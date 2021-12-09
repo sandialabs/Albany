@@ -993,35 +993,33 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT>(ptr_theta_1);
 
   auto rparams = params->sublist("Random Parameters");
-  if (rparams.isParameter("Number Of Parameters")) {
-    int nrparams = rparams.get<int>("Number Of Parameters");
-    for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
-      auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+  int nrparams = rparams.get("Number Of Parameters",0);
+  for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
+    auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
 
-      p = rcp(new Teuchos::ParameterList("Theta 1"));
-      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-      const std::string param_name = rparams_i.get<std::string>("Name");
-      p->set<std::string>("Parameter Name", param_name); //output name
-      const std::string rparam_name = rparams_i.get<std::string>("Standard Normal Parameter");
-      p->set<std::string>("Random Parameter Name", rparam_name); //input name
-      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-      p->set<const Teuchos::ParameterList*>("Distribution", &rparams_i.sublist("Distribution"));
-      Teuchos::RCP<PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>> ptr_rparam;
-      ptr_rparam = Teuchos::rcp(new PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ptr_rparam);
-    }
+    p = rcp(new Teuchos::ParameterList("Theta 1"));
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = rparams_i.get<std::string>("Name");
+    p->set<std::string>("Parameter Name", param_name); //output name
+    const std::string rparam_name = rparams_i.get<std::string>("Standard Normal Parameter");
+    p->set<std::string>("Random Parameter Name", rparam_name); //input name
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<const Teuchos::ParameterList*>("Distribution", &rparams_i.sublist("Distribution"));
+    Teuchos::RCP<PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>> ptr_rparam;
+    ptr_rparam = Teuchos::rcp(new PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ptr_rparam);
   }
 
   //--- Shared Parameter for Continuation: Glen's Law Homotopy Parameter ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("Homotopy Parameter"));
-
   param_name = ParamEnumName::GLHomotopyParam;
-  p->set<std::string>("Parameter Name", param_name);
-  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-  p->set<double>("Default Nominal Value", params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
 
-  if(!PHAL::is_param_available<EvalT>(fm0, param_name, dl->shared_param)) {
+  if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+    p = Teuchos::rcp(new Teuchos::ParameterList("Homotopy Parameter"));
+    p->set<std::string>("Parameter Name", param_name);
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
+    
     Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::GLHomotopy>> ptr_gl_homotopy;
     ptr_gl_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::GLHomotopy>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ptr_gl_homotopy);
@@ -1334,19 +1332,19 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       }
 
       //--- Shared Parameter for basal friction coefficient: alpha ---//
-      p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: alpha"));
-
       param_name = "Hydraulic-Over-Hydrostatic Potential Ratio";
-      p->set<std::string>("Parameter Name", param_name);
-      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
 
-      //TODO Why is this parameter looked for in the Basal Friction List?
-      double nominalValue = pl->sublist("Basal Friction Coefficient").isParameter(param_name) ?
-                               pl->sublist("Basal Friction Coefficient").get<double>(param_name) : -1.0;
-      p->set<double>("Default Nominal Value", nominalValue);
+      if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+        p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: alpha"));
+        p->set<std::string>("Parameter Name", param_name);
+        p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+        p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
 
-      if(!PHAL::is_param_available<EvalT>(fm0, param_name, dl->shared_param)) {
+        //TODO Why is this parameter looked for in the Basal Friction List?
+        double nominalValue = pl->sublist("Basal Friction Coefficient").isParameter(param_name) ?
+                                pl->sublist("Basal Friction Coefficient").get<double>(param_name) : -1.0;
+        p->set<double>("Default Nominal Value", nominalValue);
+
         Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Alpha>> ptr_alpha;
         ptr_alpha = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Alpha>(*p,dl));
         fm0.template registerEvaluator<EvalT>(ptr_alpha);
@@ -1354,48 +1352,48 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     }
 
     //--- Shared Parameter for basal friction coefficient: lambda ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
-
     param_name = "Bed Roughness";
-    p->set<std::string>("Parameter Name", param_name);
-    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
 
-    if(!PHAL::is_param_available<EvalT>(fm0, param_name, dl->shared_param)) {
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+      p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
+      p->set<std::string>("Parameter Name", param_name);
+      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
+
       Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Lambda>> ptr_lambda;
       ptr_lambda = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Lambda>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ptr_lambda);
     }
 
     //--- Shared Parameter for basal friction coefficient: muPowerLaw ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: mu"));
-
     param_name = ParamEnumName::Mu;
-    p->set<std::string>("Parameter Name", param_name);
-    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
 
-    if(!PHAL::is_param_available<EvalT>(fm0, param_name, dl->shared_param)) {
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+      p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: mu"));
+      p->set<std::string>("Parameter Name", param_name);
+      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
+
       Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>> ptr_mu;
       ptr_mu = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ptr_mu);
     }
 
     //--- Shared Parameter for basal friction coefficient: power ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: power"));
-
     param_name = "Power Exponent";
-    p->set<std::string>("Parameter Name", param_name);
-    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    Teuchos::ParameterList beta_list = pl->sublist("Basal Friction Coefficient");
-    const auto type = util::upper_case(beta_list.get<std::string>("Type"));
-    double default_val = (type == "FIELD") ? 1.0 : beta_list.get<double>(param_name, -1.0);
-    p->set<double>("Default Nominal Value", default_val);
 
-    if(!PHAL::is_param_available<EvalT>(fm0, param_name, dl->shared_param)) {
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+      p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: power"));
+      p->set<std::string>("Parameter Name", param_name);
+      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      Teuchos::ParameterList beta_list = pl->sublist("Basal Friction Coefficient");
+      const auto type = util::upper_case(beta_list.get<std::string>("Type"));
+      double default_val = (type == "FIELD") ? 1.0 : beta_list.get<double>(param_name, -1.0);
+      p->set<double>("Default Nominal Value", default_val);
+
       Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Power>> ptr_power;
       ptr_power = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Power>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ptr_power);

@@ -16,7 +16,7 @@
 
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_UnivariateDistribution.hpp"
+#include "Albany_UnivariateDistribution.hpp"
 
 #include "PHAL_Dimension.hpp"
 

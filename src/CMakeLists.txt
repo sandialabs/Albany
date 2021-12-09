@@ -148,6 +148,7 @@ list (APPEND SOURCES
   utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
+  utility/Albany_UnivariateDistribution.hpp
   utility/VariableMonitor.cpp
   utility/StaticAllocator.cpp
   )
@@ -561,7 +562,6 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_RandomPhysicalParameter.hpp
   evaluators/utility/PHAL_Source.hpp
   evaluators/utility/PHAL_Source_Def.hpp
-  evaluators/utility/PHAL_UnivariateDistribution.hpp
   evaluators/utility/PHAL_Field_Source.hpp
   evaluators/utility/PHAL_Field_Source_Def.hpp
   )

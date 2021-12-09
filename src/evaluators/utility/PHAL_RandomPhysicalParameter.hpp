@@ -15,7 +15,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_SharedParameter.hpp"
-#include "PHAL_UnivariateDistribution.hpp"
+#include "Albany_UnivariateDistribution.hpp"
 
 namespace PHAL {
 ///

@@ -4,31 +4,24 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_IS_PARAM_AVAILABLE_HPP
-#define PHAL_IS_PARAM_AVAILABLE_HPP
+#ifndef PHAL_IS_FIELD_EVALUATED_HPP
+#define PHAL_IS_FIELD_EVALUATED_HPP
 
 namespace PHAL
 {
 
-enum class FieldScalarType : int {
-  Real        = 0,
-  MeshScalar  = 1,
-  ParamScalar = 2,
-  Scalar      = 3
-};
-
-template<typename EvalT>
+template<typename ScalarT>
 Teuchos::RCP<PHX::FieldTag>
 createTag(const std::string& name, const Teuchos::RCP<PHX::DataLayout>& dl)
 {
-  return Teuchos::rcp(new PHX::Tag<typename EvalT::ScalarT>(name,dl));
+  return Teuchos::rcp(new PHX::Tag<ScalarT>(name,dl));
 }
 
 template<typename EvalT>
-bool is_param_available (const PHX::FieldManager<PHAL::AlbanyTraits>& fm,
+bool is_field_evaluated (const PHX::FieldManager<PHAL::AlbanyTraits>& fm,
                    const std::string& name,
                    const Teuchos::RCP<PHX::DataLayout>& dl) {
-  auto tag = createTag<EvalT>(name,dl);
+  auto tag = createTag<typename EvalT::ScalarT>(name,dl);
 
   const auto& dag = fm.getDagManager<EvalT>();
 
@@ -43,4 +36,4 @@ bool is_param_available (const PHX::FieldManager<PHAL::AlbanyTraits>& fm,
 
 } // namespace PHAL
 
-#endif // PHAL_IS_PARAM_AVAILABLE_HPP
+#endif // PHAL_IS_FIELD_EVALUATED_HPP

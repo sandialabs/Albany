@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_UNIVARIATEDISTRIBUTION_HPP
-#define ALBANY_UNIVARIATEDISTRIBUTION_HPP
+#ifndef ALBANY_UNIVARIATE_DISTRIBUTION_HPP
+#define ALBANY_UNIVARIATE_DISTRIBUTION_HPP
 
 #include <boost/math/special_functions/erf.hpp>
 
@@ -297,4 +297,4 @@ namespace Albany
 
 } // namespace Albany
 
-#endif // ALBANY_UNIVARIATEDISTRIBUTION_HPP
+#endif // ALBANY_UNIVARIATE_DISTRIBUTION_HPP
