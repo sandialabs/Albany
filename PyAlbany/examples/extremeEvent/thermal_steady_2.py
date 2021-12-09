@@ -19,9 +19,9 @@ except:
 
 
 def evaluate_responses(X, Y, problem, recompute=False):
-    if not recompute and os.path.isfile('Z1.txt'):
-        Z1 = np.loadtxt('Z1.txt')
-        Z2 = np.loadtxt('Z2.txt')
+    if not recompute and os.path.isfile('Z1_2.txt'):
+        Z1 = np.loadtxt('Z1_2.txt')
+        Z2 = np.loadtxt('Z2_2.txt')
     else:
         comm = MPI.COMM_WORLD
         myGlobalRank = comm.rank
@@ -45,8 +45,8 @@ def evaluate_responses(X, Y, problem, recompute=False):
                 Z1[j, i] = problem.getCumulativeResponseContribution(0, 0)
                 Z2[j, i] = problem.getCumulativeResponseContribution(0, 1)
 
-        np.savetxt('Z1.txt', Z1)
-        np.savetxt('Z2.txt', Z2)
+        np.savetxt('Z1_2.txt', Z1)
+        np.savetxt('Z2_2.txt', Z2)
     return Z1, Z2
 
 
@@ -57,7 +57,7 @@ def main(parallelEnv):
     # Create an Albany problem:
 
     n_params = 2
-    filename = "thermal_steady.yaml"
+    filename = "thermal_steady_2.yaml"
 
     parameter = Utils.createParameterList(
         filename, parallelEnv
@@ -80,10 +80,10 @@ def main(parallelEnv):
 
     theta_star, I_star, F_star, P_star = ee.evaluateThetaStar(l, problem, n_params)
 
-    np.savetxt('theta_star_steady.txt', theta_star)
-    np.savetxt('I_star_steady.txt', I_star)
-    np.savetxt('P_star_steady.txt', P_star)
-    np.savetxt('F_star_steady.txt', F_star)
+    np.savetxt('theta_star_steady_2.txt', theta_star)
+    np.savetxt('I_star_steady_2.txt', I_star)
+    np.savetxt('P_star_steady_2.txt', P_star)
+    np.savetxt('F_star_steady_2.txt', F_star)
 
     # ----------------------------------------------
     #
@@ -93,7 +93,7 @@ def main(parallelEnv):
 
     N_samples = 100
 
-    mean = np.array([0., 0.])
+    mean = np.array([1., 1.])
     cov = np.array([[1., 0.], [0., 1.]])
 
     samples = np.random.multivariate_normal(mean, cov, N_samples)
@@ -105,9 +105,9 @@ def main(parallelEnv):
     P_mixed = ee.mixedImportanceSamplingEstimator(mean, cov, theta_star, F_star, P_star, samples, problem, angle_1, angle_2)
     P_SO = ee.secondOrderEstimator(mean, cov, l, theta_star, I_star, F_star, P_star, problem)
 
-    np.savetxt('P_steady_IS.txt', P_IS)
-    np.savetxt('P_steady_mixed.txt', P_mixed)
-    np.savetxt('P_steady_SO.txt', P_SO)
+    np.savetxt('P_steady_IS_2.txt', P_IS)
+    np.savetxt('P_steady_mixed_2.txt', P_mixed)
+    np.savetxt('P_steady_SO_2.txt', P_SO)
 
     problem.reportTimers()
 
@@ -117,8 +117,8 @@ def main(parallelEnv):
     #
     # ----------------------------------------------
     if n_params == 2:
-        X = np.arange(0, 6, 0.2)
-        Y = np.arange(0, 6, 0.25)
+        X = np.arange(1, 7, 0.2)
+        Y = np.arange(1, 7, 0.25)
 
         Z1, Z2 = evaluate_responses(X, Y, problem, True)
 
@@ -132,29 +132,29 @@ def main(parallelEnv):
             plt.semilogy(F_star, P_mixed, 'r*--')
             plt.semilogy(F_star, P_SO, 'g*-')
 
-            plt.savefig('extreme_steady.jpeg', dpi=800)
+            plt.savefig('extreme_steady_2.jpeg', dpi=800)
             plt.close()
 
             if n_params == 2:
                 plt.figure()
                 plt.plot(theta_star[:, 0], theta_star[:, 1], '*-')
-                #plt.contour(X, Y, Z1, levels=I_star, colors='g')
-                #plt.contour(X, Y, Z2, levels=F_star, colors='r')
-                plt.savefig('theta_star.jpeg', dpi=800)
+                plt.contour(X, Y, Z1, levels=I_star, colors='g')
+                plt.contour(X, Y, Z2, levels=F_star, colors='r')
+                plt.savefig('theta_star_2.jpeg', dpi=800)
                 plt.close()
 
                 fig = plt.figure()
                 ax = fig.gca(projection='3d')
                 ax.plot_surface(X, Y, Z1)
 
-                plt.savefig('Z1.jpeg', dpi=800)
+                plt.savefig('Z1_2.jpeg', dpi=800)
                 plt.close()
 
                 fig = plt.figure()
                 ax = fig.gca(projection='3d')
                 ax.plot_surface(X, Y, Z2)
 
-                plt.savefig('Z2.jpeg', dpi=800)
+                plt.savefig('Z2_2.jpeg', dpi=800)
                 plt.close()
 
 

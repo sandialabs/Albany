@@ -130,6 +130,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");
   validPL->sublist("Parameters", false, "");
+  validPL->sublist("Random Parameters", false, "");
   validPL->sublist("Teko", false, "");
   validPL->sublist("Hessian", false, "");
   validPL->sublist("XFEM", false, "");

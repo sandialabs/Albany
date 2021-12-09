@@ -18,6 +18,11 @@
 
 #include "PHAL_ConvertFieldType.hpp"
 #include "Albany_MaterialDatabase.hpp"
+
+#include "PHAL_RandomPhysicalParameter.hpp"
+
+#include "PHAL_IsAvailable.hpp"
+
 namespace Albany {
 
   /*!
@@ -218,39 +223,93 @@ Albany::ThermalProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  if (!conductivityIsDistParam) {  
-    //Shared parameter for sensitivity analysis: kappa_x
-    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_x"));
+
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Theta 0"));
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
-    const std::string param_name = "kappa_x Parameter";
+    const std::string param_name = "Theta 0";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<double>("Default Nominal Value", kappa[0]);
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_kappa_x;
-    ptr_kappa_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
+    p->set<double>("Default Nominal Value", 0.);
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_0>> ptr_theta_0;
+    ptr_theta_0 = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_0>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ptr_theta_0);
+  }
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Theta 1"));
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = "Theta 1";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", 0.);
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_1>> ptr_theta_1;
+    ptr_theta_1 = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_1>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ptr_theta_1);
+  }
+  auto rparams = params->sublist("Random Parameters");
+  if (rparams.isParameter("Number Of Parameters"))
+  {
+    int nrparams = rparams.get<int>("Number Of Parameters");
+    for (int i_rparams=0; i_rparams<nrparams; ++i_rparams)
+    {
+      auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+
+      RCP<ParameterList> p = rcp(new ParameterList("Theta 1"));
+      p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+      const std::string param_name = rparams_i.get<std::string>("Name");
+      p->set<std::string>("Parameter Name", param_name); //output name
+      const std::string rparam_name = rparams_i.get<std::string>("Standard Normal Parameter");
+      p->set<std::string>("Random Parameter Name", rparam_name); //input name
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<const Teuchos::ParameterList*>("Distribution", &rparams_i.sublist("Distribution"));
+      RCP<PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>> ptr_rparam;
+      ptr_rparam = rcp(new PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_rparam);
+    }
+  }
+
+  if (!conductivityIsDistParam) {  
+    //Shared parameter for sensitivity analysis: kappa_x
+    const std::string param_name = "kappa_x Parameter";
+
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+      RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_x"));
+      p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<std::string>("Parameter Name", param_name);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", kappa[0]);
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_kappa_x;
+      ptr_kappa_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
+    }
 
     if (numDim > 1) {  //Shared parameter for sensitivity analysis: kappa_y
-      RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
-      p->set< RCP<ParamLib> >("Parameter Library", paramLib);
       const std::string param_name = "kappa_y Parameter";
-      p->set<std::string>("Parameter Name", param_name);
-      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-      p->set<double>("Default Nominal Value", kappa[1]);
-      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_kappa_y;
-      ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
+
+      if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+        RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
+        p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+        p->set<std::string>("Parameter Name", param_name);
+        p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+        p->set<double>("Default Nominal Value", kappa[1]);
+        RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_kappa_y;
+        ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
+      }
     }
     if (numDim > 2) {  //Shared parameter for sensitivity analysis: kappa_z
-      RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
-      p->set< RCP<ParamLib> >("Parameter Library", paramLib);
       const std::string param_name = "kappa_z Parameter";
-      p->set<std::string>("Parameter Name", param_name);
-      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-      p->set<double>("Default Nominal Value", kappa[2]);
-      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_kappa_z;
-      ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
+
+      if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+        RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
+        p->set< RCP<ParamLib> >("Parameter Library", paramLib);        
+        p->set<std::string>("Parameter Name", param_name);
+        p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+        p->set<double>("Default Nominal Value", kappa[2]);
+        RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_kappa_z;
+        ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
+      }
     }
   }
   else //conductivityIsDistParam

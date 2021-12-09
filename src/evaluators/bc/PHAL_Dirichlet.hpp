@@ -16,6 +16,9 @@
 
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "Albany_UnivariateDistribution.hpp"
+
+#include "PHAL_Dimension.hpp"
 
 namespace PHAL {
 /** \brief Gathers solution values from the Newton solution vector into
@@ -58,6 +61,9 @@ protected:
   const int offset;
   ScalarT value;
   std::string nodeSetID;
+  bool isRandom;
+  Teuchos::RCP<Albany::UnivariatDistribution> distribution;
+  PHX::MDField<ScalarT,Dim>   theta_as_field;
 };
 
 // **************************************************************

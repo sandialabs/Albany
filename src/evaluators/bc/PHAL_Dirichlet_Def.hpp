@@ -10,6 +10,7 @@
 
 #include "PHAL_Dirichlet.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -26,8 +27,25 @@ DirichletBase(Teuchos::ParameterList& p) :
   value = p.get<RealType>("Dirichlet Value");
 
   std::string name = p.get< std::string >("Dirichlet Name");
+  isRandom = false;
+  if (p.isParameter("Random"))
+    isRandom = p.get< bool >("Random");
   const Teuchos::RCP<PHX::DataLayout> dummy = p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
   const PHX::Tag<ScalarT> fieldTag(name, dummy);
+
+  if(isRandom) {
+    std::string theta_name = p.get< std::string> ("Theta");
+
+    theta_as_field = PHX::MDField<ScalarT,Dim>(theta_name, Teuchos::rcp(new PHX::MDALayout<Dim>(1)));
+    this->addDependentField(theta_as_field);
+
+    if (p.get<std::string>("Distribution Name") == "Normal")
+      distribution = Teuchos::rcp<Albany::UnivariatDistribution>(new Albany::NormalDistribution(p.get<double>("Loc"), p.get<double>("Scale")));
+    if (p.get<std::string>("Distribution Name") == "LogNormal")
+      distribution = Teuchos::rcp<Albany::UnivariatDistribution>(new Albany::LogNormalDistribution(p.get<double>("Scale")));
+    if (p.get<std::string>("Distribution Name") == "Uniform")
+      distribution = Teuchos::rcp<Albany::UnivariatDistribution>(new Albany::UniformDistribution(p.get<double>("Loc"), p.get<double>("Scale")));
+  }
 
   this->addEvaluatedField(fieldTag);
 
@@ -86,6 +104,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
+  if(this->isRandom)
+    this->value = this->distribution->fromNormalMapping(this->theta_as_field(0));
+
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
       // (*f)[lunk] = ((*x)[lunk] - this->value);
@@ -129,6 +150,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   value[0] = j_coeff;
   Teuchos::Array<ST> matrixEntries;
   Teuchos::Array<LO> matrixIndices;
+
+  if(this->isRandom)
+    this->value.val() = this->distribution->fromNormalMapping(this->theta_as_field(0).val());  
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     int lunk = nsNodes[inode][this->offset];
@@ -189,6 +213,20 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  if(this->isRandom) {
+    this->value = this->theta_as_field(0);
+
+    this->value.val() = this->distribution->fromNormalMapping(this->theta_as_field(0).val());
+    double v_dx = this->distribution->fromNormalMapping_dx(this->theta_as_field(0).val());
+
+    for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
+      this->value.fastAccessDx(dirichletWorkset.param_offset+i) = v_dx * this->theta_as_field(0).fastAccessDx(dirichletWorkset.param_offset+i);
+    }
+
+    std::cout << " RandomDBC<PHAL::AlbanyTraits::Tangent>::evaluateFields() "
+        << this->value << " theta " << this->theta_as_field(0) << std::endl;
+  }
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     int lunk = nsNodes[inode][this->offset];

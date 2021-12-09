@@ -31,6 +31,7 @@
 #include "BelosOrthoManagerFactory.hpp"
 #include "BelosOrthoManager.hpp"
 
+#include <Teuchos_TwoDArray.hpp>
 namespace PyAlbany
 {
     /**
@@ -313,8 +314,23 @@ namespace PyAlbany
             else
                 csrf->updateWeight(j, weigth);
         }
-    };
 
+        void getCovarianceMatrix(double* C, int n, int m)
+        {
+            auto responseParams = albanyApp->getAppPL()->sublist("Problem").sublist("Responses").sublist("Response 0").sublist("Response 0");
+            int total_dimension = n;
+
+            Teuchos::TwoDArray<double> C_data(total_dimension, total_dimension, 0);
+            if (responseParams.isParameter("Covariance Matrix"))
+                C_data = responseParams.get<Teuchos::TwoDArray<double>>("Covariance Matrix");
+            else
+                for (int i=0; i<total_dimension; i++)
+                    C_data(i,i) = 1.;
+            for (int i=0; i<n; i++)
+                for (int j=0; j<m; j++)
+                    C[i * n + j] = C_data(i,j);
+        }
+    };
 } // namespace PyAlbany
 
 Teuchos::RCP<PyAlbany::PyTrilinosMap> PyAlbany::getRankZeroMap(Teuchos::RCP<PyAlbany::PyTrilinosMap> distributedMap)

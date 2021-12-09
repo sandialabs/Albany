@@ -1,8 +1,5 @@
 import numpy as np
-from scipy.optimize import minimize
-from numpy.linalg import inv
 from scipy.special import erfinv
-from scipy.special import erf
 import scipy.stats
 
 
@@ -161,7 +158,7 @@ class multivariatDistribution(distribution):
         return s
 
 
-def mapping(x, distribution1, distribution2):
+def mapping_v(x, distribution1, distribution2):
     if distribution1.n_dimensions != distribution2.n_dimensions:
         raise NameError("mapping: The two distributions are not compatible")
     return distribution2.ppf(distribution1.cdf(x))
@@ -179,3 +176,14 @@ def mapping_dx_dx(x, distribution1, distribution2):
             "mapping_dx_dx: The two distributions are not compatible")
     return distribution2.ppf_dx_dx(distribution1.cdf(x)) * distribution1.cdf_dx(x)**2 + distribution2.ppf_dx(distribution1.cdf(x)) * distribution1.cdf_dx_dx(x)
 
+
+class mapping:
+    def __init__(self, standard, other):
+        self.standard = standard
+        self.other = other
+
+    def toNormal(self, x):
+        return mapping_v(x, self.other, self.standard)
+
+    def fromNormal(self, x):
+        return mapping_v(x, self.standard, self.other)

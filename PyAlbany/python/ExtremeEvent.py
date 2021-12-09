@@ -3,6 +3,91 @@ from PyTrilinos import Tpetra
 import numpy as np
 import scipy.sparse.linalg as slinalg
 import scipy.linalg as linalg
+from PyAlbany import Distributions as dist
+
+def getDistributionParameters(problem, parameter):
+    parameter_weighted_misfit = parameter.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 0")
+    n_vec_params = parameter_weighted_misfit.get("Number Of Parameters")
+
+    n_params = 0
+    for i in range(0, n_vec_params):
+        current_param = parameter.sublist("Problem").sublist("Parameters").sublist("Parameter "+str(i))
+        if current_param.isParameter("Dimension"):
+            n_params += current_param.get("Dimension")
+        else:
+            n_params += 1
+
+    if n_params == n_vec_params:
+        params_in_vector = False
+    else:
+        params_in_vector = True
+
+    mean = parameter_weighted_misfit.get("Mean")
+    cov = np.zeros((n_params, n_params))
+    problem.getCovarianceMatrix(cov)
+
+    if parameter.sublist("Problem").isSublist("Random Parameters"):
+        use_maping = True
+        distribution = dist.multivariatDistribution(n_params)
+        standard = dist.multivariatDistribution(n_params)
+        random_param = parameter.sublist("Problem").sublist("Random Parameters")
+
+        distribution_list = []
+        standard_list = []
+        for i in range(0, n_params):
+            dist_param = random_param.sublist("Parameter " + str(i)).sublist("Distribution")
+            if dist_param.get("Name") == "Normal":
+                if dist_param.isParameter("Loc"):
+                    loc = dist_param.get("Loc")
+                else:
+                    loc = 0.
+                if dist_param.isParameter("Scale"):
+                    scale = dist_param.get("Scale")
+                else:
+                    scale = 1.
+                distribution_list.append(dist.normDistribution(loc = loc, scale = scale))
+            if dist_param.get("Name") == "LogNormal":
+                if dist_param.isParameter("Scale"):
+                    scale = dist_param.get("Scale")
+                else:
+                    scale = 1.
+                distribution_list.append(dist.lognormDistribution(s = scale))
+            if dist_param.get("Name") == "Uniform":
+                if dist_param.isParameter("Loc"):
+                    loc = dist_param.get("Loc")
+                else:
+                    loc = 0.
+                if dist_param.isParameter("Scale"):
+                    scale = dist_param.get("Scale")
+                else:
+                    scale = 1.
+                distribution_list.append(dist.uniformDistribution(loc = loc, scale = scale))
+            standard_list.append(dist.normDistribution())
+        distribution.setUnivariatDistributions(distribution_list)
+        standard.setUnivariatDistributions(standard_list)
+        mapping = dist.mapping(standard, distribution)
+    else:
+        use_maping = False
+        distribution = None
+        mapping = None
+
+    return n_params, mean, cov, use_maping, params_in_vector, distribution, mapping
+
+
+def setInitialGuess(problem, p, n_params, params_in_vector=True):
+    if params_in_vector:
+        parameter_map = problem.getParameterMap(0)
+        parameter = Tpetra.Vector(parameter_map, dtype="d")
+        for j in range(0, n_params):
+            parameter[j] = p[j]
+        problem.setParameter(0, parameter)
+    else:
+        for j in range(0, n_params):
+            parameter_map = problem.getParameterMap(j)
+            parameter = Tpetra.Vector(parameter_map, dtype="d")
+            parameter[0] = p[j]
+            problem.setParameter(j, parameter)
+
 
 def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vector=True):
     n_l = len(l)
@@ -51,7 +136,7 @@ def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_
             sample = samples_0[j,:] + theta_star[i,:] - theta_0
 
             if params_in_vector:
-                parameter_map = problem.getParameter(0)
+                parameter_map = problem.getParameterMap(0)
                 parameter = Tpetra.Vector(parameter_map, dtype="d")
                 for j in range(0, n_params):
                     parameter[j] = sample[j]

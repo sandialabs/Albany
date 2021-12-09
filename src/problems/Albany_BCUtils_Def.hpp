@@ -13,6 +13,19 @@
 namespace {
 const char decorator[] = "Evaluator for ";
 
+bool isRandom(Teuchos::RCP<Teuchos::ParameterList> params, const std::string& bc_name, Teuchos::ParameterList& rparams_i)
+{
+  auto rparams = params->sublist("Random Parameters");
+  if (rparams.isParameter("Number Of Parameters")) {
+    int nrparams = rparams.get<int>("Number Of Parameters");
+    for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
+      rparams_i = rparams.sublist(Albany::strint("Parameter", i_rparams));
+      if (bc_name == rparams_i.get<std::string>("Name")) return true;
+    }    
+  }
+  return false;
+}
+
 // Name decorator.
 inline std::string
 evaluatorsToBuildName(const std::string& bc_name)
@@ -326,11 +339,27 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
     for (std::size_t j = 0; j < bcNames.size(); j++) {
       string ss = traits_type::constructBCName(nodeSetIDs[i], bcNames[j]);
       if (BCparams.isParameter(ss)) {
+        ParameterList irand;
+        bool rand = isRandom(params, ss, irand);
+
         RCP<ParameterList> p = rcp(new ParameterList);
 
         p->set<int>("Type", traits_type::type);
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
+        p->set<bool>("Random", rand);
+        if(rand) {
+          p->set<string>("Theta", irand.get<string>("Standard Normal Parameter"));
+          p->set<string>("Distribution Name", irand.sublist("Distribution").get<std::string>("Name"));
+          if(irand.sublist("Distribution").isParameter("Loc"))
+            p->set<double>("Loc", irand.sublist("Distribution").get<double>("Loc"));
+          else
+            p->set<double>("Loc", 0.);
+          if(irand.sublist("Distribution").isParameter("Scale"))
+            p->set<double>("Scale", irand.sublist("Distribution").get<double>("Scale"));
+          else
+            p->set<double>("Scale", 1.);
+        }
         p->set<RealType>("Dirichlet Value", BCparams.get<double>(ss));
         p->set<string>("Node Set ID", nodeSetIDs[i]);
         // p->set< int >     ("Number of Equations", dirichletNames.size());

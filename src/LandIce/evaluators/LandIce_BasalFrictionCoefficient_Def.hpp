@@ -17,6 +17,8 @@
 
 #include <string.hpp> // for 'upper_case' (comes from src/utility; not to be confused with <string>)
 
+#include "Albany_Utils.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -265,6 +267,17 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     } else if (beta_type == BETA_TYPE::POWER_LAW) {
       auto paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
       is_power_parameter = paramLib->isParameter("Power Exponent");
+      Teuchos::ParameterList rparams = *p.get<Teuchos::ParameterList*>("Random Parameters");
+      if (!is_power_parameter && rparams.isParameter("Number Of Parameters")) {
+        int nrparams = rparams.get<int>("Number Of Parameters");
+        for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
+          auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+          if (rparams_i.get<std::string>("Name") == "Power Exponent") {
+            is_power_parameter = true;
+            break;
+          }
+        }
+      }
       if (is_power_parameter) {
         u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
         this->addDependentField (u_norm);

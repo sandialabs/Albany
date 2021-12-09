@@ -14,7 +14,14 @@
 #include <typeinfo>
 
 #include <Albany_PyAlbanyTypes.hpp>
+#define SWIG_FILE_WITH_INIT
 #include <Albany_Interface.hpp>
+%}
+// ----------- Numpy -----------
+%include "numpy.i"
+
+%init %{
+    import_array();
 %}
 
 // ----------- PyTrilinos ------------
@@ -37,4 +44,5 @@ using std::string;
 %teuchos_rcp(PyAlbany::PyProblem)
 
 %include "Albany_PyAlbanyTypes.hpp"
+%apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* C, int n, int m)}
 %include "Albany_Interface.hpp"

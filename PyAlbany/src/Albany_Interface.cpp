@@ -38,6 +38,8 @@
 
 #include "Albany_ObserverImpl.hpp"
 
+#include "ROL_Types.hpp"
+
 #if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
 #endif
@@ -559,7 +561,7 @@ bool PyProblem::performAnalysis()
 
     stackedTimer->stop("PyAlbany: performAnalysis");
     stackedTimer->stopBaseTimer();
-    bool error = (status != 0);
+    bool error = (status != ROL::EXITSTATUS_CONVERGED && status != ROL::EXITSTATUS_STEPTOL);
     return error;
 }
 
