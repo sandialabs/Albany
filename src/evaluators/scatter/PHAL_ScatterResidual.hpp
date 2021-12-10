@@ -18,6 +18,7 @@
 #include "Albany_KokkosTypes.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_DiscretizationUtils.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -211,6 +212,7 @@ private:
   using Base::val_kokkos;
 
   typedef typename PHX::Device::execution_space ExecutionSpace;
+  static constexpr bool is_atomic = KU::IsAtomic<ExecutionSpace>::value;
   typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank0_Tag> PHAL_ScatterResRank0_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank0_Adjoint_Tag> PHAL_ScatterJacRank0_Adjoint_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank0_Tag> PHAL_ScatterJacRank0_Policy;

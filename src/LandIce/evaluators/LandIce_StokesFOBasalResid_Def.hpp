@@ -10,6 +10,7 @@
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "LandIce_StokesFOBasalResid.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
@@ -120,7 +121,7 @@ operator() (const StokesFOBasalResid_Tag&, const int& sideSet_idx) const {
       local_res[1] += (beta(sideSet_idx,qp)*(u0*bx*by + u1*(1.0+by*by)))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
     }
     for (unsigned int dim=0; dim<vecDimFO; ++dim)
-      Kokkos::atomic_add(&residual(cell,sideNodes(side,node),dim), local_res[dim]);
+      KU::atomic_add<ExecutionSpace>(&residual(cell,sideNodes(side,node),dim), local_res[dim]);
   }
 
 }
