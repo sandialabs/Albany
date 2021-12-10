@@ -162,7 +162,7 @@ operator() (const GivenImmersedRatio_Tag&, const int& sideSet_idx) const {
       // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
       const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(sideSet_idx,node,qp);
       for (unsigned int dim=0; dim<vecDimFO; ++dim) {
-        Kokkos::atomic_add(&residual(cell,sideNode,dim), w_normal_stress_bf * normals(sideSet_idx,qp,dim));
+        KU::atomic_add<ExecutionSpace>(&residual(cell,sideNode,dim), w_normal_stress_bf * normals(sideSet_idx,qp,dim));
       }
     }
   }
@@ -208,7 +208,7 @@ operator() (const ComputedImmersedRatio_Tag&, const int& sideSet_idx) const {
       // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
       const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(sideSet_idx,node,qp);
       for (unsigned int dim=0; dim<vecDimFO; ++dim) {
-        Kokkos::atomic_add(&residual(cell,sideNode,dim), w_normal_stress_bf * normals(sideSet_idx,qp,dim));
+        KU::atomic_add<ExecutionSpace>(&residual(cell,sideNode,dim), w_normal_stress_bf * normals(sideSet_idx,qp,dim));
       }
     }
   }

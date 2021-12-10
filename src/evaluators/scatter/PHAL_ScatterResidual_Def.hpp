@@ -133,7 +133,7 @@ operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&f_kokkos(id), val_kokkos[eq](cell,node));
+      KU::atomic_add<ExecutionSpace>(&f_kokkos(id), val_kokkos[eq](cell,node));
     }
 }
 
@@ -145,7 +145,7 @@ operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&f_kokkos(id), this->valVec(cell,node,eq));
+      KU::atomic_add<ExecutionSpace>(&f_kokkos(id), this->valVec(cell,node,eq));
     }
 }
 
@@ -158,7 +158,7 @@ operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
     for (int i = 0; i < numDims; i++)
       for (int j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
-        Kokkos::atomic_fetch_add(&f_kokkos(id), this->valTensor(cell,node,i,j)); 
+        KU::atomic_add<ExecutionSpace>(&f_kokkos(id), this->valTensor(cell,node,i,j));
       }
 }
 #endif
@@ -257,7 +257,7 @@ operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&f_kokkos(id), (val_kokkos[eq](cell,node)).val());
+      KU::atomic_add<ExecutionSpace>(&f_kokkos(id), (val_kokkos[eq](cell,node)).val());
     }
 }
 
@@ -288,7 +288,7 @@ operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
       auto valptr = val_kokkos[eq](cell,node);
       for (int lunk=0; lunk<nunk; lunk++) {
         ST val = valptr.fastAccessDx(lunk);
-        Jac_kokkos.sumIntoValues(col[lunk], &row, 1, &val, false, true); 
+        Jac_kokkos.sumIntoValues(col[lunk], &row, 1, &val, false, is_atomic);
       }
     }
   }
@@ -321,7 +321,7 @@ operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
       row = nodeID(cell,node,this->offset + eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-      Jac_kokkos.sumIntoValues(row, col, nunk, vals, false, true);
+      Jac_kokkos.sumIntoValues(row, col, nunk, vals, false, is_atomic);
     }
   }
 }
@@ -334,7 +334,7 @@ operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const
   for (std::size_t node = 0; node < this->numNodes; node++) {
     for (std::size_t eq = 0; eq < numFields; eq++) {
       const LO id = nodeID(cell,node,this->offset + eq);
-      Kokkos::atomic_fetch_add(&f_kokkos(id), (this->valVec(cell,node,eq)).val());
+      KU::atomic_add<ExecutionSpace>(&f_kokkos(id), (this->valVec(cell,node,eq)).val());
     }
   }
 }
@@ -366,7 +366,7 @@ operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++){
           ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
-          Jac_kokkos.sumIntoValues(col[lunk], &row, 1, &val, false, true);
+          Jac_kokkos.sumIntoValues(col[lunk], &row, 1, &val, false, is_atomic);
         }
       }//has fast access
     }
@@ -400,7 +400,7 @@ operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
-        Jac_kokkos.sumIntoValues(row, col, nunk, vals, false, true);
+        Jac_kokkos.sumIntoValues(row, col, nunk, vals, false, is_atomic);
       }
     }
   }
@@ -415,7 +415,7 @@ operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
     for (int i = 0; i < numDims; i++)
       for (int j = 0; j < numDims; j++) {
         const LO id = nodeID(cell,node,this->offset + i*numDims + j);
-        Kokkos::atomic_fetch_add(&f_kokkos(id), (this->valTensor(cell,node,i,j)).val()); 
+        KU::atomic_add<ExecutionSpace>(&f_kokkos(id), (this->valTensor(cell,node,i,j)).val());
       }
 }
 
@@ -446,7 +446,7 @@ operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++) {
           ST val = ((this->valTensor)(cell,node, eq/numDims, eq%numDims)).fastAccessDx(lunk);
-          Jac_kokkos.sumIntoValues (col[lunk], &row, 1, &val, false, true);
+          Jac_kokkos.sumIntoValues (col[lunk], &row, 1, &val, false, is_atomic);
         }
       }//has fast access
     }
@@ -480,7 +480,7 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
       row = nodeID(cell,node,this->offset + eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor)(cell,node, eq/numDims, eq%numDims).fastAccessDx(i);
-        Jac_kokkos.sumIntoValues(row, col, nunk,  vals, false, true);
+        Jac_kokkos.sumIntoValues(row, col, nunk,  vals, false, is_atomic);
       }
     }
   }
