@@ -15,13 +15,13 @@ const char decorator[] = "Evaluator for ";
 
 bool isRandom(Teuchos::RCP<Teuchos::ParameterList> params, const std::string& bc_name, Teuchos::ParameterList& rparams_i)
 {
-  auto rparams = params->sublist("Random Parameters");
-  if (rparams.isParameter("Number Of Parameters")) {
+  if(params->isSublist("Random Parameters")){
+    auto rparams = params->sublist("Random Parameters");
     int nrparams = rparams.get<int>("Number Of Parameters");
     for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
       rparams_i = rparams.sublist(Albany::strint("Parameter", i_rparams));
       if (bc_name == rparams_i.get<std::string>("Name")) return true;
-    }    
+    }
   }
   return false;
 }

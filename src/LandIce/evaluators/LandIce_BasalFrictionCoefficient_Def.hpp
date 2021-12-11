@@ -267,14 +267,16 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     } else if (beta_type == BETA_TYPE::POWER_LAW) {
       auto paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
       is_power_parameter = paramLib->isParameter("Power Exponent");
-      Teuchos::ParameterList rparams = *p.get<Teuchos::ParameterList*>("Random Parameters");
-      if (!is_power_parameter && rparams.isParameter("Number Of Parameters")) {
-        int nrparams = rparams.get<int>("Number Of Parameters");
-        for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
-          auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
-          if (rparams_i.get<std::string>("Name") == "Power Exponent") {
-            is_power_parameter = true;
-            break;
+      if(p.isParameter("Random Parameters")) {
+        Teuchos::ParameterList rparams = *p.get<Teuchos::ParameterList*>("Random Parameters");
+        if (!is_power_parameter) {
+          int nrparams = rparams.get<int>("Number Of Parameters");
+          for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
+            auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+            if (rparams_i.get<std::string>("Name") == "Power Exponent") {
+              is_power_parameter = true;
+              break;
+            }
           }
         }
       }

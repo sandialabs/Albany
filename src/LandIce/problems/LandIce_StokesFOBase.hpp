@@ -992,22 +992,24 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ptr_theta_1 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Theta_1>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_theta_1);
 
-  auto rparams = params->sublist("Random Parameters");
-  int nrparams = rparams.get<int>("Number Of Parameters");
-  for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
-    auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
-
-    p = rcp(new Teuchos::ParameterList("Theta 1"));
-    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    const std::string param_name = rparams_i.get<std::string>("Name");
-    p->set<std::string>("Parameter Name", param_name); //output name
-    const std::string rparam_name = rparams_i.get<std::string>("Standard Normal Parameter");
-    p->set<std::string>("Random Parameter Name", rparam_name); //input name
-    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<const Teuchos::ParameterList*>("Distribution", &rparams_i.sublist("Distribution"));
-    Teuchos::RCP<PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>> ptr_rparam;
-    ptr_rparam = Teuchos::rcp(new PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ptr_rparam);
+  if(params->isSublist("Random Parameters")){
+    auto rparams = params->sublist("Random Parameters");
+    int nrparams = rparams.get<int>("Number Of Parameters");
+    for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
+      auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+  
+      p = rcp(new Teuchos::ParameterList("Theta 1"));
+      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+      const std::string param_name = rparams_i.get<std::string>("Name");
+      p->set<std::string>("Parameter Name", param_name); //output name
+      const std::string rparam_name = rparams_i.get<std::string>("Standard Normal Parameter");
+      p->set<std::string>("Random Parameter Name", rparam_name); //input name
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<const Teuchos::ParameterList*>("Distribution", &rparams_i.sublist("Distribution"));
+      Teuchos::RCP<PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>> ptr_rparam;
+      ptr_rparam = Teuchos::rcp(new PHAL::RandomPhysicalParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_rparam);
+    }
   }
 
   //--- Shared Parameter for Continuation: Glen's Law Homotopy Parameter ---//
@@ -1420,7 +1422,8 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side_name);
     p->set<bool>("Is Thickness A Parameter",is_dist_param[ice_thickness_name]);
     p->set<Teuchos::RCP<std::map<std::string,bool>>>("Dist Param Query Map",Teuchos::rcpFromRef(is_dist_param));
-    p->set<Teuchos::ParameterList*>("Random Parameters", &params->sublist("Random Parameters"));
+    if(params->isSublist("Random Parameters"))
+      p->set<Teuchos::ParameterList*>("Random Parameters", &params->sublist("Random Parameters"));
 
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", beta_side_name);

@@ -246,9 +246,9 @@ Albany::ThermalProblem::constructEvaluators(
     ptr_theta_1 = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_1>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ptr_theta_1);
   }
-  auto rparams = params->sublist("Random Parameters");
-  if (rparams.isParameter("Number Of Parameters"))
-  {
+
+  if (params->isSublist("Random Parameters")) {
+    auto rparams = params->sublist("Random Parameters");
     int nrparams = rparams.get<int>("Number Of Parameters");
     for (int i_rparams=0; i_rparams<nrparams; ++i_rparams)
     {
