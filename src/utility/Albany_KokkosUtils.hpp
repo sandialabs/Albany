@@ -48,7 +48,7 @@ using Sacado::Fad::Exp::min;
 
 // Choose atomic based on execution space
 template <typename ExeSpace>
-struct IsAtomic
+struct NeedsAtomic
 {
   enum : bool
   {
@@ -58,7 +58,7 @@ struct IsAtomic
 
 #ifdef KOKKOS_ENABLE_SERIAL
 template <>
-struct IsAtomic<Kokkos::Serial>
+struct NeedsAtomic<Kokkos::Serial>
 {
   enum : bool
   {
