@@ -24,7 +24,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora35-gcc11.2.1-${CTEST_BUILD_CONFIGURATION}-Openmp-Albany")
+set (CTEST_BUILD_NAME "rhel8.5-gcc8.5.0-${CTEST_BUILD_CONFIGURATION}-Openmp-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -175,10 +175,10 @@ if (BUILD_ALBFUNCTOR_OPENMP)
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA:BOOL=ON"
-    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
-    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
+    "-DSEACAS_EPU=${TRILINSTALLDIR}/bin/epu"
+    "-DSEACAS_DECOMP=${TRILINSTALLDIR}/bin/decomp"
+    "-DSEACAS_EXODIFF=${TRILINSTALLDIR}/bin/exodiff"
+    "-DSEACAS_ALGEBRA=${TRILINSTALLDIR}/bin/algebra"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"

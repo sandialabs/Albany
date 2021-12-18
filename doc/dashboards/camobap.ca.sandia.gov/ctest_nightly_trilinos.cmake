@@ -30,7 +30,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora35-gcc11.2.1-Trilinos-extended-sts")
+set (CTEST_BUILD_NAME "rhel8.5-gcc8.5.0-Trilinos-extended-sts")
 set (CTEST_BINARY_NAME build)
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -146,16 +146,16 @@ if (BUILD_TRILINOS)
      "-DCMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90"
      "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -fext-numeric-literals'"
      "-DTPL_ENABLE_Netcdf:BOOL=ON"
-     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.2.1/include"
-     "-DNetcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.2.1/lib"
+     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/include"
+     "-DNetcdf_LIBRARY_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/lib"
      "-DTPL_ENABLE_HDF5:BOOL=OFF"
      "-DAmesos2_ENABLE_KLU2:BOOL=ON"
      "-DTPL_ENABLE_Boost:BOOL=ON"
      "-DTPL_ENABLE_BoostLib:BOOL=ON"
-     "-DBoost_INCLUDE_DIRS:FILEPATH=/usr/include"
-     "-DBoost_LIBRARY_DIRS:FILEPATH=/usr/lib64"
-     "-DBoostLib_INCLUDE_DIRS:FILEPATH=/usr/include"
-     "-DBoostLib_LIBRARY_DIRS:FILEPATH=/usr/lib64"
+     "-DBoost_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/include"
+     "-DBoost_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/lib"
+     "-DBoostLib_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/include"
+     "-DBoostLib_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/lib"
      "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
      "-DPiro_ENABLE_TESTS:BOOL=OFF"
      "-DRythmos_ENABLE_TESTS:BOOL=OFF"
@@ -240,7 +240,7 @@ if (BUILD_TRILINOS)
      "-DTpetra_INST_FLOAT128:BOOL=OFF"
      "-DTPL_ENABLE_quadmath:BOOL=ON"
      "-DTPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0"
-     "-Dquadmath_INCLUDE_DIRS:FILEPATH=/usr/lib/gcc/x86_64-redhat-linux/11/include"
+     "-Dquadmath_INCLUDE_DIRS:FILEPATH=/usr/lib/gcc/x86_64-redhat-linux/8/include"
      "-DTpetra_ENABLE_quadmath:BOOL=ON"
      "-DTrilinos_ENABLE_Tempus:BOOL=ON"
      "-DTempus_ENABLE_TESTS:BOOL=OFF"
