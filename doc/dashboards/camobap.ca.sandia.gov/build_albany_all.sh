@@ -12,4 +12,5 @@ bash nightly_cron_script_albany_fpe.sh; bash process_results_fpe.sh #Albany FPE 
 bash nightly_cron_script_trilinos.sh #Trilinos with extended scalar types                                         
 bash nightly_cron_script_trilinos_eti_ld.sh #Trilinos with long double and ETI 
 bash nightly_cron_script_alegra-xfem.sh; bash process_results_alegra-xfem.sh; bash send_email_alegra-xfem.sh
+bash process_results_alegra-xfem_eti.sh; bash send_email_alegra-xfem_eti.sh
 ~                                              
