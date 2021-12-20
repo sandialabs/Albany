@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora35-gcc11.2.1-${CTEST_BUILD_CONFIGURATION}-alegra-xfem-eti")
+set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-alegra-xfem-eti")
 set (CTEST_BINARY_NAME build)
 
 

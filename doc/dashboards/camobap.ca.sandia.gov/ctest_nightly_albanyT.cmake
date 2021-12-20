@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora35-gcc11.2.1-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
+set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -181,10 +181,10 @@ if (BUILD_ALBANY_NOEPETRA)
     "-DENABLE_UNIT_TESTS:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
-    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
+    "-DSEACAS_EPU=${TRILINSTALLDIR}/bin/epu"
+    "-DSEACAS_DECOMP=${TRILINSTALLDIR}/bin/decomp"
+    "-DSEACAS_EXODIFF=${TRILINSTALLDIR}/bin/exodiff"
+    "-DSEACAS_ALGEBRA=${TRILINSTALLDIR}/bin/algebra"
     "-DENABLE_MPAS_INTERFACE:BOOL=OFF"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=ON"

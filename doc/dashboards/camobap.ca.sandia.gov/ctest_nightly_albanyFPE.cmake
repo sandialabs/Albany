@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "fedora35-gcc11.2.1-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
+set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -189,16 +189,16 @@ if (BUILD_ALBANY_FPE)
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
     "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
-    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
+    "-DSEACAS_EPU=${TRILINSTALLDIR}/bin/epu"
+    "-DSEACAS_DECOMP=${TRILINSTALLDIR}/bin/decomp"
+    "-DSEACAS_EXODIFF=${TRILINSTALLDIR}/bin/exodiff"
+    "-DSEACAS_ALGEBRA=${TRILINSTALLDIR}/bin/algebra"
     "-DENABLE_ALBANY_PYTHON:BOOL=ON"
     "-DTRILINOS_SOURCE_DIR=${TRILINOSSRCDIR}"
     "-DTRILINOS_BUILD_DIR=${TRILINOSBLDDIR}"
-    "-DPYTHON_EXECUTABLE='/usr/bin/python'"
-    "-DPYTHON_INCLUDE_PATH='/usr/include/python3.10'"
-    "-DSWIG_EXECUTABLE='/nightlyCDash/albany-tpls-gcc-11.2.1/swig/bin/swig'"
+    "-DPYTHON_EXECUTABLE='/usr/bin/python3.6m'"
+    "-DPYTHON_INCLUDE_PATH='/usr/include/python3.6m'"
+    "-DSWIG_EXECUTABLE='/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/swig'"
     "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   

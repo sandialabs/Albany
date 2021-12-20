@@ -41,15 +41,15 @@ cmake \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi/bin \
-      -D CMAKE_C_COMPILER=/usr/lib64/openmpi/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/usr/lib64/openmpi/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90 \
+      -D MPI_BASE_DIR:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin \
+      -D CMAKE_C_COMPILER=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/mpicc \
+      -D CMAKE_CXX_COMPILER=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/mpicxx \
+      -D CMAKE_Fortran_COMPILER=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/mpif90 \
       -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11 -fext-numeric-literals" \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.2.1/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.2.1/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/lib \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
@@ -57,10 +57,10 @@ cmake \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
-      -D Boost_INCLUDE_DIRS:FILEPATH=/usr/include \
-      -D Boost_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
-      -D BoostLib_INCLUDE_DIRS:FILEPATH=/usr/include \
-      -D BoostLib_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
+      -D Boost_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/include \
+      -D Boost_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/lib \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/include \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/lib \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
@@ -150,7 +150,7 @@ cmake \
       -D Tpetra_INST_FLOAT128:BOOL=OFF \
       -D TPL_ENABLE_quadmath:BOOL=ON \
       -D TPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0 \
-      -D quadmath_INCLUDE_DIRS:FILEPATH=/usr/lib/gcc/x86_64-redhat-linux/11/include \
+      -D quadmath_INCLUDE_DIRS:FILEPATH=/usr/lib/gcc/x86_64-redhat-linux/8/include \
       -D Tpetra_ENABLE_quadmath:BOOL=ON \
 \
       -D Trilinos_ENABLE_Tempus:BOOL=ON \
@@ -168,7 +168,7 @@ cmake \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-      -D MPI_EXEC=/usr/lib64/openmpi/bin/mpirun \
+      -D MPI_EXEC=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/mpirun \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D KOKKOS_ENABLE_LIBDL:BOOL=ON \

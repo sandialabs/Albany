@@ -16,7 +16,7 @@
 
 
 
-SCRIPTDIR=/home/ikalash/nightlyAlbanyTests/
+SCRIPTDIR=/nightlyAlbanyTests
 NIGHTLYDIR=$SCRIPTDIR/Results
 
 #set this correctly
