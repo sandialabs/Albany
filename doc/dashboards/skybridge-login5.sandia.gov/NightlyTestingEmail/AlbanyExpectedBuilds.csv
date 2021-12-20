@@ -33,8 +33,8 @@ Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-albany
 Nightly, cori.nersc.gov, cori-Trilinos
 Nightly, cori.nersc.gov, cori-Albany
 Nightly, cori.nersc.gov, cori-CISM-Albany
-Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Albany
-Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Cism-Albany
+Nightly, mockba.ca.sandia.gov, mockba-rhel7.9-gcc10.1.0-Release-Albany
+Nightly, mockba.ca.sandia.gov, mockba-rhel7.9-gcc10.1.0-Release-Cism-Albany
 Nightly, skybridge-login5, skybridge-login5-trilinos
 Nightly, skybridge-login5, skybridge-login5-albany
 Nightly, weaver.sandia.gov, weaver-CUDA-Trilinos
