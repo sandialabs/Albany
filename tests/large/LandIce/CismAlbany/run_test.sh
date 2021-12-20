@@ -4,7 +4,7 @@
 #IKT, WARNING: the following 2 lines are specific to Irina Tezaur's machine, camobap!
 #They need to be changed for other machines! 
 export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib
-export PATH=$PATH:/install/ParaView-5.8.0-Linux-Sandia/bin:/install/cubit-15.4b:/usr/local/MATLAB/R2019b/bin:/usr/lib64/openmpi/bin:/nightlyAlbanyTests/Results/Trilinos/build/install/bin
+export PATH=$PATH:/MATLAB/R2021b/bin:/usr/lib64/openmpi/bin:/nightlyAlbanyTests/Results/Trilinos/build/install/bin
 
 rm -rf *exo*
 rm -rf albanyMesh/*exo*
