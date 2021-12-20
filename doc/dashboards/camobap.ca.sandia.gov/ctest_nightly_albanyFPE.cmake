@@ -26,7 +26,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "rhel8.5-gcc8.5.0-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
+set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -198,7 +198,7 @@ if (BUILD_ALBANY_FPE)
     "-DTRILINOS_BUILD_DIR=${TRILINOSBLDDIR}"
     "-DPYTHON_EXECUTABLE='/usr/bin/python3.6m'"
     "-DPYTHON_INCLUDE_PATH='/usr/include/python3.6m'"
-    "-DSWIG_EXECUTABLE='/home/ikalash/nightlyAlbanyCDash/tpls-install/bin/swig'"
+    "-DSWIG_EXECUTABLE='/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/swig'"
     "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   

@@ -41,14 +41,14 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=/usr/include/openmpi-x86_64 \
-      -D CMAKE_C_COMPILER=/usr/lib64/openmpi/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/usr/lib64/openmpi/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/usr/lib64/openmpi/bin/mpif90 \
+      -D MPI_BASE_DIR:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin \
+      -D CMAKE_C_COMPILER=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/mpicc \
+      -D CMAKE_CXX_COMPILER=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/mpicxx \
+      -D CMAKE_Fortran_COMPILER=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/lib \
 \
       -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
@@ -56,10 +56,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
-      -D Boost_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/include \
-      -D Boost_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/lib \
-      -D BoostLib_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/include \
-      -D BoostLib_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install/lib \
+      -D Boost_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/include \
+      -D Boost_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/lib \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/include \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/lib \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
@@ -168,7 +168,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D PYTHON_LIBRARIES="/usr/lib64/libpython3.6m.so.1.0" \
       -D PYTHON_LIBRARY="/usr/lib64/libpython3.6m.so.1.0" \
       -D PYTHON_INCLUDE_DIR="/usr/include/python3.6m" \
-      -D SWIG_EXECUTABLE="/home/ikalash/nightlyAlbanyCDash/tpls-install/bin/swig" \
+      -D SWIG_EXECUTABLE="/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/swig" \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
        ..
