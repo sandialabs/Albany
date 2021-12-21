@@ -514,15 +514,7 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
   const auto& nodeID = workset.wsElNodeEqID;
   const int neq = nodeID.extent_int(2);
   const int nunk = neq*numNodes;
-  Teuchos::Array<LO> cols(nunk);
 
-  // Local Unks: Loop over nodes in element, Loop over equations per node
-  for (int inode=0; inode<numNodes; ++inode){
-    const int node = side_nodes[inode];
-    for (int eq_col=0; eq_col<neq; eq_col++) {
-      cols[neq * inode + eq_col] = nodeID(cell,node,eq_col);
-    }
-  }
   for (int inode = 0; inode < numNodes; ++inode) {
     const int node = side_nodes[inode];
     for (int eq = 0; eq < this->numFields; eq++) {
@@ -573,15 +565,8 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int 
   const auto& nodeID = workset.wsElNodeEqID;
   const int neq = nodeID.extent_int(2);
   const int nunk = neq*numNodes;
-  Teuchos::Array<LO> cols(nunk);
 
   // Local Unks: Loop over nodes in element, Loop over equations per node
-  for (int inode=0; inode<numNodes; ++inode){
-    const int node = side_nodes[inode];
-    for (int eq_col=0; eq_col<neq; eq_col++) {
-      cols[neq * inode + eq_col] = nodeID(cell,node,eq_col);
-    }
-  }
   for (int inode = 0; inode < numNodes; ++inode) {
     const int node = side_nodes[inode];
     for (int eq = 0; eq < this->numFields; eq++) {
