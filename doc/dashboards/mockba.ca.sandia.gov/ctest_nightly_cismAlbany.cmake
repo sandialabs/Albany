@@ -184,7 +184,7 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_NETCDF_DIR=$ENV{NETCDF_FORTRAN_ROOT}"
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
-    "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
+    "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check -fallow-argument-mismatch'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
     "-DCISM_DISABLE_CMAKE_PYTHON2_SEARCH=ON" 
   )
