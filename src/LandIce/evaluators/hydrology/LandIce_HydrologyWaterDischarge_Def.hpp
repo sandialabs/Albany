@@ -23,8 +23,8 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
   gradPhi (p.get<std::string> ("Hydraulic Potential Gradient Variable Name"), dl->qp_gradient),
   h       (p.get<std::string> ("Water Thickness Variable Name"), dl->qp_scalar),
-  q       (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient),
-  k_param (p.get<std::string> ("Transmissivity Parameter Name"), dl->shared_param)
+  k_param (p.get<std::string> ("Transmissivity Parameter Name"), dl->shared_param),
+  q       (p.get<std::string> ("Water Discharge Variable Name"), dl->qp_gradient)
 {
   /*
    *  The water discharge follows the following Darcy-like form

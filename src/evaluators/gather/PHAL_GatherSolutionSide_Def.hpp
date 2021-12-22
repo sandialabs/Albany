@@ -229,7 +229,7 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<>
-void GatherSolutionSide<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits>::
+inline void GatherSolutionSide<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits>::
 evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
@@ -326,7 +326,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 // **********************************************************************
 
 template<>
-void GatherSolutionSide<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits>::
+inline void GatherSolutionSide<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits>::
 evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
