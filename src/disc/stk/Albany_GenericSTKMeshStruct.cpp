@@ -887,7 +887,11 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
     Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
     // First, get the name and usage of the field, and check if it's used
-    fname = fparams.get<std::string>("Field Name");
+    if (fparams.isParameter("State Name")) {
+      fname = fparams.get<std::string>("State Name");
+    } else {
+      fname = fparams.get<std::string>("Field Name");
+    }
     fusage = fparams.get<std::string>("Field Usage", "Input");
     if (fusage == "Unused") {
       *out << "  - Skipping field '" << fname << "' since it's listed as unused.\n";

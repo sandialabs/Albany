@@ -168,16 +168,12 @@ postRegistrationSetup(typename Traits::SetupData d,
         this->utils.setFieldData(val_dotdot[eq],fm);
     }
     numNodes = val[0].extent(1);
-  }
-  else
-  if (tensorRank == 1) {
+  } else if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
     if (enableTransient) this->utils.setFieldData(valVec_dot,fm);
     if (enableAcceleration) this->utils.setFieldData(valVec_dotdot,fm);
     numNodes = valVec.extent(1);
-  }
-  else
-  if (tensorRank == 2) {
+  } else if (tensorRank == 2) {
     this->utils.setFieldData(valTensor,fm);
     if (enableTransient) this->utils.setFieldData(valTensor_dot,fm);
     if (enableAcceleration) this->utils.setFieldData(valTensor_dotdot,fm);
@@ -330,8 +326,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-  } else
-  if (this->tensorRank == 2) {
+  } else if (this->tensorRank == 2) {
     int numDim = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
@@ -395,9 +390,7 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::parallel_for(PHAL_GatherSolRank2_Acceleration_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
-  }
-
-  else if (this->tensorRank == 1){
+  } else if (this->tensorRank == 1){
     Kokkos::parallel_for(PHAL_GatherSolRank1_Policy(0,workset.numCells),*this);
     cudaCheckError();
 
@@ -410,9 +403,7 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::parallel_for(PHAL_GatherSolRank1_Acceleration_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
-  }
-
-  else {
+  } else {
     // Get MDField views from std::vector
     for (int i =0; i<numFields;i++){
       //val_kokkos[i]=this->val[i].get_view();
@@ -706,9 +697,7 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::parallel_for(PHAL_GatherJacRank2_Acceleration_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
-  }
-
-  else if (this->tensorRank == 1) {
+  } else if (this->tensorRank == 1) {
     Kokkos::parallel_for(PHAL_GatherJacRank1_Policy(0,workset.numCells),*this);
     cudaCheckError();
 
@@ -721,9 +710,7 @@ evaluateFields(typename Traits::EvalData workset)
       Kokkos::parallel_for(PHAL_GatherJacRank1_Acceleration_Policy(0,workset.numCells),*this);
       cudaCheckError();
     }
-  }
-
-  else {
+  } else {
     // Get MDField views from std::vector
     for (int i =0; i<numFields;i++) {
       //val_kokkos[i]=this->val[i].get_view();
@@ -833,9 +820,9 @@ evaluateFields(typename Traits::EvalData workset)
           for (int k=0; k<workset.num_cols_x; k++)
             valref.fastAccessDx(k) =
               workset.j_coeff*Vx_data[k][nodeID(cell,node,this->offset + eq)];
-        }
-        else
+        } else {
           valref = TanFadType(x_constView[nodeID(cell,node,this->offset + eq)]);
+        }
       }
    }
 
@@ -938,8 +925,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-  } else
-  if (this->tensorRank == 2) {
+  } else if (this->tensorRank == 2) {
     int numDim = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {

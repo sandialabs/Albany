@@ -20,7 +20,7 @@
 #include "Albany_Utils.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace LandIce
 {
@@ -496,7 +496,7 @@ evaluateFields (typename Traits::EvalData workset)
     output->setProcRankAndSize (procRank, numProcs);
     output->setOutputToRootOnly (0);
 
-    if (!distributedMu && printedMu!=mu) {
+    if (mu_type==FIELD_TYPE::CONSTANT && printedMu!=mu) {
       *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] mu = " << mu << " [kPa yr^q m^{-q}]\n";
       printedMu = mu;
     }
@@ -507,10 +507,14 @@ evaluateFields (typename Traits::EvalData workset)
     }
 #endif
 
-    TEUCHOS_TEST_FOR_EXCEPTION (power<0, Teuchos::Exceptions::InvalidParameter,
-                                "\nError in LandIce::BasalFrictionCoefficient: 'Power Exponent' must be >= 0.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION ((mu_type == FIELD_TYPE::CONSTANT) && mu<0, Teuchos::Exceptions::InvalidParameter,
-                                "\nError in LandIce::BasalFrictionCoefficient: 'Coulomb Friction Coefficient' must be >= 0.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        power<0, Teuchos::Exceptions::InvalidParameter,
+        "Error in LandIce::BasalFrictionCoefficient: 'Power Exponent' must be >= 0.\n"
+        "   Input value: " + std::to_string(Albany::ADValue(mu)) + "\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        mu_type==FIELD_TYPE::CONSTANT && mu<0, Teuchos::Exceptions::InvalidParameter,
+        "Error in LandIce::BasalFrictionCoefficient: 'Coulomb Friction Coefficient' must be >= 0.\n"
+        "   Input value: " + std::to_string(Albany::ADValue(mu)) + "\n");
   }
 
   if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
@@ -528,7 +532,7 @@ evaluateFields (typename Traits::EvalData workset)
     output->setProcRankAndSize (procRank, numProcs);
     output->setOutputToRootOnly (0);
 
-    if (!distributedLambda && printedLambda!=lambda) {
+    if (lambda_type==FIELD_TYPE::CONSTANT && printedLambda!=lambda) {
       *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] lambda = " << lambda << "\n";
       printedLambda = lambda;
     }

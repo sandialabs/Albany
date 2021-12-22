@@ -65,8 +65,11 @@ void ObserverImpl::
 parameterChanged(const std::string& param)
 {
   //! If a parameter has changed in value, saved/unsaved fields must be updated
-  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << param << " has changed!" << std::endl;
+  if (app_->getAppPL()->sublist("Debug Output").get("Report Parameter Changes",true)) {
+    auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+    *out << param << " has changed! New value: "
+         << app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>(param) << std::endl;
+  }
   app_->getPhxSetup()->init_unsaved_param(param);
 }
 

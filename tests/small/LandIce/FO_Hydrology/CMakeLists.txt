@@ -21,9 +21,9 @@ endif()
 set (testName ${testNameRoot}_Steady)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome_steadyT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_dome_steadyT.yaml)
-  add_test(${testName}_Dome_Tpetra ${Albany.exe}  input_dome_steadyT.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome_steady_fwd.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_dome_steady_fwd.yaml)
+  add_test(${testName}_Dome_Tpetra ${Albany.exe}  input_dome_steady_fwd.yaml)
   set_tests_properties(${testName}_Dome_Tpetra
                        PROPERTIES
                        LABELS "LandIce;Tpetra;Forward")

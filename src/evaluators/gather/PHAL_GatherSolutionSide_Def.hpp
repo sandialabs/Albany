@@ -35,11 +35,11 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
         "Error! Multiple solution names cannot be provided for vector dofs.\n");
 
     if (!names.is_null()) {
+      numFields = names.size();
       if (is_dof_vec) {
-          valvec = PHX::MDField<ScalarT,Side,Node,VecDim> (names[0],dl->node_scalar);
+          valvec = PHX::MDField<ScalarT,Side,Node,VecDim> (names[0],dl->node_vector);
           this->addEvaluatedField(valvec);
       } else {
-        numFields = names.size();
         val.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
           val[eq] = PHX::MDField<ScalarT,Side,Node> (names[eq],dl->node_scalar);
@@ -62,11 +62,11 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
         "Error! Multiple solution dot names cannot be provided for vector dofs.\n");
 
     if (!names_dot.is_null()) {
+      numFieldsDot = names_dot.size();
       if (is_dof_dot_vec) {
-          valvec_dot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dot[0],dl->node_scalar);
+          valvec_dot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dot[0],dl->node_vector);
           this->addEvaluatedField(valvec_dot);
       } else {
-        numFields = names_dot.size();
         val_dot.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
           val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dot[eq],dl->node_scalar);
@@ -89,15 +89,15 @@ GatherSolutionSide(const Teuchos::ParameterList& p,
         "Error! Multiple solution dotdot names cannot be provided for vector dofs.\n");
 
     if (!names_dotdot.is_null()) {
+      numFieldsDotDot = names_dotdot.size();
       if (is_dof_dotdot_vec) {
-          valvec_dotdot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dotdot[0],dl->node_scalar);
+          valvec_dotdot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dotdot[0],dl->node_vector);
           this->addEvaluatedField(valvec_dotdot);
       } else {
-        numFields = names_dotdot.size();
-        val_dot.resize(numFields);
+        val_dotdot.resize(numFields);
         for (int eq=0; eq<numFields; ++eq) {
-          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dotdot[eq],dl->node_scalar);
-          this->addEvaluatedField(val_dot[eq]);
+          val_dotdot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dotdot[eq],dl->node_scalar);
+          this->addEvaluatedField(val_dotdot[eq]);
         }
       }
       enableSolutionDotDot = (numFieldsDotDot>0);
@@ -368,79 +368,88 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
     for (int node=0; node<num_side_nodes; ++node) {
       const int cell_node = sideNodes(side,node);
       const int start = neq * node + offset;
-      if (gather_Vx) {
-        if (is_dof_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offset+idim);
+
+      if (is_dof_vec) {
+        for (int idim=0; idim<vecDim; ++idim) {
+          const int node_id = nodeID(cell,cell_node,offset+idim);
+          if (enableSolution) {
             RefType val_ref = valvec(sideSet_idx,node,idim);
-            val_ref = TanFadType(fad_size,x_data[node_id]);
-            val_ref.fastAccessDx(start + idim) = workset.j_coeff;
-            if (workset.j_coeff!=0.0) {
+            if (gather_Vx && workset.j_coeff!=0.0) {
+              val_ref = TanFadType(fad_size,x_data[node_id]);
               for (int k=0; k<workset.num_cols_x; k++){
                 val_ref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][node_id];
               }
+            } else {
+              val_ref = TanFadType(x_data[node_id]);
             }
           }
-        } else {
+
+          if (enableSolutionDot) {
+            RefType val_dot_ref = valvec_dot(sideSet_idx,node,idim);
+            if (gather_Vxdot && workset.m_coeff != 0.0) {
+              val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
+              for (int k=0; k<workset.num_cols_x; k++) {
+                val_dot_ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][node_id];
+              }
+            } else {
+              val_dot_ref = TanFadType(xdot_data[node_id]);
+            }
+          }
+
+          if (enableSolutionDotDot) {
+            RefType val_dotdot_ref = valvec_dotdot(sideSet_idx,node,idim);
+            if (gather_Vxdotdot && workset.j_coeff != 0.0) {
+              val_dotdot_ref = TanFadType(fad_size,xdotdot_data[node_id]);
+              for (int k=0; k<workset.num_cols_x; k++) {
+                val_dotdot_ref.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][node_id];
+              }
+            } else {
+              val_dotdot_ref = TanFadType(xdotdot_data[node_id]);
+            }
+          }
+        }
+      } else { // is_dof_vec
+        if (enableSolution) {
           for (int isol=0; isol<numFields; ++isol) {
             const int node_id = nodeID(cell,cell_node,offset+isol);
             RefType val_ref = val[isol](sideSet_idx,node);
-            val_ref = TanFadType(fad_size,x_data[node_id]);
-            val_ref.fastAccessDx(start + isol) = workset.j_coeff;
-            if (workset.j_coeff!=0.0) {
+            if (gather_Vx && workset.j_coeff != 0.0) {
+              val_ref = TanFadType(fad_size,x_data[node_id]);
               for (int k=0; k<workset.num_cols_x; k++){
                 val_ref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][node_id];
               }
+            } else {
+              val_ref = TanFadType(x_data[node_id]);
             }
           }
         }
-      }
-      if (gather_Vxdot) {
-        if (is_dof_dot_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offsetDot+idim);
-            RefType val_dot_ref = valvec_dot(sideSet_idx,node,idim);
-            val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
-            if (workset.m_coeff != 0.0) {
-              for (int k=0; k<workset.num_cols_x; k++) {
-                val_dot_ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][node_id];
-              }
-            }
-          }
-        } else {
+
+        if (enableSolutionDot) {
           for (int isol=0; isol<numFieldsDot; ++isol) {
             const int node_id = nodeID(cell,cell_node,offsetDot+isol);
             RefType val_dot_ref = val_dot[isol](sideSet_idx,node);
-            val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
-            if (workset.m_coeff != 0.0) {
+            if (gather_Vxdot && workset.j_coeff != 0.0) {
+              val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
               for (int k=0; k<workset.num_cols_x; k++) {
                 val_dot_ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][node_id];
               }
+            } else {
+              val_dot_ref = TanFadType(xdot_data[node_id]);
             }
           }
         }
-      }
-      if (gather_Vxdotdot) {
-        if (is_dof_dotdot_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offsetDotDot+idim);
-            RefType val_dotdot_ref = valvec_dotdot(sideSet_idx,node,idim);
-            val_dotdot_ref = TanFadType(fad_size,xdotdot_data[node_id]);
-            if (workset.n_coeff != 0.0) {
-              for (int k=0; k<workset.num_cols_x; k++) {
-                val_dotdot_ref.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][node_id];
-              }
-            }
-          }
-        } else {
+
+        if (enableSolutionDotDot) {
           for (int isol=0; isol<numFieldsDotDot; ++isol) {
             const int node_id = nodeID(cell,cell_node,offsetDotDot+isol);
             RefType val_dotdot_ref = val_dotdot[isol](sideSet_idx,node);
-            val_dotdot_ref = TanFadType(fad_size,xdotdot_data[node_id]);
-            if (workset.n_coeff != 0.0) {
+            if (gather_Vxdot && workset.j_coeff != 0.0) {
+              val_dotdot_ref = TanFadType(fad_size,xdot_data[node_id]);
               for (int k=0; k<workset.num_cols_x; k++) {
-                val_dotdot_ref.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][node_id];
+                val_dotdot_ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][node_id];
               }
+            } else {
+              val_dotdot_ref = TanFadType(xdot_data[node_id]);
             }
           }
         }
