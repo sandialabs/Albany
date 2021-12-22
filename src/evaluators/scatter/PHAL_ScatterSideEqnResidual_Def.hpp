@@ -512,8 +512,6 @@ doEvaluateFieldsCell(typename Traits::EvalData workset, int cell, int side)
   const auto& side_nodes = this->sideNodes[side];
 
   const auto& nodeID = workset.wsElNodeEqID;
-  const int neq = nodeID.extent_int(2);
-  const int nunk = neq*numNodes;
 
   for (int inode = 0; inode < numNodes; ++inode) {
     const int node = side_nodes[inode];
@@ -563,8 +561,6 @@ doEvaluateFieldsSide(typename Traits::EvalData workset, int cell, int side, int 
   const auto& side_nodes = this->sideNodes[side];
 
   const auto& nodeID = workset.wsElNodeEqID;
-  const int neq = nodeID.extent_int(2);
-  const int nunk = neq*numNodes;
 
   // Local Unks: Loop over nodes in element, Loop over equations per node
   for (int inode = 0; inode < numNodes; ++inode) {

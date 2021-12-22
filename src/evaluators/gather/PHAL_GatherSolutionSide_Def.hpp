@@ -353,7 +353,6 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 
   auto nodeID = Kokkos::create_mirror_view(workset.wsElNodeEqID);
   Kokkos::deep_copy(nodeID,workset.wsElNodeEqID);
-  const int neq = nodeID.extent(2);
 
   using RefType = typename PHAL::Ref<ScalarT>::type;
   const int fad_size = val[0](0,0).size();
@@ -367,7 +366,6 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 
     for (int node=0; node<num_side_nodes; ++node) {
       const int cell_node = sideNodes(side,node);
-      const int start = neq * node + offset;
 
       if (is_dof_vec) {
         for (int idim=0; idim<vecDim; ++idim) {
