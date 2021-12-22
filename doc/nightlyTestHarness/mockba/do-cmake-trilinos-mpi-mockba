@@ -31,17 +31,16 @@
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
 
-PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
 
 BUILD_DIR=`pwd`
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
-      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
+      -D TPL_BLAS_LIBRARIES:FILEPATH=${OPENBLAS_ROOT}/libopenblas.so \
+      -D TPL_LAPACK_LIBRARIES:FILEPATH=${OPENBLAS_ROOT}/libopenblas.so \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=/usr/lib64/openmpi \
+      -D MPI_BASE_DIR:PATH=${OPENMPI_ROOT} \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_ROOT}/include \
@@ -154,14 +153,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-      -D MPI_EXEC=${SEMS_MPI_ROOT}/bin/mpiexec \
+      -D MPI_EXEC=${OPENMPI_ROOT}/bin/mpiexec \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
 \
-      -D Trilinos_ENABLE_SCOREC:BOOL=ON \
-      -D TPL_ENABLE_ParMETIS:STRING=ON \
-      -D ParMETIS_INCLUDE_DIRS:PATH=${PARMETISDIR}/include \
-      -D ParMETIS_LIBRARY_DIRS:PATH=${PARMETISDIR}/lib \
+      -D Trilinos_ENABLE_SCOREC:BOOL=OFF \
+      -D TPL_ENABLE_ParMETIS:STRING=OFF \
       -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \

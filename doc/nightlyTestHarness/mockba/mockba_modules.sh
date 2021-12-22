@@ -1,6 +1,8 @@
 module purge
 module load sems-gcc/10.1.0
 module load sems-openmpi/1.10.7
+#module load sems-openmpi/4.0.5
+module load sems-openblas/0.3.10
 module load sems-cmake
 module load sems-boost/1.74.0
 module load sems-parallel-netcdf/1.12.1
