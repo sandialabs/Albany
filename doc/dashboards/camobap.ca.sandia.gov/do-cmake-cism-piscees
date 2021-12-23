@@ -11,9 +11,9 @@ cmake \
     -D CISM_BUILD_CISM_DRIVER:BOOL=ON \
     -D ALBANY_LANDICE_DYCORE:BOOL=ON \
     -D ALBANY_LANDICE_CTEST:BOOL=ON \
-    -D CISM_ALBANY_DIR=/nightlyCDash/build/IKTAlbanyInstall \
+    -D CISM_ALBANY_DIR=/mnt/encrypted_sdc1/nightlyCDash/build/IKTAlbanyInstall \
     -D CISM_MPI_BASE_DIR=/usr/lib64/openmpi \
-    -D CISM_NETCDF_DIR=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0 \
+    -D CISM_NETCDF_DIR=/mnt/encrypted_sdc1/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0 \
     -D CISM_NETCDF_LIBS='netcdff' \
     -D BUILD_SHARED_LIBS:BOOL=ON \
     -D CMAKE_Fortran_FLAGS='-g -ffree-line-length-none -fPIC -fno-range-check -std=legacy' \

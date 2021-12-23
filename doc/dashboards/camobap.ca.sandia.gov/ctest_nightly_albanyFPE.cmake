@@ -173,9 +173,9 @@ if (BUILD_ALBANY_FPE)
   # Builds everything with FPE check enabled!
   #
 
-  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
-  set (TRILINOSBLDDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug")
-  set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
+  set (TRILINSTALLDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
+  set (TRILINOSBLDDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build-debug")
+  set (TRILINOSSRCDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"

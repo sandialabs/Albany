@@ -173,9 +173,9 @@ if (BUILD_ALBANY_FPE)
   # Builds everything with FPE check enabled!
   #
 
-  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
-  set (TRILINOSBLDDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug")
-  set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
+  set (TRILINSTALLDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
+  set (TRILINOSBLDDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build-debug")
+  set (TRILINOSSRCDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -189,16 +189,16 @@ if (BUILD_ALBANY_FPE)
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
     "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
-    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
+    "-DSEACAS_EPU=/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
+    "-DSEACAS_DECOMP=/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
+    "-DSEACAS_EXODIFF=/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
+    "-DSEACAS_ALGEBRA=/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
     "-DENABLE_ALBANY_PYTHON:BOOL=OFF"
     "-DTRILINOS_SOURCE_DIR=$TRILINOSSRCDIR"
     "-DTRILINOS_BUILD_DIR=$TRILINOSBLDDIR"
     "-DPYTHON_EXECUTABLE='/usr/bin/python'"
     "-DPYTHON_INCLUDE_PATH='/usr/include/python3.9'"
-    "-DSWIG_EXECUTABLE='/nightlyCDash/albany-tpls-gcc-11.2.1/swig/bin/swig'"
+    "-DSWIG_EXECUTABLE='/mnt/encrypted_sdc1/nightlyCDash/albany-tpls-gcc-11.2.1/swig/bin/swig'"
     "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   

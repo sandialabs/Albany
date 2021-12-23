@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/nightlyCDash
+BASE_DIR=/mnt/encrypted_sdc1/nightlyCDash
 cd $BASE_DIR
 
 #rm -rf repos

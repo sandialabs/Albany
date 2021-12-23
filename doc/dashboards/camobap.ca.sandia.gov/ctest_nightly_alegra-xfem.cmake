@@ -155,7 +155,7 @@ if (BUILD_ALBANY)
   # Builds everything!
   #
 
-  set (TRILINSTALLDIR "/nightlyCDash/build/TrilinosInstall")
+  set (TRILINSTALLDIR "/mnt/encrypted_sdc1/nightlyCDash/build/TrilinosInstall")
 
   set (CONFIGURE_OPTIONS
     "-DTRILINOS_PATH:FILEPATH=${TRILINSTALLDIR}"
