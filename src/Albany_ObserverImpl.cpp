@@ -72,7 +72,7 @@ parameterChanged(const std::string& param)
       *out << "Scalar parameter '" << param << "' has changed! New value: "
            << app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>(param) << std::endl;
     } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (app_->getDistributedParameterLibrary()->has(param), std::runtime_error,
+      TEUCHOS_TEST_FOR_EXCEPTION (! app_->getDistributedParameterLibrary()->has(param), std::runtime_error,
           "Error! Parameter '" + param + "' is not a scalar nor a distributed parameter. Please, contact developers.\n");
       *out << "Distributed parameter '" << param << "' has changed!\n";
     }
