@@ -16,7 +16,7 @@
 
 
 
-SCRIPTDIR=/nightlyAlbanyTests
+SCRIPTDIR=/mnt/encrypted_sdc1/nightlyAlbanyTests
 NIGHTLYDIR=$SCRIPTDIR/Results
 
 #set this correctly
