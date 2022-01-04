@@ -3,7 +3,10 @@ from PyTrilinos import Tpetra
 import numpy as np
 import scipy.sparse.linalg as slinalg
 import scipy.linalg as linalg
-from PyAlbany import Distributions as dist
+try: 
+    from PyAlbany import Distributions as dist
+except: 
+    import Distributions as dist
 
 def getDistributionParameters(problem, parameter):
     parameter_weighted_misfit = parameter.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 0")
