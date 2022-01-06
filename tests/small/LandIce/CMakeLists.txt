@@ -16,4 +16,6 @@ add_subdirectory(SHMIP)
 
 add_subdirectory(Enthalpy)
 
-add_subdirectory(FO_Hydrology)
+if (NOT ENABLE_MESH_DEPENDS_ON_PARAMETERS AND NOT ENABLE_MESH_DEPENDS_ON_SOLUTION)
+  add_subdirectory(FO_Hydrology)
+endif()
