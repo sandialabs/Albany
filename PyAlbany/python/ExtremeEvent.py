@@ -1,12 +1,350 @@
 from PyTrilinos import Tpetra
+from PyTrilinos import Teuchos
 
+import sys
 import numpy as np
 import scipy.sparse.linalg as slinalg
 import scipy.linalg as linalg
 try: 
     from PyAlbany import Distributions as dist
+    from PyAlbany import Utils
 except: 
     import Distributions as dist
+    import Utils
+
+try:
+    import exomerge
+except:
+    if sys.version_info.major == 2:
+        import exomerge2 as exomerge
+    if sys.version_info.major == 3:
+        import exomerge3 as exomerge
+
+
+import multiprocessing
+import time
+
+class triangleQuadrature:
+    def __init__(this, degree=2):
+        this.degree = degree
+        if this.degree == 1:
+            this.NGP = 1
+            this.GP = np.array([[1./3, 1./3]])
+            this.w = np.array([1./2])
+        if this.degree == 2:
+            this.NGP = 3
+            this.GP= np.array([[1./6, 1./6], [2./3, 1./6], [1./6, 2./3]])
+            this.w = np.array([1./6, 1./6, 1./6])
+        if this.degree == 3:
+            this.NGP = 4
+            this.GP = np.array([[1./3, 1./3], [3./5, 1./5], [1./5, 3./5], [1./5, 1./5]])
+            this.w = np.array([-9./32, 25./96, 25./96, 25./96])
+    def getJacobian(this, x, y):
+        return (x[1]-x[0])*(y[2]-y[0]) - (x[2]-x[0])*(y[1]-y[0])
+    def barryCenter(this, x, y):
+        return np.mean(x), np.mean(y)
+    def getGP(this, x_in, y_in):
+        x_out = x_in[0] + (x_in[1]-x_in[0]) * this.GP[:,0] + (x_in[2]-x_in[0]) * this.GP[:,1]
+        y_out = y_in[0] + (y_in[1]-y_in[0]) * this.GP[:,0] + (y_in[2]-y_in[0]) * this.GP[:,1]
+        return x_out, y_out
+    def evalShapeFct(this):
+        phi_0 = 1. - this.GP[:,0] - this.GP[:,1]
+        phi_1 = this.GP[:,0]
+        phi_2 = this.GP[:,1]
+        return phi_0, phi_1, phi_2
+    def evalW(this):
+        return this.w
+
+
+def compute_C_Galerkin(X, elements, quadrature, covarianceFunction, threshold = 100):
+    n_nodes = X.shape[0]
+
+    n_elements = elements.shape[0]
+    n_nodes_per_element = elements.shape[1]
+
+    C = np.zeros((n_nodes, n_nodes))
+
+    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
+    phis = np.array([phi_0, phi_1, phi_2])
+    w = quadrature.evalW()
+    nGP = len(w)
+
+    for element_i in range(0, n_elements):
+        indices_i = elements[element_i,:]
+        X_element_i = X[indices_i, :]
+        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
+        x_GP_i, y_GP_i = quadrature.getGP(X_element_i[:,0], X_element_i[:,1])
+        X_GP_i = np.array([x_GP_i, y_GP_i]).transpose()
+        mean_x_i, mean_y_i = quadrature.barryCenter(X_element_i[:,0], X_element_i[:,1])
+
+        print('element_i = '+str(element_i)+' n_elements = '+str(n_elements))
+        for element_j in range(0, n_elements):
+            indices_j = elements[element_j,:]
+            X_element_j = X[indices_j, :]
+            mean_x_j, mean_y_j = quadrature.barryCenter(X_element_j[:,0], X_element_j[:,1])
+            if np.sqrt((mean_x_i-mean_x_j)**2+(mean_y_i-mean_y_j)**2) > threshold:
+                continue
+            jac_j = quadrature.getJacobian(X_element_j[:,0], X_element_j[:,1])
+            x_GP_j, y_GP_j = quadrature.getGP(X_element_j[:,0], X_element_j[:,1])
+            X_GP_j = np.array([x_GP_j, y_GP_j]).transpose()
+            for i in range(0, n_nodes_per_element):
+                index_i = indices_i[i]
+                for j in range(0, n_nodes_per_element):
+                    index_j = indices_j[j]
+                    for gp_i in range(0, nGP):
+                        for gp_j in range(0, nGP):
+                            C[index_i, index_j] += jac_i * jac_j * w[gp_i] * w[gp_j] * phis[i, gp_i] * phis[j, gp_j] * covarianceFunction.apply(X_GP_i[gp_i,:], X_GP_j[gp_j,:])
+    return C
+
+
+def compute_A_collocation(X, elements, quadrature, covarianceFunction):
+    n_nodes = X.shape[0]
+
+    n_elements = elements.shape[0]
+    n_nodes_per_element = elements.shape[1]
+
+    A = np.zeros((n_nodes, n_nodes))
+
+    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
+    phis = np.array([phi_0, phi_1, phi_2])
+    w = quadrature.evalW()
+    nGP = len(w)
+
+    for element_i in range(0, n_elements):
+        indices_i = elements[element_i,:]
+        X_element_i = X[indices_i, :]
+        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
+        x_GP_i, y_GP_i = quadrature.getGP(X_element_i[:,0], X_element_i[:,1])
+        X_GP_i = np.array([x_GP_i, y_GP_i]).transpose()
+        print('element_i = '+str(element_i)+' n_elements = '+str(n_elements))
+        for index_i in range(0, n_nodes):
+            for j in range(0, n_nodes_per_element):
+                index_j = indices_i[j]
+                for gp_i in range(0, nGP):
+                    A[index_i, index_j] += jac_i * w[gp_i] * phis[j, gp_i] * covarianceFunction.apply(X[index_i,:], X_GP_i[gp_i,:])
+    return A
+
+
+def compute_B_Galerkin(X, elements, quadrature):
+    n_nodes = X.shape[0]
+
+    n_elements = elements.shape[0]
+    n_nodes_per_element = elements.shape[1]
+
+    B = np.zeros((n_nodes, n_nodes))
+
+    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
+    phis = np.array([phi_0, phi_1, phi_2])
+    w = quadrature.evalW()
+    nGP = len(w)
+
+    for element_i in range(0, n_elements):
+        indices_i = elements[element_i,:]
+        X_element_i = X[indices_i, :]
+        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
+        for i in range(0, n_nodes_per_element):
+            index_i = indices_i[i]
+            for j in range(0, n_nodes_per_element):
+                index_j = indices_i[j]
+                for gp_i in range(0, nGP):
+                    B[index_i, index_j] += jac_i * w[gp_i] * phis[i, gp_i] * phis[j, gp_i]
+    return B
+
+
+class covarianceFunction:
+    def __init__(this, d, corralation_lengths, type=0):
+        this.d = d
+        this.corralation_lengths = corralation_lengths
+        this.type = type
+    def apply(this, x1, x2):
+        if this.type == 0:
+            exponential = 0
+            for i in range(0, this.d):
+                exponential -= np.abs(x1[i]-x2[i])/this.corralation_lengths[i]
+
+            return np.exp(exponential)
+        if this.type == 1:
+            exponential = -np.linalg.norm(x1-x2)/this.corralation_lengths
+
+            return np.exp(exponential)
+
+def dot_Nystrom_PROC(X, x, y, covarianceFunction, row_indices, i_PROC):
+    n_coordinates = len(X[:,0])
+    n_vec = np.shape(x)[0]
+    if i_PROC == 0:
+        timer_0 = time.time()
+        print('Start dot')
+    for i_index in range(0, len(row_indices)):
+        i = row_indices[i_index]
+        for j in range(i, n_coordinates):
+            tmp = covarianceFunction.apply(X[i,:], X[j,:])
+            for k in range(0, n_vec):
+                y[k, i] += tmp * x[k,i]
+            if i != j:
+                for k in range(0, n_vec):
+                    y[k, j] += tmp * x[k,j]
+        if i_PROC == 0:
+            timer_1 = time.time()
+            diff = timer_1-timer_0
+            estimated = (len(row_indices)-i_index-1)*diff/(i_index+1)
+            if sys.version_info.major == 3:
+                print('i = ' +str(i_index) + '/'+str(len(row_indices))+ ' elapsed timer ' +str(diff)+' estimated timed ' + str(estimated), end='\r')
+            else:
+                print('i = ' +str(i_index) + '/'+str(len(row_indices))+ ' elapsed timer ' +str(diff)+' estimated timed ' + str(estimated))
+    if i_PROC == 0:
+        print('End dot')
+
+class Op_Nystrom(slinalg.LinearOperator):
+    def __init__(self, X, sqrt_W, covarianceFunction, Map, NUM_PROC=1):
+        self.dtype = np.dtype('float64')
+        self.X = X
+        self.Map = Map
+        self.sqrt_W = sqrt_W
+        self.NUM_PROC = NUM_PROC
+        self.n_coordinates = len(X[:,0])
+        self.shape = (self.n_coordinates, self.n_coordinates)
+        self.covarianceFunction = covarianceFunction
+    def dot(self, x):
+        n_vec = np.shape(x)[0]
+
+        scaled_x = Tpetra.MultiVector(self.Map, n_vec, dtype="d")
+        y = Tpetra.MultiVector(self.Map, n_vec, dtype="d")
+        for i in range(0, self.n_coordinates):
+            scaled_x[:,i] = self.sqrt_W[i] * x[:,i]
+
+        jobs = []
+
+        for i_PROC in range(self.NUM_PROC):
+            n_per_PROC = int(np.ceil(self.n_coordinates / self.NUM_PROC))
+            first_index = i_PROC*n_per_PROC
+            last_index = np.amin([first_index+n_per_PROC, self.n_coordinates])
+
+            row_indices = np.arange(first_index, last_index)
+            process = multiprocessing.Process(
+                target=dot_Nystrom_PROC, 
+                args=(self.X, scaled_x, y, self.covarianceFunction, row_indices, i_PROC)
+            )
+            jobs.append(process)
+
+        for j in jobs:
+            j.start()
+
+        for j in jobs:
+            j.join()
+
+        for i in range(0, self.n_coordinates):
+            y[:,i] *= self.sqrt_W[i]
+
+        return y
+
+def compute_C(X, covarianceFunction):
+    n = X.shape[0]
+
+    C = np.zeros((n, n))
+    for i in range(0, n):
+        for j in range(i, n):
+            C[i,j] = covarianceFunction.apply(X[i,:], X[j,:])
+            C[j,i] = C[i,j]
+    return C
+
+
+def compute_W(X, elements):
+    d = X.shape[1]
+    n_nodes = X.shape[0]
+
+    n_elements = elements.shape[0]
+    n_nodes_per_element = elements.shape[1]
+
+    W = np.zeros((n_nodes, ))
+    for i in range(0, n_elements):
+        if d == 2 and n_nodes_per_element == 3:
+            # 2D and triangles
+            area_3 = np.abs((X[elements[i,0], 0]*(X[elements[i,1], 1]-X[elements[i,2], 1]) + \
+                           X[elements[i,1], 0]*(X[elements[i,2], 1]-X[elements[i,0], 1]) + \
+                           X[elements[i,2], 0]*(X[elements[i,0], 1]-X[elements[i,1], 1]))/2.) / 3
+            for j in range(0, n_nodes_per_element):
+                node_i = elements[i,j]
+                W[node_i] += area_3
+
+    return W
+
+
+def compute_W_half(W):
+    W_half = np.diag(np.sqrt(np.diag(W)))
+    W_inv_half = np.diag(1./np.diag(W_half))
+    return W_half, W_inv_half
+
+
+def compute_B(C, W_half, W_inv_half):
+    return W_half.dot(C.dot(W_half))
+
+
+def read_mesh_coordinates(filename):
+    model = exomerge.import_model(filename)
+    positions = np.array(model.nodes)
+    x = np.ascontiguousarray(positions[:,0])
+    y = np.ascontiguousarray(positions[:,1])
+
+    min_x = np.min(x)
+    min_y = np.min(y)
+    max_x = np.max(x)
+    max_y = np.max(y)
+
+    return x, y, min_x, min_y, max_x, max_y
+
+
+def update_parameter_list(parameter, n_modes, max_abs=5.e+04, sufix='', max_n_modes_per_vec=10, useDistributed=True, filename=None, onSideDisc=False, sideName='basalside'):
+    # Update the Parameters sublist:
+    n_vectors = int(np.ceil(1.*n_modes/max_n_modes_per_vec))
+    n_params = n_vectors
+    if useDistributed:
+        n_params += n_modes
+    parameterlist = Teuchos.ParameterList()
+    parameterlist.set('Number Of Parameters', n_params)
+    for i in range(0, n_vectors):
+        parameterlist.set('Parameter '+str(i), {'Type':'Vector'})
+        currentvector = parameterlist.sublist('Parameter '+str(i))
+        if (i+1)*max_n_modes_per_vec > n_modes:
+            dim = n_modes - i * max_n_modes_per_vec
+        else:
+            dim = n_modes
+        currentvector.set('Dimension', int(dim))
+        for j in range(0, dim):
+            coeff_id = i*max_n_modes_per_vec+j
+            currentvector.set('Scalar '+str(j), {'Name':'Coefficient '+str(coeff_id), 'Lower Bound':-max_abs, 'Upper Bound':max_abs})
+    if useDistributed:
+        for i in range(n_vectors, n_params):
+            parameterlist.set('Parameter '+str(i), {'Type':'Distributed', 'Name':'Mode '+str(i-n_vectors)})
+    parameter.sublist('Problem').set('Parameters', parameterlist)
+
+    if not useDistributed:
+        # Get the current number of required fields on the basal side:
+        if onSideDisc:
+            rfi = parameter.sublist('Discretization').sublist('Side Set Discretizations').sublist(sideName).sublist('Required Fields Info')
+        else:
+            rfi = parameter.sublist('Discretization').sublist('Required Fields Info')
+        n_field_0 = rfi.get('Number Of Fields')
+        n_field = n_modes + n_field_0
+        rfi.set('Number Of Fields', n_field)
+
+        for i in range(0, n_modes):
+            parameterlist = Teuchos.ParameterList()
+            parameterlist.set('Field Name', 'Mode '+str(i))
+            parameterlist.set('Field Type', 'Node Scalar')
+            parameterlist.set('Field Origin', 'File')
+            parameterlist.set('File Name', filename[i])
+            rfi.set('Field '+str(n_field_0+i), parameterlist)
+
+    # Update the Linear Combination Parameters sublist:
+    lcparams = parameter.sublist('Problem').sublist('Linear Combination Parameters').sublist('Parameter 0')
+    lcparams.set('Number of modes', n_modes)
+    lcparams.set('On Side', onSideDisc)
+    if onSideDisc:
+        lcparams.set('Side Name', sideName)
+    for i in range(0, n_modes):
+        lcparams.set('Mode '+str(i), {'Coefficient Name':'Coefficient '+str(i), 'Mode Name':'Mode '+str(i)+sufix})
+
+
 
 def getDistributionParameters(problem, parameter):
     parameter_weighted_misfit = parameter.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 0")
@@ -92,6 +430,47 @@ def setInitialGuess(problem, p, n_params, params_in_vector=True):
             problem.setParameter(j, parameter)
 
 
+def evaluateThetaStar_2(QoI, problem, n_params, alpha=5e0, response_id=0, F_id=1, params_in_vector=True):
+    n_QoI = len(QoI)
+    theta_star = np.zeros((n_QoI,n_params))
+    I_star = np.zeros((n_QoI,))
+    sdF_star = np.zeros((n_QoI,))
+
+    # Loop over the lambdas
+    for i in range(0, n_QoI):
+        problem.updateCumulativeResponseContributionTargetAndExponent(0, 1, QoI[i], 2)
+        problem.updateCumulativeResponseContributionWeigth(0, 1, alpha)
+
+        error = problem.performAnalysis()
+
+        if error:
+            print("The forward solve has not converged for lambda = "+str(l[i]))
+            raise NameError("Has not converged")
+
+        if params_in_vector:
+            para = problem.getParameter(0)
+            for j in range(0, n_params):
+                theta_star[i, j] = para.getData()[j]
+        else:
+            for j in range(0, n_params):
+                para = problem.getParameter(j)
+                theta_star[i, j] = para.getData()
+
+        problem.performSolve()
+
+        I_star[i] = problem.getCumulativeResponseContribution(0, response_id)
+        sdF_star[i] = problem.getCumulativeResponseContribution(0, F_id)
+
+        np.savetxt('theta_star_steady_distributed_tmp.txt', theta_star)
+        np.savetxt('I_star_steady_distributed_tmp.txt', I_star)
+        np.savetxt('sdF_star_steady_distributed_tmp.txt', sdF_star)
+        np.savetxt('F_star_steady_distributed_tmp.txt', QoI)
+
+    P_star = np.exp(-I_star)
+
+    return theta_star, I_star, sdF_star, P_star
+
+
 def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vector=True):
     n_l = len(l)
     theta_star = np.zeros((n_l,n_params))
@@ -126,36 +505,43 @@ def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vec
     return theta_star, I_star, F_star, P_star
 
 
-def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_0, problem, F_id=1, params_in_vector=True):
+def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_0, problem, F_id=1, params_in_vector=True, return_QoI=False):
     invC = np.linalg.inv(C)
     n_l = len(F_star)
     P = np.zeros((n_l,))
     n_samples = np.shape(samples_0)[0]
     n_params = np.shape(samples_0)[1]
+    QoI = np.zeros((n_l, n_samples))
     # Loop over the lambdas
     for i in range(0, n_l):
-        # Loop over the samples
-        for j in range(0, n_samples):
-            sample = samples_0[j,:] + theta_star[i,:] - theta_0
+        if P_star[i] > 0.:
+            # Loop over the samples
+            for j in range(0, n_samples):
+                sample = samples_0[j,:] + theta_star[i,:] - theta_0
 
-            if params_in_vector:
-                parameter_map = problem.getParameterMap(0)
-                parameter = Tpetra.Vector(parameter_map, dtype="d")
-                for j in range(0, n_params):
-                    parameter[j] = sample[j]
-                problem.setParameter(0, parameter)
-            else:
-                for k in range(0, n_params):
-                    parameter_map = problem.getParameterMap(k)
+                if params_in_vector:
+                    parameter_map = problem.getParameterMap(0)
                     parameter = Tpetra.Vector(parameter_map, dtype="d")
-                    parameter[0] = sample[k]
-                    problem.setParameter(k, parameter)
-            problem.performSolve()
+                    for j_param in range(0, n_params):
+                        parameter[j_param] = sample[j_param]
+                    problem.setParameter(0, parameter)
+                else:
+                    for k in range(0, n_params):
+                        parameter_map = problem.getParameterMap(k)
+                        parameter = Tpetra.Vector(parameter_map, dtype="d")
+                        parameter[0] = sample[k]
+                        problem.setParameter(k, parameter)
+                problem.performSolve()
 
-            if problem.getCumulativeResponseContribution(0, F_id) > F_star[i]:
-                P[i] += np.exp(-invC.dot(theta_star[i,:]-theta_0).dot(sample-theta_star[i,:]))
-        P[i] = P_star[i] * P[i] / n_samples
-    return P
+                QoI[i, j] = problem.getCumulativeResponseContribution(0, F_id)
+
+                if QoI[i, j] > F_star[i]:
+                    P[i] += np.exp(-invC.dot(theta_star[i,:]-theta_0).dot(sample-theta_star[i,:]))
+            P[i] = P_star[i] * P[i] / n_samples
+    if return_QoI:
+        return P, QoI
+    else:
+        return P
 
 
 def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_0, problem, angle_1, angle_2, F_id=1, params_in_vector=True):
@@ -169,64 +555,65 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
     problem.updateCumulativeResponseContributionWeigth(0, F_id, 0)
     # Loop over the lambdas
     for i in range(0, n_l):
-        # Compute the normal of I - lambda F (= normal of F)
-        n_theta_star = np.zeros((n_params,))
+        if P_star[i] > 0.:
+            # Compute the normal of I - lambda F (= normal of F)
+            n_theta_star = np.zeros((n_params,))
 
-        if params_in_vector:
-            parameter_map = problem.getParameter(0)
-            parameter = Tpetra.Vector(parameter_map, dtype="d")
-            for j in range(0, n_params):
-                parameter[j] = theta_star[i,j]
-            problem.setParameter(0, parameter)
-        else:
-            for k in range(0, n_params):
-                parameter_map = problem.getParameterMap(k)
+            if params_in_vector:
+                parameter_map = problem.getParameter(0)
                 parameter = Tpetra.Vector(parameter_map, dtype="d")
-                parameter[0] = theta_star[i,k]
-                problem.setParameter(k, parameter)
-
-        problem.performSolve()
-        if params_in_vector:
-            n_theta_star = -problem.getSensitivity(0, 0).getData(0)  
-        else:
-            for k in range(0, n_params):
-                n_theta_star[k] = -problem.getSensitivity(0, k).getData(0)[0]
-        norm = np.linalg.norm(n_theta_star)
-        n_theta_star /= norm
-
-        # Loop over the samples
-        for j in range(0, n_samples):
-
-            vector_2 = samples_0[j,:] - theta_0
-            unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
-            dot_product = np.dot(n_theta_star, unit_vector_2)
-            shifted_sample_angles = np.arccos(dot_product)
-
-            sample = samples_0[j,:] + theta_star[i,:] - theta_0
-
-            if shifted_sample_angles < angle_1:
-                current_F_above = True
-            elif shifted_sample_angles > angle_2:
-                current_F_above = False
+                for j in range(0, n_params):
+                    parameter[j] = theta_star[i,j]
+                problem.setParameter(0, parameter)
             else:
-
-                if params_in_vector:
-                    parameter_map = problem.getParameter(0)
+                for k in range(0, n_params):
+                    parameter_map = problem.getParameterMap(k)
                     parameter = Tpetra.Vector(parameter_map, dtype="d")
-                    for j in range(0, n_params):
-                        parameter[j] = sample[j]
-                    problem.setParameter(0, parameter)
+                    parameter[0] = theta_star[i,k]
+                    problem.setParameter(k, parameter)
+
+            problem.performSolve()
+            if params_in_vector:
+                n_theta_star = -problem.getSensitivity(0, 0).getData(0)  
+            else:
+                for k in range(0, n_params):
+                    n_theta_star[k] = -problem.getSensitivity(0, k).getData(0)[0]
+            norm = np.linalg.norm(n_theta_star)
+            n_theta_star /= norm
+
+            # Loop over the samples
+            for j in range(0, n_samples):
+
+                vector_2 = samples_0[j,:] - theta_0
+                unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+                dot_product = np.dot(n_theta_star, unit_vector_2)
+                shifted_sample_angles = np.arccos(dot_product)
+
+                sample = samples_0[j,:] + theta_star[i,:] - theta_0
+
+                if shifted_sample_angles < angle_1:
+                    current_F_above = True
+                elif shifted_sample_angles > angle_2:
+                    current_F_above = False
                 else:
-                    for k in range(0, n_params):
-                        parameter_map = problem.getParameterMap(k)
+
+                    if params_in_vector:
+                        parameter_map = problem.getParameter(0)
                         parameter = Tpetra.Vector(parameter_map, dtype="d")
-                        parameter[0] = sample[k]
-                        problem.setParameter(k, parameter)
-                problem.performSolve()
-                current_F_above = problem.getCumulativeResponseContribution(0, F_id) > F_star[i]
-            if current_F_above:
-                P[i] += np.exp(-invC.dot(theta_star[i,:]-theta_0).dot(sample-theta_star[i,:]))
-        P[i] = P_star[i] * P[i] / n_samples
+                        for j in range(0, n_params):
+                            parameter[j] = sample[j]
+                        problem.setParameter(0, parameter)
+                    else:
+                        for k in range(0, n_params):
+                            parameter_map = problem.getParameterMap(k)
+                            parameter = Tpetra.Vector(parameter_map, dtype="d")
+                            parameter[0] = sample[k]
+                            problem.setParameter(k, parameter)
+                    problem.performSolve()
+                    current_F_above = problem.getCumulativeResponseContribution(0, F_id) > F_star[i]
+                if current_F_above:
+                    P[i] += np.exp(-invC.dot(theta_star[i,:]-theta_0).dot(sample-theta_star[i,:]))
+            P[i] = P_star[i] * P[i] / n_samples
     return P
 
 def arctan2(y, x):

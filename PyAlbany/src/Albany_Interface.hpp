@@ -25,6 +25,7 @@
 #include "Teuchos_YamlParameterListHelpers.hpp"
 
 #include "Albany_CumulativeScalarResponseFunction.hpp"
+#include "Albany_PowerScalarResponseFunction.hpp"
 
 #include "BelosTpetraAdapter.hpp"
 #include "BelosTpetraOperator.hpp"
@@ -98,6 +99,13 @@ namespace PyAlbany
    * The function returns an RCP to the parameter list.
    */
     Teuchos::RCP<Teuchos::ParameterList> getParameterList(std::string filename, Teuchos::RCP<PyAlbany::PyParallelEnv> pyParallelEnv);
+
+    /**
+   * \brief writeParameterList function
+   * 
+   * The function returns an RCP to the parameter list.
+   */
+    void writeParameterList(std::string filename, Teuchos::RCP<Teuchos::ParameterList> parameterList);
 
     /**
    * \brief getRankZeroMap function
@@ -315,6 +323,24 @@ namespace PyAlbany
                 csrf->updateWeight(j, weigth);
         }
 
+        void updateCumulativeResponseContributionTargetAndExponent( int i, int j, double target, double exponent)
+        {
+            Teuchos::RCP<Albany::CumulativeScalarResponseFunction>  csrf = Teuchos::rcp_dynamic_cast<Albany::CumulativeScalarResponseFunction>(albanyApp->getResponse(i), false);
+            if (csrf == Teuchos::null) {
+                std::cout << "Warning: updateCumulativeResponseContributionTarget() response " << i << " is not a CumulativeScalarResponseFunction." << std::endl;
+            }
+            else {
+                Teuchos::RCP<Albany::PowerScalarResponseFunction>  power = Teuchos::rcp_dynamic_cast<Albany::PowerScalarResponseFunction>(csrf->getResponse(j), false);
+                if (power == Teuchos::null) {
+                    std::cout << "Warning: updateCumulativeResponseContributionTarget() response " << j << " is not a PowerScalarResponseFunction." << std::endl;
+                }
+                else {
+                    power->updateTarget(target);
+                    power->updateExponent(exponent);
+                }            
+            }
+        }
+
         void getCovarianceMatrix(double* C, int n, int m)
         {
             auto responseParams = albanyApp->getAppPL()->sublist("Problem").sublist("Responses").sublist("Response 0").sublist("Response 0");
@@ -329,6 +355,18 @@ namespace PyAlbany
             for (int i=0; i<n; i++)
                 for (int j=0; j<m; j++)
                     C[i * n + j] = C_data(i,j);
+        }
+
+        void setCovarianceMatrix(double* C, int n, int m)
+        {
+            auto responseParams = albanyApp->getAppPL()->sublist("Problem").sublist("Responses").sublist("Response 0").sublist("Response 0");
+            int total_dimension = n;
+
+            Teuchos::TwoDArray<double> C_data(total_dimension, total_dimension, 0);
+            for (int i=0; i<n; i++)
+                for (int j=0; j<m; j++)
+                    C_data(i,j) = C[i * n + j];
+            responseParams.set<Teuchos::TwoDArray<double>>("Covariance Matrix", C_data);                    
         }
     };
 } // namespace PyAlbany
@@ -396,6 +434,19 @@ Teuchos::RCP<Teuchos::ParameterList> PyAlbany::getParameterList(std::string inpu
     return params;
 }
 
+void PyAlbany::writeParameterList(std::string outputFile, Teuchos::RCP<Teuchos::ParameterList> parameterList)
+{
+    std::string const output_extension = Albany::getFileExtension(outputFile);
+
+    if (output_extension == "yaml" || output_extension == "yml")
+    {
+        Teuchos::writeParameterListToYamlFile(*parameterList, outputFile);
+    }
+    else
+    {
+        Teuchos::writeParameterListToXmlFile(*parameterList, outputFile);
+    }    
+}
 
 void PyAlbany::orthogTpMVecs(Teuchos::RCP<PyAlbany::PyTrilinosMultiVector> inputVecs, int blkSize)
 {

@@ -50,7 +50,9 @@
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 #include "LandIce_FluxDivergenceResidual.hpp"
 
+#include "PHAL_LinearCombinationParameter.hpp"
 #include "PHAL_RandomPhysicalParameter.hpp"
+#include "PHAL_LogGaussianDistributedParameter.hpp"
 #include "PHAL_IsAvailable.hpp"
 
 #include "Albany_StringUtils.hpp" // for 'upper_case'
@@ -1063,6 +1065,142 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
+  size_t max_coeff_index = 0;
+
+  if (params->isSublist("Linear Combination Parameters")) {
+    auto lcparams = params->sublist("Linear Combination Parameters");
+    int nlcparams = lcparams.get<int>("Number Of Parameters");
+    for (int i_lcparams=0; i_lcparams<nlcparams; ++i_lcparams)
+    {
+      auto lcparams_i = lcparams.sublist(util::strint("Parameter", i_lcparams));
+      max_coeff_index = lcparams_i.get<int>("Number of modes");
+    }
+  }  
+
+  for(size_t coeff_index = 0; coeff_index<max_coeff_index; ++coeff_index)
+  {
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(util::strint("Coeff", coeff_index)));
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    const std::string param_name = util::strint("Coefficient", coeff_index);
+    p->set<std::string>("Parameter Name", param_name);
+    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<double>("Default Nominal Value", 0.);
+    Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_coeff;
+    ptr_coeff = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ptr_coeff);
+  }
+
+  if (params->isSublist("Linear Combination Parameters")) {
+    auto lcparams = params->sublist("Linear Combination Parameters");
+    int nlcparams = lcparams.get<int>("Number Of Parameters");
+
+    bool onSide;
+    std::string sideName;
+    
+    for (int i_lcparams=0; i_lcparams<nlcparams; ++i_lcparams)
+    {
+      auto lcparams_i = lcparams.sublist(util::strint("Parameter",i_lcparams));
+
+      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("LCParam"));
+      const std::string param_name = lcparams_i.get<std::string>("Name");
+      std::size_t numModes = lcparams_i.get<int>("Number of modes");
+
+      p->set<std::string>("Parameter Name", param_name);
+      p->set<std::size_t>("Number of modes", numModes);
+
+      for (std::size_t i = 0; i < numModes; ++i) {
+        Teuchos::RCP<Teuchos::ParameterList> pi = Teuchos::rcp(new Teuchos::ParameterList("Mode"));
+        pi->set<std::string>("Coefficient Name", lcparams_i.sublist(util::strint("Mode",i)).get<std::string>("Coefficient Name"));
+        pi->set<std::string>("Mode Name", lcparams_i.sublist(util::strint("Mode",i)).get<std::string>("Mode Name"));
+        p->sublist(util::strint("Mode",i)) = *pi;
+      }
+
+      onSide = lcparams_i.get<bool>("On Side");
+      sideName = lcparams_i.get<std::string>("Side Name");
+
+      if(onSide)
+        p->set<std::string>("Side Set Name", sideName);
+
+      if (lcparams_i.isParameter("Scalar scale"))
+        p->set<Teuchos::Array<double> >("Scalar scale", lcparams_i.get<Teuchos::Array<double>>("Scalar scale"));
+
+      Teuchos::RCP<PHAL::LinearCombinationParameter<EvalT,PHAL::AlbanyTraits>> ptr_lcparam;
+      if(onSide)
+        ptr_lcparam = Teuchos::rcp(new PHAL::LinearCombinationParameter<EvalT,PHAL::AlbanyTraits>(*p,dl->side_layouts.at(sideName)));
+      else
+        ptr_lcparam = Teuchos::rcp(new PHAL::LinearCombinationParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_lcparam);
+      if (!params->isSublist("LogNormal Parameter")) {
+        if(onSide)
+          fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationSideEvaluator(param_name, sideName));
+        else
+          fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(param_name));
+      }
+    }
+    if (params->isSublist("LogNormal Parameter")) {
+      auto lnparam = params->sublist("LogNormal Parameter");
+
+      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("LNParam"));
+      const std::string param_name_out = lnparam.get<std::string>("Log Gaussian Name");
+      const std::string param_name_in = lnparam.get<std::string>("Gaussian Name");
+      if (lnparam.isParameter("Mean Name")) {
+        const std::string mean_field_name = lnparam.get<std::string>("Mean Name");
+        p->set<std::string>("Mean Name", mean_field_name);
+      }
+      else {
+        const RealType mean = lnparam.get<RealType>("mean");
+        p->set<RealType>("mean", mean);
+      }
+
+      const RealType deviation = lnparam.get<RealType>("deviation");
+
+      p->set<std::string>("Log Gaussian Name", param_name_out);
+      p->set<std::string>("Gaussian Name", param_name_in);
+      p->set<RealType>("deviation", deviation);
+
+      if(onSide)
+        p->set<std::string>("Side Set Name", sideName);
+
+      Teuchos::RCP<PHAL::LogGaussianDistributedParameter<EvalT,PHAL::AlbanyTraits>> ptr_lnparam;
+      if(onSide)
+        ptr_lnparam = Teuchos::rcp(new PHAL::LogGaussianDistributedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl->side_layouts.at(sideName)));
+      else
+        ptr_lnparam = Teuchos::rcp(new PHAL::LogGaussianDistributedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_lnparam);
+      if(onSide)
+        fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationSideEvaluator(param_name_out, sideName));
+      else
+        fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(param_name_out));
+    }
+    for(size_t coeff_index = 0; coeff_index<max_coeff_index; ++coeff_index)
+    {
+      std::string stateName = util::strint("Mode", coeff_index);
+      if(onSide && !PHAL::is_field_evaluated<EvalT>(fm0, stateName, dl->side_layouts.at(sideName)->node_scalar)) {
+        //std::cout << " Field on side not yet evaluated " << stateName << std::endl;
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+        std::string fieldName = util::strint("Mode", coeff_index);
+        p = stateMgr.registerStateVariable(stateName, dl->side_layouts.at(sideName)->node_scalar, meshSpecs.ebName, true, &entity, "");
+
+        //Gather parameter (similarly to what done with the solution)
+        //ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
+        //fm0.template registerEvaluator<EvalT>(ev);
+      }
+      if(!onSide && !PHAL::is_field_evaluated<EvalT>(fm0, stateName, dl->node_scalar)) {
+        //std::cout << " Field in volume not yet evaluated " << stateName << std::endl;
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+        std::string fieldName = util::strint("Mode", coeff_index);
+        p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+
+        //Gather parameter (similarly to what done with the solution)
+        //ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
+        //fm0.template registerEvaluator<EvalT>(ev);
+      }
+    }
+  }
+
   //--- Shared Parameter for Continuation: Glen's Law Homotopy Parameter ---//
   param_name = ParamEnumName::GLHomotopyParam;
 
@@ -1484,15 +1622,17 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", beta_side_name);
 
-    auto N_st = get_scalar_type(effective_pressure_name);
-    auto A_st = get_scalar_type(flow_factor_name);
-    ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient,EvalT>(p,dl_side,N_st,FST::Scalar,A_st);
-    fm0.template registerEvaluator<EvalT>(ev);
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, beta_side_name, dl_side->node_scalar)) {
+      auto N_st = get_scalar_type(effective_pressure_name);
+      auto A_st = get_scalar_type(flow_factor_name);
+      ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient,EvalT>(p,dl_side,N_st,FST::Scalar,A_st);
+      fm0.template registerEvaluator<EvalT>(ev);
 
-    //--- LandIce basal friction coefficient at nodes ---//
-    p->set<bool>("Nodal",true);
-    ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient,EvalT>(p,dl_side,N_st,FST::Scalar,A_st);
-    fm0.template registerEvaluator<EvalT>(ev);
+      //--- LandIce basal friction coefficient at nodes ---//
+      p->set<bool>("Nodal",true);
+      ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient,EvalT>(p,dl_side,N_st,FST::Scalar,A_st);
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 }
 

@@ -14,6 +14,7 @@
 #include "Albany_SolutionMinValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_CumulativeScalarResponseFunction.hpp"
+#include "Albany_PowerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
@@ -79,6 +80,25 @@ createResponseFunction(
   else if (name == "Solution Inf Norm File") {
     responses.push_back(
       rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>(comm)));
+  }
+
+  else if (name == "Power Of Response") {
+    double target = responseParams.get<double>("Target");
+    double exponent = responseParams.get<double>("Exponent");
+    Array< RCP<AbstractResponseFunction> > aggregated_responses;
+
+    Teuchos::ParameterList sublist = responseParams.sublist("Response 0");
+    std::string name = sublist.get<std::string>("Name");
+    createResponseFunction(name, sublist, aggregated_responses);
+
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        aggregated_responses[0]->isScalarResponse() != true, std::logic_error,
+        "Response function 0 is not a scalar response function." <<
+        std::endl <<
+        "The power response can only uses scalar response " << "functions!");
+    RCP<ScalarResponseFunction> scalar_response = Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(aggregated_responses[0]);
+
+    responses.push_back(rcp(new Albany::PowerScalarResponseFunction(comm, scalar_response, target, exponent)));
   }
 
   else if (name == "Sum Of Responses") {

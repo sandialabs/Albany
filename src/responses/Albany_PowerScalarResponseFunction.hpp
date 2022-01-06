@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_CUMULATIVE_SCALAR_RESPONSE_FUNCTION_HPP
-#define ALBANY_CUMULATIVE_SCALAR_RESPONSE_FUNCTION_HPP
+#ifndef ALBANY_POWER_SCALAR_RESPONSE_FUNCTION_HPP
+#define ALBANY_POWER_SCALAR_RESPONSE_FUNCTION_HPP
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 #include "Teuchos_Array.hpp"
@@ -13,18 +13,18 @@
 namespace Albany {
 
   /*!
-   * \brief A response function that aggregates together multiple response
-   * functions into one.
+   * \brief A response function that ...
    */
-  class CumulativeScalarResponseFunction :
+  class PowerScalarResponseFunction :
     public SamplingBasedScalarResponseFunction {
   public:
   
     //! Default constructor
-    CumulativeScalarResponseFunction(
+    PowerScalarResponseFunction(
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses,
-      const Teuchos::Array< double >& scalar_weights);
+      const Teuchos::RCP<ScalarResponseFunction>& response,
+      const double scalar_target = 0.,
+      const double exponent = 2.);
 
     //! Setup response function
     virtual void setup();
@@ -33,7 +33,7 @@ namespace Albany {
     virtual void postRegSetup();
 
     //! Destructor
-    virtual ~CumulativeScalarResponseFunction();
+    virtual ~PowerScalarResponseFunction();
 
     //! Get the number of responses
     virtual unsigned int numResponses() const;
@@ -83,11 +83,8 @@ namespace Albany {
     virtual void
     printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
 
-    double getContribution(int j);
-    void updateWeight(int j, double weight);
-    Teuchos::RCP<ScalarResponseFunction> getResponse(int j){
-      return responses[j];
-    }
+    void updateTarget(double target);
+    void updateExponent(double exponent);
 
   private:
 
@@ -149,22 +146,23 @@ namespace Albany {
   private:
 
     //! Private to prohibit copying
-    CumulativeScalarResponseFunction(const CumulativeScalarResponseFunction&);
+    PowerScalarResponseFunction(const PowerScalarResponseFunction&);
     
     //! Private to prohibit copying
-    CumulativeScalarResponseFunction& operator=(const CumulativeScalarResponseFunction&);
+    PowerScalarResponseFunction& operator=(const PowerScalarResponseFunction&);
 
     Teuchos::RCP<Thyra_Vector> g_;
+    Teuchos::RCP<Thyra_Vector> f_;
 
   protected:
 
     //! Response functions to add
-    Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> > responses;
-    Teuchos::Array< double > scalar_weights;
-    unsigned int num_responses;
+    Teuchos::RCP<ScalarResponseFunction> response;
+    double scalar_target;
+    double exponent;
 
   };
 
 } // namespace Albany
 
-#endif // ALBANY_CUMULATIVE_SCALAR_RESPONSE_FUNCTION_HPP
+#endif // ALBANY_POWER_SCALAR_RESPONSE_FUNCTION_HPP

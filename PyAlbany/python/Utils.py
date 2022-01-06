@@ -66,6 +66,10 @@ def createParameterList(filename, parallelEnv):
     """@brief Creates a parameter list from a file."""
     return wpa.getParameterList(filename, parallelEnv)
 
+def writeParameterList(filename, parameterList):
+    """@brief Writes a parameter list to a file."""
+    wpa.writeParameterList(filename, parameterList)
+
 def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True, readOnRankZero = True, dtype="d"):
     """@brief Loads distributed a multivector stored using numpy format.
     

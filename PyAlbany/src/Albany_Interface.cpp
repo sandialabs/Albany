@@ -551,7 +551,8 @@ bool PyProblem::performAnalysis()
 
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
-    for (size_t l = 0; l < solver->Np(); l++)
+    size_t n_params = solver->Np() > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : solver->Np();
+    for (size_t l = 0; l < n_params; l++)
     {
         thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);
         albanyModel->setNominalValue(l, thyraParameter[l]);
