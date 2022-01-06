@@ -63,7 +63,7 @@ protected:
   std::string nodeSetID;
   bool isRandom;
   Teuchos::RCP<Albany::UnivariatDistribution> distribution;
-  PHX::MDField<ScalarT,Dim>   theta_as_field;
+  PHX::MDField<const ScalarT,Dim>   theta_as_field;
 };
 
 // **************************************************************

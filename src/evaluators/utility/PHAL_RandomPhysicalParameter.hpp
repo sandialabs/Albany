@@ -60,7 +60,7 @@ class RandomPhysicalParameterBase :
 
 protected:
   PHX::MDField<ScalarT,Dim>   param_as_field;
-  PHX::MDField<ScalarT,Dim>   theta_as_field;
+  PHX::MDField<const ScalarT,Dim>   theta_as_field;
   Teuchos::RCP<Albany::UnivariatDistribution> distribution;
 };
 
