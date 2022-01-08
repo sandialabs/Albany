@@ -113,8 +113,6 @@ ANONYMOUS:
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
-        Demo Predictor:
-          Stepper Type: Forward Euler
       Stratimikos:
         Linear Solver Type: AztecOO
         Linear Solver Types:
