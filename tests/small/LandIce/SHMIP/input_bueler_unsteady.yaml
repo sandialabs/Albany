@@ -154,7 +154,6 @@ ANONYMOUS:
       Tempus Stepper: 
         Stepper Type: Backward Euler
         Solver Name: Hydrology Solver
-        Predictor Name: None
         Hydrology Solver: 
           NOX: 
             Thyra Group Options: 

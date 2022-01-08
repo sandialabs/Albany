@@ -64,7 +64,6 @@ ALBANY:
       Tempus Stepper:
         Stepper Type: Backward Euler
         Solver Name: Demo Solver
-        Predictor Name: None
         Demo Solver:
           NOX:
             Direction:

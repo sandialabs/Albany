@@ -53,7 +53,6 @@ ANONYMOUS:
       Tempus Stepper:
         Stepper Type: RK Implicit Midpoint
         Solver Name: Demo Solver
-        Predictor Name: None
         Demo Solver:
           NOX:
             Direction:
