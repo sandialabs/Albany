@@ -205,13 +205,16 @@ InvAbsRowSum(
   invAbsRowSumsTpetra->putScalar(0.0);
   Teuchos::ArrayRCP<double> invAbsRowSumsTpetra_nonconstView =
       invAbsRowSumsTpetra->get1dViewNonConst();
+  using indices_type = typename Tpetra_CrsMatrix::local_inds_host_view_type;
+  using values_type  = typename Tpetra_CrsMatrix::values_host_view_type;
   for (size_t row = 0; row < invAbsRowSumsTpetra->getLocalLength(); row++) {
-    auto               numEntriesRow = matrix->getNumEntriesInLocalRow(row);
-    Teuchos::Array<LO> indices(numEntriesRow);
-    Teuchos::Array<ST> values(numEntriesRow);
-    matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
+    indices_type indices;
+    values_type  values;
+    matrix->getLocalRowView(row, indices, values);
     ST scale = 0.0;
-    for (size_t j = 0; j < numEntriesRow; j++) { scale += std::abs(values[j]); }
+    for (size_t j = 0; j < indices.size(); j++) {
+      scale += std::abs(values[j]);
+    }
 
     if (scale < 1.0e-16) {
       invAbsRowSumsTpetra_nonconstView[row] = 0.0;
@@ -234,13 +237,17 @@ AbsRowSum(
   absRowSumsTpetra->putScalar(0.0);
   Teuchos::ArrayRCP<double> absRowSumsTpetra_nonconstView =
       absRowSumsTpetra->get1dViewNonConst();
+
+  using indices_type = typename Tpetra_CrsMatrix::local_inds_host_view_type;
+  using values_type  = typename Tpetra_CrsMatrix::values_host_view_type;
   for (size_t row = 0; row < absRowSumsTpetra->getLocalLength(); row++) {
-    auto               numEntriesRow = matrix->getNumEntriesInLocalRow(row);
-    Teuchos::Array<LO> indices(numEntriesRow);
-    Teuchos::Array<ST> values(numEntriesRow);
-    matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
+    indices_type indices;
+    values_type  values;
+    matrix->getLocalRowView(row, indices, values);
     ST scale = 0.0;
-    for (size_t j = 0; j < numEntriesRow; j++) { scale += std::abs(values[j]); }
+    for (size_t j = 0; j < values.size(); j++) {
+      scale += std::abs(values[j]);
+    }
     absRowSumsTpetra_nonconstView[row] = scale;
   }
 }

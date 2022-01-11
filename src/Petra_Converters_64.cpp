@@ -111,12 +111,12 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
   int maxEntries = Teuchos::as<int>(tpetraCrsGraph_->getGlobalMaxNumRowEntries());
   Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph_= Teuchos::rcp(new Epetra_CrsGraph(Copy, *epetraRowMap_, *epetraColMap_, maxEntries));
 
-  Teuchos::Array<LO> Indices;
+  using indices_type = typename Tpetra_CrsGraph::nonconst_local_inds_host_view_type;
   for (std::size_t i=0; i<tpetraCrsGraph_->getNodeNumRows(); i++) {
      auto NumEntries = tpetraCrsGraph_->getNumEntriesInLocalRow(i);
-     Indices.resize(NumEntries);
-     tpetraCrsGraph_->getLocalRowCopy(i, Indices(), NumEntries);
-     epetraCrsGraph_->InsertMyIndices(i, NumEntries, Indices.getRawPtr());
+     indices_type Indices("",NumEntries);
+     tpetraCrsGraph_->getLocalRowCopy(i, Indices, NumEntries);
+     epetraCrsGraph_->InsertMyIndices(i, NumEntries, Indices.data());
   }
   epetraCrsGraph_->FillComplete();
   return epetraCrsGraph_;
@@ -132,10 +132,13 @@ Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_CrsMat
   Teuchos::RCP<Epetra_CrsMatrix> epetraCrsMatrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*epetraCrsGraph));
   epetraCrsMatrix->PutScalar(0.0);
 
+  using indices_type = typename Tpetra_CrsMatrix::local_inds_host_view_type;
+  using values_type  = typename Tpetra_CrsMatrix::values_host_view_type;
   for (std::size_t i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++) {
-     LO NumEntries; const LO *Indices; const ST *Values;
-     tpetraCrsMatrix->getLocalRowView(i, NumEntries, Values, Indices);
-     epetraCrsMatrix->ReplaceMyValues(i, NumEntries, Values, Indices);
+    indices_type Indices;
+    values_type  Values;
+    tpetraCrsMatrix->getLocalRowView(i, Indices, Values);
+    epetraCrsMatrix->ReplaceMyValues(i, Indices.size(), Values.data(), Indices.data());
   }
 
   return epetraCrsMatrix;
@@ -174,10 +177,13 @@ void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_C
 
   epetraCrsMatrix_.PutScalar(0.0);
 
+  using indices_type = typename Tpetra_CrsMatrix::local_inds_host_view_type;
+  using values_type  = typename Tpetra_CrsMatrix::values_host_view_type;
   for (std::size_t i = 0; i<tpetraCrsMatrix_->getNodeNumRows(); i++) {
-     LO NumEntries; const LO *Indices; const ST *Values;
-     tpetraCrsMatrix_->getLocalRowView(i, NumEntries, Values, Indices);
-     epetraCrsMatrix_.ReplaceMyValues(i, NumEntries, Values, Indices);
+    indices_type Indices;
+    values_type  Values;
+    tpetraCrsMatrix_->getLocalRowView(i, Indices, Values);
+    epetraCrsMatrix_.ReplaceMyValues(i, Indices.size(), Values.data(), Indices.data());
   }
 }
 

@@ -527,7 +527,6 @@ void getDiagonalCopy (const Teuchos::RCP<const Thyra_LinearOp>& lop,
   auto tmat = getConstTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
     auto tvec = *Albany::getTpetraVector(diag,true);
-    tvec.clear_sync_state();
     tmat->getLocalDiagCopy(tvec);
     return;
   }
@@ -629,10 +628,14 @@ void getLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getConstTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
+    using indices_type = typename Tpetra_CrsMatrix::nonconst_local_inds_host_view_type;
+    using values_type  = typename Tpetra_CrsMatrix::nonconst_values_host_view_type;
     auto numEntries = tmat->getNumEntriesInLocalRow(lrow);
     indices.resize(numEntries);
     values.resize(numEntries);
-    tmat->getLocalRowCopy(lrow,indices,values,numEntries);
+    indices_type indices_view(indices.getRawPtr(),numEntries);
+    values_type  values_view(values.getRawPtr(),numEntries);
+    tmat->getLocalRowCopy(lrow,indices_view,values_view,numEntries);
     return;
   }
 
@@ -797,7 +800,7 @@ DeviceLocalMatrix<const ST> getDeviceData (Teuchos::RCP<const Thyra_LinearOp>& l
   auto tmat = getConstTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
     // Get the local matrix from tpetra.
-    DeviceLocalMatrix<const ST> data = tmat->getLocalMatrix();
+    DeviceLocalMatrix<const ST> data = tmat->getLocalMatrixDevice();
     return data;
   }
 
@@ -868,7 +871,7 @@ DeviceLocalMatrix<ST> getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop)
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
     // Get the local matrix from tpetra.
-    DeviceLocalMatrix<ST> data = tmat->getLocalMatrix();
+    DeviceLocalMatrix<ST> data = tmat->getLocalMatrixDevice();
     return data;
   }
 
@@ -1094,7 +1097,7 @@ DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getConstTpetraVector(v,false);
   if (!tv.is_null()) {
-    auto data2d = tv->getLocalView<KokkosNode::execution_space>();
+    auto data2d = tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadOnly);
     DeviceView1d<const ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
     return data;
   }
@@ -1123,7 +1126,7 @@ DeviceView1d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v)
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getTpetraVector(v,false);
   if (!tv.is_null()) {
-    auto data2d = tv->getLocalView<KokkosNode::execution_space>();
+    auto data2d = tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadWrite);
     DeviceView1d<ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
     return data;
   }
