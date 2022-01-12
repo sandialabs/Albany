@@ -192,31 +192,6 @@ getParameterSizes(const Teuchos::ParameterList parameterParams, int &total_num_p
 }
 
 void
-ReplaceDiagonalEntries(
-    const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-    const Teuchos::RCP<Tpetra_Vector>&    diag)
-{
-  Teuchos::ArrayRCP<const ST> diag_constView = diag->get1dView();
-  for (size_t i = 0; i < matrix->getNodeNumRows(); i++) {
-    auto               NumEntries = matrix->getNumEntriesInLocalRow(i);
-    Teuchos::Array<LO> Indices(NumEntries);
-    Teuchos::Array<ST> Values(NumEntries);
-    matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
-    GO global_row = matrix->getRowMap()->getGlobalElement(i);
-    for (size_t j = 0; j < NumEntries; j++) {
-      GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
-      if (global_row == global_col) {
-        Teuchos::Array<ST> matrixEntriesT(1);
-        Teuchos::Array<LO> matrixIndicesT(1);
-        matrixEntriesT[0] = diag_constView[i];
-        matrixIndicesT[0] = Indices[j];
-        matrix->replaceLocalValues(i, matrixIndicesT(), matrixEntriesT());
-      }
-    }
-  }
-}
-
-void
 InvAbsRowSum(
     Teuchos::RCP<Tpetra_Vector>&         invAbsRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix)

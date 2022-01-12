@@ -38,12 +38,6 @@ CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemPa
 void
 getParameterSizes(const Teuchos::ParameterList parameterParams, int &total_num_param_vecs, int &num_param_vecs, int &num_dist_param_vecs );
 
-// Helper function which replaces the diagonal of a matrix
-void
-ReplaceDiagonalEntries(
-    const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-    const Teuchos::RCP<Tpetra_Vector>&    diag);
-
 // Helper function which computes absolute values of the rowsum
 // of a matrix, takes its inverse, and puts it in a vector.
 void
@@ -57,12 +51,6 @@ void
 AbsRowSum(
     Teuchos::RCP<Tpetra_Vector>&         absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
-
-// Helper function which replaces the diagonal of a matrix
-void
-ReplaceDiagonalEntries(
-    const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-    const Teuchos::RCP<Tpetra_Vector>&    diag);
 
 //! Utility to make a string out of a string + int with a delimiter:
 //! strint("dog",2,' ') = "dog 2"
