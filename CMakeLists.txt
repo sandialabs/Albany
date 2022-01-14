@@ -64,8 +64,9 @@ MESSAGE("-- Trilinos_DIR = ${Trilinos_DIR}")
 MESSAGE("-- Trilinos_VERSION = ${Trilinos_VERSION}")
 MESSAGE("-- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
 MESSAGE("-- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
-MESSAGE("-- Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
 MESSAGE("-- Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+MESSAGE("-- Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+MESSAGE("-- Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
 MESSAGE("-- Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("-- Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("-- Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
@@ -501,10 +502,15 @@ ENDIF()
 # Check whether Exodus can access a file in parallel
 include(CheckCSourceCompiles)
 set(CMAKE_REQUIRED_LIBRARIES ${${PROJECT_NAME}_EXTRA_LINK_FLAGS})
-set(CMAKE_REQUIRED_INCLUDES  ${Trilinos_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_INCLUDES  ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
 check_c_source_compiles(
   "
   #include <exodusII_par.h>
+  #if !defined(NC_HAS_HDF5)
+  #error Missing hdf5
+  #elif !defined(NC_HAS_PNETCDF)
+  #error Missing pnetcdf
+  #endif
   int main()
   {
     return 0;
