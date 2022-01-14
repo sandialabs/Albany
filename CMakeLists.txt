@@ -506,9 +506,9 @@ set(CMAKE_REQUIRED_INCLUDES  ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIR
 check_c_source_compiles(
   "
   #include <exodusII_par.h>
-  #if !defined(NC_HAS_HDF5)
+  #if !NC_HAS_HDF5
   #error Missing hdf5
-  #elif !defined(NC_HAS_PNETCDF)
+  #elif !NC_HAS_PNETCDF
   #error Missing pnetcdf
   #endif
   int main()
