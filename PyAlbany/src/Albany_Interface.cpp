@@ -264,8 +264,8 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVec
         {
             Teuchos::RCP<Tpetra_MultiVector> thyraDirectionsT = Albany::getTpetraMultiVector(thyraDirections[l]);
 
-            auto directions_in_view = direction->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
-            auto directions_out_view = thyraDirectionsT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            auto directions_in_view = direction->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
+            auto directions_out_view = thyraDirectionsT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
             Kokkos::deep_copy(directions_out_view, directions_in_view);
         }
         else if (is_null)
@@ -318,8 +318,8 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p
         {
             Teuchos::RCP<Tpetra_MultiVector> thyraParameterT = Albany::getTpetraVector(thyraParameter[l]);
 
-            auto p_in_view = p->getLocalView<PyTrilinosVector::node_type::device_type>();
-            auto p_out_view = thyraParameterT->getLocalView<Tpetra_Vector::node_type::device_type>();
+            auto p_in_view = p->getLocalView<PyTrilinosVector::node_type::device_type>(Tpetra::Access::ReadOnly);
+            auto p_out_view = thyraParameterT->getLocalView<Tpetra_Vector::node_type::device_type>(Tpetra::Access::ReadWrite);
             Kokkos::deep_copy(p_out_view, p_in_view);
         }
         else if (is_null)
@@ -351,8 +351,8 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getParameter(const int p_index)
     {
         Teuchos::RCP<const Tpetra_Vector> pT = Albany::getConstTpetraVector(p);
 
-        auto p_out_view = p_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
-        auto p_in_view = pT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+        auto p_out_view = p_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
+        auto p_in_view = pT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
         Kokkos::deep_copy(p_out_view, p_in_view);
         stackedTimer->stop("PyAlbany: getParameter");
         stackedTimer->stopBaseTimer();
@@ -388,8 +388,8 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
         {
             Teuchos::RCP<const Tpetra_Vector> gT = Albany::getConstTpetraVector(g);
 
-            auto g_out_view = g_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
-            auto g_in_view = gT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            auto g_out_view = g_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
+            auto g_in_view = gT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
             Kokkos::deep_copy(g_out_view, g_in_view);
             stackedTimer->stop("PyAlbany: getResponse");
             stackedTimer->stopBaseTimer();
@@ -425,8 +425,8 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
         if (Teuchos::nonnull(s))
         {
             Teuchos::RCP<const Tpetra_Vector> sT = Albany::getConstTpetraVector(s);
-            auto s_out_view = s_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
-            auto s_in_view = sT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            auto s_out_view = s_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
+            auto s_in_view = sT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
             Kokkos::deep_copy(s_out_view, s_in_view);
             stackedTimer->stop("PyAlbany: getState");
             stackedTimer->stopBaseTimer();
@@ -462,8 +462,8 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index,
             Teuchos::RCP<const Tpetra_MultiVector> dgT = Albany::getConstTpetraMultiVector(dg);
             Teuchos::RCP<PyTrilinosMultiVector> dg_out = rcp(new PyTrilinosMultiVector(this->getParameterMap(p_index),
                                                                                        dgT->getNumVectors()));
-            auto dg_out_view = dg_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
-            auto dg_in_view = dgT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            auto dg_out_view = dg_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
+            auto dg_in_view = dgT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
             Kokkos::deep_copy(dg_out_view, dg_in_view);
             stackedTimer->stop("PyAlbany: getSensitivity");
             stackedTimer->stopBaseTimer();
@@ -499,8 +499,8 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_ind
             Teuchos::RCP<const Tpetra_MultiVector> hvT = Albany::getConstTpetraMultiVector(hv);
             Teuchos::RCP<PyTrilinosMultiVector> hv_out = rcp(new PyTrilinosMultiVector(this->getParameterMap(p_index),
                                                                                        hvT->getNumVectors()));
-            auto hv_out_view = hv_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>();
-            auto hv_in_view = hvT->getLocalView<Tpetra_MultiVector::node_type::device_type>();
+            auto hv_out_view = hv_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
+            auto hv_in_view = hvT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
             Kokkos::deep_copy(hv_out_view, hv_in_view);
             stackedTimer->stop("PyAlbany: getReducedHessian");
             stackedTimer->stopBaseTimer();
