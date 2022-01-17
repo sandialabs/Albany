@@ -26,15 +26,9 @@ cmake \
       -D BLAS_INCLUDE_DIRS=${BLAS_PATH}/include \
       -D LAPACK_LIBRARY_DIRS=${BLAS_PATH}/lib \
       -D LAPACK_INCLUDE_DIRS=${BLAS_PATH}/include \
-      -D TPL_ENABLE_SuperLU:STRING=OFF \
-      -D SuperLU_INCLUDE_DIRS:STRING=${SUPERLU_PATH}/include \
-      -D SuperLU_LIBRARY_DIRS:STRING=${SUPERLU_PATH}/lib \
-      -D TPL_SuperLU_LIBRARIES:FILEPATH=${SUPERLU_PATH}/lib/libsuperlu.a \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D Boost_INCLUDE_DIRS:PATH=${BOOST_PATH}/include \
       -D Boost_LIBRARY_DIRS:PATH=${BOOST_PATH}/lib \
-      -D BoostLib_INCLUDE_DIRS:PATH=${BOOST_PATH}/include \
-      -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_PATH}/lib \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_PATH}/include \
       -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_PATH}/lib \
@@ -45,7 +39,6 @@ cmake \
       -D TPL_ENABLE_Matio:BOOL=OFF \
       -D TPL_ENABLE_METIS:STRING=OFF \
       -D TPL_ENABLE_ParMETIS:STRING=OFF \
-      -D TPL_ENABLE_SCORECparma=OFF \
       -D TPL_ENABLE_X11=OFF \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
@@ -56,7 +49,6 @@ cmake \
       -D Epetra_HIDE_DEPRECATED_CODE=ON  \
       -D Ifpack2_HIDE_DEPRECATED_CODE=ON \
       -D Ifpack2_ENABLE_DEPRECATED_CODE=OFF \
-      -D KOKKOS_ENABLE_DEPRECATED_CODE=OFF \
       -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
       -D Kokkos_ENABLE_Pthread:BOOL=OFF \
       -D Kokkos_ENABLE_Serial:BOOL=ON \
@@ -110,7 +102,6 @@ cmake \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
       -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
-      -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
@@ -143,6 +134,6 @@ cmake \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
-      -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
-      -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
+      -D Tpetra_ENABLE_DEPRECATED_CODE=OFF \
+      -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
 ..
