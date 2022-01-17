@@ -1,10 +1,10 @@
-    
-rm -rf CMake* 
+
+rm -rf CMake*
 PWD=`pwd`
 
-TRILINOS_INSTALL=${PWD}/install 
+TRILINOS_INSTALL=${PWD}/install
 NVCC_WRAPPER=${PWD}/nvcc_wrapper_volta
-BLAS_DIR=${BLAS_ROOT} 
+BLAS_DIR=${BLAS_ROOT}
 BOOST_DIR=${BOOST_ROOT}
 NETCDF_DIR=${NETCDF_ROOT}
 PNETCDF_DIR=${PNETCDF_ROOT}
@@ -61,8 +61,8 @@ cmake \
     -D Xpetra_ENABLE_Epetra=OFF \
     -D MueLu_ENABLE_Epetra=OFF \
     -D Belos_ENABLE_Epetra=OFF \
-    -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
-    -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
+    -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
+    -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
     -D TPL_ENABLE_Matio:BOOL=OFF \
     -D TPL_ENABLE_Netcdf:BOOL=ON \
     -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include \
@@ -101,7 +101,7 @@ cmake \
     -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
     -D Trilinos_ENABLE_Phalanx:BOOL=ON \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
-    -D Trilinos_ENABLE_ROL:BOOL=ON \
+    -D Trilinos_ENABLE_ROL:BOOL=OFF \
     -D Trilinos_ENABLE_Rythmos:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=OFF \

@@ -3,7 +3,7 @@
 rm -rf CMake*
 
 cmake \
-    -DALBANY_TRILINOS_DIR:FILEPATH=FILEPATH=/home/projects/albany/nightlyCDashWeaver/build/TrilinosInstall/ \
+    -DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashWeaver/build/TrilinosInstall/ \
     -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
     -DENABLE_DEMO_PDES:BOOL=ON \
     -DENABLE_LANDICE:BOOL=ON \
