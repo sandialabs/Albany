@@ -2,7 +2,7 @@
 rm -rf CMake*
 
 PWD=`pwd`
-INSTALL_DIR=$PWD/install 
+INSTALL_DIR=$PWD/install
 
 MPI_PATH=${MPI_ROOT}
 MKL_PATH=${MKL_ROOT}
@@ -29,10 +29,10 @@ cmake \
       -D TPL_BLAS_LIBRARIES:STRING=${MKL_PATH}/lib/intel64/libmkl_core.a \
       -D TPL_ENABLE_LAPACK:BOOL=ON \
       -D TPL_LAPACK_LIBRARIES:STRING=${MKL_PATH}/lib/intel64/libmkl_core.a \
-      -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_SuperLU:BOOL=ON \
       -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_PATH}/lib/libsuperlu.a \
       -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_PATH}/include \
+      -D TPL_ENABLE_Boost:BOOL=ON \
       -D Boost_INCLUDE_DIRS:PATH=${BOOST_PATH}/include \
       -D Boost_LIBRARY_DIRS:PATH=${BOOST_PATH}/lib \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
@@ -55,7 +55,7 @@ cmake \
       -D TPL_ENABLE_SimMesh=OFF \
       -D TPL_ENABLE_SimModel=OFF \
       -D TPL_ENABLE_X11=OFF \
-      -D KOKKOS_ARCH:STRING='SKX' \
+      -D Kokkos_ARCH_SKX:BOOL=ON \
       -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=OFF \
       -D Kokkos_ENABLE_CUDA_UVM:BOOL=OFF \
       -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
@@ -131,11 +131,9 @@ cmake \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
-      -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
       -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
-      -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+      -D Kokkos_ENABLE_LIBDL:BOOL=ON \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
       -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
-      -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
 ../
