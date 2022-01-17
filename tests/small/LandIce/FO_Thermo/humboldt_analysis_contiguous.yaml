@@ -174,7 +174,7 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Restart Index: 1
         Use Serial Mesh: false
-        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
+        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
         Exodus Output File Name: ./humboldt_basal.exo
         Cubature Degree: 4
         Required Fields Info: 

@@ -327,7 +327,7 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   Teuchos::RCP<const Tpetra_Map> sides_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
   GO globalElemStride = cells_map->getMaxAllGlobalIndex() - cells_map->getMinAllGlobalIndex() + 1;
-  GO globalVerticesStride = nodes_map->getMaxAllGlobalIndex() - nodes_map->getMinAllGlobalIndex() + 1;
+  GO globalVerticesStride = nodes_map->getMaxAllGlobalIndex() + 1;
   GO globalSidesStride    = sides_map->getMaxAllGlobalIndex() - sides_map->getMinAllGlobalIndex() + 1;
 
   GO elemColumnShift     = (Ordering == COLUMN) ? 1 : globalElemStride;

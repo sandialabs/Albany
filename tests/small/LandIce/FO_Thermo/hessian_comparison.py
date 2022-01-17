@@ -10,6 +10,7 @@ class TestHessian(unittest.TestCase):
     AlbanyEXE=''
     MPIEXE=''
     YAMLFILE=''
+    REF_FILE=''
     def test_hessian(self):
         if os.path.isfile('H-000.mm'):
             os.remove('H-000.mm')
@@ -17,7 +18,7 @@ class TestHessian(unittest.TestCase):
         subprocess.call(self.AlbanyEXE+' '+self.YAMLFILE, shell=True)
 
         H = read_mm("H-000.mm")
-        H_ref = read_mm("H-ref-000.mm")
+        H_ref = read_mm(self.REF_FILE)
 
         diff = H_ref-H
         largest_diff = np.amax(np.abs(diff))
@@ -28,6 +29,7 @@ class TestHessian(unittest.TestCase):
 
 if __name__ == '__main__':
 
+    TestHessian.REF_FILE = sys.argv.pop()
     TestHessian.YAMLFILE = sys.argv.pop()
     # The AlbanyEXE argument can look like this ".../mpiexec;-np;1;/...", so we have to replace the potential ';' by ' ':
     TestHessian.AlbanyEXE = sys.argv.pop().replace(';', ' ')
