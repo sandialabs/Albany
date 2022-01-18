@@ -205,6 +205,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    scalarParamesList.set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", this->getAccessors());
     p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
@@ -226,6 +227,7 @@ Albany::Helmholtz2DProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    scalarParamesList.set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", this->getAccessors());
     p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));

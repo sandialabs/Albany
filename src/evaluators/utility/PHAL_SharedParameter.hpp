@@ -8,26 +8,37 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#include "Albany_Accessors.hpp"
 
 //IKT 6/3/2020 TODO: implement support for vector parameters, which is not available currently.
 
 namespace PHAL
 {
 
-template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
+template<typename EvalT, typename Traits, typename ParamNameEnum>
 class SharedParameter : public PHX::EvaluatorWithBaseImpl<Traits>,
                         public PHX::EvaluatorDerived<EvalT, Traits>,
                         public Sacado::ParameterAccessor<EvalT, SPL_Traits>
 {
+private:
+  std::shared_ptr<Albany::Accessor<typename EvalT::ScalarT>> accessor;
+
 public:
 
   typedef typename EvalT::ScalarT   ScalarT;
   typedef ParamNameEnum             EnumType;
 
-  SharedParameter (const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+  SharedParameter (Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   {
     param_name   = p.get<std::string>("Parameter Name");
     param_as_field = PHX::MDField<ScalarT,Dim>(param_name,dl->shared_param);
+
+    Teuchos::RCP<Albany::Accessors<EvalT>> accessors = p.get<Teuchos::RCP<Albany::AccessorsMap>>("Accessors")->at<EvalT>();
+    if (accessors->accessors.count(param_name)==0) {
+      Albany::Accessor<ScalarT> tmp0;
+      accessors->accessors[param_name] = std::make_shared<Albany::Accessor<ScalarT>>(tmp0);
+    }
+    accessor = accessors->accessors.at(param_name);
 
     // Never actually evaluated, but creates the evaluation tag
     this->addEvaluatedField(param_as_field);
@@ -60,7 +71,7 @@ public:
             this->registerSacadoParameter(param_name, paramLib);
             if (pvi.isParameter("Nominal Value")) {
               double nom_val = pvi.get<double>("Nominal Value");
-              value = nom_val;
+              accessor->getValue() = nom_val;
               nominalValueSet = true;
             }
             if (pvi.isParameter("Log Of Physical Parameter")) {
@@ -79,7 +90,7 @@ public:
               this->registerSacadoParameter(param_name, paramLib);
               if (pj.isParameter("Nominal Value")) {
                 double nom_val = pj.get<double>("Nominal Value");
-                value = nom_val;
+                accessor->getValue() = nom_val;
                 nominalValueSet = true;
               }
               if (pj.isParameter("Log Of Physical Parameter")) {
@@ -93,7 +104,7 @@ public:
     }
 
     if(!nominalValueSet) 
-      value = p.get<double>("Default Nominal Value");
+      accessor->getValue() = p.get<double>("Default Nominal Value");
 
     dummy = 0;
   }
@@ -104,15 +115,15 @@ public:
     d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
   }
 
-  static ScalarT getValue ()
+  ScalarT getValue ()
   {
-    return value;
+    return accessor->getValue();
   }
 
   ScalarT& getValue(const std::string &n)
   {
     if (n==param_name)
-      return value;
+      return accessor->getValue();
 
     return dummy;
   }
@@ -120,33 +131,20 @@ public:
   void evaluateFields(typename Traits::EvalData /*d*/)
   {
     if (log_parameter) {
-      param_as_field(0) = std::exp(value);
+      param_as_field(0) = std::exp(accessor->getValue());
     } else {
-      param_as_field(0) = value;
+      param_as_field(0) = accessor->getValue();
     }
   }
 
 protected:
 
-  static ScalarT              value;
-  static ScalarT              dummy;
-  static std::string          param_name;
-  static bool                 log_parameter;
+  ScalarT              dummy;
+  std::string          param_name;
+  bool                 log_parameter;
 
   PHX::MDField<ScalarT,Dim>   param_as_field;
 };
-
-template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
-typename EvalT::ScalarT SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::value;
-
-template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
-typename EvalT::ScalarT SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::dummy;
-
-template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
-std::string SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::param_name;
-
-template<typename EvalT, typename Traits, typename ParamNameEnum, ParamNameEnum ParamName>
-bool SharedParameter<EvalT,Traits,ParamNameEnum,ParamName>::log_parameter;
 
 } // Namespace PHAL
 

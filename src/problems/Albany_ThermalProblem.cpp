@@ -13,7 +13,7 @@
 #include "Albany_BCUtils.hpp"
 #include "PHAL_SharedParameter.hpp"
 
-template<typename ParamNameEnum, ParamNameEnum ParamName>
+template<typename ParamNameEnum>
 struct ConstructSharedParameterOp
 {
 private:
@@ -26,7 +26,7 @@ public:
       fm_(fm), p_(p), dl_(dl) {}
   template<typename EvalT>
   void operator() (EvalT /*x*/) const {
-    auto ev = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamNameEnum,ParamName>(*p_,dl_));
+    auto ev = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamNameEnum>(*p_,dl_));
     fm_->template registerEvaluator<EvalT>(ev);
   }
 };
@@ -141,14 +141,16 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
 
+   Teuchos::RCP<Albany::AccessorsMap> accessors = this->getAccessors();
    {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Theta 0"));
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", this->paramLib);
     const std::string param_name = "Theta 0";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
     p->set<double>("Default Nominal Value", 0.);
-    ConstructSharedParameterOp<Albany::ParamEnum, Albany::ParamEnum::Theta_0> constructor(dfm, p, dl);
+    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl);
     Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
    }
    {
@@ -157,8 +159,9 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
     const std::string param_name = "Theta 1";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+    p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
     p->set<double>("Default Nominal Value", 0.);
-    ConstructSharedParameterOp<Albany::ParamEnum, Albany::ParamEnum::Theta_1> constructor(dfm, p, dl);
+    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl);
     Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
    }
 

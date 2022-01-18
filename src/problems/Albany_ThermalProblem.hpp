@@ -223,16 +223,18 @@ Albany::ThermalProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
+  Teuchos::RCP<Albany::AccessorsMap> accessors = this->getAccessors();
 
   {
     RCP<ParameterList> p = rcp(new ParameterList("Theta 0"));
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "Theta 0";
     p->set<std::string>("Parameter Name", param_name);
+    p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", 0.);
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_0>> ptr_theta_0;
-    ptr_theta_0 = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_0>(*p,dl));
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>> ptr_theta_0;
+    ptr_theta_0 = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ptr_theta_0);
   }
   {
@@ -240,10 +242,11 @@ Albany::ThermalProblem::constructEvaluators(
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "Theta 1";
     p->set<std::string>("Parameter Name", param_name);
+    p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", 0.);
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_1>> ptr_theta_1;
-    ptr_theta_1 = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Theta_1>(*p,dl));
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>> ptr_theta_1;
+    ptr_theta_1 = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ptr_theta_1);
   }
 
@@ -276,10 +279,11 @@ Albany::ThermalProblem::constructEvaluators(
       RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_x"));
       p->set< RCP<ParamLib> >("Parameter Library", paramLib);
       p->set<std::string>("Parameter Name", param_name);
+      p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
       p->set<double>("Default Nominal Value", kappa[0]);
-      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_kappa_x;
-      ptr_kappa_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>> ptr_kappa_x;
+      ptr_kappa_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ptr_kappa_x);
     }
 
@@ -290,10 +294,11 @@ Albany::ThermalProblem::constructEvaluators(
         RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_y"));
         p->set< RCP<ParamLib> >("Parameter Library", paramLib);
         p->set<std::string>("Parameter Name", param_name);
+        p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
         p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
         p->set<double>("Default Nominal Value", kappa[1]);
-        RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_kappa_y;
-        ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
+        RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>> ptr_kappa_y;
+        ptr_kappa_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>(*p,dl));
         fm0.template registerEvaluator<EvalT>(ptr_kappa_y);
       }
     }
@@ -304,10 +309,11 @@ Albany::ThermalProblem::constructEvaluators(
         RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity: kappa_z"));
         p->set< RCP<ParamLib> >("Parameter Library", paramLib);        
         p->set<std::string>("Parameter Name", param_name);
+        p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
         p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
         p->set<double>("Default Nominal Value", kappa[2]);
-        RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_kappa_z;
-        ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
+        RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>> ptr_kappa_z;
+        ptr_kappa_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum>(*p,dl));
         fm0.template registerEvaluator<EvalT>(ptr_kappa_z);
       }
     }
