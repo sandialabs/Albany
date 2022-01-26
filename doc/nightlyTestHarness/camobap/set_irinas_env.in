@@ -16,18 +16,9 @@
 
 
 
-SCRIPTDIR=/mnt/encrypted_sdc1/nightlyAlbanyTests
+SCRIPTDIR=/nightlyAlbanyTests
 NIGHTLYDIR=$SCRIPTDIR/Results
 
-#set this correctly
-BOOSTDIR=/home/ikalash/Install/boost_1_55_0
-LAMEINCLUDEDIR=/home/ikalash/Install//lame-4.24.1/lame/include
-LAMELIBDIR=/home/ikalash/Install/lame-4.24.1/lame/build_mockba
-PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
-CISMDIR=/home/ikalash/cism-piscees
-HWLOC_PATH=/home/ikalash/Install/hwloc-1.10.1
-NETCDFDIR=/usr/local/netcdf
-PARMETISDIR=/home/ikalash/alegra_project/TPL/parmetis/4.0.3/inst_gcc_opt
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
 
