@@ -173,7 +173,7 @@ if (BUILD_ALBANY_NOEPETRA)
   # Builds everything!
   #
 
-  set (TRILINSTALLDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"

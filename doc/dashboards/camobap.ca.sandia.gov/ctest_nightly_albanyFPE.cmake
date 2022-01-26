@@ -173,9 +173,9 @@ if (BUILD_ALBANY_FPE)
   # Builds everything with FPE check enabled!
   #
 
-  set (TRILINSTALLDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
-  set (TRILINOSBLDDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build-debug")
-  set (TRILINOSSRCDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
+  set (TRILINOSBLDDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug")
+  set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -198,7 +198,7 @@ if (BUILD_ALBANY_FPE)
     "-DTRILINOS_BUILD_DIR=${TRILINOSBLDDIR}"
     "-DPYTHON_EXECUTABLE='/usr/bin/python3.6m'"
     "-DPYTHON_INCLUDE_PATH='/usr/include/python3.6m'"
-    "-DSWIG_EXECUTABLE='/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2/bin/swig'"
+    "-DSWIG_EXECUTABLE='/tpls/install/bin/swig'"
     "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   

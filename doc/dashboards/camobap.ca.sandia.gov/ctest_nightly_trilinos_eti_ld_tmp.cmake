@@ -144,7 +144,7 @@ if (BUILD_TRILINOS)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildEti"
-    SOURCE "/mnt/encrypted_sdc1/nightlyCDash/repos/Trilinos"
+    SOURCE "/nightlyCDash/repos/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )

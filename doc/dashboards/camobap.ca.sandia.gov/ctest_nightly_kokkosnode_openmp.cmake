@@ -168,7 +168,7 @@ endif ()
 if (BUILD_ALBFUNCTOR_OPENMP)
   # ALBANY_KOKKOS_UNDER_DEVELOPMENT build with OpenMP KokkosNode
 
-  set (TRILINSTALLDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"

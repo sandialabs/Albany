@@ -168,7 +168,7 @@ if (BUILD_CISM_PISCEES)
 
   # Configure the CISM-Albany build 
   #
-  set (TRILINSTALLDIR "/mnt/encrypted_sdc1/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-Wno-dev"
@@ -180,8 +180,8 @@ if (BUILD_CISM_PISCEES)
     "-DALBANY_LANDICE_DYCORE:BOOL=ON"
     "-DALBANY_LANDICE_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall"
-    "-DCISM_MPI_BASE_DIR=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2"
-    "-DCISM_NETCDF_DIR=/home/ikalash/nightlyAlbanyCDash/tpls-install-spack2"
+    "-DCISM_MPI_BASE_DIR=/tpls/install"
+    "-DCISM_NETCDF_DIR=/tpls/install"
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_Fortran_FLAGS='-g -ffree-line-length-none -fPIC -fno-range-check -std=legacy'"
