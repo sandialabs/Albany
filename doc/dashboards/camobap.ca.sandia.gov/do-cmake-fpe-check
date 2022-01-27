@@ -25,8 +25,8 @@ cmake \
     -D TRILINOS_SOURCE_DIR=$TRILINOSSRCDIR \
     -D TRILINOS_BUILD_DIR=$TRILINOSBLDDIR \
     -D PYTHON_EXECUTABLE='/usr/bin/python' \
-    -D SWIG_EXECUTABLE='/mnt/encrypted_sdc1/nightlyCDash/albany-tpls-gcc-10.2.1-openmpi-4.0.5/swig/bin/swig' \
+    -D SWIG_EXECUTABLE='/tpls/install/swig/bin/swig' \
     -D PYTHON_INCLUDE_PATH='/usr/include/python3.9' \
     -D INSTALL_ALBANY:BOOL=OFF \
     -D ENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON \
-/mnt/encrypted_sdc1/nightlyCDash/repos/Albany/
+/nightlyCDash/repos/Albany/
