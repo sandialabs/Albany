@@ -76,18 +76,28 @@ endif()
 
 if(${PYTHON_TEST})
 if (ALBANY_FROSCH)
-  set(TESTFILES hessian_comparison.py humboldt_analysis.yaml H-ref-000.mm ${PYTHON_TEST_HELPERS_DIR}/__init__.py ${PYTHON_TEST_HELPERS_DIR}/matrix_reader.py)
+  set(TESTFILES hessian_comparison.py humboldt_analysis.yaml humboldt_analysis_contiguous.yaml H-ref-000.mm H-ref-000_contiguous.mm ${PYTHON_TEST_HELPERS_DIR}/__init__.py ${PYTHON_TEST_HELPERS_DIR}/matrix_reader.py)
   file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-  set (testName ${testNameRoot}_Contiguous_Mesh_Hessian)
-  add_test(${testName}_Serial "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${SerialAlbanyAnalysis.exe}" "humboldt_analysis.yaml")
-  set_tests_properties(${testName}_Serial PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  set (testName_Contiguous ${testNameRoot}_Contiguous_Mesh_Hessian)
+  add_test(${testName_Contiguous}_Serial "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${SerialAlbanyAnalysis.exe}" "humboldt_analysis_contiguous.yaml" "H-ref-000_contiguous.mm")
+  set_tests_properties(${testName_Contiguous}_Serial PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+
+  set (testName_Non_Contiguous ${testNameRoot}_Non_Contiguous_Mesh_Hessian)
+  add_test(${testName_Non_Contiguous}_Serial "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${SerialAlbanyAnalysis.exe}" "humboldt_analysis.yaml" "H-ref-000.mm")
+  set_tests_properties(${testName_Non_Contiguous}_Serial PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  set_tests_properties(${testName_Non_Contiguous}_Serial PROPERTIES DEPENDS  ${testName_Contiguous}_Serial)
 
   if(ALBANY_MPI)
-    add_test(${testName}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis.yaml")
-    set_tests_properties(${testName}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+    add_test(${testName_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis_contiguous.yaml" "H-ref-000_contiguous.mm")
+    set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
     # Prevent the two tests to be run at the same time as they rely on written files:
-    set_tests_properties(${testName}_Parallel PROPERTIES DEPENDS  ${testName}_Serial)
+    set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Non_Contiguous}_Serial)
+    
+    add_test(${testName_Non_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis.yaml" "H-ref-000.mm")
+    set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+    # Prevent the two tests to be run at the same time as they rely on written files:
+    set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Contiguous}_Parallel)
   endif()
 endif()
 endif()
