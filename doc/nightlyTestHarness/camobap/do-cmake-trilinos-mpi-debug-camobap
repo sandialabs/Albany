@@ -134,13 +134,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Trilinos_ENABLE_SCOREC:BOOL=OFF \
 \
-      -D Trilinos_EXTRA_REPOSITORIES="DataTransferKit" \
-      -D Trilinos_ENABLE_DataTransferKit:BOOL=ON \
-      -D DataTransferKit_ENABLE_DBC:BOOL=ON \
-      -D DataTransferKit_ENABLE_TESTS:BOOL=OFF \
-      -D DataTransferKit_ENABLE_EXAMPLES:BOOL=OFF \
-      -D TPL_ENABLE_MOAB=OFF \
-      -D TPL_ENABLE_Libmesh=OFF \
       -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
       -D Tpetra_INST_INT_INT:BOOL=OFF \
       -D Tpetra_INST_INT_LONG:BOOL=OFF \
@@ -156,7 +149,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-      -D MPI_EXEC=/usr/lib64/openmpi/bin/mpirun \
+      -D MPI_EXEC=/tpls/install/bin/mpirun \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
