@@ -155,7 +155,7 @@ if (BUILD_ALBANY)
   # Builds everything!
   #
 
-  set (TRILINSTALLDIR "/nightlyCDash/build/TrilinosInstallEti")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build3/install")
 
   set (CONFIGURE_OPTIONS
     "-DTRILINOS_PATH:FILEPATH=${TRILINSTALLDIR}"
