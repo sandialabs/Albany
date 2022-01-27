@@ -13,5 +13,5 @@ cat a b >& c
 cat c results_alegra-xfem >& d
 mv d results_alegra-xfem
 rm a b c
-cat results_alegra-xfem | /usr/lib/sendmail -F ikalash@camobap.ca.sandia.gov -t "ikalash@sandia.gov"
+cat results_alegra-xfem | /usr/sbin/sendmail -F ikalash@camobap.ca.sandia.gov -t "ikalash@sandia.gov"
 #sendmail -s "alegra-xfem, camobap.ca.sandia.gov: $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "ikalash@sandia.gov" < /nightlyCDash/results_alegra-xfem
