@@ -65,7 +65,6 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     resid_names[eqId] = dof_names[eqId] + " Residual";
     scatter_names[eqId] = "Scatter " + resid_names[eqId];
     dof_offsets[eqId] = l2ProjectedBoundaryEquation ? vecDimFO+1 : vecDimFO;
-    std::cout << "EqId: " << eqId << " " << dof_offsets[eqId] << std::endl;
     neq++;
   }
 
