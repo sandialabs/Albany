@@ -554,6 +554,7 @@ namespace Albany {
     // Do not hide base class inlined methods
     using EvaluatorUtilsBase<Traits>::constructGatherSolutionEvaluator;
     using EvaluatorUtilsBase<Traits>::constructGatherSolutionEvaluator_noTransient;
+    using EvaluatorUtilsBase<Traits>::constructGatherSolutionSideEvaluator;
     using EvaluatorUtilsBase<Traits>::constructScatterResidualEvaluator;
     using EvaluatorUtilsBase<Traits>::constructScatterSideEqnResidualEvaluator;
     using EvaluatorUtilsBase<Traits>::constructScatterResidualEvaluatorWithExtrudedParams;

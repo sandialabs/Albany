@@ -28,6 +28,12 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const int numDim_) :
   StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
+  fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
+      params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution");
+
+  l2ProjectedBoundaryEquation = params->isSublist("LandIce L2 Projected Boundary Laplacian");
+
+
   //Set # of PDEs per node based on the Equation Set.
   //Equation Set is LandIce by default (2 dofs / node -- usual LandIce Stokes FO).
   std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "LandIce");
@@ -36,7 +42,32 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   else if (eqnSet == "Poisson" || eqnSet == "LandIce X-Z")
     neq = 1; //1 PDE/node for Poisson or LandIce X-Z physics
 
-  neq =  params_->sublist("Equation Set").get<int>("Num Equations", neq);
+  if(l2ProjectedBoundaryEquation) {
+    int eqId=1;
+    dof_names.resize(eqId+1);
+    resid_names.resize(eqId+1);
+    scatter_names.resize(eqId+1);
+    dof_offsets.resize(eqId+1);
+    dof_names[eqId] = "L2 Projected Boundary Laplacian";
+    resid_names[eqId] = dof_names[eqId] + " Residual";
+    scatter_names[eqId] = "Scatter " + resid_names[eqId];
+    dof_offsets[eqId] = vecDimFO;
+    neq++;
+  }
+
+  if(fluxDivIsPartOfSolution) {
+    int eqId= l2ProjectedBoundaryEquation ? 2 : 1;
+    dof_names.resize(eqId+1);
+    resid_names.resize(eqId+1);
+    scatter_names.resize(eqId+1);
+    dof_offsets.resize(eqId+1);
+    dof_names[eqId] = "flux_divergence";
+    resid_names[eqId] = dof_names[eqId] + " Residual";
+    scatter_names[eqId] = "Scatter " + resid_names[eqId];
+    dof_offsets[eqId] = l2ProjectedBoundaryEquation ? vecDimFO+1 : vecDimFO;
+    std::cout << "EqId: " << eqId << " " << dof_offsets[eqId] << std::endl;
+    neq++;
+  }
 
   // Set parameters for passing coords/near-null space to preconditioner
   rigidBodyModes->setParameters(neq, computeConstantModes, vecDimFO, computeRotationModes);
@@ -169,6 +200,7 @@ StokesFO::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
+  validPL->sublist("LandIce Flux Divergence", false, "Parameters used for Flux Divergence Computation");
   validPL->sublist("LandIce L2 Projected Boundary Laplacian", false, "Parameters needed to compute the L2 Projected Boundary Laplacian");
   validPL->sublist("Equation Set", false, "");
   validPL->set<bool>("Adjust Bed Topography to Account for Thickness Changes", false, "");
@@ -179,6 +211,13 @@ StokesFO::getValidProblemParameters () const
 
 void StokesFO::setFieldsProperties () {
   StokesFOBase::setFieldsProperties();
+
+  if (fluxDivIsPartOfSolution || l2ProjectedBoundaryEquation) {
+    setSingleFieldProperties(dof_names[1], FRT::Scalar, FST::Scalar);
+  }
+  if (fluxDivIsPartOfSolution && l2ProjectedBoundaryEquation) {
+    setSingleFieldProperties(dof_names[2], FRT::Scalar, FST::Scalar);
+  }
 
   if (Albany::mesh_depends_on_parameters() && is_dist_param[ice_thickness_name]) {
     adjustBedTopo = params->get("Adjust Bed Topography to Account for Thickness Changes", false);
@@ -213,15 +252,14 @@ void StokesFO::setupEvaluatorRequests () {
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
   }
 
-  if(neq > static_cast<unsigned>(vecDimFO)) {
+  if(l2ProjectedBoundaryEquation) {
 
     auto& proj_lapl_params = params->sublist("LandIce L2 Projected Boundary Laplacian");
     auto& ssName = proj_lapl_params.get<std::string>("Side Set Name",basalSideName);
     std::string field_name = proj_lapl_params.get<std::string>("Field Name","basal_friction");
-    auto dof_name_auxiliary = "L2 Projected Boundary Laplacian";
 
-    ss_build_interp_ev[ssName][dof_name_auxiliary][IReq::CELL_TO_SIDE] = true;
-    ss_build_interp_ev[ssName][dof_name_auxiliary][IReq::QP_VAL] = true;
+    ss_build_interp_ev[ssName][dof_names[1]][IReq::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[ssName][dof_names[1]][IReq::QP_VAL] = true;
     ss_build_interp_ev[ssName][field_name][IReq::GRAD_QP_VAL] = true;
   }
 }
