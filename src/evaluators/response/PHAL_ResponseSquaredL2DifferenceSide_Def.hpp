@@ -24,7 +24,7 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   Teuchos::ParameterList validPL;
   validPL.set<std::string>("Name", "", "Name Of The Response");
   validPL.set<std::string>("Side Set Name", "", "Side Set Name");
-  validPL.set<std::string>("Field Rank", "Scalar", "Field Rank: Scalar, Vector, Gradient, Tensor");
+  validPL.set<std::string>("Field Rank", "Scalar", "Field Rank: Scalar, Vector, Gradient, Vector Gradient, Tensor");
   validPL.set<std::string>("Source Field Name", "", "Name of the Source field");
   validPL.set<std::string>("Target Field Name", "", "Name of the Target Field");
   validPL.set<std::string>("Root Mean Square Error Field Name", "", "Name of the RMSE for the Target");
@@ -60,7 +60,8 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
           sideSetName + "_planar" :
           sideSetName;
 
-  if (fieldDim>0)
+  isFieldGradient = (rank == "Gradient") || (rank == "Vector Gradient");
+  if (isFieldGradient)
   {
     metric = decltype(metric)(Albany::metric_name + "_" + sideSetNameForMetric, dl_side->qp_tensor);
     this->addDependentField(metric);
@@ -74,10 +75,9 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
 
   rmsScaling = plist->isParameter("Root Mean Square Error Field Name");
   if(rmsScaling) {
-    rootMeanSquareField = decltype(rootMeanSquareField)(plist->get<std::string>("Root Mean Square Error Field Name"),layout);
+    //Only considering scalar rmsScaling
+    rootMeanSquareField = decltype(rootMeanSquareField)(plist->get<std::string>("Root Mean Square Error Field Name"),dl_side->qp_scalar);
     this->addDependentField(rootMeanSquareField);
-    TEUCHOS_TEST_FOR_EXCEPTION(rmsScaling && (fieldDim>0), std::logic_error,
-       "[ResponseSquaredL2DifferenceSideBase] Error! Root Mean Square Error Scaling Available only for Scalar Fields.\n")
   }
 
   if (plist->isParameter("Target Field Name")) {
@@ -169,13 +169,11 @@ evaluateFields(typename Traits::EvalData workset)
   PHAL::set(this->local_response_eval, 0.0);
 
   if (fieldDim == 1) {
-    diffDims = dims[2];
-    diff_1.resize(diffDims);
+    diff_1.resize(dims[2]);
   } else if (fieldDim == 2) {
-    diffDims = dims[2];
-    diff_2.resize(diffDims);
-    for(size_t i=0; i<diffDims; i++)
-      diff_2[i].resize(diffDims);
+    diff_2.resize(dims[2]);
+    for(size_t i=0; i<dims[2]; i++)
+      diff_2[i].resize(dims[3]);
   }
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
@@ -215,15 +213,21 @@ evaluateFields(typename Traits::EvalData workset)
           for (int qp=0; qp<numQPs; ++qp)
           {
             ScalarT sq = 0;
+            RealType rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : 1.0;
             // Computing squared difference at qp
             // Precompute differentce and access fields only n times (not n^2)
-            for (size_t i=0; i<diffDims; ++i)
+            for (size_t i=0; i<dims[2]; ++i)
               diff_1[i] = sourceField(sideSet_idx,qp,i) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i));
 
-            for (size_t i=0; i<diffDims; ++i)
-              for (size_t j=0; j<diffDims; ++j)
-                sq += diff_1[i]*metric(sideSet_idx,qp,i,j)*diff_1[j];
-            sum += sq * w_measure(sideSet_idx,qp);
+            if(isFieldGradient){
+              for (size_t i=0; i<sideDim; ++i)
+                for (size_t j=0; j<sideDim; ++j)
+                  sq += diff_1[i]*metric(sideSet_idx,qp,i,j)*diff_1[j];
+            } else {
+              for (size_t i=0; i<dims[2]; ++i)
+                sq += diff_1[i]*diff_1[i];
+            }
+            sum += sq / rms2 * w_measure(sideSet_idx,qp);
           }
 
           this->local_response_eval(cell, 0) = sum*scaling;
@@ -240,18 +244,25 @@ evaluateFields(typename Traits::EvalData workset)
           for (int qp=0; qp<numQPs; ++qp)
           {
             ScalarT sq = 0;
+            RealType rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : 1.0;
             // Computing squared difference at qp
             // Precompute differentce and access fields only n^2 times (not n^4)
-            for (size_t i=0; i<diffDims; ++i)
-              for (size_t j=0; j<diffDims; ++j)
+            for (size_t i=0; i<dims[2]; ++i)
+              for (size_t j=0; j<dims[3]; ++j)
                 diff_2[i][j] = sourceField(sideSet_idx,qp,i,j) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i,j));
 
-            for (size_t i=0; i<diffDims; ++i)
-              for (size_t j=0; j<diffDims; ++j)
-                for (size_t k=0; k<diffDims; ++k)
-                  for (size_t l=0; l<diffDims; ++l)
-                    sq += metric(sideSet_idx,qp,k,i)*diff_2[i][j] * metric(sideSet_idx,qp,j,l)*diff_2[l][k];
-            sum += sq * w_measure(sideSet_idx,qp);
+            if(isFieldGradient){
+              for (size_t i=0; i<dims[2]; ++i)
+                for (size_t j=0; j<sideDim; ++j)
+                  for (size_t k=0; k<sideDim; ++k)
+                    sq += diff_2[i][j] * metric(sideSet_idx,qp,j,k) * diff_2[i][k];
+            } else {
+              for (size_t i=0; i<dims[2]; ++i)
+                for (size_t j=0; j<dims[3]; ++j)
+                  sq += diff_2[i][j] * diff_2[i][j];
+            }
+
+            sum += sq / rms2 * w_measure(sideSet_idx,qp);
           }
 
           this->local_response_eval(cell, 0) = sum*scaling;
@@ -309,6 +320,11 @@ getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teu
   {
     layout = dl->qp_gradient;
     dim = 1;
+  }
+  else if (rank=="Vector Gradient")
+  {
+    layout = dl->qp_vecgradient;
+    dim = 2;
   }
   else if (rank=="Tensor")
   {

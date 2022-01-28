@@ -45,7 +45,7 @@ private:
   int fieldDim;
   std::vector<PHX::Device::size_type> dims;
 
-  bool target_value, rmsScaling, extrudedParams;
+  bool target_value, rmsScaling, extrudedParams, isFieldGradient;
   TargetScalarT target_value_val;
   RealType scaling;
 
@@ -56,7 +56,6 @@ private:
   PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>   metric;
   PHX::MDField<const MeshScalarT,Side,QuadPoint>   w_measure;
 
-  size_t diffDims;
   std::vector<ScalarT> diff_1;
   std::vector<std::vector<ScalarT>> diff_2;
 
