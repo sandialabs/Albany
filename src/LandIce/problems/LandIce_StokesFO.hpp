@@ -29,7 +29,6 @@
 
 #include "LandIce_StokesFOSynteticTestBC.hpp"
 #include "LandIce_PressureCorrectedTemperature.hpp"
-#include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -80,10 +79,6 @@ public:
   void constructSynteticTestBCEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
   template <typename EvalT>
-  void constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                    Albany::FieldManagerChoice FieldManagerChoice);
-
-  template <typename EvalT>
   void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
 protected:
@@ -96,6 +91,8 @@ protected:
 
   bool adjustBedTopo;
   bool adjustSurfaceHeight;
+  bool fluxDivIsPartOfSolution;
+  bool l2ProjectedBoundaryEquation;
 };
 
 // ================================ IMPLEMENTATION ============================ //
@@ -222,7 +219,16 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   constructSynteticTestBCEvaluators<EvalT> (fm0);
 
   // --- ProjectedLaplacian-related evaluators (if needed) --- //
-  constructProjLaplEvaluators<EvalT> (fm0, fieldManagerChoice);
+  if(l2ProjectedBoundaryEquation) {
+    int eqId = 1;
+    constructProjLaplEvaluators<EvalT> (fm0, fieldManagerChoice, eqId);
+  }
+
+  // --- FluxDiv-related evaluators (if needed) --- //
+  if(fluxDivIsPartOfSolution) {
+    int eqId = l2ProjectedBoundaryEquation ? 2 : 1;
+    constructFluxDivEvaluators<EvalT> (fm0, fieldManagerChoice, eqId, meshSpecs);
+  }
 
   // --- States/parameters --- //
   constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
@@ -263,81 +269,6 @@ void StokesFO::constructSynteticTestBCEvaluators (PHX::FieldManager<PHAL::Albany
 
     ev = Teuchos::rcp(new LandIce::StokesFOSynteticTestBC<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
-}
-
-template <typename EvalT>
-void StokesFO::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                            Albany::FieldManagerChoice fieldManagerChoice)
-{
-  // Only do something if the number of equations is larger than the FO equations
-  if(neq > static_cast<unsigned>(vecDimFO)) {
-    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-    Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
-    Teuchos::RCP<Teuchos::ParameterList> p;
-
-    auto& proj_lapl_params = params->sublist("LandIce L2 Projected Boundary Laplacian");
-    auto& ssName = proj_lapl_params.get<std::string>("Side Set Name",basalSideName);
-    std::string field_name = proj_lapl_params.get<std::string>("Field Name","basal_friction");
-
-    // ----------  Define Field Names ----------- //
-    Teuchos::ArrayRCP<std::string> dof_name_auxiliary(1);
-    Teuchos::ArrayRCP<std::string> resid_name_auxiliary(1);
-    dof_name_auxiliary[0] = "L2 Projected Boundary Laplacian";
-    resid_name_auxiliary[0] = "L2 Projected Boundary Laplacian Residual";
-    std::string aux_resid_scatter_tag = "Scatter Auxiliary Residual";
-
-    field_rank[dof_name_auxiliary[0]] = FRT::Scalar;
-    field_scalar_type[dof_name_auxiliary[0]] = FST::Scalar;
-
-    // ------------------- Gather/scatter evaluators ------------------ //
-
-    // Gather solution field
-    ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_name_auxiliary, 2);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    // ev = evalUtils.constructGatherSolutionSideEvaluator(dof_name_auxiliary, ssName, cellType, 2, false);
-    // fm0.template registerEvaluator<EvalT> (ev);
-
-    // Project dof to side (keep same name)
-    ev = evalUtils.constructDOFCellToSideEvaluator(
-        dof_name_auxiliary[0], ssName, e2str(FL::Node) + " " + e2str(FRT::Scalar),
-        cellType, dof_name_auxiliary[0]);
-
-    // Scatter residual
-    ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_name_auxiliary, Teuchos::rcpFromRef(extruded_params_levels), vecDimFO, aux_resid_scatter_tag);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    // -------------------------------- LandIce evaluators ------------------------- //
-
-    // L2 Projected bd laplacian residual
-    p = Teuchos::rcp(new Teuchos::ParameterList("L2 Projected Boundary Laplacian Residual"));
-
-    //Input
-    p->set<std::string>("Solution Variable Name", dof_name_auxiliary[0]);
-    p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
-    p->set<std::string>("Field Name", side_fname(field_name,ssName));
-    p->set<std::string>("Field Gradient Name", side_fname(field_name + "_gradient",ssName));
-    p->set<std::string>("Gradient BF Side Name", side_fname(Albany::grad_bf_name,ssName));
-    p->set<std::string>("Weighted Measure Side Name", side_fname(Albany::weighted_measure_name,ssName));
-    p->set<std::string>("Tangents Side Name", side_fname(Albany::tangents_name,ssName));
-    p->set<std::string>("Side Set Name", ssName);
-    p->set<std::string>("Boundary Edges Set Name", proj_lapl_params.get<std::string>("Boundary Edges Set Name", "lateralside"));
-    p->set<double>("Mass Coefficient",  proj_lapl_params.get<double>("Mass Coefficient",1.0));
-    p->set<double>("Robin Coefficient", proj_lapl_params.get<double>("Robin Coefficient",0.0));
-    p->set<double>("Laplacian Coefficient", proj_lapl_params.get<double>("Laplacian Coefficient",1.0));
-    p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
-
-    //Output
-    p->set<std::string>("L2 Projected Boundary Laplacian Residual Name", "L2 Projected Boundary Laplacian Residual");
-
-    ev = Teuchos::rcp(new L2ProjectedBoundaryLaplacianResidualParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-      PHX::Tag<typename EvalT::ScalarT> res_tag(aux_resid_scatter_tag, dl->dummy);
-      fm0.requireField<EvalT>(res_tag);
-    }
   }
 }
 

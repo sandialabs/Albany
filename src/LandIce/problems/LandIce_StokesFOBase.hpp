@@ -51,6 +51,8 @@
 #include "LandIce_ViscosityFO.hpp"
 #include "LandIce_Dissipation.hpp"
 #include "LandIce_UpdateZCoordinate.hpp"
+#include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
+#include "LandIce_FluxDivergenceResidual.hpp"
 
 #include "PHAL_RandomPhysicalParameter.hpp"
 #include "PHAL_IsAvailable.hpp"
@@ -151,6 +153,18 @@ protected:
 
   virtual void constructDirichletEvaluators (const Albany::MeshSpecsStruct& /* meshSpecs */) {}
   virtual void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& /* meshSpecs */) {}
+
+
+  template <typename EvalT>
+  void constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                    Albany::FieldManagerChoice FieldManagerChoice,
+                                    int eqId);
+
+  template <typename EvalT>
+  void constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                    Albany::FieldManagerChoice FieldManagerChoice,
+                                    int eqId,
+                                    const Albany::MeshSpecsStruct& meshSpecs);
 
   Teuchos::RCP<Teuchos::ParameterList>
   getStokesFOBaseProblemParameters () const;
@@ -1669,6 +1683,123 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
   }
 
   return Teuchos::null;
+}
+
+template <typename EvalT>
+void StokesFOBase::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                            Albany::FieldManagerChoice fieldManagerChoice,
+                                            int eqId)
+{
+  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  Teuchos::RCP<Teuchos::ParameterList> p;
+
+  auto& proj_lapl_params = params->sublist("LandIce L2 Projected Boundary Laplacian");
+  auto& ssName = proj_lapl_params.get<std::string>("Side Set Name",basalSideName);
+  std::string field_name = proj_lapl_params.get<std::string>("Field Name","basal_friction");
+
+  // ------------------- Gather/scatter evaluators ------------------ //
+
+  // Gather solution field
+  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names[eqId], dof_offsets[eqId]);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+  // Scatter residual
+  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_names[eqId], Teuchos::rcpFromRef(extruded_params_levels), dof_offsets[eqId], scatter_names[eqId]);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+  // -------------------------------- LandIce evaluators ------------------------- //
+
+  // L2 Projected bd laplacian residual
+  p = Teuchos::rcp(new Teuchos::ParameterList("L2 Projected Boundary Laplacian Residual"));
+
+  //Input
+  p->set<std::string>("Solution Variable Name", dof_names[eqId]);
+  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
+  p->set<std::string>("Field Name", side_fname(field_name,ssName));
+  p->set<std::string>("Field Gradient Name", side_fname(field_name + "_gradient",ssName));
+  p->set<std::string>("Gradient BF Side Name", side_fname(Albany::grad_bf_name,ssName));
+  p->set<std::string>("Weighted Measure Side Name", side_fname(Albany::weighted_measure_name,ssName));
+  p->set<std::string>("Tangents Side Name", side_fname(Albany::tangents_name,ssName));
+  p->set<std::string>("Side Set Name", ssName);
+  p->set<std::string>("Boundary Edges Set Name", proj_lapl_params.get<std::string>("Boundary Edges Set Name", "lateralside"));
+  p->set<double>("Mass Coefficient",  proj_lapl_params.get<double>("Mass Coefficient",1.0));
+  p->set<double>("Robin Coefficient", proj_lapl_params.get<double>("Robin Coefficient",0.0));
+  p->set<double>("Laplacian Coefficient", proj_lapl_params.get<double>("Laplacian Coefficient",1.0));
+  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+
+  //Output
+  p->set<std::string>("L2 Projected Boundary Laplacian Residual Name", "L2 Projected Boundary Laplacian Residual");
+
+  ev = Teuchos::rcp(new L2ProjectedBoundaryLaplacianResidualParam<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+    PHX::Tag<typename EvalT::ScalarT> res_tag(scatter_names[eqId], dl->dummy);
+    fm0.requireField<EvalT>(res_tag);
+  }
+}
+
+template <typename EvalT>
+void StokesFOBase::constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                            Albany::FieldManagerChoice fieldManagerChoice,
+                                            int eqId, const Albany::MeshSpecsStruct& meshSpecs)
+{
+  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  Teuchos::RCP<Teuchos::ParameterList> p;
+
+  auto& flux_div_params = params->sublist("LandIce Flux Divergence");
+
+  // ------------------- Interpolations and utilities ------------------ //
+
+  // Gather solution field
+  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names[eqId], dof_offsets[eqId]);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+  // Scatter residual
+  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_names[eqId], Teuchos::rcpFromRef(extruded_params_levels), dof_offsets[eqId], scatter_names[eqId]);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+  ev = evalUtils.constructDOFInterpolationSideEvaluator ("flux_divergence_" + basalSideName, basalSideName);
+  fm0.template registerEvaluator<EvalT> (ev);
+
+
+  // -------------------------------- LandIce evaluators ------------------------- //
+
+  // Flux Div
+  p = Teuchos::rcp(new Teuchos::ParameterList("Gather Flux Div"));
+
+  p->set<std::string>("Contracted Solution Name", "flux_divergence_" + basalSideName);
+  p->set<std::string>("Mesh Part", "basalside");
+  p->set<int>("Solution Offset", dof_offsets[eqId]);
+  p->set<std::string>("Side Set Name", basalSideName);
+  p->set<bool>("Is Vector", false);
+  p->set<std::string>("Contraction Operator", "Vertical Sum");
+  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+
+  ev = Teuchos::rcp(new GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+  // ---  Layered Flux Divergence Residual ---
+  p = Teuchos::rcp(new Teuchos::ParameterList(resid_names[eqId]));
+
+  //Input
+  p->set<std::string>("Layered Flux Divergence Name", dof_names[eqId]);
+  p->set<std::string>("Coords Name", Albany::coord_vec_name);
+  p->set<std::string>("Thickness Name", ice_thickness_name);
+  p->set<std::string>("Velocity Name", dof_names[0]);
+  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+  p->set<bool>("Use Upwind Stabilization",  flux_div_params.get("Use Upwind Stabilization", true));
+  p->set<std::string>("Layered Flux Divergence Residual Name", resid_names[eqId]);
+
+  ev = createEvaluatorWithOneScalarType<LayeredFluxDivergenceResidual,EvalT>(p,dl,get_scalar_type(ice_thickness_name));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+    PHX::Tag<typename EvalT::ScalarT> res_tag(scatter_names[eqId], dl->dummy);
+    fm0.requireField<EvalT>(res_tag);
+  }
 }
 
 template <typename EvalT>
