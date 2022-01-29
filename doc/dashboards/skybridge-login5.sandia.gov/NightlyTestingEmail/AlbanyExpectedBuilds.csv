@@ -28,8 +28,8 @@ Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-trilinos
 Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-albany
 Nightly, cee-compute024, Linux-3.10.0-1062.9.1.el7.x86_64-clang-trilinos
 Nightly, cee-compute024, Linux-3.10.0-1062.9.1.el7.x86_64-clang-albany
-Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-trilinos
-Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-albany
+Nightly, cee-compute009, Linux-3.10.0-1062.9.1.el7.x86_64-debug-trilinos
+Nightly, cee-compute009, Linux-3.10.0-1062.9.1.el7.x86_64-debug-albany
 Nightly, cori.nersc.gov, cori-Trilinos
 Nightly, cori.nersc.gov, cori-Albany
 Nightly, cori.nersc.gov, cori-CISM-Albany
