@@ -1,10 +1,11 @@
 
 #!/bin/bash
 
-#IKT, WARNING: the following 2 lines are specific to Irina Tezaur's machine, camobap!
+#IKT, WARNING: the following 3 lines are specific to Irina Tezaur's machine, camobap!
 #They need to be changed for other machines! 
-export LD_LIBRARY_PATH=/usr/lib64:/usr/lib64/openmpi/lib:/usr/lib
-export PATH=$PATH:/MATLAB/R2021b/bin:/usr/lib64/openmpi/bin:/nightlyAlbanyTests/Results/Trilinos/build/install/bin
+export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/tpls/install/bin
+export PATH=$PATH:/MATLAB/R2021b/bin:/tpls/install/include:/nightlyAlbanyTests/Results/Trilinos/build/install/bin
+alias mpirun=/tpls/install/bin/mpirun
 
 rm -rf *exo*
 rm -rf albanyMesh/*exo*
@@ -14,7 +15,7 @@ rm -rf albanyMesh/*exo*
 # run cism-albany after modifying (if needed) the paths of the input nc "name" file and the "dycore_input_file" in the file inputFiles/cism-albanyT.config.
 cd inputFiles
 rm -rf *exo* 
-mpiexec -np 8 ../cism_driver/cism_driver cism-albanyT.config
+mpirun -np 8 ../cism_driver/cism_driver cism-albanyT.config
 epu --auto greenland_cism-albanyT.exo.8.0
 cd ..
 
