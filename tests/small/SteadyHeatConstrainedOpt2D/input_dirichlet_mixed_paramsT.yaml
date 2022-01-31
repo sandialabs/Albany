@@ -55,7 +55,6 @@ ANONYMOUS:
       Test Value: -1.98119937831999993e-01
     Sensitivity For Parameter 1:
       Test Value: 6.39756401689000054e-02
-    Number of Piro Analysis Comparisons: 1
     Piro Analysis Test Two Norm: true
     Piro Analysis Test Values: [20.3598]
   Piro: 

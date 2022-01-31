@@ -6,6 +6,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
+    Compute Sensitivities: true
     LandIce BCs:
       Number: 1
       BC 0:
@@ -20,26 +21,31 @@ ANONYMOUS:
       Parameter 0:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
+    LandIce Physical Parameters:
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8
+      Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 2.99999999999999988e-01
+      Glen's Law Homotopy Parameter: 0.3
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
     Body Force:
       Type: FO INTERP SURF GRAD
     Response Functions:
-      Response 2:
-        Type: Scalar Response
-        Name: Solution Average
       Number Of Responses: 3
-      Response 1:
-        Equation: 1
-        Type: Scalar Response
-        Name: Solution Max Value
       Response 0:
         Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
+      Response 1:
+        Equation: 1
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 2:
+        Type: Scalar Response
+        Name: Solution Average
   Discretization:
     Method: Exodus
     Restart Index: 1
@@ -58,15 +64,15 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 15
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 5.00000000000000027e-02
-        Aggressiveness: 5.00000000000000000e-01
+        Initial Step Size: 5.0e-02
+        Aggressiveness: 0.5
     NOX:
       Status Tests:
         Test Type: Combo
@@ -76,7 +82,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
-          Tolerance: 9.99999999999999954e-07
+          Tolerance: 1.0e-6
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 15
@@ -86,7 +92,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
-            Tolerance: 9.99999999999999954e-07
+            Tolerance: 1.0e-06
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
@@ -98,7 +104,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-07
+                      Convergence Tolerance: 1.0e-06
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -116,7 +122,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -135,21 +141,17 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Sensitivity For Parameter 0:
-      Test Value: -1.83781780322999992e-03
-    Test Value: 4.14425230839999983e+02
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-08
+    Relative Tolerance: 1.0e-04
+    Test Value: 4.1442523084e+02
   Regression For Response 1:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Sensitivity For Parameter 0:
-      Test Value: 8.97897488035000039e-04
-    Test Value: 2.11243655313999994e+02
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-08
+    Relative Tolerance: 1.0e-04
+    Test Value: 2.11243655314e+02
   Regression For Response 2:
-    Absolute Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-08
+    Relative Tolerance: 1.0e-04
+    Test Value: -3.636454141555e+00
     Sensitivity For Parameter 0:
-      Test Value: -3.35933961813999993e-03
-    Test Value: -3.63645413969000008e+00
-    Relative Tolerance: 1.00000000000000004e-04
+      Test Value: -3.291823014178e-03
 ...

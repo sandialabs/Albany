@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem: 
     Name: Heat 1D
+    Compute Sensitivities: true
     Periodic BC: true
     Solution Method: Transient
     Dirichlet BCs: { }

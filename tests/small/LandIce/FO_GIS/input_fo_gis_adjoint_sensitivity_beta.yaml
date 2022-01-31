@@ -5,6 +5,7 @@ ANONYMOUS:
     Write Solution to MatrixMarket: 0
   Problem:
     Phalanx Graph Visualization Detail: 1
+    Compute Sensitivities: true
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Required Fields: [temperature]

@@ -8,6 +8,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Coupled FO H 3D
+    Compute Sensitivities: true
     Time Step: 2.00000000000000011e-01
     Basal Side Name: basalside
     Surface Side Name: upperside

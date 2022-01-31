@@ -37,14 +37,17 @@ ANONYMOUS:
     Exodus Output File Name: twoDHeatEB_out_tpetra.exo
     Separate Evaluators by Element Block: true
   Regression For Response 0:
-    Test Value: 9.57299000000000011e-01
-    Absolute Tolerance: 9.99999999999999955e-07
+    Test Value: 9.57299e-01
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
   Regression For Response 1:
-    Test Value: 3.97394000000000034e+01
-    Absolute Tolerance: 9.99999999999999955e-07
+    Test Value: 3.97394e+01
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
   Regression For Response 2:
-    Test Value: 1.00000000000000000e+00
-    Absolute Tolerance: 9.99999999999999955e-07
+    Test Value: 1.0e+00
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
   Piro: 
     NOX: 
       Direction: 

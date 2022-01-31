@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem: 
     Name: Heat 3D
+    Compute Sensitivities: true
     Phalanx Graph Visualization Detail: 1
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T: 2.00000000000000000e+00

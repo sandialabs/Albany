@@ -138,7 +138,7 @@ ALBANY:
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
     Sensitivity For Parameter 0:
-      Test Value: 2.103917477841e+02
+      Test Values: [2.103917477841e+02,-2.765211450559e+02]
     Test Value: -4.391538524980e+01
     Relative Tolerance: 1.00000000000000002e-03
 ...

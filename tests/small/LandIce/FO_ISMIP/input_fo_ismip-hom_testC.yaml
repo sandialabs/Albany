@@ -6,6 +6,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
+    Compute Sensitivities: false
     Dirichlet BCs: {}
     LandIce BCs:
       Number: 2
@@ -36,25 +37,25 @@ ANONYMOUS:
         Name: Glen's Law Homotopy Parameter
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 2.99999999999999988e-01
+      Glen's Law Homotopy Parameter: 0.3
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
     Body Force:
       Type: FO INTERP SURF GRAD
-      LandIce alpha: 1.00000000000000005e-01
+      LandIce alpha: 0.1
     Response Functions:
-      Response 2:
-        Type: Scalar Response
-        Name: Solution Average
       Number Of Responses: 3
-      Response 1:
-        Equation: 1
-        Type: Scalar Response
-        Name: Solution Max Value
       Response 0:
         Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
+      Response 1:
+        Equation: 1
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 2:
+        Type: Scalar Response
+        Name: Solution Average
   Discretization:
     Periodic_x BC: true
     Periodic_y BC: true
@@ -62,12 +63,12 @@ ANONYMOUS:
     1D Elements: 20
     2D Elements: 20
     3D Elements: 5
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
-    3D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
+    2D Scale: 1.0
+    3D Scale: 1.0
     Transform Type: ISMIP-HOM Test C
-    LandIce alpha: 1.00000000000000005e-01
-    LandIce L: 5.00000000000000000e+00
+    LandIce alpha: 0.1
+    LandIce L: 5.0
     Method: STK3D
     Exodus Output File Name: felix_stokes_fo_ismip-hom_testC_out.exo
     Required Fields Info:
@@ -83,14 +84,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 20
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 1.00000000000000005e-01
+        Initial Step Size: 0.1
     NOX:
       Status Tests:
         Test Type: Combo
@@ -104,11 +105,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000006e-09
+            Tolerance: 1.0e-09
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000004e-04
-            Relative Tolerance: 1.00000000000000002e-08
+            Absolute Tolerance: 1.0e-04
+            Relative Tolerance: 1.0e-08
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -131,12 +132,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
+                    Tolerance: 1.0e-6
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-07
+                      Convergence Tolerance: 1.0e-6
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -162,7 +163,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -180,15 +181,13 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
-  Regression For Response 0:
-    Sensitivity For Parameter 0:
-      Test Value: 2.08812026833999991e-01
-    Test Value: 1.59711319232999997e+01
-    Relative Tolerance: 1.00000000000000004e-04
+  Regression For Response 0:  
+    Test Value: 1.59711319233e+01
+    Relative Tolerance: 1.0e-04
   Regression For Response 1:
-    Test Value: 6.62994775897000065e-02
-    Relative Tolerance: 1.00000000000000004e-04
+    Test Value: 6.62994775897e-02
+    Relative Tolerance: 1.0e-04
   Regression For Response 2:
-    Test Value: 7.94449649404000002e+00
-    Relative Tolerance: 1.00000000000000004e-04
+    Test Value: 7.944496494e+00
+    Relative Tolerance: 1.0e-04
 ...

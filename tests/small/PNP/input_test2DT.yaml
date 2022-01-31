@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem:
     Name: PNP 2D
+    Compute Sensitivities: true
     Solution Method: Steady
     Number of Species: 2
     Phalanx Graph Visualization Detail: 1

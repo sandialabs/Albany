@@ -4,31 +4,32 @@ ANONYMOUS:
   Build Type: Tpetra
   Problem:
     Name: Helmholtz 2D
-    Ksqr: 1.10000000000000008e+00
+    Compute Sensitivities: true
+    Ksqr: 1.1e+00
     Solution Method: Continuation
     Phalanx Graph Visualization Detail: 2
     Dirichlet BCs:
-      DBC on NS NodeSet0 for DOF U: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF U: 0.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF U: 0.00000000000000000e+00
-      DBC on NS NodeSet0 for DOF V: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF V: 0.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF V: 0.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF V: 0.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF U: 0.0e+00
+      DBC on NS NodeSet1 for DOF U: 0.0e+00
+      DBC on NS NodeSet2 for DOF U: 0.0e+00
+      DBC on NS NodeSet3 for DOF U: 0.0e+00
+      DBC on NS NodeSet0 for DOF V: 0.0e+00
+      DBC on NS NodeSet1 for DOF V: 0.0e+00
+      DBC on NS NodeSet2 for DOF V: 0.0e+00
+      DBC on NS NodeSet3 for DOF V: 0.0e+00
     Initial Condition:
       Function: Constant
-      Function Data: [1.00000000000000005e-01, 1.00000000000000005e-01]
+      Function Data: [1.0e-01, 1.0e-01]
     Source Functions:
       Point:
         Number: 1
-        Center 0: [1.30000000000000004e+00, 8.00000000000000044e-01]
+        Center 0: [1.3e+00, 8.0e-01]
         Time Wavelet:
           Type: Monotone
         Spatial:
           Type: Gaussian
-          Amplitude: 5.00000000000000000e+00
-          Radius: 1.00000000000000005e-01
+          Amplitude: 5.0e+00
+          Radius: 1.0e-01
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -45,8 +46,8 @@ ANONYMOUS:
   Discretization:
     1D Elements: 50
     2D Elements: 50
-    1D Scale: 4.00000000000000000e+00
-    2D Scale: 4.00000000000000000e+00
+    1D Scale: 4.0e+00
+    2D Scale: 4.0e+00
     Workset Size: 100
     Method: STK2D
     Exodus Output File Name: helm2d_tpetra.exo
@@ -55,15 +56,15 @@ ANONYMOUS:
       Predictor:
         Method: Tangent
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0e+00
         Continuation Parameter: Ksqr
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 2.00000000000000000e+02
-        Min Value: 0.00000000000000000e+00
+        Max Value: 2.0e+02
+        Min Value: 0.0e+00
         Compute Eigenvalues: false
       Step Size:
-        Initial Step Size: 2.00000000000000011e-01
+        Initial Step Size: 2.0e-01
         Method: Constant
     NOX:
       Status Tests:
@@ -96,12 +97,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
-                    Tolerance: 1.00000000000000008e-05
+                    Tolerance: 1.0e-05
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000008e-05
+                      Convergence Tolerance: 1.0e-05
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -120,7 +121,7 @@ ANONYMOUS:
                     'fact: level-of-fill': 1
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -137,14 +138,16 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
-  Regression For Response 0:
+  Regression For Response 0:  
+    Test Value: -2.892021e-01
     Sensitivity For Parameter 0:
-      Test Value: 4.20882169999999999e-01
-    Test Value: -2.89202100000000017e-01
-    Relative Tolerance: 1.00000000000000004e-04
+      Test Value:  -2.355262342872e+00
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
   Regression For Response 1:
+    Test Value: 5.1415553e+01
     Sensitivity For Parameter 0:
-      Test Value: 7.30462879999999969e+00
-    Test Value: 5.14155530000000027e+01
-    Relative Tolerance: 1.00000000000000004e-04
+      Test Value: 1.358323832535e+02   
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
 ...

@@ -5,6 +5,7 @@ ANONYMOUS:
   Problem:
     Phalanx Graph Visualization Detail: 0
     Name: NavierStokes 2D
+    Compute Sensitivities: true
     Heat:
       Variable Type: DOF
     Body Force:

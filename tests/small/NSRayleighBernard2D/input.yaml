@@ -6,6 +6,7 @@ ANONYMOUS:
     Solution Method: Transient
     Phalanx Graph Visualization Detail: 0
     Name: NavierStokes 2D
+    Compute Sensitivities: true
     Heat:
       Variable Type: DOF
     Volumetric Expansion Coefficient:
@@ -145,9 +146,8 @@ ANONYMOUS:
               'smoother: pre or post': both
               'coarse: type': Amesos-KLU
               PDE equations: 4
-  Regression For Response 0:
-    Sensitivity For Parameter 0:
-      Test Value: 5.21962479841000040e-03
+  Regression For Response 0:    
     Test Value: 4.636158137417e-01
-    Relative Tolerance: 1.00000000000000002e-03
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
 ...

@@ -33,14 +33,17 @@ ANONYMOUS:
     Block 1: begins at 50 ends at 100 length 1.0 named MatB
     Separate Evaluators by Element Block: true
   Regression For Response 0:
-    Test Value: 2.97480000000000022e-01
-    Absolute Tolerance: 9.99999999999999955e-07
+    Test Value: 2.9748e-01
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
   Regression For Response 1:
-    Test Value: 4.35432000000000041e+00
-    Absolute Tolerance: 9.99999999999999955e-07
+    Test Value: 4.35432e+00
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
   Regression For Response 2:
-    Test Value: 1.00000000000000000e+00
-    Absolute Tolerance: 9.99999999999999955e-07
+    Test Value: 1.0e+00
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
   Piro: 
     NOX: 
       Direction: 

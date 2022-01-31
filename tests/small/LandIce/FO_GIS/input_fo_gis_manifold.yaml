@@ -8,6 +8,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
+    Compute Sensitivities: true
     Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
@@ -222,9 +223,9 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-06    
+    Relative Tolerance: 1.0e-06
+    Test Value: 1.06697612025e+08
     Sensitivity For Parameter 0:
-      Test Value: 1.93347705432000011e+07
-    Test Value: 1.06697612025000005e+08
-    Relative Tolerance: 1.00000000000000004e-04
+      Test Value: 1.753719284188e+07
 ...

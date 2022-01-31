@@ -16,11 +16,6 @@ ANONYMOUS:
     Initial Condition:
       Function: Constant
       Function Data: [5.00000000000000000e-01, 5.00000000000000000e-01, 5.00000000000000000e-01]
-    Parameters:
-      Number Of Parameters: 1
-      Parameter 0:
-        Type: Scalar
-        Name: DBC on NS NodeSet99 for DOF ux
     Response Functions:
       Number Of Responses: 2
       Response 1:
@@ -117,15 +112,11 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000005e-01
-    Sensitivity For Parameter 0:
-      Test Value: 1.00000000000000000e+00
-    Test Value: 1.00000000000000000e+00
-    Relative Tolerance: 1.00000000000000002e-02
+    Absolute Tolerance: 0.1
+    Relative Tolerance: 1.0e-02
+    Test Value: 1.0
   Regression For Response 1:
-    Absolute Tolerance: 1.00000000000000005e-01
-    Sensitivity For Parameter 0:
-      Test Value: 3.33330000000000015e-01
-    Test Value: 0.00000000000000000e+00
-    Relative Tolerance: 1.00000000000000002e-02
+    Absolute Tolerance: 0.1
+    Relative Tolerance: 1.0e-02
+    Test Value: 0.0
 ...
