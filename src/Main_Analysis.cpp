@@ -23,7 +23,7 @@
 
 int main(int argc, char *argv[]) {
 
-  int status=0; // 0 = pass, failures are incremented
+  int failures(0);
   bool success = true;
 
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, nullptr);
@@ -91,17 +91,17 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(*fwd_solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
+    Piro::PerformAnalysis(*fwd_solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
-    status = regression.checkAnalysisTestResults(0, p);
+    auto status = regression.checkAnalysisTestResults(0, p);
+    failures = status.first;
 
-    // Regression comparisons for Dakota runs only valid on Proc 0.
-    if (mpiSession.getRank()>0)  status=0;
-    else *out << "\nNumber of Failed Comparisons: " << status << std::endl;
+    *out << "\nNumber of Comparisons Attempted: " << status.second << std::endl;
+    *out << "Number of Failed Comparisons: " << failures << std::endl;
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
-  if (!success) status+=10000;
+  if (!success) failures+=10000;
 
   stackedTimer->stopBaseTimer();
   if (reportTimers) {
@@ -113,5 +113,5 @@ int main(int argc, char *argv[]) {
 
   Kokkos::finalize_all();
 
-  return status;
+  return failures;
 }
