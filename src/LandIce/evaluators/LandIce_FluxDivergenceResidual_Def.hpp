@@ -154,9 +154,11 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 
     //distance between the triangle edges and the circumcenter
     //(this is the parts of the edges of the Voronoi cell belonging to this triangle)
-    MeshScalarT e01_c = sqrt(r2 - e01*e01/4.);
-    MeshScalarT e12_c = sqrt(r2 - e12*e12/4.);
-    MeshScalarT e20_c = sqrt(r2 - e20*e20/4.);
+    //(we take the positive part before computing the square root 
+    //because round off errors can lead to slightly negative values.)
+    MeshScalarT e01_c = sqrt(std::max(r2 - e01*e01/4.,0.0));
+    MeshScalarT e12_c = sqrt(std::max(r2 - e12*e12/4.,0.0));
+    MeshScalarT e20_c = sqrt(std::max(r2 - e20*e20/4.,0.0));
 
     //Computing the area of the intersection between the triangle and the voronoi cells centered at the triangle vertices
     MeshScalarT A0 = e01_c*e01/4. + e20_c*e20/4.;
