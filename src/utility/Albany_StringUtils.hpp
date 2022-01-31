@@ -6,22 +6,19 @@
 
 // @HEADER
 
-#ifndef UTIL_STRING_HPP
-#define UTIL_STRING_HPP
+#ifndef ALBANY_STRING_UTILS_HPP
+#define ALBANY_STRING_UTILS_HPP
 
 /**
- *  \file string.hpp
- *
- *  \brief
+ *  \brief A few utility functions for strings
  */
 
 #include <string>
 #include <type_traits>
-#include <cctype>
-#include <algorithm>
+
+#include <Teuchos_ParameterList.hpp>
 
 namespace util {
-typedef std::string string;
 
 namespace detail {
 
@@ -42,57 +39,39 @@ struct has_tostring: public std::integral_constant<bool,
 };
 
 template<typename T>
-string string_convert (
-    typename std::enable_if<std::is_convertible<T, string>::value, T>::type&& val) {
-  return static_cast<string>(val);
+std::string string_convert (
+    typename std::enable_if<std::is_convertible<T, std::string>::value, T>::type&& val) {
+  return static_cast<std::string>(val);
 }
 
 template<typename T>
-string string_convert (
+std::string string_convert (
     typename std::enable_if<has_tostring<T>::value, T>::type&& val) {
   return val.toString();
 }
 
 template<typename T>
-string string_convert (
+std::string string_convert (
     typename std::enable_if<
-        !std::is_convertible<T, string>::value && !has_tostring<T>::value, T>::type&& val) {
+        !std::is_convertible<T, std::string>::value && !has_tostring<T>::value, T>::type&& val) {
   return std::to_string(std::forward<T>(val));
 }
 
-}
+} // namespace detail
 
 template<typename T>
-inline string to_string (T&& val) {
+inline std::string to_string (T&& val) {
   return detail::string_convert<T>(std::forward<T>(val));
 }
 
-inline string upper_case (const string& s) {
-  string s_up = s;
+inline std::string upper_case (const std::string& s) {
+  std::string s_up = s;
   std::transform(s_up.begin(), s_up.end(), s_up.begin(),
                  [](unsigned char c)->char { return std::toupper(c); }
                 );
   return s_up;
 }
 
-/*
- template<typename T>
- inline string to_string (const T& val) {
- return val.toString();
- }
+} // namespace util
 
- inline string to_string (const string &val) {
- return val;
- }
-
- inline string to_string (int val) {
- return std::to_string(val);
- }
-
- inline string to_string (double val) {
- return std::to_string(val);
- }*/
-
-}
-
-#endif  // UTIL_STRING_HPP
+#endif  // ALBANY_STRING_UTILS_HPP

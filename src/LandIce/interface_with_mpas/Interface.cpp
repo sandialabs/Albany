@@ -47,7 +47,7 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
-#include "string.hpp"
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>

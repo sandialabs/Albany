@@ -19,7 +19,7 @@
 #include <vector>
 #include <utility>
 
-#include "string.hpp"
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
 
 namespace util {
 
@@ -34,7 +34,7 @@ public:
 
 private:
 
-  typedef std::vector<string> TableRow;
+  typedef std::vector<std::string> TableRow;
   
   template<class T, typename ... Args>
   void addRow (TableRow &row, const T& val, Args ... args);

@@ -57,7 +57,7 @@
 #include "PHAL_RandomPhysicalParameter.hpp"
 #include "PHAL_IsAvailable.hpp"
 
-#include <string.hpp> // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN

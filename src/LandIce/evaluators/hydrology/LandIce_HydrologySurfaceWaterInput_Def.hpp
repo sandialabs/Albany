@@ -1,5 +1,5 @@
 #include "LandIce_HydrologySurfaceWaterInput.hpp"
-#include "utility/string.hpp"
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
 
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"

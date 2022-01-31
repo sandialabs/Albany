@@ -15,17 +15,19 @@
  *  \brief 
  */
 
+
+#include "DisplayTable.hpp"
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+
 #include <Teuchos_Comm.hpp>
 #include <Teuchos_PtrDecl.hpp>
 #include <Teuchos_RCPDecl.hpp>
 #include <Teuchos_DefaultComm.hpp>
+
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-
-#include "DisplayTable.hpp"
-#include "string.hpp"
 #include <fstream>
 
 namespace util {
@@ -36,7 +38,7 @@ public:
   
   typedef MonitoredType monitored_type;
   typedef Teuchos::RCP<MonitoredType> pointer_type;
-  typedef string key_type;
+  typedef std::string key_type;
   typedef std::map<key_type, Teuchos::RCP<monitored_type> > monitor_map;
 
   MonitorBase ();
@@ -52,11 +54,11 @@ public:
 
 protected:
   
-  virtual string getStringValue (const monitored_type& val) = 0;
+  virtual std::string getStringValue (const monitored_type& val) = 0;
 
-  string title_;
-  string itemTypeLabel_;
-  string itemValueLabel_;
+  std::string title_;
+  std::string itemTypeLabel_;
+  std::string itemValueLabel_;
 
   monitor_map itemMap_;
 };

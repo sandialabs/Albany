@@ -15,7 +15,7 @@
 
 #include "LandIce_BasalFrictionCoefficient.hpp"
 
-#include <string.hpp> // for 'upper_case' (comes from src/utility; not to be confused with <string>)
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
 
 #include "Albany_Utils.hpp"
 

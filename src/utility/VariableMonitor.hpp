@@ -16,7 +16,8 @@
  */
 
 #include "MonitorBase.hpp"
-#include "string.hpp"
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+
 #include <list>
 
 namespace util {
@@ -24,21 +25,21 @@ namespace util {
 class VariableHistory {
 public:
   
-  VariableHistory (const string &name)
+  VariableHistory (const std::string &name)
       : m_name { name } {
   }
   
   template<typename T>
   void addValue (T&& val);
 
-  const std::list<string>& getHistory () const {
+  const std::list<std::string>& getHistory () const {
     return m_history;
   }
   
 private:
   
-  string m_name;
-  std::list<string> m_history;
+  std::string m_name;
+  std::list<std::string> m_history;
 };
 
 class VariableMonitor: public MonitorBase<VariableHistory> {
@@ -50,12 +51,12 @@ public:
   
 protected:
   
-  virtual string getStringValue (const monitored_type& val) override;
+  virtual std::string getStringValue (const monitored_type& val) override;
 };
 
 template<typename T>
 inline void VariableHistory::addValue (T&& val) {
-  //TODO, when compiler allows, replace following with this for performance: m_history.emplace_back(to_string(std::forward<T>(val)));
+  //TODO, when compiler allows, replace following with this for performance: m_history.emplace_back(to_std::string(std::forward<T>(val)));
   m_history.push_back(to_string(std::forward<T>(val)));
 }
 

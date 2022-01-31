@@ -2,7 +2,7 @@
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 
-#include <string.hpp>               // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
+#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
 #include <Albany_ProblemUtils.hpp>  // For 'getIntrepidwBasis'
 
 namespace LandIce {
