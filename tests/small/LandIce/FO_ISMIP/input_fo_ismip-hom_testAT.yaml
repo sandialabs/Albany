@@ -6,9 +6,10 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 2
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
+    Compute Sensitivities: false
     Dirichlet BCs:
-      DBC on NS NodeSet4 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet4 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF U0: 0.0
+      DBC on NS NodeSet4 for DOF U1: 0.0
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -16,25 +17,25 @@ ANONYMOUS:
         Name: Glen's Law Homotopy Parameter
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 2.99999999999999988e-01
+      Glen's Law Homotopy Parameter: 0.3
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0e+00
     Body Force:
       Type: FO INTERP SURF GRAD
-      LandIce alpha: 5.00000000000000000e-01
+      LandIce alpha: 5.0e-01
     Response Functions:
-      Response 2:
-        Type: Scalar Response
-        Name: Solution Average
       Number Of Responses: 3
-      Response 1:
-        Equation: 1
-        Type: Scalar Response
-        Name: Solution Max Value
       Response 0:
         Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
+      Response 1:
+        Equation: 1
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 2:
+        Type: Scalar Response
+        Name: Solution Average
   Discretization:
     Periodic_x BC: true
     Periodic_y BC: true
@@ -42,12 +43,12 @@ ANONYMOUS:
     1D Elements: 20
     2D Elements: 20
     3D Elements: 5
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
-    3D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
+    2D Scale: 1.0
+    3D Scale: 1.0
     Transform Type: ISMIP-HOM Test A
-    LandIce alpha: 5.00000000000000000e-01
-    LandIce L: 5.00000000000000000e+00
+    LandIce alpha: 5.0e-01
+    LandIce L: 5.0
     Method: STK3D
     Exodus Output File Name: felix_stokes_fo_ismip-hom_testA_out_tpetra.exo
     Required Fields Info:
@@ -63,14 +64,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0e+00
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 1.00000000000000005e-01
+        Initial Step Size: 1.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -84,11 +85,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999979e-13
+            Tolerance: 1.0e-06
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000004e-04
-            Relative Tolerance: 1.00000000000000002e-08
+            Absolute Tolerance: 1.0e-04
+            Relative Tolerance: 1.0e-07
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 10
@@ -111,12 +112,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
+                    Tolerance: 1.0e-03
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-07
+                      Convergence Tolerance: 1.0e-03
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -142,7 +143,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -160,15 +161,13 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
-  Regression For Response 0:
-    Sensitivity For Parameter 0:
-      Test Value: 2.08812026833999991e-01
-    Test Value: 1.50291698406999998e+01
-    Relative Tolerance: 1.00000000000000004e-04
+  Regression For Response 0:  
+    Test Value: 1.50291698407e+01
+    Relative Tolerance: 1.0e-04
   Regression For Response 1:
-    Test Value: 1.37379728153999991e+00
-    Relative Tolerance: 1.00000000000000004e-04
+    Test Value: 1.37379728154e+00
+    Relative Tolerance: 1.0e-04
   Regression For Response 2:
-    Test Value: 5.11690906222000041e+00
-    Relative Tolerance: 1.00000000000000004e-04
+    Test Value: 5.11690906222e+00
+    Relative Tolerance: 1.0e-04
 ...

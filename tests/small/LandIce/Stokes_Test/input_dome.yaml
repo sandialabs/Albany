@@ -6,13 +6,14 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Continuation
     Name: LandIce Stokes 3D
+    Compute Sensitivities: true
     Dirichlet BCs:
-      DBC on NS lateral for DOF ux: 0.00000000000000000e+00
-      DBC on NS lateral for DOF uy: 0.00000000000000000e+00
-      DBC on NS lateral for DOF uz: 0.00000000000000000e+00
-      DBC on NS basal for DOF ux: 0.00000000000000000e+00
-      DBC on NS basal for DOF uy: 0.00000000000000000e+00
-      DBC on NS basal for DOF uz: 0.00000000000000000e+00
+      DBC on NS lateral for DOF ux: 0.0
+      DBC on NS lateral for DOF uy: 0.0
+      DBC on NS lateral for DOF uz: 0.0
+      DBC on NS basal for DOF ux: 0.0
+      DBC on NS basal for DOF uy: 0.0
+      DBC on NS basal for DOF uz: 0.0
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -20,34 +21,34 @@ ANONYMOUS:
         Name: Glen's Law Homotopy Parameter
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 2.99999999999999988e-01
+      Glen's Law Homotopy Parameter: 0.3
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
     Tau M:
-      Delta: 1.00000000000000005e-01
+      Delta: 0.1
     Body Force:
       Type: Gravity
     Response Functions:
-      Response 4:
-        Type: Scalar Response
-        Name: Solution Average
-      Response 3:
-        Equation: 3
-        Type: Scalar Response
-        Name: Solution Max Value
-      Response 2:
-        Equation: 2
+      Number Of Responses: 5
+      Response 0:
+        Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
       Response 1:
         Equation: 1
         Type: Scalar Response
         Name: Solution Max Value
-      Response 0:
-        Equation: 0
+      Response 2:
+        Equation: 2
         Type: Scalar Response
         Name: Solution Max Value
-      Number Of Responses: 5
+      Response 3:
+        Equation: 3
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 4:
+        Type: Scalar Response
+        Name: Solution Average
   Discretization:
     Transform Type: Dome
     Method: Exodus
@@ -60,14 +61,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 1.00000000000000005e-01
+        Initial Step Size: 1.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -81,11 +82,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999954e-07
+            Tolerance: 1.0e-06
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000002e-03
-            Relative Tolerance: 9.99999999999999954e-07
+            Absolute Tolerance: 1.0e-03
+            Relative Tolerance: 1.0e-06
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 10
@@ -108,12 +109,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 1000
-                    Tolerance: 9.99999999999999954e-07
+                    Tolerance: 1.0e-06
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-07
+                      Convergence Tolerance: 1.0e-06
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 0
@@ -139,7 +140,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -158,29 +159,25 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Sensitivity For Parameter 0:
-      Test Value: -1.26120000000000008e-03
-    Test Value: 1.05281573926999996e+02
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-08
+    Relative Tolerance: 1.0e-04
+    Test Value: 1.05281573927e+02
   Regression For Response 1:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Sensitivity For Parameter 0:
-      Test Value: -1.26120000000000008e-03
-    Test Value: 1.05281573926999996e+02
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-08
+    Relative Tolerance: 1.0e-04
+    Test Value: 1.05281573927e+02
   Regression For Response 2:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Sensitivity For Parameter 0:
-      Test Value: 0.00000000000000000e+00
-    Test Value: 1.79641604894000010e+01
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-08
+    Relative Tolerance: 1.0e-04
+    Test Value: 1.79641604894e+01
   Regression For Response 3:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Test Value: 6.27385242345000006e+03
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-04
+    Relative Tolerance: 1.0e-04
+    Test Value: 6.27385242345e+03
   Regression For Response 4:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Test Value: 5.60064038295000045e+02
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-04
+    Relative Tolerance: 1.0e-04
+    Test Value: 5.60064038295e+02
+    Sensitivity For Parameter 0:
+      Test Value: -1.784760224056e-03
 ...

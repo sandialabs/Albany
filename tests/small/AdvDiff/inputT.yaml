@@ -13,16 +13,16 @@ ANONYMOUS:
     Options:
       Use Augmented Form: true
       Augmented Form Type: 2
-      Advection a: 1.00000000000000000e+00
-      Advection b: 1.00000000000000000e+00
-      Viscosity mu: 1.00000000000000005e-01
+      Advection a: 1.0
+      Advection b: 1.0
+      Viscosity mu: 0.1
     Parameters:
       Number Of Parameters: 0
-    Response Functions:
+    Response Functions:    
+      Number Of Responses: 3
       Response 2:
         Type: Scalar Response
         Name: Solution Average
-      Number Of Responses: 3
       Response 1:
         Equation: 1
         Type: Scalar Response
@@ -35,9 +35,9 @@ ANONYMOUS:
     Write Solution to MatrixMarket: -1
   Discretization:
     1D Elements: 20
-    1D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
     2D Elements: 20
-    2D Scale: 1.00000000000000000e+00
+    2D Scale: 1.0
     Periodic_x BC: true
     Periodic_y BC: true
     Method: STK2D
@@ -54,13 +54,13 @@ ANONYMOUS:
           Storage Type: Unlimited
           Storage Limit: 20
         Time Step Control:
-          Initial Time: 0.00000000000000000e+00
+          Initial Time: 0.0
           Initial Time Index: 0
           Initial Time Step: 0.025
-          Final Time: 5.00000000000000000e-01
+          Final Time: 0.5
           Final Time Index: 10000
-          Maximum Absolute Error: 1.00000000000000002e-08
-          Maximum Relative Error: 1.00000000000000002e-08
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
           Output Time List: ''
           Output Index List: ''
           #Output Time Interval: 1.00000000000000000e+01
@@ -78,10 +78,10 @@ ANONYMOUS:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
                 Linear Solver:
-                  Tolerance: 1.00000000000000008e-05
+                  Tolerance: 1.0e-05
             Line Search:
               Full Step:
-                Full Step: 1.00000000000000000e+00
+                Full Step: 1.0
               Method: Full Step
             Nonlinear Solver: Line Search Based
             Printing:
@@ -105,7 +105,7 @@ ANONYMOUS:
               Number of Tests: 2
               Test 0:
                 Test Type: NormF
-                Tolerance: 1.00000000000000002e-08
+                Tolerance: 1.0e-08
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
@@ -116,7 +116,7 @@ ANONYMOUS:
             Solver Type: Block GMRES
             Solver Types:
               Block GMRES:
-                Convergence Tolerance: 1.00000000000000008e-05
+                Convergence Tolerance: 1.0e-05
                 Output Frequency: 10
                 Output Style: 1
                 Verbosity: 0
@@ -130,14 +130,14 @@ ANONYMOUS:
             Prec Type: ILUT
             Overlap: 1
             Ifpack2 Settings:
-              'fact: ilut level-of-fill': 1.00000000000000000e+00
+              'fact: ilut level-of-fill': 1.0e+00
   Regression For Response 0:
     Test Value: 2.435402154398e-01
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-04
   Regression For Response 1:
     Test Value: 2.915474759851e-01
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-04
   Regression For Response 2:
     Test Value: 5.749999999897e-02
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-04
 ...

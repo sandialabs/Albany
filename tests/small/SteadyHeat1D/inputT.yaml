@@ -53,12 +53,6 @@ ANONYMOUS:
   Regression For Response 2:
     Test Value: 2.20519499999999979e+00
     Relative Tolerance: 1.00000000000000005e-04
-    Sensitivity For Parameter 0:
-      Test Value: 2.01329000000000002e+00
-    Sensitivity For Parameter 1:
-      Test Value: 1.01805999999999996e+00
-    Sensitivity For Parameter 2:
-      Test Value: 9.61594999999999978e-01
   Piro: 
     LOCA: 
       Bifurcation: { }

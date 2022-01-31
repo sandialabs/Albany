@@ -39,7 +39,6 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-04
     Sensitivity For Parameter 0:
       Test Value: 1.04748375675000005e-01
-    Number of Piro Analysis Comparisons: 1
     Piro Analysis Test Two Norm: true
     Piro Analysis Test Values: [3.18968]
       

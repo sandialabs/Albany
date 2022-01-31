@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Epetra
   Problem: 
     Name: Heat 3D
+    Compute Sensitivities: true
     Phalanx Graph Visualization Detail: 2
     Dirichlet BCs: 
       DBC on NS nodelist_1 for DOF T: 2.00000000000000000e+00

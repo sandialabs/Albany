@@ -13,10 +13,7 @@ ANONYMOUS:
       DBC on NS nodelist_2 for DOF uy: 0.00000000000000000e+00
       DBC on NS nodelist_4 for DOF uy: 0.00000000000000000e+00
     Parameters:
-      Number Of Parameters: 1
-      Parameter 0:
-        Type: Scalar
-        Name: DBC on NS nodelist_1 for DOF ux
+      Number Of Parameters: 0
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -105,8 +102,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Sensitivity For Parameter 0:
-      Test Value: 1.35421554999999993e+00
     Test Value: 1.37102561000000000e+00
     Relative Tolerance: 1.00000000000000002e-03
 ...

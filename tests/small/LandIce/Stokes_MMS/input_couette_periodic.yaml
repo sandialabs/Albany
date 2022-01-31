@@ -5,6 +5,7 @@ ANONYMOUS:
   Problem:
     Phalanx Graph Visualization Detail: 0
     Name: LandIce Stokes 2D
+    Compute Sensitivities: true
     Dirichlet BCs:
       DBC on NS NodeSet2 for DOF ux: 1.00000000000000000e+00
       DBC on NS NodeSet3 for DOF ux: 0.00000000000000000e+00

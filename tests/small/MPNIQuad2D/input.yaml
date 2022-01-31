@@ -3,6 +3,7 @@
 ANONYMOUS:
   Problem:
     Name: Heat 2D
+    Compute Sensitivities: true
     Dirichlet BCs:
       DBC on NS NodeSet0 for DOF T: 1.50000000000000000e+00
       DBC on NS NodeSet1 for DOF T: 1.00000000000000000e+00

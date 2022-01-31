@@ -4,6 +4,7 @@ ANONYMOUS:
   Build Type: Epetra
   Problem: 
     Name: Heat 1D
+    Compute Sensitivities: true
     Solution Method: Transient
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T: 0.00000000000000000e+00

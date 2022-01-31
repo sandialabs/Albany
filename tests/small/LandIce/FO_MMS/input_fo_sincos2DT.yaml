@@ -7,23 +7,23 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Stokes First Order 2D
     Dirichlet BCs: 
-      DBC on NS NodeSet0 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF U0: 9.42477796000000012e+00
-      DBC on NS NodeSet2 for DOF U1: 0.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF U1: -9.42477796000000012e+00
+      DBC on NS NodeSet0 for DOF U0: 0.0e+00
+      DBC on NS NodeSet1 for DOF U0: 9.42477796e+00
+      DBC on NS NodeSet2 for DOF U1: 0.0e+00
+      DBC on NS NodeSet3 for DOF U1: -9.42477796e+00
     Parameters: 
       Number Of Parameters: 1
       Parameter 0:
         Name: Glen's Law Homotopy Parameter
     LandIce Viscosity: 
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 2.99999999999999989e-01
+      Glen's Law Homotopy Parameter: 3.0e-01
       Glen's Law A: 3.17098e-20    # [ Pa^-3 s^-1 ]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0e+00
     Body Force: 
       Type: FOSinCos2D
       Glen's Law A: 3.17098e-20    # [ Pa^-3 s^-1 ]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0e+00
     Response Functions: 
       Number Of Responses: 3
       Response 0:
@@ -35,27 +35,21 @@ ANONYMOUS:
       Response 2:
         Name: Solution Average
   Discretization: 
-    1D Elements: 10
-    2D Elements: 10
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
+    1D Elements: 5
+    2D Elements: 5
+    1D Scale: 1.0e+00
+    2D Scale: 1.0e+00
     Method: STK2D
     Exodus Output File Name: felix_stokes_fo_sincos2D_out.exo
   Regression For Response 0: 
-    Test Value: 9.42477796000000012e+00
-    Relative Tolerance: 1.00000000000000005e-04
-    Sensitivity For Parameter 0:
-      Test Values: 2.08812026833999992e-01
+    Test Value: 9.42477796e+00
+    Relative Tolerance: 1.0e-04  
   Regression For Response 1: 
-    Test Value: 0.00000000000000000e+00
-    Relative Tolerance: 1.00000000000000005e-04
-    Sensitivity For Parameter 0:
-      Test Values: 2.43439246662000008e-01
+    Test Value: 0.0e+00
+    Relative Tolerance: 1.0e-04
   Regression For Response 2: 
-    Test Value: 2.34890160582000008e-16
-    Relative Tolerance: 1.00000000000000005e-04
-    Sensitivity For Parameter 0:
-      Test Values: 5.45756230980999971e-02
+    Test Value: 0.0
+    Absolute Tolerance: 1.0e-06
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -63,15 +57,15 @@ ANONYMOUS:
       Predictor: 
         Method: Constant
       Stepper: 
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0e+00
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0e+00
+        Min Value: 0.0e+00
         Compute Eigenvalues: false
       Step Size: 
-        Initial Step Size: 5.00000000000000028e-02
+        Initial Step Size: 5.0e-02
     NOX: 
       Status Tests: 
         Test Type: Combo
@@ -85,11 +79,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000002e-03
+            Tolerance: 1.0e-12
           Test 1: 
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000006e-01
-            Relative Tolerance: 1.00000000000000002e-03
+            Absolute Tolerance: 1.0e-04
+            Relative Tolerance: 1.0e-08
         Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 10
@@ -112,12 +106,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 1.00000000000000002e-02
+                    Tolerance: 1.0e-08
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000000000002e-02
+                      Convergence Tolerance: 1.0e-08
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 0
@@ -143,7 +137,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 

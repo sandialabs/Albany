@@ -3,6 +3,7 @@
 ANONYMOUS:
   Problem:
     Name: Helmholtz 2D
+    Compute Sensitivities: true
     Left BC: 0.00000000000000000e+00
     Right BC: 0.00000000000000000e+00
     Top BC: 0.00000000000000000e+00

@@ -6,10 +6,10 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 2
     Name: LandIce Stokes First Order 3D
     Dirichlet BCs: 
-      DBC on NS NodeSet4 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet5 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet4 for DOF U1: 0.00000000000000000e+00
-      DBC on NS NodeSet5 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF U0: 0.0e+00
+      DBC on NS NodeSet5 for DOF U0: 0.0e+00
+      DBC on NS NodeSet4 for DOF U1: 0.0e+00
+      DBC on NS NodeSet5 for DOF U1: 0.0e+00
     LandIce Viscosity: 
       Type: Constant
     Body Force: 
@@ -31,53 +31,21 @@ ANONYMOUS:
     1D Elements: 12
     2D Elements: 12
     3D Elements: 12
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
-    3D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0e+00
+    2D Scale: 1.0e+00
+    3D Scale: 1.0e+00
     Method: STK3D
     Exodus Output File Name: felix_stokes_fo_sincosz_out.exo
   Regression For Response 0: 
-    Test Value: 9.86721213035000044e-02
-    Relative Tolerance: 1.00000000000000005e-04
-    Sensitivity For Parameter 0:
-      Test Values: 2.08812026833999992e-01
+    Test Value: 9.86721213035e-02
+    Relative Tolerance: 1.0e-04
   Regression For Response 1: 
-    Test Value: 9.86721213035000044e-02
-    Relative Tolerance: 1.00000000000000005e-04
-    Sensitivity For Parameter 0:
-      Test Values: 2.43439246662000008e-01
+    Test Value: 9.86721213035e-02
+    Relative Tolerance: 1.0e-04
   Regression For Response 2: 
-    Test Value: 1.13599367626000007e-15
-    Relative Tolerance: 1.00000000000000005e-04
-    Sensitivity For Parameter 0:
-      Test Values: 5.45756230980999971e-02
+    Test Value: 0.0
+    Absolute Tolerance: 1.0e-06
   Piro: 
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
-        Method: Tangent
-      Stepper: 
-        Initial Value: 1.00000000000000000e+00
-        Continuation Method: Natural
-        Continuation Parameter: DBC on NS cylinder for DOF U0
-        Max Steps: 1
-        Max Value: 4.50000000000000000e+01
-        Min Value: 5.00000000000000000e-01
-        Compute Eigenvalues: true
-        Eigensolver: 
-          Method: Anasazi
-          Operator: Cayley
-          Num Blocks: 100
-          Num Eigenvalues: 1
-          Save Eigenvectors: 1
-          Block Size: 1
-          Maximum Restarts: 0
-          Cayley Pole: 1.00000000000000000e+01
-          Cayley Zero: -1.00000000000000000e+01
-          Normalize Eigenvectors with Mass Matrix: false
-      Step Size: 
-        Initial Step Size: 2.00000000000000000e+00
     NOX: 
       Status Tests: 
         Test Type: Combo
@@ -91,11 +59,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999980e-13
+            Tolerance: 1.0e-12
           Test 1: 
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000005e-04
-            Relative Tolerance: 1.00000000000000002e-08
+            Absolute Tolerance: 1.0e-04
+            Relative Tolerance: 1.0e-08
         Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 10
@@ -118,12 +86,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
+                    Tolerance: 1.0e-08
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-07
+                      Convergence Tolerance: 1.0e-08
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 0
@@ -149,7 +117,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0e+00
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 

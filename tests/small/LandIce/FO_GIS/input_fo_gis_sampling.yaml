@@ -8,6 +8,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Laplacian Sampling
+    Compute Sensitivities: true
     Required Fields: [weighted_normal_sample]
     Side Name: lateralside
     Response Functions:

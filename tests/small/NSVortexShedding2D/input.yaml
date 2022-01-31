@@ -5,6 +5,7 @@ ANONYMOUS:
   Problem:
     Phalanx Graph Visualization Detail: 0
     Name: NavierStokes 2D
+    Compute Sensitivities: false
     Solution Method: Continuation
     Dirichlet BCs:
       DBC on NS inlet for DOF ux: 1.00000000000000000e+00
@@ -147,10 +148,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Sensitivity For Parameter 0:
-      Test Value: 1.41496696000000010e+00
-    Sensitivity For Parameter 1:
-      Test Value: -4.02275570000000026e-01
-    Test Value: 6.02549462099999999e+01
-    Relative Tolerance: 1.00000000000000002e-03
+    Test Value: 6.025494621e+01
+    Relative Tolerance: 1.0e-03
 ...
