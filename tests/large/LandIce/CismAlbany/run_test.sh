@@ -5,7 +5,7 @@
 #They need to be changed for other machines! 
 export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/tpls/install/bin
 export PATH=$PATH:/MATLAB/R2021b/bin:/tpls/install/include:/nightlyAlbanyTests/Results/Trilinos/build/install/bin
-alias mpirun=/tpls/install/bin/mpirun
+mpirun=/tpls/install/bin/mpirun
 
 rm -rf *exo*
 rm -rf albanyMesh/*exo*
