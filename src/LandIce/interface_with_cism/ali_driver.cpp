@@ -722,7 +722,8 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
 #ifdef COMPUTE_SENS_AND_RESP
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "Computing responses and sensitivities..." << std::endl;
-    int status=0; // 0 = pass, failures are incremented
+    int failures(0); // 0 = pass, failures are incremented
+    int comparisons(0); // number of comparisons attempted
 
     const int num_p = solver->Np(); // Number of *vectors* of parameters
     const int num_g = solver->Ng(); // Number of *vectors* of responses
@@ -753,33 +754,35 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
           Albany::printThyraVector(*out << "\nResponse vector " << i << ":\n", g);
         }
 
-        if (num_p == 0 && cur_time_yr == final_time) {
+        if (cur_time_yr == final_time) {
           // Just calculate regression data -- only if in final time step
-          status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
-        } else {
-          for (unsigned int j=0; j<num_p; j++) {
-            Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
+          auto rspStatus = regression.checkResponse(i, g);
+          failures += rspStatus.first;
+          comparisons += rspStatus.second;
+        }
+        for (unsigned int j=0; j<num_p; j++) {
+          Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
 
-            if (debug_output_verbosity != 0) {
-              if (Teuchos::nonnull(dgdp)) {
-                Albany::printThyraMultiVector(*out <<"\nSensitivities (" << i << ", " << j << "):\n", dgdp);
-              }
+          if (debug_output_verbosity != 0) {
+            if (Teuchos::nonnull(dgdp)) {
+              Albany::printThyraMultiVector(*out <<"\nSensitivities (" << i << ", " << j << "):\n", dgdp);
             }
-            if (cur_time_yr == final_time) {
-              if (Teuchos::nonnull(dgdp))
-                status += regression.checkSolveTestResults(i, j, g, dgdp);
-              else
-                status += regression.checkSolveTestResults(i, -1, g, Teuchos::null);
-            }
+          }
+          if ((cur_time_yr == final_time) && Teuchos::nonnull(dgdp)) {
+            auto sensStatus = regression.checkSensitivity(i, j, dgdp);
+            failures += sensStatus.first;
+            comparisons += sensStatus.second;
           }
         }
       }
     }
-    if (debug_output_verbosity != 0 && cur_time_yr == final_time) //only print regression test result if you're in the final time step
-      *out << "\nNumber of Failed Comparisons: " << status << std::endl;
+    if (debug_output_verbosity != 0 && cur_time_yr == final_time){ //only print regression test result if you're in the final time step
+      *out << "\nNumber of Comparisons Attempted: " << comparisons << std::endl;
+      *out << "Number of Failed Comparisons: " << failures << std::endl;
+    }
 #ifdef CISM_CHECK_COMPARISONS
     //IK, 10/30/14: added the following line so that when you run ctest from CISM the test fails if there are some failed comparisons.
-    if (status > 0)
+    if (failures > 0)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "All regression comparisons did not pass!" << std::endl);
 #endif
 

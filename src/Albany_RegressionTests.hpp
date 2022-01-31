@@ -27,14 +27,28 @@ public:
   //! Destructor
   virtual ~RegressionTests () = default;
 
-  int checkSolveTestResults(
+  /** \brief Function that does regression testing for a response.
+   * returns the pair containing the number of failures and comparisons*/
+  std::pair<int,int> checkResponse(
+      int                                           response_index,
+      const Teuchos::RCP<const Thyra_Vector>&       g) const;
+
+  /** \brief Function that does regression testing for a sensitivity.
+   * returns the pair containing the number of failures and comparisons*/
+  std::pair<int,int> checkSensitivity(
       int                                           response_index,
       int                                           parameter_index,
-      const Teuchos::RCP<const Thyra_Vector>&       g,
       const Teuchos::RCP<const Thyra_MultiVector>&  dgdp) const;
 
-  /** \brief Function that does regression testing for Analysis runs. */
-  int checkAnalysisTestResults(
+  /** \brief Function asserting there are no sensitivity tests for a given response and parameter. */
+  void assertNoSensitivityTests(
+      int                                           response_index,
+      int                                           parameter_index,
+      const std::string&                            error_msg) const;
+
+  /** \brief Function that does regression testing for Analysis runs.
+   * returns the pair containing the number of failures and comparisons*/
+  std::pair<int,int> checkAnalysisTestResults(
       int                                            response_index,
       const Teuchos::RCP<Thyra_Vector>& tvec) const;
 
@@ -51,10 +65,6 @@ protected:
                       std::string const& name) const;
 
   Teuchos::ParameterList* getTestParameters(int response_index)const;
-
-  void storeTestResults (Teuchos::ParameterList* testParams,
-                         int                     failures,
-                         int                     comparisons) const;
 
   Teuchos::RCP<Teuchos::ParameterList>  appParams;
 
