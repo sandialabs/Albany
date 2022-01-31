@@ -133,9 +133,9 @@ if (ALBANY_FROSCH)
                        LABELS "LandIce;Tpetra;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
   
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch.yaml)
-  add_test(${testNameRoot}_Humboldt_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml)
+  add_test(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_fluxdiv.yaml)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_power_law.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_power_law.yaml)
@@ -146,33 +146,33 @@ if (ALBANY_FROSCH)
   add_test(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_effect_press.yaml)
 
   if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
-    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_FROSch
+    set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
                        PROPERTIES
-                       LABELS            "LandIce;Epetra;Forward"
+                       LABELS            "LandIce;Tpetra;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
                        
     set_tests_properties(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch
                        PROPERTIES
-                       LABELS            "LandIce;Epetra;Forward"
+                       LABELS            "LandIce;Tpetra;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
 
     set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
                        PROPERTIES
-                       LABELS            "LandIce;Epetra;Forward"
+                       LABELS            "LandIce;Tpetra;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
                        
   else ()
-    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_FROSch
+    set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
                        PROPERTIES
-                       LABELS         "LandIce;Epetra;Forward")
+                       LABELS         "LandIce;Tpetra;Forward")
                        
     set_tests_properties(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch
                        PROPERTIES
-                       LABELS         "LandIce;Epetra;Forward")
+                       LABELS         "LandIce;Tpetra;Forward")
                        
     set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
                        PROPERTIES
-                       LABELS         "LandIce;Epetra;Forward")
+                       LABELS         "LandIce;Tpetra;Forward")
   endif()
   
 endif()
@@ -302,16 +302,14 @@ if (ALBANY_EPETRA)
 endif()
 
 # Basal friction sensitivity
-set (testName ${testNameRoot}_AdjointSensitivity_BasalFriction)
-
-if (ALBANY_EPETRA)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta.yaml)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_analysis_beta.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif ()
+set (testName ${testNameRoot}_AdjointSensitivity_BasalFriction_FluxDivergence)
 
 if (ALBANY_IFPACK2)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_fluxdivT.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_fluxdivT.yaml)
+  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_analysis_beta_fluxdivT.yaml)
+  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_betaT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_betaT.yaml)
