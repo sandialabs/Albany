@@ -260,49 +260,6 @@ strint(const std::string s, const int i, const char delim)
   return ss.str();
 }
 
-bool
-isValidInitString(const std::string& initString)
-{
-  // Make sure the first part of the string has the correct verbiage
-  std::string verbiage("initial value ");
-  size_t      pos = initString.find(verbiage);
-  if (pos != 0) return false;
-
-  // Make sure the rest of the string has only allowable characters
-  std::string valueString =
-      initString.substr(verbiage.size(), initString.size() - verbiage.size());
-  for (std::string::iterator it = valueString.begin(); it != valueString.end();
-       it++) {
-    std::string charAsString(1, *it);
-    pos = charAsString.find_first_of("0123456789.-+eE");
-    if (pos == std::string::npos) return false;
-  }
-
-  return true;
-}
-
-std::string
-doubleToInitString(double val)
-{
-  std::string       verbiage("initial value ");
-  std::stringstream ss;
-  ss << verbiage << val;
-  return ss.str();
-}
-
-double
-initStringToDouble(const std::string& initString)
-{
-  ALBANY_ASSERT(
-      isValidInitString(initString),
-      " initStringToDouble() called with invalid initialization string: "
-          << initString);
-  std::string verbiage("initial value ");
-  std::string valueString =
-      initString.substr(verbiage.size(), initString.size() - verbiage.size());
-  return std::atof(valueString.c_str());
-}
-
 void
 splitStringOnDelim(
     const std::string&        s,
