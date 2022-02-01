@@ -7,25 +7,23 @@
 #include "Albany_WeightedMisfitResponseFunction.hpp"
 
 #include "Albany_SolutionCullingStrategy.hpp"
+#include "Albany_Application.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_Hessian.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_StringUtils.hpp"
 
+#include "Thyra_VectorStdOps.hpp"
+#include "Teuchos_SerialDenseHelpers.hpp"
+#include "Teuchos_SerialDenseSolver.hpp"
+#include <Teuchos_TwoDArray.hpp>
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Array.hpp"
-
 #include "Teuchos_Assert.hpp"
 
 #include <iostream>
 
-#include "Albany_Application.hpp"
-#include "Albany_ThyraUtils.hpp"
-#include "Albany_CombineAndScatterManager.hpp"
-#include "Albany_GlobalLocalIndexer.hpp"
-#include "Thyra_VectorStdOps.hpp"
-
-#include "Teuchos_SerialDenseHelpers.hpp"
-#include "Teuchos_SerialDenseSolver.hpp"
-#include <Teuchos_TwoDArray.hpp>
-
-#include "Albany_Hessian.hpp"
 
 using Teuchos::ScalarTraits;
 using Teuchos::SerialDenseMatrix;
@@ -45,8 +43,8 @@ WeightedMisfitResponse(const Teuchos::RCP<const Application>& app,
   dimensions = Teuchos::rcp( new Teuchos::SerialDenseVector<int, int>(n_parameters) );
 
   for (int i=0; i<n_parameters; i++) {
-    if (app->getProblemPL()->sublist("Parameters").sublist(strint("Parameter",i)).isParameter("Dimension"))
-      (*dimensions)(i) = app->getProblemPL()->sublist("Parameters").sublist(strint("Parameter",i)).get<int>("Dimension");
+    if (app->getProblemPL()->sublist("Parameters").sublist(util::strint("Parameter",i)).isParameter("Dimension"))
+      (*dimensions)(i) = app->getProblemPL()->sublist("Parameters").sublist(util::strint("Parameter",i)).get<int>("Dimension");
     else
       (*dimensions)(i) = 1;
     total_dimension += (*dimensions)(i);

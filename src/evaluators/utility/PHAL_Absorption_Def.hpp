@@ -90,7 +90,7 @@ Absorption<EvalT,Traits>::getValue(const std::string &n)
   if (is_constant)
     return constant_value;
   /*for (int i=0; i<rv.size(); i++) {
-    if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
+    if (n == util::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
   }*/
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

@@ -4,13 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <string>
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_PopulateMesh.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include "Shards_CellTopology.hpp"
 
-#include "Albany_Utils.hpp"
-#include "Albany_ProblemUtils.hpp"
-#include "Albany_PopulateMesh.hpp"
+#include <string>
 
 namespace Albany
 {
@@ -90,7 +91,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
   int num_fields = req_fields_info.get<int>("Number Of Fields",0);
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
-    const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(strint("Field", ifield));
+    const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(util::strint("Field", ifield));
 
     fname   = thisFieldList.get<std::string>("Field Name");
     flayout = thisFieldList.get<std::string>("Field Type");
@@ -140,14 +141,14 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
     for (auto ss_name : ss_names)
     {
       Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
-      Teuchos::ParameterList& req_fields_info = this_ss_pl.sublist("Required Fields Info");
+      Teuchos::ParameterList& ss_req_fields_info = this_ss_pl.sublist("Required Fields Info");
       Teuchos::RCP<Layouts> sdl = dl->side_layouts[ss_name];
 
-      int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+      int ss_num_fields = ss_req_fields_info.get<int>("Number Of Fields",0);
 
-      for (int ifield=0; ifield<num_fields; ++ifield)
+      for (int ifield=0; ifield<ss_num_fields; ++ifield)
       {
-        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(strint("Field", ifield));
+        const Teuchos::ParameterList& thisFieldList =  ss_req_fields_info.sublist(util::strint("Field", ifield));
 
         fname   = thisFieldList.get<std::string>("Field Name");
         flayout = thisFieldList.get<std::string>("Field Type");

@@ -65,7 +65,7 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     int total_num_param_vecs, num_param_vecs, numDistParams;
     Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
-      Teuchos::ParameterList p = params->sublist("Parameters").sublist(Albany::strint("Parameter", 
+      Teuchos::ParameterList p = params->sublist("Parameters").sublist(util::strint("Parameter", 
 			                 i+num_param_vecs));
       if(p.get<std::string>("Name") == "thermal_conductivity" && p.get<std::string>("Type") == "Distributed")
         conductivityIsDistParam = true;

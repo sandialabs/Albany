@@ -4,9 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// @HEADER
-
 #include "VariableMonitor.hpp"
+
 #include <sstream>
 
 namespace util {
@@ -17,7 +16,7 @@ VariableMonitor::VariableMonitor () {
   itemValueLabel_ = "Value";
 }
 
-string VariableMonitor::getStringValue (const monitored_type& val) {
+std::string VariableMonitor::getStringValue (const monitored_type& val) {
   std::stringstream ret;
   for (auto&& v : val.getHistory()) {
     ret << v << " ";
@@ -26,4 +25,4 @@ string VariableMonitor::getStringValue (const monitored_type& val) {
   return ret.str();
 }
 
-}
+} // namespace util

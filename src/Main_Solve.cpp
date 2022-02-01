@@ -7,12 +7,15 @@
 #include <iostream>
 #include <string>
 
-#include "Albany_Memory.hpp"
-#include "Albany_SolverFactory.hpp"
 #include "Albany_RegressionTests.hpp"
-#include "Albany_Utils.hpp"
+#include "Albany_SolverFactory.hpp"
+#include "Albany_PiroObserver.hpp"
+#include "Albany_Memory.hpp"
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
+#include "Albany_DataTypes.hpp"
 
 #include "Albany_FactoriesHelpers.hpp"
 
@@ -31,8 +34,6 @@
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_MultiVectorStdOps.hpp"
 
-#include "Albany_PiroObserver.hpp"
-
 #if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
 #endif
@@ -44,8 +45,6 @@
 #if defined(ALBANY_FLUSH_DENORMALS)
 #include <pmmintrin.h>
 #endif
-
-#include "Albany_DataTypes.hpp"
 
 #include "Phalanx_config.hpp"
 
@@ -197,7 +196,7 @@ int main(int argc, char *argv[])
     param_names.resize(num_param_vecs);
     for (int l = 0; l < num_param_vecs; ++l) {
       const Teuchos::ParameterList & pList =
-          parameterParams.sublist(Albany::strint("Parameter", l));
+          parameterParams.sublist(util::strint("Parameter", l));
 
       const std::string& parameterType = pList.isParameter("Type") ?
           pList.get<std::string>("Type") : std::string("Scalar");
@@ -223,7 +222,7 @@ int main(int argc, char *argv[])
             Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
         for (int k = 0; k < numParameters; ++k) {
           (*param_names[l])[k] =
-              pList.sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
+              pList.sublist(util::strint("Scalar", k)).get<std::string>("Name");
         }
       }
     }
@@ -232,7 +231,7 @@ int main(int argc, char *argv[])
     response_names.resize(num_responses);
     for (int l = 0; l < num_responses; ++l) {
       const Teuchos::ParameterList& pList =
-        responseParams.sublist(Albany::strint("Response", l));
+        responseParams.sublist(util::strint("Response", l));
 
       const std::string& type = pList.isParameter("Type") ?
           pList.get<std::string>("Type") : std::string("Scalar Response");
@@ -247,7 +246,7 @@ int main(int argc, char *argv[])
                 << std::endl);
         response_names[l] = "Sum Of Responses: ";
         for (int k = 0; k < num_sub_responses; ++k) {
-          response_names[l] += pList.sublist(Albany::strint("Response", k)).get<std::string>("Name");
+          response_names[l] += pList.sublist(util::strint("Response", k)).get<std::string>("Name");
           if( k != num_sub_responses-1)
             response_names[l] += " + ";
         }

@@ -13,8 +13,8 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_DataTypes.hpp"
-#include "utility/Albany_ThyraBlockedCrsMatrixFactory.hpp"
-#include "utility/Albany_ThyraUtils.hpp"
+#include "Albany_ThyraBlockedCrsMatrixFactory.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 #include "Panzer_BlockedDOFManager.hpp"
 //#include "Albany_NullSpaceUtils.hpp"

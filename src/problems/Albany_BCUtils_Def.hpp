@@ -5,10 +5,10 @@
 //*****************************************************************//
 
 #include "Albany_BCUtils.hpp"
+#include "Albany_StringUtils.hpp"
 #include "Albany_Macros.hpp"
 
 #include <Phalanx_Evaluator_Factory.hpp>
-#include <boost/algorithm/string.hpp>
 
 namespace {
 const char decorator[] = "Evaluator for ";
@@ -19,7 +19,7 @@ bool isRandom(Teuchos::RCP<Teuchos::ParameterList> params, const std::string& bc
     auto rparams = params->sublist("Random Parameters");
     int nrparams = rparams.get<int>("Number Of Parameters");
     for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
-      rparams_i = rparams.sublist(Albany::strint("Parameter", i_rparams));
+      rparams_i = rparams.sublist(util::strint("Parameter", i_rparams));
       if (bc_name == rparams_i.get<std::string>("Name")) return true;
     }
   }

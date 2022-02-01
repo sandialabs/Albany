@@ -255,7 +255,7 @@ Albany::ThermalProblem::constructEvaluators(
     int nrparams = rparams.get<int>("Number Of Parameters");
     for (int i_rparams=0; i_rparams<nrparams; ++i_rparams)
     {
-      auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+      auto rparams_i = rparams.sublist(util::strint("Parameter",i_rparams));
 
       RCP<ParameterList> p = rcp(new ParameterList("Theta 1"));
       p->set< RCP<ParamLib> >("Parameter Library", paramLib);

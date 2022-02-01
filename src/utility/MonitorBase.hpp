@@ -17,7 +17,7 @@
 
 
 #include "DisplayTable.hpp"
-#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 #include <Teuchos_Comm.hpp>
 #include <Teuchos_PtrDecl.hpp>

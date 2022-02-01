@@ -4,11 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// @HEADER
-
 #include "TimeMonitor.hpp"
 
-#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 namespace util {
 

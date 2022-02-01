@@ -9,6 +9,7 @@
 #include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GitVersion.h"
+#include "Albany_StringUtils.hpp"
 
 // Include the concrete Epetra Comm's, if needed
 #if defined(ALBANY_EPETRA)
@@ -116,7 +117,7 @@ CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemPa
     int  num_param_vecs = parameterParams.get<int>("Number Of Parameters");
     for (int i = 0; i < num_param_vecs; ++i) {
       const Teuchos::ParameterList& pList =
-          parameterParams.sublist(Albany::strint("Parameter", i));
+          parameterParams.sublist(util::strint("Parameter", i));
       const std::string& parameterType = pList.isParameter("Type") ?
           pList.get<std::string>("Type") : std::string("Scalar");
       if(parameterType == "Scalar" || parameterType == "Distributed")
@@ -151,7 +152,7 @@ getParameterSizes(const Teuchos::ParameterList parameterParams, int &total_num_p
 
   for (int l = 0; l < total_num_param_vecs; ++l) {
     const Teuchos::ParameterList& pList =
-        parameterParams.sublist(Albany::strint("Parameter", l));
+        parameterParams.sublist(util::strint("Parameter", l));
 
     const std::string parameterType = pList.isParameter("Type") ?
         pList.get<std::string>("Type") : std::string("Scalar");
@@ -250,25 +251,6 @@ AbsRowSum(
     }
     absRowSumsTpetra_nonconstView[row] = scale;
   }
-}
-
-std::string
-strint(const std::string s, const int i, const char delim)
-{
-  std::ostringstream ss;
-  ss << s << delim << i;
-  return ss.str();
-}
-
-void
-splitStringOnDelim(
-    const std::string&        s,
-    char                      delim,
-    std::vector<std::string>& elems)
-{
-  std::stringstream ss(s);
-  std::string       item;
-  while (std::getline(ss, item, delim)) { elems.push_back(item); }
 }
 
 std::string

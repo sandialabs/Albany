@@ -72,6 +72,19 @@ inline std::string upper_case (const std::string& s) {
   return s_up;
 }
 
+//! Utility to make a string out of a string + int with a delimiter:
+//! strint("dog",2,' ') = "dog 2"
+//! The default delimiter is ' '. Potential delimiters include '_' - "dog_2"
+std::string
+strint(const std::string s, const int i, const char delim = ' ');
+
+//! Splits a std::string on a delimiter
+void
+splitStringOnDelim(
+    const std::string&        s,
+    char                      delim,
+    std::vector<std::string>& elems);
+
 } // namespace util
 
 #endif  // ALBANY_STRING_UTILS_HPP

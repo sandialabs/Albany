@@ -16,7 +16,7 @@
  */
 
 #include "MonitorBase.hpp"
-#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 #include <list>
 

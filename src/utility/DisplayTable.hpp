@@ -19,7 +19,7 @@
 #include <vector>
 #include <utility>
 
-#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 namespace util {
 

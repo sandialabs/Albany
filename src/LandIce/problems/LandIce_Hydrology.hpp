@@ -7,22 +7,6 @@
 #ifndef LANDICE_HYDROLOGY_PROBLEM_HPP
 #define LANDICE_HYDROLOGY_PROBLEM_HPP
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
-#include "Albany_AbstractProblem.hpp"
-#include "Albany_EvaluatorUtils.hpp"
-#include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "LandIce_ResponseUtilities.hpp"
-
-#include "PHAL_Dimension.hpp"
-#include "PHAL_FieldFrobeniusNorm.hpp"
-#include "PHAL_LoadStateField.hpp"
-#include "PHAL_SaveStateField.hpp"
-#include "PHAL_Workset.hpp"
-
 #include "LandIce_BasalFrictionCoefficient.hpp"
 #include "LandIce_HydrologyBasalGravitationalWaterPotential.hpp"
 #include "LandIce_HydraulicPotential.hpp"
@@ -37,10 +21,27 @@
 #include "LandIce_HydrologySurfaceWaterInput.hpp"
 #include "LandIce_HydrologyWaterThickness.hpp"
 #include "LandIce_ParamEnum.hpp"
-
-#include "PHAL_SharedParameter.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 #include "LandIce_SimpleOperationEvaluator.hpp"
 #include "LandIce_ProblemUtils.hpp"
+
+#include "Albany_AbstractProblem.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "PHAL_Dimension.hpp"
+#include "PHAL_FieldFrobeniusNorm.hpp"
+#include "PHAL_LoadStateField.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "PHAL_Workset.hpp"
+#include "PHAL_SharedParameter.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
 
 namespace LandIce
 {
@@ -235,7 +236,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index)
     {
-      std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+      std::string parameter_sublist_name = util::strint("Parameter", p_index+num_param_vecs);
       Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
       param_name = param_list.get<std::string>("Name");
       dist_params_name_to_mesh_part[param_name] = param_list.get<std::string>("Mesh Part","");
@@ -294,7 +295,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   for (unsigned int ifield=0; ifield<num_fields; ++ifield)
   {
     // Get info on this field
-    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
+    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
 
     // Get current state name and usage
     stateName  = fieldName = thisFieldList.get<std::string>("Field Name");

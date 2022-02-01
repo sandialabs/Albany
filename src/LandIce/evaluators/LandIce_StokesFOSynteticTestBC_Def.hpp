@@ -14,7 +14,7 @@
 
 #include "LandIce_StokesFOSynteticTestBC.hpp"
 
-#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 //uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN

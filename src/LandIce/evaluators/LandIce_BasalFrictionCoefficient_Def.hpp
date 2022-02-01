@@ -15,7 +15,7 @@
 
 #include "LandIce_BasalFrictionCoefficient.hpp"
 
-#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 #include "Albany_Utils.hpp"
 
@@ -272,7 +272,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         if (!is_power_parameter) {
           int nrparams = rparams.get<int>("Number Of Parameters");
           for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
-            auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+            auto rparams_i = rparams.sublist(util::strint("Parameter",i_rparams));
             if (rparams_i.get<std::string>("Name") == "Power Exponent") {
               is_power_parameter = true;
               break;

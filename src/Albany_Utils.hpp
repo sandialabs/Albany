@@ -52,19 +52,6 @@ AbsRowSum(
     Teuchos::RCP<Tpetra_Vector>&         absRowSumsTpetra,
     const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
-//! Utility to make a string out of a string + int with a delimiter:
-//! strint("dog",2,' ') = "dog 2"
-//! The default delimiter is ' '. Potential delimiters include '_' - "dog_2"
-std::string
-strint(const std::string s, const int i, const char delim = ' ');
-
-//! Splits a std::string on a delimiter
-void
-splitStringOnDelim(
-    const std::string&        s,
-    char                      delim,
-    std::vector<std::string>& elems);
-
 /// Get file name extension
 std::string
 getFileExtension(std::string const& filename);

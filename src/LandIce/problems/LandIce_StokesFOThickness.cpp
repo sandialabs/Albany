@@ -8,7 +8,7 @@
 
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_BCUtils.hpp"
-#include "utility/Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 // Uncomment for some setup output
 #define OUTPUT_TO_SCREEN
