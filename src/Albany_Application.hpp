@@ -41,13 +41,6 @@ class Application
 {
 public:
 
-  enum SolutionMethod
-  {
-    Steady,
-    Transient,
-    Continuation
-  };
-
   enum SolutionStatus
   {
     Converged,
@@ -142,7 +135,7 @@ public:
   getDistributedParameterLibrary() const;
 
   //! Get solution method
-  SolutionMethod
+  SolutionMethodType
   getSolutionMethod() const
   {
     return solMethod;
@@ -1228,7 +1221,7 @@ void
   std::string                          precType;
 
   //! Type of solution method
-  SolutionMethod solMethod;
+  SolutionMethodType solMethod;
 
   //! Integer specifying whether user wants to write Jacobian to MatrixMarket
   //! file
