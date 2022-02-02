@@ -220,8 +220,8 @@ evaluateFields(typename Traits::EvalData workset)
               diff_1[i] = sourceField(sideSet_idx,qp,i) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i));
 
             if(isFieldGradient){
-              for (size_t i=0; i<sideDim; ++i)
-                for (size_t j=0; j<sideDim; ++j)
+              for (int i=0; i<sideDim; ++i)
+                for (int j=0; j<sideDim; ++j)
                   sq += diff_1[i]*metric(sideSet_idx,qp,i,j)*diff_1[j];
             } else {
               for (size_t i=0; i<dims[2]; ++i)
@@ -253,8 +253,8 @@ evaluateFields(typename Traits::EvalData workset)
 
             if(isFieldGradient){
               for (size_t i=0; i<dims[2]; ++i)
-                for (size_t j=0; j<sideDim; ++j)
-                  for (size_t k=0; k<sideDim; ++k)
+                for (int j=0; j<sideDim; ++j)
+                  for (int k=0; k<sideDim; ++k)
                     sq += diff_2[i][j] * metric(sideSet_idx,qp,j,k) * diff_2[i][k];
             } else {
               for (size_t i=0; i<dims[2]; ++i)
