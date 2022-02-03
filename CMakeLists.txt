@@ -7,7 +7,7 @@
 
 # CMAKE File for Albany building against an installed Trilinos
 
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.17.0)
 include(CMakeDependentOption)
 
 OPTION (USE_NEW_POLICY_CMP0060 "Flag to turn on new behavior for policy CMP0060" OFF)
