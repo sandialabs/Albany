@@ -61,10 +61,16 @@ ANONYMOUS:
     LandIce Flux Divergence:
       Use Upwind Stabilization: true
       Flux Divergence Is Part Of Solution: true
+    LandIce L2 Projected Boundary Laplacian:
+      Field Name: basal_friction_log
+      Mass Coefficient: 1.0e-01
+      Laplacian Coefficient: 1.0e+01
+      Robin Coefficient: 1.0
+      Boundary Edges Set Name: lateralside
     Body Force:
       Type: FO INTERP SURF GRAD
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 2
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 2
@@ -86,6 +92,10 @@ ANONYMOUS:
           Field Rank: Vector
           Root Mean Square Error Field Name: observed_surface_velocity_RMS_upperside
           Target Field Name: observed_surface_velocity_upperside
+      Response 1:
+        Scaling Coefficient: 5.8824e-05
+        Name: Boundary Squared L2 Norm
+        Field Name: L2 Projected Boundary Laplacian_basalside 
   Discretization:
     Workset Size: -1
     Method: Extruded
@@ -475,7 +485,7 @@ ANONYMOUS:
                   CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
                   Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
                   Dimension: 3                                              # Spatial dimension of the problem
-                  DofsPerNode: 3                                            # Number of degrees of freedom per node
+                  DofsPerNode: 4                                            # Number of degrees of freedom per node
                   Overlap: 0                                                # Number of layers of elements in the overlap
                   Null Space Type: Input                                    # Null space is provided by Albany
                   AlgebraicOverlappingOperator:
@@ -555,5 +565,8 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Test Value: 1.262910802732e+02
+    Relative Tolerance: 1.0e-06
+  Regression For Response 1:
+    Test Value: 1.757156464993e+01
     Relative Tolerance: 1.0e-06
 ...

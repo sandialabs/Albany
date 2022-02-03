@@ -13,6 +13,7 @@
 
 #include "LandIce_FluxDivergenceResidual.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_Macros.hpp"
 
 
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
@@ -152,14 +153,14 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     MeshScalarT lmbd2_c = (-(y1-y0)*(x_c-x0) + (x1-x0)*(y_c-y0))/det;
     MeshScalarT lmbd0_c = 1.0-lmbd1_c - lmbd2_c;
 
+    double eps=1e-12;
+    ALBANY_ASSERT(lmbd0_c>eps && lmbd1_c>eps && lmbd2_c>eps, "This evaluator works only for acute triangles");
+
     //distance between the triangle edges and the circumcenter
     //(this is the parts of the edges of the Voronoi cell belonging to this triangle)
-
-    //avoid issues caused by round off errors and computing the derivative of the sqrt of 0
-    double eps=1e-12;
-    MeshScalarT e01_c = sqrt(std::max(r2 - e01*e01/4.,eps*r2));
-    MeshScalarT e12_c = sqrt(std::max(r2 - e12*e12/4.,eps*r2));
-    MeshScalarT e20_c = sqrt(std::max(r2 - e20*e20/4.,eps*r2));
+    MeshScalarT e01_c = sqrt(r2 - e01*e01/4.);
+    MeshScalarT e12_c = sqrt(r2 - e12*e12/4.);
+    MeshScalarT e20_c = sqrt(r2 - e20*e20/4.);
 
     //Computing the area of the intersection between the triangle and the voronoi cells centered at the triangle vertices
     MeshScalarT A0 = e01_c*e01/4. + e20_c*e20/4.;

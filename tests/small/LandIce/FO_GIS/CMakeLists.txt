@@ -305,11 +305,6 @@ endif()
 set (testName ${testNameRoot}_AdjointSensitivity_BasalFriction_FluxDivergence)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_fluxdivT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_fluxdivT.yaml)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_analysis_beta_fluxdivT.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
-
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_betaT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_betaT.yaml)
