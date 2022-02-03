@@ -26,6 +26,12 @@ if(ALBANY_MPI)
     COMMAND ${PARALLEL_CALL} null_space_utils)
 endif(ALBANY_MPI)
 
+# StringUtils unit tests (no MPI test, since it's pointless)
+add_executable (string_utils ./UnitTest_StringUtils.cpp)
+target_link_libraries (string_utils PUBLIC albany_ut_main)
+add_test(NAME StringUtils_Serial_Unit_Test
+         COMMAND ${SERIAL_CALL} string_utils)
+
 #####################################################################
 
 add_subdirectory(evaluators)

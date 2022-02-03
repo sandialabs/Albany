@@ -85,6 +85,12 @@ splitStringOnDelim(
     char                      delim,
     std::vector<std::string>& elems);
 
+// Utils to verify/parse a string encoding nested lists,
+// such as '[a,b,[c,d],e]'
+bool validNestedListFormat (const std::string& str);
+
+Teuchos::ParameterList parseNestedList (std::string str);
+
 } // namespace util
 
 #endif  // ALBANY_STRING_UTILS_HPP
