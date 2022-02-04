@@ -127,31 +127,31 @@ class AbstractProblem {
     return nodeSetIDs_;
   }
 
-  Teuchos::RCP<Albany::AccessorsMap>
+  Teuchos::RCP<Albany::ScalarParameterAccessorsMap>
   getAccessors() {
     if (accessors_all.is_null()) {
       accessors_all =
-        Teuchos::rcp(new Albany::AccessorsMap());
+        Teuchos::rcp(new Albany::ScalarParameterAccessorsMap());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::Residual>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::Residual>() =
-        Teuchos::rcp(new Albany::Accessors<PHAL::AlbanyTraits::Residual>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Residual>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::Jacobian>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::Jacobian>() =
-        Teuchos::rcp(new Albany::Accessors<PHAL::AlbanyTraits::Jacobian>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Jacobian>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::Tangent>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::Tangent>() =
-        Teuchos::rcp(new Albany::Accessors<PHAL::AlbanyTraits::Tangent>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Tangent>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>() =
-        Teuchos::rcp(new Albany::Accessors<PHAL::AlbanyTraits::DistParamDeriv>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::DistParamDeriv>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::HessianVec>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::HessianVec>() =
-        Teuchos::rcp(new Albany::Accessors<PHAL::AlbanyTraits::HessianVec>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::HessianVec>());
     }
     return accessors_all;
   }
@@ -227,7 +227,7 @@ class AbstractProblem {
   Teuchos::RCP<ParamLib> paramLib;
 
   //! Parameter accessors
-  Teuchos::RCP<Albany::AccessorsMap> accessors_all;
+  Teuchos::RCP<Albany::ScalarParameterAccessorsMap> accessors_all;
 
   //! Distributed parameter library
   // Teuchos::RCP<DistributedParameterLibrary> distParamLib;

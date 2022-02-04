@@ -822,6 +822,7 @@ PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList& p, PHX::FieldMana
 
   Teuchos::ParameterList& paramList = m_source_list->sublist("Point",true);
   paramList.set< Teuchos::RCP<ParamLib> >("Parameter Library",p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null));
+  paramList.set< Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>> >("Accessors",p.get< Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>> >("Accessors"));    
 
   m_num_dim  = paramList.get("Number", 0);
   Teuchos::ParameterList& spatial_param = paramList.sublist("Spatial",true);

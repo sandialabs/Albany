@@ -8,36 +8,35 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Sacado_ParameterAccessor.hpp"
-#include "Albany_Accessors.hpp"
+#include "Albany_ScalarParameterAccessors.hpp"
 
 //IKT 6/3/2020 TODO: implement support for vector parameters, which is not available currently.
 
 namespace PHAL
 {
 
-template<typename EvalT, typename Traits, typename ParamNameEnum>
+template<typename EvalT, typename Traits>
 class SharedParameter : public PHX::EvaluatorWithBaseImpl<Traits>,
                         public PHX::EvaluatorDerived<EvalT, Traits>,
                         public Sacado::ParameterAccessor<EvalT, SPL_Traits>
 {
 private:
-  std::shared_ptr<Albany::Accessor<typename EvalT::ScalarT>> accessor;
+  std::shared_ptr<Albany::ScalarParameterAccessor<typename EvalT::ScalarT>> accessor;
 
 public:
 
   typedef typename EvalT::ScalarT   ScalarT;
-  typedef ParamNameEnum             EnumType;
 
   SharedParameter (Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   {
     param_name   = p.get<std::string>("Parameter Name");
     param_as_field = PHX::MDField<ScalarT,Dim>(param_name,dl->shared_param);
 
-    Teuchos::RCP<Albany::Accessors<EvalT>> accessors = p.get<Teuchos::RCP<Albany::AccessorsMap>>("Accessors")->at<EvalT>();
-    if (accessors->accessors.count(param_name)==0) {
-      Albany::Accessor<ScalarT> tmp0;
-      accessors->accessors[param_name] = std::make_shared<Albany::Accessor<ScalarT>>(tmp0);
-    }
+    Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>> accessors =
+      p.get<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors");
+    if (accessors->accessors.count(param_name)==0)
+      accessors->accessors[param_name] = std::make_shared<Albany::ScalarParameterAccessor<ScalarT>>();
+
     accessor = accessors->accessors.at(param_name);
 
     // Never actually evaluated, but creates the evaluation tag

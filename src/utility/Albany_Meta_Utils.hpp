@@ -1,3 +1,6 @@
+// This file is copied from "ekat_meta_utils.hpp",
+// a file in the EKAT library (https://github.com/E3SM-Project/EKAT).
+
 #ifndef ALBANY_META_UTILS_HPP
 #define ALBANY_META_UTILS_HPP
 

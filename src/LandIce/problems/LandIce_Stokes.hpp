@@ -329,13 +329,13 @@ LandIce::Stokes::constructEvaluators(
 
     std::string param_name = "Glen's Law Homotopy Parameter";
     p->set<std::string>("Parameter Name", param_name);
-    p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", this->getAccessors());
+    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
 
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum>> ptr_homotopy;
-    ptr_homotopy = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum>(*p,dl));
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_homotopy;
+    ptr_homotopy = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ptr_homotopy);
   }
 

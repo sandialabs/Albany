@@ -20,13 +20,16 @@ private:
   Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm_;
   Teuchos::RCP<Teuchos::ParameterList> p_;
   Teuchos::RCP<Albany::Layouts> dl_;
+  Albany::ThermalProblem& problem_;
 
 public:
-  ConstructSharedParameterOp (Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm, Teuchos::RCP<Teuchos::ParameterList> p, Teuchos::RCP<Albany::Layouts> dl) :
-      fm_(fm), p_(p), dl_(dl) {}
+  ConstructSharedParameterOp (Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm, Teuchos::RCP<Teuchos::ParameterList> p, Teuchos::RCP<Albany::Layouts> dl, Albany::ThermalProblem& problem) :
+      fm_(fm), p_(p), dl_(dl), problem_(problem) {}
   template<typename EvalT>
   void operator() (EvalT /*x*/) const {
-    auto ev = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamNameEnum>(*p_,dl_));
+    //access the accessors
+    p_->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", problem_.getAccessors()->at<EvalT>());
+    auto ev = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p_,dl_));
     fm_->template registerEvaluator<EvalT>(ev);
   }
 };
@@ -141,16 +144,14 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
 
-   Teuchos::RCP<Albany::AccessorsMap> accessors = this->getAccessors();
    {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Theta 0"));
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", this->paramLib);
     const std::string param_name = "Theta 0";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
     p->set<double>("Default Nominal Value", 0.);
-    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl);
+    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl, *this);
     Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
    }
    {
@@ -159,9 +160,8 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
     const std::string param_name = "Theta 1";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<Teuchos::RCP<Albany::AccessorsMap>>("Accessors", accessors);
     p->set<double>("Default Nominal Value", 0.);
-    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl);
+    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl, *this);
     Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
    }
 
