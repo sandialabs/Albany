@@ -1021,7 +1021,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   param_name = "Theta 0";
   p->set<std::string>("Parameter Name", param_name);
-  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", 0.);
   Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_theta_0;
@@ -1032,7 +1032,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   param_name = "Theta 1";
   p->set<std::string>("Parameter Name", param_name);
-  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", 0.);
   Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_theta_1;
@@ -1049,7 +1049,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       const std::string param_name = rparams_i.get<std::string>("Name");
       p->set<std::string>("Parameter Name", param_name); //output name
-      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       const std::string rparam_name = rparams_i.get<std::string>("Standard Normal Parameter");
       p->set<std::string>("Random Parameter Name", rparam_name); //input name
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
@@ -1066,7 +1066,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
     p = Teuchos::rcp(new Teuchos::ParameterList("Homotopy Parameter"));
     p->set<std::string>("Parameter Name", param_name);
-    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
@@ -1388,7 +1388,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
         p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: alpha"));
         p->set<std::string>("Parameter Name", param_name);
-        p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+        p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
         p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
         p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
 
@@ -1409,7 +1409,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
       p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
       p->set<std::string>("Parameter Name", param_name);
-      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
       p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
@@ -1425,7 +1425,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
       p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: mu"));
       p->set<std::string>("Parameter Name", param_name);
-      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
       p->set<double>("Default Nominal Value", pl->sublist("Basal Friction Coefficient").get<double>(param_name,-1.0));
@@ -1441,7 +1441,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
       p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: power"));
       p->set<std::string>("Parameter Name", param_name);
-      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->at<EvalT>());
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
       Teuchos::ParameterList beta_list = pl->sublist("Basal Friction Coefficient");

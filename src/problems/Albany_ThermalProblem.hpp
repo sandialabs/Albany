@@ -223,7 +223,7 @@ Albany::ThermalProblem::constructEvaluators(
         evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
-  Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>> accessors = this->getAccessors()->at<EvalT>();
+  Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>> accessors = this->getAccessors()->template at<EvalT>();
 
   {
     RCP<ParameterList> p = rcp(new ParameterList("Theta 0"));

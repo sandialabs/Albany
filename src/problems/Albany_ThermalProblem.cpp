@@ -28,7 +28,7 @@ public:
   template<typename EvalT>
   void operator() (EvalT /*x*/) const {
     //access the accessors
-    p_->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", problem_.getAccessors()->at<EvalT>());
+    p_->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", problem_.getAccessors()->template at<EvalT>());
     auto ev = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p_,dl_));
     fm_->template registerEvaluator<EvalT>(ev);
   }
