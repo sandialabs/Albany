@@ -1,0 +1,22 @@
+#!/bin/bash
+# This is a sample MPAS configuration script
+
+# Get ALBANY_LINK_LIBS (Note: Need to add quotes to file)
+# NOTE: May need to remove "-l" from "-l-L/opt/cray/pe/mpt/7.7.10/gni/mpich-intel/16.0/lib"
+ALBANYBUILDDIR=
+source ${ALBANYBUILDDIR}/install/export_albany.in
+PIODIR=
+
+make clean \
+  CORE=landice
+
+make -j 8 intel-hsw-nersc \
+  CORE=landice \
+  ALBANY=true \
+  USE_PIO2=true \
+  NETCDF=${NETCDF_DIR} \
+  PNETCDF=${PARALLEL_NETCDF_DIR} \
+  PIO=${PIODIR} \
+  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -lstdc++ -mkl" \
+  MPAS_EXTERNAL_INCLUDES="-I${ALBANYBUILDDIR}/install/include -I${MKLROOT}/include"
+

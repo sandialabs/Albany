@@ -1,0 +1,21 @@
+#!/bin/bash
+# This is a sample MPAS configuration script
+
+# Get ALBANY_LINK_LIBS (Note: Need to add quotes to file)
+ALBANYBUILDDIR=
+source ${ALBANYBUILDDIR}/install/export_albany.in
+PIODIR=
+
+make clean \
+  CORE=landice
+
+make -j 8 gnu-nersc \
+  CORE=landice \
+  ALBANY=true \
+  USE_PIO2=true \
+  NETCDF=${NETCDF_DIR} \
+  PNETCDF=${PARALLEL_NETCDF_DIR} \
+  PIO=${PIODIR} \
+  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -lstdc++ -L${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu_mpi.a" \
+  MPAS_EXTERNAL_INCLUDES="-I${ALBANYBUILDDIR}/install/include -I${CRAY_LIBSCI_PREFIX_DIR}/include"
+
