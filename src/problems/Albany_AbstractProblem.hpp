@@ -128,34 +128,7 @@ class AbstractProblem {
   }
 
   Teuchos::RCP<Albany::ScalarParameterAccessorsMap>
-  getAccessors() {
-    if (accessors_all.is_null()) {
-      accessors_all =
-        Teuchos::rcp(new Albany::ScalarParameterAccessorsMap());
-    }
-    if (accessors_all->at<PHAL::AlbanyTraits::Residual>().is_null()) {
-      accessors_all->at<PHAL::AlbanyTraits::Residual>() =
-        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Residual>());
-    }
-    if (accessors_all->at<PHAL::AlbanyTraits::Jacobian>().is_null()) {
-      accessors_all->at<PHAL::AlbanyTraits::Jacobian>() =
-        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Jacobian>());
-    }
-    if (accessors_all->at<PHAL::AlbanyTraits::Tangent>().is_null()) {
-      accessors_all->at<PHAL::AlbanyTraits::Tangent>() =
-        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Tangent>());
-    }
-    if (accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>().is_null()) {
-      accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>() =
-        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::DistParamDeriv>());
-    }
-    if (accessors_all->at<PHAL::AlbanyTraits::HessianVec>().is_null()) {
-      accessors_all->at<PHAL::AlbanyTraits::HessianVec>() =
-        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::HessianVec>());
-    }
-    return accessors_all;
-  }
-
+  getAccessors();
 
   //! Return the Null space object used to communicate with MP
   const Teuchos::RCP<Albany::RigidBodyModes>&

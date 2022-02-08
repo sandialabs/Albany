@@ -3,12 +3,14 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Albany_AbstractProblem.hpp"
 #include "NOX_StatusTest_Generic.H"
 
-// Generic implementations that can be used by derived problems
+namespace Albany
+{
 
-Albany::AbstractProblem::AbstractProblem(
+AbstractProblem::AbstractProblem(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
   const Teuchos::RCP<ParamLib>& paramLib_,
   //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
@@ -20,7 +22,7 @@ Albany::AbstractProblem::AbstractProblem(
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
-  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes()))
+  rigidBodyModes(Teuchos::rcp(new RigidBodyModes()))
 {
 
  /* 
@@ -68,7 +70,7 @@ Albany::AbstractProblem::AbstractProblem(
 }
 
 unsigned int
-Albany::AbstractProblem::numEquations() const
+AbstractProblem::numEquations() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION( neq <= 0,
                     Teuchos::Exceptions::InvalidParameter,
@@ -77,39 +79,68 @@ Albany::AbstractProblem::numEquations() const
 }
 
 const std::map<int,std::vector<std::string> >&
-Albany::AbstractProblem::getSideSetEquations() const
+AbstractProblem::getSideSetEquations() const
 {
   return sideSetEquations;
 }
 
 void
-Albany::AbstractProblem::setNumEquations(const int neq_)
+AbstractProblem::setNumEquations(const int neq_)
 {
   neq = neq_;
 }
 
 
 // Get the solution method type name
-Albany::SolutionMethodType 
-Albany::AbstractProblem::getSolutionMethod()
+SolutionMethodType 
+AbstractProblem::getSolutionMethod()
 {
     return SolutionMethodName;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
-Albany::AbstractProblem::getFieldManager()
+AbstractProblem::getFieldManager()
 { return fm; }
 
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
-Albany::AbstractProblem::getDirichletFieldManager()
+AbstractProblem::getDirichletFieldManager()
 { return dfm; }
 
 Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
-Albany::AbstractProblem::getNeumannFieldManager()
+AbstractProblem::getNeumannFieldManager()
 { return nfm; }
 
+Teuchos::RCP<ScalarParameterAccessorsMap>
+AbstractProblem::getAccessors() {
+  if (accessors_all.is_null()) {
+    accessors_all =
+      Teuchos::rcp(new ScalarParameterAccessorsMap());
+  }
+  if (accessors_all->at<PHAL::AlbanyTraits::Residual>().is_null()) {
+    accessors_all->at<PHAL::AlbanyTraits::Residual>() =
+      Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::Residual>());
+  }
+  if (accessors_all->at<PHAL::AlbanyTraits::Jacobian>().is_null()) {
+    accessors_all->at<PHAL::AlbanyTraits::Jacobian>() =
+      Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::Jacobian>());
+  }
+  if (accessors_all->at<PHAL::AlbanyTraits::Tangent>().is_null()) {
+    accessors_all->at<PHAL::AlbanyTraits::Tangent>() =
+      Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::Tangent>());
+  }
+  if (accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>().is_null()) {
+    accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>() =
+      Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::DistParamDeriv>());
+  }
+  if (accessors_all->at<PHAL::AlbanyTraits::HessianVec>().is_null()) {
+    accessors_all->at<PHAL::AlbanyTraits::HessianVec>() =
+      Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::HessianVec>());
+  }
+  return accessors_all;
+}
+
 Teuchos::RCP<Teuchos::ParameterList>
-Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
+AbstractProblem::getGenericProblemParams(std::string listname) const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      Teuchos::rcp(new Teuchos::ParameterList(listname));;
@@ -163,3 +194,5 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   return validPL;
 }
+
+} // namespace Albany
