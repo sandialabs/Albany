@@ -670,6 +670,7 @@ namespace Albany
         const double /* time */,
         const bool overlapped)
     {
+      ALBANY_ABORT ("This function not yet implemented.\n");
       this->writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, 0.0, overlapped);
     }
     void
@@ -715,6 +716,7 @@ namespace Albany
         const double /* time */,
         const bool overlapped)
     {
+      ALBANY_ABORT ("This function not yet implemented.\n");
       this->writeSolutionMVToMeshDatabase(soln, soln_dxdp, 0.0, overlapped);
     }
     void
