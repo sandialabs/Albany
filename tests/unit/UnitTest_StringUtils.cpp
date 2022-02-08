@@ -90,7 +90,7 @@ TEUCHOS_UNIT_TEST(StringUtils,ParseList)
   TEST_ASSERT (subsub.get<std::string>("Type 0")=="Value");
   TEST_ASSERT (subsub.get<std::string>("Type 1")=="Value");
   TEST_ASSERT (subsub.get<std::string>("Entry 0")=="b");
-  TEST_ASSERT (subsub.get<std::string>("Entry 1")=="a");
+  TEST_ASSERT (subsub.get<std::string>("Entry 1")=="c");
 }
 
 } // namespace Albany
