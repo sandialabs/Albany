@@ -4,11 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <fstream>
+#include "Albany_StringUtils.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Albany_Utils.hpp"
+
+#include <fstream>
 
 //Radom field types
 /*
