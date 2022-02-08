@@ -4,6 +4,7 @@
 #include "PHAL_Dimension.hpp"
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -57,7 +58,7 @@ public:
       int n = paramsList->get<int>("Number Of Parameters");
       for (int i=0; (nominalValueSet==false) && i<n; ++i)
       {
-        const Teuchos::ParameterList& pvi = paramsList->sublist(Albany::strint("Parameter",i));
+        const Teuchos::ParameterList& pvi = paramsList->sublist(util::strint("Parameter",i));
         std::string parameterType = "Scalar";
         if(pvi.isParameter("Type"))
           parameterType = pvi.get<std::string>("Type");
@@ -83,7 +84,7 @@ public:
           int m = pvi.get<int>("Dimension");
           for (int j=0; j<m; ++j)
           {
-            const Teuchos::ParameterList& pj = pvi.sublist(Albany::strint("Scalar",j));
+            const Teuchos::ParameterList& pj = pvi.sublist(util::strint("Scalar",j));
             if (pj.get<std::string>("Name")==param_name)
             {
               this->registerSacadoParameter(param_name, paramLib);

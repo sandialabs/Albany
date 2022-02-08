@@ -144,6 +144,7 @@ list (APPEND SOURCES
   utility/Albany_Gather.cpp
   utility/Albany_GlobalLocalIndexer.cpp
   utility/Albany_Hessian.cpp
+  utility/Albany_StringUtils.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
   utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
@@ -158,7 +159,7 @@ list (APPEND HEADERS
   utility/DisplayTable.hpp
   utility/MonitorBase.hpp
   utility/PerformanceContext.hpp
-  utility/string.hpp
+  utility/Albany_StringUtils.hpp
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp

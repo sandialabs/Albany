@@ -1,9 +1,10 @@
 #include "LandIce_StokesFOBase.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "Teuchos_CompilerCodeTweakMacros.hpp"
 
-#include <string.hpp>               // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
-#include <Albany_ProblemUtils.hpp>  // For 'getIntrepidwBasis'
+#include "Albany_ProblemUtils.hpp"  // For 'getIntrepidwBasis'
+#include "Albany_StringUtils.hpp" // for 'upper_case'
+
+#include "Teuchos_CompilerCodeTweakMacros.hpp"
 
 namespace LandIce {
 
@@ -31,7 +32,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   auto landice_bcs_params = Teuchos::sublist(params,"LandIce BCs");
   unsigned int num_bcs = landice_bcs_params->get<int>("Number",0);
   for (unsigned int i=0; i<num_bcs; ++i) {
-    auto this_bc = Teuchos::sublist(landice_bcs_params,Albany::strint("BC",i));
+    auto this_bc = Teuchos::sublist(landice_bcs_params,util::strint("BC",i));
     std::string type_str = util::upper_case(this_bc->get<std::string>("Type"));
 
     LandIceBC type;
@@ -318,7 +319,7 @@ void StokesFOBase::parseInputFields ()
     Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
     for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index) {
-      std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+      std::string parameter_sublist_name = util::strint("Parameter", p_index+num_param_vecs);
       Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
       param_name = param_list.get<std::string>("Name");
       dist_params_name_to_mesh_part[param_name] = param_list.get<std::string>("Mesh Part","");
@@ -360,7 +361,7 @@ void StokesFOBase::parseInputFields ()
   FL loc;
 
   for (int ifield=0; ifield<num_fields; ++ifield) {
-    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
+    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
 
     // Get current state specs
     fieldName = thisFieldList.get<std::string>("Field Name");
@@ -435,7 +436,7 @@ void StokesFOBase::parseInputFields ()
 
     Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
     for (unsigned int ifield=0; ifield< (unsigned int) num_fields; ++ifield) {
-      Teuchos::ParameterList& thisFieldList =  info.sublist(Albany::strint("Field", ifield));
+      Teuchos::ParameterList& thisFieldList =  info.sublist(util::strint("Field", ifield));
 
       // Get current state specs
       fieldName = thisFieldList.get<std::string>("Field Name");
@@ -603,12 +604,12 @@ void StokesFOBase::setupEvaluatorRequests ()
       const Teuchos::ParameterList& resp = this->params->sublist("Response Functions",true);
       unsigned int num_resps = resp.get<int>("Number Of Responses");
       for(unsigned int i=0; i<num_resps; i++) {
-        const std::string responseType = resp.sublist(Albany::strint("Response", i)).isParameter("Type") ?
-         resp.sublist(Albany::strint("Response", i)).get<std::string>("Type") : std::string("Scalar Response");
+        const std::string responseType = resp.sublist(util::strint("Response", i)).isParameter("Type") ?
+         resp.sublist(util::strint("Response", i)).get<std::string>("Type") : std::string("Scalar Response");
         if(responseType == "Sum Of Responses") {
-          unsigned int num_sub_resps = resp.sublist(Albany::strint("Response", i)).get<int>("Number Of Responses");
+          unsigned int num_sub_resps = resp.sublist(util::strint("Response", i)).get<int>("Number Of Responses");
           for(unsigned int j=0; j<num_sub_resps; j++) {
-            const auto& response = resp.sublist(Albany::strint("Response", i)).sublist(Albany::strint("Response", j));
+            const auto& response = resp.sublist(util::strint("Response", i)).sublist(util::strint("Response", j));
             if(response.get<std::string>("Name") == "Grounding Line Flux") {
               has_GLF_resp = true;
               continue;
@@ -625,16 +626,16 @@ void StokesFOBase::setupEvaluatorRequests ()
           if (has_GLF_resp && has_SMB_resp)
             break;
         } else {
-          if(resp.sublist(Albany::strint("Response", i)).get<std::string>("Name") == "Grounding Line Flux") {
+          if(resp.sublist(util::strint("Response", i)).get<std::string>("Name") == "Grounding Line Flux") {
             has_GLF_resp = true;
             continue;
           }
-          if(resp.sublist(Albany::strint("Response", i)).get<std::string>("Name") == "Surface Mass Balance Mismatch") {
+          if(resp.sublist(util::strint("Response", i)).get<std::string>("Name") == "Surface Mass Balance Mismatch") {
             has_SMB_resp = true;
             continue;
           }
-          if(resp.sublist(Albany::strint("Response", i)).get<std::string>("Name") == "Squared L2 Difference Side Source ST Target RT") {
-            has_SMB_resp = (resp.sublist(Albany::strint("Response", i)).get<std::string>("Source Field Name").find("flux_divergence") != std::string::npos);
+          if(resp.sublist(util::strint("Response", i)).get<std::string>("Name") == "Squared L2 Difference Side Source ST Target RT") {
+            has_SMB_resp = (resp.sublist(util::strint("Response", i)).get<std::string>("Source Field Name").find("flux_divergence") != std::string::npos);
             continue;
           }
         }

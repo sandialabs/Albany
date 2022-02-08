@@ -103,7 +103,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 
 	  std::string fieldType, fieldUsage, meshPart;
 	  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
-	    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
+	    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
 
 	    // Get current state specs
 	    volumeFields.insert(thisFieldList.get<std::string>("Field Name"));

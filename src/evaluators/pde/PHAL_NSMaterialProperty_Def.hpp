@@ -4,11 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <fstream>
+#include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Albany_Utils.hpp"
+
+#include <fstream>
 
 namespace PHAL {
 
@@ -59,7 +62,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 
       // Add property as a Sacado-ized parameter
       for (PHX::index_size_type i=0; i<numDims; i++)
-        this->registerSacadoParameter(Albany::strint(name_mp,i), paramLib);
+        this->registerSacadoParameter(util::strint(name_mp,i), paramLib);
     }
     else if (rank == 4) {
       matPropType = TENSOR_CONSTANT;
@@ -84,7 +87,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       // Add property as a Sacado-ized parameter
       for (PHX::index_size_type i=0; i<numRows; i++)
 	for (PHX::index_size_type j=0; j<numCols; j++)
-          this->registerSacadoParameter(Albany::strint(Albany::strint(name_mp,i),j), paramLib);
+          this->registerSacadoParameter(util::strint(util::strint(name_mp,i),j), paramLib);
     }
     else
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -264,13 +267,13 @@ NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
   }
   else if (matPropType == VECTOR_CONSTANT) {
     for (int dim=0; dim<vector_constant_value.size(); ++dim)
-      if (n == Albany::strint(name_mp,dim))
+      if (n == util::strint(name_mp,dim))
 	return vector_constant_value[dim];
   }
   else if (matPropType == TENSOR_CONSTANT) {
     for (int dim1=0; dim1<tensor_constant_value.getNumRows(); ++dim1)
       for (int dim2=0; dim2<tensor_constant_value.getNumCols(); ++dim2)
-	if (n == Albany::strint(Albany::strint(name_mp,dim1),dim2))
+	if (n == util::strint(util::strint(name_mp,dim1),dim2))
 	  return tensor_constant_value(dim1,dim2);
   }
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

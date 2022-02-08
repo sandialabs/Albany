@@ -8,10 +8,6 @@
 #define LANDICE_STOKES_FO_BASE_HPP
 
 #include "LandIce_GatherVerticallyContractedSolution.hpp"
-#include "Shards_CellTopology.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Phalanx_Print.hpp"
 
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -57,7 +53,12 @@
 #include "PHAL_RandomPhysicalParameter.hpp"
 #include "PHAL_IsAvailable.hpp"
 
-#include <string.hpp> // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
+#include "Albany_StringUtils.hpp" // for 'upper_case'
+
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Phalanx_Print.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -390,7 +391,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string fieldType, fieldUsage, meshPart;
   Teuchos::RCP<PHX::DataLayout> state_dl;
   for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
-    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
+    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
 
     // Get current state specs
     fieldName = thisFieldList.get<std::string>("Field Name");
@@ -526,7 +527,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const std::string& sideEBName = meshSpecs.sideSetMeshSpecs.at(ss_name)[0]->ebName;
     Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
     for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
-      Teuchos::ParameterList& thisFieldList =  info.sublist(Albany::strint("Field", ifield));
+      Teuchos::ParameterList& thisFieldList =  info.sublist(util::strint("Field", ifield));
 
       // Get current state specs
       fieldName = thisFieldList.get<std::string>("Field Name");
@@ -1043,7 +1044,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     auto rparams = params->sublist("Random Parameters");
     int nrparams = rparams.get<int>("Number Of Parameters");
     for (int i_rparams=0; i_rparams<nrparams; ++i_rparams) {
-      auto rparams_i = rparams.sublist(Albany::strint("Parameter",i_rparams));
+      auto rparams_i = rparams.sublist(util::strint("Parameter",i_rparams));
   
       p = rcp(new Teuchos::ParameterList("Theta 1"));
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);

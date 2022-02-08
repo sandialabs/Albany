@@ -162,7 +162,7 @@ Permittivity<EvalT,Traits>::getValue(const std::string &n)
   }
 
   for (int i=0; i<rv.size(); i++) {
-    if (n == Albany::strint("Permittivity KL Random Variable",i))
+    if (n == util::strint("Permittivity KL Random Variable",i))
       return rv[i];
   }
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

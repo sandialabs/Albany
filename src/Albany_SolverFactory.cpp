@@ -11,6 +11,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include "Piro_ProviderBase.hpp"
 #include "Piro_NOXSolver.hpp"
@@ -333,7 +334,7 @@ SolverFactory::getValidAppParameters() const
   validPL->sublist("Quadrature", false, "Quadrature sublist");
   const int maxRegression = 10;
   for (int i = 0; i < maxRegression; i++) {
-    validPL->sublist(strint("Regression For Response", i), false, "Regression Results sublist");
+    validPL->sublist(util::strint("Regression For Response", i), false, "Regression Results sublist");
   }
   validPL->sublist("VTK", false, "DEPRECATED  VTK sublist");
   validPL->sublist("Piro", false, "Piro sublist");
@@ -393,7 +394,7 @@ SolverFactory::getValidParameterParameters() const
   validPL->set<int>("Number", 0);
   const int maxParameters = 100;
   for (int i = 0; i < maxParameters; i++) {
-    validPL->set<std::string>(strint("Parameter", i), "");
+    validPL->set<std::string>(util::strint("Parameter", i), "");
   }
   return validPL;
 }
@@ -412,7 +413,7 @@ SolverFactory::getValidResponseParameters() const
       "Array of responses for which relative change will be obtained");
   const int maxNumResponses = 50;
   for (int i = 0; i < maxNumResponses; i++)
-    validPL->sublist(strint("Response", i), false, "Response sublist");
+    validPL->sublist(util::strint("Response", i), false, "Response sublist");
   return validPL;
 }
 

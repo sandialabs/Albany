@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// @HEADER
-
 #include "PerformanceContext.hpp"
 
 namespace util {
@@ -32,4 +30,4 @@ void PerformanceContext::summarizeAll (std::ostream& out) {
   summarizeAll(comm.ptr(), out);
 }
 
-}
+} // namespace util

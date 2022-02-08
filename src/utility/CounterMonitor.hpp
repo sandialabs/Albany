@@ -28,9 +28,10 @@ namespace util {
     virtual ~CounterMonitor() {};
     
   protected:
-    virtual string        getStringValue(const monitored_type& val) override;
+    virtual std::string getStringValue(const monitored_type& val) override;
     
   };
-}
+
+} // namespace util
 
 #endif  // UTIL_COUNTERMONITOR_HPP

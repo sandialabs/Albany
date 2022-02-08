@@ -27,7 +27,7 @@ namespace util {
     virtual ~TimeMonitor() {};
     
   protected:
-    virtual string        getStringValue(const monitored_type& val) override;
+    virtual std::string getStringValue(const monitored_type& val) override;
     
   };
 }

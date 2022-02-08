@@ -4,21 +4,23 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "PHAL_SharedParameter.hpp"
+#include "PHAL_Field_Source.hpp"
+
+#include "Sacado_ParameterAccessor.hpp"
+#include "Sacado_ParameterRegistration.hpp"
+#include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_Array.hpp"
+#include "Teuchos_TestForException.hpp"
+
 #include <cmath>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-
-#include "Sacado_ParameterAccessor.hpp"
-#include "Sacado_ParameterRegistration.hpp"
-#include "Teuchos_VerboseObject.hpp"
-#include "Albany_Utils.hpp"
-#include "Teuchos_Array.hpp"
-#include "Teuchos_TestForException.hpp"
-
-#include "PHAL_SharedParameter.hpp"
-#include "PHAL_Field_Source.hpp"
 
 namespace PHAL {
 
@@ -600,10 +602,10 @@ MVQuadratic<EvalT,Traits>::MVQuadratic(Teuchos::ParameterList& p) {
   m_factor.resize(num_vars);
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
   for (int i=0; i<num_vars; i++) {
-    m_factor[i] = paramList.get(Albany::strint("Nonlinear Factor",i), 0.0);
+    m_factor[i] = paramList.get(util::strint("Nonlinear Factor",i), 0.0);
 
     // Add the factor as a Sacado-ized parameter
-    this->registerSacadoParameter(Albany::strint("Multivariate Quadratic Nonlinear Factor",i), paramLib);
+    this->registerSacadoParameter(util::strint("Multivariate Quadratic Nonlinear Factor",i), paramLib);
   }
 }
 
@@ -652,7 +654,7 @@ typename MVQuadratic<EvalT,Traits>::ScalarT&
 MVQuadratic<EvalT,Traits>::getValue(const std::string &n)
 {
   for (unsigned int i=0; i<m_factor.size(); i++) {
-    if (n == Albany::strint("Multivariate Quadratic Nonlinear Factor",i))
+    if (n == util::strint("Multivariate Quadratic Nonlinear Factor",i))
       return m_factor[i];
   }
   return m_factor[0];
@@ -694,10 +696,10 @@ MVExponential<EvalT,Traits>::MVExponential(Teuchos::ParameterList& p) {
   m_factor.resize(num_vars);
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
   for (int i=0; i<num_vars; i++) {
-    m_factor[i] = paramList.get(Albany::strint("Nonlinear Factor",i), 0.0);
+    m_factor[i] = paramList.get(util::strint("Nonlinear Factor",i), 0.0);
 
     // Add the factor as a Sacado-ized parameter
-    this->registerSacadoParameter(Albany::strint("Multivariate Exponential Nonlinear Factor",i), paramLib);
+    this->registerSacadoParameter(util::strint("Multivariate Exponential Nonlinear Factor",i), paramLib);
   }
 }
 
@@ -746,7 +748,7 @@ typename MVExponential<EvalT,Traits>::ScalarT&
 MVExponential<EvalT,Traits>::getValue(const std::string &n)
 {
   for (unsigned int i=0; i<m_factor.size(); i++) {
-    if (n == Albany::strint("Multivariate Exponential Nonlinear Factor",i))
+    if (n == util::strint("Multivariate Exponential Nonlinear Factor",i))
       return m_factor[i];
   }
   return m_factor[0];
@@ -831,9 +833,9 @@ PointSource<EvalT,Traits>::PointSource(Teuchos::ParameterList& p, PHX::FieldMana
         p.get<Teuchos::ParameterList*>("Scalar Parameters List");
     Teuchos::RCP<Gaussian<EvalT,Traits>> ev;
     for (std::size_t i=0; i<m_num_dim; ++i) {
-      paramList.set<std::string>(Albany::strint("Gaussian: Amplitude", i), Albany::strint("Amplitude", i));
-      paramList.set<std::string>(Albany::strint("Gaussian: Radius", i), Albany::strint("Radius", i));
-      paramList.set<std::string>(Albany::strint("Gaussian: Field", i), Albany::strint(p.get<std::string>("Source Name") + ": Gaussian Field", i));
+      paramList.set<std::string>(util::strint("Gaussian: Amplitude", i), util::strint("Amplitude", i));
+      paramList.set<std::string>(util::strint("Gaussian: Radius", i), util::strint("Radius", i));
+      paramList.set<std::string>(util::strint("Gaussian: Field", i), util::strint(p.get<std::string>("Source Name") + ": Gaussian Field", i));
 
       ev = Teuchos::rcp(new Gaussian<EvalT,Traits>(paramList,*scalarParamList,i,fm,dl));
       fm.template registerEvaluator<EvalT>(ev);
@@ -970,7 +972,7 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p, PHX::FieldManager<PHAL:
     this->setName("PointSource" );
 
     for (std::size_t i=0; i<s->getNumDim(); ++i) {
-      const PHX::Tag<ScalarT> fieldTag(Albany::strint(p.get<std::string>("Source Name") + ": Gaussian Field", i), dl->dummy);
+      const PHX::Tag<ScalarT> fieldTag(util::strint(p.get<std::string>("Source Name") + ": Gaussian Field", i), dl->dummy);
       this->addDependentField(fieldTag);
     }
   }

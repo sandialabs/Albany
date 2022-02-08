@@ -8,28 +8,6 @@
 #ifndef LANDICE_ENTHALPY_PROBLEM_HPP
 #define LANDICE_ENTHALPY_PROBLEM_HPP
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
-#include "Albany_AbstractProblem.hpp"
-#include "Albany_Utils.hpp"
-#include "Albany_ProblemUtils.hpp"
-#include "Albany_EvaluatorUtils.hpp"
-#include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "Albany_ScalarOrdinalTypes.hpp"
-#include "Albany_FieldUtils.hpp"
-
-#include "PHAL_Workset.hpp"
-#include "PHAL_Dimension.hpp"
-#include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_SaveCellStateField.hpp"
-#include "PHAL_SaveStateField.hpp"
-#include "PHAL_LoadSideSetStateField.hpp"
-#include "PHAL_ScatterScalarNodalParameter.hpp"
-#include "PHAL_SharedParameter.hpp"
-
 #include "LandIce_EnthalpyResid.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
 #include "LandIce_w_Resid.hpp"
@@ -43,6 +21,29 @@
 #include "LandIce_SurfaceAirEnthalpy.hpp"
 #include "LandIce_ParamEnum.hpp"
 #include "LandIce_ResponseUtilities.hpp"
+
+#include "Albany_AbstractProblem.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_FieldUtils.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "PHAL_Workset.hpp"
+#include "PHAL_Dimension.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_SaveCellStateField.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "PHAL_LoadSideSetStateField.hpp"
+#include "PHAL_ScatterScalarNodalParameter.hpp"
+#include "PHAL_SharedParameter.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace LandIce
 {
@@ -184,7 +185,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
       for (unsigned int ifield=0; ifield<num_fields; ++ifield)
       {
-        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(util::strint("Field", ifield));
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
           unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
@@ -210,7 +211,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
       for (unsigned int ifield=0; ifield<num_fields; ++ifield)
       {
-        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(util::strint("Field", ifield));
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
           unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;

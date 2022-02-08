@@ -4,13 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <string>
+#include "LandIce_StokesFOThickness.hpp"
 
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_BCUtils.hpp"
-#include <string.hpp> // For util::upper_case (do not confuse this with <string>! string.hpp is an Albany file)
-
-#include "LandIce_StokesFOThickness.hpp"
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 // Uncomment for some setup output
 #define OUTPUT_TO_SCREEN
