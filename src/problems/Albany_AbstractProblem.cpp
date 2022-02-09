@@ -90,6 +90,13 @@ AbstractProblem::setNumEquations(const int neq_)
   neq = neq_;
 }
 
+BlockCoupling
+AbstractProblem::getBlockCoupling (const std::string& /* name */,
+                                   const bool /* resposeEvaluation */)
+{
+  // Default all blocks contributions to be local
+  return BlockCoupling::ElemLocal;
+}
 
 // Get the solution method type name
 SolutionMethodType 

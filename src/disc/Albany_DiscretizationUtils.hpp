@@ -13,7 +13,9 @@
 
 #include "Albany_KokkosTypes.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
+
 #include "Teuchos_ArrayRCP.hpp"
+#include "Shards_CellTopology.hpp"
 
 namespace Albany {
 
@@ -22,6 +24,18 @@ enum class DiscType
   BlockedMono = 0,
   Interleaved = 1,
   BlockedDisc = 2
+};
+
+// Determine how a solution block can contribute to residuals/response
+//   - ElemLocal: only dofs in the current cell are used
+//   - ReducedCol: on a basal/upper side of an extruded mesh, all the
+//                 dofs in the column are used
+// The AbstractProblem returns this for each solution block, and the info
+// is later used to determine the FAD length for that block.
+enum class BlockCoupling
+{
+  ElemLocal,
+  ReducedCol
 };
 
 using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;

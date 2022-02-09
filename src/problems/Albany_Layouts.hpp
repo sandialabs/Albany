@@ -147,9 +147,9 @@ constexpr const char* INVALID_STR = "__INVALID__";
 
 // Mesh entity where a field is located
 enum class FieldLocation : int {
-  Cell,
-  Node,
-  QuadPoint
+  Cell      = 0,
+  Node      = 1,
+  QuadPoint = 2
 };
 
 inline std::string e2str (const FieldLocation e) {
@@ -164,10 +164,10 @@ inline std::string e2str (const FieldLocation e) {
 // Type of field (scalar, vector, gradient, tensor)
 // Note: gradient is just a vector with length equal to the mesh dimension
 enum class FieldRankType : int {
-  Scalar,
-  Vector,
-  Gradient,
-  Tensor
+  Scalar   = 0,
+  Vector   = 1,
+  Gradient = 2,
+  Tensor   = 3
 };
 
 inline std::string e2str (const FieldRankType rank) {

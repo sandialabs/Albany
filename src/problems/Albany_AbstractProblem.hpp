@@ -83,6 +83,10 @@ class AbstractProblem {
   unsigned int
   numStates() const;
 
+  // Return how block $name is coupled to the output (residual or response).
+  BlockCoupling getBlockCoupling (const std::string& name,
+                                  const bool resposeEvaluation);
+
   // Get the solution method type name
   SolutionMethodType
   getSolutionMethod();

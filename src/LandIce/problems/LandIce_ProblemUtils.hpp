@@ -10,6 +10,7 @@
 #include "Phalanx_Evaluator.hpp"
 #include "Phalanx_FieldManager.hpp"
 
+#include "Albany_Utils.hpp"
 #include "Albany_Layouts.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -22,12 +23,6 @@ constexpr const char* INVALID_STR = "__INVALID__";
 
 inline bool isInvalid (const std::string& str) {
   return str==INVALID_STR;
-}
-
-// Extract underlying integer value from an enum
-template<typename EnumType>
-typename std::underlying_type<EnumType>::type etoi (const EnumType e) {
-  return static_cast<typename std::underlying_type<EnumType>::type>(e);
 }
 
 // -------- LandIce boundary conditions -------- //
@@ -72,8 +67,8 @@ inline FieldScalarType& operator|= (FieldScalarType& st1,
   // The idea is that the assignment of a scalar type A from a scalar type B is legal if
   // A is 'stronger' than B.
 
-  auto st1_int = etoi(st1);
-  auto st2_int = etoi(st2);
+  auto st1_int = Albany::etoi(st1);
+  auto st2_int = Albany::etoi(st2);
 
   if (st2_int>st1_int) {
     st1 = st2;

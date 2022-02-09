@@ -202,6 +202,21 @@ Teuchos::ParameterList parseNestedList (std::string str)
   list.set("Num Entries",num_entries);
   list.set("Depth",depth_max);
 
+  // Now get a 'flattened' version of the list, with all sublists
+  // injected in the parent list.
+  using aos_t = Teuchos::Array<std::string>;
+  aos_t flat;
+  for (int i=0; i<num_entries; ++i) {
+    auto key = util::strint("Entry",i);
+    if (list.get<std::string>(util::strint("Type",i))=="Value") {
+      flat.push_back(list.get<std::string>(key));
+    } else {
+      const auto& sub_flat = list.sublist(key).get<aos_t>("Flattened List");
+      flat.insert(flat.end(),sub_flat.begin(),sub_flat.end());
+    }
+  }
+  list.set<aos_t>("Flattened List",flat);
+
   return list;
 }
 

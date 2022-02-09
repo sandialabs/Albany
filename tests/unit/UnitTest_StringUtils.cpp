@@ -91,6 +91,13 @@ TEUCHOS_UNIT_TEST(StringUtils,ParseList)
   TEST_ASSERT (subsub.get<std::string>("Type 1")=="Value");
   TEST_ASSERT (subsub.get<std::string>("Entry 0")=="b");
   TEST_ASSERT (subsub.get<std::string>("Entry 1")=="c");
+
+  const auto& flat = pl_6.get<Teuchos::Array<std::string>>("Flattened List");
+  TEST_ASSERT (flat.size()==4);
+  TEST_ASSERT (flat[0] == "a");
+  TEST_ASSERT (flat[1] == "b");
+  TEST_ASSERT (flat[2] == "c");
+  TEST_ASSERT (flat[3] == "d");
 }
 
 } // namespace Albany

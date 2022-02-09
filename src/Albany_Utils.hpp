@@ -22,6 +22,12 @@
 
 namespace Albany {
 
+// Extract underlying integer value from an enum
+template<typename EnumType>
+typename std::underlying_type<EnumType>::type etoi (const EnumType e) {
+  return static_cast<typename std::underlying_type<EnumType>::type>(e);
+}
+
 //! Print ascii art and version information
 void
 PrintHeader(std::ostream& os);

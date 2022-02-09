@@ -450,6 +450,12 @@ if (ALBANY_EPETRA)
   )
 endif()
 
+# if (ENABLE_EXPERIMENTAL)
+#   list (APPEND SOURCES
+#     evaluators/gather/PHAL_GatherBlockedSolution.cpp
+#   )
+# endif()
+
 list (APPEND HEADERS
   evaluators/bc/PHAL_Dirichlet.hpp
   evaluators/bc/PHAL_TimeDepDBC.hpp
@@ -587,6 +593,13 @@ if (ALBANY_EPETRA)
     evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
 endif()
+
+# if (ENABLE_EXPERIMENTAL)
+#   list (APPEND SOURCES
+#     evaluators/gather/PHAL_GatherBlockedSolution.hpp
+#     evaluators/gather/PHAL_GatherBlockedSolution_Def.hpp
+#   )
+# endif()
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(albanyLib PROPERTIES PUBLIC_HEADER "${HEADERS}")
