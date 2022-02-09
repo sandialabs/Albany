@@ -127,8 +127,8 @@ cmake \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
-      -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
-      -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF \
+      -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
+      -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
       -D Kokkos_ENABLE_LIBDL:BOOL=ON \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
 ../
