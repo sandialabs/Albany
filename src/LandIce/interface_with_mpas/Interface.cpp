@@ -133,20 +133,13 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
   }
 
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
+  using VectorFieldType = Albany::AbstractSTKFieldContainer::VectorFieldType;
+  using ScalarFieldType = Albany::AbstractSTKFieldContainer::ScalarFieldType;
+  using SolFldContainerType = Albany::OrdinarySTKFieldContainer;
 
-  VectorFieldType* solutionField;
-
-  if (interleavedOrdering == Albany::DiscType::Interleaved) {
-    solutionField = Teuchos::rcp_dynamic_cast<
-        Albany::OrdinarySTKFieldContainer<Albany::DiscType::Interleaved> >(
-            stk_disc->getSolutionFieldContainer())->getSolutionField();
-  } else {
-    solutionField = Teuchos::rcp_dynamic_cast<
-        Albany::OrdinarySTKFieldContainer<Albany::DiscType::BlockedMono> >(
-            stk_disc->getSolutionFieldContainer())->getSolutionField();
-  }
+  auto fld_container = stk_disc->getSolutionFieldContainer();
+  auto sol_fld_container = Teuchos::rcp_dynamic_cast<SolFldContainerType>(fld_container);
+  auto solutionField = sol_fld_container->getSolutionField();
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
   ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "ice_thickness");
