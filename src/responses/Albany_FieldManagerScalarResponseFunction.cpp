@@ -223,8 +223,7 @@ template<typename EvalT>
 void FieldManagerScalarResponseFunction::
 evaluate(PHAL::Workset& workset)
 {
-  const WorksetArray<int>::type&
-    wsPhysIndex = application->getDiscretization()->getWsPhysIndex();
+  const auto& wsPhysIndex = application->getDiscretization()->getWsPhysIndex();
   rfm->preEvaluate<EvalT>(workset);
   for (int ws = 0, numWorksets = application->getNumWorksets();
        ws < numWorksets; ws++) {

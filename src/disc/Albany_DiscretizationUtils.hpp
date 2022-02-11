@@ -94,10 +94,7 @@ class wsLid
 using WsLIDList = std::map<GO, wsLid>;
 
 template <typename T>
-struct WorksetArray
-{
-  using type = Teuchos::ArrayRCP<T>;
-};
+using WorksetArray = Teuchos::ArrayRCP<T>;
 
 // LB 8/17/18: I moved these out of AbstractDiscretization, so if one only needs
 // these types,
@@ -105,7 +102,7 @@ struct WorksetArray
 //             Albany_AbstractDiscretization.hpp, which has tons of
 //             dependencies.
 using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
-using Conn        = WorksetArray<WorksetConn>::type;
+using Conn        = WorksetArray<WorksetConn>;
 
 }  // namespace Albany
 
