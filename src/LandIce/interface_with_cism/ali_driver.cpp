@@ -628,12 +628,8 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      //Check what kind of ordering you have in the solution & create solutionField object.
      interleavedOrdering = meshStruct->getInterleavedOrdering();
      Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
-     if(interleavedOrdering == Albany::DiscType::Interleaved)
-       solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<Albany::DiscType::Interleaved> >
-         (stk_disc->getSolutionFieldContainer())->getSolutionField();
-     else
-       solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<Albany::DiscType::BlockedMono> >
-         (stk_disc->getSolutionFieldContainer())->getSolutionField();
+     solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer>
+       (stk_disc->getSolutionFieldContainer())->getSolutionField();
 
 
      //Loop over all the elements to find which nodes are active.  For the active nodes, copy uvel and vvel from CISM into Albany solution array to
