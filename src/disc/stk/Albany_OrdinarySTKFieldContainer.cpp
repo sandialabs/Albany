@@ -43,7 +43,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>&               params_,
     const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const AbstractFieldContainer::FieldContainerRequirements& /* req */,
     const DiscType                                            interleaved_,
     const int                                                 numDim_,
     const Teuchos::RCP<StateInfoStruct>&                      sis,
@@ -99,7 +99,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
     const DiscType                                            interleaved_,
     const int                                                 neq_,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const AbstractFieldContainer::FieldContainerRequirements& /* req */,
     const int                                                 numDim_,
     const Teuchos::RCP<StateInfoStruct>&                      sis,
     const int                                                 num_params_)
@@ -272,7 +272,7 @@ OrdinarySTKFieldContainer::fillSolnVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::Interleaved);
 
   fillVectorImpl(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
@@ -298,7 +298,7 @@ OrdinarySTKFieldContainer::fillSolnMultiVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::BlockedDisc);
 
   for (int icomp = 0; icomp < solution.domain()->dim(); ++icomp) {
     fillVectorImpl(
@@ -354,7 +354,7 @@ OrdinarySTKFieldContainer::saveSolnVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::BlockedDisc);
 
   saveVectorImpl(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
@@ -398,7 +398,7 @@ OrdinarySTKFieldContainer::saveSolnVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::BlockedDisc);
 
   saveVectorImpl(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
@@ -444,7 +444,7 @@ OrdinarySTKFieldContainer::saveSolnVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::BlockedDisc);
 
   saveVectorImpl(
       solution, solution_field[0]->name(), sel, node_vs, nodalDofManager);
@@ -491,7 +491,7 @@ OrdinarySTKFieldContainer::saveSolnMultiVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::BlockedDisc);
 
   for (int icomp = 0; icomp < solution.domain()->dim(); ++icomp) {
     saveVectorImpl(
@@ -535,7 +535,7 @@ OrdinarySTKFieldContainer::saveResVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::Interleaved);
 
   saveVectorImpl(res, residual_field->name(), sel, node_vs, nodalDofManager);
 }

@@ -10,9 +10,6 @@
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
-// Get DiscType
-#include "Albany_DiscretizationUtils.hpp"
-
 namespace Albany
 {
 
@@ -50,7 +47,7 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 // Create a vector VectorSpace from a scalar one.
 Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
-                   const int numComponents, const DiscType discType);
+                   const int numComponents, const bool interleaved);
 
 // Intersects vectors spaces
 Teuchos::RCP<const Thyra_VectorSpace>

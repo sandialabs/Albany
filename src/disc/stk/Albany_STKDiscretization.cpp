@@ -1156,8 +1156,8 @@ void STKDiscretization::computeVectorSpaces()
         dofs->vs_indexer         = dofs->node_vs_indexer;
       } else {
         // Create dof vs by replicating the nodal one (possibly interleaved)
-        dofs->vs         = createVectorSpace(dofs->node_vs,numComponents,interleavedOrdering);
-        dofs->overlap_vs = createVectorSpace(dofs->overlap_node_vs,numComponents,interleavedOrdering);
+        dofs->vs         = createVectorSpace(dofs->node_vs,numComponents,interleavedOrdering==DiscType::Interleaved);
+        dofs->overlap_vs = createVectorSpace(dofs->overlap_node_vs,numComponents,interleavedOrdering==DiscType::Interleaved);
         dofs->overlap_vs_indexer = createGlobalLocalIndexer(dofs->overlap_vs);
         dofs->vs_indexer         = createGlobalLocalIndexer(dofs->vs);
       }
@@ -1165,12 +1165,12 @@ void STKDiscretization::computeVectorSpaces()
       dofs->dofManager.setup(numComponents,
                              numNodes,
                              maxGlobalNodeGID,
-                             interleavedOrdering);
+                             interleavedOrdering==DiscType::Interleaved);
 
       dofs->overlap_dofManager.setup(numComponents,
                              numNodes+numGhostedNodes,
                              maxGlobalNodeGID,
-                             interleavedOrdering);
+                             interleavedOrdering==DiscType::Interleaved);
     }
   }
 

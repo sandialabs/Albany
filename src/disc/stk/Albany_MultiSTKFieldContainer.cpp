@@ -290,7 +290,7 @@ MultiSTKFieldContainer::fillSolnVector(
 
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::Interleaved);
 
   int offset = 0;
   for (int k = 0; k < sol_index[0].size(); k++) {
@@ -320,7 +320,7 @@ MultiSTKFieldContainer::fillSolnMultiVector(
   // to retrieve the local entry id in the thyra vector.
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::Interleaved);
 
   for (int icomp = 0; icomp < solution.domain()->dim(); ++icomp) {
     int offset = 0;
@@ -364,7 +364,7 @@ MultiSTKFieldContainer::saveVector(
 void
 MultiSTKFieldContainer::saveSolnVector(
     const Thyra_Vector&                          solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
@@ -380,7 +380,7 @@ MultiSTKFieldContainer::saveSolnVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::Interleaved);
 
   int offset = 0;
   for (int k = 0; k < sol_index[0].size(); ++k) {
@@ -448,7 +448,7 @@ MultiSTKFieldContainer::saveSolnVector(
 void
 MultiSTKFieldContainer::saveSolnMultiVector(
     const Thyra_MultiVector&                     solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
     stk::mesh::Selector&                         sel,
     const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
 {
@@ -464,7 +464,7 @@ MultiSTKFieldContainer::saveSolnMultiVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::Interleaved);
 
   for (int icomp = 0; icomp < solution.domain()->dim(); ++icomp) {
     int offset = 0;
@@ -499,7 +499,7 @@ MultiSTKFieldContainer::saveResVector(
   // The number of equations is given by sol_index
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
   NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved==DiscType::Interleaved);
 
   int offset = 0;
   for (int k = 0; k < res_index.size(); k++) {

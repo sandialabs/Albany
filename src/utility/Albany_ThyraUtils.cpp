@@ -264,7 +264,7 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
 Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
-                   const int numComponents, const DiscType discType)
+                   const int numComponents, const bool interleaved)
 {
   if (numComponents==1) {
     return scalar_vs;
@@ -275,7 +275,7 @@ createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
   const GO maxGlobalGID = scalar_indexer->getMaxGlobalGID();
   const int numMyGids = scalar_indexer->getNumLocalElements();
   NodalDOFManager mgr;
-  mgr.setup(numComponents,numMyGids,maxGlobalGID,discType);
+  mgr.setup(numComponents,numMyGids,maxGlobalGID,interleaved);
 
   Teuchos::Array<GO> indices(numMyGids*numComponents);
   for (int i=0; i<numMyGids; ++i) {
