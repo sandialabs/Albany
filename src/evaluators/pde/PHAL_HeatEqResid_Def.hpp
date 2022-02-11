@@ -117,10 +117,6 @@ template<typename EvalT, typename Traits>
 void HeatEqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
-//// workset.print(std::cout);
-
-
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   FST::scalarMultiplyDataData (flux, ThermalCond.get_view(), TGrad.get_view());
