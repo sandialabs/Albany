@@ -245,7 +245,7 @@ namespace Albany
       return wsElNodeEqID;
     }
 
-    const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type &
+    const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>> &
     getWsElNodeID() const
     {
       return wsElNodeID;
@@ -297,7 +297,7 @@ namespace Albany
       return m_blocks[i_block]->getOverlapDOFManager(field_name);
     }
 
-    const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double *>>>::type &
+    const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double *>>> &
     getCoords() const
     {
       return coords;
@@ -329,13 +329,13 @@ namespace Albany
     }
 
     //! Retrieve Vector (length num worksets) of element block names
-    const WorksetArray<std::string>::type &
+    const WorksetArray<std::string> &
     getWsEBNames() const
     {
       return wsEBNames;
     }
     //! Retrieve Vector (length num worksets) of physics set index
-    const WorksetArray<int>::type &
+    const WorksetArray<int> &
     getWsPhysIndex() const
     {
       return wsPhysIndex;
@@ -835,15 +835,15 @@ namespace Albany
     Conn wsElNodeEqID;
 
     //! Connectivity array [workset, element, local-node] => GID
-    WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type wsElNodeID;
+    WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>> wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Teuchos::RCP<Thyra_MultiVector> coordMV;
-    WorksetArray<std::string>::type wsEBNames;
-    WorksetArray<int>::type wsPhysIndex;
-    WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double *>>>::type coords;
-    WorksetArray<Teuchos::ArrayRCP<double>>::type sphereVolume;
-    WorksetArray<Teuchos::ArrayRCP<double *>>::type latticeOrientation;
+    WorksetArray<std::string> wsEBNames;
+    WorksetArray<int> wsPhysIndex;
+    WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double *>>> coords;
+    WorksetArray<Teuchos::ArrayRCP<double>> sphereVolume;
+    WorksetArray<Teuchos::ArrayRCP<double *>> latticeOrientation;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList elemGIDws;

@@ -99,7 +99,7 @@ class AbstractDiscretization
   getWsElNodeEqID() const = 0;
 
   //! Get map from (Ws, El, Local Node) -> unkGID
-  virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
+  virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>&
   getWsElNodeID() const = 0;
 
   //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
@@ -140,8 +140,7 @@ class AbstractDiscretization
   getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
 
   //! Retrieve coodinate ptr_field (ws, el, node)
-  virtual const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
+  virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
   getCoords() const = 0;
 
   //! Get coordinates (overlap map).
@@ -181,11 +180,11 @@ class AbstractDiscretization
   getNodalParameterSIS() const = 0;
 
   //! Retrieve Vector (length num worksets) of element block names
-  virtual const WorksetArray<std::string>::type&
+  virtual const WorksetArray<std::string>&
   getWsEBNames() const = 0;
 
   //! Retrieve Vector (length num worksets) of Physics Index
-  virtual const WorksetArray<int>::type&
+  virtual const WorksetArray<int>&
   getWsPhysIndex() const = 0;
 
   //! Retrieve connectivity map from elementGID to workset
