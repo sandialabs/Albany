@@ -22,6 +22,9 @@
 // Phalanx determines the Kokkos node we use for Tpetra types
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
+// To get assert macros
+#include "Albany_Macros.hpp"
+
 // The Kokkos node is determined from the Phalanx Device
 typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device>  KokkosNode;
 
@@ -41,6 +44,66 @@ using DeviceLocalGraph  = Kokkos::StaticCrsGraph<LO, Kokkos::LayoutLeft, KokkosN
 
 template<typename Scalar>
 using DeviceLocalMatrix = KokkosSparse::CrsMatrix<Scalar, LO, KokkosNode::device_type, void, DeviceLocalGraph::size_type>;
+
+// A tiny tiny version of a dual view.
+// No correctness check except non-null dev view in ctor.
+template<typename DT>
+struct DualView {
+  using dev_t  = Kokkos::View<DT, Kokkos::LayoutRight, PHX::Device>;
+  using host_t = typename dev_t::HostMirror;
+
+  DualView () = default;
+
+  // Construct DualView on the fly.
+  DualView (const std::string& name,
+      const size_t n0,
+      const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+      const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+      const size_t n3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+      const size_t n4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+      const size_t n5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+      const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+      const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
+   : d_view(name,n0,n1,n2,n3,n4,n5,n6,n7)
+  {
+    // Nothing to do here
+  }
+  DualView (dev_t d_view_) : d_view(d_view_) {
+    ALBANY_ALWAYS_ASSERT (d_view.data!=nullptr);
+  }
+  DualView (const DualView&) = default;
+  DualView& operator= (const DualView&) = default;
+
+  DualView& operator= (const dev_t d_view_) {
+    d_view = d_view_;
+    h_view = host_t();  // Don't init host!
+  }
+
+  const dev_t&  dev  () const { return d_view; }
+  const host_t& host () const { lazy_init_host(); return h_view; }
+
+  void sync_to_host () {
+    lazy_init_host();
+    Kokkos::deep_copy(h_view,d_view);
+  }
+  void sync_to_dev  () {
+    lazy_init_host();
+    Kokkos::deep_copy(d_view,h_view);
+  }
+
+  int size () const { return d_view().size(); }
+
+private:
+  void lazy_init_host () const {
+    if (h_view.data()==nullptr) {
+      h_view = Kokkos::create_mirror_view (d_view);
+    }
+  }
+
+          dev_t   d_view;
+  mutable host_t  h_view;
+};
+
 
 } // namespace Albany
 
