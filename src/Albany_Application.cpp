@@ -939,7 +939,7 @@ namespace {
 inline Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>&
 deref_nfm(
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>>& nfm,
-    const WorksetArray<int>::type& wsPhysIndex,
+    const WorksetArray<int>&       wsPhysIndex,
     int                            ws)
 {
   return nfm.size() == 1 ?  // Currently, all problems seem to have one nfm ...
