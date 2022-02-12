@@ -91,14 +91,18 @@ STKDiscretization::printConnectivity() const
   for (int rank = 0; rank < comm->getSize(); ++rank) {
     comm->barrier();
     if (rank == comm->getRank()) {
+      auto indexer = getNodeGlobalLocalIndexer ();
       std::cout << std::endl << "Process rank " << rank << std::endl;
-      for (int ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck) {
+      const int numWs = wsElNodeLID.size();
+      for (int ibuck = 0; ibuck < numWs; ++ibuck) {
         std::cout << "  Bucket " << ibuck << std::endl;
-        for (int ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem) {
-          int numNodes = wsElNodeID[ibuck][ielem].size();
+        const auto& el_nodes = wsElNodeLID[ibuck].host();
+        const int numCells = el_nodes.extent(0);
+        const int numNodes = el_nodes.extent(1);
+        for (int ielem = 0; ielem < numCells; ++ielem) {
           std::cout << "    Element " << ielem << ": Nodes = ";
           for (int inode = 0; inode < numNodes; ++inode)
-            std::cout << wsElNodeID[ibuck][ielem][inode] << " ";
+            std::cout << indexer->getGlobalElement(el_nodes(ielem,inode)) << " ";
           std::cout << std::endl;
         }
       }
@@ -1426,8 +1430,7 @@ STKDiscretization::computeWorksetInfo()
   }
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
-  wsElNodeEqID.resize(numBuckets);
-  wsElNodeID.resize(numBuckets);
+  wsElNodeLID.resize(numBuckets);
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
   latticeOrientation.resize(numBuckets);
@@ -1444,181 +1447,119 @@ STKDiscretization::computeWorksetInfo()
   typedef stk::mesh::Cartesian ElemTag;
   typedef stk::mesh::Cartesian CompTag;
 
-  NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs =
-      nodalDOFsStructContainer.mapOfDOFsStructs;
-  for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
-    it->second.wsElNodeEqID.resize(numBuckets);
-    it->second.wsElNodeEqID_rawVec.resize(numBuckets);
-    it->second.wsElNodeID.resize(numBuckets);
-    it->second.wsElNodeID_rawVec.resize(numBuckets);
-  }
-
   auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
-    wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
     // Set size of Kokkos views
     // Note: Assumes nodes_per_element is the same across all elements in a
     // workset
-    {
-      const int         buckSize          = buck.size();
-      stk::mesh::Entity element           = buck[0];
-      const int         nodes_per_element = bulkData->num_nodes(element);
-      wsElNodeEqID[b] =
-          WorksetConn("wsElNodeEqID", buckSize, nodes_per_element, neq);
-    }
+    const int numCells          = buck.size();
+    const int nodes_per_element = bulkData->num_nodes(buck[0]);
+    wsElNodeLID[b] = WorksetConnectivity<LO>("wsElNodeLID",numCells,nodes_per_element);
 
-    {  // nodalDataToElemNode.
+    nodesOnElemStateVec[b].resize(nodal_states.size());
 
-      nodesOnElemStateVec[b].resize(nodal_states.size());
-
-      for (size_t is = 0; is < nodal_states.size(); ++is) {
-        const std::string&            name = nodal_states[is]->name;
-        const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
-        MDArray&             array    = stateArrays.elemStateArrays[b][name];
-        std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
-        int dim0 = buck.size();  // may be different from dim[0];
-        switch (dim.size()) {
-          case 2:  // scalar
-          {
-            const ScalarFieldType& field = *metaData->get_field<ScalarFieldType>(
-                stk::topology::NODE_RANK, name);
-            stateVec.resize(dim0 * dim[1]);
-            array.assign<ElemTag, NodeTag>(stateVec.data(), dim0, dim[1]);
-            for (int i = 0; i < dim0; i++) {
-              stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-                stk::mesh::Entity rowNode = rel[j];
-                array(i, j) = *stk::mesh::field_data(field, rowNode);
+    for (size_t is = 0; is < nodal_states.size(); ++is) {
+      const std::string&            name = nodal_states[is]->name;
+      const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
+      MDArray&             array    = stateArrays.elemStateArrays[b][name];
+      std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
+      int dim0 = buck.size();  // may be different from dim[0];
+      switch (dim.size()) {
+        case 2:  // scalar
+        {
+          const ScalarFieldType& field = *metaData->get_field<ScalarFieldType>(
+              stk::topology::NODE_RANK, name);
+          stateVec.resize(dim0 * dim[1]);
+          array.assign<ElemTag, NodeTag>(stateVec.data(), dim0, dim[1]);
+          for (int i = 0; i < dim0; i++) {
+            stk::mesh::Entity        element = buck[i];
+            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
+            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
+              stk::mesh::Entity rowNode = rel[j];
+              array(i, j) = *stk::mesh::field_data(field, rowNode);
+            }
+          }
+          break;
+        }
+        case 3:  // vector
+        {
+          const VectorFieldType& field = *metaData->get_field<VectorFieldType>(
+              stk::topology::NODE_RANK, name);
+          stateVec.resize(dim0 * dim[1] * dim[2]);
+          array.assign<ElemTag, NodeTag, CompTag>(
+              stateVec.data(), dim0, dim[1], dim[2]);
+          for (int i = 0; i < dim0; i++) {
+            stk::mesh::Entity        element = buck[i];
+            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
+            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
+              stk::mesh::Entity rowNode = rel[j];
+              double*           entry = stk::mesh::field_data(field, rowNode);
+              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
+                array(i, j, k) = entry[k];
               }
             }
-            break;
           }
-          case 3:  // vector
-          {
-            const VectorFieldType& field = *metaData->get_field<VectorFieldType>(
-                stk::topology::NODE_RANK, name);
-            stateVec.resize(dim0 * dim[1] * dim[2]);
-            array.assign<ElemTag, NodeTag, CompTag>(
-                stateVec.data(), dim0, dim[1], dim[2]);
-            for (int i = 0; i < dim0; i++) {
-              stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-                stk::mesh::Entity rowNode = rel[j];
-                double*           entry = stk::mesh::field_data(field, rowNode);
-                for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                  array(i, j, k) = entry[k];
+          break;
+        }
+        case 4:  // tensor
+        {
+          const TensorFieldType& field = *metaData->get_field<TensorFieldType>(
+              stk::topology::NODE_RANK, name);
+          stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
+          array.assign<ElemTag, NodeTag, CompTag, CompTag>(
+              stateVec.data(), dim0, dim[1], dim[2], dim[3]);
+          for (int i = 0; i < dim0; i++) {
+            stk::mesh::Entity        element = buck[i];
+            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
+            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
+              stk::mesh::Entity rowNode = rel[j];
+              double*           entry = stk::mesh::field_data(field, rowNode);
+              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
+                for (int l = 0; l < static_cast<int>(dim[3]); l++) {
+                  array(i, j, k, l) = entry[k * dim[3] + l];  // check this,
+                                                              // is stride
+                                                              // Correct?
                 }
               }
             }
-            break;
           }
-          case 4:  // tensor
-          {
-            const TensorFieldType& field = *metaData->get_field<TensorFieldType>(
-                stk::topology::NODE_RANK, name);
-            stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
-            array.assign<ElemTag, NodeTag, CompTag, CompTag>(
-                stateVec.data(), dim0, dim[1], dim[2], dim[3]);
-            for (int i = 0; i < dim0; i++) {
-              stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-                stk::mesh::Entity rowNode = rel[j];
-                double*           entry = stk::mesh::field_data(field, rowNode);
-                for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                  for (int l = 0; l < static_cast<int>(dim[3]); l++) {
-                    array(i, j, k, l) = entry[k * dim[3] + l];  // check this,
-                                                                // is stride
-                                                                // Correct?
-                  }
-                }
-              }
-            }
-            break;
-          }
+          break;
         }
       }
     }
 
-    stk::mesh::Entity element           = buck[0];
-    int               nodes_per_element = bulkData->num_nodes(element);
-    for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
-         ++it) {
-      int nComp = it->first.second;
-      it->second.wsElNodeEqID_rawVec[b].resize(
-          buck.size() * nodes_per_element * nComp);
-      it->second.wsElNodeEqID[b].assign<ElemTag, NodeTag, CompTag>(
-          it->second.wsElNodeEqID_rawVec[b].data(),
-          (int)buck.size(),
-          nodes_per_element,
-          nComp);
-      it->second.wsElNodeID_rawVec[b].resize(buck.size() * nodes_per_element);
-      it->second.wsElNodeID[b].assign<ElemTag, NodeTag>(
-          it->second.wsElNodeID_rawVec[b].data(),
-          (int)buck.size(),
-          nodes_per_element);
-    }
-
     // i is the element index within bucket b
-    for (std::size_t i = 0; i < buck.size(); i++) {
+    auto h_elNodeLID = wsElNodeLID[b].host();
+    for (std::size_t cell = 0; cell < buck.size(); cell++) {
       // Traverse all the elements in this bucket
-      element = buck[i];
+      auto element = buck[cell];
 
       // Now, save a map from element GID to workset on this PE
       elemGIDws[stk_gid(element)].ws = b;
 
       // Now, save a map from element GID to local id on this workset on this PE
-      elemGIDws[stk_gid(element)].LID = i;
+      elemGIDws[stk_gid(element)].LID = cell;
 
       stk::mesh::Entity const* node_rels = bulkData->begin_nodes(element);
-      nodes_per_element                  = bulkData->num_nodes(element);
 
-      wsElNodeID[b][i].resize(nodes_per_element);
-      coords[b][i].resize(nodes_per_element);
-
-      for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
-           ++it) {
-        const auto& ov_indexer = it->second.overlap_vs_indexer;
-        IDArray&  wsElNodeEqID_array = it->second.wsElNodeEqID[b];
-        GIDArray& wsElNodeID_array   = it->second.wsElNodeID[b];
-        int       nComp              = it->first.second;
-        for (int j = 0; j < nodes_per_element; j++) {
-          stk::mesh::Entity node      = node_rels[j];
-          wsElNodeID_array((int)i, j) = stk_gid(node);
-          for (int k = 0; k < nComp; k++) {
-            const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(
-                stk_gid(node), k);
-            const int node_lid = ov_indexer->getLocalElement(node_gid);
-            wsElNodeEqID_array((int)i, j, k) = node_lid;
-          }
-        }
-      }
+      coords[b][cell].resize(nodes_per_element);
 
       // loop over local nodes
-      DOFsStruct& dofs_struct =
-          mapOfDOFsStructs[make_pair(std::string(""), neq)];
-      GIDArray& node_array    = dofs_struct.wsElNodeID[b];
-      IDArray&  node_eq_array = dofs_struct.wsElNodeEqID[b];
-      for (int j = 0; j < nodes_per_element; j++) {
-        const stk::mesh::Entity rowNode  = node_rels[j];
+      for (int node=0; node<nodes_per_element; node++) {
+        const stk::mesh::Entity rowNode  = node_rels[node];
         const GO                node_gid = stk_gid(rowNode);
         const LO node_lid = ov_node_indexer->getLocalElement(node_gid);
+        h_elNodeLID(cell,node) = node_lid;
+
 
         TEUCHOS_TEST_FOR_EXCEPTION(
             node_lid < 0,
             std::logic_error,
             "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-        coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
-
-        wsElNodeID[b][i][j] = node_array((int)i, j);
-
-        for (int eq = 0; eq < static_cast<int>(neq); ++eq)
-          wsElNodeEqID[b](i, j, eq) = node_eq_array((int)i, j, eq);
+        coords[b][cell][node] = stk::mesh::field_data(*coordinates_field, rowNode);
       }
     }
   }
@@ -1626,25 +1567,29 @@ STKDiscretization::computeWorksetInfo()
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
       for (int b = 0; b < numBuckets; b++) {
-        for (std::size_t i = 0; i < buckets[b]->size(); i++) {
-          int  nodes_per_element = buckets[b]->num_nodes(i);
+        for (std::size_t cell = 0; cell < buckets[b]->size(); cell++) {
+          int  nodes_per_element = buckets[b]->num_nodes(cell);
           bool anyXeqZero        = false;
-          for (int j = 0; j < nodes_per_element; j++)
-            if (coords[b][i][j][d] == 0.0) anyXeqZero = true;
+
+          for (int node = 0; node < nodes_per_element; node++)
+            if (coords[b][cell][node][d] == 0.0) anyXeqZero = true;
+
           if (anyXeqZero) {
             bool flipZeroToScale = false;
-            for (int j = 0; j < nodes_per_element; j++)
-              if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
+            for (int node = 0; node < nodes_per_element; node++)
+              if (coords[b][cell][node][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
                 flipZeroToScale = true;
+
             if (flipZeroToScale) {
-              for (int j = 0; j < nodes_per_element; j++) {
-                if (coords[b][i][j][d] == 0.0) {
+              for (int node = 0; node < nodes_per_element; node++) {
+                if (coords[b][cell][node][d] == 0.0) {
                   double* xleak = new double[stkMeshStruct->numDim];
                   for (int k = 0; k < stkMeshStruct->numDim; k++)
                     if (k == d)
                       xleak[d] = stkMeshStruct->PBCStruct.scale[d];
                     else
-                      xleak[k] = coords[b][i][j][k];
+                      xleak[k] = coords[b][cell][node][k];
+
                   std::string transformType = stkMeshStruct->transformType;
                   double      alpha         = stkMeshStruct->felixAlpha;
                   alpha *= M_PI / 180.;  // convert alpha, read in from
@@ -1658,10 +1603,10 @@ STKDiscretization::computeWorksetInfo()
                     StateArray::iterator sHeight =
                         stateArrays.elemStateArrays[b].find("surface_height");
                     if (sHeight != stateArrays.elemStateArrays[b].end())
-                      sHeight->second(int(i), j) -=
+                      sHeight->second(int(cell), node) -=
                           stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
                   }
-                  coords[b][i][j] = xleak;  // replace ptr to coords
+                  coords[b][cell][node] = xleak;  // replace ptr to coords
                   toDelete.push_back(xleak);
                 }
               }
@@ -2087,10 +2032,10 @@ STKDiscretization::computeSideSets()
   }
 
   // 7) Populate localDOFViews for GatherVerticallyContractedSolution
-  for (unsigned int i = 0; i < sideSets.size(); ++i) {
+  for (unsigned int ws = 0; ws < sideSets.size(); ++ws) {
 
-    // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[i];
+    // Need to look at localDOFViews for each ws so that there is a view available for each workset even if it is empty
+    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
 
     // Not all mesh structs that come through here are extruded mesh structs. This is to check if
     //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
@@ -2104,9 +2049,9 @@ STKDiscretization::computeSideSets()
       const unsigned int numComps = solDOFManager.numComponents();
 
       // Loop over the sides that form the boundary condition
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
+      auto h_elNodeLID = wsElNodeLID[ws].host();
 
-      SideSetList& ssList = sideSets[i];
+      SideSetList& ssList = sideSets[ws];
       std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
       while (ss_it != ssList.end()) {
@@ -2122,13 +2067,14 @@ STKDiscretization::computeSideSets()
           const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
           const unsigned int numSideNodes = side.topology->node_count;
 
-          const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID_i[elem_LID];
-
           //we only consider elements on the top.
           GO baseId;
           for (unsigned int j = 0; j < numSideNodes; ++j) {
             const std::size_t node = side.node[j];
-            baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
+            const LO node_lid = h_elNodeLID(elem_LID,node);
+            const GO node_gid = ov_node_indexer.getGlobalElement(node_lid);
+
+            baseId = layeredMeshNumbering.getColumnId(node_gid);
             for (unsigned int il = 0; il < numLayers+1; ++il) {
               const GO gnode = layeredMeshNumbering.getId(baseId, il);
               const LO inode = ov_node_indexer.getLocalElement(gnode);
@@ -2149,7 +2095,6 @@ STKDiscretization::computeSideSets()
       }
     }
   }
-  
 }
 
 unsigned

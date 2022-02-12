@@ -49,24 +49,25 @@ Teuchos::RCP<Thyra_LinearOp>
 createSparseHessianLinearOp(
     Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
     Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
-    const std::vector<IDArray> vElDofs)
+    const Connectivity<LO>& ws_el_nodes)
 {
     Teuchos::RCP<const Tpetra_Map> p_overlapped_map = getTpetraMap(p_overlapped_vs);
     Teuchos::RCP<const Tpetra_Map> p_owned_map = getTpetraMap(p_owned_vs);
     Teuchos::RCP<Thyra_LinearOp> H;
 
     std::size_t num_elem = 0;
-    const std::size_t num_elem_per_ws = vElDofs[0].dimension(0);
-    const std::size_t nws = vElDofs.size();
+    const std::size_t num_elem_per_ws = ws_el_nodes[0].dev().extent(0);
+    const std::size_t nws = ws_el_nodes.size();
 
     bool same_num_elem_per_ws = true;
 
     for (std::size_t wsIndex = 0; wsIndex < nws; ++wsIndex)
     {
-        const std::size_t num_elem_per_ws_i = vElDofs[wsIndex].dimension(0);
+        const auto& elem_node = ws_el_nodes[wsIndex].dev();
+        const std::size_t num_elem_per_ws_i = elem_node.extent(0);
         if (num_elem_per_ws != num_elem_per_ws_i && wsIndex + 1 < nws)
             same_num_elem_per_ws = false;
-        num_elem += vElDofs[wsIndex].dimension(0);
+        num_elem += elem_node.extent(0);
     }
 
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -77,26 +78,26 @@ createSparseHessianLinearOp(
             << "Not implemented yet"
             << std::endl);
 
-    const std::size_t NN = vElDofs[0].dimension(1);
+    const int NN = ws_el_nodes[0].dev().extent(1);
 
     Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_owned_map, 30));
 
     Tpetra_GO cols[1];
 
     for (std::size_t ielem=0; ielem<num_elem; ++ielem) {
-        IDArray wsElDofs = vElDofs[floor(ielem / num_elem_per_ws)];
         const Tpetra_LO ielem_ws = ielem % num_elem_per_ws;
-        for (std::size_t i = 0; i < NN; ++i)
+        auto el_nodes = ws_el_nodes[floor(ielem / num_elem_per_ws)].host();
+        for (int inode=0; inode < NN; ++inode)
         {
-            const Tpetra_LO lcl_overlapped_node1 = wsElDofs((int)ielem_ws, (int)i, 0);
+            const Tpetra_LO lcl_overlapped_node1 = el_nodes(ielem_ws,inode);
             if (lcl_overlapped_node1 < 0)
                 continue;
 
             const GO row = p_overlapped_map->getGlobalElement(lcl_overlapped_node1);
 
-            for (std::size_t j = 0; j < NN; ++j)
+            for (int jnode = 0; jnode < NN; ++jnode)
             {
-                const Tpetra_LO lcl_overlapped_node2 = wsElDofs((int)ielem_ws, (int)j, 0);
+                const Tpetra_LO lcl_overlapped_node2 = el_nodes(ielem_ws, jnode);
                 if (lcl_overlapped_node2 < 0)
                     continue;
 

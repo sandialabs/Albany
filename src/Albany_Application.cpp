@@ -159,7 +159,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   problemParams->validateParameters(*(problem->getValidProblemParameters()), 0);
 
   try {
-    tangent_deriv_dim = calcTangentDerivDimension(problemParams);
+    tangent_deriv_dim = calcTangentDerivDimension();
   } catch (...) {
     tangent_deriv_dim = 1;
   }
@@ -669,8 +669,8 @@ Application::finalSetUp(
           param_name,
           disc->getVectorSpace(param_name),
           disc->getOverlapVectorSpace(param_name)));
-      parameter->set_workset_elem_dofs(
-          Teuchos::rcpFromRef(disc->getElNodeEqID(param_name)));
+      // parameter->set_workset_elem_nodes(disc->getWsElNodeLID(param_name));
+      parameter->set_dof_mgr (disc->getOverlapDOFManager(param_name));
 
       // Get the vector and lower/upper bounds, and fill them with available
       // data
@@ -789,13 +789,12 @@ void
 Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const
 {
   // get number of worksets
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
-  unsigned int const numWorksets = wsElNodeEqID.size();
+  int const numWorksets = disc->getNumWorksets();
 
   // compute largest workset size over all worksets for each sideset name
   std::map<std::string, unsigned int> maxSideSetSizes;
-  for (unsigned int i = 0; i < numWorksets; ++i) { 
-    const LocalSideSetInfoList& sideSetView = disc->getSideSetViews(i);
+  for (int ws=0; ws<numWorksets; ++ws) { 
+    const LocalSideSetInfoList& sideSetView = disc->getSideSetViews(ws);
     for (auto it = sideSetView.begin(); it != sideSetView.end(); ++it) {
       if (maxSideSetSizes.find(it->first) == maxSideSetSizes.end()) {
         maxSideSetSizes[it->first] = 0;
@@ -1328,10 +1327,8 @@ Application::computeGlobalResidualImpl(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int const numWorksets = wsElNodeEqID.size();
+  const int numWorksets    = disc->getNumWorksets();
 
   const Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
@@ -1551,10 +1548,8 @@ Application::computeGlobalJacobianImpl(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets    = disc->getNumWorksets();
 
   Teuchos::RCP<Thyra_Vector> overlapped_f;
   if (Teuchos::nonnull(f)) { overlapped_f = solMgr->get_overlapped_f(); }
@@ -1865,10 +1860,8 @@ Application::computeGlobalTangent(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets    = disc->getNumWorksets();
 
   Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
@@ -2096,10 +2089,8 @@ Application::applyGlobalDistParamDerivImpl(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets    = disc->getNumWorksets();
 
   // The combin-and-scatter manager
   auto cas_manager = solMgr->get_cas_manager();
@@ -2649,8 +2640,8 @@ Application::evaluateResidual_HessVecProd_xx(
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xx = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xx->domain()->dim());
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xx->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
+    const int numWorksets    = disc->getNumWorksets();
 
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
@@ -2662,8 +2653,6 @@ Application::evaluateResidual_HessVecProd_xx(
       workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
-
-    int const numWorksets = wsElNodeEqID.size();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -2751,8 +2740,8 @@ Application::evaluateResidual_HessVecProd_xp(
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xp = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xp->domain()->dim());
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xp->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
+    const int numWorksets    = disc->getNumWorksets();
 
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
@@ -2764,8 +2753,6 @@ Application::evaluateResidual_HessVecProd_xp(
       workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
-
-    int const numWorksets = wsElNodeEqID.size();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -2866,8 +2853,8 @@ Application::evaluateResidual_HessVecProd_px(
     workset.hessianWorkset.hess_vec_prod_f_px = Hv_f_px;
     workset.hessianWorkset.overlapped_hess_vec_prod_f_px->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
+    const int numWorksets    = disc->getNumWorksets();
 
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
@@ -2879,8 +2866,6 @@ Application::evaluateResidual_HessVecProd_px(
       workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
-
-    int const numWorksets = wsElNodeEqID.size();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -3018,7 +3003,6 @@ Application::evaluateResidual_HessVecProd_pp(
     workset.hessianWorkset.hess_vec_prod_f_pp = Hv_f_pp;
     workset.hessianWorkset.overlapped_hess_vec_prod_f_pp->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
 
     if (dfm != Teuchos::null) {
@@ -3032,7 +3016,7 @@ Application::evaluateResidual_HessVecProd_pp(
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
 
-    int const numWorksets = wsElNodeEqID.size();
+    int const numWorksets = disc->getNumWorksets();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -3119,10 +3103,8 @@ Application::evaluateStateFieldManager(
   Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
   // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets = disc->getNumWorksets();
 
   // Scatter to the overlapped distrbution
   solMgr->scatterX(x, xdot, xdotdot, dxdp);
@@ -3489,8 +3471,7 @@ Application::setupBasicWorksetInfo(
 }
 
 int
-Application::calcTangentDerivDimension(
-    const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+Application::calcTangentDerivDimension()
 {
   int np = Albany::CalculateNumberParams(problemParams);
   return std::max(1, np);

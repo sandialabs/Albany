@@ -7,14 +7,16 @@
 #ifndef ALBANY_DISTRIBUTED_PARAMETER_HPP
 #define ALBANY_DISTRIBUTED_PARAMETER_HPP
 
-#include <string>
+#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_StateInfoStruct.hpp" // For IDArray
+#include "Albany_NodalDOFManager.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_ThyraTypes.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#include "Albany_StateInfoStruct.hpp" // For IDArray
-#include "Albany_ThyraTypes.hpp"
-#include "Albany_CombineAndScatterManager.hpp"
+#include <string>
 
 namespace Albany {
 
@@ -51,13 +53,18 @@ public:
   //! Get name
   const std::string& name() const { return param_name; }
 
-  //! Set workset_elem_dofs map
-  void set_workset_elem_dofs(const Teuchos::RCP<const id_array_vec_type>& ws_elem_dofs_) {
-    ws_elem_dofs = ws_elem_dofs_;
+  //! Set workset_elem_nodes map
+  // void set_workset_elem_nodes (const Connectivity<LO>& ws_el_nodes_) {
+  //   ws_el_nodes = ws_el_nodes_;
+  // }
+  // Set the dof manager for the parameter
+  void set_dof_mgr (const NodalDOFManager& dof_mgr_) {
+    dof_mgr = dof_mgr_;
   }
 
   //! Return constant workset_elem_dofs. For each workset, workset_elem_dofs maps (elem, node, nComp) into local id
-  const id_array_vec_type& workset_elem_dofs() const { return *ws_elem_dofs; }
+  // const Connectivity<LO>&   workset_elem_nodes() const { return ws_el_nodes; }
+  const NodalDOFManager&    get_dof_mgr () const { return dof_mgr; }
 
   //! Get vector space 
   virtual Teuchos::RCP<const Thyra_VectorSpace> vector_space() const { return owned_vec->space(); }
@@ -109,8 +116,12 @@ protected:
   //! The manager for scatter/combine operation
   Teuchos::RCP<const CombineAndScatterManager> cas_manager;
 
-  //! Vector over worksets, containing DOF's map from (elem, node, nComp) into local id
-  Teuchos::RCP<const id_array_vec_type> ws_elem_dofs;
+  // Together, the following two allow to retrieve the GID of
+  // any dof of the parameter. The first retrieves the list of
+  // LOCAL node ids given the tripled (ws,cell,node), while the
+  // latter gives the dof id as a function of the node id.
+  Connectivity<LO>  ws_el_nodes;
+  NodalDOFManager   dof_mgr;
 };
 
 } // namespace Albany

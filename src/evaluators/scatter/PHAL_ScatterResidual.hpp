@@ -7,18 +7,19 @@
 #ifndef PHAL_SCATTER_RESIDUAL_HPP
 #define PHAL_SCATTER_RESIDUAL_HPP
 
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
+
+#include "Albany_Layouts.hpp"
+#include "Albany_NodalDOFManager.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_KokkosUtils.hpp"
+#include "Albany_KokkosTypes.hpp"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_Dimension.hpp"
-
-#include "Albany_KokkosTypes.hpp"
-#include "Albany_Layouts.hpp"
-#include "Albany_DiscretizationUtils.hpp"
-#include "Albany_KokkosUtils.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -58,17 +59,26 @@ protected:
   PHX::MDField<ScalarT const,Cell,Node,Dim>  valVec;
   PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> valTensor;
   std::size_t numNodes;
-  std::size_t numFieldsBase; // Number of fields gathered in this call
-  std::size_t offset; // Offset of first DOF being gathered when numFields<neq
+  std::size_t numFieldsBase; // Number of fields scattered in this call
+  std::size_t offset; // Offset of first DOF being scattered when numFields<neq
 
+  // The dof mgr of the solution, used to map node ids to dof ids
+  Albany::NodalDOFManager sol_dof_mgr;
+
+  // Retrieves (local) dof ids *for the DOF being scattered*
+  // If you need the id of other dofs, copy+past the impl,
+  // without adding offset.
+  KOKKOS_FORCEINLINE_FUNCTION
+  int dof_id (const int node, const int eq) const {
+    return sol_dof_mgr.getLocalDOF(node,eq+offset);
+  }
   unsigned short int tensorRank;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
-  Albany::WorksetConn nodeID;
+  Albany::WorksetConnectivity<LO>::dev_t elNodeLID;
   Albany::DeviceView1d<ST> f_kokkos;
   Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
-
 #endif
 };
 
@@ -140,7 +150,7 @@ private:
   int numDims;
 
   typedef ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits> Base;
-  using Base::nodeID;
+  using Base::elNodeLID;
   using Base::f_kokkos;
   using Base::val_kokkos;
 
@@ -207,7 +217,7 @@ private:
   Albany::DeviceLocalMatrix<ST> Jac_kokkos;
 
   typedef ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
-  using Base::nodeID;
+  using Base::elNodeLID;
   using Base::f_kokkos;
   using Base::val_kokkos;
 

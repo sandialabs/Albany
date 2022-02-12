@@ -4,17 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <vector>
-#include <string>
-#include <chrono>
+#include "PHAL_GatherSolution.hpp"
+
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_Macros.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Albany_Macros.hpp"
-#include "Albany_ThyraUtils.hpp"
-
-#include "PHAL_GatherSolution.hpp"
+#include <vector>
+#include <string>
+#include <chrono>
 
 namespace PHAL {
 
@@ -212,81 +213,99 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank1_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      (this->valVec)(cell,node,eq)= x_constView(nodeID(cell, node,this->offset+eq));
+      this->valVec(cell,node,eq)= x_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank1_Transient_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      (this->valVec_dot)(cell,node,eq)= xdot_constView(nodeID(cell, node, this->offset+eq));
+      this->valVec_dot(cell,node,eq)= xdot_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank1_Acceleration_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      (this->valVec_dotdot)(cell,node,eq)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
+      this->valVec_dotdot(cell,node,eq)= xdotdot_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank2_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      (this->valTensor)(cell,node,eq/numDim,eq%numDim)= x_constView(nodeID(cell, node, this->offset+eq));
+      this->valTensor(cell,node,eq/numDim,eq%numDim)= x_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank2_Transient_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim)= xdot_constView(nodeID(cell, node, this->offset+eq));
+      this->valTensor_dot(cell,node,eq/numDim,eq%numDim)= xdot_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank2_Acceleration_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
+      this->valTensor_dotdot(cell,node,eq/numDim,eq%numDim)= xdotdot_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank0_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      d_val[eq](cell,node)= x_constView(nodeID(cell, node, this->offset+eq));
+      d_val[eq](cell,node)= x_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank0_Transient_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      d_val_dot[eq](cell,node)= xdot_constView(nodeID(cell, node, this->offset+eq));
+      d_val_dot[eq](cell,node)= xdot_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSolRank0_Acceleration_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (size_t node = 0; node < this->numNodes; ++node) {
+    const auto node_lid = elNodeLID(cell,node);
     for (int eq = 0; eq < numFields; eq++)
-      d_val_dotdot[eq](cell,node)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
+      d_val_dotdot[eq](cell,node)= xdotdot_constView(this->dof_id(node_lid,eq));
+  }
 }
 
 #endif
@@ -300,8 +319,11 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
 
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  auto nodeID = workset.wsElNodeEqID;
+  auto h_elNodeLID = workset.wsElNodeLID.host();
+
   Teuchos::ArrayRCP<const ST> x_constView, xdot_constView, xdotdot_constView;
   x_constView = Albany::getLocalData(x);
   if(!xdot.is_null()) {
@@ -314,15 +336,16 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->valVec)(cell,node,eq) = x_constView[nodeID(cell,node,this->offset + eq)];
+          (this->valVec)(cell,node,eq) = x_constView[this->dof_id(node_lid,eq)];
         if (workset.transientTerms && this->enableTransient) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dot)(cell,node,eq) = xdot_constView[nodeID(cell,node,this->offset + eq)];
+            (this->valVec_dot)(cell,node,eq) = xdot_constView[this->dof_id(node_lid,eq)];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dotdot)(cell,node,eq) = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+            (this->valVec_dotdot)(cell,node,eq) = xdotdot_constView[this->dof_id(node_lid,eq)];
         }
       }
     }
@@ -330,30 +353,32 @@ evaluateFields(typename Traits::EvalData workset)
     int numDim = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->valTensor)(cell,node,eq/numDim,eq%numDim) = x_constView[nodeID(cell,node,this->offset + eq)];
+          (this->valTensor)(cell,node,eq/numDim,eq%numDim) = x_constView[this->dof_id(node_lid,eq)];
         if (workset.transientTerms && this->enableTransient) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim) = xdot_constView[nodeID(cell,node,this->offset + eq)];
+            (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim) = xdot_constView[this->dof_id(node_lid,eq)];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim) = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+            (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim) = xdotdot_constView[this->dof_id(node_lid,eq)];
         }
       }
     }
   } else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->val[eq])(cell,node) = x_constView[nodeID(cell,node,this->offset + eq)];
+          this->val[eq](cell,node) = x_constView[this->dof_id(node_lid,eq)];
         if (workset.transientTerms && this->enableTransient) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dot[eq])(cell,node) = xdot_constView[nodeID(cell,node,this->offset + eq)];
+            this->val_dot[eq](cell,node) = xdot_constView[this->dof_id(node_lid,eq)];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dotdot[eq])(cell,node) = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+            this->val_dotdot[eq](cell,node) = xdotdot_constView[this->dof_id(node_lid,eq)];
         }
       }
     }
@@ -365,7 +390,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
   // Get map for local data structures
-  nodeID = workset.wsElNodeEqID;
+  elNodeLID = workset.wsElNodeLID.dev();
 
   // Get vector view from a specific device
   x_constView = Albany::getDeviceData(x);
@@ -477,10 +502,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank2_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
-      typename PHAL::Ref<ScalarT>::type valref = (this->valTensor)(cell,node,eq/numDim,eq%numDim);
-      valref=FadType(valref.size(), x_constView(nodeID(cell,node,this->offset+eq)));
+      typename PHAL::Ref<ScalarT>::type valref = this->valTensor(cell,node,eq/numDim,eq%numDim);
+      valref=FadType(valref.size(), x_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =j_coeff;
     }
   }
@@ -491,10 +517,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank2_Transient_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
-      typename PHAL::Ref<ScalarT>::type valref = (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim);
-      valref =FadType(valref.size(), xdot_constView(nodeID(cell,node,this->offset+eq)));
+      typename PHAL::Ref<ScalarT>::type valref = this->valTensor_dot(cell,node,eq/numDim,eq%numDim);
+      valref =FadType(valref.size(), xdot_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =m_coeff;
     }
   }
@@ -505,10 +532,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank2_Acceleration_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim);
-      valref=FadType(valref.size(), xdotdot_constView(nodeID(cell,node,this->offset+eq)));
+      valref=FadType(valref.size(), xdotdot_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =n_coeff;
     }
   }
@@ -519,10 +547,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank1_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; node++){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valVec)(cell,node,eq);
-      valref =FadType(valref.size(), x_constView(nodeID(cell,node,this->offset+eq)));
+      valref =FadType(valref.size(), x_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =j_coeff;
     }
   }
@@ -533,10 +562,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank1_Transient_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valVec_dot)(cell,node,eq);
-      valref =FadType(valref.size(), xdot_constView(nodeID(cell,node,this->offset+eq)));
+      valref =FadType(valref.size(), xdot_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =m_coeff;
     }
   }
@@ -547,10 +577,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank1_Acceleration_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valVec_dotdot)(cell,node,eq);
-      valref =FadType(valref.size(), xdotdot_constView(nodeID(cell,node,this->offset+eq)));
+      valref =FadType(valref.size(), xdotdot_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =n_coeff;
     }
   }
@@ -561,10 +592,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank0_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = d_val[eq](cell,node);
-      valref =FadType(valref.size(), x_constView(nodeID(cell,node,this->offset+eq)));
+      valref =FadType(valref.size(), x_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =j_coeff;
     }
   }
@@ -575,10 +607,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank0_Transient_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = d_val_dot[eq](cell,node);
-      valref =FadType(valref.size(), xdot_constView(nodeID(cell,node,this->offset+eq)));
+      valref =FadType(valref.size(), xdot_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) =m_coeff;
     }
   }
@@ -589,10 +622,11 @@ KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJacRank0_Acceleration_Tag&, const int& cell) const{
   for (size_t node = 0; node < this->numNodes; ++node){
+    const LO node_lid = elNodeLID(cell,node);
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = d_val_dotdot[eq](cell,node);
-      valref = FadType(valref.size(), xdotdot_constView(nodeID(cell,node,this->offset+eq)));
+      valref = FadType(valref.size(), xdotdot_constView(this->dof_id(node_lid,eq)));
       valref.fastAccessDx(firstunk + eq) = n_coeff;
     }
   }
@@ -609,8 +643,9 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
 
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  auto nodeID = workset.wsElNodeEqID;
+  auto h_elNodeLID = workset.wsElNodeLID.host();
   Teuchos::ArrayRCP<const ST> x_constView, xdot_constView, xdotdot_constView;
   x_constView = Albany::getLocalData(x);
   if(!xdot.is_null()) {
@@ -623,17 +658,17 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor.extent(2); // only needed for tensor fields
 
+  const int neq = this->sol_dof_mgr.numComponents();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const int neq = nodeID.extent(2);
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       int firstunk = neq * node + this->offset;
       for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT>::type
           valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor(cell,node, eq/numDim, eq%numDim));
-        valref = FadType(valref.size(), x_constView[nodeID(cell,node,this->offset + eq)]);
+        valref = FadType(valref.size(), x_constView[this->dof_id(node_lid,eq)];
         valref.fastAccessDx(firstunk + eq) = workset.j_coeff;
       }
       if (workset.transientTerms && this->enableTransient) {
@@ -642,7 +677,7 @@ evaluateFields(typename Traits::EvalData workset)
           valref = (this->tensorRank == 0 ? this->val_dot[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec_dot(cell,node,eq) :
                     this->valTensor_dot(cell,node, eq/numDim, eq%numDim));
-        valref = FadType(valref.size(), xdot_constView[nodeID(cell,node,this->offset + eq)]);
+        valref = FadType(valref.size(), xdot_constView[this->dof_id(node_lid,eq)];
         valref.fastAccessDx(firstunk + eq) = workset.m_coeff;
         }
       }
@@ -652,7 +687,7 @@ evaluateFields(typename Traits::EvalData workset)
           valref = (this->tensorRank == 0 ? this->val_dotdot[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec_dotdot(cell,node,eq) :
                     this->valTensor_dotdot(cell,node, eq/numDim, eq%numDim));
-        valref = FadType(valref.size(), xdotdot_constView[nodeID(cell,node,this->offset + eq)]);
+        valref = FadType(valref.size(), xdotdot_constView[this->dof_id(node_lid,eq)];
         valref.fastAccessDx(firstunk + eq) = workset.n_coeff;
         }
       }
@@ -665,10 +700,11 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
   // Get map for local data structures
-  nodeID = workset.wsElNodeEqID;
+  elNodeLID = workset.wsElNodeLID.dev();
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
 
   // Get dimensions and coefficients
-  neq = nodeID.extent(2);
+  neq = this->sol_dof_mgr.numComponents();
   j_coeff=workset.j_coeff;
   m_coeff=workset.m_coeff;
   n_coeff=workset.n_coeff;
@@ -784,8 +820,6 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
-
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
@@ -799,6 +833,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& Vx_data       = Albany::getLocalData(Vx);
   const auto& Vxdot_data    = Albany::getLocalData(Vxdot);
   const auto& Vxdotdot_data = Albany::getLocalData(Vxdotdot);
+  auto h_elNodeLID = workset.wsElNodeLID.host();
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
 
   Teuchos::RCP<ParamVec> params = workset.params;
   //int num_cols_tot = workset.param_offset + workset.num_cols_p;
@@ -810,36 +846,38 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT>::type
           valref = ((this->tensorRank == 2) ? (this->valTensor)(cell,node,eq/numDim,eq%numDim) :
                     (this->tensorRank == 1) ? (this->valVec)(cell,node,eq) :
                     (this->val[eq])(cell,node));
         if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-          valref = TanFadType(valref.size(), x_constView[nodeID(cell,node,this->offset + eq)]);
+          valref = TanFadType(valref.size(), x_constView[this->dof_id(node_lid,eq)]);
           for (int k=0; k<workset.num_cols_x; k++)
             valref.fastAccessDx(k) =
-              workset.j_coeff*Vx_data[k][nodeID(cell,node,this->offset + eq)];
+              workset.j_coeff*Vx_data[k][this->dof_id(node_lid,eq)];
         } else {
-          valref = TanFadType(x_constView[nodeID(cell,node,this->offset + eq)]);
+          valref = TanFadType(x_constView[this->dof_id(node_lid,eq)]);
         }
       }
-   }
+    }
 
 
-   if (workset.transientTerms && this->enableTransient) {
-    Teuchos::ArrayRCP<const ST> xdot_constView = Albany::getLocalData(xdot);
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
+    if (workset.transientTerms && this->enableTransient) {
+      Teuchos::ArrayRCP<const ST> xdot_constView = Albany::getLocalData(xdot);
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT>::type
           valref = ((this->tensorRank == 2) ? (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim) :
                     (this->tensorRank == 1) ? (this->valVec_dot)(cell,node,eq) :
                     (this->val_dot[eq])(cell,node));
-          valref = TanFadType(valref.size(), xdot_constView[nodeID(cell,node,this->offset + eq)]);
+          valref = TanFadType(valref.size(), xdot_constView[this->dof_id(node_lid,eq)]);
           if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
             for (int k=0; k<workset.num_cols_x; k++)
               valref.fastAccessDx(k) =
-                workset.m_coeff*Vxdot_data[k][nodeID(cell,node,this->offset + eq)];
+                workset.m_coeff*Vxdot_data[k][this->dof_id(node_lid,eq)];
           }
         }
       }
@@ -848,17 +886,18 @@ evaluateFields(typename Traits::EvalData workset)
    if (workset.accelerationTerms && this->enableAcceleration) {
     Teuchos::ArrayRCP<const ST> xdotdot_constView = Albany::getLocalData(xdotdot);
     for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT>::type
           valref = ((this->tensorRank == 2) ? (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim) :
                     (this->tensorRank == 1) ? (this->valVec_dotdot)(cell,node,eq) :
                     (this->val_dotdot[eq])(cell,node));
 
-          valref = TanFadType(valref.size(), xdotdot_constView[nodeID(cell,node,this->offset + eq)]);
+          valref = TanFadType(valref.size(), xdotdot_constView[this->dof_id(node_lid,eq)]);
           if (Vxdotdot != Teuchos::null && workset.n_coeff != 0.0) {
             for (int k=0; k<workset.num_cols_x; k++)
               valref.fastAccessDx(k) =
-                workset.n_coeff*Vxdotdot_data[k][nodeID(cell,node,this->offset + eq)];
+                workset.n_coeff*Vxdotdot_data[k][this->dof_id(node_lid,eq)];
           }
         }
       }
@@ -894,7 +933,6 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
@@ -902,26 +940,32 @@ evaluateFields(typename Traits::EvalData workset)
   //get const (read-only) view of x and xdot
   const auto& x_constView = Albany::getLocalData(x);
 
+  auto h_elNodeLID = workset.wsElNodeLID.host();
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
+
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->valVec)(cell,node,eq) = x_constView[nodeID(cell,node,this->offset + eq)];
+          this->valVec(cell,node,eq) = x_constView[this->dof_id(node_lid,eq)];
       }
 
     if (workset.transientTerms && this->enableTransient) {
       Teuchos::ArrayRCP<const ST> xdot_constView = Albany::getLocalData(xdot);
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dot)(cell,node,eq) = xdot_constView[nodeID(cell,node,this->offset + eq)];
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          this->valVec_dot(cell,node,eq) = xdot_constView[this->dof_id(node_lid,eq)];
       }
     }
 
     if (workset.accelerationTerms && this->enableAcceleration) {
       Teuchos::ArrayRCP<const ST> xdotdot_constView = Albany::getLocalData(xdotdot);
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dotdot)(cell,node,eq) = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          this->valVec_dotdot(cell,node,eq) = xdotdot_constView[this->dof_id(node_lid,eq)];
         }
       }
     }
@@ -929,45 +973,51 @@ evaluateFields(typename Traits::EvalData workset)
     int numDim = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->valTensor)(cell,node,eq/numDim,eq%numDim) = x_constView[nodeID(cell,node,this->offset + eq)];
+          this->valTensor(cell,node,eq/numDim,eq%numDim) = x_constView[this->dof_id(node_lid,eq)];
       }
 
     if (workset.transientTerms && this->enableTransient) {
       Teuchos::ArrayRCP<const ST> xdot_constView = Albany::getLocalData(xdot);
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim) = xdot_constView[nodeID(cell,node,this->offset + eq)];
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          this->valTensor_dot(cell,node,eq/numDim,eq%numDim) = xdot_constView[this->dof_id(node_lid,eq)];
       }
     }
 
     if (workset.accelerationTerms && this->enableAcceleration) {
       Teuchos::ArrayRCP<const ST> xdotdot_constView = Albany::getLocalData(xdotdot);
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim) = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          this->valTensor_dotdot(cell,node,eq/numDim,eq%numDim) = xdotdot_constView[this->dof_id(node_lid,eq)];
         }
       }
     }
   } else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->val[eq])(cell,node) = x_constView[nodeID(cell,node,this->offset + eq)];
+          this->val[eq](cell,node) = x_constView[this->dof_id(node_lid,eq)];
       }
     if (workset.transientTerms && this->enableTransient) {
       Teuchos::ArrayRCP<const ST> xdot_constView = Albany::getLocalData(xdot);
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dot[eq])(cell,node) = xdot_constView[nodeID(cell,node,this->offset + eq)];
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          this->val_dot[eq](cell,node) = xdot_constView[this->dof_id(node_lid,eq)];
       }
     }
 
     if (workset.accelerationTerms && this->enableAcceleration) {
       Teuchos::ArrayRCP<const ST> xdotdot_constView = Albany::getLocalData(xdotdot);
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dotdot[eq])(cell,node) = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          this->val_dotdot[eq](cell,node) = xdotdot_constView[this->dof_id(node_lid,eq)];
         }
       }
     }
@@ -1006,7 +1056,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
 
-  auto nodeID = workset.wsElNodeEqID;
   Teuchos::ArrayRCP<const ST> x_constView, xdot_constView, xdotdot_constView, direction_x_constView;
   bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
@@ -1046,17 +1095,20 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor.extent(2); // only needed for tensor fields
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const int neq = nodeID.extent(2);
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
+  auto h_elNodeLID = workset.wsElNodeLID.host();
+  const int neq = this->sol_dof_mgr.numComponents();
 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       int firstunk = neq * node + this->offset;
       for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT>::type
           valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor(cell,node, eq/numDim, eq%numDim));
-        RealType xvec_val = x_constView[nodeID(cell,node,this->offset + eq)];
+        RealType xvec_val = x_constView[this->dof_id(node_lid,eq)];
 
         valref = HessianVecFad(valref.size(), xvec_val);
         // If we differentiate w.r.t. the solution, we have to set the first
@@ -1066,20 +1118,21 @@ evaluateFields(typename Traits::EvalData workset)
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)
-          valref.val().fastAccessDx(0) = direction_x_constView[nodeID(cell,node,this->offset + eq)];
+          valref.val().fastAccessDx(0) = direction_x_constView[this->dof_id(node_lid,eq)];
       }
     }
   }
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           typename PHAL::Ref<ScalarT>::type
             valref = (this->tensorRank == 0 ? this->val_dot[eq](cell,node) :
                       this->tensorRank == 1 ? this->valVec_dot(cell,node,eq) :
                       this->valTensor_dot(cell,node, eq/numDim, eq%numDim));
-          valref = xdot_constView[nodeID(cell,node,this->offset + eq)];
+          valref = xdot_constView[this->dof_id(node_lid,eq)];
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
@@ -1088,7 +1141,7 @@ evaluateFields(typename Traits::EvalData workset)
             valref = (this->tensorRank == 0 ? this->val_dotdot[eq](cell,node) :
                       this->tensorRank == 1 ? this->valVec_dotdot(cell,node,eq) :
                       this->valTensor_dotdot(cell,node, eq/numDim, eq%numDim));
-          valref = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
+          valref = xdotdot_constView[this->dof_id(node_lid,eq)];
         }
       }
     }

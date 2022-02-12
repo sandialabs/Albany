@@ -94,26 +94,34 @@ class AbstractDiscretization
   virtual const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const = 0;
 
-  //! Get map from (Ws, El, Local Node, Eq) -> unkLID
-  virtual const Conn&
-  getWsElNodeEqID() const = 0;
+  // Get number of cell worksets
+  int getNumWorksets () const {
+    return getWsElNodeLID().size();
+  }
 
-  //! Get map from (Ws, El, Local Node) -> unkGID
-  virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>&
-  getWsElNodeID() const = 0;
-
-  //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
-  //! both scalar and vector fields
-  virtual const std::vector<IDArray>&
-  getElNodeEqID(const std::string& field_name) const = 0;
+  //! Get WS array of (Ws, El, Local Node) -> nodeLID
+  virtual const Connectivity<LO>&
+  getWsElNodeLID() const = 0;
 
   //! Get Dof Manager of field field_name
   virtual const NodalDOFManager&
   getDOFManager(const std::string& field_name) const = 0;
 
+  // Handy shortcut of the above for solution dof name
+  const NodalDOFManager&
+  getSolutionDOFManager() const {
+    return getDOFManager (solution_dof_name());
+  }
+
   //! Get Dof Manager of field field_name
   virtual const NodalDOFManager&
   getOverlapDOFManager(const std::string& field_name) const = 0;
+
+  // Handy shortcut of the above for solution dof name
+  const NodalDOFManager&
+  getSolutionOverlapDOFManager() const {
+    return getOverlapDOFManager (solution_dof_name());
+  }
 
   //! Get Dof Manager of field field_name
   virtual Teuchos::RCP<const GlobalLocalIndexer>

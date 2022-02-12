@@ -96,13 +96,17 @@ using WsLIDList = std::map<GO, wsLid>;
 template <typename T>
 using WorksetArray = Teuchos::ArrayRCP<T>;
 
-// LB 8/17/18: I moved these out of AbstractDiscretization, so if one only needs
-// these types,
-//             he/she can include this small file rather than
-//             Albany_AbstractDiscretization.hpp, which has tons of
-//             dependencies.
-using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
-using Conn        = WorksetArray<WorksetConn>;
+// LB 8/17/18:
+// I moved these out of AbstractDiscretization, so if one only needs
+// these types, they can include this small file rather than
+// Albany_AbstractDiscretization.hpp, which has tons of dependencies.
+
+// Connectivity means a map (cell_id, entity_id) -> ID
+template<typename T>
+using WorksetConnectivity = DualView<T**>;
+
+template<typename T>
+using Connectivity = WorksetArray<WorksetConnectivity<T>>;
 
 }  // namespace Albany
 

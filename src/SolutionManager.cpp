@@ -68,8 +68,6 @@ SolutionManager::SolutionManager(
   }
   //  }
 
-  {
-
   auto owned_vs      = disc_->getVectorSpace();
   auto overlapped_vs = disc_->getOverlapVectorSpace();
 
@@ -81,9 +79,6 @@ SolutionManager::SolutionManager(
     overlapped_soln_dxdp = Teuchos::null;
   }
 
-  // TODO: ditch the overlapped_*T and keep only overlapped_*.
-  //       You need to figure out how to pass the graph in a Tpetra-free way
-  //       though...
   overlapped_f = Thyra::createMember(overlapped_vs);
 
   // This call allocates the non-overlapped MV
@@ -92,15 +87,6 @@ SolutionManager::SolutionManager(
   // Create the CombineAndScatterManager for handling distributed memory linear
   // algebra communications
   cas_manager = Albany::createCombineAndScatterManager(owned_vs, overlapped_vs);
-
-  }
-
-
-  auto                           wsElNodeEqID = disc_->getWsElNodeEqID();
-  auto                           coords       = disc_->getCoords();
-  Teuchos::ArrayRCP<std::string> wsEBNames    = disc_->getWsEBNames();
-  const int                      numDim       = disc_->getNumDim();
-  const int                      neq          = disc_->getNumEq();
 
   Teuchos::RCP<Teuchos::ParameterList> pbParams =
       Teuchos::sublist(appParams_, "Problem", true);
@@ -114,11 +100,7 @@ SolutionManager::SolutionManager(
         Albany::CombineMode::INSERT);
     InitialConditions(
         overlapped_soln->col(0),
-        wsElNodeEqID,
-        wsEBNames,
-        coords,
-        neq,
-        numDim,
+        *disc,
         pbParams->sublist("Initial Condition"),
         disc_->hasRestartSolution());
     cas_manager->combine(
@@ -133,11 +115,7 @@ SolutionManager::SolutionManager(
           Albany::CombineMode::INSERT);
       InitialConditions(
           overlapped_soln->col(1),
-          wsElNodeEqID,
-          wsEBNames,
-          coords,
-          neq,
-          numDim,
+          *disc,
           pbParams->sublist("Initial Condition Dot"),
           disc_->hasRestartSolution());
       cas_manager->combine(
@@ -153,11 +131,7 @@ SolutionManager::SolutionManager(
           Albany::CombineMode::INSERT);
       InitialConditions(
           overlapped_soln->col(2),
-          wsElNodeEqID,
-          wsEBNames,
-          coords,
-          neq,
-          numDim,
+          *disc,
           pbParams->sublist("Initial Condition DotDot"),
           disc_->hasRestartSolution());
       cas_manager->combine(

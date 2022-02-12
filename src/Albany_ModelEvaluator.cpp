@@ -555,7 +555,7 @@ ModelEvaluator::create_W_prec() const
 }
 
 Teuchos::RCP<Thyra_LinearOp>
-ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
+ModelEvaluator::create_hess_g_pp( int /* j */, int l1, int l2 ) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       l1 != l2,
@@ -581,12 +581,12 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
             << l1
             << std::endl);
 
-    Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
-    Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
-    std::vector<IDArray> vElDofs =
-      distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
+    auto dist_param = distParamLib->get(dist_param_names[l1 - num_param_vecs]);
+    auto p_overlapped_vs = dist_param->overlap_vector_space();
+    auto p_owned_vs = dist_param->vector_space();
+    auto ws_elem_nodes = app->getDisc()->getWsElNodeLID();
 
-    return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+    return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, ws_elem_nodes);
   }
 }
 
@@ -781,16 +781,17 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
 
   const int num_params = num_param_vecs + num_dist_param_vecs;
 
-  bool aDHessVec_f[num_params + 1][num_params + 1];
-  bool aDHessVec_g[num_params + 1][num_params + 1];
+  using bool2d = Kokkos::View<bool**,Kokkos::HostSpace>;
+  bool2d aDHessVec_f("",num_params + 1,num_params + 1);
+  bool2d aDHessVec_g("",num_params + 1,num_params + 1);
 
-  aDHessVec_f[0][0] = dADHessVec_f;
+  aDHessVec_f(0,0) = dADHessVec_f;
 
   for (int j1 = 0; j1 < num_params; j1++) {
-    aDHessVec_f[0][j1+1] = dADHessVec_f;
-    aDHessVec_f[j1+1][0] = dADHessVec_f;
+    aDHessVec_f(0,j1+1) = dADHessVec_f;
+    aDHessVec_f(j1+1,0) = dADHessVec_f;
     for (int j2 = 0; j2 < num_params; j2++) {
-      aDHessVec_f[j1+1][j2+1] = dADHessVec_f;
+      aDHessVec_f(j1+1,j2+1) = dADHessVec_f;
     }
   }
 
@@ -830,7 +831,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
             << num_params
             << "]"
             << std::endl);
-      aDHessVec_f[i1][i2] = false;
+      aDHessVec_f(i1,i2) = false;
     }
     for (auto toEnableEntry : toEnableVec) {
       Albany::getHessianBlockIDs(i1, i2, toEnableEntry);
@@ -841,18 +842,18 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
             << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
             << "Hessian contribution of the residual = "
             << toEnableEntry
-            << " has an ID out of the range: [0, "
+            << " has an ID out of the range: (0, "
             << num_params
-            << "]"
+            << ")"
             << std::endl);
-      aDHessVec_f[i1][i2] = true;
+      aDHessVec_f(i1,i2) = true;
     }
 
     if (num_params > 1) {
-      bool tmp = aDHessVec_f[0][1];
+      bool tmp = aDHessVec_f(0,1);
       for (int j1 = 2; j1 < num_params + 1; j1++) {
         TEUCHOS_TEST_FOR_EXCEPTION(
-          aDHessVec_f[0][j1] != tmp,
+          aDHessVec_f(0,j1) != tmp,
           Teuchos::Exceptions::InvalidParameter,
           std::endl
               << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
@@ -860,10 +861,10 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
               << "AD is enable for some blocks but not for others."
               << std::endl);
       }
-      tmp = aDHessVec_f[1][0];
+      tmp = aDHessVec_f(1,0);
       for (int j1 = 2; j1 < num_params + 1; j1++) {
         TEUCHOS_TEST_FOR_EXCEPTION(
-          aDHessVec_f[j1][0] != tmp,
+          aDHessVec_f(j1,0) != tmp,
           Teuchos::Exceptions::InvalidParameter,
           std::endl
               << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
@@ -871,11 +872,11 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
               << "AD is enable for some blocks but not for others."
               << std::endl);
       }
-      tmp = aDHessVec_f[1][1];
+      tmp = aDHessVec_f(1,1);
       for (int j1 = 2; j1 < num_params + 1; j1++) {
         for (int j2 = 2; j2 < num_params + 1; j2++) {
           TEUCHOS_TEST_FOR_EXCEPTION(
-            aDHessVec_f[j1][j2] != tmp,
+            aDHessVec_f(j1,j2) != tmp,
             Teuchos::Exceptions::InvalidParameter,
             std::endl
                 << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
@@ -889,23 +890,23 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
 
   result.setSupports(
     Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xx,
-    aDHessVec_f[0][0]);
+    aDHessVec_f(0,0));
 
   for (int j1 = 0; j1 < num_params; j1++) {
     result.setSupports(
       Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_xp,
       j1,
-      aDHessVec_f[0][j1+1]);
+      aDHessVec_f(0,j1+1));
     result.setSupports(
       Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_px,
       j1,
-      aDHessVec_f[j1+1][0]);
+      aDHessVec_f(j1+1,0));
     for (int j2 = 0; j2 < num_params; j2++) {
       result.setSupports(
         Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_f_pp,
         j1,
         j2,
-        aDHessVec_f[j1+1][j2+1]);
+        aDHessVec_f(j1+1,j2+1));
     }
   }
 
@@ -942,13 +943,13 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
 
     }
 
-    aDHessVec_g[0][0] = dADHessVec_g;
+    aDHessVec_g(0,0) = dADHessVec_g;
 
     for (int j1 = 0; j1 < num_params; j1++) {
-      aDHessVec_g[0][j1+1] = dADHessVec_g;
-      aDHessVec_g[j1+1][0] = dADHessVec_g;
+      aDHessVec_g(0,j1+1) = dADHessVec_g;
+      aDHessVec_g(j1+1,0) = dADHessVec_g;
       for (int j2 = 0; j2 < num_params; j2++) {
-        aDHessVec_g[j1+1][j2+1] = dADHessVec_g;
+        aDHessVec_g(j1+1,j2+1) = dADHessVec_g;
       }
     }
     
@@ -984,11 +985,11 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
               << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
               << "Hessian contribution of the response " << i << " = "
               << toDisableEntry
-              << " has an ID out of the range: [0, "
+              << " has an ID out of the range: (0, "
               << num_params
-              << "]"
+              << ")"
               << std::endl);
-        aDHessVec_g[i1][i2] = false;
+        aDHessVec_g(i1,i2) = false;
       }
       for (auto toEnableEntry : toEnableVec) {
         Albany::getHessianBlockIDs(i1, i2, toEnableEntry);
@@ -999,18 +1000,18 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
               << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
               << "Hessian contribution of the response " << i << " = "
               << toEnableEntry
-              << " has an ID out of the range: [0, "
+              << " has an ID out of the range: (0, "
               << num_params
-              << "]"
+              << ")"
               << std::endl);
-        aDHessVec_g[i1][i2] = true;
+        aDHessVec_g(i1,i2) = true;
       }
 
       if (num_params > 1) {
-        bool tmp = aDHessVec_g[0][1];
+        bool tmp = aDHessVec_g(0,1);
         for (int j1 = 2; j1 < num_params + 1; j1++) {
           TEUCHOS_TEST_FOR_EXCEPTION(
-            aDHessVec_g[0][j1] != tmp,
+            aDHessVec_g(0,j1) != tmp,
             Teuchos::Exceptions::InvalidParameter,
             std::endl
                 << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
@@ -1018,10 +1019,10 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
                 << "AD is enable for some blocks but not for others."
                 << std::endl);
         }
-        tmp = aDHessVec_g[1][0];
+        tmp = aDHessVec_g(1,0);
         for (int j1 = 2; j1 < num_params + 1; j1++) {
           TEUCHOS_TEST_FOR_EXCEPTION(
-            aDHessVec_g[j1][0] != tmp,
+            aDHessVec_g(j1,0) != tmp,
             Teuchos::Exceptions::InvalidParameter,
             std::endl
                 << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
@@ -1029,11 +1030,11 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
                 << "AD is enable for some blocks but not for others."
                 << std::endl);
         }
-        tmp = aDHessVec_g[1][1];
+        tmp = aDHessVec_g(1,1);
         for (int j1 = 2; j1 < num_params + 1; j1++) {
           for (int j2 = 2; j2 < num_params + 1; j2++) {
             TEUCHOS_TEST_FOR_EXCEPTION(
-              aDHessVec_g[j1][j2] != tmp,
+              aDHessVec_g(j1,j2) != tmp,
               Teuchos::Exceptions::InvalidParameter,
               std::endl
                   << "Error!  Albany::ModelEvaluator::createOutArgsImpl():  "
@@ -1048,19 +1049,19 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     result.setSupports(
       Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx,
       i,
-      aDHessVec_g[0][0]);
+      aDHessVec_g(0,0));
 
     for (int j1 = 0; j1 < num_params; j1++) {
       result.setSupports(
         Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xp,
         i,
         j1,
-        aDHessVec_g[0][j1+1]);
+        aDHessVec_g(0,j1+1));
       result.setSupports(
         Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_px,
         i,
         j1,
-        aDHessVec_g[j1+1][0]);
+        aDHessVec_g(j1+1,0));
       result.setSupports(
         Thyra_ModelEvaluator::OUT_ARG_hess_g_pp,
         i,
@@ -1073,7 +1074,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
           i,
           j1,
           j2,
-          aDHessVec_g[j1+1][j2+1]);
+          aDHessVec_g(j1+1,j2+1));
       }
     }
   }
@@ -1450,7 +1451,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
 
     // Need to handle hess_vec_prod_g
 
-    const Teuchos::RCP<const Thyra_MultiVector> delta_x = inArgs.get_x_direction();
     const Teuchos::RCP<Thyra_MultiVector> g_hess_xx_v =
       outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_vec_prod_g_xx, j) ?
       outArgs.get_hess_vec_prod_g_xx(j) : Teuchos::null;

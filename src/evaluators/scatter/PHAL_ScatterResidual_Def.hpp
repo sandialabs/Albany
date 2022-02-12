@@ -130,11 +130,13 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const
 {
-  for (std::size_t node = 0; node < this->numNodes; node++)
+  for (std::size_t node = 0; node < this->numNodes; node++) {
+    const LO node_lid = elNodeLID(cell,node);
     for (std::size_t eq = 0; eq < numFields; eq++) {
-      const LO id = nodeID(cell,node,this->offset + eq);
+      const LO id = this->dof_id(node_lid,eq);
       KU::atomic_add<ExecutionSpace>(&f_kokkos(id), val_kokkos[eq](cell,node));
     }
+  }
 }
 
 template<typename Traits>
@@ -142,11 +144,13 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const
 {
-  for (std::size_t node = 0; node < this->numNodes; node++)
+  for (std::size_t node = 0; node < this->numNodes; node++) {
+    const LO node_lid = elNodeLID(cell,node);
     for (std::size_t eq = 0; eq < numFields; eq++) {
-      const LO id = nodeID(cell,node,this->offset + eq);
+      const LO id = this->dof_id(node_lid,eq);
       KU::atomic_add<ExecutionSpace>(&f_kokkos(id), this->valVec(cell,node,eq));
     }
+  }
 }
 
 template<typename Traits>
@@ -154,12 +158,14 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
 {
-  for (std::size_t node = 0; node < this->numNodes; node++)
+  for (std::size_t node = 0; node < this->numNodes; node++) {
+    const LO node_lid = elNodeLID(cell,node);
     for (int i = 0; i < numDims; i++)
       for (int j = 0; j < numDims; j++) {
-        const LO id = nodeID(cell,node,this->offset + i*numDims + j);
+        const LO id = this->dof_id(node_lid,numDims*i+j);
         KU::atomic_add<ExecutionSpace>(&f_kokkos(id), this->valTensor(cell,node,i,j));
       }
+  }
 }
 #endif
 
@@ -170,32 +176,40 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<Thyra_Vector> f = workset.f;
 
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  auto nodeID = workset.wsElNodeEqID;
+  auto h_elNodeLID = workset.wsElNodeLID.host();
 
   //get nonconst (read and write) view of f
   Teuchos::ArrayRCP<ST> f_nonconstView = Albany::getNonconstLocalData(f);
 
   if (this->tensorRank == 0) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < this->numNodes; ++node)
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->val[eq])(cell,node);
+          f_nonconstView[this->dof_id(node_lid,eq)] += this->val[eq](cell,node);
+      }
     }
   } else if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < this->numNodes; ++node)
-        for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID(cell,node,this->offset + eq)] += (this->valVec)(cell,node,eq);
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t eq=0; eq < numFields; eq++)
+          f_nonconstView[this->dof_id(node_lid,eq)] += this->valVec(cell,node,eq);
+      }
     }
   } else if (this->tensorRank == 2) {
     int numDims = this->valTensor.extent(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < this->numNodes; ++node)
-        for (std::size_t i = 0; i < numDims; i++)
-          for (std::size_t j = 0; j < numDims; j++)
-            f_nonconstView[nodeID(cell,node,this->offset + i*numDims + j)] += (this->valTensor)(cell,node,i,j);
-  
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
+        for (std::size_t idim=0; idim < numDim; ++idim)
+          for (std::size_t jdim=0; jdim < numDim; ++jdim)
+            f_nonconstView[this->dof_id(node_lid,idim*numDim+jdim)] += this->valTensor(cell,node,idim,jdim);
+
+      }
     }
   }
 
@@ -204,7 +218,7 @@ evaluateFields(typename Traits::EvalData workset)
   auto start = std::chrono::high_resolution_clock::now();
 #endif
   // Get map for local data structures
-  nodeID = workset.wsElNodeEqID;
+  elNodeLID = workset.wsElNodeLID.dev();
 
   // Get device data
   f_kokkos = Albany::getNonconstDeviceData(f);
@@ -254,11 +268,13 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const
 {
-  for (std::size_t node = 0; node < this->numNodes; node++)
+  for (std::size_t node = 0; node < this->numNodes; node++) {
+    const LO node_lid = elNodeLID(cell,node);
     for (std::size_t eq = 0; eq < numFields; eq++) {
-      const LO id = nodeID(cell,node,this->offset + eq);
+      const LO id = this->dof_id(node_lid,eq);
       KU::atomic_add<ExecutionSpace>(&f_kokkos(id), (val_kokkos[eq](cell,node)).val());
     }
+  }
 }
 
 template<typename Traits>
@@ -266,7 +282,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.extent(2);
+  //const int neq = nodeLID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -275,16 +291,18 @@ operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
   if (nunk>500) {
     Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
   }
-
   for (size_t node_col=0; node_col<this->numNodes; node_col++) {
+    const LO node_lid = elNodeLID(cell,node_col);
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      col[neq * node_col + eq_col] =  nodeID(cell,node_col,eq_col);
+      // NOTE: do not use dof_id here, since you don't want to add offset
+      col[neq * node_col + eq_col] = this->sol_dof_mgr.getLocalDOF(node_lid,eq_col);
     }
   }
 
   for (size_t node = 0; node < this->numNodes; ++node) {
+    const LO node_lid = elNodeLID(cell,node);
     for (size_t eq = 0; eq < numFields; eq++) {
-      row = nodeID(cell,node,this->offset + eq);
+      row = this->dof_id(node_lid,eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int lunk=0; lunk<nunk; lunk++) {
         ST val = valptr.fastAccessDx(lunk);
@@ -299,7 +317,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.extent(2);
+  //const int neq = nodeLID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO row;
@@ -311,14 +329,17 @@ operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
   }
 
   for (size_t node_col=0; node_col<this->numNodes; node_col++) {
+    const LO node_lid = elNodeLID(cell,node_col);
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
+      // NOTE: do not use dof_id here, since you don't want to add offset
+      col[neq * node_col + eq_col] = this->sol_dof_mgr.getLocalDOF(node_lid,eq_col);
     }
   }
 
   for (size_t node = 0; node < this->numNodes; ++node) {
+    const LO node_lid = elNodeLID(cell,node);
     for (size_t eq = 0; eq < numFields; eq++) {
-      row = nodeID(cell,node,this->offset + eq);
+      row = this->dof_id(node_lid,eq);
       auto valptr = val_kokkos[eq](cell,node);
       for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
       Jac_kokkos.sumIntoValues(row, col, nunk, vals, false, is_atomic);
@@ -332,8 +353,9 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const
 {
   for (std::size_t node = 0; node < this->numNodes; node++) {
+    const LO node_lid = elNodeLID(cell,node);
     for (std::size_t eq = 0; eq < numFields; eq++) {
-      const LO id = nodeID(cell,node,this->offset + eq);
+      const LO id = this->dof_id(node_lid,eq);
       KU::atomic_add<ExecutionSpace>(&f_kokkos(id), (this->valVec(cell,node,eq)).val());
     }
   }
@@ -344,7 +366,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.extent(2);
+  //const int neq = nodeLID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -355,14 +377,17 @@ operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
   }
 
   for (size_t node_col=0; node_col<this->numNodes; node_col++) {
+    const LO node_lid = elNodeLID(cell,node_col);
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
+      // NOTE: do not use dof_id here, since you don't want to add offset
+      col[neq * node_col + eq_col] = this->sol_dof_mgr.getLocalDOF(node_lid,eq_col);
     }
   }
 
   for (size_t node = 0; node < this->numNodes; ++node) {
+    const LO node_lid = elNodeLID(cell,node);
     for (size_t eq = 0; eq < numFields; eq++) {
-      row = nodeID(cell,node,this->offset + eq);
+      row = this->dof_id(node_lid,eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++){
           ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
@@ -378,7 +403,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.extent(2);
+  //const int neq = nodeLID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -390,14 +415,17 @@ operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
   }
 
   for (size_t node_col=0; node_col<this->numNodes; node_col++) {
+    const LO node_lid = elNodeLID(cell,node_col);
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
+      // NOTE: do not use dof_id here, since you don't want to add offset
+      col[neq * node_col + eq_col] = this->sol_dof_mgr.getLocalDOF(node_lid,eq_col);
     }
   }
 
   for (size_t node = 0; node < this->numNodes; ++node) {
+    const LO node_lid = elNodeLID(cell,node);
     for (size_t eq = 0; eq < numFields; eq++) {
-      row = nodeID(cell,node,this->offset + eq);
+      row = this->dof_id(node_lid,eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
         Jac_kokkos.sumIntoValues(row, col, nunk, vals, false, is_atomic);
@@ -411,12 +439,14 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
 {
-  for (std::size_t node = 0; node < this->numNodes; node++)
+  for (std::size_t node = 0; node < this->numNodes; node++) {
+    const LO node_lid = elNodeLID(cell,node);
     for (int i = 0; i < numDims; i++)
       for (int j = 0; j < numDims; j++) {
-        const LO id = nodeID(cell,node,this->offset + i*numDims + j);
+        const LO id = this->dof_id(node_lid,i*numDims + j);
         KU::atomic_add<ExecutionSpace>(&f_kokkos(id), (this->valTensor(cell,node,i,j)).val());
       }
+  }
 }
 
 template<typename Traits>
@@ -424,7 +454,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.extent(2);
+  //const int neq = nodeLID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -435,14 +465,17 @@ operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
   }
 
   for (size_t node_col=0; node_col<this->numNodes; node_col++) {
+    const LO node_lid = elNodeLID(cell,node_col);
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
+      // NOTE: do not use dof_id here, since you don't want to add offset
+      col[neq * node_col + eq_col] = this->sol_dof_mgr.getLocalDOF(node_lid,eq_col);
     }
   }
 
   for (size_t node = 0; node < this->numNodes; ++node) {
+    const LO node_lid = elNodeLID(cell,node);
     for (size_t eq = 0; eq < numFields; eq++) {
-      row = nodeID(cell,node,this->offset + eq);
+      row = this->dof_id(node_lid,eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++) {
           ST val = ((this->valTensor)(cell,node, eq/numDims, eq%numDims)).fastAccessDx(lunk);
@@ -458,7 +491,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
 {
-  //const int neq = nodeID.extent(2);
+  //const int neq = nodeLID.extent(2);
   //const int nunk = neq*this->numNodes;
   // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO col[500];
@@ -470,14 +503,17 @@ operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
   }
 
   for (size_t node_col=0; node_col<this->numNodes; node_col++) {
+    const LO node_lid = elNodeLID(cell,node_col);
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
+      // NOTE: do not use dof_id here, since you don't want to add offset
+      col[neq * node_col + eq_col] = this->sol_dof_mgr.getLocalDOF(node_lid,eq_col);
     }
   }
 
   for (size_t node = 0; node < this->numNodes; ++node) {
+    const LO node_lid = elNodeLID(cell,node);
     for (size_t eq = 0; eq < numFields; eq++) {
-      row = nodeID(cell,node,this->offset + eq);
+      row = this->dof_id(node_lid,eq);
       if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor)(cell,node, eq/numDims, eq%numDims).fastAccessDx(i);
         Jac_kokkos.sumIntoValues(row, col, nunk,  vals, false, is_atomic);
@@ -497,6 +533,7 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   const bool use_device = false;
 #endif
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
   if (use_device) {
     evaluateFieldsDevice(workset);
   } else {
@@ -512,10 +549,10 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
   auto start = std::chrono::high_resolution_clock::now();
 #endif
   // Get map for local data structures
-  nodeID = workset.wsElNodeEqID;
+  elNodeLID = workset.wsElNodeLID.dev();
 
   // Get dimensions
-  neq = nodeID.extent(2);
+  neq = this->sol_dof_mgr.numComponents();
   nunk = neq*this->numNodes;
 
   // Get Kokkos vector view and local matrix
@@ -573,10 +610,10 @@ evaluateFieldsHost(typename Traits::EvalData workset)
   Teuchos::RCP<Thyra_Vector>   f   = workset.f;
   Teuchos::RCP<Thyra_LinearOp> Jac = workset.Jac;
 
-  auto nodeID = workset.wsElNodeEqID;
+  auto h_elNodeLID = workset.wsElNodeLID.host();
   const bool loadResid = Teuchos::nonnull(f);
   Teuchos::Array<LO> col;
-  neq = nodeID.extent(2);
+  neq = this->sol_dof_mgr.numComponents();
   nunk = neq*this->numNodes;
   col.resize(nunk);
   numDims = 0;
@@ -591,17 +628,20 @@ evaluateFieldsHost(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     // Local Unks: Loop over nodes in element, Loop over equations per node
     for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+      const auto node_lid = h_elNodeLID(cell,node_col);
       for (int eq_col=0; eq_col<neq; eq_col++) {
-        col[neq * node_col + eq_col] = nodeID(cell,node_col,eq_col);
+        // NOTE: do not use dof_id here, since you don't want to add offset
+        col[neq * node_col + eq_col] = this->sol_dof_mgr.getLocalDOF(node_lid,eq_col);
       }
     }
     for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor(cell,node, eq/numDims, eq%numDims));
-        const LO row = nodeID(cell,node,this->offset + eq);
+        const LO row = this->dof_id(node_lid,eq);
         if (loadResid) {
           f_nonconstView[row] += valptr.val();
         }
@@ -634,7 +674,6 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_Vector> f = workset.f;
   Teuchos::RCP<Thyra_MultiVector> JV = workset.JV;
   Teuchos::RCP<Thyra_MultiVector> fp = workset.fp;
@@ -654,18 +693,22 @@ evaluateFields(typename Traits::EvalData workset)
     fp_nonconst2dView = Albany::getNonconstLocalData(fp);
   }
 
+  auto h_elNodeLID = workset.wsElNodeLID.host();
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
+
   int numDims = 0;
   if (this->tensorRank == 2) numDims = this->valTensor.extent(2);
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
     for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT const>::type valref = (
             this->tensorRank == 0 ? this->val[eq] (cell, node) :
             this->tensorRank == 1 ? this->valVec (cell, node, eq) :
             this->valTensor (cell, node, eq / numDims, eq % numDims));
 
-        const LO row = nodeID(cell,node,this->offset + eq);
+        const LO row = this->dof_id(node_lid,eq);
 
         if (Teuchos::nonnull (f)) {
           f_nonconstView[row] += valref.val();
@@ -703,7 +746,6 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_MultiVector> fpV = workset.fpV;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
 
@@ -713,15 +755,19 @@ evaluateFields(typename Traits::EvalData workset)
   if(workset.local_Vp[0].size() == 0) { return; } //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
 
   int numDims= (this->tensorRank==2) ? this->valTensor.extent(2) : 0;
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
 
   if (trans) {
-    const int neq = nodeID.extent(2);
-    const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
+    const int neq = this->sol_dof_mgr.numComponents();
+    const auto& dist_param = workset.distParamLib->get(workset.dist_param_deriv_name);
+    const auto& el_nodes = dist_param->workset_elem_nodes()[workset.wsIndex].host();
+    const auto& param_dof_mgr = dist_param->get_dof_mgr();
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = this->numNodes;//local_Vp.size()/numFields;
       for (int i=0; i<num_deriv; i++) {
+        const auto node_lid = el_nodes(cell,i);
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
           for (std::size_t node = 0; node < this->numNodes; ++node) {
@@ -733,7 +779,7 @@ evaluateFields(typename Traits::EvalData workset)
               val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
-          const LO row = wsElDofs((int)cell,i,0);
+          const LO row = param_dof_mgr.getLocalDOF(node_lid,0);
           if(row >=0) {
             fpV_nonconst2dView[col][row] += val;
           }
@@ -741,18 +787,20 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   } else {
+    auto h_elNodeLID = workset.wsElNodeLID.host();
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < numFields; eq++) {
           typename PHAL::Ref<ScalarT const>::type
                     valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                               this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                               this->valTensor(cell,node, eq/numDims, eq%numDims));
-          const int row = nodeID(cell,node,this->offset + eq);
+          const int row = this->dof_id(node_lid,eq);
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
@@ -777,31 +825,36 @@ evaluateFields(typename Traits::EvalData workset)
   if(level_it == extruded_params_levels->end()) //if parameter is not extruded use usual scatter.
     return ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(workset);
 
-  auto nodeID = workset.wsElNodeEqID;
   int fieldLevel = level_it->second;
   Teuchos::RCP<Thyra_MultiVector> fpV = workset.fpV;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
 
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.Vp->domain()->dim();
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
 
   int numDims= (this->tensorRank==2) ? this->valTensor.extent(2) : 0;
 
   if (trans) {
-    const int neq = nodeID.extent(2);
+    auto h_elNodeLID = workset.wsElNodeLID.host();
+    const int neq = this->sol_dof_mgr.numComponents();
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+    // TODO: can you just use node
+    auto dist_param = workset.distParamLib->get(workset.dist_param_deriv_name);
 
-    auto overlapVS = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-    auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
+    auto param_overlapVS = dist_param->overlap_vector_space();
+    auto node_overlapVS = workset.disc->getOverlapNodeVectorSpace();
+
+    auto param_indexer = Albany::createGlobalLocalIndexer(param_overlapVS);
+    auto node_indexer = Albany::createGlobalLocalIndexer(node_overlapVS);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
-        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[i]);
+        const GO node_gid = node_indexer->getGlobalElement(h_elNodeLID(cell,i));
+        const GO base_id = layeredMeshNumbering.getColumnId(node_gid);
         const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
 
         for (int col=0; col<num_cols; col++) {
@@ -815,7 +868,7 @@ evaluateFields(typename Traits::EvalData workset)
               val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
-          const LO row = indexer->getLocalElement(ginode);
+          const LO row = param_indexer->getLocalElement(ginode);
           if(row >=0) {
             fpV_nonconst2dView[col][row] += val;
           }
@@ -823,18 +876,20 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   } else {
+    auto h_elNodeLID = workset.wsElNodeLID.host();
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (std::size_t eq = 0; eq < this->numFields; eq++) {
           typename PHAL::Ref<ScalarT const>::type
                     valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                               this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                               this->valTensor(cell,node, eq/numDims, eq%numDims));
-          const int row = nodeID(cell,node,this->offset + eq);
+          const int row = this->dof_id(node_lid,eq);
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
@@ -873,7 +928,6 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::getParameterVectorID(l1, l1_is_distributed, workset.dist_param_deriv_name);
 
   // Here we scatter the *local* response derivative
-  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xx = workset.hessianWorkset.overlapped_hess_vec_prod_f_xx;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_xp = workset.hessianWorkset.overlapped_hess_vec_prod_f_xp;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
@@ -889,7 +943,8 @@ evaluateFields(typename Traits::EvalData workset)
   if (!f_xx_is_active && !f_xp_is_active && !f_px_is_active && !f_pp_is_active)
     return;
 
-  const int neq = nodeID.extent(2);
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
+  const int neq = this->sol_dof_mgr.numComponents();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> > hess_vec_prod_f_xx_data, hess_vec_prod_f_xp_data, hess_vec_prod_f_px_data, hess_vec_prod_f_pp_data;
 
   auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);
@@ -909,26 +964,36 @@ evaluateFields(typename Traits::EvalData workset)
   // If the parameter associated to workset.dist_param_deriv_name is a distributed parameter,
   // the function needs to access the associated workset_elem_dofs to deduce the IDs of the entries
   // of the resulting vector.
-  if(l1_is_distributed && (f_px_is_active || f_pp_is_active))
-    wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
 
+  Albany::WorksetConnectivity<LO>::host_t el_nodes;
+  Albany::NodalDOFManager param_dof_mgr;
+
+  if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
+    auto dist_param = workset.distParamLib->get(workset.dist_param_deriv_name);
+    el_nodes = dist_param->workset_elem_nodes()[workset.wsIndex].host();
+    param_dof_mgr = dist_param->get_dof_mgr();
+  }
+
+  auto h_elNodeLID = workset.wsElNodeLID.host();
   for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
     ScalarT value=0.0;
     for (unsigned int node=0; node<this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       for (unsigned int eq=0; eq<numFields; ++eq) {
         typename PHAL::Ref<ScalarT const>::type valref = (
             this->tensorRank == 0 ? this->val[eq] (cell, node) :
             this->tensorRank == 1 ? this->valVec (cell, node, eq) :
             this->valTensor (cell, node, eq / numDims, eq % numDims));
 
-        value += valref * f_multiplier_data[nodeID(cell,node,this->offset + eq)];
+        value += valref * f_multiplier_data[this->dof_id(node_lid,eq)];
       }
     }
 
     for (unsigned int node=0; node<this->numNodes; ++node) {
       if(f_xx_is_active || f_xp_is_active) {
+        const auto node_lid = h_elNodeLID(cell,node);
         for (unsigned int eq=0; eq<numFields; ++eq) {
-          const int row = nodeID(cell,node,this->offset + eq);
+          const int row = this->dof_id(node_lid,eq);
           const int deriv = neq * node + eq;
           if (f_xx_is_active)
             hess_vec_prod_f_xx_data[0][row] += value.dx(deriv).dx(0);
@@ -937,7 +1002,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
-        const int row = wsElDofs((int)cell,(int)node,0);
+        const int row = param_dof_mgr.getLocalDOF(el_nodes(cell,node),0);
         if(row >=0){
           if(f_px_is_active)
             hess_vec_prod_f_px_data[0][row] += value.dx(node).dx(0);
@@ -982,7 +1047,6 @@ evaluateFields(typename Traits::EvalData workset)
     return ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::evaluateFields(workset);
   if(f_px_is_active || f_pp_is_active)
     return ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec, Traits>::evaluate2DFieldsDerivativesDueToExtrudedParams(workset);
-  return;
 }
 
 template<typename Traits>
@@ -995,7 +1059,6 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
 
   // Here we scatter the *local* response derivative
-  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_px = workset.hessianWorkset.overlapped_hess_vec_prod_f_px;
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_f_pp = workset.hessianWorkset.overlapped_hess_vec_prod_f_pp;
 
@@ -1019,29 +1082,37 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  auto h_elNodeLID = workset.wsElNodeLID.host();
+  this->sol_dof_mgr = workset.disc->getSolutionOverlapDOFManager();
 
-  auto overlapVS = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-  auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
+  auto dist_param = workset.distParamLib->get(workset.dist_param_deriv_name);
+
+  auto param_overlapVS = dist_param->overlap_vector_space();
+  auto node_overlapVS = workset.disc->getOverlapNodeVectorSpace();
+
+  auto param_indexer = Albany::createGlobalLocalIndexer(param_overlapVS);
+  auto node_indexer = Albany::createGlobalLocalIndexer(node_overlapVS);
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     ScalarT value=0.0;
     for (unsigned int node=0; node<this->numNodes; ++node) {
+      const auto node_lid = h_elNodeLID(cell,node);
       for (unsigned int eq=0; eq<this->numFields; ++eq) {
         typename PHAL::Ref<ScalarT const>::type valref = (
             this->tensorRank == 0 ? this->val[eq] (cell, node) :
             this->tensorRank == 1 ? this->valVec (cell, node, eq) :
             this->valTensor (cell, node, eq / numDims, eq % numDims));
 
-        value += valref * f_multiplier_data[nodeID(cell,node,this->offset + eq)];
+        value += valref * f_multiplier_data[this->dof_id(node_lid,eq)];
       }
     }
 
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
     for (unsigned int node=0; node<this->numNodes; ++node) {
-      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
+      auto node_gid = node_indexer->getGlobalElement(h_elNodeLID(cell,node));
+      const GO base_id = layeredMeshNumbering.getColumnId(node_gid);
       const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
 
-      const LO row = indexer->getLocalElement(ginode);
+      const LO row = param_indexer->getLocalElement(ginode);
       if(row >=0) {
         if (f_px_is_active)
           hess_vec_prod_f_px_data[0][row] += value.dx(node).dx(0);

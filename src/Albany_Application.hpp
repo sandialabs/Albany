@@ -1007,7 +1007,7 @@ void
   int
   getNumWorksets()
   {
-    return disc->getWsElNodeEqID().size();
+    return disc->getWsElNodeLID().size();
   }
 
   //! Const access to problem parameter list
@@ -1118,8 +1118,7 @@ void
       const Teuchos::RCP<const Thyra_MultiVector>& Vxdotdot,
       const Teuchos::RCP<const Thyra_MultiVector>& Vp);
 
-  int
-  calcTangentDerivDimension(const Teuchos::RCP<Teuchos::ParameterList>& problemParams);
+  int calcTangentDerivDimension();
 
  private:
   template <typename EvalT>
@@ -1307,17 +1306,16 @@ void
 Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
     const std::string& evalName)
 {
-  auto const& wsElNodeEqID       = disc->getWsElNodeEqID();
-  auto const& wsElNodeID         = disc->getWsElNodeID();
-  auto const& coords             = disc->getCoords();
-  auto const& wsEBNames          = disc->getWsEBNames();
+  // auto const& wsElNodeEqID       = disc->getWsElNodeEqID();
+  auto const& wsElNodeLID = disc->getWsElNodeLID();
+  auto const& coords      = disc->getCoords();
+  auto const& wsEBNames   = disc->getWsEBNames();
 
-  workset.numCells             = wsElNodeEqID[ws].extent(0);
-  workset.wsElNodeEqID         = wsElNodeEqID[ws];
-  workset.wsElNodeID           = wsElNodeID[ws];
-  workset.wsCoords             = coords[ws];
-  workset.EBName               = wsEBNames[ws];
-  workset.wsIndex              = ws;
+  workset.numCells        = wsElNodeLID[ws].dev().extent(0);
+  workset.wsElNodeLID     = wsElNodeLID[ws];
+  workset.wsCoords        = coords[ws];
+  workset.EBName          = wsEBNames[ws];
+  workset.wsIndex         = ws;
 
   workset.local_Vp.resize(workset.numCells);
 

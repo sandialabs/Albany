@@ -1,6 +1,9 @@
 #ifndef ALBANY_HESSIAN_HPP
 #define ALBANY_HESSIAN_HPP
 
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_ThyraTypes.hpp"
+
 namespace Albany
 {
     /**
@@ -29,7 +32,7 @@ namespace Albany
     Teuchos::RCP<Thyra_LinearOp> createSparseHessianLinearOp(
         Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
         Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
-        const std::vector<IDArray> wsElDofs);
+        const Connectivity<LO>& ws_nodes);
 
     /**
      * \brief getHessianBlockIDs function

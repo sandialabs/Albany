@@ -44,10 +44,6 @@ struct DOFsStruct
   Teuchos::RCP<const Thyra_VectorSpace> overlap_vs;
   NodalDOFManager                       dofManager;
   NodalDOFManager                       overlap_dofManager;
-  std::vector<std::vector<LO>>          wsElNodeEqID_rawVec;
-  std::vector<IDArray>                  wsElNodeEqID;
-  std::vector<std::vector<GO>>          wsElNodeID_rawVec;
-  std::vector<GIDArray>                 wsElNodeID;
 
   Teuchos::RCP<const GlobalLocalIndexer> node_vs_indexer;
   Teuchos::RCP<const GlobalLocalIndexer> overlap_node_vs_indexer;
@@ -225,25 +221,25 @@ class STKDiscretization : public AbstractDiscretization
   }
 
   //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
-  const Conn&
-  getWsElNodeEqID() const
+  const Connectivity<LO>&
+  getWsElNodeLID() const
   {
-    return wsElNodeEqID;
+    return wsElNodeLID;
   }
 
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>&
-  getWsElNodeID() const
-  {
-    return wsElNodeID;
-  }
+  // const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>&
+  // getWsElNodeID() const
+  // {
+  //   return wsElNodeID;
+  // }
 
-  //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
-  //! both scalar and vector fields
-  const std::vector<IDArray>&
-  getElNodeEqID(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
-  }
+  // //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
+  // //! both scalar and vector fields
+  // const std::vector<IDArray>&
+  // getElNodeEqID(const std::string& field_name) const
+  // {
+  //   return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
+  // }
 
   Teuchos::RCP<const GlobalLocalIndexer>
   getGlobalLocalIndexer(const std::string& field_name) const
@@ -389,7 +385,8 @@ class STKDiscretization : public AbstractDiscretization
   int
   getFADLength() const
   {
-    return neq * wsElNodeID[0][0].size();
+    // TODO: switch depending on where the dofs are defined.
+    return neq * wsElNodeLID[0].dev().extent(1);
   }
 
   Teuchos::RCP<LayeredMeshNumbering<GO>>
@@ -655,10 +652,10 @@ class STKDiscretization : public AbstractDiscretization
   std::map<int, std::map<std::string, Kokkos::View<LO****, PHX::Device>>> wsLocalDOFViews;
 
   //! Connectivity array [workset, element, local-node, Eq] => LID
-  Conn wsElNodeEqID;
+  Connectivity<LO> wsElNodeLID;
 
   //! Connectivity array [workset, element, local-node] => GID
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>        wsElNodeID;
+  // WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>        wsElNodeID;
 
   mutable Teuchos::ArrayRCP<double>                                 coordinates;
   Teuchos::RCP<Thyra_MultiVector>                                   coordMV;

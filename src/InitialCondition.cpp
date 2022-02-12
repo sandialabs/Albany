@@ -5,11 +5,12 @@
 //*****************************************************************//
 
 #include "InitialCondition.hpp"
+
 #include "AnalyticFunction.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
-#include <Teuchos_CommHelpers.hpp>
+// #include <Teuchos_CommHelpers.hpp>
 
 #include <cmath>
 
@@ -43,13 +44,19 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
 }
 
 void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
-                       const Albany::Conn& wsElNodeEqID,
-                       const Teuchos::ArrayRCP<std::string>& wsEBNames,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq, const int numDim,
-                       Teuchos::ParameterList& icParams, const bool hasRestartSolution)
+                        const Albany::AbstractDiscretization& disc,
+                        Teuchos::ParameterList& icParams,
+                        const bool hasRestartSolution)
 {
   auto soln_data = Albany::getNonconstLocalData(soln);
+
+  const auto& wsEBNames    = disc.getWsEBNames();
+  const auto& solDofMgr    = disc.getSolutionOverlapDOFManager();
+  const auto& wsElNodeLID  = disc.getWsElNodeLID();
+  const auto& coords       = disc.getCoords();
+  const int neq            = solDofMgr.numComponents();
+  const int numDim         = disc.getNumDim();
+  const int numWorksets    = disc.getNumWorksets();
 
   // Called three times, with x, xdot, and xdotdot. Different param lists are sent in.
   icParams.validateParameters(getValidInitialConditionParameters(wsEBNames), 0);
@@ -107,24 +114,23 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
       soln_data[i] = 0.0;
     }
 
-    // Loop over all worksets, elements, all local nodes: compute soln as a function of coord and wsEBName
-    std::vector<double> x;
-    x.resize(neq);
+    // Loop over all worksets, elements, all local nodes.
+    // Compute soln as a function of coord and wsEBName
+    std::vector<double> x(neq);
 
     Teuchos::RCP<AnalyticFunction> initFunc;
 
-    for (int ws=0; ws < wsElNodeEqID.size(); ws++) { // loop over worksets
+    // loop over worksets
+    for (int ws=0; ws < numWorksets; ++ws) {
+      const auto& ElNodeID = wsElNodeLID[ws].host();
 
       Teuchos::Array<double> data = icParams.get(wsEBNames[ws], defaultData);
-      // Call factory method from library of initial condition functions
 
       if(perturb_values){
 
         if(name == "EBPerturb") {
           initFunc = Teuchos::rcp(new ConstantFunctionPerturbed(neq, numDim, data, perturb_mag));
-
         } else { // name == EBGaussianPerturb
-
           initFunc = Teuchos::rcp(new
             ConstantFunctionGaussianPerturbed(neq, numDim, data, perturb_mag));
         }
@@ -134,51 +140,59 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
       std::vector<double> X(neq);
 
-      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) { // loop over elements in workset
+      // loop over elements in workset
+      const int numElements = ElNodeID.extent(0);
+      const int numNodes    = ElNodeID.extent(1);
+      for (int el=0; el<numElements; ++el) {
 
         for (int i=0; i<neq; i++)
             X[i] = 0;
-
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) // loop over node local to the element
+        // loop over node local to the element
+        for (int ln=0; ln<numNodes; ++ln)
           for (int i=0; i<neq; i++)
             X[i] += coords[ws][el][ln][i]; // nodal coords
 
         for (int i=0; i<neq; i++)
-          X[i] /= (double)neq;
+          X[i] /= neq;
 
         initFunc->compute(&x[0], &X[0]);
 
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) { // loop over node local to the element
-          for (int i=0; i<neq; i++){
-
-             soln_data[wsElNodeEqID[ws](el,ln,i)] += x[i];
-//             (*soln)[wsElNodeEqID[ws](el,ln,i)] += X[i]; // Test with coord values
-             lumpedMMT_data[wsElNodeEqID[ws](el,ln,i)] += 1.0;
+        // loop over node local to the element
+        for (unsigned ln=0; ln < ElNodeID.extent(1); ln++) {
+          const LO nodeID = ElNodeID(el,ln);
+          for (int eq=0; eq<neq; eq++){
+            const LO dofID = solDofMgr.getLocalDOF(nodeID,eq);
+            soln_data[dofID] += x[eq];
+            lumpedMMT_data[dofID] += 1.0;
           }
-    } } }
+        }
+      }
+    }
 
-//  Apply the inverted lumped mass matrix to get the final nodal projection
-
+    //  Apply the inverted lumped mass matrix to get the final nodal projection
     for(int i = 0; i < soln_data.size(); ++i) {
       soln_data[i] /= lumpedMMT_data[i];
     }
-
-    return;
-  }
-
-  if(name == "Coordinates") {
+  } else if(name == "Coordinates") {
     // Place the coordinate locations of the nodes into the solution vector for an initial guess
-
     int numDOFsPerDim = neq / numDim;
 
-    for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for(unsigned el = 0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for(unsigned ln = 0; ln < wsElNodeEqID[ws].extent(1); ln++) {
+    for(int ws=0; ws<numWorksets; ++ws) {
+      const auto& ElNodeID = wsElNodeLID[ws].host();
+
+      const int numElements = ElNodeID.extent(0);
+      const int numNodes    = ElNodeID.extent(1);
+      for (int el=0; el<numElements; ++el) {
+        for (int ln=0; ln<numNodes; ++ln) {
+          const LO nodeID = ElNodeID(el,ln);
 
           const double* X = coords[ws][el][ln];
-          for(int j = 0; j < numDOFsPerDim; j++)
-            for(int i = 0; i < numDim; i++)
-             soln_data[wsElNodeEqID[ws](el,ln,j * numDim + i)] = X[i];
+          for(int j = 0; j < numDOFsPerDim; j++) {
+            for(int i = 0; i < numDim; i++) {
+              const LO dofID = solDofMgr.getLocalDOF(nodeID,j*numDim+i);
+              soln_data[dofID] = X[i];
+            }
+          }
         }
       }
     }
@@ -194,16 +208,23 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x; x.resize(neq);
-    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) {
+    for(int ws=0; ws<numWorksets; ++ws) {
+      const auto& ElNodeID = wsElNodeLID[ws].host();
+
+      const int numElements = ElNodeID.extent(0);
+      const int numNodes    = ElNodeID.extent(1);
+      for (int el=0; el<numElements; ++el) {
+        for (int ln=0; ln<numNodes; ++ln) {
+          const LO nodeID = ElNodeID(el,ln);
           const double* X = coords[ws][el][ln];
-          for (int i=0; i<neq; i++) {
-            x[i] = soln_data[wsElNodeEqID[ws](el,ln,i)];
+          for (int eq=0; eq<neq; eq++) {
+            const LO dofID = solDofMgr.getLocalDOF(nodeID,eq);
+            x[eq] = soln_data[dofID];
           }
           initFunc->compute(&x[0],X);
-          for (int i=0; i<neq; i++) {
-            soln_data[wsElNodeEqID[ws](el,ln,i)] = x[i];
+          for (int eq=0; eq<neq; eq++) {
+            const LO dofID = solDofMgr.getLocalDOF(nodeID,eq);
+            soln_data[dofID] = x[eq];
           }
         }
       }
@@ -223,16 +244,23 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     // function of coord
     std::vector<double> x;
     x.resize(neq);
-    for (int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el = 0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for (unsigned ln = 0; ln < wsElNodeEqID[ws].extent(1); ln++) {
+    for(int ws=0; ws<numWorksets; ++ws) {
+      const auto& ElNodeID = wsElNodeLID[ws].host();
+
+      const int numElements = ElNodeID.extent(0);
+      const int numNodes    = ElNodeID.extent(1);
+      for (int el=0; el<numElements; ++el) {
+        for (int ln=0; ln<numNodes; ++ln) {
+          const LO nodeID = ElNodeID(el,ln);
           double const* X = coords[ws][el][ln];
-          for (int i = 0; i < neq; i++) {
-            x[i] = soln_data[wsElNodeEqID[ws](el, ln, i)];
+          for (int eq=0; eq<neq; eq++) {
+            const LO dofID = solDofMgr.getLocalDOF(nodeID,eq);
+            x[eq] = soln_data[dofID];
           }
           initFunc->compute(&x[0], X);
-          for (int i = 0; i < neq; i++) {
-            soln_data[wsElNodeEqID[ws](el, ln, i)] = x[i];
+          for (int eq=0; eq<neq; eq++) {
+            const LO dofID = solDofMgr.getLocalDOF(nodeID,eq);
+            soln_data[dofID] = x[eq];
           }
         }
       }
@@ -249,16 +277,23 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x; x.resize(neq);
-    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) {
+    for(int ws=0; ws<numWorksets; ++ws) {
+      const auto& ElNodeID = wsElNodeLID[ws].host();
+
+      const int numElements = ElNodeID.extent(0);
+      const int numNodes    = ElNodeID.extent(1);
+      for (int el=0; el<numElements; ++el) {
+        for (int ln=0; ln<numNodes; ++ln) {
+          const LO nodeID = ElNodeID(el,ln);
           const double* X = coords[ws][el][ln];
-          for (int i=0; i<neq; i++) {
-            x[i] = soln_data[wsElNodeEqID[ws](el,ln,i)];
+          for (int eq=0; eq<neq; eq++) {
+            const LO dofID = solDofMgr.getLocalDOF(nodeID,eq);
+            x[eq] = soln_data[dofID];
           }
           initFunc->compute(&x[0],X);
-          for (int i=0; i<neq; i++) {
-            soln_data[wsElNodeEqID[ws](el,ln,i)] = x[i];
+          for (int eq=0; eq<neq; eq++) {
+            const LO dofID = solDofMgr.getLocalDOF(nodeID,eq);
+            soln_data[dofID] = x[eq];
           }
         }
       }

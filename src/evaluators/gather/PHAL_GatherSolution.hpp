@@ -7,15 +7,16 @@
 #ifndef PHAL_GATHER_SOLUTION_HPP
 #define PHAL_GATHER_SOLUTION_HPP
 
+#include "Albany_Layouts.hpp"
+#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_NodalDOFManager.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Dimension.hpp"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-#include "Albany_Layouts.hpp"
-#include "Albany_DiscretizationUtils.hpp"
-#include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_Dimension.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -67,10 +68,19 @@ protected:
   bool enableTransient;
   bool enableAcceleration;
 
+  // Retrieves (local) dof ids *for the DOF being scattered*
+  // If you need the id of other dofs, copy+past the impl,
+  // without adding offset.
+  KOKKOS_FORCEINLINE_FUNCTION
+  int dof_id (const int node, const int eq) const {
+    return sol_dof_mgr.getLocalDOF(node,eq+offset);
+  }
+
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
-  Albany::WorksetConn nodeID;
+  Albany::WorksetConnectivity<LO>::dev_t elNodeLID;
   Albany::DeviceView1d<const ST> x_constView, xdot_constView, xdotdot_constView;
+  Albany::NodalDOFManager     sol_dof_mgr;
 
   typedef Kokkos::vector<Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> KV;
   KV val_kokkos, val_dot_kokkos, val_dotdot_kokkos;
@@ -145,7 +155,7 @@ private:
   int numDim;
 
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits> Base;
-  using Base::nodeID;
+  using Base::elNodeLID;
   using Base::x_constView;
   using Base::xdot_constView;
   using Base::xdotdot_constView;
@@ -227,7 +237,7 @@ private:
   double j_coeff, n_coeff, m_coeff;
 
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
-  using Base::nodeID;
+  using Base::elNodeLID;
   using Base::x_constView;
   using Base::xdot_constView;
   using Base::xdotdot_constView;

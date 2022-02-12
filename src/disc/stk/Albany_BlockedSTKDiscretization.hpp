@@ -66,6 +66,11 @@ namespace Albany
     void printConnectivity() const;
     void printConnectivity(const size_t i_block) const;
 
+    Teuchos::RCP<disc_type> get_block (const int iblock) const {
+      ALBANY_ASSERT (iblock>=0 && iblock<n_m_blocks);
+      return m_blocks[iblock];
+    }
+
     int getBlockFADLength(const size_t i_block);
 
     int getBlockFADOffset(const size_t i_block)
@@ -238,31 +243,24 @@ namespace Albany
       return elemGIDws;
     }
 
-    //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
-    const Conn &
-    getWsElNodeEqID() const
+    const Connectivity<LO>&
+    getWsElNodeLID() const
     {
-      return wsElNodeEqID;
+      return m_blocks[0]->getWsElNodeLID();
     }
 
-    const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>> &
-    getWsElNodeID() const
-    {
-      return wsElNodeID;
-    }
-
-    //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
-    //! both scalar and vector fields
-    const std::vector<IDArray> &
-    getElNodeEqID(const std::string &field_name) const
-    {
-      return this->getElNodeEqID(0, field_name);
-    }
-    const std::vector<IDArray> &
-    getElNodeEqID(const size_t i_block, const std::string &field_name) const
-    {
-      return m_blocks[i_block]->getElNodeEqID(field_name);
-    }
+    // //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
+    // //! both scalar and vector fields
+    // const std::vector<IDArray> &
+    // getElNodeEqID(const std::string &field_name) const
+    // {
+    //   return this->getElNodeEqID(0, field_name);
+    // }
+    // const std::vector<IDArray> &
+    // getElNodeEqID(const size_t i_block, const std::string &field_name) const
+    // {
+    //   return m_blocks[i_block]->getElNodeEqID(field_name);
+    // }
 
     void
     setBlockedDOFManager(Teuchos::RCP<panzer::BlockedDOFManager> blockedDOFManagerVolume_)
@@ -834,10 +832,10 @@ namespace Albany
     NodeSetCoordList nodeSetCoords;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Conn wsElNodeEqID;
+    // Conn wsElNodeEqID;
 
     //! Connectivity array [workset, element, local-node] => GID
-    WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>> wsElNodeID;
+    Connectivity<LO>    wsElNodeLID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Teuchos::RCP<Thyra_MultiVector> coordMV;
