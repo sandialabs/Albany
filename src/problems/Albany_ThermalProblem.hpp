@@ -164,7 +164,7 @@ Albany::ThermalProblem::constructEvaluators(
   ALBANY_PANIC(
       SolutionType == SolutionMethodType::Unknown,
       "Solution Method must be Steady, Transient, "
-      "Continuation, or Eigensolve");
+      "Continuation");
   
   if (SolutionType == SolutionMethodType::Transient) { // Problem is transient
     ALBANY_PANIC(

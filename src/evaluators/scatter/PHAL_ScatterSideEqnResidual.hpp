@@ -22,8 +22,8 @@
 
 #include "Teuchos_ParameterList.hpp"
 
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
+#include <set>
 
 namespace PHAL {
 /** \brief Scatters result from the residual fields of equations

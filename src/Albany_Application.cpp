@@ -262,8 +262,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     }
   } else if (solutionMethod == "Transient") {
     solMethod = Transient;
-  } else if (solutionMethod == "Eigensolve") {
-    solMethod = Eigensolve;
   } else if (
       solutionMethod == "Transient") {
     solMethod = Transient;
@@ -366,7 +364,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         true,
         std::logic_error,
         "Solution Method must be Steady, Transient, Transient, "
-            << "Continuation, Eigensolve, not : "
+            << "Continuation, not : "
             << solutionMethod);
   }
 

@@ -28,10 +28,6 @@
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_Neumann.hpp"
 
-#if defined(ALBANY_EPETRA)
-#include "PHAL_GatherAuxData.hpp"
-#endif
-
 #include "Sacado_mpl_placeholders.hpp"
 
 // \cond  Have doxygern ignore this namespace
