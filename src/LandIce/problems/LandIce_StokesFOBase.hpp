@@ -60,6 +60,8 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Phalanx_Print.hpp"
 
+#include <set>
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
