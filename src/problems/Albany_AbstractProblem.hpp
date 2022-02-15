@@ -51,7 +51,6 @@ enum SolutionMethodType {
   Steady,
   Continuation,
   Transient,
-  Eigensolve,
   Unknown
 };
 

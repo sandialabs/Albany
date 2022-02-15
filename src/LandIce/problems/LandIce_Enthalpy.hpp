@@ -45,6 +45,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include <set>
+
 namespace LandIce
 {
 

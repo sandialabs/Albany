@@ -7,22 +7,20 @@
 #ifndef PHAL_WORKSET_HPP
 #define PHAL_WORKSET_HPP
 
-#include <list>
-#include <set>
-#include <string>
-
-#include "Albany_SacadoTypes.hpp"
-#include "Albany_ThyraTypes.hpp"
-#include "Albany_TpetraTypes.hpp"
 #include "PHAL_Setup.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
-#include "Kokkos_ViewFactory.hpp"
+#include "Albany_ThyraTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
+#include "Albany_SacadoTypes.hpp"
+#include "Albany_CommTypes.hpp"
 
-#include "Teuchos_Comm.hpp"
+#include "Kokkos_ViewFactory.hpp"
 #include "Teuchos_RCP.hpp"
+
+#include <string>
 
 // Forward declarations
 namespace Albany {
@@ -30,13 +28,7 @@ class AbstractDiscretization;
 class CombineAndScatterManager;
 class DistributedParameterLibrary;
 
-#if defined(ALBANY_EPETRA)
-struct EigendataStruct;
-#endif
 }  // namespace Albany
-#if defined(ALBANY_EPETRA)
-class Epetra_MultiVector;
-#endif
 
 namespace PHAL {
 
@@ -155,12 +147,6 @@ struct Workset
   int spatial_dimension_{0};
 
   Albany::StateArray* stateArrayPtr;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
-  Teuchos::RCP<Epetra_MultiVector>      auxDataPtr;
-#endif
-  // Teuchos::RCP<Albany::EigendataStructT> eigenDataPtrT;
-  Teuchos::RCP<Tpetra_MultiVector> auxDataPtrT;
 
   bool transientTerms;
   bool accelerationTerms;
@@ -173,7 +159,7 @@ struct Workset
   bool ignore_residual;
 
   // New field manager response stuff
-  Teuchos::RCP<const Teuchos::Comm<int>> comm;
+  Teuchos::RCP<const Teuchos_Comm> comm;
 
   // Combine and Scatter manager (for import-export of responses derivatives),
   // for both solution (x) and distributed parameter (p)

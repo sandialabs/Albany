@@ -92,7 +92,6 @@ set(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
   Albany_DummyParameterAccessor.hpp
-  Albany_EigendataInfoStructT.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
@@ -123,7 +122,6 @@ set(HEADERS
 
 if(ALBANY_EPETRA)
   list (APPEND HEADERS
-    Albany_EigendataInfoStruct.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
     Albany_ObserverFactory.hpp
@@ -383,7 +381,6 @@ list (APPEND SOURCES
   evaluators/bc/PHAL_SDirichletField.cpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/bc/PHAL_Neumann.cpp
-  evaluators/gather/PHAL_GatherAuxData.cpp
   evaluators/gather/PHAL_GatherCoordinateVector.cpp
   evaluators/gather/PHAL_GatherScalarNodalParameter.cpp
   evaluators/gather/PHAL_GatherSolution.cpp
@@ -440,13 +437,6 @@ if(ALBANY_STK_EXPR_EVAL)
     evaluators/bc/PHAL_ExprEvalSDBC.cpp)
 endif()
 
-if (ALBANY_EPETRA)
-  list (APPEND SOURCES
-    evaluators/gather/PHAL_GatherEigenData.cpp
-    evaluators/gather/PHAL_GatherEigenvectors.cpp
-  )
-endif()
-
 list (APPEND HEADERS
   evaluators/bc/PHAL_Dirichlet.hpp
   evaluators/bc/PHAL_TimeDepDBC.hpp
@@ -466,8 +456,6 @@ list (APPEND HEADERS
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/bc/PHAL_Neumann.hpp
   evaluators/bc/PHAL_Neumann_Def.hpp
-  evaluators/gather/PHAL_GatherAuxData.hpp
-  evaluators/gather/PHAL_GatherAuxData_Def.hpp
   evaluators/gather/PHAL_GatherCoordinateVector.hpp
   evaluators/gather/PHAL_GatherCoordinateVector_Def.hpp
   evaluators/gather/PHAL_GatherScalarNodalParameter.hpp
@@ -576,10 +564,6 @@ endif()
 
 if (ALBANY_EPETRA)
   list (APPEND HEADERS
-    evaluators/gather/PHAL_GatherEigenvectors.hpp
-    evaluators/gather/PHAL_GatherEigenvectors_Def.hpp
-    evaluators/gather/PHAL_GatherEigenData.hpp
-    evaluators/gather/PHAL_GatherEigenData_Def.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
   )

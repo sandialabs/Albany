@@ -52,15 +52,10 @@ Albany::AbstractProblem::AbstractProblem(
     number_of_time_deriv = 1;
     SolutionMethodName = Transient;
   }
-  else if(solutionMethod == "Eigensolve")
-  {
-    number_of_time_deriv = 0;
-    SolutionMethodName = Eigensolve;
-  }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
-            << "Continuation, Eigensolve, not : " << solutionMethod);
+            << "Continuation, not : " << solutionMethod);
 
    // Set the number in the Problem PL
    params->set<int>("Number Of Time Derivatives", number_of_time_deriv);

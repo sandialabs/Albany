@@ -45,8 +45,7 @@ public:
   {
     Steady,
     Transient,
-    Continuation,
-    Eigensolve
+    Continuation
   };
 
   enum SolutionStatus
@@ -1340,11 +1339,7 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
       &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
 #if defined(ALBANY_EPETRA)
   workset.disc         = disc;  // Needed by LandIce for sideset DOF save
-  workset.eigenDataPtr = stateMgr.getEigenData();
-  workset.auxDataPtr   = stateMgr.getAuxData();
 #endif
-  // FIXME, 6/25: This line was causing link error.  Need to figure out why.
-  // workset.auxDataPtrT = stateMgr.getAuxDataT();
 }
 
 }  // namespace Albany

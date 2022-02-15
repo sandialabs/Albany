@@ -17,15 +17,9 @@
 #include "Adapt_NodalDataBase.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_EigendataInfoStructT.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_TpetraTypes.hpp"
-
-#if defined(ALBANY_EPETRA)
-#include "Albany_EigendataInfoStruct.hpp"
-#include "Epetra_Vector.h"
-#endif
 
 namespace Albany {
 
@@ -248,27 +242,6 @@ class StateManager
   void
   printStates(std::string const& where = "") const;
 
-#if defined(ALBANY_EPETRA)
-  /// Methods to get/set the EigendataStruct which holds eigenvalue /
-  /// eigenvector data
-  Teuchos::RCP<Albany::EigendataStruct>
-  getEigenData();
-  void
-  setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
-
-  /// Methods to get/set Auxilliary data vectors
-  Teuchos::RCP<Epetra_MultiVector>
-  getAuxData();
-  void
-  setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
-#endif
-  Teuchos::RCP<Tpetra_MultiVector>
-  getAuxDataT();
-
-  void
-  setEigenDataT(const Teuchos::RCP<Albany::EigendataStructT>& eigdata);
-  void
-  setAuxDataT(const Teuchos::RCP<Tpetra_MultiVector>& aux_data);
   bool
   areStateVarsAllocated() const
   {
@@ -308,13 +281,6 @@ class StateManager
   Teuchos::RCP<StateInfoStruct> stateInfo;
   std::map<std::string, Teuchos::RCP<StateInfoStruct>>
       sideSetStateInfo;  // A map sideSetName->stateInfoBd
-
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<EigendataStruct>    eigenData;
-  Teuchos::RCP<Epetra_MultiVector> auxData;
-#endif
-  Teuchos::RCP<EigendataStructT>   eigenDataT;
-  Teuchos::RCP<Tpetra_MultiVector> auxDataT;
 };
 
 }  // Namespace Albany
