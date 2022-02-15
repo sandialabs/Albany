@@ -1,6 +1,7 @@
 set (tmpStr "Looking for valid Omega_h installation ...")
 message (STATUS ${tmpStr})
 
+set (CMAKE_FIND_DEBUG_MODE ON)
 find_package(Omega_h 10.8 CONFIG QUIET
   # Avoid all defaults. Only check env/CMake var Omega_h_ROOT
   NO_CMAKE_PATH
@@ -11,6 +12,7 @@ find_package(Omega_h 10.8 CONFIG QUIET
   NO_CMAKE_INSTALL_PREFIX
   NO_CMAKE_SYSTEM_PACKAGE_REGISTRY
 )
+set (CMAKE_FIND_DEBUG_MODE OFF)
 
 # If we're building shared libs in Albany, we need Omega_h to be built with shared libs
 # TODO: if CMake adds a "DYNAMYC=<value>" to find_package (to specify what variant
