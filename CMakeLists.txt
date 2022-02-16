@@ -37,7 +37,7 @@ FIND_PACKAGE(Trilinos 13.1 REQUIRED)
 OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
 
 IF (DEFINED CMAKE_BUILD_TYPE)
-   IF (${CMAKE_BUILD_TYPE} STREQUAL "DEBUG")
+   IF ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
       MESSAGE("-- CMAKE_BUILD_TYPE=DEBUG...  Debug build is Enabled")
       SET(ALBANY_DEBUG_BUILD ON)
    ELSE()
