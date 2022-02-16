@@ -132,6 +132,6 @@ cmake \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
-      -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
-      -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
+      -D Tpetra_ENABLE_DEPRECATED_CODE=OFF \
+      -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
 ..
