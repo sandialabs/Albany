@@ -74,15 +74,6 @@ ANONYMOUS:
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 2
-        Response 1:
-          Scaling: 5.8824e-07
-          Name: Squared L2 Difference Side Source ST Target RT
-          Source Field Name: flux_divergence_basalside
-          Response Depends On Solution Column: true
-          Side Set Name: basalside
-          Field Rank: Scalar
-          Is Side Set Planar: true
-          Target Value: 0.0
         Response 0:
           Scaling: 5.8824e-07
           Name: Squared L2 Difference Side Source ST Target RT
@@ -92,6 +83,15 @@ ANONYMOUS:
           Field Rank: Vector
           Root Mean Square Error Field Name: observed_surface_velocity_RMS_upperside
           Target Field Name: observed_surface_velocity_upperside
+        Response 1:
+          Scaling: 5.8824e-07
+          Name: Squared L2 Difference Side Source ST Target RT
+          Source Field Name: flux_divergence_basalside
+          Response Depends On Solution Column: true
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Target Value: 0.0
       Response 1:
         Scaling Coefficient: 5.8824e-05
         Name: Boundary Squared L2 Norm
@@ -116,7 +116,7 @@ ANONYMOUS:
     Basal Node Layered Fields Ranks: [2]
     Use Glimmer Spacing: true
     Required Fields Info:
-      Number Of Fields: 11
+      Number Of Fields: 10
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -159,10 +159,6 @@ ANONYMOUS:
         Field Name: velocity
         Field Type: Node Vector
         Field Origin: Mesh
-      Field 10:
-        Field Name: flux_divergence
-        Field Type: Node Scalar
-        Field Usage: Output
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
@@ -175,7 +171,7 @@ ANONYMOUS:
         Exodus Output File Name: output/humboldt_basal.exo
         Cubature Degree: 4
         Required Fields Info:
-          Number Of Fields: 11
+          Number Of Fields: 12
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -203,7 +199,7 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii
           Field 5:
             Field Name: flux_divergence
-            Field Type: Elem Scalar
+            Field Type: Node Scalar
             Field Usage: Output
           Field 6:
             Field Name: basal_friction_log
@@ -211,22 +207,26 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
           Field 7:
+            Field Name: beta
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 8:
             Field Name: temperature
             Field Type: Elem Layered Scalar
             Number Of Layers: 10
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/cell_temperature.ascii
-          Field 8:
+          Field 9:
             Field Name: apparent_mass_balance
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/apparent_mass_balance.ascii
-          Field 9:
+          Field 10:
             Field Name: apparent_mass_balance_RMS
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/apparent_mass_balance_uncertainty.ascii
-          Field 10:
+          Field 11:
             Field Name: velocity
             Field Origin: File
             Field Type: Node Layered Vector

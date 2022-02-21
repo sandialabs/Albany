@@ -69,7 +69,7 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   dof_offsets[1] = vecDimFO;
   dof_offsets[2] = dof_offsets[1]+1;
   if(fluxDivIsPartOfSolution) {
-    dof_names[3] = "flux_divergence";
+    dof_names[3] = "layered_flux_divergence";
     resid_names[3] = dof_names[3] + " Residual";
     scatter_names[3] = "Scatter " + resid_names[3];
     dof_offsets[3] = dof_offsets[2]+1;

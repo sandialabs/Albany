@@ -61,7 +61,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     resid_names.resize(eqId+1);
     scatter_names.resize(eqId+1);
     dof_offsets.resize(eqId+1);
-    dof_names[eqId] = "flux_divergence";
+    dof_names[eqId] = "layered_flux_divergence";
     resid_names[eqId] = dof_names[eqId] + " Residual";
     scatter_names[eqId] = "Scatter " + resid_names[eqId];
     dof_offsets[eqId] = l2ProjectedBoundaryEquation ? vecDimFO+1 : vecDimFO;
