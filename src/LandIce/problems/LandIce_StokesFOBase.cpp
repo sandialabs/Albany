@@ -509,7 +509,7 @@ void StokesFOBase::setFieldsProperties ()
   setSingleFieldProperties(bed_topography_name,               FRT::Scalar, FST::MeshScalar);
   setSingleFieldProperties(body_force_name,                   FRT::Vector);
   setSingleFieldProperties(flow_factor_name,                  FRT::Scalar);
-  setSingleFieldProperties(flux_divergence_name,              FRT::Scalar);
+  setSingleFieldProperties(flux_divergence_name,              FRT::Scalar, FST::Scalar);
 
   setSingleFieldProperties(Albany::coord_vec_name,            FRT::Vector, FST::MeshScalar);
 }

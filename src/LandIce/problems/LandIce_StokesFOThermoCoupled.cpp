@@ -29,8 +29,10 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
       params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution");
 
+  l2ProjectedBoundaryEquation = params->isSublist("LandIce L2 Projected Boundary Laplacian");
+
   // 2 eqns for Stokes FO + 1 eqn. for enthalpy + 1 eqn. for w. Optionally 1 eqn. for fluxDiv
-  neq = fluxDivIsPartOfSolution ? 5 : 4;
+  neq = unsigned(fluxDivIsPartOfSolution) + unsigned(l2ProjectedBoundaryEquation) + 4;
   this->setNumEquations(neq);
 
   //Teuchos::ParameterList SUPG_list = params->get<Teuchos::ParameterList>("SUPG Settings");
@@ -53,26 +55,37 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   compute_dissipation &= needsDiss;
 
-  dof_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
+  dof_names.resize(neq-1);
   dof_names[1] = "W";
   dof_names[2] = "Enthalpy";
 
-  resid_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
+  resid_names.resize(neq-1);
   resid_names[1] = dof_names[1] + " Residual";
   resid_names[2] = dof_names[2] + " Residual";
 
-  scatter_names.resize(fluxDivIsPartOfSolution ? 4 : 3);
+  scatter_names.resize(neq-1);
   scatter_names[1] = "Scatter " + resid_names[1];
   scatter_names[2] = "Scatter " + resid_names[2];
 
-  dof_offsets.resize(fluxDivIsPartOfSolution ? 4 : 3);
+  dof_offsets.resize(neq-1);
   dof_offsets[1] = vecDimFO;
   dof_offsets[2] = dof_offsets[1]+1;
+
+
+  if(l2ProjectedBoundaryEquation) {
+    int eqId=3;
+    dof_names[eqId] = "L2 Projected Boundary Laplacian";
+    resid_names[eqId] = dof_names[eqId] + " Residual";
+    scatter_names[eqId] = "Scatter " + resid_names[eqId];
+    dof_offsets[eqId] = dof_offsets[eqId-1]+1;
+  }
+
   if(fluxDivIsPartOfSolution) {
-    dof_names[3] = "layered_flux_divergence";
-    resid_names[3] = dof_names[3] + " Residual";
-    scatter_names[3] = "Scatter " + resid_names[3];
-    dof_offsets[3] = dof_offsets[2]+1;
+    int eqId = l2ProjectedBoundaryEquation ? 4 : 3;
+    dof_names[eqId] = "layered_flux_divergence";
+    resid_names[eqId] = dof_names[eqId] + " Residual";
+    scatter_names[eqId] = "Scatter " + resid_names[eqId];
+    dof_offsets[eqId] = dof_offsets[eqId-1]+1;
   }
 
   // We *always* use corrected temperature in this problem
@@ -277,6 +290,21 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
   ss_utils_needed[basalSideName][UtilityRequest::BFS      ] = true;
   ss_utils_needed[basalSideName][UtilityRequest::QP_COORDS] = true;
   ss_utils_needed[basalSideName][UtilityRequest::NORMALS] = true;
+
+  if(l2ProjectedBoundaryEquation) {
+    auto& proj_lapl_params = params->sublist("LandIce L2 Projected Boundary Laplacian");
+    auto& ssName = proj_lapl_params.get<std::string>("Side Set Name",basalSideName);
+    std::string field_name = proj_lapl_params.get<std::string>("Field Name","basal_friction");
+
+    int eqId = 3;
+    ss_build_interp_ev[ssName][dof_names[eqId]][IReq::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[ssName][dof_names[eqId]][IReq::QP_VAL] = true;
+    ss_build_interp_ev[ssName][field_name][IReq::GRAD_QP_VAL] = true;
+  }
+
+  if(fluxDivIsPartOfSolution) {
+    ss_build_interp_ev[basalSideName][flux_divergence_name][IReq::GRAD_QP_VAL] = true;
+  }
 }
 
 void StokesFOThermoCoupled::setFieldsProperties () {
@@ -298,8 +326,11 @@ void StokesFOThermoCoupled::setFieldsProperties () {
   // All dofs have scalar type Scalar (i.e., they depend on the solution)
   setSingleFieldProperties(dof_names[1], FRT::Scalar, FST::Scalar);  // Vertical velocity
   setSingleFieldProperties(dof_names[2], FRT::Scalar, FST::Scalar);  // Enthalpy
-  if (fluxDivIsPartOfSolution) {
-    setSingleFieldProperties(dof_names[3], FRT::Scalar, FST::Scalar);  // FluxDiv
+  if (fluxDivIsPartOfSolution || l2ProjectedBoundaryEquation) {
+    setSingleFieldProperties(dof_names[3], FRT::Scalar, FST::Scalar);  // L2 Projected Boundary Laplacian || FluxDiv
+  }
+  if (fluxDivIsPartOfSolution && l2ProjectedBoundaryEquation) {
+    setSingleFieldProperties(dof_names[4], FRT::Scalar, FST::Scalar);  // FluxDiv
   }
 
   setSingleFieldProperties(surface_enthalpy_name     , FRT::Scalar);

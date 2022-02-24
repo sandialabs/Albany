@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Debug Output:
     Write Solution to MatrixMarket: 0
     #Write Jacobian to MatrixMarket: -1
@@ -82,6 +82,12 @@ ANONYMOUS:
     LandIce Flux Divergence:
       Use Upwind Stabilization: false
       Flux Divergence Is Part Of Solution: true
+    LandIce L2 Projected Boundary Laplacian:
+      Field Name: basal_friction_log
+      Mass Coefficient: 1.0e-01
+      Laplacian Coefficient: 1.0e+01
+      Robin Coefficient: 1.0
+      Boundary Edges Set Name: lateralside
     LandIce Enthalpy:
       Regularization:
         Flux Regularization:
@@ -95,17 +101,33 @@ ANONYMOUS:
         Parameter Delta: 0.5
       Bed Lubrication: Dry
     Response Functions:
-      Number Of Responses: 1
+      Number Of Responses: 3
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 1
         Response 0:
-          Cubature Degree: 4
-          Name: Surface Mass Balance Mismatch
-          SMB Coefficient: 1.0
-          Regularization Coefficient: 1.0
-          Scaling Coefficient: 4.540693e-06
-          H Coefficient: 10.0
+          Scaling: 5.8824e-07
+          Name: Squared L2 Difference Side Source ST Target RT
+          Source Field Name: flux_divergence_basalside
+          Response Depends On Solution Column: true
+          Root Mean Square Error Field Name: apparent_mass_balance_RMS_basalside
+          Field Rank: Scalar
+          Target Field Name: apparent_mass_balance_basalside
+          Side Set Name: basalside
+          Is Side Set Planar: true
+      Response 1:
+        Scaling: 5.8824e-07
+        Name: Squared L2 Difference Side Source ST Target RT
+        Source Field Name: flux_divergence_gradient_basalside
+        Response Depends On Solution Column: true
+        Side Set Name: basalside
+        Field Rank: Gradient
+        Is Side Set Planar: true
+        Target Value: 0.0
+      Response 2:
+        Scaling Coefficient: 5.8824e-05
+        Name: Boundary Squared L2 Norm
+        Field Name: L2 Projected Boundary Laplacian_basalside 
   Discretization:
     Workset Size: -1
     Method: Extruded
@@ -475,11 +497,11 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
-            Tolerance: 1.0e-7
+            Tolerance: 1.0e-7  # used for forward solves
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
                 AztecOO:
                   Forward Solve:
@@ -489,12 +511,11 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 500
-                    Tolerance: 9.99999999999999954e-08
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000004e-04
+                      Convergence Tolerance: 1.0e-7  # used for adjoint solve
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -502,54 +523,15 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+                  VerboseObject:
+                    Verbosity Level: low
+              Preconditioner Type: FROSch
               Preconditioner Types:
                 Ifpack:
                   Overlap: 0
                   Prec Type: Amesos
                   Ifpack Settings:
                     'fact: level-of-fill': 0
-                Ifpack2:
-                  Overlap: 0
-                  Prec Type: Amesos2
-#                 FROSch:
-#                   FROSch Preconditioner Type: TwoLevelPreconditioner        # FROSch preconditioner type. Options: OneLevelPreconditioner, TwoLevelPreconditioner
-#                   OverlappingOperator Type: AlgebraicOverlappingOperator    # First Level: AlgebrAlgebraicOverlappingOperator determines the overlap based on the graph of the matrix
-#                   CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
-#                   Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
-#                   Dimension : 3                                             # Spatial dimension of the problem
-#                   DofsPerNode : 2                                           # Number of degrees of freedom per node
-#                   Overlap: 2                                                # Number of layers of elements in the overlap
-#                   Null Space Type: Input                                    # Null space is provided by Albany
-#                   AlgebraicOverlappingOperator:
-#                     'Reuse: Symbolic Factorization': true                   # Reuse of the symbolic factorization
-#                     Adding Layers Strategy: CrsGraph
-#                     Solver:                                                 # Solver on the first level
-#                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
-#                       Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
-#                   IPOUHarmonicCoarseOperator:
-#                     'Reuse: Coarse Basis': true                             # Reuse of the coarse basis functions
-#                     'Reuse: Coarse Matrix': false                           # Reuse of the coarse matrix
-#                     'Reuse: Coarse Matrix Symbolic Factorization': true     # Reuse of the symbolic factorization of the coarse matrix
-#                     Blocks:
-#                       1:                                                    # For a multiphysics problem, the coarse space may be decomposed into several blocks. Here, we only need one block.
-#                         InterfacePartitionOfUnity:                          # The interface partition of unity defines the specific GDSW type coarse space
-#                           Type: RGDSW                                       # Possible types: GDSW, RGDSW
-#                           GDSW:
-#                             Type: Full                                      # Here, we could select subspaces of the GDSW coarse. Generally, we use "Full".
-#                           RGDSW:
-#                             Type: Full                                      # Here, we could select subspaces of the RGDSW coarse. Generally, we use "Full".
-#                             Distance Function: Inverse Euclidean            # Options 1 and 2.2 differ in the distance function used to compute the interface values: "Constant" (Option 1) and "Inverse Euclidean" (Option 2.2)
-#                     Interface Communication Strategy: CreateOneToOneMap
-#                     ExtensionSolver:                                        # Solver for the energy-minimizing extensions
-#                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
-#                       Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
-#                     Distribution:                                           # Parallel distribution of the coarse problem
-#                       Type: linear                                          # Specifies the parallel distribution strategy. For now, we use "linear"
-#                       NumProcs: 1                                           # Number of ranks used for the coarse problem
-#                     CoarseSolver:                                           # Solver for the coarse problem
-#                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
-#                       Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
                 ML:
                   Base Method Defaults: none
                   ML Settings:
@@ -575,6 +557,42 @@ ANONYMOUS:
                     'coarse: pre or post': pre
                     'coarse: sweeps': 4
                     max levels: 7
+                FROSch:
+                  FROSch Preconditioner Type: OneLevelPreconditioner        # FROSch preconditioner type. Options: OneLevelPreconditioner, TwoLevelPreconditioner
+                  OverlappingOperator Type: AlgebraicOverlappingOperator    # First Level: AlgebrAlgebraicOverlappingOperator determines the overlap based on the graph of the matrix
+                  CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
+                  Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
+                  Dimension: 3                                              # Spatial dimension of the problem
+                  DofsPerNode: 6                                            # Number of degrees of freedom per node
+                  Overlap: 0                                                # Number of layers of elements in the overlap
+                  Null Space Type: Input                                    # Null space is provided by Albany
+                  AlgebraicOverlappingOperator:
+                    'Reuse: Symbolic Factorization': true                   # Reuse of the symbolic factorization
+                    Solver:                                                 # Solver on the first level
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                  IPOUHarmonicCoarseOperator:
+                    'Reuse: Coarse Basis': true                             # Reuse of the coarse basis functions
+                    'Reuse: Coarse Matrix': false                           # Reuse of the coarse matrix
+                    'Reuse: Coarse Matrix Symbolic Factorization': true     # Reuse of the symbolic factorization of the coarse matrix
+                    Blocks:
+                      1:                                                    # For a multiphysics problem, the coarse space may be decomposed into several blocks. Here, we only need one block.
+                        InterfacePartitionOfUnity:                          # The interface partition of unity defines the specific GDSW type coarse space
+                          Type: RGDSW                                       # Possible types: GDSW, RGDSW
+                          GDSW:
+                            Type: Full                                      # Here, we could select subspaces of the GDSW coarse. Generally, we use "Full".
+                          RGDSW:
+                            Type: Full                                      # Here, we could select subspaces of the RGDSW coarse. Generally, we use "Full".
+                            Distance Function: Inverse Euclidean            # Options 1 and 2.2 differ in the distance function used to compute the interface values: "Constant" (Option 1) and "Inverse Euclidean" (Option 2.2)
+                    ExtensionSolver:                                        # Solver for the energy-minimizing extensions
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                    Distribution:                                           # Parallel distribution of the coarse problem
+                      Type: linear                                          # Specifies the parallel distribution strategy. For now, we use "linear"
+                      NumProcs: 1                                           # Number of ranks used for the coarse problem
+                    CoarseSolver:                                           # Solver for the coarse problem
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
@@ -597,8 +615,19 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
+    Relative Tolerance: 1.0e-06
+    Test Value: 1.232439363229e+00
     Sensitivity For Parameter 0:
-      Test Value: 1.394468249631e+00
-    Test Value: 9.513538821279e+00
-    Relative Tolerance: 1.0e-04
+      Test Value: 1.806512890510e-01
+  Regression For Response 1:
+    Relative Tolerance: 1.0e-06
+    Test Value: 4.974221748047e-02
+    Sensitivity For Parameter 0:
+      Test Value: 4.556068666689e-03
+  Regression For Response 2:
+    Relative Tolerance: 1.0e-06
+    Test Value: 1.757156464993e+01
+    Sensitivity For Parameter 0:
+      Test Value: 8.475863167629e-01
+...
 ...
