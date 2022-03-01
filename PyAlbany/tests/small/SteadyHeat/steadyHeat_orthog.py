@@ -31,7 +31,7 @@ class TestSteadyHeat(unittest.TestCase):
 
         n_vecs = 4
         parameter_map = problem.getParameterMap(0)
-        num_elems     = parameter_map.getNodeNumElements()
+        num_elems     = parameter_map.getLocalNumElements()
         
         # generate vectors with random entries
         omega = Tpetra.MultiVector(parameter_map, n_vecs, dtype="d")

@@ -135,7 +135,7 @@ void createTestMapsAndWorksetConns(
   std::vector<Tpetra_GO> overlapped_nodes = {};
   std::vector<Tpetra_GO> overlapped_dofs = {};
 
-  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getLocalNumElements(); ++cell)
     for (unsigned int node = 0; node < nodes_per_element; ++node)
     {
       const Tpetra_GO nodeID = wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq;
@@ -152,7 +152,7 @@ void createTestMapsAndWorksetConns(
   overlapped_node_map = Teuchos::rcp(new Tpetra_Map(numNodes, overlapped_nodes, 0, comm));
   overlapped_dof_map = Teuchos::rcp(new Tpetra_Map(numNodes * neq, overlapped_dofs, 0, comm));
 
-  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getLocalNumElements(); ++cell)
     for (unsigned int node = 0; node < nodes_per_element; ++node)
       for (unsigned int eq = 0; eq < neq; ++eq)
         wsLocalElNodeEqID(cell, node, eq) = overlapped_dof_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, eq));

@@ -2517,7 +2517,7 @@ Application::evaluateResponseHessian_pp(
 
   if (replace_by_I) {
     auto rangeMap = Ht->getRangeMap();
-    int numElements = rangeMap->getNodeNumElements();
+    int numElements = rangeMap->getLocalNumElements();
 
     Tpetra_Vector::scalar_type values[1];
     Tpetra_Vector::global_ordinal_type cols[1];
@@ -2572,7 +2572,7 @@ Application::evaluateResponseHessian_pp(
     colorer.reconstructMatrix(*HV, *Ht);
   }
   else {
-    int numColors = Ht->getDomainMap()->getNodeNumElements();
+    int numColors = Ht->getDomainMap()->getLocalNumElements();
     RCP<Tpetra_Vector> v = rcp(new Tpetra_Vector(Ht->getDomainMap()));
     RCP<Tpetra_Vector> Hv = rcp(new Tpetra_Vector(Ht->getDomainMap()));
 
