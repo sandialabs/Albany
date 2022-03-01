@@ -157,9 +157,9 @@ namespace PyAlbany
     PyTrilinosMap::global_ordinal_type globalNumElements = t_map->getGlobalNumElements();
     auto indexBase = t_map->getIndexBase();
     auto comm = t_map->getComm();
-    auto nodeNumElements = t_map->getNodeNumElements();
+    auto nodeNumElements = t_map->getLocalNumElements();
     PyTrilinosMap::global_ordinal_type myIndicesLongLong[nodeNumElements];
-    Teuchos::Array<Tpetra_GO> nodes_gids = t_map->getNodeElementList();
+    Teuchos::Array<Tpetra_GO> nodes_gids = t_map->getLocalElementList();
 
     if (correctGIDs)
       correctIDs(comm, nodes_gids, indexBase);

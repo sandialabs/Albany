@@ -97,7 +97,7 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
                 mVectorNP = np.load(filename+'.npy')
             else:
                 mVectorNP = np.loadtxt(filename+'.txt')
-            for lid in range(0, map.getNodeNumElements()):
+            for lid in range(0, map.getLocalNumElements()):
                 gid = map.getGlobalElement(lid)
                 mvector[:,lid] = mVectorNP[:,gid]
     return mvector

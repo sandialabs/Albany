@@ -22,7 +22,7 @@ createDenseHessianLinearOp(Teuchos::RCP<const Thyra_VectorSpace> p_vs)
     Teuchos::RCP<const Tpetra_Map> p_map = getTpetraMap(p_vs);
     Teuchos::RCP<Thyra_LinearOp> H;
 
-    Tpetra_GO num_params = p_map->getNodeNumElements();
+    Tpetra_GO num_params = p_map->getLocalNumElements();
 
     Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_map, num_params));
 

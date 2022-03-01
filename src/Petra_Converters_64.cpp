@@ -24,10 +24,10 @@
 Teuchos::RCP<const Epetra_Map> Petra::TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_Map>& tpetraMap_,
                                                       const Teuchos::RCP<const Epetra_Comm>& comm_)
 {
-  const int numElements = Teuchos::as<int>(tpetraMap_->getNodeNumElements());
+  const int numElements = Teuchos::as<int>(tpetraMap_->getLocalNumElements());
   const int indexBase = Teuchos::as<int>(tpetraMap_->getIndexBase());
   if (tpetraMap_->isDistributed() || tpetraMap_->getComm()->getSize() == Teuchos::OrdinalTraits<int>::one()) {
-    auto indices = tpetraMap_->getNodeElementList();
+    auto indices = tpetraMap_->getLocalElementList();
     Teuchos::Array<int> i_indices(numElements);
     for(int k = 0; k < numElements; k++)
 		i_indices[k] = Teuchos::as<int>(indices[k]);
@@ -112,7 +112,7 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
   Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph_= Teuchos::rcp(new Epetra_CrsGraph(Copy, *epetraRowMap_, *epetraColMap_, maxEntries));
 
   using indices_type = typename Tpetra_CrsGraph::nonconst_local_inds_host_view_type;
-  for (std::size_t i=0; i<tpetraCrsGraph_->getNodeNumRows(); i++) {
+  for (std::size_t i=0; i<tpetraCrsGraph_->getLocalNumRows(); i++) {
      auto NumEntries = tpetraCrsGraph_->getNumEntriesInLocalRow(i);
      indices_type Indices("",NumEntries);
      tpetraCrsGraph_->getLocalRowCopy(i, Indices, NumEntries);
@@ -134,7 +134,7 @@ Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_CrsMat
 
   using indices_type = typename Tpetra_CrsMatrix::local_inds_host_view_type;
   using values_type  = typename Tpetra_CrsMatrix::values_host_view_type;
-  for (std::size_t i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++) {
+  for (std::size_t i = 0; i<tpetraCrsMatrix->getLocalNumRows(); i++) {
     indices_type Indices;
     values_type  Values;
     tpetraCrsMatrix->getLocalRowView(i, Indices, Values);
@@ -179,7 +179,7 @@ void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<const Tpetra_C
 
   using indices_type = typename Tpetra_CrsMatrix::local_inds_host_view_type;
   using values_type  = typename Tpetra_CrsMatrix::values_host_view_type;
-  for (std::size_t i = 0; i<tpetraCrsMatrix_->getNodeNumRows(); i++) {
+  for (std::size_t i = 0; i<tpetraCrsMatrix_->getLocalNumRows(); i++) {
     indices_type Indices;
     values_type  Values;
     tpetraCrsMatrix_->getLocalRowView(i, Indices, Values);
@@ -204,9 +204,9 @@ void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>
   //                          "Error in Petra::TpetraVector_To_EpetraVector! Arguments Epetra_Vector and Tpetra::Vector do not have same map." <<  std::endl) ;
 
   //Copy tpetraVector_ to epetraVector_
-  Teuchos::Array<ST> array(tpetraVector_->getMap()->getNodeNumElements());
+  Teuchos::Array<ST> array(tpetraVector_->getMap()->getLocalNumElements());
   tpetraVector_->get1dCopy(array);
-  for (std::size_t i=0; i<tpetraVector_->getMap()->getNodeNumElements(); ++i)
+  for (std::size_t i=0; i<tpetraVector_->getMap()->getLocalNumElements(); ++i)
      epetraVector_[i] = array[i];
 }
 
@@ -223,9 +223,9 @@ void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>
   }
 
   //Copy tpetraVector_ to epetraVector_
-  Teuchos::Array<ST> array(tpetraVector_->getMap()->getNodeNumElements());
+  Teuchos::Array<ST> array(tpetraVector_->getMap()->getLocalNumElements());
   tpetraVector_->get1dCopy(array);
-  for (std::size_t i=0; i<tpetraVector_->getMap()->getNodeNumElements(); ++i)
+  for (std::size_t i=0; i<tpetraVector_->getMap()->getLocalNumElements(); ++i)
      (*epetraVector_)[i] = array[i];
 
 }
@@ -256,7 +256,7 @@ Teuchos::RCP<const Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorConst(const
   auto mapT = EpetraMap_To_TpetraMap(epetraVector_.Map(), commT_);
   ST *values;
   epetraVector_.ExtractView(&values);
-  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getNodeNumElements());
+  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getLocalNumElements());
   Teuchos::RCP<const Tpetra_Vector> tpetraVector_ = Teuchos::rcp(new Tpetra_Vector(mapT, valuesAV));
   return tpetraVector_;
 }
@@ -287,7 +287,7 @@ Teuchos::RCP<Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorNonConst(const Ep
   auto mapT = EpetraMap_To_TpetraMap(epetraVector_.Map(), commT_);
   ST *values;
   epetraVector_.ExtractView(&values);
-  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getNodeNumElements());
+  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getLocalNumElements());
   Teuchos::RCP<Tpetra_Vector> tpetraVector_ = Teuchos::rcp(new Tpetra_Vector(mapT, valuesAV));
   return tpetraVector_;
 }

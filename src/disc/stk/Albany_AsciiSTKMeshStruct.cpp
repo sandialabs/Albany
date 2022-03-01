@@ -392,7 +392,7 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getLocalNumElements());
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
@@ -445,8 +445,8 @@ AsciiSTKMeshStruct::setBulkData(
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
 #ifdef OUTPUT_TO_SCREEN
-  *out << "elem_map # elements: " << elem_mapT->getNodeNumElements() << std::endl;
-  *out << "node_map # elements: " << node_mapT->getNodeNumElements() << std::endl;
+  *out << "elem_map # elements: " << elem_mapT->getLocalNumElements() << std::endl;
+  *out << "node_map # elements: " << node_mapT->getLocalNumElements() << std::endl;
 #endif
   unsigned int ebNo = 0; //element block #???
 
@@ -467,7 +467,7 @@ AsciiSTKMeshStruct::setBulkData(
   if(!basal_friction_field)
      have_beta = false;
 
-  for (size_t i=0; i<elem_mapT->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_mapT->getLocalNumElements(); i++) {
      const unsigned int elem_GID = elem_mapT->getGlobalElement(i);
      //std::cout << "elem_GID: " << elem_GID << std::endl;
      stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
@@ -702,7 +702,7 @@ AsciiSTKMeshStruct::setBulkData(
   }
   if (have_bf == true) {
     *out << "Setting basal surface connectivity from bf file provided..." << std::endl;
-    for (unsigned int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
+    for (unsigned int i=0; i<basal_face_mapT->getLocalNumElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
 
        const unsigned int elem_GID = bf[i][0];
