@@ -34,7 +34,7 @@ rm -rf CMakeFiles
 PWD=`pwd`
 TRILINOS_INSTALL=$PWD/install 
 
-cmake \
+cmake -G Ninja \
       -D CMAKE_INSTALL_PREFIX:PATH=${TRILINOS_INSTALL} \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \

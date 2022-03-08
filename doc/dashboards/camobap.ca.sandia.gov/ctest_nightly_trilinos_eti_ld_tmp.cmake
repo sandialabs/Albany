@@ -23,7 +23,8 @@ ENDIF()
 set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
-set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+#set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+set (CTEST_CMAKE_GENERATOR "Ninja") # What is your compilation apps ?
 set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
@@ -49,8 +50,10 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j32")
-SET (CTEST_BUILD_FLAGS "-j32")
+#set (CTEST_FLAGS "-j32")
+#SET (CTEST_BUILD_FLAGS "-j32")
+#IKT, 3/8/2022: the following is for Ninja build
+set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
 
 set (CTEST_DROP_METHOD "https")
 

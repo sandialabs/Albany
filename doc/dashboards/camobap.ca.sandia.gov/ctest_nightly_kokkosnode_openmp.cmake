@@ -13,7 +13,8 @@ set (BUILD_ALBFUNCTOR_OPENMP TRUE)
 set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
-set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+#set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+set (CTEST_CMAKE_GENERATOR "Ninja") # What is your compilation apps ?
 IF (BUILD_ALBANY_FPE) 
 set (CTEST_BUILD_CONFIGURATION Debug) # What type of build do you want ?
 ELSE()
@@ -44,7 +45,9 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_BUILD_FLAGS "-j16")
+#set (CTEST_BUILD_FLAGS "-j16")
+#IKT, 3/8/2022: the following is for Ninja build
+set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
 
 set (CTEST_DROP_METHOD "https")
 
@@ -171,6 +174,7 @@ if (BUILD_ALBFUNCTOR_OPENMP)
   set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
 
   set (CONFIGURE_OPTIONS
+    "-GNinja"
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_UNIT_TESTS:BOOL=ON"
