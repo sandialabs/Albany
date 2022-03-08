@@ -18,9 +18,9 @@ fi
 echo "    Finished Trilinos cmake, starting make" ; date
 
 #Build Trilinos
-/usr/bin/make -j 32  > $TRILOUTDIR/trilinos_debug_make.out 2>&1
+/tpls/install/ninja/build-cmake/ninja -j 32  > $TRILOUTDIR/trilinos_debug_make.out 2>&1
 echo "    Finished Trilinos make, starting install" ; date
-/usr/bin/make install > $TRILOUTDIR/trilinos_debug_install.out 2>&1
+/tpls/install/ninja/build-cmake/ninja install > $TRILOUTDIR/trilinos_debug_install.out 2>&1
 
 # Get Dakota's boost out of the path
 rm -rf $TRILINSTALLDIRDEBUG/include/boost
