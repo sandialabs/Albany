@@ -681,12 +681,6 @@ class STKDiscretization : public AbstractDiscretization
   // Needed to pass coordinates to ML.
   Teuchos::RCP<RigidBodyModes> rigidBodyModes;
 
-  int              netCDFp;
-  size_t           netCDFOutputRequest;
-  std::vector<int> varSolns;
-
-  WorksetArray<Teuchos::ArrayRCP<std::vector<interp>>>::type interpolateData;
-
   // Storage used in periodic BCs to un-roll coordinates. Pointers saved for
   // destructor.
   std::vector<double*> toDelete;
@@ -714,18 +708,6 @@ class STKDiscretization : public AbstractDiscretization
   size_t outputFileIdx;
 #endif
   DiscType interleavedOrdering;
-
- private:
-
-  template <typename T, typename ContainerType>
-  bool
-  in_list(const T& value, const ContainerType& list)
-  {
-    for (const T& item : list) {
-      if (item == value) { return true; }
-    }
-    return false;
-  }
 
   Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };
