@@ -105,6 +105,8 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_STATIC_LINKING:BOOL=OFF"
     "-DCISM_Fortran_FLAGS='-ffree-line-length-none -fallow-argument-mismatch'"
     "-DCMAKE_C_FLAGS:STRING='-g'"
+    "-DCMAKE_CXX_FLAGS:STRING='-g -std=c++1y'"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
   )
  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")
