@@ -814,9 +814,10 @@ if (INSTALL_ALBANY)
 
   message("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
   string(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
-  string(REPLACE ";" " -l" ALBANY_LINK_LIBS
+  string(REPLACE ";" " -l" TMP3
         "-L${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
         " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
+  string(REPLACE "-l-L" "-L" ALBANY_LINK_LIBS ${TMP3})
   configure_file(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
 
 endif()
