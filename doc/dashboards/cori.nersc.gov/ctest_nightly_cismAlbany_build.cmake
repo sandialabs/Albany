@@ -103,10 +103,10 @@ if (BUILD_CISM_PISCEES)
     "-DCMAKE_EXE_LINKER_FLAGS:STRING='-Wl,-zmuldefs'"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCISM_STATIC_LINKING:BOOL=OFF"
-    "-DCISM_Fortran_FLAGS='-ffree-line-length-none -fallow-argument-mismatch'"
-    "-DCMAKE_C_FLAGS:STRING='-g'"
-    "-DCMAKE_CXX_FLAGS:STRING='-g -std=c++1y'"
-    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
+    "-DCISM_Fortran_FLAGS='-ffree-line-length-none -Wno-argument-mismatch'"
+    "-DCMAKE_C_FLAGS:STRING='-O2'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O2 -std=c++1y'"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
   )
  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")
