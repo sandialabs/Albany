@@ -17,6 +17,11 @@
 #include "Panzer_String_Utilities.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Intrepid2_HVOL_C0_FEM.hpp"
+#include "Intrepid2_HGRAD_QUAD_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_TET_Cn_FEM.hpp"
+
 
 #include <fstream>
 #include <iostream>
@@ -219,22 +224,26 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 9;
               }
               else if (topo_name == "Triangle_3")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 6;
               }
               else if (topo_name == "Tetrahedron_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 10;
               }
               else if (topo_name == "Hexahedron_8")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 27;
               }
               else
@@ -293,12 +302,14 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 9;
               }
               else if (topo_name == "Triangle_3")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 6;
               }
               else
