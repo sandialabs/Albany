@@ -49,6 +49,7 @@ FFLAGS="-O3 -march=native -DNDEBUG=1 -Wa,-q"
       #-D CMAKE_Fortran_FLAGS:STRING=${FFLAGS} \
 
 cmake \
+      -G Ninja \
       -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION} \
       -D CMAKE_BUILD_TYPE:STRING=${BTYPE} \
 \

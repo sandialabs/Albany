@@ -8,4 +8,5 @@ module load sems-boost/1.55.0/base
 module load sems-netcdf/4.4.1/exo_parallel 
 module unload sems-python
 module load sparc-tools/python/3.7.9
+module load cde/dev/ninja/1.10.1
 module list  
