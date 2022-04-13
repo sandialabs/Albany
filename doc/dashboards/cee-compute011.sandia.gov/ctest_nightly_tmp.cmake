@@ -176,7 +176,8 @@ SITE_NAME(CTEST_SITE) # directly set CTEST_SITE to the output of `hostname`
 set (CTEST_DASHBOARD_ROOT "$ENV{INSTALL_DIRECTORY}" ) # writable path
 set (CTEST_SCRATCH_ROOT "$ENV{SCRATCH_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_ROOT "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
-set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+#set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+set (CTEST_CMAKE_GENERATOR "Ninja")
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
@@ -226,7 +227,9 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_BUILD_FLAGS "-j16")
+#set (CTEST_BUILD_FLAGS "-j16")
+#IKT, 4/10/2022: the following is for Ninja build
+set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
 
 set (CTEST_DROP_METHOD "https")
 
@@ -363,6 +366,7 @@ INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 if (BUILD_INTEL_TRILINOS)
   set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall")
   set (CONF_OPTS
+    "-G Ninja"
     CDASH-TRILINOS-INTEL-FILE.TXT
   )
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
