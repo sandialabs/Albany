@@ -25,6 +25,31 @@ def inner(distributedVector1, distributedVector2, comm):
     innerProduct = comm.reduceAll(Teuchos.REDUCE_SUM, localInnerProduct)
     return innerProduct
 
+def innerMVector(distributedMVector1, distributedMVector2, comm):
+    """@brief computes C = A^T B, where A is a n x r1 MultiVector and B is a n x r2 MultiVector using Python and Teuchos MPI communicator."""
+    r1 = distributedMVector1.shape[0]
+    r2 = distributedMVector2.shape[0]
+    dtype = distributedMVector1.dtype
+    Cloc = np.zeros((r1, r2), dtype=dtype)
+    C    = np.zeros((r1, r2), dtype=dtype)
+    for i in range(r1):
+        for j in range(r2):
+            Cloc[i, j] = np.inner(distributedMVector1[i, :], distributedMVector2[j, :])
+    C[:, :] = comm.reduceAll(Teuchos.REDUCE_SUM, Cloc[:,:])
+    return C
+
+def innerMVectorMat(distributedMVector, array):
+    """@brief computes C = A B, where A and C are distributed n x r and B is r x r and available to each process"""
+    r1, nloc = distributedMVector.shape
+    r2       = array.shape[1]
+    dtype    = distributedMVector.dtype 
+    C = np.zeros((r2, nloc), dtype=dtype)
+    for k in range(r1):
+        for i in range(r2):
+            C[i, :] += array[k, i] * distributedMVector[k, :]
+    return C 
+
+
 def createDefaultParallelEnv(comm = Teuchos.DefaultComm.getComm(), n_threads=-1,n_numa=-1,device_id=-1):
     """@brief Creates a default parallel environment.
     
