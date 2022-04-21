@@ -88,9 +88,9 @@ def singlePass(Op, k, comm=Teuchos.DefaultComm.getComm()):
 
 def doublePass(Op, k, comm = Teuchos.DefaultComm.getComm(), symmetric=True):
     if symmetric:
-        return doublePassSymmetric(Op, k, comm)
+        return doublePassSymmetric(Op, k, comm=comm)
     else:
-        return doublePassNonSymmetric(Op, k, comm)
+        return doublePassNonSymmetric(Op, k, comm=comm)
 """
   doublePass: randomized singular value decomposition of an operator
               here operator is assumed symmetric, though not algorithmically necessary
@@ -103,7 +103,7 @@ def doublePass(Op, k, comm = Teuchos.DefaultComm.getComm(), symmetric=True):
           \Sigma,  singular values,       a nondistributed numpy array with k entries
           V,       right singular vectors, a distributed Tpetra MultiVector with k columns
 """
-def doublePassNonSymmetric(Op, k, comm):
+def doublePassNonSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
     nElems     = Op.Map.getLocalNumElements()
@@ -146,7 +146,7 @@ def doublePassNonSymmetric(Op, k, comm):
           \Lambda, eigenvalues, a nondistributed numpy array with k entries
           U,       eigenvectors, a distributed Tpetra MultiVector with k columns
 """
-def doublePassSymmetric(Op, k, comm):
+def doublePassSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
     nElems     = Op.Map.getLocalNumElements()
