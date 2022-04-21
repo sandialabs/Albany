@@ -39,11 +39,11 @@ def innerMVector(distributedMVector1, distributedMVector2, comm):
     return C
 
 def innerMVectorMat(distributedMVector, array):
-    """@brief computes C = A B, where A and C are distributed n x r and B is r x r and available to each process"""
+    """@brief computes C = A B, where A is an n x r1 MultiVector, B is a nondistributed r1 x r2 array and C is a n x r2 MultiVector"""
     r1, nloc = distributedMVector.shape
     r2       = array.shape[1]
     dtype    = distributedMVector.dtype 
-    C = np.zeros((r2, nloc), dtype=dtype)
+    C = Tpetra.MultiVector(distributedMVector.getMap(), r2, dtype=dtype) 
     for k in range(r1):
         for i in range(r2):
             C[i, :] += array[k, i] * distributedMVector[k, :]

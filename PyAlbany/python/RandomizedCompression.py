@@ -17,7 +17,7 @@
 #
 #
 #
-# Last updated on April 19th, 2022
+# Last updated on April 21st, 2022
 # Author Tucker Hartland, University of California, Merced
 
 
@@ -48,17 +48,15 @@ import scipy.linalg as spla
           \Lambda, eigenvalues,  a nondistributed numpy array with k entries
           U,       eigenvectors, a distributed Tpetra MultiVector with k columns
 """
-def singlePass(Op, k):
-    comm       = Teuchos.DefaultComm.getComm()
+def singlePass(Op, k, comm=Teuchos.DefaultComm.getComm()):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
-    nElems     = Op.Map.getNodeNumElements()
+    nElems     = Op.Map.getLocalNumElements()
     N          = Op.Map.getGlobalNumElements()
     nMaxOrthog = min(50, k)
 
     omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
     q     = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    u     = Tpetra.MultiVector(Op.Map, k, dtype="d")
     
     for i in range(k):
         omega[i, :] = np.random.randn(nElems)
@@ -84,14 +82,14 @@ def singlePass(Op, k):
     lam    = lam[args[::-1]]
     utilde = utilde[:, args[::-1]]
 
-    u[:,:] = utils.innerMVectorMat(q, utilde)[:,:] 
+    u      = utils.innerMVectorMat(q, utilde)
     return lam, u
 
-def doublePass(Op, k, symmetric=True):
+def doublePass(Op, k, comm = Teuchos.DefaultComm.getComm(), symmetric=True):
     if symmetric:
-        return doublePassSymmetric(Op, k)
+        return doublePassSymmetric(Op, k, comm)
     else:
-        return doublePassNonSymmetric(Op, k)
+        return doublePassNonSymmetric(Op, k, comm)
 """
   doublePass: randomized singular value decomposition of an operator
               here operator is assumed symmetric, though not algorithmically necessary
@@ -104,20 +102,17 @@ def doublePass(Op, k, symmetric=True):
           \Sigma,  singular values,       a nondistributed numpy array with k entries
           V,       right singular vectors, a distributed Tpetra MultiVector with k columns
 """
-def doublePassNonSymmetric(Op, k):
-    comm       = Teuchos.DefaultComm.getComm()
+def doublePassNonSymmetric(Op, k, comm):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
-    nElems     = Op.Map.getNodeNumElements()
+    nElems     = Op.Map.getLocalNumElements()
     N          = Op.Map.getGlobalNumElements()
+    # orthogonalize no more than 50 vectors at a time
     nMaxOrthog = min(50, k)
 
     omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
     qy    = Tpetra.MultiVector(Op.Map, k, dtype="d")
     qz    = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    u     = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    v     = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    
     
     for i in range(k):
         omega[i, :] = np.random.randn(nElems)
@@ -135,8 +130,8 @@ def doublePassNonSymmetric(Op, k):
     R = utils.innerMVector(qz, z, comm)
     vhat, sig, uhat = np.linalg.svd(R, full_matrices=False)
     uhat[:, :] = (uhat.T)[:, :]
-    u[:,:]     = utils.innerMVectorMat(qy, uhat)
-    v[:,:]     = utils.innerMVectorMat(qz, vhat)
+    u          = utils.innerMVectorMat(qy, uhat)
+    v          = utils.innerMVectorMat(qz, vhat)
     return u, sig, v
 
 """
@@ -150,17 +145,16 @@ def doublePassNonSymmetric(Op, k):
           \Lambda, eigenvalues, a nondistributed numpy array with k entries
           U,       eigenvectors, a distributed Tpetra MultiVector with k columns
 """
-def doublePassSymmetric(Op, k):
-    comm       = Teuchos.DefaultComm.getComm()
+def doublePassSymmetric(Op, k, comm):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
-    nElems     = Op.Map.getNodeNumElements()
+    nElems     = Op.Map.getLocalNumElements()
     N          = Op.Map.getGlobalNumElements()
+    # orthogonalize no more than 50 vectors at a time
     nMaxOrthog = min(50, k)
 
     omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
     q    = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    u     = Tpetra.MultiVector(Op.Map, k, dtype="d")
      
     
     for i in range(k):
@@ -181,7 +175,7 @@ def doublePassSymmetric(Op, k):
     lam    = lam[args[::-1]]
     utilde = utilde[:, args[::-1]]
 
-    u[:,:] = utils.innerMVectorMat(q, utilde)[:,:] 
+    u = utils.innerMVectorMat(q, utilde)
     return lam, u
 
 """
@@ -198,12 +192,12 @@ def doublePassSymmetric(Op, k):
           V,       array of right singular vectors, each element of which is a distributed Tpetra MultiVector with k columns
 """
 
-def HODLR(Op, L, k):
-    comm   = Teuchos.DefaultComm.getComm()
+def HODLR(Op, L, k, comm = Teuchos.DefaultComm().getComm()):
     rank   = comm.getRank()
     nprocs = comm.getSize()
-    nElem  = Op.Map.getNodeNumElements()
+    nElem  = Op.Map.getLocalNumElements()
     N      = Op.Map.getGlobalNumElements()
+    # orthogonalize no more than 50 vectors at a time
     nMaxOrthog = min(50, k)
 
     MPIidxset = MPIpartition(Op.Map)
@@ -237,11 +231,11 @@ def HODLR(Op, L, k):
          for lvl in range(l):
              for j in range(2**lvl):
                  VTomega = utils.innerMVector(Vs[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega))
+                 x[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega))[:, :]
                  y[:, :] = y[:, :] - x[:, :]
 
                  UTomega = utils.innerMVector(Us[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega))
+                 x[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega))[:, :]
                  y[:, :] = y[:, :] - x[:, :]
          # zero out unneeded rows
          for j in range(1, numPartitions, 2):
@@ -265,11 +259,11 @@ def HODLR(Op, L, k):
          for lvl in range(l):
              for j in range(2**lvl):
                  VTomega = utils.innerMVector(Vs[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega))
+                 x[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega))[:, :]
                  z[:, :] = z[:, :] - x[:, :]
 
                  UTomega = utils.innerMVector(Us[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega))
+                 x[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega))[:, :]
                  z[:, :] = z[:, :] - x[:, :]
          # zero out unneeded rows
          for j in range(0, numPartitions, 2):
@@ -290,8 +284,8 @@ def HODLR(Op, L, k):
          for j in range(2**l):
              Vhats[j], Sigs[l][j], Uhats[j] = np.linalg.svd(Rs[j], full_matrices=False)
              Uhats[j][:, :] = (Uhats[j].T)[:, :]
-             Us[l][j][:, :] = utils.innerMVectorMat(qys[j], Uhats[j])
-             Vs[l][j][:, :] = utils.innerMVectorMat(qzs[j], Vhats[j])
+             Us[l][j][:, :] = utils.innerMVectorMat(qys[j], Uhats[j])[:, :]
+             Vs[l][j][:, :] = utils.innerMVectorMat(qzs[j], Vhats[j])[:, :]
     return Us, Sigs, Vs
 
 """
