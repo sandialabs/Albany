@@ -60,13 +60,12 @@ class TestDoublePass(unittest.TestCase):
         k = 10
         p = 10
         r = k + p
-        u, sigVals, v = doublePass(Hess, r)
+        eigVals, u = doublePass(Hess, r, symmetric=True)
         H = wpa.gatherMVector(h, parameterMap)
         U = wpa.gatherMVector(u, parameterMap)
-        V = wpa.gatherMVector(v, parameterMap)
         # H \approx U \Lambda U^T
         if iAmRoot:
-            Htilde = U[:,:].T.dot(np.diag(sigVals).dot(V[:,:]))
+            Htilde = U[:,:].T.dot(np.diag(eigVals).dot(U[:,:]))
             error  = np.linalg.norm(Htilde[:,:] - H[:,:])
             sigValsTrue = np.loadtxt(fileDir+"/singularvaluesTrue.txt")
             # see equation (5) of "Compressing rank-structured matrices via randomized sampling" Martinsson (2016)

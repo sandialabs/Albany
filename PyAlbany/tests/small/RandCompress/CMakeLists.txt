@@ -20,15 +20,27 @@ IF(ALBANY_MPI)
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()
 
-add_test(PyAlbany_RSVDdoublePass ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeatRSVDdoublePass.py")
+add_test(PyAlbany_RSVDdoublePassSymmetric ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeatRSVDdoublePassSymmetric.py")
 
-set_tests_properties(PyAlbany_RSVDdoublePass
+set_tests_properties(PyAlbany_RSVDdoublePassSymmetric
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 
 IF(ALBANY_MPI)
-    add_test(PyAlbany_RSVDdoublePass_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeatRSVDdoublePass.py")
+    add_test(PyAlbany_RSVDdoublePassSymmetric_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeatRSVDdoublePassSymmetric.py")
 
-    set_tests_properties(PyAlbany_RSVDdoublePass_MPI
+    set_tests_properties(PyAlbany_RSVDdoublePassSymmetric_MPI
+        PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+ENDIF()
+
+add_test(PyAlbany_RSVDdoublePassNonSymmetric ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeatRSVDdoublePassNonSymmetric.py")
+
+set_tests_properties(PyAlbany_RSVDdoublePassNonSymmetric
+    PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+
+IF(ALBANY_MPI)
+    add_test(PyAlbany_RSVDdoublePassNonSymmetric_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/steadyHeatRSVDdoublePassNonSymmetric.py")
+
+    set_tests_properties(PyAlbany_RSVDdoublePassNonSymmetric_MPI
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()
 

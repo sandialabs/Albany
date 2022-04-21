@@ -87,6 +87,11 @@ def singlePass(Op, k):
     u[:,:] = utils.innerMVectorMat(q, utilde)[:,:] 
     return lam, u
 
+def doublePass(Op, k, symmetric=True):
+    if symmetric:
+        return doublePassSymmetric(Op, k)
+    else:
+        return doublePassNonSymmetric(Op, k)
 """
   doublePass: randomized singular value decomposition of an operator
               here operator is assumed symmetric, though not algorithmically necessary
@@ -99,7 +104,7 @@ def singlePass(Op, k):
           \Sigma,  singular values,       a nondistributed numpy array with k entries
           V,       right singular vectors, a distributed Tpetra MultiVector with k columns
 """
-def doublePass(Op, k):
+def doublePassNonSymmetric(Op, k):
     comm       = Teuchos.DefaultComm.getComm()
     rank       = comm.getRank()
     nprocs     = comm.getSize()
@@ -133,6 +138,51 @@ def doublePass(Op, k):
     u[:,:]     = utils.innerMVectorMat(qy, uhat)
     v[:,:]     = utils.innerMVectorMat(qz, vhat)
     return u, sig, v
+
+"""
+  doublePassSymmetric: randomized singular value decomposition of an operator
+                       here operator is assumed symmetric
+  input: Op, operator which contains a Map member data and a 
+                  dot method which takes a Tpetra MultiVector
+                             and returns a Tpetra MultiVector 
+          k, the rank of the output operator U \Lambda U^T
+  output: \Lambda, U
+          \Lambda, eigenvalues, a nondistributed numpy array with k entries
+          U,       eigenvectors, a distributed Tpetra MultiVector with k columns
+"""
+def doublePassSymmetric(Op, k):
+    comm       = Teuchos.DefaultComm.getComm()
+    rank       = comm.getRank()
+    nprocs     = comm.getSize()
+    nElems     = Op.Map.getNodeNumElements()
+    N          = Op.Map.getGlobalNumElements()
+    nMaxOrthog = min(50, k)
+
+    omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
+    q    = Tpetra.MultiVector(Op.Map, k, dtype="d")
+    u     = Tpetra.MultiVector(Op.Map, k, dtype="d")
+     
+    
+    for i in range(k):
+        omega[i, :] = np.random.randn(nElems)
+    
+    y = Op.dot(omega)
+    
+    q[:, :] = y[:, :]
+    wpa.orthogTpMVecs(q, nMaxOrthog)
+
+    z = Op.dot(q)
+    B = utils.innerMVector(q, z, comm)
+    
+    lam, utilde = np.linalg.eigh(B)
+   
+    args = np.argsort(lam)
+
+    lam    = lam[args[::-1]]
+    utilde = utilde[:, args[::-1]]
+
+    u[:,:] = utils.innerMVectorMat(q, utilde)[:,:] 
+    return lam, u
 
 """
   HODLR: hierarchical off-diagonal low-rank decomposition of an operator
