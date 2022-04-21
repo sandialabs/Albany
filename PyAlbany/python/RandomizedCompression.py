@@ -53,6 +53,7 @@ def singlePass(Op, k, comm=Teuchos.DefaultComm.getComm()):
     nprocs     = comm.getSize()
     nElems     = Op.Map.getLocalNumElements()
     N          = Op.Map.getGlobalNumElements()
+    # orthogonalize no more than 50 vectors at a time
     nMaxOrthog = min(50, k)
 
     omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
