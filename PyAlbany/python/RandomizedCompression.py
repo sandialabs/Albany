@@ -86,7 +86,7 @@ def singlePass(Op, k, comm=Teuchos.DefaultComm.getComm()):
     u      = utils.innerMVectorMat(q, utilde)
     return lam, u
 
-def doublePass(Op, k, comm = Teuchos.DefaultComm.getComm(), symmetric=True):
+def doublePass(Op, k, comm = Teuchos.DefaultComm.getComm(), symmetric=False):
     if symmetric:
         return doublePassSymmetric(Op, k, comm=comm)
     else:
