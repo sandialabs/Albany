@@ -6,15 +6,12 @@ import numpy as np
 import os
 try:
     from PyAlbany import Utils
+    from PyAlbany import wpyalbany as wpa
+    from PyAlbany.RandomizedCompression import singlePass
 except:
     import Utils
-try:
-    from PyAlbany import wpyalbany as wpa
-except:
     import wpyalbany as wpa
-
-
-from PyAlbany.RandomizedCompression import singlePass
+    from RandomizedCompression import singlePass
 
 
 class Hessian:
