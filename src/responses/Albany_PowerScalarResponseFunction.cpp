@@ -301,7 +301,7 @@ evaluate_HessVecProd_xx(
           Hv_dp_i);
   
   double a = exponent * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-1);
-  double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
+  //double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
 
   // Copy results into combined result
   Hv_dp->update(a, *Hv_dp_i);
@@ -339,7 +339,7 @@ evaluate_HessVecProd_xp(
           Hv_dp_i);
 
   double a = exponent * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-1);
-  double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
+  //double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
 
   // Copy results into combined result
   Hv_dp->update(a, *Hv_dp_i);
@@ -377,7 +377,7 @@ evaluate_HessVecProd_px(
           Hv_dp_i);
 
   double a = exponent * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-1);
-  double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
+  //double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
 
   // Copy results into combined result
   Hv_dp->update(a, *Hv_dp_i);
@@ -418,7 +418,7 @@ evaluate_HessVecProd_pp(
           Hv_dp_i);
 
   double a = exponent * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-1);
-  double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
+  //double b = exponent * (exponent-1) * pow(Thyra::get_ele(*f_,0)-scalar_target, exponent-2);
 
   // Copy results into combined result
   Hv_dp->update(a, *Hv_dp_i);
