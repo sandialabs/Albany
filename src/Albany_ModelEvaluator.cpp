@@ -15,6 +15,7 @@
 
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Hessian.hpp"
+#include "Albany_StringUtils.hpp"
 
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -76,7 +77,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   param_lower_bds.resize(num_param_vecs);
   param_upper_bds.resize(num_param_vecs);
   for (int l = 0; l < num_param_vecs; ++l) {
-    const Teuchos::ParameterList& pList = parameterParams.sublist(Albany::strint("Parameter", l));
+    const Teuchos::ParameterList& pList = parameterParams.sublist(util::strint("Parameter", l));
 
     const std::string& parameterType = pList.isParameter("Type") ?
         pList.get<std::string>("Type") : std::string("Scalar");
@@ -104,7 +105,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
           Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
       for (int k = 0; k < numParameters; ++k) {
         (*param_names[l])[k] =
-            pList.sublist(Albany::strint("Scalar", k)).get<std::string>("Name");
+            pList.sublist(util::strint("Scalar", k)).get<std::string>("Name");
       }
       *out << "Number of parameters in parameter vector " << l << " = "
           << numParameters << std::endl;
@@ -146,7 +147,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
     // Create Thyra vector for parameters
     param_vecs[l] = Thyra::createMember(param_vss[l]);
 
-    const Teuchos::ParameterList& pList = parameterParams.sublist(strint("Parameter",l));
+    const Teuchos::ParameterList& pList = parameterParams.sublist(util::strint("Parameter",l));
 
     int numParameters = param_vss[l]->dim();
 
@@ -200,7 +201,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
       auto param_vec_nonConstView = getNonconstLocalData(param_vecs[l]);
 
       for (int k = 0; k < numParameters; ++k) {
-        std::string sublistName = strint("Scalar",k);
+        std::string sublistName = util::strint("Scalar",k);
 	//IKT: I believe the following parameters are only for optimization
         if (pList.sublist(sublistName).isParameter("Lower Bound")) {
           ST lb = pList.sublist(sublistName).get<ST>("Lower Bound");
@@ -228,7 +229,7 @@ ModelEvaluator (const Teuchos::RCP<Albany::Application>&    app_,
   std::string p_name;
   std::string  emptyString("");
   for (int i = num_param_vecs; i < total_num_param_vecs; i++) {
-    const std::string& p_sublist_name = strint("Parameter", i);
+    const std::string& p_sublist_name = util::strint("Parameter", i);
     Teuchos::ParameterList param_list = parameterParams.sublist(p_sublist_name);
 
     p_name = param_list.get<std::string>("Name");
@@ -801,8 +802,8 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
 
     std::vector<std::string> toDisableVec, toEnableVec;
 
-    Albany::splitStringOnDelim(toDisable,' ',toDisableVec);
-    Albany::splitStringOnDelim(toEnable,' ',toEnableVec);
+    util::splitStringOnDelim(toDisable,' ',toDisableVec);
+    util::splitStringOnDelim(toEnable,' ',toEnableVec);
 
     for (auto toDisableEntry : toDisableVec)
       for (auto toEnableEntry : toEnableVec)
@@ -912,11 +913,11 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     // Default value for response:
     bool dADHessVec_g, supportHpp;
 
-    if(hessParams.isSublist(Albany::strint("Response", i))) {
-      dADHessVec_g = hessParams.sublist(Albany::strint("Response", i)).isParameter("Use AD for Hessian-vector products (default)") ?
-        hessParams.sublist(Albany::strint("Response", i)).get<bool>("Use AD for Hessian-vector products (default)") : dADHessVec;
-      supportHpp = hessParams.sublist(Albany::strint("Response", i)).isParameter("Reconstruct H_pp") ?
-        hessParams.sublist(Albany::strint("Response", i)).get<bool>("Reconstruct H_pp") : true;
+    if(hessParams.isSublist(util::strint("Response", i))) {
+      dADHessVec_g = hessParams.sublist(util::strint("Response", i)).isParameter("Use AD for Hessian-vector products (default)") ?
+        hessParams.sublist(util::strint("Response", i)).get<bool>("Use AD for Hessian-vector products (default)") : dADHessVec;
+      supportHpp = hessParams.sublist(util::strint("Response", i)).isParameter("Reconstruct H_pp") ?
+        hessParams.sublist(util::strint("Response", i)).get<bool>("Reconstruct H_pp") : true;
     }
     else {
       dADHessVec_g = dADHessVec;
@@ -951,16 +952,16 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
       }
     }
     
-    if(hessParams.isSublist(Albany::strint("Response", i))) {
-      std::string toDisable = hessParams.sublist(Albany::strint("Response", i)).isParameter("Disable AD for Hessian-vector product contributions of") ?
-        hessParams.sublist(Albany::strint("Response", i)).get<std::string>("Disable AD for Hessian-vector product contributions of") : "";
-      std::string toEnable = hessParams.sublist(Albany::strint("Response", i)).isParameter("Enable AD for Hessian-vector product contributions of") ?
-        hessParams.sublist(Albany::strint("Response", i)).get<std::string>("Enable AD for Hessian-vector product contributions of") : "";
+    if(hessParams.isSublist(util::strint("Response", i))) {
+      std::string toDisable = hessParams.sublist(util::strint("Response", i)).isParameter("Disable AD for Hessian-vector product contributions of") ?
+        hessParams.sublist(util::strint("Response", i)).get<std::string>("Disable AD for Hessian-vector product contributions of") : "";
+      std::string toEnable = hessParams.sublist(util::strint("Response", i)).isParameter("Enable AD for Hessian-vector product contributions of") ?
+        hessParams.sublist(util::strint("Response", i)).get<std::string>("Enable AD for Hessian-vector product contributions of") : "";
 
       std::vector<std::string> toDisableVec, toEnableVec;
 
-      Albany::splitStringOnDelim(toDisable,' ',toDisableVec);
-      Albany::splitStringOnDelim(toEnable,' ',toEnableVec);
+      util::splitStringOnDelim(toDisable,' ',toDisableVec);
+      util::splitStringOnDelim(toEnable,' ',toEnableVec);
 
       for (auto toDisableEntry : toDisableVec)
         for (auto toEnableEntry : toEnableVec)
@@ -1312,7 +1313,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   std::vector<std::string> all_param_names(num_params);
 
   for (int l1 = 0; l1 < num_param_vecs; l1++) {
-    all_param_names[l1] = Albany::strint("parameter_vector", l1);
+    all_param_names[l1] = util::strint("parameter_vector", l1);
   }
   for (int l1 = 0; l1 < num_dist_param_vecs; l1++) {
     all_param_names[l1 + num_param_vecs] = dist_param_names[l1];

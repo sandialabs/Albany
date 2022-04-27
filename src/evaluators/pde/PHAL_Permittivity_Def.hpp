@@ -4,11 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <fstream>
+#include "Albany_StringUtils.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Albany_Utils.hpp"
+
+#include <fstream>
 
 //Radom field types
 /*
@@ -162,7 +164,7 @@ Permittivity<EvalT,Traits>::getValue(const std::string &n)
   }
 
   for (int i=0; i<rv.size(); i++) {
-    if (n == Albany::strint("Permittivity KL Random Variable",i))
+    if (n == util::strint("Permittivity KL Random Variable",i))
       return rv[i];
   }
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

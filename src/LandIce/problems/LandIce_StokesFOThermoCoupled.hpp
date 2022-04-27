@@ -89,6 +89,7 @@ protected:
   bool adjustBedTopo;
   bool adjustSurfaceHeight;
   bool fluxDivIsPartOfSolution;
+  bool l2ProjectedBoundaryEquation;
 
   std::string hydrostatic_pressure_name;
   std::string melting_enthalpy_name;
@@ -212,9 +213,15 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // --- Enthalpy equation evaluators --- //
   constructEnthalpyEvaluators<EvalT> (fm0, fieldManagerChoice);
 
+  // --- ProjectedLaplacian-related evaluators (if needed) --- //
+  if(l2ProjectedBoundaryEquation) {
+    int eqId = 3;
+    constructProjLaplEvaluators<EvalT> (fm0, fieldManagerChoice, eqId);
+  }
+
   // --- FluxDiv-related evaluators (if needed) --- //
   if(fluxDivIsPartOfSolution) {
-    int eqId = 3;
+    int eqId = l2ProjectedBoundaryEquation ? 4 : 3;
     constructFluxDivEvaluators<EvalT> (fm0, fieldManagerChoice, eqId, meshSpecs);
   }
 

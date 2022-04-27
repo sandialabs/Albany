@@ -6,11 +6,13 @@
 
 #include "Albany_HeatProblem.hpp"
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
 
 Albany::HeatProblem::
 HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -47,7 +49,7 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     int total_num_param_vecs, num_param_vecs, numDistParams;
     Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
-      Teuchos::ParameterList p = params->sublist("Parameters").sublist(Albany::strint("Parameter", i+num_param_vecs));
+      Teuchos::ParameterList p = params->sublist("Parameters").sublist(util::strint("Parameter", i+num_param_vecs));
       if(p.get<std::string>("Name") == "thermal_conductivity" && p.get<std::string>("Type") == "Distributed")
         conductivityIsDistParam = true;
       if(p.get<std::string>("Name") == "dirichlet_field" && p.get<std::string>("Type") == "Distributed") {

@@ -12,6 +12,7 @@ cd $BASE_DIR
 
 export https_proxy="http://proxy.ca.sandia.gov:80"
 export http_proxy="http://proxy.ca.sandia.gov:80"
+export PATH=$PATH:/tpls/install/ninja/build-cmake
 
 source convert-cmake-to-cdash-longdouble-eti.sh
 source create-new-cdash-cmake-script-eti-ld.sh

@@ -22,7 +22,7 @@ public:
 
   LO getLocalElement  (const GO gid) const { return m_tmap->getLocalElement(gid);  }
 
-  LO getNumLocalElements  () const { return m_tmap->getNodeNumElements();   }
+  LO getNumLocalElements  () const { return m_tmap->getLocalNumElements();   }
   GO getNumGlobalElements () const { return m_tmap->getGlobalNumElements(); }
 
   GO getMaxGlobalGID () const { return m_tmap->getMaxGlobalIndex(); }

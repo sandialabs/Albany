@@ -27,7 +27,7 @@ class TestSteadyHeat(unittest.TestCase):
 
         parameter_map    = problem.getParameterMap(0)
         parameter        = Tpetra.MultiVector(parameter_map, 1, dtype="d")
-        num_elems        = parameter_map.getNodeNumElements()
+        num_elems        = parameter_map.getLocalNumElements()
         parameter[0, :]  = 2.0*np.ones(num_elems)
     
 

@@ -92,7 +92,6 @@ set(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
   Albany_DummyParameterAccessor.hpp
-  Albany_EigendataInfoStructT.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
@@ -123,7 +122,6 @@ set(HEADERS
 
 if(ALBANY_EPETRA)
   list (APPEND HEADERS
-    Albany_EigendataInfoStruct.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
     Albany_ObserverFactory.hpp
@@ -144,6 +142,7 @@ list (APPEND SOURCES
   utility/Albany_Gather.cpp
   utility/Albany_GlobalLocalIndexer.cpp
   utility/Albany_Hessian.cpp
+  utility/Albany_StringUtils.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
   utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
@@ -158,7 +157,7 @@ list (APPEND HEADERS
   utility/DisplayTable.hpp
   utility/MonitorBase.hpp
   utility/PerformanceContext.hpp
-  utility/string.hpp
+  utility/Albany_StringUtils.hpp
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp
@@ -336,13 +335,10 @@ list (APPEND HEADERS
   disc/stk/Albany_GenericSTKMeshStruct.hpp
   disc/stk/Albany_GmshSTKMeshStruct.hpp
   disc/stk/Albany_GenericSTKFieldContainer.hpp
-  disc/stk/Albany_GenericSTKFieldContainer_Def.hpp
   disc/stk/Albany_IossSTKMeshStruct.hpp
   disc/stk/Albany_MultiSTKFieldContainer.hpp
-  disc/stk/Albany_MultiSTKFieldContainer_Def.hpp
   disc/stk/Albany_NodalGraphUtils.hpp
   disc/stk/Albany_OrdinarySTKFieldContainer.hpp
-  disc/stk/Albany_OrdinarySTKFieldContainer_Def.hpp
   disc/stk/Albany_SideSetSTKMeshStruct.hpp
   disc/stk/Albany_STKDiscretization.hpp
   disc/stk/Albany_STKFieldContainerHelper.hpp
@@ -385,7 +381,6 @@ list (APPEND SOURCES
   evaluators/bc/PHAL_SDirichletField.cpp
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/bc/PHAL_Neumann.cpp
-  evaluators/gather/PHAL_GatherAuxData.cpp
   evaluators/gather/PHAL_GatherCoordinateVector.cpp
   evaluators/gather/PHAL_GatherScalarNodalParameter.cpp
   evaluators/gather/PHAL_GatherSolution.cpp
@@ -442,13 +437,6 @@ if(ALBANY_STK_EXPR_EVAL)
     evaluators/bc/PHAL_ExprEvalSDBC.cpp)
 endif()
 
-if (ALBANY_EPETRA)
-  list (APPEND SOURCES
-    evaluators/gather/PHAL_GatherEigenData.cpp
-    evaluators/gather/PHAL_GatherEigenvectors.cpp
-  )
-endif()
-
 list (APPEND HEADERS
   evaluators/bc/PHAL_Dirichlet.hpp
   evaluators/bc/PHAL_TimeDepDBC.hpp
@@ -468,8 +456,6 @@ list (APPEND HEADERS
   evaluators/bc/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/bc/PHAL_Neumann.hpp
   evaluators/bc/PHAL_Neumann_Def.hpp
-  evaluators/gather/PHAL_GatherAuxData.hpp
-  evaluators/gather/PHAL_GatherAuxData_Def.hpp
   evaluators/gather/PHAL_GatherCoordinateVector.hpp
   evaluators/gather/PHAL_GatherCoordinateVector_Def.hpp
   evaluators/gather/PHAL_GatherScalarNodalParameter.hpp
@@ -578,10 +564,6 @@ endif()
 
 if (ALBANY_EPETRA)
   list (APPEND HEADERS
-    evaluators/gather/PHAL_GatherEigenvectors.hpp
-    evaluators/gather/PHAL_GatherEigenvectors_Def.hpp
-    evaluators/gather/PHAL_GatherEigenData.hpp
-    evaluators/gather/PHAL_GatherEigenData_Def.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
   )
@@ -832,9 +814,10 @@ if (INSTALL_ALBANY)
 
   message("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
   string(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
-  string(REPLACE ";" " -l" ALBANY_LINK_LIBS
+  string(REPLACE ";" " -l" TMP3
         "-L${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
         " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
+  string(REPLACE "-l-L" "-L" ALBANY_LINK_LIBS ${TMP3})
   configure_file(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
 
 endif()

@@ -81,7 +81,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
 
   Albany::createTestMapsAndWorksetConns(cell_map, overlapped_node_map, overlapped_dof_map, wsGlobalElNodeEqID, wsLocalElNodeEqID, numCells_per_direction, nodes_per_element, neq, comm);
 
-  Kokkos::resize(wsLocalElNodeEqID, cell_map->getNodeNumElements(), nodes_per_element, neq);
+  Kokkos::resize(wsLocalElNodeEqID, cell_map->getLocalNumElements(), nodes_per_element, neq);
 
   Teuchos::RCP<const Thyra_VectorSpace> overlapped_x_space = Albany::createThyraVectorSpace(overlapped_dof_map);
 
@@ -96,7 +96,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   for (int i = 0; i < x_array.size(); ++i)
     x_array[i] = 6.;
 
-  phxWorkset.numCells = cell_map->getNodeNumElements();
+  phxWorkset.numCells = cell_map->getLocalNumElements();
   const int cubature_degree = 2;
   const int num_dim = 3;
 
@@ -184,7 +184,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
   Albany::createTestMapsAndWorksetConns(cell_map, overlapped_node_map, overlapped_dof_map, wsGlobalElNodeEqID, wsLocalElNodeEqID, numCells_per_direction, nodes_per_element, neq, comm);
 
-  Kokkos::resize(wsLocalElNodeEqID, cell_map->getNodeNumElements(), nodes_per_element, neq);
+  Kokkos::resize(wsLocalElNodeEqID, cell_map->getLocalNumElements(), nodes_per_element, neq);
 
   Teuchos::RCP<const Thyra_VectorSpace> overlapped_x_space = Albany::createThyraVectorSpace(overlapped_dof_map);
 
@@ -216,7 +216,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   for (int i = 0; i < direction_p_array.size(); ++i)
     direction_p_array[i] = 0.4;
 
-  phxWorkset.numCells = cell_map->getNodeNumElements();
+  phxWorkset.numCells = cell_map->getLocalNumElements();
   const int cubature_degree = 2;
   const int num_dim = 3;
 

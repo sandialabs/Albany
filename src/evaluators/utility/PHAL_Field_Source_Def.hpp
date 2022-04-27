@@ -4,22 +4,23 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "PHAL_SharedParameter.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "Sacado_ParameterAccessor.hpp"
+#include "Sacado_ParameterRegistration.hpp"
+#include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_Array.hpp"
+#include "Teuchos_TestForException.hpp"
+
+#include "Phalanx_DataLayout_MDALayout.hpp"
+
 #include <cmath>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-
-#include "Sacado_ParameterAccessor.hpp"
-#include "Sacado_ParameterRegistration.hpp"
-#include "Teuchos_VerboseObject.hpp"
-#include "Albany_Utils.hpp"
-#include "Teuchos_Array.hpp"
-#include "Teuchos_TestForException.hpp"
-
-#include "PHAL_SharedParameter.hpp"
-
-#include "Phalanx_DataLayout_MDALayout.hpp"
 
 namespace PHAL
 {
@@ -47,9 +48,9 @@ namespace PHAL
         typename Gaussian<EvalT, Traits>::ScalarT &
         Gaussian<EvalT, Traits>::getValue(const std::string &n)
         {
-            if (n == Albany::strint("Amplitude", m_num))
+            if (n == util::strint("Amplitude", m_num))
                 return m_amplitude;
-            else if (n == Albany::strint("Radius", m_num))
+            else if (n == util::strint("Radius", m_num))
                 return m_radius;
             TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                        std::endl
@@ -62,21 +63,23 @@ namespace PHAL
                                                  Teuchos::ParameterList &scalarParam_list,
                                                  std::size_t num,
                                                  PHX::FieldManager<Traits> &fm,
-                                                 const Teuchos::RCP<Albany::Layouts> &dl) : mdf_amplitude(source_list.get<std::string>(Albany::strint("Gaussian: Amplitude", num)), dl->shared_param),
-                                                                                            mdf_radius(source_list.get<std::string>(Albany::strint("Gaussian: Radius", num)), dl->shared_param)
+                                                 const Teuchos::RCP<Albany::Layouts> &dl) : mdf_amplitude(source_list.get<std::string>(util::strint("Gaussian: Amplitude", num)), dl->shared_param),
+                                                                                            mdf_radius(source_list.get<std::string>(util::strint("Gaussian: Radius", num)), dl->shared_param)
         {
             Teuchos::ParameterList &paramList = source_list.sublist("Spatial", true);
             m_amplitude = paramList.get("Amplitude", 1.0);
             m_radius = paramList.get("Radius", 1.0);
             // sigma = 1.0/(sqrt(2.0)*m_radius);
-            m_centroid = source_list.get(Albany::strint("Center", num), m_centroid);
+            m_centroid = source_list.get(util::strint("Center", num), m_centroid);
             m_num = num;
 
             Teuchos::RCP<ParamLib> paramLib =
                 source_list.get<Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
+            Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>> accessors =
+                source_list.get<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors");
             { //Shared parameter for sensitivity analysis: amplitude
-                const std::string param_name = source_list.get<std::string>(Albany::strint("Gaussian: Amplitude", num));
+                const std::string param_name = source_list.get<std::string>(util::strint("Gaussian: Amplitude", num));
                 // Check if param_name has already been registered in fm or not:
                 bool already_registered = false;
                 const auto dag = fm.template getDagManager<EvalT>();
@@ -92,19 +95,20 @@ namespace PHAL
                 }
                 if (!already_registered)
                 {
-                    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(Albany::strint("Gaussian: Amplitude", num)));
+                    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(util::strint("Gaussian: Amplitude", num)));
                     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
                     p->set<std::string>("Parameter Name", param_name);
+                    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", accessors);
                     p->set<const Teuchos::ParameterList*>("Parameters List", &scalarParam_list);
                     p->set<double>("Default Nominal Value", paramList.get("Amplitude", 1.0));
 
-                    Teuchos::RCP<PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Amplitude>> ptr_amplitude;
-                    ptr_amplitude = Teuchos::rcp(new PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Amplitude>(*p, dl));
+                    Teuchos::RCP<PHAL::SharedParameter<EvalT, Traits>> ptr_amplitude;
+                    ptr_amplitude = Teuchos::rcp(new PHAL::SharedParameter<EvalT, Traits>(*p, dl));
                     fm.template registerEvaluator<EvalT>(ptr_amplitude);
                 }
             }
             { //Shared parameter for sensitivity analysis: radius
-                const std::string param_name = source_list.get<std::string>(Albany::strint("Gaussian: Radius", num));
+                const std::string param_name = source_list.get<std::string>(util::strint("Gaussian: Radius", num));
                 // Check if param_name has already been registered in fm or not:
                 bool already_registered = false;
                 const auto dag = fm.template getDagManager<EvalT>();
@@ -120,14 +124,15 @@ namespace PHAL
                 }
                 if (!already_registered)
                 {
-                    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(Albany::strint("Gaussian: Radius", num)));
+                    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(util::strint("Gaussian: Radius", num)));
                     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
                     p->set<std::string>("Parameter Name", param_name);
+                    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", accessors);
                     p->set<const Teuchos::ParameterList*>("Parameters List", &scalarParam_list);
                     p->set<double>("Default Nominal Value", paramList.get("Radius", 1.0));
 
-                    Teuchos::RCP<PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Radius>> ptr_radius;
-                    ptr_radius = Teuchos::rcp(new PHAL::SharedParameter<EvalT, Traits, ParamEnum, ParamEnum::Radius>(*p, dl));
+                    Teuchos::RCP<PHAL::SharedParameter<EvalT, Traits>> ptr_radius;
+                    ptr_radius = Teuchos::rcp(new PHAL::SharedParameter<EvalT, Traits>(*p, dl));
                     fm.template registerEvaluator<EvalT>(ptr_radius);
                 }
             }
@@ -135,11 +140,11 @@ namespace PHAL
             this->addDependentField(mdf_amplitude);
             this->addDependentField(mdf_radius);
 
-            const PHX::Tag<ScalarT> fieldTag(source_list.get<std::string>(Albany::strint("Gaussian: Field", num)), dl->dummy);
+            const PHX::Tag<ScalarT> fieldTag(source_list.get<std::string>(util::strint("Gaussian: Field", num)), dl->dummy);
 
             this->addEvaluatedField(fieldTag);
 
-            this->setName(Albany::strint("Gaussian", num));
+            this->setName(util::strint("Gaussian", num));
         }
 
         template <typename EvalT, typename Traits>

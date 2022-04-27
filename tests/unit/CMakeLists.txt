@@ -4,38 +4,33 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-#####################################################################
+#######################################
+#          Unit tests main            #
+#######################################
+
+# We build the main as a library, then link it to each executable
+add_library (albany_ut_main ./Albany_UnitTestMain.cpp)
+target_link_libraries (albany_ut_main PUBLIC albanyLib)
+
+#######################################
+#       Individual unit tests         #
+#######################################
+
 # NullSpaceUtils unit tests
-INCLUDE_DIRECTORIES(
-  ${Trilinos_INCLUDE_DIRS}
-  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${CMAKE_BINARY_DIR}/src
-  ${CMAKE_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
+add_executable (null_space_utils ./UnitTest_NullSpaceUtils.cpp)
+target_link_libraries (null_space_utils PUBLIC albany_ut_main)
+add_test(NAME NullSpaceUtils_Serial_Unit_Test
+         COMMAND ${SERIAL_CALL} null_space_utils)
+if(ALBANY_MPI)
+  add_test(NAME NullSpaceUtils_Parallel_Unit_Test
+    COMMAND ${PARALLEL_CALL} null_space_utils)
+endif(ALBANY_MPI)
 
-SET(SOURCES
-  ./UnitTest_NullSpaceUtils.cpp
-  ./Albany_UnitTestMain.cpp
-)
-
-#LINK_DIRECTORIES(${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
-
-ADD_EXECUTABLE(
-  nullSpaceUtils_unit_tester
-  ${SOURCES}
-)
-
-TARGET_LINK_LIBRARIES(nullSpaceUtils_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
-
-ADD_TEST(
-  NullSpaceUtils_Serial_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/nullSpaceUtils_unit_tester
-)
-IF(ALBANY_MPI)
-  ADD_TEST(
-    NullSpaceUtils_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/nullSpaceUtils_unit_tester
-  )
-ENDIF(ALBANY_MPI)
+# StringUtils unit tests (no MPI test, since it's pointless)
+add_executable (string_utils ./UnitTest_StringUtils.cpp)
+target_link_libraries (string_utils PUBLIC albany_ut_main)
+add_test(NAME StringUtils_Serial_Unit_Test
+         COMMAND ${SERIAL_CALL} string_utils)
 
 #####################################################################
 

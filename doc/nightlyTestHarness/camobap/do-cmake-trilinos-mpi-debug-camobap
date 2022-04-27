@@ -34,7 +34,8 @@ rm -rf CMakeFiles
 
 BUILD_DIR=`pwd`
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+cmake -G Ninja \
+      -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=DEBUG \
       -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11 -g" \
       -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \

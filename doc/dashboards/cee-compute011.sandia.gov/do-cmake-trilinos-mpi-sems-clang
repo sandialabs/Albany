@@ -57,6 +57,7 @@ cmake \
       -D CMAKE_CXX_COMPILER:FILEPATH=${SEMS_OPENMPI_ROOT}/bin/mpicxx \
       -D CMAKE_C_COMPILER:FILEPATH=${SEMS_OPENMPI_ROOT}/bin/mpicc \
       -D CMAKE_Fortran_COMPILER:FILEPATH=${SEMS_OPENMPI_ROOT}/bin/mpifort \
+      -D CMAKE_CXX_FLAGS:STRING='-Wnoinconsistent-missing-override' \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=${SEMS_NETCDF_ROOT}/include \

@@ -360,7 +360,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
   elem_map = Teuchos::rcp(new Tpetra_Map(total_elems, StartIndex, commT, Tpetra::GloballyDistributed));
 
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getNodeNumElements() * (triangles ? 2 : 1));
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getLocalNumElements() * (triangles ? 2 : 1));
 
   for (unsigned int eb=0; eb<numEB; eb++){
 
@@ -733,7 +733,7 @@ TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
   }
 
   // Create elements and node IDs
-  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getLocalNumElements(); i++) {
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO left_node  = elem_GID;
     GO right_node = left_node+1;
@@ -839,7 +839,7 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT
       this->PBCStruct.scale[1] = scale[1];
   }
 
-  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getLocalNumElements(); i++) {
 
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO x_GID = elem_GID % nelem[0]; // mesh column number
@@ -1087,7 +1087,7 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
   }
 
   // Create elements and node IDs
-  for (size_t i=0; i<elem_map->getNodeNumElements(); i++) {
+  for (size_t i=0; i<elem_map->getLocalNumElements(); i++) {
     const GO elem_GID = elem_map->getGlobalElement(i);
     const GO z_GID    = elem_GID / (nelem[0]*nelem[1]); // mesh column number
     const GO xy_plane = elem_GID % (nelem[0]*nelem[1]);

@@ -336,7 +336,7 @@ namespace PyAlbany
 Teuchos::RCP<PyAlbany::PyTrilinosMap> PyAlbany::getRankZeroMap(Teuchos::RCP<PyAlbany::PyTrilinosMap> distributedMap)
 {
     int numGlobalElements = distributedMap->getGlobalNumElements();
-    int numLocalElements = distributedMap->getNodeNumElements();
+    int numLocalElements = distributedMap->getLocalNumElements();
 
     // GO and PyAlbany::PyTrilinosMap::global_ordinal_type can be different
     auto nodes_gids_view = distributedMap->getMyGlobalIndices();

@@ -8,6 +8,8 @@
 
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_StringUtils.hpp"
+
 #include <stdexcept>
 
 
@@ -94,7 +96,7 @@ parametersChanged()
       int num_parameters = params_pl.get<int>("Number Of Parameters");
       for (int i=0; i<num_parameters; ++i)
       {
-        const Teuchos::ParameterList& pvi = params_pl.sublist(Albany::strint("Parameter",i));
+        const Teuchos::ParameterList& pvi = params_pl.sublist(util::strint("Parameter",i));
 
         std::string parameterType = "Scalar";
 
@@ -107,7 +109,7 @@ parametersChanged()
           int m = pvi.get<int>("Dimension");
           for (int j=0; j<m; ++j)
           {
-            const Teuchos::ParameterList& pj = pvi.sublist(Albany::strint("Scalar",j));
+            const Teuchos::ParameterList& pj = pvi.sublist(util::strint("Scalar",j));
             p_names.push_back(pj.get<std::string>("Name"));
           }
         }

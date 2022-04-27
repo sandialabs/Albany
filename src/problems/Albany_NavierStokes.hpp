@@ -709,6 +709,7 @@ Albany::NavierStokes::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
     p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
@@ -729,6 +730,7 @@ Albany::NavierStokes::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
+    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
     p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));

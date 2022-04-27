@@ -493,12 +493,13 @@ constructHydrologyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 
   auto param_name = ParamEnumName::Kappa;
   p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", hy_pl.sublist("Darcy Law").get<double>(param_name,-1.0));
 
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Kappa>> ptr_kappa;
-  ptr_kappa = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Kappa>(*p,dl));
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_kappa;
+  ptr_kappa = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_kappa);
 
   // -------- Regularization from Homotopy Parameter h: reg = 10^(-10*h)

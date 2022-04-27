@@ -133,25 +133,11 @@ void GenericSTKMeshStruct::SetupFieldData(
 
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
   if(user_specified_solution_components && (residual_vector.length() > 0)){
-
-      if(interleavedOrdering == DiscType::Interleaved)
-        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::Interleaved>(params,
-            metaData, bulkData, numDim, sis, num_params));
-      else
-        this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::BlockedMono>(params,
-            metaData, bulkData, numDim, sis, num_params));
-
-  }
-
-  else {
-
-      if(interleavedOrdering == DiscType::Interleaved)
-        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::Interleaved>(params,
-            metaData, bulkData, req, numDim, sis, num_params));
-      else
-        this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::BlockedMono>(params,
-            metaData, bulkData, req, numDim, sis, num_params));
-
+    this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(params,
+        metaData, bulkData, interleavedOrdering, numDim, sis, num_params));
+  } else {
+    this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
+        metaData, bulkData, req, interleavedOrdering, numDim, sis, num_params));
   }
 
 // Exodus is only for 2D and 3D. Have 1D version as well

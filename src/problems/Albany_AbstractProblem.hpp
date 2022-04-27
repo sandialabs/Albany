@@ -21,6 +21,7 @@
 #include "Albany_StateManager.hpp"
 
 #include "Albany_DataTypes.hpp"
+#include "PHAL_SharedParameter.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
@@ -28,18 +29,6 @@
 
 #include "Teuchos_VerboseObject.hpp"
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Intrepid2_HGRAD_HEX_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_HEX_C2_FEM.hpp"
-#include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
-#include "Intrepid2_HGRAD_QUAD_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_QUAD_C2_FEM.hpp"
-#include "Intrepid2_HGRAD_TET_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_TET_C2_FEM.hpp"
-#include "Intrepid2_HGRAD_TET_COMP12_FEM.hpp"
-#include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_TRI_C2_FEM.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Shards_CellTopology.hpp"
 
@@ -50,7 +39,6 @@ enum SolutionMethodType {
   Steady,
   Continuation,
   Transient,
-  Eigensolve,
   Unknown
 };
 
@@ -126,6 +114,35 @@ class AbstractProblem {
     return nodeSetIDs_;
   }
 
+  Teuchos::RCP<Albany::ScalarParameterAccessorsMap>
+  getAccessors() {
+    if (accessors_all.is_null()) {
+      accessors_all =
+        Teuchos::rcp(new Albany::ScalarParameterAccessorsMap());
+    }
+    if (accessors_all->at<PHAL::AlbanyTraits::Residual>().is_null()) {
+      accessors_all->at<PHAL::AlbanyTraits::Residual>() =
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Residual>());
+    }
+    if (accessors_all->at<PHAL::AlbanyTraits::Jacobian>().is_null()) {
+      accessors_all->at<PHAL::AlbanyTraits::Jacobian>() =
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Jacobian>());
+    }
+    if (accessors_all->at<PHAL::AlbanyTraits::Tangent>().is_null()) {
+      accessors_all->at<PHAL::AlbanyTraits::Tangent>() =
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Tangent>());
+    }
+    if (accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>().is_null()) {
+      accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>() =
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::DistParamDeriv>());
+    }
+    if (accessors_all->at<PHAL::AlbanyTraits::HessianVec>().is_null()) {
+      accessors_all->at<PHAL::AlbanyTraits::HessianVec>() =
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::HessianVec>());
+    }
+    return accessors_all;
+  }
+
 
   //! Return the Null space object used to communicate with MP
   const Teuchos::RCP<Albany::RigidBodyModes>&
@@ -195,6 +212,9 @@ class AbstractProblem {
 
   //! Parameter library
   Teuchos::RCP<ParamLib> paramLib;
+
+  //! Parameter accessors
+  Teuchos::RCP<Albany::ScalarParameterAccessorsMap> accessors_all;
 
   //! Distributed parameter library
   // Teuchos::RCP<DistributedParameterLibrary> distParamLib;

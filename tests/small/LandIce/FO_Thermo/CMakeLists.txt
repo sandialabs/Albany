@@ -21,10 +21,6 @@ if (ALBANY_EPETRA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test.yaml)
                  
-  # Copy input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_Humboldt_fluxDiv.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_fluxDiv.yaml)
-
   # Create the tests
   set (testName ${testNameRoot}_Dry_Bed)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_dry_bed_test.yaml)
@@ -34,14 +30,12 @@ if (ALBANY_EPETRA)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
   
-  set (testName ${testNameRoot}_Humboldt_fluxDiv)
-  add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_fluxDiv.yaml)
   # If Iopx is not present, we must decompose the input mesh first
   if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
-    add_test (NAME FO_GIS_HUMBOLDT_decompMesh
+    add_test (NAME FO_Thermo_Humboldt_decompMesh
             COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-    set_tests_properties (FO_GIS_HUMBOLDT_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
+    set_tests_properties (FO_Thermo_Humboldt_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
 
     set_tests_properties(${testName}
                        PROPERTIES
@@ -65,10 +59,17 @@ set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
 if (ALBANY_FROSCH)
   # Copy input file from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_Humboldt_fluxDiv.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_fluxDiv.yaml)
+  
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test_FROSch.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test_FROSch.yaml)
 
   # Create the tests
+  set (testName ${testNameRoot}_Humboldt_fluxDiv)
+  add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_fluxDiv.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+  
   set (testName ${testNameRoot}_Wet_Bed_FROSch)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_FROSch.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")

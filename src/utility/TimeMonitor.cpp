@@ -4,10 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// @HEADER
-
 #include "TimeMonitor.hpp"
-#include "string.hpp"
+
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 namespace util {
 
@@ -17,9 +16,8 @@ TimeMonitor::TimeMonitor () {
   itemValueLabel_ = "Time (s)";
 }
 
-string TimeMonitor::getStringValue (const monitored_type& val) {
+std::string TimeMonitor::getStringValue (const monitored_type& val) {
   return to_string(static_cast<long double>(val.totalElapsedTime()));
 }
 
-}
-
+} // namespace util

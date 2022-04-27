@@ -9,6 +9,7 @@
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 
@@ -80,7 +81,7 @@ std::pair<int,int> RegressionTests::checkSensitivity(
         testParams->get<double>("Absolute Tolerance") : 1.0e-8;
 
     std::string sensitivity_sublist_name =
-        strint("Sensitivity For Parameter", parameter_index);
+        util::strint("Sensitivity For Parameter", parameter_index);
 
     if (testParams->isSublist(sensitivity_sublist_name)) {
       // Repeat comparisons for sensitivities
@@ -95,7 +96,7 @@ std::pair<int,int> RegressionTests::checkSensitivity(
         Teuchos::Array<double> testSensValues;
 
         const Teuchos::ParameterList& paramList = appParams->sublist("Problem").sublist("Parameters");
-        const Teuchos::ParameterList& paramSublist = paramList.sublist(strint("Parameter", parameter_index));
+        const Teuchos::ParameterList& paramSublist = paramList.sublist(util::strint("Parameter", parameter_index));
         const std::string parameterType = paramSublist.isParameter("Type") ?
             paramSublist.get<std::string>("Type") : std::string("Scalar");
         if (parameterType == "Vector") {
@@ -172,7 +173,7 @@ assertNoSensitivityTests(
 
   if (testParams != NULL) {
     std::string sensitivity_sublist_name =
-        strint("Sensitivity For Parameter", parameter_index);
+        util::strint("Sensitivity For Parameter", parameter_index);
 
     ALBANY_ASSERT(!testParams->isSublist(sensitivity_sublist_name), error_msg);
   }
@@ -230,7 +231,7 @@ Teuchos::ParameterList*
 RegressionTests::getTestParameters(int response_index) const
 {
   Teuchos::ParameterList* result = &(appParams->sublist(
-      strint("Regression For Response", response_index)));
+      util::strint("Regression For Response", response_index)));
   if(result->isParameter("Test Value"))
     result->validateParameters(
         *getValidRegressionResultsParameters(), 0);
@@ -282,18 +283,18 @@ RegressionTests::getValidRegressionResultsParameters() const
 
   const int maxSensTests = 10;
   for (int i = 0; i < maxSensTests; i++) {
-    std::string sublist_name = strint("Sensitivity For Parameter", i);
+    std::string sublist_name = util::strint("Sensitivity For Parameter", i);
     validPL->sublist(sublist_name, false, "Sensitivity regression sublist");
 
     validPL->sublist(sublist_name).set<double>(
-        strint("Test Value", i),
+        util::strint("Test Value", i),
         0.,
-        strint(
+        util::strint(
             "Array of regression values for Sensitivities w.r.t parameter", i));
     validPL->sublist(sublist_name).set<Array<double>>(
-        strint("Test Values", i),
+        util::strint("Test Values", i),
         ta,
-        strint(
+        util::strint(
             "Array of regression values for Sensitivities w.r.t parameters", i));
   }
 
@@ -316,9 +317,9 @@ RegressionTests::getValidRegressionResultsParameters() const
   const int maxSGTests = 10;
   for (int i = 0; i < maxSGTests; i++) {
     validPL->set<Array<double>>(
-        strint("Stochastic Galerkin Expansion Test Values", i),
+        util::strint("Stochastic Galerkin Expansion Test Values", i),
         ta,
-        strint(
+        util::strint(
             "Array of regression values for stochastic Galerkin expansions",
             i));
   }

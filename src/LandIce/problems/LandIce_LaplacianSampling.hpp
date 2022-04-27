@@ -7,28 +7,28 @@
 #ifndef LANDICE_LAPLACIAN_SAMPLING_PROBLEM_HPP
 #define LANDICE_LAPLACIAN_SAMPLING_PROBLEM_HPP 1
 
-#include <type_traits>
-
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "LandIce_ResponseUtilities.hpp"
+#include "LandIce_LaplacianRegularizationResidual.hpp"
 
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "LandIce_ResponseUtilities.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
-
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_LoadSideSetStateField.hpp"
 
-#include "LandIce_LaplacianRegularizationResidual.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include <type_traits>
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -148,7 +148,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   stateName = "weighted_normal_sample";
   bool isParameter = false;
   for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index) {
-    std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+    std::string parameter_sublist_name = util::strint("Parameter", p_index+num_param_vecs);
     Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
     param_name = param_list.get<std::string>("Name");
     if(param_name == stateName) {

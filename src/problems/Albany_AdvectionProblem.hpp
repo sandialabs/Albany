@@ -214,10 +214,11 @@ Albany::AdvectionProblem::constructEvaluators(
     p->set< RCP<ParamLib> >("Parameter Library", paramLib);
     const std::string param_name = "a_x Parameter";
     p->set<std::string>("Parameter Name", param_name);
+    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", a[0]);
-    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>> ptr_a_x;
-    ptr_a_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_x>(*p,dl));
+    RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_a_x;
+    ptr_a_x = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ptr_a_x);
 
     if (numDim > 1) {  //Shared parameter for sensitivity analysis: a_y
@@ -225,10 +226,11 @@ Albany::AdvectionProblem::constructEvaluators(
       p->set< RCP<ParamLib> >("Parameter Library", paramLib);
       const std::string param_name = "a_y Parameter";
       p->set<std::string>("Parameter Name", param_name);
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
       p->set<double>("Default Nominal Value", a[1]);
-      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>> ptr_a_y;
-      ptr_a_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_y>(*p,dl));
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_a_y;
+      ptr_a_y = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ptr_a_y);
     }
     if (numDim > 2) {  //Shared parameter for sensitivity analysis: a_z
@@ -236,10 +238,11 @@ Albany::AdvectionProblem::constructEvaluators(
       p->set< RCP<ParamLib> >("Parameter Library", paramLib);
       const std::string param_name = "a_z Parameter";
       p->set<std::string>("Parameter Name", param_name);
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
       p->set<double>("Default Nominal Value", a[2]);
-      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>> ptr_a_z;
-      ptr_a_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,Albany::ParamEnum,Albany::ParamEnum::Kappa_z>(*p,dl));
+      RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_a_z;
+      ptr_a_z = rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ptr_a_z);
     }
   }

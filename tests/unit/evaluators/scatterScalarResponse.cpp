@@ -90,7 +90,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
   Albany::createTestMapsAndWorksetConns(cell_map, overlapped_node_map, overlapped_dof_map, wsGlobalElNodeEqID, wsLocalElNodeEqID, numCells_per_direction, nodes_per_element, neq, comm);
 
-  Kokkos::resize(wsLocalElNodeEqID, cell_map->getNodeNumElements(), nodes_per_element, neq);
+  Kokkos::resize(wsLocalElNodeEqID, cell_map->getLocalNumElements(), nodes_per_element, neq);
 
   RCP<const Tpetra_Map> node_map = Tpetra::createOneToOne<Tpetra_Map::local_ordinal_type, Tpetra_Map::global_ordinal_type, Tpetra_Map::node_type>(overlapped_node_map);
 
@@ -144,7 +144,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   auto hess_vec_prod_g_px_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_px_out);
   auto hess_vec_prod_g_pp_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_pp_out);
 
-  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getLocalNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
     {
       size_t id = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0));
@@ -169,7 +169,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
   std::vector<std::vector<int>> wsElNodeEqID_ID_raw;
 
-  const int buck_size = cell_map->getNodeNumElements();
+  const int buck_size = cell_map->getLocalNumElements();
   const int numBucks = 1;
 
   wsElNodeEqID_ID.resize(numBucks);
@@ -177,7 +177,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   for (std::size_t i = 0; i < numBucks; i++)
     wsElNodeEqID_ID_raw[i].resize(buck_size * nodes_per_element * neq);
 
-  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getLocalNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
       wsElNodeEqID_ID_raw[0][cell * nodes_per_element * neq + node * neq] = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq);
 
@@ -190,7 +190,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
   Kokkos::fence();
 
-  phxWorkset.numCells = cell_map->getNodeNumElements();
+  phxWorkset.numCells = cell_map->getLocalNumElements();
   const int cubature_degree = 2;
   const int num_dim = 3;
 
@@ -471,7 +471,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
   Albany::createTestMapsAndWorksetConns(cell_map, overlapped_node_map, overlapped_dof_map, wsGlobalElNodeEqID, wsLocalElNodeEqID, numCells_per_direction, nodes_per_element, neq, comm);
 
-  Kokkos::resize(wsLocalElNodeEqID, cell_map->getNodeNumElements(), nodes_per_element, neq);
+  Kokkos::resize(wsLocalElNodeEqID, cell_map->getLocalNumElements(), nodes_per_element, neq);
 
   RCP<const Tpetra_Map> node_map = Tpetra::createOneToOne<Tpetra_Map::local_ordinal_type, Tpetra_Map::global_ordinal_type, Tpetra_Map::node_type>(overlapped_node_map);
 
@@ -528,7 +528,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   auto hess_vec_prod_g_px_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_px_out);
   auto hess_vec_prod_g_pp_out_array = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_pp_out);
 
-  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getLocalNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
     {
       for (int eq = 0; eq < neq; ++eq)
@@ -559,7 +559,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
   std::vector<std::vector<int>> wsElNodeEqID_ID_raw;
 
-  const int buck_size = cell_map->getNodeNumElements();
+  const int buck_size = cell_map->getLocalNumElements();
   const int numBucks = 1;
 
   wsElNodeEqID_ID.resize(numBucks);
@@ -567,7 +567,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
   for (std::size_t i = 0; i < numBucks; i++)
     wsElNodeEqID_ID_raw[i].resize(buck_size * nodes_per_element * neq);
 
-  for (unsigned int cell = 0; cell < cell_map->getNodeNumElements(); ++cell)
+  for (unsigned int cell = 0; cell < cell_map->getLocalNumElements(); ++cell)
     for (int node = 0; node < nodes_per_element; ++node)
       wsElNodeEqID_ID_raw[0][cell * nodes_per_element * neq + node * neq] = overlapped_node_map->getLocalElement(wsGlobalElNodeEqID(cell_map->getGlobalElement(cell), node, 0) / neq);
 
@@ -580,7 +580,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
   Kokkos::fence();
 
-  phxWorkset.numCells = cell_map->getNodeNumElements();
+  phxWorkset.numCells = cell_map->getLocalNumElements();
   const int cubature_degree = 2;
   const int num_dim = 3;
 

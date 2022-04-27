@@ -12,30 +12,30 @@
 #include "Albany_ResponseFactory.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_DataTypes.hpp"
+#include "Albany_DummyParameterAccessor.hpp"
+#include "Albany_ScalarResponseFunction.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "PHAL_Utilities.hpp"
+#include "Albany_KokkosUtils.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_Hessian.hpp"
+
 #include "Thyra_MultiVectorStdOps.hpp"
 #include "Thyra_VectorBase.hpp"
 #include "Thyra_VectorStdOps.hpp"
 
 #include "Teuchos_TimeMonitor.hpp"
+#include "Zoltan2_TpetraCrsColorer.hpp"
 
-#include <stdexcept>
-#include <string>
-#include "Albany_DataTypes.hpp"
-
-#include "Albany_DummyParameterAccessor.hpp"
 
 #ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
 #endif
 
-#include "Albany_ScalarResponseFunction.hpp"
-#include "PHAL_Utilities.hpp"
-#include "Albany_KokkosUtils.hpp"
-
-#include "Albany_TpetraThyraUtils.hpp"
-#include "Zoltan2_TpetraCrsColorer.hpp"
-
-#include "Albany_Hessian.hpp"
+#include <stdexcept>
+#include <string>
 
 //#define WRITE_TO_MATRIX_MARKET
 //#define DEBUG_OUTPUT
@@ -262,8 +262,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     }
   } else if (solutionMethod == "Transient") {
     solMethod = Transient;
-  } else if (solutionMethod == "Eigensolve") {
-    solMethod = Eigensolve;
   } else if (
       solutionMethod == "Transient") {
     solMethod = Transient;
@@ -366,7 +364,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
         true,
         std::logic_error,
         "Solution Method must be Steady, Transient, Transient, "
-            << "Continuation, Eigensolve, not : "
+            << "Continuation, not : "
             << solutionMethod);
   }
 
@@ -2511,15 +2509,15 @@ Application::evaluateResponseHessian_pp(
   validHessianResponseParams->set<bool>("Reconstruct H_pp", false);
 
   for (int i=0; i<problemParams->sublist("Parameters").get<int>("Number Of Parameters"); ++i)
-    validHessianResponseParams->set<bool>(Albany::strint("Replace H_pp with Identity for Parameter", i), false);
+    validHessianResponseParams->set<bool>(util::strint("Replace H_pp with Identity for Parameter", i), false);
 
-  auto hessianResponseParams = problemParams->sublist("Hessian").sublist(Albany::strint("Response", response_index));
+  auto hessianResponseParams = problemParams->sublist("Hessian").sublist(util::strint("Response", response_index));
   hessianResponseParams.validateParametersAndSetDefaults(*validHessianResponseParams, 0);
-  bool replace_by_I = hessianResponseParams.get<bool>(Albany::strint("Replace H_pp with Identity for Parameter", parameter_index));
+  bool replace_by_I = hessianResponseParams.get<bool>(util::strint("Replace H_pp with Identity for Parameter", parameter_index));
 
   if (replace_by_I) {
     auto rangeMap = Ht->getRangeMap();
-    int numElements = rangeMap->getNodeNumElements();
+    int numElements = rangeMap->getLocalNumElements();
 
     Tpetra_Vector::scalar_type values[1];
     Tpetra_Vector::global_ordinal_type cols[1];
@@ -2574,7 +2572,7 @@ Application::evaluateResponseHessian_pp(
     colorer.reconstructMatrix(*HV, *Ht);
   }
   else {
-    int numColors = Ht->getDomainMap()->getNodeNumElements();
+    int numColors = Ht->getDomainMap()->getLocalNumElements();
     RCP<Tpetra_Vector> v = rcp(new Tpetra_Vector(Ht->getDomainMap()));
     RCP<Tpetra_Vector> Hv = rcp(new Tpetra_Vector(Ht->getDomainMap()));
 
@@ -3153,7 +3151,7 @@ Application::registerShapeParameters()
   if (shapeParamNames.size() == 0) {
     shapeParamNames.resize(numShParams);
     for (int i = 0; i < numShParams; i++)
-      shapeParamNames[i] = strint("ShapeParam", i);
+      shapeParamNames[i] = util::strint("ShapeParam", i);
   }
   DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>* dJ =
       new DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>();

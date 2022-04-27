@@ -18,14 +18,6 @@
 //! Includes
 // ===================================================
 
-#include <fstream>
-#include <vector>
-#include <mpi.h>
-#include <list>
-#include <iostream>
-#include <limits>
-#include <cmath>
-
 #include "LandIce_ProblemFactory.hpp"
 
 #include "Albany_MpasSTKMeshStruct.hpp"
@@ -47,13 +39,21 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
-#include "string.hpp"
+#include "Albany_StringUtils.hpp" // for 'upper_case'
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/StkMeshIoBroker.hpp>
 #include <Ionit_Initializer.h>
 #endif
+
+#include <fstream>
+#include <vector>
+#include <mpi.h>
+#include <list>
+#include <iostream>
+#include <limits>
+#include <cmath>
 
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
@@ -133,20 +133,13 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
   }
 
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
+  using VectorFieldType = Albany::AbstractSTKFieldContainer::VectorFieldType;
+  using ScalarFieldType = Albany::AbstractSTKFieldContainer::ScalarFieldType;
+  using SolFldContainerType = Albany::OrdinarySTKFieldContainer;
 
-  VectorFieldType* solutionField;
-
-  if (interleavedOrdering == Albany::DiscType::Interleaved) {
-    solutionField = Teuchos::rcp_dynamic_cast<
-        Albany::OrdinarySTKFieldContainer<Albany::DiscType::Interleaved> >(
-            stk_disc->getSolutionFieldContainer())->getSolutionField();
-  } else {
-    solutionField = Teuchos::rcp_dynamic_cast<
-        Albany::OrdinarySTKFieldContainer<Albany::DiscType::BlockedMono> >(
-            stk_disc->getSolutionFieldContainer())->getSolutionField();
-  }
+  auto fld_container = stk_disc->getSolutionFieldContainer();
+  auto sol_fld_container = Teuchos::rcp_dynamic_cast<SolFldContainerType>(fld_container);
+  auto solutionField = sol_fld_container->getSolutionField();
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
   ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "ice_thickness");
@@ -606,17 +599,17 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
   discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",fp+10);
-  Teuchos::ParameterList& field0  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",0+fp));
-  Teuchos::ParameterList& field1  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",1+fp));
-  Teuchos::ParameterList& field2  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",2+fp));
-  Teuchos::ParameterList& field3  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",3+fp));
-  Teuchos::ParameterList& field4  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",4+fp));
-  Teuchos::ParameterList& field5  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",5+fp));
-  Teuchos::ParameterList& field6  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",6+fp));
-  Teuchos::ParameterList& field7  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",7+fp));
-  Teuchos::ParameterList& field8  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",8+fp));
-  Teuchos::ParameterList& field9  = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",9+fp));
-  //Teuchos::ParameterList& field10 = discretizationList->sublist("Required Fields Info").sublist(Albany::strint("Field",10+fp));
+  Teuchos::ParameterList& field0  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",0+fp));
+  Teuchos::ParameterList& field1  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",1+fp));
+  Teuchos::ParameterList& field2  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",2+fp));
+  Teuchos::ParameterList& field3  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",3+fp));
+  Teuchos::ParameterList& field4  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",4+fp));
+  Teuchos::ParameterList& field5  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",5+fp));
+  Teuchos::ParameterList& field6  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",6+fp));
+  Teuchos::ParameterList& field7  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",7+fp));
+  Teuchos::ParameterList& field8  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",8+fp));
+  Teuchos::ParameterList& field9  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",9+fp));
+  //Teuchos::ParameterList& field10 = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",10+fp));
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");

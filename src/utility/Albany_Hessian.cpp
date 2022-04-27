@@ -1,5 +1,3 @@
-
-#include <Teuchos_RCP.hpp>
 #include "Albany_TpetraTypes.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_Hessian.hpp"
@@ -7,47 +5,54 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_StringUtils.hpp"
 
+#include <Teuchos_RCP.hpp>
 #include <Kokkos_UnorderedMap.hpp>
 #include <Kokkos_Sort.hpp>
+
 #include <math.h>
 
-Teuchos::RCP<Thyra_LinearOp> Albany::createDenseHessianLinearOp(
-    Teuchos::RCP<const Thyra_VectorSpace> p_vs)
+namespace Albany
 {
-    Teuchos::RCP<const Tpetra_Map> p_map = Albany::getTpetraMap(p_vs);
+
+Teuchos::RCP<Thyra_LinearOp>
+createDenseHessianLinearOp(Teuchos::RCP<const Thyra_VectorSpace> p_vs)
+{
+    Teuchos::RCP<const Tpetra_Map> p_map = getTpetraMap(p_vs);
     Teuchos::RCP<Thyra_LinearOp> H;
 
-    Tpetra_GO num_params = p_map->getNodeNumElements();
+    Tpetra_GO num_params = p_map->getLocalNumElements();
 
     Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_map, num_params));
 
-    Tpetra_GO cols[num_params];
+    Teuchos::Array<Tpetra_GO> cols(num_params);
 
     for (Tpetra_GO iparam=0; iparam<num_params; ++iparam) {
         cols[iparam] = p_map->getGlobalElement(iparam);
     }
 
     for (Tpetra_GO iparam=0; iparam<num_params; ++iparam) {
-        Hgraph->insertGlobalIndices(cols[iparam], num_params, cols);
+        Hgraph->insertGlobalIndices(cols[iparam], num_params, cols.getRawPtr());
     }
 
     Hgraph->fillComplete();
     Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
 
-    H = Albany::createThyraLinearOp(Ht);
+    H = createThyraLinearOp(Ht);
     assign(H, 0.0);
 
     return H;
 }
 
-Teuchos::RCP<Thyra_LinearOp> Albany::createSparseHessianLinearOp(
+Teuchos::RCP<Thyra_LinearOp>
+createSparseHessianLinearOp(
     Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
     Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
     const std::vector<IDArray> vElDofs)
 {
-    Teuchos::RCP<const Tpetra_Map> p_overlapped_map = Albany::getTpetraMap(p_overlapped_vs);
-    Teuchos::RCP<const Tpetra_Map> p_owned_map = Albany::getTpetraMap(p_owned_vs);
+    Teuchos::RCP<const Tpetra_Map> p_overlapped_map = getTpetraMap(p_overlapped_vs);
+    Teuchos::RCP<const Tpetra_Map> p_owned_map = getTpetraMap(p_owned_vs);
     Teuchos::RCP<Thyra_LinearOp> H;
 
     std::size_t num_elem = 0;
@@ -105,16 +110,13 @@ Teuchos::RCP<Thyra_LinearOp> Albany::createSparseHessianLinearOp(
     Hgraph->fillComplete();
     Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
 
-    H = Albany::createThyraLinearOp(Ht);
+    H = createThyraLinearOp(Ht);
     assign(H, 0.0);
 
     return H;
 }
 
-void Albany::getHessianBlockIDs(
-    int &i1,
-    int &i2,
-    std::string blockName)
+void getHessianBlockIDs(int &i1, int &i2, std::string blockName)
 {
     std::string tmp = blockName;
     tmp.erase(std::remove(tmp.begin(), tmp.end(), '('), tmp.end());
@@ -122,7 +124,7 @@ void Albany::getHessianBlockIDs(
 
     std::vector<std::string> block_ids;
 
-    Albany::splitStringOnDelim(tmp, ',', block_ids);
+    util::splitStringOnDelim(tmp, ',', block_ids);
     int ids[2];
 
     for (int i = 0; i < 2; ++i)
@@ -148,13 +150,13 @@ void Albany::getHessianBlockIDs(
     i2 = ids[1];
 }
 
-void Albany::getParameterVectorID(
+void getParameterVectorID(
     int &i,
     bool &is_distributed,
     std::string parameterName)
 {
     std::vector<std::string> elems;
-    Albany::splitStringOnDelim(parameterName, ' ', elems);
+    util::splitStringOnDelim(parameterName, ' ', elems);
     if (elems.size() == 2 && elems[0].compare("parameter_vector") == 0)
     {
         is_distributed = false;
@@ -166,3 +168,5 @@ void Albany::getParameterVectorID(
         i = -1;
     }
 }
+
+} // namespace Albany

@@ -7,22 +7,6 @@
 #ifndef LANDICE_HYDROLOGY_PROBLEM_HPP
 #define LANDICE_HYDROLOGY_PROBLEM_HPP
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
-#include "Albany_AbstractProblem.hpp"
-#include "Albany_EvaluatorUtils.hpp"
-#include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "LandIce_ResponseUtilities.hpp"
-
-#include "PHAL_Dimension.hpp"
-#include "PHAL_FieldFrobeniusNorm.hpp"
-#include "PHAL_LoadStateField.hpp"
-#include "PHAL_SaveStateField.hpp"
-#include "PHAL_Workset.hpp"
-
 #include "LandIce_BasalFrictionCoefficient.hpp"
 #include "LandIce_HydrologyBasalGravitationalWaterPotential.hpp"
 #include "LandIce_HydraulicPotential.hpp"
@@ -37,10 +21,28 @@
 #include "LandIce_HydrologySurfaceWaterInput.hpp"
 #include "LandIce_HydrologyWaterThickness.hpp"
 #include "LandIce_ParamEnum.hpp"
-
-#include "PHAL_SharedParameter.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 #include "LandIce_SimpleOperationEvaluator.hpp"
 #include "LandIce_ProblemUtils.hpp"
+
+#include "Albany_AbstractProblem.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "PHAL_Dimension.hpp"
+#include "PHAL_FieldFrobeniusNorm.hpp"
+#include "PHAL_LoadStateField.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "PHAL_Workset.hpp"
+#include "PHAL_SharedParameter.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include <set>
 
 namespace LandIce
 {
@@ -235,7 +237,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index)
     {
-      std::string parameter_sublist_name = Albany::strint("Parameter", p_index+num_param_vecs);
+      std::string parameter_sublist_name = util::strint("Parameter", p_index+num_param_vecs);
       Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
       param_name = param_list.get<std::string>("Name");
       dist_params_name_to_mesh_part[param_name] = param_list.get<std::string>("Mesh Part","");
@@ -294,7 +296,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   for (unsigned int ifield=0; ifield<num_fields; ++ifield)
   {
     // Get info on this field
-    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
+    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
 
     // Get current state name and usage
     stateName  = fieldName = thisFieldList.get<std::string>("Field Name");
@@ -863,12 +865,13 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   param_name = ParamEnumName::Kappa;
   p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", hy_pl.sublist("Darcy Law").get<double>(param_name,-1.0));
 
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Kappa>> ptr_kappa;
-  ptr_kappa = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Kappa>(*p,dl));
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_kappa;
+  ptr_kappa = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_kappa);
 
   //--- Shared Parameter for basal friction coefficient: lambda ---//
@@ -876,12 +879,13 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   param_name = ParamEnumName::Lambda;
   p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", params->sublist("LandIce Basal Friction Coefficient").get<double>(param_name,-1.0));
 
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Lambda>> ptr_lambda;
-  ptr_lambda = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Lambda>(*p,dl));
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_lambda;
+  ptr_lambda = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_lambda);
 
   //--- Shared Parameter for basal friction coefficient: mu ---//
@@ -889,12 +893,13 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   param_name = ParamEnumName::Mu;
   p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", params->sublist("LandIce Basal Friction Coefficient").get<double>(param_name,-1.0));
 
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>> ptr_mu;
-  ptr_mu = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Mu>(*p,dl));
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_mu;
+  ptr_mu = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_mu);
 
   //--- Shared Parameter for basal friction coefficient: power ---//
@@ -902,12 +907,13 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   param_name = ParamEnumName::Power;
   p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", params->sublist("LandIce Basal Friction Coefficient").get<double>(param_name,-1.0));
 
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Power>> ptr_power;
-  ptr_power = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Power>(*p,dl));
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_power;
+  ptr_power = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_power);
 
   //--- Shared Parameter for Continuation:  ---//
@@ -915,6 +921,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   param_name = ParamEnumName::HomotopyParam;
   p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
 
@@ -923,8 +930,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //       the value passed as second input.
   p->set<double>("Default Nominal Value", 1.0);
 
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
-  ptr_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_homotopy;
+  ptr_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
   // ----------------------------------------------------- //

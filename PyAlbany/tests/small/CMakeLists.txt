@@ -7,3 +7,4 @@
 add_subdirectory(ExtremeEvent)
 add_subdirectory(IO)
 add_subdirectory(SteadyHeat)
+add_subdirectory(RandCompress)

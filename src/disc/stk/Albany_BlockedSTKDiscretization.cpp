@@ -4,26 +4,29 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <limits>
+#include "Albany_BlockedSTKDiscretization.hpp"
+#include "STKConnManager.hpp"
 
 #include <Albany_ThyraUtils.hpp>
 #include "Albany_Macros.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "Teuchos_XMLParameterListHelpers.hpp"
+#include "Panzer_BlockedDOFManager.hpp"
+#include "Panzer_String_Utilities.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Intrepid2_HVOL_C0_FEM.hpp"
+#include "Intrepid2_HGRAD_QUAD_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_TET_Cn_FEM.hpp"
+
 
 #include <fstream>
 #include <iostream>
 #include <string>
-
-#include "Teuchos_XMLParameterListHelpers.hpp"
-
-#include "Panzer_BlockedDOFManager.hpp"
-#include "Panzer_String_Utilities.hpp"
-
-#include "Albany_BlockedSTKDiscretization.hpp"
-#include "STKConnManager.hpp"
-
-#include "Thyra_DefaultProductVectorSpace.hpp"
-#include "Intrepid2_HVOL_C0_FEM.hpp"
+#include <limits>
 
 namespace Albany
 {
@@ -161,11 +164,11 @@ namespace Albany
           shards::CellTopology eb_topology;
           for (int i_block = 0; i_block < n_DiscParamsBlocks; ++i_block)
           {
-            if (blocksDiscretizationName[i][j] == bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Name"))
+            if (blocksDiscretizationName[i][j] == bDiscParams->sublist(util::strint("Block", i_block)).get<std::string>("Name"))
             {
-              type = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("FE Type");
-              mesh = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Mesh", "Element Block 0");
-              domain = bDiscParams->sublist(Albany::strint("Block", i_block)).get<std::string>("Domain", "Volume");
+              type = bDiscParams->sublist(util::strint("Block", i_block)).get<std::string>("FE Type");
+              mesh = bDiscParams->sublist(util::strint("Block", i_block)).get<std::string>("Mesh", "Element Block 0");
+              domain = bDiscParams->sublist(util::strint("Block", i_block)).get<std::string>("Domain", "Volume");
               break;
             }
           }
@@ -221,22 +224,26 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 9;
               }
               else if (topo_name == "Triangle_3")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 6;
               }
               else if (topo_name == "Tetrahedron_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 10;
               }
               else if (topo_name == "Hexahedron_8")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 27;
               }
               else
@@ -295,12 +302,14 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 9;
               }
               else if (topo_name == "Triangle_3")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::exec_space, double, double>>();
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::exec_space, double, double>(2));
+                pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 6;
               }
               else

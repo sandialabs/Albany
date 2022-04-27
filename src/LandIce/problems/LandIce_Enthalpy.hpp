@@ -8,28 +8,6 @@
 #ifndef LANDICE_ENTHALPY_PROBLEM_HPP
 #define LANDICE_ENTHALPY_PROBLEM_HPP
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
-#include "Albany_AbstractProblem.hpp"
-#include "Albany_Utils.hpp"
-#include "Albany_ProblemUtils.hpp"
-#include "Albany_EvaluatorUtils.hpp"
-#include "Albany_GeneralPurposeFieldsNames.hpp"
-#include "Albany_ScalarOrdinalTypes.hpp"
-#include "Albany_FieldUtils.hpp"
-
-#include "PHAL_Workset.hpp"
-#include "PHAL_Dimension.hpp"
-#include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_SaveCellStateField.hpp"
-#include "PHAL_SaveStateField.hpp"
-#include "PHAL_LoadSideSetStateField.hpp"
-#include "PHAL_ScatterScalarNodalParameter.hpp"
-#include "PHAL_SharedParameter.hpp"
-
 #include "LandIce_EnthalpyResid.hpp"
 #include "LandIce_EnthalpyBasalResid.hpp"
 #include "LandIce_w_Resid.hpp"
@@ -43,6 +21,31 @@
 #include "LandIce_SurfaceAirEnthalpy.hpp"
 #include "LandIce_ParamEnum.hpp"
 #include "LandIce_ResponseUtilities.hpp"
+
+#include "Albany_AbstractProblem.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_FieldUtils.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "PHAL_Workset.hpp"
+#include "PHAL_Dimension.hpp"
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_SaveCellStateField.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "PHAL_LoadSideSetStateField.hpp"
+#include "PHAL_ScatterScalarNodalParameter.hpp"
+#include "PHAL_SharedParameter.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include <set>
 
 namespace LandIce
 {
@@ -184,7 +187,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
       for (unsigned int ifield=0; ifield<num_fields; ++ifield)
       {
-        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(util::strint("Field", ifield));
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
           unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
@@ -210,7 +213,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
       for (unsigned int ifield=0; ifield<num_fields; ++ifield)
       {
-        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(util::strint("Field", ifield));
         if(thisFieldList.get<std::string>("Field Name") ==  stateName){
           unsigned int numLayers = thisFieldList.get<int>("Number Of Layers");
           auto sns = dl_basal->node_vector;
@@ -623,6 +626,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       entity = Albany::StateStruct::NodalDistParameter;
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Parameter Name", stateName);
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
 
       ev = rcp(new PHAL::ScatterScalarNodalParameter<EvalT,PHAL::AlbanyTraits>(*p, dl));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -719,12 +723,13 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
   std::string param_name = "Glen's Law Homotopy Parameter";
   p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
   p->set<double>("Default Nominal Value", params->sublist("LandIce Viscosity").get<double>(param_name,-1.0));
 
-  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>> ptr_homotopy;
-  ptr_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits,ParamEnum,ParamEnum::Homotopy>(*p,dl));
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_homotopy;
+  ptr_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)

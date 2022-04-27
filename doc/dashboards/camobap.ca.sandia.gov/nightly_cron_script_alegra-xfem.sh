@@ -7,6 +7,7 @@ cd /nightlyCDash
 
 export https_proxy="http://proxy.ca.sandia.gov:80"
 export http_proxy="http://proxy.ca.sandia.gov:80"
+export PATH=$PATH:/tpls/install/ninja/build-cmake
 
 LOG_FILE=/nightlyCDash/nightly_log_alegra-xfem.txt
 eval "env TEST_DIRECTORY=/nightlyCDash SCRIPT_DIRECTORY=/nightlyCDash ctest -VV -S /nightlyCDash/ctest_nightly_alegra-xfem.cmake" > $LOG_FILE 2>&1

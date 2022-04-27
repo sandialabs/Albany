@@ -20,6 +20,8 @@
 #include "Albany_KLResponseFunction.hpp"
 #include "Albany_WeightedMisfitResponseFunction.hpp"
 
+#include "Albany_StringUtils.hpp"
+
 #include "Teuchos_TestForException.hpp"
 
 void
@@ -85,7 +87,7 @@ createResponseFunction(
     Array< RCP<ScalarResponseFunction> > scalar_responses;
     Array<double> scalar_weights;
     for (int i=0; i<num_responses; i++) {
-      std::string id = Albany::strint("Response",i);
+      std::string id = util::strint("Response",i);
       Teuchos::ParameterList sublist = responseParams.sublist(id);
       std::string name = sublist.get<std::string>("Name");
       createResponseFunction(name, sublist, aggregated_responses);
@@ -100,7 +102,7 @@ createResponseFunction(
           "The aggregated response can only aggregate scalar response " << "functions!");
       scalar_responses[i] = Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(aggregated_responses[i]);
 
-      std::string id = Albany::strint("Scaling Coefficient",i);
+      std::string id = util::strint("Scaling Coefficient",i);
       scalar_weights[i] = responseParams.get<double>(id, 1.0);
     }
     responses.push_back(rcp(new Albany::CumulativeScalarResponseFunction(comm, scalar_responses, scalar_weights)));
@@ -197,7 +199,7 @@ createResponseFunctions(Teuchos::ParameterList& responseList) const
   Array<RCP<AbstractResponseFunction> > responses;
 
   for (int i=0; i<num_response_vecs; i++) {
-    std::string sublist_name = Albany::strint("Response",i);
+    std::string sublist_name = util::strint("Response",i);
     ParameterList& response_params =
       responseList.sublist(sublist_name);
     std::string responseType = response_params.isParameter("Type") ?

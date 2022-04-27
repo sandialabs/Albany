@@ -9,6 +9,10 @@ cp $BASE_DIR/repos/Albany/doc/dashboards/cori.nersc.gov/ctest_nightly_cismAlbany
 source cori_modules.sh >& modules.out 
 #export CRAYPE_LINK_TYPE=STATIC
 
+#IKT, 3/19/2022: older cmake is needed to be able to push to CDash site
+export PATH=/project/projectdirs/piscees/tpl/cmake-3.18.0/bin:$PATH
+cmake --version >& cmake_version_cism-albany_submit.out
+
 now="$(date +'%Y%m%d')"
 sed -i "s/XXX/$now/g" ctest_nightly_cismAlbany_submit.cmake 
 

@@ -28,8 +28,8 @@ Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-trilinos
 Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-albany
 Nightly, cee-compute024, Linux-3.10.0-1062.9.1.el7.x86_64-clang-trilinos
 Nightly, cee-compute024, Linux-3.10.0-1062.9.1.el7.x86_64-clang-albany
-Nightly, cee-compute009, Linux-3.10.0-1062.1.2.el7.x86_64-debug-trilinos 
-Nightly, cee-compute009, Linux-3.10.0-1062.1.2.el7.x86_64-debug-albany 
+Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-albany 
+Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-trilinos 
 Nightly, mockba.ca.sandia.gov, mockba-rhel7.9-gcc10.1.0-Release-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7.9-gcc10.1.0-Release-Cism-Albany
 Nightly, skybridge-login5, skybridge-login5-trilinos

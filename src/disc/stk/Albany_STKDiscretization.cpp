@@ -24,7 +24,6 @@
 
 #include <Intrepid2_Basis.hpp>
 #include <Intrepid2_CellTools.hpp>
-#include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -2544,36 +2543,17 @@ STKDiscretization::setFieldData(
 {
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
-  Teuchos::RCP<MultiSTKFieldContainer<DiscType::Interleaved>> mISTKFieldContainer =
-    Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer<DiscType::Interleaved>>(fieldContainer,false);
-  Teuchos::RCP<MultiSTKFieldContainer<DiscType::BlockedMono>> mBSTKFieldContainer =
-    Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer<DiscType::BlockedMono>>(fieldContainer,false);
-
-  Teuchos::RCP<OrdinarySTKFieldContainer<DiscType::Interleaved>> oISTKFieldContainer =
-    Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer<DiscType::Interleaved>>(fieldContainer,false);
-  Teuchos::RCP<OrdinarySTKFieldContainer<DiscType::BlockedMono>> oBSTKFieldContainer =
-    Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer<DiscType::BlockedMono>>(fieldContainer,false);
-
-  Teuchos::RCP<GenericSTKFieldContainer<DiscType::Interleaved>> gISTKFieldContainer =
-    Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer<DiscType::Interleaved>>(fieldContainer,false);
-  Teuchos::RCP<GenericSTKFieldContainer<DiscType::BlockedMono>> gBSTKFieldContainer =
-    Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer<DiscType::BlockedMono>>(fieldContainer,false);
+  auto mSTKFieldContainer = Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer>(fieldContainer,false);
+  auto oSTKFieldContainer = Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer>(fieldContainer,false);
 
   int num_time_deriv, numDim, num_params;
   Teuchos::RCP<Teuchos::ParameterList> params;
   
-  if(Teuchos::nonnull(gISTKFieldContainer))
-  {
-    params = gISTKFieldContainer->getParams();
-    numDim = gISTKFieldContainer->getNumDim();
-    num_params = gISTKFieldContainer->getNumParams();
-  }
-  if(Teuchos::nonnull(gBSTKFieldContainer))
-  {
-    params = gBSTKFieldContainer->getParams();
-    numDim = gBSTKFieldContainer->getNumDim();
-    num_params = gBSTKFieldContainer->getNumParams();
-  }
+  auto gSTKFieldContainer = Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer>(fieldContainer,false);
+  params = gSTKFieldContainer->getParams();
+  numDim = gSTKFieldContainer->getNumDim();
+  num_params = gSTKFieldContainer->getNumParams();
+  auto interleaved = gSTKFieldContainer->getOrdering();
 
   num_time_deriv = params->get<int>("Number Of Time Derivatives");
 
@@ -2594,26 +2574,14 @@ STKDiscretization::setFieldData(
       params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
   }
 
-
-  if(Teuchos::nonnull(mISTKFieldContainer))
-  {
-    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::Interleaved>(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, solution_vector, num_params));
-  }
-  if(Teuchos::nonnull(mBSTKFieldContainer))
-  {
-    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer<DiscType::BlockedMono>(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, solution_vector, num_params));
-  }
-  if(Teuchos::nonnull(oISTKFieldContainer))
-  {
-    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::Interleaved>(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, req, numDim, sis, num_params));
-  }
-  if(Teuchos::nonnull(oBSTKFieldContainer))
-  {
-    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer<DiscType::BlockedMono>(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, req, numDim, sis, num_params));
+  if (Teuchos::nonnull(mSTKFieldContainer)) {
+    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, numDim, sis, solution_vector, num_params));
+  } else if (Teuchos::nonnull(oSTKFieldContainer)) {
+    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, req, numDim, sis, num_params));
+  } else {
+    ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }
 }
 

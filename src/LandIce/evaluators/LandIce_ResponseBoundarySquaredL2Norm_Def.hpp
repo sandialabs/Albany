@@ -144,11 +144,6 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::postEvaluate(typenam
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
   reg = p_reg;
 
-
-  if(workset.comm->getRank()   ==0)
-    std::cout << "Boundary Squared L2 Norm: "<< Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
-
-
   // Do global scattering
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postEvaluate(workset);
 }

@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-// @HEADER
-
 #include "DisplayTable.hpp"
 
 #include <algorithm>
@@ -58,4 +56,4 @@ std::ostream& DisplayTable::writeCSV (std::ostream& strm, const char delim) {
   return strm;
 }
 
-}
+} // namespace util

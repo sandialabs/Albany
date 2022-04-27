@@ -6,13 +6,13 @@
 
 #include <iostream>
 
+#include "Albany_RegressionTests.hpp"
+#include "Albany_SolverFactory.hpp"
+#include "Albany_ObserverImpl.hpp"
+#include "Albany_FactoriesHelpers.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
-#include "Albany_SolverFactory.hpp"
-#include "Albany_RegressionTests.hpp"
-#include "Albany_ObserverImpl.hpp"
-
-#include "Albany_FactoriesHelpers.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include <Piro_PerformAnalysis.hpp>
 #include <Teuchos_GlobalMPISession.hpp>

@@ -21,7 +21,6 @@ class MetaData;
 
 namespace Albany {
 
-template<DiscType Interleaved>
 class GenericSTKFieldContainer : public AbstractSTKFieldContainer
 {
 public:
@@ -29,12 +28,14 @@ public:
   GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                            const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                            const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
+                           const DiscType interleaved_,
                            const int numDim_,
                            const int num_params_);
 
   GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                            const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                            const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
+                           const DiscType interleaved_,
                            const int neq_,
                            const int numDim_,
                            const int num_params_);
@@ -52,12 +53,15 @@ public:
   int getNumDim() const {return numDim; }
   int getNumParams() const {return num_params; }
 
+  DiscType getOrdering () const { return interleaved; }
+
 protected:
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
   Teuchos::RCP<Teuchos::ParameterList> params;
 
+  DiscType interleaved;
   int neq;
   int numDim;
   int num_params{0};

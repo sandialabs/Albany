@@ -32,11 +32,6 @@ if (ALBANY_IFPACK2)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 endif ()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputEnrich.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputEnrich.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputConvert.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputConvert.yaml COPYONLY)
-
 ####################################
 ###        Refine tests          ###
 ####################################
@@ -55,9 +50,5 @@ IF(ALBANY_STK_PERCEPT)
 
     add_test(${testName}_2_Epetra ${Albany.exe} inputRefine2.yaml)
     set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-
-    # Enrich and convert both still have bugs
-    #add_test(${testName}_Enrich ${Albany.exe} inputEnrich.yaml)
-    #add_test(${testName}_Convert ${Albany.exe} inputConvert.yaml)
   endif()
 ENDIF()
