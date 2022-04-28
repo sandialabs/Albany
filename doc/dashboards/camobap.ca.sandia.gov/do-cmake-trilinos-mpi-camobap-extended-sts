@@ -87,7 +87,6 @@ cmake -G Ninja \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Kokkos_ENABLE_SERIAL:BOOL=ON \
       -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
-      -D Kokkos_ENABLE_PTHREAD:BOOL=OFF \
       -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
       -D Trilinos_ENABLE_MiniTensor:BOOL=OFF \
       -D Trilinos_ENABLE_ML:BOOL=OFF \
@@ -173,4 +172,5 @@ cmake -G Ninja \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=OFF \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
+      -D Kokkos_ENABLE_THREADS=OFF \
        ..
