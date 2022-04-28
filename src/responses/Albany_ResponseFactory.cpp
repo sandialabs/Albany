@@ -14,7 +14,7 @@
 #include "Albany_SolutionMinValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_CumulativeScalarResponseFunction.hpp"
-#include "Albany_PowerScalarResponseFunction.hpp"
+#include "Albany_ScalarResponsePower.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
@@ -98,7 +98,7 @@ createResponseFunction(
         "The power response can only uses scalar response " << "functions!");
     RCP<ScalarResponseFunction> scalar_response = Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(aggregated_responses[0]);
 
-    responses.push_back(rcp(new Albany::PowerScalarResponseFunction(comm, scalar_response, target, exponent)));
+    responses.push_back(rcp(new Albany::ScalarResponsePower(comm, scalar_response, target, exponent)));
   }
 
   else if (name == "Sum Of Responses") {

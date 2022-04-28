@@ -1065,65 +1065,71 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  size_t max_coeff_index = 0;
-
-  if (params->isSublist("Linear Combination Parameters")) {
-    auto lcparams = params->sublist("Linear Combination Parameters");
-    int nlcparams = lcparams.get<int>("Number Of Parameters");
-    for (int i_lcparams=0; i_lcparams<nlcparams; ++i_lcparams)
-    {
-      auto lcparams_i = lcparams.sublist(util::strint("Parameter", i_lcparams));
-      max_coeff_index = lcparams_i.get<int>("Number of modes");
-    }
-  }  
-
-  for(size_t coeff_index = 0; coeff_index<max_coeff_index; ++coeff_index)
-  {
-    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(util::strint("Coeff", coeff_index)));
-    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    const std::string param_name = util::strint("Coefficient", coeff_index);
-    p->set<std::string>("Parameter Name", param_name);
-    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
-    p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-    p->set<double>("Default Nominal Value", 0.);
-    Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_coeff;
-    ptr_coeff = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ptr_coeff);
-  }
-
   if (params->isSublist("Linear Combination Parameters")) {
     auto lcparams = params->sublist("Linear Combination Parameters");
     int nlcparams = lcparams.get<int>("Number Of Parameters");
 
     bool onSide;
     std::string sideName;
-    
+
     for (int i_lcparams=0; i_lcparams<nlcparams; ++i_lcparams)
     {
-      auto lcparams_i = lcparams.sublist(util::strint("Parameter",i_lcparams));
+      auto lcparams_i = lcparams.sublist(util::strint("Parameter", i_lcparams));
+      Teuchos::Array<std::string> mode_names  = lcparams_i.get<Teuchos::Array<std::string> >("Modes");
+      Teuchos::Array<std::string> coeff_names = lcparams_i.get<Teuchos::Array<std::string> >("Coeffs");
+      size_t numModes = mode_names.size();
+
+      onSide = lcparams_i.get<bool>("On Side");
+      sideName = lcparams_i.get<std::string>("Side Name");      
+
+      TEUCHOS_TEST_FOR_EXCEPTION (
+          mode_names.size() != coeff_names.size(), std::runtime_error,
+          "Error! Incompatible Modes and Coeffs sizes for linear combination parameter " + std::to_string(i_lcparams) + " \n");
+
+      for(size_t coeff_index = 0; coeff_index<numModes; ++coeff_index)
+      {
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList(util::strint("Coeff", coeff_index)));
+        p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+        const std::string param_name = coeff_names[coeff_index];
+        p->set<std::string>("Parameter Name", param_name);
+        p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+        p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+        p->set<double>("Default Nominal Value", 0.);
+        Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_coeff;
+        ptr_coeff = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ptr_coeff);
+
+        std::string stateName = mode_names[coeff_index];
+        if(onSide && !PHAL::is_field_evaluated<EvalT>(fm0, stateName, dl->side_layouts.at(sideName)->node_scalar)) {
+          Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+          Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+          p = stateMgr.registerStateVariable(stateName, dl->side_layouts.at(sideName)->node_scalar, meshSpecs.ebName, true, &entity, "");
+        }
+        if(!onSide && !PHAL::is_field_evaluated<EvalT>(fm0, stateName, dl->node_scalar)) {
+          Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+          Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+          p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+        }
+      }
 
       Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("LCParam"));
       const std::string param_name = lcparams_i.get<std::string>("Name");
-      std::size_t numModes = lcparams_i.get<int>("Number of modes");
 
       p->set<std::string>("Parameter Name", param_name);
       p->set<std::size_t>("Number of modes", numModes);
 
       for (std::size_t i = 0; i < numModes; ++i) {
         Teuchos::RCP<Teuchos::ParameterList> pi = Teuchos::rcp(new Teuchos::ParameterList("Mode"));
-        pi->set<std::string>("Coefficient Name", lcparams_i.sublist(util::strint("Mode",i)).get<std::string>("Coefficient Name"));
-        pi->set<std::string>("Mode Name", lcparams_i.sublist(util::strint("Mode",i)).get<std::string>("Mode Name"));
+        pi->set<std::string>("Coefficient Name", coeff_names[i]);
+        pi->set<std::string>("Mode Name", mode_names[i]);
         p->sublist(util::strint("Mode",i)) = *pi;
       }
-
-      onSide = lcparams_i.get<bool>("On Side");
-      sideName = lcparams_i.get<std::string>("Side Name");
 
       if(onSide)
         p->set<std::string>("Side Set Name", sideName);
 
-      if (lcparams_i.isParameter("Scalar scale"))
-        p->set<Teuchos::Array<double> >("Scalar scale", lcparams_i.get<Teuchos::Array<double>>("Scalar scale"));
+      if (lcparams_i.isParameter("Weights"))
+        p->set<Teuchos::Array<double> >("Weights", lcparams_i.get<Teuchos::Array<double>>("Weights"));
 
       Teuchos::RCP<PHAL::LinearCombinationParameter<EvalT,PHAL::AlbanyTraits>> ptr_lcparam;
       if(onSide)
@@ -1172,32 +1178,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationSideEvaluator(param_name_out, sideName));
       else
         fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(param_name_out));
-    }
-    for(size_t coeff_index = 0; coeff_index<max_coeff_index; ++coeff_index)
-    {
-      std::string stateName = util::strint("Mode", coeff_index);
-      if(onSide && !PHAL::is_field_evaluated<EvalT>(fm0, stateName, dl->side_layouts.at(sideName)->node_scalar)) {
-        //std::cout << " Field on side not yet evaluated " << stateName << std::endl;
-        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
-        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
-        std::string fieldName = util::strint("Mode", coeff_index);
-        p = stateMgr.registerStateVariable(stateName, dl->side_layouts.at(sideName)->node_scalar, meshSpecs.ebName, true, &entity, "");
-
-        //Gather parameter (similarly to what done with the solution)
-        //ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
-        //fm0.template registerEvaluator<EvalT>(ev);
-      }
-      if(!onSide && !PHAL::is_field_evaluated<EvalT>(fm0, stateName, dl->node_scalar)) {
-        //std::cout << " Field in volume not yet evaluated " << stateName << std::endl;
-        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
-        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
-        std::string fieldName = util::strint("Mode", coeff_index);
-        p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
-
-        //Gather parameter (similarly to what done with the solution)
-        //ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
-        //fm0.template registerEvaluator<EvalT>(ev);
-      }
     }
   }
 

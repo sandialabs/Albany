@@ -13,14 +13,15 @@
 namespace Albany {
 
   /*!
-   * \brief A response function that ...
+   * \brief A response function that takes the value of another response, 
+   * substract a targeted value, and raises the difference to a user defined power.
    */
-  class PowerScalarResponseFunction :
+  class ScalarResponsePower :
     public SamplingBasedScalarResponseFunction {
   public:
   
     //! Default constructor
-    PowerScalarResponseFunction(
+    ScalarResponsePower(
       const Teuchos::RCP<const Teuchos_Comm>& commT,
       const Teuchos::RCP<ScalarResponseFunction>& response,
       const double scalar_target = 0.,
@@ -33,7 +34,7 @@ namespace Albany {
     virtual void postRegSetup();
 
     //! Destructor
-    virtual ~PowerScalarResponseFunction();
+    virtual ~ScalarResponsePower();
 
     //! Get the number of responses
     virtual unsigned int numResponses() const;
@@ -146,10 +147,10 @@ namespace Albany {
   private:
 
     //! Private to prohibit copying
-    PowerScalarResponseFunction(const PowerScalarResponseFunction&);
+    ScalarResponsePower(const ScalarResponsePower&);
     
     //! Private to prohibit copying
-    PowerScalarResponseFunction& operator=(const PowerScalarResponseFunction&);
+    ScalarResponsePower& operator=(const ScalarResponsePower&);
 
     Teuchos::RCP<Thyra_Vector> g_;
     Teuchos::RCP<Thyra_Vector> f_;

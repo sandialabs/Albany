@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 
-#include "Albany_PowerScalarResponseFunction.hpp"
+#include "Albany_ScalarResponsePower.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Thyra_VectorStdOps.hpp"
@@ -13,8 +13,8 @@
 using Teuchos::RCP;
 using Teuchos::rcp;
 
-Albany::PowerScalarResponseFunction::
-PowerScalarResponseFunction(
+Albany::ScalarResponsePower::
+ScalarResponsePower(
   const Teuchos::RCP<const Teuchos_Comm>& commT,
   const Teuchos::RCP<ScalarResponseFunction>& response_,
   const double scalar_target_,
@@ -28,33 +28,33 @@ PowerScalarResponseFunction(
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 setup()
 {
   response->setup();
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 postRegSetup()
 {
   response->postRegSetup();
 }
 
-Albany::PowerScalarResponseFunction::
-~PowerScalarResponseFunction()
+Albany::ScalarResponsePower::
+~ScalarResponsePower()
 {
 }
 
 unsigned int
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 numResponses() const 
 {
   return 1;
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluateResponse(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -81,7 +81,7 @@ evaluateResponse(const double current_time,
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluateTangent(const double alpha, 
 		const double beta,
 		const double omega,
@@ -154,7 +154,7 @@ evaluateTangent(const double alpha,
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluateGradient(const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& xdot,
@@ -238,7 +238,7 @@ evaluateGradient(const double current_time,
 
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluateDistParamDeriv(
     const double current_time,
     const Teuchos::RCP<const Thyra_Vector>& x,
@@ -271,7 +271,7 @@ evaluateDistParamDeriv(
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluate_HessVecProd_xx(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -308,7 +308,7 @@ evaluate_HessVecProd_xx(
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluate_HessVecProd_xp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -346,7 +346,7 @@ evaluate_HessVecProd_xp(
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluate_HessVecProd_px(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -384,7 +384,7 @@ evaluate_HessVecProd_px(
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 evaluate_HessVecProd_pp(
     const double current_time,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
@@ -425,7 +425,7 @@ evaluate_HessVecProd_pp(
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
 {
   if (g_.is_null()) {
@@ -442,14 +442,14 @@ printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 updateTarget(double scalar_target_)
 {
   scalar_target = scalar_target_;
 }
 
 void
-Albany::PowerScalarResponseFunction::
+Albany::ScalarResponsePower::
 updateExponent(double exponent_)
 {
   exponent = exponent_;

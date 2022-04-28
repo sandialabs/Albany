@@ -25,7 +25,7 @@
 #include "Teuchos_YamlParameterListHelpers.hpp"
 
 #include "Albany_CumulativeScalarResponseFunction.hpp"
-#include "Albany_PowerScalarResponseFunction.hpp"
+#include "Albany_ScalarResponsePower.hpp"
 
 #include "BelosTpetraAdapter.hpp"
 #include "BelosTpetraOperator.hpp"
@@ -330,9 +330,9 @@ namespace PyAlbany
                 std::cout << "Warning: updateCumulativeResponseContributionTarget() response " << i << " is not a CumulativeScalarResponseFunction." << std::endl;
             }
             else {
-                Teuchos::RCP<Albany::PowerScalarResponseFunction>  power = Teuchos::rcp_dynamic_cast<Albany::PowerScalarResponseFunction>(csrf->getResponse(j), false);
+                Teuchos::RCP<Albany::ScalarResponsePower>  power = Teuchos::rcp_dynamic_cast<Albany::ScalarResponsePower>(csrf->getResponse(j), false);
                 if (power == Teuchos::null) {
-                    std::cout << "Warning: updateCumulativeResponseContributionTarget() response " << j << " is not a PowerScalarResponseFunction." << std::endl;
+                    std::cout << "Warning: updateCumulativeResponseContributionTarget() response " << j << " is not a ScalarResponsePower." << std::endl;
                 }
                 else {
                     power->updateTarget(target);

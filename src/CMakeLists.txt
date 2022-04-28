@@ -252,7 +252,7 @@ list (APPEND SOURCES
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
   responses/Albany_WeightedMisfitResponseFunction.cpp
-  responses/Albany_PowerScalarResponseFunction.cpp
+  responses/Albany_ScalarResponsePower.cpp
   responses/Albany_ResponseFactory.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_SolutionCullingStrategy.cpp
@@ -272,7 +272,7 @@ list (APPEND HEADERS
   responses/Albany_KLResponseFunction.hpp
   responses/Albany_WeightedMisfitResponseFunction.hpp
   responses/Albany_SamplingBasedScalarResponseFunction.hpp
-  responses/Albany_PowerScalarResponseFunction.hpp
+  responses/Albany_ScalarResponsePower.hpp
   responses/Albany_ResponseFactory.hpp
   responses/Albany_ScalarResponseFunction.hpp
   responses/Albany_SolutionAverageResponseFunction.hpp
@@ -428,6 +428,8 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_DummyResidual.cpp
   evaluators/utility/PHAL_FieldFrobeniusNorm.cpp
   evaluators/utility/PHAL_LangevinNoiseTerm.cpp
+  evaluators/utility/PHAL_LinearCombinationParameter.cpp
+  evaluators/utility/PHAL_LogGaussianDistributedParameter.cpp
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
   evaluators/utility/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/utility/PHAL_Source.cpp
