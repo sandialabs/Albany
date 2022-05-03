@@ -30,12 +30,12 @@ LinearCombinationParameter (const Teuchos::ParameterList& p, const Teuchos::RCP<
   val = decltype(val)(field_name,dl->node_scalar);
   numNodes = 0;
 
-  for (std::size_t i = 0; i < numModes; ++i) {
-    std::string coefficient_name   = p.sublist(util::strint("Mode",i)).get<std::string>("Coefficient Name");
-    std::string mode_name          = p.sublist(util::strint("Mode",i)).get<std::string>("Mode Name");
+  Teuchos::Array<std::string> mode_names  = p.get<Teuchos::Array<std::string> >("Modes");
+  Teuchos::Array<std::string> coeff_names = p.get<Teuchos::Array<std::string> >("Coeffs");
 
-    coefficients_as_field.push_back(PHX::MDField<const ScalarT,Dim>(coefficient_name,dl->shared_param));
-    modes_val.push_back(PHX::MDField<const RealType,Cell,Node>(mode_name,dl->node_scalar));
+  for (std::size_t i = 0; i < numModes; ++i) {
+    coefficients_as_field.push_back(PHX::MDField<const ScalarT,Dim>(coeff_names[i],dl->shared_param));
+    modes_val.push_back(PHX::MDField<const RealType,Cell,Node>(mode_names[i],dl->node_scalar));
   }
 
   this->addEvaluatedField(val);

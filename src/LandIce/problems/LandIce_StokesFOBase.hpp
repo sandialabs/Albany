@@ -1118,12 +1118,8 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Parameter Name", param_name);
       p->set<std::size_t>("Number of modes", numModes);
 
-      for (std::size_t i = 0; i < numModes; ++i) {
-        Teuchos::RCP<Teuchos::ParameterList> pi = Teuchos::rcp(new Teuchos::ParameterList("Mode"));
-        pi->set<std::string>("Coefficient Name", coeff_names[i]);
-        pi->set<std::string>("Mode Name", mode_names[i]);
-        p->sublist(util::strint("Mode",i)) = *pi;
-      }
+      p->set<Teuchos::Array<std::string>>("Modes", mode_names);
+      p->set<Teuchos::Array<std::string>>("Coeffs", coeff_names);
 
       if(onSide)
         p->set<std::string>("Side Set Name", sideName);
