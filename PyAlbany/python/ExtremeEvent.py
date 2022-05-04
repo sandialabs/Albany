@@ -24,6 +24,24 @@ except:
 import multiprocessing
 import time
 
+# The functions implemented in this file are based on:
+#
+# [1] Tong, S., Vanden-Eijnden, E., & Stadler, G. (2021).
+# Extreme event probability estimation using PDE-constrained optimization and
+# large deviation theory, with application to tsunamis. Communications in Applied
+# Mathematics and Computational Science, 16(2), 181-225.
+#
+# And:
+# 
+# [2] Betz, W., Papaioannou, I., & Straub, D. (2014). Numerical methods for the discretization
+# of random fields by means of the Karhunen–Loève expansion. Computer Methods in Applied
+# Mechanics and Engineering, 271, 109-129.
+#
+
+### Functions associated to the computation of the KL expansion:
+
+# Quadrature rule for TRI3 element used in the computation of the KL expansion
+# using the Collocation and the Galerkin methods described in [2].
 class triangleQuadrature:
     def __init__(this, degree=2):
         this.degree = degree
@@ -41,7 +59,7 @@ class triangleQuadrature:
             this.w = np.array([-9./32, 25./96, 25./96, 25./96])
     def getJacobian(this, x, y):
         return (x[1]-x[0])*(y[2]-y[0]) - (x[2]-x[0])*(y[1]-y[0])
-    def barryCenter(this, x, y):
+    def getBarycenter(this, x, y):
         return np.mean(x), np.mean(y)
     def getGP(this, x_in, y_in):
         x_out = x_in[0] + (x_in[1]-x_in[0]) * this.GP[:,0] + (x_in[2]-x_in[0]) * this.GP[:,1]
@@ -56,101 +74,9 @@ class triangleQuadrature:
         return this.w
 
 
-def compute_C_Galerkin(X, elements, quadrature, covarianceFunction, threshold = 100):
-    n_nodes = X.shape[0]
-
-    n_elements = elements.shape[0]
-    n_nodes_per_element = elements.shape[1]
-
-    C = np.zeros((n_nodes, n_nodes))
-
-    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
-    phis = np.array([phi_0, phi_1, phi_2])
-    w = quadrature.evalW()
-    nGP = len(w)
-
-    for element_i in range(0, n_elements):
-        indices_i = elements[element_i,:]
-        X_element_i = X[indices_i, :]
-        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
-        x_GP_i, y_GP_i = quadrature.getGP(X_element_i[:,0], X_element_i[:,1])
-        X_GP_i = np.array([x_GP_i, y_GP_i]).transpose()
-        mean_x_i, mean_y_i = quadrature.barryCenter(X_element_i[:,0], X_element_i[:,1])
-
-        print('element_i = '+str(element_i)+' n_elements = '+str(n_elements))
-        for element_j in range(0, n_elements):
-            indices_j = elements[element_j,:]
-            X_element_j = X[indices_j, :]
-            mean_x_j, mean_y_j = quadrature.barryCenter(X_element_j[:,0], X_element_j[:,1])
-            if np.sqrt((mean_x_i-mean_x_j)**2+(mean_y_i-mean_y_j)**2) > threshold:
-                continue
-            jac_j = quadrature.getJacobian(X_element_j[:,0], X_element_j[:,1])
-            x_GP_j, y_GP_j = quadrature.getGP(X_element_j[:,0], X_element_j[:,1])
-            X_GP_j = np.array([x_GP_j, y_GP_j]).transpose()
-            for i in range(0, n_nodes_per_element):
-                index_i = indices_i[i]
-                for j in range(0, n_nodes_per_element):
-                    index_j = indices_j[j]
-                    for gp_i in range(0, nGP):
-                        for gp_j in range(0, nGP):
-                            C[index_i, index_j] += jac_i * jac_j * w[gp_i] * w[gp_j] * phis[i, gp_i] * phis[j, gp_j] * covarianceFunction.apply(X_GP_i[gp_i,:], X_GP_j[gp_j,:])
-    return C
-
-
-def compute_A_collocation(X, elements, quadrature, covarianceFunction):
-    n_nodes = X.shape[0]
-
-    n_elements = elements.shape[0]
-    n_nodes_per_element = elements.shape[1]
-
-    A = np.zeros((n_nodes, n_nodes))
-
-    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
-    phis = np.array([phi_0, phi_1, phi_2])
-    w = quadrature.evalW()
-    nGP = len(w)
-
-    for element_i in range(0, n_elements):
-        indices_i = elements[element_i,:]
-        X_element_i = X[indices_i, :]
-        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
-        x_GP_i, y_GP_i = quadrature.getGP(X_element_i[:,0], X_element_i[:,1])
-        X_GP_i = np.array([x_GP_i, y_GP_i]).transpose()
-        print('element_i = '+str(element_i)+' n_elements = '+str(n_elements))
-        for index_i in range(0, n_nodes):
-            for j in range(0, n_nodes_per_element):
-                index_j = indices_i[j]
-                for gp_i in range(0, nGP):
-                    A[index_i, index_j] += jac_i * w[gp_i] * phis[j, gp_i] * covarianceFunction.apply(X[index_i,:], X_GP_i[gp_i,:])
-    return A
-
-
-def compute_B_Galerkin(X, elements, quadrature):
-    n_nodes = X.shape[0]
-
-    n_elements = elements.shape[0]
-    n_nodes_per_element = elements.shape[1]
-
-    B = np.zeros((n_nodes, n_nodes))
-
-    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
-    phis = np.array([phi_0, phi_1, phi_2])
-    w = quadrature.evalW()
-    nGP = len(w)
-
-    for element_i in range(0, n_elements):
-        indices_i = elements[element_i,:]
-        X_element_i = X[indices_i, :]
-        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
-        for i in range(0, n_nodes_per_element):
-            index_i = indices_i[i]
-            for j in range(0, n_nodes_per_element):
-                index_j = indices_i[j]
-                for gp_i in range(0, nGP):
-                    B[index_i, index_j] += jac_i * w[gp_i] * phis[i, gp_i] * phis[j, gp_i]
-    return B
-
-
+# Covariance function class.
+# Given a type and one (ore more) correlation length(s),
+# it evaluates the value of the function given two points. 
 class covarianceFunction:
     def __init__(this, d, corralation_lengths, type=0):
         this.d = d
@@ -168,6 +94,57 @@ class covarianceFunction:
 
             return np.exp(exponential)
 
+
+## Nystrom method:
+
+# Compute the matrix C of equation 17 of [2].
+def compute_C_Nystrom(X, covarianceFunction):
+    n = X.shape[0]
+
+    C = np.zeros((n, n))
+    for i in range(0, n):
+        for j in range(i, n):
+            C[i,j] = covarianceFunction.apply(X[i,:], X[j,:])
+            C[j,i] = C[i,j]
+    return C
+
+
+# Compute the matrix W of equation 17 of [2].
+def compute_W_Nystrom(X, elements):
+    d = X.shape[1]
+    n_nodes = X.shape[0]
+
+    n_elements = elements.shape[0]
+    n_nodes_per_element = elements.shape[1]
+
+    W = np.zeros((n_nodes, ))
+    for i in range(0, n_elements):
+        if d == 2 and n_nodes_per_element == 3:
+            # 2D and triangles
+            area_3 = np.abs((X[elements[i,0], 0]*(X[elements[i,1], 1]-X[elements[i,2], 1]) + \
+                           X[elements[i,1], 0]*(X[elements[i,2], 1]-X[elements[i,0], 1]) + \
+                           X[elements[i,2], 0]*(X[elements[i,0], 1]-X[elements[i,1], 1]))/2.) / 3
+            for j in range(0, n_nodes_per_element):
+                node_i = elements[i,j]
+                W[node_i] += area_3
+
+    return W
+
+
+# Compute the matrix W half of the paragraph below equation 17 of [2].
+def compute_W_half(W):
+    W_half = np.diag(np.sqrt(np.diag(W)))
+    W_inv_half = np.diag(1./np.diag(W_half))
+    return W_half, W_inv_half
+
+
+# Compute the matrix B of the paragraph below equation 17 of [2].
+def compute_B(C, W_half, W_inv_half):
+    return W_half.dot(C.dot(W_half))
+
+
+# Instead of constructing the matrix and store it explicitly,
+# this function is used to apply some rows of the B matrix to a vector
 def dot_Nystrom_PROC(X, x, y, covarianceFunction, row_indices, i_PROC):
     n_coordinates = len(X[:,0])
     n_vec = np.shape(x)[0]
@@ -191,6 +168,9 @@ def dot_Nystrom_PROC(X, x, y, covarianceFunction, row_indices, i_PROC):
     if i_PROC == 0:
         print('End dot')
 
+
+# The above function dot_Nystrom_PROC is used inside this class to loop over different processes
+# that compute the dot product contributions associated to a different set of rows.
 class Op_Nystrom(slinalg.LinearOperator):
     def __init__(self, X, sqrt_W, covarianceFunction, Map, NUM_PROC=1):
         self.dtype = np.dtype('float64')
@@ -234,48 +214,110 @@ class Op_Nystrom(slinalg.LinearOperator):
 
         return y
 
-def compute_C(X, covarianceFunction):
-    n = X.shape[0]
 
-    C = np.zeros((n, n))
-    for i in range(0, n):
-        for j in range(i, n):
-            C[i,j] = covarianceFunction.apply(X[i,:], X[j,:])
-            C[j,i] = C[i,j]
-    return C
+## Colocation method:
 
-
-def compute_W(X, elements):
-    d = X.shape[1]
+# Compute the matrix A of equation 22 of [2].
+def compute_A_collocation(X, elements, quadrature, covarianceFunction):
     n_nodes = X.shape[0]
 
     n_elements = elements.shape[0]
     n_nodes_per_element = elements.shape[1]
 
-    W = np.zeros((n_nodes, ))
-    for i in range(0, n_elements):
-        if d == 2 and n_nodes_per_element == 3:
-            # 2D and triangles
-            area_3 = np.abs((X[elements[i,0], 0]*(X[elements[i,1], 1]-X[elements[i,2], 1]) + \
-                           X[elements[i,1], 0]*(X[elements[i,2], 1]-X[elements[i,0], 1]) + \
-                           X[elements[i,2], 0]*(X[elements[i,0], 1]-X[elements[i,1], 1]))/2.) / 3
+    A = np.zeros((n_nodes, n_nodes))
+
+    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
+    phis = np.array([phi_0, phi_1, phi_2])
+    w = quadrature.evalW()
+    nGP = len(w)
+
+    for element_i in range(0, n_elements):
+        indices_i = elements[element_i,:]
+        X_element_i = X[indices_i, :]
+        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
+        x_GP_i, y_GP_i = quadrature.getGP(X_element_i[:,0], X_element_i[:,1])
+        X_GP_i = np.array([x_GP_i, y_GP_i]).transpose()
+        print('element_i = '+str(element_i)+' n_elements = '+str(n_elements))
+        for index_i in range(0, n_nodes):
             for j in range(0, n_nodes_per_element):
-                node_i = elements[i,j]
-                W[node_i] += area_3
-
-    return W
-
-
-def compute_W_half(W):
-    W_half = np.diag(np.sqrt(np.diag(W)))
-    W_inv_half = np.diag(1./np.diag(W_half))
-    return W_half, W_inv_half
+                index_j = indices_i[j]
+                for gp_i in range(0, nGP):
+                    A[index_i, index_j] += jac_i * w[gp_i] * phis[j, gp_i] * covarianceFunction.apply(X[index_i,:], X_GP_i[gp_i,:])
+    return A
 
 
-def compute_B(C, W_half, W_inv_half):
-    return W_half.dot(C.dot(W_half))
+## Galerkin method:
+
+# Compute the matrix B of equations 26 and 27 of [2].
+def compute_B_Galerkin(X, elements, quadrature, covarianceFunction, threshold = 100):
+    n_nodes = X.shape[0]
+
+    n_elements = elements.shape[0]
+    n_nodes_per_element = elements.shape[1]
+
+    B = np.zeros((n_nodes, n_nodes))
+
+    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
+    phis = np.array([phi_0, phi_1, phi_2])
+    w = quadrature.evalW()
+    nGP = len(w)
+
+    for element_i in range(0, n_elements):
+        indices_i = elements[element_i,:]
+        X_element_i = X[indices_i, :]
+        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
+        x_GP_i, y_GP_i = quadrature.getGP(X_element_i[:,0], X_element_i[:,1])
+        X_GP_i = np.array([x_GP_i, y_GP_i]).transpose()
+        mean_x_i, mean_y_i = quadrature.getBarycenter(X_element_i[:,0], X_element_i[:,1])
+
+        print('element_i = '+str(element_i)+' n_elements = '+str(n_elements))
+        for element_j in range(0, n_elements):
+            indices_j = elements[element_j,:]
+            X_element_j = X[indices_j, :]
+            mean_x_j, mean_y_j = quadrature.getBarycenter(X_element_j[:,0], X_element_j[:,1])
+            if np.sqrt((mean_x_i-mean_x_j)**2+(mean_y_i-mean_y_j)**2) > threshold:
+                continue
+            jac_j = quadrature.getJacobian(X_element_j[:,0], X_element_j[:,1])
+            x_GP_j, y_GP_j = quadrature.getGP(X_element_j[:,0], X_element_j[:,1])
+            X_GP_j = np.array([x_GP_j, y_GP_j]).transpose()
+            for i in range(0, n_nodes_per_element):
+                index_i = indices_i[i]
+                for j in range(0, n_nodes_per_element):
+                    index_j = indices_j[j]
+                    for gp_i in range(0, nGP):
+                        for gp_j in range(0, nGP):
+                            B[index_i, index_j] += jac_i * jac_j * w[gp_i] * w[gp_j] * phis[i, gp_i] * phis[j, gp_j] * covarianceFunction.apply(X_GP_i[gp_i,:], X_GP_j[gp_j,:])
+    return B
 
 
+# Compute the matrix M of equations 26 and 28 of [2].
+def compute_M_Galerkin(X, elements, quadrature):
+    n_nodes = X.shape[0]
+
+    n_elements = elements.shape[0]
+    n_nodes_per_element = elements.shape[1]
+
+    M = np.zeros((n_nodes, n_nodes))
+
+    phi_0, phi_1, phi_2 = quadrature.evalShapeFct()
+    phis = np.array([phi_0, phi_1, phi_2])
+    w = quadrature.evalW()
+    nGP = len(w)
+
+    for element_i in range(0, n_elements):
+        indices_i = elements[element_i,:]
+        X_element_i = X[indices_i, :]
+        jac_i = quadrature.getJacobian(X_element_i[:,0], X_element_i[:,1])
+        for i in range(0, n_nodes_per_element):
+            index_i = indices_i[i]
+            for j in range(0, n_nodes_per_element):
+                index_j = indices_i[j]
+                for gp_i in range(0, nGP):
+                    M[index_i, index_j] += jac_i * w[gp_i] * phis[i, gp_i] * phis[j, gp_i]
+    return M
+
+
+# Read mesh coordinates from an exodus mesh.
 def read_mesh_coordinates(filename):
     model = exomerge.import_model(filename)
     positions = np.array(model.nodes)
@@ -290,6 +332,7 @@ def read_mesh_coordinates(filename):
     return x, y, min_x, min_y, max_x, max_y
 
 
+# Update the parameter list to add the KL expansion.
 def update_parameter_list(parameter, n_modes, max_abs=5.e+04, sufix='', max_n_modes_per_vec=10, useDistributed=True, filename=None, onSideDisc=False, sideName='basalside'):
     # Update the Parameters sublist:
     n_vectors = int(np.ceil(1.*n_modes/max_n_modes_per_vec))
@@ -347,6 +390,10 @@ def update_parameter_list(parameter, n_modes, max_abs=5.e+04, sufix='', max_n_mo
     lcparams.set('Modes', mode_names)
     lcparams.set('Coeffs', coeff_names)
 
+
+### Functions associated to the computation of the extreme events:
+
+## Functions associated to the optimization problems:
 
 
 def getDistributionParameters(problem, parameter):
@@ -433,7 +480,8 @@ def setInitialGuess(problem, p, n_params, params_in_vector=True):
             problem.setParameter(j, parameter)
 
 
-def evaluateThetaStar_2(QoI, problem, n_params, alpha=5e0, response_id=0, F_id=1, params_in_vector=True):
+# Solve (2.5) of [1] using a quadratic penalty method for a sequence of targeted QoI values.
+def evaluateThetaStar_QPM(QoI, problem, n_params, alpha=5e0, response_id=0, F_id=1, params_in_vector=True):
     n_QoI = len(QoI)
     theta_star = np.zeros((n_QoI,n_params))
     I_star = np.zeros((n_QoI,))
@@ -474,6 +522,8 @@ def evaluateThetaStar_2(QoI, problem, n_params, alpha=5e0, response_id=0, F_id=1
     return theta_star, I_star, sdF_star, P_star
 
 
+# Solve (2.20) of [1] using an unconstrained optimization problem for
+# a sequence of lambda values (input parameter l).
 def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vector=True):
     n_l = len(l)
     theta_star = np.zeros((n_l,n_params))
@@ -508,6 +558,9 @@ def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vec
     return theta_star, I_star, F_star, P_star
 
 
+## Functions associated to the computation of the prefactor C_0(z) of equation (1.5) of [1]:
+
+# Importance sampling approach based on (3.8) of [1].
 def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_0, problem, F_id=1, params_in_vector=True, return_QoI=False):
     invC = np.linalg.inv(C)
     n_l = len(F_star)
@@ -547,6 +600,7 @@ def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_
         return P
 
 
+# Novel mixed approach that combine importance sampling and first order information.
 def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_0, problem, angle_1, angle_2, F_id=1, params_in_vector=True):
     invC = np.linalg.inv(C)
     n_l = len(F_star)
@@ -730,6 +784,8 @@ class RotatedHessianOperator(slinalg.LinearOperator):
         tmp3 = self.P.dot(self.R.transpose().dot(self.C_sqr.transpose().dot(tmp2)))
         return tmp3
 
+
+# Second order approximation approach based on (4.13) of [1].
 def secondOrderEstimator(theta_0, C, l, theta_star, I_star, F_star, P_star, problem, F_id=1, params_in_vector=True):
     n_l = len(F_star)
     P = np.zeros((n_l,))
