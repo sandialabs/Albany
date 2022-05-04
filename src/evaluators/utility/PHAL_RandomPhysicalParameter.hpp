@@ -257,4 +257,4 @@ class RandomPhysicalParameter<PHAL::AlbanyTraits::HessianVec,Traits>
 
 }  // Namespace PHAL
 
-#endif  // PHAL_READSTATEFIELD_HPP
+#endif  // PHAL_RANDOMPHYSICALPARAMETER_HPP

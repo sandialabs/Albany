@@ -73,6 +73,6 @@ INSTALL(FILES
 MESSAGE("End of the configuration of PyAlbany")
 
 IF (ALBANY_PYTHON_TESTS)
-  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_LIB_DIRS}/python${PYTHON_VERSION}/site-packages:${CMAKE_CURRENT_BINARY_DIR}/swig:$ENV{PYTHONPATH}")
+  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_LIB_DIRS}/:${Trilinos_LIB_DIRS}/python${PYTHON_VERSION}/site-packages:${CMAKE_CURRENT_BINARY_DIR}/swig:$ENV{PYTHONPATH}")
   add_subdirectory( tests )
 ENDIF()
