@@ -7,7 +7,12 @@
 #ifndef PYALBANY_STOKHOS_H
 #define PYALBANY_STOKHOS_H
 
+// Get all Albany configuration macros
+#include "Albany_config.h"
+
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
+#endif
 #include "Albany_PyAlbanyTypes.hpp"
 
 namespace PyAlbany
@@ -16,7 +21,9 @@ namespace PyAlbany
     {
     private:
 #ifndef SWIG
+#ifdef ALBANY_STOKHOS
         typedef Stokhos::KL::ExponentialRandomField<double> RandomFieldType;
+#endif
         typedef Teuchos::ScalarTraits<double> RST;
 
         const int ndim;
@@ -24,8 +31,10 @@ namespace PyAlbany
         Teuchos::Array<int> num_KL_per_dim;
         double eps, tol;
         int max_it, num_KL_terms;
+#ifdef ALBANY_STOKHOS
         RandomFieldType randomField;
-#endif        
+#endif
+#endif
 
     public:
         KLExpansion(int _ndim = 2);
