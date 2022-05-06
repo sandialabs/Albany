@@ -21,6 +21,7 @@
 #cmakedefine ALBANY_STK_REBALANCE
 #cmakedefine ALBANY_TEKO
 #cmakedefine ALBANY_ZOLTAN
+#cmakedefine ALBANY_STOKHOS
 
 // ========================== General Albany build and capabilities options ============================== //
 
