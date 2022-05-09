@@ -7,14 +7,14 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 if (1)
   # What to build and test
   IF(CTEST_BUILD_OPTION MATCHES "base-trilinos") 
-    set (DOWNLOAD_TRILINOS TRUE)
+    set (DOWNLOAD_TRILINOS FALSE)
     set (DOWNLOAD_ALBANY FALSE)
     set (BUILD_TRILINOS TRUE)
     set (BUILD_ALB64 FALSE) 
   ENDIF() 
   IF(CTEST_BUILD_OPTION MATCHES "base-albany") 
     set (DOWNLOAD_TRILINOS FALSE)
-    set (DOWNLOAD_ALBANY TRUE)
+    set (DOWNLOAD_ALBANY FALSE)
     set (BUILD_TRILINOS FALSE)
     set (BUILD_ALB64 TRUE) 
   ENDIF() 
@@ -268,7 +268,7 @@ if (DOWNLOAD_TRILINOS)
     endif ()
   endif ()
 
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+  #set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 
 ENDIF()
 
@@ -366,7 +366,6 @@ INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 if (BUILD_INTEL_TRILINOS)
   set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall")
   set (CONF_OPTS
-    "-G Ninja"
     CDASH-TRILINOS-INTEL-FILE.TXT
   )
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)

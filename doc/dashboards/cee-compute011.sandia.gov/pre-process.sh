@@ -11,3 +11,12 @@ source $SCRIPT_DIR/convert-cmake-to-cdash.sh clang
 source $SCRIPT_DIR/create-new-cdash-cmake-script.sh clang 
 source $SCRIPT_DIR/convert-cmake-to-cdash.sh gcc
 source $SCRIPT_DIR/create-new-cdash-cmake-script.sh gcc
+cd $SCRIPT_DIR
+mkdir repos
+cd repos
+git clone git@github.com:trilinos/Trilinos.git 
+cd Trilinos
+git checkout develop
+cd ../
+git clone git@github.com:sandialabs/Albany.git
+
