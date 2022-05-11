@@ -85,6 +85,10 @@ private:
   double rho_i, rho_w;    // [kg m^{-3}]
   double g;               // [m s^{-2}]
 
+  bool use_pressurized_bed;
+  double overburden_fraction;  // [adim]
+  double pressure_smoothing_length_scale; //[km]
+
   ParamScalarT mu;
   ParamScalarT lambda;
   ParamScalarT power;
