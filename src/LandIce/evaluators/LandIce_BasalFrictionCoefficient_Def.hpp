@@ -43,6 +43,9 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   dim = -1;
   worksetSize = -1;
   is_power_parameter = false;
+  use_pressurized_bed = false;
+  overburden_fraction = 0.0;
+  pressure_smoothing_length_scale = 1.0;
   Teuchos::ParameterList beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
   //Validate Parameters
@@ -54,6 +57,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<std::string>("Mu Field Name", "", "Name of the Field Mu");
   validPL.set<std::string>("Effective Pressure Type", "Field", "Type of N: One, Field, Hydrostatic, Hydrostatic Computed At Nodes");
   validPL.set<double>("Effective Pressure", 1.0, "Effective Pressure [kPa]");
+  validPL.set<double>("Minimum Fraction Overburden Pressure", 1.0, "Minimum Fraction Overburden Pressure");
+  validPL.set<double>("Length Scale Factor", 1.0, "Length Scale Factor [km]");
   validPL.set<double>("Power Exponent", 1.0, "Name of the Field Mu");
   validPL.set<double>("Beta", 1.0, "Constant value for beta");
   validPL.set<double>("Mu Coefficient", 1.0, "Constant value for Mu");
@@ -62,6 +67,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");
   validPL.set<bool>("Zero Beta On Floating Ice", false, "Whether to zero beta on floating ice");
   validPL.set<bool>("Exponentiate Scalar Parameters", false, "Whether the scalar parameters needs to be exponentiate");
+  validPL.set<bool>("Use Pressurized Bed Above Sea Level", false, "Whether to use a Downs & Johnson (2022) type parameterization for basal water pressure"); 
   beta_list.validateParameters(validPL,0);
 
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
@@ -70,8 +76,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   //whether to first interpolate the given field and then exponetiate it (on quad points) or the other way around.
   logParameters = beta_list.get<bool>("Exponentiate Scalar Parameters",false);
 
-  std::string betaType = util::upper_case(beta_list.get<std::string>("Type"));
-
+  std::string betaType = util::upper_case(beta_list.get<std::string>("Type"));  
 
   is_side_equation = p.isParameter("Side Set Name");
 
@@ -165,11 +170,18 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       this->addDependentField (N);
     } else if (effectivePressureType == "HYDROSTATIC") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
+      use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level");
     } else if (effectivePressureType == "HYDROSTATIC COMPUTED AT NODES") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES;
+      use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level");
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << effectivePressureType << "\" is not a valid parameter for Effective Pressure Type\n");
+    }
+
+    if(use_pressurized_bed) {
+      overburden_fraction = beta_list.get<double>("Minimum Fraction Overburden Pressure");
+      pressure_smoothing_length_scale = beta_list.get<double>("Length Scale Factor");
     }
 
     if(zero_on_floating || zero_N_on_floating_at_nodes || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC) ) {
@@ -357,7 +369,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
         if(zero_N_on_floating_at_nodes) {
           NVal = 0;
           if(nodal) {
-            if(rho_i*thickness_field(cell,ipt)+rho_w*bed_topo_field(cell,ipt) > 0)
+            if (rho_i*thickness_field(cell,ipt)+rho_w*bed_topo_field(cell,ipt) > 0)
               NVal =  1.0;
           } else {
             for (int node=0; node<numNodes; ++node)
@@ -367,24 +379,37 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
         }
         break;
       case EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC:
-        if(nodal)
-          NVal = g*KU::max(rho_i*thickness_field(cell,ipt)+KU::min(rho_w*bed_topo_field(cell,ipt),0.0),0.0);
-        else {
+        if(nodal) {
+          auto f_p = use_pressurized_bed ? MeshScalarT(1.0 / (1.0 + std::exp(bed_topo_field(cell,ipt)/pressure_smoothing_length_scale))) : MeshScalarT(0.0);
+          NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (overburden_fraction*rho_i*
+                    thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
+                    KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
+	} else {
           MeshScalarT thickness(0), bed_topo(0);
           for (int node=0; node<numNodes; ++node) {
             thickness += thickness_field(cell,node)*BF(cell,node,ipt);
             bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
           }
-          NVal = g*KU::max(rho_i*thickness+KU::min(rho_w*bed_topo,0.0),0.0);
+          auto f_p = use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(bed_topo/pressure_smoothing_length_scale))) : MeshScalarT(0.0);
+          NVal = g* KU::max(rho_i*thickness - ( (overburden_fraction*rho_i*
+                    thickness*f_p) + (1.0 - f_p)*
+                    KU::max(-1.0 * rho_w*bed_topo,0.0) ),0.0);
         }
         break;
       case EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES:
-        if(nodal)
-          NVal = g* KU::max(rho_i*thickness_field(cell,ipt)+KU::min(rho_w*bed_topo_field(cell,ipt),0.0),0.0);
-        else {
+	if(nodal) {
+          auto f_p = use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(bed_topo_field(cell,ipt)/pressure_smoothing_length_scale))) :  MeshScalarT(0.0);
+          NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (overburden_fraction*rho_i*
+                    thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
+                    KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
+	} else {
           NVal = 0;
-          for (int node=0; node<numNodes; ++node)
-            NVal += g*KU::max(rho_i*thickness_field(cell,node)+KU::min(rho_w*bed_topo_field(cell,node),0.0),0.0)*BF(cell,node,ipt);
+          for (int node=0; node<numNodes; ++node) {
+            auto f_p =use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(bed_topo_field(cell,node)/pressure_smoothing_length_scale))) :  MeshScalarT(0.0);
+            NVal += g* KU::max(rho_i*thickness_field(cell,node) - ( (overburden_fraction*rho_i*
+                    thickness_field(cell,node)*f_p) + (1.0 - f_p)*
+                    KU::max(-1.0 * rho_w*bed_topo_field(cell,node),0.0) ),0.0)*BF(cell,node,ipt);
+	  }
         }
         break;
       }
