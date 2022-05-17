@@ -40,17 +40,17 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 {
   NumElemNodes = NumNodes = NumElems = NumBdEdges = 0;
 
-  std::string fname = params->get("Ascii Input Mesh File Name", "greenland.msh");
+  std::string fname = params->get<std::string>("Ascii Input Mesh File Name");
 
   std::string shape, word;
   int number;
-  bool globalIds = false;
   stk::topology etopology;
   if (commT->getRank() == 0)
   {
     std::ifstream ifile;
 
     NumElemNodes = 0;
+    bool globalIds = false;
     ifile.open(fname.c_str());
     if (ifile.is_open())
     {
@@ -63,6 +63,10 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
         shape = word;
         NumElemNodes = number;
       }
+
+      // Even if the mesh provides global Ids we can choose to store Linear Ids
+      bool enforceLinearNodeIds = params->get("Enforce Linear Node Ids", false);
+
       if(shape == "Triangle")
       {
         TEUCHOS_TEST_FOR_EXCEPTION(NumElemNodes != 3, Teuchos::Exceptions::InvalidParameter,
@@ -99,8 +103,11 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
       }
 
       for (int i = 0; i < NumNodes; i++) {
-        if(globalIds)
+        if(globalIds) {
           ifile >> coord_Ids[i] >> coords[i][0] >> coords[i][1] >> coord_flags[i];
+          if(enforceLinearNodeIds)   //overwrite the Ids with linear ids
+            coord_Ids[i] = i+1;
+        }
         else
           ifile >> coords[i][0] >> coords[i][1] >> coord_flags[i];
       }
@@ -450,6 +457,8 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::AsciiSTKMesh2D::getValidDiscr
       this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
   validPL->set<std::string>("Ascii Input Mesh File Name", "greenland.msh",
       "Name of the file containing the 2D mesh, with list of coordinates, elements' connectivity and boundary edges' connectivity");
+  validPL->set<bool>("Enforce Linear Node Ids", false,
+        "Imports mesh using linear nodes ids overwriting the ids provided in the mesh file");
 
   return validPL;
 }
