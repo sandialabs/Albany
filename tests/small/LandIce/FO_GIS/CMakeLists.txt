@@ -456,8 +456,8 @@ endif()
 if (ALBANY_EPETRA)
   set (testName ${testNameRoot}_LaplacianPriorSampling)
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_sampling.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_sampling.yaml)
-  add_test(${testName} ${Albany.exe} input_fo_gis_sampling.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gis_sampling.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_gis_sampling.yaml)
+  add_test(${testName} ${Albany.exe} input_gis_sampling.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
 endif()

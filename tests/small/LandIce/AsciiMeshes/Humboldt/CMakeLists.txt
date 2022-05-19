@@ -56,3 +56,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cell_temperature.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/cell_temperature.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_temperature.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/nodal_temperature.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/A_humboldt.mm
+               ${CMAKE_CURRENT_BINARY_DIR}/A_humboldt.mm COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/D_humboldt.mm
+               ${CMAKE_CURRENT_BINARY_DIR}/D_humboldt.mm COPYONLY)

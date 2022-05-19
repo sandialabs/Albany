@@ -24,3 +24,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_mass_balance_RMS.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_mass_balance_RMS.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bed_topography.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/bed_topography.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/A_gis.mm
+               ${CMAKE_CURRENT_BINARY_DIR}/A_gis.mm COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/D_gis.mm
+               ${CMAKE_CURRENT_BINARY_DIR}/D_gis.mm COPYONLY)
