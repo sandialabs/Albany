@@ -48,26 +48,26 @@ ANONYMOUS:
     LandIce Viscosity:
       Extract Strain Rate Sq: true
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 0.3e+00
+      Glen's Law Homotopy Parameter: 0.3
       Continuous Homotopy With Constant Initial Viscosity: true
-      Coefficient For Continuous Homotopy: 8.00000000000000000e+00
+      Coefficient For Continuous Homotopy: 8.0
       Glen's Law A: 2.400304414e-24            # [Pa^-n s^-1
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     LandIce Physical Parameters:
-      Conductivity of ice: 2.10000000000000008e+00
-      Diffusivity temperate ice: 1.09999999999999992e-08
-      Heat capacity of ice: 2.00900000000000000e+03
+      Conductivity of ice: 2.1
+      Diffusivity temperate ice: 1.1e-08
+      Heat capacity of ice: 2.009e+03
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
       Gravity Acceleration: 9.81e+00
-      Reference Temperature: 2.65000000000000000e+02
-      Clausius-Clapeyron Coefficient: 7.90000000000000059e-08
-      Ice Latent Heat Of Fusion: 3.34000000000000000e+05
+      Reference Temperature: 2.65e+02
+      Clausius-Clapeyron Coefficient: 7.9e-08
+      Ice Latent Heat Of Fusion: 3.34e+05
       Permeability factor: 1.0e-12 #1e-12
-      Viscosity of water: 1.79999999999999995e-03
-      Omega exponent alpha: 2.00000000000000000e+00
-      Diffusivity homotopy exponent: -1.10000000000000008e+00
+      Viscosity of water: 1.8e-03
+      Omega exponent alpha: 2.0e+00
+      Diffusivity homotopy exponent: -1.1e+00
     Body Force:
       Type: FO INTERP SURF GRAD
     Response Functions:
@@ -79,15 +79,15 @@ ANONYMOUS:
           Cubature Degree: 4
           Name: Surface Mass Balance Mismatch
           SMB Coefficient: 1.0
-          Regularization Coefficient: 1.00000000000000000e+00
-          Scaling Coefficient: 5.88239999999999978e-07
-          H Coefficient: 100.00000000000000000e+00
+          Regularization Coefficient: 1.0e+00
+          Scaling Coefficient: 5.8824e-07
+          H Coefficient: 100.0e+00
         Response 0:
           Cubature Degree: 4
-          Scaling Coefficient: 5.88239999999999978e-07
-          Asinh Scaling: 1.00000000000000000e+01
+          Scaling Coefficient: 5.8824e-07
+          Asinh Scaling: 1.0e+01
           Name: Surface Velocity Mismatch
-          Regularization Coefficient: 1.00000000000000000e+00
+          Regularization Coefficient: 1.0e+00
   Discretization:
     Workset Size: -1
     Method: Extruded
@@ -201,7 +201,7 @@ ANONYMOUS:
           Field 7:
             Field Name: temperature
             Field Type: Elem Layered Scalar
-            Number Of Layers: 10
+            Number Of Layers: 7
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/cell_temperature.ascii
           Field 8:
@@ -247,15 +247,14 @@ ANONYMOUS:
       ROL:
         Number Of Parameters: 2
         Check Gradient: false
-        Gradient Tolerance: 1.00000000000000004e-04
-        Step Tolerance: 1.00000000000000002e-08
+        Gradient Tolerance: 1.0e-04
+        Step Tolerance: 1.0e-08
         Max Iterations: 1000
         Print Output: true
         Parameter Initial Guess Type: From Model Evaluator
-        Uniform Parameter Guess: 0.00000000000000000e+00
-        Min And Max Of Random Parameter Guess: [1.00000000000000000e+00, 2.00000000000000000e+00]
+        Uniform Parameter Guess: 0.0
+        Min And Max Of Random Parameter Guess: [1.0, 2.0]
         Bound Constrained: true
-        bound_eps: 1.00000000000000005e-01
 
         Step Method: "Trust Region"
 
@@ -284,7 +283,7 @@ ANONYMOUS:
 
           General:
             Variable Objective Function: false
-            Scale for Epsilon Active Sets: 1.00000000000000000e+00
+            Scale for Epsilon Active Sets: 1.0
             Inexact Objective Function: false
             Inexact Gradient: false
             Inexact Hessian-Times-A-Vector: false
@@ -297,16 +296,16 @@ ANONYMOUS:
               Barzilai-Borwein Type: 1
             Krylov:
               Type: Conjugate Gradients
-              Absolute Tolerance: 1.00000000000000004e-04
-              Relative Tolerance: 1.00000000000000002e-02
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
               Iteration Limit: 100
 
           Step:
             Type: "Augmented Lagrangian" #"Moreau-Yosida Penalty"
             Line Search:
               Function Evaluation Limit: 60
-              Sufficient Decrease Tolerance: 9.99999999999999945e-21
-              Initial Step Size: 1.00000000000000000e+00
+              Sufficient Decrease Tolerance: 1.0e-20
+              Initial Step Size: 1.0
               User Defined Initial Step Size: false
               Accept Linesearch Minimizer: false
               Accept Last Alpha: false
@@ -315,35 +314,35 @@ ANONYMOUS:
                 Nonlinear CG Type: Hestenes-Stiefel
               Curvature Condition:
                 Type: Strong Wolfe Conditions
-                General Parameter: 9.00000000000000022e-01
-                Generalized Wolfe Parameter: 5.99999999999999977e-01
+                General Parameter: 9.0e-01
+                Generalized Wolfe Parameter: 6.0e-01
               Line-Search Method:
                 Type: Cubic Interpolation
-                Backtracking Rate: 5.00000000000000000e-01
-                Bracketing Tolerance: 1.00000000000000002e-08
+                Backtracking Rate: 0.5
+                Bracketing Tolerance: 1.0e-08
                 Path-Based Target Level:
-                  Target Relaxation Parameter: 1.00000000000000000e+00
-                  Upper Bound on Path Length: 1.00000000000000000e+00
+                  Target Relaxation Parameter: 1.0
+                  Upper Bound on Path Length: 1.0
             Trust Region:
               Subproblem Solver: Truncated CG
               Initial Radius: 10.0
               Step Acceptance Threshold: 5.0e-02
               Radius Shrinking Threshold: 5.0e-02
               Radius Growing Threshold: 9.0e-01
-              Radius Shrinking Rate (Negative rho): 6.25000000000000000e-02
-              Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
-              Radius Growing Rate: 2.50000000000000000e+00
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
               Safeguard Size: 1.0e+01
               Inexact:
                 Value:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Exponent: 9.00000000000000022e-01
-                  Forcing Sequence Initial Value: 1.00000000000000000e+00
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
                   Forcing Sequence Update Frequency: 10
-                  Forcing Sequence Reduction Factor: 1.00000000000000005e-01
+                  Forcing Sequence Reduction Factor: 1.0e-01
                 Gradient:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Relative Tolerance: 2.00000000000000000e+00
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0
 
             Moreau-Yosida Penalty:
               # ===========  PENALTY PARAMETER UPDATE  ===========
@@ -404,15 +403,15 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 100
-        Max Value: 4.00000000000000022e-01
-        Min Value: 0.00000000000000000e+00
+        Max Value: 4.0e-01
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 1.00000000000000005e-01
-        Max Step Size: 1.00000000000000005e-01
+        Initial Step Size: 1.0e-01
+        Max Step Size: 1.0e-01
     NOX:
       Thyra Group Options:
         Function Scaling: None
@@ -569,7 +568,7 @@ ANONYMOUS:
                       ParameterList: 
                         'relaxation: type': Gauss-Seidel
                         'relaxation: sweeps': 1
-                        'relaxation: damping factor': 1.00000000000000000e+00
+                        'relaxation: damping factor': 1.0e+00
                         'block relaxation: decouple dofs': true
                         'partitioner: PDE equations': 2
                     mySmoother3: 
@@ -579,7 +578,7 @@ ANONYMOUS:
                       ParameterList: 
                         'relaxation: type': Gauss-Seidel
                         'relaxation: sweeps': 1
-                        'relaxation: damping factor': 1.00000000000000000e+00
+                        'relaxation: damping factor': 1.0e+00
                     mySmoother4: 
                       factory: TrilinosSmoother
                       type: RELAXATION
@@ -587,7 +586,7 @@ ANONYMOUS:
                       ParameterList: 
                         'relaxation: type': Gauss-Seidel
                         'relaxation: sweeps': 4
-                        'relaxation: damping factor': 1.00000000000000000e+00
+                        'relaxation: damping factor': 1.0e+00
                   Hierarchy: 
                     max levels: 7
                     'coarse: max size': 2000
@@ -622,7 +621,7 @@ ANONYMOUS:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
-                    'repartition: max min ratio': 1.32699999999999995e+00
+                    'repartition: max min ratio': 1.327e+00
                     'repartition: min per proc': 600
                     'repartition: Zoltan dimensions': 2
                     'repartition: start level': 4
@@ -630,12 +629,12 @@ ANONYMOUS:
                     'semicoarsen: coarsen rate': 12
                     'smoother: sweeps': 4
                     'smoother: type': Chebyshev
-                    'smoother: Chebyshev eig boost': 1.19999999999999995e+00
+                    'smoother: Chebyshev eig boost': 1.2e+00
                     'smoother: sweeps (level 0)': 1
                     'smoother: sweeps (level 1)': 4
                     'smoother: type (level 0)': line Jacobi
                     'smoother: type (level 1)': line Jacobi
-                    'smoother: damping factor': 5.50000000000000044e-01
+                    'smoother: damping factor': 5.5e-01
                     'smoother: pre or post': both
                     'coarse: type': Amesos-KLU
                     'coarse: pre or post': pre
@@ -644,7 +643,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:
@@ -663,6 +662,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 1.762330021661e+01
-    Relative Tolerance: 1.0e-04
+    Test Value: 2.057700602643e+01
+    Relative Tolerance: 1.0e-06
 ...

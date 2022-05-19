@@ -66,7 +66,7 @@ ANONYMOUS:
       Mass Coefficient: 1.0e-01
       Laplacian Coefficient: 1.0e+01
       Robin Coefficient: 1.0
-      Boundary Edges Set Name: lateralside
+      Boundary Edges Set Name: boundary_side_set
     Body Force:
       Type: FO INTERP SURF GRAD
     Response Functions:
@@ -213,7 +213,7 @@ ANONYMOUS:
           Field 8:
             Field Name: temperature
             Field Type: Elem Layered Scalar
-            Number Of Layers: 10
+            Number Of Layers: 7
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/cell_temperature.ascii
           Field 9:
@@ -564,9 +564,9 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 1.262910802732e+02
+    Test Value: 4.227351465925e+01
     Relative Tolerance: 1.0e-06
   Regression For Response 1:
-    Test Value: 1.787883761283e+01
+    Test Value: 5.967986097162e+00
     Relative Tolerance: 1.0e-06
 ...
