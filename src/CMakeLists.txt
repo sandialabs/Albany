@@ -262,6 +262,7 @@ list (APPEND SOURCES
   responses/Albany_SolutionMinValueResponseFunction.cpp
   responses/Albany_SolutionResponseFunction.cpp
   responses/Albany_SolutionTwoNormResponseFunction.cpp
+  responses/Albany_QuadraticLinearOperatorBasedResponseFunction.cpp
   responses/Albany_SolutionValuesResponseFunction.cpp
   )
 list (APPEND HEADERS
@@ -282,6 +283,7 @@ list (APPEND HEADERS
   responses/Albany_SolutionMinValueResponseFunction.cpp
   responses/Albany_SolutionResponseFunction.hpp
   responses/Albany_SolutionTwoNormResponseFunction.hpp
+  responses/Albany_QuadraticLinearOperatorBasedResponseFunction.hpp
   responses/Albany_SolutionValuesResponseFunction.hpp
   )
 

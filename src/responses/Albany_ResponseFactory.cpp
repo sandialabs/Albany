@@ -12,6 +12,7 @@
 #include "Albany_SolutionValuesResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionMinValueResponseFunction.hpp"
+#include "Albany_QuadraticLinearOperatorBasedResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 #include "Albany_ScalarResponsePower.hpp"
@@ -70,6 +71,11 @@ createResponseFunction(
 
     responses.push_back(
       rcp(new Albany::SolutionMinValueResponseFunction(comm, neq, eq, inor)));
+  }
+
+  else if (name == "Quadratic Linear Operator Based") {
+    responses.push_back(
+      rcp(new Albany::QuadraticLinearOperatorBasedResponseFunction(app, responseParams)));
   }
 
   else if (name == "Solution Two Norm File") {
