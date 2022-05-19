@@ -56,6 +56,8 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
 
   // Get Dimensions
   numNodes  = dl->node_scalar->extent(1);
+  TEUCHOS_TEST_FOR_EXCEPTION (cellType->getBaseKey() != shards::Wedge<>::key, std::runtime_error,
+      "Error! This evaluator works only with Wedge nodal finite elements.\n");
 
   numSideNodes  = dl_side->node_scalar->extent(1);
   numBasalQPs = dl_side->qp_scalar->extent(1);
@@ -115,7 +117,11 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
-
+  // First initialize the residual on all the nodes (to guarantee a non-singular Jacobian),
+  // then overwrite the residual at the sidesets nodes with the correct value.
+  // Note, this initialization works for Wedges but not for Tetrahedrons,
+  // because a Tetrahedron might share a node with a basal side without sharing the side,
+  // which would cause the residual to not being overwritten at those nodes.
   for (unsigned int cell=0; cell<workset.numCells; ++cell)
     for (unsigned int inode=0; inode<numNodes; ++inode)
       bdLaplacian_L2Projection_res(cell,inode) = solution(cell,inode);
@@ -148,13 +154,6 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
             t -= laplacian_coeff * gradField_i*gradBF_i * w_side_measure(sideSet_idx,qp);
           }
         }
-        //for (int qp=0; qp<numBasalQPs; ++qp)
-        //  for (int idim=0; idim<sideDim; ++idim)
-        //    for (int jdim=0; jdim<sideDim; ++jdim)
-        //      for (int icoor=0; icoor<sideDim; ++icoor) // Note: if icoor<cellDim, then tangents(...)*tangents(...)=metric
-        //        t -= laplacian_coeff*side_tangents(sideSet_idx,qp,icoor,idim)*gradField(sideSet_idx,qp,idim)
-        //                            *side_tangents(sideSet_idx,qp,icoor,jdim)*gradBF(sideSet_idx,inode, qp,jdim)
-        //                            *w_side_measure(sideSet_idx, qp);
 
         //using trapezoidal rule to get diagonal mass matrix
         t += (solution(cell,sideNodes(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
@@ -168,17 +167,33 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
       // Get the local data of side and cell
       const int cell = sideSet.elem_LID(sideSet_idx);
       const int side = sideSet.side_local_id(sideSet_idx);
-      shards::CellTopology sideType(cellType->getCellTopologyData(sideDim,side));
+      shards::CellTopology cell2dType(cellType->getCellTopologyData(sideDim,side));
       auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
       auto side_gid = sideSet.side_GID(sideSet_idx);
+
+      // The following line associates to each 3d-side GID the corresponding 2d-cell.
+      // It's needed when the 3d mesh is not built online
       side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
+
+      //This map associates the nodes of a 2d cell to the nodes of the corresponding side of the 3d mesh
+      const auto& node_map = workset.disc->getSideNodeNumerationMap().at(sideName).at(side_gid);
       auto side_workset = side_disc->getElemGIDws()[side_gid].ws;
       auto side_side_set = side_disc->getSideSets(side_workset);
       if(side_side_set.find(bdEdgesName) != side_side_set.end()) {
         auto bdEdges_set = side_side_set[bdEdgesName];
         for (auto const& it_bdEdge : bdEdges_set){
           if(it_bdEdge.elem_GID == side_gid) {
-            unsigned int side_nodes[2] = {sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),sideType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
+            unsigned int cell2d_nodes[2] = {cell2dType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),cell2dType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
+
+            unsigned int side_nodes[2];
+            for(int side_node=0; side_node < numSideNodes; ++side_node) {
+              int cell2d_node = node_map[side_node];
+              if(cell2d_node == cell2d_nodes[0])
+                side_nodes[0] = side_node;
+              if(cell2d_node == cell2d_nodes[1])
+                side_nodes[1] = side_node;
+            }
+
             int cell_nodes[2] = {sideNodes(side,side_nodes[0]),sideNodes(side,side_nodes[1])};
             MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
             MeshScalarT bdEdge_measure = 0.0; 
