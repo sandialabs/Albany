@@ -87,7 +87,7 @@ ANONYMOUS:
       Mass Coefficient: 1.0e-01
       Laplacian Coefficient: 1.0e+01
       Robin Coefficient: 1.0
-      Boundary Edges Set Name: lateralside
+      Boundary Edges Set Name: boundary_side_set
     LandIce Enthalpy:
       Regularization:
         Flux Regularization:
@@ -616,18 +616,18 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value: 1.232439363229e+00
+    Test Value:  8.757629152094e+00
     Sensitivity For Parameter 0:
-      Test Value: 1.806512890510e-01
+      Test Value: 2.248679203103e+00
   Regression For Response 1:
     Relative Tolerance: 1.0e-06
-    Test Value: 4.974221748047e-02
+    Test Value: 6.849787851185e-04
     Sensitivity For Parameter 0:
-      Test Value: 4.556068666689e-03
+      Test Value: 1.536226903533e-04
   Regression For Response 2:
     Relative Tolerance: 1.0e-06
-    Test Value: 1.787883761283e+01
+    Test Value: 5.967986097162e+00
     Sensitivity For Parameter 0:
-      Test Value: 8.643788365263e-01
+      Test Value: 4.713654424891e-01
 ...
 ...
