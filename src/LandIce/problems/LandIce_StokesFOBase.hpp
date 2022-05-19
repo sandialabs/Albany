@@ -1840,14 +1840,21 @@ void StokesFOBase::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTr
   // L2 Projected bd laplacian residual
   p = Teuchos::rcp(new Teuchos::ParameterList("L2 Projected Boundary Laplacian Residual"));
 
+  // we want the Laplacian residual to be computed on a planar mesh to be consistent with the sampling, done on a 2d mesh
+  std::string ssNamePlanar = ssName + "_planar";
+  std::string fname_side = side_fname(field_name,ssName);
+  const std::string& grad_name_side = side_fname(field_name + "_gradient",ssNamePlanar);
+  ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator (fname_side, ssName, grad_name_side, true);
+  fm0.template registerEvaluator<EvalT> (ev);
+
   //Input
   p->set<std::string>("Solution Variable Name", dof_names[eqId]);
   p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
-  p->set<std::string>("Field Name", side_fname(field_name,ssName));
-  p->set<std::string>("Field Gradient Name", side_fname(field_name + "_gradient",ssName));
-  p->set<std::string>("Gradient BF Side Name", side_fname(Albany::grad_bf_name,ssName));
-  p->set<std::string>("Weighted Measure Side Name", side_fname(Albany::weighted_measure_name,ssName));
-  p->set<std::string>("Tangents Side Name", side_fname(Albany::tangents_name,ssName));
+  p->set<std::string>("Field Name", fname_side);
+  p->set<std::string>("Field Gradient Name", grad_name_side);
+  p->set<std::string>("Gradient BF Side Name", side_fname(Albany::grad_bf_name,ssNamePlanar));
+  p->set<std::string>("Weighted Measure Side Name", side_fname(Albany::weighted_measure_name,ssNamePlanar));
+  p->set<std::string>("Tangents Side Name", side_fname(Albany::tangents_name,ssNamePlanar));
   p->set<std::string>("Side Set Name", ssName);
   p->set<std::string>("Boundary Edges Set Name", proj_lapl_params.get<std::string>("Boundary Edges Set Name", "lateralside"));
   p->set<double>("Mass Coefficient",  proj_lapl_params.get<double>("Mass Coefficient",1.0));

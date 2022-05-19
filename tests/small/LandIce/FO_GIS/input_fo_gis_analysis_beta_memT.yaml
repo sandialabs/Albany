@@ -14,19 +14,18 @@ ANONYMOUS:
     Surface Side Name: upperside
     Equation Set:
       Type: LandIce
-      Num Equations: 3
     Response Functions:
       Number Of Responses: 1
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 2
         Response 1:
-          Scaling Coefficient: 5.88239999999999978e-07
-          Asinh Scaling: 1.00000000000000000e+01
+          Scaling Coefficient: 5.8824e-07
+          Asinh Scaling: 1.0e+01
           Name: Surface Velocity Mismatch
-          Regularization Coefficient: 0.00000000000000000e+00
+          Regularization Coefficient: 0.0e+00
         Response 0:
-          Scaling Coefficient: 5.88239999999999978e-05
+          Scaling Coefficient: 5.8824e-05
           Name: Boundary Squared L2 Norm
           Field Name: L2 Projected Boundary Laplacian_basalside
     Dirichlet BCs: {}
@@ -49,26 +48,26 @@ ANONYMOUS:
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Lower Bound: -2.00000000000000000e+00
+        Lower Bound: -2.0e+00
         Mesh Part: bottom
         Type: Distributed
         Name: basal_friction
-        Upper Bound: 2.00000000000000000e+00
+        Upper Bound: 2.0e+00
     LandIce Physical Parameters:
-      Water Density: 1.02800000000000000e+03
-      Ice Density: 9.10000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+      Water Density: 1028.0
+      Ice Density: 910.0
+      Gravity Acceleration: 9.8e+00
+      Clausius-Clapeyron Coefficient: 0.0e+00
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 1.00000000000000005e-01
+      Glen's Law Homotopy Parameter: 1.0e-01
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0e+00
       Flow Rate Type: Temperature Based
     LandIce L2 Projected Boundary Laplacian:
-      Mass Coefficient: 1.00000000000000005e-01
-      Laplacian Coefficient: 1.00000000000000000e+01
-      Robin Coefficient: 1.00000000000000000e+00
+      Mass Coefficient: 1.0e-01
+      Laplacian Coefficient: 1.0e+01
+      Robin Coefficient: 1.0e+00
       Boundary Edges Set Name: lateralside
     Body Force:
       Type: FO INTERP SURF GRAD
@@ -76,10 +75,10 @@ ANONYMOUS:
     Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_analysis_beta_mem.exo
-    Element Shape: Tetrahedron
-    Columnwise Ordering: true
+    Element Shape: Wedge
+    Columnwise Ordering: false
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
@@ -160,15 +159,15 @@ ANONYMOUS:
       Analysis Package: ROL
       ROL:
         Check Gradient: false
-        Gradient Tolerance: 1.00000000000000004e-04
-        Step Tolerance: 1.00000000000000004e-04
+        Gradient Tolerance: 1.0e-04
+        Step Tolerance: 1.0e-04
         Max Iterations: 1
         Print Output: true
         Parameter Initial Guess Type: Uniform Vector
-        Uniform Parameter Guess: 2.00000000000000000e+00
-        Min And Max Of Random Parameter Guess: [1.00000000000000000e+00, 2.00000000000000000e+00]
+        Uniform Parameter Guess: 2.0e+00
+        Min And Max Of Random Parameter Guess: [1.0e+00, 2.0e+00]
         Bound Constrained: true
-        bound_eps: 1.00000000000000005e-01
+        bound_eps: 1.0e-01
 
         Full Space: false
         Use NOX Solver: false
@@ -176,7 +175,7 @@ ANONYMOUS:
         ROL Options:
           General:
             Variable Objective Function: false
-            Scale for Epsilon Active Sets: 1.00000000000000000e+00
+            Scale for Epsilon Active Sets: 1.0e+00
             Inexact Objective Function: false
             Inexact Gradient: false
             Inexact Hessian-Times-A-Vector: false
@@ -189,14 +188,14 @@ ANONYMOUS:
               Barzilai-Borwein Type: 1
             Krylov:
               Type: Conjugate Gradients
-              Absolute Tolerance: 1.00000000000000004e-04
-              Relative Tolerance: 1.00000000000000002e-02
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
               Iteration Limit: 100
           Step:
             Line Search:
               Function Evaluation Limit: 60
-              Sufficient Decrease Tolerance: 9.99999999999999945e-21
-              Initial Step Size: 1.00000000000000000e+00
+              Sufficient Decrease Tolerance: 1.0e-20
+              Initial Step Size: 1.0e+00
               User Defined Initial Step Size: false
               Accept Linesearch Minimizer: false
               Accept Last Alpha: false
@@ -205,40 +204,40 @@ ANONYMOUS:
                 Nonlinear CG Type: Hestenes-Stiefel
               Curvature Condition:
                 Type: Strong Wolfe Conditions
-                General Parameter: 9.00000000000000022e-01
-                Generalized Wolfe Parameter: 5.99999999999999977e-01
+                General Parameter: 9.0e-01
+                Generalized Wolfe Parameter: 6.0e-01
               Line-Search Method:
                 Type: Cubic Interpolation
-                Backtracking Rate: 5.00000000000000000e-01
-                Bracketing Tolerance: 1.00000000000000002e-08
+                Backtracking Rate: 5.0e-01
+                Bracketing Tolerance: 1.0e-08
                 Path-Based Target Level:
-                  Target Relaxation Parameter: 1.00000000000000000e+00
-                  Upper Bound on Path Length: 1.00000000000000000e+00
+                  Target Relaxation Parameter: 1.0e+00
+                  Upper Bound on Path Length: 1.0e+00
             Trust Region:
               Subproblem Solver: Truncated CG
-              Initial Radius: 1.00000000000000000e+01
-              Maximum Radius: 5.00000000000000000e+03
-              Step Acceptance Threshold: 5.00000000000000027e-02
-              Radius Shrinking Threshold: 5.00000000000000027e-02
-              Radius Growing Threshold: 9.00000000000000022e-01
-              Radius Shrinking Rate (Negative rho): 6.25000000000000000e-02
-              Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
-              Radius Growing Rate: 2.50000000000000000e+00
-              Safeguard Size: 1.00000000000000000e+08
+              Initial Radius: 1.0e+01
+              Maximum Radius: 5.0e+03
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5e+00
+              Safeguard Size: 1.0e+08
               Inexact:
                 Value:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Exponent: 9.00000000000000022e-01
-                  Forcing Sequence Initial Value: 1.00000000000000000e+00
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0e+00
                   Forcing Sequence Update Frequency: 10
-                  Forcing Sequence Reduction Factor: 1.00000000000000005e-01
+                  Forcing Sequence Reduction Factor: 1.0e-01
                 Gradient:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Relative Tolerance: 2.00000000000000000e+00
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
           Status Test:
-            Gradient Tolerance: 1.00000000000000003e-10
-            Constraint Tolerance: 1.00000000000000003e-10
-            Step Tolerance: 9.99999999999999998e-15
+            Gradient Tolerance: 1.0e-10
+            Constraint Tolerance: 1.0e-10
+            Step Tolerance: 1.0e-14
             Iteration Limit: 1
           SimOpt:
             Solve:
@@ -257,14 +256,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 1.00000000000000005e-01
+        Initial Value: 1.0e-01
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0e+00
+        Min Value: 0.0e+00
       Step Size:
-        Initial Step Size: 2.00000000000000011e-01
+        Initial Step Size: 2.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -278,11 +277,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000008e-05
+            Tolerance: 1.0e-05
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000008e-05
-            Relative Tolerance: 1.00000000000000002e-03
+            Absolute Tolerance: 1.0e-05
+            Relative Tolerance: 1.0e-03
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -305,14 +304,14 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
+                    Tolerance: 1.0e-06
                 Belos:
                   VerboseObject:
                     Verbosity Level: high
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-07
+                      Convergence Tolerance: 1.0e-6
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -337,7 +336,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0e+00
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:
@@ -356,9 +355,9 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    Test Value:  1.145436599178e+02
     Sensitivity For Parameter 0:
-      Test Value: 4.53304824162499997e+00
-    Test Value: 1.13523015029099994e+02
-    Relative Tolerance: 1.00000000000000004e-04
+      Test Value: 4.530749883697e+00
 ...

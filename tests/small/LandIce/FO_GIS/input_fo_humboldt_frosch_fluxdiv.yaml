@@ -166,7 +166,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Use Serial Mesh: ${USE_SERIAL_MESH}
+        Use Serial Mesh: false
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
         Exodus Output File Name: output/humboldt_basal.exo
         Cubature Degree: 4
@@ -567,6 +567,6 @@ ANONYMOUS:
     Test Value: 1.262910802732e+02
     Relative Tolerance: 1.0e-06
   Regression For Response 1:
-    Test Value: 1.757156464993e+01
+    Test Value: 1.787883761283e+01
     Relative Tolerance: 1.0e-06
 ...
