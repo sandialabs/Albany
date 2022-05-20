@@ -186,8 +186,8 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
             unsigned int cell2d_nodes[2] = {cell2dType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,0),cell2dType.getNodeMap(sideDim-1,it_bdEdge.side_local_id,1)};
 
             unsigned int side_nodes[2];
-            for(int side_node=0; side_node < numSideNodes; ++side_node) {
-              int cell2d_node = node_map[side_node];
+            for(unsigned int side_node=0; side_node < numSideNodes; ++side_node) {
+              unsigned int cell2d_node = static_cast<unsigned int>(node_map[side_node]);
               if(cell2d_node == cell2d_nodes[0])
                 side_nodes[0] = side_node;
               if(cell2d_node == cell2d_nodes[1])

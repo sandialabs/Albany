@@ -41,7 +41,6 @@ void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 loadLinearOperator() {
   Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
-  const Tpetra_GO globalNumElts = field->space()->dim();
   Teuchos::RCP<const Tpetra_Map> rowMap = Albany::getTpetraMap(field->space());
 
   Teuchos::RCP<const Tpetra_Map> colMap;
@@ -50,8 +49,8 @@ loadLinearOperator() {
   typedef Tpetra::MatrixMarket::Reader<Tpetra_CrsMatrix> reader_type;
 
   bool mapIsContiguous =
-      (rowMap->getMaxAllGlobalIndex()+1-rowMap->getMinAllGlobalIndex() ==
-      rowMap->getGlobalNumElements());
+      (static_cast<Tpetra_GO>(rowMap->getMaxAllGlobalIndex()+1-rowMap->getMinAllGlobalIndex()) ==
+       static_cast<Tpetra_GO>(rowMap->getGlobalNumElements()));
 
   TEUCHOS_TEST_FOR_EXCEPTION (!mapIsContiguous, std::runtime_error,
                               "Error! Row Map needs to be contigous for the Matrix reader to work.\n");
