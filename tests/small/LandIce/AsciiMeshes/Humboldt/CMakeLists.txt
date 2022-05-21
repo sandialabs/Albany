@@ -1,3 +1,5 @@
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/humboldt_2d.msh
+               ${CMAKE_CURRENT_BINARY_DIR}/humboldt_2d.msh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/humboldt_2d.exo
                ${CMAKE_CURRENT_BINARY_DIR}/humboldt_2d.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/humboldt_2d.exo.4.0
