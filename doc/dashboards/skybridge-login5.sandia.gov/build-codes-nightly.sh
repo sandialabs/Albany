@@ -1,17 +1,18 @@
 #!/bin/bash
 ## Do not put any commands or blank lines before the #SBATCH lines
 export TEST_DIR=`pwd`
-rm -rf *log 
-rm -rf Albany
-rm -rf Trilinos
-git clone git@github.com:trilinos/Trilinos.git >& trilinos-clone.log
-cd Trilinos
-git checkout develop
-cd ..
-git clone git@github.com:sandialabs/Albany.git >& albany-clone.log 
+#rm -rf *log 
+#rm -rf Albany
+#rm -rf Trilinos
+#git clone git@github.com:trilinos/Trilinos.git >& trilinos-clone.log
+#cd Trilinos
+#git checkout develop
+#cd ..
+#git clone git@github.com:sandialabs/Albany.git >& albany-clone.log 
 module use --append $TEST_DIR/Albany/doc/LandIce/modulefiles
 module load serial-intel-release
 module load python/3.4
+module load cmake/3.22.3
 rm -rf trilinos-build-serial-intel-release
 rm -rf trilinos-install-serial-intel-release
 rm -rf albany-build-serial-intel-release
