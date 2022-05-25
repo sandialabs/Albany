@@ -143,7 +143,7 @@ namespace Albany
     void evaluateResponseImpl (const Teuchos::Array<ParamVec> &p,
                               Thyra_Vector& g);
 
-    void evaluateGradientImpl (const Teuchos::Array<ParamVec> &p,
+    void evaluateTangentImpl (const Teuchos::Array<ParamVec> &p,
 		                           Teuchos::SerialDenseVector<int, double>& dgdp);
 
     Teuchos::RCP<const Application> app_;
