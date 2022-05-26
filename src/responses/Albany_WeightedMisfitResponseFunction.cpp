@@ -320,7 +320,8 @@ evaluate_HessVecProd_pp(
       tmp1(i) = Thyra::get_ele(*v->col(0),i);
     }
 
-    tmp2.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *invC, tmp1, 0.0 );
+    tmp2.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 0.0 );
+    tmp2.multiply( Teuchos::TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 1.0 );
 
     for (int i=0; i<total_dimension; i++) {
       Thyra::set_ele(i, tmp2(i), Hv_dp->col(0).ptr());
