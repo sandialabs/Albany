@@ -1172,8 +1172,10 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       if(l<num_param_vecs){
         auto p_constView = getLocalData(p);
         ParamVec& sacado_param_vector = sacado_param_vec[l];
-        for (unsigned int k = 0; k < sacado_param_vector.size(); ++k)
+        for (unsigned int k = 0; k < sacado_param_vector.size(); ++k) {
           sacado_param_vector[k].baseValue = p_constView[k];
+          sacado_param_vector[k].family->setRealValueForAllTypes(sacado_param_vector[k].baseValue);
+        }
       } else {
         distParamLib->get(dist_param_names[l-num_param_vecs])->vector()->assign(*p);
       }

@@ -1344,13 +1344,6 @@ Application::computeGlobalResidualImpl(
   // Scatter distributed parameters
   distParamLib->scatter();
 
-  // Set parameters
-  for (int i = 0; i < p.size(); i++) {
-    for (unsigned int j = 0; j < p[i].size(); j++) {
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-    }
-  }
-
   // Zero out overlapped residual
   overlapped_f->assign(0.0);
   f->assign(0.0);
@@ -1566,13 +1559,6 @@ Application::computeGlobalJacobianImpl(
 
   // Scatter distributed parameters
   distParamLib->scatter();
-
-  // Set parameters
-  for (int i = 0; i < p.size(); i++) {
-    for (unsigned int j = 0; j < p[i].size(); j++) {
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-    }
-  }
 
   // Zero out overlapped residual
   if (Teuchos::nonnull(f)) {
@@ -1907,6 +1893,8 @@ Application::computeGlobalTangent(
   }
 
   // Set parameters
+  // We have to reset the parameters here to be sure to zero out the
+  // previously used derivatives.
   for (int i = 0; i < par.size(); i++) {
     for (unsigned int j = 0; j < par[i].size(); j++) {
       par[i][j].family->setRealValueForAllTypes(par[i][j].baseValue);
@@ -2109,13 +2097,6 @@ Application::applyGlobalDistParamDerivImpl(
 
   // Scatter distributed parameters
   distParamLib->scatter();
-
-  // Set parameters
-  for (int i = 0; i < p.size(); i++) {
-    for (unsigned int j = 0; j < p[i].size(); j++) {
-      p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
-    }
-  }
 
   Teuchos::RCP<Thyra_MultiVector> overlapped_fpV;
   if (trans) {
@@ -3464,6 +3445,8 @@ Application::setupBasicWorksetInfo(
   distParamLib->scatter();
 
   // Set parameters
+  // We have to reset the parameters here to be sure to zero out the
+  // previously used derivatives.
   for (int i = 0; i < p.size(); i++) {
     for (unsigned int j = 0; j < p[i].size(); j++) {
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);

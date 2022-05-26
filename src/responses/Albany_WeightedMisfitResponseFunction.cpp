@@ -135,7 +135,7 @@ evaluateResponseImpl (
 }
 
 void WeightedMisfitResponse::
-evaluateGradientImpl (
+evaluateTangentImpl (
     const Teuchos::Array<ParamVec> &p,
 		SerialDenseVector<int, double>& dgdp)
 {
@@ -158,7 +158,8 @@ evaluateGradientImpl (
     tmp1(i) = theta(i) - (*theta_0)(i);
   }
 
-  dgdp.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *invC, tmp1, 0.0 );
+  dgdp.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 0.0 );
+  dgdp.multiply( Teuchos::TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 1.0 );
 }
 
 void WeightedMisfitResponse::
@@ -212,7 +213,7 @@ evaluateTangent(const double /*alpha*/,
     if (parameter_index < n_parameters) {
       // dgdp = dg/dp
       SerialDenseVector<int, double> dgdp(total_dimension);
-      evaluateGradientImpl (p, dgdp);
+      evaluateTangentImpl (p, dgdp);
 
       int offset = 0;
       for (int j=0; j<parameter_index; j++) {
@@ -319,7 +320,8 @@ evaluate_HessVecProd_pp(
       tmp1(i) = Thyra::get_ele(*v->col(0),i);
     }
 
-    tmp2.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *invC, tmp1, 0.0 );
+    tmp2.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 0.0 );
+    tmp2.multiply( Teuchos::TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 1.0 );
 
     for (int i=0; i<total_dimension; i++) {
       Thyra::set_ele(i, tmp2(i), Hv_dp->col(0).ptr());
@@ -362,7 +364,7 @@ evaluateGradient(const double /*current_time*/,
     if (parameter_index < n_parameters) {
       // dgdp = dg/dp
       SerialDenseVector<int, double> dgdp(total_dimension);
-      evaluateGradientImpl (p, dgdp);
+      evaluateTangentImpl (p, dgdp);
 
       for (int i=0; i<total_dimension; i++) {
         dg_dp->col(i)->assign(dgdp(i));

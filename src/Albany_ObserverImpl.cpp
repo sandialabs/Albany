@@ -68,11 +68,11 @@ void ObserverImpl::
 parameterChanged(const std::string& param)
 {
   //! If a parameter has changed in value, saved/unsaved fields must be updated
+  // TO DO: in the future, it would be great to only unsave parameters that have changed.
   if (app_->getAppPL()->sublist("Debug Output").get("Report Parameter Changes",true)) {
     auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
     if (app_->getParamLib()->isParameter(param)) {
-      *out << "Scalar parameter '" << param << "' has changed! New value: "
-           << app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>(param) << std::endl;
+      *out << "Scalar parameter '" << param << "' has changed! " << std::endl;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (! app_->getDistributedParameterLibrary()->has(param), std::runtime_error,
           "Error! Parameter '" + param + "' is not a scalar nor a distributed parameter. Please, contact developers.\n");
