@@ -645,7 +645,7 @@ ModelEvaluator::create_DgDx_op_impl(int j) const
   return app->getResponse(j)->createGradientOp();
 }
 
-// AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+// AGS: x_dotdot time integrators not implemented in Thyra ME yet
 Teuchos::RCP<Thyra_LinearOp>
 ModelEvaluator::create_DgDx_dotdot_op_impl(int j) const
 {
@@ -737,7 +737,7 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
           Thyra_ModelEvaluator::OUT_ARG_DgDx_dot, i, dgdx_support);
     }
 
-    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+    // AGS: x_dotdot time integrators not implemented in Thyra ME yet
     // result.setSupports(
     //    Thyra_ModelEvaluator::OUT_ARG_DgDx_dotdot, i, dgdx_support);
 

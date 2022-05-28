@@ -264,7 +264,7 @@ class StateManager
       const Teuchos::RCP<StateInfoStruct>&                stateInfoPtr);
 
   /// boolean to enforce that allocate gets called once, and after registration
-  /// and befor gets
+  /// and before gets
   bool stateVarsAreAllocated;
 
   /// Container to hold the states that have been registered, by element block,

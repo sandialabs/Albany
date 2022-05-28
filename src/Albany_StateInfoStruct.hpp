@@ -10,7 +10,7 @@
 // The StateInfoStruct contains information from the Problem
 // (via the State Manager) that is used by STK to define Fields.
 // This includes name, number of quantitites (scalar,vector,tensor),
-// Element vs Node lcoation, etc.
+// Element vs Node location, etc.
 
 #include <map>
 #include <string>
