@@ -209,7 +209,7 @@ assert_fail(std::string const& msg) __attribute__((noreturn));
 /// preferably as one of the first actions of the program (before initializing
 /// MPI)..
 ///
-/// This function and capablity may not be necessary after the transition away
+/// This function and capability may not be necessary after the transition away
 /// from Epetra is complete.  In the meantime, it is used in a handful of places
 /// to execute code that is specific to either Tpetra or Epetra.
 enum class BuildType

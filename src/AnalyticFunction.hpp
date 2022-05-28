@@ -32,7 +32,7 @@ Teuchos::RCP<AnalyticFunction> createAnalyticFunction(
   std::string name, int neq, int numDim,
   Teuchos::Array<double> data);
 
-// Below is a library of intial condition functions
+// Below is a library of initial condition functions
 
 class ConstantFunction : public AnalyticFunction {
   public:

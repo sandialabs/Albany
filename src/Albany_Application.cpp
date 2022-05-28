@@ -1338,7 +1338,7 @@ Application::computeGlobalResidualImpl(
   Teuchos::RCP<const CombineAndScatterManager> cas_manager =
       solMgr->get_cas_manager();
 
-  // Scatter x and xdot to the overlapped distrbution
+  // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(*x, x_dot.ptr(), x_dotdot.ptr());
 
   // Scatter distributed parameters
@@ -1861,7 +1861,7 @@ Application::computeGlobalTangent(
   // The combine-and-scatter manager
   auto cas_manager = solMgr->get_cas_manager();
 
-  // Scatter x and xdot to the overlapped distrbution
+  // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters
@@ -3105,7 +3105,7 @@ Application::evaluateStateFieldManager(
 
   int numWorksets = wsElNodeEqID.size();
 
-  // Scatter to the overlapped distrbution
+  // Scatter to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot, dxdp);
 
   // Scatter distributed parameters
@@ -3301,7 +3301,7 @@ Application::setScale(Teuchos::RCP<const Thyra_LinearOp> jac)
     } else {
       scaleVec_->assign(0.0);
       // We MUST be able to cast the linear op to RowStatLinearOpBase, in order
-      // to get row informations
+      // to get row information
       auto jac_row_stat =
           Teuchos::rcp_dynamic_cast<const Thyra::RowStatLinearOpBase<ST>>(
               jac, true);
@@ -3334,7 +3334,7 @@ Application::setScaleBCDofs(
     scale = tmp->norm_inf();
   } else if (scale_type == ABSROWSUM) {
     // We MUST be able to cast the linear op to RowStatLinearOpBase, in order to
-    // get row informations
+    // get row information
     auto jac_row_stat =
         Teuchos::rcp_dynamic_cast<const Thyra::RowStatLinearOpBase<ST>>(
             jac, true);
@@ -3438,7 +3438,7 @@ Application::setupBasicWorksetInfo(
   Teuchos::RCP<const Thyra_Vector> overlapped_xdotdot =
       numVectors > 2 ? overlapped_MV->col(2) : Teuchos::null;
 
-  // Scatter xT and xdotT to the overlapped distrbution
+  // Scatter xT and xdotT to the overlapped distribution
   solMgr->scatterX(*x, xdot.ptr(), xdotdot.ptr());
 
   // Scatter distributed parameters

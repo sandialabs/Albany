@@ -119,7 +119,7 @@ namespace PyAlbany
    * 
    * This class is used to drives Albany from Python.
    * 
-   * This class is used to communicate directions, solutions, sensitivites, and reduced Hessian-vector products
+   * This class is used to communicate directions, solutions, sensitivities, and reduced Hessian-vector products
    * between Python and Albany.
    */
     class PyProblem
