@@ -256,7 +256,7 @@ protected:
   bool viscosity_use_corrected_temperature;
   bool compute_dissipation;
 
-  //Wether to compute rigid body modes
+  //Whether to compute rigid body modes
   bool computeConstantModes, computeRotationModes;
 
   template<typename T>
@@ -972,7 +972,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Compute basis funcitons
+  // Compute basis functions
   ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 

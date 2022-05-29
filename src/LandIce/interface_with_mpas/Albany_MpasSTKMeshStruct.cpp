@@ -259,7 +259,7 @@ void MpasSTKMeshStruct::setBulkData(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector emptyPartVec;
-  std::cout << "elem_map # elments: " << elem_vs->localSubDim() << std::endl;
+  std::cout << "elem_map # elements: " << elem_vs->localSubDim() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
   singlePartVec[0] = nsPartVec["bottom"];

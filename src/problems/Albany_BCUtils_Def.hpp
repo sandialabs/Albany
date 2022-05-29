@@ -867,7 +867,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
     // Input: Periodic BC flag
     p->set<bool>("Periodic BC", false);
 
-    // Output:: Coordindate Vector at vertices
+    // Output:: Coordinate Vector at vertices
     p->set<RCP<DataLayout>>("Coordinate Data Layout", dl->vertices_vector);
     p->set<string>("Coordinate Vector Name", "Coord Vec");
 

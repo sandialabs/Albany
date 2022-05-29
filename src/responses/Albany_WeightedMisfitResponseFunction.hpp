@@ -26,7 +26,7 @@ namespace Albany
    * \brief Weighted l2 misfit response
    *
    * Given an invertible matrix \f$\boldsymbol{C}\f$ and a vector \f$\theta_0\f$, 
-   * this response is, for a given curent parameter vector \f$\theta\f$:
+   * this response is, for a given current parameter vector \f$\theta\f$:
    *
    * \f[
    *   I(\theta) := 

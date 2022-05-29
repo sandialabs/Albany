@@ -266,7 +266,7 @@ OrdinarySTKFieldContainer::fillSolnVector(
     "Error OrdinarySTKFieldContainer::fillSolnVector not called from a solution field container."
     << std::endl);
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -292,7 +292,7 @@ OrdinarySTKFieldContainer::fillSolnMultiVector(
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -348,7 +348,7 @@ OrdinarySTKFieldContainer::saveSolnVector(
   // IKT, FIXME? throw exception if num_time_deriv == 0 and we are calling this
   // function?
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -392,7 +392,7 @@ OrdinarySTKFieldContainer::saveSolnVector(
   // IKT, FIXME? throw exception if num_time_deriv == 0 and we are calling this
   // function?
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -438,7 +438,7 @@ OrdinarySTKFieldContainer::saveSolnVector(
   // IKT, FIXME? throw exception if num_time_deriv < 2 and we are calling this
   // function?
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -485,7 +485,7 @@ OrdinarySTKFieldContainer::saveSolnMultiVector(
     "Error OrdinarySTKFieldContainer::saveSolnMultiVector not called from a solution field container."
     << std::endl);
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -529,7 +529,7 @@ OrdinarySTKFieldContainer::saveResVector(
     "Error OrdinarySTKFieldContainer::saveResVector not called from a solution field container."
     << std::endl);
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index

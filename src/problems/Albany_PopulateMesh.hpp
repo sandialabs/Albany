@@ -61,7 +61,7 @@ public:
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-  //! Each problem must generate it's list of valide parameters
+  //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
   bool useSDBCs() const { return use_sdbcs_; }

@@ -248,7 +248,7 @@ public:
    		       ArrayT& vertices) const;
 
    /** Get Entities corresponding to the locally owned part of the side set requested.
-     * The Entites in the vector should be a dimension
+     * The Entities in the vector should be a dimension
      * lower then <code>getDimension()</code>.
      *
      * \param[in] sideName Name of side set
@@ -257,7 +257,7 @@ public:
    void getAllSides(const std::string & sideName,std::vector<stk::mesh::Entity> & sides) const;
 
    /** Get Entities corresponding to the side set requested. This also limits the entities
-     * to be in a particular element block. The Entites in the vector should be a dimension
+     * to be in a particular element block. The Entities in the vector should be a dimension
      * lower then <code>getDimension()</code>.
      *
      * \param[in] sideName Name of side set

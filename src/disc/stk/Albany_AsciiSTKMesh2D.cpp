@@ -113,7 +113,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
       }
 
       TEUCHOS_TEST_FOR_EXCEPTION (!std::is_sorted(coord_Ids.begin(), coord_Ids.end()), std::runtime_error,
-          "The global coodinate IDs need to be sorted");
+          "The global coordinate IDs need to be sorted");
 
 
       int temp(0);

@@ -71,7 +71,7 @@ public:
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-  //! Each problem must generate it's list of valide parameters
+  //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
 private:
@@ -204,7 +204,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Compute basis funcitons
+  // Compute basis functions
   ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 

@@ -28,7 +28,7 @@ using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;
 using NodeSetGIDsList  = std::map<std::string, std::vector<GO>>;
 using NodeSetCoordList = std::map<std::string, std::vector<double*>>;
 
-// Legacy SideStruct and SideSetList for compatability until all problems are converted to new layouts
+// Legacy SideStruct and SideSetList for compatibility until all problems are converted to new layouts
 class SideStruct
 {
  public:
@@ -41,7 +41,7 @@ class SideStruct
 using SideSetList = std::map<std::string, std::vector<SideStruct>>;
 
 
-// This is a stucture that holds all of the sideset information over all worksets. When running populate mesh,
+// This is a structure that holds all of the sideset information over all worksets. When running populate mesh,
 //   there can be a huge number of worksets with only a handful (1-20) of entries each, which causes a huge
 //   performance hit on GPUs since each of these tiny views must be allocated serially on the GPU. These global/local
 //   side structs avoid this issue by allocating once after computing the global view extents and then providing

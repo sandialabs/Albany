@@ -773,7 +773,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
     std::set<panzer::StrPureBasisPair,panzer::StrPureBasisComp> fieldNames;
     fieldNames.insert(blockFields.begin(),blockFields.end());
 
-    // build string for modifiying vectors
+    // build string for modifying vectors
     std::vector<std::string> dimenStr(3);
     dimenStr[0] = "X"; dimenStr[1] = "Y"; dimenStr[2] = "Z";
 
@@ -823,7 +823,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
       std::vector<std::string> tokens;
 
-      // break up comma seperated fields
+      // break up comma separated fields
       panzer::StringTokenizer(tokens, fields, ",", true);
 
       for (std::size_t i = 0; i < tokens.size(); i++)
@@ -841,7 +841,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
       std::vector<std::string> tokens;
 
-      // break up comma seperated fields
+      // break up comma separated fields
       panzer::StringTokenizer(tokens, fields, ",", true);
 
       for (std::size_t i = 0; i < tokens.size(); i++)
@@ -861,7 +861,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
       std::vector<std::string> tokens;
 
-      // break up comma seperated fields
+      // break up comma separated fields
       panzer::StringTokenizer(tokens, fields, ",", true);
 
       for (std::size_t i = 0; i < tokens.size(); i++)
@@ -877,7 +877,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
       std::vector<std::string> tokens;
 
-      // break up comma seperated fields
+      // break up comma separated fields
       panzer::StringTokenizer(tokens, fields, ",", true);
 
       for (std::size_t i = 0; i < tokens.size(); i++)
@@ -892,7 +892,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       const std::string &fields = Teuchos::any_cast<std::string>(itr->second.getAny());
       std::vector<std::string> tokens;
 
-      // break up comma seperated fields
+      // break up comma separated fields
       panzer::StringTokenizer(tokens, fields, ",", true);
 
       for (std::size_t i = 0; i < tokens.size(); i++)
@@ -998,7 +998,7 @@ void createExodusFile(const std::vector<Teuchos::RCP<panzer::PhysicsBlock> >& ph
       if (str[i] == ']')
         --bracket_level;
       TEUCHOS_TEST_FOR_EXCEPTION(bracket_level < 0, std::logic_error,
-                                 "Error! A closing bracket is located befor an opening one.\n");
+                                 "Error! A closing bracket is located before an opening one.\n");
       TEUCHOS_TEST_FOR_EXCEPTION(bracket_level > 2, std::logic_error,
                                  "Error! Cannot have more than two level of nested blocks.\n");
 

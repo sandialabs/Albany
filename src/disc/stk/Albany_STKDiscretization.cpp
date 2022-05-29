@@ -271,7 +271,7 @@ STKDiscretization::transformMesh()
    for a specified double beta (and similarly for x and y coordinates).  The
    result is a mesh that is finer near x = 0 and coarser near x = L.  The
    relative coarseness/fineness is controlled by the parameter beta: large beta
-   => finer boundary layer near x = 0.  If beta = 0, no tranformation is
+   => finer boundary layer near x = 0.  If beta = 0, no transformation is
    applied.*/
 
     Teuchos::Array<double> betas  = stkMeshStruct->betas_BLtransform;

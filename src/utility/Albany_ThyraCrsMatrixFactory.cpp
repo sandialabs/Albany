@@ -100,7 +100,7 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
   // Note: the alternative would be to have user do two loops: during the first,
   //       the non-zeros are counted, then the graph is created with the exact
   //       nnz count, and in the second loop the indices are inserted.
-  //       Keeping indices in a temp auxiliary sturcture, allowing a single loop,
+  //       Keeping indices in a temp auxiliary structure, allowing a single loop,
   //       seems the easiest solution, and not too bad, considering graphs are
   //       usually created once during simulation setup.
 

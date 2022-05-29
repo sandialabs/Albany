@@ -419,7 +419,7 @@ void GenericSTKMeshStruct::checkNodeSetsFromSideSetsIntegrity ()
     // Fetch the part
     auto it = ssPartVec.find(ssn);
     TEUCHOS_TEST_FOR_EXCEPTION (it==ssPartVec.end(), std::runtime_error,
-                                "Error! Side set " << ssn << " not found. This error should NEVER occurr though. Bug?\n");
+                                "Error! Side set " << ssn << " not found. This error should NEVER occur though. Bug?\n");
     stk::mesh::Part* ssPart = it->second;
 
     // Extract sides
@@ -458,7 +458,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
       // he/she can specify cubature and workset size there. The method initializeSideSetMeshStructs will overwrite
       // this mesh specs anyways.
       // Note: it *may* be that the user need no cubature on this side (only node/cell fields).
-      //       But if the user *does* nned cubature, we want to set a *very wrong* number, so that
+      //       But if the user *does* need cubature, we want to set a *very wrong* number, so that
       //       the code will crash somewhere, and he/sh can realize he/she needs to set cubature info somewhere
 
       // We allow a null ctd here, and we simply do not store the side mesh specs.
@@ -553,7 +553,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       // If requested, we ignore the side maps already stored in the imported side mesh (if any)
       // This can be useful for side mesh of an extruded mesh, in the case it was constructed
       // as side mesh of an extruded mesh with a different ordering and/or different number
-      // of layers. Notice that if that's the case, it probalby is impossible to build a new
+      // of layers. Notice that if that's the case, it probably is impossible to build a new
       // set of maps, since there is no way to correctly map the side nodes to the cell nodes.
       this->sideSetMeshStructs[ss_name]->ignore_side_maps = params_ss->get<bool>("Ignore Side Maps", false);
     }
@@ -1577,18 +1577,18 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<int>("Interleaved Ordering", 1, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
-  validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for LandIce problem that require tranformation of STK mesh
+  validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for LandIce problem that require transformation of STK mesh
   validPL->set<int>("Element Degree", 1, "Element degree (points per edge - 1) in enriched Aeras mesh");
   validPL->set<bool>("Write Coordinates to MatrixMarket", false, "Writing Coordinates to MatrixMarket File"); //for writing coordinates to matrix market file
-  validPL->set<double>("LandIce alpha", 0.0, "Surface boundary inclination for LandIce problems (in degrees)"); //for LandIce problem that require tranformation of STK mesh
-  validPL->set<double>("LandIce L", 1, "Domain length for LandIce problems"); //for LandIce problem that require tranformation of STK mesh
+  validPL->set<double>("LandIce alpha", 0.0, "Surface boundary inclination for LandIce problems (in degrees)"); //for LandIce problem that require transformation of STK mesh
+  validPL->set<double>("LandIce L", 1, "Domain length for LandIce problems"); //for LandIce problem that require transformation of STK mesh
 
   validPL->set<double>("x-shift", 0.0, "Value by which to shift domain in positive x-direction");
   validPL->set<double>("y-shift", 0.0, "Value by which to shift domain in positive y-direction");
   validPL->set<double>("z-shift", 0.0, "Value by which to shift domain in positive z-direction");
   validPL->set<Teuchos::Array<double>>("Betas BL Transform", Teuchos::tuple<double>(0.0, 0.0, 0.0), "Beta parameters for Tanh Boundary Layer transform type");
 
-  validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for LandIce problem that require tranformation of STK mesh
+  validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for LandIce problem that require transformation of STK mesh
 
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,

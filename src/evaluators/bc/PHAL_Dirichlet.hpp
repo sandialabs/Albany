@@ -30,7 +30,7 @@ namespace PHAL {
 
 */
 // **************************************************************
-// Generic Template Impelementation for constructor and PostReg
+// Generic Template Implementation for constructor and PostReg
 // **************************************************************
 
 template<typename EvalT, typename Traits>

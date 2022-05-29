@@ -278,7 +278,7 @@ NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
   }
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
-		     "Error! Logic error in getting paramter " << n
+		     "Error! Logic error in getting parameter " << n
 		     << " in NSMaterialProperty::getValue()" << std::endl);
   return scalar_constant_value;
 }

@@ -256,7 +256,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     //--- Gather Coordinates ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
-    // Output:: Coordindate Vector at vertices
+    // Output:: Coordinate Vector at vertices
     p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
 
     ev =  Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));

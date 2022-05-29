@@ -170,7 +170,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Are we differentiating w.r.t. this parameter?
   bool is_active = (workset.dist_param_deriv_name == this->param_name);
 
-  // If active, intialize data needed for differentiation
+  // If active, initialize data needed for differentiation
   if (is_active) {
     const int num_deriv = this->numNodes;
     const int num_nodes_res = this->numNodes;
@@ -254,7 +254,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   auto nodeID = workset.wsElNodeEqID;
 
-  // If active, intialize data needed for differentiation
+  // If active, initialize data needed for differentiation
   auto p_indexer = Albany::createGlobalLocalIndexer(pvec->space());
   if (is_active) {
     const int num_deriv = this->numNodes;
@@ -444,7 +444,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   auto nodeID = workset.wsElNodeEqID;
 
-  // If active, intialize data needed for differentiation
+  // If active, initialize data needed for differentiation
   auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
   auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
   auto p_indexer = Albany::createGlobalLocalIndexer(pvec->space());

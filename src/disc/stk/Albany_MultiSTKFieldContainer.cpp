@@ -315,7 +315,7 @@ MultiSTKFieldContainer::fillSolnMultiVector(
   using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
   using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
 
-  // Build a dof manger on the fly (it's cheap anyways).
+  // Build a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
@@ -374,7 +374,7 @@ MultiSTKFieldContainer::saveSolnVector(
     "Error MultiSTKFieldContainer::saveSolnVector not called from a solution field container."
     << std::endl);
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -458,7 +458,7 @@ MultiSTKFieldContainer::saveSolnMultiVector(
     "Error MultiSTKFieldContainer::saveSolnMultiVector not called from a solution field container."
     << std::endl);
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index
@@ -493,7 +493,7 @@ MultiSTKFieldContainer::saveResVector(
     "Error MultiSTKFieldContainer::saveResVector not called from a solution field container."
     << std::endl);
 
-  // Setup a dof manger on the fly (it's cheap anyways).
+  // Setup a dof manager on the fly (it's cheap anyways).
   // We don't care about global dofs (hence, the -1), since it's used only
   // to retrieve the local entry id in the thyra vector.
   // The number of equations is given by sol_index

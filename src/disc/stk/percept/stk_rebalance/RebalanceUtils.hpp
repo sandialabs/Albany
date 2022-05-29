@@ -58,5 +58,5 @@ namespace stk {
     bool verify_dependent_ownership(mesh::BulkData& bulk_data, const stk::mesh::EntityRank & parent_rank,
                                     stk::mesh::EntityVector & entities );
 
-  } // namepsace rebalance
-} // namepsace stk
+  } // namespace rebalance
+} // namespace stk

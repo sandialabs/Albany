@@ -52,7 +52,7 @@ public:
   //! Build unmanaged fields
   virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
-  //! Each problem must generate it's list of valide parameters
+  //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
   //! Main problem setup routine. Not directly called, but indirectly by following functions
@@ -196,7 +196,7 @@ constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //----- Gather Coordinate Vector (ad hoc parameters)
     p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
 
-    // Output:: Coordindate Vector at vertices
+    // Output:: Coordinate Vector at vertices
     p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
 
     ev = Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));

@@ -16,7 +16,7 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 
 // **********************************************************************
-// Base Class Generic Implemtation
+// Base Class Generic Implementation
 // **********************************************************************
 namespace PHAL {
 

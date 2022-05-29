@@ -12,7 +12,7 @@
 namespace Albany {
 
   /*!
-   * \brief Reponse function that calls an evaluator that implements only EvalT=
+   * \brief Response function that calls an evaluator that implements only EvalT=
    * PHAL::AlbanyTraits::Residual.
    *
    * It seems that a common use case for a response function is to do something

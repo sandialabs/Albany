@@ -22,7 +22,7 @@
 #include "Albany_Hessian.hpp"
 
 // **********************************************************************
-// Base Class Generic Implemtation
+// Base Class Generic Implementation
 // **********************************************************************
 namespace PHAL {
 

@@ -11,7 +11,7 @@
 #include "Albany_ThyraUtils.hpp"
 
 // **********************************************************************
-// Base Class Generic Implemtation
+// Base Class Generic Implementation
 // **********************************************************************
 namespace PHAL {
 

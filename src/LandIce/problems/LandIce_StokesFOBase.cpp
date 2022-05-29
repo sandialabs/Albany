@@ -335,7 +335,7 @@ void StokesFOBase::parseInputFields ()
       is_dist[param_name+"_lowerbound"] = true;
       dist_params_name_to_mesh_part[param_name+"_lowerbound"] = dist_params_name_to_mesh_part[param_name];
 
-      // set hte scalar type already to ParamScalar
+      // set the scalar type already to ParamScalar
       field_scalar_type[param_name] = FST::ParamScalar;
     }
   }

@@ -138,7 +138,7 @@ loadNodeState(typename Traits::EvalData workset)
   // When the 3d mesh is built online, the gid of the 3d-mesh side *should*
   // match that of the 2d-mesh cell. HOWEVER, when the mesh is saved, then
   // loaded in a future run, stk might reassign side gids. In that case,
-  // the life line is given by the map in the STK discretization, whic
+  // the life line is given by the map in the STK discretization, which
   // associates to each 3d-side GID the corresponding 2d-cell GID
   const auto& side3d_to_cell2d = workset.disc->getSideToSideSetCellMap().at(sideSetName);
 
