@@ -1,16 +1,13 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import unittest
 import numpy as np
 import os
 try:
     from PyAlbany import Utils
-    from PyAlbany import wpyalbany as wpa
+    from PyAlbany import Albany_Pybind11 as wpa
     from PyAlbany.RandomizedCompression import HODLR, Hpartition
 except:
     import Utils
-    import wpyalbany as wpa
+    import Albany_Pybind11 as wpa
     from RandomizedCompression import HODLR, Hpartition
 
 
@@ -28,8 +25,8 @@ class Hessian:
 class TestHODLR(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         cls = self.__class__
@@ -74,8 +71,8 @@ class TestHODLR(unittest.TestCase):
                 idx0 = idxSet[l][0][0]
                 idx1 = idxSet[l][0][1]
                 idx2 = idxSet[l][1][1]
-                H12tilde = Us[l][:,idx0:idx1].T.dot(np.diag(sigs[l][0]).dot(Vs[l][:,idx1:idx2]))
-                error12 = np.linalg.norm(H12tilde - H[idx0:idx1, idx1:idx2])
+                H12tilde = Us[l].getLocalViewHost()[idx0:idx1,:].dot(np.diag(sigs[l][0]).dot(Vs[l].getLocalViewHost()[idx1:idx2,:].T))
+                error12 = np.linalg.norm(H12tilde - H.getLocalViewHost()[idx1:idx2, idx0:idx1])
                 # see equation (5) of "Compressing rank-structured matrices via randomized sampling" Martinsson (2016)
                 # for the error bound, this error does not take into account errors
                 # due to peeling

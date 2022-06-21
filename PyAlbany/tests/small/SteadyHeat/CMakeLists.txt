@@ -32,13 +32,13 @@ IF(ALBANY_MPI)
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 ENDIF()
 
-add_test(PyAlbany_multiple_SteadyHeat ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+add_test(PyAlbany_multiple_SteadyHeat ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/multiple_runs_steadyHeat.py")
 
 set_tests_properties(PyAlbany_multiple_SteadyHeat
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 
 IF(ALBANY_MPI)
-    add_test(PyAlbany_multiple_SteadyHeat_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/inv_steadyHeat.py")
+    add_test(PyAlbany_multiple_SteadyHeat_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/multiple_runs_steadyHeat.py")
 
     set_tests_properties(PyAlbany_multiple_SteadyHeat_MPI
         PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")

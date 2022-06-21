@@ -1,10 +1,8 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 from mpi4py import MPI
 import numpy as np
 from PyAlbany import Utils
 from PyAlbany import ExtremeEvent as ee
+from PyAlbany import Albany_Pybind11 as wpa
 import os
 import sys
 
@@ -19,15 +17,16 @@ except:
 
 
 def evaluate_responses(X, Y, problem, recompute=False):
-    if not recompute and os.path.isfile('Z1.txt'):
-        Z1 = np.loadtxt('Z1.txt')
-        Z2 = np.loadtxt('Z2.txt')
+    if not recompute and os.path.isfile('Z1_2.txt'):
+        Z1 = np.loadtxt('Z1_2.txt')
+        Z2 = np.loadtxt('Z2_2.txt')
     else:
         comm = MPI.COMM_WORLD
         myGlobalRank = comm.rank
 
         parameter_map = problem.getParameterMap(0)
-        parameter = Tpetra.Vector(parameter_map, dtype="d")
+        parameter = Utils.createVector(parameter_map)
+        para_view = parameter.getLocalViewHost()
 
         n_x = len(X)
         n_y = len(Y)
@@ -35,9 +34,10 @@ def evaluate_responses(X, Y, problem, recompute=False):
         Z2 = np.zeros((n_y, n_x))
 
         for i in range(n_x):
-            parameter[0] = X[i]
+            para_view[0,0] = X[i]
             for j in range(n_y):
-                parameter[1] = Y[j]
+                para_view[1,0] = Y[j]
+                parameter.setLocalViewHost(para_view)
                 problem.setParameter(0, parameter)
 
                 problem.performSolve()
@@ -45,8 +45,8 @@ def evaluate_responses(X, Y, problem, recompute=False):
                 Z1[j, i] = problem.getCumulativeResponseContribution(0, 0)
                 Z2[j, i] = problem.getCumulativeResponseContribution(0, 1)
 
-        np.savetxt('Z1.txt', Z1)
-        np.savetxt('Z2.txt', Z2)
+        np.savetxt('Z1_2.txt', Z1)
+        np.savetxt('Z2_2.txt', Z2)
     return Z1, Z2
 
 
@@ -91,7 +91,7 @@ def main(parallelEnv):
     #
     # ----------------------------------------------
 
-    N_samples = 100
+    N_samples = 10
 
     mean = np.array([0., 0.])
     cov = np.array([[1., 0.], [0., 1.]])
@@ -159,6 +159,6 @@ def main(parallelEnv):
 
 
 if __name__ == "__main__":
-    comm = Teuchos.DefaultComm.getComm()
+    comm = wpa.getTeuchosComm(MPI.COMM_WORLD)
     parallelEnv = Utils.createDefaultParallelEnv(comm)
     main(parallelEnv)

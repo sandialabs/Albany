@@ -28,11 +28,21 @@ set (ALBANY_INCLUDE_DIRS
 
 set(PyAlbany_SRCS
   Albany_PyUtils.cpp
-  PyAlbany_Stokhos.cpp
 )
 set(PyAlbany_HDRS
   Albany_PyUtils.hpp
-  PyAlbany_Stokhos.hpp
+)
+
+set(PybindAlbany_SRCS
+  Albany_Pybind11.cpp
+  Albany_Pybind11_Comm.cpp
+  Albany_Pybind11_ParallelEnv.cpp
+  Albany_Pybind11_ParameterList.cpp
+  Albany_Pybind11_Timer.cpp
+  Albany_Pybind11_Tpetra.cpp
+)
+set(PybindAlbany_HDRS
+  Albany_Pybind11_Comm.hpp
 )
 
 set(AI_SRCS
@@ -115,3 +125,47 @@ if (INSTALL_ALBANY)
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 endif()
+
+
+include(FetchContent)
+FetchContent_Declare(
+	pybind11
+	GIT_REPOSITORY https://github.com/pybind/pybind11.git
+	GIT_TAG        v2.6.2
+	GIT_SHALLOW    TRUE
+)
+
+FetchContent_MakeAvailable(pybind11)
+
+# Retrieve the Mpi4Py version
+EXECUTE_PROCESS(COMMAND
+  ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.__version__)"
+  OUTPUT_VARIABLE Mpi4Py_VERSION
+  ERROR_VARIABLE  Mpi4Py_VERSION_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+# If Mpi4Py_VERSION_ERROR does not exist, then we know Mpi4Py exists;
+# now look for the Mpi4Py include directory
+IF(NOT Mpi4Py_VERSION_ERROR)
+  EXECUTE_PROCESS(COMMAND
+    ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.get_include())"
+    OUTPUT_VARIABLE Mpi4Py_INCLUDE_DIR
+    ERROR_VARIABLE  Mpi4Py_INCLUDE_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+  pybind11_add_module(Albany_Pybind11 ${PybindAlbany_SRCS})
+  target_include_directories(Albany_Pybind11 PUBLIC ${Trilinos_INCLUDE_DIRS} ${Mpi4Py_INCLUDE_DIR})
+  target_compile_features(Albany_Pybind11 PUBLIC cxx_std_11)
+  #target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
+  target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} albanyPyInterface)
+  set_target_properties(Albany_Pybind11 PROPERTIES SUFFIX ".so")
+
+  if (INSTALL_ALBANY)
+    install(TARGETS Albany_Pybind11
+      LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
+      ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
+  endif()
+
+ENDIF(NOT Mpi4Py_VERSION_ERROR)

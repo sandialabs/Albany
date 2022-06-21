@@ -1,6 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import unittest
 import numpy as np
 
@@ -14,8 +11,8 @@ import os
 class TestSteadyHeat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         cls = self.__class__
@@ -44,43 +41,48 @@ class TestSteadyHeat(unittest.TestCase):
         problem.performSolve()
 
         response_before_analysis = problem.getResponse(0)
+        response_before_analysis_view = response_before_analysis.getLocalViewHost()
 
         problem.performAnalysis()
 
         para_0 = problem.getParameter(0)
         para_1 = problem.getParameter(1)
 
-        print(para_0.getData())
-        print(para_1.getData())
+        para_0_view = para_0.getLocalViewHost()
+        para_1_view = para_1.getLocalViewHost()
 
-        para_1_norm = Utils.norm(para_1.getData(), cls.comm)
+        print(para_0_view)
+        print(para_1_view)
+
+        para_1_norm = Utils.norm(para_1)
         print(para_1_norm)
 
         if rank == 0:
-            self.assertTrue(np.abs(para_0[0] - p_0_target) < tol)
+            self.assertTrue(np.abs(para_0_view[0,0] - p_0_target) < tol)
             self.assertTrue(np.abs(para_1_norm - p_1_norm_target) < tol)
 
         problem.performSolve()
 
         response_after_analysis = problem.getResponse(0)
+        response_after_analysis_view = response_after_analysis.getLocalViewHost()
 
-        print("Response before analysis " + str(response_before_analysis.getData()))
-        print("Response after analysis " + str(response_after_analysis.getData()))
+        print("Response before analysis " + str(response_before_analysis_view))
+        print("Response after analysis " + str(response_after_analysis_view))
         if rank == 0:
-            self.assertTrue(np.abs(response_before_analysis[0] - g_target_before) < tol)
-            self.assertTrue(np.abs(response_after_analysis[0] - g_target_after) < tol)
+            self.assertTrue(np.abs(response_before_analysis_view[0,0] - g_target_before) < tol)
+            self.assertTrue(np.abs(response_after_analysis_view[0,0] - g_target_after) < tol)
 
         parameter_map_0 = problem.getParameterMap(0)
-        para_0_new = Tpetra.Vector(parameter_map_0, dtype="d")
-        para_0_new[:] = 0.0
+        para_0_new = Utils.createVector(parameter_map_0)
         problem.setParameter(0, para_0_new)
 
         problem.performSolve()
 
         response = problem.getResponse(0)
-        print("Response after setParameter " + str(response.getData()))
+        response_view = response.getLocalViewHost()
+        print("Response after setParameter " + str(response_view))
         if rank == 0:
-            self.assertTrue(np.abs(response[0] - g_target_2) < tol)
+            self.assertTrue(np.abs(response_view[0,0] - g_target_2) < tol)
 
     @classmethod
     def tearDownClass(cls):

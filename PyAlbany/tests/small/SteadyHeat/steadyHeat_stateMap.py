@@ -1,6 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import unittest
 import numpy as np
 try:
@@ -12,12 +9,11 @@ import os
 class TestSteadyHeat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         cls = self.__class__
-        rank = cls.comm.getRank()
 
         file_dir = os.path.dirname(__file__)
 
@@ -26,15 +22,19 @@ class TestSteadyHeat(unittest.TestCase):
         problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         parameter_map    = problem.getParameterMap(0)
-        parameter        = Tpetra.MultiVector(parameter_map, 1, dtype="d")
+        parameter        = Utils.createMultiVector(parameter_map, 1)
         num_elems        = parameter_map.getLocalNumElements()
-        parameter[0, :]  = 2.0*np.ones(num_elems)
+
+        parameter_view = parameter.getLocalViewHost()
+
+        parameter_view[:,0] = 2.0*np.ones(num_elems)
+
+        parameter.setLocalViewHost(parameter_view)
     
 
         problem.performSolve()
         state_map    = problem.getStateMap()
-        state        = Tpetra.MultiVector(state_map, 1, dtype="d")
-        state[0, :]  = problem.getState()
+        state        = problem.getState()
         state_ref    = Utils.loadMVector('state_ref', 1, state_map, distributedFile=False, useBinary=False, readOnRankZero=True)
         
 
@@ -42,7 +42,9 @@ class TestSteadyHeat(unittest.TestCase):
         setup_time = stackedTimer.accumulatedTime("PyAlbany: Setup Time")
         print("setup_time = " + str(setup_time))
         tol = 1.e-8
-        self.assertTrue(np.linalg.norm(state_ref[0, :] - state[0,:]) < tol)
+        state_view = state.getLocalViewHost()
+        state_ref_view = state_ref.getLocalViewHost()
+        self.assertTrue(np.linalg.norm(state_ref_view[:, 0] - state_view[:, 0]) < tol)
 
 
     @classmethod

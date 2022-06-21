@@ -61,7 +61,7 @@ using namespace PyAlbany;
 using Teuchos::RCP;
 using Teuchos::rcp;
 
-PyParallelEnv::PyParallelEnv(Teuchos::RCP<Teuchos::Comm<int>> _comm, int _num_threads, int _num_numa, int _device_id) : comm(_comm), num_threads(_num_threads), num_numa(_num_numa), device_id(_device_id)
+PyParallelEnv::PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, int _num_numa, int _device_id) : comm(_comm), num_threads(_num_threads), num_numa(_num_numa), device_id(_device_id)
 {
     Kokkos::InitArguments args;
     args.num_threads = this->num_threads;
@@ -69,6 +69,8 @@ PyParallelEnv::PyParallelEnv(Teuchos::RCP<Teuchos::Comm<int>> _comm, int _num_th
     args.device_id = this->device_id;
 
     Kokkos::initialize(args);
+
+    rank = comm->getRank();
 }
 
 PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParallelEnv) : pyParallelEnv(_pyParallelEnv)
@@ -173,7 +175,7 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
     stackedTimer->stopBaseTimer();
 }
 
-Teuchos::RCP<const PyTrilinosMap> PyProblem::getResponseMap(const int g_index)
+Teuchos::RCP<const Tpetra_Map> PyProblem::getResponseMap(const int g_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -191,14 +193,14 @@ Teuchos::RCP<const PyTrilinosMap> PyProblem::getResponseMap(const int g_index)
         auto g_space = g->space();
         stackedTimer->stop("PyAlbany: getResponseMap");
         stackedTimer->stopBaseTimer();
-        return getPyTrilinosMap(Albany::getTpetraMap(g_space), false);
+        return getCorrectedMap(Albany::getTpetraMap(g_space), false);
     }
     stackedTimer->stop("PyAlbany: getResponseMap");
     stackedTimer->stopBaseTimer();
     return Teuchos::null;
 }
 
-Teuchos::RCP<const PyTrilinosMap> PyProblem::getStateMap()
+Teuchos::RCP<const Tpetra_Map> PyProblem::getStateMap()
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -216,26 +218,26 @@ Teuchos::RCP<const PyTrilinosMap> PyProblem::getStateMap()
         auto s_space = s->space();
         stackedTimer->stop("PyAlbany: getStateMap");
         stackedTimer->stopBaseTimer();
-        return getPyTrilinosMap(Albany::getTpetraMap(s_space), false);
+        return getCorrectedMap(Albany::getTpetraMap(s_space), false);
     }
     stackedTimer->stop("PyAlbany: getStateMap");
     stackedTimer->stopBaseTimer();
     return Teuchos::null;
 }
 
-Teuchos::RCP<const PyTrilinosMap> PyProblem::getParameterMap(const int p_index)
+Teuchos::RCP<const Tpetra_Map> PyProblem::getParameterMap(const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: getParameterMap");
     auto p_space = solver->get_p_space(p_index);
-    auto outputMap = getPyTrilinosMap(Albany::getTpetraMap(p_space), true);
+    auto outputMap = getCorrectedMap(Albany::getTpetraMap(p_space), true);
     stackedTimer->stop("PyAlbany: getParameterMap");
     stackedTimer->stopBaseTimer();
     return outputMap;
 }
 
-void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVector> direction)
+void PyProblem::setDirections(const int p_index, Teuchos::RCP<Tpetra_MultiVector> direction)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -248,10 +250,8 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVec
     {
         if (p_index == l)
         {
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
             thyraDirections[l] = Albany::createThyraMultiVector(direction);
             continue;
-#endif
         }
 
         bool is_null = Teuchos::is_null(thyraDirections[l]);
@@ -259,25 +259,16 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<PyTrilinosMultiVec
         {
             auto p_space = solver->getNominalValues().get_p(l)->space();
             thyraDirections[l] = Thyra::createMembers(p_space, n_directions);
-        }
-        if (p_index == l)
-        {
-            Teuchos::RCP<Tpetra_MultiVector> thyraDirectionsT = Albany::getTpetraMultiVector(thyraDirections[l]);
-
-            auto directions_in_view = direction->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
-            auto directions_out_view = thyraDirectionsT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
-            Kokkos::deep_copy(directions_out_view, directions_in_view);
-        }
-        else if (is_null)
             for (size_t i_direction = 0; i_direction < n_directions; i_direction++)
                 thyraDirections[l]->col(i_direction)->assign(0.0);
+        }
     }
 
     stackedTimer->stop("PyAlbany: setDirections");
     stackedTimer->stopBaseTimer();
 }
 
-void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p)
+void PyProblem::setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -301,11 +292,9 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p
     {
         if (p_index == l)
         {
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
             thyraParameter[l] = Albany::createThyraVector(p);
             albanyModel->setNominalValue(l, thyraParameter[l]);
             continue;
-#endif
         }
 
         bool is_null = Teuchos::is_null(thyraParameter[l]);
@@ -313,58 +302,27 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<PyTrilinosVector> p
         {
             auto p_space = solver->getNominalValues().get_p(l)->space();
             thyraParameter[l] = Thyra::createMember(p_space);
-        }
-        if (p_index == l)
-        {
-            Teuchos::RCP<Tpetra_MultiVector> thyraParameterT = Albany::getTpetraVector(thyraParameter[l]);
-
-            auto p_in_view = p->getLocalView<PyTrilinosVector::node_type::device_type>(Tpetra::Access::ReadOnly);
-            auto p_out_view = thyraParameterT->getLocalView<Tpetra_Vector::node_type::device_type>(Tpetra::Access::ReadWrite);
-            Kokkos::deep_copy(p_out_view, p_in_view);
-        }
-        else if (is_null)
             thyraParameter[l]->assign(0.0);
-
-        if (p_index == l)
-            albanyModel->setNominalValue(l, thyraParameter[l]);
+        }
     }
 
     stackedTimer->stop("PyAlbany: setParameter");
     stackedTimer->stopBaseTimer();
 }
 
-Teuchos::RCP<PyTrilinosVector> PyProblem::getParameter(const int p_index)
+Teuchos::RCP<Tpetra_Vector> PyProblem::getParameter(const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: getParameter");
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
     Teuchos::RCP<Thyra_Vector> p = thyraParameter[p_index];
-    Teuchos::RCP<PyTrilinosVector> p_out = Albany::getTpetraVector(p);
+    Teuchos::RCP<Tpetra_Vector> p_out = Albany::getTpetraVector(p);
     stackedTimer->stop("PyAlbany: getParameter");
     stackedTimer->stopBaseTimer();
     return p_out;
-#else
-    Teuchos::RCP<const Thyra_Vector> p = thyraParameter[p_index];
-    Teuchos::RCP<PyTrilinosVector> p_out = rcp(new PyTrilinosVector(this->getParameterMap(p_index)));
-    if (Teuchos::nonnull(p))
-    {
-        Teuchos::RCP<const Tpetra_Vector> pT = Albany::getConstTpetraVector(p);
-
-        auto p_out_view = p_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
-        auto p_in_view = pT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
-        Kokkos::deep_copy(p_out_view, p_in_view);
-        stackedTimer->stop("PyAlbany: getParameter");
-        stackedTimer->stopBaseTimer();
-        return p_out;
-    }
-    stackedTimer->stop("PyAlbany: getParameter");
-    stackedTimer->stopBaseTimer();
-    return Teuchos::null;
-#endif
 }
 
-Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
+Teuchos::RCP<Tpetra_Vector> PyProblem::getResponse(const int g_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -375,34 +333,18 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getResponse(const int g_index)
     }
     else
     {
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
         Teuchos::RCP<Thyra_Vector> g = thyraResponses[g_index];
-        Teuchos::RCP<PyTrilinosVector> g_out = Albany::getTpetraVector(g);
+        Teuchos::RCP<Tpetra_Vector> g_out = Albany::getTpetraVector(g);
         stackedTimer->stop("PyAlbany: getResponse");
         stackedTimer->stopBaseTimer();
         return g_out;
-#else
-        Teuchos::RCP<const Thyra_Vector> g = thyraResponses[g_index];
-        Teuchos::RCP<PyTrilinosVector> g_out = rcp(new PyTrilinosVector(this->getResponseMap(g_index)));
-        if (Teuchos::nonnull(g))
-        {
-            Teuchos::RCP<const Tpetra_Vector> gT = Albany::getConstTpetraVector(g);
-
-            auto g_out_view = g_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
-            auto g_in_view = gT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
-            Kokkos::deep_copy(g_out_view, g_in_view);
-            stackedTimer->stop("PyAlbany: getResponse");
-            stackedTimer->stopBaseTimer();
-            return g_out;
-        }
-#endif
     }
     stackedTimer->stop("PyAlbany: getResponse");
     stackedTimer->stopBaseTimer();
     return Teuchos::null;
 }
 
-Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
+Teuchos::RCP<Tpetra_Vector> PyProblem::getState()
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -413,33 +355,18 @@ Teuchos::RCP<PyTrilinosVector> PyProblem::getState()
     }
     else
     {
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
         Teuchos::RCP<Thyra_Vector> s = thyraResponses.back();
-        Teuchos::RCP<PyTrilinosVector> s_out = Albany::getTpetraVector(s);
+        Teuchos::RCP<Tpetra_Vector> s_out = Albany::getTpetraVector(s);
         stackedTimer->stop("PyAlbany: getState");
         stackedTimer->stopBaseTimer();
         return s_out;
-#else
-        Teuchos::RCP<const Thyra_Vector> s = thyraResponses.back();
-        Teuchos::RCP<PyTrilinosVector> s_out = rcp(new PyTrilinosVector(this->getStateMap()));
-        if (Teuchos::nonnull(s))
-        {
-            Teuchos::RCP<const Tpetra_Vector> sT = Albany::getConstTpetraVector(s);
-            auto s_out_view = s_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
-            auto s_in_view = sT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
-            Kokkos::deep_copy(s_out_view, s_in_view);
-            stackedTimer->stop("PyAlbany: getState");
-            stackedTimer->stopBaseTimer();
-            return s_out;
-        }
-#endif
     }
     stackedTimer->stop("PyAlbany: getState");
     stackedTimer->stopBaseTimer();
     return Teuchos::null;
 }
 
-Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index, const int p_index)
+Teuchos::RCP<Tpetra_MultiVector> PyProblem::getSensitivity(const int g_index, const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -450,33 +377,17 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getSensitivity(const int g_index,
     }
     else
     {
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
-        Teuchos::RCP<PyTrilinosMultiVector> dg_out = Albany::getTpetraMultiVector(thyraSensitivities[g_index][p_index]);
+        Teuchos::RCP<Tpetra_MultiVector> dg_out = Albany::getTpetraMultiVector(thyraSensitivities[g_index][p_index]);
         stackedTimer->stop("PyAlbany: getSensitivity");
         stackedTimer->stopBaseTimer();
         return dg_out;
-#else
-        Teuchos::RCP<const Thyra_MultiVector> dg = thyraSensitivities[g_index][p_index];
-        if (Teuchos::nonnull(dg))
-        {
-            Teuchos::RCP<const Tpetra_MultiVector> dgT = Albany::getConstTpetraMultiVector(dg);
-            Teuchos::RCP<PyTrilinosMultiVector> dg_out = rcp(new PyTrilinosMultiVector(this->getParameterMap(p_index),
-                                                                                       dgT->getNumVectors()));
-            auto dg_out_view = dg_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
-            auto dg_in_view = dgT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
-            Kokkos::deep_copy(dg_out_view, dg_in_view);
-            stackedTimer->stop("PyAlbany: getSensitivity");
-            stackedTimer->stopBaseTimer();
-            return dg_out;
-        }
-#endif
     }
     stackedTimer->stop("PyAlbany: getSensitivity");
     stackedTimer->stopBaseTimer();
     return Teuchos::null;
 }
 
-Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_index, const int p_index)
+Teuchos::RCP<Tpetra_MultiVector> PyProblem::getReducedHessian(const int g_index, const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
@@ -487,26 +398,10 @@ Teuchos::RCP<PyTrilinosMultiVector> PyProblem::getReducedHessian(const int g_ind
     }
     else
     {
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
-        Teuchos::RCP<PyTrilinosMultiVector> hv_out = Albany::getTpetraMultiVector(thyraReducedHessian[g_index][p_index]);
+        Teuchos::RCP<Tpetra_MultiVector> hv_out = Albany::getTpetraMultiVector(thyraReducedHessian[g_index][p_index]);
         stackedTimer->stop("PyAlbany: getReducedHessian");
         stackedTimer->stopBaseTimer();
         return hv_out;
-#else
-        Teuchos::RCP<const Thyra_MultiVector> hv = thyraReducedHessian[g_index][p_index];
-        if (Teuchos::nonnull(hv))
-        {
-            Teuchos::RCP<const Tpetra_MultiVector> hvT = Albany::getConstTpetraMultiVector(hv);
-            Teuchos::RCP<PyTrilinosMultiVector> hv_out = rcp(new PyTrilinosMultiVector(this->getParameterMap(p_index),
-                                                                                       hvT->getNumVectors()));
-            auto hv_out_view = hv_out->getLocalView<PyTrilinosMultiVector::node_type::device_type>(Tpetra::Access::ReadWrite);
-            auto hv_in_view = hvT->getLocalView<Tpetra_MultiVector::node_type::device_type>(Tpetra::Access::ReadOnly);
-            Kokkos::deep_copy(hv_out_view, hv_in_view);
-            stackedTimer->stop("PyAlbany: getReducedHessian");
-            stackedTimer->stopBaseTimer();
-            return hv_out;
-        }
-#endif
     }
     stackedTimer->stop("PyAlbany: getReducedHessian");
     stackedTimer->stopBaseTimer();
@@ -572,4 +467,129 @@ void PyProblem::reportTimers()
     options.output_fraction = true;
     options.output_minmax = true;
     stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
+}
+
+Teuchos::RCP<Tpetra_MultiVector> PyAlbany::scatterMVector(Teuchos::RCP<Tpetra_MultiVector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap)
+{
+    int myRank = distributedMap->getComm()->getRank();
+    auto rankZeroMap = getRankZeroMap(distributedMap);
+    Teuchos::RCP<Tpetra_Export> exportZero = rcp(new Tpetra_Export(distributedMap, rankZeroMap));
+    Teuchos::RCP<Tpetra_MultiVector> outVector = rcp(new Tpetra_MultiVector(distributedMap, inVector->getNumVectors()));
+    outVector->doImport(*inVector, *exportZero, Tpetra::INSERT);
+    return outVector;
+}
+
+Teuchos::RCP<Tpetra_MultiVector> PyAlbany::gatherMVector(Teuchos::RCP<Tpetra_MultiVector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap)
+{
+    int myRank = distributedMap->getComm()->getRank();
+    auto rankZeroMap = getRankZeroMap(distributedMap);
+    Teuchos::RCP<Tpetra_Export> exportZero = rcp(new Tpetra_Export(distributedMap, rankZeroMap));
+    Teuchos::RCP<Tpetra_MultiVector> outVector = rcp(new Tpetra_MultiVector(rankZeroMap, inVector->getNumVectors()));
+    outVector->doExport(*inVector, *exportZero, Tpetra::ADD);
+    return outVector;
+}
+
+Teuchos::RCP<Teuchos::ParameterList> PyAlbany::getParameterList(std::string inputFile, Teuchos::RCP<PyParallelEnv> pyParallelEnv)
+{
+    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::createParameterList("Albany Parameters");
+
+    std::string const input_extension = Albany::getFileExtension(inputFile);
+
+    if (input_extension == "yaml" || input_extension == "yml")
+    {
+        Teuchos::updateParametersFromYamlFileAndBroadcast(
+            inputFile, params.ptr(), *(pyParallelEnv->comm));
+    }
+    else
+    {
+        Teuchos::updateParametersFromXmlFileAndBroadcast(
+            inputFile, params.ptr(), *(pyParallelEnv->comm));
+    }
+
+    return params;
+}
+
+void PyAlbany::writeParameterList(std::string outputFile, Teuchos::RCP<Teuchos::ParameterList> parameterList)
+{
+    std::string const output_extension = Albany::getFileExtension(outputFile);
+
+    if (output_extension == "yaml" || output_extension == "yml")
+    {
+        Teuchos::writeParameterListToYamlFile(*parameterList, outputFile);
+    }
+    else
+    {
+        Teuchos::writeParameterListToXmlFile(*parameterList, outputFile);
+    }    
+}
+
+void PyAlbany::orthogTpMVecs(Teuchos::RCP<Tpetra_MultiVector> inputVecs, int blkSize)
+{
+  typedef double                            ScalarType;
+  typedef int                               OT;
+  typedef typename Teuchos::SerialDenseMatrix<OT,ScalarType> MAT;
+  typedef Tpetra::MultiVector<ScalarType>   MV;
+  typedef Kokkos::DefaultExecutionSpace     EXSP;
+  typedef Tpetra::Operator<ScalarType>             OP;
+  typedef Belos::OperatorTraits<ScalarType,MV,OP> OPT;
+  int numVecs = inputVecs->getNumVectors();
+  int numRows = inputVecs->getGlobalLength();
+  std::string orthogType("ICGS");
+
+  Teuchos::RCP<MAT> B = Teuchos::rcp(new MAT(blkSize, blkSize)); //Matrix for coeffs of X
+  Teuchos::Array<Teuchos::RCP<MAT>> C; 
+
+  Belos::OrthoManagerFactory<ScalarType, MV, OP> factory;
+  Teuchos::RCP<Teuchos::ParameterList> paramsOrtho;   // can be null
+
+  //Default OutputManager is std::cout.
+  Teuchos::RCP<Belos::OutputManager<ScalarType> > myOutputMgr = Teuchos::rcp( new Belos::OutputManager<ScalarType>() );
+  const Teuchos::RCP<Belos::OrthoManager<ScalarType,MV>> orthoMgr = factory.makeOrthoManager (orthogType, Teuchos::null, myOutputMgr, "Tpetra OrthoMgr", paramsOrtho); 
+  
+  int numLoops = numVecs/blkSize;
+  int remainder = numVecs % blkSize;
+
+  Teuchos::RCP<MV> vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(0,blkSize-1));
+  orthoMgr->normalize(*vecBlock, B);
+  std::vector<Teuchos::RCP<const MV>> pastVecArray;
+  pastVecArray.push_back(vecBlock);
+  Teuchos::ArrayView<Teuchos::RCP<const MV>> pastVecArrayView; 
+
+  for(int k=1; k<numLoops; k++){
+    pastVecArrayView = arrayViewFromVector(pastVecArray);
+    vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(k*blkSize,k*blkSize + blkSize - 1));
+    C.append(rcp(new MAT(blkSize, blkSize)));
+    int rank = orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
+    pastVecArray.push_back(vecBlock);
+  }
+  if( remainder > 0){
+    pastVecArrayView = arrayViewFromVector(pastVecArray);
+    vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(numVecs-remainder, numVecs-1));
+    B = Teuchos::rcp(new MAT(remainder, remainder));
+    C.append(Teuchos::rcp(new MAT(remainder, remainder)));
+    int rank = orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
+  }
+}
+
+Teuchos::RCP<const Tpetra_Map> PyAlbany::getRankZeroMap(Teuchos::RCP<const Tpetra_Map> distributedMap)
+{
+    int numGlobalElements = distributedMap->getGlobalNumElements();
+    int numLocalElements = distributedMap->getLocalNumElements();
+
+    // GO and Tpetra_Map::global_ordinal_type can be different
+    auto nodes_gids_view = distributedMap->getMyGlobalIndices();
+    Teuchos::Array<GO> nodes_gids(numLocalElements);
+    for (int i=0; i<numLocalElements; ++i)
+        nodes_gids[i] = nodes_gids_view(i);
+    Teuchos::Array<GO> all_nodes_gids;
+    Albany::gatherV(distributedMap->getComm(),nodes_gids(),all_nodes_gids,0);
+    std::sort(all_nodes_gids.begin(),all_nodes_gids.end());
+    auto it = std::unique(all_nodes_gids.begin(),all_nodes_gids.end());
+    all_nodes_gids.erase(it,all_nodes_gids.end());
+
+    Teuchos::Array<Tpetra_Map::global_ordinal_type> all_nodes_py_gids(all_nodes_gids.size());
+    for (int i=0; i<all_nodes_gids.size(); ++i)
+        all_nodes_py_gids[i] = all_nodes_gids[i];
+
+    return rcp(new Tpetra_Map(numGlobalElements, all_nodes_py_gids, distributedMap->getIndexBase(), distributedMap->getComm()));
 }

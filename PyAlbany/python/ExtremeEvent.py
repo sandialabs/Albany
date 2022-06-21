@@ -1,6 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import sys
 import numpy as np
 import scipy.sparse.linalg as slinalg
@@ -184,8 +181,8 @@ class Op_Nystrom(slinalg.LinearOperator):
     def dot(self, x):
         n_vec = np.shape(x)[0]
 
-        scaled_x = Tpetra.MultiVector(self.Map, n_vec, dtype="d")
-        y = Tpetra.MultiVector(self.Map, n_vec, dtype="d")
+        scaled_x = Utils.createMultiVector(self.Map, n_vec)
+        y = Utils.createMultiVector(self.Map, n_vec)
         for i in range(0, self.n_coordinates):
             scaled_x[:,i] = self.sqrt_W[i] * x[:,i]
 
@@ -339,7 +336,7 @@ def update_parameter_list(parameter, n_modes, max_abs=5.e+04, sufix='', max_n_mo
     n_params = n_vectors
     if useDistributed:
         n_params += n_modes
-    parameterlist = Teuchos.ParameterList()
+    parameterlist = Utils.createParameterList()
     parameterlist.set('Number Of Parameters', n_params)
     for i in range(0, n_vectors):
         parameterlist.set('Parameter '+str(i), {'Type':'Vector'})
@@ -368,7 +365,7 @@ def update_parameter_list(parameter, n_modes, max_abs=5.e+04, sufix='', max_n_mo
         rfi.set('Number Of Fields', n_field)
 
         for i in range(0, n_modes):
-            parameterlist = Teuchos.ParameterList()
+            parameterlist = Utils.createParameterList()
             parameterlist.set('Field Name', 'Mode '+str(i))
             parameterlist.set('Field Type', 'Node Scalar')
             parameterlist.set('Field Origin', 'File')
@@ -468,15 +465,19 @@ def getDistributionParameters(problem, parameter):
 def setInitialGuess(problem, p, n_params, params_in_vector=True):
     if params_in_vector:
         parameter_map = problem.getParameterMap(0)
-        parameter = Tpetra.Vector(parameter_map, dtype="d")
+        parameter = Utils.createVector(parameter_map)
+        para_view = parameter.getLocalViewHost()
         for j in range(0, n_params):
-            parameter[j] = p[j]
+            para_view[j,0] = p[j]
+        parameter.setLocalViewHost(para_view)
         problem.setParameter(0, parameter)
     else:
         for j in range(0, n_params):
             parameter_map = problem.getParameterMap(j)
-            parameter = Tpetra.Vector(parameter_map, dtype="d")
-            parameter[0] = p[j]
+            parameter = Utils.createVector(parameter_map)
+            para_view = parameter.getLocalViewHost()
+            para_view[0,0] = p[j]
+            parameter.setLocalViewHost(para_view)
             problem.setParameter(j, parameter)
 
 
@@ -500,12 +501,14 @@ def evaluateThetaStar_QPM(QoI, problem, n_params, alpha=5e0, response_id=0, F_id
 
         if params_in_vector:
             para = problem.getParameter(0)
+            para_view = para.getLocalViewHost()
             for j in range(0, n_params):
-                theta_star[i, j] = para.getData()[j]
+                theta_star[i, j] = para_view[j,0]
         else:
             for j in range(0, n_params):
                 para = problem.getParameter(j)
-                theta_star[i, j] = para.getData()
+                para_view = para.getLocalViewHost()
+                theta_star[i, j] = para_view[0,0]
 
         problem.performSolve()
 
@@ -541,12 +544,14 @@ def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vec
 
         if params_in_vector:
             para = problem.getParameter(0)
+            para_view = para.getLocalViewHost()
             for j in range(0, n_params):
-                theta_star[i, j] = para.getData()[j]
+                theta_star[i, j] = para_view[j,0]
         else:
             for j in range(0, n_params):
                 para = problem.getParameter(j)
-                theta_star[i, j] = para.getData()
+                para_view = para.getLocalViewHost()
+                theta_star[i, j] = para_view[0,0]
 
         problem.performSolve()
 
@@ -577,15 +582,19 @@ def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_
 
                 if params_in_vector:
                     parameter_map = problem.getParameterMap(0)
-                    parameter = Tpetra.Vector(parameter_map, dtype="d")
+                    parameter = Utils.createVector(parameter_map)
+                    para_view = parameter.getLocalViewHost()
                     for j_param in range(0, n_params):
-                        parameter[j_param] = sample[j_param]
+                        para_view[j_param,0] = sample[j_param]
+                    parameter.setLocalViewHost(para_view)
                     problem.setParameter(0, parameter)
                 else:
                     for k in range(0, n_params):
                         parameter_map = problem.getParameterMap(k)
-                        parameter = Tpetra.Vector(parameter_map, dtype="d")
-                        parameter[0] = sample[k]
+                        parameter = Utils.createVector(parameter_map)
+                        para_view = parameter.getLocalViewHost()
+                        para_view[0,0] = sample[k]
+                        parameter.setLocalViewHost(para_view)
                         problem.setParameter(k, parameter)
                 problem.performSolve()
 
@@ -617,24 +626,28 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
             n_theta_star = np.zeros((n_params,))
 
             if params_in_vector:
-                parameter_map = problem.getParameter(0)
-                parameter = Tpetra.Vector(parameter_map, dtype="d")
+                parameter_map = problem.getParameterMap(0)
+                parameter = Utils.createVector(parameter_map)
+                para_view = parameter.getLocalViewHost()
                 for j in range(0, n_params):
-                    parameter[j] = theta_star[i,j]
+                    para_view[j,0] = theta_star[i,j]
+                parameter.setLocalViewHost(para_view)
                 problem.setParameter(0, parameter)
             else:
                 for k in range(0, n_params):
                     parameter_map = problem.getParameterMap(k)
-                    parameter = Tpetra.Vector(parameter_map, dtype="d")
-                    parameter[0] = theta_star[i,k]
+                    parameter = Utils.createVector(parameter_map)
+                    para_view = parameter.getLocalViewHost()
+                    para_view[0,0] = theta_star[i,k]
+                    parameter.setLocalViewHost(para_view)
                     problem.setParameter(k, parameter)
 
             problem.performSolve()
             if params_in_vector:
-                n_theta_star = -problem.getSensitivity(0, 0).getData(0)  
+                n_theta_star = -problem.getSensitivity(0, 0).getLocalViewHost()[:,0]  
             else:
                 for k in range(0, n_params):
-                    n_theta_star[k] = -problem.getSensitivity(0, k).getData(0)[0]
+                    n_theta_star[k] = -problem.getSensitivity(0, k).getLocalViewHost()[0,0]
             norm = np.linalg.norm(n_theta_star)
             n_theta_star /= norm
 
@@ -655,16 +668,20 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
                 else:
 
                     if params_in_vector:
-                        parameter_map = problem.getParameter(0)
-                        parameter = Tpetra.Vector(parameter_map, dtype="d")
+                        parameter_map = problem.getParameterMap(0)
+                        parameter = Utils.createVector(parameter_map)
+                        para_view = parameter.getLocalViewHost()
                         for j in range(0, n_params):
-                            parameter[j] = sample[j]
+                            para_view[j,0] = sample[j]
+                        parameter.setLocalViewHost(para_view)
                         problem.setParameter(0, parameter)
                     else:
                         for k in range(0, n_params):
                             parameter_map = problem.getParameterMap(k)
-                            parameter = Tpetra.Vector(parameter_map, dtype="d")
-                            parameter[0] = sample[k]
+                            parameter = Utils.createVector(parameter_map)
+                            para_view = parameter.getLocalViewHost()
+                            para_view[0,0] = sample[k]
+                            parameter.setLocalViewHost(para_view)
                             problem.setParameter(k, parameter)
                     problem.performSolve()
                     current_F_above = problem.getCumulativeResponseContribution(0, F_id) > F_star[i]
@@ -718,20 +735,24 @@ class HessianOperator(slinalg.LinearOperator):
         self.theta_star = theta_star
         if self.params_in_vector:
             parameter_map = self.problem.getParameterMap(0)
-            parameter = Tpetra.Vector(parameter_map, dtype="d")
+            parameter = Utils.createVector(parameter_map)
             for k in range(0, self.n_params):
                 parameter[k] = theta_star[k]
             self.problem.setParameter(0, parameter)
         else:
             for k in range(0, self.n_params):
                 parameter_map = self.problem.getParameterMap(k)
-                parameter = Tpetra.Vector(parameter_map, dtype="d")
+                parameter = Utils.createVector(parameter_map)
                 parameter[0] = theta_star[k]
                 self.problem.setParameter(k, parameter)
     def _matvec(self, x):
         parameter_map = self.problem.getParameterMap(self.parameter_id)
-        direction = Tpetra.MultiVector(parameter_map, 1, dtype="d")
-        direction[0,:] = x
+        direction = Utils.createMultiVector(parameter_map, 1)
+
+        direction_view = direction.getLocalViewHost()
+        direction_view[:,0] = x
+        direction.setLocalViewHost(direction_view)
+
         self.problem.setDirections(self.parameter_id, direction)
         self.problem.performSolve()
         hessian = self.problem.getReducedHessian(self.response_id, self.parameter_id)
@@ -758,29 +779,36 @@ class RotatedHessianOperator(slinalg.LinearOperator):
         self.theta_star = theta_star
         if self.params_in_vector:
             parameter_map = self.problem.getParameterMap(0)
-            parameter = Tpetra.Vector(parameter_map, dtype="d")
+            parameter = Utils.createVector(parameter_map)
+            para_view = parameter.getLocalViewHost()
             for k in range(0, self.n_params):
-                parameter[k] = theta_star[k]
+                para_view[k,0] = theta_star[k]
+            parameter.setLocalViewHost(para_view)
             self.problem.setParameter(0, parameter)
         else:
             for k in range(0, self.n_params):
                 parameter_map = self.problem.getParameterMap(k)
-                parameter = Tpetra.Vector(parameter_map, dtype="d")
-                parameter[0] = theta_star[k]
+                parameter = Utils.createVector(parameter_map)
+                para_view = parameter.getLocalViewHost()
+                para_view[0,0] = theta_star[k]
+                parameter.setLocalViewHost(para_view)
                 self.problem.setParameter(k, parameter)
         self.compute_rotation_matrix()
     def _matvec(self, x):
         tmp1 = self.C_sqr.dot(self.R.dot(self.P.transpose().dot(x)))
 
         parameter_map = self.problem.getParameterMap(self.parameter_id)
-        direction = Tpetra.MultiVector(parameter_map, 1, dtype="d")
+        direction = Utils.createMultiVector(parameter_map, 1)
 
-        direction[0,:] = tmp1
+        direction_view = direction.getLocalViewHost()
+        direction_view[:,0] = tmp1
+        direction.setLocalViewHost(direction_view)
+
         self.problem.setDirections(self.parameter_id, direction)
         self.problem.performSolve()
         hessian = self.problem.getReducedHessian(self.response_id, self.parameter_id)
 
-        tmp2 = hessian[0,:]
+        tmp2 = hessian.getLocalViewHost()[:,0]
         tmp3 = self.P.dot(self.R.transpose().dot(self.C_sqr.transpose().dot(tmp2)))
         return tmp3
 

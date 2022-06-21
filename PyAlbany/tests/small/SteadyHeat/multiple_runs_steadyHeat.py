@@ -1,6 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import unittest
 import numpy as np
 
@@ -14,8 +11,8 @@ import os
 class TestSteadyHeat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         cls = self.__class__
@@ -35,11 +32,17 @@ class TestSteadyHeat(unittest.TestCase):
         problem = Utils.createAlbanyProblem(parameter, cls.parallelEnv)
 
         parameter_map_0 = problem.getParameterMap(0)
-        para_0_new = Tpetra.Vector(parameter_map_0, dtype="d")
+        para_0_new = Utils.createVector(parameter_map_0)
+
+        para_0_new_view = para_0_new.getLocalViewHost()
 
         parameter_map_1 = problem.getParameterMap(1)
-        para_1_new = Tpetra.Vector(parameter_map_1, dtype="d")
-        para_1_new[:] = 0.333333
+        para_1_new = Utils.createVector(parameter_map_1)
+
+        para_1_new_view = para_1_new.getLocalViewHost()
+        para_1_new_view[0,:] = 0.333333
+        para_1_new.setLocalViewHost(para_1_new_view)
+
 
         n_values = 5
         para_0_values = np.linspace(-1, 1, n_values)
@@ -51,13 +54,13 @@ class TestSteadyHeat(unittest.TestCase):
         tol = 1e-8
 
         for i in range(0, n_values):
-            para_0_new[:] = para_0_values[i]
+            para_0_new_view[0,:] = para_0_values[i]
+            para_0_new.setLocalViewHost(para_0_new_view)
             problem.setParameter(0, para_0_new)
 
             problem.performSolve()
 
-            response = problem.getResponse(0)
-            responses[i] = response.getData()[0]
+            responses[i] = problem.getResponse(0).getLocalViewHost()[0,0]
 
         print("p = " + str(para_0_values))
         print("QoI = " + str(responses))

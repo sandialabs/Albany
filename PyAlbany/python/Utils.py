@@ -4,53 +4,60 @@ Documentation for the PyAlbany.Utils module.
 This module provides utility functions for the Python wrapper of Albany (wpyalbany).
 """
 
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
 try:
-    from PyAlbany import wpyalbany as wpa
+    from PyAlbany import Albany_Pybind11 as wpa
 except:
-    import wpyalbany as wpa
+    import Albany_Pybind11 as wpa
 import numpy as np
-from numpy import linalg as LA
 import sys
 
-def norm(distributedVector, comm):
+def createMultiVector(map, n):
+    return wpa.RCPPyMultiVector(map, n, True)
+
+def createVector(map):
+    return wpa.RCPPyVector(map, True)
+
+def norm(distributedVector):
     """@brief Computes the norm-2 of a distributed vector using Python and Teuchos MPI communicator."""
-    norm = np.sqrt(inner(distributedVector, distributedVector, comm))
-    return norm
+    return np.sqrt(inner(distributedVector, distributedVector))
 
-def inner(distributedVector1, distributedVector2, comm):
+def inner(distributedVector1, distributedVector2):
     """@brief Computes the l2 inner product of two distributed vectors using Python and Teuchos MPI communicator."""
-    localInnerProduct = np.inner(distributedVector1, distributedVector2)
-    innerProduct = comm.reduceAll(Teuchos.REDUCE_SUM, localInnerProduct)
-    return innerProduct
+    return distributedVector1.dot(distributedVector2)
 
-def innerMVector(distributedMVector1, distributedMVector2, comm):
+def innerMVector(distributedMVector1, distributedMVector2):
     """@brief computes C = A^T B, where A is a n x r1 MultiVector and B is a n x r2 MultiVector using Python and Teuchos MPI communicator."""
-    r1 = distributedMVector1.shape[0]
-    r2 = distributedMVector2.shape[0]
-    dtype = distributedMVector1.dtype
-    Cloc = np.zeros((r1, r2), dtype=dtype)
-    C    = np.zeros((r1, r2), dtype=dtype)
+    r1 = distributedMVector1.getNumVectors()
+    r2 = distributedMVector2.getNumVectors()
+    C    = np.zeros((r1, r2))
     for i in range(r1):
         for j in range(r2):
-            Cloc[i, j] = np.inner(distributedMVector1[i, :], distributedMVector2[j, :])
-    C[:, :] = comm.reduceAll(Teuchos.REDUCE_SUM, Cloc[:,:])
+            C[i, j] = inner(distributedMVector1.getVector(i), distributedMVector2.getVector(j))
     return C
 
 def innerMVectorMat(distributedMVector, array):
     """@brief computes C = A B, where A is an n x r1 MultiVector, B is a nondistributed r1 x r2 array and C is a n x r2 MultiVector"""
-    r1, nloc = distributedMVector.shape
-    r2       = array.shape[1]
-    dtype    = distributedMVector.dtype 
-    C = Tpetra.MultiVector(distributedMVector.getMap(), r2, dtype=dtype) 
+    r1 = distributedMVector.getNumVectors()
+    r2 = array.shape[1]
+    C = createMultiVector(distributedMVector.getMap(), r2)
+    C_view = C.getLocalViewHost()
+    distributedMVector_view = distributedMVector.getLocalViewHost()
+
     for k in range(r1):
         for i in range(r2):
-            C[i, :] += array[k, i] * distributedMVector[k, :]
+            C_view[:,i] += array[k, i] * distributedMVector_view[:,k]
+    C.setLocalViewHost(C_view)
     return C 
 
+def getDefaultComm():
+    init = wpa.initializeMPI(sys.argv)
+    comm = wpa.getDefaultComm()
+    if init:
+        import atexit
+        atexit.register(wpa.finalize)
+    return comm
 
-def createDefaultParallelEnv(comm = Teuchos.DefaultComm.getComm(), n_threads=-1,n_numa=-1,device_id=-1):
+def createDefaultParallelEnv(comm = getDefaultComm(), n_threads=-1,n_numa=-1,device_id=-1):
     """@brief Creates a default parallel environment.
     
     This function initializes Kokkos; Kokkos will be finalized when the destructor of the returned ParallelEnv 
@@ -86,49 +93,58 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
     """
     rank = map.getComm().getRank()
     nproc = map.getComm().getSize()
-    mvector = Tpetra.MultiVector(map, n_cols, dtype=dtype)
+    mvector = createMultiVector(map, n_cols)
     if nproc==1:
         if useBinary:
             mVectorNP = np.load(filename+'.npy')
         else:
             mVectorNP = np.loadtxt(filename+'.txt')
 
+        mvector_view = mvector.getLocalViewHost()
         if(mVectorNP.ndim == 1 and n_cols == 1):
-            mvector[0,:] = mVectorNP
+            mvector_view[:,0] = mVectorNP
         else: 
             for i in range(0, n_cols):
-                mvector[i,:] = mVectorNP[i,:]        
+                mvector_view[:,i] = mVectorNP[i,:]
+        mvector.setLocalViewHost(mvector_view)
+
     elif distributedFile:
         if useBinary:
             mVectorNP = np.load(filename+'_'+str(rank)+'.npy')
         else:
             mVectorNP = np.loadtxt(filename+'_'+str(rank)+'.txt')
+        mvector_view = mvector.getLocalViewHost()
         for i in range(0, n_cols):
-            mvector[i,:] = mVectorNP[i,:]
+            mvector_view[:,i] = mVectorNP[i,:]
+        mvector.setLocalViewHost(mvector_view)
     else:
         if readOnRankZero:
             map0 = wpa.getRankZeroMap(map)
-            mvector0 = Tpetra.MultiVector(map0, n_cols, dtype=dtype)
+            mvector0 = createMultiVector(map0, n_cols)
             if rank == 0:
                 if useBinary:
                     mVectorNP = np.load(filename+'.npy')
                 else:
                     mVectorNP = np.loadtxt(filename+'.txt')
-                
+
+                mvector0_view = mvector0.getLocalViewHost()
                 if(mVectorNP.ndim == 1 and n_cols == 1):
-                    mvector0[0,:] = mVectorNP
+                    mvector0_view[:,0] = mVectorNP
                 else: 
                     for i in range(0, n_cols):
-                        mvector0[i,:] = mVectorNP[i,:]
+                        mvector0_view[:,i] = mVectorNP[i,:]
+                mvector0.setLocalViewHost(mvector0_view)
             mvector = wpa.scatterMVector(mvector0, map)
         else:
             if useBinary:
                 mVectorNP = np.load(filename+'.npy')
             else:
                 mVectorNP = np.loadtxt(filename+'.txt')
+            mvector_view = mvector.getLocalViewHost()
             for lid in range(0, map.getLocalNumElements()):
                 gid = map.getGlobalElement(lid)
-                mvector[:,lid] = mVectorNP[:,gid]
+                mvector_view[lid,:] = mVectorNP[:,gid]
+            mvector.setLocalViewHost(mvector_view)
     return mvector
 
 def writeMVector(filename, mvector, distributedFile = True, useBinary = True):
@@ -144,33 +160,35 @@ def writeMVector(filename, mvector, distributedFile = True, useBinary = True):
     """    
     rank = mvector.getMap().getComm().getRank()
     nproc = mvector.getMap().getComm().getSize()
+    mvector_view = mvector.getLocalViewHost()
     if distributedFile:
         if useBinary:
             if nproc > 1:
-                np.save(filename+'_'+str(rank)+'.npy', mvector[:,:])
+                np.save(filename+'_'+str(rank)+'.npy', mvector_view.transpose())
             else:
-                np.save(filename+'.npy', mvector[:,:])
+                np.save(filename+'.npy', mvector_view.transpose())
         else:
             if nproc > 1:
-                np.savetxt(filename+'_'+str(rank)+'.txt', mvector[:,:])
+                np.savetxt(filename+'_'+str(rank)+'.txt', mvector_view.transpose())
             else:
-                np.savetxt(filename+'.txt', mvector[:,:])
+                np.savetxt(filename+'.txt', mvector_view.transpose())
     else:
         if nproc > 1:
             mvectorRank0 = wpa.gatherMVector(mvector, mvector.getMap())
         else:
             mvectorRank0 = mvector
+        mvectorRank0_view = mvectorRank0.getLocalViewHost()
         if rank == 0:
             if useBinary:
-                np.save(filename+'.npy', mvectorRank0[:,:])
+                np.save(filename+'.npy', mvectorRank0_view.transpose())
             else:
-                np.savetxt(filename+'.txt', mvectorRank0[:,:])
+                np.savetxt(filename+'.txt', mvectorRank0_view.transpose())
 
 def createTimers(names):
     """@brief Creates Teuchos timers."""
     timers_list = []
     for name in names:
-        timers_list.append(Teuchos.Time(name))
+        timers_list.append(wpa.Time(name))
     return timers_list
 
 def printTimers(timers_list, filename=None, verbose=True):

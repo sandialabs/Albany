@@ -146,19 +146,15 @@ namespace PyAlbany
     }
   }
 
-  Teuchos::RCP<const PyTrilinosMap> getPyTrilinosMap(Teuchos::RCP<const Tpetra_Map> t_map, bool correctGIDs)
+  Teuchos::RCP<const Tpetra_Map> getCorrectedMap(Teuchos::RCP<const Tpetra_Map> t_map, bool correctGIDs)
   {
     if (!correctGIDs)
-    {
-#ifdef PYALBANY_DOES_NOT_USE_DEEP_COPY
       return t_map;
-#endif
-    }
-    PyTrilinosMap::global_ordinal_type globalNumElements = t_map->getGlobalNumElements();
+    Tpetra_Map::global_ordinal_type globalNumElements = t_map->getGlobalNumElements();
     auto indexBase = t_map->getIndexBase();
     auto comm = t_map->getComm();
     auto nodeNumElements = t_map->getLocalNumElements();
-    PyTrilinosMap::global_ordinal_type myIndicesLongLong[nodeNumElements];
+    Tpetra_Map::global_ordinal_type myIndicesLongLong[nodeNumElements];
     Teuchos::Array<Tpetra_GO> nodes_gids = t_map->getLocalElementList();
 
     if (correctGIDs)
@@ -167,7 +163,7 @@ namespace PyAlbany
     for (size_t i = 0; i < nodeNumElements; ++i)
       myIndicesLongLong[i] = nodes_gids[i];
 
-    Teuchos::RCP<PyTrilinosMap> out_map = rcp(new PyTrilinosMap(globalNumElements, myIndicesLongLong, nodeNumElements, indexBase, comm));
+    Teuchos::RCP<Tpetra_Map> out_map = rcp(new Tpetra_Map(globalNumElements, myIndicesLongLong, nodeNumElements, indexBase, comm));
     return out_map;
   }
 } // namespace PyAlbany

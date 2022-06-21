@@ -1,6 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-import numpy as np
 from PyAlbany import Utils
 
 # As discussed in example_0.py parallelEnv should be destructed
@@ -22,9 +19,6 @@ def main(parallelEnv):
     problem = Utils.createAlbanyProblem(filename, parallelEnv)
 
 if __name__ == "__main__":
-    comm = Teuchos.DefaultComm.getComm()
-    parallelEnv = Utils.createDefaultParallelEnv(comm,
-                                                n_threads=-1,
-                                                n_numa=-1,
-                                                device_id=-1)
+    comm = Utils.getDefaultComm()
+    parallelEnv = Utils.createDefaultParallelEnv(comm)
     main(parallelEnv)

@@ -1,11 +1,8 @@
-# First, some Python packages are imported:
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-import numpy as np
+# First, import Utils from PyAlbany:
 from PyAlbany import Utils
 
 # Then, the parallel environment is initialized (including Kokkos):
-comm = Teuchos.DefaultComm.getComm()
+comm = Utils.getDefaultComm()
 parallelEnv = Utils.createDefaultParallelEnv(comm,
                                              n_threads=-1,
                                              n_numa=-1,
