@@ -103,7 +103,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   mesh_data->add_mesh_database(file_name, mesh_type, stk::io::READ_MESH);
   mesh_data->create_input_mesh();
 
-  metaData = mesh_data->meta_data_rcp();//Teuchos::rcpFromRef(mesh_data->meta_data());
+  metaData = Teuchos::rcp(mesh_data->meta_data_ptr());
 
   // End of creating input mesh
 
