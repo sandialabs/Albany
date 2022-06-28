@@ -8,12 +8,15 @@
 
 #include "Albany_SideSetSTKMeshStruct.hpp"
 
+#include "Teuchos_RCPStdSharedPtrConversions.hpp"
+
 #include <Shards_BasicTopologies.hpp>
 
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/Selector.hpp>
+#include <stk_mesh/base/MeshBuilder.hpp>
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -102,9 +105,12 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
                                                                 ebn, ebNameToIndex, this->interleavedOrdering));
 
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
-  bulkData = Teuchos::rcp(new stk::mesh::BulkData(*metaData, *mpiComm->getRawMpiComm(),
-                                                   stk::mesh::BulkData::NO_AUTO_AURA,
-                                                   false, NULL, worksetSize));
+  stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(*mpiComm->getRawMpiComm());
+  meshBuilder.set_aura_option(stk::mesh::BulkData::NO_AUTO_AURA);
+  meshBuilder.set_bucket_capacity(worksetSize);
+  meshBuilder.set_add_fmwk_data(false);
+  std::unique_ptr<stk::mesh::BulkData> bulkDataPtr = meshBuilder.create(Teuchos::get_shared_ptr(metaData));
+  bulkData = Teuchos::rcp(bulkDataPtr.release());
 }
 
 SideSetSTKMeshStruct::~SideSetSTKMeshStruct()
