@@ -319,7 +319,7 @@ void STKConnManager::applyPeriodicBCs(const panzer::FieldPattern & fp, GlobalOrd
       } else
         TEUCHOS_ASSERT(false);
 
-      // get relevent elements and node IDs
+      // get relevant elements and node IDs
       getOwnedElementsSharingNode(oldNodeId-offset0,elements,localIds,(*matchTypes)[m]);
 
       // modify global numbering already built for each element

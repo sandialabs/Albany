@@ -133,7 +133,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
                 Teuchos::Exceptions::InvalidParameter,
                 "Error: Discretization method " << method
-                << " requested, but no longe supported as of 10/2017" << std::endl);
+                << " requested, but no longer supported as of 10/2017" << std::endl);
     } else
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                   "Error!  Unknown discretization method in DiscretizationFactory: " << method <<

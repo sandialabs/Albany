@@ -150,7 +150,7 @@ class AbstractProblem {
     return rigidBodyModes;
   }
 
-  //! Each problem must generate it's list of valide parameters
+  //! Each problem must generate it's list of valid parameters
   virtual Teuchos::RCP<const Teuchos::ParameterList>
   getValidProblemParameters() const {
     return getGenericProblemParams("Generic Problem List");

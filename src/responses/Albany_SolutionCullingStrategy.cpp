@@ -156,7 +156,7 @@ selectedGIDs(const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
 {
   Teuchos::Array<GO> mySelectedGIDs;
 
-  // Subract 1 to convert exodus GIDs to our GIDs
+  // Subtract 1 to convert exodus GIDs to our GIDs
   auto source_indexer = createGlobalLocalIndexer(sourceVS);
   for (int i=0; i<nodeGIDs_.size(); ++i) {
     if (source_indexer->isLocallyOwnedElement(nodeGIDs_[i] -1)) {

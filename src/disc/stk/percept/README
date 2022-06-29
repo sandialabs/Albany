@@ -14,7 +14,7 @@ out of percept. Here are modifications I made:
    In  Percept_MyPairIterRelation.hpp, 
    I had to comment out the constructor that had PerceptMesh in the
    argument list: this was not defined with my stripped-down version and
-   only the contructor taking BulkData is used in stk_rebalance.
+   only the constructor taking BulkData is used in stk_rebalance.
 
 4. To get stk_rebalance to compile, without  stk::mesh::Cartesian Not Found
    error, I needed to add  #include <stk_mesh/base/CoordinateSystems.hpp>

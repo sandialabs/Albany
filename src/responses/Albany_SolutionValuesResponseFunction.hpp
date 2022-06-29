@@ -20,7 +20,7 @@ class Application;
 class CombineAndScatterManager;
 
 /*!
- * \brief Reponse function representing the average of the solution values
+ * \brief Response function representing the average of the solution values
  */
 class SolutionValuesResponseFunction : public SamplingBasedScalarResponseFunction
 {

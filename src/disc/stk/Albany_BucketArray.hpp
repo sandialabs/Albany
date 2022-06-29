@@ -127,7 +127,7 @@ public:
       }
       else if (f.field_array_rank() == 3) {
 #ifdef IKT_DEBUG
-        std::cout << "IKT field arry rank = 3" << std::endl; 
+        std::cout << "IKT field array rank = 3" << std::endl; 
 #endif
         int dim0 = stk::mesh::find_restriction(f, b.entity_rank(), b.supersets()).dimension();
 #ifdef IKT_DEBUG

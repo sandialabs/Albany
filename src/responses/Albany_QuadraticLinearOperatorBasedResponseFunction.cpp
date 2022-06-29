@@ -53,7 +53,7 @@ loadLinearOperator() {
        static_cast<Tpetra_GO>(rowMap->getGlobalNumElements()));
 
   TEUCHOS_TEST_FOR_EXCEPTION (!mapIsContiguous, std::runtime_error,
-                              "Error! Row Map needs to be contigous for the Matrix reader to work.\n");
+                              "Error! Row Map needs to be contiguous for the Matrix reader to work.\n");
 
   auto tpetra_mat =
       reader_type::readSparseFile (file_name_A_, rowMap, colMap, domainMap, rangeMap);

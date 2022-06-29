@@ -153,7 +153,7 @@ ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
   }
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
-                     "Error! Logic error in getting paramter " << n
+                     "Error! Logic error in getting parameter " << n
                      << " in ThermalConductivity::getValue()" << std::endl);
   return constant_value;
 }

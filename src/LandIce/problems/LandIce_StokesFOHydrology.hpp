@@ -56,7 +56,7 @@ public:
   //! Build unmanaged fields
   virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
-  //! Each problem must generate it's list of valide parameters
+  //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
 private:

@@ -80,7 +80,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                            const Teuchos::RCP<const Teuchos_Comm>& commT,
                            int dim);
 
-  // Share physical_names map with all other proccesses
+  // Share physical_names map with all other processes
   void broadcast_physical_names( std::map<std::string, int>&             physical_names,
                                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 

@@ -882,8 +882,8 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<std::string>("Pamgen Input File Name", "", "File Name For Pamgen Mesh Input");
-  validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
-  validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
+  validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");
+  validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for initial guess/condition.");
   validPL->set<Teuchos::ParameterList>("Required Fields Info",Teuchos::ParameterList());
   validPL->set<bool>("Write points coordinates to ascii file", "", "Write the mesh points coordinates to file?");
 

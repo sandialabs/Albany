@@ -271,7 +271,7 @@ class STKDiscretization : public AbstractDiscretization
         .overlap_dofManager;
   }
 
-  //! Retrieve coodinate vector (num_used_nodes * 3)
+  //! Retrieve coordinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const;
 

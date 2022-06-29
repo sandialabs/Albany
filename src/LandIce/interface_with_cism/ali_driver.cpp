@@ -235,7 +235,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     // ---------------------------------------------
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver: grabbing connectivity array pointers from CISM..." << std::endl;
-    //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/LandIce
+    //IK, 11/13/13: check that connectivity derived types are transferred over from CISM to Albany/LandIce
     nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity"));
     nWestFacesActive = *(ftg_ptr -> getLongVar("nWestFacesActive","connectivity"));
     nEastFacesActive = *(ftg_ptr -> getLongVar("nEastFacesActive","connectivity"));

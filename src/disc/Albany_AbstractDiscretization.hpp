@@ -139,7 +139,7 @@ class AbstractDiscretization
   Teuchos::RCP<const GlobalLocalIndexer>
   getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
 
-  //! Retrieve coodinate ptr_field (ws, el, node)
+  //! Retrieve coordinate ptr_field (ws, el, node)
   virtual const WorksetArray<
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   getCoords() const = 0;
@@ -210,7 +210,7 @@ class AbstractDiscretization
   virtual int
   getNumEq() const = 0;
 
-  //! Get Numbering for layered mesh (mesh structred in one direction)
+  //! Get Numbering for layered mesh (mesh structured in one direction)
   virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
   getLayeredMeshNumbering() const = 0;
 

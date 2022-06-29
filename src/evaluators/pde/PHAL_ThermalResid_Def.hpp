@@ -367,7 +367,7 @@ evaluateFields(typename Traits::EvalData workset)
           }
 	}
 	else { //IKT 7/11/2021: note that for distributed params, ThermalCond is a scalar, not a vector, 
-	       //that is, it is the same for all coordinate dimentions
+	       //that is, it is the same for all coordinate dimensions
           for (unsigned int dim = 0; dim < numDims; ++dim) {
 	    TResidual(cell, node) += ThermalCond(cell, qp) * TGrad(cell, qp, dim) * wGradBF(cell, node, qp, dim); 
 	  }

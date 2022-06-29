@@ -360,7 +360,7 @@ void beginFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
     femat->beginAssembly();
 
     // Note: we 're-initialize' the linear op, cause it's the only way
-    //       to get the range/domain vector spaces to be consitent with
+    //       to get the range/domain vector spaces to be consistent with
     //       the matrix maps. Unfortunately, Thyra builds range/domain
     //       vs of the LinearOp only at initialization time.
     // TODO: This may be expensive. Consider having a FELinearOp class.
@@ -394,7 +394,7 @@ void endFEAssembly (const Teuchos::RCP<Thyra_LinearOp>& lop)
     femat->endAssembly();
 
     // Note: we 're-initialize' the linear op, cause it's the only way
-    //       to get the range/domain vector spaces to be consitent with
+    //       to get the range/domain vector spaces to be consistent with
     //       the matrix maps. Unfortunately, Thyra builds range/domain
     //       vs of the LinearOp only at initialization time.
     // TODO: This may be expensive. Consider having a FELinearOp class.

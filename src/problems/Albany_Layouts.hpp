@@ -131,7 +131,7 @@ namespace Albany {
     // For backward compatibility, and simplicitiy, we want to check if
     // the vector length is the same as the spatial dimension. This
     // assumption is hardwired in mechanics problems and we want to
-    // test that it is a valide assumption with this bool.
+    // test that it is a valid assumption with this bool.
     bool vectorAndGradientLayoutsAreEquivalent;
 
     // A flag to check whether this layouts structure belongs to a sideset

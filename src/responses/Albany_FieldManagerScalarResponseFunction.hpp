@@ -20,7 +20,7 @@ class StateManager;
 struct MeshSpecsStruct;
 
 /*!
- * \brief Reponse function representing the average of the solution values
+ * \brief Response function representing the average of the solution values
  */
 class FieldManagerScalarResponseFunction : public ScalarResponseFunction {
 public:

@@ -537,7 +537,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherCoordinateVectorEval
     // Input: Periodic BC flag
     p->set<bool>("Periodic BC", false);
 
-    // Output:: Coordindate Vector at vertices
+    // Output:: Coordinate Vector at vertices
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
     if( strCurrentDisp != "" )
@@ -643,7 +643,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideE
     const bool planar) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (buildNormals && planar, std::runtime_error,
-                                "Error! Cannot compute normal for planar sufaces at the moment.\n");
+                                "Error! Cannot compute normal for planar surfaces at the moment.\n");
 
     TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
                                 "Error! The layout structure for side set " << sideSetName << " was not found.\n");

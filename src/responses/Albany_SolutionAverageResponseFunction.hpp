@@ -12,7 +12,7 @@
 namespace Albany {
 
 /*!
- * \brief Reponse function representing the average of the solution values
+ * \brief Response function representing the average of the solution values
  */
 class SolutionAverageResponseFunction : public ScalarResponseFunction {
 public:

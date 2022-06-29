@@ -41,7 +41,7 @@ struct MeshSpecsStruct
   // build mesh specs for side sets will have to manually modify the specs.
   MeshSpecsStruct();
 
-  // This constructor initializes all the possible informations in a mesh specs object.
+  // This constructor initializes all the possible information in a mesh specs object.
   MeshSpecsStruct(
       const CellTopologyData&  ctd_,
       int                      numDim_,

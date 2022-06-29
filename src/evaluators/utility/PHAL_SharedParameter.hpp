@@ -49,7 +49,7 @@ public:
 
     const Teuchos::ParameterList* paramsList = p.get<const Teuchos::ParameterList*>("Parameters List");
 
-    // Find the parameter in the Paramter list,
+    // Find the parameter in the Parameter list,
     // register as a Sacado Parameter and set the Nominal value
     bool nominalValueSet = false;
     log_parameter = false;

@@ -407,7 +407,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::GmshSTKMeshStruct::getValidDi
   return validPL;
 }
 
-// -------------------------------- Read methos ---------------------------- //
+// -------------------------------- Read methods ---------------------------- //
 
 void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
 {
@@ -441,7 +441,7 @@ void Albany::GmshSTKMeshStruct::loadLegacyMesh ()
   int nb_entities = std::atoi (line.c_str() );
   TEUCHOS_TEST_FOR_EXCEPTION (nb_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
 
-  // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements
+  // Gmsh lists elements and sides (and some points) all together, and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
@@ -703,13 +703,13 @@ void Albany::GmshSTKMeshStruct::increment_element_type( int e_type)
 
 void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream& ifile)
 {
-  // Gmsh lists elements and sides (and some points) all toghether, 
+  // Gmsh lists elements and sides (and some points) all together, 
   // and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to 
   // establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
 
-  // Reset to begining of msh file, then advance to elements section
+  // Reset to beginning of msh file, then advance to elements section
   std::string line;
   ifile.seekg (0, std::ios::beg);
   swallow_lines_until( ifile, line, "$Elements");
@@ -791,7 +791,7 @@ void Albany::GmshSTKMeshStruct::set_specific_num_of_each_elements( std::ifstream
          missing_parts = (nb_tet10 == 0) || missing_parts;
 
     TEUCHOS_TEST_FOR_EXCEPTION ( missing_parts, std::logic_error, 
-        "Error! This second order mesh is missing secord order parts.\n");
+        "Error! This second order mesh is missing second order parts.\n");
     
   }
   else
@@ -1140,7 +1140,7 @@ void Albany::GmshSTKMeshStruct::loadBinaryMesh ()
   int nb_entities = std::atoi (line.c_str() );
   TEUCHOS_TEST_FOR_EXCEPTION (nb_entities<=0, Teuchos::Exceptions::InvalidParameter, "Error! Invalid number of mesh elements.\n");
 
-  // Gmsh lists elements and sides (and some points) all toghether, and does not specify beforehand what kind of elements
+  // Gmsh lists elements and sides (and some points) all together, and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
   std::vector<int> tmp;

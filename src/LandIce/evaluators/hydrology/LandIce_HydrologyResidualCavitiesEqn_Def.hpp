@@ -67,7 +67,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     closure = Cubic;
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (false, Teuchos::Exceptions::InvalidParameterValue,
-        "Error! Unkonwn cavity closure type '" + closure_type_N + "'.\n"
+        "Error! Unknown cavity closure type '" + closure_type_N + "'.\n"
         "       Valid options are: Linear, Cubic.\n");
   }
   if (englacial_phi>0 && unsteady) {

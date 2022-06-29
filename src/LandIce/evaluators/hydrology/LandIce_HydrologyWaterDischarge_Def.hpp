@@ -32,7 +32,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
    *     q = - k * h^alpha * |grad(Phi)|^(beta-2) * grad(Phi)
    *
    *  where q is the water discharge, h the water thickness, k a transmissivity constant,
-   *  phi is the hydraulic poential, and alpha/beta are two constants, with requirements
+   *  phi is the hydraulic potential, and alpha/beta are two constants, with requirements
    *  alpha>1, beta>1. The units of q follow from those of the mesh, h, k and Phi.
    *  We assume h is in [m], Phi in [kPa], the mesh is in [km], and k has units
    *     [k] =  m^(2*beta-alpha) s^(2*beta-3) kg^(1-beta).

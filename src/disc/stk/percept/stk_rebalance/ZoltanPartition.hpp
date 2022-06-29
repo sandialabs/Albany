@@ -141,7 +141,7 @@ public:
    *
    * \param pm     The parallel communicator.
    *
-   * \param ndim   The spatial dimention of the mesh being balanced.
+   * \param ndim   The spatial dimension of the mesh being balanced.
    *
    * \param rebal_region_parameters  This is a hierarchial map of strings to strings
    *                                 that defines the parameters used to
@@ -302,7 +302,7 @@ public:
     return m_zoltan_id_;
   }
 
-  /** \brief Return the spatial dimention of the entities being rebalanced. */
+  /** \brief Return the spatial dimension of the entities being rebalanced. */
   unsigned spatial_dimension() const {
     return m_spatial_dimension_;
   }
