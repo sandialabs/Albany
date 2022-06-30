@@ -34,19 +34,18 @@
 #error "Albany needs Tpetra to enable double as a Scalar type"
 #endif
 
-typedef int Tpetra_LO;
-#if defined( HAVE_TPETRA_INST_INT_LONG_LONG )
-typedef long long Tpetra_GO;
-#elif defined( HAVE_TPETRA_INST_INT_LONG )
-static_assert(sizeof(long) == sizeof(GO),
-    "Tpetra's biggest enabled GlobalOrdinal is long but thats not 64 bit");
-typedef long Tpetra_GO;
-#elif defined( HAVE_TPETRA_INST_INT_UNSIGNED_LONG )
-static_assert(sizeof(unsigned long) == sizeof(GO),
-    "Tpetra's biggest enabled GlobalOrdinal is unsigned long but thats not 64 bit");
-typedef unsigned long Tpetra_GO;
+using Tpetra_LO = int;
+// NOTE: this ifdef logic allows Tpetra_GO to be the *exact same type*
+//       as panzer::GlobalOrdinal. In turn, panzer is keeping the first
+//       branch of the if only for backward compatibility with some
+//       deprecated code. As soon as that code in PanzerCore_config.hpp
+//       is removed, we can keep the one using DefaulTypes.
+#if defined(HAVE_TPETRA_INST_INT_LONG_LONG)
+using Tpetra_GO = long long int;  // NOTE: long long is *guaranteed* to be >=64 bits
 #else
-#error "Albany needs a 64-bit GlobalOrdinal enabled in Tpetra"
+using Tpetra_GO = Tpetra::Details::DefaultTypes::global_ordinal_type;
+static_assert(sizeof(Tpetra_GO) == sizeof(GO),
+    "Tpetra's default global ordinal is not 64 bit");
 #endif
 
 typedef Tpetra::Map<Tpetra_LO, Tpetra_GO, KokkosNode>                 Tpetra_Map;

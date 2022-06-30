@@ -36,75 +36,75 @@ namespace Albany {
 
 typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
 
-struct DOFsStruct
-{
-  Teuchos::RCP<const Thyra_VectorSpace> node_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> overlap_node_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> vs;
-  Teuchos::RCP<const Thyra_VectorSpace> overlap_vs;
-  NodalDOFManager                       dofManager;
-  NodalDOFManager                       overlap_dofManager;
-  std::vector<std::vector<LO>>          wsElNodeEqID_rawVec;
-  std::vector<IDArray>                  wsElNodeEqID;
-  std::vector<std::vector<GO>>          wsElNodeID_rawVec;
-  std::vector<GIDArray>                 wsElNodeID;
+// struct DOFsStruct
+// {
+//   Teuchos::RCP<const Thyra_VectorSpace> node_vs;
+//   Teuchos::RCP<const Thyra_VectorSpace> overlap_node_vs;
+//   Teuchos::RCP<const Thyra_VectorSpace> vs;
+//   Teuchos::RCP<const Thyra_VectorSpace> overlap_vs;
+//   NodalDOFManager                       dofManager;
+//   NodalDOFManager                       overlap_dofManager;
+//   std::vector<std::vector<LO>>          wsElNodeEqID_rawVec;
+//   std::vector<IDArray>                  wsElNodeEqID;
+//   std::vector<std::vector<GO>>          wsElNodeID_rawVec;
+//   std::vector<GIDArray>                 wsElNodeID;
 
-  Teuchos::RCP<const GlobalLocalIndexer> node_vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> overlap_node_vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> overlap_vs_indexer;
-};
+//   Teuchos::RCP<const GlobalLocalIndexer> node_vs_indexer;
+//   Teuchos::RCP<const GlobalLocalIndexer> overlap_node_vs_indexer;
+//   Teuchos::RCP<const GlobalLocalIndexer> vs_indexer;
+//   Teuchos::RCP<const GlobalLocalIndexer> overlap_vs_indexer;
+// };
 
-struct NodalDOFsStructContainer
-{
-  typedef std::map<std::pair<std::string, int>, DOFsStruct> MapOfDOFsStructs;
+// struct NodalDOFsStructContainer
+// {
+//   typedef std::map<std::pair<std::string, int>, DOFsStruct> MapOfDOFsStructs;
 
-  MapOfDOFsStructs                                        mapOfDOFsStructs;
-  std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
+//   MapOfDOFsStructs                                        mapOfDOFsStructs;
+//   std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
 
-  const DOFsStruct&
-  getDOFsStruct(const std::string& field_name) const
-  {
-    const auto iter = fieldToMap.find(field_name);
-    if (iter == fieldToMap.end())
-      TEUCHOS_TEST_FOR_EXCEPTION(true,
-          std::logic_error, field_name + " does not exist in fieldToMap");
-    return iter->second->second;
-  };
+//   const DOFsStruct&
+//   getDOFsStruct(const std::string& field_name) const
+//   {
+//     const auto iter = fieldToMap.find(field_name);
+//     if (iter == fieldToMap.end())
+//       TEUCHOS_TEST_FOR_EXCEPTION(true,
+//           std::logic_error, field_name + " does not exist in fieldToMap");
+//     return iter->second->second;
+//   };
 
-  // IKT: added the following function, which may be useful for debugging.
-  void
-  printFieldToMap() const
-  {
-    typedef std::map<std::string, MapOfDOFsStructs::const_iterator>::
-        const_iterator                  MapIterator;
-    Teuchos::RCP<Teuchos::FancyOStream> out =
-        Teuchos::VerboseObjectBase::getDefaultOStream();
-    for (MapIterator iter = fieldToMap.begin(); iter != fieldToMap.end();
-         iter++) {
-      std::string key = iter->first;
-      *out << "IKT Key: " << key << "\n";
-      auto vs = getDOFsStruct(key).vs;
-      *out << "IKT Vector Space \n: ";
-      describe(vs, *out, Teuchos::VERB_EXTREME);
-    }
-  }
+//   // IKT: added the following function, which may be useful for debugging.
+//   void
+//   printFieldToMap() const
+//   {
+//     typedef std::map<std::string, MapOfDOFsStructs::const_iterator>::
+//         const_iterator                  MapIterator;
+//     Teuchos::RCP<Teuchos::FancyOStream> out =
+//         Teuchos::VerboseObjectBase::getDefaultOStream();
+//     for (MapIterator iter = fieldToMap.begin(); iter != fieldToMap.end();
+//          iter++) {
+//       std::string key = iter->first;
+//       *out << "IKT Key: " << key << "\n";
+//       auto vs = getDOFsStruct(key).vs;
+//       *out << "IKT Vector Space \n: ";
+//       describe(vs, *out, Teuchos::VERB_EXTREME);
+//     }
+//   }
 
-  void
-  addEmptyDOFsStruct(
-      const std::string& field_name,
-      const std::string& meshPart,
-      int                numComps)
-  {
-    if (numComps != 1)
-      mapOfDOFsStructs.insert(make_pair(make_pair(meshPart, 1), DOFsStruct()));
+//   void
+//   addEmptyDOFsStruct(
+//       const std::string& field_name,
+//       const std::string& meshPart,
+//       int                numComps)
+//   {
+//     if (numComps != 1)
+//       mapOfDOFsStructs.insert(make_pair(make_pair(meshPart, 1), DOFsStruct()));
 
-    fieldToMap[field_name] =
-        mapOfDOFsStructs
-            .insert(make_pair(make_pair(meshPart, numComps), DOFsStruct()))
-            .first;
-  }
-};
+//     fieldToMap[field_name] =
+//         mapOfDOFsStructs
+//             .insert(make_pair(make_pair(meshPart, numComps), DOFsStruct()))
+//             .first;
+//   }
+// };
 
 class STKDiscretization : public AbstractDiscretization
 {
@@ -125,29 +125,29 @@ class STKDiscretization : public AbstractDiscretization
   void
   printConnectivity() const;
 
-  //! Get node vector space (owned and overlapped)
-  Teuchos::RCP<const Thyra_VectorSpace>
-  getNodeVectorSpace() const
-  {
-    return m_node_vs;
-  }
-  Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapNodeVectorSpace() const
-  {
-    return m_overlap_node_vs;
-  }
+  // //! Get node vector space (owned and overlapped)
+  // Teuchos::RCP<const Thyra_VectorSpace>
+  // getNodeVectorSpace() const
+  // {
+  //   return m_node_vs;
+  // }
+  // Teuchos::RCP<const Thyra_VectorSpace>
+  // getOverlapNodeVectorSpace() const
+  // {
+  //   return m_overlap_node_vs;
+  // }
 
-  //! Get solution DOF vector space (owned and overlapped).
-  Teuchos::RCP<const Thyra_VectorSpace>
-  getVectorSpace() const
-  {
-    return m_vs;
-  }
-  Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapVectorSpace() const
-  {
-    return m_overlap_vs;
-  }
+  // //! Get solution DOF vector space (owned and overlapped).
+  // Teuchos::RCP<const Thyra_VectorSpace>
+  // getVectorSpace() const
+  // {
+  //   return m_vs;
+  // }
+  // Teuchos::RCP<const Thyra_VectorSpace>
+  // getOverlapVectorSpace() const
+  // {
+  //   return m_overlap_vs;
+  // }
 
   //! Get Field node vector space (owned and overlapped)
   Teuchos::RCP<const Thyra_VectorSpace>
@@ -224,59 +224,58 @@ class STKDiscretization : public AbstractDiscretization
     return elemGIDws;
   }
 
-  //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
-  const Conn&
-  getWsElNodeEqID() const
-  {
-    return wsElNodeEqID;
-  }
+  // //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
+  // const Conn&
+  // getWsElNodeEqID() const
+  // {
+  //   return wsElNodeEqID;
+  // }
 
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>&
-  getWsElNodeID() const
-  {
-    return wsElNodeID;
-  }
+  // const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
+  // getWsElNodeID() const
+  // {
+  //   return wsElNodeID;
+  // }
 
   //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
   //! both scalar and vector fields
-  const std::vector<IDArray>&
-  getElNodeEqID(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
-  }
+  // const std::vector<IDArray>&
+  // getElNodeEqID(const std::string& field_name) const
+  // {
+  //   return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
+  // }
 
-  Teuchos::RCP<const GlobalLocalIndexer>
-  getGlobalLocalIndexer(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).vs_indexer;
-  }
+  // Teuchos::RCP<const GlobalLocalIndexer>
+  // getGlobalLocalIndexer(const std::string& field_name) const
+  // {
+  //   return nodalDOFsStructContainer.getDOFsStruct(field_name).vs_indexer;
+  // }
 
-  Teuchos::RCP<const GlobalLocalIndexer>
-  getOverlapGlobalLocalIndexer(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name)
-        .overlap_vs_indexer;
-  }
+  // Teuchos::RCP<const GlobalLocalIndexer>
+  // getOverlapGlobalLocalIndexer(const std::string& field_name) const
+  // {
+  //   return nodalDOFsStructContainer.getDOFsStruct(field_name)
+  //       .overlap_vs_indexer;
+  // }
 
-  const NodalDOFManager&
-  getDOFManager(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
-  }
+  // const NodalDOFManager&
+  // getDOFManager(const std::string& field_name) const
+  // {
+  //   return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
+  // }
 
-  const NodalDOFManager&
-  getOverlapDOFManager(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name)
-        .overlap_dofManager;
-  }
+  // const NodalDOFManager&
+  // getOverlapDOFManager(const std::string& field_name) const
+  // {
+  //   return nodalDOFsStructContainer.getDOFsStruct(field_name)
+  //       .overlap_dofManager;
+  // }
 
   //! Retrieve coodinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const;
 
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
-  getCoords() const
+  const DualView<double****>& getCoords () const
   {
     return coords;
   }
@@ -618,17 +617,15 @@ class STKDiscretization : public AbstractDiscretization
   Teuchos::RCP<const Teuchos_Comm> comm;
 
   //! Unknown map and node map
-  Teuchos::RCP<const Thyra_VectorSpace> m_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_node_vs;
+  // Teuchos::RCP<const Thyra_VectorSpace> m_vs;
+  // Teuchos::RCP<const Thyra_VectorSpace> m_node_vs;
 
   //! Overlapped unknown map and node map
-  Teuchos::RCP<const Thyra_VectorSpace> m_overlap_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_overlap_node_vs;
+  // Teuchos::RCP<const Thyra_VectorSpace> m_overlap_vs;
+  // Teuchos::RCP<const Thyra_VectorSpace> m_overlap_node_vs;
 
   //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
-
-  NodalDOFsStructContainer nodalDOFsStructContainer;
 
   //! Number of equations (and unknowns) per node
   const unsigned int neq;
@@ -660,13 +657,13 @@ class STKDiscretization : public AbstractDiscretization
   //! Connectivity array [workset, element, local-node] => GID
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>        wsElNodeID;
 
-  mutable Teuchos::ArrayRCP<double>                                 coordinates;
-  Teuchos::RCP<Thyra_MultiVector>                                   coordMV;
-  WorksetArray<std::string>                                         wsEBNames;
-  WorksetArray<int>                                                 wsPhysIndex;
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>       coords;
-  WorksetArray<Teuchos::ArrayRCP<double>>        sphereVolume;
-  WorksetArray<Teuchos::ArrayRCP<double*>>       latticeOrientation;
+  mutable Teuchos::ArrayRCP<double>         coordinates;
+  Teuchos::RCP<Thyra_MultiVector>           coordMV;
+  WorksetArray<std::string>                 wsEBNames;
+  WorksetArray<int>                         wsPhysIndex;
+  DualView<double****>                      coords;
+  WorksetArray<Teuchos::ArrayRCP<double>>   sphereVolume;
+  WorksetArray<Teuchos::ArrayRCP<double*>>  latticeOrientation;
 
   //! Connectivity map from elementGID to workset and LID in workset
   WsLIDList elemGIDws;

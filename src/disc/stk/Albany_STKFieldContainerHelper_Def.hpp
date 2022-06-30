@@ -25,12 +25,11 @@ namespace Albany
 
 template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
-fillVector (      Thyra_Vector&    field_thyra,
-            const FieldType& field_stk,
-            const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
-            const stk::mesh::Bucket& bucket,
-            const NodalDOFManager& nodalDofManager,
-            const int offset)
+fillVector (      Thyra_Vector&       vector,
+            const FieldType&          field_stk,
+            const stk::mesh::Bucket&  bucket,
+            const DOF&                vector_dof,
+            const int                 offset)
 {
   constexpr int rank = FieldRank<FieldType>::n;
   static_assert(rank==0 || rank==1,
@@ -41,31 +40,35 @@ fillVector (      Thyra_Vector&    field_thyra,
 
   auto stk_data = stk::mesh::field_data(field_stk,bucket);
   const int num_nodes_in_bucket = bucket.size();
-  const int num_vec_components = nodalDofManager.numComponents();
+  const int num_vec_components = vector_dof.dof_mgr->getNumFields();
+  const int num_field_components = stk::mesh::field_scalars_per_entity(field_stk,bucket);
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      num_field_components>num_vec_components, std::logic_error,
+      "Error! The STK field has a vector dim larger than the num fields in the DOF.\n");
 
-  ViewT field_view (stk_data,num_nodes_in_bucket,num_vec_components);
+  // Wrap the stk pointer in a 2d view. Note: for scalar fields, the 2nd dim is 1.
+  ViewT field_view (stk_data,num_nodes_in_bucket,num_field_components);
 
   const stk::mesh::BulkData& mesh = field_stk.get_mesh();
-  auto data = getNonconstLocalData(field_thyra);
-
+  auto data = getNonconstLocalData(vector);
+  auto indexer = vector_dof.node_dof->overlapped_indexer;
   for(int i=0; i<num_nodes_in_bucket; ++i)  {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
     const LO node_lid = indexer->getLocalElement(node_gid);
 
-    for(int j=0; j<num_vec_components; ++j) {
-      data[nodalDofManager.getLocalDOF(node_lid,offset+j)] = field_view(i,j);
+    for(int j=0; j<num_field_components; ++j) {
+      data[node_lid*num_vec_components + j + offset] = field_view(i,j);
     }
   }
 }
 
 template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
-saveVector(const Thyra_Vector& field_thyra,
-           FieldType& field_stk,
-           const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
-           const stk::mesh::Bucket& bucket,
-           const NodalDOFManager& nodalDofManager,
-           const int offset)
+saveVector (const Thyra_Vector&       vector,
+                  FieldType&          field_stk,
+            const stk::mesh::Bucket&  bucket,
+            const DOF&                vector_dof,
+            const int                 offset)
 {
   constexpr int rank = FieldRank<FieldType>::n;
   static_assert(rank==0 || rank==1,
@@ -76,19 +79,24 @@ saveVector(const Thyra_Vector& field_thyra,
   
   auto stk_data = stk::mesh::field_data(field_stk,bucket);
   const int num_nodes_in_bucket = bucket.size();
-  const int num_vec_components = nodalDofManager.numComponents();
+  const int num_vec_components = vector_dof.dof_mgr->getNumFields();
+  const int num_field_components = stk::mesh::field_scalars_per_entity(field_stk,bucket);
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      num_field_components>num_vec_components, std::logic_error,
+      "Error! The STK field has a vector dim larger than the num fields in the DOF.\n");
 
+  // Wrap the stk pointer in a 2d view. Note: for scalar fields, the 2nd dim is 1.
   ViewT field_view (stk_data,num_nodes_in_bucket,num_vec_components);
 
   const auto& mesh = field_stk.get_mesh();
-  auto data = getLocalData(field_thyra);
-
+  auto data = getLocalData(vector);
+  auto indexer = vector_dof.node_dof->overlapped_indexer;
   for(int i=0; i<num_nodes_in_bucket; ++i) {
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
     const LO node_lid = indexer->getLocalElement(node_gid);
 
-    for(int j = 0; j<num_vec_components; ++j) {
-      field_view(i,j) = data[nodalDofManager.getLocalDOF(node_lid,offset+j)];
+    for(int j = 0; j<num_field_components; ++j) {
+      field_view(i,j) = data[node_lid*num_vec_components + j + offset] = field_view(i,j);
     }
   }
 }

@@ -659,26 +659,20 @@ Application::finalSetUp(
     // Create Distributed parameters and initialize them with data stored in the
     // mesh.
     const StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();
-    for (size_t is = 0; is < distParamSIS.size(); is++) {
-      // Get name of distributed parameter
-      const std::string& param_name = distParamSIS[is]->name;
+    for (const auto& state : distParamSIS) {
+      // Get name/ebName of distributed parameter
+      const std::string& param_name = state->name;
+      const std::string& eb_name    = state->ebName;
 
       // Get parameter vector spaces and build parameter vector
       // Create distributed parameter and set workset_elem_dofs
       Teuchos::RCP<DistributedParameter> parameter(new DistributedParameter(
-          param_name,
-          disc->getVectorSpace(param_name),
-          disc->getOverlapVectorSpace(param_name)));
-      parameter->set_workset_elem_dofs(
-          Teuchos::rcpFromRef(disc->getElNodeEqID(param_name)));
+          param_name,eb_name,disc->getDOF(param_name)));
 
-      // Get the vector and lower/upper bounds, and fill them with available
-      // data
-      Teuchos::RCP<Thyra_Vector> dist_param = parameter->vector();
-      Teuchos::RCP<Thyra_Vector> dist_param_lowerbound =
-          parameter->lower_bounds_vector();
-      Teuchos::RCP<Thyra_Vector> dist_param_upperbound =
-          parameter->upper_bounds_vector();
+      // Get the vector and lower/upper bounds, and fill them with available data
+      auto dist_param = parameter->vector();
+      auto dist_param_lowerbound = parameter->lower_bounds_vector();
+      auto dist_param_upperbound = parameter->upper_bounds_vector();
 
       std::stringstream lowerbound_name, upperbound_name;
       lowerbound_name << param_name << "_lowerbound";
@@ -687,13 +681,10 @@ Application::finalSetUp(
       // Initialize parameter with data stored in the mesh
       disc->getField(*dist_param, param_name);
       const auto& nodal_param_states = disc->getNodalParameterSIS();
-      bool        has_lowerbound(false), has_upperbound(false);
-      for (int ist = 0; ist < static_cast<int>(nodal_param_states.size());
-           ist++) {
-        has_lowerbound = has_lowerbound || (nodal_param_states[ist]->name ==
-                                            lowerbound_name.str());
-        has_upperbound = has_upperbound || (nodal_param_states[ist]->name ==
-                                            upperbound_name.str());
+      bool has_lowerbound(false), has_upperbound(false);
+      for (const auto& nps : nodal_param_states) {
+        has_lowerbound = has_lowerbound || (nps->name==lowerbound_name.str());
+        has_upperbound = has_upperbound || (nps->name==upperbound_name.str());
       }
       if (has_lowerbound) {
         disc->getField(*dist_param_lowerbound, lowerbound_name.str());
@@ -789,12 +780,11 @@ void
 Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const
 {
   // get number of worksets
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
-  unsigned int const numWorksets = wsElNodeEqID.size();
+  const int numWorksets = disc->getNumWorksets();
 
   // compute largest workset size over all worksets for each sideset name
   std::map<std::string, unsigned int> maxSideSetSizes;
-  for (unsigned int i = 0; i < numWorksets; ++i) { 
+  for (int i = 0; i < numWorksets; ++i) { 
     const LocalSideSetInfoList& sideSetView = disc->getSideSetViews(i);
     for (auto it = sideSetView.begin(); it != sideSetView.end(); ++it) {
       if (maxSideSetSizes.find(it->first) == maxSideSetSizes.end()) {
@@ -1327,11 +1317,9 @@ Application::computeGlobalResidualImpl(
   using EvalT = PHAL::AlbanyTraits::Residual;
   postRegSetup<EvalT>();
 
-  // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  // Get basic worksets info
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int const numWorksets = wsElNodeEqID.size();
+  const int numWorksets = disc->getNumWorksets();
 
   const Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
@@ -1543,11 +1531,9 @@ Application::computeGlobalJacobianImpl(
   using EvalT = PHAL::AlbanyTraits::Jacobian;
   postRegSetup<EvalT>();
 
-  // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  // Get basic worksets info
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets = disc->getNumWorksets();
 
   Teuchos::RCP<Thyra_Vector> overlapped_f;
   if (Teuchos::nonnull(f)) { overlapped_f = solMgr->get_overlapped_f(); }
@@ -1850,11 +1836,9 @@ Application::computeGlobalTangent(
   using EvalT = PHAL::AlbanyTraits::Tangent;
   postRegSetup<EvalT>();
 
-  // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  // Get basic worksets info
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets = disc->getNumWorksets();
 
   Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
@@ -2083,11 +2067,9 @@ Application::applyGlobalDistParamDerivImpl(
   using EvalT = PHAL::AlbanyTraits::DistParamDeriv;
   postRegSetup<EvalT>();
 
-  // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  // Get basic worksets info
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets = disc->getNumWorksets();
 
   // The combin-and-scatter manager
   auto cas_manager = solMgr->get_cas_manager();
@@ -2630,8 +2612,9 @@ Application::evaluateResidual_HessVecProd_xx(
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xx = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xx->domain()->dim());
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xx->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    // Get basic worksets info
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
+    const int numWorksets = disc->getNumWorksets();
 
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
@@ -2643,8 +2626,6 @@ Application::evaluateResidual_HessVecProd_xx(
       workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
-
-    int const numWorksets = wsElNodeEqID.size();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -2732,8 +2713,9 @@ Application::evaluateResidual_HessVecProd_xp(
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xp = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xp->domain()->dim());
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xp->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    // Get basic worksets info
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
+    const int numWorksets = disc->getNumWorksets();
 
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
@@ -2745,8 +2727,6 @@ Application::evaluateResidual_HessVecProd_xp(
       workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
-
-    int const numWorksets = wsElNodeEqID.size();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -2847,8 +2827,9 @@ Application::evaluateResidual_HessVecProd_px(
     workset.hessianWorkset.hess_vec_prod_f_px = Hv_f_px;
     workset.hessianWorkset.overlapped_hess_vec_prod_f_px->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    // Get basic worksets info
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
+    const int numWorksets = disc->getNumWorksets();
 
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
@@ -2861,7 +2842,6 @@ Application::evaluateResidual_HessVecProd_px(
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
 
-    int const numWorksets = wsElNodeEqID.size();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -2999,8 +2979,9 @@ Application::evaluateResidual_HessVecProd_pp(
     workset.hessianWorkset.hess_vec_prod_f_pp = Hv_f_pp;
     workset.hessianWorkset.overlapped_hess_vec_prod_f_pp->assign(0.0);
 
-    const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+    // Get basic worksets info
     const auto& wsPhysIndex  = disc->getWsPhysIndex();
+    const int numWorksets = disc->getNumWorksets();
 
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
@@ -3012,8 +2993,6 @@ Application::evaluateResidual_HessVecProd_pp(
       workset.hessianWorkset.overlapped_f_multiplier = Thyra::createMember(workset.x_cas_manager->getOverlappedVectorSpace());
       workset.x_cas_manager->scatter(workset.hessianWorkset.f_multiplier, workset.hessianWorkset.overlapped_f_multiplier, Albany::CombineMode::INSERT);
     }
-
-    int const numWorksets = wsElNodeEqID.size();
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -3099,11 +3078,9 @@ Application::evaluateStateFieldManager(
 
   Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
-  // Load connectivity map and coordinates
-  const auto& wsElNodeEqID = disc->getWsElNodeEqID();
+  // Get basic worksets info
   const auto& wsPhysIndex  = disc->getWsPhysIndex();
-
-  int numWorksets = wsElNodeEqID.size();
+  const int numWorksets = disc->getNumWorksets();
 
   // Scatter to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot, dxdp);
@@ -3473,7 +3450,7 @@ Application::setupBasicWorksetInfo(
 
 int
 Application::calcTangentDerivDimension(
-    const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+    const Teuchos::RCP<Teuchos::ParameterList>& /* problemParams */)
 {
   int np = Albany::CalculateNumberParams(problemParams);
   return std::max(1, np);

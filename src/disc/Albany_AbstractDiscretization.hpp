@@ -13,11 +13,12 @@
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
-#include "Shards_Array.hpp"
-#include "Shards_CellTopologyData.h"
-
 #include "Albany_ThyraTypes.hpp"
-#include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_DOF.hpp"
+
+#include <Panzer_DOFManager.hpp>
+#include <Shards_Array.hpp>
+#include <Shards_CellTopologyData.h>
 
 namespace Albany {
 
@@ -26,6 +27,8 @@ class AbstractDiscretization
  public:
   typedef std::map<std::string, Teuchos::RCP<AbstractDiscretization>>
       SideSetDiscretizationsType;
+
+  using dof_map = std::map<std::string,Teuchos::RCP<DOF>>;
 
   static const char* solution_dof_name () { return "ordinary_solution"; }
   static const char* nodes_dof_name    () { return "mesh_nodes"; }
@@ -42,16 +45,20 @@ class AbstractDiscretization
   virtual ~AbstractDiscretization() = default;
 
   //! Get node vector space (owned and overlapped)
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getNodeVectorSpace() const = 0;
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapNodeVectorSpace() const = 0;
+  Teuchos::RCP<const Thyra_VectorSpace> getNodeVectorSpace() const {
+    return getVectorSpace (nodes_dof_name());
+  }
+  Teuchos::RCP<const Thyra_VectorSpace> getOverlapNodeVectorSpace() const {
+    return getOverlapVectorSpace (nodes_dof_name());
+  }
 
   //! Get solution DOF vector space (owned and overlapped).
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getVectorSpace() const = 0;
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapVectorSpace() const = 0;
+  Teuchos::RCP<const Thyra_VectorSpace> getVectorSpace() const {
+    return getVectorSpace (solution_dof_name());
+  }
+  Teuchos::RCP<const Thyra_VectorSpace> getOverlapVectorSpace() const {
+    return getOverlapVectorSpace (solution_dof_name());
+  }
 
   //! Get Field node vector space (owned and overlapped)
   virtual Teuchos::RCP<const Thyra_VectorSpace>
@@ -75,12 +82,9 @@ class AbstractDiscretization
   isExplicitScheme() const = 0;
 
   //! Get Node set lists
-  virtual const NodeSetList&
-  getNodeSets() const = 0;
-  virtual const NodeSetGIDsList&
-  getNodeSetGIDs() const = 0;
-  virtual const NodeSetCoordList&
-  getNodeSetCoords() const = 0;
+  virtual const NodeSetList&      getNodeSets() const = 0;
+  virtual const NodeSetGIDsList&  getNodeSetGIDs() const = 0;
+  virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
 
   //! Get Side set lists
   virtual const SideSetList&
@@ -94,54 +98,67 @@ class AbstractDiscretization
   virtual const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const = 0;
 
+  // Return the size of each workset
+  const WorksetArray<int>& getWorksetSizes () const { return m_workset_sizes; }
+
+  // virtual DualView<int*> getWorksetSizes () const = 0;
+  // virtual DualView<int*> getWsElLID () const = 0;
   //! Get map from (Ws, El, Local Node, Eq) -> unkLID
-  virtual const Conn&
-  getWsElNodeEqID() const = 0;
+  // virtual const Conn&
+  // getWsElNodeEqID() const = 0;
 
-  //! Get map from (Ws, El, Local Node) -> unkGID
-  virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>&
-  getWsElNodeID() const = 0;
+  // //! Get map from (Ws, El, Local Node) -> unkGID
+  // virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
+  // getWsElNodeID() const = 0;
 
-  //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
-  //! both scalar and vector fields
-  virtual const std::vector<IDArray>&
-  getElNodeEqID(const std::string& field_name) const = 0;
-
-  //! Get Dof Manager of field field_name
-  virtual const NodalDOFManager&
-  getDOFManager(const std::string& field_name) const = 0;
+  // //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
+  // //! both scalar and vector fields
+  // virtual const std::vector<IDArray>&
+  // getElNodeEqID(const std::string& field_name) const = 0;
 
   //! Get Dof Manager of field field_name
-  virtual const NodalDOFManager&
-  getOverlapDOFManager(const std::string& field_name) const = 0;
+  virtual const DOF& getDOF (const std::string& field_name) const {
+    return *m_dof_map.at(field_name);
+  }
+  virtual const DOF& getSolutionDOF () const {
+    return *m_dof_map.at(solution_dof_name());
+  }
+  virtual const DOF& getNodeDOF () const {
+    return *m_dof_map.at(nodes_dof_name());
+  }
 
-  //! Get Dof Manager of field field_name
-  virtual Teuchos::RCP<const GlobalLocalIndexer>
-  getGlobalLocalIndexer(const std::string& field_name) const = 0;
+  // //! Get Dof Manager of field field_name
+  // virtual const NodalDOFManager&
+  // getOverlapDOFManager(const std::string& field_name) const = 0;
 
-  //! Get Dof Manager of field field_name
-  virtual Teuchos::RCP<const GlobalLocalIndexer>
-  getOverlapGlobalLocalIndexer(const std::string& field_name) const = 0;
+  // //! Get Dof Manager of field field_name
+  // virtual Teuchos::RCP<const GlobalLocalIndexer>
+  // getGlobalLocalIndexer(const std::string& field_name) const = 0;
 
-  //! Get GlobalLocalIndexer for solution field
-  Teuchos::RCP<const GlobalLocalIndexer>
-  getGlobalLocalIndexer () const { return getGlobalLocalIndexer(solution_dof_name()); }
+  // //! Get Dof Manager of field field_name
+  // virtual Teuchos::RCP<const GlobalLocalIndexer>
+  // getOverlapGlobalLocalIndexer(const std::string& field_name) const = 0;
 
-  //! Get GlobalLocalIndexer for overlapped solution field
-  Teuchos::RCP<const GlobalLocalIndexer>
-  getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(solution_dof_name()); }
+  // //! Get GlobalLocalIndexer for solution field
+  // Teuchos::RCP<const GlobalLocalIndexer>
+  // getGlobalLocalIndexer () const { return getGlobalLocalIndexer(solution_dof_name()); }
 
-  //! Get GlobalLocalIndexer for node field
-  Teuchos::RCP<const GlobalLocalIndexer>
-  getNodeGlobalLocalIndexer () const { return getGlobalLocalIndexer(nodes_dof_name()); }
+  // //! Get GlobalLocalIndexer for overlapped solution field
+  // Teuchos::RCP<const GlobalLocalIndexer>
+  // getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(solution_dof_name()); }
 
-  //! Get GlobalLocalIndexer for overlapped node field
-  Teuchos::RCP<const GlobalLocalIndexer>
-  getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
+  // //! Get GlobalLocalIndexer for node field
+  // Teuchos::RCP<const GlobalLocalIndexer>
+  // getNodeGlobalLocalIndexer () const { return getGlobalLocalIndexer(nodes_dof_name()); }
+
+  // //! Get GlobalLocalIndexer for overlapped node field
+  // Teuchos::RCP<const GlobalLocalIndexer>
+  // getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
 
   //! Retrieve coodinate ptr_field (ws, el, node)
-  virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
-  getCoords() const = 0;
+  virtual const DualView<double****>& getCoords () const = 0;
+  // virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
+  // getCoords() const = 0;
 
   //! Get coordinates (overlap map).
   virtual const Teuchos::ArrayRCP<double>&
@@ -186,6 +203,9 @@ class AbstractDiscretization
   //! Retrieve Vector (length num worksets) of Physics Index
   virtual const WorksetArray<int>&
   getWsPhysIndex() const = 0;
+
+  // The the number of worksets
+  int getNumWorksets () { return getWsPhysIndex().size(); }
 
   //! Retrieve connectivity map from elementGID to workset
   virtual WsLIDList&
@@ -309,6 +329,11 @@ class AbstractDiscretization
       const double             time,
       const bool               overlapped = false,
       const bool               force_write_solution = false) = 0; 
+
+protected:
+
+  dof_map             m_dof_map;
+  WorksetArray<int>   m_workset_sizes;
 };
 
 }  // namespace Albany

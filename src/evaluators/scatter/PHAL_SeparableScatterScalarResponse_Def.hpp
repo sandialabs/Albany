@@ -662,14 +662,11 @@ evaluateFields(typename Traits::EvalData workset)
     auto hess_vec_prod_g_px_data = Albany::getNonconstLocalData(hess_vec_prod_g_px);
 
     int num_deriv = this->numNodes;
-    auto nodeID = workset.wsElNodeEqID;
     int fieldLevel = level_it->second;
 
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
     auto overlap_p_vs = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
     auto ov_p_indexer = Albany::createGlobalLocalIndexer(overlap_p_vs);
 
     // Loop over cells in workset
@@ -698,14 +695,11 @@ evaluateFields(typename Traits::EvalData workset)
     auto hess_vec_prod_g_pp_data = Albany::getNonconstLocalData(hess_vec_prod_g_pp);
 
     int num_deriv = this->numNodes;
-    auto nodeID = workset.wsElNodeEqID;
     int fieldLevel = level_it->second;
 
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
     auto overlap_p_vs = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_vector_space();
-    auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-    auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
     auto ov_p_indexer = Albany::createGlobalLocalIndexer(overlap_p_vs);
 
     // Loop over cells in workset

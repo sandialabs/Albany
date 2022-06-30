@@ -35,5 +35,5 @@ add_test(NAME StringUtils_Serial_Unit_Test
 #####################################################################
 
 add_subdirectory(evaluators)
-add_subdirectory(disc)
+# add_subdirectory(disc)
 

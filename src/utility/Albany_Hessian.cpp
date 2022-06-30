@@ -45,72 +45,158 @@ createDenseHessianLinearOp(Teuchos::RCP<const Thyra_VectorSpace> p_vs)
     return H;
 }
 
+// Teuchos::RCP<Thyra_LinearOp>
+// createSparseHessianLinearOp(
+//     Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
+//     Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
+//     const std::vector<IDArray> vElDofs)
+// {
+//     Teuchos::RCP<const Tpetra_Map> p_overlapped_map = getTpetraMap(p_overlapped_vs);
+//     Teuchos::RCP<const Tpetra_Map> p_owned_map = getTpetraMap(p_owned_vs);
+//     Teuchos::RCP<Thyra_LinearOp> H;
+
+//     std::size_t num_elem = 0;
+//     const std::size_t num_elem_per_ws = vElDofs[0].dimension(0);
+//     const std::size_t nws = vElDofs.size();
+
+//     bool same_num_elem_per_ws = true;
+
+//     for (std::size_t wsIndex = 0; wsIndex < nws; ++wsIndex)
+//     {
+//         const std::size_t num_elem_per_ws_i = vElDofs[wsIndex].dimension(0);
+//         if (num_elem_per_ws != num_elem_per_ws_i && wsIndex + 1 < nws)
+//             same_num_elem_per_ws = false;
+//         num_elem += vElDofs[wsIndex].dimension(0);
+//     }
+
+//     TEUCHOS_TEST_FOR_EXCEPTION(
+//         same_num_elem_per_ws == false,
+//         std::logic_error,
+//         std::endl
+//             << "Error!  Albany::createHessianCrsGraph():  "
+//             << "Not implemented yet"
+//             << std::endl);
+
+//     const std::size_t NN = vElDofs[0].dimension(1);
+
+//     Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_owned_map, 30));
+
+//     Tpetra_GO cols[1];
+
+//     for (std::size_t ielem=0; ielem<num_elem; ++ielem) {
+//         IDArray wsElDofs = vElDofs[floor(ielem / num_elem_per_ws)];
+//         const Tpetra_LO ielem_ws = ielem % num_elem_per_ws;
+//         for (std::size_t i = 0; i < NN; ++i)
+//         {
+//             const Tpetra_LO lcl_overlapped_node1 = wsElDofs((int)ielem_ws, (int)i, 0);
+//             if (lcl_overlapped_node1 < 0)
+//                 continue;
+
+//             const GO row = p_overlapped_map->getGlobalElement(lcl_overlapped_node1);
+
+//             for (std::size_t j = 0; j < NN; ++j)
+//             {
+//                 const Tpetra_LO lcl_overlapped_node2 = wsElDofs((int)ielem_ws, (int)j, 0);
+//                 if (lcl_overlapped_node2 < 0)
+//                     continue;
+
+//                 cols[0] = p_overlapped_map->getGlobalElement(lcl_overlapped_node2);
+
+//                 Hgraph->insertGlobalIndices(row, 1, cols);
+//             }
+//         }
+//     }
+
+//     Hgraph->fillComplete();
+//     Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
+
+//     H = createThyraLinearOp(Ht);
+//     assign(H, 0.0);
+
+//     return H;
+// }
+
 Teuchos::RCP<Thyra_LinearOp>
 createSparseHessianLinearOp(
-    Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
-    Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
-    const std::vector<IDArray> vElDofs)
+    const Teuchos::RCP<const DistributedParameter>& param,
+    const Teuchos::RCP<const AbstractDiscretization>& disc)
+
+    // return createSparseHessianLinearOp(distParamLib->get(param_name),
+    //                                    app->getDisc());
+    // Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
+    // Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
+    // Teuchos::RCP<const panzer::DOFManager> p_dof_mgr,
+    // const WorksetArray<int>& ws_sizes,
+    // const DualView<int*>& ws_elem_lids)
 {
-    Teuchos::RCP<const Tpetra_Map> p_overlapped_map = getTpetraMap(p_overlapped_vs);
-    Teuchos::RCP<const Tpetra_Map> p_owned_map = getTpetraMap(p_owned_vs);
-    Teuchos::RCP<Thyra_LinearOp> H;
+    auto p_space    = param->vector_space();
+    auto p_ov_space = param->overlap_vector_space();
+    // Teuchos::RCP<const Tpetra_Map> p_overlapped_map = getTpetraMap(p_overlapped_vs);
+    // Teuchos::RCP<const Tpetra_Map> p_owned_map = getTpetraMap(p_owned_vs);
 
-    std::size_t num_elem = 0;
-    const std::size_t num_elem_per_ws = vElDofs[0].dimension(0);
-    const std::size_t nws = vElDofs.size();
+    // Teuchos::RCP<Thyra_LinearOp> H;
 
-    bool same_num_elem_per_ws = true;
+    // int num_elem = 0;
+    // const int num_elem_per_ws = ws_sizes[0];
+    // const int nws = ws_sizes.size();
 
-    for (std::size_t wsIndex = 0; wsIndex < nws; ++wsIndex)
-    {
-        const std::size_t num_elem_per_ws_i = vElDofs[wsIndex].dimension(0);
-        if (num_elem_per_ws != num_elem_per_ws_i && wsIndex + 1 < nws)
-            same_num_elem_per_ws = false;
-        num_elem += vElDofs[wsIndex].dimension(0);
-    }
+    // bool same_num_elem_per_ws = true;
 
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        same_num_elem_per_ws == false,
-        std::logic_error,
-        std::endl
-            << "Error!  Albany::createHessianCrsGraph():  "
-            << "Not implemented yet"
-            << std::endl);
+    // for (int iws = 0; iws < nws; ++iws) {
+    //     const int num_elem_per_ws_i = ws_sizes[iws];
+    //     if (num_elem_per_ws != num_elem_per_ws_i && iws + 1 < nws)
+    //         same_num_elem_per_ws = false;
+    //     num_elem += ws_sizes[iws];
+    // }
 
-    const std::size_t NN = vElDofs[0].dimension(1);
+    // TEUCHOS_TEST_FOR_EXCEPTION(
+    //     same_num_elem_per_ws == false,
+    //     std::logic_error,
+    //     std::endl
+    //         << "Error!  Albany::createHessianCrsGraph():  "
+    //         << "Not implemented yet"
+    //         << std::endl);
 
-    Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_owned_map, 30));
+    ThyraCrsMatrixFactory H_factory (p_space,p_space,p_ov_space,p_ov_space);
+    
+    // Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_owned_map, 30));
+    Teuchos::Array<GO> cols(1);
 
-    Tpetra_GO cols[1];
+    // Loop over all elems in the param dof mgr
+    const auto& p_dof_mgr = param->dof_mgr();
+    const auto& conn_mgr  = p_dof_mgr()->getConnManager();
 
-    for (std::size_t ielem=0; ielem<num_elem; ++ielem) {
-        IDArray wsElDofs = vElDofs[floor(ielem / num_elem_per_ws)];
-        const Tpetra_LO ielem_ws = ielem % num_elem_per_ws;
-        for (std::size_t i = 0; i < NN; ++i)
-        {
-            const Tpetra_LO lcl_overlapped_node1 = wsElDofs((int)ielem_ws, (int)i, 0);
-            if (lcl_overlapped_node1 < 0)
-                continue;
+    // Local ids of elements
+    const auto& elem_lids = conn_mgr->getElementBlock(param->ebName());
+    // const int   num_elem  = elem_lids.size();
 
-            const GO row = p_overlapped_map->getGlobalElement(lcl_overlapped_node1);
+    const auto p_ov_gids = getGlobalElements(p_ov_space);
 
-            for (std::size_t j = 0; j < NN; ++j)
-            {
-                const Tpetra_LO lcl_overlapped_node2 = wsElDofs((int)ielem_ws, (int)j, 0);
-                if (lcl_overlapped_node2 < 0)
-                    continue;
-
-                cols[0] = p_overlapped_map->getGlobalElement(lcl_overlapped_node2);
-
-                Hgraph->insertGlobalIndices(row, 1, cols);
-            }
+    // Global ids of dofs in the element
+    for (const auto elem_lid : elem_lids) {
+        // int ws       = ielem / num_elem_per_ws;
+        // int ielem_ws = ielem % num_elem_per_ws; 
+        // int elem_lid = ws_elem_lids(ws,ielem_ws);
+        // IDArray wsElDofs = vElDofs[floor(ielem / num_elem_per_ws)];
+        // const Tpetra_LO ielem_ws = ielem % num_elem_per_ws;
+      std::vector<Tpetra_GO> elem_gids;
+      p_dof_mgr->getElementGIDs(elem_lid,elem_gids);
+      std::vector<Tpetra_GO> param_elem_gids;
+      for (const auto gid : elem_gids) {
+        if (std::find(p_ov_gids.begin(),p_ov_gids.end(),gid)!=p_ov_gids.end()) {
+          param_elem_gids.push_back(gid);
         }
+      }
+      for (const auto row : param_elem_gids) {
+        for (const auto col : param_elem_gids) {
+          cols[0] = col;
+          H_factory.insertGlobalIndices(row,cols());
+        }
+      }
     }
 
-    Hgraph->fillComplete();
-    Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
-
-    H = createThyraLinearOp(Ht);
+    H_factory.fillComplete();
+    auto H = H_factory.createOp ();
     assign(H, 0.0);
 
     return H;

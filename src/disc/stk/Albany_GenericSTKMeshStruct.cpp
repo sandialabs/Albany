@@ -134,10 +134,11 @@ void GenericSTKMeshStruct::SetupFieldData(
     params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
 
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
-  if(user_specified_solution_components && (residual_vector.length() > 0)){
-    this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(params,
-        metaData, bulkData, interleavedOrdering, numDim, sis, num_params));
-  } else {
+  // if(user_specified_solution_components && (residual_vector.length() > 0)){
+  //   this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(params,
+  //       metaData, bulkData, interleavedOrdering, numDim, sis, num_params));
+  // } else
+  {
     this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
         metaData, bulkData, req, interleavedOrdering, numDim, sis, num_params));
   }

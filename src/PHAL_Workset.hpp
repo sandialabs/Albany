@@ -135,13 +135,10 @@ struct Workset
   bool                                              transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>> local_Vp;
 
-  Albany::WorksetConn                           wsElNodeEqID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>      wsElNodeID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>> wsCoords;
-  std::string                                   EBName;
+  Albany::ViewLR<double***,Albany::HostMemSpace>    wsCoords;
+  std::string                                       EBName;
 
-  // Needed for Schwarz coupling and for dirichlet conditions based on dist
-  // parameters.
+  // The disc is crucial to access DOF numbering for all dofs
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
   int spatial_dimension_{0};

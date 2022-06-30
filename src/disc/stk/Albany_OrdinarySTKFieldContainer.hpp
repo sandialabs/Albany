@@ -69,93 +69,62 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
   };
 #endif
 
-  void
-  fillSolnVector(
-      Thyra_Vector&                                soln,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  fillVector(
-      Thyra_Vector&                                field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
-  void
-  fillSolnMultiVector(
-      Thyra_MultiVector&                           soln,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveVector(
-      const Thyra_Vector&                          field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
-  void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      const Thyra_Vector&                          soln_dot,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      const Thyra_Vector&                          soln_dot,
-      const Thyra_Vector&                          soln_dotdot,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveResVector(
-      const Thyra_Vector&                          res,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveSolnMultiVector(
-      const Thyra_MultiVector&                     soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void fillSolnVector (Thyra_Vector& solution,
+                       const DOF&    solution_dof);
 
-  void
-  transferSolutionToCoords();
+  void fillVector (Thyra_Vector&      field_vector,
+                   const std::string& field_name,
+                   const DOF&         field_dof);
+
+  void fillSolnMultiVector (Thyra_MultiVector& solution,
+                            const DOF&         solution_dof);
+
+  void saveVector (const Thyra_Vector&  field_vector,
+                   const std::string&   field_name,
+                   const DOF&           field_dof);
+
+  void saveSolnVector (const Thyra_Vector&  solution,
+                       const cmv_ptr_t&     solution_dxdp,
+                       const DOF&           solution_dof);
+
+  void saveSolnVector (const Thyra_Vector&  solution,
+                       const cmv_ptr_t&     solution_dxdp,
+                       const Thyra_Vector&  solution_dot,
+                       const DOF&           solution_dof);
+
+  void saveSolnVector (const Thyra_Vector&  solution,
+                       const cmv_ptr_t&     solution_dxdp,
+                       const Thyra_Vector&  solution_dot,
+                       const Thyra_Vector&  solution_dotdot,
+                       const DOF&           solution_dof);
+
+  void saveResVector (const Thyra_Vector& residual,
+                      const DOF&          solution_dof);
+
+  void saveSolnMultiVector (const Thyra_MultiVector&  solution,
+                            const cmv_ptr_t&          solution_dxdp,
+                            const DOF&                solution_dof);
+
+  void transferSolutionToCoords();
 
 
  private:
-  void
-  fillVectorImpl(
-      Thyra_Vector&                                field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
-  void
-  saveVectorImpl(
-      const Thyra_Vector&                          field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
+  void fillVectorImpl (Thyra_Vector&      field_vector,
+                       const std::string& field_name,
+                       const DOF&         field_dof);
 
-  void
-  initializeProcRankField();
+  void saveVectorImpl (const Thyra_Vector&  field_vector,
+                       const std::string&   field_name,
+                       const DOF&           field_dof);
+
+  void initializeProcRankField();
 
 
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field;
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
-                                              solution_field_dtk;
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
-                                              solution_field_dxdp;
-  AbstractSTKFieldContainer::VectorFieldType* residual_field;
+  Teuchos::Array<VectorFieldType*>  solution_field;
+  Teuchos::Array<VectorFieldType*>  solution_field_dtk;
+  Teuchos::Array<VectorFieldType*>  solution_field_dxdp;
+
+  VectorFieldType*                  residual_field;
 };
 
 }  // namespace Albany

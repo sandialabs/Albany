@@ -7,21 +7,16 @@
 #ifndef INITIAL_CONDITION_HPP
 #define INITIAL_CONDITION_HPP
 
-#include "Albany_DataTypes.hpp"
-#include "Albany_DiscretizationUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 
-#include <string>
+#include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
 
 void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
-                        const Albany::Conn& wsElNodeEqID,
-                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
-                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                        const int neq, const int numDim,
-                        Teuchos::ParameterList& icParams,
-                        const bool gasRestartSolution = false);
+                        const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
+                        Teuchos::ParameterList& icParams);
 
 } // namespace Albany
 

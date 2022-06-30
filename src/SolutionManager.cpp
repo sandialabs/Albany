@@ -95,13 +95,6 @@ SolutionManager::SolutionManager(
 
   }
 
-
-  auto                           wsElNodeEqID = disc_->getWsElNodeEqID();
-  auto                           coords       = disc_->getCoords();
-  Teuchos::ArrayRCP<std::string> wsEBNames    = disc_->getWsEBNames();
-  const int                      numDim       = disc_->getNumDim();
-  const int                      neq          = disc_->getNumEq();
-
   Teuchos::RCP<Teuchos::ParameterList> pbParams =
       Teuchos::sublist(appParams_, "Problem", true);
 
@@ -114,13 +107,8 @@ SolutionManager::SolutionManager(
         Albany::CombineMode::INSERT);
     InitialConditions(
         overlapped_soln->col(0),
-        wsElNodeEqID,
-        wsEBNames,
-        coords,
-        neq,
-        numDim,
-        pbParams->sublist("Initial Condition"),
-        disc_->hasRestartSolution());
+        disc,
+        pbParams->sublist("Initial Condition"));
     cas_manager->combine(
         overlapped_soln->col(0),
         current_soln->col(0),
@@ -133,13 +121,8 @@ SolutionManager::SolutionManager(
           Albany::CombineMode::INSERT);
       InitialConditions(
           overlapped_soln->col(1),
-          wsElNodeEqID,
-          wsEBNames,
-          coords,
-          neq,
-          numDim,
-          pbParams->sublist("Initial Condition Dot"),
-          disc_->hasRestartSolution());
+          disc,
+          pbParams->sublist("Initial Condition Dot"));
       cas_manager->combine(
           overlapped_soln->col(1),
           current_soln->col(1),
@@ -153,13 +136,8 @@ SolutionManager::SolutionManager(
           Albany::CombineMode::INSERT);
       InitialConditions(
           overlapped_soln->col(2),
-          wsElNodeEqID,
-          wsEBNames,
-          coords,
-          neq,
-          numDim,
-          pbParams->sublist("Initial Condition DotDot"),
-          disc_->hasRestartSolution());
+          disc,
+          pbParams->sublist("Initial Condition DotDot"));
       cas_manager->combine(
           overlapped_soln->col(1),
           current_soln->col(1),

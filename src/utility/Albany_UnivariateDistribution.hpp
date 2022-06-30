@@ -7,6 +7,8 @@
 #ifndef ALBANY_UNIVARIATE_DISTRIBUTION_HPP
 #define ALBANY_UNIVARIATE_DISTRIBUTION_HPP
 
+#include "Teuchos_ParameterList.hpp"
+
 #include <boost/math/special_functions/erf.hpp>
 
 namespace Albany
@@ -19,7 +21,7 @@ namespace Albany
       {
         // Nothing to be done here
       }
-      UnivariatDistribution(const Teuchos::ParameterList &distributionParams)
+      UnivariatDistribution(const Teuchos::ParameterList &/* distributionParams */)
       {
         // Nothing to be done here
       }
@@ -83,15 +85,15 @@ namespace Albany
         return 2*sqrt(2)*M_PI * sigma * exp(2*pow(boost::math::erf_inv(-1+2*x),2))*boost::math::erf_inv(2*x-1);
       }
 
-      double ppf(const double x, const double v) {
+      double ppf(const double /* x */, const double v) {
         return mu + sigma * v;
       }
 
-      double ppf_dx(const double x, const double v) {
+      double ppf_dx(const double /* x */, const double v) {
         return sqrt(2*M_PI) * sigma * exp(pow(v/sqrt(2),2));
       }
 
-      double ppf_dx_dx(const double x, const double v) {
+      double ppf_dx_dx(const double /* x */, const double v) {
         return 2*sqrt(2)*M_PI * sigma * exp(2*pow(v/sqrt(2),2))*v/sqrt(2);
       }
 
@@ -167,15 +169,15 @@ namespace Albany
         return sqrt(2)*M_PI*sigma*(2*boost::math::erf_inv(2*x-1)+sqrt(2)*sigma) * exp(sqrt(2)*sigma*boost::math::erf_inv(2*x-1)+2*pow(boost::math::erf_inv(2*x-1),2)+mu);
       }
 
-      double ppf(const double x, const double v) {
+      double ppf(const double /* x */, const double v) {
         return exp(mu + sqrt(2) * sigma * v/sqrt(2));
       }
 
-      double ppf_dx(const double x, const double v) {
+      double ppf_dx(const double /* x */, const double v) {
         return sqrt(2*M_PI)*sigma*exp(sqrt(2)*sigma*v/sqrt(2)+pow(v/sqrt(2),2)+mu);
       }
 
-      double ppf_dx_dx(const double x, const double v) {
+      double ppf_dx_dx(const double /* x */, const double v) {
         return sqrt(2)*M_PI*sigma*(2*v/sqrt(2)+sqrt(2)*sigma) * exp(sqrt(2)*sigma*v/sqrt(2)+2*pow(v/sqrt(2),2)+mu);
       }
 
@@ -241,11 +243,11 @@ namespace Albany
         return (x-a)/(b-a);
       }
 
-      double cdf_dx(const double x) {
+      double cdf_dx(const double /* x */) {
         return 1./(b-a);
       }
 
-      double cdf_dx_dx(const double x) {
+      double cdf_dx_dx(const double /* x */) {
         return 0;
       }
       
@@ -253,11 +255,11 @@ namespace Albany
         return (b-a) * x + a;
       }
 
-      double ppf_dx(const double x) {
+      double ppf_dx(const double /* x */) {
         return (b-a);
       }
 
-      double ppf_dx_dx(const double x) {
+      double ppf_dx_dx(const double /* x */) {
         return 0;
       }
 

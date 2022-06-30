@@ -106,56 +106,59 @@ STKDiscretization::printConnectivity() const
   }
 }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getVectorSpace(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).vs;
-}
+// Teuchos::RCP<const Thyra_VectorSpace>
+// STKDiscretization::getVectorSpace(const std::string& field_name) const
+// {
+//   return m_dof_map.at(field_name)->vs;
+// }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getNodeVectorSpace(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).node_vs;
-}
+// Teuchos::RCP<const Thyra_VectorSpace>
+// STKDiscretization::getNodeVectorSpace(const std::string& field_name) const
+// {
+//   return m_dof_map.at(field_name).node_vs;
+// }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getOverlapVectorSpace(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_vs;
-}
+// Teuchos::RCP<const Thyra_VectorSpace>
+// STKDiscretization::getOverlapVectorSpace(const std::string& field_name) const
+// {
+//   return m_dof_map.at(field_name).overlap_vs;
+// }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getOverlapNodeVectorSpace(
-    const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_node_vs;
-}
+// Teuchos::RCP<const Thyra_VectorSpace>
+// STKDiscretization::getOverlapNodeVectorSpace(
+//     const std::string& field_name) const
+// {
+//   return m_dof_map.at(field_name).overlap_node_vs;
+// }
 
 void
 STKDiscretization::printCoords() const
 {
   std::cout << "Processor " << bulkData->parallel_rank() << " has "
-            << coords.size() << " worksets.\n";
+            << coords.host().extent(0) << " worksets.\n";
 
   const int numDim = stkMeshStruct->numDim;
   double xmin = std::numeric_limits<double>::max(), xmax = std::numeric_limits<double>::lowest(),
       ymin = xmin, ymax = xmax, zmin = xmin, zmax = xmax;
-  for (int ws = 0; ws < coords.size(); ws++) {
-    for (int e = 0; e < coords[ws].size(); e++) {
-      for (int j = 0; j < coords[ws][e].size(); j++) {
-        xmin = std::min(xmin, coords[ws][e][j][0]);
-        xmax = std::max(xmax, coords[ws][e][j][0]);
+  auto coords_h = coords.host();
+  const auto& wsSizes = getWorksetSizes();
+  for (int ws = 0; ws < coords_h.extent_int(0); ws++) {
+    for (int e = 0; e < wsSizes[ws]; e++) {
+      for (int j = 0; j < coords_h.extent_int(2); j++) {
+        auto coords_node = Kokkos::subview(coords_h,ws,e,j,Kokkos::ALL());
+        xmin = std::min(xmin, coords_node(0));
+        xmax = std::max(xmax, coords_node(0));
         if (numDim > 1) {
-          ymin = std::min(ymin, coords[ws][e][j][1]);
-          ymax = std::max(ymax, coords[ws][e][j][1]);
+          ymin = std::min(ymin, coords_node(1));
+          ymax = std::max(ymax, coords_node(1));
         }
         if (numDim > 2) {
-          zmin = std::min(zmin, coords[ws][e][j][2]);
-          zmax = std::max(zmax, coords[ws][e][j][2]);
+          zmin = std::min(zmin, coords_node(2));
+          zmax = std::max(zmax, coords_node(2));
         }
         std::cout << "Coord for workset: " << ws << " element: " << e
-                  << " node: " << j << " x, y, z: " << coords[ws][e][j][0]
-                  << ", " << coords[ws][e][j][1] << ", " << coords[ws][e][j][2]
+                  << " node: " << j << " x, y, z: " << coords_node(0)
+                  << ", " << coords_node(1) << ", " << coords_node(2)
                   << std::endl;
       }
     }
@@ -178,18 +181,17 @@ STKDiscretization::getCoordinates() const
   // since the mesh can move in shape opt problems
 
   const auto& coordinates_field = *stkMeshStruct->getCoordinatesField();
-
-  const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
-  const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
-  const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
   const int meshDim = stkMeshStruct->numDim;
-  for (int node_lid = 0; node_lid < numOverlapNodes; ++node_lid) {
-    GO node_gid = ov_node_indexer->getGlobalElement(node_lid);
 
+  const auto& node_dof_mgr = getDOF(nodes_dof_name()).dof_mgr;
+  std::vector<Tpetra_GO> ov_node_gids;
+  node_dof_mgr->getOwnedAndGhostedIndices(ov_node_gids);
+  for (int inode=0; inode<node_dof_mgr->getNumOwnedAndGhosted(); ++inode) {
+    const GO node_gid = ov_node_gids[inode];
     const auto ov_node = bulkData->get_entity(stk::topology::NODE_RANK, node_gid + 1);
     double* x = stk::mesh::field_data(coordinates_field, ov_node);
     for (int dim = 0; dim < meshDim; ++dim) {
-      coordinates[meshDim * node_lid + dim] = x[dim];
+      coordinates[meshDim * inode + dim] = x[dim];
     }
   }
 
@@ -213,6 +215,7 @@ STKDiscretization::transformMesh()
   const auto& buckets = bulkData->buckets(stk::topology::NODE_RANK);
   stk::mesh::get_selected_entities(selector, buckets, overlapnodes);
 
+  auto overlap_node_vs = getDOF(nodes_dof_name()).overlapped_node_vs;
   if (transformType == "None") {
   } else if (transformType == "Spherical") {
 // This form takes a mesh of a square / cube and transforms it into a mesh of a
@@ -221,7 +224,7 @@ STKDiscretization::transformMesh()
     *out << "Spherical!" << endl;
 #endif
     const int numDim = stkMeshStruct->numDim;
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       double  r = 0.0;
@@ -241,7 +244,7 @@ STKDiscretization::transformMesh()
     // zshift << '\n';
     const int numDim = stkMeshStruct->numDim;
     //*out << "numDim = " << numDim << '\n';
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     if (numDim >= 0) {
       for (int i = 0; i < numOverlapNodes; i++) {
         double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -296,7 +299,7 @@ STKDiscretization::transformMesh()
       beta  = betas[0];
       scale = scales[0];
       if (abs(beta) > 1.0e-12) {
-        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+        const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -309,7 +312,7 @@ STKDiscretization::transformMesh()
       beta  = betas[1];
       scale = scales[1];
       if (abs(beta) > 1.0e-12) {
-        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+        const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -322,7 +325,7 @@ STKDiscretization::transformMesh()
       beta  = betas[2];
       scale = scales[2];
       if (abs(beta) > 1.0e-12) {
-        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+        const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -352,7 +355,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -383,7 +386,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -415,7 +418,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -435,7 +438,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -455,7 +458,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -480,7 +483,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -511,7 +514,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(overlap_node_vs);
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0] = L * (x[0] - 1.0);  // test case assumes domain is from [-L, L],
@@ -535,31 +538,39 @@ STKDiscretization::transformMesh()
 void
 STKDiscretization::setupMLCoords()
 {
-  if (rigidBodyModes.is_null()) { return; }
-  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
+  if (rigidBodyModes.is_null() ||
+     (!rigidBodyModes->isMLUsed() &&
+      !rigidBodyModes->isMueLuUsed() &&
+      !rigidBodyModes->isFROSchUsed())) {
+    return;
+  }
 
-  const int                                   numDim = stkMeshStruct->numDim;
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
-      stkMeshStruct->getCoordinatesField();
-  coordMV           = Thyra::createMembers(m_node_vs, numDim);
+  const int   numDim = stkMeshStruct->numDim;
+  const auto* coordinates_field = stkMeshStruct->getCoordinatesField();
+  const auto node_vs = getDOF(nodes_dof_name()).vs;
+  const auto node_dof_mgr = getDOF(nodes_dof_name()).dof_mgr;
+
+  coordMV = Thyra::createMembers(node_vs, numDim);
   auto coordMV_data = getNonconstLocalData(coordMV);
-
-  auto node_indexer = createGlobalLocalIndexer(m_node_vs);
 
   std::vector<stk::mesh::Entity> ownedNodes;
   const auto& part    = metaData->locally_owned_part();
   const auto& buckets = bulkData->buckets(stk::topology::NODE_RANK);
   stk::mesh::get_selected_entities(part, buckets, ownedNodes);
+  std::vector<Tpetra_GO>  node_gids;
+  node_dof_mgr->getOwnedIndices(node_gids);
 
-  for (const auto node : ownedNodes) {
-    GO      node_gid = stk_gid(node);
-    int     node_lid = node_indexer->getLocalElement(node_gid);
+  for (int inode=0; inode<node_dof_mgr->getNumOwned(); ++inode) {
+    const GO gid = node_gids[inode];
+    const auto node = bulkData->get_entity(stk::topology::NODE_RANK, gid + 1);
     double* X        = stk::mesh::field_data(*coordinates_field, node);
     for (int j = 0; j < numDim; j++) {
-      coordMV_data[j][node_lid] = X[j];
+      coordMV_data[j][inode] = X[j];
     }
   }
-  rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, interleavedOrdering, m_vs, m_overlap_vs);
+  const auto& solution_dof = getDOF(solution_dof_name());
+  rigidBodyModes->setCoordinatesAndComputeNullspace(
+      coordMV, interleavedOrdering, solution_dof.vs, solution_dof.overlapped_vs);
   writeCoordsToMatrixMarket();
 }
 
@@ -896,7 +907,9 @@ Teuchos::RCP<Thyra_Vector>
 STKDiscretization::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Thyra_Vector> soln = Thyra::createMember(m_vs);
+  auto solDOF = getSolutionDOF();
+  auto vs = overlapped ? solDOF.overlapped_vs : solDOF.vs;
+  Teuchos::RCP<Thyra_Vector> soln = Thyra::createMember(vs);
   this->getSolutionField(*soln, overlapped);
   return soln;
 }
@@ -906,8 +919,10 @@ STKDiscretization::getSolutionMV(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   int num_time_deriv = stkMeshStruct->num_time_deriv;
+  auto solDOF = getSolutionDOF();
+  auto vs = overlapped ? solDOF.overlapped_vs : solDOF.vs;
   Teuchos::RCP<Thyra_MultiVector> soln =
-      Thyra::createMembers(m_vs, num_time_deriv + 1);
+      Thyra::createMembers(vs, num_time_deriv + 1);
   this->getSolutionMV(*soln, overlapped);
   return soln;
 }
@@ -917,14 +932,12 @@ STKDiscretization::getField(Thyra_Vector& result, const std::string& name) const
 {
   // Iterate over the on-processor nodes by getting node buckets and iterating
   // over each bucket.
-  const std::string& part =
-      nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
+  const auto& dof = getDOF(name);
   stk::mesh::Selector selector = metaData->locally_owned_part();
-  if (part.size()) {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it =
-        stkMeshStruct->nsPartVec.find(part);
-    if (it != stkMeshStruct->nsPartVec.end())
-      selector &= stk::mesh::Selector(*(it->second));
+  if (dof.mesh_part!="") {
+    for (const auto& part : stkMeshStruct->nsPartVec) {
+      selector &= stk::mesh::Selector(*part.second);
+    }
   }
 
   const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
@@ -943,7 +956,11 @@ STKDiscretization::getSolutionField(Thyra_Vector& result, const bool overlapped)
   // over each bucket.
   stk::mesh::Selector locally_owned = metaData->locally_owned_part();
 
-  solutionFieldContainer->fillSolnVector(result, locally_owned, m_node_vs);
+  auto solDOF = getSolutionDOF();
+  auto node_vs = overlapped ? solDOF.overlapped_node_vs : solDOF.node_vs;
+  Teuchos::RCP<Thyra_MultiVector> soln =
+      Thyra::createMembers(vs, num_time_deriv + 1);
+  solutionFieldContainer->fillSolnVector(result, locally_owned, node_vs);
 }
 
 void
@@ -1427,9 +1444,14 @@ STKDiscretization::computeWorksetInfo()
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
-  coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
   latticeOrientation.resize(numBuckets);
+
+  wsSizes.resize(numBuckets);
+  const auto meshSpecs = getMeshStruct()->getMeshSpecs()[0];
+  const auto max_ws_size = meshSpecs->worksetSize;
+  const auto num_elem_nodes = meshSpecs->ctd.node_count;
+  coords = DualView<double****>("coords",numBuckets,max_ws_size,num_elem_nodes,getNumDim());
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
@@ -1456,7 +1478,7 @@ STKDiscretization::computeWorksetInfo()
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeID[b].resize(buck.size());
-    coords[b].resize(buck.size());
+    wsSizes[b] = buck.size();
 
     // Set size of Kokkos views
     // Note: Assumes nodes_per_element is the same across all elements in a
@@ -1546,6 +1568,7 @@ STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Entity element           = buck[0];
     int               nodes_per_element = bulkData->num_nodes(element);
+    auto coords_h = coords.host();
     for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
          ++it) {
       int nComp = it->first.second;
@@ -1578,7 +1601,6 @@ STKDiscretization::computeWorksetInfo()
       nodes_per_element                  = bulkData->num_nodes(element);
 
       wsElNodeID[b][i].resize(nodes_per_element);
-      coords[b][i].resize(nodes_per_element);
 
       for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
            ++it) {
@@ -1612,7 +1634,10 @@ STKDiscretization::computeWorksetInfo()
             node_lid < 0,
             std::logic_error,
             "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-        coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
+        auto node_coords = stk::mesh::field_data(*coordinates_field, rowNode);
+        for (int idim=0; idim<getNumDim(); ++idim) {
+          coords_h(b,i,j,idim) = node_coords[idim];
+        }
 
         wsElNodeID[b][i][j] = node_array((int)i, j);
 
@@ -1629,21 +1654,21 @@ STKDiscretization::computeWorksetInfo()
           int  nodes_per_element = buckets[b]->num_nodes(i);
           bool anyXeqZero        = false;
           for (int j = 0; j < nodes_per_element; j++)
-            if (coords[b][i][j][d] == 0.0) anyXeqZero = true;
+            if (coords_h(b,i,j,d) == 0.0) anyXeqZero = true;
           if (anyXeqZero) {
             bool flipZeroToScale = false;
             for (int j = 0; j < nodes_per_element; j++)
-              if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
+              if (coords_h(b,i,j,d) > stkMeshStruct->PBCStruct.scale[d] / 1.9)
                 flipZeroToScale = true;
             if (flipZeroToScale) {
               for (int j = 0; j < nodes_per_element; j++) {
-                if (coords[b][i][j][d] == 0.0) {
+                if (coords_b(b,i,j,d) == 0.0) {
                   double* xleak = new double[stkMeshStruct->numDim];
                   for (int k = 0; k < stkMeshStruct->numDim; k++)
                     if (k == d)
                       xleak[d] = stkMeshStruct->PBCStruct.scale[d];
                     else
-                      xleak[k] = coords[b][i][j][k];
+                      xleak[k] = coords_h(b,i,j,k);
                   std::string transformType = stkMeshStruct->transformType;
                   double      alpha         = stkMeshStruct->felixAlpha;
                   alpha *= M_PI / 180.;  // convert alpha, read in from
@@ -1660,7 +1685,9 @@ STKDiscretization::computeWorksetInfo()
                       sHeight->second(int(i), j) -=
                           stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
                   }
-                  coords[b][i][j] = xleak;  // replace ptr to coords
+                  for (int k=0; k<getNumDim(); ++k) {
+                    coords_h(b,i,j,k) = xleak[k];  // replace ptr to coords
+                  }
                   toDelete.push_back(xleak);
                 }
               }
@@ -1670,6 +1697,7 @@ STKDiscretization::computeWorksetInfo()
       }
     }
   }
+  coords.sync_to_dev();
 
   typedef AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
   typedef AbstractSTKFieldContainer::QPScalarState    QPScalarState;
