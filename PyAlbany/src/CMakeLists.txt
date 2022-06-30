@@ -88,7 +88,7 @@ set(TPL_LIBRARIES
 )
 
 add_library(pyalbanyLib ${Albany_LIBRARY_TYPE} ${PyAlbany_SRCS})
-set_target_properties(pyalbanyLib PROPERTIES PUBLIC_HEADER "${PyAlbany_HDRS}")
+set_target_properties(pyalbanyLib PROPERTIES HEADER "${PyAlbany_HDRS}")
 target_link_libraries(pyalbanyLib ${Trilinos_LIBRARIES})
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(pyalbanyLib SYSTEM PUBLIC
@@ -103,7 +103,7 @@ target_include_directories(pyalbanyLib PUBLIC
 list(APPEND ALBANY_LIBRARIES pyalbanyLib)
 
 add_library(albanyPyInterface ${Albany_LIBRARY_TYPE} ${AI_SRCS})
-set_target_properties(albanyPyInterface PROPERTIES PUBLIC_HEADER "${AI_HDRS}")
+set_target_properties(albanyPyInterface PROPERTIES HEADER "${AI_HDRS}")
 target_link_libraries(albanyPyInterface ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(albanyPyInterface SYSTEM PUBLIC
