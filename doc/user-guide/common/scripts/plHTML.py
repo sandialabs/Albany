@@ -28,7 +28,7 @@ def parse_file(fname):
  
         if line.startswith("validPL->"):
             
-            # valid paramater list may be split onto multiple lines
+            # valid parameter list may be split onto multiple lines
             while not ( ");" in line ):
                 nextline = lines[i+1]
                 nextline = nextline.strip()

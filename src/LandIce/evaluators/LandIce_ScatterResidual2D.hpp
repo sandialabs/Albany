@@ -12,7 +12,7 @@
 
 namespace PHAL {
 /** \brief Scatters result from the residual fields into the
-    global (epetra) data structurs.  This includes the
+    global (epetra) data structures.  This includes the
     post-processing of the AD data type for all evaluation
     types besides Residual.
 

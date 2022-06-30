@@ -133,7 +133,7 @@ public:
 
           elementBlockTopologies.push_back(stkMeshStruct_->elementBlockTopologies_[i]);
    }
-   /** Get the local element IDs for a paricular element
+   /** Get the local element IDs for a parricular element
      * block. These are only the owned element ids.
      *
      * \param[in] blockIndex Block Index
@@ -143,7 +143,7 @@ public:
    virtual const std::vector<LocalOrdinal> & getElementBlock(const std::string & blockId) const
    { return *(elementBlocks_.find(blockId)->second); }
 
-   /** Get the local element IDs for a paricular element
+   /** Get the local element IDs for a parricular element
      * block. These element ids are not owned, and the element
      * will live on another processor.
      *
@@ -233,7 +233,7 @@ public:
 //   void getOwnedElementsSharingNode(stk::mesh::EntityId nodeId,std::vector<stk::mesh::Entity> & elements,
 //                                    std::vector<int> & relIds, unsigned int matchType) const;
 
-   /** Get vertices and local cell IDs of a paricular element block.
+   /** Get vertices and local cell IDs of a parricular element block.
      *
      * \param[in] mesh Reference to STK_Interface object
      * \param[in] blockId Element block identifier string

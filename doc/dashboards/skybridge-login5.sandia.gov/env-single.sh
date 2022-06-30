@@ -9,12 +9,12 @@ INTEL_DIR=/opt/intel
 
 # Some basic error checking.
 if [ -z "$PACKAGE" ]; then
-    echo "Specifiy package [trilinos|albany]"
+    echo "Specify package [trilinos|albany]"
     exit 1
 fi
 
 if [ -z "$ARCH" ]; then
-    echo "Specifiy architecture [serial|openmp|pthreads|cuda]"
+    echo "Specify architecture [serial|openmp|pthreads|cuda]"
     exit 1
 fi
 

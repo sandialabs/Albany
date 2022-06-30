@@ -98,7 +98,7 @@ Albany is also the home for several application and algorithm
 projects that use and contribute to the overall infrastructure.
 These include the LCM (Laboratory for Computatinal Mechanics),
 QCAD (Quantum Computer Aided Design) and FELIX (Finite Element for
-Land Ice eXperiments) applications, as well as algorthmic projects
+Land Ice eXperiments) applications, as well as algorithmic projects
 in embedded uncertainty quantification, model order reduction, and
 maturation of the templated software stack in Trilinos.
 \end{abstract}
@@ -172,7 +172,7 @@ Albany is also the home for several application and algorithm
 projects that use and contribute to the overall infrastructure.
 These include the LCM (Laboratory for Computatinal Mechanics),
 QCAD (Quantum Computer Aided Design) and FELIX (Finite Element for
-Land Ice eXperiments) applications, as well as algorthmic projects
+Land Ice eXperiments) applications, as well as algorithmic projects
 in embedded uncertainty quantification, model order reduction, and
 maturation of the templated software stack in Trilinos.
 
@@ -204,7 +204,7 @@ database, IO, and will be growing soon to include mesh changes for
 stk\_rebalance and stk\_adapt.  
 
 Also of note is that Albany is, and intends to remain, a 
-Publically Available code base, free of export control 
+Publicly Available code base, free of export control 
 restrictions. This allows it to serve freely as a collaboration
 vehicle with universities and other labs, and as a template
 for building applications from Trilinos.
@@ -217,15 +217,15 @@ are difficult to change, and less by the physics set. Much of Albany
 was developed in FY08-10 for solving simple heat transfer and poisson
 equations. With nonlinear source terms, this was adequate for
 developing and verifying all the hooks for analysis algorithms from
-sensitivity analysis to UQ. Recenty, Navier-Stokes equations have been
+sensitivity analysis to UQ. Recently, Navier-Stokes equations have been
 added to the general Albany physics set. In FY11, two new projects
 (LCM and QCAD) were funded to develop application codes on Albany. These physics sets
 are developed in the Albany code, yet are distinct in many ways as
 well: C++ namespace, project teams, and funding sources.  
-More recenlty, other applications and algorithm research projects
+More recently, other applications and algorithm research projects
 have chose Albany as their home. 
 
-\section{LCM: Labratory for Computational Mechanics}
+\section{LCM: Laboratory for Computational Mechanics}
 
 The first application project build on Albany is the LCM, or
 Laboratory for Computational Mechanics [Ostien-PI, Salinger, Mota,
@@ -296,11 +296,11 @@ design LDRD (Schrodinger-Poisson) [Muller-PI, Gao, Nielsen,
 distribution is coupled to a Schrodinger region for quantum effects.
 Embedded UQ
 
-\section {Uncertainity Quantification (UQ)}
+\section {Uncertainty Quantification (UQ)}
 Albany is also serving as a main development and demonstration
 environment for embedded UQ research [Phipps-PI, Wildey]. By
 leveraging the templated fill environment, polynomial representations
-can be directly propogated through the physics assembly. Many issues
+can be directly propagated through the physics assembly. Many issues
 with data structures, parallelization, and linear algebra are being
 addressed.  
 
@@ -317,7 +317,7 @@ formulation plus $2-3$ other models that are simplifications of Stokes.
 This project will drive much development in UQ through interactions 
 with Dakota. One unique feature of this project is that it will be able
 to use a mesh from LANL's MPAS framework, putting to test the abstraction
-layer that we put between the finite element asembly and the concrete
+layer that we put between the finite element assembly and the concrete
 STK Mesh implementation. Long term plans include adjoint for distributed
 boundary condition parameters, coupled temperature solves, and implicit
 advection of the Ice Sheet. The plan is for this code to be integrated
@@ -383,7 +383,7 @@ directory.
 # not compiled. Version _1_40 or newer.
 #
 # There are two optional build choices, commented below
-#   these are for Dakota and Exodus I/O capabilites.
+#   these are for Dakota and Exodus I/O capabilities.
 #
 # Albany automatically queries the Trilinos build to 
 # know if these capabilities are enabled or disabled.
@@ -531,7 +531,7 @@ cmake  \
     ../
 \end{verbatim}
 Note that the \texttt{<location\_of\_trilinos\_install>} needs to be
-exacly the path in the \texttt{CMAKE\_INSTALL\_PREFIX} in the Trilinos
+exactly the path in the \texttt{CMAKE\_INSTALL\_PREFIX} in the Trilinos
 build above.  This is typically executed from a subdirectory of Albany such as
 \texttt{build} or \texttt{build\_linux\_mpi\_20120920} depending on
 your personal directory-naming style.
@@ -544,7 +544,7 @@ the following command.
 \begin{verbatim}
 % make -j 4 && ctest
 \end{verbatim}
-If everyting is well, all the tests should pass. 
+If everything is well, all the tests should pass. 
 
 Numerous parts of the build process are taken from the Trilinos install.
 For instance, the compilers, compiler flags, and any paths to netcdf,
@@ -563,7 +563,7 @@ SEACASIoss (for reading exodus files), and MPI (versus serial).
 There are other CMake configuration options recognized by the
 Albany build system. (In addition, CMake has a standard set that
 can be found at the CMake websote.) Many of these are experimental
-options and not generally supported, but currrently include [default]:
+options and not generally supported, but currently include [default]:
 \begin{verbatim}
 ENABLE_DEMO_PDES       & Bool flag to enable Albany PDES such as Navier-Stokes [on] \\
 ENABLE_LCM             & Bool flag to enable LCM physics sets [off] \\
@@ -624,7 +624,7 @@ Details of this implementation are in the \texttt{PHAL\_AlbanyTraits} class. The
 that needs to span these two realms is packed in the \texttt{PHAL\_Workset} struct.
 
 Also in the \texttt{src} directory are classes to handle states (fields besides the
-solution vector that persist between subseqent solves), "observers" that control
+solution vector that persist between subsequent solves), "observers" that control
 the output and postrprocessing of solutions, and utility functions (such as a single
 file to manage different parallel communicator abstractions and serial code).
 
@@ -700,7 +700,7 @@ These include several common responses that involve norms of the solution vector
 Responses that required finite element information, such as integrals of quantites
 over the mesh, are all hooked up through the
 \texttt{FieldManagerScalarResponseFunction} function. This triggers an assembly
-phase, using evaluators, much like the Residual and Jacobian evalutations, and 
+phase, using evaluators, much like the Residual and Jacobian evaluations, and 
 also make use of template-based generic programming.
 
 \item{\texttt{Albany/src/LCM}}  The \texttt{LCM} source code directory contains 
@@ -715,7 +715,7 @@ option \texttt{-D ENABLE\_LCM:=ON} needed to enable this code base (POC: Ostien)
 
 \item{\texttt{Albany/src/QCAD}}  The \texttt{QCAD} directory contains source code specific
 to the quantum device simulation and design project. It contains \texttt{problems}, 
-\texttt{evaluators}, and \texttt{respones} subdirectors for code that only effects
+\texttt{evaluators}, and \texttt{responses} subdirectors for code that only effects
 QCAD applciations. Currently there are several classes in the QCAD namespace that live
 in the Albany code base since their usage has grown beyond QCAD applications.
 (POC: Nielsen). 
@@ -773,7 +773,7 @@ starting with \texttt{Albany\_SolverFactory}.
 "\texttt{.hpp}" and "\texttt{.cpp}" suffixes. For the templated code base, which is primarily the
 code in the \texttt{evaluators} directories, we use the following naming conventions.
 There is a tiny "\texttt{{\em file}.cpp}" file for
-explicit template instatiation, a file with "\texttt{{\em file}\_Def.hpp}" extension
+explicit template instantiation, a file with "\texttt{{\em file}\_Def.hpp}" extension
 for the definition files with the source code in it, and "\texttt{{\em file}.hpp}" for
 the header file.
 
@@ -787,7 +787,7 @@ Each directory holds one or more \texttt{xml} file that is
 the input file for the run. Separate problems do {\em not} run off of separate executables. 
 The physics set and solution method are set in the input file. The
 large majority of examples run of of the same \texttt{Albany} executable, which performs simulations and
-linearized sensititivity anaysis. Problems that perform optimization or Dakota-based UQ 
+linearized sensitivity anaysis. Problems that perform optimization or Dakota-based UQ 
 use the \texttt{AlbanyDakota} or \texttt{AlbanyAnalysis} executables, while intrusive UQ
 using the Stokhos package use the \texttt{AlbanySG} executable. Other \texttt{Main*.cpp} files
 can exist to create other executables, but these are currently experimental only.
@@ -982,7 +982,7 @@ conditional ENABLE\_MYCRUD compile option.
 
 The following are some general steps to add new evaluators or problems, as well as new test problems to Albany CMakeLists. As an example, there are two newly created source and header files belonging to Albany LCM \verb+ myNewProblem.cpp, myNewProblem.hpp+ that you would like to add to the CMakeLists (same steps apply for other types of Albany problems or evaluators). 
 \begin{itemize}
-\item Add new problem files in \verb+<path_to_Albany_directory>/src/CMakeList.txt+ at the correspoinding section (in this example \verb+ALBANY_LCM+)
+\item Add new problem files in \verb+<path_to_Albany_directory>/src/CMakeList.txt+ at the corresponding section (in this example \verb+ALBANY_LCM+)
 \begin{verbatim}
 # LCM
 IF(ALBANY_LCM)
@@ -1044,7 +1044,7 @@ might not be part of your workflow.
 \chapter{Albany Copyright and Licensing Info}
 
 \texttt{Albany 2.0} has been approved for open source release with a
-Publically Available designation. There is a file \texttt{license.txt} 
+Publicly Available designation. There is a file \texttt{license.txt} 
 with the full text. All other source code has a short banner that should
 be added to the top of any new source code files. We will re-assert 
 copyright for major releases, but not minor releases. 

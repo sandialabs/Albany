@@ -117,7 +117,7 @@ void STKConnManager::buildLocalElementMapping()
    // this expensive operation guarantees ordering of local IDs
    std::sort(elements_->begin(), elements_->end(), LocalIdCompare(*this));
 
-   // allocate space for element LID to Connectivty map
+   // allocate space for element LID to Connectivity map
    // connectivity size
    elmtLidToConn_.clear();
    elmtLidToConn_.resize(elements_->size(),0);

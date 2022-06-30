@@ -45,7 +45,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(Gc,fm);
 
-  // Pre-Calculate reference element quantitites
+  // Pre-Calculate reference element quantities
   refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
   refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
   cubature->getCubature(refPoints, refWeights);

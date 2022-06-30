@@ -107,7 +107,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideNodes, numSideQPs, numSideDims);
   cub_weights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs);
 
-  // Pre-Calculate reference element quantitites
+  // Pre-Calculate reference element quantities
   cubature->getCubature(cub_points, cub_weights);
 
   intrepidBasis->getValues(val_at_cub_points, cub_points, Intrepid2::OPERATOR_VALUE);

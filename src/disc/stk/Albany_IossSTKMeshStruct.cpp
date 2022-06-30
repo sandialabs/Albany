@@ -852,7 +852,7 @@ Albany::IossSTKMeshStruct::loadOrSetCoordinates3d(int index)
       // The 3d coords field exists in the input mesh, but the restart index was
       // not set in the input file. We issue a warning, and load default coordinates
       *out << "WARNING! The field 'coordinates3d' was found in the input mesh, but no restart index was specified.\n"
-           << "         Albany will set the 3d coordinates to the 'default' ones (filling native coordinates with trailins zeros).\n";
+           << "         Albany will set the 3d coordinates to the 'default' ones (filling native coordinates with trailing zeros).\n";
     }
     // The input mesh does not store the 'coordinates3d' field
     // (perhaps the mesh does not come from a previous Albany run).

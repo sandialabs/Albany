@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # WARNING: This file is generated automatically. Any changes made here
-# will be lost when the package is configured again.  Any permament
+# will be lost when the package is configured again.  Any permanent
 # changes should go into the corresponding template at the top level
 # LCM directory.
 
