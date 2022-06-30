@@ -174,7 +174,7 @@ RCP_PyMultiVector createRCPPyMultiVector2(RCP_ConstPyMap &map, const int n_cols,
 }
 
 pybind11::array_t<ST> getLocalViewHost(RCP_PyVector &vector) {
-    return convert_kokkos_to_np(vector->getLocalViewDevice(Tpetra::Access::ReadOnly));
+    return convert_kokkos_to_np(Kokkos::subview(vector->getLocalViewDevice(Tpetra::Access::ReadOnly), Kokkos::ALL, 0));
 }
 
 pybind11::array_t<ST> getLocalViewHost(RCP_PyMultiVector &mvector) {
@@ -182,8 +182,8 @@ pybind11::array_t<ST> getLocalViewHost(RCP_PyMultiVector &mvector) {
 }
 
 void setLocalViewHost(RCP_PyVector &vector, pybind11::array_t<double> input) {
-    auto view = vector->getLocalViewDevice(Tpetra::Access::ReadWrite);
-    convert_np_to_kokkos_2d(input, view);
+    auto view = Kokkos::subview(vector->getLocalViewDevice(Tpetra::Access::ReadWrite), Kokkos::ALL, 0);
+    convert_np_to_kokkos_1d(input, view);
 }
 
 void setLocalViewHost(RCP_PyMultiVector &mvector, pybind11::array_t<double> input) {

@@ -39,14 +39,14 @@ def main(parallelEnv):
 
     # Loop over the N samples and evaluate the quantity of interest:
     for i in range(0, N):
-        parameter_0_view[0,0] = p[i]
+        parameter_0_view[0] = p[i]
         parameter_0.setLocalViewHost(parameter_0_view)
         problem.setParameter(0, parameter_0)
 
         problem.performSolve()
 
         response = problem.getResponse(0)
-        QoI[i] = response.getLocalViewHost()[0,0]
+        QoI[i] = response.getLocalViewHost()[0]
 
     if myGlobalRank == 0:
         if printPlot:

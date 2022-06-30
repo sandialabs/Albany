@@ -27,7 +27,7 @@ class TestSteadyHeat(unittest.TestCase):
 
         parameter_view = parameter.getLocalViewHost()
 
-        parameter_view[:,0] = 2.0*np.ones(num_elems)
+        parameter_view[:] = 2.0*np.ones((num_elems, 1))
 
         parameter.setLocalViewHost(parameter_view)
     
@@ -35,7 +35,7 @@ class TestSteadyHeat(unittest.TestCase):
         problem.performSolve()
         state_map    = problem.getStateMap()
         state        = problem.getState()
-        state_ref    = Utils.loadMVector('state_ref', 1, state_map, distributedFile=False, useBinary=False, readOnRankZero=True)
+        state_ref    = Utils.loadMVector('state_ref', 1, state_map, distributedFile=False, useBinary=False, readOnRankZero=True).getVector(0)
         
 
         stackedTimer = problem.getStackedTimer()
@@ -44,7 +44,7 @@ class TestSteadyHeat(unittest.TestCase):
         tol = 1.e-8
         state_view = state.getLocalViewHost()
         state_ref_view = state_ref.getLocalViewHost()
-        self.assertTrue(np.linalg.norm(state_ref_view[:, 0] - state_view[:, 0]) < tol)
+        self.assertTrue(np.linalg.norm(state_ref_view - state_view) < tol)
 
 
     @classmethod

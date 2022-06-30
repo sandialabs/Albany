@@ -34,9 +34,9 @@ def evaluate_responses(X, Y, problem, recompute=False):
         Z2 = np.zeros((n_y, n_x))
 
         for i in range(n_x):
-            para_view[0,0] = X[i]
+            para_view[0] = X[i]
             for j in range(n_y):
-                para_view[1,0] = Y[j]
+                para_view[1] = Y[j]
                 parameter.setLocalViewHost(para_view)
                 problem.setParameter(0, parameter)
 
