@@ -183,7 +183,7 @@ input_fo_dome.xml
    Other parameters: 
      A and n (Glen's law params): same as ISMIP-HOM test cases
      rho = 910 kg/m^3 (ice density)
-     g = 9.8 m/s^2 (gravitational costant)
+     g = 9.8 m/s^2 (gravitational constant)
 
 input_fo_sincos2D.xml
     dofs: u,v  viscosity = Glen,  20x20 elements, 21 x 21 mesh 

@@ -28,7 +28,7 @@
 #include <stk_mesh/base/Types.hpp>
 #include <percept/stk_rebalance/GeomDecomp.hpp>
 
-//Forward declaration for pointer to a Zoltan structrue.
+//Forward declaration for pointer to a Zoltan structure.
 struct Zoltan_Struct;
 
 /** \addtogroup stk_rebalance_module
@@ -61,7 +61,7 @@ public:
    *  \brief A structure to organize the mesh entity data.
    *
    * \param mesh_entities  Vector of mesh entities to balance
-   *                       these can span multiple regons.
+   *                       these can span multiple regions.
    *
    * \param nodal_coord_ref Coordinate reference defined on the
    *                        nodes of the entities in \a mesh_entities.
@@ -203,7 +203,7 @@ public:
   ////////////////////////////////////////////////////////////
 
   /** \brief Name Conversion Functions.
-   * Long friendly string prarameters
+   * Long friendly string parameters
    * need to be converted into short Zoltan names.  The
    * \a merge_default_values and \a convert_names_and_values
    * functions do that.  Merge_Default_Values should be called

@@ -37,7 +37,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
    *  We assume h is in [m], Phi in [kPa], the mesh is in [km], and k has units
    *     [k] =  m^(2*beta-alpha) s^(2*beta-3) kg^(1-beta).
    *  In the common case of beta=2, alpha=1, we have [k] = m^3 s kg^-1
-   *  Putting everything togeter, we get
+   *  Putting everything together, we get
    *     [q] = m^2/s
    */
 

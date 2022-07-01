@@ -4,7 +4,7 @@
 #  They are currently only built for serial (non-mpi) builds so are
 #  not created with the same script as the general Trilinos build.
 #
-#  1. Download Trilinos, make a build directort, e.g.  Trilinos/seacas-build
+#  1. Download Trilinos, make a build directory, e.g.  Trilinos/seacas-build
 #  2. Put this file in that subdirectory of Trilinos
 #  3. Modify the NETCDF path below to point to your installed netcdf
 #  4. Execute this script;  make -j 4; make install

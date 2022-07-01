@@ -214,7 +214,7 @@
 %    - Paragraph indent is set to 0 for cover pages, but never restored (Daniel Dolan)
 %    - Use "Lorem ipsum" instead of "bla bla bla" in the examples (Stephanie Phillips)
 %        (There is a LaTeX package, lipsum.sty, that does it, but it is not always installed.
-%        Therefore, I included the text verbaitm, instead of generating it.)
+%        Therefore, I included the text verbatim, instead of generating it.)
 %    - If the report is an OUO document, some text on the back cover needs to disappear.
 %         Thanks to Marcia Cooper for discovering it, and providing the necessary LaTeX code.
 %    - A lot of changes from Michael Kaneshige to better match the formatting of the official
@@ -275,7 +275,7 @@
 %    - Per management request, remove all references in the examples to Harry Potter and magic
 %
 % 04/30/2009 v1.32
-%    - When strict is used, section refernces do not work, since sections are
+%    - When strict is used, section references do not work, since sections are
 %        not numbered. Not sure how to deal with this. For now just print a
 %        warning during compile and update the strict examples not to use \ref.
 %        (Problem reported by Eric Chu)
@@ -290,7 +290,7 @@
 %        option now indents the first paragraph as well. (Suggested by Tammy Kolda)
 %    - Some people don't like their blank pages to be blank. Added the "blank"
 %        option which adds "Page intentionally blank" to blank pages
-%    - Shared text bewteen examples is now in seperate files and \input into the
+%    - Shared text between examples is now in separate files and \input into the
 %        examples
 %
 % 07/02/2010 v1.33
@@ -869,7 +869,7 @@
 	    {\normalfont\Large\bfseries\centering}%			% new 4
 	}								% \section from article.cls
 
-	% This is basicaly the same as above, but without the clearpage. We want that
+	% This is basically the same as above, but without the clearpage. We want that
 	% for \listof... in article.cls to conserve some paper.
 	\newcommand\SANDTOCsection{%					% new 3
 	    \@startsection {section}{1}{\z@}%				% \section from article.cls

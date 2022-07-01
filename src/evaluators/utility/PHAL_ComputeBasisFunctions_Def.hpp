@@ -74,7 +74,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   refPoints = Kokkos::DynRankView<RealType, PHX::Device>("refPoints", numQPs, numDims);
   refWeights = Kokkos::DynRankView<RealType, PHX::Device>("refWeights", numQPs);
 
-  // Pre-Calculate reference element quantitites
+  // Pre-Calculate reference element quantities
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);

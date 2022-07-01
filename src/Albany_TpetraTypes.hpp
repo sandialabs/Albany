@@ -39,11 +39,11 @@ typedef int Tpetra_LO;
 typedef long long Tpetra_GO;
 #elif defined( HAVE_TPETRA_INST_INT_LONG )
 static_assert(sizeof(long) == sizeof(GO),
-    "Tpetra's biggest enabled GlobalOrdinal is long but thats not 64 bit");
+    "Tpetra's biggest enabled GlobalOrdinal is long but that is not 64 bit");
 typedef long Tpetra_GO;
 #elif defined( HAVE_TPETRA_INST_INT_UNSIGNED_LONG )
 static_assert(sizeof(unsigned long) == sizeof(GO),
-    "Tpetra's biggest enabled GlobalOrdinal is unsigned long but thats not 64 bit");
+    "Tpetra's biggest enabled GlobalOrdinal is unsigned long but that is not 64 bit");
 typedef unsigned long Tpetra_GO;
 #else
 #error "Albany needs a 64-bit GlobalOrdinal enabled in Tpetra"

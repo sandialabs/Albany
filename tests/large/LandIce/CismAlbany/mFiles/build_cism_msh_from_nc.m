@@ -320,7 +320,7 @@ sigmaVel = max(max(sigmaVel, 0.05*abs(vel)),0.05);
 thicknessRMS = max(0.1,thicknessRMS');
 
 
-%% write fieds into ascii files
+%% write fields into ascii files
 numComponents = size(thickness,1);
 
 if(~isempty(tempr))
