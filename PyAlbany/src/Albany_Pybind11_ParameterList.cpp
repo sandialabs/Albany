@@ -143,9 +143,6 @@ bool setPythonParameterArray(Teuchos::ParameterList & plist,
 py::object getPythonParameter(const Teuchos::ParameterList & plist,
 			      const std::string            & name)
 {
-  // If parameter does not exist, return None
-  //if (!plist.isParameter(name)) return Py_BuildValue("");
-
   // Get the parameter entry.  I now deal with the Teuchos::ParameterEntry
   // objects so that I can query the Teuchos::ParameterList without setting
   // the "used" flag to true.
@@ -183,58 +180,47 @@ py::object getPythonParameter(const Teuchos::ParameterList & plist,
 
   else if (entry->isArray())
   {
-    // try
-    // {
-    //   Teuchos::Array< bool > tArray =
-    //     Teuchos::any_cast< Teuchos::Array< bool > >(entry->getAny(false));
-    //   return copyTeuchosArrayToNumPy(tArray);
-    // }
-    // catch(Teuchos::bad_any_cast &e)
-    // {
+    try
+    {
+      Teuchos::Array< int > tArray =
+        Teuchos::any_cast< Teuchos::Array< int > >(entry->getAny(false));
+      return copyTeuchosArrayToNumPy(tArray);
+    }
+    catch(Teuchos::bad_any_cast &e)
+    {
       try
       {
-        Teuchos::Array< int > tArray =
-          Teuchos::any_cast< Teuchos::Array< int > >(entry->getAny(false));
+        Teuchos::Array< long > tArray =
+          Teuchos::any_cast< Teuchos::Array< long > >(entry->getAny(false));
         return copyTeuchosArrayToNumPy(tArray);
       }
       catch(Teuchos::bad_any_cast &e)
       {
         try
         {
-          Teuchos::Array< long > tArray =
-            Teuchos::any_cast< Teuchos::Array< long > >(entry->getAny(false));
+          Teuchos::Array< float > tArray =
+            Teuchos::any_cast< Teuchos::Array< float > >(entry->getAny(false));
           return copyTeuchosArrayToNumPy(tArray);
         }
         catch(Teuchos::bad_any_cast &e)
         {
           try
           {
-            Teuchos::Array< float > tArray =
-              Teuchos::any_cast< Teuchos::Array< float > >(entry->getAny(false));
+            Teuchos::Array< double > tArray =
+              Teuchos::any_cast< Teuchos::Array< double > >(entry->getAny(false));
             return copyTeuchosArrayToNumPy(tArray);
           }
           catch(Teuchos::bad_any_cast &e)
           {
-            try
-            {
-              Teuchos::Array< double > tArray =
-                Teuchos::any_cast< Teuchos::Array< double > >(entry->getAny(false));
-              return copyTeuchosArrayToNumPy(tArray);
-            }
-            catch(Teuchos::bad_any_cast &e)
-            {
-              // Teuchos::Arrays of type other than int or double are
-              // currently unsupported
-              //return NULL;
-            }
+            return py::none();
           }
         }
       }
-    // }
+    }
   }
 
   // All  other types are unsupported
-  //return NULL;
+  return py::none();
 }    // getPythonParameter
 
 // **************************************************************** //

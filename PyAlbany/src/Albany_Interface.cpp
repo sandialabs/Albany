@@ -193,7 +193,7 @@ Teuchos::RCP<const Tpetra_Map> PyProblem::getResponseMap(const int g_index)
         auto g_space = g->space();
         stackedTimer->stop("PyAlbany: getResponseMap");
         stackedTimer->stopBaseTimer();
-        return getCorrectedMap(Albany::getTpetraMap(g_space), false);
+        return Albany::getTpetraMap(g_space);
     }
     stackedTimer->stop("PyAlbany: getResponseMap");
     stackedTimer->stopBaseTimer();
@@ -218,7 +218,7 @@ Teuchos::RCP<const Tpetra_Map> PyProblem::getStateMap()
         auto s_space = s->space();
         stackedTimer->stop("PyAlbany: getStateMap");
         stackedTimer->stopBaseTimer();
-        return getCorrectedMap(Albany::getTpetraMap(s_space), false);
+        return Albany::getTpetraMap(s_space);
     }
     stackedTimer->stop("PyAlbany: getStateMap");
     stackedTimer->stopBaseTimer();
@@ -231,7 +231,7 @@ Teuchos::RCP<const Tpetra_Map> PyProblem::getParameterMap(const int p_index)
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: getParameterMap");
     auto p_space = solver->get_p_space(p_index);
-    auto outputMap = getCorrectedMap(Albany::getTpetraMap(p_space), true);
+    auto outputMap = Albany::getTpetraMap(p_space);
     stackedTimer->stop("PyAlbany: getParameterMap");
     stackedTimer->stopBaseTimer();
     return outputMap;

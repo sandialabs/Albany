@@ -57,10 +57,9 @@ def main(parallelEnv):
     timers[5].stop()
 
     hessian_view = hessian.getLocalViewHost()
-    print(hessian_view[0,0])
-    print(hessian_view[0,1])
-    print(hessian_view[0,2])
-    print(hessian_view[0,3])
+    expected_hessian = np.array([-0.000195717646, -0.000272421749, -4.99117153e-05, -0.000453498014])
+    print(hessian_view[0,:])
+    print(expected_hessian)
 
     timers[6].stop()
 
