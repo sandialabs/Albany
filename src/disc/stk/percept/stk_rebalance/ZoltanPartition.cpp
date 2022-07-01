@@ -625,7 +625,7 @@ void Zoltan::init( const vector< pair<std::string,std::string> >
   }
 
   /**
-   * Register the Zoltan/SIERRA "call-back" (querry) functions.
+   * Register the Zoltan/SIERRA "call-back" (query) functions.
    */
   if ( ZOLTAN_OK != register_callbacks() )
     throw runtime_error ("zoltan->Register_Callbacks error. ");
@@ -770,7 +770,7 @@ const std::string &Zoltan::parameter_entry_name() const
 int Zoltan::register_callbacks()
 {
   /*
-   * Register the Zoltan/SIERRA "call-back" (querry) functions.
+   * Register the Zoltan/SIERRA "call-back" (query) functions.
    * Use ONLY THE BARE ESSENTIALS for decompositions:
    *
    *    Zoltan_Set_Num_Obj_Fn      

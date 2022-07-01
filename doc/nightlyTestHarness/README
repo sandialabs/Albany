@@ -41,7 +41,7 @@ scripts in the order listed.
   dakota_checkout.sh
   ----------------
   Fetches the Dakota_votd tarball with the "wget" command,
-  and untars all of Dakota withing Trilinos/packages/TriKota
+  and untars all of Dakota within Trilinos/packages/TriKota
 
   trilinos_build_all.sh
   ----------------
@@ -77,7 +77,7 @@ scripts in the order listed.
 =========================================================
 Note:
 The standard output of the builds and test are sent
-to seperate files in the nightly test directory: 
+to separate files in the nightly test directory: 
 under sub-driectories Albany_out, Trilinos_out,
 and Dakota_out. (These paths are specified in the
 file with environmental variables.)

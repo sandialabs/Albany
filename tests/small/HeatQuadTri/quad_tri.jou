@@ -9,7 +9,7 @@ create vertex 0 {yExtent/2} 0
 create vertex {xExtent} {yExtent} 0
 create vertex 0 {yExtent} 0
 
-# create the recangle
+# create the rectangle
 create surface vertex 1 2 3 4
 create surface vertex 3 5 6 4
 merge all

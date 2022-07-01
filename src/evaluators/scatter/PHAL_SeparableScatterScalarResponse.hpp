@@ -53,7 +53,7 @@ protected:
 /** \brief Handles scattering of separable scalar response functions into epetra
  * data structures.
  *
- * A separable response function is one that is a sum of respones across cells.
+ * A separable response function is one that is a sum of responses across cells.
  * In this case we can compute the Jacobian in a generic fashion.
  */
 template <typename EvalT, typename Traits>

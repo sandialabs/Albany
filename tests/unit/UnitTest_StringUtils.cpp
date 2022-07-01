@@ -34,7 +34,7 @@ TEUCHOS_UNIT_TEST(StringUtils,ParseList)
 
   using namespace util;
 
-  // Ensure we can tell valid from unvalid strings
+  // Ensure we can tell valid from invalid strings
   TEST_ASSERT (validNestedListFormat(valid_1));
   TEST_ASSERT (validNestedListFormat(valid_2));
   TEST_ASSERT (validNestedListFormat(valid_3));

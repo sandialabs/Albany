@@ -152,17 +152,17 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
                                 std::map< std::string, int>&            physical_names);
 
   // Reads a single physical name from ifile.
-  // Prepends with an undescore and remove quotation marks.
+  // Prepends with an underscore and remove quotation marks.
   void get_name_for_physical_names( std::string& name, int& id, std::ifstream& ifile, int& dim);
 
   // Reads ifile to map surface tags to physical tags.
-  // Reports error if any surface is associted with more than one tag.
+  // Reports error if any surface is associated with more than one tag.
   void get_physical_tag_to_surface_tag_map( std::ifstream&      ifile, 
                                             std::map<int, int>& physical_surface_tags,
                                             int                 num_surfaces);
 
   // Reads ifile to map volume tags to physical tags.
-  // Reports error if any volume is associted with more than one tag.
+  // Reports error if any volume is associated with more than one tag.
   void get_physical_tag_to_volume_tag_map( std::ifstream&      ifile, 
                                            std::map<int, int>& physical_volume_tags,
                                            int                 num_volumes);

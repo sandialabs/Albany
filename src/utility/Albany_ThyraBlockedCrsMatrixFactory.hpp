@@ -45,7 +45,7 @@ namespace Albany
                                  const int nonzeros_per_row = -1); //currently not used
 
     // Inserts global indices in a temporary local graph.
-    // Indices that are not owned by callig processor are ignored
+    // Indices that are not owned by calling processor are ignored
     // The actual graph is created when FillComplete is called
     void insertGlobalIndices(const GO row, const Teuchos::ArrayView<const GO> &indices,
                              const size_t i_block = 0, const size_t j_block = 0);

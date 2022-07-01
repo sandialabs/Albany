@@ -47,7 +47,7 @@ legend('Simulation data','orientation','horizontal','location','northoutside')
 
 
 
-% Plot displacment increment norm convergence
+% Plot displacement increment norm convergence
 handleFigure = figure(116);
 
 stepPlot = numel(normDu);

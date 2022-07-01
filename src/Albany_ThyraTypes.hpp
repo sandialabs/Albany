@@ -38,7 +38,7 @@
 #include "Thyra_ProductMultiVectorBase.hpp"
 #include "Thyra_ProductVectorBase.hpp"
 
-// Basic linar algebra types
+// Basic linear algebra types
 typedef Thyra::VectorSpaceBase<ST>                Thyra_VectorSpace;
 typedef Thyra::MultiVectorBase<ST>                Thyra_MultiVector;
 typedef Thyra::VectorBase<ST>                     Thyra_Vector;
