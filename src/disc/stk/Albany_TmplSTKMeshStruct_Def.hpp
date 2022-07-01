@@ -853,7 +853,7 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT
     const GO upper_right =  x_GIDplus1 + nodes_x * y_GIDplus1;
     const GO upper_left  =  x_GID      + nodes_x * y_GIDplus1;
 
-    // get ID of quadrilateral -- will be doubled for trianlges below
+    // get ID of quadrilateral -- will be doubled for triangles below
     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
 
     // Calculate elemNumber of element

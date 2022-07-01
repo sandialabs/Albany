@@ -48,7 +48,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   jacobian = Kokkos::createDynRankView(coordVec.get_view(), "XXX", numCells, numQPs, numDims, numDims);
   jacobian_inv = Kokkos::createDynRankView(coordVec.get_view(), "XXX", numCells, numQPs, numDims, numDims);
 
-  // Pre-Calculate reference element quantitites
+  // Pre-Calculate reference element quantities
   cubature->getCubature(refPoints, refWeights);
 }
 

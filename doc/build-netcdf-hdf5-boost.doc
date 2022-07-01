@@ -7,7 +7,7 @@ hdf5 and netcdf and boost_1_49. This includes Dakota build
 within Trilinos, which needs boost libraries.
 
 1) Download boost 1_49
-Build with this sciript (sice Dakota needs libraries not just headers)
+Build with this script (sice Dakota needs libraries not just headers)
 
 ./bootstrap.sh --with-libraries=signals,regex,filesystem,system,serialization  --prefix=.
 ./bjam install  

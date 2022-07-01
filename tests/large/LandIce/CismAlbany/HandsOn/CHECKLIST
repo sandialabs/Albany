@@ -1,6 +1,6 @@
 1. Make sure to use same physical parameters (g, rho_i, rho_w) in both cism-albanyT.config and in input_standalone-albanyT.yaml input files.
 
-2. make sure that the "ice_limit" value is the same in the cism-albany.confing and in the scripts
+2. make sure that the "ice_limit" value is the same in the cism-albany.config and in the scripts
     build_cism_msh_from_nc.m and print_exo_fields_into_nc.m
 
 2. set to zero the use_glissade_surf_height_grad option in cism-albanyT.config file.

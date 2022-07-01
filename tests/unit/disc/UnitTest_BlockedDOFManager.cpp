@@ -222,7 +222,7 @@ tests are a beginning, "work in progress."
 
             TEST_EQUALITY(conn1[3], conn2[1]);
 
-            // Need to look at the exodus file and do a few of these sort of comparions
+            // Need to look at the exodus file and do a few of these sort of comparisons
             //      TEST_EQUALITY(conn1[8],nodeCount+(maxEdgeId+1)+2);
             //      TEST_EQUALITY(conn2[8],nodeCount+(maxEdgeId+1)+3);
          }

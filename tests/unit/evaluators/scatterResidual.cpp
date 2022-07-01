@@ -62,7 +62,7 @@ PHX_EXTENT(R)
 *                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_px,
 *                            and only setting phxWorkset.hessianWorkset.hess_vec_prod_f_pp,
 * - The evaluator is then evaluated,
-* - A Thyra vector is created with the expected ouput of the ScatterResidual based on the 2D MDField residual,
+* - A Thyra vector is created with the expected output of the ScatterResidual based on the 2D MDField residual,
 * - The output of the evaluator is compared to the Thyra vector comparing the relative norm of their difference.
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
@@ -452,7 +452,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 *                            only setting phxWorkset.hessianWorkset.hess_vec_prod_f_px,
 *                            and only setting phxWorkset.hessianWorkset.hess_vec_prod_f_pp,
 * - The evaluator is then evaluated,
-* - A Thyra vector is created with the expected ouput of the ScatterResidual based on the 3D MDField residual,
+* - A Thyra vector is created with the expected output of the ScatterResidual based on the 3D MDField residual,
 * - The output of the evaluator is compared to the Thyra vector comparing the relative norm of their difference.
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)

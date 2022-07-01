@@ -176,7 +176,7 @@ evaluateFields(typename Traits::EvalData workset)
       H0_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
       V_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide, numVecFODims);
 
-      // Pre-Calculate reference element quantitites
+      // Pre-Calculate reference element quantities
       cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
       // Copy the coordinate data over to a temp container
