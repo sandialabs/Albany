@@ -63,7 +63,7 @@ enableMueLu(
     Stratimikos::DefaultLinearSolverBuilder&    linearSolverBuilder)
 {
 #ifdef ALBANY_MUELU
-  Stratimikos::enableMueLu<LO, Tpetra_GO, KokkosNode>(linearSolverBuilder);
+  Stratimikos::enableMueLu<ST, LO, Tpetra_GO, KokkosNode>(linearSolverBuilder);
 #endif
 }
 

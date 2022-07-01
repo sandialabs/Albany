@@ -9,10 +9,12 @@
 #define ALBANY_QUADRATICLINEAROPERATORBASEDRESPONSEFUNCTION_HPP
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
+#include "Albany_LinearOpWithSolveDecorators.hpp"
 #include "Albany_Utils.hpp"
 
 namespace Albany {
   class Application;
+  class AtDinvA_LOWS;
 
   /*!
    * \brief Response function computing the scalar:
@@ -79,6 +81,10 @@ namespace Albany {
       const Teuchos::RCP<Thyra_MultiVector>& dg_dxdot,
       const Teuchos::RCP<Thyra_MultiVector>& dg_dxdotdot,
       const Teuchos::RCP<Thyra_MultiVector>& dg_dp);
+
+    //! returns Hessian Linear Operator
+    virtual Teuchos::RCP<Thyra_LinearOp>
+    get_Hess_pp_operator(const std::string& param_name);
 
   void printResponse(Teuchos::RCP<Teuchos::FancyOStream> out);
 
@@ -147,11 +153,92 @@ namespace Albany {
     QuadraticLinearOperatorBasedResponseFunction& operator=(const QuadraticLinearOperatorBasedResponseFunction&);
 
     Teuchos::RCP<const Application> app_;
-    Teuchos::RCP<Thyra_Vector> D_,g_,vec1_,vec2_;
-    Teuchos::RCP<Thyra_LinearOp> A_;
-    std::string field_name_, file_name_A_, file_name_D_;
-    double coeff_;
+    std::string field_name_;
+    Teuchos::RCP<AtDinvA_LOWS> twoAtDinvA_;
+    Teuchos::RCP<Thyra_Vector> g_;
   };
+
+
+
+    //! Concrete implementation of Thyra::LinearOpWithSolveBase, for the operator coeff A' D^{-1} A
+      /*!
+      * A is a sparse matrix, and D is a non singular diagonal matrix stored as a vector, and coeff a scalar coefficient
+      * A and D are imported from files, they have same range and domain space, which is passed using the method setupFwdOp
+      */
+    class AtDinvA_LOWS : public Init_LOWS {
+    public:
+
+      // Constructor
+      AtDinvA_LOWS(
+        const std::string& file_name_A,
+        const std::string& file_name_D,
+        const double& coeff);
+
+      //! Destructor
+      virtual ~AtDinvA_LOWS();
+
+
+      //! Overrides Thyra::LinearOpWithSolveBase purely virtual method
+      Teuchos::RCP<const Thyra_VectorSpace> domain() const;
+
+      //! Overrides Thyra::LinearOpWithSolveBase purely virtual method
+      Teuchos::RCP<const Thyra_VectorSpace> range() const;
+
+      //! Imports the Thyra VectorSpace and uses it to define the range and domain of A.
+      //! The matrices A and D are then imported from file.
+      //! If the matrix A and D have been already created, this function returns without performing any operation
+      void setupFwdOp(const Teuchos::RCP<const Thyra_VectorSpace>& vec_space);
+
+      //  coeff X' A' inv(D) A  X
+      ST quadraticForm(const Thyra_MultiVector& X);
+
+      //! Initilializes the solver from a parameter list with Stratimikos parameters  
+      void initializeSolver(Teuchos::RCP<Teuchos::ParameterList> solverParamList);
+
+
+    protected:
+      //! Overrides Thyra::LinearOpWithSolveBase purely virtual method
+      bool opSupportedImpl(Thyra::EOpTransp /*M_trans*/) const;
+
+      //! Overrides Thyra::LinearOpWithSolveBase purely virtual method
+      void applyImpl (const Thyra::EOpTransp /*M_trans*/, //operator is symmetric by construction
+                      const Thyra_MultiVector& X,
+                      const Teuchos::Ptr<Thyra_MultiVector>& Y,
+                      const ST alpha,
+                      const ST beta) const;
+
+      //! Overrides Thyra::LinearOpWithSolveBase purely virtual method
+      Thyra::SolveStatus<double> solveImpl(
+        const Thyra::EOpTransp transp,
+        const Thyra_MultiVector &B,
+        const Teuchos::Ptr<Thyra_MultiVector> &X,
+        const Teuchos::Ptr<const Thyra::SolveCriteria<ST> > solveCriteria
+        ) const;
+
+    private:
+      //! sets the range and domain of the matrices A and D and imports them from file
+      void loadLinearOperators();
+
+      //! files storing the operators A and D
+      std::string file_name_A_, file_name_D_;
+
+      //! scaling coefficient
+      double coeff_; 
+
+      //! matrix A
+      Teuchos::RCP<Thyra_LinearOp> A_;
+
+      //! solvers for A and A'
+      Teuchos::RCP<Thyra_LOWS> A_solver_, A_transSolver_;
+
+      //! vector space which is also the range and domain of A
+      Teuchos::RCP<const Thyra_VectorSpace> vec_space_;
+
+      //! internal auxiliary vectors for computations
+      Teuchos::RCP<Thyra_Vector> D_,vec1_,vec2_;
+
+
+    }; // class DistributedParameterDerivativeOp
 
 } // namespace Albany
 
