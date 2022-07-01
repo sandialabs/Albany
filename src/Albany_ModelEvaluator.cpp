@@ -571,6 +571,7 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
     return Albany::createDenseHessianLinearOp(param_vss[l1]);
   }
   else {
+
     // distributed parameters
     TEUCHOS_TEST_FOR_EXCEPTION(
         l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
@@ -580,6 +581,11 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
             << "Invalid parameter index l1 = "
             << l1
             << std::endl);
+
+    const Teuchos::ParameterList& rList = app->getProblemPL()->sublist("Response Functions").sublist(util::strint("Response", j));
+    if(rList.get<std::string>("Name") == "Quadratic Linear Operator Based"){
+      return Teuchos::rcp(new AtA_LinearOp(app,rList));
+    }
 
     Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
     Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
@@ -1518,12 +1524,17 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
 
       if (Teuchos::nonnull(g_hess_pp)) {
-        app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
-                  sacado_param_vec,
-                  all_param_names[l1],
-                  g_hess_pp);
-        if(appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false))
-          Albany::writeMatrixMarket(Albany::getTpetraMatrix(g_hess_pp).getConst(), "H", l1);
+        auto hess_pp = Teuchos::rcp_dynamic_cast<AtA_LinearOp>(g_hess_pp);
+        if(Teuchos::nonnull(hess_pp))
+          hess_pp->setup(all_param_names[l1]);
+        else {
+          app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
+                    sacado_param_vec,
+                    all_param_names[l1],
+                    g_hess_pp);
+          if(appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false))
+            Albany::writeMatrixMarket(Albany::getTpetraMatrix(g_hess_pp).getConst(), "H", l1);
+        }
       }
 
       for (int l2 = 0; l2 < num_params; l2++) {
