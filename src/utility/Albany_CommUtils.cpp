@@ -50,7 +50,7 @@ Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Co
 }
 #endif // defined(ALBANY_EPETRA)
 
-Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
+Albany_MPI_Comm getMpiCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
   Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
              Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
   return *mpiComm->getRawMpiComm();
