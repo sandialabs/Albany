@@ -7,8 +7,6 @@ def main(parallelEnv):
     # This example illustrates how PyAlbany can be used to compute
     # reduced Hessian-vector products w.r.t to the basal friction.
 
-    # !!! The associated yaml file is broken !!!
-
     comm = parallelEnv.getComm()
     rank = comm.getRank()
     nprocs = comm.getSize()
