@@ -62,8 +62,6 @@ bool setPythonParameter(Teuchos::ParameterList & plist,
 {
   py::handle h = value;
 
-  auto &npy_api = py::detail::npy_api::get();
-
   // Boolean values
   if (PyBool_Check(value.ptr ()))
   {

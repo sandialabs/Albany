@@ -18,7 +18,6 @@ using enable_if_t = typename std::enable_if<B,T>::type;
 template<typename T>
 Teuchos::ArrayView< T > convert_np_to_ArrayView(pybind11::array_t<T> array) {
 
-    auto np_array = array.template mutable_unchecked<1>();
     int size = array.shape(0);
     Teuchos::ArrayView< T > av(array.mutable_data(0), size);
 
@@ -62,7 +61,7 @@ struct cknp1d {
     pybind11::array_t<typename T::value_type> result;
     cknp1d (T kokkos_array_host) {
 
-        auto dim_out_0 = kokkos_array_host.extent(0);
+        const int dim_out_0 = kokkos_array_host.extent(0);
         result = pybind11::array_t<typename T::value_type>(dim_out_0);
         auto data = result.template mutable_unchecked<1>();
         Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0,dim_out_0), [&](int i) {
@@ -88,8 +87,8 @@ struct cknp2d {
     pybind11::array_t<typename T::value_type> result;
     cknp2d (T kokkos_array_host) {
 
-        auto dim_out_0 = kokkos_array_host.extent(0);
-        auto dim_out_1 = kokkos_array_host.extent(1);
+        const int dim_out_0 = kokkos_array_host.extent(0);
+        const int dim_out_1 = kokkos_array_host.extent(1);
 
         result = pybind11::array_t<typename T::value_type>(dim_out_0*dim_out_1);
         result.resize({dim_out_0,dim_out_1});

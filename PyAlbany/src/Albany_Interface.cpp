@@ -246,7 +246,7 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<Tpetra_MultiVector
 
     const unsigned int n_directions = direction->getNumVectors();
 
-    for (size_t l = 0; l < solver->Np(); l++)
+    for (int l = 0; l < solver->Np(); l++)
     {
         if (p_index == l)
         {
@@ -288,7 +288,7 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p)
     forwardHasBeenSolved = false;
     inverseHasBeenSolved = false;
 
-    for (size_t l = 0; l < solver->Np(); l++)
+    for (int l = 0; l < solver->Np(); l++)
     {
         if (p_index == l)
         {
@@ -471,7 +471,6 @@ void PyProblem::reportTimers()
 
 Teuchos::RCP<Tpetra_MultiVector> PyAlbany::scatterMVector(Teuchos::RCP<Tpetra_MultiVector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap)
 {
-    int myRank = distributedMap->getComm()->getRank();
     auto rankZeroMap = getRankZeroMap(distributedMap);
     Teuchos::RCP<Tpetra_Export> exportZero = rcp(new Tpetra_Export(distributedMap, rankZeroMap));
     Teuchos::RCP<Tpetra_MultiVector> outVector = rcp(new Tpetra_MultiVector(distributedMap, inVector->getNumVectors()));
@@ -481,7 +480,6 @@ Teuchos::RCP<Tpetra_MultiVector> PyAlbany::scatterMVector(Teuchos::RCP<Tpetra_Mu
 
 Teuchos::RCP<Tpetra_MultiVector> PyAlbany::gatherMVector(Teuchos::RCP<Tpetra_MultiVector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap)
 {
-    int myRank = distributedMap->getComm()->getRank();
     auto rankZeroMap = getRankZeroMap(distributedMap);
     Teuchos::RCP<Tpetra_Export> exportZero = rcp(new Tpetra_Export(distributedMap, rankZeroMap));
     Teuchos::RCP<Tpetra_MultiVector> outVector = rcp(new Tpetra_MultiVector(rankZeroMap, inVector->getNumVectors()));
@@ -533,7 +531,6 @@ void PyAlbany::orthogTpMVecs(Teuchos::RCP<Tpetra_MultiVector> inputVecs, int blk
   typedef Tpetra::Operator<ScalarType>             OP;
   typedef Belos::OperatorTraits<ScalarType,MV,OP> OPT;
   int numVecs = inputVecs->getNumVectors();
-  int numRows = inputVecs->getGlobalLength();
   std::string orthogType("ICGS");
 
   Teuchos::RCP<MAT> B = Teuchos::rcp(new MAT(blkSize, blkSize)); //Matrix for coeffs of X
@@ -559,7 +556,7 @@ void PyAlbany::orthogTpMVecs(Teuchos::RCP<Tpetra_MultiVector> inputVecs, int blk
     pastVecArrayView = arrayViewFromVector(pastVecArray);
     vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(k*blkSize,k*blkSize + blkSize - 1));
     C.append(rcp(new MAT(blkSize, blkSize)));
-    int rank = orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
+    orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
     pastVecArray.push_back(vecBlock);
   }
   if( remainder > 0){
@@ -567,7 +564,7 @@ void PyAlbany::orthogTpMVecs(Teuchos::RCP<Tpetra_MultiVector> inputVecs, int blk
     vecBlock = inputVecs->subViewNonConst(Teuchos::Range1D(numVecs-remainder, numVecs-1));
     B = Teuchos::rcp(new MAT(remainder, remainder));
     C.append(Teuchos::rcp(new MAT(remainder, remainder)));
-    int rank = orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
+    orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
   }
 }
 

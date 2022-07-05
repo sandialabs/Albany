@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_Pybind11_Comm.hpp"
+#include <mpi4py/mpi4py.h>
 
 namespace py = pybind11;
 
