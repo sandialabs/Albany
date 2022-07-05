@@ -336,7 +336,7 @@ def update_parameter_list(parameter, n_modes, max_abs=5.e+04, sufix='', max_n_mo
     n_params = n_vectors
     if useDistributed:
         n_params += n_modes
-    parameterlist = Utils.createParameterList()
+    parameterlist = Utils.createEmptyParameterList()
     parameterlist.set('Number Of Parameters', n_params)
     for i in range(0, n_vectors):
         parameterlist.set('Parameter '+str(i), {'Type':'Vector'})
@@ -365,7 +365,7 @@ def update_parameter_list(parameter, n_modes, max_abs=5.e+04, sufix='', max_n_mo
         rfi.set('Number Of Fields', n_field)
 
         for i in range(0, n_modes):
-            parameterlist = Utils.createParameterList()
+            parameterlist = Utils.createEmptyParameterList()
             parameterlist.set('Field Name', 'Mode '+str(i))
             parameterlist.set('Field Type', 'Node Scalar')
             parameterlist.set('Field Origin', 'File')
