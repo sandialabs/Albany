@@ -54,38 +54,10 @@ namespace pybind11 { namespace detail {
   };
 }}
 
-bool
-initializeMPI (std::vector<std::string> stdvec_args) {
-    int ierr = 0;
-    MPI_Initialized(&ierr);
-    if (!ierr) {
-      int argc = (int)stdvec_args.size();
-      char **argv = new char*[argc+1];
-      for (int i = 0; i < argc; ++i) {
-          argv[i] = (char*)stdvec_args[i].data();
-      }
-      argv[argc] = nullptr;
-
-      MPI_Init(&argc, &argv);
-      return true;
-    }
-
-    return false;
-}
-
-RCP_Teuchos_Comm_PyAlbany
-getDefaultComm () {
-    return Teuchos::DefaultComm<int>::getComm();
-}
-
 RCP_Teuchos_Comm_PyAlbany
 getTeuchosComm (mpi4py_comm comm) {
     return Teuchos::rcp<const Teuchos_Comm_PyAlbany>(new Teuchos::MpiComm< int >
       (Teuchos::opaqueWrapper(comm.value)));
-}
-
-void finalize() {
-    MPI_Finalize();
 }
 
 PyObject * reduceAll(RCP_Teuchos_Comm_PyAlbany comm, Teuchos::EReductionType reductOp, PyObject * sendObj)
@@ -114,8 +86,5 @@ void pyalbany_comm(py::module &m) {
             return reduceAll(m, reductOp, sendObj);
         });
 
-    m.def("initializeMPI", &initializeMPI, "A function which initializes MPI if not yet iniatialized");
-    m.def("getDefaultComm", &getDefaultComm, "A function which returns the default Teuchos communicator");
     m.def("getTeuchosComm", &getTeuchosComm, "A function which returns a Teuchos communicator corresponding to a Mpi4Py communicator");
-    m.def("finalize", &finalize, "A function which finalizes MPI (called once at the end if initializeMPI is called)");
 }

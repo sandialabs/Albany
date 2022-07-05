@@ -50,12 +50,8 @@ def innerMVectorMat(distributedMVector, array):
     return C 
 
 def getDefaultComm():
-    init = wpa.initializeMPI(sys.argv)
-    comm = wpa.getDefaultComm()
-    if init:
-        import atexit
-        atexit.register(wpa.finalize)
-    return comm
+    from mpi4py import MPI
+    return wpa.getTeuchosComm(MPI.COMM_WORLD)
 
 def createDefaultParallelEnv(comm = getDefaultComm(), n_threads=-1,n_numa=-1,device_id=-1):
     """@brief Creates a default parallel environment.

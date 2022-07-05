@@ -14,7 +14,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <mpi.h>
 #include <mpi4py/mpi4py.h>
 
 using Teuchos_Comm_PyAlbany = Teuchos::Comm<int>;
