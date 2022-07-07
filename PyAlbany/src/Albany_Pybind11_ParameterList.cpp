@@ -238,9 +238,6 @@ void pyalbany_parameterlist(py::module &m) {
         .def("print", [](RCP_PyParameterList &m) {
             m->print();
         })
-        .def("setSublist", [](RCP_PyParameterList &m, const std::string &name, RCP_PyParameterList &sub) {
-            m->set(name, *sub);
-        })
         .def("isParameter", [](RCP_PyParameterList &m, const std::string &name) {
             return m->isParameter(name);
         })
@@ -249,6 +246,9 @@ void pyalbany_parameterlist(py::module &m) {
                 return getPythonParameter(*m, name);
             }
             return py::cast("Invalid parameter name");
+        })
+        .def("set", [](RCP_PyParameterList &m, const std::string &name, RCP_PyParameterList &sub) {
+            m->set(name, *sub);
         })
         .def("set", [](RCP_PyParameterList &m, const std::string &name, py::object value) {
             if (!setPythonParameter(*m,name,value))

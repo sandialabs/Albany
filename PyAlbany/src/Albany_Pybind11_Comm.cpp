@@ -83,6 +83,9 @@ void pyalbany_comm(py::module &m) {
         .def("getSize", [](RCP_Teuchos_Comm_PyAlbany &m) {
             return m->getSize();
         })
+        .def("barrier", [](RCP_Teuchos_Comm_PyAlbany &m) {
+            return m->barrier();
+        })
         .def("reduceAll", [](RCP_Teuchos_Comm_PyAlbany &m, Teuchos::EReductionType reductOp, PyObject * sendObj) {
             return reduceAll(m, reductOp, sendObj);
         });
