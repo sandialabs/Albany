@@ -18,16 +18,28 @@ pip install pybind11 --trusted-host=pypi.org --trusted-host=files.pythonhosted.o
 
 ### Configuration
 
-In order to configure PyAlbany, both Trilinos and Albany have to be configured accordingly.
+In order to configure PyAlbany, both Albany has to be configured accordingly.
 
-PyAlbany can be configured with either Python 2 (tested with 2.7) or Python 3 (tested with 3.6).
+PyAlbany has been tested with Python 3 (tested with 3.7 and 3.8) but should work with Python 2.
+
 To switch from one python version to the other requires to recompile both Trilinos and Albany.
 
 ##### Trilinos configuration
 PyAlbany does not add any particular Trilinos requirement.
 
 ##### Albany configuration
-To select the python version, the easiest way is to specify the desired python executable during the configuration of Albany as illustrated as follows:
+The first required option is:
+```
+-D ENABLE_ALBANY_PYTHON=ON \
+```
+to enable the build of PyAlbany.
+
+Then, if you want to install PyAlbany and not just to test it in a build directory, you need to have:
+```
+-D INSTALL_ALBANY=ON \
+```
+
+Finally, to select the python version, the easiest way is to specify the desired python executable during the configuration of Albany as illustrated as follows:
 ```
 -D PYTHON_EXECUTABLE="/usr/bin/python3" \
 ```
