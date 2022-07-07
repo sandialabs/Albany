@@ -1,10 +1,6 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-import numpy as np
 from PyAlbany import Utils
 
 def main(parallelEnv):
-    comm = Teuchos.DefaultComm.getComm()
     filename = 'input_conductivity_dist_paramT.yaml'
     problem = Utils.createAlbanyProblem(filename, parallelEnv)
 
@@ -13,13 +9,17 @@ def main(parallelEnv):
 
     # This map can then be used to construct an RCP to a Tpetra::Multivector:
     m_directions = 4
-    directions = Tpetra.MultiVector(parameter_map, m_directions, dtype="d")
+    directions = Utils.createMultiVector(parameter_map, m_directions)
+
+    directions_view = directions.getLocalViewHost()
 
     # Numpy operations, such as assignments, can then be performed on the local entries:
-    directions[0,:] = 1.        # Set all entries of v_0 to   1
-    directions[1,:] = -1.       # Set all entries of v_1 to  -1
-    directions[2,:] = 3.        # Set all entries of v_2 to   3
-    directions[3,:] = -3.       # Set all entries of v_3 to  -3
+    directions_view[:,0] = 1.        # Set all entries of v_0 to   1
+    directions_view[:,1] = -1.       # Set all entries of v_1 to  -1
+    directions_view[:,2] = 3.        # Set all entries of v_2 to   3
+    directions_view[:,3] = -3.       # Set all entries of v_3 to  -3
+
+    directions.setLocalViewHost(directions_view)
 
     # Now that we have an RCP to the directions, we provide it to the Albany problem:
     problem.setDirections(0, directions)
@@ -30,6 +30,6 @@ def main(parallelEnv):
     hessian = problem.getReducedHessian(0, 0)
 
 if __name__ == "__main__":
-    comm = Teuchos.DefaultComm.getComm()
+    comm = Utils.getDefaultComm()
     parallelEnv = Utils.createDefaultParallelEnv(comm)
     main(parallelEnv)

@@ -1,23 +1,18 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import unittest
 import numpy as np
 try:
     from PyAlbany import Utils
+    from PyAlbany import Albany_Pybind11 as wpa
 except:
     import Utils
-try:
-    from PyAlbany import wpyalbany as wpa
-except:
-    import wpyalbany as wpa
+    import Albany_Pybind11 as wpa
 import os
 
 class TestSteadyHeat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         cls = self.__class__
@@ -34,9 +29,11 @@ class TestSteadyHeat(unittest.TestCase):
         num_elems     = parameter_map.getLocalNumElements()
         
         # generate vectors with random entries
-        omega = Tpetra.MultiVector(parameter_map, n_vecs, dtype="d")
+        omega = Utils.createMultiVector(parameter_map, n_vecs)
+        omega_view = omega.getLocalViewHost()
         for i in range(n_vecs):
-            omega[i,:] = np.random.randn(num_elems)
+            omega_view[:,i] = np.random.randn(num_elems)
+        omega.setLocalViewHost(omega_view)
         
         # call the orthonormalization method
         wpa.orthogTpMVecs(omega, 2)
@@ -45,7 +42,7 @@ class TestSteadyHeat(unittest.TestCase):
         tol = 1.e-12
         for i in range(n_vecs):
             for j in range(i+1):
-                omegaiTomegaj = Utils.inner(omega[i,:], omega[j,:], cls.comm)
+                omegaiTomegaj = Utils.inner(omega.getVector(i), omega.getVector(j))
                 if rank == 0:
                     if i == j:
                         self.assertTrue(abs(omegaiTomegaj - 1.0) < tol)

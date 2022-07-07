@@ -1,16 +1,13 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import unittest
 import numpy as np
 import os
 try:
     from PyAlbany import Utils
-    from PyAlbany import wpyalbany as wpa
+    from PyAlbany import Albany_Pybind11 as wpa
     from PyAlbany.RandomizedCompression import doublePass
 except:
     import Utils
-    import wpyalbany as wpa
+    import Albany_Pybind11 as wpa
     from RandomizedCompression import doublePass
 
 
@@ -28,8 +25,8 @@ class Hessian:
 class TestDoublePass(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         cls = self.__class__
@@ -62,8 +59,8 @@ class TestDoublePass(unittest.TestCase):
         U = wpa.gatherMVector(u, parameterMap)
         # H \approx U \Lambda U^T
         if iAmRoot:
-            Htilde = U[:,:].T.dot(np.diag(eigVals).dot(U[:,:]))
-            error  = np.linalg.norm(Htilde[:,:] - H[:,:])
+            Htilde = U.getLocalViewHost().dot(np.diag(eigVals).dot(U.getLocalViewHost().T))
+            error  = np.linalg.norm(Htilde[:,:] - H.getLocalViewHost())
             sigValsTrue = np.loadtxt(fileDir+"/singularvaluesTrue.txt")
             # see equation (5) of "Compressing rank-structured matrices via randomized sampling" Martinsson (2016)
             # for the error bound 

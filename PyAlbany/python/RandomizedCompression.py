@@ -22,12 +22,10 @@
 
 
 
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
 try:
-    from PyAlbany import wpyalbany as wpa
+    from PyAlbany import Albany_Pybind11 as wpa
 except:
-    import wpyalbany as wpa
+    import Albany_Pybind11 as wpa
 
 try:
     from PyAlbany import Utils as utils
@@ -36,6 +34,7 @@ except:
 
 import numpy as np
 import scipy.linalg as spla
+import sys
 
 
 """
@@ -48,7 +47,7 @@ import scipy.linalg as spla
           \Lambda, eigenvalues,  a nondistributed numpy array with k entries
           U,       eigenvectors, a distributed Tpetra MultiVector with k columns
 """
-def singlePass(Op, k, comm=Teuchos.DefaultComm.getComm()):
+def singlePass(Op, k, comm=utils.getDefaultComm()):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
     nElems     = Op.Map.getLocalNumElements()
@@ -56,18 +55,23 @@ def singlePass(Op, k, comm=Teuchos.DefaultComm.getComm()):
     # orthogonalize no more than 50 vectors at a time
     nMaxOrthog = min(50, k)
 
-    omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    q     = Tpetra.MultiVector(Op.Map, k, dtype="d")
+    omega = utils.createMultiVector(Op.Map, k)
+    q     = utils.createMultiVector(Op.Map, k)
     
+    omega_view = omega.getLocalViewHost()
     for i in range(k):
-        omega[i, :] = np.random.randn(nElems)
+        omega_view[:,i] = np.random.randn(nElems)
+    omega.setLocalViewHost(omega_view)
     y = Op.dot(omega)
     
-    q[:, :] = y[:, :]
+    y_view = y.getLocalViewHost()
+    q_view = q.getLocalViewHost()
+    q_view[:, :] = y_view[:, :]
+    q.setLocalViewHost(q_view)
     wpa.orthogTpMVecs(q, nMaxOrthog)
 
-    C = utils.innerMVector(q, omega, comm)
-    D = utils.innerMVector(q, y, comm)
+    C = utils.innerMVector(q, omega)
+    D = utils.innerMVector(q, y)
 
     A = C.dot(C.T)
     F = D.dot(C.T) + C.dot(D.T)
@@ -86,7 +90,7 @@ def singlePass(Op, k, comm=Teuchos.DefaultComm.getComm()):
     u      = utils.innerMVectorMat(q, utilde)
     return lam, u
 
-def doublePass(Op, k, comm = Teuchos.DefaultComm.getComm(), symmetric=False):
+def doublePass(Op, k, comm = utils.getDefaultComm(), symmetric=False):
     if symmetric:
         return doublePassSymmetric(Op, k, comm=comm)
     else:
@@ -103,7 +107,7 @@ def doublePass(Op, k, comm = Teuchos.DefaultComm.getComm(), symmetric=False):
           \Sigma,  singular values,       a nondistributed numpy array with k entries
           V,       right singular vectors, a distributed Tpetra MultiVector with k columns
 """
-def doublePassNonSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
+def doublePassNonSymmetric(Op, k, comm = utils.getDefaultComm()):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
     nElems     = Op.Map.getLocalNumElements()
@@ -111,24 +115,34 @@ def doublePassNonSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
     # orthogonalize no more than 50 vectors at a time
     nMaxOrthog = min(50, k)
 
-    omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    qy    = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    qz    = Tpetra.MultiVector(Op.Map, k, dtype="d")
+    omega = utils.createMultiVector(Op.Map, k)
+    qy    = utils.createMultiVector(Op.Map, k)
+    qz    = utils.createMultiVector(Op.Map, k)
     
+    omega_view = omega.getLocalViewHost()
     for i in range(k):
-        omega[i, :] = np.random.randn(nElems)
-    
+        omega_view[:, i] = np.random.randn(nElems)
+    omega.setLocalViewHost(omega_view)
+
     y = Op.dot(omega)
     
-    qy[:, :] = y[:, :]
+    qy_view = qy.getLocalViewHost()
+    y_view = y.getLocalViewHost()
+
+    qy_view[:, :] = y_view[:, :]
+    qy.setLocalViewHost(qy_view)
     wpa.orthogTpMVecs(qy, nMaxOrthog)
 
     z = Op.dot(qy)
+
+    qz_view = qz.getLocalViewHost()
+    z_view = z.getLocalViewHost()
     
-    qz[:, :] = z[:, :]
+    qz_view[:, :] = z_view[:, :]
+    qz.setLocalViewHost(qz_view)
     wpa.orthogTpMVecs(qz, nMaxOrthog)
 
-    R = utils.innerMVector(qz, z, comm)
+    R = utils.innerMVector(qz, z)
     vhat, sig, uhat = np.linalg.svd(R, full_matrices=False)
     uhat[:, :] = (uhat.T)[:, :]
     u          = utils.innerMVectorMat(qy, uhat)
@@ -146,7 +160,7 @@ def doublePassNonSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
           \Lambda, eigenvalues, a nondistributed numpy array with k entries
           U,       eigenvectors, a distributed Tpetra MultiVector with k columns
 """
-def doublePassSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
+def doublePassSymmetric(Op, k, comm = utils.getDefaultComm()):
     rank       = comm.getRank()
     nprocs     = comm.getSize()
     nElems     = Op.Map.getLocalNumElements()
@@ -154,20 +168,24 @@ def doublePassSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
     # orthogonalize no more than 50 vectors at a time
     nMaxOrthog = min(50, k)
 
-    omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    q    = Tpetra.MultiVector(Op.Map, k, dtype="d")
+    omega = utils.createMultiVector(Op.Map, k)
+    q    = utils.createMultiVector(Op.Map, k)
      
-    
+    omega_view = omega.getLocalViewHost()
     for i in range(k):
-        omega[i, :] = np.random.randn(nElems)
-    
+        omega_view[:,i] = np.random.randn(nElems)
+    omega.setLocalViewHost(omega_view)
+
     y = Op.dot(omega)
+    y_view = y.getLocalViewHost()
+    q_view = q.getLocalViewHost()
     
-    q[:, :] = y[:, :]
+    q_view[:, :] = y_view[:, :]
+    q.setLocalViewHost(q_view)
     wpa.orthogTpMVecs(q, nMaxOrthog)
 
     z = Op.dot(q)
-    B = utils.innerMVector(q, z, comm)
+    B = utils.innerMVector(q, z)
     
     lam, utilde = np.linalg.eigh(B)
    
@@ -193,7 +211,7 @@ def doublePassSymmetric(Op, k, comm = Teuchos.DefaultComm.getComm()):
           V,       array of right singular vectors, each element of which is a distributed Tpetra MultiVector with k columns
 """
 
-def HODLR(Op, L, k, comm = Teuchos.DefaultComm().getComm()):
+def HODLR(Op, L, k, comm = utils.getDefaultComm()):
     rank   = comm.getRank()
     nprocs = comm.getSize()
     nElem  = Op.Map.getLocalNumElements()
@@ -210,83 +228,97 @@ def HODLR(Op, L, k, comm = Teuchos.DefaultComm().getComm()):
     Hidxsetloc = [[HidxMPIproc(Op.Map, Hidxset[l][j], MPIidxset) \
                       for j in range(2**(l+1))] for l in range(L)]
 
-    Us   = [[Tpetra.MultiVector(Op.Map, k, dtype="d") for j in range(2**l)] for l in range(L)]
-    Vs   = [[Tpetra.MultiVector(Op.Map, k, dtype="d") for j in range(2**l)] for l in range(L)]
+    Us   = [[utils.createMultiVector(Op.Map, k) for j in range(2**l)] for l in range(L)]
+    Vs   = [[utils.createMultiVector(Op.Map, k) for j in range(2**l)] for l in range(L)]
     Sigs = [[None for j in range(2**l)] for l in range(L)]
 
-    omega = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    x     = Tpetra.MultiVector(Op.Map, k, dtype="d")
-    qy    = Tpetra.MultiVector(Op.Map, k, dtype="d")
+    omega = utils.createMultiVector(Op.Map, k)
+    x     = utils.createMultiVector(Op.Map, k)
+    qy    = utils.createMultiVector(Op.Map, k)
     for l in range(L):
          """
            Construct structured random off-diagonal block sampling vectors
          """
          numPartitions = 2**(l+1)
-         omega[:, :] *= 0.
+         omega_view = omega.getLocalViewHost()
+         omega_view[:, :] *= 0.
          for j in range(1, numPartitions, 2):
-             omega[:, Hidxsetloc[l][j]] = np.random.randn(k, len(Hidxsetloc[l][j]))
+             omega_view[Hidxsetloc[l][j], :] = np.random.randn(len(Hidxsetloc[l][j]), k)
+         omega.setLocalViewHost(omega_view)
          """
            generate column samples of off-diagonal blocks by peeling
          """
          y = Op.dot(omega)
+         y_view = y.getLocalViewHost()
+         x_view = x.getLocalViewHost()
          for lvl in range(l):
              for j in range(2**lvl):
-                 VTomega = utils.innerMVector(Vs[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega))[:, :]
-                 y[:, :] = y[:, :] - x[:, :]
+                 VTomega = utils.innerMVector(Vs[lvl][j], omega)
+                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega)).getLocalViewHost()
+                 y_view[:, :] = y_view[:, :] - x_view[:, :]
 
-                 UTomega = utils.innerMVector(Us[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega))[:, :]
-                 y[:, :] = y[:, :] - x[:, :]
+                 UTomega = utils.innerMVector(Us[lvl][j], omega)
+                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega)).getLocalViewHost()
+                 y_view[:, :] = y_view[:, :] - x_view[:, :]
          # zero out unneeded rows
          for j in range(1, numPartitions, 2):
-             y[:, Hidxsetloc[l][j]] *= 0.
+             y_view[Hidxsetloc[l][j], :] *= 0.
 
          """
            orthogonalize column samples and store data in one MultiVector
          """
-         qy[:, :] *= 0.
-         qys = [Tpetra.MultiVector(Op.Map, k, dtype="d") for j in range(2**l)]
+         qy_view = qy.getLocalViewHost()
+         qy_view[:, :] *= 0.
+         qys = [utils.createMultiVector(Op.Map, k) for j in range(2**l)]
          for j in range(0, numPartitions, 2):
              idx = int(j/2)
-             qys[idx][:, Hidxsetloc[l][j]] = y[:, Hidxsetloc[l][j]]
+             qys_view = qys[idx].getLocalViewHost()
+             qys_view[Hidxsetloc[l][j],] = y_view[Hidxsetloc[l][j], :]
+             qys[idx].setLocalViewHost(qys_view)
              wpa.orthogTpMVecs(qys[idx], nMaxOrthog)
-             qy[:, Hidxsetloc[l][j]] = qys[idx][:, Hidxsetloc[l][j]]
+             qys_view = qys[idx].getLocalViewHost()
+             qy_view[Hidxsetloc[l][j], :] = qys_view[Hidxsetloc[l][j], :]
          
          """
            generate row samples of off-diagonal blocks by peeling
          """
+         qy.setLocalViewHost(qy_view)
          z = Op.dot(qy)
+         z_view = z.getLocalViewHost()
          for lvl in range(l):
              for j in range(2**lvl):
-                 VTomega = utils.innerMVector(Vs[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega))[:, :]
-                 z[:, :] = z[:, :] - x[:, :]
+                 VTomega = utils.innerMVector(Vs[lvl][j], omega)
+                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega)).getLocalViewHost()
+                 z_view[:, :] = z_view[:, :] - x_view[:, :]
 
-                 UTomega = utils.innerMVector(Us[lvl][j], omega, comm)
-                 x[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega))[:, :]
-                 z[:, :] = z[:, :] - x[:, :]
+                 UTomega = utils.innerMVector(Us[lvl][j], omega)
+                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega)).getLocalViewHost()
+                 z_view[:, :] = z_view[:, :] - x_view[:, :]
          # zero out unneeded rows
          for j in range(0, numPartitions, 2):
-             z[:, Hidxsetloc[l][j]] *= 0.
+             z_view[Hidxsetloc[l][j], :] *= 0.
 
-         zs  = [Tpetra.MultiVector(Op.Map, k, dtype="d") for j in range(2**l)]
-         qzs = [Tpetra.MultiVector(Op.Map, k, dtype="d") for j in range(2**l)]
+         zs  = [utils.createMultiVector(Op.Map, k) for j in range(2**l)]
+         qzs = [utils.createMultiVector(Op.Map, k) for j in range(2**l)]
 
          for j in range(1, numPartitions, 2):
              idx = int((j-1)/2)
-             zs[idx][:, Hidxsetloc[l][j]] = z[:, Hidxsetloc[l][j]]
-             qzs[idx][:, :] = zs[idx][:, :]
+             zs_view = zs[idx].getLocalViewHost()
+             qzs_view = qzs[idx].getLocalViewHost()
+             zs_view[Hidxsetloc[l][j], :] = z_view[Hidxsetloc[l][j], :]
+             qzs_view[:, :] = zs_view[:, :]
+             qzs[idx].setLocalViewHost(qzs_view)
              wpa.orthogTpMVecs(qzs[idx], nMaxOrthog)
 
-         Rs = [utils.innerMVector(qzs[j], zs[j], comm) for j in range(2**l)]
+         Rs = [utils.innerMVector(qzs[j], zs[j]) for j in range(2**l)]
          Uhats = [None for j in range(2**l)]
          Vhats = [None for j in range(2**l)]
          for j in range(2**l):
              Vhats[j], Sigs[l][j], Uhats[j] = np.linalg.svd(Rs[j], full_matrices=False)
              Uhats[j][:, :] = (Uhats[j].T)[:, :]
-             Us[l][j][:, :] = utils.innerMVectorMat(qys[j], Uhats[j])[:, :]
-             Vs[l][j][:, :] = utils.innerMVectorMat(qzs[j], Vhats[j])[:, :]
+             Us[l][j]
+             Us[l][j] = utils.innerMVectorMat(qys[j], Uhats[j])
+             Vs[l][j] = utils.innerMVectorMat(qzs[j], Vhats[j])
     return Us, Sigs, Vs
 
 """

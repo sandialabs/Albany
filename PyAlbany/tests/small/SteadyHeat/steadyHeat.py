@@ -1,6 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 import unittest
 import numpy as np
 try:
@@ -12,8 +9,8 @@ import os
 class TestSteadyHeat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         cls = self.__class__
@@ -27,12 +24,16 @@ class TestSteadyHeat(unittest.TestCase):
 
         n_directions = 4
         parameter_map = problem.getParameterMap(0)
-        directions = Tpetra.MultiVector(parameter_map, n_directions, dtype="d")
+        directions = Utils.createMultiVector(parameter_map, n_directions)
 
-        directions[0,:] = 1.
-        directions[1,:] = -1.
-        directions[2,:] = 3.
-        directions[3,:] = -3.
+        directions_view = directions.getLocalViewHost()
+
+        directions_view[:,0] = 1.
+        directions_view[:,1] = -1.
+        directions_view[:,2] = 3.
+        directions_view[:,3] = -3.
+
+        directions.setLocalViewHost(directions_view)
 
         problem.setDirections(0, directions)
 
@@ -46,15 +47,16 @@ class TestSteadyHeat(unittest.TestCase):
         setup_time = stackedTimer.accumulatedTime("PyAlbany: Setup Time")
         print("setup_time = " + str(setup_time))
 
-        setup_time_2 = stackedTimer.findBaseTimer("PyAlbany Total Time@PyAlbany: Setup Time").accumulatedTime()
-        setup_time_fix_node_sharing = stackedTimer.findBaseTimer("PyAlbany Total Time@PyAlbany: Setup Time@Albany Setup: fix_node_sharing").accumulatedTime()
+        setup_time_2 = stackedTimer.baseTimerAccumulatedTime("PyAlbany Total Time@PyAlbany: Setup Time")
+        setup_time_fix_node_sharing = stackedTimer.baseTimerAccumulatedTime("PyAlbany Total Time@PyAlbany: Setup Time@Albany Setup: fix_node_sharing")
 
         g_target = 3.23754626955999991e-01
         norm_target = 8.94463776843999921e-03
         h_target = np.array([0.009195356672103817, 0.009195356672103817, 0.027586070971800013, 0.027586070971800013])
-
-        g_data = response.getData()
-        norm = Utils.norm(sensitivity.getData(0), cls.comm)
+        
+        g_data = response.getLocalViewHost()
+         
+        norm = Utils.norm(sensitivity.getVector(0))
 
         print("g_target = " + str(g_target))
         print("g_data[0] = " + str(g_data[0]))
@@ -63,7 +65,7 @@ class TestSteadyHeat(unittest.TestCase):
 
         hessian_norms = np.zeros((n_directions,))
         for i in range(0,n_directions):
-            hessian_norms[i] = Utils.norm(hessian.getData(i), cls.comm)
+            hessian_norms[i] = Utils.norm(hessian.getVector(i))
 
         tol = 1e-8
         if rank == 0:

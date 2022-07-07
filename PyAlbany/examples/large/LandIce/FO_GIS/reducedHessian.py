@@ -1,5 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
 from PyAlbany import Utils
 
 import numpy as np
@@ -9,7 +7,7 @@ def main(parallelEnv):
     # This example illustrates how PyAlbany can be used to compute
     # reduced Hessian-vector products w.r.t to the basal friction.
 
-    comm = parallelEnv.comm
+    comm = parallelEnv.getComm()
     rank = comm.getRank()
     nprocs = comm.getSize()
 
@@ -56,16 +54,15 @@ def main(parallelEnv):
     Utils.writeMVector("hessian_all_nprocs_"+str(nprocs), hessian, distributedFile = False, useBinary = False)
     timers[5].stop()
 
-    print(hessian[0,0])
-    print(hessian[1,0])
-    print(hessian[2,0])
-    print(hessian[3,0])
+    hessian_view = hessian.getLocalViewHost()
+    expected_hessian = np.array([-0.000195717646, -0.000272421749, -4.99117153e-05, -0.000453498014])
+    print(hessian_view[0,:])
+    print(expected_hessian)
 
     timers[6].stop()
 
     Utils.printTimers(timers, "timers_nprocs_"+str(nprocs)+".txt")
 
 if __name__ == "__main__":
-    comm = Teuchos.DefaultComm.getComm()
-    parallelEnv = Utils.createDefaultParallelEnv(comm)
+    parallelEnv = Utils.createDefaultParallelEnv()
     main(parallelEnv)

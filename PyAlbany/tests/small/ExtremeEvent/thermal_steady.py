@@ -1,7 +1,3 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
-from mpi4py import MPI
 import numpy as np
 try:
     from PyAlbany import Utils
@@ -17,8 +13,8 @@ import unittest
 class TestExtremeEvent(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.comm = Teuchos.DefaultComm.getComm()
-        cls.parallelEnv = Utils.createDefaultParallelEnv(cls.comm)
+        cls.parallelEnv = Utils.createDefaultParallelEnv()
+        cls.comm = cls.parallelEnv.getComm()
 
     def test_all(self):
         debug = True

@@ -1,9 +1,7 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
-
 from mpi4py import MPI
 import numpy as np
 from PyAlbany import Utils
+from PyAlbany import Albany_Pybind11 as wpa
 import os
 import sys
 
@@ -41,7 +39,7 @@ def main(parallelEnv):
         newComm = comm.Create_group(newGroup)
 
         if myGlobalRank < nProcs:
-            parallelEnv.comm = Teuchos.MpiComm(newComm)
+            parallelEnv.setComm(wpa.getTeuchosComm(newComm))
 
             for i_test in range(0,N):
                 timers = Utils.createTimers(timerNames)
@@ -55,12 +53,14 @@ def main(parallelEnv):
                 timers[1].start()
                 n_directions = 4
                 parameter_map = problem.getParameterMap(0)
-                directions = Tpetra.MultiVector(parameter_map, n_directions, dtype="d")
+                directions = Utils.createMultiVector(parameter_map, n_directions)
 
-                directions[0,:] = 1.
-                directions[1,:] = -1.
-                directions[2,:] = 3.
-                directions[3,:] = -3.
+                directions_view = directions.getLocalViewHost()
+                directions_view[:,0] = 1.
+                directions_view[:,1] = -1.
+                directions_view[:,2] = 3.
+                directions_view[:,3] = -3.
+                directions.setLocalViewHost(directions_view)
 
                 problem.setDirections(0, directions)
                 timers[1].stop()
@@ -98,6 +98,6 @@ def main(parallelEnv):
             plt.close()
 
 if __name__ == "__main__":
-    comm = Teuchos.DefaultComm.getComm()
+    comm = wpa.getTeuchosComm(MPI.COMM_WORLD)
     parallelEnv = Utils.createDefaultParallelEnv(comm)
     main(parallelEnv)

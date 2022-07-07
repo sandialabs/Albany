@@ -6,7 +6,7 @@
 
 file(GLOB TESTFILES expected_* *.py *.yaml )
 
-file(COPY ${TESTFILES} ${PyAlbanyPyFiles} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
+file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
 
 add_test(PyAlbany_ExtremeEvent ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/thermal_steady.py")
 

@@ -1,10 +1,8 @@
-from PyTrilinos import Tpetra
-from PyTrilinos import Teuchos
 import numpy as np
 from PyAlbany import Utils
 
 def main(parallelEnv):
-    comm = parallelEnv.comm
+    comm = parallelEnv.getComm()
     filename = 'input_conductivity_dist_paramT.yaml'
     problem = Utils.createAlbanyProblem(filename, parallelEnv)
     problem.performSolve()
@@ -15,11 +13,11 @@ def main(parallelEnv):
     # In this example, we illustrate how to return values as output without
     # relying on Kokkos-related object; the local data of the vectors are deeply
     # copied to a new numpy array:
-    sensitivity_out = np.copy(sensitivity[0,:])
+    sensitivity_out = np.copy(sensitivity.getLocalViewHost()[:,0])
     return sensitivity_out
 
 if __name__ == "__main__":
-    comm = Teuchos.DefaultComm.getComm()
+    comm = Utils.getDefaultComm()
     parallelEnv = Utils.createDefaultParallelEnv(comm)
     sensitivity = main(parallelEnv)
 
