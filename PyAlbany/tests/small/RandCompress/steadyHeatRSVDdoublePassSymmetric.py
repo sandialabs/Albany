@@ -1,14 +1,9 @@
 import unittest
 import numpy as np
 import os
-try:
-    from PyAlbany import Utils
-    from PyAlbany import Albany_Pybind11 as wpa
-    from PyAlbany.RandomizedCompression import doublePass
-except:
-    import Utils
-    import Albany_Pybind11 as wpa
-    from RandomizedCompression import doublePass
+from PyAlbany import Utils
+from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany.RandomizedCompression import doublePass
 
 
 class Hessian:

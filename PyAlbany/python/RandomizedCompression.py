@@ -22,15 +22,8 @@
 
 
 
-try:
-    from PyAlbany import Albany_Pybind11 as wpa
-except:
-    import Albany_Pybind11 as wpa
-
-try:
-    from PyAlbany import Utils as utils
-except:
-    import Utils as utils
+from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany import Utils as utils
 
 import numpy as np
 import scipy.linalg as spla

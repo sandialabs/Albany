@@ -1,10 +1,6 @@
 import numpy as np
-try:
-    from PyAlbany import Utils
-    from PyAlbany import ExtremeEvent as ee
-except:
-    import Utils
-    import ExtremeEvent as ee   
+from PyAlbany import Utils
+from PyAlbany import ExtremeEvent as ee
 import os
 import sys
 

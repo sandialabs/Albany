@@ -1,10 +1,7 @@
 import unittest
 import numpy as np
 
-try:
-    from PyAlbany import Utils
-except:
-    import Utils
+from PyAlbany import Utils
 import os
 
 

@@ -168,4 +168,10 @@ IF(NOT Mpi4Py_VERSION_ERROR)
       ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
   endif()
 
+  IF (ALBANY_PYTHON_TESTS)
+    add_custom_command(TARGET Albany_Pybind11 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/Albany_Pybind11.so ${CMAKE_CURRENT_BINARY_DIR}/../PyAlbany/.
+        COMMENT "Copy ${PROJECT_BINARY_DIR}/src/Albany_Pybind11.so"
+    )
+  ENDIF()
 ENDIF(NOT Mpi4Py_VERSION_ERROR)

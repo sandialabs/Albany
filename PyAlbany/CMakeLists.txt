@@ -58,6 +58,10 @@ SET(PyAlbany_INSTALL_DIR
   )
 MESSAGE("-- PyAlbany installation path: ${PyAlbany_INSTALL_DIR}")
 
+IF (ALBANY_PYTHON_TESTS)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/PyAlbany)
+ENDIF()
+
 add_subdirectory( src )
 
 # Python files to install
@@ -70,6 +74,7 @@ INSTALL(FILES
 MESSAGE("End of the configuration of PyAlbany")
 
 IF (ALBANY_PYTHON_TESTS)
-  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_LIB_DIRS}/:${CMAKE_CURRENT_SOURCE_DIR}/python:${CMAKE_CURRENT_BINARY_DIR}/src:$ENV{PYTHONPATH}")
+  file(COPY ${PyAlbanyPyFiles} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PyAlbany/.)
+  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_LIB_DIRS}/:${CMAKE_CURRENT_BINARY_DIR}")
   add_subdirectory( tests )
 ENDIF()

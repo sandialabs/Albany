@@ -4,10 +4,7 @@ Documentation for the PyAlbany.Utils module.
 This module provides utility functions for the Python wrapper of Albany (wpyalbany).
 """
 
-try:
-    from PyAlbany import Albany_Pybind11 as wpa
-except:
-    import Albany_Pybind11 as wpa
+from PyAlbany import Albany_Pybind11 as wpa
 import numpy as np
 import sys
 

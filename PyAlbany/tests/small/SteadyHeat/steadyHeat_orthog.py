@@ -1,11 +1,7 @@
 import unittest
 import numpy as np
-try:
-    from PyAlbany import Utils
-    from PyAlbany import Albany_Pybind11 as wpa
-except:
-    import Utils
-    import Albany_Pybind11 as wpa
+from PyAlbany import Utils
+from PyAlbany import Albany_Pybind11 as wpa
 import os
 
 class TestSteadyHeat(unittest.TestCase):
