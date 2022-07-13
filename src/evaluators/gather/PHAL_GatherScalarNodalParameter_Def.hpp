@@ -104,8 +104,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
-  // auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-  // auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
   auto pspace_indexer = Albany::createGlobalLocalIndexer(pvec->space());
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
@@ -445,8 +443,6 @@ evaluateFields(typename Traits::EvalData workset)
   auto nodeID = workset.wsElNodeEqID;
 
   // If active, initialize data needed for differentiation
-  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
   auto p_indexer = Albany::createGlobalLocalIndexer(pvec->space());
 
   bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();

@@ -12,6 +12,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include "Albany_DOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp" // For IDArray
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_CombineAndScatterManager.hpp"
@@ -26,6 +27,13 @@ public:
   using id_array_vec_type = std::vector<IDArray>;
 
   //! Constructor
+  DistributedParameter(
+    const std::string& param_name_,
+    const Teuchos::RCP<const DOFManager>& dof_mgr)
+   : DistributedParameter(param_name_,dof_mgr->vs(),dof_mgr->ov_vs())
+  {
+    // Nothing to do here
+  }
   DistributedParameter(
     const std::string& param_name_,
     const Teuchos::RCP<const Thyra_VectorSpace>& owned_vs_,

@@ -663,10 +663,8 @@ Application::finalSetUp(
 
       // Get parameter vector spaces and build parameter vector
       // Create distributed parameter and set workset_elem_dofs
-      Teuchos::RCP<DistributedParameter> parameter(new DistributedParameter(
-          param_name,
-          disc->getVectorSpace(param_name),
-          disc->getOverlapVectorSpace(param_name)));
+      auto parameter = Teuchos::rcp(new DistributedParameter(
+          param_name, disc->getNewDOFManager(param_name)));
       parameter->set_workset_elem_dofs(
           Teuchos::rcpFromRef(disc->getElNodeEqID(param_name)));
 
@@ -1869,7 +1867,7 @@ Application::computeGlobalTangent(
   RCP<Thyra_MultiVector> overlapped_Vx;
   if (Teuchos::nonnull(Vx)) {
     overlapped_Vx = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), Vx->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), Vx->domain()->dim());
     overlapped_Vx->assign(0.0);
     cas_manager->scatter(Vx, overlapped_Vx, CombineMode::INSERT);
   }
@@ -1878,14 +1876,14 @@ Application::computeGlobalTangent(
   RCP<Thyra_MultiVector> overlapped_Vxdot;
   if (Teuchos::nonnull(Vxdot)) {
     overlapped_Vxdot = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), Vxdot->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), Vxdot->domain()->dim());
     overlapped_Vxdot->assign(0.0);
     cas_manager->scatter(Vxdot, overlapped_Vxdot, CombineMode::INSERT);
   }
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Teuchos::nonnull(Vxdotdot)) {
     overlapped_Vxdotdot = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), Vxdotdot->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), Vxdotdot->domain()->dim());
     overlapped_Vxdotdot->assign(0.0);
     cas_manager->scatter(Vxdotdot, overlapped_Vxdotdot, CombineMode::INSERT);
   }
@@ -1913,7 +1911,7 @@ Application::computeGlobalTangent(
   RCP<Thyra_MultiVector> overlapped_JV;
   if (Teuchos::nonnull(JV)) {
     overlapped_JV = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), JV->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), JV->domain()->dim());
     overlapped_JV->assign(0.0);
     JV->assign(0.0);
   }
@@ -1921,7 +1919,7 @@ Application::computeGlobalTangent(
   RCP<Thyra_MultiVector> overlapped_fp;
   if (Teuchos::nonnull(fp)) {
     overlapped_fp = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), fp->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), fp->domain()->dim());
     overlapped_fp->assign(0.0);
     fp->assign(0.0);
   }
@@ -2102,7 +2100,7 @@ Application::applyGlobalDistParamDerivImpl(
     overlapped_fpV = Thyra::createMembers(vs, V->domain()->dim());
   } else {
     overlapped_fpV = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), fpV->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), fpV->domain()->dim());
   }
   overlapped_fpV->assign(0.0);
   fpV->assign(0.0);
@@ -2138,7 +2136,7 @@ Application::applyGlobalDistParamDerivImpl(
   RCP<Thyra_MultiVector> overlapped_V;
   if (trans) {
     overlapped_V = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), V_bc->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), V_bc->domain()->dim());
     overlapped_V->assign(0.0);
     cas_manager->scatter(V_bc, overlapped_V, CombineMode::INSERT);
   } else {
@@ -3494,11 +3492,13 @@ Application::setupTangentWorksetInfo(
 {
   setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, p);
 
+  auto dof_mgr = disc->getNewDOFManager();
+
   // Scatter Vx dot the overlapped distribution
   RCP<Thyra_MultiVector> overlapped_Vx;
   if (Vx != Teuchos::null) {
     overlapped_Vx = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), Vx->domain()->dim());
+        dof_mgr->ov_vs(), Vx->domain()->dim());
     overlapped_Vx->assign(0.0);
     solMgr->get_cas_manager()->scatter(Vx, overlapped_Vx, CombineMode::INSERT);
   }
@@ -3507,7 +3507,7 @@ Application::setupTangentWorksetInfo(
   RCP<Thyra_MultiVector> overlapped_Vxdot;
   if (Vxdot != Teuchos::null) {
     overlapped_Vxdot = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), Vxdot->domain()->dim());
+        dof_mgr->ov_vs(), Vxdot->domain()->dim());
     overlapped_Vxdot->assign(0.0);
     solMgr->get_cas_manager()->scatter(
         Vxdot, overlapped_Vxdot, CombineMode::INSERT);
@@ -3515,7 +3515,7 @@ Application::setupTangentWorksetInfo(
   RCP<Thyra_MultiVector> overlapped_Vxdotdot;
   if (Vxdotdot != Teuchos::null) {
     overlapped_Vxdotdot = Thyra::createMembers(
-        disc->getOverlapVectorSpace(), Vxdotdot->domain()->dim());
+        dof_mgr->ov_vs(), Vxdotdot->domain()->dim());
     overlapped_Vxdotdot->assign(0.0);
     solMgr->get_cas_manager()->scatter(
         Vxdotdot, overlapped_Vxdotdot, CombineMode::INSERT);
