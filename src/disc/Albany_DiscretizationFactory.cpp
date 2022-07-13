@@ -9,7 +9,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 
 #include "Albany_STKDiscretization.hpp"
-#include "Albany_BlockedSTKDiscretization.hpp"
+// #include "Albany_BlockedSTKDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STK3DPointStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
@@ -248,10 +248,10 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     case AbstractMeshStruct::STK_MS:
     {
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-        auto disc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-        return disc;
-      } else
+      // if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+      //   auto disc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
+      //   return disc;
+      // } else
       {
         auto disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
         return disc;
@@ -271,10 +271,10 @@ DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
     case AbstractMeshStruct::STK_MS:
     {
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-        auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
-        stk_disc->setFieldData(req, sis);
-      } else
+      // if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+      //   auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
+      //   stk_disc->setFieldData(req, sis);
+      // } else
       {
         auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
         stk_disc->setFieldData(req, sis);
@@ -291,10 +291,10 @@ DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> di
     case AbstractMeshStruct::STK_MS:
     {
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-        auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
-        stk_disc->updateMesh();
-      } else
+      // if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+      //   auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
+      //   stk_disc->updateMesh();
+      // } else
       {
         auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
         stk_disc->updateMesh();
