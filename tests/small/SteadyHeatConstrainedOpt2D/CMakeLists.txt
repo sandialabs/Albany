@@ -131,7 +131,7 @@ set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward"
 ### Hessian Mixed Scalar Distributed Params tests ###
 ####################################
 
-if (ALBANY_ROL)
+if (ALBANY_ROL AND ALBANY_TEKO)
   set(testName ${testNameRoot}_Scalar_And_Dist_Param_Hessian)
 
   # Copy Input file from source to binary dir

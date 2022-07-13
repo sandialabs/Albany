@@ -164,15 +164,6 @@ ANONYMOUS:
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 500
-                    Tolerance: 9.99999999999999954e-08
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
@@ -186,12 +177,6 @@ ANONYMOUS:
                       Num Blocks: 1
                       Flexible Gmres: false
               Preconditioner Type: None
-              Preconditioner Types:
-                Ifpack:
-                  Overlap: 0
-                  Prec Type: Amesos
-                  Ifpack Settings:
-                    'fact: level-of-fill': 0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:

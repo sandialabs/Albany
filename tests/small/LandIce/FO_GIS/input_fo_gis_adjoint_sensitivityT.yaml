@@ -189,22 +189,13 @@ ANONYMOUS:
             Stratimikos: 
               Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
                 Belos: 
                   VerboseObject: 
                     Verbosity Level: medium
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-08
+                      Convergence Tolerance: 1.0e-07
                       Output Frequency: 10
                       Output Style: 1
                       Maximum Iterations: 100
@@ -218,13 +209,6 @@ ANONYMOUS:
                   Prec Type: RILUK
                   Ifpack2 Settings: 
                     'fact: iluk level-of-fill': 0
-                ML: 
-                  Base Method Defaults: none
-                  ML Settings: 
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 

@@ -316,22 +316,13 @@ ANONYMOUS:
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 10
-                    Max Iterations: 200
-                    Tolerance: 1.0e-07
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-08
+                      Convergence Tolerance: 1.0e-07
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -345,11 +336,11 @@ ANONYMOUS:
                   Overlap: 1
                   Prec Type: RILUK
                   Ifpack2 Settings: 
-                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
                     'fact: iluk level-of-fill': 0
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 

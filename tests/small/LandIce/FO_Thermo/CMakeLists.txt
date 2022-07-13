@@ -76,7 +76,7 @@ if (ALBANY_FROSCH)
 endif()
 
 if(${PYTHON_TEST})
-if (ALBANY_FROSCH)
+if (ALBANY_FROSCH AND ALBNAY_TEKO)
   set(TESTFILES hessian_comparison.py humboldt_analysis.yaml humboldt_analysis_contiguous.yaml H-ref-000.mm H-ref-000_contiguous.mm ${PYTHON_TEST_HELPERS_DIR}/__init__.py ${PYTHON_TEST_HELPERS_DIR}/matrix_reader.py)
   file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
