@@ -7,12 +7,13 @@
 #ifndef ALBANY_STK_CONN_MANAGER_HPP
 #define ALBANY_STK_CONN_MANAGER_HPP
 
-#include "Albany_AbstractSTKMeshStruct.hpp"
-
 #include "Panzer_ConnManager.hpp"
+#include "stk_mesh/base/MetaData.hpp"
+#include "stk_mesh/base/BulkData.hpp"
 #include "Teuchos_RCP.hpp"
 
 #include <vector>
+#include <map>
 
 namespace Albany {
 
@@ -26,7 +27,22 @@ public:
   typedef stk::mesh::Field<ProcIdData> ProcIdFieldType;
   typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType;
 
-  STKConnManager(const Teuchos::RCP<const AbstractSTKMeshStruct>& stkMeshStruct);
+  // Note: the parts requested MUST satisfy
+  //  - they all have the same dimension (e.g., no elems and sides)
+  //  - they do NOT intersect
+  // The ctor verifies that the conditions are met
+  STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
+                 const Teuchos::RCP<const stk::mesh::BulkData>& bulkData,
+                 const std::vector<std::string>& part_names);
+
+  // Shortcut for single part
+  STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
+                 const Teuchos::RCP<const stk::mesh::BulkData>& bulkData,
+                 const std::string& part_name)
+   : STKConnManager (metaData,bulkData,std::vector<std::string>(1,part_name))
+  {
+    // Nothing to do
+  }
 
   ~STKConnManager() = default;
 
@@ -73,19 +89,27 @@ public:
   /** How many element blocks in this mesh?
     */
   std::size_t numElementBlocks() const override {
-    return m_stkMeshStruct->ebNames_.size();
+    return m_parts.size();
   }
 
   /** Get block IDs from STK mesh object
     */
   void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
-    elementBlockIds = m_stkMeshStruct->ebNames_;
+    elementBlockIds.resize(0);
+    elementBlockIds.reserve(m_parts.size());
+    for (const auto& it : m_parts) {
+      elementBlockIds.push_back(it.first);
+    }
   }
 
   /** What are the cellTopologies linked to element blocks in this connection manager?
    */
   void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override {
-    elementBlockTopologies = m_stkMeshStruct->elementBlockTopologies_;
+    elementBlockTopologies.resize(0);
+    elementBlockTopologies.reserve(m_parts.size());
+    for (const auto& it : m_parts) {
+      elementBlockTopologies.push_back(stk::mesh::get_cell_topology(it.second->topology()));
+    }
   }
 
   /** Get the local element IDs for a paricular element
@@ -96,8 +120,8 @@ public:
     * \returns Vector of local element IDs.
     */
   const std::vector<LocalOrdinal> & getElementBlock(const std::string & blockId) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION (m_elementBlocks.count(blockId)>=1, std::runtime_error,
-        "Error! Block '" << blockId << "' not found in the mesh.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (m_elementBlocks.find(blockId)==m_elementBlocks.end(), std::runtime_error,
+        "[STKConnManager] Error! Block '" + blockId + "' not found in the mesh.\n");
     return m_elementBlocks.at(blockId);
   }
 
@@ -191,12 +215,12 @@ protected:
   // The max gid for each element rank, across the whole mesh.
   std::vector<stk::mesh::EntityId> m_maxEntityId;
 
-private:
-
   //! Stk Mesh Objects
   Teuchos::RCP<const stk::mesh::MetaData>   m_metaData;
   Teuchos::RCP<const stk::mesh::BulkData>   m_bulkData;
-  Teuchos::RCP<const AbstractSTKMeshStruct> m_stkMeshStruct;
+
+  std::map<std::string,stk::mesh::Part*>    m_parts;
+  unsigned int                              m_parts_topo_dim;
 
   std::unordered_map<stk::mesh::EntityId, int> m_localIDHash;
 };
