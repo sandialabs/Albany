@@ -104,15 +104,6 @@ ANONYMOUS:
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.0e-03
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
@@ -131,15 +122,7 @@ ANONYMOUS:
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings:
-                    'fact: ilut level-of-fill': 2.00000000000000000e+00
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
-                    PDE equations: 4
+                    'fact: ilut level-of-fill': 2.0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:

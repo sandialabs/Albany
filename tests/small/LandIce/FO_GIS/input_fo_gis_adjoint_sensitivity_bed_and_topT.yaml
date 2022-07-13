@@ -291,17 +291,8 @@ ANONYMOUS:
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
                 Belos:
                   VerboseObject:
                     Verbosity Level: medium
@@ -322,13 +313,6 @@ ANONYMOUS:
                   Prec Type: RILUK
                   Ifpack2 Settings:
                     'fact: iluk level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
       Line Search:
         Full Step:
           Full Step: 1.00000000000000000e+00
