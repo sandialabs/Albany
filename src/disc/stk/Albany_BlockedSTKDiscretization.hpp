@@ -167,12 +167,6 @@ namespace Albany
       return m_overlap_jac_factory->createOp();
     }
 
-    bool
-    isExplicitScheme() const
-    {
-      return false;
-    }
-
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList &
     getNodeSets() const

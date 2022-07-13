@@ -1213,8 +1213,6 @@ void
   //! Phalanx Field Manager for states
   Teuchos::Array<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
 
-  bool explicit_scheme;
-
   //! Data for Physics-Based Preconditioners
   bool                                 physicsBasedPreconditioner;
   Teuchos::RCP<Teuchos::ParameterList> precParams;

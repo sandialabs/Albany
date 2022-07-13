@@ -94,7 +94,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
 }
 
 template <typename EvalT>
-int getDerivativeDimensions(const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
+int getDerivativeDimensions(const Albany::Application* app, const int ebi)
 {
   return getDerivativeDimensions<EvalT>(app, app->getEnrichedMeshSpecs()[ebi].get());
 }
@@ -207,13 +207,13 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
 }
 
 template int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 template int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 template int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 template int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 
 #  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \

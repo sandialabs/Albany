@@ -586,8 +586,6 @@ Application::createDiscretization()
       problem->getFieldRequirements(),
       problem->getSideSetFieldRequirements(),
       problem->getNullSpace());
-  // The following is for Aeras problems.
-  explicit_scheme = disc->isExplicitScheme();
   // For extruded meshes, we need the number of layers in postRegistrationSetup
   Teuchos::RCP<LayeredMeshNumbering<GO>> layeredMeshNumbering = disc->getLayeredMeshNumbering();
   if (!layeredMeshNumbering.is_null()) {
@@ -1236,7 +1234,7 @@ Application::postRegSetupDImpl()
 
     std::vector<PHX::index_size_type> derivative_dimensions;
     derivative_dimensions.push_back(
-        PHAL::getDerivativeDimensions<EvalT>(this, ps, explicit_scheme));
+        PHAL::getDerivativeDimensions<EvalT>(this, ps));
     fm[ps]->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
     setDynamicLayoutSizes<EvalT>(fm[ps]);
     fm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
@@ -1270,7 +1268,7 @@ Application::postRegSetupDImpl()
     // different element types?
     std::vector<PHX::index_size_type> derivative_dimensions;
     derivative_dimensions.push_back(
-        PHAL::getDerivativeDimensions<EvalT>(this, 0, explicit_scheme));
+        PHAL::getDerivativeDimensions<EvalT>(this, 0));
     dfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
     setDynamicLayoutSizes<EvalT>(dfm);
     dfm->postRegistrationSetupForType<EvalT>(*phxSetup);
@@ -3079,7 +3077,7 @@ Application::evaluateStateFieldManager(
         std::vector<PHX::index_size_type> derivative_dimensions;
         derivative_dimensions.push_back(
             PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-                this, ps, explicit_scheme));
+                this, ps));
         sfm[ps]
             ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
                 derivative_dimensions);
