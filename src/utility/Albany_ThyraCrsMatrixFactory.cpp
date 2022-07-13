@@ -2,10 +2,10 @@
 
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
-#include "Albany_EpetraThyraUtils.hpp"
 
 #ifdef ALBANY_EPETRA
 #include "Albany_Epetra_FECrsMatrix.hpp"
+#include "Albany_EpetraThyraUtils.hpp"
 #include "Epetra_Export.h"
 #include "Epetra_IntVector.h"
 #endif

@@ -5,7 +5,10 @@
 #include "Albany_ThyraTypes.hpp"
 
 #include "Albany_TpetraThyraUtils.hpp"
+
+#ifdef ALBANY_EPETRA
 #include "Albany_EpetraThyraUtils.hpp"
+#endif
 
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 

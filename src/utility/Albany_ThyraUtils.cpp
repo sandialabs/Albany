@@ -7,7 +7,6 @@
 #include "Albany_Utils.hpp"
 #include "Albany_Macros.hpp"
 
-#include "Petra_Converters.hpp"
 #include "Tpetra_RowMatrixTransposer.hpp"
 
 #include "Thyra_VectorStdOps.hpp"
@@ -18,6 +17,7 @@
 #include "Teuchos_RCP.hpp"
 
 #if defined(ALBANY_EPETRA)
+#include "Petra_Converters.hpp"
 #include "Thyra_EpetraLinearOp.hpp"
 #include "AztecOO_ConditionNumber.h"
 #include "Albany_EpetraThyraUtils.hpp"
