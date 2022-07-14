@@ -75,7 +75,7 @@ struct DualView {
     h_view = Kokkos::create_mirror_view (d_view);
   }
   DualView (dev_t d_view_) : d_view(d_view_) {
-    ALBANY_ALWAYS_ASSERT (d_view.data()!=nullptr);
+    ALBANY_ASSERT (d_view.data()!=nullptr, "Invalid device view.");
     h_view = Kokkos::create_mirror_view (d_view);
   }
   DualView (const DualView&) = default;

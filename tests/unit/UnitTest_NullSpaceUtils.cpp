@@ -59,7 +59,7 @@ struct Cube
         for (int i = 0; i < numGNodesPerDir; ++i) {
           if (std::find(node2gnode.begin(), node2gnode.end(), gnode) != node2gnode.end()) {
             const int node = gnode - gnodeStart;
-            ALBANY_ASSERT(node >= 0);
+            ALBANY_ASSERT(node >= 0, "Invalid node.\n");
 
             coordMVData[0][node] = i * dx;
             coordMVData[1][node] = j * dx;

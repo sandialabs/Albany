@@ -154,11 +154,11 @@ Albany::AdvectionProblem::constructEvaluators(
   // Get the solution method type
   SolutionMethodType SolutionType = getSolutionMethod();
 
-  ALBANY_PANIC(
+  ALBANY_ASSERT(
       SolutionType != SolutionMethodType::Transient,
       "Solution Method must be Transient for Advection Problem!\n "); 
   
-  ALBANY_PANIC(
+  ALBANY_ASSERT(
       number_of_time_deriv != 1,
       "You are using a transient solution method in Albany::AdvectionProblem but number of time derivatives != 1!"); 
 
