@@ -137,6 +137,12 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(pybind11)
 
+IF(ALBANY_PYTHON_TESTS)
+  MESSAGE("-- ALBANY_PYTHON_TESTS is TRUE.")
+ELSE()
+  MESSAGE("-- ALBANY_PYTHON_TESTS is FALSE.")
+ENDIF()
+
 # Retrieve the Mpi4Py version
 EXECUTE_PROCESS(COMMAND
   ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.__version__)"
@@ -148,6 +154,7 @@ EXECUTE_PROCESS(COMMAND
 # If Mpi4Py_VERSION_ERROR does not exist, then we know Mpi4Py exists;
 # now look for the Mpi4Py include directory
 IF(NOT Mpi4Py_VERSION_ERROR)
+  MESSAGE("-- Mpi4Py is found and works.")
   EXECUTE_PROCESS(COMMAND
     ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.get_include())"
     OUTPUT_VARIABLE Mpi4Py_INCLUDE_DIR
@@ -163,9 +170,12 @@ IF(NOT Mpi4Py_VERSION_ERROR)
   set_target_properties(Albany_Pybind11 PROPERTIES SUFFIX ".so")
 
   if (INSTALL_ALBANY)
+    MESSAGE("-- PyAlbany will be installed.")
     install(TARGETS Albany_Pybind11
       LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
       ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
+  else()
+    MESSAGE("-- PyAlbany will be compiled but not installed.")
   endif()
 
   IF (ALBANY_PYTHON_TESTS)
@@ -174,4 +184,6 @@ IF(NOT Mpi4Py_VERSION_ERROR)
         COMMENT "Copy ${PROJECT_BINARY_DIR}/src/Albany_Pybind11.so"
     )
   ENDIF()
+ELSE()
+  MESSAGE("-- Error: Mpi4Py_VERSION_ERROR is defined; the python executable cannot access mpi4py successfully, PyAlbany will not work.")
 ENDIF(NOT Mpi4Py_VERSION_ERROR)
