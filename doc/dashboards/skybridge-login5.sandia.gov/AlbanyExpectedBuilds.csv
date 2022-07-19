@@ -18,8 +18,8 @@ Nightly, camobap.ca.sandia.gov, fedora33-gcc10.2.1-Release-Openmp-Albany
 Nightly, camobap.ca.sandia.gov, fedora33-gcc10.2.1-Debug-FPE-Albany
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-trilinos
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-albany
-Nightly, cee-compute021, Linux-3.10.0-1062.9.1.el7.x86_64-base-trilinos
-Nightly, cee-compute021, Linux-3.10.0-1062.9.1.el7.x86_64-base-albany
+Nightly, cee-compute007, Linux-3.10.0-1062.9.1.el7.x86_64-base-trilinos
+Nightly, cee-compute007, Linux-3.10.0-1062.9.1.el7.x86_64-base-albany
 Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-trilinos
 Nightly, cee-compute022, Linux-3.10.0-1062.9.1.el7.x86_64-clangdbg-albany
 Nightly, cee-compute024, Linux-3.10.0-1062.9.1.el7.x86_64-clang-trilinos
