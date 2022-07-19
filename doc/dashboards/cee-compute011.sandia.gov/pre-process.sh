@@ -14,9 +14,11 @@ source $SCRIPT_DIR/create-new-cdash-cmake-script.sh gcc
 cd $SCRIPT_DIR
 mkdir repos
 cd repos
+ssh-keyscan -t rsa github.com >> /home/ikalash/.ssh/known_hosts
 git clone git@github.com:trilinos/Trilinos.git >& /scratch/albany/trilinos_clone.out 
 cd Trilinos
 git checkout develop
 cd ../
+ssh-keyscan -t rsa github.com >> /home/ikalash/.ssh/known_hosts
 git clone git@github.com:sandialabs/Albany.git >& /scratch/albany/albany_clone.out
 
