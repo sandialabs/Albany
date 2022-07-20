@@ -122,6 +122,10 @@ class AbstractDiscretization
   virtual const NodeSetCoordList&
   getNodeSetCoords() const = 0;
 
+  const WorksetArray<int>& getWorksetsSizes () const { return m_workset_sizes; }
+
+  int getNumWorksets () const { return m_workset_sizes.size(); }
+
   //! Get Side set lists
   virtual const SideSetList&
   getSideSets(const int ws) const = 0;
@@ -355,6 +359,10 @@ class AbstractDiscretization
       const double             time,
       const bool               overlapped = false,
       const bool               force_write_solution = false) = 0; 
+
+protected:
+
+  WorksetArray<int>   m_workset_sizes;
 };
 
 }  // namespace Albany

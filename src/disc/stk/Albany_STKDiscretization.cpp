@@ -1479,10 +1479,12 @@ STKDiscretization::computeWorksetInfo()
   }
 
   auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
+  m_workset_sizes.resize(numBuckets);
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
+    m_workset_sizes[b] = buck.size();
 
     // Set size of Kokkos views
     // Note: Assumes nodes_per_element is the same across all elements in a
