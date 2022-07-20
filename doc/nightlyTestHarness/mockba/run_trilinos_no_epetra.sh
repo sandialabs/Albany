@@ -33,7 +33,7 @@ export PATH=$PATH:/usr/lib64/openmpi/bin:/home/ikalash/Install/ParaView-4.4.0-Qt
 
 
 if [ ! $1 ] ; then
-    echo "ERROR: run_trilinos: run_trilinos.sh requires a file as an argument"
+    echo "ERROR: run_trilinos: run_trilinos_no_epetra.sh requires a file as an argument"
     echo "You must define env variables with required paths!"
     exit
 fi
@@ -48,14 +48,14 @@ else
 fi
 
 if [ "$2" = "MPI" ] ; then
-   echo; echo "... Performing $2 build Trilinos"
+   echo; echo "... Performing $2 build of Trilinos"
    echo
    export MPI_BUILD=true
 fi
 
-echo "... Deleting then Creating " $NIGHTLYDIR
-rm -rf $NIGHTLYDIR
-mkdir $NIGHTLYDIR
+#echo "... Deleting then Creating " $NIGHTLYDIR
+#rm -rf $NIGHTLYDIR
+#mkdir $NIGHTLYDIR
 
 #-------------------------------------------
 # Execute scripts for building trilinos, dakota, and albany
@@ -64,17 +64,17 @@ mkdir $NIGHTLYDIR
 #echo; echo "...Sourcing bashrc"
 #time source /home/ikalash/.bashrc
 
-echo; echo "...Starting Trilinos VOTD Checkout"
-time source $SCRIPTDIR/trilinos_checkout.sh
+#echo; echo "...Starting Trilinos VOTD Checkout"
+#time source $SCRIPTDIR/trilinos_checkout.sh
 
-echo; echo "...Starting Albany VOTD Checkout"
-time source $SCRIPTDIR/albany_checkout.sh
+#echo; echo "...Starting Albany VOTD Checkout"
+#time source $SCRIPTDIR/albany_checkout.sh
 
 #echo; echo "...Starting Dakota VOTD wget and untar"
 #time source $SCRIPTDIR/dakota_checkout.sh
 
-echo; echo "...Starting Trilinos full Build"
-time source $SCRIPTDIR/trilinos_build.sh
+echo; echo "...Starting Trilinos full Build without Epetra"
+time source $SCRIPTDIR/trilinos_build_no_epetra.sh
 
 #echo; echo "...Starting Albany Build (Albany and AlbanyT)"
 #time source $SCRIPTDIR/albany_build_tpetra.sh
