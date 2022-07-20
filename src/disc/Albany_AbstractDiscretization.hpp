@@ -13,6 +13,7 @@
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Albany_DOFManager.hpp"
 #include "Shards_Array.hpp"
 #include "Shards_CellTopologyData.h"
 
@@ -41,29 +42,73 @@ class AbstractDiscretization
   //! Destructor
   virtual ~AbstractDiscretization() = default;
 
+  //! Get the panzer DOF manager
+  virtual Teuchos::RCP<const DOFManager>
+  getNewDOFManager (const std::string& fieldName) const = 0;
+  virtual Teuchos::RCP<const DOFManager>
+  getNodeNewDOFManager (const std::string& fieldName) const = 0;
+
+  Teuchos::RCP<const DOFManager>
+  getNewDOFManager () const
+  {
+    return getNewDOFManager (solution_dof_name());
+  }
+
+  Teuchos::RCP<const DOFManager>
+  getNodeNewDOFManager () const
+  {
+    return getNodeNewDOFManager (solution_dof_name());
+  }
+
   //! Get node vector space (owned and overlapped)
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getNodeVectorSpace() const = 0;
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapNodeVectorSpace() const = 0;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getNodeVectorSpace() const
+  {
+    return getNodeNewDOFManager()->vs();
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getOverlapNodeVectorSpace() const
+  {
+    return getNodeNewDOFManager()->ov_vs();
+  }
 
   //! Get solution DOF vector space (owned and overlapped).
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getVectorSpace() const = 0;
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapVectorSpace() const = 0;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getVectorSpace() const
+  {
+    return getNewDOFManager()->vs();
+  }
+
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getOverlapVectorSpace() const
+  {
+    return getNewDOFManager()->ov_vs();
+  }
 
   //! Get Field node vector space (owned and overlapped)
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getNodeVectorSpace(const std::string& field_name) const = 0;
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapNodeVectorSpace(const std::string& field_name) const = 0;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getNodeVectorSpace(const std::string& field_name) const
+  {
+    return getNodeNewDOFManager(field_name)->vs();
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getOverlapNodeVectorSpace(const std::string& field_name) const
+  {
+    return getNodeNewDOFManager(field_name)->ov_vs();
+  }
 
   //! Get Field vector space (owned and overlapped)
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getVectorSpace(const std::string& field_name) const = 0;
-  virtual Teuchos::RCP<const Thyra_VectorSpace>
-  getOverlapVectorSpace(const std::string& field_name) const = 0;
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getVectorSpace(const std::string& field_name) const
+  {
+    return getNewDOFManager(field_name)->vs();
+  }
+  Teuchos::RCP<const Thyra_VectorSpace>
+  getOverlapVectorSpace(const std::string& field_name)
+  {
+    return getNewDOFManager(field_name)->ov_vs();
+  }
 
   //! Create a Jacobian operator
   virtual Teuchos::RCP<Thyra_LinearOp>
@@ -111,12 +156,18 @@ class AbstractDiscretization
   getOverlapDOFManager(const std::string& field_name) const = 0;
 
   //! Get Dof Manager of field field_name
-  virtual Teuchos::RCP<const GlobalLocalIndexer>
-  getGlobalLocalIndexer(const std::string& field_name) const = 0;
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return getNewDOFManager(field_name)->indexer();
+  }
 
   //! Get Dof Manager of field field_name
-  virtual Teuchos::RCP<const GlobalLocalIndexer>
-  getOverlapGlobalLocalIndexer(const std::string& field_name) const = 0;
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getOverlapGlobalLocalIndexer(const std::string& field_name) const
+  {
+    return getNewDOFManager(field_name)->ov_indexer();
+  }
 
   //! Get GlobalLocalIndexer for solution field
   Teuchos::RCP<const GlobalLocalIndexer>
