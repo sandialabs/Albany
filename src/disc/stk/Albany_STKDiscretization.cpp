@@ -25,8 +25,6 @@
 #include <Intrepid2_Basis.hpp>
 #include <Intrepid2_CellTools.hpp>
 
-#include <stk_util/parallel/Parallel.hpp>
-
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
@@ -104,31 +102,6 @@ STKDiscretization::printConnectivity() const
     }
     comm->barrier();
   }
-}
-
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getVectorSpace(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).vs;
-}
-
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getNodeVectorSpace(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).node_vs;
-}
-
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getOverlapVectorSpace(const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_vs;
-}
-
-Teuchos::RCP<const Thyra_VectorSpace>
-STKDiscretization::getOverlapNodeVectorSpace(
-    const std::string& field_name) const
-{
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_node_vs;
 }
 
 void
@@ -1188,6 +1161,59 @@ void STKDiscretization::computeVectorSpaces()
   }
 
   coordinates.resize(3 * getLocalSubdim(m_overlap_node_vs));
+
+  // ====================== NEW DOF MANAGER ========================= //
+  for (const auto& it : nodalDOFsStructContainer.fieldToMap) {
+    const auto& field_name = it.first;
+    const auto& part_dim   = it.second->first; 
+          auto  part_name  = part_dim.first;
+    const auto& dof_dim    = part_dim.second;
+
+    // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
+    //       That's not the name that stk uses for the whole mesh. So if the
+    //       part name is "", we get the part stored in the stk mesh struct
+    //       for the element block, where we REQUIRE that there is only ONE element block.
+    if (part_name=="") {
+      TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
+          "Error! We currently do not support meshes with 2+ element blocks.\n");
+      part_name = stkMeshStruct->ebNames_[0];
+    }
+
+    auto& conn_mgr = m_conn_managers[part_name];
+    if (conn_mgr.is_null()) {
+      conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
+    }
+
+    auto dof_mgr = Teuchos::rcp(new DOFManager(conn_mgr,comm));
+
+    // NOTE: for now we hard code P1. In the future, we must be able to
+    //       store this info somewhere and retrieve it here.
+    std::vector<shards::CellTopology> topologies;
+    conn_mgr->getElementBlockTopologies(topologies);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (topologies.size()!=1, std::runtime_error,
+        "Error! We have not yet implemented the case where a DOF is defined on multiple cell topologies.\n");
+    auto fp = createFieldPattern (FE_Type::P1, topologies[0]);
+
+    // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
+    //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+    for (int i=0; i<dof_dim; ++i) {
+      dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    }
+
+    dof_mgr->build();
+
+    m_dof_managers[field_name] = dof_mgr;
+    m_part_dim_2_dof_manager[part_name][dof_dim] = dof_mgr;
+
+    if (dof_dim>1) {
+      // Create a scalar dof mgr, for nodes
+      auto node_dof_mgr = Teuchos::rcp(new DOFManager(conn_mgr->noConnectivityClone(),comm));
+      node_dof_mgr->addField(field_name + "_nodes", fp);
+      node_dof_mgr->build();
+      m_part_dim_2_dof_manager[part_name][1] = node_dof_mgr;
+    }
+  }
 }
 
 void
