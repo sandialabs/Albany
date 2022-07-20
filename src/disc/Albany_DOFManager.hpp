@@ -43,8 +43,11 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace> vs    () const;
   Teuchos::RCP<const Thyra_VectorSpace> ov_vs () const;
 
+  const std::vector<std::string>& parts_names () const { return m_parts_names; }
+
 private:
   Teuchos::RCP<const Teuchos_Comm>          m_comm;
+  std::vector<std::string>                  m_parts_names;
 
   Teuchos::RCP<const GlobalLocalIndexer>    m_indexer;
   Teuchos::RCP<const GlobalLocalIndexer>    m_ov_indexer;

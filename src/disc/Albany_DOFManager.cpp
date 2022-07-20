@@ -50,6 +50,8 @@ DOFManager (const Teuchos::RCP<panzer::ConnManager>& conn_mgr,
       "Error! Invalid ConnManager pointer.\n");
 
   setConnManager (conn_mgr,getMpiCommFromTeuchosComm(comm));
+
+  conn_mgr->getElementBlockIds(m_parts_names);
 }
 
 void DOFManager::build ()
