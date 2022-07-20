@@ -873,12 +873,6 @@ Application::getVectorSpace() const
   return disc->getVectorSpace();
 }
 
-Teuchos::RCP<const Thyra_VectorSpace>
-Application::getDualVectorSpace() const
-{
-  return Teuchos::null;
-}
-
 RCP<Thyra_LinearOp>
 Application::createJacobianOp() const
 {

@@ -90,10 +90,6 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace>
   getVectorSpace() const;
 
-  //! Get Thyra DOF dual vector space
-  Teuchos::RCP<const Thyra_VectorSpace>
-  getDualVectorSpace() const;
-
   //! Create Jacobian operator
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const;
