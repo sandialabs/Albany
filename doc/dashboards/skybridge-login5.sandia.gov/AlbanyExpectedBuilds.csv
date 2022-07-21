@@ -28,6 +28,7 @@ Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-trilinos
 Nightly, cee-compute026, Linux-3.10.0-1062.9.1.el7.x86_64-debug-albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Albany
 Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Cism-Albany
+Nightly, mockba.ca.sandia.gov, mockba-rhel7-gcc9.2.0-Release-Albany-No-Epetra
 Nightly, ride.sandia.gov, ride-CUDA-Trilinos
 Nightly, ride.sandia.gov, ride-CUDA-Albany
 Nightly, skybridge-login5, skybridge-login5-trilinos
