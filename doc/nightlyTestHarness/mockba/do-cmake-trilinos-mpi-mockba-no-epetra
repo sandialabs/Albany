@@ -69,7 +69,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Trilinos_ENABLE_Amesos:BOOL=OFF \
       -D Trilinos_ENABLE_Amesos2:BOOL=ON \
-      -D Trilinos_ENABLE_Anasazi:BOOL=OFF \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
       -D Trilinos_ENABLE_AztecOO:BOOL=OFF \
       -D Trilinos_ENABLE_Belos:BOOL=ON \
       -D Trilinos_ENABLE_COMPLEX_DOUBLE:BOOL=ON \
