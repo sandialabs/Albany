@@ -70,7 +70,7 @@ class TestExtremeEvent(unittest.TestCase):
             expected_P_IS = np.loadtxt('expected_P_steady_IS_'+str(nproc)+'.txt')
             expected_P_mixed = np.loadtxt('expected_P_steady_mixed_'+str(nproc)+'.txt')
 
-            tol = 1e-8
+            tol = 5e-8
             tol_F = 5e-5
 
             if debug:

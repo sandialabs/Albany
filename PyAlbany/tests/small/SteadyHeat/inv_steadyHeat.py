@@ -33,7 +33,7 @@ class TestSteadyHeat(unittest.TestCase):
         g_target_2 = 0.19570272
         p_0_target = 0.39886689
         p_1_norm_target = 5.37319376038225
-        tol = 1e-8
+        tol = 5e-8
 
         problem.performSolve()
 
