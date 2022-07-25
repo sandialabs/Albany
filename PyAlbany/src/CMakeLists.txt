@@ -117,16 +117,6 @@ target_include_directories(albanyPyInterface PUBLIC
                             "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
 
-if (INSTALL_ALBANY)
-  install(TARGETS pyalbanyLib
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  install(TARGETS albanyPyInterface
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-endif()
-
-
 include(FetchContent)
 FetchContent_Declare(
 	pybind11
@@ -137,53 +127,35 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(pybind11)
 
-IF(ALBANY_PYTHON_TESTS)
-  MESSAGE("-- ALBANY_PYTHON_TESTS is TRUE.")
-ELSE()
-  MESSAGE("-- ALBANY_PYTHON_TESTS is FALSE.")
-ENDIF()
-
-# Retrieve the Mpi4Py version
 EXECUTE_PROCESS(COMMAND
-  ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.__version__)"
-  OUTPUT_VARIABLE Mpi4Py_VERSION
-  ERROR_VARIABLE  Mpi4Py_VERSION_ERROR
+  ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.get_include())"
+  OUTPUT_VARIABLE Mpi4Py_INCLUDE_DIR
+  ERROR_VARIABLE  Mpi4Py_INCLUDE_ERROR
   OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
-# If Mpi4Py_VERSION_ERROR does not exist, then we know Mpi4Py exists;
-# now look for the Mpi4Py include directory
-IF(NOT Mpi4Py_VERSION_ERROR)
-  MESSAGE("-- Mpi4Py is found and works.")
-  EXECUTE_PROCESS(COMMAND
-    ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.get_include())"
-    OUTPUT_VARIABLE Mpi4Py_INCLUDE_DIR
-    ERROR_VARIABLE  Mpi4Py_INCLUDE_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+pybind11_add_module(Albany_Pybind11 ${PybindAlbany_SRCS})
+target_include_directories(Albany_Pybind11 PUBLIC ${Trilinos_INCLUDE_DIRS} ${Mpi4Py_INCLUDE_DIR})
+target_compile_features(Albany_Pybind11 PUBLIC cxx_std_11)
+#target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
+target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} albanyPyInterface)
+set_target_properties(Albany_Pybind11 PROPERTIES SUFFIX ".so")
 
-  pybind11_add_module(Albany_Pybind11 ${PybindAlbany_SRCS})
-  target_include_directories(Albany_Pybind11 PUBLIC ${Trilinos_INCLUDE_DIRS} ${Mpi4Py_INCLUDE_DIR})
-  target_compile_features(Albany_Pybind11 PUBLIC cxx_std_11)
-  #target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
-  target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} albanyPyInterface)
-  set_target_properties(Albany_Pybind11 PROPERTIES SUFFIX ".so")
+if (INSTALL_ALBANY)
+  install(TARGETS pyalbanyLib
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS albanyPyInterface
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS Albany_Pybind11
+    LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
+    ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
+endif()
 
-  if (INSTALL_ALBANY)
-    MESSAGE("-- PyAlbany will be installed.")
-    install(TARGETS Albany_Pybind11
-      LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
-      ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
-  else()
-    MESSAGE("-- PyAlbany will be compiled but not installed.")
-  endif()
-
-  IF (ALBANY_PYTHON_TESTS)
-    add_custom_command(TARGET Albany_Pybind11 POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/Albany_Pybind11.so ${CMAKE_CURRENT_BINARY_DIR}/../PyAlbany/.
-        COMMENT "Copy ${PROJECT_BINARY_DIR}/src/Albany_Pybind11.so"
-    )
-  ENDIF()
-ELSE()
-  MESSAGE("-- Error: Mpi4Py_VERSION_ERROR is defined; the python executable cannot access mpi4py successfully, PyAlbany will not work.")
-ENDIF(NOT Mpi4Py_VERSION_ERROR)
+IF (ALBANY_PYTHON_TESTS)
+  add_custom_command(TARGET Albany_Pybind11 POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/Albany_Pybind11.so ${CMAKE_CURRENT_BINARY_DIR}/../PyAlbany/.
+      COMMENT "Copy ${PROJECT_BINARY_DIR}/src/Albany_Pybind11.so"
+  )
+ENDIF()

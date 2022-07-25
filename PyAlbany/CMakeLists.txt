@@ -31,7 +31,15 @@ EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+# Get the python version
+EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c
+                        "import sys; print(sys.version[:1])"
+  OUTPUT_VARIABLE PYTHON_MAJOR_VERSION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 MESSAGE("  -- PYTHON_VERSION = ${PYTHON_VERSION}")
+MESSAGE("  -- PYTHON_MAJOR_VERSION = ${PYTHON_MAJOR_VERSION}")
 
 SET(PYBIND11_PYTHON_VERSION ${PYTHON_VERSION})
 
@@ -62,10 +70,96 @@ IF (ALBANY_PYTHON_TESTS)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/PyAlbany)
 ENDIF()
 
+MESSAGE("-- Check required dependencies:")
+
+# Retrieve the Pybind11 version
+EXECUTE_PROCESS(COMMAND
+  ${PYTHON_EXECUTABLE} -c "import pybind11; print(pybind11.__version__)"
+  OUTPUT_VARIABLE PYBIND11_VERSION
+  ERROR_VARIABLE  PYBIND11_VERSION_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+IF(NOT PYBIND11_VERSION_ERROR)
+  MESSAGE("  -- Pybind11 Enabled.")
+ELSE()
+  MESSAGE(FATAL_ERROR "PYBIND11_VERSION_ERROR is defined; the python executable cannot access pybind11.")
+ENDIF()
+
+# Retrieve the Mpi4Py version
+EXECUTE_PROCESS(COMMAND
+  ${PYTHON_EXECUTABLE} -c "import mpi4py; print(mpi4py.__version__)"
+  OUTPUT_VARIABLE Mpi4Py_VERSION
+  ERROR_VARIABLE  Mpi4Py_VERSION_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+IF(NOT Mpi4Py_VERSION_ERROR)
+  MESSAGE("  -- Mpi4Py Enabled.")
+ELSE()
+  MESSAGE(FATAL_ERROR "Mpi4Py_VERSION_ERROR is defined; the python executable cannot access mpi4py.")
+ENDIF()
+
+# Retrieve the Numpy version
+EXECUTE_PROCESS(COMMAND
+  ${PYTHON_EXECUTABLE} -c "import numpy; print(numpy.__version__)"
+  OUTPUT_VARIABLE NUMPY_VERSION
+  ERROR_VARIABLE  NUMPY_VERSION_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+IF(NOT NUMPY_VERSION_ERROR)
+  MESSAGE("  -- Numpy Enabled.")
+ELSE()
+  MESSAGE(FATAL_ERROR "NUMPY_VERSION_ERROR is defined; the python executable cannot access numpy.")
+ENDIF()
+
+MESSAGE("-- PyAlbany uses pybind11 ${PYBIND11_VERSION}, mpi4py ${Mpi4Py_VERSION}, and numpy ${NUMPY_VERSION}.")
+
+MESSAGE("-- Check optional dependencies:")
+
+EXECUTE_PROCESS(COMMAND
+  PYTHONPATH=${Trilinos_LIB_DIRS} ${PYTHON_EXECUTABLE} -c "import exomerge${PYTHON_MAJOR_VERSION}; print(exomerge${PYTHON_MAJOR_VERSION}.__version__)"
+  OUTPUT_VARIABLE Exomerge_VERSION
+  ERROR_VARIABLE  Exomerge_VERSION_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+IF(NOT Exomerge_VERSION_ERROR)
+  MESSAGE("  -- Exomerge Enabled.")
+  SET(PYALBANY_EXTREME_EVENTS true)
+ELSE()
+  MESSAGE("  -- Exomerge NOT Enabled.")
+  SET(PYALBANY_EXTREME_EVENTS false)
+ENDIF()
+
+IF(PYALBANY_EXTREME_EVENTS)
+  MESSAGE("-- PyAlbany Extreme Events Enabled.")
+ELSE()
+  MESSAGE("-- PyAlbany Extreme Events NOT Enabled.")
+ENDIF()
+
+IF(INSTALL_ALBANY)
+  MESSAGE("-- Installation of PyAlbany Enabled.")
+ELSE()
+  MESSAGE("-- Installation of PyAlbany NOT Enabled.")
+ENDIF()
+
+IF(ALBANY_PYTHON_TESTS)
+  MESSAGE("-- ALBANY_PYTHON_TESTS Enabled.")
+ELSE()
+  MESSAGE("-- ALBANY_PYTHON_TESTS NOT Enabled.")
+ENDIF()
+
 add_subdirectory( src )
 
 # Python files to install
 FILE(GLOB PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/*.py)
+
+IF(NOT PYALBANY_EXTREME_EVENTS)
+  list(REMOVE_ITEM PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/ExtremeEvent.py)
+ENDIF()
+
 
 INSTALL(FILES
   ${PyAlbanyPyFiles}
