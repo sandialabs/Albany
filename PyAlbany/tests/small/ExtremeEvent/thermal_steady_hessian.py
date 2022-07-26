@@ -1,10 +1,6 @@
 import numpy as np
-try:
-    from PyAlbany import Utils
-    from PyAlbany import ExtremeEvent as ee
-except:
-    import Utils
-    import ExtremeEvent as ee   
+from PyAlbany import Utils
+from PyAlbany import ExtremeEvent as ee
 import os
 import sys
 
@@ -66,7 +62,7 @@ class TestExtremeEvent(unittest.TestCase):
             expected_F_star = np.loadtxt('expected_F_star_steady_hessian_'+str(nproc)+'.txt')
             expected_P_SO = np.loadtxt('expected_P_steady_hessian_SO_'+str(nproc)+'.txt')
 
-            tol = 1e-6
+            tol = 5e-6
 
             if debug:
                 for i in range(0, len(expected_theta_star)):

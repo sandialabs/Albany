@@ -2,12 +2,8 @@ import sys
 import numpy as np
 import scipy.sparse.linalg as slinalg
 import scipy.linalg as linalg
-try: 
-    from PyAlbany import Distributions as dist
-    from PyAlbany import Utils
-except: 
-    import Distributions as dist
-    import Utils
+from PyAlbany import Distributions as dist
+from PyAlbany import Utils
 
 try:
     import exomerge
