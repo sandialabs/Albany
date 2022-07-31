@@ -3,12 +3,7 @@
 BASE_DIR=/home/projects/albany/nightlyCDashWeaver
 cd $BASE_DIR
 
-rm -rf repos
-rm -rf build
-rm -rf nightly_log*
-rm -rf results*
-rm -rf modules*out 
-source clean-up.sh 
+#source clean-up.sh 
 
 unset http_proxy
 unset https_proxy
