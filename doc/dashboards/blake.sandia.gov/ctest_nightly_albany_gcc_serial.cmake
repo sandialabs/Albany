@@ -129,6 +129,8 @@ if (BUILD_ALBANY_SERIAL)
     "-DALBANY_CTEST_TIMEOUT=1800"
     "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
+    "-DENABLE_ALBANY_PYTHON:BOOL=ON"
+    "-DPYTHON_EXECUTABLE='/home/projects/x86-64/python/3.7.3/bin/python'"
     )
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn")
