@@ -73,18 +73,18 @@ ENDIF()
 MESSAGE("-- Check required dependencies:")
 
 # Retrieve the Pybind11 version
-EXECUTE_PROCESS(COMMAND
-  ${PYTHON_EXECUTABLE} -c "import pybind11; print(pybind11.__version__)"
-  OUTPUT_VARIABLE PYBIND11_VERSION
-  ERROR_VARIABLE  PYBIND11_VERSION_ERROR
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+#EXECUTE_PROCESS(COMMAND
+#  ${PYTHON_EXECUTABLE} -c "import pybind11; print(pybind11.__version__)"
+#  OUTPUT_VARIABLE PYBIND11_VERSION
+#  ERROR_VARIABLE  PYBIND11_VERSION_ERROR
+#  OUTPUT_STRIP_TRAILING_WHITESPACE
+#  )
 
-IF(NOT PYBIND11_VERSION_ERROR)
-  MESSAGE("  -- Pybind11 Enabled.")
-ELSE()
-  MESSAGE(FATAL_ERROR "PYBIND11_VERSION_ERROR is defined; the python executable cannot access pybind11.")
-ENDIF()
+#IF(NOT PYBIND11_VERSION_ERROR)
+#  MESSAGE("  -- Pybind11 Enabled.")
+#ELSE()
+#  MESSAGE(FATAL_ERROR "PYBIND11_VERSION_ERROR is defined; the python executable cannot access pybind11.")
+#ENDIF()
 
 # Retrieve the Mpi4Py version
 EXECUTE_PROCESS(COMMAND
