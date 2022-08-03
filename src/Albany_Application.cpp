@@ -1372,7 +1372,7 @@ Application::computeGlobalResidualImpl(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -1588,7 +1588,7 @@ Application::computeGlobalJacobianImpl(
 #endif
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -1995,7 +1995,7 @@ Application::computeGlobalTangent(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -2153,7 +2153,7 @@ Application::applyGlobalDistParamDerivImpl(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -2632,7 +2632,7 @@ Application::evaluateResidual_HessVecProd_xx(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -2733,7 +2733,7 @@ Application::evaluateResidual_HessVecProd_xp(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -2847,7 +2847,7 @@ Application::evaluateResidual_HessVecProd_px(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -2998,7 +2998,7 @@ Application::evaluateResidual_HessVecProd_pp(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
-      loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+      loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
@@ -3100,7 +3100,7 @@ Application::evaluateStateFieldManager(
   for (int ws = 0; ws < numWorksets; ws++) {
     const std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>(
         "SFM", wsPhysIndex[ws]);
-    loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws, evalName);
+    loadWorksetBucketInfo(workset, ws, evalName);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 }
@@ -3190,6 +3190,33 @@ Application::determinePiroSolver(
 
     piroParams->set("Solver Type", piroSolverToken);
   }
+}
+
+void
+Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
+    const std::string& evalName)
+{
+  auto const& wsElNodeEqID       = disc->getWsElNodeEqID();
+  auto const& wsElNodeID         = disc->getWsElNodeID();
+  auto const& coords             = disc->getCoords();
+  auto const& wsEBNames          = disc->getWsEBNames();
+
+  workset.numCells             = wsElNodeEqID[ws].extent(0);
+  workset.wsElNodeEqID         = wsElNodeEqID[ws];
+  workset.wsElNodeID           = wsElNodeID[ws];
+  workset.wsCoords             = coords[ws];
+  workset.EBName               = wsEBNames[ws];
+  workset.wsIndex              = ws;
+
+  workset.local_Vp.resize(workset.numCells);
+
+  workset.savedMDFields = phxSetup->get_saved_fields(evalName);
+
+  // Sidesets are integrated within the Cells
+  loadWorksetSidesetInfo(workset, ws);
+
+  workset.stateArrayPtr =
+      &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
 }
 
 void

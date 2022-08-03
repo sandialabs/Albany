@@ -1047,7 +1047,6 @@ void
 
  public:
   //! Routine to get workset (bucket) size info needed by all Evaluation types
-  template <typename EvalT>
   void
   loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
       const std::string& evalName);
@@ -1295,39 +1294,6 @@ void
   mutable bool adjoint_trans_sens{false}; 
 
 };
-
-template <typename EvalT>
-void
-Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
-    const std::string& evalName)
-{
-  auto const& wsElNodeEqID       = disc->getWsElNodeEqID();
-  auto const& wsElNodeID         = disc->getWsElNodeID();
-  auto const& coords             = disc->getCoords();
-  auto const& wsEBNames          = disc->getWsEBNames();
-
-  workset.numCells             = wsElNodeEqID[ws].extent(0);
-  workset.wsElNodeEqID         = wsElNodeEqID[ws];
-  workset.wsElNodeID           = wsElNodeID[ws];
-  workset.wsCoords             = coords[ws];
-  workset.EBName               = wsEBNames[ws];
-  workset.wsIndex              = ws;
-
-  workset.local_Vp.resize(workset.numCells);
-
-  workset.savedMDFields = phxSetup->get_saved_fields(evalName);
-
-  //  workset.print(*out);
-
-  // Sidesets are integrated within the Cells
-  loadWorksetSidesetInfo(workset, ws);
-
-  workset.stateArrayPtr =
-      &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
-#if defined(ALBANY_EPETRA)
-  workset.disc         = disc;  // Needed by LandIce for sideset DOF save
-#endif
-}
 
 }  // namespace Albany
 

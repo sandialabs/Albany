@@ -230,7 +230,7 @@ evaluate(PHAL::Workset& workset)
     if (element_block_index >= 0 && element_block_index != wsPhysIndex[ws])
       continue;
     const std::string evalName = PHAL::evalName<EvalT>("RFM", wsPhysIndex[ws]) + "_" + vis_response_name;
-    application->loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+    application->loadWorksetBucketInfo(workset, ws, evalName);
     rfm->evaluateFields<EvalT>(workset);
   }
   rfm->postEvaluate<EvalT>(workset);
