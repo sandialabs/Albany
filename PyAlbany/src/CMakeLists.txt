@@ -102,21 +102,6 @@ target_include_directories(pyalbanyLib PUBLIC
                            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>")
 list(APPEND ALBANY_LIBRARIES pyalbanyLib)
 
-add_library(albanyPyInterface ${Albany_LIBRARY_TYPE} ${AI_SRCS})
-set_target_properties(albanyPyInterface PROPERTIES HEADER "${AI_HDRS}")
-target_link_libraries(albanyPyInterface ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
-if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
-  target_include_directories(albanyPyInterface SYSTEM PUBLIC
-                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
-else()
-  target_include_directories(albanyPyInterface PUBLIC
-                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
-endif()
-
-target_include_directories(albanyPyInterface PUBLIC
-                            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
-                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-
 include(FetchContent)
 FetchContent_Declare(
 	pybind11
@@ -134,26 +119,43 @@ EXECUTE_PROCESS(COMMAND
   OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
-pybind11_add_module(Albany_Pybind11 ${PybindAlbany_SRCS})
-target_include_directories(Albany_Pybind11 PUBLIC ${Trilinos_INCLUDE_DIRS} ${Mpi4Py_INCLUDE_DIR})
-target_compile_features(Albany_Pybind11 PUBLIC cxx_std_11)
-#target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
-target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} albanyPyInterface)
-set_target_properties(Albany_Pybind11 PROPERTIES SUFFIX ".so")
+add_library(albanyPyInterface ${Albany_LIBRARY_TYPE} ${AI_SRCS})
+set_target_properties(albanyPyInterface PROPERTIES HEADER "${AI_HDRS}")
+target_link_libraries(albanyPyInterface ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
+if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
+  target_include_directories(albanyPyInterface SYSTEM PUBLIC
+                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+else()
+  target_include_directories(albanyPyInterface PUBLIC
+                            "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
+endif()
 
-install(TARGETS pyalbanyLib
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS albanyPyInterface
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS Albany_Pybind11
-  LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
-  ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
+target_include_directories(albanyPyInterface PUBLIC
+                            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+                            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+
+pybind11_add_module(AlbanyInterface ${PybindAlbany_SRCS})
+target_include_directories(AlbanyInterface PUBLIC ${Trilinos_INCLUDE_DIRS} ${Mpi4Py_INCLUDE_DIR})
+target_compile_features(AlbanyInterface PUBLIC cxx_std_11)
+#target_link_libraries(AlbanyInterface PRIVATE ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
+target_link_libraries(AlbanyInterface PRIVATE ${ALBANY_LIBRARIES} albanyPyInterface)
+set_target_properties(AlbanyInterface PROPERTIES SUFFIX ".so")
+
+if (INSTALL_ALBANY)
+  install(TARGETS pyalbanyLib
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS albanyPyInterface
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS AlbanyInterface
+    LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
+    ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
+endif()
 
 IF (ALBANY_PYTHON_TESTS)
-  add_custom_command(TARGET Albany_Pybind11 POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/Albany_Pybind11.so ${CMAKE_CURRENT_BINARY_DIR}/../PyAlbany/.
-      COMMENT "Copy ${PROJECT_BINARY_DIR}/src/Albany_Pybind11.so"
+  add_custom_command(TARGET AlbanyInterface POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/AlbanyInterface.so ${CMAKE_CURRENT_BINARY_DIR}/../PyAlbany/.
+      COMMENT "Copy ${PROJECT_BINARY_DIR}/src/AlbanyInterface.so"
   )
 ENDIF()

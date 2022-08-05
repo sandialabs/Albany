@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import os
 from PyAlbany import Utils
-from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany import AlbanyInterface as pa
 from PyAlbany.RandomizedCompression import HODLR, Hpartition
 
 
@@ -44,7 +44,7 @@ class TestHODLR(unittest.TestCase):
         parameterMap = problem.getParameterMap(parameterIndex)
         N            = parameterMap.getGlobalNumElements()
         h            = Utils.loadMVector(fileDir+'/Hess', N, parameterMap, distributedFile=False, useBinary=True)
-        H = wpa.gatherMVector(h, parameterMap)
+        H = pa.gatherMVector(h, parameterMap)
 
         Hess = Hessian(problem, parameterIndex, responseIndex)
         k = 10
@@ -52,10 +52,10 @@ class TestHODLR(unittest.TestCase):
         r = k + p
         L = 2
         us, sigs, vs = HODLR(Hess, L , r)
-        UL0J0 = wpa.gatherMVector(us[0][0], parameterMap)
-        VL0J0 = wpa.gatherMVector(vs[0][0], parameterMap)
-        UL1J0 = wpa.gatherMVector(us[1][0], parameterMap)
-        VL1J0 = wpa.gatherMVector(vs[1][0], parameterMap)
+        UL0J0 = pa.gatherMVector(us[0][0], parameterMap)
+        VL0J0 = pa.gatherMVector(vs[0][0], parameterMap)
+        UL1J0 = pa.gatherMVector(us[1][0], parameterMap)
+        VL1J0 = pa.gatherMVector(vs[1][0], parameterMap)
         Us = [UL0J0, UL1J0]
         Vs = [VL0J0, VL1J0]
         

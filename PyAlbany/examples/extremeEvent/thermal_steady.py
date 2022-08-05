@@ -2,7 +2,7 @@ from mpi4py import MPI
 import numpy as np
 from PyAlbany import Utils
 from PyAlbany import ExtremeEvent as ee
-from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany import AlbanyInterface as pa
 import os
 import sys
 
@@ -159,6 +159,6 @@ def main(parallelEnv):
 
 
 if __name__ == "__main__":
-    comm = wpa.getTeuchosComm(MPI.COMM_WORLD)
+    comm = pa.getTeuchosComm(MPI.COMM_WORLD)
     parallelEnv = Utils.createDefaultParallelEnv(comm)
     main(parallelEnv)

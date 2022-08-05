@@ -151,7 +151,7 @@ add_subdirectory( src )
 FILE(GLOB PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/*.py)
 
 IF(NOT PYALBANY_EXTREME_EVENTS)
-  list(REMOVE_ITEM PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/ExtremeEvent.py)
+  list(REMOVE_ITEM PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/ExtremeEvent.py ${CMAKE_CURRENT_SOURCE_DIR}/python/FEM_postprocess.py)
 ENDIF()
 
 

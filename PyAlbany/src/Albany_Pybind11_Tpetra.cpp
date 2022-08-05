@@ -212,189 +212,68 @@ pybind11::tuple getRemoteIndexList(RCP_ConstPyMap map, pybind11::array_t<Tpetra_
 }
 
 void pyalbany_map(pybind11::module &m) {
-    py::class_<RCP_PyMap>(m, "RCPPyMap")
+    py::class_<PyMap, Teuchos::RCP<PyMap>>(m, "PyMap")
         .def(py::init(&createRCPPyMapEmpty))
         .def(py::init(&createRCPPyMap))
         .def(py::init(&createRCPPyMapFromView))
-        .def("isOneToOne", [](RCP_PyMap &m) {
-            return m->isOneToOne();
-        })
-        .def("getIndexBase", [](RCP_PyMap &m) {
-            return m->getIndexBase();
-        })
-        .def("getMinLocalIndex", [](RCP_PyMap &m) {
-            return m->getMinLocalIndex();
-        })
-        .def("getMaxLocalIndex", [](RCP_PyMap &m) {
-            return m->getMaxLocalIndex();
-        })
-        .def("getMinGlobalIndex", [](RCP_PyMap &m) {
-            return m->getMinGlobalIndex();
-        })
-        .def("getMaxGlobalIndex", [](RCP_PyMap &m) {
-            return m->getMaxGlobalIndex();
-        })
-        .def("getMinAllGlobalIndex", [](RCP_PyMap &m) {
-            return m->getMinAllGlobalIndex();
-        })
-        .def("getMaxAllGlobalIndex", [](RCP_PyMap &m) {
-            return m->getMaxAllGlobalIndex();
-        })
-        .def("getLocalNumElements", [](RCP_PyMap &m) {
-            return m->getLocalNumElements();
-        })
-        .def("getGlobalNumElements", [](RCP_PyMap &m) {
-            return m->getGlobalNumElements();
-        })
-        .def("getLocalElement", [](RCP_PyMap &m, const Tpetra_GO i) {
-            return m->getLocalElement(i);
-        })
-        .def("getGlobalElement", [](RCP_PyMap &m, const Tpetra_LO i) {
-            return m->getGlobalElement(i);
-        })
-        .def("isNodeGlobalElement", [](RCP_PyMap &m, const Tpetra_GO i) {
-            return m->isNodeGlobalElement(i);
-        })
-        .def("isNodeLocalElement", [](RCP_PyMap &m, const Tpetra_LO i) {
-            return m->isNodeLocalElement(i);
-        })
-        .def("isUniform", [](RCP_PyMap &m) {
-            return m->isUniform();
-        })
-        .def("isContiguous", [](RCP_PyMap &m) {
-            return m->isContiguous();
-        })
-        .def("isDistributed", [](RCP_PyMap &m) {
-            return m->isDistributed();
-        })
-        .def("isCompatible", [](RCP_PyMap &m, RCP_PyMap &m2) {
-            return m->isCompatible(*m2);
-        })
-        .def("isSameAs", [](RCP_PyMap &m, RCP_PyMap &m2) {
-            return m->isSameAs(*m2);
-        })
-        .def("locallySameAs", [](RCP_PyMap &m, RCP_PyMap &m2) {
-            return m->locallySameAs(*m2);
-        })
-        .def("getComm", [](RCP_PyMap &m) {
-            return m->getComm();
-        })
-        .def("getRemoteIndexList", [](RCP_PyMap &m, py::array_t<Tpetra_GO> globalIndexes) {
-            return getRemoteIndexList(m, globalIndexes);
-        });
-
-    py::class_<RCP_ConstPyMap>(m, "RCPConstPyMap")
-        .def(py::init(&createRCPPyMapEmpty))
-        .def(py::init(&createRCPPyMap))
-        .def(py::init(&createRCPPyMapFromView))
-        .def("isOneToOne", [](RCP_ConstPyMap &m) {
-            return m->isOneToOne();
-        })
-        .def("getIndexBase", [](RCP_ConstPyMap &m) {
-            return m->getIndexBase();
-        })
-        .def("getMinLocalIndex", [](RCP_ConstPyMap &m) {
-            return m->getMinLocalIndex();
-        })
-        .def("getMaxLocalIndex", [](RCP_ConstPyMap &m) {
-            return m->getMaxLocalIndex();
-        })
-        .def("getMinGlobalIndex", [](RCP_ConstPyMap &m) {
-            return m->getMinGlobalIndex();
-        })
-        .def("getMaxGlobalIndex", [](RCP_ConstPyMap &m) {
-            return m->getMaxGlobalIndex();
-        })
-        .def("getMinAllGlobalIndex", [](RCP_ConstPyMap &m) {
-            return m->getMinAllGlobalIndex();
-        })
-        .def("getMaxAllGlobalIndex", [](RCP_ConstPyMap &m) {
-            return m->getMaxAllGlobalIndex();
-        })
-        .def("getLocalNumElements", [](RCP_ConstPyMap &m) {
-            return m->getLocalNumElements();
-        })
-        .def("getGlobalNumElements", [](RCP_ConstPyMap &m) {
-            return m->getGlobalNumElements();
-        })
-        .def("getLocalElement", [](RCP_ConstPyMap &m, const Tpetra_GO i) {
-            return m->getLocalElement(i);
-        })
-        .def("getGlobalElement", [](RCP_ConstPyMap &m, const Tpetra_LO i) {
-            return m->getGlobalElement(i);
-        })
-        .def("isNodeGlobalElement", [](RCP_ConstPyMap &m, const Tpetra_GO i) {
-            return m->isNodeGlobalElement(i);
-        })
-        .def("isNodeLocalElement", [](RCP_ConstPyMap &m, const Tpetra_LO i) {
-            return m->isNodeLocalElement(i);
-        })
-        .def("isUniform", [](RCP_ConstPyMap &m) {
-            return m->isUniform();
-        })
-        .def("isContiguous", [](RCP_ConstPyMap &m) {
-            return m->isContiguous();
-        })
-        .def("isDistributed", [](RCP_ConstPyMap &m) {
-            return m->isDistributed();
-        })
-        .def("isCompatible", [](RCP_ConstPyMap &m, RCP_ConstPyMap &m2) {
-            return m->isCompatible(*m2);
-        })
-        .def("isSameAs", [](RCP_ConstPyMap &m, RCP_ConstPyMap &m2) {
-            return m->isSameAs(*m2);
-        })
-        .def("locallySameAs", [](RCP_ConstPyMap &m, RCP_ConstPyMap &m2) {
-            return m->locallySameAs(*m2);
-        })
-        .def("getComm", [](RCP_ConstPyMap &m) {
-            return m->getComm();
-        })
-        .def("getRemoteIndexList", [](RCP_ConstPyMap &m, py::array_t<Tpetra_GO> globalIndexes) {
+        .def("isOneToOne", &PyMap::isOneToOne)
+        .def("getIndexBase", &PyMap::getIndexBase)
+        .def("getMinLocalIndex", &PyMap::getMinLocalIndex)
+        .def("getMaxLocalIndex", &PyMap::getMaxLocalIndex)
+        .def("getMinGlobalIndex", &PyMap::getMinGlobalIndex)
+        .def("getMaxGlobalIndex", &PyMap::getMaxGlobalIndex)
+        .def("getMinAllGlobalIndex", &PyMap::getMinAllGlobalIndex)
+        .def("getMaxAllGlobalIndex", &PyMap::getMaxAllGlobalIndex)
+        .def("getLocalNumElements", &PyMap::getLocalNumElements)
+        .def("getGlobalNumElements", &PyMap::getGlobalNumElements)
+        .def("getLocalElement", &PyMap::getLocalElement)
+        .def("getGlobalElement", &PyMap::getGlobalElement)
+        .def("isNodeGlobalElement", &PyMap::isNodeGlobalElement)
+        .def("isNodeLocalElement", &PyMap::isNodeLocalElement)
+        .def("isUniform", &PyMap::isUniform)
+        .def("isContiguous", &PyMap::isContiguous)
+        .def("isDistributed", &PyMap::isDistributed)
+        .def("isCompatible", &PyMap::isCompatible)
+        .def("isSameAs", &PyMap::isSameAs)
+        .def("locallySameAs", &PyMap::locallySameAs)
+        .def("getComm", &PyMap::getComm)
+        .def("getRemoteIndexList", [](Teuchos::RCP<PyMap> &m, py::array_t<Tpetra_GO> globalIndexes) {
             return getRemoteIndexList(m, globalIndexes);
         });
 }
 
 void pyalbany_vector(pybind11::module &m){
-    py::class_<RCP_PyVector>(m, "RCPPyVector")
+    py::class_<Tpetra_Vector, Teuchos::RCP<Tpetra_Vector>>(m, "PyVector")
         .def(py::init(&createRCPPyVector1))
         .def(py::init(&createRCPPyVector2))
         .def(py::init(&createRCPPyVectorEmpty))
-        .def("putScalar",[](RCP_PyVector &m, ST val) {
-            m->putScalar(val);
-        })
-        .def("getLocalViewHost",[](RCP_PyVector &m){
+        .def("getMap",&Tpetra_Vector::getMap)
+        .def("getLocalViewHost",[](Teuchos::RCP<Tpetra_Vector> &m){
             return getLocalViewHost(m);
         })
-        .def("setLocalViewHost",[](RCP_PyVector &m, py::array_t<ST> input){
+        .def("setLocalViewHost",[](Teuchos::RCP<Tpetra_Vector> &m, py::array_t<ST> input){
             return setLocalViewHost(m, input);
         })
-        .def("getMap",[](RCP_PyVector &m){
-            return m->getMap();
+        .def("putScalar",[](Teuchos::RCP<Tpetra_Vector> &m, ST val) {
+            m->putScalar(val);
         })
-        .def("dot",[](RCP_PyVector &m, RCP_PyVector &m2){
+        .def("dot",[](Teuchos::RCP<Tpetra_Vector> &m, Teuchos::RCP<Tpetra_Vector> &m2){
             return m->dot(*m2);
         });
 }
 
 void pyalbany_mvector(pybind11::module &m){
-    py::class_<RCP_PyMultiVector>(m, "RCPPyMultiVector")
+    py::class_<Tpetra_MultiVector, Teuchos::RCP<Tpetra_MultiVector>>(m, "PyMultiVector")
         .def(py::init(&createRCPPyMultiVector1))
         .def(py::init(&createRCPPyMultiVector2))
         .def(py::init(&createRCPPyMultiVectorEmpty))
-        .def("getVector", [](RCP_PyMultiVector &m, int i) {
-            return m->getVectorNonConst(i);
-        })
-        .def("getLocalViewHost",[](RCP_PyMultiVector &m){
+        .def("getNumVectors",&Tpetra_MultiVector::getNumVectors)
+        .def("getMap",&Tpetra_MultiVector::getMap)
+        .def("getVector",&Tpetra_MultiVector::getVector)
+        .def("getLocalViewHost",[](Teuchos::RCP<Tpetra_MultiVector> &m){
             return getLocalViewHost(m);
         })
-        .def("setLocalViewHost",[](RCP_PyMultiVector &m, py::array_t<ST> input){
+        .def("setLocalViewHost",[](Teuchos::RCP<Tpetra_MultiVector> &m, py::array_t<ST> input){
             return setLocalViewHost(m, input);
-        })
-        .def("getMap",[](RCP_PyMultiVector &m){
-            return m->getMap();
-        })
-        .def("getNumVectors",[](RCP_PyMultiVector &m){
-            return m->getNumVectors();
         });
 }

@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import os
 from PyAlbany import Utils
-from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany import AlbanyInterface as pa
 from PyAlbany.RandomizedCompression import doublePass
 
 
@@ -50,9 +50,9 @@ class TestDoublePass(unittest.TestCase):
         p = 10
         r = k + p
         u, sigVals, v = doublePass(Hess, r, symmetric=False)
-        H = wpa.gatherMVector(h, parameterMap)
-        U = wpa.gatherMVector(u, parameterMap)
-        V = wpa.gatherMVector(v, parameterMap)
+        H = pa.gatherMVector(h, parameterMap)
+        U = pa.gatherMVector(u, parameterMap)
+        V = pa.gatherMVector(v, parameterMap)
         # H \approx U \Lambda U^T
         if iAmRoot:
             Htilde = U.getLocalViewHost().dot(np.diag(sigVals).dot(V.getLocalViewHost().T))

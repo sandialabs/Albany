@@ -68,7 +68,8 @@ PyParallelEnv::PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, 
     args.num_numa = this->num_numa;
     args.device_id = this->device_id;
 
-    Kokkos::initialize(args);
+    if(!Kokkos::is_initialized())
+        Kokkos::initialize(args);
 
     rank = comm->getRank();
 }
@@ -87,7 +88,7 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
 
     stackedTimer->start("PyAlbany: Setup Time");
 
-    comm = this->pyParallelEnv->comm;
+    comm = this->pyParallelEnv->getComm();
 
     slvrfctry = rcp(new Albany::SolverFactory(filename, comm));
 
@@ -138,7 +139,7 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
 
     stackedTimer->start("PyAlbany: Setup Time");
 
-    comm = this->pyParallelEnv->comm;
+    comm = this->pyParallelEnv->getComm();
 
     slvrfctry = rcp(new Albany::SolverFactory(params, comm));
 
@@ -496,12 +497,12 @@ Teuchos::RCP<Teuchos::ParameterList> PyAlbany::getParameterList(std::string inpu
     if (input_extension == "yaml" || input_extension == "yml")
     {
         Teuchos::updateParametersFromYamlFileAndBroadcast(
-            inputFile, params.ptr(), *(pyParallelEnv->comm));
+            inputFile, params.ptr(), *(pyParallelEnv->getComm()));
     }
     else
     {
         Teuchos::updateParametersFromXmlFileAndBroadcast(
-            inputFile, params.ptr(), *(pyParallelEnv->comm));
+            inputFile, params.ptr(), *(pyParallelEnv->getComm()));
     }
 
     return params;
@@ -566,6 +567,12 @@ void PyAlbany::orthogTpMVecs(Teuchos::RCP<Tpetra_MultiVector> inputVecs, int blk
     C.append(Teuchos::rcp(new MAT(remainder, remainder)));
     orthoMgr->projectAndNormalize(*vecBlock, C, B, pastVecArrayView);
   }
+}
+
+void PyAlbany::finalizeKokkos()
+{
+    if(Kokkos::is_initialized())
+        Kokkos::finalize_all();
 }
 
 Teuchos::RCP<const Tpetra_Map> PyAlbany::getRankZeroMap(Teuchos::RCP<const Tpetra_Map> distributedMap)

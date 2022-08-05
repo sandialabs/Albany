@@ -10,24 +10,9 @@
 #include "Albany_Pybind11_Comm.hpp"
 #include "Albany_Interface.hpp"
 
-using RCP_PyParallelEnv = Teuchos::RCP<PyAlbany::PyParallelEnv>;
+#include "Albany_Pybind11_Include.hpp"
 
-/**
- * \brief createPyParallelEnv function
- * 
- * This function is used to create an RCP to a PyAlbany::PyParallelEnv
- * given an RCP to a Teuchos::Comm<int>, a number of threads,
- * a number of NUMA region, and a device ID.
- */
-RCP_PyParallelEnv createPyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads = -1, int _num_numa = -1, int _device_id = -1);
-
-/**
- * \brief createDefaultKokkosPyParallelEnv function
- * 
- * This function is used to create an RCP to a PyAlbany::PyParallelEnv
- * given an RCP to a Teuchos::Comm<int>.
- */
-RCP_PyParallelEnv createDefaultKokkosPyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm);
+using PyParallelEnv = PyAlbany::PyParallelEnv;
 
 void pyalbany_parallelenv(pybind11::module &m);
 
