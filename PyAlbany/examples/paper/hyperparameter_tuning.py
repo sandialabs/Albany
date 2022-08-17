@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 def run_forward(nSweeps, damping, parallelEnv):
     timerName = "PyAlbany Total Time@PyAlbany: performSolve@Piro::NOXSolver::evalModelImpl::solve@Thyra::NOXNonlinearSolver::solve@NOX Total Linear Solve"
-    filename = "input.yaml"
+    filename = "input_scalar.yaml"
 
     parameter = Utils.createParameterList(
         filename, parallelEnv

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import numpy as np
 import sys
+import math
 
 try:
     import exomerge
@@ -55,8 +56,18 @@ def readExodus(filename, solnames=[], nProcs=1, timesteps='last'):
 
         current_index = 0
 
+        digits_nProcs = int(math.log10(nProcs))+1
+
         for i_proc in range(0, nProcs):
-            model = exomerge.import_model(filename+'.'+str(nProcs)+'.'+str(i_proc), timesteps=timesteps)
+            if i_proc != 0:
+                digits_i_proc = int(math.log10(i_proc))+1
+            else:
+                digits_i_proc = 1
+            tmp_filename = filename+'.'+str(nProcs)+'.'
+            for i_digit in range(digits_i_proc, digits_nProcs):
+                tmp_filename += '0'
+            tmp_filename += str(i_proc)
+            model = exomerge.import_model(tmp_filename, timesteps=timesteps)
             positions = np.array(model.nodes)
             x = np.append(x, np.ascontiguousarray(positions[:,0]))
             y = np.append(y, np.ascontiguousarray(positions[:,1]))
@@ -87,7 +98,15 @@ def readExodus(filename, solnames=[], nProcs=1, timesteps='last'):
         else:
             current_index = 0
             for i_proc in range(0, nProcs):
-                model = exomerge.import_model(filename+'.'+str(nProcs)+'.'+str(i_proc), timesteps=timesteps)
+                if i_proc != 0:
+                    digits_i_proc = int(math.log10(i_proc))+1
+                else:
+                    digits_i_proc = 1
+                tmp_filename = filename+'.'+str(nProcs)+'.'
+                for i_digit in range(digits_i_proc, digits_nProcs):
+                    tmp_filename += '0'
+                tmp_filename += str(i_proc)
+                model = exomerge.import_model(tmp_filename, timesteps=timesteps)
                 current_length = len(np.ascontiguousarray(model.node_fields[solnames[0]])[0,:])
                 for i in range(0, n_sol):
                     sol[i,current_index:(current_index+current_length)] = np.ascontiguousarray(model.node_fields[solnames[i]])[0,:]

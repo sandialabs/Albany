@@ -11,13 +11,8 @@ ANONYMOUS:
       SDBC on NS NodeSet2 for DOF T: -1.
       SDBC on NS NodeSet3 for DOF T: 0.
     Parameters:
-      Number Of Parameters: 2
+      Number Of Parameters: 1
       Parameter 0:
-        Type: Scalar
-        Name: SDBC on NS NodeSet2 for DOF T
-        Lower Bound: -2.
-        Upper Bound: 2.
-      Parameter 1:
         Type: Distributed
         Name: thermal_conductivity
         Lower Bound: 0.4
@@ -37,9 +32,9 @@ ANONYMOUS:
         Response 1:
           Name: Squared L2 Difference Source ST Target PST
           Field Rank: Scalar
-          Scaling: 0.15
+          Scaling: 1.
           Source Field Name: ThermalConductivity
-          Target Value: 0.0
+          Target Value: 1.0
   Discretization: 
     1D Elements: 40
     2D Elements: 40
@@ -63,9 +58,9 @@ ANONYMOUS:
     Analysis: 
       Analysis Package: ROL
       ROL: 
-        Number Of Parameters: 2
+        Number Of Parameters: 1
         Check Gradient: true
-        Gradient Tolerance: 1.0e-04
+        Gradient Tolerance: 1.0e-05
         Step Tolerance: 1.0e-04
         Print Output: true
         Parameter Initial Guess Type: Uniform Vector
@@ -98,10 +93,10 @@ ANONYMOUS:
               Solver Type:                   0    
           
           Status Test: 
-            Gradient Tolerance: 1.0e-4
+            Gradient Tolerance: 1.0e-5
             Constraint Tolerance: 1.0e-5
             Step Tolerance: 1.0e-10
-            Iteration Limit: 10
+            Iteration Limit: 20
 
           General: 
             Variable Objective Function: false

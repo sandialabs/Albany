@@ -14,7 +14,7 @@ parallelEnv = Utils.createDefaultParallelEnv()
 myGlobalRank = MPI.COMM_WORLD.rank
 
 # Create an Albany problem:
-filename = "input.yaml"
+filename = "input_distributed.yaml"
 parameter = Utils.createParameterList(
     filename, parallelEnv
 )
@@ -24,13 +24,10 @@ problem.performAnalysis()
 problem.performSolve()
 
 para_0 = problem.getParameter(0)
-para_1 = problem.getParameter(1)
 
 para_0_view = para_0.getLocalViewHost()
-para_1_view = para_1.getLocalViewHost()
 
 print(para_0_view)
-print(para_1_view)
 
 if myGlobalRank==0:
     x, y, sol, elements, triangulation = fp.readExodus("steady2d.exo", ['solution', 'thermal_conductivity', 'thermal_conductivity_sensitivity'], MPI.COMM_WORLD.Get_size())

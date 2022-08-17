@@ -2,8 +2,6 @@ from mpi4py import MPI
 import numpy as np
 from PyAlbany import Utils
 from PyAlbany.RandomizedCompression import doublePass
-from PyAlbany import FEM_postprocess as fp
-from PyAlbany import Albany_Pybind11 as wpa
 import os
 import sys
 
@@ -27,7 +25,7 @@ def main(parallelEnv):
     myGlobalRank = MPI.COMM_WORLD.rank
 
     # Create an Albany problem:
-    filename = "input.yaml"
+    filename = "input_distributed.yaml"
     parameter = Utils.createParameterList(filename, parallelEnv)
 
     problem = Utils.createAlbanyProblem(parameter, parallelEnv)
@@ -37,11 +35,10 @@ def main(parallelEnv):
     
     parameterDataMisfit.sublist("Discretization").set("Exodus Output File Name", "steady2d_DataMisfit.exo")
     problemDataMisfit = Utils.createAlbanyProblem(parameterDataMisfit, parallelEnv)
-    for i in range(2):
-        problemDataMisfit.setParameter(i, problem.getParameter(i)) 
+    problemDataMisfit.setParameter(0, problem.getParameter(0)) 
     problemDataMisfit.performSolve()
     
-    parameterIndex = 1
+    parameterIndex = 0
     responseIndex  = 0
     Hess = Hessian(problemDataMisfit, parameterIndex, responseIndex)
     
@@ -49,12 +46,15 @@ def main(parallelEnv):
     eigVals, eigVecs = doublePass(Hess, k, symmetric=True)
     eigVals = np.abs(eigVals)
     eigVals = eigVals[np.argsort(eigVals)[::-1]]
-    if myGlobalRank == 0:        
-        fig = plt.figure(figsize=(10,6))
-        plt.plot(eigVals, '.--k')
-        plt.ylabel('Eigenvalue magnitudes of the reduced Hessian misfit')
+    if myGlobalRank == 0:
+        fig = plt.figure(figsize=(6,4))
+        plt.semilogy(eigVals)
+        plt.ylabel('Eigenvalues of the Hessian')
         plt.xlabel('Eigenvalue index')
-        plt.grid(True)
+        plt.gca().set_xlim([0, k])
+        #plt.gca().set_ylim([0, 2.7e-3])
+        plt.grid(True, which="both")
+        fig.tight_layout()
         plt.savefig('hessian_eigenvalues.jpeg', dpi=800)
         plt.close()
     

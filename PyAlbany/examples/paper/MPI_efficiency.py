@@ -44,7 +44,7 @@ for nProcs in range(1, nMaxProcs+1):
         timers[2].start()
         timers[0].start()
 
-        filename = "input.yaml"
+        filename = "input_scalar.yaml"
         parameter = Utils.createParameterList(
             filename, parallelEnv
         )
