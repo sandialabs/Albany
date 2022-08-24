@@ -5,14 +5,6 @@ import scipy.linalg as linalg
 from PyAlbany import Distributions as dist
 from PyAlbany import Utils
 
-try:
-    import exomerge
-except:
-    if sys.version_info.major == 2:
-        import exomerge2 as exomerge
-    if sys.version_info.major == 3:
-        import exomerge3 as exomerge
-
 
 import multiprocessing
 import time
@@ -308,21 +300,6 @@ def compute_M_Galerkin(X, elements, quadrature):
                 for gp_i in range(0, nGP):
                     M[index_i, index_j] += jac_i * w[gp_i] * phis[i, gp_i] * phis[j, gp_i]
     return M
-
-
-# Read mesh coordinates from an exodus mesh.
-def read_mesh_coordinates(filename):
-    model = exomerge.import_model(filename)
-    positions = np.array(model.nodes)
-    x = np.ascontiguousarray(positions[:,0])
-    y = np.ascontiguousarray(positions[:,1])
-
-    min_x = np.min(x)
-    min_y = np.min(y)
-    max_x = np.max(x)
-    max_y = np.max(y)
-
-    return x, y, min_x, min_y, max_x, max_y
 
 
 # Update the parameter list to add the KL expansion.
