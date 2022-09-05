@@ -25,7 +25,7 @@ ScatterScalarNodalParameterBase(const Teuchos::ParameterList& p,
   val = decltype(val)(field_name,dl->node_scalar);
   numNodes = 0;
 
-  this->addDependentField(val);
+  this->addNonConstDependentField(val);
 
   this->setName("Scatter Nodal Parameter" );
 }

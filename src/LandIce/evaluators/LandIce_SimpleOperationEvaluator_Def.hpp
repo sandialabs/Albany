@@ -28,7 +28,7 @@ SimpleOperationBase (const Teuchos::ParameterList& p,
   field_in  = PHX::MDField<InOutScalarT> (fieldInName,  layout);
   field_out = PHX::MDField<InOutScalarT> (fieldOutName, layout);
 
-  this->addDependentField(field_in);
+  this->addNonConstDependentField(field_in);
   this->addEvaluatedField(field_out);
 
   this->setName("SimpleOperationBase"+PHX::print<EvalT>());
@@ -112,7 +112,7 @@ SimpleBinaryOperation (const Teuchos::ParameterList& p,
 {
   field1 = PHX::MDField<const FieldScalarT> (p.get<std::string>("Parameter Field 1"), 
       p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout"));
-  this->addDependentField(field1);
+  this->addNonConstDependentField(field1);
 }
 
 //**********************************************************************
@@ -198,8 +198,8 @@ SimpleTernaryOperation (const Teuchos::ParameterList& p,
       p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout"));
   field2 = PHX::MDField<const FieldScalarT> (p.get<std::string>("Parameter Field 2"),
       p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout"));
-  this->addDependentField(field1);
-  this->addDependentField(field2);
+  this->addNonConstDependentField(field1);
+  this->addNonConstDependentField(field2);
 }
 
 //**********************************************************************

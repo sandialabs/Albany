@@ -33,12 +33,12 @@ CahnHillWResid(const Teuchos::ParameterList& p) :
 
   lump = p.get<bool>("Lump Mass");
 
-  this->addDependentField(wBF.fieldTag());
-  this->addDependentField(BF.fieldTag());
-  this->addDependentField(rhoDot.fieldTag());
-  this->addDependentField(rhoDotNode.fieldTag());
-  this->addDependentField(wGrad.fieldTag());
-  this->addDependentField(wGradBF.fieldTag());
+  this->addNonConstDependentField(wBF.fieldTag());
+  this->addNonConstDependentField(BF.fieldTag());
+  this->addNonConstDependentField(rhoDot.fieldTag());
+  this->addNonConstDependentField(rhoDotNode.fieldTag());
+  this->addNonConstDependentField(wGrad.fieldTag());
+  this->addNonConstDependentField(wGradBF.fieldTag());
   this->addEvaluatedField(wResidual);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =

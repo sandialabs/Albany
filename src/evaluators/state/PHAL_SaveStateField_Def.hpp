@@ -64,7 +64,7 @@ SaveStateField(const Teuchos::ParameterList& p)
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT> (fieldName, dummy));
 
-  this->addDependentField(field.fieldTag());
+  this->addNonConstDependentField(field.fieldTag());
   this->addEvaluatedField(*savestate_operation);
 
   this->setName("Save Field " + fieldName +" to State " + stateName

@@ -40,8 +40,8 @@ HydraulicPotential (const Teuchos::ParameterList& p,
   phi_0 = decltype(phi_0)(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
   phi   = decltype(phi)(p.get<std::string> ("Hydraulic Potential Variable Name"), layout);
 
-  this->addDependentField (P_w);
-  this->addDependentField (phi_0);
+  this->addNonConstDependentField (P_w);
+  this->addNonConstDependentField (phi_0);
 
   this->addEvaluatedField (phi);
 
@@ -51,7 +51,7 @@ HydraulicPotential (const Teuchos::ParameterList& p,
     use_h = true;
 
     h = decltype(h)(p.get<std::string> ("Water Thickness Variable Name"), layout);
-    this->addDependentField(h);
+    this->addNonConstDependentField(h);
 
     // Setting parameters
     Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");

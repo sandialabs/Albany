@@ -30,8 +30,8 @@ JouleHeating(Teuchos::ParameterList& p) :
   numDims = dims[2];
 
   this->addEvaluatedField(jouleHeating);
-  this->addDependentField(potentialGrad.fieldTag());
-  this->addDependentField(potentialFlux.fieldTag());
+  this->addNonConstDependentField(potentialGrad.fieldTag());
+  this->addNonConstDependentField(potentialFlux.fieldTag());
   this->setName("Joule Heating" );
 }
 

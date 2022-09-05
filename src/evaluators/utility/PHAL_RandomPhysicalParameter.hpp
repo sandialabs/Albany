@@ -39,7 +39,7 @@ class RandomPhysicalParameterBase :
 
     // Never actually evaluated, but creates the evaluation tag
     this->addEvaluatedField(param_as_field);
-    this->addDependentField(theta_as_field);
+    this->addNonConstDependentField(theta_as_field);
     this->setName("Random Parameter " + param_name + PHX::print<EvalT>());
 
     const Teuchos::ParameterList* distributionList = p.get<const Teuchos::ParameterList*>("Distribution");

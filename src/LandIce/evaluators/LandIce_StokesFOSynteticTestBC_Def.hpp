@@ -51,9 +51,9 @@ StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::StokesFOSynteticTestBC (cons
   BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar);
   w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar);
 
-  this->addDependentField(u);
-  this->addDependentField(BF);
-  this->addDependentField(w_measure);
+  this->addNonConstDependentField(u);
+  this->addNonConstDependentField(BF);
+  this->addNonConstDependentField(w_measure);
 
   this->addContributedField(residual);
 
@@ -106,10 +106,10 @@ StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::StokesFOSynteticTestBC (cons
 
   if (bc_type!=BCType::CONSTANT) {
     qp_coords    = decltype(qp_coords)(p.get<std::string>("Coordinate Vector Name"), dl_side->qp_coords);
-    this->addDependentField(qp_coords);
+    this->addNonConstDependentField(qp_coords);
     if (bc_type!=BCType::CONFINED_SHELF) {
       side_normals = decltype(qp_coords)(p.get<std::string>("Side Normal Name"), dl_side->qp_coords);
-      this->addDependentField(side_normals);
+      this->addNonConstDependentField(side_normals);
     }
   }
 

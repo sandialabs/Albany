@@ -42,18 +42,18 @@ HeatEqResid(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);
-  this->addDependentField(Temperature);
-  this->addDependentField(ThermalCond);
-  if (enableTransient) this->addDependentField(Tdot);
-  this->addDependentField(TGrad);
-  this->addDependentField(wGradBF);
-  if (haveSource) this->addDependentField(Source);
+  this->addNonConstDependentField(wBF);
+  this->addNonConstDependentField(Temperature);
+  this->addNonConstDependentField(ThermalCond);
+  if (enableTransient) this->addNonConstDependentField(Tdot);
+  this->addNonConstDependentField(TGrad);
+  this->addNonConstDependentField(wGradBF);
+  if (haveSource) this->addNonConstDependentField(Source);
   if (haveAbsorption) {
     Absorption = decltype(Absorption)(
 	p.get<std::string>("Absorption Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
-    this->addDependentField(Absorption);
+    this->addNonConstDependentField(Absorption);
   }
   this->addEvaluatedField(TResidual);
 
@@ -79,7 +79,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
     if (haverhoCp) {
       rhoCp = decltype(rhoCp)(p.get<std::string>("Rho Cp Name"),
             p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
-      this->addDependentField(rhoCp);
+      this->addNonConstDependentField(rhoCp);
     }
   }
 

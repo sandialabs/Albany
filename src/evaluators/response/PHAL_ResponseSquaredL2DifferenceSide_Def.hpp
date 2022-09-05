@@ -64,20 +64,20 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   if (isFieldGradient)
   {
     metric = decltype(metric)(Albany::metric_name + "_" + sideSetNameForMetric, dl_side->qp_tensor);
-    this->addDependentField(metric);
+    this->addNonConstDependentField(metric);
   }
 
   sourceField = decltype(sourceField)(fname,layout);
   w_measure   = decltype(w_measure)(Albany::weighted_measure_name + "_" + sideSetNameForMetric, dl_side->qp_scalar);
   scaling     = plist->isParameter("Scaling") ? plist->get<double>("Scaling") : 1.0;
 
-  this->addDependentField(sourceField);
+  this->addNonConstDependentField(sourceField);
 
   rmsScaling = plist->isParameter("Root Mean Square Error Field Name");
   if(rmsScaling) {
     //Only considering scalar rmsScaling
     rootMeanSquareField = decltype(rootMeanSquareField)(plist->get<std::string>("Root Mean Square Error Field Name"),dl_side->qp_scalar);
-    this->addDependentField(rootMeanSquareField);
+    this->addNonConstDependentField(rootMeanSquareField);
   }
 
   if (plist->isParameter("Target Field Name")) {
@@ -86,7 +86,7 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
     std::string target_fname;
     target_fname = plist->get<std::string>("Target Field Name");
     targetField = decltype(targetField)(target_fname,layout);
-    this->addDependentField(targetField);
+    this->addNonConstDependentField(targetField);
 
     target_value = false;
   } else {
@@ -95,7 +95,7 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
     target_value = true;
     target_value_val = TargetScalarT(plist->get<double>("Target Value"));
   }
-  this->addDependentField(w_measure);
+  this->addNonConstDependentField(w_measure);
 
   this->setName("Response Squared L2 Error Side" + PHX::print<EvalT>());
 

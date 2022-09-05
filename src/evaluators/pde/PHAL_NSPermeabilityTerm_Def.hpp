@@ -31,10 +31,10 @@ NSPermeabilityTerm(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(V.fieldTag());
-  this->addDependentField(mu.fieldTag());
-  this->addDependentField(phi.fieldTag());
-  this->addDependentField(K.fieldTag());
+  this->addNonConstDependentField(V.fieldTag());
+  this->addNonConstDependentField(mu.fieldTag());
+  this->addNonConstDependentField(phi.fieldTag());
+  this->addNonConstDependentField(K.fieldTag());
 
   this->addEvaluatedField(permTerm);
 

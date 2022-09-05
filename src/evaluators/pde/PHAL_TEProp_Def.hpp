@@ -62,8 +62,8 @@ TEProp(Teuchos::ParameterList& p) :
   }
 
 
-  this->addDependentField(Temp.fieldTag());
-  this->addDependentField(coordVec.fieldTag());
+  this->addNonConstDependentField(Temp.fieldTag());
+  this->addNonConstDependentField(coordVec.fieldTag());
   this->addEvaluatedField(rhoCp);
   this->addEvaluatedField(permittivity);
   this->addEvaluatedField(thermalCond);

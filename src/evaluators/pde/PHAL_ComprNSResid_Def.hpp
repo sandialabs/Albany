@@ -54,21 +54,21 @@ ComprNSResid(const Teuchos::ParameterList& p) :
   //TO DOs: 
   //3D 
 
-  this->addDependentField(qFluct.fieldTag());
-  this->addDependentField(qFluctGrad.fieldTag());
-  this->addDependentField(qFluctDot.fieldTag());
-  this->addDependentField(force.fieldTag());
-  this->addDependentField(mu.fieldTag());
-  this->addDependentField(kappa.fieldTag());
-  this->addDependentField(lambda.fieldTag());
-  this->addDependentField(wBF.fieldTag());
-  this->addDependentField(wGradBF.fieldTag());
-  this->addDependentField(tau11.fieldTag());
-  this->addDependentField(tau12.fieldTag());
-  this->addDependentField(tau13.fieldTag());
-  this->addDependentField(tau22.fieldTag());
-  this->addDependentField(tau23.fieldTag());
-  this->addDependentField(tau33.fieldTag());
+  this->addNonConstDependentField(qFluct.fieldTag());
+  this->addNonConstDependentField(qFluctGrad.fieldTag());
+  this->addNonConstDependentField(qFluctDot.fieldTag());
+  this->addNonConstDependentField(force.fieldTag());
+  this->addNonConstDependentField(mu.fieldTag());
+  this->addNonConstDependentField(kappa.fieldTag());
+  this->addNonConstDependentField(lambda.fieldTag());
+  this->addNonConstDependentField(wBF.fieldTag());
+  this->addNonConstDependentField(wGradBF.fieldTag());
+  this->addNonConstDependentField(tau11.fieldTag());
+  this->addNonConstDependentField(tau12.fieldTag());
+  this->addNonConstDependentField(tau13.fieldTag());
+  this->addNonConstDependentField(tau22.fieldTag());
+  this->addNonConstDependentField(tau23.fieldTag());
+  this->addNonConstDependentField(tau33.fieldTag());
 
   this->addEvaluatedField(Residual);
 

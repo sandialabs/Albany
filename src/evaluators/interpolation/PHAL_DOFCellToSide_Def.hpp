@@ -80,7 +80,7 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout. (" + layout_str + ")\n");
   }
 
-  this->addDependentField(val_cell);
+  this->addNonConstDependentField(val_cell);
   this->addEvaluatedField(val_side);
 
   this->setName("DOFCellToSide(" + cell_field_name + " -> " + side_field_name + ")[" + layout_str + "]" + PHX::print<EvalT>());

@@ -23,7 +23,7 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
   cellType         (p.get<Teuchos::RCP<shards::CellTopology> > ("Cell Type")),
   coords_qp        (p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient)
 {
-  this->addDependentField(coords_vertices.fieldTag());
+  this->addNonConstDependentField(coords_vertices.fieldTag());
   this->addEvaluatedField(coords_qp);
 
   // Get Dimensions

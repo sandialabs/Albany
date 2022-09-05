@@ -26,7 +26,7 @@ ConvertFieldType<EvalT, Traits, InputType, OutputType>::ConvertFieldType(const T
   in_field = decltype(in_field)(input_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
   out_field = decltype(out_field)(output_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
     
-  this->addDependentField(in_field);
+  this->addNonConstDependentField(in_field);
   this->addEvaluatedField(out_field);
 
   this->setName("ConvertFieldType");

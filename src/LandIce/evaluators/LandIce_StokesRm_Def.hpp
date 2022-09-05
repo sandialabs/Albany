@@ -24,12 +24,12 @@ StokesRm(const Teuchos::ParameterList& p,
 {
   coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(coordVec);
 
-  this->addDependentField(pGrad);
-  this->addDependentField(VGrad);
-  this->addDependentField(V);
-  this->addDependentField(force);
+  this->addNonConstDependentField(pGrad);
+  this->addNonConstDependentField(VGrad);
+  this->addNonConstDependentField(V);
+  this->addNonConstDependentField(force);
   this->addEvaluatedField(Rm);
 
   std::vector<PHX::DataLayout::size_type> dims;

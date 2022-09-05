@@ -27,10 +27,10 @@ StokesTauM(const Teuchos::ParameterList& p,
 
   delta = tauM_list->get("Delta", 1.0);
 
-  this->addDependentField(V);
-  this->addDependentField(Gc);
-  this->addDependentField(muLandIce);
-  this->addDependentField(jacobian_det);
+  this->addNonConstDependentField(V);
+  this->addNonConstDependentField(Gc);
+  this->addNonConstDependentField(muLandIce);
+  this->addNonConstDependentField(jacobian_det);
 
   this->addEvaluatedField(TauM);
 

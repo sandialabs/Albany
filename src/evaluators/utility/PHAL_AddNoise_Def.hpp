@@ -157,7 +157,7 @@ setup(const std::string& fieldName,
   noisy_field = decltype(noisy_field)(noisyFieldName, layout);
 
   field = decltype(field)(fieldName, layout);
-  this->addDependentField(field);
+  this->addNonConstDependentField(field);
 
   this->addEvaluatedField(noisy_field);
 

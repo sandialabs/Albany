@@ -40,11 +40,11 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
   normals   = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
 
-  this->addDependentField(u);
-  this->addDependentField(beta);
-  this->addDependentField(BF);
-  this->addDependentField(w_measure);
-  this->addDependentField(normals);
+  this->addNonConstDependentField(u);
+  this->addNonConstDependentField(beta);
+  this->addNonConstDependentField(BF);
+  this->addNonConstDependentField(w_measure);
+  this->addNonConstDependentField(normals);
 
   this->addContributedField(residual);
 

@@ -42,11 +42,11 @@ FluxDiv (const Teuchos::ParameterList& p,
   sideSetName = p.get<std::string> ("Side Set Name");
 
   // add dependent fields
-  this->addDependentField(averaged_velocity);
-  this->addDependentField(div_averaged_velocity);
-  this->addDependentField(thickness);
-  this->addDependentField(grad_thickness);
-  this->addDependentField(side_tangents);
+  this->addNonConstDependentField(averaged_velocity);
+  this->addNonConstDependentField(div_averaged_velocity);
+  this->addNonConstDependentField(thickness);
+  this->addNonConstDependentField(grad_thickness);
+  this->addNonConstDependentField(side_tangents);
 
   this->addEvaluatedField(flux_div);
 

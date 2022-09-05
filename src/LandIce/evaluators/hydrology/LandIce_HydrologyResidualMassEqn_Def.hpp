@@ -38,7 +38,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   if (eval_on_side) {
     metric = PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>(p.get<std::string>("Metric Name"),dl->qp_tensor);
-    this->addDependentField(metric);
+    this->addNonConstDependentField(metric);
   }
 
   this->addEvaluatedField(residual);
@@ -56,11 +56,11 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   if (unsteady) {
     h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), dl->qp_scalar);
-    this->addDependentField(h_dot);
+    this->addNonConstDependentField(h_dot);
 
     if (has_h_till) {
       h_till_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Till Water Storage Dot Variable Name"), dl->qp_scalar);
-      this->addDependentField(h_till_dot);
+      this->addNonConstDependentField(h_till_dot);
     }
   }
 
@@ -79,14 +79,14 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
 
   if (use_melting) {
     m = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
-    this->addDependentField(m);
+    this->addNonConstDependentField(m);
   }
 
-  this->addDependentField(BF);
-  this->addDependentField(GradBF);
-  this->addDependentField(w_measure);
-  this->addDependentField(q);
-  this->addDependentField(omega);
+  this->addNonConstDependentField(BF);
+  this->addNonConstDependentField(GradBF);
+  this->addNonConstDependentField(w_measure);
+  this->addNonConstDependentField(q);
+  this->addNonConstDependentField(omega);
 
   /*
    * Scalings, needed to account for different units: ice velocity

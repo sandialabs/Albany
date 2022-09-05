@@ -66,15 +66,15 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #endif
     surfaceGrad = decltype(surfaceGrad)(
              p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
-    this->addDependentField(surfaceGrad);
+    this->addNonConstDependentField(surfaceGrad);
 
     if(useStereographicMap) {
       surface = decltype(surface)(
           p.get<std::string>("Surface Height Name"), dl->qp_scalar);
-      this->addDependentField(surface);
+      this->addNonConstDependentField(surface);
       coordVec = decltype(coordVec)(
                   p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-      this->addDependentField(coordVec);
+      this->addNonConstDependentField(coordVec);
     }
      bf_type = FO_INTERP_SURF_GRAD;
   }
@@ -85,7 +85,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #endif
     surfaceGrad = decltype(surfaceGrad)(
              p.get<std::string>("Surface Height Gradient QP Variable Name"), dl->qp_gradient);
-    this->addDependentField(surfaceGrad);
+    this->addNonConstDependentField(surfaceGrad);
     bf_type = FO_SURF_GRAD_PROVIDED;
   }
 #endif
@@ -93,57 +93,57 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     bf_type = FO_SINCOS2D;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "FOSinExp2D") {
     bf_type = FO_SINEXP2D;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "FOCosExp2D") {
     bf_type = FO_COSEXP2D;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "FOCosExp2DFlip") {
     bf_type = FO_COSEXP2DFLIP;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "FOCosExp2DAll") {
     bf_type = FO_COSEXP2DALL;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "FOSinCosZ") {
     bf_type = FO_SINCOSZ;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "Poisson") {
     bf_type = POISSON;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   //Source for xz MMS problem derived by Mauro.
   else if (type == "FO_XZ_MMS") {
     bf_type = FO_XZMMS;
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
   else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
   *out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << std::endl;
     surfaceGrad = decltype(surfaceGrad)(
         p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
-    this->addDependentField(surfaceGrad);
+    this->addNonConstDependentField(surfaceGrad);
     bf_type = FO_INTERP_SURF_GRAD;
   }
   else if (type == "FO Dome") {
@@ -153,7 +153,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     bf_type = FO_DOME;
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
 
   this->addEvaluatedField(force);

@@ -90,7 +90,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
     dof = decltype(dof)(p.get<std::string>("DOF Name"),
                         p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-    this->addDependentField(dof);
+    this->addNonConstDependentField(dof);
   } else if( inputConditions == "closed_form") {
     bc_type = CLOSED_FORM;
   }
@@ -133,7 +133,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   }
 
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(coordVec);
 
   PHX::Tag<ScalarT> fieldTag(name, dl->dummy);
 
@@ -1050,7 +1050,7 @@ NeumannAggregator(const Teuchos::ParameterList& p)
 
   for (unsigned int i=0; i<nbcs.size(); i++) {
     PHX::Tag<ScalarT> fieldTag(nbcs[i], dl);
-    this->addDependentField(fieldTag);
+    this->addNonConstDependentField(fieldTag);
   }
 
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("NBC Aggregator Name"), dl);

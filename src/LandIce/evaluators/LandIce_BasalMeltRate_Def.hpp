@@ -50,13 +50,13 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   enthalpyBasalFlux = decltype(enthalpyBasalFlux)(p.get<std::string> ("Basal Melt Rate Variable Name"),scalar_layout);
   basalVertVelocity = decltype(basalVertVelocity)(p.get<std::string> ("Basal Vertical Velocity Variable Name"),scalar_layout);
 
-  this->addDependentField(phi);
-  this->addDependentField(geoFluxHeat);
-  this->addDependentField(velocity);
-  this->addDependentField(beta);
-  this->addDependentField(EnthalpyHs);
-  this->addDependentField(Enthalpy);
-  this->addDependentField(homotopy);
+  this->addNonConstDependentField(phi);
+  this->addNonConstDependentField(geoFluxHeat);
+  this->addNonConstDependentField(velocity);
+  this->addNonConstDependentField(beta);
+  this->addNonConstDependentField(EnthalpyHs);
+  this->addNonConstDependentField(Enthalpy);
+  this->addNonConstDependentField(homotopy);
 
   this->addEvaluatedField(enthalpyBasalFlux);
   this->addEvaluatedField(basalVertVelocity);

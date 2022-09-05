@@ -315,8 +315,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("LandIce Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-    this->addDependentField(muLandIce);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(muLandIce);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "PolySacado") {
     bf_type = POLYSACADO;
@@ -324,8 +324,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("LandIce Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(muLandIce);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "SinSin") {
     bf_type = SINSIN;
@@ -333,8 +333,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("LandIce Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(muLandIce);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "FullStokesBasal") {
     bf_type = FULLSTOKESBASAL;
@@ -342,8 +342,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("LandIce Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(muLandIce);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "SinSinGlen") {
     bf_type = SINSINGLEN;
@@ -351,8 +351,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("LandIce Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(muLandIce);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "SinCosZ") {
     bf_type = SINCOSZ;
@@ -360,8 +360,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("LandIce Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(muLandIce);
+    this->addNonConstDependentField(coordVec);
   }
   else if (type == "TestAMMF") {
     bf_type = TESTAMMF;
@@ -369,8 +369,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("LandIce Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muLandIce);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(muLandIce);
+    this->addNonConstDependentField(coordVec);
   }
 
   this->addEvaluatedField(force);

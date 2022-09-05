@@ -35,9 +35,9 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addDependentField(dH);
-  this->addDependentField(wBF);
-  this->addDependentField(gradBF);
+  this->addNonConstDependentField(dH);
+  this->addNonConstDependentField(wBF);
+  this->addNonConstDependentField(gradBF);
   this->addContributedField(Residual);
 
 

@@ -22,8 +22,8 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
   CResidual (p.get<std::string> ("Residual Name"), dl->node_scalar),
   havePSPG(p.get<bool>("Have PSPG"))
 {
-  this->addDependentField(wBF);
-  this->addDependentField(VGrad);
+  this->addNonConstDependentField(wBF);
+  this->addNonConstDependentField(VGrad);
   if (havePSPG) {
     wGradBF = decltype(wGradBF)(
       p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector);
@@ -31,9 +31,9 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
       p.get<std::string>("Tau M Name"), dl->qp_scalar);
     Rm = decltype(Rm)(
       p.get<std::string>("Rm Name"), dl->qp_vector);
-    this->addDependentField(wGradBF);
-    this->addDependentField(TauM);
-    this->addDependentField(Rm);
+    this->addNonConstDependentField(wGradBF);
+    this->addNonConstDependentField(TauM);
+    this->addNonConstDependentField(Rm);
   }
 
   this->addEvaluatedField(CResidual);

@@ -63,15 +63,15 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   numBasalQPs  = dl_basal->qp_scalar->extent(1);
 
   // add dependent fields
-  this->addDependentField(flux_div);
-  this->addDependentField(SMB);
-  this->addDependentField(SMBRMS);
-  this->addDependentField(thickness);
-  this->addDependentField(grad_thickness);
-  this->addDependentField(obs_thickness);
-  this->addDependentField(thicknessRMS);
-  this->addDependentField(w_measure_2d);
-  this->addDependentField(tangents);
+  this->addNonConstDependentField(flux_div);
+  this->addNonConstDependentField(SMB);
+  this->addNonConstDependentField(SMBRMS);
+  this->addNonConstDependentField(thickness);
+  this->addNonConstDependentField(grad_thickness);
+  this->addNonConstDependentField(obs_thickness);
+  this->addNonConstDependentField(thicknessRMS);
+  this->addNonConstDependentField(w_measure_2d);
+  this->addNonConstDependentField(tangents);
 
   this->setName("Response Surface Mass Balance Mismatch" + PHX::print<EvalT>());
 

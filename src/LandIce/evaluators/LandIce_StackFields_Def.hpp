@@ -70,8 +70,8 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   fields_in.push_back(PHX::MDField<const ScalarT>(name_1,layout_1));
   fields_in.push_back(PHX::MDField<const ScalarT>(name_2,layout_2));
 
-  this->addDependentField(fields_in[0]);
-  this->addDependentField(fields_in[1]);
+  this->addNonConstDependentField(fields_in[0]);
+  this->addNonConstDependentField(fields_in[1]);
 
   TEUCHOS_TEST_FOR_EXCEPTION (offsets[2]!=dims_out.back(), std::logic_error,
                               "Error! The sum of input fields dimensions does not match the output field dimension.\n");
@@ -125,7 +125,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
     offsets[i+1] = offsets[i] + dims_in[i];
 
     fields_in[i] = PHX::MDField<const ScalarT>(names[i],layout_i);
-    this->addDependentField(fields_in[i]);
+    this->addNonConstDependentField(fields_in[i]);
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (offsets.back()!=dims_out.back(), std::logic_error,

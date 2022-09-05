@@ -25,8 +25,8 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
 
-  this->addDependentField(enthalpyHs);
-  this->addDependentField(enthalpy);
+  this->addNonConstDependentField(enthalpyHs);
+  this->addNonConstDependentField(enthalpy);
 
   this->addEvaluatedField(phi);
   this->setName("Phi");

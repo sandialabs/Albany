@@ -91,8 +91,8 @@ ViscosityFO(const Teuchos::ParameterList& p,
     *out << "Glen's law viscosity!" << std::endl;
 #endif
     if (useStereographicMap) {
-      this->addDependentField(U);
-      this->addDependentField(coordVec);
+      this->addNonConstDependentField(U);
+      this->addNonConstDependentField(coordVec);
     }
 
     if (flowRateType == "Uniform") {
@@ -103,7 +103,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     } else if (flowRateType == "From File") {
       flowRate_type = FROMFILE;
       flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
-      this->addDependentField(flowFactorA);
+      this->addNonConstDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate read in from file (exodus or ascii).\n"
            << "  NOTE: A units must be [k^-1 kPa^-n yr^-1]!\n";
@@ -111,7 +111,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     } else if (flowRateType == "From CISM") {
       flowRate_type = FROMCISM;
       flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
-      this->addDependentField(flowFactorA);
+      this->addNonConstDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate passed in from CISM.\n"
            << "  NOTE: A units must be [k^-1 kPa^-n yr^-1]!\n";
@@ -119,7 +119,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     } else if (flowRateType == "Temperature Based") {
       flowRate_type = TEMPERATUREBASED;
       temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
-      this->addDependentField(temperature);
+      this->addNonConstDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate computed using temperature field." << std::endl;
 #endif
@@ -132,11 +132,11 @@ ViscosityFO(const Teuchos::ParameterList& p,
 #endif
   }
 
-  this->addDependentField(Ugrad);
-  this->addDependentField(homotopyParam);
-  if (visc_type == EXPTRIG) this->addDependentField(coordVec);
+  this->addNonConstDependentField(Ugrad);
+  this->addNonConstDependentField(homotopyParam);
+  if (visc_type == EXPTRIG) this->addNonConstDependentField(coordVec);
   if(useStiffeningFactor)
-    this->addDependentField(stiffeningFactor);
+    this->addNonConstDependentField(stiffeningFactor);
   this->addEvaluatedField(mu);
 
   if (extractStrainRateSq) {

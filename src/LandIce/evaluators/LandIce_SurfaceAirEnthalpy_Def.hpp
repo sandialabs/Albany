@@ -27,7 +27,7 @@ SurfaceAirEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
   numNodes = dims[1];
 
-  this->addDependentField(surfaceTemp);
+  this->addNonConstDependentField(surfaceTemp);
   this->addEvaluatedField(surfaceEnthalpy);
 
   this->setName("Surface air Enthalpy");

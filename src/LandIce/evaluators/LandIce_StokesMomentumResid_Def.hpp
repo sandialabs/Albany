@@ -24,12 +24,12 @@ StokesMomentumResid(const Teuchos::ParameterList& p,
   MResidual (p.get<std::string> ("Residual Name"),dl->node_vector)
 {
 
-  this->addDependentField(wBF);
-  this->addDependentField(VGrad);
-  this->addDependentField(wGradBF);
-  this->addDependentField(P);
-  this->addDependentField(force);
-  this->addDependentField(muLandIce);
+  this->addNonConstDependentField(wBF);
+  this->addNonConstDependentField(VGrad);
+  this->addNonConstDependentField(wGradBF);
+  this->addNonConstDependentField(P);
+  this->addNonConstDependentField(force);
+  this->addNonConstDependentField(muLandIce);
 
   this->addEvaluatedField(MResidual);
 

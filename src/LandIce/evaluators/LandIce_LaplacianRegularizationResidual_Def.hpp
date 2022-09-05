@@ -61,12 +61,12 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   unsigned int numSides = cellType->getSideCount();
   sideDim  = cellType->getDimension()-1;
 
-  this->addDependentField(forcing);
-  this->addDependentField(field);
-  this->addDependentField(gradField);
-  this->addDependentField(gradBF);
-  this->addDependentField(w_measure);
-  this->addDependentField(w_side_measure);
+  this->addNonConstDependentField(forcing);
+  this->addNonConstDependentField(field);
+  this->addNonConstDependentField(gradField);
+  this->addNonConstDependentField(gradBF);
+  this->addNonConstDependentField(w_measure);
+  this->addNonConstDependentField(w_side_measure);
 
   this->addEvaluatedField(residual);
 

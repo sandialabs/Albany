@@ -130,9 +130,9 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
       std::endl);
 
   // add dependent fields
-  this->addDependentField(field.fieldTag());
-  this->addDependentField(coordVec.fieldTag());
-  this->addDependentField(weights.fieldTag());
+  this->addNonConstDependentField(field.fieldTag());
+  this->addNonConstDependentField(coordVec.fieldTag());
+  this->addNonConstDependentField(weights.fieldTag());
   this->setName(field_name+" Response Field Integral"+PHX::print<EvalT>());
 
   // Setup scatter evaluator

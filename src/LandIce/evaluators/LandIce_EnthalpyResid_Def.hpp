@@ -70,26 +70,26 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   needsDiss = p.get<bool>("Needs Dissipation");
   needsBasFric = p.get<bool>("Needs Basal Friction");
 
-  this->addDependentField(Enthalpy);
-  this->addDependentField(EnthalpyGrad);
-  this->addDependentField(EnthalpyHs);
-  this->addDependentField(diffEnth);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(Velocity);
-  this->addDependentField(velGrad);
-  this->addDependentField(verticalVel);
-  this->addDependentField(coordVec);
-  this->addDependentField(meltTempGrad);
-  this->addDependentField(phi);
-  this->addDependentField(phiGrad);
-  this->addDependentField(homotopy);
-  this->addDependentField(basalResid);
+  this->addNonConstDependentField(Enthalpy);
+  this->addNonConstDependentField(EnthalpyGrad);
+  this->addNonConstDependentField(EnthalpyHs);
+  this->addNonConstDependentField(diffEnth);
+  this->addNonConstDependentField(wBF);
+  this->addNonConstDependentField(wGradBF);
+  this->addNonConstDependentField(Velocity);
+  this->addNonConstDependentField(velGrad);
+  this->addNonConstDependentField(verticalVel);
+  this->addNonConstDependentField(coordVec);
+  this->addNonConstDependentField(meltTempGrad);
+  this->addNonConstDependentField(phi);
+  this->addNonConstDependentField(phiGrad);
+  this->addNonConstDependentField(homotopy);
+  this->addNonConstDependentField(basalResid);
 
   if (needsDiss)
   {
     diss = decltype(diss)(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
-    this->addDependentField(diss);
+    this->addNonConstDependentField(diss);
   }
 
   this->addEvaluatedField(Residual);

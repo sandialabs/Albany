@@ -40,10 +40,10 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
   numNodes = dims[1];
 
-  this->addDependentField(meltingTemp);
-  this->addDependentField(enthalpyHs);
-  this->addDependentField(enthalpy);
-  // this->addDependentField(thickness);
+  this->addNonConstDependentField(meltingTemp);
+  this->addNonConstDependentField(enthalpyHs);
+  this->addNonConstDependentField(enthalpy);
+  // this->addNonConstDependentField(thickness);
 
   this->addEvaluatedField(temperature);
   this->addEvaluatedField(correctedTemp);

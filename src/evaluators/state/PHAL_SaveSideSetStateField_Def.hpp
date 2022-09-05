@@ -44,7 +44,7 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
 
-  this->addDependentField (field.fieldTag());
+  this->addNonConstDependentField (field.fieldTag());
   this->addEvaluatedField (*savestate_operation);
 
   if (rank==FRT::Gradient) {
@@ -52,10 +52,10 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
     const auto w_meas_name   = Albany::weighted_measure_name + "_" + sideSetName;
 
     tangents = decltype(tangents)(tangents_name, dl->qp_tensor_cd_sd);
-    this->addDependentField(tangents);
+    this->addNonConstDependentField(tangents);
 
     w_measure = decltype(w_measure)(tangents_name, dl->qp_tensor_cd_sd);
-    this->addDependentField(w_measure);
+    this->addNonConstDependentField(w_measure);
   }
 
   numQPs = dl->qp_scalar->dimension(1);

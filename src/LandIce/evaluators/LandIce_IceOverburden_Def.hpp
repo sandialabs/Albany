@@ -37,7 +37,7 @@ IceOverburden (const Teuchos::ParameterList& p,
   H   = PHX::MDField<const RealType>(p.get<std::string> ("Ice Thickness Variable Name"), layout);
   P_o = PHX::MDField<RealType>(p.get<std::string> ("Ice Overburden Variable Name"), layout);
 
-  this->addDependentField (H);
+  this->addNonConstDependentField (H);
   this->addEvaluatedField (P_o);
 
   // Setting parameters

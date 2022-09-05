@@ -64,13 +64,13 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
   unsigned int numSides = cellType->getSideCount();
   sideDim  = cellType->getDimension()-1;
 
-  this->addDependentField(solution);
-  this->addDependentField(field);
-  this->addDependentField(gradField);
-  this->addDependentField(gradBF);
-  this->addDependentField(w_side_measure);
-  this->addDependentField(side_tangents);
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(solution);
+  this->addNonConstDependentField(field);
+  this->addNonConstDependentField(gradField);
+  this->addNonConstDependentField(gradBF);
+  this->addNonConstDependentField(w_side_measure);
+  this->addNonConstDependentField(side_tangents);
+  this->addNonConstDependentField(coordVec);
 
   this->addEvaluatedField(bdLaplacian_L2Projection_res);
 

@@ -69,17 +69,17 @@ StokesFOResid(const Teuchos::ParameterList& p,
     eqn_type = POISSON;
   }
 
-  this->addDependentField(U);
-  this->addDependentField(Ugrad);
-  this->addDependentField(force);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(muLandIce);
+  this->addNonConstDependentField(U);
+  this->addNonConstDependentField(Ugrad);
+  this->addNonConstDependentField(force);
+  this->addNonConstDependentField(wBF);
+  this->addNonConstDependentField(wGradBF);
+  this->addNonConstDependentField(muLandIce);
 
   if(useStereographicMap)
   {
     coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
 
   this->addEvaluatedField(Residual);

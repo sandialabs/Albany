@@ -44,17 +44,17 @@ EffectivePressure (const Teuchos::ParameterList& p,
   if (Surrogate) {
     // P_w is set to a percentage of the overburden
     alphaParam = PHX::MDField<const ScalarT,Dim> (ParamEnumName::Alpha,dl->shared_param);
-    this->addDependentField (alphaParam);
+    this->addNonConstDependentField (alphaParam);
 
     printedAlpha = -1.0;
   } else {
     P_w  = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Water Pressure Variable Name"), layout);
-    this->addDependentField (P_w);
+    this->addNonConstDependentField (P_w);
   }
 
   P_o = PHX::MDField<const RealType>(p.get<std::string> ("Ice Overburden Variable Name"), layout);
   N   = PHX::MDField<HydroScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-  this->addDependentField (P_o);
+  this->addNonConstDependentField (P_o);
   this->addEvaluatedField (N);
 
   this->setName("EffectivePressure"+PHX::print<EvalT>());

@@ -28,8 +28,8 @@ namespace LandIce
 
     numQPs = dims[2];
 
-    this->addDependentField(mu);
-    this->addDependentField(epsilonSq);
+    this->addNonConstDependentField(mu);
+    this->addNonConstDependentField(epsilonSq);
 
     this->addEvaluatedField(diss);
     this->setName("Dissipation");

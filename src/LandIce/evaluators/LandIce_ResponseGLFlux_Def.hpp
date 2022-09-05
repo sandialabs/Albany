@@ -51,10 +51,10 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   numSideDims  = dl_basal->vertices_vector->extent(2);
 
   // add dependent fields
-  this->addDependentField(avg_vel);
-  this->addDependentField(thickness);
-  this->addDependentField(bed);
-  this->addDependentField(coords);
+  this->addNonConstDependentField(avg_vel);
+  this->addNonConstDependentField(thickness);
+  this->addNonConstDependentField(bed);
+  this->addNonConstDependentField(coords);
 
   this->setName("Response Grounding Line Flux" + PHX::print<EvalT>());
 

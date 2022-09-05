@@ -128,7 +128,7 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
   }
 
-  this->addDependentField(field);
+  this->addNonConstDependentField(field);
   this->addEvaluatedField(field_norm);
 
   Teuchos::ParameterList& options = p.get<Teuchos::ParameterList*>("Parameter List")->sublist(fieldNormName);
@@ -148,14 +148,14 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
   {
     regularization_type = GIVEN_PARAMETER;
     regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
-    this->addDependentField(regularizationParam);
+    this->addNonConstDependentField(regularizationParam);
     printedReg = -1.0;
   }
   else if (type=="Parameter Exponential")
   {
     regularization_type = PARAMETER_EXPONENTIAL;
     regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
-    this->addDependentField(regularizationParam);
+    this->addNonConstDependentField(regularizationParam);
     printedReg = -1.0;
   }
   else

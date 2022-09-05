@@ -22,9 +22,9 @@ DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
   tangents    (p.get<std::string> ("Tangents Name"), dl_side->qp_tensor_cd_sd),
   val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar)
 {
-  this->addDependentField(val_node);
-  this->addDependentField(gradBF);
-  this->addDependentField(tangents);
+  this->addNonConstDependentField(val_node);
+  this->addNonConstDependentField(gradBF);
+  this->addNonConstDependentField(tangents);
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFDivInterpolationSideBase" );

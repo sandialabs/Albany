@@ -36,10 +36,10 @@ StokesFOStress(const Teuchos::ParameterList& p,
   output->setOutputToRootOnly (0);
 #endif
 
-  this->addDependentField(Ugrad);
-  this->addDependentField(surfaceHeight);
-  this->addDependentField(muLandIce);
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(Ugrad);
+  this->addNonConstDependentField(surfaceHeight);
+  this->addNonConstDependentField(muLandIce);
+  this->addNonConstDependentField(coordVec);
 
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
@@ -47,9 +47,9 @@ StokesFOStress(const Teuchos::ParameterList& p,
   if(useStereographicMap)
   {
     U = decltype(U)(p.get<std::string>("Velocity QP Variable Name"), dl->qp_vector);
-    this->addDependentField(U);
+    this->addNonConstDependentField(U);
     coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
 
   this->addEvaluatedField(Stress);

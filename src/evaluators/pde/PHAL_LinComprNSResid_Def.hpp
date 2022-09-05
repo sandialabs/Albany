@@ -38,13 +38,13 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(qFluct.fieldTag());
-  this->addDependentField(qFluctGrad.fieldTag());
+  this->addNonConstDependentField(qFluct.fieldTag());
+  this->addNonConstDependentField(qFluctGrad.fieldTag());
   if(enableTransient)
-    this->addDependentField(qFluctDot.fieldTag());
-  this->addDependentField(force.fieldTag());
-  this->addDependentField(wBF.fieldTag());
-  this->addDependentField(wGradBF.fieldTag());
+    this->addNonConstDependentField(qFluctDot.fieldTag());
+  this->addNonConstDependentField(force.fieldTag());
+  this->addNonConstDependentField(wBF.fieldTag());
+  this->addNonConstDependentField(wGradBF.fieldTag());
 
   this->addEvaluatedField(Residual);
 

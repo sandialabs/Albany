@@ -27,11 +27,11 @@ MapThickness (const Teuchos::ParameterList& p,
   bed(p.get<std::string> ("Observed Bed Topography Name"), dl->node_scalar),
   H_out(p.get<std::string> ("Output Thickness Name"), dl->node_scalar)
 {
-  this->addDependentField(H_in);
-  this->addDependentField(bed);
-  this->addDependentField(H_obs);
-  this->addDependentField(H_min);
-  this->addDependentField(H_max);
+  this->addNonConstDependentField(H_in);
+  this->addNonConstDependentField(bed);
+  this->addNonConstDependentField(H_obs);
+  this->addNonConstDependentField(H_min);
+  this->addNonConstDependentField(H_max);
   this->addEvaluatedField(H_out);
 
   this->setName("MapThickness"+PHX::print<EvalT>());

@@ -31,7 +31,7 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   coords_side_qp = decltype(coords_side_qp)(
       p.get<std::string>("Coordinate Vector QP Name"), dl_side->qp_coords);
 
-  this->addDependentField(coords_side_vertices.fieldTag());
+  this->addNonConstDependentField(coords_side_vertices.fieldTag());
   this->addEvaluatedField(coords_side_qp);
 
   Teuchos::RCP<shards::CellTopology> cellType;

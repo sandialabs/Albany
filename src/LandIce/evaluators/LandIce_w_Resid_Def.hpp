@@ -78,17 +78,17 @@ namespace LandIce
       }
     }
 
-    this->addDependentField(GradVelocity);
-    this->addDependentField(velocity);
-    this->addDependentField(basalVerticalVelocitySideQP);
-    this->addDependentField(wBF);
-    this->addDependentField(wGradBF);
-    this->addDependentField(sideBF);
-    this->addDependentField(side_w_qp);
-    this->addDependentField(side_w_measure);
-    this->addDependentField(w_z);
-    this->addDependentField(coordVec);
-    this->addDependentField(normals);
+    this->addNonConstDependentField(GradVelocity);
+    this->addNonConstDependentField(velocity);
+    this->addNonConstDependentField(basalVerticalVelocitySideQP);
+    this->addNonConstDependentField(wBF);
+    this->addNonConstDependentField(wGradBF);
+    this->addNonConstDependentField(sideBF);
+    this->addNonConstDependentField(side_w_qp);
+    this->addNonConstDependentField(side_w_measure);
+    this->addNonConstDependentField(w_z);
+    this->addNonConstDependentField(coordVec);
+    this->addNonConstDependentField(normals);
 
     this->addEvaluatedField(Residual);
     this->setName("W Residual");

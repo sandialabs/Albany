@@ -78,17 +78,17 @@ ScatterSideEqnResidualBase (const Teuchos::ParameterList& p,
     val.resize(numFields);
     for (int eq = 0; eq < numFields; ++eq) {
       val[eq] = res_type(names[eq], res_dl->node_scalar);
-      this->addDependentField(val[eq]);
+      this->addNonConstDependentField(val[eq]);
     }
   } else if (tensorRank == 1 ) {
     // vector
     valVec = res_type(names[0], res_dl->node_vector);
-    this->addDependentField(valVec);
+    this->addNonConstDependentField(valVec);
     numFields = res_dl->node_vector->extent(2);
   } else if (tensorRank == 2 ) {
     // tensor
     valTensor = res_type (names[0], res_dl->node_tensor);
-    this->addDependentField(valTensor);
+    this->addNonConstDependentField(valTensor);
     numDims = res_dl->node_tensor->extent(2);
     numFields = (res_dl->node_tensor->extent(2))*(res_dl->node_tensor->extent(3));
   }

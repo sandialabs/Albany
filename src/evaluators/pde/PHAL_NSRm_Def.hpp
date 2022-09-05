@@ -42,16 +42,16 @@ NSRm(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(pGrad.fieldTag());
-  this->addDependentField(VGrad.fieldTag());
-  this->addDependentField(V.fieldTag());
-  if (enableTransient) this->addDependentField(V_Dot.fieldTag());
-  this->addDependentField(force.fieldTag()); 
-  this->addDependentField(rho.fieldTag());
+  this->addNonConstDependentField(pGrad.fieldTag());
+  this->addNonConstDependentField(VGrad.fieldTag());
+  this->addNonConstDependentField(V.fieldTag());
+  if (enableTransient) this->addNonConstDependentField(V_Dot.fieldTag());
+  this->addNonConstDependentField(force.fieldTag()); 
+  this->addNonConstDependentField(rho.fieldTag());
   if (porousMedia) {
-   this->addDependentField(phi.fieldTag());   
-   this->addDependentField(permTerm.fieldTag());
-   this->addDependentField(ForchTerm.fieldTag());
+   this->addNonConstDependentField(phi.fieldTag());   
+   this->addNonConstDependentField(permTerm.fieldTag());
+   this->addNonConstDependentField(ForchTerm.fieldTag());
   }
   this->addEvaluatedField(Rm);
 

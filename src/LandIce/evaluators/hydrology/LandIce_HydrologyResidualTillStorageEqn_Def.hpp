@@ -61,13 +61,13 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
 
   if (use_melting) {
     m = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
-    this->addDependentField(m);
+    this->addNonConstDependentField(m);
   }
 
-  this->addDependentField(BF);
-  this->addDependentField(w_measure);
-  this->addDependentField(h_till_dot);
-  this->addDependentField(omega);
+  this->addNonConstDependentField(BF);
+  this->addNonConstDependentField(w_measure);
+  this->addNonConstDependentField(h_till_dot);
+  this->addNonConstDependentField(omega);
 
   /*
    * Scalings, needed to account for different units

@@ -47,7 +47,7 @@ P0InterpolationBase (const Teuchos::ParameterList& p,
   } else {
     // For CellAverage, we need to divide by cell measure
     w_measure = decltype(w_measure)(p.get<std::string>("Weighted Measure Name"), dl->qp_scalar);
-    this->addDependentField(w_measure);
+    this->addNonConstDependentField(w_measure);
   }
 
   // Determine input and output layouts, and get dimensions
@@ -73,7 +73,7 @@ P0InterpolationBase (const Teuchos::ParameterList& p,
 
   // Create input/output fields
   field    = decltype(field)(p.get<std::string> ("Field Name"), point_layout);
-  this->addDependentField (field);
+  this->addNonConstDependentField (field);
 
   if (itype==CellAverage) {
     field_avg = decltype(field_avg)(p.get<std::string> ("Field P0 Name"), p0_layout);
@@ -89,7 +89,7 @@ P0InterpolationBase (const Teuchos::ParameterList& p,
     // If itype is CellAverage, we need basis and measure too
     if (itype == CellAverage) {
       BF = decltype(BF) (p.get<std::string>("BF Name"), dl->node_qp_scalar);
-      this->addDependentField(BF);
+      this->addNonConstDependentField(BF);
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (itype==ValueAtCellBarycenter, std::logic_error,

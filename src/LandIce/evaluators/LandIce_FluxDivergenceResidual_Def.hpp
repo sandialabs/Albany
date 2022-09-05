@@ -43,10 +43,10 @@ LayeredFluxDivergenceResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   TEUCHOS_TEST_FOR_EXCEPTION (numNodes != 6, std::runtime_error,
       "Error! This evaluator works only with Wedge nodal finite elements.\n");
 
-  this->addDependentField(vel);
-  this->addDependentField(H);
-  this->addDependentField(coords);
-  this->addDependentField(flux_div);
+  this->addNonConstDependentField(vel);
+  this->addNonConstDependentField(H);
+  this->addNonConstDependentField(coords);
+  this->addNonConstDependentField(flux_div);
   this->addEvaluatedField(residual);
 
   this->setName("Layered Flux Divergence Residual" + PHX::print<EvalT>());
@@ -283,10 +283,10 @@ FluxDivergenceResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Lay
   TEUCHOS_TEST_FOR_EXCEPTION (numSideNodes != 3, std::runtime_error,
       "Error! This evaluator works only with triangular nodal finite elements.\n");
 
-  this->addDependentField(vel);
-  this->addDependentField(H);
-  this->addDependentField(coords);
-  this->addDependentField(flux_div);
+  this->addNonConstDependentField(vel);
+  this->addNonConstDependentField(H);
+  this->addNonConstDependentField(coords);
+  this->addNonConstDependentField(flux_div);
   this->addEvaluatedField(residual);
 
   this->setName("Flux Divergence Residual" + PHX::print<EvalT>());

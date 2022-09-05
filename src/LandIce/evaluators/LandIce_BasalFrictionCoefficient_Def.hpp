@@ -142,7 +142,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
     n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
     ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
-    this->addDependentField (ice_softness);
+    this->addNonConstDependentField (ice_softness);
 
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -162,7 +162,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         N = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), nodal_layout);
       else
         N = PHX::MDField<const EffPressureST>(p.get<std::string> ("Effective Pressure Variable Name"), layout);
-      this->addDependentField (N);
+      this->addNonConstDependentField (N);
     } else if (effectivePressureType == "HYDROSTATIC") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
     } else if (effectivePressureType == "HYDROSTATIC COMPUTED AT NODES") {
@@ -174,12 +174,12 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
     if(zero_on_floating || zero_N_on_floating_at_nodes || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC) ) {
       bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), nodal_layout);
-      this->addDependentField (bed_topo_field);
+      this->addNonConstDependentField (bed_topo_field);
       thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
-      this->addDependentField (thickness_field);
+      this->addNonConstDependentField (thickness_field);
       if(!nodal) {
         BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-        this->addDependentField (BF);
+        this->addNonConstDependentField (BF);
       }
       Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
       rho_i = phys_param_list.get<double> ("Ice Density");
@@ -209,7 +209,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
     if(mu_type == FIELD_TYPE::CONSTANT) {
       muParam     = PHX::MDField<const ScalarT,Dim>("Mu Coefficient", dl->shared_param);
-      this->addDependentField (muParam);
+      this->addNonConstDependentField (muParam);
     } else {
       std::string mu_field_name;
       mu_field_name = beta_list.get<std::string> ("Mu Field Name");
@@ -221,15 +221,15 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       if(!nodal && (mu_type == FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES)) {
         BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
         layout_mu_field = nodal_layout;
-        this->addDependentField (BF);
+        this->addNonConstDependentField (BF);
       }
 
       muField = PHX::MDField<const ParamScalarT>(mu_field_name, layout_mu_field);
-      this->addDependentField (muField);
+      this->addNonConstDependentField (muField);
     }
 
     powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
-    this->addDependentField (powerParam);
+    this->addNonConstDependentField (powerParam);
 
     if (beta_type == BETA_TYPE::REGULARIZED_COULOMB) {
 
@@ -245,7 +245,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         if(!nodal) {
           BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
           layout_lambda_field = nodal_layout;
-          this->addDependentField (BF);
+          this->addNonConstDependentField (BF);
         }
       } else if (lambdaType == "EXPONENT OF FIELD") {
         lambda_type = FIELD_TYPE::EXPONENT_OF_FIELD;
@@ -256,13 +256,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
       if(lambda_type == FIELD_TYPE::CONSTANT) {
         lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-        this->addDependentField (lambdaParam);
+        this->addNonConstDependentField (lambdaParam);
       } else {
         lambdaField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), layout_lambda_field);
-        this->addDependentField (lambdaField);
+        this->addNonConstDependentField (lambdaField);
       }
       u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-      this->addDependentField (u_norm);
+      this->addNonConstDependentField (u_norm);
 
     } else if (beta_type == BETA_TYPE::POWER_LAW) {
       auto paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -282,13 +282,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       }
       if (is_power_parameter) {
         u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-        this->addDependentField (u_norm);
+        this->addNonConstDependentField (u_norm);
       } else {
         double q = beta_list.get<double>("Power Exponent");
         bool linearLaw = (!logParameters && q==1.0)||(logParameters && q==0.0);
         if(!linearLaw) {
           u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
-          this->addDependentField (u_norm);
+          this->addNonConstDependentField (u_norm);
         }
       }
     }
@@ -305,7 +305,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
     R2 = std::pow(R,2);
 
-    this->addDependentField(coordVec);
+    this->addNonConstDependentField(coordVec);
   }
 
   this->setName("BasalFrictionCoefficient"+PHX::print<EvalT>());

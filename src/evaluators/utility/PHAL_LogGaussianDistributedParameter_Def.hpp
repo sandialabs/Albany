@@ -34,7 +34,7 @@ LogGaussianDistributedParameter (const Teuchos::ParameterList& p, const Teuchos:
 
   if (mean_is_field) {
     mean = decltype(mean)(mean_field_name,dl->node_scalar);
-    this->addDependentField(mean);
+    this->addNonConstDependentField(mean);
   }
   else {
     RealType mean = p.get<RealType>("mean");
@@ -43,7 +43,7 @@ LogGaussianDistributedParameter (const Teuchos::ParameterList& p, const Teuchos:
     b = sqrt(log(1+deviation*deviation));
   }  
   this->addEvaluatedField(logGaussian);
-  this->addDependentField(gaussian);
+  this->addNonConstDependentField(gaussian);
 
   this->setName("Log Gaussian " + log_gaussian_field_name + PHX::print<EvalT>());
 }

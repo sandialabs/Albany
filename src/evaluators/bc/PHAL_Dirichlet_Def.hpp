@@ -37,7 +37,7 @@ DirichletBase(Teuchos::ParameterList& p) :
     std::string theta_name = p.get< std::string> ("Theta");
 
     theta_as_field = PHX::MDField<ScalarT,Dim>(theta_name, Teuchos::rcp(new PHX::MDALayout<Dim>(1)));
-    this->addDependentField(theta_as_field);
+    this->addNonConstDependentField(theta_as_field);
 
     if (p.get<std::string>("Distribution Name") == "Normal")
       distribution = Teuchos::rcp<Albany::UnivariatDistribution>(new Albany::NormalDistribution(p.get<double>("Loc"), p.get<double>("Scale")));
@@ -63,7 +63,7 @@ DirichletBase(Teuchos::ParameterList& p) :
     // we can use it.
     if (p.isType<std::string>("BCOrder Dependency")) {
       PHX::Tag<ScalarT> order_depends_on(p.get<std::string>("BCOrder Dependency"), dummy);
-      this->addDependentField(order_depends_on);
+      this->addNonConstDependentField(order_depends_on);
     }
     if (p.isType<std::string>("BCOrder Evaluates")) {
       PHX::Tag<ScalarT> order_evaluates(p.get<std::string>("BCOrder Evaluates"), dummy);
@@ -349,7 +349,7 @@ DirichletAggregator(Teuchos::ParameterList& p)
 
   for (unsigned int i=0; i<dbcs.size(); i++) {
     PHX::Tag<ScalarT> fieldTag(dbcs[i], dl);
-    this->addDependentField(fieldTag);
+    this->addNonConstDependentField(fieldTag);
   }
 
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("DBC Aggregator Name"), dl);

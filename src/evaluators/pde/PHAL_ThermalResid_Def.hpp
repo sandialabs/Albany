@@ -36,16 +36,16 @@ ThermalResid(const Teuchos::ParameterList& p,
   TResidual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
-  this->addDependentField(wBF);
-  if (!disable_transient) this->addDependentField(Tdot);
-  this->addDependentField(TGrad);
-  this->addDependentField(wGradBF);
+  this->addNonConstDependentField(wBF);
+  if (!disable_transient) this->addNonConstDependentField(Tdot);
+  this->addNonConstDependentField(TGrad);
+  this->addNonConstDependentField(wGradBF);
   this->addEvaluatedField(Source);
   this->addEvaluatedField(TResidual);
   Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   coordVec = decltype(coordVec)(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(coordVec);
 
   Teuchos::RCP<PHX::DataLayout> node_vector_dl =
       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
@@ -58,20 +58,20 @@ ThermalResid(const Teuchos::ParameterList& p,
 
   if (!conductivityIsDistParam) {  
     kappa_x = decltype(kappa_x)(p.get<std::string>("Thermal Conductivity: kappa_x"), dl->shared_param);
-    this->addDependentField(kappa_x);
+    this->addNonConstDependentField(kappa_x);
     if (numDims > 1) {
       kappa_y = decltype(kappa_y)(p.get<std::string>("Thermal Conductivity: kappa_y"), dl->shared_param);
-      this->addDependentField(kappa_y);
+      this->addNonConstDependentField(kappa_y);
     }
     if (numDims > 2) {
       kappa_z = decltype(kappa_z)(p.get<std::string>("Thermal Conductivity: kappa_z"), dl->shared_param);
-      this->addDependentField(kappa_z);
+      this->addNonConstDependentField(kappa_z);
     }
   }
   else {  
     ThermalCond = decltype(ThermalCond)(p.get<std::string>("ThermalConductivity Name"),
   	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(ThermalCond);
+    this->addNonConstDependentField(ThermalCond);
   }
   std::string thermal_source = p.get<std::string>("Thermal Source"); 
   if (thermal_source == "None") {

@@ -31,15 +31,15 @@ AdvectionResid(const Teuchos::ParameterList& p,
   residual   (p.get<std::string>                   ("Residual Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
 {
-  this->addDependentField(wBF);
-  this->addDependentField(udot);
-  this->addDependentField(uGrad);
+  this->addNonConstDependentField(wBF);
+  this->addNonConstDependentField(udot);
+  this->addNonConstDependentField(uGrad);
   this->addEvaluatedField(source);
   this->addEvaluatedField(residual);
   Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   coordVec = decltype(coordVec)(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(coordVec);
 
   Teuchos::RCP<PHX::DataLayout> node_vector_dl =
       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
@@ -60,23 +60,23 @@ AdvectionResid(const Teuchos::ParameterList& p,
 
   if (!advectionIsDistParam) {  
     a_x = decltype(a_x)(p.get<std::string>("Advection Coefficient: a_x"), dl->shared_param);
-    this->addDependentField(a_x);
+    this->addNonConstDependentField(a_x);
     if (numDims > 1) {
       a_y = decltype(a_y)(p.get<std::string>("Advection Coefficient: a_y"), dl->shared_param);
-      this->addDependentField(a_y);
+      this->addNonConstDependentField(a_y);
     }
     if (numDims > 2) {
       a_z = decltype(a_z)(p.get<std::string>("Advection Coefficient: a_z"), dl->shared_param);
-      this->addDependentField(a_z);
+      this->addNonConstDependentField(a_z);
     }
   }
   else {  
     AdvCoeff = decltype(AdvCoeff)(p.get<std::string>("AdvectionCoefficient Name"),
   	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(AdvCoeff);
+    this->addNonConstDependentField(AdvCoeff);
     AdvCoeffGrad = decltype(AdvCoeffGrad)(p.get<std::string>("AdvectionCoefficient Gradient Name"),
 		    dl->qp_gradient); 
-    this->addDependentField(AdvCoeffGrad);
+    this->addNonConstDependentField(AdvCoeffGrad);
 
   }
 

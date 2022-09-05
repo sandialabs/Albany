@@ -57,13 +57,13 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   numSurfaceQPs = dl_surface->qp_scalar->extent(1);
 
   // add dependent fields
-  this->addDependentField(velocity);
-  this->addDependentField(observedVelocity);
-  this->addDependentField(w_measure_surface);
+  this->addNonConstDependentField(velocity);
+  this->addNonConstDependentField(observedVelocity);
+  this->addNonConstDependentField(w_measure_surface);
   if(scalarRMS)
-    this->addDependentField(observedVelocityMagnitudeRMS);
+    this->addNonConstDependentField(observedVelocityMagnitudeRMS);
   else
-    this->addDependentField(observedVelocityRMS);
+    this->addNonConstDependentField(observedVelocityRMS);
 
   if (alpha!=0) {
     beta_reg_params = *paramList->get<std::vector<Teuchos::RCP<Teuchos::ParameterList>>*>("Basal Regularization Params");
@@ -86,9 +86,9 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
       numBasalQPs = dl_basal->qp_scalar->extent(1);
 
-      this->addDependentField(w_measure_beta_vec.back());
-      this->addDependentField(metric_beta_vec.back());
-      this->addDependentField(grad_beta_vec.back());
+      this->addNonConstDependentField(w_measure_beta_vec.back());
+      this->addNonConstDependentField(metric_beta_vec.back());
+      this->addNonConstDependentField(grad_beta_vec.back());
     }
   }
 
@@ -112,10 +112,10 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
     numBasalQPs = dl_basal->qp_scalar->extent(1);
 
-    this->addDependentField(w_measure_basal);
-    this->addDependentField(metric_basal);
-    this->addDependentField(grad_stiffening);
-    this->addDependentField(stiffening);
+    this->addNonConstDependentField(w_measure_basal);
+    this->addNonConstDependentField(metric_basal);
+    this->addNonConstDependentField(grad_stiffening);
+    this->addNonConstDependentField(stiffening);
   }
 
   this->setName("Response surface_velocity Mismatch" + PHX::print<EvalT>());

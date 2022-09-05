@@ -40,8 +40,8 @@ LinearCombinationParameter (const Teuchos::ParameterList& p, const Teuchos::RCP<
 
   this->addEvaluatedField(val);
   for (std::size_t i = 0; i < numModes; ++i) {
-    this->addDependentField(coefficients_as_field[i]);
-    this->addDependentField(modes_val[i]);
+    this->addNonConstDependentField(coefficients_as_field[i]);
+    this->addNonConstDependentField(modes_val[i]);
   }
   this->setName("Linear Combination " + field_name + PHX::print<EvalT>());
 }

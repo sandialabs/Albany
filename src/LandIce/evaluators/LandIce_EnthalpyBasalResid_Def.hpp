@@ -34,9 +34,9 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
   w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_basal->qp_scalar);
   basalMeltRateQP = decltype(basalMeltRateQP)(p.get<std::string> ("Basal Melt Rate Side QP Variable Name"), dl_basal->qp_scalar);
 
-  this->addDependentField(BF);
-  this->addDependentField(w_measure);
-  this->addDependentField(basalMeltRateQP);
+  this->addNonConstDependentField(BF);
+  this->addNonConstDependentField(w_measure);
+  this->addNonConstDependentField(basalMeltRateQP);
 
   this->addEvaluatedField(enthalpyBasalResid);
 

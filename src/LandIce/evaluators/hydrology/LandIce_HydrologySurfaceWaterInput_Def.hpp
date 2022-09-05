@@ -27,7 +27,7 @@ HydrologySurfaceWaterInput (const Teuchos::ParameterList& p,
   if (type=="APPROXIMATE FROM SMB") {
     // Set omega=min(-smb,0);
     smb = decltype(smb)(p.get<std::string> ("Surface Mass Balance Variable Name"), dl->node_scalar);
-    this->addDependentField(smb);
+    this->addNonConstDependentField(smb);
 
     omega = decltype(omega)(p.get<std::string> ("Surface Water Input Variable Name"), dl->node_scalar);
     this->addEvaluatedField(omega);

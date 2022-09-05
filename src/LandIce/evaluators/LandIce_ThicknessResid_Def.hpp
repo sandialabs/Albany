@@ -32,13 +32,13 @@ ThicknessResid(const Teuchos::ParameterList& p,
   coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
-  this->addDependentField(dH);
-  this->addDependentField(H0);
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(dH);
+  this->addNonConstDependentField(H0);
+  this->addNonConstDependentField(coordVec);
   if(p.isParameter("SMB Name")) {
    SMB = decltype(SMB)(p.get<std::string> ("SMB Name"), dl->node_scalar);
    have_SMB = true;
-   this->addDependentField(SMB);
+   this->addNonConstDependentField(SMB);
   } else {
     have_SMB = false;
   }
@@ -56,7 +56,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   auto av_v_layout = dl_side->node_vector;
   V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), av_v_layout);
-  this->addDependentField(V);
+  this->addNonConstDependentField(V);
 
   this->setName("ThicknessResid"+PHX::print<EvalT>());
 

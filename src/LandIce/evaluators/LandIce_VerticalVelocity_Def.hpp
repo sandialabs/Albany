@@ -21,8 +21,8 @@ namespace LandIce
   int1Dw_z        (p.get<std::string> ("Integral1D w_z Variable Name"),dl->node_scalar),
   w           (p.get<std::string> ("Vertical Velocity Variable Name"),dl->node_scalar)
   {
-    this->addDependentField(thickness);
-    this->addDependentField(int1Dw_z);
+    this->addNonConstDependentField(thickness);
+    this->addNonConstDependentField(int1Dw_z);
 
     this->addEvaluatedField(w);
     this->setName("Vertical Velocity");

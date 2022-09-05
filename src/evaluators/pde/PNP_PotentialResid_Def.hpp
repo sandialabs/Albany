@@ -23,11 +23,11 @@ PotentialResid(const Teuchos::ParameterList& p,
   Permittivity (p.get<std::string>  ("Permittivity Name"), dl->qp_scalar),
   PotentialResidual ("Potential Residual",  dl->node_scalar )
 {
-  this->addDependentField(wBF.fieldTag());
-  this->addDependentField(wGradBF.fieldTag());
-  this->addDependentField(Permittivity.fieldTag());
-  this->addDependentField(Concentration.fieldTag());
-  this->addDependentField(PotentialGrad.fieldTag());
+  this->addNonConstDependentField(wBF.fieldTag());
+  this->addNonConstDependentField(wGradBF.fieldTag());
+  this->addNonConstDependentField(Permittivity.fieldTag());
+  this->addNonConstDependentField(Concentration.fieldTag());
+  this->addNonConstDependentField(PotentialGrad.fieldTag());
 
   this->addEvaluatedField(PotentialResidual);
 

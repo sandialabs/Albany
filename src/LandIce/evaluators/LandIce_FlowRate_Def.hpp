@@ -36,14 +36,14 @@ FlowRate (const Teuchos::ParameterList& p,
   } else if (flowRateType == "Given Field") {
     flowRate_type = GIVEN_FIELD;
     given_flow_rate = decltype(given_flow_rate)(p.get<std::string> ("Given Flow Rate Field Name"), dl->cell_scalar2);
-    this->addDependentField(given_flow_rate);
+    this->addNonConstDependentField(given_flow_rate);
 #ifdef OUTPUT_TO_SCREEN
     *out << "Flow Rate read in from file (exodus or ascii) or passed in from CISM." << std::endl;
 #endif
   } else if (flowRateType == "Temperature Based") {
     flowRate_type = TEMPERATURE_BASED;
     temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
-    this->addDependentField(temperature);
+    this->addNonConstDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
     *out << "Flow Rate computed using temperature field." << std::endl;
 #endif

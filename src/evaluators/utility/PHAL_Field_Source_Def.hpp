@@ -137,8 +137,8 @@ namespace PHAL
                 }
             }
 
-            this->addDependentField(mdf_amplitude);
-            this->addDependentField(mdf_radius);
+            this->addNonConstDependentField(mdf_amplitude);
+            this->addNonConstDependentField(mdf_radius);
 
             const PHX::Tag<ScalarT> fieldTag(source_list.get<std::string>(util::strint("Gaussian: Field", num)), dl->dummy);
 

@@ -36,20 +36,20 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
   haveNeutSource  (p.get<bool>("Have Neutron Source"))
 {
 
-  this->addDependentField(wBF.fieldTag());
-  this->addDependentField(wGradBF.fieldTag());
-  this->addDependentField(Neutron.fieldTag());
-  this->addDependentField(NGrad.fieldTag());
-  this->addDependentField(NeutronDiff.fieldTag());
-  this->addDependentField(Absorp.fieldTag());
-  this->addDependentField(Fission.fieldTag());
-  this->addDependentField(nu.fieldTag());
+  this->addNonConstDependentField(wBF.fieldTag());
+  this->addNonConstDependentField(wGradBF.fieldTag());
+  this->addNonConstDependentField(Neutron.fieldTag());
+  this->addNonConstDependentField(NGrad.fieldTag());
+  this->addNonConstDependentField(NeutronDiff.fieldTag());
+  this->addNonConstDependentField(Absorp.fieldTag());
+  this->addNonConstDependentField(Fission.fieldTag());
+  this->addNonConstDependentField(nu.fieldTag());
   
   if (haveNeutSource) {
     Source = decltype(Source)(
       p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(Source.fieldTag());
+    this->addNonConstDependentField(Source.fieldTag());
   }
 
   this->addEvaluatedField(NResidual);

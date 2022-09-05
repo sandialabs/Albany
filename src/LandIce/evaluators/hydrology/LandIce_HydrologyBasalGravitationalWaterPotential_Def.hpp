@@ -39,8 +39,8 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
   H     = decltype(H)(p.get<std::string> ("Ice Thickness Variable Name"), layout);
   phi_0 = decltype(phi_0)(p.get<std::string> ("Basal Gravitational Water Potential Variable Name"), layout);
 
-  this->addDependentField (z_s);
-  this->addDependentField (H);
+  this->addNonConstDependentField (z_s);
+  this->addNonConstDependentField (H);
   this->addEvaluatedField (phi_0);
 
   // Setting parameters

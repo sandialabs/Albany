@@ -84,8 +84,8 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
     if (melt_pl.get("Use Friction Melt",false)) {
       u_b  = decltype(u_b) (p.get<std::string> ("Sliding Velocity Variable Name"), layout);
       beta = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
-      this->addDependentField(beta);
-      this->addDependentField(u_b);
+      this->addNonConstDependentField(beta);
+      this->addNonConstDependentField(u_b);
 
       friction = true;
     }
@@ -95,7 +95,7 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
         G_value = melt_pl.get<double>("Given Geothermal Flux");
       } else {
         G = decltype(G)(p.get<std::string> ("Geothermal Heat Source Variable Name"), layout);
-        this->addDependentField(G);
+        this->addNonConstDependentField(G);
         G_field = true;
       }
     }

@@ -27,10 +27,10 @@ NSTauM(const Teuchos::ParameterList& p) :
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
   
 {
-  this->addDependentField(V.fieldTag());
-  this->addDependentField(Gc.fieldTag());
-  this->addDependentField(rho.fieldTag());
-  this->addDependentField(mu.fieldTag());
+  this->addNonConstDependentField(V.fieldTag());
+  this->addNonConstDependentField(Gc.fieldTag());
+  this->addNonConstDependentField(rho.fieldTag());
+  this->addNonConstDependentField(mu.fieldTag());
  
   this->addEvaluatedField(TauM);
 

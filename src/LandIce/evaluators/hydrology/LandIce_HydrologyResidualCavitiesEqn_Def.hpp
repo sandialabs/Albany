@@ -120,29 +120,29 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
     BF        = PHX::MDField<const RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
     w_measure = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
 
-    this->addDependentField(BF);
-    this->addDependentField(w_measure);
+    this->addNonConstDependentField(BF);
+    this->addNonConstDependentField(w_measure);
   }
 
   h            = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Variable Name"),     layout);
   N            = PHX::MDField<const ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"),  layout);
   u_b          = PHX::MDField<const IceScalarT>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
   ice_softness = PHX::MDField<const TempScalarT>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
-  this->addDependentField(h);
-  this->addDependentField(N);
+  this->addNonConstDependentField(h);
+  this->addNonConstDependentField(N);
   if (use_melting) {
     m  = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
-    this->addDependentField(m);
+    this->addNonConstDependentField(m);
   }
-  this->addDependentField(u_b);
-  this->addDependentField(ice_softness);
+  this->addNonConstDependentField(u_b);
+  this->addNonConstDependentField(ice_softness);
 
   if (unsteady) {
     h_dot = PHX::MDField<const ScalarT>(p.get<std::string> ("Water Thickness Dot Variable Name"), layout);
-    this->addDependentField(h_dot);
+    this->addNonConstDependentField(h_dot);
     if (has_p_dot) {
       P_dot = PHX::MDField<const ScalarT>(p.get<std::string>("Water Pressure Dot Variable Name"), layout);
-      this->addDependentField(P_dot);
+      this->addNonConstDependentField(P_dot);
     }
   }
 

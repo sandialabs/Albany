@@ -53,9 +53,9 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   numQPs  = dl->qp_gradient->extent(1);
   numDim  = dl->qp_gradient->extent(2);
 
-  this->addDependentField(gradPhi);
-  this->addDependentField(h);
-  this->addDependentField(k_param);
+  this->addNonConstDependentField(gradPhi);
+  this->addNonConstDependentField(h);
+  this->addNonConstDependentField(k_param);
 
   this->addEvaluatedField(q);
 
@@ -80,7 +80,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 
   if (needsGradPhiNorm) {
     gradPhiNorm = decltype(gradPhiNorm)(p.get<std::string>("Hydraulic Potential Gradient Norm Variable Name"), dl->qp_scalar);
-    this->addDependentField(gradPhiNorm);
+    this->addNonConstDependentField(gradPhiNorm);
   }
 
   auto& reg_pl = darcy_law_params.sublist("Regularization");
@@ -95,7 +95,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
     reg_type = GIVEN_PARAMETER;
     auto pname = reg_pl.get<std::string>("Regularization Parameter Name");
     regularizationParam = PHX::MDField<ScalarT,Dim>(pname, dl->shared_param);
-    this->addDependentField(regularizationParam);
+    this->addNonConstDependentField(regularizationParam);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
         "Error! Invalid choice for 'Regularization Type'. Valid options: 'Given Parameter', 'Given Value', 'None'.\n");

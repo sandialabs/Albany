@@ -27,8 +27,8 @@ DOFGradInterpolationSideBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
 
-  this->addDependentField(val_node.fieldTag());
-  this->addDependentField(gradBF.fieldTag());
+  this->addNonConstDependentField(val_node.fieldTag());
+  this->addNonConstDependentField(gradBF.fieldTag());
   this->addEvaluatedField(grad_qp);
 
   this->setName("DOFGradInterpolationSide("+p.get<std::string>("Variable Name") + ")"+PHX::print<EvalT>());

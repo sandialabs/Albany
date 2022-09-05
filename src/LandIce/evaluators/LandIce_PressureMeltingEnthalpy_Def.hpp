@@ -28,8 +28,8 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
 
   numNodes = dims[1];
 
-  this->addDependentField(coords);
-  this->addDependentField(s);
+  this->addNonConstDependentField(coords);
+  this->addNonConstDependentField(s);
 
   this->addEvaluatedField(meltingTemp);
   this->addEvaluatedField(enthalpyHs);

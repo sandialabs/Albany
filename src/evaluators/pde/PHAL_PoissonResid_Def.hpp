@@ -25,12 +25,12 @@ PoissonResid(const Teuchos::ParameterList& p,
   PhiResidual (p.get<std::string>  ("Residual Name"),  dl->node_scalar ),
   PhiFlux     (p.get<std::string>  ("Flux QP Variable Name"), dl->qp_gradient)
 {
-  this->addDependentField(wBF);
-  //this->addDependentField(Potential);
-  this->addDependentField(Permittivity);
-  this->addDependentField(PhiGrad);
-  this->addDependentField(wGradBF);
-  if (haveSource) this->addDependentField(Source);
+  this->addNonConstDependentField(wBF);
+  //this->addNonConstDependentField(Potential);
+  this->addNonConstDependentField(Permittivity);
+  this->addNonConstDependentField(PhiGrad);
+  this->addNonConstDependentField(wGradBF);
+  if (haveSource) this->addNonConstDependentField(Source);
 
   this->addEvaluatedField(PhiResidual);
   this->addEvaluatedField(PhiFlux);

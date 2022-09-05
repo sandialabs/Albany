@@ -32,18 +32,18 @@ UpdateZCoordinateMovingTop (const Teuchos::ParameterList& p,
   topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector)
 {
-  this->addDependentField(coordVecIn);
-  this->addDependentField(bedTopo);
+  this->addNonConstDependentField(coordVecIn);
+  this->addNonConstDependentField(bedTopo);
   if(p.isParameter("Thickness Name")) {
     H = decltype(H)(p.get<std::string> ("Thickness Name"), dl->node_scalar);
-    this->addDependentField(H);
+    this->addNonConstDependentField(H);
     haveThickness = true;
   }
   else {
     H0 = decltype(H0)(p.get<std::string> ("Past Thickness Name"), dl->node_scalar);
     dH = decltype(dH)(p.get<std::string> ("Thickness Increment Name"), dl->node_scalar);
-    this->addDependentField(H0);
-    this->addDependentField(dH);
+    this->addNonConstDependentField(H0);
+    this->addNonConstDependentField(dH);
     haveThickness = false;
   }
 
@@ -132,11 +132,11 @@ UpdateZCoordinateMovingBed (const Teuchos::ParameterList& p,
 {
   this->addEvaluatedField(coordVecOut);
 
-  this->addDependentField(coordVecIn);
+  this->addNonConstDependentField(coordVecIn);
 
-  this->addDependentField(H);
-  this->addDependentField(bedTopo);
-  this->addDependentField(topSurface);
+  this->addNonConstDependentField(H);
+  this->addNonConstDependentField(bedTopo);
+  this->addNonConstDependentField(topSurface);
   this->addEvaluatedField(topSurfaceOut);
   this->addEvaluatedField(bedTopoOut);
 
@@ -232,21 +232,21 @@ UpdateZCoordinateGivenTopAndBedSurfaces (const Teuchos::ParameterList& p,
 
   if(isBedTopoParam == true) {
     bedTopoIn = decltype(bedTopoIn)(p.get<std::string> ("Bed Topography Parameter Name"), dl->node_scalar);
-    this->addDependentField(bedTopoIn);
+    this->addNonConstDependentField(bedTopoIn);
     this->addEvaluatedField(bedTopo);
   } else {
-    this->addDependentField(bedTopo);
+    this->addNonConstDependentField(bedTopo);
   }
 
   if((isTopSurfParam == true)) {
     topSurfIn = decltype(topSurfIn)(p.get<std::string> ("Top Surface Parameter Name"), dl->node_scalar);
-    this->addDependentField(topSurfIn);
+    this->addNonConstDependentField(topSurfIn);
     this->addEvaluatedField(topSurf);
   } else {
-    this->addDependentField(topSurf);
+    this->addNonConstDependentField(topSurf);
   }
 
-  this->addDependentField(coordVecIn);
+  this->addNonConstDependentField(coordVecIn);
   this->addEvaluatedField(H);
   this->addEvaluatedField(coordVecOut);
 

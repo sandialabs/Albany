@@ -32,10 +32,10 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
   normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_lateral->qp_vector_spacedim);
   w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_lateral->qp_scalar);
 
-  this->addDependentField(thickness);
-  this->addDependentField(BF);
-  this->addDependentField(normals);
-  this->addDependentField(w_measure);
+  this->addNonConstDependentField(thickness);
+  this->addNonConstDependentField(BF);
+  this->addNonConstDependentField(normals);
+  this->addNonConstDependentField(w_measure);
 
   Teuchos::ParameterList& bc_pl = *p.get<Teuchos::ParameterList*>("Lateral BC Parameters");
   immerse_ratio_provided = bc_pl.isParameter("Immersed Ratio");
@@ -43,7 +43,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
     given_immersed_ratio = bc_pl.get<double>("Immersed Ratio");
   } else {
     elevation = decltype(elevation)(p.get<std::string> ("Ice Surface Elevation Variable Name"), dl_lateral->qp_scalar);
-    this->addDependentField(elevation);
+    this->addNonConstDependentField(elevation);
   }
 
   add_melange_force=false;
@@ -71,7 +71,7 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
     R2 = std::pow(R,2);
 
     coords_qp = decltype(coords_qp)(p.get<std::string>("Coordinate Vector Variable Name"), dl_lateral->qp_coords);
-    this->addDependentField(coords_qp);
+    this->addNonConstDependentField(coords_qp);
   }
 
   // Get physical parameters

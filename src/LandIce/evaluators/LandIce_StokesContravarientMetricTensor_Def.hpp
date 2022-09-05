@@ -20,7 +20,7 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   cellType (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   Gc       (p.get<std::string> ("Contravarient Metric Tensor Name"), dl->qp_tensor)
 {
-  this->addDependentField(coordVec);
+  this->addNonConstDependentField(coordVec);
   this->addEvaluatedField(Gc);
 
   // Get Dimensions

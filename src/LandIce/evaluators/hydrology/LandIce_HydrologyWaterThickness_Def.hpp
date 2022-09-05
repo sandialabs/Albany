@@ -53,9 +53,9 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
   A   = PHX::MDField<const TempScalarT>(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
   h   = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness Variable Name"), layout);
 
-  this->addDependentField(u_b);
-  this->addDependentField(N);
-  this->addDependentField(A);
+  this->addNonConstDependentField(u_b);
+  this->addNonConstDependentField(N);
+  this->addNonConstDependentField(A);
 
   this->addEvaluatedField(h);
 
@@ -74,7 +74,7 @@ HydrologyWaterThickness (const Teuchos::ParameterList& p,
 
   if (use_melting) {
     m = PHX::MDField<const ScalarT>(p.get<std::string> ("Melting Rate Variable Name"), layout);
-    this->addDependentField(m);
+    this->addNonConstDependentField(m);
   }
 
   /*

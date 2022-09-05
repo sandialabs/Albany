@@ -21,9 +21,9 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
   coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient),
   correctedTemp (p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2)
 {
-	this->addDependentField(sHeight);
-	this->addDependentField(coord);
-	this->addDependentField(temp);
+	this->addNonConstDependentField(sHeight);
+	this->addNonConstDependentField(coord);
+	this->addNonConstDependentField(temp);
 	this->addEvaluatedField(correctedTemp);
 
 	this->setName("Pressure Corrected Temperature"+PHX::print<EvalT>());

@@ -102,7 +102,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     T = decltype(T)(
       p.get<std::string>("Temperature Variable Name"),
       layout);
-    this->addDependentField(T.fieldTag());
+    this->addNonConstDependentField(T.fieldTag());
 
     // Add property as a Sacado-ized parameter
     this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
@@ -114,7 +114,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     T = decltype(T)(
       p.get<std::string>("Temperature Variable Name"),
       layout);
-    this->addDependentField(T.fieldTag());
+    this->addNonConstDependentField(T.fieldTag());
 
     // Add property as a Sacado-ized parameter
     this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
@@ -130,9 +130,9 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     mu = decltype(mu)(
       p.get<std::string>("Average Scattering Angle Name"),
       layout);
-    this->addDependentField(sigma_a.fieldTag());
-    this->addDependentField(sigma_s.fieldTag());
-    this->addDependentField(mu.fieldTag());
+    this->addNonConstDependentField(sigma_a.fieldTag());
+    this->addNonConstDependentField(sigma_s.fieldTag());
+    this->addNonConstDependentField(mu.fieldTag());
   }
   else if (type == "Time Dependent") {
     matPropType = TIME_DEP_SCALAR;

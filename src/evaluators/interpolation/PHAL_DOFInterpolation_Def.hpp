@@ -21,8 +21,8 @@ DOFInterpolationBase(const Teuchos::ParameterList& p,
   BF          (p.get<std::string>   ("BF Name"), dl->node_qp_scalar),
   val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_scalar )
 {
-  this->addDependentField(val_node.fieldTag());
-  this->addDependentField(BF.fieldTag());
+  this->addNonConstDependentField(val_node.fieldTag());
+  this->addNonConstDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFInterpolationBase"+PHX::print<EvalT>());
