@@ -235,7 +235,7 @@ UpdateZCoordinateGivenTopAndBedSurfaces (const Teuchos::ParameterList& p,
     this->addDependentField(bedTopoIn);
     this->addEvaluatedField(bedTopo);
   } else {
-    this->addDependentField(bedTopo);
+    this->addDependentField(bedTopo.fieldTag());
   }
 
   if((isTopSurfParam == true)) {
@@ -243,7 +243,7 @@ UpdateZCoordinateGivenTopAndBedSurfaces (const Teuchos::ParameterList& p,
     this->addDependentField(topSurfIn);
     this->addEvaluatedField(topSurf);
   } else {
-    this->addDependentField(topSurf);
+    this->addDependentField(topSurf.fieldTag());
   }
 
   this->addDependentField(coordVecIn);
