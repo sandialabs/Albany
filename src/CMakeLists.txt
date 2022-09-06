@@ -790,6 +790,14 @@ foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
   endif()
 endforeach()
 
+macro(replace_list_item LIST INDEX NEWVALUE)
+  list (GET ${LIST} ${INDEX} ITEM)
+  message ("in list ${LIST}, replace list(${INDEX})=${ITEM} with ${NEWVALUE}")
+  list(INSERT ${LIST} ${INDEX} ${NEWVALUE})
+  math(EXPR __INDEX "${INDEX} + 1")
+  list (REMOVE_AT ${LIST} ${__INDEX})
+endmacro(replace_list_item)
+
 if (INSTALL_ALBANY)
   configure_package_config_file(AlbanyConfig.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
@@ -841,6 +849,18 @@ if (INSTALL_ALBANY)
   # Remove any entry coming before the executable name
   foreach(index RANGE ${DUMMY_INDEX})
     list (REMOVE_AT ALBANY_LINK_LIBS 0)
+  endforeach()
+
+  # Replace ../src/<albLib> with /path/to/install/lib/<albLib>
+  foreach (lib IN ITEMS ${ALBANY_LIBRARIES})
+    foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
+      if (item MATCHES "${lib}")
+        get_filename_component(fname ${item} NAME)
+        list (FIND ALBANY_LINK_LIBS ${item} itemIdx)
+        replace_list_item (ALBANY_LINK_LIBS ${itemIdx} "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/${fname}")
+        break()
+      endif()
+    endforeach()
   endforeach()
 
   # Configure the export_albany.in file
