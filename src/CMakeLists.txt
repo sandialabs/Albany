@@ -851,6 +851,14 @@ if (INSTALL_ALBANY)
     list (REMOVE_AT ALBANY_LINK_LIBS 0)
   endforeach()
 
+  # Also, remove rpath, since we  will link ALL libs using full path
+  foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
+    if (item MATCHES "-rpath")
+      list(REMOVE_ITEM ALBANY_LINK_LIBS ${item})
+      break()
+    endif()
+  endforeach()
+
   # Replace ../src/<albLib> with /path/to/install/lib/<albLib>
   foreach (lib IN ITEMS ${ALBANY_LIBRARIES})
     foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
