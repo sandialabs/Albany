@@ -816,18 +816,37 @@ if (INSTALL_ALBANY)
   endif()
   install(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
 
-  # Reverse albany libraries, so that they link correctly.
-  # Recall, -lA -lB means B *cannot* need stuff from A.
-  list (REVERSE ALBANY_LIBRARIES)
+  # Create dummy executable that links against all albany libs and its tpls
+  # Then, read its link.txt file, to fetch all the actual library files we're linking against.
+  # Note: link.txt will contain something like
+  #   /path/to/mpicxx $flag1 ... $flagN /path/to/main.cpp.o -o dummy $lib1 ... $libN
+  # We want to remove every string up to dummy, and keep only the libs afterward.
 
-  set(TMP1 ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
+  # Parse dummy subproject folder
+  add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
+                    ${CMAKE_BINARY_DIR}/dummy)
 
-  message("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
-  string(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
-  string(REPLACE ";" " -l" TMP3
-        "-L${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
-        " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
-  string(REPLACE "-l-L" "-L" ALBANY_LINK_LIBS ${TMP3})
-  configure_file(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
+  # Read link.txt
+  file (READ ${CMAKE_BINARY_DIR}/dummy/CMakeFiles/dummy.dir/link.txt LINK_FILE_CONTENT)
 
+  # Turn into a list, so we can iterate over it
+  string (REPLACE " " ";" ALBANY_LINK_LIBS ${LINK_FILE_CONTENT})
+
+  # Find the name of the executable.
+  list (FIND ALBANY_LINK_LIBS "dummy" DUMMY_INDEX)
+  if (DUMMY_INDEX EQUAL -1)
+    message (FATAL_ERROR "Somethinkg went wrong while generating export_albany.in")
+  endif()
+
+  # Remove any entry coming before the executable name
+  foreach(index RANGE ${DUMMY_INDEX})
+    list (REMOVE_AT ALBANY_LINK_LIBS 0)
+  endforeach()
+
+  # Configure the export_albany.in file
+  configure_file(export_albany.in ${CMAKE_BINARY_DIR}/export_albany.in)
+
+  # Install the file
+  install (FILES ${CMAKE_BINARY_DIR}/export_albany.in
+           DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
