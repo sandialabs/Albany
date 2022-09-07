@@ -14,11 +14,6 @@ if (NOT DEFINED SET_COMPILERS_AUTOMATICALLY)
   set(SET_COMPILERS_AUTOMATICALLY TRUE)
 endif()
 
-if (NOT SET_COMPILERS_AUTOMATICALLY)
-  message("Experimental configuration.")
-  project(Albany CXX C Fortran)
-endif ()
-
 # Kokkos recommends to set CMAKE_CXX_EXTENSIONS to OFF
 if (NOT DEFINED CMAKE_CXX_EXTENSIONS)
   set(CMAKE_CXX_EXTENSIONS OFF)
@@ -153,6 +148,8 @@ else()
   SET(Trilinos_Fortran_COMPILER_ID ${CMAKE_Fortran_COMPILER_ID})
 endif()
 
+project(Albany CXX C)
+
 # Build Albany as shared libraries if Trilinos was compiled that way
 IF(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE SHARED)
@@ -175,15 +172,6 @@ IF (Albany_DEPRECATED_DECLARATIONS)
 ELSE()
   MESSAGE("-- Deprecated code warnings are NOT Enabled.")
 ENDIF()
-
-
-# End of setup and error checking
-#  NOTE: PROJECT command checks for compilers, so this statement
-#        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
-
-if (SET_COMPILERS_AUTOMATICALLY)
-  PROJECT(Albany)
-endif()
 
 # AGS: Adding these lines so Ctest can be run to submit to cdash dashboard
 #   Uses CTestConfig.cmake file for Cdash info.
