@@ -588,8 +588,8 @@ else()
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
 target_include_directories(albanyLib PUBLIC
-                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
-                           "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>")
+                           "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 install(TARGETS albanyLib EXPORT albany-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -791,8 +791,9 @@ foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
   endif()
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
   target_include_directories(${ALB_EXEC} PUBLIC
-      $<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>)
+                             "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+                              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
   # We may not want warnings from Trilinos and/or its TPLs...
   if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
     target_include_directories(${ALB_EXEC} SYSTEM PUBLIC
@@ -821,12 +822,14 @@ configure_package_config_file(AlbanyConfig.cmake.in
   PATH_VARS CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_LIBDIR)
 install(FILES ${HEADERS}
   DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h
-  DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_GitVersion.h
-  DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake )
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake )
+
 install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake  FILE "albany-targets.cmake")
 
 # Create dummy executable that links against all albany libs and its tpls
@@ -839,47 +842,17 @@ install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake  F
 add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
                   ${CMAKE_BINARY_DIR}/dummy)
 
-# Read link.txt
-file (READ ${CMAKE_BINARY_DIR}/dummy/CMakeFiles/dummy.dir/link.txt LINK_FILE_CONTENT)
+add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
+                    COMMAND ${CMAKE_COMMAND} -D ALBANY_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+                                             -D ALBANY_BINARY_DIR=${CMAKE_BINARY_DIR}
+                                             -D ALBANY_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+                                             -D ALBANY_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
+                                             -P ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany.cmake
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# Turn into a list, so we can iterate over it
-string (REPLACE " " ";" ALBANY_LINK_LIBS ${LINK_FILE_CONTENT})
-
-# Find the name of the executable.
-list (FIND ALBANY_LINK_LIBS "dummy" DUMMY_INDEX)
-if (DUMMY_INDEX EQUAL -1)
-  message (FATAL_ERROR "Somethinkg went wrong while generating export_albany.in")
-endif()
-
-# Remove any entry coming before the executable name
-foreach(index RANGE ${DUMMY_INDEX})
-  list (REMOVE_AT ALBANY_LINK_LIBS 0)
-endforeach()
-
-# Also, remove rpath, since we  will link ALL libs using full path
-foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
-  if (item MATCHES "-rpath")
-    list(REMOVE_ITEM ALBANY_LINK_LIBS ${item})
-    break()
-  endif()
-endforeach()
-
-# Replace ../src/<albLib> with /path/to/install/lib/<albLib>
-foreach (lib IN ITEMS ${ALBANY_LIBRARIES})
-  foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
-    if (item MATCHES "${lib}")
-      get_filename_component(fname ${item} NAME)
-      list (FIND ALBANY_LINK_LIBS ${item} itemIdx)
-      replace_list_item (ALBANY_LINK_LIBS ${itemIdx} "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${fname}")
-      break()
-    endif()
-  endforeach()
-endforeach()
-
-# Configure the export_albany.in file
-configure_file(export_albany.in ${CMAKE_BINARY_DIR}/export_albany.in)
+add_custom_target (create_export_albany ALL
+                   DEPENDS ${CMAKE_BINARY_DIR}/export_albany.in)
 
 # Install the file
 install (FILES ${CMAKE_BINARY_DIR}/export_albany.in
          DESTINATION ${CMAKE_INSTALL_PREFIX})
-endif()
