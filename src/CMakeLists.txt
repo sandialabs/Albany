@@ -838,6 +838,7 @@ add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
                     COMMAND ${CMAKE_COMMAND} -D ALBANY_SOURCE_DIR=${CMAKE_SOURCE_DIR}
                                              -D ALBANY_BINARY_DIR=${CMAKE_BINARY_DIR}
                                              -P ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany.cmake
+                    DEPENDS ${CMAKE_BINARY_DIR}/src/Albany_GitVersion.h
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/dummy)
 
 add_custom_target (create_export_albany ALL
