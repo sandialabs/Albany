@@ -16,7 +16,6 @@ cmake \
     -D ENABLE_CISM_INTERFACE=ON \
     -D Albany_BUILD_STATIC_EXE:BOOL=OFF \
     -D DISABLE_ALBANY_TESTS:BOOL=ON \
-    -D INSTALL_ALBANY:BOOL=ON \
     -D CMAKE_INSTALL_PREFIX:BOOL=$PWD/install \
     -D CISM_INCLUDE_DIR:FILEPATH=/project/projectdirs/piscees/nightlyCoriCDash/repos/cism-piscees/libdycore \
     -D CMAKE_EXE_LINKER_FLAGS:STRING='-Wl,-zmuldefs' \

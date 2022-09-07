@@ -98,7 +98,7 @@ else()
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
 target_include_directories(pyalbanyLib PUBLIC
-                            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
                            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>")
 list(APPEND ALBANY_LIBRARIES pyalbanyLib)
 
@@ -115,7 +115,7 @@ endif()
 
 target_include_directories(albanyPyInterface PUBLIC
                             "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
-                            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -141,17 +141,15 @@ target_compile_features(Albany_Pybind11 PUBLIC cxx_std_11)
 target_link_libraries(Albany_Pybind11 PRIVATE ${ALBANY_LIBRARIES} albanyPyInterface)
 set_target_properties(Albany_Pybind11 PROPERTIES SUFFIX ".so")
 
-if (INSTALL_ALBANY)
-  install(TARGETS pyalbanyLib
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  install(TARGETS albanyPyInterface
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  install(TARGETS Albany_Pybind11
-    LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
-    ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
-endif()
+install(TARGETS pyalbanyLib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS albanyPyInterface
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS Albany_Pybind11
+  LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
+  ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
 
 IF (ALBANY_PYTHON_TESTS)
   add_custom_command(TARGET Albany_Pybind11 POST_BUILD

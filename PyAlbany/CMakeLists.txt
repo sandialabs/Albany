@@ -139,12 +139,6 @@ ELSE()
   MESSAGE("-- PyAlbany Extreme Events NOT Enabled.")
 ENDIF()
 
-IF(INSTALL_ALBANY)
-  MESSAGE("-- Installation of PyAlbany Enabled.")
-ELSE()
-  MESSAGE("-- Installation of PyAlbany NOT Enabled.")
-ENDIF()
-
 IF(ALBANY_PYTHON_TESTS)
   MESSAGE("-- ALBANY_PYTHON_TESTS Enabled.")
 ELSE()

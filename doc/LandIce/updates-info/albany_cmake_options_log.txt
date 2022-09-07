@@ -1,8 +1,0 @@
-As of commit 53bd122a, for installing libraries we need to replace
--D ENABLE_INSTALL:BOOL=ON \ 
-with: 
--D INSTALL_ALBANY:BOOL=ON \
-
-
-
-

@@ -237,14 +237,12 @@ set (LANDICE_INCLUDE_DIRS
 
 target_include_directories(LandIce PUBLIC
                            "$<BUILD_INTERFACE:${LANDICE_INCLUDE_DIRS}>"
-                            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-if (INSTALL_ALBANY)
-  install(TARGETS LandIce EXPORT albany-export
-    LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
-    ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
-    PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-endif()
+install(TARGETS LandIce EXPORT albany-export
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 ###################################
 ###     CISM interface lib     ####

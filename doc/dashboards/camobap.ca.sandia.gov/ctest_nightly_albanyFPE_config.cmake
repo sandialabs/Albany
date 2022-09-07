@@ -203,7 +203,6 @@ if (BUILD_ALBANY_FPE)
     "-DPYTHON_EXECUTABLE='/usr/bin/python'"
     "-DPYTHON_INCLUDE_PATH='/usr/include/python3.9'"
     "-DSWIG_EXECUTABLE='/tpls/install/swig/bin/swig'"
-    "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg")
