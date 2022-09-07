@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+
+import sys, os, argparse, pathlib
+
+
+###############################################################################
+def parse_command_line(args, description):
+###############################################################################
+  parser = argparse.ArgumentParser()
+
+  parser.add_argument ("--bin-dir", help="binary dir", default=None)
+  parser.add_argument ("--install-lib-dir", help="albany install lib dir", default=None)
+
+  return parser.parse_args(args[1:])
+
+###############################################################################
+def _main_func(description):
+###############################################################################
+    args = vars(parse_command_line(sys.argv, description))
+
+    bin_dir = pathlib.Path(args["bin_dir"]).resolve()
+    install_lib_dir = pathlib.Path(args["install_lib_dir"]).resolve()
+
+    infile  = bin_dir / "dummy" / "CMakeFiles" / "dummy.dir" / "link.txt"
+    libs = []
+    libs_dirs = []
+
+    bin_src_dir = bin_dir / "src"
+    with infile.open('r') as fd:
+        line = fd.read().strip()
+        # print (f"line: {line}")
+        items = line.split()
+        index = items.index('dummy')
+        # print (f"found dummy at index {index}")
+        items = items[index+1:]
+        # print (f"new first entry: {items[0]}")
+        for item in items:
+            lib_file = pathlib.Path(item).resolve()
+            if "-rpath" in item:
+                # This are link options, and one is rpath. Need to replace rpaths with albany install lib dir
+                tokens = item.split(',')
+                for i,t in enumerate(tokens):
+                    if ':' in t:
+                      paths = t.split(':')
+                      # Loop over all paths, replace them with install dir
+                      for j,p in enumerate(paths):
+                        path = pathlib.Path(p).resolve()
+                        paths[j] = str(install_lib_dir)
+
+                      # Replace the rpath list with the unique list
+                      tokens[i] = ':'.join(list(set(paths)))
+                    else:
+                      # Just a link flag, keep it
+                      tokens[i] = t
+
+                # Re-join proecessed tokens with commas
+                libs.append(",".join(tokens))
+            elif lib_file.exists():
+                lib_file = pathlib.Path(item).resolve()
+                # Remove all extensions (such as .so.5), and remove first 3 chars (lib)
+                libs.append (f"-l{lib_file.name.split('.')[0][3:]}")
+                if not lib_file.parent in libs_dirs and not str(lib_file.parent).startswith(str(bin_dir)):
+                    libs_dirs.append(lib_file.parent)
+            else:
+                # It's either a system lib or a link flag. Keep it as is.
+                libs.append(item)
+                
+    outfile = pathlib.Path(args["bin_dir"]) / "export_albany.in"
+
+    link_line = ""
+    for dir in libs_dirs:
+        link_line += f"-L{dir} "
+
+    for lib in libs:
+        link_line += f"{lib} "
+
+    with outfile.open('w') as fd:
+        fd.write(f'ALBANY_LINK_LIBS="{link_line.strip()}"')
+        
+    sys.exit(0)
+
+###############################################################################
+
+if (__name__ == "__main__"):
+    _main_func(__doc__)
+
