@@ -591,6 +591,11 @@ target_include_directories(albanyLib PUBLIC
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
                            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>")
 
+install(TARGETS albanyLib EXPORT albany-export
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
 # Note: Albany_EXTRA_LIBRARIES is to allow users to specify
 # libraries that one cannot get out of Trilinos directly.
 set(TPL_LIBRARIES
@@ -743,6 +748,11 @@ if(ALBANY_DEMO_PDES)
                              "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>)
   list(APPEND ALBANY_LIBRARIES albanyPDEs)
+
+  install(TARGETS albanyPDEs EXPORT albany-export
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
 if (ALBANY_LANDICE)
@@ -767,7 +777,10 @@ if (NOT ALBANY_LIBRARIES_ONLY)
   set(ALBANY_EXECUTABLES Albany)
 
   add_executable(AlbanyAnalysis Main_Analysis.cpp)
-  set(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+  list (APPEND ALBANY_EXECUTABLES AlbanyAnalysis)
+
+  install(TARGETS ${ALBANY_EXECUTABLES} EXPORT albany-export
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 endif (NOT ALBANY_LIBRARIES_ONLY)
 
@@ -790,6 +803,10 @@ foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
   endif()
 endforeach()
 
+##################################################
+#              Installation stuff                #
+##################################################
+
 macro(replace_list_item LIST INDEX NEWVALUE)
   list (GET ${LIST} ${INDEX} ITEM)
   message ("in list ${LIST}, replace list(${INDEX})=${ITEM} with ${NEWVALUE}")
@@ -797,10 +814,6 @@ macro(replace_list_item LIST INDEX NEWVALUE)
   math(EXPR __INDEX "${INDEX} + 1")
   list (REMOVE_AT ${LIST} ${__INDEX})
 endmacro(replace_list_item)
-
-##################################################
-#              Instalation stuff                 #
-##################################################
 
 configure_package_config_file(AlbanyConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
@@ -814,17 +827,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_GitVersion.h
   DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake )
-# Install each binary in the list
-install(TARGETS ${ALBANY_EXECUTABLES} RUNTIME DESTINATION
-  ${CMAKE_INSTALL_BINDIR})
-install(TARGETS albanyLib EXPORT albany-export
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-if (ENABLE_DEMO_PDES)
-  install(TARGETS albanyPDEs EXPORT albany-export
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
 install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake  FILE "albany-targets.cmake")
 
 # Create dummy executable that links against all albany libs and its tpls
