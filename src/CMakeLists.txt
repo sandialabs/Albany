@@ -196,14 +196,16 @@ message("TeuchosParameterList_LIBRARIES = '${TeuchosParameterList_LIBRARIES}'")
 message("TeuchosParameterList_INCLUDE_DIRS = '${TeuchosParameterList_INCLUDE_DIRS}'")
 message("TeuchosParameterList_TPL_INCLUDE_DIRS = '${TeuchosParameterList_TPL_INCLUDE_DIRS}'")
 
-add_executable(xml2yaml utility/xml2yaml.cpp)
-add_executable(yaml2xml utility/yaml2xml.cpp)
-target_link_libraries(xml2yaml PUBLIC ${TeuchosParameterList_LIBRARIES})
-target_link_libraries(yaml2xml PUBLIC ${TeuchosParameterList_LIBRARIES})
-target_include_directories(yaml2xml SYSTEM PUBLIC
-  "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
-target_include_directories(xml2yaml SYSTEM PUBLIC
-  "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
+if (NOT ALBANY_LIBRARIES_ONLY)
+  add_executable(xml2yaml utility/xml2yaml.cpp)
+  add_executable(yaml2xml utility/yaml2xml.cpp)
+  target_link_libraries(xml2yaml PUBLIC ${TeuchosParameterList_LIBRARIES})
+  target_link_libraries(yaml2xml PUBLIC ${TeuchosParameterList_LIBRARIES})
+  target_include_directories(yaml2xml SYSTEM PUBLIC
+    "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
+  target_include_directories(xml2yaml SYSTEM PUBLIC
+    "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
+endif()
 
 #problems
 list (APPEND SOURCES
