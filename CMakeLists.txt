@@ -72,43 +72,6 @@ LIST(REMOVE_DUPLICATES Trilinos_TPL_INCLUDE_DIRS)
 LIST(REMOVE_DUPLICATES Trilinos_LIBRARIES)
 LIST(REMOVE_DUPLICATES Trilinos_TPL_LIBRARIES)
 
-# Set Albany branch and commit id
-EXECUTE_PROCESS(
-  COMMAND git rev-parse --abbrev-ref HEAD
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE ALBANY_GIT_BRANCH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-EXECUTE_PROCESS(
-  COMMAND git log -1 --format=%h
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-MESSAGE("Albany version details:")
-MESSAGE("-- ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
-MESSAGE("-- ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
-MESSAGE("End of Albany version details\n")
-
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
-MESSAGE(" +----------------------------------+")
-MESSAGE(" |       Installation details       |")
-MESSAGE(" +----------------------------------+"\n)
-MESSAGE("  - Prefix: ${CMAKE_INSTALL_PREFIX}")
-MESSAGE("  - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
-MESSAGE("  - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
-MESSAGE("  - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-MESSAGE(" +----------------------------------+"\n)
-
-option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
-if (ENABLE_CROSS_COMPILE)
-  set (Albany_CROSS_COMPILE ON)
-  message ("Building with cross-compiling tools.")
-else ()
-  set (Albany_CROSS_COMPILE OFF)
-endif ()
-
 if (SET_COMPILERS_AUTOMATICALLY)
   MESSAGE("Setting and checking of compilers:")
   if (Albany_CROSS_COMPILE)
@@ -149,6 +112,43 @@ else()
 endif()
 
 project(Albany CXX C)
+
+# Set Albany branch and commit id
+EXECUTE_PROCESS(
+  COMMAND git rev-parse --abbrev-ref HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE ALBANY_GIT_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+EXECUTE_PROCESS(
+  COMMAND git log -1 --format=%h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+MESSAGE("Albany version details:")
+MESSAGE("-- ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
+MESSAGE("-- ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
+MESSAGE("End of Albany version details\n")
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+MESSAGE(" +----------------------------------+")
+MESSAGE(" |       Installation details       |")
+MESSAGE(" +----------------------------------+")
+MESSAGE(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
+MESSAGE(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+MESSAGE(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+MESSAGE(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+MESSAGE(" +----------------------------------+")
+
+option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
+if (ENABLE_CROSS_COMPILE)
+  set (Albany_CROSS_COMPILE ON)
+  message ("Building with cross-compiling tools.")
+else ()
+  set (Albany_CROSS_COMPILE OFF)
+endif ()
 
 # Build Albany as shared libraries if Trilinos was compiled that way
 IF(Trilinos_BUILD_SHARED_LIBS)
