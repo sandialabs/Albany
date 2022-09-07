@@ -837,11 +837,8 @@ add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
 add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
                     COMMAND ${CMAKE_COMMAND} -D ALBANY_SOURCE_DIR=${CMAKE_SOURCE_DIR}
                                              -D ALBANY_BINARY_DIR=${CMAKE_BINARY_DIR}
-                                             -D ALBANY_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-                                             -D ALBANY_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
-                                             -D ALBANY_LIBRARIES="${ALBANY_LIBRARIES}"
                                              -P ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany.cmake
-                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/dummy)
 
 add_custom_target (create_export_albany ALL
                    DEPENDS ${CMAKE_BINARY_DIR}/export_albany.in)

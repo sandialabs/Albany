@@ -1,3 +1,4 @@
+cmake_minimum_required (VERSION 3.3)
 # Read link.txt
 file (READ ${ALBANY_BINARY_DIR}/dummy/CMakeFiles/dummy.dir/link.txt LINK_FILE_CONTENT)
 
@@ -29,7 +30,7 @@ foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
   endif()
 endforeach()
 
-# Replace ../src/<albLib> with /path/to/install/lib/<albLib>
+# Replace /path/to/libFOO.XYZ with -lFOO, and prepend albany/trilinos install dirs
 macro(replace_list_item LIST INDEX NEWVALUE)
   list (GET ${LIST} ${INDEX} ITEM)
   list(INSERT ${LIST} ${INDEX} ${NEWVALUE})
@@ -37,17 +38,29 @@ macro(replace_list_item LIST INDEX NEWVALUE)
   list (REMOVE_AT ${LIST} ${__INDEX})
 endmacro(replace_list_item)
 
-string (REPLACE " " ";" ALBANY_LIBRARIES ${ALBANY_LIBRARIES})
-foreach (lib IN ITEMS ${ALBANY_LIBRARIES})
-  foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
-    if ("lib${item}" MATCHES "${lib}")
-      get_filename_component(fname ${item} NAME)
-      list (FIND ALBANY_LINK_LIBS ${item} itemIdx)
-      replace_list_item (ALBANY_LINK_LIBS ${itemIdx} "${ALBANY_INSTALL_PREFIX}/${ALBANY_INSTALL_LIBDIR}/${fname}")
-      break()
+set (SEARCH_PATHS)
+foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
+  if (NOT item MATCHES "^-l")
+    get_filename_component(fname ${item} NAME_WLE)
+    get_filename_component(abs_fname ${item} ABSOLUTE)
+    get_filename_component(dir ${abs_fname} DIRECTORY)
+    list (FIND ALBANY_LINK_LIBS ${item} itemIdx)
+    replace_list_item (ALBANY_LINK_LIBS ${itemIdx} "-l${fname}")
+    if (NOT dir IN_LIST SEARCH_PATHS AND
+        NOT dir MATCHES ${ALBANY_BINARY_DIR})
+      list(APPEND SEARCH_PATHS ${dir})
     endif()
-  endforeach()
+  endif()
 endforeach()
+
+foreach (path IN ITEMS ${SEARCH_PATHS})
+  list (PREPEND ALBANY_LINK_LIBS "-L${path}")
+endforeach()
+
+# Finally, replace ';'  with ' ', since this will be used on the link line,
+# and semicolon means end of bash command, and replace -llibXYZ with -lXYZ
+string(REPLACE ";" " " ALBANY_LINK_LIBS "${ALBANY_LINK_LIBS}")
+string(REPLACE "-llib" "-l" ALBANY_LINK_LIBS ${ALBANY_LINK_LIBS})
 
 # Configure the export_albany.in file
 configure_file(${ALBANY_SOURCE_DIR}/cmake/export_albany.in ${ALBANY_BINARY_DIR}/export_albany.in)
