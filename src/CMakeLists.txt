@@ -810,14 +810,6 @@ endforeach()
 #              Installation stuff                #
 ##################################################
 
-macro(replace_list_item LIST INDEX NEWVALUE)
-  list (GET ${LIST} ${INDEX} ITEM)
-  message ("in list ${LIST}, replace list(${INDEX})=${ITEM} with ${NEWVALUE}")
-  list(INSERT ${LIST} ${INDEX} ${NEWVALUE})
-  math(EXPR __INDEX "${INDEX} + 1")
-  list (REMOVE_AT ${LIST} ${__INDEX})
-endmacro(replace_list_item)
-
 configure_package_config_file(AlbanyConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake
@@ -847,6 +839,7 @@ add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
                                              -D ALBANY_BINARY_DIR=${CMAKE_BINARY_DIR}
                                              -D ALBANY_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                                              -D ALBANY_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
+                                             -D ALBANY_LIBRARIES="${ALBANY_LIBRARIES}"
                                              -P ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany.cmake
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 

@@ -30,9 +30,17 @@ foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
 endforeach()
 
 # Replace ../src/<albLib> with /path/to/install/lib/<albLib>
+macro(replace_list_item LIST INDEX NEWVALUE)
+  list (GET ${LIST} ${INDEX} ITEM)
+  list(INSERT ${LIST} ${INDEX} ${NEWVALUE})
+  math(EXPR __INDEX "${INDEX} + 1")
+  list (REMOVE_AT ${LIST} ${__INDEX})
+endmacro(replace_list_item)
+
+string (REPLACE " " ";" ALBANY_LIBRARIES ${ALBANY_LIBRARIES})
 foreach (lib IN ITEMS ${ALBANY_LIBRARIES})
   foreach (item IN ITEMS ${ALBANY_LINK_LIBS})
-    if (item MATCHES "${lib}")
+    if ("lib${item}" MATCHES "${lib}")
       get_filename_component(fname ${item} NAME)
       list (FIND ALBANY_LINK_LIBS ${item} itemIdx)
       replace_list_item (ALBANY_LINK_LIBS ${itemIdx} "${ALBANY_INSTALL_PREFIX}/${ALBANY_INSTALL_LIBDIR}/${fname}")
