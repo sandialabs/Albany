@@ -23,7 +23,7 @@ def _main_func(description):
 
     infile  = bin_dir / "dummy" / "CMakeFiles" / "dummy.dir" / "link.txt"
     libs = []
-    libs_dirs = []
+    libs_dirs = [install_lib_dir]
 
     bin_src_dir = bin_dir / "src"
     with infile.open('r') as fd:
@@ -35,9 +35,8 @@ def _main_func(description):
         items = items[index+1:]
         # print (f"new first entry: {items[0]}")
         for item in items:
-            lib_file = pathlib.Path(item).resolve()
-            if "-rpath" in item:
-                # This are link options, and one is rpath. Need to replace rpaths with albany install lib dir
+            if "," in item:
+                # This are link options, so process them one by one
                 tokens = item.split(',')
                 for i,t in enumerate(tokens):
                     if ':' in t:
@@ -55,15 +54,24 @@ def _main_func(description):
 
                 # Re-join proecessed tokens with commas
                 libs.append(",".join(tokens))
-            elif lib_file.exists():
-                lib_file = pathlib.Path(item).resolve()
-                # Remove all extensions (such as .so.5), and remove first 3 chars (lib)
-                libs.append (f"-l{lib_file.name.split('.')[0][3:]}")
-                if not lib_file.parent in libs_dirs and not str(lib_file.parent).startswith(str(bin_dir)):
-                    libs_dirs.append(lib_file.parent)
-            else:
-                # It's either a system lib or a link flag. Keep it as is.
+            elif item.startswith("-l"):
+                # It's either a -lXYZ lib or a link flag. Keep it as is.
                 libs.append(item)
+            else:
+                lib_file_full = pathlib.Path(item).resolve()
+                if not lib_file_full.exists():
+                    print (f"could not locate lib: {lib_file_full}")
+                    print (f"cwd: {os.getcwd()}")
+                    raise ValueError
+                print (f"full lib name: {lib_file_full}")
+                lib_file      = lib_file_full.name
+                lib_path      = lib_file_full.parent
+                # Remove all extensions (such as .so.5), and remove first 3 chars (lib)
+                lib_name = str(lib_file).split('.')[0][3:]
+                print (f"adding lib '{lib_name}")
+                libs.append (f"-l{lib_name}")
+                if not lib_path in libs_dirs and not str(lib_path).startswith(str(bin_dir)):
+                    libs_dirs.append(lib_path)
                 
     outfile = pathlib.Path(args["bin_dir"]) / "export_albany.in"
 
