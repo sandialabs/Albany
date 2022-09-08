@@ -34,11 +34,6 @@ The first required option is:
 ```
 to enable the build of PyAlbany.
 
-Then, if you want to install PyAlbany and not just to test it in a build directory, you need to have:
-```
--D INSTALL_ALBANY=ON \
-```
-
 Finally, to select the python version, the easiest way is to specify the desired python executable during the configuration of Albany as illustrated as follows:
 ```
 -D PYTHON_EXECUTABLE="/usr/bin/python3" \

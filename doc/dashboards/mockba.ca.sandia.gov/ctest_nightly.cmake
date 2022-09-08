@@ -197,7 +197,6 @@ if (BUILD_ALBANY)
     "-DSEACAS_EXODIFF=/home/ikalash/Trilinos/seacas-build/install/bin/exodiff"
     "-DSEACAS_ALGEBRA=/home/ikalash/Trilinos/seacas-build/install/bin/algebra"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
-    "-DINSTALL_ALBANY:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyMockbaInstall"
     "-DENABLE_LAME:BOOL=OFF")
   

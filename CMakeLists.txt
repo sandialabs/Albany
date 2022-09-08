@@ -14,11 +14,6 @@ if (NOT DEFINED SET_COMPILERS_AUTOMATICALLY)
   set(SET_COMPILERS_AUTOMATICALLY TRUE)
 endif()
 
-if (NOT SET_COMPILERS_AUTOMATICALLY)
-  message("Experimental configuration.")
-  project(Albany CXX C Fortran)
-endif ()
-
 # Kokkos recommends to set CMAKE_CXX_EXTENSIONS to OFF
 if (NOT DEFINED CMAKE_CXX_EXTENSIONS)
   set(CMAKE_CXX_EXTENSIONS OFF)
@@ -77,46 +72,6 @@ LIST(REMOVE_DUPLICATES Trilinos_TPL_INCLUDE_DIRS)
 LIST(REMOVE_DUPLICATES Trilinos_LIBRARIES)
 LIST(REMOVE_DUPLICATES Trilinos_TPL_LIBRARIES)
 
-# Set Albany branch and commit id
-EXECUTE_PROCESS(
-  COMMAND git rev-parse --abbrev-ref HEAD
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE ALBANY_GIT_BRANCH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-EXECUTE_PROCESS(
-  COMMAND git log -1 --format=%h
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-MESSAGE("Albany version details:")
-MESSAGE("-- ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
-MESSAGE("-- ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
-MESSAGE("End of Albany version details\n")
-
-# Optional Installation helpers
-# Note that some of this functionality depends on CMAKE > 2.8.8
-SET (INSTALL_ALBANY FALSE CACHE BOOL "Whether Albany should be installed")
-IF (INSTALL_ALBANY)
-  MESSAGE("")
-  MESSAGE("Installation files for Albany will be created")
-  MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
-  MESSAGE("")
-  set(BINARY_INSTALL_DIR bin)
-  set(INCLUDE_INSTALL_DIR include)
-  set(LIB_INSTALL_DIR lib)
-  include(CMakePackageConfigHelpers)
-ENDIF()
-
-option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
-if (ENABLE_CROSS_COMPILE)
-  set (Albany_CROSS_COMPILE ON)
-  message ("Building with cross-compiling tools.")
-else ()
-  set (Albany_CROSS_COMPILE OFF)
-endif ()
-
 if (SET_COMPILERS_AUTOMATICALLY)
   MESSAGE("Setting and checking of compilers:")
   if (Albany_CROSS_COMPILE)
@@ -156,6 +111,45 @@ else()
   SET(Trilinos_Fortran_COMPILER_ID ${CMAKE_Fortran_COMPILER_ID})
 endif()
 
+project(Albany CXX C)
+
+# Set Albany branch and commit id
+EXECUTE_PROCESS(
+  COMMAND git rev-parse --abbrev-ref HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE ALBANY_GIT_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+EXECUTE_PROCESS(
+  COMMAND git log -1 --format=%h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+MESSAGE("Albany version details:")
+MESSAGE("-- ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
+MESSAGE("-- ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
+MESSAGE("End of Albany version details\n")
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+MESSAGE(" +----------------------------------+")
+MESSAGE(" |       Installation details       |")
+MESSAGE(" +----------------------------------+")
+MESSAGE(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
+MESSAGE(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+MESSAGE(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+MESSAGE(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+MESSAGE(" +----------------------------------+")
+
+option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
+if (ENABLE_CROSS_COMPILE)
+  set (Albany_CROSS_COMPILE ON)
+  message ("Building with cross-compiling tools.")
+else ()
+  set (Albany_CROSS_COMPILE OFF)
+endif ()
+
 # Build Albany as shared libraries if Trilinos was compiled that way
 IF(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE SHARED)
@@ -178,15 +172,6 @@ IF (Albany_DEPRECATED_DECLARATIONS)
 ELSE()
   MESSAGE("-- Deprecated code warnings are NOT Enabled.")
 ENDIF()
-
-
-# End of setup and error checking
-#  NOTE: PROJECT command checks for compilers, so this statement
-#        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
-
-if (SET_COMPILERS_AUTOMATICALLY)
-  PROJECT(Albany)
-endif()
 
 # AGS: Adding these lines so Ctest can be run to submit to cdash dashboard
 #   Uses CTestConfig.cmake file for Cdash info.
@@ -680,12 +665,12 @@ MESSAGE("\nAlbany Templated Data Type Options:\n")
 SET(ENABLE_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type")
 IF(ENABLE_FAD_TYPE STREQUAL "SFad")
   SET(ALBANY_FAD_TYPE_SFAD TRUE)
-  SET(ALBANY_SFAD_SIZE 32 CACHE INT "Number of derivative components chosen at compile-time for AD")
+  SET(ALBANY_SFAD_SIZE 32 CACHE STRING "Number of derivative components chosen at compile-time for AD")
   MESSAGE("-- FAD_TYPE  is SFad, ALBANY_SFAD_SIZE=${ALBANY_SFAD_SIZE}")
   MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_SFAD_SIZE} will fail")
 ELSEIF(ENABLE_FAD_TYPE STREQUAL "SLFad")
   SET(ALBANY_FAD_TYPE_SLFAD TRUE)
-  SET(ALBANY_SLFAD_SIZE 32 CACHE INT "Maximum number of derivative components chosen at compile-time for AD")
+  SET(ALBANY_SLFAD_SIZE 32 CACHE STRING "Maximum number of derivative components chosen at compile-time for AD")
   MESSAGE("-- FAD_TYPE  is SLFad, ALBANY_SLFAD_SIZE=${ALBANY_SLFAD_SIZE}")
   MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_SLFAD_SIZE} will fail")
 ELSEIF(ENABLE_FAD_TYPE STREQUAL "DFad")
@@ -700,12 +685,12 @@ ENDIF()
 SET(ENABLE_TAN_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type for Tangent")
 IF(ENABLE_TAN_FAD_TYPE STREQUAL "SFad")
   SET(ALBANY_TAN_FAD_TYPE_SFAD TRUE)
-  SET(ALBANY_TAN_SFAD_SIZE 32 CACHE INT "Number of derivative components chosen at compile-time for Tangent AD")
+  SET(ALBANY_TAN_SFAD_SIZE 32 CACHE STRING "Number of derivative components chosen at compile-time for Tangent AD")
   MESSAGE("-- TAN_FAD_TYPE is SFad, ALBANY_TAN_SFAD_SIZE=${ALBANY_TAN_SFAD_SIZE}")
   MESSAGE("---> WARNING: problems with Tangent elemental DOFs > ${ALBANY_TAN_SFAD_SIZE} will fail")
 ELSEIF(ENABLE_TAN_FAD_TYPE STREQUAL "SLFad")
   SET(ALBANY_TAN_FAD_TYPE_SLFAD TRUE)
-  SET(ALBANY_TAN_SLFAD_SIZE 32 CACHE INT "Maximum number of derivative components chosen at compile-time for Tangent AD")
+  SET(ALBANY_TAN_SLFAD_SIZE 32 CACHE STRING "Maximum number of derivative components chosen at compile-time for Tangent AD")
   MESSAGE("-- TAN_FAD_TYPE is SLFad, ALBANY_TAN_SLFAD_SIZE=${ALBANY_TAN_SLFAD_SIZE}")
   MESSAGE("---> WARNING: problems with Tangent elemental DOFs > ${ALBANY_TAN_SLFAD_SIZE} will fail")
 ELSEIF(ENABLE_TAN_FAD_TYPE STREQUAL "DFad")
@@ -720,12 +705,12 @@ ENDIF()
 SET(ENABLE_HES_VEC_FAD_TYPE "DFad" CACHE STRING "Sacado forward mode automatic differentiation data type for Hessian-vector product")
 IF(ENABLE_HES_VEC_FAD_TYPE STREQUAL "SFad")
   SET(ALBANY_HES_VEC_FAD_TYPE_SFAD TRUE)
-  SET(ALBANY_HES_VEC_SFAD_SIZE 32 CACHE INT "Number of derivative components chosen at compile-time for Hessian-vector AD")
+  SET(ALBANY_HES_VEC_SFAD_SIZE 32 CACHE STRING "Number of derivative components chosen at compile-time for Hessian-vector AD")
   MESSAGE("-- HES_VEC_FAD_TYPE is SFad, ALBANY_HES_VEC_SFAD_SIZE=${ALBANY_HES_VEC_SFAD_SIZE}")
   MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_HES_VEC_SFAD_SIZE} will fail")
 ELSEIF(ENABLE_HES_VEC_FAD_TYPE STREQUAL "SLFad")
   SET(ALBANY_HES_VEC_FAD_TYPE_SLFAD TRUE)
-  SET(ALBANY_HES_VEC_SLFAD_SIZE 32 CACHE INT "Maximum number of derivative components chosen at compile-time for Hessian-vector AD")
+  SET(ALBANY_HES_VEC_SLFAD_SIZE 32 CACHE STRING "Maximum number of derivative components chosen at compile-time for Hessian-vector AD")
   MESSAGE("-- HES_VEC_FAD_TYPE is SLFad, ALBANY_HES_VEC_SLFAD_SIZE=${ALBANY_HES_VEC_SLFAD_SIZE}")
   MESSAGE("---> WARNING: problems with elemental DOFs > ${ALBANY_HES_VEC_SLFAD_SIZE} will fail")
 ELSEIF(ENABLE_HES_VEC_FAD_TYPE STREQUAL "DFad")
@@ -777,7 +762,7 @@ IF(ALBANY_ENABLE_CUDA)
   IF (ENABLE_ALBANY_EPETRA)
     MESSAGE(FATAL_ERROR "\nError: Albany with Epetra is not supported with CUDA KokkosNode!  Please re-configure w/o Epetra (ENABLE_ALBANY_EPETRA=OFF).")
   ENDIF()
-  SET(NUM_GPUS_PER_NODE 4 CACHE INT "set Number of GPUs per Node")
+  SET(NUM_GPUS_PER_NODE 4 CACHE STRING "set Number of GPUs per Node")
   MESSAGE("-- NUM_GPUS_PER_NODE=${NUM_GPUS_PER_NODE}")
   SET(KOKKOS_NDEVICES "--kokkos-ndevices=${NUM_GPUS_PER_NODE}")
   IF (ENABLE_CUDA_ERROR_CHECK)

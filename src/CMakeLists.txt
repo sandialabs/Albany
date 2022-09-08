@@ -196,14 +196,16 @@ message("TeuchosParameterList_LIBRARIES = '${TeuchosParameterList_LIBRARIES}'")
 message("TeuchosParameterList_INCLUDE_DIRS = '${TeuchosParameterList_INCLUDE_DIRS}'")
 message("TeuchosParameterList_TPL_INCLUDE_DIRS = '${TeuchosParameterList_TPL_INCLUDE_DIRS}'")
 
-add_executable(xml2yaml utility/xml2yaml.cpp)
-add_executable(yaml2xml utility/yaml2xml.cpp)
-target_link_libraries(xml2yaml PUBLIC ${TeuchosParameterList_LIBRARIES})
-target_link_libraries(yaml2xml PUBLIC ${TeuchosParameterList_LIBRARIES})
-target_include_directories(yaml2xml SYSTEM PUBLIC
-  "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
-target_include_directories(xml2yaml SYSTEM PUBLIC
-  "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
+if (NOT ALBANY_LIBRARIES_ONLY)
+  add_executable(xml2yaml utility/xml2yaml.cpp)
+  add_executable(yaml2xml utility/yaml2xml.cpp)
+  target_link_libraries(xml2yaml PUBLIC ${TeuchosParameterList_LIBRARIES})
+  target_link_libraries(yaml2xml PUBLIC ${TeuchosParameterList_LIBRARIES})
+  target_include_directories(yaml2xml SYSTEM PUBLIC
+    "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
+  target_include_directories(xml2yaml SYSTEM PUBLIC
+    "${TeuchosParameterList_INCLUDE_DIRS};${TeuchosParameterList_TPL_INCLUDE_DIRS}")
+endif()
 
 #problems
 list (APPEND SOURCES
@@ -588,8 +590,13 @@ else()
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
 target_include_directories(albanyLib PUBLIC
-                            $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
-                           "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>")
+                           "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+install(TARGETS albanyLib EXPORT albany-export
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Note: Albany_EXTRA_LIBRARIES is to allow users to specify
 # libraries that one cannot get out of Trilinos directly.
@@ -741,8 +748,13 @@ if(ALBANY_DEMO_PDES)
   endif()
   target_include_directories(albanyPDEs PUBLIC
                              "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
-                              $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+                              $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>)
   list(APPEND ALBANY_LIBRARIES albanyPDEs)
+
+  install(TARGETS albanyPDEs EXPORT albany-export
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
 if (ALBANY_LANDICE)
@@ -767,7 +779,10 @@ if (NOT ALBANY_LIBRARIES_ONLY)
   set(ALBANY_EXECUTABLES Albany)
 
   add_executable(AlbanyAnalysis Main_Analysis.cpp)
-  set(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+  list (APPEND ALBANY_EXECUTABLES AlbanyAnalysis)
+
+  install(TARGETS ${ALBANY_EXECUTABLES} EXPORT albany-export
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 endif (NOT ALBANY_LIBRARIES_ONLY)
 
@@ -778,8 +793,9 @@ foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
   endif()
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
   target_include_directories(${ALB_EXEC} PUBLIC
-      $<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>
-      $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>)
+                             "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
+                              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
   # We may not want warnings from Trilinos and/or its TPLs...
   if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
     target_include_directories(${ALB_EXEC} SYSTEM PUBLIC
@@ -790,44 +806,45 @@ foreach(ALB_EXEC ${ALBANY_EXECUTABLES})
   endif()
 endforeach()
 
-if (INSTALL_ALBANY)
-  configure_package_config_file(AlbanyConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
-    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake
-    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR)
-  install(FILES ${HEADERS}
-    DESTINATION ${INCLUDE_INSTALL_DIR})
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h
-    DESTINATION ${INCLUDE_INSTALL_DIR})
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_GitVersion.h
-    DESTINATION ${INCLUDE_INSTALL_DIR})
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
-    DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake )
-  # Install each binary in the list
-  install(TARGETS ${ALBANY_EXECUTABLES} RUNTIME DESTINATION
-     ${BINARY_INSTALL_DIR})
-  install(TARGETS albanyLib EXPORT albany-export
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  if (ENABLE_DEMO_PDES)
-    install(TARGETS albanyPDEs EXPORT albany-export
-      LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-      ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  endif()
-  install(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
+##################################################
+#              Installation stuff                #
+##################################################
 
-  # Reverse albany libraries, so that they link correctly.
-  # Recall, -lA -lB means B *cannot* need stuff from A.
-  list (REVERSE ALBANY_LIBRARIES)
+configure_package_config_file(AlbanyConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake
+  PATH_VARS CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_LIBDIR)
 
-  set(TMP1 ${ALBANY_LIBRARIES} ${TPL_LIBRARIES})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_GitVersion.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake )
 
-  message("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
-  string(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
-  string(REPLACE ";" " -l" TMP3
-        "-L${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
-        " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
-  string(REPLACE "-l-L" "-L" ALBANY_LINK_LIBS ${TMP3})
-  configure_file(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
+install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake  FILE "albany-targets.cmake")
 
-endif()
+# Create dummy executable that links against all albany libs and its tpls
+# Then, read its link.txt file, to fetch all the actual library files we're linking against.
+# Note: link.txt will contain something like
+#   /path/to/mpicxx $flag1 ... $flagN /path/to/main.cpp.o -o dummy $lib1 ... $libN
+# We want to remove every string up to dummy, and keep only the libs afterward.
+
+# Parse dummy subproject folder
+add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
+                  ${CMAKE_BINARY_DIR}/dummy)
+
+add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
+                    COMMAND ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany
+                    ARGS --bin-dir ${CMAKE_BINARY_DIR}
+                         --install-lib-dir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                    DEPENDS ${CMAKE_BINARY_DIR}/src/Albany_GitVersion.h
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/dummy)
+
+add_custom_target (create_export_albany ALL
+                   DEPENDS ${CMAKE_BINARY_DIR}/export_albany.in)
+add_dependencies(create_export_albany ${ALBANY_LIBRARIES})
+
+# Install the file
+install (FILES ${CMAKE_BINARY_DIR}/export_albany.in
+         DESTINATION ${CMAKE_INSTALL_PREFIX})
