@@ -842,6 +842,7 @@ add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
 
 add_custom_target (create_export_albany ALL
                    DEPENDS ${CMAKE_BINARY_DIR}/export_albany.in)
+add_dependencies(create_export_albany ${ALBANY_LIBRARIES})
 
 # Install the file
 install (FILES ${CMAKE_BINARY_DIR}/export_albany.in
