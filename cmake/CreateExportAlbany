@@ -55,7 +55,10 @@ def _main_func(description):
                 # It's either a -lXYZ lib or a link flag. Keep it as is.
                 libs.append(item)
             else:
-                lib_file_full = pathlib.Path(item).resolve()
+                # We want to get an abs path, with symlinks resolved *except* for symlinks
+                # in the file name, to avoid an error we're seeing where libdl.so points
+                # to the file libdl-2.28.so (an odd name: usually we see libdl.so.2.28)
+                lib_file_full = pathlib.Path(item).parent.resolve() / pathlib.Path(item).name
                 if not lib_file_full.exists():
                     print (f"could not locate lib: {lib_file_full}")
                     print (f"cwd: {os.getcwd()}")
