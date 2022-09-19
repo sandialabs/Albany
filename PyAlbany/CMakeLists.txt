@@ -127,16 +127,10 @@ EXECUTE_PROCESS(COMMAND
 
 IF(NOT Exomerge_VERSION_ERROR)
   MESSAGE("  -- Exomerge Enabled.")
-  SET(PYALBANY_EXTREME_EVENTS true)
+  SET(PYALBANY_EXOMERGE_ENABLED true)
 ELSE()
   MESSAGE("  -- Exomerge NOT Enabled.")
-  SET(PYALBANY_EXTREME_EVENTS false)
-ENDIF()
-
-IF(PYALBANY_EXTREME_EVENTS)
-  MESSAGE("-- PyAlbany Extreme Events Enabled.")
-ELSE()
-  MESSAGE("-- PyAlbany Extreme Events NOT Enabled.")
+  SET(PYALBANY_EXOMERGE_ENABLED false)
 ENDIF()
 
 IF(ALBANY_PYTHON_TESTS)
@@ -150,8 +144,8 @@ add_subdirectory( src )
 # Python files to install
 FILE(GLOB PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/*.py)
 
-IF(NOT PYALBANY_EXTREME_EVENTS)
-  list(REMOVE_ITEM PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/ExtremeEvent.py)
+IF(NOT PYALBANY_EXOMERGE_ENABLED)
+  list(REMOVE_ITEM PyAlbanyPyFiles ${CMAKE_CURRENT_SOURCE_DIR}/python/FEM_postprocess.py)
 ENDIF()
 
 

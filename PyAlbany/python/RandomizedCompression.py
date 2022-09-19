@@ -22,7 +22,7 @@
 
 
 
-from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany import AlbanyInterface as pa
 from PyAlbany import Utils as utils
 
 import numpy as np
@@ -61,7 +61,7 @@ def singlePass(Op, k, comm=utils.getDefaultComm()):
     q_view = q.getLocalViewHost()
     q_view[:, :] = y_view[:, :]
     q.setLocalViewHost(q_view)
-    wpa.orthogTpMVecs(q, nMaxOrthog)
+    pa.orthogTpMVecs(q, nMaxOrthog)
 
     C = utils.innerMVector(q, omega)
     D = utils.innerMVector(q, y)
@@ -124,7 +124,7 @@ def doublePassNonSymmetric(Op, k, comm = utils.getDefaultComm()):
 
     qy_view[:, :] = y_view[:, :]
     qy.setLocalViewHost(qy_view)
-    wpa.orthogTpMVecs(qy, nMaxOrthog)
+    pa.orthogTpMVecs(qy, nMaxOrthog)
 
     z = Op.dot(qy)
 
@@ -133,7 +133,7 @@ def doublePassNonSymmetric(Op, k, comm = utils.getDefaultComm()):
     
     qz_view[:, :] = z_view[:, :]
     qz.setLocalViewHost(qz_view)
-    wpa.orthogTpMVecs(qz, nMaxOrthog)
+    pa.orthogTpMVecs(qz, nMaxOrthog)
 
     R = utils.innerMVector(qz, z)
     vhat, sig, uhat = np.linalg.svd(R, full_matrices=False)
@@ -175,7 +175,7 @@ def doublePassSymmetric(Op, k, comm = utils.getDefaultComm()):
     
     q_view[:, :] = y_view[:, :]
     q.setLocalViewHost(q_view)
-    wpa.orthogTpMVecs(q, nMaxOrthog)
+    pa.orthogTpMVecs(q, nMaxOrthog)
 
     z = Op.dot(q)
     B = utils.innerMVector(q, z)
@@ -268,7 +268,7 @@ def HODLR(Op, L, k, comm = utils.getDefaultComm()):
              qys_view = qys[idx].getLocalViewHost()
              qys_view[Hidxsetloc[l][j],] = y_view[Hidxsetloc[l][j], :]
              qys[idx].setLocalViewHost(qys_view)
-             wpa.orthogTpMVecs(qys[idx], nMaxOrthog)
+             pa.orthogTpMVecs(qys[idx], nMaxOrthog)
              qys_view = qys[idx].getLocalViewHost()
              qy_view[Hidxsetloc[l][j], :] = qys_view[Hidxsetloc[l][j], :]
          
@@ -301,7 +301,7 @@ def HODLR(Op, L, k, comm = utils.getDefaultComm()):
              zs_view[Hidxsetloc[l][j], :] = z_view[Hidxsetloc[l][j], :]
              qzs_view[:, :] = zs_view[:, :]
              qzs[idx].setLocalViewHost(qzs_view)
-             wpa.orthogTpMVecs(qzs[idx], nMaxOrthog)
+             pa.orthogTpMVecs(qzs[idx], nMaxOrthog)
 
          Rs = [utils.innerMVector(qzs[j], zs[j]) for j in range(2**l)]
          Uhats = [None for j in range(2**l)]

@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from PyAlbany import Utils
-from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany import AlbanyInterface as pa
 import os
 
 class TestSteadyHeat(unittest.TestCase):
@@ -32,7 +32,7 @@ class TestSteadyHeat(unittest.TestCase):
         omega.setLocalViewHost(omega_view)
         
         # call the orthonormalization method
-        wpa.orthogTpMVecs(omega, 2)
+        pa.orthogTpMVecs(omega, 2)
         
         # check that the vectors are now orthonormal
         tol = 1.e-12

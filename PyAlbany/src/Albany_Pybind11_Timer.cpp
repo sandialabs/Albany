@@ -8,32 +8,21 @@
 
 namespace py = pybind11;
 
-RCP_Time createRCPTime(const std::string name) {
-    return Teuchos::rcp<Teuchos::Time>(new Teuchos::Time(name));
+Teuchos::Time createRCPTime(const std::string name) {
+    return Teuchos::Time(name);
 }
 
 void pyalbany_time(pybind11::module &m) {
-    py::class_<RCP_Time>(m, "Time")
+    py::class_<Teuchos::Time, Teuchos::RCP<Teuchos::Time>>(m, "Time")
         .def(py::init(&createRCPTime))
-        .def("totalElapsedTime",[](RCP_Time &m){
-            return m->totalElapsedTime();
-        })
-        .def("name",[](RCP_Time &m){
-            return m->name();
-        })
-        .def("start",[](RCP_Time &m){
-            return m->start();
-        })
-        .def("stop",[](RCP_Time &m){
-            return m->stop();
-        });
+        .def("totalElapsedTime", &Teuchos::Time::totalElapsedTime)
+        .def("name", &Teuchos::Time::name)
+        .def("start", &Teuchos::Time::start)
+        .def("stop", &Teuchos::Time::stop);
 
-    py::class_<RCP_StackedTimer>(m, "RCPStackedTimer")
-        .def(py::init())
-        .def("accumulatedTime",[](RCP_StackedTimer &m, const std::string name){
-            return m->accumulatedTime(name);
-        })
-        .def("baseTimerAccumulatedTime",[](RCP_StackedTimer &m, const std::string name){
-            return m->findBaseTimer(name)->accumulatedTime();
+    py::class_<Teuchos::StackedTimer, Teuchos::RCP<Teuchos::StackedTimer>>(m, "StackedTimer")
+        .def("accumulatedTime", &Teuchos::StackedTimer::accumulatedTime)
+        .def("baseTimerAccumulatedTime",[](Teuchos::StackedTimer &m, const std::string name){
+            return m.findBaseTimer(name)->accumulatedTime();
         });
 }

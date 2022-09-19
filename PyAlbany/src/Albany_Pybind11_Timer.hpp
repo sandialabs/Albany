@@ -9,19 +9,10 @@
 
 #include "Teuchos_StackedTimer.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "Albany_Pybind11_Include.hpp"
 
 using RCP_StackedTimer = Teuchos::RCP<Teuchos::StackedTimer>;
 using RCP_Time = Teuchos::RCP<Teuchos::Time>;
-
-/**
- * \brief createRCPTime function
- * 
- * This function is used to create an RCP to a new Teuchos::Time
- * associated to the input name.
- */
-RCP_Time createRCPTime(const std::string name);
 
 void pyalbany_time(pybind11::module &m);
 

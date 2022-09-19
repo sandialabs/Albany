@@ -36,7 +36,7 @@
 
 #include <Teuchos_TwoDArray.hpp>
 
-using Teuchos_Comm_PyAlbany = Teuchos::Comm<int>;
+using Teuchos_Comm_PyAlbany = Teuchos::MpiComm<int>;
 using RCP_Teuchos_Comm_PyAlbany = Teuchos::RCP<const Teuchos_Comm_PyAlbany >;
 
 namespace PyAlbany
@@ -78,18 +78,23 @@ namespace PyAlbany
    */
     class PyParallelEnv
     {
-    public:
+    private:
         RCP_Teuchos_Comm_PyAlbany comm;
         const int num_threads, num_numa, device_id;
         int rank;
 
+    public:
         PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads = -1, int _num_numa = -1, int _device_id = -1);
         ~PyParallelEnv()
         {
-            Kokkos::finalize_all();
             if (rank == 0)
                 std::cout << "~PyParallelEnv()\n";
         }
+        int getNumThreads() const { return num_threads; }
+        int getNumNuma() const { return num_numa; }
+        int getDeviceID() const { return device_id; }
+        RCP_Teuchos_Comm_PyAlbany getComm() const { return comm; }
+        void setComm(RCP_Teuchos_Comm_PyAlbany _comm) {comm = _comm;}
     };
 
     /**
@@ -115,6 +120,13 @@ namespace PyAlbany
     void writeParameterList(std::string filename, Teuchos::RCP<Teuchos::ParameterList> parameterList);
 
     /**
+   * \brief finalizeKokkos function
+   * 
+   * The function finalizes Kokkos if it has been previously initialized.
+   */
+    void finalizeKokkos();
+
+    /**
    * \brief getRankZeroMap function
    * 
    * The function returns an RCP to a map where all IDs are stored on Rank 0.
@@ -132,7 +144,6 @@ namespace PyAlbany
     class PyProblem
     {
     private:
-#ifndef SWIG
         bool forwardHasBeenSolved;
         bool inverseHasBeenSolved;
         Teuchos::RCP<PyParallelEnv> pyParallelEnv;
@@ -150,7 +161,6 @@ namespace PyAlbany
         Teuchos::Array<Teuchos::RCP<Thyra_MultiVector>> thyraDirections;
 
         Teuchos::Array<Teuchos::RCP<Thyra_Vector>> thyraParameter;
-#endif
     public:
         PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParallelEnv);
 

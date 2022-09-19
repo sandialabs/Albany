@@ -4,15 +4,15 @@ Documentation for the PyAlbany.Utils module.
 This module provides utility functions for the Python wrapper of Albany (wpyalbany).
 """
 
-from PyAlbany import Albany_Pybind11 as wpa
+from PyAlbany import AlbanyInterface as pa
 import numpy as np
 import sys
 
 def createMultiVector(map, n):
-    return wpa.RCPPyMultiVector(map, n, True)
+    return pa.PyMultiVector(map, n, True)
 
 def createVector(map):
-    return wpa.RCPPyVector(map, True)
+    return pa.PyVector(map, True)
 
 def norm(distributedVector):
     """@brief Computes the norm-2 of a distributed vector using Python and Teuchos MPI communicator."""
@@ -48,7 +48,7 @@ def innerMVectorMat(distributedMVector, array):
 
 def getDefaultComm():
     from mpi4py import MPI
-    return wpa.getTeuchosComm(MPI.COMM_WORLD)
+    return pa.getTeuchosComm(MPI.COMM_WORLD)
 
 def createDefaultParallelEnv(comm = getDefaultComm(), n_threads=-1,n_numa=-1,device_id=-1):
     """@brief Creates a default parallel environment.
@@ -56,23 +56,23 @@ def createDefaultParallelEnv(comm = getDefaultComm(), n_threads=-1,n_numa=-1,dev
     This function initializes Kokkos; Kokkos will be finalized when the destructor of the returned ParallelEnv 
     object is called.
     """
-    return wpa.PyParallelEnv(comm,n_threads,n_numa,device_id)
+    return pa.PyParallelEnv(comm,n_threads,n_numa,device_id)
 
 def createAlbanyProblem(filename, parallelEnv):
     """@brief Creates an Albany problem given a yaml file and a parallel environment."""
-    return wpa.PyProblem(filename, parallelEnv)
+    return pa.PyProblem(filename, parallelEnv)
 
 def createParameterList(filename, parallelEnv):
     """@brief Creates a parameter list from a file."""
-    return wpa.getParameterList(filename, parallelEnv)
+    return pa.getParameterList(filename, parallelEnv)
 
 def createEmptyParameterList():
     """@brief Creates an empty parameter list."""
-    return wpa.RCPPyParameterList()
+    return pa.PyParameterList()
 
 def writeParameterList(filename, parameterList):
     """@brief Writes a parameter list to a file."""
-    wpa.writeParameterList(filename, parameterList)
+    pa.writeParameterList(filename, parameterList)
 
 def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True, readOnRankZero = True, dtype="d"):
     """@brief Loads distributed a multivector stored using numpy format.
@@ -116,7 +116,7 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
         mvector.setLocalViewHost(mvector_view)
     else:
         if readOnRankZero:
-            map0 = wpa.getRankZeroMap(map)
+            map0 = pa.getRankZeroMap(map)
             mvector0 = createMultiVector(map0, n_cols)
             if rank == 0:
                 if useBinary:
@@ -131,7 +131,7 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
                     for i in range(0, n_cols):
                         mvector0_view[:,i] = mVectorNP[i,:]
                 mvector0.setLocalViewHost(mvector0_view)
-            mvector = wpa.scatterMVector(mvector0, map)
+            mvector = pa.scatterMVector(mvector0, map)
         else:
             if useBinary:
                 mVectorNP = np.load(filename+'.npy')
@@ -171,7 +171,7 @@ def writeMVector(filename, mvector, distributedFile = True, useBinary = True):
                 np.savetxt(filename+'.txt', mvector_view.transpose())
     else:
         if nproc > 1:
-            mvectorRank0 = wpa.gatherMVector(mvector, mvector.getMap())
+            mvectorRank0 = pa.gatherMVector(mvector, mvector.getMap())
         else:
             mvectorRank0 = mvector
         mvectorRank0_view = mvectorRank0.getLocalViewHost()
@@ -185,7 +185,7 @@ def createTimers(names):
     """@brief Creates Teuchos timers."""
     timers_list = []
     for name in names:
-        timers_list.append(wpa.Time(name))
+        timers_list.append(pa.Time(name))
     return timers_list
 
 def printTimers(timers_list, filename=None, verbose=True):

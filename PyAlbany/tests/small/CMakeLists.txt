@@ -4,9 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-IF(PYALBANY_EXTREME_EVENTS)
-    add_subdirectory(ExtremeEvent)
-ENDIF()
+add_subdirectory(ExtremeEvent)
 add_subdirectory(IO)
 add_subdirectory(SteadyHeat)
 add_subdirectory(RandCompress)
