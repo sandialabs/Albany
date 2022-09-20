@@ -22,7 +22,8 @@ int main( int argc, char* argv[] )
   {
     Teuchos::FancyOStream out(Teuchos::rcpFromRef(std::cout));
     out.setOutputToRootOnly(0);
-    PHX::exec_space::print_configuration(out);
+    //PHX::exec_space::print_configuration(out);
+    PHX::exec_space().print_configuration(out);
   }
   Teuchos::UnitTestRepository::setGloballyReduceTestResult(true);
   return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
