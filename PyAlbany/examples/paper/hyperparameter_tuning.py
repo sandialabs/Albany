@@ -14,14 +14,14 @@ def run_forward(nSweeps, damping, parallelEnv):
     timerName = "PyAlbany Total Time@PyAlbany: performSolve@Piro::NOXSolver::evalModelImpl::solve@Thyra::NOXNonlinearSolver::solve@NOX Total Linear Solve"
     filename = "input_scalar.yaml"
 
-    parameter = Utils.createParameterList(
+    paramList = Utils.createParameterList(
         filename, parallelEnv
     )
-    ifpack2 = parameter.sublist('Piro').sublist('NOX').sublist('Direction').sublist('Newton').sublist('Stratimikos Linear Solver').sublist('Stratimikos').sublist('Preconditioner Types').sublist('Ifpack2').sublist('Ifpack2 Settings')
+    ifpack2 = paramList.sublist('Piro').sublist('NOX').sublist('Direction').sublist('Newton').sublist('Stratimikos Linear Solver').sublist('Stratimikos').sublist('Preconditioner Types').sublist('Ifpack2').sublist('Ifpack2 Settings')
     ifpack2.set('relaxation: sweeps', int(nSweeps))
     ifpack2.set('relaxation: damping factor', damping)
 
-    problem = Utils.createAlbanyProblem(parameter, parallelEnv)
+    problem = Utils.createAlbanyProblem(paramList, parallelEnv)
     problem.performSolve()
 
     return problem.getStackedTimer().baseTimerAccumulatedTime(timerName)

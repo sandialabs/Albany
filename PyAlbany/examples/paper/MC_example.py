@@ -16,11 +16,11 @@ myGlobalRank = comm.rank
 
 # Create an Albany problem:
 filename = "input_scalar.yaml"
-parameter = Utils.createParameterList(
+paramList = Utils.createParameterList(
     filename, parallelEnv
 )
 
-problem = Utils.createAlbanyProblem(parameter, parallelEnv)
+problem = Utils.createAlbanyProblem(paramList, parallelEnv)
 
 parameter_map_0 = problem.getParameterMap(0)
 parameter_0 = Utils.createVector(parameter_map_0)
