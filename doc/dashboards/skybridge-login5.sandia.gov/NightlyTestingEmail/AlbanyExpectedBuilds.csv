@@ -16,10 +16,6 @@ Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-Cism-Albany
 Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-No-Epetra-Albany 
 Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-Openmp-Albany
 Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Debug-FPE-Albany
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Trilinos-extended-sts
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Trilinos-eti-longdouble
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-alegra-xfem
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-alegra-xfem-eti
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-trilinos
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-albany
 Nightly, cee-compute006, Linux-3.10.0-1062.1.2.el7.x86_64-base-trilinos
