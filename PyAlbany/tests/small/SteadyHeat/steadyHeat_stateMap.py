@@ -22,11 +22,11 @@ class TestSteadyHeat(unittest.TestCase):
         parameter        = Utils.createMultiVector(parameter_map, 1)
         num_elems        = parameter_map.getLocalNumElements()
 
-        parameter_view = parameter.getLocalViewHost()
+        parameter_view = parameter.getLocalView()
 
         parameter_view[:] = 2.0*np.ones((num_elems, 1))
 
-        parameter.setLocalViewHost(parameter_view)
+        parameter.setLocalView(parameter_view)
     
 
         problem.performSolve()
@@ -39,8 +39,8 @@ class TestSteadyHeat(unittest.TestCase):
         setup_time = stackedTimer.accumulatedTime("PyAlbany: Setup Time")
         print("setup_time = " + str(setup_time))
         tol = 1.e-8
-        state_view = state.getLocalViewHost()
-        state_ref_view = state_ref.getLocalViewHost()
+        state_view = state.getLocalView()
+        state_ref_view = state_ref.getLocalView()
         self.assertTrue(np.linalg.norm(state_ref_view - state_view) < tol)
 
 

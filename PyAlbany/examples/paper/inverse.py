@@ -15,17 +15,17 @@ myGlobalRank = MPI.COMM_WORLD.rank
 
 # Create an Albany problem:
 filename = "input_distributed.yaml"
-parameter = Utils.createParameterList(
+paramList = Utils.createParameterList(
     filename, parallelEnv
 )
 
-problem = Utils.createAlbanyProblem(parameter, parallelEnv)
+problem = Utils.createAlbanyProblem(paramList, parallelEnv)
 problem.performAnalysis()
 problem.performSolve()
 
 para_0 = problem.getParameter(0)
 
-para_0_view = para_0.getLocalViewHost()
+para_0_view = para_0.getLocalView()
 
 print(para_0_view)
 

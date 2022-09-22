@@ -27,12 +27,12 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
         mvector = Utils.createMultiVector(parameter_map, n_cols)
 
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
         mvector_view[:,0] = 1.*(rank+1)
         mvector_view[:,1] = -1.*(rank+1)
         mvector_view[:,2] = 3.26*(rank+1)
         mvector_view[:,3] = -3.1*(rank+1)
-        mvector.setLocalViewHost(mvector_view)
+        mvector.setLocalView(mvector_view)
 
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = True, useBinary = True)
 
@@ -54,12 +54,12 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
         mvector = Utils.createMultiVector(parameter_map, n_cols)
 
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
         mvector_view[:,0] = 1.*(rank+1)
         mvector_view[:,1] = -1.*(rank+1)
         mvector_view[:,2] = 3.26*(rank+1)
         mvector_view[:,3] = -3.1*(rank+1)
-        mvector.setLocalViewHost(mvector_view)
+        mvector.setLocalView(mvector_view)
 
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = True, useBinary = False)
 
@@ -81,12 +81,12 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
         mvector = Utils.createMultiVector(parameter_map, n_cols)
 
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
         mvector_view[:,0] = 1.*(rank+1)
         mvector_view[:,1] = -1.*(rank+1)
         mvector_view[:,2] = 3.26*(rank+1)
         mvector_view[:,3] = -3.1*(rank+1)
-        mvector.setLocalViewHost(mvector_view)
+        mvector.setLocalView(mvector_view)
 
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = False, useBinary = True)
 
@@ -108,12 +108,12 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
         mvector = Utils.createMultiVector(parameter_map, n_cols)
 
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
         mvector_view[:,0] = 1.*(rank+1)
         mvector_view[:,1] = -1.*(rank+1)
         mvector_view[:,2] = 3.26*(rank+1)
         mvector_view[:,3] = -3.1*(rank+1)
-        mvector.setLocalViewHost(mvector_view)
+        mvector.setLocalView(mvector_view)
 
         Utils.writeMVector(file_dir+'/'+mvector_filename, mvector, distributedFile = False, useBinary = False)
 
@@ -135,7 +135,7 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
 
         mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = True)
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
 
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
@@ -161,7 +161,7 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
 
         mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = True, useBinary = False)
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
 
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
@@ -186,7 +186,7 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
 
         mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = False)
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
 
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
@@ -211,7 +211,7 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
 
         mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = False, useBinary = False)
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
 
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
@@ -236,7 +236,7 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
 
         mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = False, readOnRankZero = False)
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
 
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
@@ -261,7 +261,7 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
 
         mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = False, useBinary = False, readOnRankZero = False)
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
 
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)

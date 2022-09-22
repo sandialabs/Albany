@@ -54,7 +54,7 @@ def main(parallelEnv):
     Utils.writeMVector("hessian_all_nprocs_"+str(nprocs), hessian, distributedFile = False, useBinary = False)
     timers[5].stop()
 
-    hessian_view = hessian.getLocalViewHost()
+    hessian_view = hessian.getLocalView()
     expected_hessian = np.array([-0.000195717646, -0.000272421749, -4.99117153e-05, -0.000453498014])
     print(hessian_view[0,:])
     print(expected_hessian)

@@ -31,14 +31,14 @@ class TestSteadyHeat(unittest.TestCase):
         parameter_map_0 = problem.getParameterMap(0)
         para_0_new = Utils.createVector(parameter_map_0)
 
-        para_0_new_view = para_0_new.getLocalViewHost()
+        para_0_new_view = para_0_new.getLocalView()
 
         parameter_map_1 = problem.getParameterMap(1)
         para_1_new = Utils.createVector(parameter_map_1)
 
-        para_1_new_view = para_1_new.getLocalViewHost()
+        para_1_new_view = para_1_new.getLocalView()
         para_1_new_view[:] = 0.333333
-        para_1_new.setLocalViewHost(para_1_new_view)
+        para_1_new.setLocalView(para_1_new_view)
 
 
         n_values = 5
@@ -52,12 +52,12 @@ class TestSteadyHeat(unittest.TestCase):
 
         for i in range(0, n_values):
             para_0_new_view[0] = para_0_values[i]
-            para_0_new.setLocalViewHost(para_0_new_view)
+            para_0_new.setLocalView(para_0_new_view)
             problem.setParameter(0, para_0_new)
 
             problem.performSolve()
 
-            responses[i] = problem.getResponse(0).getLocalViewHost()[0]
+            responses[i] = problem.getResponse(0).getLocalView()[0]
 
         print("p = " + str(para_0_values))
         print("QoI = " + str(responses))

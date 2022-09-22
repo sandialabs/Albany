@@ -26,10 +26,10 @@ class TestSteadyHeat(unittest.TestCase):
         
         # generate vectors with random entries
         omega = Utils.createMultiVector(parameter_map, n_vecs)
-        omega_view = omega.getLocalViewHost()
+        omega_view = omega.getLocalView()
         for i in range(n_vecs):
             omega_view[:,i] = np.random.randn(num_elems)
-        omega.setLocalViewHost(omega_view)
+        omega.setLocalView(omega_view)
         
         # call the orthonormalization method
         pa.orthogTpMVecs(omega, 2)

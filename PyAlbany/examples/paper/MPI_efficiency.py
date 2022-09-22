@@ -45,13 +45,13 @@ for nProcs in range(1, nMaxProcs+1):
         timers[0].start()
 
         filename = "input_scalar.yaml"
-        parameter = Utils.createParameterList(
+        paramList = Utils.createParameterList(
             filename, parallelEnv
         )
 
         if weak_scaling:
-            parameter.sublist("Discretization").set("2D Elements", 40*nProcs)
-        problem = Utils.createAlbanyProblem(parameter, parallelEnv)
+            paramList.sublist("Discretization").set("2D Elements", 40*nProcs)
+        problem = Utils.createAlbanyProblem(paramList, parallelEnv)
         timers[0].stop()
 
         timers[1].start()

@@ -37,13 +37,13 @@ def innerMVectorMat(distributedMVector, array):
     r1 = distributedMVector.getNumVectors()
     r2 = array.shape[1]
     C = createMultiVector(distributedMVector.getMap(), r2)
-    C_view = C.getLocalViewHost()
-    distributedMVector_view = distributedMVector.getLocalViewHost()
+    C_view = C.getLocalView()
+    distributedMVector_view = distributedMVector.getLocalView()
 
     for k in range(r1):
         for i in range(r2):
             C_view[:,i] += array[k, i] * distributedMVector_view[:,k]
-    C.setLocalViewHost(C_view)
+    C.setLocalView(C_view)
     return C 
 
 def getDefaultComm():
@@ -97,23 +97,23 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
         else:
             mVectorNP = np.loadtxt(filename+'.txt')
 
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
         if(mVectorNP.ndim == 1 and n_cols == 1):
             mvector_view[:,0] = mVectorNP
         else: 
             for i in range(0, n_cols):
                 mvector_view[:,i] = mVectorNP[i,:]
-        mvector.setLocalViewHost(mvector_view)
+        mvector.setLocalView(mvector_view)
 
     elif distributedFile:
         if useBinary:
             mVectorNP = np.load(filename+'_'+str(rank)+'.npy')
         else:
             mVectorNP = np.loadtxt(filename+'_'+str(rank)+'.txt')
-        mvector_view = mvector.getLocalViewHost()
+        mvector_view = mvector.getLocalView()
         for i in range(0, n_cols):
             mvector_view[:,i] = mVectorNP[i,:]
-        mvector.setLocalViewHost(mvector_view)
+        mvector.setLocalView(mvector_view)
     else:
         if readOnRankZero:
             map0 = pa.getRankZeroMap(map)
@@ -124,24 +124,24 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
                 else:
                     mVectorNP = np.loadtxt(filename+'.txt')
 
-                mvector0_view = mvector0.getLocalViewHost()
+                mvector0_view = mvector0.getLocalView()
                 if(mVectorNP.ndim == 1 and n_cols == 1):
                     mvector0_view[:,0] = mVectorNP
                 else: 
                     for i in range(0, n_cols):
                         mvector0_view[:,i] = mVectorNP[i,:]
-                mvector0.setLocalViewHost(mvector0_view)
+                mvector0.setLocalView(mvector0_view)
             mvector = pa.scatterMVector(mvector0, map)
         else:
             if useBinary:
                 mVectorNP = np.load(filename+'.npy')
             else:
                 mVectorNP = np.loadtxt(filename+'.txt')
-            mvector_view = mvector.getLocalViewHost()
+            mvector_view = mvector.getLocalView()
             for lid in range(0, map.getLocalNumElements()):
                 gid = map.getGlobalElement(lid)
                 mvector_view[lid,:] = mVectorNP[:,gid]
-            mvector.setLocalViewHost(mvector_view)
+            mvector.setLocalView(mvector_view)
     return mvector
 
 def writeMVector(filename, mvector, distributedFile = True, useBinary = True):
@@ -157,7 +157,7 @@ def writeMVector(filename, mvector, distributedFile = True, useBinary = True):
     """    
     rank = mvector.getMap().getComm().getRank()
     nproc = mvector.getMap().getComm().getSize()
-    mvector_view = mvector.getLocalViewHost()
+    mvector_view = mvector.getLocalView()
     if distributedFile:
         if useBinary:
             if nproc > 1:
@@ -174,7 +174,7 @@ def writeMVector(filename, mvector, distributedFile = True, useBinary = True):
             mvectorRank0 = pa.gatherMVector(mvector, mvector.getMap())
         else:
             mvectorRank0 = mvector
-        mvectorRank0_view = mvectorRank0.getLocalViewHost()
+        mvectorRank0_view = mvectorRank0.getLocalView()
         if rank == 0:
             if useBinary:
                 np.save(filename+'.npy', mvectorRank0_view.transpose())

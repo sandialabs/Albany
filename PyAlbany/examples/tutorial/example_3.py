@@ -11,7 +11,7 @@ def main(parallelEnv):
     m_directions = 4
     directions = Utils.createMultiVector(parameter_map, m_directions)
 
-    directions_view = directions.getLocalViewHost()
+    directions_view = directions.getLocalView()
 
     # Numpy operations, such as assignments, can then be performed on the local entries:
     directions_view[:,0] = 1.        # Set all entries of v_0 to   1
@@ -19,7 +19,7 @@ def main(parallelEnv):
     directions_view[:,2] = 3.        # Set all entries of v_2 to   3
     directions_view[:,3] = -3.       # Set all entries of v_3 to  -3
 
-    directions.setLocalViewHost(directions_view)
+    directions.setLocalView(directions_view)
 
     # Now that we have an RCP to the directions, we provide it to the Albany problem:
     problem.setDirections(0, directions)

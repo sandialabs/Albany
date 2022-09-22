@@ -13,7 +13,7 @@ def main(parallelEnv):
     # In this example, we illustrate how to return values as output without
     # relying on Kokkos-related object; the local data of the vectors are deeply
     # copied to a new numpy array:
-    sensitivity_out = np.copy(sensitivity.getLocalViewHost()[:,0])
+    sensitivity_out = np.copy(sensitivity.getLocalView()[:,0])
     return sensitivity_out
 
 if __name__ == "__main__":

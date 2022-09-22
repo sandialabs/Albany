@@ -26,15 +26,15 @@ def main(parallelEnv):
 
     # Create an Albany problem:
     filename = "input_distributed.yaml"
-    parameter = Utils.createParameterList(filename, parallelEnv)
+    paramList = Utils.createParameterList(filename, parallelEnv)
 
-    problem = Utils.createAlbanyProblem(parameter, parallelEnv)
+    problem = Utils.createAlbanyProblem(paramList, parallelEnv)
     problem.performAnalysis()
-    parameterDataMisfit = Utils.createParameterList(filename, parallelEnv)
-    parameterDataMisfit.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 1").set("Scaling", 0.0)
+    paramListDataMisfit = Utils.createParameterList(filename, parallelEnv)
+    paramListDataMisfit.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 1").set("Scaling", 0.0)
     
-    parameterDataMisfit.sublist("Discretization").set("Exodus Output File Name", "steady2d_DataMisfit.exo")
-    problemDataMisfit = Utils.createAlbanyProblem(parameterDataMisfit, parallelEnv)
+    paramListDataMisfit.sublist("Discretization").set("Exodus Output File Name", "steady2d_DataMisfit.exo")
+    problemDataMisfit = Utils.createAlbanyProblem(paramListDataMisfit, parallelEnv)
     problemDataMisfit.setParameter(0, problem.getParameter(0)) 
     problemDataMisfit.performSolve()
     

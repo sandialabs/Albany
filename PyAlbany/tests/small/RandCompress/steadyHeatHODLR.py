@@ -66,8 +66,8 @@ class TestHODLR(unittest.TestCase):
                 idx0 = idxSet[l][0][0]
                 idx1 = idxSet[l][0][1]
                 idx2 = idxSet[l][1][1]
-                H12tilde = Us[l].getLocalViewHost()[idx0:idx1,:].dot(np.diag(sigs[l][0]).dot(Vs[l].getLocalViewHost()[idx1:idx2,:].T))
-                error12 = np.linalg.norm(H12tilde - H.getLocalViewHost()[idx1:idx2, idx0:idx1])
+                H12tilde = Us[l].getLocalView()[idx0:idx1,:].dot(np.diag(sigs[l][0]).dot(Vs[l].getLocalView()[idx1:idx2,:].T))
+                error12 = np.linalg.norm(H12tilde - H.getLocalView()[idx1:idx2, idx0:idx1])
                 # see equation (5) of "Compressing rank-structured matrices via randomized sampling" Martinsson (2016)
                 # for the error bound, this error does not take into account errors
                 # due to peeling

@@ -16,16 +16,16 @@ myGlobalRank = comm.rank
 
 # Create an Albany problem:
 filename = "input_scalar.yaml"
-parameter = Utils.createParameterList(
+paramList = Utils.createParameterList(
     filename, parallelEnv
 )
 
-problem = Utils.createAlbanyProblem(parameter, parallelEnv)
+problem = Utils.createAlbanyProblem(paramList, parallelEnv)
 
 parameter_map_0 = problem.getParameterMap(0)
 parameter_0 = Utils.createVector(parameter_map_0)
 
-parameter_0_view = parameter_0.getLocalViewHost()
+parameter_0_view = parameter_0.getLocalView()
 
 N = 200
 p_min = -2.
@@ -38,13 +38,13 @@ QoI = np.zeros((N,))
 # Loop over the N samples and evaluate the quantity of interest:
 for i in range(0, N):
     parameter_0_view[0] = p[i]
-    parameter_0.setLocalViewHost(parameter_0_view)
+    parameter_0.setLocalView(parameter_0_view)
     problem.setParameter(0, parameter_0)
 
     problem.performSolve()
 
     response = problem.getResponse(0)
-    QoI[i] = response.getLocalViewHost()[0]
+    QoI[i] = response.getLocalView()[0]
 
 if myGlobalRank == 0:
     f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8,4))
