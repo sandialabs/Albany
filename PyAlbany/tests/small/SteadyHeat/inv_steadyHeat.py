@@ -38,15 +38,15 @@ class TestSteadyHeat(unittest.TestCase):
         problem.performSolve()
 
         response_before_analysis = problem.getResponse(0)
-        response_before_analysis_view = response_before_analysis.getLocalViewHost()
+        response_before_analysis_view = response_before_analysis.getLocalView()
 
         problem.performAnalysis()
 
         para_0 = problem.getParameter(0)
         para_1 = problem.getParameter(1)
 
-        para_0_view = para_0.getLocalViewHost()
-        para_1_view = para_1.getLocalViewHost()
+        para_0_view = para_0.getLocalView()
+        para_1_view = para_1.getLocalView()
 
         print(para_0_view)
         print(para_1_view)
@@ -61,7 +61,7 @@ class TestSteadyHeat(unittest.TestCase):
         problem.performSolve()
 
         response_after_analysis = problem.getResponse(0)
-        response_after_analysis_view = response_after_analysis.getLocalViewHost()
+        response_after_analysis_view = response_after_analysis.getLocalView()
 
         print("Response before analysis " + str(response_before_analysis_view))
         print("Response after analysis " + str(response_after_analysis_view))
@@ -76,7 +76,7 @@ class TestSteadyHeat(unittest.TestCase):
         problem.performSolve()
 
         response = problem.getResponse(0)
-        response_view = response.getLocalViewHost()
+        response_view = response.getLocalView()
         print("Response after setParameter " + str(response_view))
         if rank == 0:
             self.assertTrue(np.abs(response_view[0] - g_target_2) < tol)

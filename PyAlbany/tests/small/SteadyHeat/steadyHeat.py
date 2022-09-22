@@ -23,14 +23,14 @@ class TestSteadyHeat(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
         directions = Utils.createMultiVector(parameter_map, n_directions)
 
-        directions_view = directions.getLocalViewHost()
+        directions_view = directions.getLocalView()
 
         directions_view[:,0] = 1.
         directions_view[:,1] = -1.
         directions_view[:,2] = 3.
         directions_view[:,3] = -3.
 
-        directions.setLocalViewHost(directions_view)
+        directions.setLocalView(directions_view)
 
         problem.setDirections(0, directions)
 
@@ -51,7 +51,7 @@ class TestSteadyHeat(unittest.TestCase):
         norm_target = 8.94463776843999921e-03
         h_target = np.array([0.009195356672103817, 0.009195356672103817, 0.027586070971800013, 0.027586070971800013])
         
-        g_data = response.getLocalViewHost()
+        g_data = response.getLocalView()
          
         norm = Utils.norm(sensitivity.getVector(0))
 

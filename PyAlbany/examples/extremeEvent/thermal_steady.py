@@ -26,7 +26,7 @@ def evaluate_responses(X, Y, problem, recompute=False):
 
         parameter_map = problem.getParameterMap(0)
         parameter = Utils.createVector(parameter_map)
-        para_view = parameter.getLocalViewHost()
+        para_view = parameter.getLocalView()
 
         n_x = len(X)
         n_y = len(Y)
@@ -37,7 +37,7 @@ def evaluate_responses(X, Y, problem, recompute=False):
             para_view[0] = X[i]
             for j in range(n_y):
                 para_view[1] = Y[j]
-                parameter.setLocalViewHost(para_view)
+                parameter.setLocalView(para_view)
                 problem.setParameter(0, parameter)
 
                 problem.performSolve()

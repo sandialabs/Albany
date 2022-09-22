@@ -25,7 +25,7 @@ problem.performSolve()
 
 para_0 = problem.getParameter(0)
 
-para_0_view = para_0.getLocalViewHost()
+para_0_view = para_0.getLocalView()
 
 print(para_0_view)
 

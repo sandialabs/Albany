@@ -8,7 +8,7 @@ def main(parallelEnv):
     # it and evaluate the response:
     problem.performSolve()
     response = problem.getResponse(0)
-    print(response.getLocalViewHost())
+    print(response.getLocalView())
 
 if __name__ == "__main__":
     comm = Utils.getDefaultComm()

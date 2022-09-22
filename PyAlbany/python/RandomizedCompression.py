@@ -51,16 +51,16 @@ def singlePass(Op, k, comm=utils.getDefaultComm()):
     omega = utils.createMultiVector(Op.Map, k)
     q     = utils.createMultiVector(Op.Map, k)
     
-    omega_view = omega.getLocalViewHost()
+    omega_view = omega.getLocalView()
     for i in range(k):
         omega_view[:,i] = np.random.randn(nElems)
-    omega.setLocalViewHost(omega_view)
+    omega.setLocalView(omega_view)
     y = Op.dot(omega)
     
-    y_view = y.getLocalViewHost()
-    q_view = q.getLocalViewHost()
+    y_view = y.getLocalView()
+    q_view = q.getLocalView()
     q_view[:, :] = y_view[:, :]
-    q.setLocalViewHost(q_view)
+    q.setLocalView(q_view)
     pa.orthogTpMVecs(q, nMaxOrthog)
 
     C = utils.innerMVector(q, omega)
@@ -112,27 +112,27 @@ def doublePassNonSymmetric(Op, k, comm = utils.getDefaultComm()):
     qy    = utils.createMultiVector(Op.Map, k)
     qz    = utils.createMultiVector(Op.Map, k)
     
-    omega_view = omega.getLocalViewHost()
+    omega_view = omega.getLocalView()
     for i in range(k):
         omega_view[:, i] = np.random.randn(nElems)
-    omega.setLocalViewHost(omega_view)
+    omega.setLocalView(omega_view)
 
     y = Op.dot(omega)
     
-    qy_view = qy.getLocalViewHost()
-    y_view = y.getLocalViewHost()
+    qy_view = qy.getLocalView()
+    y_view = y.getLocalView()
 
     qy_view[:, :] = y_view[:, :]
-    qy.setLocalViewHost(qy_view)
+    qy.setLocalView(qy_view)
     pa.orthogTpMVecs(qy, nMaxOrthog)
 
     z = Op.dot(qy)
 
-    qz_view = qz.getLocalViewHost()
-    z_view = z.getLocalViewHost()
+    qz_view = qz.getLocalView()
+    z_view = z.getLocalView()
     
     qz_view[:, :] = z_view[:, :]
-    qz.setLocalViewHost(qz_view)
+    qz.setLocalView(qz_view)
     pa.orthogTpMVecs(qz, nMaxOrthog)
 
     R = utils.innerMVector(qz, z)
@@ -164,17 +164,17 @@ def doublePassSymmetric(Op, k, comm = utils.getDefaultComm()):
     omega = utils.createMultiVector(Op.Map, k)
     q    = utils.createMultiVector(Op.Map, k)
      
-    omega_view = omega.getLocalViewHost()
+    omega_view = omega.getLocalView()
     for i in range(k):
         omega_view[:,i] = np.random.randn(nElems)
-    omega.setLocalViewHost(omega_view)
+    omega.setLocalView(omega_view)
 
     y = Op.dot(omega)
-    y_view = y.getLocalViewHost()
-    q_view = q.getLocalViewHost()
+    y_view = y.getLocalView()
+    q_view = q.getLocalView()
     
     q_view[:, :] = y_view[:, :]
-    q.setLocalViewHost(q_view)
+    q.setLocalView(q_view)
     pa.orthogTpMVecs(q, nMaxOrthog)
 
     z = Op.dot(q)
@@ -233,25 +233,25 @@ def HODLR(Op, L, k, comm = utils.getDefaultComm()):
            Construct structured random off-diagonal block sampling vectors
          """
          numPartitions = 2**(l+1)
-         omega_view = omega.getLocalViewHost()
+         omega_view = omega.getLocalView()
          omega_view[:, :] *= 0.
          for j in range(1, numPartitions, 2):
              omega_view[Hidxsetloc[l][j], :] = np.random.randn(len(Hidxsetloc[l][j]), k)
-         omega.setLocalViewHost(omega_view)
+         omega.setLocalView(omega_view)
          """
            generate column samples of off-diagonal blocks by peeling
          """
          y = Op.dot(omega)
-         y_view = y.getLocalViewHost()
-         x_view = x.getLocalViewHost()
+         y_view = y.getLocalView()
+         x_view = x.getLocalView()
          for lvl in range(l):
              for j in range(2**lvl):
                  VTomega = utils.innerMVector(Vs[lvl][j], omega)
-                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega)).getLocalViewHost()
+                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega)).getLocalView()
                  y_view[:, :] = y_view[:, :] - x_view[:, :]
 
                  UTomega = utils.innerMVector(Us[lvl][j], omega)
-                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega)).getLocalViewHost()
+                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega)).getLocalView()
                  y_view[:, :] = y_view[:, :] - x_view[:, :]
          # zero out unneeded rows
          for j in range(1, numPartitions, 2):
@@ -260,32 +260,32 @@ def HODLR(Op, L, k, comm = utils.getDefaultComm()):
          """
            orthogonalize column samples and store data in one MultiVector
          """
-         qy_view = qy.getLocalViewHost()
+         qy_view = qy.getLocalView()
          qy_view[:, :] *= 0.
          qys = [utils.createMultiVector(Op.Map, k) for j in range(2**l)]
          for j in range(0, numPartitions, 2):
              idx = int(j/2)
-             qys_view = qys[idx].getLocalViewHost()
+             qys_view = qys[idx].getLocalView()
              qys_view[Hidxsetloc[l][j],] = y_view[Hidxsetloc[l][j], :]
-             qys[idx].setLocalViewHost(qys_view)
+             qys[idx].setLocalView(qys_view)
              pa.orthogTpMVecs(qys[idx], nMaxOrthog)
-             qys_view = qys[idx].getLocalViewHost()
+             qys_view = qys[idx].getLocalView()
              qy_view[Hidxsetloc[l][j], :] = qys_view[Hidxsetloc[l][j], :]
          
          """
            generate row samples of off-diagonal blocks by peeling
          """
-         qy.setLocalViewHost(qy_view)
+         qy.setLocalView(qy_view)
          z = Op.dot(qy)
-         z_view = z.getLocalViewHost()
+         z_view = z.getLocalView()
          for lvl in range(l):
              for j in range(2**lvl):
                  VTomega = utils.innerMVector(Vs[lvl][j], omega)
-                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega)).getLocalViewHost()
+                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega)).getLocalView()
                  z_view[:, :] = z_view[:, :] - x_view[:, :]
 
                  UTomega = utils.innerMVector(Us[lvl][j], omega)
-                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega)).getLocalViewHost()
+                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega)).getLocalView()
                  z_view[:, :] = z_view[:, :] - x_view[:, :]
          # zero out unneeded rows
          for j in range(0, numPartitions, 2):
@@ -296,11 +296,11 @@ def HODLR(Op, L, k, comm = utils.getDefaultComm()):
 
          for j in range(1, numPartitions, 2):
              idx = int((j-1)/2)
-             zs_view = zs[idx].getLocalViewHost()
-             qzs_view = qzs[idx].getLocalViewHost()
+             zs_view = zs[idx].getLocalView()
+             qzs_view = qzs[idx].getLocalView()
              zs_view[Hidxsetloc[l][j], :] = z_view[Hidxsetloc[l][j], :]
              qzs_view[:, :] = zs_view[:, :]
-             qzs[idx].setLocalViewHost(qzs_view)
+             qzs[idx].setLocalView(qzs_view)
              pa.orthogTpMVecs(qzs[idx], nMaxOrthog)
 
          Rs = [utils.innerMVector(qzs[j], zs[j]) for j in range(2**l)]

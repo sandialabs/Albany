@@ -172,20 +172,20 @@ RCP_PyMultiVector createRCPPyMultiVector2(RCP_ConstPyMap &map, const int n_cols,
     return Teuchos::rcp<Tpetra_MultiVector>(new Tpetra_MultiVector(map, n_cols, zeroOut));
 }
 
-pybind11::array_t<ST> getLocalViewHost(RCP_PyVector &vector) {
+pybind11::array_t<ST> getLocalView(RCP_PyVector &vector) {
     return convert_kokkos_to_np(Kokkos::subview(vector->getLocalViewDevice(Tpetra::Access::ReadOnly), Kokkos::ALL, 0));
 }
 
-pybind11::array_t<ST> getLocalViewHost(RCP_PyMultiVector &mvector) {
+pybind11::array_t<ST> getLocalView(RCP_PyMultiVector &mvector) {
     return convert_kokkos_to_np(mvector->getLocalViewDevice(Tpetra::Access::ReadOnly));
 }
 
-void setLocalViewHost(RCP_PyVector &vector, pybind11::array_t<double> input) {
+void setLocalView(RCP_PyVector &vector, pybind11::array_t<double> input) {
     auto view = Kokkos::subview(vector->getLocalViewDevice(Tpetra::Access::ReadWrite), Kokkos::ALL, 0);
     convert_np_to_kokkos_1d(input, view);
 }
 
-void setLocalViewHost(RCP_PyMultiVector &mvector, pybind11::array_t<double> input) {
+void setLocalView(RCP_PyMultiVector &mvector, pybind11::array_t<double> input) {
     auto view = mvector->getLocalViewDevice(Tpetra::Access::ReadWrite);
     convert_np_to_kokkos_2d(input, view);
 }
@@ -248,11 +248,11 @@ void pyalbany_vector(pybind11::module &m){
         .def(py::init(&createRCPPyVector2))
         .def(py::init(&createRCPPyVectorEmpty))
         .def("getMap",&Tpetra_Vector::getMap)
-        .def("getLocalViewHost",[](Teuchos::RCP<Tpetra_Vector> &m){
-            return getLocalViewHost(m);
+        .def("getLocalView",[](Teuchos::RCP<Tpetra_Vector> &m){
+            return getLocalView(m);
         })
-        .def("setLocalViewHost",[](Teuchos::RCP<Tpetra_Vector> &m, py::array_t<ST> input){
-            return setLocalViewHost(m, input);
+        .def("setLocalView",[](Teuchos::RCP<Tpetra_Vector> &m, py::array_t<ST> input){
+            return setLocalView(m, input);
         })
         .def("putScalar",[](Teuchos::RCP<Tpetra_Vector> &m, ST val) {
             m->putScalar(val);
@@ -270,10 +270,10 @@ void pyalbany_mvector(pybind11::module &m){
         .def("getNumVectors",&Tpetra_MultiVector::getNumVectors)
         .def("getMap",&Tpetra_MultiVector::getMap)
         .def("getVector",&Tpetra_MultiVector::getVector)
-        .def("getLocalViewHost",[](Teuchos::RCP<Tpetra_MultiVector> &m){
-            return getLocalViewHost(m);
+        .def("getLocalView",[](Teuchos::RCP<Tpetra_MultiVector> &m){
+            return getLocalView(m);
         })
-        .def("setLocalViewHost",[](Teuchos::RCP<Tpetra_MultiVector> &m, py::array_t<ST> input){
-            return setLocalViewHost(m, input);
+        .def("setLocalView",[](Teuchos::RCP<Tpetra_MultiVector> &m, py::array_t<ST> input){
+            return setLocalView(m, input);
         });
 }

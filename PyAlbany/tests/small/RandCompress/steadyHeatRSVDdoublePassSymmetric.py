@@ -54,8 +54,8 @@ class TestDoublePass(unittest.TestCase):
         U = pa.gatherMVector(u, parameterMap)
         # H \approx U \Lambda U^T
         if iAmRoot:
-            Htilde = U.getLocalViewHost().dot(np.diag(eigVals).dot(U.getLocalViewHost().T))
-            error  = np.linalg.norm(Htilde[:,:] - H.getLocalViewHost())
+            Htilde = U.getLocalView().dot(np.diag(eigVals).dot(U.getLocalView().T))
+            error  = np.linalg.norm(Htilde[:,:] - H.getLocalView())
             sigValsTrue = np.loadtxt(fileDir+"/singularvaluesTrue.txt")
             # see equation (5) of "Compressing rank-structured matrices via randomized sampling" Martinsson (2016)
             # for the error bound 

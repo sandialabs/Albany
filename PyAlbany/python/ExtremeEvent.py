@@ -439,18 +439,18 @@ def setInitialGuess(problem, p, n_params, params_in_vector=True):
     if params_in_vector:
         parameter_map = problem.getParameterMap(0)
         parameter = Utils.createVector(parameter_map)
-        para_view = parameter.getLocalViewHost()
+        para_view = parameter.getLocalView()
         for j in range(0, n_params):
             para_view[j] = p[j]
-        parameter.setLocalViewHost(para_view)
+        parameter.setLocalView(para_view)
         problem.setParameter(0, parameter)
     else:
         for j in range(0, n_params):
             parameter_map = problem.getParameterMap(j)
             parameter = Utils.createVector(parameter_map)
-            para_view = parameter.getLocalViewHost()
+            para_view = parameter.getLocalView()
             para_view[0] = p[j]
-            parameter.setLocalViewHost(para_view)
+            parameter.setLocalView(para_view)
             problem.setParameter(j, parameter)
 
 
@@ -474,12 +474,12 @@ def evaluateThetaStar_QPM(QoI, problem, n_params, alpha=5e0, response_id=0, F_id
 
         if params_in_vector:
             para = problem.getParameter(0)
-            para_view = para.getLocalViewHost()
+            para_view = para.getLocalView()
             theta_star[i, :] = para_view
         else:
             for j in range(0, n_params):
                 para = problem.getParameter(j)
-                para_view = para.getLocalViewHost()
+                para_view = para.getLocalView()
                 theta_star[i, j] = para_view[0]
 
         problem.performSolve()
@@ -516,12 +516,12 @@ def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vec
 
         if params_in_vector:
             para = problem.getParameter(0)
-            para_view = para.getLocalViewHost()
+            para_view = para.getLocalView()
             theta_star[i, :] = para_view
         else:
             for j in range(0, n_params):
                 para = problem.getParameter(j)
-                para_view = para.getLocalViewHost()
+                para_view = para.getLocalView()
                 theta_star[i, j] = para_view[0]
 
         problem.performSolve()
@@ -554,17 +554,17 @@ def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_
                 if params_in_vector:
                     parameter_map = problem.getParameterMap(0)
                     parameter = Utils.createVector(parameter_map)
-                    #para_view = parameter.getLocalViewHost()
+                    #para_view = parameter.getLocalView()
                     #para_view = sample
-                    parameter.setLocalViewHost(sample)
+                    parameter.setLocalView(sample)
                     problem.setParameter(0, parameter)
                 else:
                     for k in range(0, n_params):
                         parameter_map = problem.getParameterMap(k)
                         parameter = Utils.createVector(parameter_map)
-                        para_view = parameter.getLocalViewHost()
+                        para_view = parameter.getLocalView()
                         para_view[0] = sample[k]
-                        parameter.setLocalViewHost(para_view)
+                        parameter.setLocalView(para_view)
                         problem.setParameter(k, parameter)
                 problem.performSolve()
 
@@ -598,25 +598,25 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
             if params_in_vector:
                 parameter_map = problem.getParameterMap(0)
                 parameter = Utils.createVector(parameter_map)
-                #para_view = parameter.getLocalViewHost()
+                #para_view = parameter.getLocalView()
                 #para_view = theta_star[i,:]
-                parameter.setLocalViewHost(theta_star[i,:])
+                parameter.setLocalView(theta_star[i,:])
                 problem.setParameter(0, parameter)
             else:
                 for k in range(0, n_params):
                     parameter_map = problem.getParameterMap(k)
                     parameter = Utils.createVector(parameter_map)
-                    para_view = parameter.getLocalViewHost()
+                    para_view = parameter.getLocalView()
                     para_view[0] = theta_star[i,k]
-                    parameter.setLocalViewHost(para_view)
+                    parameter.setLocalView(para_view)
                     problem.setParameter(k, parameter)
 
             problem.performSolve()
             if params_in_vector:
-                n_theta_star = -problem.getSensitivity(0, 0).getLocalViewHost()[:,0]  
+                n_theta_star = -problem.getSensitivity(0, 0).getLocalView()[:,0]  
             else:
                 for k in range(0, n_params):
-                    n_theta_star[k] = -problem.getSensitivity(0, k).getLocalViewHost()[0,0]
+                    n_theta_star[k] = -problem.getSensitivity(0, k).getLocalView()[0,0]
             norm = np.linalg.norm(n_theta_star)
             n_theta_star /= norm
 
@@ -639,17 +639,17 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
                     if params_in_vector:
                         parameter_map = problem.getParameterMap(0)
                         parameter = Utils.createVector(parameter_map)
-                        #para_view = parameter.getLocalViewHost()
+                        #para_view = parameter.getLocalView()
                         #para_view = sample
-                        parameter.setLocalViewHost(sample)
+                        parameter.setLocalView(sample)
                         problem.setParameter(0, parameter)
                     else:
                         for k in range(0, n_params):
                             parameter_map = problem.getParameterMap(k)
                             parameter = Utils.createVector(parameter_map)
-                            para_view = parameter.getLocalViewHost()
+                            para_view = parameter.getLocalView()
                             para_view[0] = sample[k]
-                            parameter.setLocalViewHost(para_view)
+                            parameter.setLocalView(para_view)
                             problem.setParameter(k, parameter)
                     problem.performSolve()
                     current_F_above = problem.getCumulativeResponseContribution(0, F_id) > F_star[i]
@@ -704,21 +704,21 @@ class HessianOperator(slinalg.LinearOperator):
         if self.params_in_vector:
             parameter_map = self.problem.getParameterMap(0)
             parameter = Utils.createVector(parameter_map)
-            parameter.setLocalViewHost(theta_star)
+            parameter.setLocalView(theta_star)
             self.problem.setParameter(0, parameter)
         else:
             for k in range(0, self.n_params):
                 parameter_map = self.problem.getParameterMap(k)
                 parameter = Utils.createVector(parameter_map)
-                parameter.setLocalViewHost(theta_star[k])
+                parameter.setLocalView(theta_star[k])
                 self.problem.setParameter(k, parameter)
     def _matvec(self, x):
         parameter_map = self.problem.getParameterMap(self.parameter_id)
         direction = Utils.createMultiVector(parameter_map, 1)
 
-        direction_view = direction.getLocalViewHost()
+        direction_view = direction.getLocalView()
         direction_view[:,0] = x
-        direction.setLocalViewHost(direction_view)
+        direction.setLocalView(direction_view)
 
         self.problem.setDirections(self.parameter_id, direction)
         self.problem.performSolve()
@@ -747,13 +747,13 @@ class RotatedHessianOperator(slinalg.LinearOperator):
         if self.params_in_vector:
             parameter_map = self.problem.getParameterMap(0)
             parameter = Utils.createVector(parameter_map)
-            parameter.setLocalViewHost(theta_star)
+            parameter.setLocalView(theta_star)
             self.problem.setParameter(0, parameter)
         else:
             for k in range(0, self.n_params):
                 parameter_map = self.problem.getParameterMap(k)
                 parameter = Utils.createVector(parameter_map)
-                parameter.setLocalViewHost(theta_star[k])
+                parameter.setLocalView(theta_star[k])
                 self.problem.setParameter(k, parameter)
         self.compute_rotation_matrix()
     def _matvec(self, x):
@@ -762,15 +762,15 @@ class RotatedHessianOperator(slinalg.LinearOperator):
         parameter_map = self.problem.getParameterMap(self.parameter_id)
         direction = Utils.createMultiVector(parameter_map, 1)
 
-        direction_view = direction.getLocalViewHost()
+        direction_view = direction.getLocalView()
         direction_view[:,0] = tmp1
-        direction.setLocalViewHost(direction_view)
+        direction.setLocalView(direction_view)
 
         self.problem.setDirections(self.parameter_id, direction)
         self.problem.performSolve()
         hessian = self.problem.getReducedHessian(self.response_id, self.parameter_id)
 
-        tmp2 = hessian.getLocalViewHost()[:,0]
+        tmp2 = hessian.getLocalView()[:,0]
         tmp3 = self.P.dot(self.R.transpose().dot(self.C_sqr.transpose().dot(tmp2)))
         return tmp3
 
