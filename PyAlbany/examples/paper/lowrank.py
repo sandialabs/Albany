@@ -24,16 +24,15 @@ class Hessian:
 def main(parallelEnv):
     myGlobalRank = MPI.COMM_WORLD.rank
 
-    # Create an Albany problem:
+    # Create an Albany problems:
     filename = "input_distributed.yaml"
     paramList = Utils.createParameterList(filename, parallelEnv)
+    paramListDataMisfit = Utils.createParameterList(filename, parallelEnv)
+    paramListDataMisfit.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 1").set("Scaling", 0.0)
+    paramListDataMisfit.sublist("Discretization").set("Exodus Output File Name", "steady2d_DataMisfit.exo")
 
     problem = Utils.createAlbanyProblem(paramList, parallelEnv)
     problem.performAnalysis()
-    paramListDataMisfit = Utils.createParameterList(filename, parallelEnv)
-    paramListDataMisfit.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 1").set("Scaling", 0.0)
-    
-    paramListDataMisfit.sublist("Discretization").set("Exodus Output File Name", "steady2d_DataMisfit.exo")
     problemDataMisfit = Utils.createAlbanyProblem(paramListDataMisfit, parallelEnv)
     problemDataMisfit.setParameter(0, problem.getParameter(0)) 
     problemDataMisfit.performSolve()
@@ -48,7 +47,7 @@ def main(parallelEnv):
     eigVals = eigVals[np.argsort(eigVals)[::-1]]
     if myGlobalRank == 0:
         fig = plt.figure(figsize=(6,4))
-        plt.semilogy(eigVals)
+        plt.plot(eigVals)
         plt.ylabel('Eigenvalues of the Hessian')
         plt.xlabel('Eigenvalue index')
         plt.gca().set_xlim([0, k])

@@ -30,29 +30,26 @@ def run_forward(nSweeps, damping, parallelEnv):
 parallelEnv = Utils.createDefaultParallelEnv()
 myGlobalRank = MPI.COMM_WORLD.rank
 
-nMaxSweeps = 300
-
 sweeps = np.arange(1, 6)
 dampings = np.linspace(0.8, 1.2, 21)
 
 N_sweeps = len(sweeps)
 N_dampings = len(dampings)
-N_measures = 100
+N_measures = 10
 
-timers_sec = np.zeros((N_sweeps, N_dampings, N_measures))
-timers_mean_sec = np.zeros((N_sweeps, N_dampings))
+timers_sec = np.zeros((N_sweeps, N_dampings))
 
-for i_sweeps in range(0, N_sweeps):
-    for i_dampings in range(0, N_dampings):
-        for i_measures in range(0, N_measures):
-            timers_sec[i_sweeps, i_dampings, i_measures] = run_forward(sweeps[i_sweeps], dampings[i_dampings], parallelEnv)
-        timers_mean_sec[i_sweeps, i_dampings] = np.median(timers_sec[i_sweeps, i_dampings, :])
+for i in range(0, N_sweeps):
+    for j in range(0, N_dampings):
+        for k in range(0, N_measures):
+            timers_sec[i, j] += run_forward(sweeps[i], dampings[j], parallelEnv)
+        timers_sec[i, j] /= N_measures
 
 if myGlobalRank==0:
-    np.savetxt('timers_sec.txt', timers_mean_sec)
+    np.savetxt('timers_sec.txt', timers_sec)
     fig = plt.figure(figsize=(6,4))
     for i_dampings in range(0, N_dampings):
-        plt.plot(sweeps, timers_mean_sec[:,i_dampings], 'o--', label='damping factor = ' + str(dampings[i_dampings]))
+        plt.plot(sweeps, timers_sec[:,i_dampings], 'o--', label='damping factor = ' + str(dampings[i_dampings]))
     plt.ylabel('Wall-clock time [sec]')
     plt.xlabel('Number of sweeps of the Gauss-Seidel preconditioner')
     plt.grid(True)
@@ -62,7 +59,7 @@ if myGlobalRank==0:
 
     fig = plt.figure(figsize=(6,4))
     for i_sweeps in range(0, N_sweeps):
-        plt.semilogy(dampings, timers_mean_sec[i_sweeps,:], 'o-', label='number of sweeps = ' + str(sweeps[i_sweeps]))
+        plt.semilogy(dampings, timers_sec[i_sweeps,:], 'o-', label='number of sweeps = ' + str(sweeps[i_sweeps]))
     plt.ylabel('Wall-clock time [sec]')
     plt.xlabel('Damping factor')
     plt.grid(True)
