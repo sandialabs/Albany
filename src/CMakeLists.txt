@@ -834,12 +834,19 @@ install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake  F
 add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
                   ${CMAKE_BINARY_DIR}/dummy)
 
+if (CMAKE_GENERATOR STREQUAL "Ninja")
+  set (WORK_DIR ${CMAKE_BINARY_DIR})
+elseif(CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+  set (WORK_DIR ${CMAKE_BINARY_DIR}/dummy)
+endif()
+
 add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
                     COMMAND ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany
                     ARGS --bin-dir ${CMAKE_BINARY_DIR}
                          --install-lib-dir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                         --cmake-generator ${CMAKE_GENERATOR}
                     DEPENDS ${CMAKE_BINARY_DIR}/src/Albany_GitVersion.h
-                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/dummy)
+                    WORKING_DIRECTORY ${WORK_DIR})
 
 add_custom_target (create_export_albany ALL
                    DEPENDS ${CMAKE_BINARY_DIR}/export_albany.in)
