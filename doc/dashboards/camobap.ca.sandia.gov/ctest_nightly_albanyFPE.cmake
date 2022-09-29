@@ -15,8 +15,8 @@ set (BUILD_ALBANY_FPE TRUE)
 set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
-set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-#set (CTEST_CMAKE_GENERATOR "Ninja") # What is your compilation apps ?
+#set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+set (CTEST_CMAKE_GENERATOR "Ninja") # What is your compilation apps ?
 IF (BUILD_ALBANY_FPE) 
 set (CTEST_BUILD_CONFIGURATION Debug) # What type of build do you want ?
 ELSE()
@@ -47,9 +47,9 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_BUILD_FLAGS "-j16")
+#set (CTEST_BUILD_FLAGS "-j16")
 #IKT, 3/8/2022: the following is for Ninja build
-#set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
+set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
 
 set (CTEST_DROP_METHOD "https")
 
@@ -181,7 +181,7 @@ if (BUILD_ALBANY_FPE)
   set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
 
   set (CONFIGURE_OPTIONS
-	  #"-GNinja"
+    "-GNinja"
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
     "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
     "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
@@ -197,13 +197,14 @@ if (BUILD_ALBANY_FPE)
     "-DSEACAS_DECOMP=${TRILINOSSRCDIR}/build/install/bin/decomp"
     "-DSEACAS_EXODIFF=${TRILINOSSRCDIR}/build/install/bin/exodiff"
     "-DSEACAS_ALGEBRA=${TRILINOSSRCDIR}/build/install/bin/algebra"
-    "-DENABLE_ALBANY_PYTHON:BOOL=ON"
-    "-DPYTHON_EXECUTABLE=/usr/bin/python3"
+    "-DENABLE_ALBANY_PYTHON:BOOL=OFF"
     "-DTRILINOS_SOURCE_DIR=${TRILINOSSRCDIR}"
     "-DTRILINOS_BUILD_DIR=${TRILINOSBLDDIR}"
-    "-DINSTALL_ALBANY:BOOL=OFF"
+    "-DPYTHON_EXECUTABLE='/usr/bin/python3.6m'"
+    "-DPYTHON_INCLUDE_PATH='/usr/include/python3.6m'"
+    "-DSWIG_EXECUTABLE='/tpls/install/bin/swig'"
     "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
-    
+  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg)
   endif ()
