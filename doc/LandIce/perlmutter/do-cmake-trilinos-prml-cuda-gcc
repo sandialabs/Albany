@@ -7,8 +7,11 @@ rm -rf CMake*
 # Set Trilinos build path
 BUILD_DIR=`pwd`
 
-BOOST_DIR=
-NVCC_WRAPPER=nvcc_wrapper_a100
+# FIXME: update with path to nvcc_wrapper_a100
+NVCC_WRAPPER=
+
+# FIXME: update with path to Trilinos source directory
+TRILINOS_SOURCE_DIR=
 
 export CRAYPE_LINK_TYPE=dynamic
 
@@ -52,9 +55,9 @@ cmake \
   -D Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_DIR}/include \
   -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_DIR}/lib \
 \
-	-D TPL_ENABLE_HDF5:STRING=ON \
-	-D HDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include \
-	-D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib\
+  -D TPL_ENABLE_HDF5:STRING=ON \
+  -D HDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include \
+  -D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib\
 \
   -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
   -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
@@ -80,6 +83,9 @@ cmake \
   -D TPL_ENABLE_Thrust:BOOL=ON \
   -D TPL_ENABLE_CUDA:BOOL=ON \
   -D TPL_ENABLE_CUSPARSE:BOOL=OFF \
+  -D CUDA_cublas_LIBRARY=$CUDATOOLKIT_HOME/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcublas.so \
+  -D CUDA_cusolver_LIBRARY=$CUDATOOLKIT_HOME/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcusolver.so \
+  -D CUDA_cufft_LIBRARY=$CUDATOOLKIT_HOME/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcufft.so \
 \
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
   -D EpetraExt_USING_HDF5:BOOL=OFF \
@@ -163,8 +169,7 @@ cmake \
   -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
   -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
 \
-  ${HOME}/LandIce/Trilinos.fork
+${TRILINOS_SOURCE_DIR}
 
 # There is no zen3 in mtune for current gcc, that may change later
 #  -D Kokkos_ARCH_ZEN3:BOOL=ON \
-

@@ -7,7 +7,8 @@ rm -rf CMake*
 # Set Trilinos build path
 BUILD_DIR=`pwd`
 
-BOOST_DIR=
+# FIXME: update with path to Trilinos source directory
+TRILINOS_SOURCE_DIR=
 
 export CRAYPE_LINK_TYPE=dynamic
 
@@ -51,9 +52,9 @@ cmake \
   -D Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_DIR}/include \
   -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_DIR}/lib \
 \
-	-D TPL_ENABLE_HDF5:STRING=ON \
-	-D HDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include \
-	-D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib\
+  -D TPL_ENABLE_HDF5:STRING=ON \
+  -D HDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include \
+  -D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib\
 \
   -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
   -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
@@ -154,7 +155,7 @@ cmake \
   -D Tpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
   -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
 \
-  ${HOME}/LandIce/Trilinos.fork
+${TRILINOS_SOURCE_DIR}
 
 # There is no zen3 in mtune for current gcc, that may change later
 #  -D Kokkos_ARCH_ZEN3:BOOL=ON \
