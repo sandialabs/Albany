@@ -176,8 +176,12 @@ SITE_NAME(CTEST_SITE) # directly set CTEST_SITE to the output of `hostname`
 set (CTEST_DASHBOARD_ROOT "$ENV{INSTALL_DIRECTORY}" ) # writable path
 set (CTEST_SCRATCH_ROOT "$ENV{SCRATCH_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_ROOT "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
-#set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_CMAKE_GENERATOR "Ninja")
+#IKT, 9/26/2022: Use Ninja only for Trilinos builds,  not Albany builds
+#IF((CTEST_BUILD_OPTION MATCHES "base-albany") OR (CTEST_BUILD_OPTION MATCHES "debug-albany") OR (CTEST_BUILD_OPTION MATCHES "clang-albany") OR (CTEST_BUILD_OPTION MATCHES "clangdbg-albany") OR (CTEST_BUILD_OPTION MATCHES "intel-albany"))
+#  set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
+#ELSE ()
+  set (CTEST_CMAKE_GENERATOR "Ninja")
+#ENDIF()
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
@@ -191,7 +195,7 @@ set (CTEST_INSTALL_NAME test)
 set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
 set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
-if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
+if ((CTEST_BUILD_CONFIGURATION MATCHES "Debug") OR (CTEST_BUILD_OPTION MATCHES "clang-albany"))
 # Runs tests longer if in debug mode
    set (CTEST_TEST_TIMEOUT 4200)
 endif ()
@@ -227,9 +231,13 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-#set (CTEST_BUILD_FLAGS "-j16")
-#IKT, 4/10/2022: the following is for Ninja build
-set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
+#IKT, 9/26/2022: use Ninja only for Trilinos builds, not Albany
+#IF((CTEST_BUILD_OPTION MATCHES "base-albany") OR (CTEST_BUILD_OPTION MATCHES "debug-albany") OR (CTEST_BUILD_OPTION MATCHES "clang-albany") OR (CTEST_BUILD_OPTION MATCHES "clangdbg-albany") OR (CTEST_BUILD_OPTION MATCHES "intel-albany"))
+#  set (CTEST_BUILD_FLAGS "-j16")
+#ELSE()
+  #IKT, 4/10/2022: the following is for Ninja build
+  set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
+#ENDIF()
 
 set (CTEST_DROP_METHOD "https")
 
