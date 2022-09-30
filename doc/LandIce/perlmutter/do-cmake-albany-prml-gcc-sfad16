@@ -4,10 +4,15 @@
 # Cleanup old cmake files
 rm -rf CMake*
 
-#FIXME: the following needs needs to be changed to point to your Trilinos! 
 BUILD_DIR=`pwd`
+
+#FIXME: the following needs needs to be changed to point to your Trilinos! 
 TRILINOS_INSTALL_DIR=
-ALBANY_INSTALL_DIR=
+
+#FIXME: the following needs to be changed to point to Albany's source directory
+ALBANY_SOURCE_DIR=
+
+ALBANY_INSTALL_DIR=$BUILD_DIR/install
 
 cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL_DIR} \
@@ -24,5 +29,8 @@ cmake \
       -D ENABLE_FAD_TYPE:STRING="SFad" \
       -D ALBANY_SFAD_SIZE=16 \
       -D ENABLE_MPAS_INTERFACE:BOOL=ON \
-      ${HOME}/LandIce/Albany
+${ALBANY_SOURCE_DIR}
 
+# Include these flags if you want to enable PyAlbany
+#  -D ENABLE_ALBANY_PYTHON=ON \
+#  -D PYTHON_EXECUTABLE=/global/common/software/nersc/pm-2022q3/sw/python/3.9-anaconda-2021.11/bin/python \
