@@ -9,8 +9,7 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_ThyraUtils.hpp"
 
-#include <Kokkos_HostSpace.hpp>
-#include <Kokkos_Layout.hpp>
+#include <Kokkos_Core.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <type_traits>
 
