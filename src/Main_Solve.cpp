@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
     stackedTimer->report(std::cout, Teuchos::DefaultComm<int>::getComm(), options);
   }
 
-  Kokkos::finalize_all();
+  Kokkos::finalize();
 
   return failures;
 }
