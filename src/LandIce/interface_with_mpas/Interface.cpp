@@ -382,7 +382,7 @@ void velocity_solver_finalize() {
 
   mpiCommMPAS = Teuchos::null;
   if(kokkosInitializedByAlbany)
-    Kokkos::finalize_all();
+    Kokkos::finalize();
 }
 
 /*duality:
