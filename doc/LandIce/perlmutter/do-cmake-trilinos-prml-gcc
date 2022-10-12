@@ -72,7 +72,7 @@ cmake \
   -D Kokkos_ENABLE_PTHREAD:BOOL=OFF \
   -D Kokkos_ENABLE_SERIAL:BOOL=ON \
   -D Kokkos_ENABLE_TESTS:BOOL=OFF \
-  -D Kokkos_ARCH_ZEN2:BOOL=ON \
+  -D Kokkos_ARCH_ZEN3:BOOL=ON \
 \
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
   -D EpetraExt_USING_HDF5:BOOL=OFF \
