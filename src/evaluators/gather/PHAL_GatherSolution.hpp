@@ -50,6 +50,51 @@ public:
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
 
 protected:
+
+  using ref_t = typename PHAL::Ref<typename EvalT::ScalarT>::type;
+
+  KOKKOS_INLINE_FUNCTION
+  ref_t get_ref (const int cell, const int node, const int eq) const {
+    switch (tensorRank) {
+      case 2:
+        return valTensor(cell,node,eq/numDim,eq%numDim);
+      case 1:
+        return valVec(cell,node,eq);
+      case 0:
+        KOKKOS_IF_ON_HOST  (return val[eq](cell,node);)
+        KOKKOS_IF_ON_DEVICE(return d_val[eq](cell,node);)
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  ref_t get_ref_dot (const int cell, const int node, const int eq) const {
+    switch (tensorRank) {
+      case 2:
+        return valTensor_dot(cell,node,eq/numDim,eq%numDim);
+      case 1:
+        return valVec_dot(cell,node,eq);
+      case 0:
+        KOKKOS_IF_ON_HOST  (return val_dot[eq](cell,node);)
+        KOKKOS_IF_ON_DEVICE(return d_val_dot[eq](cell,node);)
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  ref_t get_ref_dotdot (const int cell, const int node, const int eq) const {
+    switch (tensorRank) {
+      case 2:
+        return valTensor_dotdot(cell,node,eq/numDim,eq%numDim);
+      case 1:
+        return valVec_dotdot(cell,node,eq);
+      case 0:
+        KOKKOS_IF_ON_HOST  (return val_dotdot[eq](cell,node);)
+        KOKKOS_IF_ON_DEVICE(return d_val_dotdot[eq](cell,node);)
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
+
   typedef typename EvalT::ScalarT ScalarT;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
@@ -60,15 +105,19 @@ protected:
   PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> valTensor;
   PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> valTensor_dot;
   PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> valTensor_dotdot;
-  std::size_t numNodes;
-  std::size_t numFieldsBase; // Number of fields gathered in this call
-  std::size_t offset; // Offset of first DOF being gathered when numFields<neq
-  unsigned short int tensorRank;
+
+  int numDim;
+  int numNodes;
+  int numFields; // Number of fields gathered in this call
+  int offset; // Offset of first DOF being gathered when numFields<neq
+  int tensorRank;
+
   bool enableTransient;
   bool enableAcceleration;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
   Albany::WorksetConn nodeID;
   Albany::DeviceView1d<const ST> x_constView, xdot_constView, xdotdot_constView;
 
@@ -104,47 +153,29 @@ public:
 
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  const int numFields;
+  typedef GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits> Base;
+  using ref_t = typename Base::ref_t;
+  using Base::get_ref;
+  using Base::get_ref_dot;
+  using Base::get_ref_dotdot;
+  using Base::numFields;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  struct PHAL_GatherSolRank2_Tag{};
-  struct PHAL_GatherSolRank2_Transient_Tag{};
-  struct PHAL_GatherSolRank2_Acceleration_Tag{};
-
-  struct PHAL_GatherSolRank1_Tag{};
-  struct PHAL_GatherSolRank1_Transient_Tag{};
-  struct PHAL_GatherSolRank1_Acceleration_Tag{};
-
-  struct PHAL_GatherSolRank0_Tag{};
-  struct PHAL_GatherSolRank0_Transient_Tag{};
-  struct PHAL_GatherSolRank0_Acceleration_Tag{};
+  struct PHAL_GatherSol_Tag{};
+  struct PHAL_GatherSol_Transient_Tag{};
+  struct PHAL_GatherSol_Acceleration_Tag{};
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank2_Tag&, const int& cell) const;
+  void operator() (const PHAL_GatherSol_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank2_Transient_Tag&, const int& cell) const;
+  void operator() (const PHAL_GatherSol_Transient_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank2_Acceleration_Tag&, const int& cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank1_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank1_Transient_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank1_Acceleration_Tag&, const int& cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank0_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank0_Transient_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSolRank0_Acceleration_Tag&, const int& cell) const;
+  void operator() (const PHAL_GatherSol_Acceleration_Tag&, const int& cell) const;
 
 private:
-  int numDim;
 
-  typedef GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits> Base;
+  using Base::numDim;
   using Base::nodeID;
   using Base::x_constView;
   using Base::xdot_constView;
@@ -156,16 +187,11 @@ private:
   using Base::d_val_dot;
   using Base::d_val_dotdot;
 
-  typedef typename PHX::Device::execution_space ExecutionSpace;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank2_Tag> PHAL_GatherSolRank2_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank2_Transient_Tag> PHAL_GatherSolRank2_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank2_Acceleration_Tag> PHAL_GatherSolRank2_Acceleration_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank1_Tag> PHAL_GatherSolRank1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank1_Transient_Tag> PHAL_GatherSolRank1_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank1_Acceleration_Tag> PHAL_GatherSolRank1_Acceleration_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank0_Tag> PHAL_GatherSolRank0_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank0_Transient_Tag> PHAL_GatherSolRank0_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSolRank0_Acceleration_Tag> PHAL_GatherSolRank0_Acceleration_Policy;
+  using ExecutionSpace = typename Base::ExecutionSpace;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSol_Tag> PHAL_GatherSol_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSol_Transient_Tag> PHAL_GatherSol_Transient_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSol_Acceleration_Tag> PHAL_GatherSol_Acceleration_Policy;
 
 #endif
 };
@@ -185,48 +211,32 @@ public:
 
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  const int numFields;
+  typedef GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
+  using Base::numFields;
+  using ref_t = typename Base::ref_t;
+  using Base::get_ref;
+  using Base::get_ref_dot;
+  using Base::get_ref_dotdot;
+
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  struct PHAL_GatherJacRank2_Tag{};
-  struct PHAL_GatherJacRank2_Transient_Tag{};
-  struct PHAL_GatherJacRank2_Acceleration_Tag{};
-
-  struct PHAL_GatherJacRank1_Tag{};
-  struct PHAL_GatherJacRank1_Transient_Tag{};
-  struct PHAL_GatherJacRank1_Acceleration_Tag{};
-
-  struct PHAL_GatherJacRank0_Tag{};
-  struct PHAL_GatherJacRank0_Transient_Tag{};
-  struct PHAL_GatherJacRank0_Acceleration_Tag{};
+  struct PHAL_GatherJac_Tag{};
+  struct PHAL_GatherJac_Transient_Tag{};
+  struct PHAL_GatherJac_Acceleration_Tag{};
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank2_Tag&, const int& cell) const;
+  void operator() (const PHAL_GatherJac_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank2_Transient_Tag&, const int& cell) const;
+  void operator() (const PHAL_GatherJac_Transient_Tag&, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank2_Acceleration_Tag&, const int& cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank1_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank1_Transient_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank1_Acceleration_Tag&, const int& cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank0_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank0_Transient_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJacRank0_Acceleration_Tag&, const int& cell) const;
+  void operator() (const PHAL_GatherJac_Acceleration_Tag&, const int& cell) const;
 
 private:
-  int neq, numDim;
+  int neq;
   double j_coeff, n_coeff, m_coeff;
 
-  typedef GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
+  using Base::numDim;
   using Base::nodeID;
   using Base::x_constView;
   using Base::xdot_constView;
@@ -238,17 +248,11 @@ private:
   using Base::d_val_dot;
   using Base::d_val_dotdot;
 
-  typedef typename PHX::Device::execution_space ExecutionSpace;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank2_Tag> PHAL_GatherJacRank2_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank2_Transient_Tag> PHAL_GatherJacRank2_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank2_Acceleration_Tag> PHAL_GatherJacRank2_Acceleration_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank1_Tag> PHAL_GatherJacRank1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank1_Transient_Tag> PHAL_GatherJacRank1_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank1_Acceleration_Tag> PHAL_GatherJacRank1_Acceleration_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank0_Tag> PHAL_GatherJacRank0_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank0_Transient_Tag> PHAL_GatherJacRank0_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJacRank0_Acceleration_Tag> PHAL_GatherJacRank0_Acceleration_Policy;
+  using ExecutionSpace = typename Base::ExecutionSpace;
 
+  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJac_Tag> PHAL_GatherJac_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJac_Transient_Tag> PHAL_GatherJac_Transient_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJac_Acceleration_Tag> PHAL_GatherJac_Acceleration_Policy;
 #endif
 };
 
@@ -268,7 +272,13 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
   typedef typename Kokkos::View<ScalarT*, PHX::Device>::reference_type reference_type;
-  const std::size_t numFields;
+
+  typedef GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits> Base;
+  using ref_t = typename Base::ref_t;
+  using Base::get_ref;
+  using Base::get_ref_dot;
+  using Base::get_ref_dotdot;
+  using Base::numFields;
 };
 
 // **************************************************************
@@ -285,7 +295,13 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-  const std::size_t numFields;
+
+  typedef GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> Base;
+  using ref_t = typename Base::ref_t;
+  using Base::get_ref;
+  using Base::get_ref_dot;
+  using Base::get_ref_dotdot;
+  using Base::numFields;
 };
 
 // **************************************************************
@@ -497,7 +513,13 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
-  const std::size_t numFields;
+
+  typedef GatherSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits> Base;
+  using ref_t = typename Base::ref_t;
+  using Base::get_ref;
+  using Base::get_ref_dot;
+  using Base::get_ref_dotdot;
+  using Base::numFields;
 };
 
 } // namespace PHAL
