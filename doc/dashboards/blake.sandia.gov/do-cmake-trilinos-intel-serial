@@ -38,6 +38,9 @@ cmake \
     -D TPL_ENABLE_SuperLU:BOOL=ON \
     -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_PATH}/lib/libsuperlu.a \
     -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_PATH}/include \
+    -D TPL_ENABLE_PARDISO_MKL:BOOL=ON \
+    -D TPL_PARDISO_MKL_LIBRARIES:PATH=${MKL_PATH}/lib/intel64/libmkl_intel_lp64.a \
+    -D PARDISO_MKL_INCLUDE_DIRS:PATH=${MKL_PATH}/include \
 \
     -D TPL_ENABLE_Boost:BOOL=ON \
     -D Boost_INCLUDE_DIRS:PATH=${BOOST_PATH}/include \
