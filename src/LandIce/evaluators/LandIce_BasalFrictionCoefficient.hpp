@@ -89,10 +89,10 @@ private:
   ParamScalarT lambda;
   ParamScalarT power;
 
-  unsigned int numNodes;
-  unsigned int numQPs;
-  unsigned int dim;
-  unsigned int worksetSize;
+  int numNodes;
+  int numQPs;
+  int dim;
+  int worksetSize;
 
   bool logParameters;
   bool nodal;

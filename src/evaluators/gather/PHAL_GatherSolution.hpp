@@ -64,6 +64,7 @@ protected:
         KOKKOS_IF_ON_HOST  (return val[eq](cell,node);)
         KOKKOS_IF_ON_DEVICE(return d_val[eq](cell,node);)
     }
+    Kokkos::abort("Unsupported tensor rank");
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -77,6 +78,7 @@ protected:
         KOKKOS_IF_ON_HOST  (return val_dot[eq](cell,node);)
         KOKKOS_IF_ON_DEVICE(return d_val_dot[eq](cell,node);)
     }
+    Kokkos::abort("Unsupported tensor rank");
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -90,6 +92,7 @@ protected:
         KOKKOS_IF_ON_HOST  (return val_dotdot[eq](cell,node);)
         KOKKOS_IF_ON_DEVICE(return d_val_dotdot[eq](cell,node);)
     }
+    Kokkos::abort("Unsupported tensor rank");
   }
 
   typedef typename EvalT::ScalarT ScalarT;

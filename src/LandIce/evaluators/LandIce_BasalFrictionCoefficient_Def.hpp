@@ -336,7 +336,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
   typename Albany::StrongestScalarType<EffPressureST,MeshScalarT>::type NVal = N_val;
 
   if(beta_type != BETA_TYPE::CONSTANT) {
-    for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    for (int ipt=0; ipt<dim; ++ipt) {
 
       switch (effectivePressure_type) {
       case EFFECTIVE_PRESSURE_TYPE::FIELD:
@@ -443,7 +443,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
   }
 
   if (is_side_equation && zero_on_floating) {
-    for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    for (int ipt=0; ipt<dim; ++ipt) {
       bool isGrounded;
       if(nodal)
         isGrounded = rho_i*thickness_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
@@ -461,7 +461,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
   }
 
   if (use_stereographic_map) {
-    for (unsigned int ipt=0; ipt<dim; ++ipt) {
+    for (int ipt=0; ipt<dim; ++ipt) {
       MeshScalarT x = coordVec(cell,ipt,0) - x_0;
       MeshScalarT y = coordVec(cell,ipt,1) - y_0;
       MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);

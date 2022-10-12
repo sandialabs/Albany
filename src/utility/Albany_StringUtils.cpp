@@ -53,7 +53,7 @@ bool validNestedListFormat (const std::string& str)
   // We verified the string starts with '['.
   size_t start = 1;
   char last_match = '[';
-  size_t num_open = 1;
+  int num_open = 1;
   size_t pos = str.find_first_of(separators,start);
 
   while (pos!=npos) {
