@@ -158,7 +158,4 @@ cmake \
     -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
     -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
     -D CMAKE_CXX_STANDARD=17 \
-../
-
-#    -D ML_ENABLE_SuperLU:BOOL=OFF \
-
+..
