@@ -32,7 +32,10 @@ cmake \
   -D MPI_EXEC=srun \
   -D MPI_EXEC_NUMPROCS_FLAG:STRING="-n" \
 \
-  -D TPL_ENABLE_SuperLU:BOOL=OFF \
+  -D TPL_ENABLE_SuperLU:BOOL=ON \
+  -D TPL_SuperLU_LIBRARIES:PATH="${SUPERLU_ROOT}/lib/libsuperlu.a" \
+  -D SuperLU_INCLUDE_DIRS:PATH="${SUPERLU_ROOT}/include" \
+  -D ML_ENABLE_SuperLU:BOOL=OFF \
   -D TPL_ENABLE_BLAS:BOOL=ON \
   -D TPL_BLAS_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a" \
   -D TPL_ENABLE_LAPACK:BOOL=ON \
@@ -170,6 +173,3 @@ cmake \
   -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=ON \
 \
 ${TRILINOS_SOURCE_DIR}
-
-# There is no zen3 in mtune for current gcc, that may change later
-#  -D Kokkos_ARCH_ZEN3:BOOL=ON \
