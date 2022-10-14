@@ -229,7 +229,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSol_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       get_ref(cell,node,eq) = x_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -238,7 +238,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSol_Transient_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       get_ref_dot(cell,node,eq)= xdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -247,7 +247,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const PHAL_GatherSol_Acceleration_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node)
+  for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
       get_ref_dotdot(cell,node,eq)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
 }
@@ -355,7 +355,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJac_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node){
+  for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       ref_t valref = get_ref(cell,node,eq);
@@ -369,7 +369,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJac_Transient_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node){
+  for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       ref_t valref = get_ref_dot(cell,node,eq);
@@ -383,7 +383,7 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const PHAL_GatherJac_Acceleration_Tag&, const int& cell) const{
-  for (size_t node = 0; node < this->numNodes; ++node){
+  for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       ref_t valref = get_ref_dotdot(cell,node,eq);
