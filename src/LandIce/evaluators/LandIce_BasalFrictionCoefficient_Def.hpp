@@ -346,7 +346,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
             if (rho_i*thickness_field(cell,ipt)+rho_w*bed_topo_field(cell,ipt) > 0)
               NVal = N(cell,ipt);
           } else {
-            for (unsigned int node=0; node<numNodes; ++node)
+            for (int node=0; node<numNodes; ++node)
               if (rho_i*thickness_field(cell,node)+rho_w*bed_topo_field(cell,node) > 0)
                 NVal += N(cell,node)*BF(cell,node,ipt);
           }
@@ -360,7 +360,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
             if(rho_i*thickness_field(cell,ipt)+rho_w*bed_topo_field(cell,ipt) > 0)
               NVal =  1.0;
           } else {
-            for (unsigned int node=0; node<numNodes; ++node)
+            for (int node=0; node<numNodes; ++node)
               if (rho_i*thickness_field(cell,node)+rho_w*bed_topo_field(cell,node) > 0)
                 NVal += BF(cell,node,ipt);
           }
@@ -371,7 +371,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
           NVal = g*KU::max(rho_i*thickness_field(cell,ipt)+KU::min(rho_w*bed_topo_field(cell,ipt),0.0),0.0);
         else {
           MeshScalarT thickness(0), bed_topo(0);
-          for (unsigned int node=0; node<numNodes; ++node) {
+          for (int node=0; node<numNodes; ++node) {
             thickness += thickness_field(cell,node)*BF(cell,node,ipt);
             bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
           }
@@ -383,7 +383,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
           NVal = g* KU::max(rho_i*thickness_field(cell,ipt)+KU::min(rho_w*bed_topo_field(cell,ipt),0.0),0.0);
         else {
           NVal = 0;
-          for (unsigned int node=0; node<numNodes; ++node)
+          for (int node=0; node<numNodes; ++node)
             NVal += g*KU::max(rho_i*thickness_field(cell,node)+KU::min(rho_w*bed_topo_field(cell,node),0.0),0.0)*BF(cell,node,ipt);
         }
         break;
@@ -398,7 +398,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
           muValue = std::exp(muField(cell,ipt));
         else {
           muValue = 0;
-          for (unsigned int node=0; node<numNodes; ++node)
+          for (int node=0; node<numNodes; ++node)
             muValue += std::exp(muField(cell,node))*BF(cell,node,ipt);
         }
         break;
@@ -426,7 +426,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
             lambdaValue = std::exp(lambdaField(cell,ipt));
           else {
             lambdaValue = 0;
-            for (unsigned int node=0; node<numNodes; ++node)
+            for (int node=0; node<numNodes; ++node)
               lambdaValue += std::exp(lambdaField(cell,node))*BF(cell,node,ipt);
           }
           break;
@@ -449,7 +449,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
         isGrounded = rho_i*thickness_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
       else {
         MeshScalarT thickness(0), bed_topo(0);
-        for (unsigned int node=0; node<numNodes; ++node) {
+        for (int node=0; node<numNodes; ++node) {
           thickness += thickness_field(cell,node)*BF(cell,node,ipt);
           bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
         }
