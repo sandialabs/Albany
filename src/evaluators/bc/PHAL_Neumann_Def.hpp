@@ -343,7 +343,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   std::vector<std::vector<Kokkos::DynRankView<int, PHX::Device> > > cellsOnSidesOnBlocks;
   for (auto const& it_side : sideSet) {
     const int ebIndex = it_side.elem_ebIndex;
-    const int elem_side = it_side.side_local_id;
+    const int elem_side = it_side.side_elem_pos;
 
     if(ordinalEbIndex.insert(std::pair<int,int>(ebIndex,ordinalEbIndex.size())).second) {
       numCellsOnSidesOnBlocks.push_back(std::vector<int>(numSidesOnElem, 0));
@@ -364,7 +364,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   for (auto const& it_side : sideSet) {
     const int iBlock = ordinalEbIndex[it_side.elem_ebIndex];
     const int elem_LID = it_side.elem_LID;
-    const int elem_side = it_side.side_local_id;
+    const int elem_side = it_side.side_elem_pos;
 
     cellsOnSidesOnBlocks[iBlock][elem_side](numCellsOnSidesOnBlocks[iBlock][elem_side]++) = elem_LID;
   }

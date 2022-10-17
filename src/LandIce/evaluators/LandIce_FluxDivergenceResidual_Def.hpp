@@ -330,7 +330,7 @@ void LandIce::FluxDivergenceResidual<EvalT, Traits>::evaluateFields(typename Tra
     {
       // Get the local data of side and cell
       const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
+      const int side = it_side.side_pos;
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (int snode=0; snode<numSideNodes; ++snode) {
         auto inode = sideNodes[side][snode];
@@ -343,7 +343,7 @@ void LandIce::FluxDivergenceResidual<EvalT, Traits>::evaluateFields(typename Tra
     {
       // Get the local data of side and cell
       const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
+      const int side = it_side.side_pos;
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
 
       int node0 = sideNodes[side][0];

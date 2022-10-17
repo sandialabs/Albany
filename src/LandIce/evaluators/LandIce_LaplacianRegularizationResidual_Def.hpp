@@ -135,7 +135,7 @@ operator() (const LaplacianRegularization_Side_Tag& tag, const int& sideSet_idx)
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
+  const int side = sideSet.side_pos(sideSet_idx);
 
   MeshScalarT side_trapezoid_weights= 0;
   for (unsigned int qp=0; qp<numSideQPs; ++qp)

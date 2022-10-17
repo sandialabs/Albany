@@ -558,8 +558,8 @@ class STKDiscretization : public AbstractDiscretization
   setupExodusOutput();
 
   //! Find the local side id number within parent element
-  unsigned
-  determine_local_side_id(const stk::mesh::Entity elem, stk::mesh::Entity side);
+  int
+  determine_side_pos(const stk::mesh::Entity elem, stk::mesh::Entity side);
 
   void
   writeCoordsToMatrixMarket() const;

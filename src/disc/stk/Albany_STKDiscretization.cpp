@@ -1883,27 +1883,24 @@ STKDiscretization::computeSideSets()
       // Save side (global id)
       sStruct.side_GID = bulkData->identifier(sidee) - 1;
 
-      // Save elem id. This is the global element id
+      // Save elem GID and LID. Here, LID is the local id *within* the workset
       sStruct.elem_GID = bulkData->identifier(elem) - 1;
 
-      int workset = elemGIDws[sStruct.elem_GID]
-                        .ws;  // Get the ws that this element lives in
-
-      // Save elem id. This is the local element id within the workset
       sStruct.elem_LID = elemGIDws[sStruct.elem_GID].LID;
 
-      // Save the side identifier inside of the element. This starts at zero
-      // here.
-      sStruct.side_local_id = determine_local_side_id(elem, sidee);
+      // Get the ws that this element lives in
+      int workset = elemGIDws[sStruct.elem_GID].ws;
+
+      // Save the position of the side within element (0-based).
+      sStruct.side_pos = determine_side_pos(elem, sidee);
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
           stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[workset]];
 
-      SideSetList& ssList =
-          sideSets[workset];  // Get a ref to the side set map for this ws
-      SideSetList::iterator it = ssList.find(
-          ss->first);  // Get an iterator to the correct sideset (if any)
+      SideSetList& ssList = sideSets[workset];  // Get a ref to the side set map for this ws
+
+      SideSetList::iterator it = ssList.find(ss->first);  // Get an iterator to the correct sideset (if any)
 
       if (it != ssList.end()) {
         // The sideset has already been created
@@ -1951,7 +1948,7 @@ STKDiscretization::computeSideSets()
       num_local_worksets[ss_key]++;
       max_sideset_length[ss_key] = std::max(max_sideset_length[ss_key], (int) ss_val.size());
       for (size_t j = 0; j < ss_val.size(); ++j)
-        max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_local_id);
+        max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_pos);
 
       ss_it++;
     }
@@ -1965,15 +1962,15 @@ STKDiscretization::computeSideSets()
 
     globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
     globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,       Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_LID         = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,      Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_local_id    = Kokkos::View<unsigned**, Kokkos::LayoutRight>("side_local_id", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_LID         = Kokkos::View<int**,  Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,  Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_pos    = Kokkos::View<int**,  Kokkos::LayoutRight>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,      Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***,     Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***,     Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,  Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
+    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***, Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***, Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
   }
 
   // 3) Populate global views
@@ -1994,7 +1991,7 @@ STKDiscretization::computeSideSets()
       std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
       for (size_t j = 0; j < ss_val.size(); ++j) {
         int cell = ss_val[j].elem_LID;
-        int side = ss_val[j].side_local_id;
+        int side = ss_val[j].side_pos;
         cellsOnSide[side].push_back(cell);
         sideSetIdxOnSide[side].push_back(j);
       }
@@ -2020,7 +2017,7 @@ STKDiscretization::computeSideSets()
         globalSideSetViews[ss_key].elem_GID(current_index, j)      = ss_val[j].elem_GID;
         globalSideSetViews[ss_key].elem_LID(current_index, j)      = ss_val[j].elem_LID;
         globalSideSetViews[ss_key].elem_ebIndex(current_index, j)  = ss_val[j].elem_ebIndex;
-        globalSideSetViews[ss_key].side_local_id(current_index, j) = ss_val[j].side_local_id;
+        globalSideSetViews[ss_key].side_pos(current_index, j) = ss_val[j].side_pos;
       }
 
       current_local_index[ss_key]++;
@@ -2055,7 +2052,7 @@ STKDiscretization::computeSideSets()
       lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
       lssList[ss_key].elem_LID       = Kokkos::subview(globalSideSetViews[ss_key].elem_LID, current_index, range );
       lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
-      lssList[ss_key].side_local_id  = Kokkos::subview(globalSideSetViews[ss_key].side_local_id, current_index, range );
+      lssList[ss_key].side_pos  = Kokkos::subview(globalSideSetViews[ss_key].side_pos, current_index, range );
       lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
       lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
       lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
@@ -2127,8 +2124,8 @@ STKDiscretization::computeSideSets()
       const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
       const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
       const auto& ov_node_indexer = *(getOverlapGlobalLocalIndexer(nodes_dof_name()));
-      const unsigned int numLayers = layeredMeshNumbering.numLayers;
-      const unsigned int numComps = solDOFManager.numComponents();
+      const int numLayers = layeredMeshNumbering.numLayers;
+      const int numComps = solDOFManager.numComponents();
 
       // Loop over the sides that form the boundary condition
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
@@ -2144,19 +2141,19 @@ STKDiscretization::computeSideSets()
 
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
           // Get the data that corresponds to the side
-          const unsigned int elem_LID = ss_val[sideSet_idx].elem_LID;
-          const unsigned int elem_side = ss_val[sideSet_idx].side_local_id;
-          const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
-          const unsigned int numSideNodes = side.topology->node_count;
+          const int elem_LID = ss_val[sideSet_idx].elem_LID;
+          const int side_pos = ss_val[sideSet_idx].side_pos;
+          const CellTopologyData_Subcell& side =  cell_topo->side[side_pos];
+          const int numSideNodes = side.topology->node_count;
 
           const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID_i[elem_LID];
 
           //we only consider elements on the top.
           GO baseId;
-          for (unsigned int j = 0; j < numSideNodes; ++j) {
+          for (int j=0; j<numSideNodes; ++j) {
             const std::size_t node = side.node[j];
             baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
-            for (unsigned int il = 0; il < numLayers+1; ++il) {
+            for (int il=0; il<numLayers+1; ++il) {
               const GO gnode = layeredMeshNumbering.getId(baseId, il);
               const LO inode = ov_node_indexer.getLocalElement(gnode);
               for (unsigned int comp = 0; comp < numComps; ++comp) {
@@ -2179,8 +2176,8 @@ STKDiscretization::computeSideSets()
   
 }
 
-unsigned
-STKDiscretization::determine_local_side_id(
+int
+STKDiscretization::determine_side_pos(
     const stk::mesh::Entity elem,
     stk::mesh::Entity       side)
 {
@@ -2196,32 +2193,31 @@ STKDiscretization::determine_local_side_id(
 
   const stk::topology::rank_t side_rank = metaData->side_rank();
 
-  int side_id = -1;
+  int side_pos = -1;
 
   if (num_elem_nodes == 0 || num_side_nodes == 0) {
     // Node relations are not present, look at elem->face
 
-    const unsigned num_sides = bulkData->num_connectivity(elem, side_rank);
+    const int num_sides = bulkData->num_connectivity(elem, side_rank);
     stk::mesh::Entity const* elem_sides = bulkData->begin(elem, side_rank);
 
-    for (unsigned i = 0; i < num_sides; ++i) {
+    for (int i = 0; i < num_sides; ++i) {
       const stk::mesh::Entity elem_side = elem_sides[i];
 
       if (bulkData->identifier(elem_side) == bulkData->identifier(side)) {
         // Found the local side in the element
-        side_id = static_cast<int>(i);
-        return side_id;
+        return i;
       }
     }
 
-    if (side_id < 0) {
+    if (side_pos < 0) {
       std::ostringstream msg;
-      msg << "determine_local_side_id( ";
+      msg << "determine_side_pos( ";
       msg << elem_top.name();
       msg << " , Element[ ";
       msg << bulkData->identifier(elem);
       msg << " ]{";
-      for (unsigned i = 0; i < num_sides; ++i) {
+      for (int i = 0; i < num_sides; ++i) {
         msg << " " << bulkData->identifier(elem_sides[i]);
       }
       msg << " } , Side[ ";
@@ -2232,52 +2228,50 @@ STKDiscretization::determine_local_side_id(
   } else {  // Conventional elem->node - side->node connectivity present
 
     std::vector<unsigned> side_map;
-    for (unsigned i = 0; side_id == -1 && i < elem_top.num_sides(); ++i) {
+    for (unsigned i = 0; side_pos == -1 && i < elem_top.num_sides(); ++i) {
       stk::topology side_top = elem_top.side_topology(i);
       side_map.clear();
       elem_top.side_node_ordinals(i, std::back_inserter(side_map));
 
       if (num_side_nodes == side_top.num_nodes()) {
-        side_id = i;
 
-        for (unsigned j = 0;
-             side_id == static_cast<int>(i) && j < side_top.num_nodes();
-             ++j) {
+        bool found = false;
+        for (unsigned j=0; j<side_top.num_nodes(); ++j) {
           stk::mesh::Entity elem_node = elem_nodes[side_map[j]];
-
-          bool found = false;
+          found = false;
 
           for (unsigned k = 0; !found && k < side_top.num_nodes(); ++k) {
             found = elem_node == side_nodes[k];
           }
 
-          if (!found) { side_id = -1; }
+          if (!found) { break; }
         }
+        if (found) side_pos = i;
       }
-    }
-
-    if (side_id < 0) {
-      std::ostringstream msg;
-      msg << "determine_local_side_id( ";
-      msg << elem_top.name();
-      msg << " , Element[ ";
-      msg << bulkData->identifier(elem);
-      msg << " ]{";
-      for (unsigned i = 0; i < num_elem_nodes; ++i) {
-        msg << " " << bulkData->identifier(elem_nodes[i]);
-      }
-      msg << " } , Side[ ";
-      msg << bulkData->identifier(side);
-      msg << " ]{";
-      for (unsigned i = 0; i < num_side_nodes; ++i) {
-        msg << " " << bulkData->identifier(side_nodes[i]);
-      }
-      msg << " } ) FAILED";
-      throw std::runtime_error(msg.str());
     }
   }
 
-  return static_cast<unsigned>(side_id);
+  if (side_pos < 0) {
+    std::ostringstream msg;
+    msg << "determine_side_pos( ";
+    msg << elem_top.name();
+    msg << " , Element[ ";
+    msg << bulkData->identifier(elem);
+    msg << " ]{";
+    for (unsigned i=0; i<num_elem_nodes; ++i) {
+      msg << " " << bulkData->identifier(elem_nodes[i]);
+    }
+    msg << " } , Side[ ";
+    msg << bulkData->identifier(side);
+    msg << " ]{";
+    for (unsigned i=0; i<num_side_nodes; ++i) {
+      msg << " " << bulkData->identifier(side_nodes[i]);
+    }
+    msg << " } ) FAILED";
+    throw std::runtime_error(msg.str());
+  }
+
+  return side_pos;
 }
 
 void

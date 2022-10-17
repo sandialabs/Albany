@@ -122,7 +122,7 @@ namespace LandIce
 
     // Get the local data of side and cell
     const int cell = sideSet.elem_LID(side_idx);
-    const int side = sideSet.side_local_id(side_idx);
+    const int side = sideSet.side_pos(side_idx);
 
     for (unsigned int snode=0; snode<numSideNodes; ++snode){
       int cnode = sideNodes(side,snode);

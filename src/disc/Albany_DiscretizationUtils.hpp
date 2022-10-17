@@ -32,11 +32,11 @@ using NodeSetCoordList = std::map<std::string, std::vector<double*>>;
 class SideStruct
 {
  public:
-  GO       side_GID;       // global id of side in the mesh
-  GO       elem_GID;       // global id of element containing side
-  int      elem_LID;       // local id of element containing side
-  int      elem_ebIndex;   // index of element block that contains element
-  unsigned side_local_id;  // local id of side relative to owning element
+  GO    side_GID;       // global id of side in the mesh
+  GO    elem_GID;       // global id of element containing side
+  int   elem_LID;       // local id of element containing side
+  int   elem_ebIndex;   // index of element block that contains element
+  int   side_pos;       // position of side relative to owning element
 };
 using SideSetList = std::map<std::string, std::vector<SideStruct>>;
 
@@ -53,29 +53,37 @@ class GlobalSideSetInfo
 public:
   int num_local_worksets;
   int max_sideset_length;
-  Kokkos::View<int*, Kokkos::LayoutRight> sideset_sizes;       // (num_local_worksets)
-  Kokkos::View<GO**, Kokkos::LayoutRight>       side_GID;      // (num_local_worksets, max_sideset_length)
-  Kokkos::View<GO**, Kokkos::LayoutRight>       elem_GID;      // (num_local_worksets, max_sideset_length)
-  Kokkos::View<int**, Kokkos::LayoutRight>      elem_LID;      // (num_local_worksets, max_sideset_length)
-  Kokkos::View<int**, Kokkos::LayoutRight>      elem_ebIndex;  // (num_local_worksets, max_sideset_length)
-  Kokkos::View<unsigned**, Kokkos::LayoutRight> side_local_id; // (num_local_worksets, max_sideset_length)
+
+  // (num_local_worksets)
+  Kokkos::View<int*, Kokkos::LayoutRight> sideset_sizes;
+
+  // (num_local_worksets, max_sideset_length)
+  Kokkos::View<GO**, Kokkos::LayoutRight>   side_GID;
+  Kokkos::View<GO**, Kokkos::LayoutRight>   elem_GID;
+  Kokkos::View<int**, Kokkos::LayoutRight>  elem_LID;
+  Kokkos::View<int**, Kokkos::LayoutRight>  elem_ebIndex;
+  Kokkos::View<int**, Kokkos::LayoutRight>  side_pos;
 
   int max_sides;
-  Kokkos::View<int**, Kokkos::LayoutRight>      numCellsOnSide;   // (num_local_worksets, max_sides)
-  Kokkos::View<int***, Kokkos::LayoutRight>     cellsOnSide;      // (num_local_worksets, max_sides, max_sideset_length)
-  Kokkos::View<int***, Kokkos::LayoutRight>     sideSetIdxOnSide; // (num_local_worksets, max_sides, max_sideset_length)
+  // (num_local_worksets, max_sides)
+  Kokkos::View<int**, Kokkos::LayoutRight>  numCellsOnSide;
+
+  // (num_local_worksets, max_sides, max_sideset_length)
+  Kokkos::View<int***, Kokkos::LayoutRight>   cellsOnSide;
+  Kokkos::View<int***, Kokkos::LayoutRight>   sideSetIdxOnSide;
 };
+
 using GlobalSideSetList = std::map<std::string, GlobalSideSetInfo>;
 
 class LocalSideSetInfo
 {
 public:
   int size;
-  Kokkos::View<GO*, Kokkos::LayoutRight>       side_GID;      // (size)
-  Kokkos::View<GO*, Kokkos::LayoutRight>       elem_GID;      // (size)
-  Kokkos::View<int*, Kokkos::LayoutRight>      elem_LID;      // (size)
-  Kokkos::View<int*, Kokkos::LayoutRight>      elem_ebIndex;  // (size)
-  Kokkos::View<unsigned*, Kokkos::LayoutRight> side_local_id; // (size)
+  Kokkos::View<GO*, Kokkos::LayoutRight>    side_GID;      // (size)
+  Kokkos::View<GO*, Kokkos::LayoutRight>    elem_GID;      // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>   elem_LID;      // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>   elem_ebIndex;  // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>   side_pos;      // (size)
 
   int numSides;
   Kokkos::View<int*, Kokkos::LayoutRight>      numCellsOnSide;   // (sides)

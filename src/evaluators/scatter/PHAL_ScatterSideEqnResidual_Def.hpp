@@ -154,7 +154,7 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc) {
     const auto& ss = ssMap.at(this->sideSetName);
     for (const auto& side : ss) {
       const int icell = side.elem_LID;
-      const int iside = side.side_local_id;
+      const int iside = side.side_elem_pos;
 
       const auto& side_nodes = this->sideNodes[iside];
 
@@ -209,7 +209,7 @@ evaluateFields(typename Traits::EvalData workset)
     {
       // Get the local data of side and cell
       const int icell = sideSet.elem_LID(sideSet_idx);
-      const int iside = sideSet.side_local_id(sideSet_idx);
+      const int iside = sideSet.side_elem_pos(sideSet_idx);
 
       if (residualsAreVolumeFields) {
         doEvaluateFieldsCell(workset,icell,iside);

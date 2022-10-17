@@ -179,7 +179,7 @@ void StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::evaluateFields (typenam
   {
     // Get the local data of side and cell
     const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
+    const int side = sideSet.side_pos(sideSet_idx);
 
     Kokkos::deep_copy(qp_temp,0.0);
     

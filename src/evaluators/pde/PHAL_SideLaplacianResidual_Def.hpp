@@ -113,7 +113,7 @@ operator() (const SideLaplacianResidual_Side_Tag& tag, const int& sideSet_idx) c
 
   // Get the local data of side and cell
   const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
+  const int side = sideSet.side_elem_pos(sideSet_idx);
 
   // Assembling the residual of -\Delta u + u = f
   for (int node=0; node<numNodes; ++node) {

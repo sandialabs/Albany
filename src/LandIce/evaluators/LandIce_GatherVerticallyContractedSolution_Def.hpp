@@ -118,7 +118,7 @@ KOKKOS_INLINE_FUNCTION
 void GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const ResidualScalar_Tag& tag, const int& sideSet_idx) const {
 
-  const int side = this->sideSet.side_local_id(sideSet_idx);
+  const int side = this->sideSet.side_elem_pos(sideSet_idx);
   const int numSideNodes = this->numSideNodes(side);
 
   //we only consider elements on the top.
@@ -138,7 +138,7 @@ KOKKOS_INLINE_FUNCTION
 void GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const ResidualVector_Tag& tag, const int& sideSet_idx) const {
 
-  const int side = this->sideSet.side_local_id(sideSet_idx);
+  const int side = this->sideSet.side_elem_pos(sideSet_idx);
   const int numSideNodes = this->numSideNodes(side);
 
   //we only consider elements on the top.
@@ -235,7 +235,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const unsigned int elem_LID = sideSet.elem_LID(sideSet_idx);
-      const unsigned int elem_side = sideSet.side_local_id(sideSet_idx);
+      const unsigned int elem_side = sideSet.side_elem_pos(sideSet_idx);
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
       unsigned int numSideNodes = side.topology->node_count;
 
@@ -310,7 +310,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const unsigned int elem_LID = sideSet.elem_LID(sideSet_idx);
-      const unsigned int elem_side = sideSet.side_local_id(sideSet_idx);
+      const unsigned int elem_side = sideSet.side_elem_pos(sideSet_idx);
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
       unsigned int numSideNodes = side.topology->node_count;
 
@@ -382,7 +382,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const unsigned int elem_LID = sideSet.elem_LID(sideSet_idx);
-      const unsigned int elem_side = sideSet.side_local_id(sideSet_idx);
+      const unsigned int elem_side = sideSet.side_elem_pos(sideSet_idx);
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
       unsigned int numSideNodes = side.topology->node_count;
 
@@ -485,7 +485,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const unsigned int elem_LID = sideSet.elem_LID(sideSet_idx);
-      const unsigned int elem_side = sideSet.side_local_id(sideSet_idx);
+      const unsigned int elem_side = sideSet.side_elem_pos(sideSet_idx);
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
       unsigned int numSideNodes = side.topology->node_count;
 
