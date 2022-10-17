@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "STKConnManager.hpp"
+#include "Albany_config.h"
 
 #include "Panzer_FieldPattern.hpp"
 
@@ -33,18 +34,17 @@ STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
   m_metaData = metaData;
 
   // Add parts, and check that 1) compatible dimensions and 2) no intersection
-  auto INVALID = std::numeric_limits<unsigned int>::max();
-  m_parts_topo_dim = INVALID;
+  constexpr auto INVALID = stk::topology::rank_t::INVALID_RANK;
   for (const auto& pn : part_names) {
     auto part = m_metaData->get_part(pn);
     TEUCHOS_TEST_FOR_EXCEPTION (part==nullptr, std::runtime_error,
         "[STKConnManager] Error! Part '" + pn + "' not found in the mesh.\n");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (m_parts_topo_dim!=INVALID && part->topology().dimension()!=m_parts_topo_dim, std::logic_error,
-        "[STKConnManager] Error! Input parts do not have the same topological dimension.\n"
-        "  - current topo dim : " + std::to_string(m_parts_topo_dim) + "\n"
-        "  - new part name    : " + pn + "\n"
-        "  - new part topo dim: " + std::to_string(part->topology().dimension()) + "\n"
+    TEUCHOS_TEST_FOR_EXCEPTION (m_parts_topo.rank()!=INVALID && part->topology()!=m_parts_topo, std::logic_error,
+        "[STKConnManager] Error! Input parts do not have the same topology.\n"
+        "  - current topo  : " + m_parts_topo.name() + "\n";
+        "  - new part name : " + pn + "\n"
+        "  - new part topo : " + part->topology().name() + "\n"
     );
 
     for (const auto& p : m_parts) {
@@ -61,7 +61,7 @@ STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
           "  - second part name: " + part->name() + "\n");
     }
 
-    m_parts_topo_dim = part->topology().dimension();
+    m_parts_topo = part->topology();
 
     m_parts[pn] = part;
   }
@@ -115,11 +115,17 @@ void STKConnManager::buildLocalElementMapping()
     }
   }
 
-  // this expensive operation guarantees ordering of local IDs
+#ifdef ALBANY_DEBUG
+  // this expensive operation checks ordering of local IDs
   auto cmpLids = [&](stk::mesh::Entity a, stk::mesh::Entity b)->bool{
      return elementLocalId(a) < elementLocalId(b);
   };
-  std::sort(m_elements.begin(), m_elements.end(), cmpLids);
+  auto copy = m_elements;
+  std::sort(copy.begin(), copy.end(), cmpLids);
+  TEUCHOS_TEST_FOR_EXCEPTION (copy!=m_elements, std::runtime_error,
+      "Error! Elements were supposed to be already sorted.\n"
+      "       Something is off, please, contact developers.\n");
+#endif
 
   // Pre allocate space for internal connectivity offsets/sizes
   m_elmtLidToConn.resize(m_elements.size(),0);
@@ -203,10 +209,10 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
   RCP<Teuchos::TimeMonitor> tM = rcp(new TimeMonitor(*TimeMonitor::getNewTimer(std::string("panzer_stk::STKConnManager::buildConnectivity"))));
 #endif
 
-  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()!=m_parts_topo_dim, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()!=m_parts_topo.dimension(), std::logic_error,
       "[STKConnManager] Error! Field pattern incompatible with stored parts.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
-      "  - Parts topo dim: " + std::to_string(m_parts_topo_dim) + "\n");
+      "  - Parts topo dim: " + std::to_string(m_parts_topo.dimension()) + "\n");
 
   // get element info from STK_Interface
   // object and build a local element mapping.
@@ -316,11 +322,7 @@ void STKConnManager::buildMaxEntityIds() {
 
 int STKConnManager::elementLocalId(stk::mesh::Entity elmt) const
 {
-  return elementLocalId(m_bulkData->identifier(elmt));
-}
-
-int STKConnManager::elementLocalId(stk::mesh::EntityId gid) const
-{
+  const auto gid = m_bulkData->identifier(elmt);
   auto it = m_localIDHash.find(gid);
   TEUCHOS_ASSERT(it!=m_localIDHash.end());
   return it->second;
@@ -329,10 +331,14 @@ int STKConnManager::elementLocalId(stk::mesh::EntityId gid) const
 void STKConnManager::getMyElements(std::vector<stk::mesh::Entity> & elements) const
 {
   // setup local ownership
-  stk::mesh::Selector ownedPart = m_metaData->locally_owned_part();
+  stk::mesh::Selector ownedPart;
+  for (const auto& it : m_parts) {
+    ownedPart |= *it.second;
+  }
+  ownedPart &= m_metaData->locally_owned_part();
 
   // grab elements
-  constexpr auto ELEM_RANK = stk::topology::ELEMENT_RANK;
+  const auto ELEM_RANK = m_parts_topo.rank();
   stk::mesh::get_selected_entities(ownedPart, m_bulkData->buckets(ELEM_RANK), elements);
 }
 

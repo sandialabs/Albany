@@ -162,7 +162,6 @@ protected:
   std::string containingBlockId(stk::mesh::Entity elmt) const;
 
   int elementLocalId (const stk::mesh::Entity elmt) const;
-  int elementLocalId (const stk::mesh::EntityId gid) const;
   stk::mesh::EntityId getMaxEntityId (const stk::mesh::EntityRank entityRank) const;
 
   void getMyElements(std::vector<stk::mesh::Entity> & elements) const;
@@ -201,7 +200,6 @@ protected:
   //       for simplicity in the getter functions
   std::map<std::string,std::vector<LocalOrdinal> > m_elementBlocks;
   std::map<std::string,std::vector<LocalOrdinal> > m_neighborElementBlocks;
-  // std::map<std::string,GlobalOrdinal> blockIdToIndex_;
 
   // Map elemLID to offset in m_connectivity
   std::vector<LocalOrdinal> m_elmtLidToConn;
@@ -220,7 +218,7 @@ protected:
   Teuchos::RCP<const stk::mesh::BulkData>   m_bulkData;
 
   std::map<std::string,stk::mesh::Part*>    m_parts;
-  unsigned int                              m_parts_topo_dim;
+  stk::topology                             m_parts_topo;
 
   std::unordered_map<stk::mesh::EntityId, int> m_localIDHash;
 };
