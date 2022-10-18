@@ -16,8 +16,8 @@ Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-Cism-Albany
 Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-No-Epetra-Albany 
 Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-Openmp-Albany
 Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Debug-FPE-Albany
-Nightly, cee-compute009, Linux-3.10.0-1062.1.2.el7.x86_64-debug-trilinos
-Nightly, cee-compute009, Linux-3.10.0-1062.1.2.el7.x86_64-debug-albany
+Nightly, cee-compute007, Linux-3.10.0-1062.1.2.el7.x86_64-debug-trilinos
+Nightly, cee-compute007, Linux-3.10.0-1062.1.2.el7.x86_64-debug-albany
 Nightly, cee-compute010, Linux-3.10.0-1160.66.1.el7.x86_64-clangdbg-trilinos
 Nightly, cee-compute010, Linux-3.10.0-1160.66.1.el7.x86_64-clangdbg-albany
 Nightly, cee-compute020, Linux-3.10.0-1062.9.1.el7.x86_64-intel-trilinos
