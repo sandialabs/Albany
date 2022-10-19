@@ -20,7 +20,7 @@ endif()
 
 set (testName ${testNameRoot}_Steady)
 
-if (ALBANY_IFPACK2)
+if (ALBANY_IFPACK2 AND ALBANY_PANZER_EXPR_EVAL)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome_steady_fwd.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_dome_steady_fwd.yaml)
   add_test(${testName}_Dome_Tpetra ${Albany.exe}  input_dome_steady_fwd.yaml)
