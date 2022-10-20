@@ -571,16 +571,6 @@ ELSE()
   SET(ALBANY_MESH_DEPENDS_ON_PARAMETERS FALSE)
 ENDIF()
 
-# set optional dependency of mesh on solution, defaults to Disabled
-OPTION(ENABLE_MESH_DEPENDS_ON_SOLUTION "Flag to turn on dependency of mesh on solution" OFF)
-IF (ENABLE_MESH_DEPENDS_ON_SOLUTION)
-  MESSAGE("-- MESH_DEPENDS_ON_SOLUTION                Enabled.")
-  SET(ALBANY_MESH_DEPENDS_ON_SOLUTION TRUE)
-ELSE()
-  MESSAGE("-- MESH_DEPENDS_ON_SOLUTION            NOT Enabled.")
-  SET(ALBANY_MESH_DEPENDS_ON_SOLUTION FALSE)
-ENDIF()
-
 MESSAGE("\nAlbany physics packages:\n")
 
 # set optional dependency on demoPDEs, defaults to Enabled
@@ -733,15 +723,6 @@ IF(ENABLE_FAD_TYPE STREQUAL ENABLE_TAN_FAD_TYPE)
 ELSE()
   SET(ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE TRUE)
   MESSAGE("-- FAD_TYPE is not TAN_FAD_TYPE")
-ENDIF()
-  
-LIST(FIND Trilinos_PACKAGE_LIST Pamgen PAMGEN_List_ID)
-IF (NOT PAMGEN_List_ID GREATER -1)
-  MESSAGE("-- Pamgen   is Enabled.  Building Pamgen tests")
-  set(ALBANY_PAMGEN TRUE)
-ELSE()
-  MESSAGE("-- Pamgen   is NOT Enabled.  Not building Pamgen tests")
-  set(ALBANY_PAMGEN FALSE)
 ENDIF()
 
 # Disable the RTC capability if Trilinos is not built with Pamgen

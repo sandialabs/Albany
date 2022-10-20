@@ -6,15 +6,11 @@
 
 #include "Albany_DemoProblemFactory.hpp"
 
-#include "Albany_CahnHillProblem.hpp"
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_NavierStokes.hpp"
-#include "Albany_LinComprNSProblem.hpp"
 #include "Albany_AdvDiffProblem.hpp"
 #include "Albany_ReactDiffSystem.hpp"
-#include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
-#include "Albany_PNPProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "Albany_ThermalProblem.hpp"
 #include "Albany_AdvectionProblem.hpp"
@@ -37,24 +33,15 @@ int getNumDim(std::string const& key)
 
 bool DemoProblemFactory::provides (const std::string& key) const
 {
-  return key == "CahnHill 2D" ||
-         key == "ODE" ||
+  return key == "ODE" ||
          key == "Helmholtz 2D" ||
          key == "NavierStokes 1D" ||
          key == "NavierStokes 2D" ||
          key == "NavierStokes 3D" ||
-         key == "LinComprNS 1D" ||
          key == "AdvDiff 1D" ||
          key == "AdvDiff 2D" ||
          key=="Reaction-Diffusion System 3D" ||
          key == "Reaction-Diffusion System" ||
-         key == "LinComprNS 2D" ||
-         key == "LinComprNS 3D" ||
-         key == "ComprNS 2D" ||
-         key == "ComprNS 3D" ||
-         key == "PNP 1D" ||
-         key == "PNP 2D" ||
-         key == "PNP 3D" ||
          key == "Thermal 1D" ||
          key == "Thermal 2D" ||
          key == "Thermal 3D" ||
@@ -78,9 +65,7 @@ create (const std::string& key,
   auto problemParams = Teuchos::sublist(topLevelParams, "Problem", true);
   auto discretizationParams = Teuchos::sublist(topLevelParams, "Discretization");
 
-  if (key == "CahnHill 2D") {
-    problem = Teuchos::rcp(new CahnHillProblem(problemParams, paramLib, 2, comm));
-  } else if (key == "ODE") {
+  if (key == "ODE") {
     problem = Teuchos::rcp(new ODEProblem(problemParams, paramLib, 0));
   } else if (key == "Helmholtz 2D") {
     problem = Teuchos::rcp(new Helmholtz2DProblem(problemParams, paramLib));
@@ -90,8 +75,6 @@ create (const std::string& key,
     problem = Teuchos::rcp(new NavierStokes(problemParams, paramLib, 2));
   } else if (key == "NavierStokes 3D") {
     problem = Teuchos::rcp(new NavierStokes(problemParams, paramLib, 3));
-  } else if (key == "LinComprNS 1D") {
-    problem = Teuchos::rcp(new LinComprNSProblem(problemParams, paramLib, 1));
   } else if (key == "AdvDiff 1D") {
     problem = Teuchos::rcp(new AdvDiffProblem(problemParams, paramLib, 1));
   } else if (key == "AdvDiff 2D") {
@@ -99,20 +82,6 @@ create (const std::string& key,
   } else if (key=="Reaction-Diffusion System 3D" ||
              key == "Reaction-Diffusion System") {
     problem = Teuchos::rcp(new ReactDiffSystem(problemParams, paramLib, 3));
-  } else if (key == "LinComprNS 2D") {
-    problem = Teuchos::rcp(new LinComprNSProblem(problemParams, paramLib, 2));
-  } else if (key == "LinComprNS 3D") {
-    problem = Teuchos::rcp(new LinComprNSProblem(problemParams, paramLib, 3));
-  } else if (key == "ComprNS 2D") {
-    problem = Teuchos::rcp(new ComprNSProblem(problemParams, paramLib, 2));
-  } else if (key == "ComprNS 3D") {
-    problem = Teuchos::rcp(new ComprNSProblem(problemParams, paramLib, 3));
-  } else if (key == "PNP 1D") {
-    problem = Teuchos::rcp(new PNPProblem(problemParams, paramLib, 1));
-  } else if (key == "PNP 2D") {
-    problem = Teuchos::rcp(new PNPProblem(problemParams, paramLib, 2));
-  } else if (key == "PNP 3D") {
-    problem = Teuchos::rcp(new PNPProblem(problemParams, paramLib, 3));
   } else if (key == "ThermoElectrostatics 1D") {
     problem = Teuchos::rcp(new ThermoElectrostaticsProblem(problemParams, paramLib, 1));
   } else if (key == "ThermoElectrostatics 2D") {
