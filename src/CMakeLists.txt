@@ -615,29 +615,17 @@ if(ALBANY_DEMO_PDES)
   set(PDE_SRCS
     problems/Albany_AdvDiffProblem.cpp
     problems/Albany_ReactDiffSystem.cpp
-    problems/Albany_CahnHillProblem.cpp
-    problems/Albany_ComprNSProblem.cpp
     problems/Albany_DemoProblemFactory.cpp
     problems/Albany_Helmholtz2DProblem.cpp
-    problems/Albany_LinComprNSProblem.cpp
     problems/Albany_ODEProblem.cpp
     problems/Albany_NavierStokes.cpp
-    problems/Albany_PNPProblem.cpp
     problems/Albany_ThermoElectrostaticsProblem.cpp
     problems/Albany_ThermalProblem.cpp
     problems/Albany_AdvectionProblem.cpp
     evaluators/pde/PHAL_AdvDiffResid.cpp
     evaluators/pde/PHAL_ReactDiffSystemResid.cpp
-    evaluators/pde/PHAL_CahnHillChemTerm.cpp
-    evaluators/pde/PHAL_CahnHillRhoResid.cpp
-    evaluators/pde/PHAL_CahnHillWResid.cpp
-    evaluators/pde/PHAL_ComprNSBodyForce.cpp
-    evaluators/pde/PHAL_ComprNSResid.cpp
-    evaluators/pde/PHAL_ComprNSViscosity.cpp
     evaluators/pde/PHAL_HelmholtzResid.cpp
     evaluators/pde/PHAL_JouleHeating.cpp
-    evaluators/pde/PHAL_LinComprNSBodyForce.cpp
-    evaluators/pde/PHAL_LinComprNSResid.cpp
     evaluators/pde/PHAL_NSBodyForce.cpp
     evaluators/pde/PHAL_NSContinuityResid.cpp
     evaluators/pde/PHAL_NSContravarientMetricTensor.cpp
@@ -655,20 +643,14 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PHAL_PoissonResid.cpp
     evaluators/pde/PHAL_Permittivity.cpp
     evaluators/pde/PHAL_TEProp.cpp
-    evaluators/pde/PNP_ConcentrationResid.cpp
-    evaluators/pde/PNP_PotentialResid.cpp
   )
 
   set(PDE_HDRS
     problems/Albany_AdvDiffProblem.hpp
     problems/Albany_ReactDiffSystem.hpp
-    problems/Albany_CahnHillProblem.hpp
-    problems/Albany_ComprNSProblem.hpp
     problems/Albany_Helmholtz2DProblem.hpp
-    problems/Albany_LinComprNSProblem.hpp
     problems/Albany_NavierStokes.hpp
     problems/Albany_ODEProblem.hpp
-    problems/Albany_PNPProblem.hpp
     problems/Albany_ThermoElectrostaticsProblem.hpp
     problems/Albany_ThermalProblem.hpp
     problems/Albany_AdvectionProblem.hpp
@@ -676,26 +658,10 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PHAL_AdvDiffResid_Def.hpp
     evaluators/pde/PHAL_ReactDiffSystemResid.hpp
     evaluators/pde/PHAL_ReactDiffSystemResid_Def.hpp
-    evaluators/pde/PHAL_CahnHillRhoResid.hpp
-    evaluators/pde/PHAL_CahnHillRhoResid_Def.hpp
-    evaluators/pde/PHAL_CahnHillWResid.hpp
-    evaluators/pde/PHAL_CahnHillWResid_Def.hpp
-    evaluators/pde/PHAL_CahnHillChemTerm.hpp
-    evaluators/pde/PHAL_CahnHillChemTerm_Def.hpp
-    evaluators/pde/PHAL_ComprNSBodyForce.hpp
-    evaluators/pde/PHAL_ComprNSBodyForce_Def.hpp
-    evaluators/pde/PHAL_ComprNSResid.hpp
-    evaluators/pde/PHAL_ComprNSResid_Def.hpp
-    evaluators/pde/PHAL_ComprNSViscosity.hpp
-    evaluators/pde/PHAL_ComprNSViscosity_Def.hpp
     evaluators/pde/PHAL_HelmholtzResid.hpp
     evaluators/pde/PHAL_HelmholtzResid_Def.hpp
     evaluators/pde/PHAL_JouleHeating.hpp
     evaluators/pde/PHAL_JouleHeating_Def.hpp
-    evaluators/pde/PHAL_LinComprNSBodyForce.hpp
-    evaluators/pde/PHAL_LinComprNSBodyForce_Def.hpp
-    evaluators/pde/PHAL_LinComprNSResid.hpp
-    evaluators/pde/PHAL_LinComprNSResid_Def.hpp
     evaluators/pde/PHAL_NSContinuityResid.hpp
     evaluators/pde/PHAL_NSContinuityResid_Def.hpp
     evaluators/pde/PHAL_NSBodyForce.hpp
@@ -726,10 +692,6 @@ if(ALBANY_DEMO_PDES)
     evaluators/pde/PHAL_Permittivity_Def.hpp
     evaluators/pde/PHAL_TEProp.hpp
     evaluators/pde/PHAL_TEProp_Def.hpp
-    evaluators/pde/PNP_ConcentrationResid.hpp
-    evaluators/pde/PNP_ConcentrationResid_Def.hpp
-    evaluators/pde/PNP_PotentialResid.hpp
-    evaluators/pde/PNP_PotentialResid_Def.hpp
     evaluators/pde/PHAL_ThermalResid.hpp
     evaluators/pde/PHAL_ThermalResid_Def.hpp
     evaluators/pde/PHAL_AdvectionResid.hpp

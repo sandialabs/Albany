@@ -134,14 +134,6 @@ getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
    return intrepidBasis;
 }
 
-bool mesh_depends_on_solution () {
-#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
-  return true;
-#else
-  return false;
-#endif
-}
-
 bool mesh_depends_on_parameters () {
 #ifdef ALBANY_MESH_DEPENDS_ON_PARAMETERS
   return true;
