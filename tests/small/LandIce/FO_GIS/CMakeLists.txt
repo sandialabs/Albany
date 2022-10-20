@@ -223,46 +223,24 @@ endif()
 ###    Coupled Thickness tests   ###
 ####################################
 
-if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
-  # LB: Disabling this test for now, since ever since we merged #412 it no longer works
-  #     To be clear, before merging #412 it passed, but it was computing the wrong thing...
+set (testName ${testNameRoot}_CoupledThickness)
 
-  # set (testName ${testNameRoot}_CoupledThicknessShapeOpt)
+if (ALBANY_EPETRA)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.yaml)
 
-  # if (ALBANY_EPETRA)
-  #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled_shape_opt.yaml
-  #                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled_shape_opt.yaml)
+  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_coupled.yaml)
+  set_tests_properties(${testName}_Epetra  PROPERTIES LABELS "LandIce;Epetra;Forward")
+endif()
 
-  #   add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_coupled_shape_opt.yaml)
-  #   set_tests_properties(${testName}_Epetra  PROPERTIES LABELS "LandIce;Epetra;Forward")
-  # endif()
-  # if (ALBANY_IFPACK2)
-  #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled_shape_optT.yaml
-  #                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled_shape_optT.yaml)
+IF(NOT ALBANY_ENABLE_CUDA)
+  #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
+  #see issue #420. 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupledT.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupledT.yaml)
 
-  #   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_coupled_shape_optT.yaml)
-  #   set_tests_properties(${testName}_Tpetra  PROPERTIES LABELS "LandIce;Tpetra;Forward")
-  # endif()
-else()
-  set (testName ${testNameRoot}_CoupledThickness)
-
-  if (ALBANY_EPETRA)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.yaml)
-
-    add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_coupled.yaml)
-    set_tests_properties(${testName}_Epetra  PROPERTIES LABELS "LandIce;Epetra;Forward")
-  endif()
-
-  IF(NOT ALBANY_ENABLE_CUDA)
-    #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
-    #see issue #420. 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupledT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupledT.yaml)
-
-    add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_coupledT.yaml)
-    set_tests_properties(${testName}_Tpetra  PROPERTIES LABELS "LandIce;Tpetra;Forward")
-  endif()
+  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_coupledT.yaml)
+  set_tests_properties(${testName}_Tpetra  PROPERTIES LABELS "LandIce;Tpetra;Forward")
 endif()
 
 ####################################
