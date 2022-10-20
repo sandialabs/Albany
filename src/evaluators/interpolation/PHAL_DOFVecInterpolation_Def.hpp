@@ -133,9 +133,8 @@ std::cout<< "DOFVecInterpolationBase Residual time = "  << millisec << "  "  << 
 }
 
 // Specialization for Jacobian evaluation taking advantage of known sparsity
+// This assumes that the Mesh coordinates are not of FAD type
 //**********************************************************************
-
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 //Kokkos kernel for Jacobian
 template <typename ScalarT, class Device, class MDFieldType, class MDFieldTypeFad1, class MDFieldTypeFad2>
@@ -221,6 +220,5 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 }
-#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 }

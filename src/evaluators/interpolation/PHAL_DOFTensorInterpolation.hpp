@@ -81,7 +81,7 @@ public:
 
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
+//! This assumes that the mesh coordinates are not a FAD type
 template<typename Traits>
 class FastSolutionTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
   : public DOFTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
@@ -110,7 +110,6 @@ private:
 
   std::size_t offset;
 };
-#endif
 
 
 // Some shortcut names

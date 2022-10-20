@@ -189,7 +189,7 @@ void StokesFOThickness::setFieldsProperties () {
   StokesFOBase::setFieldsProperties();
 
   // Fix the scalar type of ice_thickness_name, since in StokesFOThickness it depends on the solution.
-  // Note: the ST of surface_height doesn't *need* to be Scalar if MESH_DEPENDS_ON_SOLUTION=OFF,
+  // Note: the ST of surface_height doesn't *need* to be Scalar,
   //       But if they don't match StokesFOLateralResid would need a second template argument.
   //       This simply makes life easier.
   setSingleFieldProperties(ice_thickness_name, FRT::Scalar, FST::Scalar);
