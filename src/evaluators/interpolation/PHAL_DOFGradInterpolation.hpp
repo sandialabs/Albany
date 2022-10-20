@@ -112,7 +112,7 @@ public:
   }
 };
 
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION  //assumes that the bases gradients are not FAD types
+//this class assumes that the bases gradients are not FAD types
 template<typename Traits>
 class FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
       : public DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT> {
@@ -156,7 +156,6 @@ public:
 #endif
 
 };
-#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 // Some shortcut names
 template<typename EvalT, typename Traits>

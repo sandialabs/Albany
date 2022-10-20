@@ -88,7 +88,6 @@ public:
 
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
 template<typename Traits>
 class FastSolutionTensorGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
   : public DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
@@ -117,7 +116,6 @@ private:
 
   std::size_t offset;
 };
-#endif
 
 // Some shortcut names
 template<typename EvalT, typename Traits>

@@ -698,7 +698,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 //    if (st==FieldScalarType::ParamScalar) {
 //      useMemoization &= !Albany::params_depend_on_solution();
 //    } else if (st==FieldScalarType::MeshScalar) {
-//      useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
+//      useMemoization &= !Albany::mesh_depends_on_parameters();
 //    }
 
     // Get the needs of this field
@@ -819,7 +819,7 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 //      if (st==FieldScalarType::ParamScalar) {
 //        useMemoization &= !Albany::params_depend_on_solution();
 //      } else if (st==FieldScalarType::MeshScalar) {
-//        useMemoization &= !Albany::mesh_depends_on_solution() && !Albany::mesh_depends_on_parameters();
+//        useMemoization &= !Albany::mesh_depends_on_parameters();
 //      }
 
       // Get the right evaluator utils for this field.

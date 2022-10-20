@@ -102,7 +102,8 @@ public:
 };
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
+//! This assumes that the Mesh coordinates are not a FAD type
+
 template<typename Traits>
 class FastSolutionVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
   : public DOFVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
@@ -147,7 +148,6 @@ public:
 
 #endif
 };
-#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 // Some shortcut names
 template<typename EvalT, typename Traits>

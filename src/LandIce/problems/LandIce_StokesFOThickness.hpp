@@ -252,35 +252,9 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   ev = Teuchos::rcp(new LandIce::ThicknessResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
-  if (Albany::mesh_depends_on_solution()) {
-    //--- Gather Coordinates ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Gather Coordinate Vector"));
-
-    // Output:: Coordinate Vector at vertices
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
-
-    ev =  Teuchos::rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    //--- Update Z Coordinate ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("Update Z Coordinate"));
-
-    // Input
-    p->set<std::string>("Old Coords Name", "Coord Vec Old");
-    p->set<std::string>("New Coords Name", Albany::coord_vec_name);
-    p->set<std::string>("Thickness Increment Name", "Extruded " + dof_names[1]);
-    p->set<std::string>("Past Thickness Name", initial_ice_thickness_name);
-    p->set<std::string>("Top Surface Name", surface_height_name);
-    p->set<std::string>("Bed Topography Name", bed_topography_name);
-    p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
-
-    ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  } else {
-    //---- Gather coordinates
-    ev = evalUtils.constructGatherCoordinateVectorEvaluator();
-    fm0.template registerEvaluator<EvalT> (ev);
-  }
+  //---- Gather coordinates
+  ev = evalUtils.constructGatherCoordinateVectorEvaluator();
+  fm0.template registerEvaluator<EvalT> (ev);
 
   //--- Compute actual thickness --- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Update Thickness"));

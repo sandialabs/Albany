@@ -73,7 +73,6 @@ namespace PHAL {
 //Specialization for Jacobian evaluation taking advantage of the sparsity of the derivatives
 
   //**********************************************************************
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
   template<typename Traits>
   void FastSolutionTensorGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
@@ -101,6 +100,5 @@ namespace PHAL {
       }
     }
   }
-#endif
 
 } // Namespace PHAL

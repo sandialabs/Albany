@@ -123,9 +123,9 @@ namespace PHAL {
   }
 
   // Specialization for Jacobian evaluation taking advantage of known sparsity
+  // This assumes that mesh coordinates are not FAD types
   //**********************************************************************
   //Kokkos functor Jacobian
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   template<typename Traits>
   KOKKOS_INLINE_FUNCTION
@@ -192,6 +192,5 @@ namespace PHAL {
 
 #endif
   }
-#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 } // Namespace PHAL

@@ -69,7 +69,6 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
 template<typename Traits>
 void FastSolutionTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
@@ -97,7 +96,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 //**********************************************************************
 
 } // Namespace PHAL

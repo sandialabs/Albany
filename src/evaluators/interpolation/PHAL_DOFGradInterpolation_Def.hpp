@@ -164,8 +164,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 }
 //Specialization for Jacobian evaluation taking advantage of the sparsity of the derivatives
+//Note, this assumes that the mesh is not FAD type
 // *********************************************************************
-#ifndef ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 // Kokkos kernel for Jacobian
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -238,7 +238,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 }
-#endif //ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 //**********************************************************************
 
