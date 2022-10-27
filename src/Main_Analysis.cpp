@@ -81,7 +81,14 @@ int main(int argc, char *argv[]) {
 
     auto albanyApp   = slvrfctry.createApplication(comm);
     auto albanyModel = slvrfctry.createModel(albanyApp);
-    auto fwd_solver  = slvrfctry.createSolver(comm, albanyModel);
+    
+    const bool explicitMatrixTranspose = slvrfctry.getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
+                                           slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
+                                           false;
+
+    const bool explicitAdjointModel = albanyApp->isAdjointTransSensitivities() && explicitMatrixTranspose;
+    const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
+    const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
 
     stackedTimer->stop("Albany: Setup Time");
 
@@ -91,7 +98,7 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
-    Piro::PerformAnalysis(*fwd_solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
+    Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
     auto status = regression.checkAnalysisTestResults(0, p);

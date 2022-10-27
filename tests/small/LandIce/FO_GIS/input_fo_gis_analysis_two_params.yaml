@@ -22,17 +22,17 @@ ANONYMOUS:
         Response 1:
           Cubature Degree: 3
           Name: Surface Mass Balance Mismatch
-          SMB Coefficient: 1.00000000000000000e+02
+          SMB Coefficient: 1.0e+02
           Field Name: Velocity
-          Regularization Coefficient: 1.00000000000000000e+00
-          Scaling Coefficient: 5.88239999999999978e-07
-          H Coefficient: 1.00000000000000000e+00
+          Regularization Coefficient: 1.0
+          Scaling Coefficient: 5.8824e-07
+          H Coefficient: 1.0
         Response 0:
           Cubature Degree: 3
-          Asinh Scaling: 1.00000000000000000e+01
+          Asinh Scaling: 1.0e+01
           Field Name: Velocity
-          Regularization Coefficient: 1.00000000000000000e+00
-          Scaling Coefficient: 5.88239999999999978e-07
+          Regularization Coefficient: 1.0
+          Scaling Coefficient: 5.8824e-07
           Name: Surface Velocity Mismatch
     Dirichlet BCs: {}
     Neumann BCs: {}
@@ -55,28 +55,28 @@ ANONYMOUS:
     Parameters:
       Number Of Parameters: 2
       Parameter 0:
-        Lower Bound: -1.20000000000000000e+01
+        Lower Bound: -1.2e+01
         Mesh Part: bottom
         Type: Distributed
         Name: basal_friction
-        Upper Bound: 1.20000000000000000e+01
+        Upper Bound: 1.2e+01
       Parameter 1:
-        Lower Bound: 1.00000000000000002e-02
+        Lower Bound: 1.0e-02
         Name: ice_thickness
         Extruded: true
         Mesh Part: bottom
-        Upper Bound: 4.00000000000000000e+00
+        Upper Bound: 4.0
         Type: Distributed
     LandIce Physical Parameters:
-      Water Density: 1.02800000000000000e+03
-      Ice Density: 9.10000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8
+      Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 1.00000000000000005e-01
+      Glen's Law Homotopy Parameter: 1.0e-01
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
@@ -193,101 +193,6 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
   Piro:
     Sensitivity Method: Adjoint
-    Analysis:
-      Analysis Package: ROL
-      ROL:
-        Number Of Parameters: 2
-        Check Gradient: true
-        Gradient Tolerance: 1.00000000000000004e-04
-        Step Tolerance: 1.00000000000000004e-04
-        Max Iterations: 100
-        Print Output: true
-        Parameter Initial Guess Type: From Model Evaluator
-        Uniform Parameter Guess: 2.00000000000000000e+00
-        Min And Max Of Random Parameter Guess: [1.00000000000000000e+00, 2.00000000000000000e+00]
-        Bound Constrained: true
-        bound_eps: 1.00000000000000005e-01
-        ROL Options:
-          General:
-            Variable Objective Function: false
-            Scale for Epsilon Active Sets: 1.00000000000000000e+00
-            Inexact Objective Function: false
-            Inexact Gradient: false
-            Inexact Hessian-Times-A-Vector: false
-            Projected Gradient Criticality Measure: false
-            Secant:
-              Type: Limited-Memory BFGS
-              Use as Preconditioner: false
-              Use as Hessian: false
-              Maximum Storage: 50
-              Barzilai-Borwein Type: 1
-            Krylov:
-              Type: Conjugate Gradients
-              Absolute Tolerance: 1.00000000000000004e-04
-              Relative Tolerance: 1.00000000000000002e-02
-              Iteration Limit: 100
-          Step:
-            Line Search:
-              Function Evaluation Limit: 60
-              Sufficient Decrease Tolerance: 9.99999999999999945e-21
-              Initial Step Size: 1.00000000000000000e+00
-              User Defined Initial Step Size: false
-              Accept Linesearch Minimizer: false
-              Accept Last Alpha: false
-              Descent Method:
-                Type: Quasi-Newton
-                Nonlinear CG Type: Hestenes-Stiefel
-              Curvature Condition:
-                Type: Strong Wolfe Conditions
-                General Parameter: 9.00000000000000022e-01
-                Generalized Wolfe Parameter: 5.99999999999999977e-01
-              Line-Search Method:
-                Type: Cubic Interpolation
-                Backtracking Rate: 5.00000000000000000e-01
-                Bracketing Tolerance: 1.00000000000000002e-08
-                Path-Based Target Level:
-                  Target Relaxation Parameter: 1.00000000000000000e+00
-                  Upper Bound on Path Length: 1.00000000000000000e+00
-            Trust Region:
-              Subproblem Solver: Truncated CG
-              Initial Radius: 1.00000000000000000e+01
-              Maximum Radius: 5.00000000000000000e+03
-              Step Acceptance Threshold: 5.00000000000000027e-02
-              Radius Shrinking Threshold: 5.00000000000000027e-02
-              Radius Growing Threshold: 9.00000000000000022e-01
-              Radius Shrinking Rate (Negative rho): 6.25000000000000000e-02
-              Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
-              Radius Growing Rate: 2.50000000000000000e+00
-              Safeguard Size: 1.00000000000000000e+08
-              Inexact:
-                Value:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Exponent: 9.00000000000000022e-01
-                  Forcing Sequence Initial Value: 1.00000000000000000e+00
-                  Forcing Sequence Update Frequency: 10
-                  Forcing Sequence Reduction Factor: 1.00000000000000005e-01
-                Gradient:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Relative Tolerance: 2.00000000000000000e+00
-          Status Test:
-            Gradient Tolerance: 1.00000000000000003e-10
-            Constraint Tolerance: 1.00000000000000003e-10
-            Step Tolerance: 9.99999999999999998e-15
-            Iteration Limit: 1000
-    LOCA:
-      Bifurcation: {}
-      Constraints: {}
-      Predictor:
-        Method: Constant
-      Stepper:
-        Initial Value: 1.00000000000000005e-01
-        Continuation Parameter: Glen's Law Homotopy Parameter
-        Continuation Method: Natural
-        Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
-      Step Size:
-        Initial Step Size: 2.00000000000000011e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -301,7 +206,7 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999954e-08
+            Tolerance: 1.0e-07
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 25
@@ -312,6 +217,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
           Forcing Term Method: Constant
           Linear Solver:
+            Tolerance: 1.0e-7
             Write Linear System: false
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
@@ -326,7 +232,7 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
+                    Tolerance: 1.0e-06
               Preconditioner Type: Ifpack
               Preconditioner Types:
                 Ifpack:
@@ -343,7 +249,7 @@ ANONYMOUS:
                     'coarse: type': Amesos-KLU
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Printing:
         Output Precision: 3

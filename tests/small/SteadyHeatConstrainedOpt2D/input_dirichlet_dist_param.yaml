@@ -7,15 +7,15 @@ ANONYMOUS:
     Compute Sensitivities: true
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T prescribe Field: dirichlet_field
-      DBC on NS NodeSet1 for DOF T: -1.00000000000000000e+00
+      DBC on NS NodeSet1 for DOF T: -1.0
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
         Type: Distributed
         Name: dirichlet_field
-        Lower Bound: -1.00000000000000000e+00
-        Upper Bound: 2.00000000000000000e+00
-        Initial Uniform Value: -5.00000000000000000e-01
+        Lower Bound: -1.0
+        Upper Bound: 2.0
+        Initial Uniform Value: -5.0e-01
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -36,99 +36,10 @@ ANONYMOUS:
     Test Value: 5.8333333333e-01
     Relative Tolerance: 1.0e-03
     Sensitivity For Parameter 0:
-      Test Value: 1.04748375675000005e-01
+      Test Value: 1.04748375675e-01
   Piro: 
     Sensitivity Method: Adjoint
-    Analysis: 
-      Analysis Package: ROL
-      ROL: 
-        Check Gradient: false
-        Gradient Tolerance: 1.00000000000000008e-05
-        Step Tolerance: 1.00000000000000005e-04
-        Max Iterations: 50
-        Print Output: true
-        Parameter Initial Guess Type: From Model Evaluator
-        Uniform Parameter Guess: 0.00000000000000000e+00
-        Min And Max Of Random Parameter Guess: [-1.00000000000000000e+00, 2.00000000000000000e+00]
-        Bound Constrained: true
-        bound_eps: 1.00000000000000006e-01
-        
-        ROL Options: 
-          General: 
-            Variable Objective Function: false
-            Scale for Epsilon Active Sets: 1.00000000000000000e+00
-            Inexact Objective Function: true
-            Inexact Gradient: true
-            Inexact Hessian-Times-A-Vector: true
-            Projected Gradient Criticality Measure: false
-            Secant: 
-              Type: Limited-Memory BFGS
-              Use as Preconditioner: false
-              Use as Hessian: false
-              Maximum Storage: 50
-              Barzilai-Borwein Type: 1
-            Krylov: 
-              Type: Conjugate Gradients
-              Absolute Tolerance: 1.00000000000000005e-04
-              Relative Tolerance: 1.00000000000000002e-02
-              Iteration Limit: 100
-          Step: 
-            Line Search: 
-              Function Evaluation Limit: 60
-              Sufficient Decrease Tolerance: 9.99999999999999945e-21
-              Initial Step Size: 1.00000000000000000e+00
-              User Defined Initial Step Size: false
-              Accept Linesearch Minimizer: false
-              Accept Last Alpha: false
-              Descent Method: 
-                Type: Newton-Krylov
-                Nonlinear CG Type: Hestenes-Stiefel
-              Curvature Condition: 
-                Type: Strong Wolfe Conditions
-                General Parameter: 9.00000000000000022e-01
-                Generalized Wolfe Parameter: 5.99999999999999978e-01
-              Line-Search Method: 
-                Type: Cubic Interpolation
-                Backtracking Rate: 5.00000000000000000e-01
-                Bracketing Tolerance: 1.00000000000000002e-08
-                Path-Based Target Level: 
-                  Target Relaxation Parameter: 1.00000000000000000e+00
-                  Upper Bound on Path Length: 1.00000000000000000e+00
-            Trust Region: 
-              Subproblem Solver: Truncated CG
-              Initial Radius: 1.00000000000000000e+01
-              Maximum Radius: 5.00000000000000000e+03
-              Step Acceptance Threshold: 5.00000000000000028e-02
-              Radius Shrinking Threshold: 5.00000000000000028e-02
-              Radius Growing Threshold: 9.00000000000000022e-01
-              Radius Shrinking Rate (Negative rho): 6.25000000000000000e-02
-              Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
-              Radius Growing Rate: 2.50000000000000000e+00
-              Safeguard Size: 1.00000000000000000e+08
-              Inexact: 
-                Value: 
-                  Tolerance Scaling: 1.00000000000000006e-01
-                  Exponent: 9.00000000000000022e-01
-                  Forcing Sequence Initial Value: 1.00000000000000000e+00
-                  Forcing Sequence Update Frequency: 10
-                  Forcing Sequence Reduction Factor: 1.00000000000000006e-01
-                Gradient: 
-                  Tolerance Scaling: 1.00000000000000006e-01
-                  Relative Tolerance: 2.00000000000000000e+00
-          Status Test: 
-            Gradient Tolerance: 1.00000000000000004e-10
-            Constraint Tolerance: 1.00000000000000004e-10
-            Step Tolerance: 9.99999999999999999e-15
-            Iteration Limit: 1000
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
-        First Step Predictor: { }
-        Last Step Predictor: { }
-      Step Size: { }
-      Stepper: 
-        Eigensolver: { }
+    
     NOX: 
       Direction: 
         Method: Newton
@@ -148,12 +59,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-08
+                    Tolerance: 1.0e-07
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 9.99999999999999955e-08
+                      Convergence Tolerance: 1.0e-07
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -167,12 +78,12 @@ ANONYMOUS:
                   Overlap: 1
                   Prec Type: ILU
                   Ifpack Settings: 
-                    'fact: drop tolerance': 0.00000000000000000e+00
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 
