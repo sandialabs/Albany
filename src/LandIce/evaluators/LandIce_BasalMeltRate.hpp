@@ -74,7 +74,11 @@ private:
   double flux_reg_beta;
   double basalMelt_reg_alpha;
   double basalMelt_reg_beta;
-  bool isThereWater;
+
+  enum class BED_LUBRICATION_TYPE {DRY, WET, BASAL_FRICTION_BASED};
+  BED_LUBRICATION_TYPE bed_lubrication;
+  double basal_friction_threshold;
+
   bool nodal;
 
   const unsigned int vecDimFO = 2;

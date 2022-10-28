@@ -92,7 +92,18 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   flux_reg_alpha = flux_reg_list.get<double>("alpha");
   flux_reg_beta = flux_reg_list.get<double>("beta");
 
-  isThereWater = (landice_list->get<std::string>("Bed Lubrication") == "Wet") ? true : false;
+  auto lubrication_list = landice_list->sublist("Bed Lubrication",false);
+  if(lubrication_list.get<std::string>("Type") == "Dry")
+    bed_lubrication = BED_LUBRICATION_TYPE::DRY;
+  else if(lubrication_list.get<std::string>("Type") == "Wet")
+    bed_lubrication = BED_LUBRICATION_TYPE::WET;
+  else if(lubrication_list.get<std::string>("Type") == "Basal Friction Based")
+    bed_lubrication = BED_LUBRICATION_TYPE::BASAL_FRICTION_BASED;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Bed Lubrication Type not recognized.\n");
+
+  if(bed_lubrication == BED_LUBRICATION_TYPE::BASAL_FRICTION_BASED)
+    basal_friction_threshold = lubrication_list.get<double>("Basal Friction Treshold"); //wet if basal friction is small than threshold	  
 
   basalMelt_reg_alpha = basalMelt_reg_list.get<double>("alpha");
   basalMelt_reg_beta = basalMelt_reg_list.get<double>("beta");
@@ -117,12 +128,15 @@ operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
   const unsigned int numPts = nodal ? numSideNodes : numSideQPs;
 
   for (unsigned int node = 0; node < numPts; ++node) {
-    //always in presence of water on shelves (assuming that beta==0 <==> on shelves)
-    bool isThereWaterHere = isThereWater || (beta(sideSet_idx,node) == 0.0);
+    double reg_exp = 4.0*(1.0+std::log(1.0+basalMelt_reg_alpha));
+    //std::cout << reg_exp << " ";
+    VelocityST isThereWaterHere = (bed_lubrication == BED_LUBRICATION_TYPE::WET) ? VelocityST(1.0) : 
+	                          (bed_lubrication == BED_LUBRICATION_TYPE::DRY) ? VelocityST(0.0) :
+				  VelocityST(1./(std::pow(beta(sideSet_idx,node)/basal_friction_threshold,reg_exp)+1.0));
     ScalarT diffEnthalpy = Enthalpy(sideSet_idx,node) - EnthalpyHs(sideSet_idx,node);
-    ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWaterHere) ?  ScalarT(0.5 + 0.5*tanh(basal_reg_coeff * diffEnthalpy)) :
-                                                                        ScalarT(0.5 + 0.5* basal_reg_coeff * diffEnthalpy);
-                                                                  //    ScalarT(0.5 + 0.5* (0.5-0.5*std::pow(1-basal_reg_coeff * diffEnthalpy,2)));
+    ScalarT basal_reg_scale = (diffEnthalpy > 0) ?  ScalarT(0.5 + 0.5*tanh(basalMelt_reg_alpha * diffEnthalpy)) :
+                                                    ScalarT((1.0 - isThereWaterHere)*(0.5 + 0.5*tanh(basalMelt_reg_alpha * diffEnthalpy)) +
+					 isThereWaterHere *(0.5 + 0.5* basalMelt_reg_alpha * diffEnthalpy));
 
     //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
     ScalarT mstar = geoFluxHeat(sideSet_idx,node);
@@ -151,7 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   hom = homotopy(0);
-  basal_reg_coeff = basalMelt_reg_alpha*exp(basalMelt_reg_beta*hom); // [adim]
+  //basal_reg_coeff = basalMelt_reg_alpha*exp(basalMelt_reg_beta*hom); // [adim]
   flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
 
   sideSet = workset.sideSetViews->at(basalSideName);
