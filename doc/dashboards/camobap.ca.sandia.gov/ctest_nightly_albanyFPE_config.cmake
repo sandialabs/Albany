@@ -6,10 +6,10 @@ set (CTEST_TEST_TYPE Nightly)
 # What to build and test
 set (DOWNLOAD FALSE)
 set (BUILD_ALBANY FALSE)
-set (BUILD_ALBANY_NOEPETRA TRUE)
-set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+set (BUILD_ALBANY_NOEPETRA FALSE)
 set (BUILD_CISM_PISCEES_EPETRA FALSE)
 set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+set (BUILD_ALBANY_FPE TRUE)
 
 # Begin User inputs:
 set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
@@ -27,7 +27,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-#set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
+set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -52,42 +52,6 @@ set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
 
 set (CTEST_DROP_METHOD "https")
-
-#message("IKT mpicc  = " ${CMAKE_C_COMPILER})
-execute_process(COMMAND bash delete_compiler.sh 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-execute_process(COMMAND /tpls/install/bin/mpicc -dumpversion 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE COMPILER_VERSION_RESULT
-		OUTPUT_VARIABLE COMPILER_VERSION
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler version = " ${COMPILER_VERSION})
-execute_process(COMMAND /tpls/install/bin/mpicc --version 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE COMPILER_RESULT
-		OUTPUT_FILE "compiler.txt")
-execute_process(COMMAND bash process_compiler.sh 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE CHANGE_COMPILER_RESULT
-		OUTPUT_VARIABLE COMPILER
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler = " ${COMPILER})
-
-
-find_program(UNAME NAMES uname)
-macro(getuname name flag)
-  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
-endmacro(getuname)
-
-getuname(osname -s)
-getuname(osrel  -r)
-getuname(cpu    -m)
-
-#message("IKT osname = " ${osname}) 
-#message("IKT osrel = " ${osrel}) 
-#message("IKT cpu = " ${cpu}) 
-
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Serial")
 
 
 if (CTEST_DROP_METHOD STREQUAL "https")
@@ -207,40 +171,45 @@ if (DOWNLOAD)
 endif ()
 
 
-if (BUILD_ALBANY_NOEPETRA)
+if (BUILD_ALBANY_FPE)
 
-  # Builds everything!
+  # Builds everything with FPE check enabled!
   #
 
-  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
+  set (TRILINOSBLDDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug")
+  set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
 
   set (CONFIGURE_OPTIONS
     "-GNinja"
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DCMAKE_CXX_FLAGS:STRING='-std=c++14'" 
+    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
+    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DSEACAS_EPU=${TRILINSTALLDIR}/bin/epu"
-    "-DSEACAS_DECOMP=${TRILINSTALLDIR}/bin/decomp"
-    "-DSEACAS_EXODIFF=${TRILINSTALLDIR}/bin/exodiff"
-    "-DSEACAS_ALGEBRA=${TRILINSTALLDIR}/bin/algebra"
+    "-DENABLE_ALBANY_EPETRA:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=OFF"
-    "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=ON"
-    "-DENABLE_CISM_EPETRA:BOOL=OFF"
+    "-DENABLE_CISM_INTERFACE:BOOL=OFF"
+    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
     "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
-    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetraInstall"
-    "-DCISM_EXE_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
+    "-DSEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu"
+    "-DSEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp"
+    "-DSEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff"
+    "-DSEACAS_ALGEBRA=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/algebra"
+    "-DENABLE_ALBANY_PYTHON:BOOL=ON"
+    "-DPYTHON_EXECUTABLE=/usr/bin/python3"
+    "-DTRILINOS_SOURCE_DIR=$TRILINOSSRCDIR"
+    "-DTRILINOS_BUILD_DIR=$TRILINOSBLDDIR"
+    "-DINSTALL_ALBANY:BOOL=OFF"
+    "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -265,60 +234,59 @@ if (BUILD_ALBANY_NOEPETRA)
   # Build Albany
   #
 
-  set (CTEST_BUILD_TARGET install)
+  #set (CTEST_BUILD_TARGET all)
+  #set (CTEST_BUILD_TARGET install)
 
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+  #MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
+  #CTEST_BUILD(
+  #  BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
+  #  RETURN_VALUE  HAD_ERROR
+  #  NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+  #  APPEND
+  #  )
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
+  #if (CTEST_DO_SUBMIT)
+  #  ctest_submit (PARTS Build
+  #    RETURN_VALUE  S_HAD_ERROR
+  #    )
 
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
-    endif ()
-  endif ()
+  #  if (S_HAD_ERROR)
+  #    message(FATAL_ERROR "Cannot submit Albany build results!")
+  #  endif ()
+  #endif ()
 
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
-  endif ()
+  #if (HAD_ERROR)
+  #  message(FATAL_ERROR "Cannot build Albany!")
+  #endif ()
 
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
-  endif ()
+  #if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+  #  message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+  #endif ()
 
   #
   # Run Albany tests
   #
   
-  #  Over-write default limit for output posted to CDash site
-  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
-  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
+  #set (CTEST_TEST_TIMEOUT 2400)
 
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
+  #CTEST_TEST(
+  #  BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
-    RETURN_VALUE  HAD_ERROR
-    )
+    #  RETURN_VALUE  HAD_ERROR
+    #)
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
+    #if (CTEST_DO_SUBMIT)
+    #ctest_submit (PARTS Test
+    #  RETURN_VALUE  S_HAD_ERROR
+    #  )
 
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
-    endif ()
-  endif ()
+    #if (S_HAD_ERROR)
+    #  message(FATAL_ERROR "Cannot submit Albany test results!")
+    #endif ()
+    #endif ()
 
   #if (HAD_ERROR)
   #	message(FATAL_ERROR "Some Albany tests failed.")
