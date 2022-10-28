@@ -11,11 +11,11 @@ Nightly, blake.sandia.gov, blake-serial-sfad8-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad12-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad24-Albany
 Nightly, blake.sandia.gov, blake-serial-sfad-Albany-PerfTests
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-Albany
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-Cism-Albany
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-No-Epetra-Albany 
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Release-Openmp-Albany
-Nightly, camobap.ca.sandia.gov, rhel8.5-gcc11.1.0-Debug-FPE-Albany
+Nightly, camobap.ca.sandia.gov, Linux-4.18.0-372.19.1.el8_6.x86_64-gcc-11.1.0-Release-Albany-SerialKokkosNode
+Nightly, camobap.ca.sandia.gov, CismAlbany-Linux-4.18.0-372.19.1.el8_6.x86_64-gcc11.1.0-Release-Serial
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-372.19.1.el8_6.x86_64-gcc-11.1.0-Release-No-Epetra-Serial
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-372.19.1.el8_6.x86_64-gcc-11.1.0-Release-OpenMP
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-372.19.1.el8_6.x86_64-gcc-11.1.0-Debug-FPE-Serial
 Nightly, cee-compute007, Linux-3.10.0-1062.1.2.el7.x86_64-debug-trilinos
 Nightly, cee-compute007, Linux-3.10.0-1062.1.2.el7.x86_64-debug-albany
 Nightly, cee-compute010, Linux-3.10.0-1160.66.1.el7.x86_64-clangdbg-trilinos
