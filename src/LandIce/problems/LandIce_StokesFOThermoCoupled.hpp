@@ -319,7 +319,6 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Enthalpy Hs Side Variable Name", melting_enthalpy_name + "_" + basalSideName);
   p->set<std::string>("Enthalpy Side Variable Name", dof_names[2] + "_" + basalSideName);
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
   p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy", false));

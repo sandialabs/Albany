@@ -57,12 +57,13 @@ ANONYMOUS:
           alpha: 1.00000000000000005e-01
           beta: 7.50000000000000000e+00
         Basal Melting Regularization:
-          alpha: 1.00000000000000005e-01
-          beta: 7.50000000000000000e+00
+          alpha: 2.008557
+          beta: 4.0e+00
       Stabilization:
         Type: Streamline Upwind
-        Parameter Delta: 2.00000000000000000e+00
-      Bed Lubrication: 'Dry'
+        Parameter Delta: 2.0e+00
+      Bed Lubrication:
+        Type: Dry
     Body Force:
       Type: FO INTERP SURF GRAD
     Response Functions:
@@ -257,7 +258,7 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Sensitivity For Parameter 0:
-      Test Value: 2.276716695089e-01
+      Test Value: 2.344521645843e-01
     Test Value: 5.622308517722e-01
     Relative Tolerance: 1.0e-02
 ...

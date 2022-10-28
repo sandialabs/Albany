@@ -704,7 +704,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<std::string>("Enthalpy Side Variable Name", "Enthalpy");
     p->set<std::string>("Basal dTdz Variable Name", "basal_dTdz");
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
     p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy",false));

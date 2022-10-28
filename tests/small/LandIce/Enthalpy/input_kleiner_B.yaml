@@ -48,7 +48,8 @@ ANONYMOUS:
       Stabilization:
         Type: None
         Parameter Delta: 1.0e+00
-      Bed Lubrication: Dry
+      Bed Lubrication:
+        Type: Dry
     Parameters:
       Number Of Parameters: 1
       Parameter 0:

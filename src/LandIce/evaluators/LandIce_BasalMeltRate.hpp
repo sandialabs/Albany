@@ -44,7 +44,6 @@ private:
   PHX::MDField<const ParamScalarT>         geoFluxHeat;// [W m^{-2}] = [Pa m s^{-1}]
   PHX::MDField<const ScalarT>              Enthalpy;   //[MW s m^{-3}]
   PHX::MDField<const MeshScalarT>           EnthalpyHs; //[MW s m^{-3}]
-  PHX::MDField<const ScalarT,Dim>          homotopy;
 
   // Output:
   PHX::MDField<ScalarT> enthalpyBasalFlux; // [W m^{-2}]
@@ -59,7 +58,6 @@ private:
   double rho_i; 	// [kg m^{-3}] density of ice
   double L;       //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5);
   double g;       //[m s^{-2}], Gravity Acceleration
-  double a;       // [adim], Diffusivity homotopy exponent
 
   double k_0;      //[m^2], Permeability factor
   double k_i;      //[W m^{-1} K^{-1}], Conductivity of ice
@@ -74,13 +72,15 @@ private:
   double flux_reg_beta;
   double basalMelt_reg_alpha;
   double basalMelt_reg_beta;
-  bool isThereWater;
+
+  enum class BED_LUBRICATION_TYPE {DRY, WET, BASAL_FRICTION_BASED};
+  BED_LUBRICATION_TYPE bed_lubrication;
+  double basal_friction_threshold;
+
   bool nodal;
 
   const unsigned int vecDimFO = 2;
-  ScalarT hom;
-  ScalarT basal_reg_coeff;
-  ScalarT flux_reg_coeff;
+  double basal_reg_coeff;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
