@@ -64,16 +64,16 @@ ANONYMOUS:
       Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     LandIce Physical Parameters:
-      Conductivity of ice: 2.10e+00
+      Conductivity of ice: 2.1
       Diffusivity temperate ice: 1.1e-08
       Heat capacity of ice: 2.009e+03
-      Water Density: 1.028e+03
-      Ice Density: 9.10e+02
-      Gravity Acceleration: 9.81e+00
+      Water Density: 1028.0
+      Ice Density: 910.0
+      Gravity Acceleration: 9.81
       Reference Temperature: 2.65e+02
       Clausius-Clapeyron Coefficient: 7.9e-08
       Ice Latent Heat Of Fusion: 3.34e+05
-      Permeability factor: 1.0e-12 #1e-12
+      Permeability factor: 1.0e-12
       Viscosity of water: 1.8e-03
       Omega exponent alpha: 2.0
       Diffusivity homotopy exponent: -1.1
@@ -99,7 +99,8 @@ ANONYMOUS:
       Stabilization:
         Type: Upwind
         Parameter Delta: 0.5
-      Bed Lubrication: Dry
+      Bed Lubrication:
+        Type: Dry
     Response Functions:
       Number Of Responses: 3
       Response 0:

@@ -95,7 +95,8 @@ ANONYMOUS:
       Stabilization: 
         Type: Upwind
         Parameter Delta: 0.5
-      Bed Lubrication: Dry
+      Bed Lubrication:
+        Type: Dry
     Response Functions: 
       Number Of Responses: 1
       Response 0: 

@@ -26,7 +26,6 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
  , geoFluxHeat       (p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar)
  , Enthalpy          (p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar)
  , EnthalpyHs        (p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar)
- , homotopy          (p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
  , enthalpyBasalFlux     (p.get<std::string> ("Basal Melt Rate Variable Name"), dl_basal->node_scalar)
  , basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar)
 {
@@ -46,7 +45,6 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   geoFluxHeat = decltype(geoFluxHeat)(p.get<std::string> ("Geothermal Flux Side Variable Name"),scalar_layout);
   Enthalpy = decltype(Enthalpy)(p.get<std::string> ("Enthalpy Side Variable Name"),scalar_layout);
   EnthalpyHs = decltype(EnthalpyHs)(p.get<std::string> ("Enthalpy Hs Side Variable Name"),scalar_layout);
-  homotopy = decltype(homotopy)(p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param);
   enthalpyBasalFlux = decltype(enthalpyBasalFlux)(p.get<std::string> ("Basal Melt Rate Variable Name"),scalar_layout);
   basalVertVelocity = decltype(basalVertVelocity)(p.get<std::string> ("Basal Vertical Velocity Variable Name"),scalar_layout);
 
@@ -56,7 +54,6 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->addDependentField(beta);
   this->addDependentField(EnthalpyHs);
   this->addDependentField(Enthalpy);
-  this->addDependentField(homotopy);
 
   this->addEvaluatedField(enthalpyBasalFlux);
   this->addEvaluatedField(basalVertVelocity);
@@ -82,17 +79,23 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   alpha_om = physics_list->get<double>("Omega exponent alpha");//, 2.0);
 
   beta_p = physics_list->get<double>("Clausius-Clapeyron Coefficient");
-
-  a = physics_list->get<double>("Diffusivity homotopy exponent");//, -9.0);
   scyr = physics_list->get<double>("Seconds per Year");
 
   Teuchos::ParameterList* landice_list = p.get<Teuchos::ParameterList*>("LandIce Enthalpy");
-  auto flux_reg_list = landice_list->sublist("Regularization",false).sublist("Flux Regularization", false);
   auto basalMelt_reg_list = landice_list->sublist("Regularization",false).sublist("Basal Melting Regularization", false);
-  flux_reg_alpha = flux_reg_list.get<double>("alpha");
-  flux_reg_beta = flux_reg_list.get<double>("beta");
 
-  isThereWater = (landice_list->get<std::string>("Bed Lubrication") == "Wet") ? true : false;
+  auto lubrication_list = landice_list->sublist("Bed Lubrication",false);
+  if(lubrication_list.get<std::string>("Type") == "Dry")
+    bed_lubrication = BED_LUBRICATION_TYPE::DRY;
+  else if(lubrication_list.get<std::string>("Type") == "Wet")
+    bed_lubrication = BED_LUBRICATION_TYPE::WET;
+  else if(lubrication_list.get<std::string>("Type") == "Basal Friction Based")
+    bed_lubrication = BED_LUBRICATION_TYPE::BASAL_FRICTION_BASED;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Bed Lubrication Type not recognized.\n");
+
+  if(bed_lubrication == BED_LUBRICATION_TYPE::BASAL_FRICTION_BASED)
+    basal_friction_threshold = lubrication_list.get<double>("Basal Friction Threshold"); //wet if basal friction is small than threshold	  
 
   basalMelt_reg_alpha = basalMelt_reg_list.get<double>("alpha");
   basalMelt_reg_beta = basalMelt_reg_list.get<double>("beta");
@@ -117,12 +120,21 @@ operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
   const unsigned int numPts = nodal ? numSideNodes : numSideQPs;
 
   for (unsigned int node = 0; node < numPts; ++node) {
-    //always in presence of water on shelves (assuming that beta==0 <==> on shelves)
-    bool isThereWaterHere = isThereWater || (beta(sideSet_idx,node) == 0.0);
+    VelocityST lubrication; //coefficient that varies from zero (dry bed) to one (wet bed).
+    switch(bed_lubrication) {
+      case BED_LUBRICATION_TYPE::WET:
+        lubrication = 1.0; break;
+      case BED_LUBRICATION_TYPE::DRY:
+        lubrication = (beta(sideSet_idx,node)>0.0) ? 0.0 : 1.0; break;
+      case BED_LUBRICATION_TYPE::BASAL_FRICTION_BASED:
+        lubrication = 1./(std::pow(beta(sideSet_idx,node)/basal_friction_threshold,basal_reg_coeff)+1.0); break;
+    }
+
     ScalarT diffEnthalpy = Enthalpy(sideSet_idx,node) - EnthalpyHs(sideSet_idx,node);
-    ScalarT basal_reg_scale = (diffEnthalpy > 0 || !isThereWaterHere) ?  ScalarT(0.5 + 0.5*tanh(basal_reg_coeff * diffEnthalpy)) :
-                                                                        ScalarT(0.5 + 0.5* basal_reg_coeff * diffEnthalpy);
-                                                                  //    ScalarT(0.5 + 0.5* (0.5-0.5*std::pow(1-basal_reg_coeff * diffEnthalpy,2)));
+
+    ScalarT basal_reg_scale = (diffEnthalpy > 0) ?  ScalarT(0.5 + 0.5*tanh(basalMelt_reg_alpha * diffEnthalpy)) :
+                                                    ScalarT((1.0 - lubrication)*(0.5 + 0.5*tanh(basalMelt_reg_alpha * diffEnthalpy)) +
+					            lubrication *(0.5 + 0.5* basalMelt_reg_alpha * diffEnthalpy));
 
     //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
     ScalarT mstar = geoFluxHeat(sideSet_idx,node);
@@ -150,9 +162,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (workset.sideSetViews->find(basalSideName)==workset.sideSetViews->end()) return;
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  hom = homotopy(0);
-  basal_reg_coeff = basalMelt_reg_alpha*exp(basalMelt_reg_beta*hom); // [adim]
-  flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
+  basal_reg_coeff = basalMelt_reg_beta*(1.0+std::log(1.0+basalMelt_reg_alpha)); // [adim]
 
   sideSet = workset.sideSetViews->at(basalSideName);
 
