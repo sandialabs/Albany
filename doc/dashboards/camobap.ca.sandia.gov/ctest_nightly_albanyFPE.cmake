@@ -53,16 +53,29 @@ set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
 
 set (CTEST_DROP_METHOD "https")
 
-#message("IKT mpicc  = " ${CMAKE_C_COMPILER})
-execute_process(COMMAND bash delete_compiler.sh 
+execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-execute_process(COMMAND /tpls/install/bin/mpicc -dumpversion 
+set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE MPICC_RESULT
+		OUTPUT_FILE "mpicc.txt")
+execute_process(COMMAND bash get_mpicc.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT)
+execute_process(COMMAND cat mpicc.txt 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT
+		OUTPUT_VARIABLE MPICC
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT mpicc = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT
 		OUTPUT_VARIABLE COMPILER_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 #message("IKT compiler version = " ${COMPILER_VERSION})
-execute_process(COMMAND /tpls/install/bin/mpicc --version 
+execute_process(COMMAND ${MPICC} --version 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_RESULT
 		OUTPUT_FILE "compiler.txt")
