@@ -44,6 +44,7 @@ cmake \
 \
  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+ -D Trilinos_ENABLE_CXX11:BOOL=ON \
  -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
  -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
  -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
@@ -76,11 +77,11 @@ cmake \
  -D TPL_ENABLE_HWLOC:STRING=lcm_enable_hwloc \
  -D TPL_ENABLE_Matio:BOOL=OFF \
  -D TPL_ENABLE_Netcdf:BOOL=ON \
+ -D TPL_ENABLE_X11:BOOL=OFF \
  -D TPL_Netcdf_INCLUDE_DIRS:STRING="lcm_netcdf_inc" \
  -D TPL_Netcdf_LIBRARY_DIRS:STRING="lcm_netcdf_lib" \
  -D TPL_Netcdf_LIBRARIES:STRING="lcm_netcdf_lib/libnetcdf.so" \
  -D TPL_Netcdf_PARALLEL:BOOL=ON \
- -D CMAKE_CXX_STANDARD=17 \
 \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
  -D Trilinos_ENABLE_Amesos:BOOL=ON \
