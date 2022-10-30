@@ -14,6 +14,8 @@ set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 message("SCRIPT_NAME ${SCRIPT_NAME}")
 message("PACKAGE ${PACKAGE}")
 message("BUILD_THREADS ${BUILD_THREADS}")
+message("MPI_DIR ${MPI_DIR}")
+message("BUILD_TYPE $ENV{BUILD_TYPE}")
 
 set(BUILD_ID_STRING "$ENV{ARCH}-$ENV{TOOL_CHAIN}-$ENV{BUILD_TYPE}")
 message("BUILD_ID_STRING ${BUILD_ID_STRING}")
@@ -48,7 +50,45 @@ set(LCM_HOSTNAME "skybridge-login5")
 
 message("LCM_HOSTNAME ${LCM_HOSTNAME}")
 
-set(CTEST_BUILD_NAME "${LCM_HOSTNAME}-${PACKAGE}")
+execute_process(COMMAND bash delete_txt_files.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(MPICC $ENV{MPI_ROOT}/bin/mpicc)
+#message("IKT MPICC = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_VERSION_RESULT
+		OUTPUT_VARIABLE COMPILER_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND ${MPICC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_RESULT
+		OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash process_compiler.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CHANGE_COMPILER_RESULT
+		OUTPUT_VARIABLE COMPILER
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler = " ${COMPILER})
+
+
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+#message("IKT osname = " ${osname}) 
+#message("IKT osrel = " ${osrel}) 
+#message("IKT cpu = " ${cpu}) 
+
+#message("IKT LCM_HOSTNAME = " ${LCM_HOSTNAME}) 
+#message("IKT PACKAGE = " ${PACKAGE}) 
+#set(CTEST_BUILD_NAME "${LCM_HOSTNAME}-${PACKAGE}")
+set (CTEST_BUILD_NAME "${PACKAGE}-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-$ENV{BUILD_TYPE}-Serial")
 set(CTEST_SITE "${LCM_HOSTNAME}")
 set(CTEST_SOURCE_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
 set(CTEST_BINARY_DIRECTORY "$ENV{TEST_DIR}/${PACKAGE}-build-${BUILD_ID_STRING}")
