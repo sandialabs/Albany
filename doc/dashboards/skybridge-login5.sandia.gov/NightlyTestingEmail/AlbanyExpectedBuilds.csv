@@ -26,9 +26,9 @@ Nightly, cee-compute025, Trilinos-Linux-3.10.0-1062.9.1.el7.x86_64-gcc-9.2.0-Rel
 Nightly, cee-compute025, Albany-Linux-3.10.0-1062.9.1.el7.x86_64-gcc-9.2.0-Release-Serial
 Nightly, cee-compute024, Trilinos-Linux-3.10.0-1160.66.1.el7.x86_64-clang-9.0.0-Release-Serial
 Nightly, cee-compute024, Albany-Linux-3.10.0-1160.66.1.el7.x86_64-clang-9.0.0-Release-Serial
-Nightly, mockba.ca.sandia.gov, mockba-rhel7.9-gcc10.1.0-Release-Albany
-Nightly, mockba.ca.sandia.gov, mockba-rhel7.9-gcc10.1.0-Release-Cism-Albany
-Nightly, mockba.ca.sandia.gov, mockba-rhel7.9-gcc10.1.0-Release-Albany-No-Epetra
+Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.76.1.el7.x86_64-gcc-10.1.0-Release-Serial
+Nightly, mockba.ca.sandia.gov, CismAlbany-Linux-3.10.0-1160.76.1.el7.x86_64-gcc-10.1.0-Release-Serial
+Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.76.1.el7.x86_64-gcc-10.1.0-Release-Serial-No-Epetra
 Nightly, skybridge-login5, trilinos-Linux-3.10.0-1160.76.1.1chaos.ch6.x86_64-icc-18.0.3-release-Serial
 Nightly, skybridge-login5, albany-Linux-3.10.0-1160.76.1.1chaos.ch6.x86_64-icc-18.0.3-release-Serial
 Nightly, weaver.sandia.gov, weaver-CUDA-Trilinos
