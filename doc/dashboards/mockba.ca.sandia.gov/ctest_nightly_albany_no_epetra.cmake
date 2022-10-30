@@ -23,7 +23,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "mockba-rhel7.9-gcc10.1.0-${CTEST_BUILD_CONFIGURATION}-Albany-No-Epetra")
+#set (CTEST_BUILD_NAME "mockba-rhel7.9-gcc10.1.0-${CTEST_BUILD_CONFIGURATION}-Albany-No-Epetra")
 set (CTEST_BINARY_NAME build)
 
 
@@ -47,6 +47,54 @@ set (CTEST_BUILD_FLAGS "-j8")
 
 set (CTEST_DROP_METHOD "https")
 
+execute_process(COMMAND bash delete_txt_files.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-no-epetra/install")
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE MPICC_RESULT
+		OUTPUT_FILE "mpicc.txt")
+execute_process(COMMAND bash get_mpicc.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT)
+execute_process(COMMAND cat mpicc.txt 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT
+		OUTPUT_VARIABLE MPICC
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT mpicc = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_VERSION_RESULT
+		OUTPUT_VARIABLE COMPILER_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND ${MPICC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_RESULT
+		OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash process_compiler.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CHANGE_COMPILER_RESULT
+		OUTPUT_VARIABLE COMPILER
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler = " ${COMPILER})
+
+
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+#message("IKT osname = " ${osname}) 
+#message("IKT osrel = " ${osrel}) 
+#message("IKT cpu = " ${cpu}) 
+
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-Serial-No-Epetra")
 
 if (CTEST_DROP_METHOD STREQUAL "https")
   set(CTEST_DROP_METHOD "https")
@@ -171,7 +219,6 @@ if (BUILD_ALBANY)
   #
 
 
-  set (TRILINSTALLDIR "/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build-no-epetra/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -189,6 +236,7 @@ if (BUILD_ALBANY)
     "-DSEACAS_EXODIFF=${TRILINSTALLDIR}/bin/exodiff"
     "-DSEACAS_ALGEBRA=$TRILINSTALLDIR/bin/algebra"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
+    "-DINSTALL_ALBANY:BOOL=OFF"
     "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
     "-DPYTHON_EXECUTABLE=/projects/sems/install/rhel7-x86_64/sems/compiler/python/2.7.9/bin/python"
     "-DENABLE_ALBANY_EPETRA=OFF"
