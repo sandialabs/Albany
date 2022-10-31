@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-set (CTEST_DO_SUBMIT OFF)
+set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
@@ -8,8 +8,8 @@ set (DOWNLOAD_ALBANY FALSE)
 set (CLEAN_BUILD FALSE) 
 set (BUILD_TRILINOS FALSE)
 set (BUILD_ALBANY FALSE)
-set (BUILD_CISM_PISCEES FALSE)
-set (RUN_CISM_PISCEES TRUE)
+set (BUILD_CISM_PISCEES TRUE)
+set (RUN_CISM_PISCEES FALSE)
 
 # Begin User inputs:
 set (CTEST_SITE "cori07.nersc.gov" ) # generally the output of hostname
@@ -22,7 +22,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-#set (CTEST_BUILD_NAME "cori-CISM-Albany")
+set (CTEST_BUILD_NAME "cori-CISM-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -46,57 +46,6 @@ set (CTEST_FLAGS "-j16")
 set (CTEST_BUILD_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "https")
-
-
-execute_process(COMMAND bash delete_txt_files.sh 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINSTALLDIR "${CTEST_BINARY_DIRECTORY}/TrilinosInstall")
-execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE MPICC_RESULT
-		OUTPUT_FILE "mpicc.txt")
-execute_process(COMMAND bash get_mpicc.sh 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE GET_MPICC_RESULT)
-execute_process(COMMAND cat mpicc.txt 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE GET_MPICC_RESULT
-		OUTPUT_VARIABLE MPICC
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("IKT mpicc = " ${MPICC}) 
-execute_process(COMMAND ${MPICC} -dumpversion 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE COMPILER_VERSION_RESULT
-		OUTPUT_VARIABLE COMPILER_VERSION
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("IKT compiler version = " ${COMPILER_VERSION})
-execute_process(COMMAND ${MPICC} --version 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE COMPILER_RESULT
-		OUTPUT_FILE "compiler.txt")
-execute_process(COMMAND bash process_compiler.sh 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE CHANGE_COMPILER_RESULT
-		OUTPUT_VARIABLE COMPILER
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("IKT compiler = " ${COMPILER})
-
-
-find_program(UNAME NAMES uname)
-macro(getuname name flag)
-  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
-endmacro(getuname)
-
-getuname(osname -s)
-getuname(osrel  -r)
-getuname(cpu    -m)
-
-message("IKT osname = " ${osname}) 
-message("IKT osrel = " ${osrel}) 
-message("IKT cpu = " ${cpu}) 
-
-set (CTEST_BUILD_NAME "CismAlbany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
-
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
@@ -141,12 +90,11 @@ if (BUILD_CISM_PISCEES)
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
     #
     "-DCISM_USE_TRILINOS:BOOL=ON"
-    "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
+    "-DCISM_TRILINOS_DIR=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DALBANY_LANDICE_DYCORE:BOOL=ON"
     "-DALBANY_LANDICE_CTEST:BOOL=ON"
-    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/AlbanyFELIXInstall"
+    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/AlbanyInstall"
     "-DCISM_NETCDF_DIR=$ENV{NETCDF_DIR}"
-    "-DPYTHON_EXE=/opt/python/2.7.15.6/bin/python" 
     #
     "-DCMAKE_CXX_COMPILER=CC"
     "-DCMAKE_C_COMPILER=cc"
@@ -155,10 +103,8 @@ if (BUILD_CISM_PISCEES)
     "-DCMAKE_EXE_LINKER_FLAGS:STRING='-Wl,-zmuldefs'"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCISM_STATIC_LINKING:BOOL=OFF"
-    "-DCISM_Fortran_FLAGS='-ffree-line-length-none'" 
-    "-DCISM_GNU:BOOL=ON"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -std=c++1y'"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++1y'"
+    "-DCISM_Fortran_FLAGS='-g -ffree-line-length-none -fPIC -fno-range-check -std=legacy'" 
+    "-DCMAKE_CXX_FLAGS:STRING='-std=c++14'"
   )
  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")
@@ -229,7 +175,6 @@ IF(RUN_CISM_PISCEES)
   #  Over-write default limit for output posted to CDash site
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
-  set (CTEST_TEST_TIMEOUT 1200)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany"

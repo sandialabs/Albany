@@ -12,7 +12,7 @@ set (BUILD_ALB_FELIX FALSE)
 set (BUILD_CISM_PISCEES FALSE)
 
 # Begin User inputs:
-set (CTEST_SITE "cori.nersc.gov" ) # generally the output of hostname
+set (CTEST_SITE "cori07.nersc.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -22,7 +22,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "cori-Trilinos")
+#set (CTEST_BUILD_NAME "cori-Trilinos")
 set (CTEST_BINARY_NAME build)
 
 
@@ -46,6 +46,43 @@ set (CTEST_FLAGS "-j16")
 set (CTEST_BUILD_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "https")
+
+execute_process(COMMAND bash delete_txt_files.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(MPICC cc)
+message("IKT MPICC = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_VERSION_RESULT
+		OUTPUT_VARIABLE COMPILER_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND ${MPICC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_RESULT
+		OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash process_compiler.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CHANGE_COMPILER_RESULT
+		OUTPUT_VARIABLE COMPILER
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("IKT compiler = " ${COMPILER})
+
+
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+message("IKT osname = " ${osname}) 
+message("IKT osrel = " ${osrel}) 
+message("IKT cpu = " ${cpu}) 
+
+set (CTEST_BUILD_NAME "Trilinos-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
 
 
 find_program (CTEST_GIT_COMMAND NAMES git)

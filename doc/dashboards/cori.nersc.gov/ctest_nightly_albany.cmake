@@ -11,7 +11,7 @@ set (BUILD_ALBANY TRUE)
 set (BUILD_CISM_PISCEES FALSE)
 
 # Begin User inputs:
-set (CTEST_SITE "cori.nersc.gov" ) # generally the output of hostname
+set (CTEST_SITE "cori07.nersc.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -21,7 +21,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "cori-Albany")
+#set (CTEST_BUILD_NAME "cori-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -45,6 +45,55 @@ set (CTEST_FLAGS "-j16")
 set (CTEST_BUILD_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "https")
+
+execute_process(COMMAND bash delete_txt_files.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set (TRILINSTALLDIR "${CTEST_BINARY_DIRECTORY}/TrilinosInstall")
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE MPICC_RESULT
+		OUTPUT_FILE "mpicc.txt")
+execute_process(COMMAND bash get_mpicc.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT)
+execute_process(COMMAND cat mpicc.txt 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT
+		OUTPUT_VARIABLE MPICC
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("IKT mpicc = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_VERSION_RESULT
+		OUTPUT_VARIABLE COMPILER_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND ${MPICC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_RESULT
+		OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash process_compiler.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CHANGE_COMPILER_RESULT
+		OUTPUT_VARIABLE COMPILER
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("IKT compiler = " ${COMPILER})
+
+
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+message("IKT osname = " ${osname}) 
+message("IKT osrel = " ${osrel}) 
+message("IKT cpu = " ${cpu}) 
+
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
@@ -128,7 +177,7 @@ if (BUILD_ALBANY)
   #
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DENABLE_DEMO_PDES=OFF" 
     "-DENABLE_LANDICE:BOOL=ON"
@@ -139,6 +188,7 @@ if (BUILD_ALBANY)
     "-DENABLE_CISM_INTERFACE=ON"
     "-DAlbany_BUILD_STATIC_EXE:BOOL=OFF"
     "-DDISABLE_ALBANY_TESTS:BOOL=ON"
+    "-DINSTALL_ALBANY:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/AlbanyInstall"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DCMAKE_EXE_LINKER_FLAGS:STRING='-Wl,-zmuldefs'"
