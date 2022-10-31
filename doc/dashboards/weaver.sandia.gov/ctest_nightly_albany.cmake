@@ -21,9 +21,9 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_NAME "weaver-CUDA-Albany")
+#set (CTEST_NAME "weaver-CUDA-Albany")
 set (CTEST_BINARY_NAME build)
-set (CTEST_BUILD_NAME "weaver-CUDA-Albany")
+#set (CTEST_BUILD_NAME "weaver-CUDA-Albany")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -45,6 +45,79 @@ set (CTEST_BUILD_FLAGS "-j40")
 
 set (CTEST_DROP_METHOD "https")
 
+execute_process(COMMAND bash delete_txt_files.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set (TRILINSTALLDIR "${CTEST_BINARY_DIRECTORY}/TrilinosInstall") 
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE MPICC_RESULT
+		OUTPUT_FILE "mpicc.txt")
+execute_process(COMMAND bash get_mpicc.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT)
+execute_process(COMMAND cat mpicc.txt 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT
+		OUTPUT_VARIABLE MPICC
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT mpicc = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_VERSION_RESULT
+		OUTPUT_VARIABLE COMPILER_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND ${MPICC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_RESULT
+		OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash process_compiler.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CHANGE_COMPILER_RESULT
+		OUTPUT_VARIABLE COMPILER
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler = " ${COMPILER})
+execute_process(COMMAND grep "Trilinos_CXX_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE MPICXX_RESULT
+		OUTPUT_FILE "mpicxx.txt")
+execute_process(COMMAND bash get_mpicxx.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICXX_RESULT)
+execute_process(COMMAND cat mpicxx.txt 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICXX_RESULT
+		OUTPUT_VARIABLE NVCC
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT nvcc = " ${NVCC}) 
+execute_process(COMMAND ${NVCC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE NVCC_RESULT
+		OUTPUT_FILE "cuda.txt")
+execute_process(COMMAND bash get_cuda_version.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CUDA_VERSION_RESULT
+		OUTPUT_VARIABLE CUDA_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT cuda version = " ${CUDA_VERSION})
+
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+#message("IKT osname = " ${osname}) 
+#message("IKT osrel = " ${osrel}) 
+#message("IKT cpu = " ${cpu}) 
+
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
+set (CTEST_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
+
+set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 if (CTEST_DROP_METHOD STREQUAL "https")
   set (CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
   set (CTEST_PROJECT_NAME "Albany")
@@ -134,7 +207,7 @@ if (BUILD_ALBANY)
   #
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_LANDICE:BOOL=ON"
