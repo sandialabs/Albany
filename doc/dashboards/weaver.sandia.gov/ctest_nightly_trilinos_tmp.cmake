@@ -49,7 +49,7 @@ set (CTEST_DROP_METHOD "https")
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set(NVCC $ENV{CUDA_ROOT}/bin/nvcc)
-#message("IKT NVCC = " ${NVCC})
+message("IKT NVCC = " ${NVCC})
 execute_process(COMMAND ${NVCC} --version 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE NVCC_RESULT
@@ -57,16 +57,17 @@ execute_process(COMMAND ${NVCC} --version
 execute_process(COMMAND bash get_cuda_version.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE CUDA_VERSION_RESULT
-		OUTPUT_VARIABLE CUDA_VERSION)
-#message("IKT cuda version = " ${CUDA_VERSION})
-set(MPICC mpicc)
-#message("IKT MPICC = " ${MPICC}) 
+		OUTPUT_VARIABLE CUDA_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("IKT cuda version = " ${CUDA_VERSION})
+set(MPICC $ENV{OPENMPI_ROOT}/bin/mpicc)
+message("IKT MPICC = " ${MPICC}) 
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT
 		OUTPUT_VARIABLE COMPILER_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler version = " ${COMPILER_VERSION})
+message("IKT compiler version = " ${COMPILER_VERSION})
 execute_process(COMMAND ${MPICC} --version 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_RESULT
@@ -76,7 +77,7 @@ execute_process(COMMAND bash process_compiler.sh
 		RESULT_VARIABLE CHANGE_COMPILER_RESULT
 		OUTPUT_VARIABLE COMPILER
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler = " ${COMPILER})
+message("IKT compiler = " ${COMPILER})
 
 find_program(UNAME NAMES uname)
 macro(getuname name flag)
@@ -87,9 +88,9 @@ getuname(osname -s)
 getuname(osrel  -r)
 getuname(cpu    -m)
 
-#message("IKT osname = " ${osname}) 
-#message("IKT osrel = " ${osrel}) 
-#message("IKT cpu = " ${cpu}) 
+message("IKT osname = " ${osname}) 
+message("IKT osrel = " ${osrel}) 
+message("IKT cpu = " ${cpu}) 
 
 set (CTEST_BUILD_NAME "Trilinos-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
 set (CTEST_NAME "Trilinos-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
