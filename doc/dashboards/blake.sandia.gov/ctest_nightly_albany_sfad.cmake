@@ -1,7 +1,58 @@
 #cmake_minimum_required (VERSION 2.8)
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
-SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
+SET (CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
+set (CTEST_CONFIGURATION "Release") 
+message("CTEST_BUILD_OPTION = " ${CTEST_BUILD_OPTION})
+
+execute_process(COMMAND bash delete_txt_files.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set (TRILINSTALLDIR "/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall")
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE MPICC_RESULT
+		OUTPUT_FILE "mpicc.txt")
+execute_process(COMMAND bash get_mpicc.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT)
+execute_process(COMMAND cat mpicc.txt 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT
+		OUTPUT_VARIABLE MPICC
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT mpicc = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_VERSION_RESULT
+		OUTPUT_VARIABLE COMPILER_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND ${MPICC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_RESULT
+		OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash process_compiler.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CHANGE_COMPILER_RESULT
+		OUTPUT_VARIABLE COMPILER
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler = " ${COMPILER})
+
+
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+#message("IKT osname = " ${osname}) 
+#message("IKT osrel = " ${osrel}) 
+#message("IKT cpu = " ${cpu}) 
+
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial-${CTEST_BUILD_OPTION}")
 
 # What to build and test
 set (CLEAN_BUILD FALSE)
@@ -14,7 +65,6 @@ if (1)
     set (BUILD_ALBANY_SERIAL_SFAD8 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD12 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD24 FALSE) 
-    set (CTEST_BUILD_NAME "blake-serial-sfad4-Albany")
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "sfad6")
     set (BUILD_ALBANY_SERIAL_SFAD4 FALSE) 
@@ -22,7 +72,6 @@ if (1)
     set (BUILD_ALBANY_SERIAL_SFAD8 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD12 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD24 FALSE) 
-    set (CTEST_BUILD_NAME "blake-serial-sfad6-Albany")
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "sfad8")
     set (BUILD_ALBANY_SERIAL_SFAD4 FALSE) 
@@ -30,7 +79,6 @@ if (1)
     set (BUILD_ALBANY_SERIAL_SFAD8 TRUE) 
     set (BUILD_ALBANY_SERIAL_SFAD12 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD24 FALSE) 
-    set (CTEST_BUILD_NAME "blake-serial-sfad8-Albany")
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "sfad12")
     set (BUILD_ALBANY_SERIAL_SFAD4 FALSE) 
@@ -38,7 +86,6 @@ if (1)
     set (BUILD_ALBANY_SERIAL_SFAD8 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD12 TRUE) 
     set (BUILD_ALBANY_SERIAL_SFAD24 FALSE) 
-    set (CTEST_BUILD_NAME "blake-serial-sfad12-Albany")
   ENDIF()
   IF(CTEST_BUILD_OPTION MATCHES "sfad24")
     set (BUILD_ALBANY_SERIAL_SFAD4 FALSE) 
@@ -46,7 +93,6 @@ if (1)
     set (BUILD_ALBANY_SERIAL_SFAD8 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD12 FALSE) 
     set (BUILD_ALBANY_SERIAL_SFAD24 TRUE) 
-    set (CTEST_BUILD_NAME "blake-serial-sfad24-Albany")
   ENDIF()
 ENDIF()
 
@@ -161,7 +207,7 @@ ctest_start(${CTEST_TEST_TYPE})
 
 IF (BUILD_ALBANY_SERIAL_SFAD4) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -184,7 +230,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD4)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD6) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -207,7 +253,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD6)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD8) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -230,7 +276,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD8)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD12) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
@@ -253,7 +299,7 @@ IF (BUILD_ALBANY_SERIAL_SFAD12)
 ENDIF()
 IF (BUILD_ALBANY_SERIAL_SFAD24) 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DENABLE_LANDICE:BOOL=ON"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
