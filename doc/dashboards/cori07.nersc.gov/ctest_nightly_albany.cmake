@@ -61,13 +61,13 @@ execute_process(COMMAND cat mpicc.txt
 		RESULT_VARIABLE GET_MPICC_RESULT
 		OUTPUT_VARIABLE MPICC
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("IKT mpicc = " ${MPICC}) 
+#message("IKT mpicc = " ${MPICC}) 
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT
 		OUTPUT_VARIABLE COMPILER_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("IKT compiler version = " ${COMPILER_VERSION})
+#message("IKT compiler version = " ${COMPILER_VERSION})
 execute_process(COMMAND ${MPICC} --version 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_RESULT
@@ -77,7 +77,7 @@ execute_process(COMMAND bash process_compiler.sh
 		RESULT_VARIABLE CHANGE_COMPILER_RESULT
 		OUTPUT_VARIABLE COMPILER
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("IKT compiler = " ${COMPILER})
+#message("IKT compiler = " ${COMPILER})
 
 
 find_program(UNAME NAMES uname)
@@ -89,9 +89,9 @@ getuname(osname -s)
 getuname(osrel  -r)
 getuname(cpu    -m)
 
-message("IKT osname = " ${osname}) 
-message("IKT osrel = " ${osrel}) 
-message("IKT cpu = " ${cpu}) 
+#message("IKT osname = " ${osname}) 
+#message("IKT osrel = " ${osrel}) 
+#message("IKT cpu = " ${cpu}) 
 
 set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
 
