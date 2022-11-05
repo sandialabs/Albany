@@ -225,7 +225,6 @@ if (BUILD_ALBANY_FPE)
   # Builds everything with FPE check enabled!
   #
 
-  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
   set (TRILINOSBLDDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug")
   set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
 

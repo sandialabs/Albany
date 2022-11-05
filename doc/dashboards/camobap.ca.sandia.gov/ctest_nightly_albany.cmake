@@ -226,8 +226,6 @@ if (BUILD_ALBANY)
   # Builds everything!
   #
 
-  set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
-
   set (CONFIGURE_OPTIONS
     "-GNinja"
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
