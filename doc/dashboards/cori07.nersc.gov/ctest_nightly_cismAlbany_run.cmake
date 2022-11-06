@@ -169,8 +169,8 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_STATIC_LINKING:BOOL=OFF"
     "-DCISM_Fortran_FLAGS='-ffree-line-length-none'" 
     "-DCISM_GNU:BOOL=ON"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -std=c++1y'"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++1y'"
+    "-DCMAKE_C_FLAGS:STRING='-O2 -std=c++17'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O2 -std=c++17'"
   )
  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")
