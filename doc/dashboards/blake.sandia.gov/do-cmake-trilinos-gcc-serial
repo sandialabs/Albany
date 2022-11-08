@@ -18,7 +18,7 @@ cmake \
       -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
       -D CMAKE_C_COMPILER:FILEPATH=mpicc \
       -D CMAKE_Fortran_COMPILER:FILEPATH=mpif77 \
-      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Werror' \
+      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Werror -std=c++17' \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
@@ -39,7 +39,6 @@ cmake \
       -D TPL_ENABLE_Matio:BOOL=OFF \
       -D TPL_ENABLE_METIS:STRING=OFF \
       -D TPL_ENABLE_ParMETIS:STRING=OFF \
-      -D TPL_ENABLE_X11=OFF \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
 \
@@ -131,7 +130,8 @@ cmake \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
-\
+      -D TPL_ENABLE_X11:BOOL=OFF \
       -D Tpetra_ENABLE_DEPRECATED_CODE=OFF \
       -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
+      -D CMAKE_CXX_STANDARD=17 \
 ..
