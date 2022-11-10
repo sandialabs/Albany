@@ -9,13 +9,6 @@
 
 #include "Albany_config.h"
 
-#include "Teuchos_ArrayRCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_SerialDenseMatrix.hpp"
-#include "Teuchos_TimeMonitor.hpp"
-#include "Teuchos_VerboseObject.hpp"
-
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
@@ -24,15 +17,23 @@
 #include "SolutionManager.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Setup.hpp"
+#include "PHAL_Workset.hpp"
+
 #include "Sacado_ParameterAccessor.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Sacado_ScalarParameterVector.hpp"
 
+#include "Teuchos_ArrayRCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_SerialDenseMatrix.hpp"
+#include "Teuchos_TimeMonitor.hpp"
+#include "Teuchos_VerboseObject.hpp"
+
 #include <set>
-#include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_Setup.hpp"
-#include "PHAL_Workset.hpp"
 
 namespace Albany {
 

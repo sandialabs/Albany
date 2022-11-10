@@ -24,6 +24,7 @@
 
 #include "PHAL_SaveSideSetStateField.hpp"
 #include "PHAL_SaveStateField.hpp"
+#include "PHAL_GatherCoordinateVector.hpp"
 
 #include "LandIce_StokesFOBase.hpp"
 

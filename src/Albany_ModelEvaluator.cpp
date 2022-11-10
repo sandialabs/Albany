@@ -6,8 +6,6 @@
 
 #include "Albany_ModelEvaluator.hpp"
 
-#include "Teuchos_ScalarTraits.hpp"
-#include "Teuchos_TestForException.hpp"
 #include "Albany_ObserverImpl.hpp"
 #include "Albany_ThyraUtils.hpp"
 
@@ -15,8 +13,11 @@
 
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Hessian.hpp"
+#include "Albany_Utils.hpp"
 #include "Albany_StringUtils.hpp"
 
+#include "Teuchos_ScalarTraits.hpp"
+#include "Teuchos_TestForException.hpp"
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
 

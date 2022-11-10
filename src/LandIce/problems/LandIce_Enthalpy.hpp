@@ -35,6 +35,7 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_SaveCellStateField.hpp"
+#include "PHAL_LoadStateField.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_ScatterScalarNodalParameter.hpp"

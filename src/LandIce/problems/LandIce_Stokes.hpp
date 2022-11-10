@@ -15,6 +15,7 @@
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
+#include "PHAL_LoadStateField.hpp"
 
 namespace LandIce {
 
