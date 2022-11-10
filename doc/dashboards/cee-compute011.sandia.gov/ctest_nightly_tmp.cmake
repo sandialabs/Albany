@@ -229,7 +229,7 @@ set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 if ((CTEST_BUILD_CONFIGURATION MATCHES "Debug") OR (CTEST_BUILD_OPTION MATCHES "clang-albany"))
 # Runs tests longer if in debug mode
    set (CTEST_TEST_TIMEOUT 4200)
-else 
+else () 
    set (CTEST_TEST_TIMEOUT 900)
 endif ()
 
