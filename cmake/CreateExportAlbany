@@ -138,7 +138,16 @@ def run (bin_dir,install_lib_dir, cmake_generator):
         elif item.startswith("-l"):
             # It's either a -lXYZ lib or a link flag. Keep it as is.
             libs.append(item)
+        elif item.startswith("-L"):
+            # We want to get an abs path, with symlinks resolved (if any)
+            lib_dir_full = pathlib.Path(item[2:]).resolve()
+            if not lib_dir_full.exists() or not lib_dir_full.is_dir():
+                print (f"could not parse token {item}")
+                print (f" -> It appears to be a lib dir entry, but the path does not exist, or is not a directory")
+                raise ValueError
+            libs_dirs.append(lib_dir_full)
         else:
+            # This should be a library name, expressed by full/relative path.
             # We want to get an abs path, with symlinks resolved *except* for symlinks
             # in the file name, to avoid an error we're seeing where libdl.so points
             # to the file libdl-2.28.so (an odd name: usually we see libdl.so.2.28)
