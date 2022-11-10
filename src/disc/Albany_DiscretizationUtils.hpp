@@ -7,15 +7,55 @@
 #ifndef ALBANY_DISCRETIZATION_UTILS_HPP
 #define ALBANY_DISCRETIZATION_UTILS_HPP
 
+#include "Albany_KokkosTypes.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Teuchos_ArrayRCP.hpp"
+#include "Panzer_NodalFieldPattern.hpp"
+#include "Panzer_ElemFieldPattern.hpp"
+#include "Panzer_FieldPattern.hpp"
+
 #include <map>
 #include <string>
 #include <vector>
 
-#include "Albany_KokkosTypes.hpp"
-#include "Albany_ScalarOrdinalTypes.hpp"
-#include "Teuchos_ArrayRCP.hpp"
-
 namespace Albany {
+
+enum class FE_Type {
+  P0,
+  P1
+};
+
+inline std::string e2str (const FE_Type fe_type)
+{
+  std::string s;
+  switch (fe_type) {
+    case FE_Type::P1: s = "P1"; break;
+    case FE_Type::P0: s = "P0"; break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+          "Error! Unsupported FE_Type.\n");
+  }
+  return s;
+}
+
+inline Teuchos::RCP<const panzer::FieldPattern>
+createFieldPattern (const FE_Type fe_type,
+                    const shards::CellTopology& cell_topo)
+{
+  Teuchos::RCP<const panzer::FieldPattern> fp;
+  switch (fe_type) {
+    case FE_Type::P1:
+      fp = Teuchos::rcp(new panzer::NodalFieldPattern(cell_topo));
+      break;
+    case FE_Type::P0:
+      fp = Teuchos::rcp(new panzer::ElemFieldPattern(cell_topo));
+      break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+          "Error! Unsupported FE_Type.\n");
+  }
+  return fp;
+}
 
 enum class DiscType
 {

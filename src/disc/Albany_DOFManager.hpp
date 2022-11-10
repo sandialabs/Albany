@@ -16,17 +16,6 @@
 
 namespace Albany {
 
-enum class FE_Type {
-  P0,
-  P1
-};
-
-std::string e2str (const FE_Type fe_type);
-
-Teuchos::RCP<const panzer::FieldPattern>
-createFieldPattern (const FE_Type fe_type,
-                    const shards::CellTopology& cell_topo);
-
 class DOFManager : public panzer::DOFManager {
 public:
   // Initializes DOF manager

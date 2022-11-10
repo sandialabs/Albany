@@ -8,37 +8,6 @@
 
 namespace Albany {
 
-Teuchos::RCP<const panzer::FieldPattern>
-createFieldPattern (const FE_Type fe_type,
-                    const shards::CellTopology& cell_topo)
-{
-  Teuchos::RCP<const panzer::FieldPattern> fp;
-  switch (fe_type) {
-    case FE_Type::P1:
-      fp = Teuchos::rcp(new panzer::NodalFieldPattern(cell_topo));
-      break;
-    case FE_Type::P0:
-      fp = Teuchos::rcp(new panzer::ElemFieldPattern(cell_topo));
-      break;
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-          "Error! Unsupported FE_Type.\n");
-  }
-  return fp;
-}
-
-std::string e2str (const FE_Type fe_type) {
-  std::string s;
-  switch (fe_type) {
-    case FE_Type::P1: s = "P1"; break;
-    case FE_Type::P0: s = "P0"; break;
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-          "Error! Unsupported FE_Type.\n");
-  }
-  return s;
-}
-
 DOFManager::
 DOFManager (const Teuchos::RCP<panzer::ConnManager>& conn_mgr,
             const Teuchos::RCP<const Teuchos_Comm>& comm)
