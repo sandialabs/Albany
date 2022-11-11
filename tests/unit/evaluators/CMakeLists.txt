@@ -4,156 +4,37 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
-INCLUDE_DIRECTORIES(
-  ${Trilinos_INCLUDE_DIRS}  
-  ${Trilinos_TPL_INCLUDE_DIRS} 
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_BINARY_DIR}/src
-  ${CMAKE_SOURCE_DIR}/src/evaluators/utility
-  ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation
-  ${CMAKE_SOURCE_DIR}/src/problems
-  ${CMAKE_SOURCE_DIR}/src/disc
-  ${CMAKE_SOURCE_DIR}/src/utility
-  ${CMAKE_SOURCE_DIR}/src
-)
+#################################################
+#             Scalar Interpolation              #
+#################################################
 
-# Files in Albany to be built or are needed
-SET(SOURCES
-          ./EvaluatorUnitTester.cpp
-          ../Albany_UnitTestMain.cpp
-          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
-)
+create_unit_test (NAME    DOFInterpolation
+                  SOURCES DOFInterpolation.cpp)
 
-SET(SOURCES_gatherSolution
-          ./gatherSolution.cpp
-          ../Albany_UnitTestMain.cpp
-          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
-)
+#################################################
+#               Gather Solution                 #
+#################################################
 
-SET(SOURCES_gatherDistributedParameters
-          ./gatherDistributedParameters.cpp
-          ../Albany_UnitTestMain.cpp
-          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
-)
+create_unit_test (NAME    GatherSolution
+                  SOURCES GatherSolution.cpp)
 
-SET(SOURCES_scatterScalarResponse
-          ./scatterScalarResponse.cpp
-          ../Albany_UnitTestMain.cpp
-          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
-)
+#################################################
+#           Gather Distributed Param            #
+#################################################
 
-SET(SOURCES_scatterResidual
-          ./scatterResidual.cpp
-          ../Albany_UnitTestMain.cpp
-          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.cpp
-)
+create_unit_test (NAME    GatherDistributedParameter
+                  SOURCES GatherDistributedParameter.cpp)
 
-SET(HEADERS
-          ${CMAKE_SOURCE_DIR}/src/evaluators/utility/PHAL_ComputeBasisFunctions.hpp
-          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation.hpp
-          ${CMAKE_SOURCE_DIR}/src/evaluators/interpolation/PHAL_DOFInterpolation_Def.hpp
-)
+#################################################
+#               Scatter Residual                #
+#################################################
 
-LINK_DIRECTORIES (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+create_unit_test (NAME    ScatterResidual
+                  SOURCES ScatterResidual.cpp)
 
-# Duplicate Roger's Phalanx EvaluatorUnitTester here for right now
-ADD_EXECUTABLE(
-  evaluator_unit_tester
-  ${HEADERS} ${SOURCES}
-)
+#################################################
+#          Scatter Scalar Response              #
+#################################################
 
-ADD_EXECUTABLE(
-  gatherSolution_unit_tester
-  ${HEADERS} ${SOURCES_gatherSolution}
-)
-
-ADD_EXECUTABLE(
-  gatherDistributedParameters_unit_tester
-  ${HEADERS} ${SOURCES_gatherDistributedParameters}
-)
-
-ADD_EXECUTABLE(
-  scatterScalarResponse_unit_tester
-  ${HEADERS} ${SOURCES_scatterScalarResponse}
-)
-
-ADD_EXECUTABLE(
-  scatterResidual_unit_tester
-  ${HEADERS} ${SOURCES_scatterResidual}
-)
-
-set_target_properties(evaluator_unit_tester PROPERTIES
-  PUBLIC_HEADER "${HEADERS}")
-
-TARGET_LINK_LIBRARIES(evaluator_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
-
-set_target_properties(gatherSolution_unit_tester PROPERTIES
-  PUBLIC_HEADER "${HEADERS}")
-
-TARGET_LINK_LIBRARIES(gatherSolution_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
-
-set_target_properties(gatherDistributedParameters_unit_tester PROPERTIES
-  PUBLIC_HEADER "${HEADERS}")
-
-TARGET_LINK_LIBRARIES(gatherDistributedParameters_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
-
-set_target_properties(scatterScalarResponse_unit_tester PROPERTIES
-  PUBLIC_HEADER "${HEADERS}")
-
-TARGET_LINK_LIBRARIES(scatterScalarResponse_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
-
-set_target_properties(scatterResidual_unit_tester PROPERTIES
-  PUBLIC_HEADER "${HEADERS}")
-
-TARGET_LINK_LIBRARIES(scatterResidual_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
-
-# We should always run the unit tests in both serial and parallel if possible (they should run quickly)
-IF (ALBANY_MPI)
-  ADD_TEST(
-    Albany_Serial_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
-  )
-  ADD_TEST(
-    Albany_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
-  )
-  ADD_TEST(
-    Albany_Serial_GatherSolution_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
-  )
-  ADD_TEST(
-    Albany_Parallel_GatherSolution_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
-  )
-  ADD_TEST(
-    Albany_Serial_GatherDistributedParameters_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
-  )
-  ADD_TEST(
-    Albany_Parallel_GatherDistributedParameters_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
-  )
-  ADD_TEST(
-    Albany_Serial_ScatterScalarResponse_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
-  )
-  ADD_TEST(
-    Albany_Parallel_ScatterScalarResponse_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
-  )
-  ADD_TEST(
-    Albany_Serial_ScatterResidual_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
-  )
-  ADD_TEST(
-    Albany_Parallel_ScatterResidual_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
-  )
-ELSE(ALBANY_MPI)
-  ADD_TEST(
-    Albany_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
-  )
-  ADD_TEST(
-    Albany_GatherSolution_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
-  )
-  ADD_TEST(
-    Albany_GatherDistributedParameters_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
-  )
-  ADD_TEST(
-    Albany_ScatterScalarResponse_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
-  )
-  ADD_TEST(
-    Albany_ScatterResidual_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
-  )
-ENDIF(ALBANY_MPI)
-
+create_unit_test (NAME    ScatterScalarResponse
+                  SOURCES ScatterScalarResponse.cpp)
