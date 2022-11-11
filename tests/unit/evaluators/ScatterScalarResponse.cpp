@@ -86,8 +86,11 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
     const auto overlapped_hess_vec_prod_g_px = Thyra::createMember(overlapped_p_space);
     const auto overlapped_hess_vec_prod_g_pp = Thyra::createMember(overlapped_p_space);
 
-    const auto diff_out = Thyra::createMember(x_space);
-    const auto one_out  = Thyra::createMember(x_space);
+    const auto diff_x_out = Thyra::createMember(x_space);
+    const auto diff_p_out = Thyra::createMember(p_space);
+    const auto one_x_out = Thyra::createMember(x_space);
+    const auto one_p_out = Thyra::createMember(p_space);
+
 
     const auto hess_vec_prod_g_xx_out = Thyra::createMember(x_space);
     const auto hess_vec_prod_g_xp_out = Thyra::createMember(x_space);
@@ -104,7 +107,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
     overlapped_hess_vec_prod_g_px->assign(0.0);
     overlapped_hess_vec_prod_g_pp->assign(0.0);
 
-    one_out->assign(1.0);
+    one_x_out->assign(1.0);
+    one_p_out->assign(1.0);
 
     overlapped_hess_vec_prod_g_xx_out->assign(0.0);
     overlapped_hess_vec_prod_g_xp_out->assign(0.0);
@@ -133,10 +137,11 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
     }
 
     auto x_cas_manager = Albany::createCombineAndScatterManager(x_space, overlapped_x_space);
+    auto p_cas_manager = Albany::createCombineAndScatterManager(p_space, overlapped_p_space);
     x_cas_manager->combine(overlapped_hess_vec_prod_g_xx_out, hess_vec_prod_g_xx_out, ADD);
     x_cas_manager->combine(overlapped_hess_vec_prod_g_xp_out, hess_vec_prod_g_xp_out, ADD);
-    x_cas_manager->combine(overlapped_hess_vec_prod_g_px_out, hess_vec_prod_g_px_out, ADD);
-    x_cas_manager->combine(overlapped_hess_vec_prod_g_pp_out, hess_vec_prod_g_pp_out, ADD);
+    p_cas_manager->combine(overlapped_hess_vec_prod_g_px_out, hess_vec_prod_g_px_out, ADD);
+    p_cas_manager->combine(overlapped_hess_vec_prod_g_pp_out, hess_vec_prod_g_pp_out, ADD);
 
     // Create layouts
     auto dl = UnitTest::createTestLayouts(num_cells, cubature_degree, num_dims, neq);
@@ -145,6 +150,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
     // Create distributed parameter and add it to the library
     auto distParamLib = Teuchos::rcp(new Albany::DistributedParameterLibrary());
     auto parameter    = Teuchos::rcp(new Albany::DistributedParameter(param_name,p_dof_mgr));
+    parameter->compute_elem_dof_lids(disc->getNodeNewDOFManager());
 
     auto dist_param = parameter->vector();
     dist_param->assign(6.0);
@@ -216,41 +222,41 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
       x_cas_manager->combine(overlapped_hess_vec_prod_g_xx, hess_vec_prod_g_xx, ADD);
       x_cas_manager->combine(overlapped_hess_vec_prod_g_xp, hess_vec_prod_g_xp, ADD);
-      x_cas_manager->combine(overlapped_hess_vec_prod_g_px, hess_vec_prod_g_px, ADD);
-      x_cas_manager->combine(overlapped_hess_vec_prod_g_pp, hess_vec_prod_g_pp, ADD);
+      p_cas_manager->combine(overlapped_hess_vec_prod_g_px, hess_vec_prod_g_px, ADD);
+      p_cas_manager->combine(overlapped_hess_vec_prod_g_pp, hess_vec_prod_g_pp, ADD);
 
-      Thyra::V_VmV(diff_out.ptr(), *one_out, *hess_vec_prod_g_xx);
+      Thyra::V_VmV(diff_x_out.ptr(), *one_x_out, *hess_vec_prod_g_xx);
       TEUCHOS_TEST_FOR_EXCEPT(
           !Thyra::testRelNormDiffErr(
-              "hess_vec_prod_g_xx_out", *one_out,
-              "hess_vec_prod_g_xx", *diff_out,
+              "hess_vec_prod_g_xx_out", *one_x_out,
+              "hess_vec_prod_g_xx", *diff_x_out,
               "maxSensError", tol,
               "warningTol", 1.0, // Don't warn
               &*out_test, verbLevel));
 
-      Thyra::V_VmV(diff_out.ptr(), *one_out, *hess_vec_prod_g_xp);
+      Thyra::V_VmV(diff_x_out.ptr(), *one_x_out, *hess_vec_prod_g_xp);
       TEUCHOS_TEST_FOR_EXCEPT(
           !Thyra::testRelNormDiffErr(
-              "hess_vec_prod_g_xp_out", *one_out,
-              "hess_vec_prod_g_xp", *diff_out,
+              "hess_vec_prod_g_xp_out", *one_x_out,
+              "hess_vec_prod_g_xp", *diff_x_out,
               "maxSensError", tol,
               "warningTol", 1.0, // Don't warn
               &*out_test, verbLevel));
 
-      Thyra::V_VmV(diff_out.ptr(), *one_out, *hess_vec_prod_g_px);
+      Thyra::V_VmV(diff_p_out.ptr(), *one_p_out, *hess_vec_prod_g_px);
       TEUCHOS_TEST_FOR_EXCEPT(
           !Thyra::testRelNormDiffErr(
-              "hess_vec_prod_g_px_out", *one_out,
-              "hess_vec_prod_g_px", *diff_out,
+              "hess_vec_prod_g_px_out", *one_p_out,
+              "hess_vec_prod_g_px", *diff_p_out,
               "maxSensError", tol,
               "warningTol", 1.0, // Don't warn
               &*out_test, verbLevel));
 
-      Thyra::V_VmV(diff_out.ptr(), *one_out, *hess_vec_prod_g_pp);
+      Thyra::V_VmV(diff_p_out.ptr(), *one_p_out, *hess_vec_prod_g_pp);
       TEUCHOS_TEST_FOR_EXCEPT(
           !Thyra::testRelNormDiffErr(
-              "hess_vec_prod_g_pp_out", *one_out,
-              "hess_vec_prod_g_pp", *diff_out,
+              "hess_vec_prod_g_pp_out", *one_p_out,
+              "hess_vec_prod_g_pp", *diff_p_out,
               "maxSensError", tol,
               "warningTol", 1.0, // Don't warn
               &*out_test, verbLevel));
@@ -333,7 +339,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
       // Check against expected values
       Kokkos::fence();
 
-      x_cas_manager->combine(overlapped_hess_vec_prod_g_px, hess_vec_prod_g_px, ADD);
+      p_cas_manager->combine(overlapped_hess_vec_prod_g_px, hess_vec_prod_g_px, ADD);
 
       TEUCHOS_TEST_FOR_EXCEPT(
           !Thyra::testRelNormDiffErr(
@@ -363,7 +369,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
       // Check against expected values
       Kokkos::fence();
 
-      x_cas_manager->combine(overlapped_hess_vec_prod_g_pp, hess_vec_prod_g_pp, ADD);
+      p_cas_manager->combine(overlapped_hess_vec_prod_g_pp, hess_vec_prod_g_pp, ADD);
 
       TEUCHOS_TEST_FOR_EXCEPT(
           !Thyra::testRelNormDiffErr(
