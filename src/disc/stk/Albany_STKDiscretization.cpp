@@ -1914,12 +1914,16 @@ STKDiscretization::computeSideSets()
 
       SideStruct sStruct;
 
-      // Save side (global id)
+      // Save side GID and LID. Here LID is in the sense of "where this side is
+      // in the list of this sideset's sides in this rank".
+      // NOTE: we selected sides in the same way as the STKConnMgr, so the sides are
+      //       ordered in the same way as in the conn mgr, and hence the LID is just
+      //       the iter variable.
       sStruct.side_GID = bulkData->identifier(sidee) - 1;
+      sStruct.side_LID = localSideID;
 
       // Save elem GID and LID. Here, LID is the local id *within* the workset
       sStruct.elem_GID = bulkData->identifier(elem) - 1;
-
       sStruct.elem_LID = elemGIDws[sStruct.elem_GID].LID;
 
       // Get the ws that this element lives in
@@ -1997,6 +2001,7 @@ STKDiscretization::computeSideSets()
     globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
     globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
     globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_LID         = Kokkos::View<int**,  Kokkos::LayoutRight>("side_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].elem_LID         = Kokkos::View<int**,  Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,  Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
@@ -2048,6 +2053,7 @@ STKDiscretization::computeSideSets()
 
       for (size_t j = 0; j < ss_val.size(); ++j) {
         globalSideSetViews[ss_key].side_GID(current_index, j)      = ss_val[j].side_GID;
+        globalSideSetViews[ss_key].side_LID(current_index, j)      = ss_val[j].side_LID;
         globalSideSetViews[ss_key].elem_GID(current_index, j)      = ss_val[j].elem_GID;
         globalSideSetViews[ss_key].elem_LID(current_index, j)      = ss_val[j].elem_LID;
         globalSideSetViews[ss_key].elem_ebIndex(current_index, j)  = ss_val[j].elem_ebIndex;

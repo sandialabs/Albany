@@ -73,6 +73,7 @@ class SideStruct
 {
  public:
   GO    side_GID;       // global id of side in the mesh
+  int   side_LID;       // local id of side in the mesh
   GO    elem_GID;       // global id of element containing side
   int   elem_LID;       // local id of element containing side
   int   elem_ebIndex;   // index of element block that contains element
@@ -99,6 +100,7 @@ public:
 
   // (num_local_worksets, max_sideset_length)
   Kokkos::View<GO**, Kokkos::LayoutRight>   side_GID;
+  Kokkos::View<int**, Kokkos::LayoutRight>  side_LID;
   Kokkos::View<GO**, Kokkos::LayoutRight>   elem_GID;
   Kokkos::View<int**, Kokkos::LayoutRight>  elem_LID;
   Kokkos::View<int**, Kokkos::LayoutRight>  elem_ebIndex;
@@ -120,6 +122,7 @@ class LocalSideSetInfo
 public:
   int size;
   Kokkos::View<GO*, Kokkos::LayoutRight>    side_GID;      // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>   side_LID;      // (size)
   Kokkos::View<GO*, Kokkos::LayoutRight>    elem_GID;      // (size)
   Kokkos::View<int*, Kokkos::LayoutRight>   elem_LID;      // (size)
   Kokkos::View<int*, Kokkos::LayoutRight>   elem_ebIndex;  // (size)
