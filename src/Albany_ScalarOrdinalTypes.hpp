@@ -7,11 +7,12 @@
 #ifndef ALBANY_SCALAR_ORDINAL_TYPES_HPP
 #define ALBANY_SCALAR_ORDINAL_TYPES_HPP
 
-#include <cstdint>
+#include <PanzerCore_config.hpp>
 
 typedef double        RealType;
 typedef RealType      ST;
-typedef std::int64_t  GO;
-typedef std::int32_t  LO;
+
+using GO = panzer::GlobalOrdinal;
+using LO = panzer::LocalOrdinal;
 
 #endif // ALBANY_SCALAR_ORDINAL_TYPES_HPP
