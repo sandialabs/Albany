@@ -4,200 +4,104 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
+#include "LandIce_ScatterResidual2D.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
-#include "LandIce_ScatterResidual2D.hpp"
+#include "Teuchos_TestForException.hpp"
+#include "Phalanx_DataLayout.hpp"
 
 namespace PHAL {
 
-// **********************************************************************
-// Specialization: Residual
-// **********************************************************************
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::Residual,Traits>::
+using Teuchos::arrayView;
+
+template<typename EvalT, typename Traits>
+ScatterResidual2D<EvalT,Traits>::
 ScatterResidual2D(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>(p,dl)
+ : Base(p,dl)
 {
-  // Nothing to do here
-}
+  TEUCHOS_TEST_FOR_EXCEPTION (this->numFields!=1, std::logic_error,
+      "Error! ScatterResidual2D only supports scalar fields.\n");
 
-// **********************************************************************
-// Specialization: Jacobian
-// **********************************************************************
+  auto cell_topo  = p.get<Teuchos::RCP<const shards::CellTopology>>("Cell Topology");
+  sideDim = cell_topo->getDimension()-1;
 
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::Jacobian, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl),
-   numFields(ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
-{
-  cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
+  // Ensure we have ONE cell per layer.
+  const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      cell_topo->getName()==topo_hexa->name || cell_topo->getName()==topo_wedge->name, std::runtime_error,
+      "ScatterResidual2D is only for extruded meshes with 1 element per layer.\n");
+
+  // Shards has both Hexa and Wedge with bot and top in the last two side positions
+  m_top_side_pos = cell_topo->getSideCount()-1;
+  m_bot_side_pos = m_top_side_pos - 1;
+
+  numSideNodes = cell_topo->getNodeCount(sideDim,m_bot_side_pos);
+
   fieldLevel = p.get<int>("Field Level");
-  meshPart = p.get<std::string>("Mesh Part");
+  meshPart   = p.get<std::string>("Mesh Part");
 }
 
-// **********************************************************************
-template<typename Traits>
-void ScatterResidual2D<PHAL::AlbanyTraits::Jacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+template<typename EvalT, typename Traits>
+void ScatterResidual2D<EvalT,Traits>::
+evaluateFields (typename Traits::EvalData d)
 {
-  auto nodeID = workset.wsElNodeEqID;
-  const bool loadResid = Teuchos::nonnull(workset.f);
-  Teuchos::Array<LO> lcols;
-  const unsigned int neq = nodeID.extent(2);
-  unsigned int numDim = 0;
-  if (this->tensorRank==2) {
-    numDim = this->valTensor.extent(2);
-  }
-  double diagonal_value = 1;
+  // Do this only once
+  if (m_bot_dofs_offsets.size()==0) {
+    const auto& dof_mgr = d.disc->getNewDOFManager();
 
-  if (workset.sideSets == Teuchos::null) {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets not properly specified on the mesh" << std::endl);
-  }
+    this->gather_fields_offsets (dof_mgr);
 
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find(meshPart);
+    const int neq = dof_mgr->getNumFields();
 
-  auto Jac = workset.Jac;
-  Teuchos::ArrayRCP<ST> f_data;
-  if (loadResid) {
-    f_data = Albany::getNonconstLocalData(workset.f);
-  }
+    m_bot_dofs_offsets.resize("",numSideNodes,neq);
+    m_top_dofs_offsets.resize("",numSideNodes,neq);
 
-  if (it != ssList.end()) {
-    const std::vector<Albany::SideStruct>& sideSet = it->second;
-
-    const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-    auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-    unsigned int numLayers = layeredMeshNumbering.numLayers;
-    lcols.reserve(neq*this->numNodes*(numLayers+1));
-
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-
-    // Loop over the sides that form the boundary condition
-    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
-      // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_elem_pos;
-      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      unsigned int numSideNodes = side.topology->node_count;
-
-      lcols.resize(neq*numSideNodes*(numLayers+1));
-      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
-
-      GO base_id;
-      for (unsigned int i = 0; i < numSideNodes; ++i) {
-        std::size_t node = side.node[i];
-        base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-        for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
-          GO gnode = layeredMeshNumbering.getId(base_id, il_col);
-          for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-            GO gcol  = solDOFManager.getGlobalDOF(gnode, eq_col);
-            lcols[il_col*neq*numSideNodes + neq*i + eq_col] = solIndexer->getLocalElement(gcol);
-          }
-          if(il_col != fieldLevel) {
-            const GO grow = solDOFManager.getGlobalDOF(gnode, this->offset); //insert diagonal values
-            const LO lrow = solIndexer->getLocalElement(grow);
-            Albany::setLocalRowValues(Jac,lrow,Teuchos::arrayView(&lrow,1), Teuchos::arrayView(&diagonal_value,1));
-          }
-        }
-      }
-
-      for (unsigned int i = 0; i < numSideNodes; ++i) {
-        std::size_t node = side.node[i];
-        base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-        for (std::size_t eq = 0; eq < numFields; eq++) {
-          typename PHAL::Ref<ScalarT const>::type
-          valptr = (this->tensorRank == 0 ? this->val[eq](elem_LID,node) :
-                    this->tensorRank == 1 ? this->valVec(elem_LID,node,eq) :
-                    this->valTensor(elem_LID,node, eq/numDim, eq%numDim));
-          // GO gnode = layeredMeshNumbering.getId(base_id, fieldLevel);
-          // GO grow  = solDOFManager.getGlobalDOF(gnode,this->offset + eq);
-          // const LO lrow = solIndexer->getLocalElement(grow);
-          const LO lrow = nodeID(elem_LID,node,this->offset + eq);
-          if (loadResid) {
-            f_data[lrow] += valptr.val();
-          }
-          if (valptr.hasFastAccess()) {
-            Albany::addToLocalRowValues(Jac,lrow,lcols(), Teuchos::arrayView(&(valptr.fastAccessDx(0)),lcols.size()));
-          } // has fast access
-        }
+    for (int eq=0; eq<neq; ++eq) {
+      auto bot_offsets = dof_mgr->getGIDFieldOffsets_subcell (eq,sideDim,m_bot_side_pos);
+      auto top_offsets = dof_mgr->getGIDFieldOffsets_subcell (eq,sideDim,m_top_side_pos);
+      for (int i=0; i<numSideNodes; ++i) {
+        m_bot_dofs_offsets.host()(i,eq) = bot_offsets[i];
+        m_top_dofs_offsets.host()(i,eq) = top_offsets[i];
       }
     }
+
+    m_bot_dofs_offsets.sync_to_dev();
+    m_top_dofs_offsets.sync_to_dev();
   }
+
+  evaluateFieldsImpl(d);
 }
 
-// **********************************************************************
-// Specialization: Tangent
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::Tangent, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::Tangent,Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-// **********************************************************************
-// Specialization: DistParamDeriv
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-// **********************************************************************
-// Specialization: HessianVec
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidual2D<PHAL::AlbanyTraits::HessianVec, Traits>::
-ScatterResidual2D(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-// **********************************************************************
-// Specialization: Residual
-// **********************************************************************
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Residual,Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-// **********************************************************************
-// Specialization: Jacobian
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Jacobian, Traits>::
+template<typename EvalT, typename Traits>
+ScatterResidualWithExtrudedField<EvalT, Traits>::
 ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl),
-   numFields(ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
+ : Base(p,dl)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (this->numFields!=1, std::logic_error,
+      "Error! ScatterResidual2D only supports scalar fields.\n");
+
+  auto cell_topo  = p.get<Teuchos::RCP<const shards::CellTopology>>("Cell Topology");
+  sideDim = cell_topo->getDimension()-1;
+
+  // Ensure we have ONE cell per layer.
+  const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  TEUCHOS_TEST_FOR_EXCEPTION ( *cell_topo==topo_hexa || *cell_topo==topo_wedge, std::runtime_error,
+      "ScatterResidualWithExtrudedField is only for extruded meshes with 1 element per layer.\n");
+
+  // Shards has both Hexa and Wedge with bot and top in the last two side positions
+  m_top_side_pos = cell_topo->getSideCount()-1;
+  m_bot_side_pos = m_top_side_pos - 1;
+
+
   if (p.isType<int>("Offset 2D Field")) {
     offset2DField = p.get<int>("Offset 2D Field");
   } else {
@@ -206,141 +110,260 @@ ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
   fieldLevel = p.get<int>("Field Level");
 }
 
-// **********************************************************************
-template<typename Traits>
-void ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Jacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+template<typename EvalT, typename Traits>
+void ScatterResidualWithExtrudedField<EvalT,Traits>::
+evaluateFields (typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
-  const bool loadResid = Teuchos::nonnull(workset.f);
-  const unsigned int neq = nodeID.extent(2);
-  unsigned int nunk = this->numNodes*(neq-1);
-  Teuchos::Array<LO> lcols, index;
-  lcols.resize(nunk), index.resize(nunk);
-  unsigned int numDim = 0;
-  if (this->tensorRank==2) {
-    numDim = this->valTensor.extent(2);
+  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+
+  // Build a layer numbering for cell LIDs (just once)
+  if (m_cell_layers_data.is_null()) {
+    const auto& dof_mgr = workset.disc->getNewDOFManager();
+    const auto node_layers_data = workset.disc->getLayeredMeshNumbering();
+
+    ALBANY_EXPECT (fieldLevel>=0 && fieldLevel<=node_layers_data->numLayers,
+        "Field level out of bounds.\n"
+        "  - field level: " + std::to_string(fieldLevel) + "\n"
+        "  - num layers : " + std::to_string(node_layers_data->numLayers) + "\n");
+
+    using LMMI = Albany::LayeredMeshNumbering<int>;
+    constexpr auto COL = Albany::LayeredMeshOrdering::COLUMN;
+
+    const auto num_elems = dof_mgr->cell_indexer()->getNumLocalElements();
+    const auto numLayers = node_layers_data->numLayers;
+    const auto ordering  = node_layers_data->ordering;
+    const auto stride = ordering==COL ? numLayers : num_elems;
+    m_cell_layers_data = Teuchos::rcp(new LMMI(stride,ordering,node_layers_data->layers_ratio));
+    m_field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
   }
 
+  // Do this only once
+  if (m_bot_dofs_offsets.size()==0) {
+    const auto& dof_mgr      = workset.disc->getNewDOFManager();
+    const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+
+    m_bot_dofs_offsets.resize("",numSideNodes);
+    m_top_dofs_offsets.resize("",numSideNodes);
+    m_bot_nodes_offsets.resize("",numSideNodes);
+    m_top_nodes_offsets.resize("",numSideNodes);
+
+    auto bot_offsets = dof_mgr->getGIDFieldOffsets_subcell (offset2DField,sideDim,m_bot_side_pos);
+    auto top_offsets = dof_mgr->getGIDFieldOffsets_subcell (offset2DField,sideDim,m_top_side_pos);
+    auto bot_node_offsets = node_dof_mgr->getGIDFieldOffsets_subcell (0,sideDim,m_bot_side_pos);
+    auto top_node_offsets = node_dof_mgr->getGIDFieldOffsets_subcell (0,sideDim,m_top_side_pos);
+    for (int i=0; i<numSideNodes; ++i) {
+      m_bot_dofs_offsets.host()(i) = bot_offsets[i];
+      m_top_dofs_offsets.host()(i) = top_offsets[i];
+      m_bot_nodes_offsets.host()(i) = bot_offsets[i];
+      m_top_nodes_offsets.host()(i) = top_offsets[i];
+    }
+    m_bot_dofs_offsets.sync_to_dev();
+    m_top_dofs_offsets.sync_to_dev();
+    m_bot_nodes_offsets.sync_to_dev();
+    m_top_nodes_offsets.sync_to_dev();
+  }
+
+  evaluateFieldsImpl(workset);
+}
+
+// **********************************************************************
+// Specializations: Jacobian
+// **********************************************************************
+
+template<>
+void ScatterResidual2D<AlbanyTraits::Jacobian, AlbanyTraits>::
+evaluateFieldsImpl(typename AlbanyTraits::EvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
+      "Side sets not properly specified on the mesh.\n");
+
+  // Check for early return
+  if (workset.sideSets->count(meshPart)==0) {
+    return;
+  }
+
+  constexpr auto ALL = Kokkos::ALL();
+  constexpr auto COL = Albany::LayeredMeshOrdering::COLUMN;
+
+  const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto dof_mgr      = workset.disc->getNewDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+
+  // Build local id layer numbering for cells.
+  // IMPORTANT: this works *because* of how we add elements in the ConnManager
+  const auto& mesh = workset.disc->getMeshStruct();
+  const auto& cell_layers_gid = mesh->layered_mesh_numbering_cells;
+  const int numLayers = cell_layers_gid->numLayers;
+  const auto ordering = cell_layers_gid->ordering;
+  const auto num_elems = dof_mgr->cell_indexer()->getNumLocalElements();
+  const auto stride = ordering==COL ? numLayers : num_elems;
+  Albany::LayeredMeshNumbering<int> cell_layers_lid(stride,ordering,Teuchos::null);
+
+  const bool scatter_f = Teuchos::nonnull(workset.f);
+  auto f_data = scatter_f ? Albany::getNonconstLocalData(workset.f) : Teuchos::null;
   auto Jac = workset.Jac;
-  Teuchos::ArrayRCP<ST> f_data;
-  if (loadResid) {
-    f_data = Albany::getNonconstLocalData(workset.f);
-  }
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    // Local Unks: Loop over nodes in element, Loop over equations per node
-    for (unsigned int node_col(0), i(0); node_col<this->numNodes; node_col++){
-      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-        if(eq_col != offset2DField) {
-          lcols[i] = nodeID(cell,node_col,eq_col);
-          index[i++] = neq * node_col + eq_col;
+
+  const int  neq = dof_mgr->getNumFields();
+  Teuchos::Array<LO> lcols;
+  lcols.reserve(neq*numNodes*(numLayers+1));
+  double one = 1;
+  auto diagonal_value = arrayView(&one,1);
+  const auto& sideSet = workset.sideSets->at(meshPart);
+  for (const auto& side : sideSet) {
+    const int pos  = side.side_pos;
+    const int cell = side.elem_LID;
+
+    const int basal_elem_LID = elem_lids(cell);
+
+    // Gather Jac col indices, and set Jac=1 outside of the level where the field is defined
+    lcols.resize(neq*numSideNodes*(numLayers+1));
+    for (int ilev=0; ilev<=numLayers; ++ilev) {
+      // Get correct cell layer and correct dofs offsets
+      const int ilayer = ilev==numLayers ? ilev-1 : ilev;
+      const auto dofs_offsets = ilev==numLayers ? m_top_dofs_offsets.host() : m_bot_dofs_offsets.host();
+
+      const int elem_LID = cell_layers_lid.getId(basal_elem_LID,ilayer);
+
+      const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+
+      for (int inode=0; inode<numSideNodes; ++inode) {
+        for (int eq=0; eq<neq; ++eq) {
+          const int lrow = dof_lids(dofs_offsets(inode,eq));
+
+          // add to lcols
+          lcols[ilev*neq*numSideNodes*neq*inode + eq] = lrow;
+        }
+
+        // Diagonalize Jac outisde of the 2d field location.
+        if (ilev!=fieldLevel) {
+          const LO lrow = dof_lids(dofs_offsets(inode,this->offset));
+          Albany::setLocalRowValues(Jac, lrow, arrayView(&lrow,1), diagonal_value);
         }
       }
     }
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      for (std::size_t eq = 0; eq < numFields; eq++) {
-        if(this->offset + eq != offset2DField) {
-          typename PHAL::Ref<ScalarT const>::type
-            valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
-                      this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                      this->valTensor(cell,node, eq/numDim, eq%numDim));
-          const LO lrow = nodeID(cell,node,this->offset + eq);
-          if (loadResid) {
-            f_data[lrow] += valptr.val();
-          }
-          // Check derivative array is nonzero
-          if (valptr.hasFastAccess()) {
-            // Sum Jacobian entries all at once
-            for (unsigned int lunk = 0; lunk < nunk; lunk++) {
-              Albany::addToLocalRowValues(Jac,lrow,
-                                          Teuchos::arrayView(&lcols[lunk],1),
-                                          Teuchos::arrayView(&(valptr.fastAccessDx(index[lunk])), 1));
-            }
-          } // has fast access
-        }
+
+    // Cell layer where we'll do the scatter of the 2d residual
+    int layer = fieldLevel==numLayers ? numLayers-1 : 0;
+    auto offsets_2d_field = fieldLevel==numLayers ? m_top_dofs_offsets.host() : m_bot_dofs_offsets.host();
+    const int elem_LID = cell_layers_lid.getId(basal_elem_LID,layer);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+
+    // Recall: we scatter a single scalar residual, so no loop on [0,numFields) here.
+    for (int i=0; i<numSideNodes; ++i) {
+      const int lrow = dof_lids(offsets_2d_field(i,this->offset));
+      auto res = this->get_resid(cell,i,0);
+      if (scatter_f) {
+        f_data[lrow] += res.val();
       }
+      if (res.hasFastAccess()) {
+        Albany::addToLocalRowValues(Jac,lrow,lcols(), arrayView(&(res.fastAccessDx(0)),lcols.size()));
+      } // has fast access
     }
   }
+}
 
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-  auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  lcols.resize(this->numNodes);
+// **********************************************************************
+template<>
+void ScatterResidualWithExtrudedField<AlbanyTraits::Jacobian, AlbanyTraits>::
+evaluateFieldsImpl(typename AlbanyTraits::EvalData workset)
+{
+  constexpr auto ALL = Kokkos::ALL();
+  constexpr auto COL = Albany::LayeredMeshOrdering::COLUMN;
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto& dof_mgr       = workset.disc->getNewDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
-  auto indexer = Albany::createGlobalLocalIndexer(workset.disc->getOverlapNodeVectorSpace());
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    Teuchos::ArrayRCP<LO> basalIds(this->numNodes);
-    GO base_id;
-    for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-      base_id = layeredMeshNumbering.getColumnId(elNodeID[node_col]);
-      GO gnode = layeredMeshNumbering.getId(base_id, fieldLevel);
-      GO gcol  = solDOFManager.getGlobalDOF(gnode, offset2DField);
-      lcols[node_col] = solIndexer->getLocalElement(gcol);
-    }
+  const int neq = dof_mgr->getNumFields();
+  const int nunk = this->numNodes*(neq-1);
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      for (std::size_t eq = 0; eq < numFields; eq++) {
+  Teuchos::Array<LO> lcols_nunk, lcols_nodes, index;
+  lcols_nunk.resize(nunk), index.resize(nunk), lcols_nodes.resize(this->numNodes);
+
+  const bool scatter_f = Teuchos::nonnull(workset.f);
+  auto f_data = scatter_f? Albany::getNonconstLocalData(workset.f) : Teuchos::null;
+  auto Jac = workset.Jac;
+
+  const auto& bot_offsets = m_bot_dofs_offsets.host();
+  const auto& top_offsets = m_top_dofs_offsets.host();
+  const auto& bot_nodes   = m_bot_nodes_offsets.host();
+  const auto& top_nodes   = m_top_nodes_offsets.host();
+
+  const auto sol_offsets   = this->m_fields_offsets.host();
+  const auto m_elem_offsets_field2d = dof_mgr->getGIDFieldOffsets(offset2DField);
+  for (size_t cell=0; cell<workset.numCells; ++cell ) {
+    // 1. All contributions except the extruded field
+    const int elem_LID = elem_lids(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+
+    // Local Unks: gather LID of all other dofs (not the extruded field)
+    for (int node=0, i=0; node<this->numNodes; ++node){
+      for (int eq=0; eq<neq; ++eq) {
         if(eq != offset2DField) {
-          const LO lrow = nodeID(cell,node,eq);
-          typename PHAL::Ref<ScalarT const>::type valptr = this->valVec(cell,node,eq);
+          lcols_nunk[i] = dof_lids(sol_offsets(node,eq));
+          index[i++] = sol_offsets(node,eq);
+        }
+      }
+    }
 
-          if (loadResid) {
-            f_data[lrow] += valptr.val();
+    for (int node=0; node<this->numNodes; ++node) {
+      for (int eq=0; eq<this->numFields; ++eq) {
+        if(this->offset + eq != offset2DField) {
+          auto res = this->get_resid(cell,node,eq);
+
+          // Safety check: FAD derivs should be inited by now
+          assert(res.hasFastAccess());
+
+          const int lrow = dof_lids(sol_offsets(node,this->offset + eq));
+          if (scatter_f) {
+            f_data[lrow] += res.val();
           }
-          if (valptr.hasFastAccess()) { // has fast access
-              // Sum Jacobian entries all at once
-            for (unsigned int i = 0; i<this->numNodes; ++i) {
-              Albany::addToLocalRowValues(Jac,lrow,
-                                              Teuchos::arrayView(&lcols[i],1),
-                                              Teuchos::arrayView(&(valptr.fastAccessDx(neq*i + offset2DField)), 1));
-            }
+
+          // Need to do derivs one-by-one, since we have a 2-level indirection
+          for (int lunk = 0; lunk < nunk; lunk++) {
+            Albany::addToLocalRowValues(Jac,lrow,
+                                        arrayView(&lcols_nunk[lunk],1),
+                                        arrayView(&(res.fastAccessDx(index[lunk])), 1));
+          }
+        }
+      }
+    }
+
+    // 2. Contribution of the extruded field
+
+    // Get the local ID of the cell that contains the level where the field is,
+    // and the lids of the 2d field in that cell
+    const int basal_elem_LID = m_cell_layers_data->getColumnId(elem_LID);
+    const int field_elem_LID = m_cell_layers_data->getId(basal_elem_LID,m_field_layer);
+    const auto field_elem_dof_lids = Kokkos::subview(elem_dof_lids,field_elem_LID,ALL);
+    for (int node=0; node<numSideNodes; ++node) {
+      lcols_nodes[top_nodes[node]] = field_elem_dof_lids(top_offsets[node]);
+      lcols_nodes[bot_nodes[node]] = field_elem_dof_lids(bot_offsets[node]);
+    }
+
+    for (int node=0; node<this->numNodes; ++node) {
+      for (int eq=0; eq<this->numFields; ++eq) {
+        if(eq != offset2DField) {
+          const LO lrow = dof_lids(sol_offsets(node,eq));
+          auto res = this->get_resid(cell,node,eq);
+
+          // Safety check: FAD derivs should be inited by now
+          assert(res.hasFastAccess());
+
+          if (scatter_f) {
+            f_data[lrow] += res.val();
+          }
+
+          // Need to do derive one-by-one, since they are strided
+          for (int i=0; i<this->numNodes; ++i) {
+            Albany::addToLocalRowValues(Jac,lrow,
+                                        arrayView(&lcols_nodes[i],1),
+                                        arrayView(&(res.fastAccessDx(sol_offsets(i,offset2DField))), 1));
           }
         }
       }
     }
   }
-}
-
-// **********************************************************************
-// Specialization: Tangent
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Tangent, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::Tangent,Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-// **********************************************************************
-// Specialization: DistParamDeriv
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-// **********************************************************************
-// Specialization: HessianVec
-// **********************************************************************
-
-template<typename Traits>
-ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::HessianVec, Traits>::
-ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl)
- : ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>(p,dl)
-{
-  // Nothing to do here
 }
 
 } // namespace PHAL

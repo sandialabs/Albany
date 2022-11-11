@@ -66,6 +66,12 @@ protected:
 
   typedef typename EvalT::ScalarT ScalarT;
   bool stand_alone;
+
+  // Note: these two fields have the same Field Name, so they alias each other.
+  //       The former is used to fill the Thyra response vectors, while the
+  //       latter is computed by derived classes. We really only need the
+  //       former in case the response field is provided externally. In practice,
+  //       all derived classes *compute* the response field.
   PHX::MDField<const ScalarT> global_response;
   PHX::MDField<ScalarT> global_response_eval;
   Teuchos::RCP<PHX::FieldTag> scatter_operation;

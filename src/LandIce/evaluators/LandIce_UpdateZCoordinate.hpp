@@ -51,7 +51,7 @@ private:
 
   bool haveThickness;
   double minH, rho_i, rho_w;
-  unsigned int numDims, numNodes;
+  int numDims, numNodes;
 };
 
 template<typename EvalT, typename Traits>
@@ -87,7 +87,7 @@ private:
   PHX::MDField<ScalarOutT, Cell, Node>       bedTopoOut;
 
   double minH, rho_i, rho_w;
-  unsigned int numDims, numNodes;
+  int numDims, numNodes;
 };
 
 
@@ -127,7 +127,7 @@ private:
 
   bool isTopSurfParam, isBedTopoParam;
   double minH, rho_i, rho_w;
-  unsigned int numDims, numNodes;
+  int numDims, numNodes;
 };
 
 } // namespace LandIce

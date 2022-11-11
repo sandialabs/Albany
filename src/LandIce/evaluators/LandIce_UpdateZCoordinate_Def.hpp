@@ -74,27 +74,32 @@ template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingTop<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
-
   TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
     std::runtime_error, "Error! No layered numbering in the mesh.\n");
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  using ref_t = typename PHAL::Ref<MeshScalarT>::type;
 
-  const int numLayers = layeredMeshNumbering.numLayers;
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+  const auto& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const int   numLayers    = layeredMeshNumbering.numLayers;
+  const auto& layers_ratio = layeredMeshNumbering.layers_ratio;
+
+  // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i) {
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
   }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
+  std::vector<GO> node_gids;
+  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+    const int elem_LID = elem_lids(cell);
+    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+
+    for (int node=0; node<numNodes; ++node) {
+      const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
       MeshScalarT h;
       if(haveThickness) {
         h = std::max(H(cell,node), MeshScalarT(minH));
@@ -105,11 +110,11 @@ evaluateFields(typename Traits::EvalData workset)
       auto floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
 
       MeshScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
-      typename PHAL::Ref<MeshScalarT>::type vals = topSurface(cell,node);
+      ref_t vals = topSurface(cell,node);
       vals = lowSurf+h;
 
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
-        typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
+        ref_t val = coordVecOut(cell,node,icomp);
         val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*h)
                          : coordVecIn(cell,node,icomp);
       }
@@ -168,7 +173,7 @@ template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingBed<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
+  using ref_t = typename PHAL::Ref<ScalarOutT>::type;
 
   TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
     std::runtime_error, "Error! No layered numbering in the mesh.\n");
@@ -183,17 +188,20 @@ evaluateFields(typename Traits::EvalData workset)
   for(int i=1; i<numLayers; ++i)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    // const int neq = nodeID.extent(2); 
-    // const std::size_t num_dof = neq * this->numNodes;
+  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
+  std::vector<GO> node_gids;
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const int elem_LID = elem_lids(cell);
+    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+
+    for (int node=0; node<numNodes; ++node) {
+      const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
       ScalarOutT h = H(cell,node);
       ScalarOutT top = topSurface(cell,node);
-      typename PHAL::Ref<ScalarOutT>::type vals = topSurfaceOut(cell,node);
-      typename PHAL::Ref<ScalarOutT>::type valb = bedTopoOut(cell,node);
+      ref_t vals = topSurfaceOut(cell,node);
+      ref_t valb = bedTopoOut(cell,node);
       ScalarOutT bed = bedTopo(cell,node);
 
       //floating when the floating condition is met with the old bed
@@ -205,8 +213,8 @@ evaluateFields(typename Traits::EvalData workset)
       bed = floating ? std::min(bed, ScalarOutT(-rho_i/rho_w*h)) : top - h;
       valb = bed;
 
-      for(std::size_t icomp=0; icomp< numDims; icomp++) {
-        typename PHAL::Ref<ScalarOutT>::type val = coordVecOut(cell,node,icomp);
+      for(int icomp=0; icomp<numDims; ++icomp) {
+        ref_t val = coordVecOut(cell,node,icomp);
         val = (icomp==2) ?
             ScalarOutT(top - (1.0- sigmaLevel[ ilevel])*h)
            : ScalarOutT(coordVecIn(cell,node,icomp));
@@ -274,7 +282,7 @@ template<typename EvalT, typename Traits>
 void UpdateZCoordinateGivenTopAndBedSurfaces<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
+  using ref_t = typename PHAL::Ref<MeshScalarT>::type;
 
   TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
     std::runtime_error, "Error! No layered numbering in the mesh.\n");
@@ -290,11 +298,16 @@ evaluateFields(typename Traits::EvalData workset)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
   }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const GO ilevel = layeredMeshNumbering.getLayerId(elNodeID[node]);
+  std::vector<GO> node_gids;
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const int elem_LID = elem_lids(cell);
+    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+
+    for (int node=0; node<numNodes; ++node) {
+      const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
 
       if(isTopSurfParam) {
         if(!isBedTopoParam) {
@@ -314,8 +327,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       H(cell,node) = h-lowSurf;
 
-      for(std::size_t icomp=0; icomp< numDims; icomp++) {
-        typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
+      for(int icomp=0; icomp<numDims; ++icomp) {
+        ref_t val = coordVecOut(cell,node,icomp);
         val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*H(cell,node))
                          : coordVecIn(cell,node,icomp);
       }

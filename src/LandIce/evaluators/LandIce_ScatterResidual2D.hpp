@@ -8,160 +8,97 @@
 #define LANDICE_SCATTER_RESIDUAL2D_HPP
 
 #include "PHAL_ScatterResidual.hpp"
-#include "PHAL_AlbanyTraits.hpp"
 
-namespace PHAL {
-/** \brief Scatters result from the residual fields into the
-    global (epetra) data structures.  This includes the
-    post-processing of the AD data type for all evaluation
-    types besides Residual.
-
-*/
-// **************************************************************
-// Base Class for code that is independent of evaluation type
-// **************************************************************
-
-
-
-template<typename EvalT, typename Traits> class ScatterResidual2D;
-template<typename EvalT, typename Traits> class ScatterResidualWithExtrudedField;
-
-// **************************************************************
-// **************************************************************
-// * Specializations
-// **************************************************************
-// **************************************************************
-
-
-// **************************************************************
-// Residual
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::Residual,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::Jacobian,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  const std::size_t numFields;
-  unsigned int fieldLevel;
-  std::string meshPart;
-  Teuchos::RCP<const CellTopologyData> cell_topo;
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::Tangent,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-//  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Distributed parameter derivative
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-//  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Distributed parameter derivative
-// **************************************************************
-template<typename Traits>
-class ScatterResidual2D<PHAL::AlbanyTraits::HessianVec,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>  {
-public:
-  ScatterResidual2D(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-//  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Residual
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Residual,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-};
-
-// **************************************************************
-// Jacobian
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Jacobian,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d);
-private:
-  const std::size_t numFields;
-  unsigned int offset2DField;
-  unsigned int fieldLevel;
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-};
-
-// **************************************************************
-// Tangent
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::Tangent,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-//  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// Distributed parameter derivative
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-//  void evaluateFields(typename Traits::EvalData d);
-};
-
-// **************************************************************
-// HessianVec
-// **************************************************************
-template<typename Traits>
-class ScatterResidualWithExtrudedField<PHAL::AlbanyTraits::HessianVec,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>  {
-public:
-  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl);
-//  void evaluateFields(typename Traits::EvalData d);
-};
-
+// Fwd decl
+namespace Albany {
+template<typename T>
+struct LayeredMeshNumbering; 
 }
 
-#endif
+namespace PHAL {
+
+// Scatter a cell-based residual field of a 2D equation defined
+// at an arbitrary level of an extruded mesh. Only Jacobian does
+// something different from base class (full specialization of the
+// evaluateField method is in the _Def.hpp file)
+template<typename EvalT, typename Traits>
+class ScatterResidual2D : public ScatterResidual<EvalT, Traits>
+{
+public:
+  ScatterResidual2D (const Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields (typename Traits::EvalData d);
+
+protected:
+  void evaluateFieldsImpl (typename Traits::EvalData d) {
+    Base::evaluateFields(d);
+  }
+
+  void compute_offsets (const Albany::DOFManager& dof_mgr, const int bot_pos);
+
+  using Base = ScatterResidual<EvalT,Traits>;
+  using ScalarT = typename Base::ScalarT;
+
+  // This stuff is really needed only by Jacobian, since the other
+  // eval types rely on base class implementation
+  using Base::numFields;
+  using Base::numNodes;
+
+  int m_bot_side_pos;
+  int m_top_side_pos;
+  int numSideNodes;
+  int sideDim;
+  int fieldLevel; // The node-layer where the 2d field is defined
+
+  std::string meshPart;
+
+  Albany::DualView<int**> m_bot_dofs_offsets;
+  Albany::DualView<int**> m_top_dofs_offsets;
+};
+
+// Scatter a cell-based residual field of a 3D equation when
+// one of the solution dofs is defined on an arbitrary level
+// of an extruded mesh. Only Jacobian does something different
+// from base class (full specialization of the evaluateField
+// method is in the _Def.hpp file)
+template<typename EvalT, typename Traits>
+class ScatterResidualWithExtrudedField : public ScatterResidual<EvalT, Traits>
+{
+public:
+  ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
+                                   const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields (typename Traits::EvalData d);
+
+protected:
+  void evaluateFieldsImpl (typename Traits::EvalData d) {
+    Base::evaluateFields(d);
+  }
+
+  // This stuff is really needed only by Jacobian, since the other
+  // eval types rely on base class implementation
+  using Base = ScatterResidual<EvalT,Traits>;
+  using ScalarT = typename Base::ScalarT;
+
+  using Base::numFields;
+
+  Teuchos::RCP<Albany::LayeredMeshNumbering<int>> m_cell_layers_data;
+
+  Albany::DualView<int*> m_bot_dofs_offsets;
+  Albany::DualView<int*> m_top_dofs_offsets;
+  Albany::DualView<int*> m_bot_nodes_offsets;
+  Albany::DualView<int*> m_top_nodes_offsets;
+
+  int m_bot_side_pos;
+  int m_top_side_pos;
+  int sideDim;
+  int numSideNodes;
+  int offset2DField;
+  int fieldLevel; // Node level where field is defined
+  int m_field_layer; // Cell layer containing the field level
+};
+
+} // namespace PHAL
+
+#endif // LANDICE_SCATTER_RESIDUAL2D_HPP

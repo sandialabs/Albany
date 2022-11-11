@@ -48,7 +48,8 @@ template<typename EvalT, typename Traits>
 void ScatterScalarNodalParameter<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData /* workset */)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "PHAL::ScatterScalarNodalParameter is supposed to be used only for Residual evaluation Type.");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+    "PHAL::ScatterScalarNodalParameter is supposed to be used only for EvalT=Residual\n");
 }
 
 // **********************************************************************
@@ -76,31 +77,31 @@ ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
   this->addEvaluatedField(*nodal_field_tag);
 }
 
-
 // **********************************************************************
 template<typename Traits>
 void ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+  // Check for early return
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
+    return;
 
-  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
-  Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
-  Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
+  const auto param = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getNonconstLocalData(param->vector());
 
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
-  auto param_overlap_vs = workset.distParamLib->get(this->param_name)->overlap_vector_space();
-  auto param_vs = pvec->range();
+  const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto p_dof_mgr    = workset.disc->getNewDOFManager(this->param_name);
+  const auto p_indexer    = p_dof_mgr->indexer();
 
-  auto param_indexer = Albany::createGlobalLocalIndexer(param_vs);
-  auto param_ov_indexer = Albany::createGlobalLocalIndexer(param_overlap_vs);
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lid_overlap = wsElDofs((int)cell,(int)node,0);
-      const GO gid_overlap = param_ov_indexer->getGlobalElement(lid_overlap);
-      const LO lid = param_indexer->getLocalElement(gid_overlap);
+  std::vector<GO> node_gids;
+  for (size_t cell=0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    for (int node=0; node<this->numNodes; ++node) {
+      const LO lid = p_indexer->getLocalElement(node_gids[node]);
       if(lid >= 0) {
-       pvec_view[lid] = (this->val)(cell,node);
+       p_data[lid] = this->val(cell,node);
       }
     }
   }
@@ -125,26 +126,29 @@ template<typename Traits>
 void ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+  // Check for early return
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
+    return;
 
-  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
-  Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
-  Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
+  const auto param = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getNonconstLocalData(param->vector());
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const auto& layers_data   = *workset.disc->getLayeredMeshNumbering();
+  const auto  elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto  node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto  p_dof_mgr    = workset.disc->getNewDOFManager(this->param_name);
+  const auto  p_indexer    = p_dof_mgr->indexer();
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  auto param_vs = pvec->range();
-
-  auto param_indexer = Albany::createGlobalLocalIndexer(param_vs);
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const GO ilayer = layeredMeshNumbering.getLayerId(elNodeID[node]);
-      if(ilayer==fieldLevel) {
-        const LO lid = param_indexer->getLocalElement(elNodeID[node]);
-        if(lid>=0) {
-          pvec_view[ lid ] = (this->val)(cell,node);
+  std::vector<GO> node_gids;
+  for (size_t cell=0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    for (int node=0; node<this->numNodes; ++node) {
+      const GO ilayer = layers_data.getLayerId(node_gids[node]);
+      if (ilayer==fieldLevel) {
+        const LO lid = p_indexer->getLocalElement(node_gids[node]);
+        if (lid>=0) {
+          p_data[lid] = this->val(cell,node);
         }
       }
     }

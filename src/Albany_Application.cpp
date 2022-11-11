@@ -3196,14 +3196,10 @@ void
 Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
     const std::string& evalName)
 {
-  auto const& wsElNodeEqID       = disc->getWsElNodeEqID();
-  auto const& wsElNodeID         = disc->getWsElNodeID();
   auto const& coords             = disc->getCoords();
   auto const& wsEBNames          = disc->getWsEBNames();
 
-  workset.numCells             = wsElNodeEqID[ws].extent(0);
-  workset.wsElNodeEqID         = wsElNodeEqID[ws];
-  workset.wsElNodeID           = wsElNodeID[ws];
+  workset.numCells             = disc->getWorksetsSizes()[ws];
   workset.wsCoords             = coords[ws];
   workset.EBName               = wsEBNames[ws];
   workset.wsIndex              = ws;

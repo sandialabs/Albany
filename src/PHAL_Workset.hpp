@@ -27,7 +27,6 @@ namespace Albany {
 class AbstractDiscretization;
 class CombineAndScatterManager;
 class DistributedParameterLibrary;
-
 }  // namespace Albany
 
 namespace PHAL {
@@ -66,11 +65,6 @@ struct HessianWorkset
 
 struct Workset
 {
-  Workset()
-      : transientTerms(false), accelerationTerms(false), ignore_residual(false)
-  {
-  }
-
   unsigned int numCells;
   unsigned int wsIndex;
   unsigned int numEqs;
@@ -135,8 +129,6 @@ struct Workset
   bool                                              transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>> local_Vp;
 
-  Albany::WorksetConn                           wsElNodeEqID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>      wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>> wsCoords;
   std::string                                   EBName;
 
@@ -148,15 +140,15 @@ struct Workset
 
   Albany::StateArray* stateArrayPtr;
 
-  bool transientTerms;
-  bool accelerationTerms;
+  bool transientTerms     = false;
+  bool accelerationTerms  = false;
 
   // Flag indicating whether to ignore residual calculations in the
   // Jacobian calculation.  This only works for some problems where the
   // the calculation of the Jacobian doesn't require calculation of the
   // residual (such as linear problems), but if it does work it can
   // significantly reduce Jacobian calculation cost.
-  bool ignore_residual;
+  bool ignore_residual    = false;
 
   // New field manager response stuff
   Teuchos::RCP<const Teuchos_Comm> comm;

@@ -21,15 +21,17 @@
 
 #include "Kokkos_Vector.hpp"
 
+namespace Albany {
+  class DOFManager;
+}
+
 namespace PHAL {
-/** \brief Gathers solution values from the Newton solution vector into
-    the nodal fields of the field manager
+/** \brief Gathers solution values from the Thyra vector into the PHX Field
 
-    Currently makes an assumption that the stride is constant for dofs
-    and that the nmber of dofs is equal to the size of the solution
-    names vector.
-
+    Currently makes an assumption that dofs are contiguous, possibly with
+    an initial offset.
 */
+
 // **************************************************************
 // Base Class with Generic Implementations: Specializations for
 // Automatic Differentiation Below
@@ -53,16 +55,21 @@ protected:
 
   using ref_t = typename PHAL::Ref<typename EvalT::ScalarT>::type;
 
+  // These functions are used to select the correct field based on rank.
+  // They are called from *inside* for loops, but the switch statement
+  // is constant for all iterations, so the compiler branch predictor
+  // can easily guess the correct branch, making the conditional jump
+  // cheap.
   KOKKOS_INLINE_FUNCTION
   ref_t get_ref (const int cell, const int node, const int eq) const {
     switch (tensorRank) {
-      case 2:
-        return valTensor(cell,node,eq/numDim,eq%numDim);
-      case 1:
-        return valVec(cell,node,eq);
       case 0:
         KOKKOS_IF_ON_HOST  (return val[eq](cell,node);)
         KOKKOS_IF_ON_DEVICE(return d_val[eq](cell,node);)
+      case 1:
+        return valVec(cell,node,eq);
+      case 2:
+        return valTensor(cell,node,eq/numDim,eq%numDim);
     }
     Kokkos::abort("Unsupported tensor rank");
   }
@@ -70,13 +77,13 @@ protected:
   KOKKOS_INLINE_FUNCTION
   ref_t get_ref_dot (const int cell, const int node, const int eq) const {
     switch (tensorRank) {
-      case 2:
-        return valTensor_dot(cell,node,eq/numDim,eq%numDim);
-      case 1:
-        return valVec_dot(cell,node,eq);
       case 0:
         KOKKOS_IF_ON_HOST  (return val_dot[eq](cell,node);)
         KOKKOS_IF_ON_DEVICE(return d_val_dot[eq](cell,node);)
+      case 1:
+        return valVec_dot(cell,node,eq);
+      case 2:
+        return valTensor_dot(cell,node,eq/numDim,eq%numDim);
     }
     Kokkos::abort("Unsupported tensor rank");
   }
@@ -84,21 +91,30 @@ protected:
   KOKKOS_INLINE_FUNCTION
   ref_t get_ref_dotdot (const int cell, const int node, const int eq) const {
     switch (tensorRank) {
-      case 2:
-        return valTensor_dotdot(cell,node,eq/numDim,eq%numDim);
-      case 1:
-        return valVec_dotdot(cell,node,eq);
       case 0:
         KOKKOS_IF_ON_HOST  (return val_dotdot[eq](cell,node);)
         KOKKOS_IF_ON_DEVICE(return d_val_dotdot[eq](cell,node);)
+      case 1:
+        return valVec_dotdot(cell,node,eq);
+      case 2:
+        return valTensor_dotdot(cell,node,eq/numDim,eq%numDim);
     }
     Kokkos::abort("Unsupported tensor rank");
   }
+
+  void gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr);
+
+  // Offsets of solution field(s) inside a single element, as per the DOFManager
+  // The only reason we have this view is that the offsets returned by the
+  // dof manager would have the node striding faster. By doing the transposition
+  // once, we can get better cached/coalesced memory access during the evaluation
+  Albany::DualView<int**> m_fields_offsets;
 
   typedef typename EvalT::ScalarT ScalarT;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dotdot;
+
   PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec;
   PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dot;
   PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dotdot;
@@ -109,7 +125,7 @@ protected:
   int numDim;
   int numNodes;
   int numFields; // Number of fields gathered in this call
-  int offset; // Offset of first DOF being gathered when numFields<neq
+  int offset;    // Offset of first DOF being gathered when numFields<neq
   int tensorRank;
 
   bool enableTransient;
@@ -118,13 +134,11 @@ protected:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 protected:
   using ExecutionSpace = typename PHX::Device::execution_space;
-  Albany::WorksetConn nodeID;
-  Albany::DeviceView1d<const ST> x_constView, xdot_constView, xdotdot_constView;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 
   typedef Kokkos::vector<Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> KV;
   KV val_kokkos, val_dot_kokkos, val_dotdot_kokkos;
   typename KV::t_dev d_val, d_val_dot, d_val_dotdot;
-
 #endif
 };
 
@@ -142,8 +156,8 @@ template<typename EvalT, typename Traits> class GatherSolution;
 // **************************************************************
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::Residual,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>  {
-
+   : public GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>
+{
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -152,47 +166,21 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits> Base;
+
   using ref_t = typename Base::ref_t;
   using Base::get_ref;
   using Base::get_ref_dot;
   using Base::get_ref_dotdot;
   using Base::numFields;
+  using Base::m_fields_offsets;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-public:
-  struct PHAL_GatherSol_Tag{};
-  struct PHAL_GatherSol_Transient_Tag{};
-  struct PHAL_GatherSol_Acceleration_Tag{};
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSol_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSol_Transient_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherSol_Acceleration_Tag&, const int& cell) const;
-
 private:
-
-  using Base::numDim;
-  using Base::nodeID;
-  using Base::x_constView;
-  using Base::xdot_constView;
-  using Base::xdotdot_constView;
-  using Base::val_kokkos;
-  using Base::val_dot_kokkos;
-  using Base::val_dotdot_kokkos;
+  using RangePolicy = typename Base::RangePolicy;
   using Base::d_val;
   using Base::d_val_dot;
   using Base::d_val_dotdot;
-
-  using ExecutionSpace = typename Base::ExecutionSpace;
-
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSol_Tag> PHAL_GatherSol_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSol_Transient_Tag> PHAL_GatherSol_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherSol_Acceleration_Tag> PHAL_GatherSol_Acceleration_Policy;
-
 #endif
 };
 
@@ -201,8 +189,8 @@ private:
 // **************************************************************
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::Jacobian,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
-
+   : public GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>
+{
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -210,49 +198,21 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
-  using Base::numFields;
+
   using ref_t = typename Base::ref_t;
   using Base::get_ref;
   using Base::get_ref_dot;
   using Base::get_ref_dotdot;
-
+  using Base::numFields;
+  using Base::m_fields_offsets;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-public:
-  struct PHAL_GatherJac_Tag{};
-  struct PHAL_GatherJac_Transient_Tag{};
-  struct PHAL_GatherJac_Acceleration_Tag{};
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJac_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJac_Transient_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_GatherJac_Acceleration_Tag&, const int& cell) const;
-
 private:
-  int neq;
-  double j_coeff, n_coeff, m_coeff;
-
-  using Base::numDim;
-  using Base::nodeID;
-  using Base::x_constView;
-  using Base::xdot_constView;
-  using Base::xdotdot_constView;
-  using Base::val_kokkos;
-  using Base::val_dot_kokkos;
-  using Base::val_dotdot_kokkos;
+  using RangePolicy = typename Base::RangePolicy;
   using Base::d_val;
   using Base::d_val_dot;
   using Base::d_val_dotdot;
-
-  using ExecutionSpace = typename Base::ExecutionSpace;
-
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJac_Tag> PHAL_GatherJac_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJac_Transient_Tag> PHAL_GatherJac_Transient_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,PHAL_GatherJac_Acceleration_Tag> PHAL_GatherJac_Acceleration_Policy;
 #endif
 };
 
@@ -262,23 +222,23 @@ private:
 // **************************************************************
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::Tangent,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>  {
-
+   : public GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>
+{
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-  typedef typename Kokkos::View<ScalarT*, PHX::Device>::reference_type reference_type;
 
   typedef GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits> Base;
+
   using ref_t = typename Base::ref_t;
   using Base::get_ref;
   using Base::get_ref_dot;
   using Base::get_ref_dotdot;
   using Base::numFields;
+  using Base::m_fields_offsets;
 };
 
 // **************************************************************
@@ -286,22 +246,23 @@ private:
 // **************************************************************
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
-
+   : public GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+{
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 
+private:
   typedef GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> Base;
+
   using ref_t = typename Base::ref_t;
   using Base::get_ref;
   using Base::get_ref_dot;
   using Base::get_ref_dotdot;
   using Base::numFields;
+  using Base::m_fields_offsets;
 };
 
 // **************************************************************
@@ -364,8 +325,8 @@ private:
 
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::HessianVec,Traits>
-   : public GatherSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits>  {
-
+   : public GatherSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits>
+{
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl);
@@ -512,14 +473,14 @@ public:
    */
   void evaluateFields(typename Traits::EvalData d);
 private:
-  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
-
   typedef GatherSolutionBase<PHAL::AlbanyTraits::HessianVec, Traits> Base;
+
   using ref_t = typename Base::ref_t;
   using Base::get_ref;
   using Base::get_ref_dot;
   using Base::get_ref_dotdot;
   using Base::numFields;
+  using Base::m_fields_offsets;
 };
 
 } // namespace PHAL
