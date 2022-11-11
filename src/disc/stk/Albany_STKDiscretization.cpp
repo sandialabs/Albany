@@ -15,6 +15,7 @@
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "STKConnManager.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -1162,38 +1163,16 @@ void STKDiscretization::computeVectorSpaces()
 
   coordinates.resize(3 * getLocalSubdim(m_overlap_node_vs));
 
-  // ====================== NEW DOF MANAGER ========================= //
-  for (const auto& it : nodalDOFsStructContainer.fieldToMap) {
-    const auto& field_name = it.first;
-    const auto& part_dim   = it.second->first; 
-          auto  part_name  = part_dim.first;
-    const auto& dof_dim    = part_dim.second;
+  auto create_dof_mgr = [&] (const std::string& part_name,
+                             const std::string& field_name,
+                             const FE_Type fe_type,
+                             const int dof_dim)
+  {
+    auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
+    auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
 
-    // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
-    //       That's not the name that stk uses for the whole mesh. So if the
-    //       part name is "", we get the part stored in the stk mesh struct
-    //       for the element block, where we REQUIRE that there is only ONE element block.
-    if (part_name=="") {
-      TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
-          "Error! We currently do not support meshes with 2+ element blocks.\n");
-      part_name = stkMeshStruct->ebNames_[0];
-    }
-
-    auto& conn_mgr = m_conn_managers[part_name];
-    if (conn_mgr.is_null()) {
-      conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
-    }
-
-    auto dof_mgr = Teuchos::rcp(new DOFManager(conn_mgr,comm));
-
-    // NOTE: for now we hard code P1. In the future, we must be able to
-    //       store this info somewhere and retrieve it here.
-    std::vector<shards::CellTopology> topologies;
-    conn_mgr->getElementBlockTopologies(topologies);
-
-    TEUCHOS_TEST_FOR_EXCEPTION (topologies.size()!=1, std::runtime_error,
-        "Error! We have not yet implemented the case where a DOF is defined on multiple cell topologies.\n");
-    auto fp = createFieldPattern (FE_Type::P1, topologies[0]);
+    const auto topology = conn_mgr->get_topology();
+    const auto fp = createFieldPattern (fe_type, topology);
 
     // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
     //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
@@ -1203,16 +1182,54 @@ void STKDiscretization::computeVectorSpaces()
 
     dof_mgr->build();
 
-    m_dof_managers[field_name] = dof_mgr;
-    m_part_dim_2_dof_manager[part_name][dof_dim] = dof_mgr;
+    return dof_mgr;
+  };
 
-    if (dof_dim>1) {
-      // Create a scalar dof mgr, for nodes
-      auto node_dof_mgr = Teuchos::rcp(new DOFManager(conn_mgr->noConnectivityClone(),comm));
-      node_dof_mgr->addField(field_name + "_nodes", fp);
-      node_dof_mgr->build();
-      m_part_dim_2_dof_manager[part_name][1] = node_dof_mgr;
+  // ====================== NEW DOF MANAGER ========================= //
+  for (const auto& it : nodalDOFsStructContainer.fieldToMap) {
+    const auto& field_name = it.first;
+    const auto& part_dim   = it.second->first; 
+          auto  part_name  = part_dim.first;
+    const auto& dof_dim    = part_dim.second;
+
+    // For dofs defined on the whole mesh, we also add a dof mgr for each sideset
+    bool do_sides = false;
+
+    // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
+    //       That's not the name that stk uses for the whole mesh. So if the
+    //       part name is "", we get the part stored in the stk mesh struct
+    //       for the element block, where we REQUIRE that there is only ONE element block.
+    if (part_name=="") {
+      TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
+          "Error! We currently do not support meshes with 2+ element blocks.\n");
+      part_name = stkMeshStruct->ebNames_[0];
+      do_sides = true;
     }
+
+    // NOTE: for now we hard code P1. In the future, we must be able to
+    //       store this info somewhere and retrieve it here.
+    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::P1,dof_dim);
+    m_dof_managers[field_name][part_name] = dof_mgr;
+
+    m_node_dof_managers[part_name] = Teuchos::null;
+
+    if (do_sides) {
+      for (const auto& ss_it : stkMeshStruct->ssPartVec) {
+        const auto& ss_name = ss_it.first;
+        auto ss_dof_mgr = create_dof_mgr(ss_name,field_name,FE_Type::P1,dof_dim);
+        m_dof_managers[field_name][ss_name] = ss_dof_mgr;
+
+        if (m_node_dof_managers[ss_name].is_null() && dof_dim==1) {
+          m_node_dof_managers[ss_name] = dof_mgr;
+        }
+      }
+    }
+  }
+
+  // For each part, also make a Node dof manager
+  for (auto& it : m_node_dof_managers) {
+    const auto& part_name = it.first;
+    it.second = create_dof_mgr(part_name, "node", FE_Type::P1, 1);
   }
 }
 
@@ -1479,12 +1496,10 @@ STKDiscretization::computeWorksetInfo()
   }
 
   auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
-  m_workset_sizes.resize(numBuckets);
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
-    m_workset_sizes[b] = buck.size();
 
     // Set size of Kokkos views
     // Note: Assumes nodes_per_element is the same across all elements in a
@@ -1825,6 +1840,25 @@ STKDiscretization::computeWorksetInfo()
       }
     }
   }
+  int max_ws_size = getMeshStruct()->getMeshSpecs()[0]->worksetSize;
+
+  m_workset_sizes.resize(numBuckets);
+  m_workset_elements = DualView<int**>("ws_elem",numBuckets,max_ws_size);
+  for (int b=0,lid=0; b<numBuckets; ++b) {
+    const auto& bucket = *buckets[b];
+    m_workset_sizes[b] = bucket.size();
+    // NOTE: STKConnManager is built in such a way that the elements
+    //       in the conn mgr are ordered by bucket, and, if in the same
+    //       bucket, they are ordered in the same way.
+    //       That means that, if elem E1 is in bucket 3 and elem E2 is
+    //       in bucket 4, then elemLid(E1)<elemLid(E2). If they are in
+    //       the same bucket, then elemLid(E1)<elemLid(E2) IIF E1 is
+    //       listed first in the bucket.
+    for (unsigned ie=0; ie<bucket.size(); ++ie, ++lid) {
+      m_workset_elements.host()(b,ie) = lid;
+    }
+  }
+  m_workset_elements.sync_to_dev();
 }
 
 void
