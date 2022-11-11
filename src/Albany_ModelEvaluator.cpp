@@ -18,6 +18,7 @@
 
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
+
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
 
@@ -581,12 +582,8 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
             << l1
             << std::endl);
 
-    Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
-    Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
-    std::vector<IDArray> vElDofs =
-      distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
-
-    return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+    const auto p = distParamLib->get(dist_param_names[l1-num_param_vecs]);
+    return Albany::createSparseHessianLinearOp(p);
   }
 }
 

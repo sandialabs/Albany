@@ -1,6 +1,11 @@
 #ifndef ALBANY_HESSIAN_HPP
 #define ALBANY_HESSIAN_HPP
 
+#include "Albany_DistributedParameter.hpp"
+#include "Albany_ThyraTypes.hpp"
+
+#include <string>
+
 namespace Albany
 {
     /**
@@ -27,9 +32,7 @@ namespace Albany
      * \param wsElDofs [in] Vector of IDArray associated to the mesh used.
      */
     Teuchos::RCP<Thyra_LinearOp> createSparseHessianLinearOp(
-        Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
-        Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
-        const std::vector<IDArray> wsElDofs);
+        const Teuchos::RCP<const DistributedParameter>& p);
 
     /**
      * \brief getHessianBlockIDs function

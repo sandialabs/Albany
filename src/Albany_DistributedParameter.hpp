@@ -23,34 +23,28 @@ namespace Albany {
 class DistributedParameter {
 public:
 
-  //! Id Array type
-  using id_array_vec_type = std::vector<IDArray>;
+  using dof_mgr_ptr_t = Teuchos::RCP<const DOFManager>;
 
   //! Constructor
-  DistributedParameter(
-    const std::string& param_name_,
-    const Teuchos::RCP<const DOFManager>& dof_mgr)
-   : DistributedParameter(param_name_,dof_mgr->vs(),dof_mgr->ov_vs())
-  {
-    // Nothing to do here
-  }
-  DistributedParameter(
-    const std::string& param_name_,
-    const Teuchos::RCP<const Thyra_VectorSpace>& owned_vs_,
-    const Teuchos::RCP<const Thyra_VectorSpace>& overlapped_vs_) :
-      param_name(param_name_)
+  DistributedParameter(const std::string& param_name_,
+                       const dof_mgr_ptr_t& dof_mgr)
+   : param_name(param_name_)
+   , m_dof_mgr (dof_mgr)
   {
     // Sanity checks
-    TEUCHOS_TEST_FOR_EXCEPTION(owned_vs_.is_null(), std::runtime_error, "Error! Owned vector space is null.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION(overlapped_vs_.is_null(), std::runtime_error, "Error! Overlapped vector space is null.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(m_dof_mgr.is_null(), std::runtime_error,
+        "Error! Input dof manager is null.\n");
 
-    owned_vec = Thyra::createMember(owned_vs_);
-    overlapped_vec = Thyra::createMember(overlapped_vs_);
+    const auto owned_vs = m_dof_mgr->vs();
+    const auto overlapped_vs = m_dof_mgr->ov_vs();
 
-    lower_bounds_vec = Thyra::createMember(owned_vs_);
-    upper_bounds_vec = Thyra::createMember(owned_vs_);
+    owned_vec = Thyra::createMember(owned_vs);
+    overlapped_vec = Thyra::createMember(overlapped_vs);
 
-    cas_manager = createCombineAndScatterManager(owned_vs_, overlapped_vs_);
+    lower_bounds_vec = Thyra::createMember(owned_vs);
+    upper_bounds_vec = Thyra::createMember(owned_vs);
+
+    cas_manager = createCombineAndScatterManager(owned_vs, overlapped_vs);
   }
 
   //! Destructor
@@ -59,13 +53,12 @@ public:
   //! Get name
   const std::string& name() const { return param_name; }
 
-  //! Set workset_elem_dofs map
-  void set_workset_elem_dofs(const Teuchos::RCP<const id_array_vec_type>& ws_elem_dofs_) {
-    ws_elem_dofs = ws_elem_dofs_;
+  //! Compute elem_dof_lid view
+  void compute_elem_dof_lids(const dof_mgr_ptr_t& volume_dof_mgr) {
+    m_elem_dof_lids = m_dof_mgr->elem_dof_lids(volume_dof_mgr);
   }
 
-  //! Return constant workset_elem_dofs. For each workset, workset_elem_dofs maps (elem, node, nComp) into local id
-  const id_array_vec_type& workset_elem_dofs() const { return *ws_elem_dofs; }
+  const DualView<const int**>& elem_dof_lids() const { return m_elem_dof_lids; }
 
   //! Get vector space 
   virtual Teuchos::RCP<const Thyra_VectorSpace> vector_space() const { return owned_vec->space(); }
@@ -98,8 +91,10 @@ public:
     cas_manager->combine(overlapped_vec, owned_vec, CombineMode::ZERO);
   }
 
+  dof_mgr_ptr_t get_dof_mgr () const { return m_dof_mgr; }
+
   //! Get the CombineAndScatterManager for this parameter
-  virtual Teuchos::RCP<const CombineAndScatterManager> get_cas_manager () const { return cas_manager; }
+  Teuchos::RCP<const CombineAndScatterManager> get_cas_manager () const { return cas_manager; }
 
 protected:
 
@@ -117,8 +112,12 @@ protected:
   //! The manager for scatter/combine operation
   Teuchos::RCP<const CombineAndScatterManager> cas_manager;
 
-  //! Vector over worksets, containing DOF's map from (elem, node, nComp) into local id
-  Teuchos::RCP<const id_array_vec_type> ws_elem_dofs;
+  // The DOFManager for this parameter
+  dof_mgr_ptr_t m_dof_mgr;
+
+  // View containing the map (elem, idof)->dof_LID, where idof=0,..,ndofs_per_elem,
+  // and dof_LID is relative to the *overlapped* vector space.
+  DualView<const int**> m_elem_dof_lids;
 };
 
 } // namespace Albany
