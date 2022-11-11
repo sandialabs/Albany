@@ -7,7 +7,7 @@
 #ifndef ALBANY_STK_CONN_MANAGER_HPP
 #define ALBANY_STK_CONN_MANAGER_HPP
 
-#include "Panzer_ConnManager.hpp"
+#include "Albany_ConnManager.hpp"
 #include "stk_mesh/base/MetaData.hpp"
 #include "stk_mesh/base/BulkData.hpp"
 #include "Teuchos_RCP.hpp"
@@ -17,16 +17,8 @@
 
 namespace Albany {
 
-class STKConnManager : public panzer::ConnManager {
+class STKConnManager : public ConnManager {
 public:
-  using LocalOrdinal  = typename panzer::ConnManager::LocalOrdinal;
-  using GlobalOrdinal = typename panzer::ConnManager::GlobalOrdinal;
-
-  typedef double ProcIdData;
-  typedef stk::mesh::Field<double> SolutionFieldType;
-  typedef stk::mesh::Field<ProcIdData> ProcIdFieldType;
-  typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType;
-
   // Note: the parts requested MUST satisfy
   //  - they all have the same dimension (e.g., no elems and sides)
   //  - they do NOT intersect
@@ -45,6 +37,9 @@ public:
   }
 
   ~STKConnManager() = default;
+
+  std::vector<GO>
+  getElementsInBlock (const std::string& blockId) const override;
 
   /** Tell the connection manager to build the connectivity assuming
     * a particular field pattern.
@@ -66,7 +61,7 @@ public:
     * \returns Pointer to beginning of indices, with total size
     *          equal to <code>getConnectivitySize(localElmtId)</code>
     */
-  const GlobalOrdinal * getConnectivity(LocalOrdinal localElmtId) const override {
+  const GO * getConnectivity(LO localElmtId) const override {
     return &m_connectivity[m_elmtLidToConn[localElmtId]];
   }
 
@@ -76,7 +71,7 @@ public:
     *
     * \returns Number of mesh IDs that are associated with this element.
     */
-  LocalOrdinal getConnectivitySize(LocalOrdinal localElmtId) const override {
+  LO getConnectivitySize(LO localElmtId) const override {
     return m_connSize[localElmtId];
   }
 
@@ -84,7 +79,7 @@ public:
     *
     * \param[in] localElmtId Local element ID
     */
-  std::string getBlockId(LocalOrdinal localElmtId) const override;
+  std::string getBlockId(LO localElmtId) const override;
 
   /** How many element blocks in this mesh?
     */
@@ -119,7 +114,7 @@ public:
     *
     * \returns Vector of local element IDs.
     */
-  const std::vector<LocalOrdinal> & getElementBlock(const std::string & blockId) const override {
+  const std::vector<LO> & getElementBlock(const std::string & blockId) const override {
     TEUCHOS_TEST_FOR_EXCEPTION (m_elementBlocks.find(blockId)==m_elementBlocks.end(), std::runtime_error,
         "[STKConnManager] Error! Block '" + blockId + "' not found in the mesh.\n");
     return m_elementBlocks.at(blockId);
@@ -133,7 +128,7 @@ public:
     *
     * \returns Vector of local element IDs.
     */
-  const std::vector<LocalOrdinal> & getNeighborElementBlock(const std::string & blockId) const override {
+  const std::vector<LO> & getNeighborElementBlock(const std::string & blockId) const override {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
         "Error! Albany does not use elements halos, so the method\n"
         "       'STKConnManager::getNeighborElementBlock' should not have been called.\n");
@@ -147,7 +142,7 @@ public:
   /** Get elements, if any, associated with <code>el</code>, excluding
     * <code>el</code> itself.
     */
-  const std::vector<LocalOrdinal>& getAssociatedNeighbors(const LocalOrdinal& el) const override;
+  const std::vector<LO>& getAssociatedNeighbors(const LO& el) const override;
 
   /** Return whether getAssociatedNeighbors will return true for at least one
     * input. Default implementation returns false.
@@ -172,16 +167,16 @@ protected:
   void buildLocalElementMapping();
   void buildOffsetsAndIdCounts(
       const panzer::FieldPattern & fp,
-      LocalOrdinal & nodeIdCnt, LocalOrdinal & edgeIdCnt,
-      LocalOrdinal & faceIdCnt, LocalOrdinal & cellIdCnt,
-      GlobalOrdinal & nodeOffset, GlobalOrdinal & edgeOffset,
-      GlobalOrdinal & faceOffset, GlobalOrdinal & cellOffset) const;
+      LO & nodeIdCnt, LO & edgeIdCnt,
+      LO & faceIdCnt, LO & cellIdCnt,
+      GO & nodeOffset, GO & edgeOffset,
+      GO & faceOffset, GO & cellOffset) const;
 
-   LocalOrdinal addSubcellConnectivities(
+   LO addSubcellConnectivities(
        const stk::mesh::Entity element,
        const stk::mesh::EntityRank subcellRank,
-       const LocalOrdinal idCnt,
-       const GlobalOrdinal offset);
+       const LO idCnt,
+       const GO offset);
 
   stk::mesh::Part * getElementBlockPart(const std::string & name) const;
 
@@ -198,17 +193,17 @@ protected:
   // NOTE: Albany should *never* use neighbors, since we do not require
   //       an element halo anywhere. Keep the neighbor fcn anyways,
   //       for simplicity in the getter functions
-  std::map<std::string,std::vector<LocalOrdinal> > m_elementBlocks;
-  std::map<std::string,std::vector<LocalOrdinal> > m_neighborElementBlocks;
+  std::map<std::string,std::vector<LO> > m_elementBlocks;
+  std::map<std::string,std::vector<LO> > m_neighborElementBlocks;
 
   // Map elemLID to offset in m_connectivity
-  std::vector<LocalOrdinal> m_elmtLidToConn;
+  std::vector<LO> m_elmtLidToConn;
 
   // For each elemLID, returns size of connectivity
-  std::vector<LocalOrdinal> m_connSize;
+  std::vector<LO> m_connSize;
 
   // List of GIDs of entities in each element, spliced together
-  std::vector<GlobalOrdinal> m_connectivity;
+  std::vector<GO> m_connectivity;
 
   // The max gid for each element rank, across the whole mesh.
   std::vector<stk::mesh::EntityId> m_maxEntityId;
