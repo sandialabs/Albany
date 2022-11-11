@@ -219,7 +219,6 @@ namespace Albany {
     virtual constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const = 0;
@@ -228,11 +227,10 @@ namespace Albany {
     constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        bool isVectorField,
        const std::string& resid_name,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const {
-      return constructScatterSideEqnResidualEvaluator (cellType, sideSetName,residualsAreVolumeFields,isVectorField,arcp_str(resid_name),offsetToFirstDOF,scatterName);
+      return constructScatterSideEqnResidualEvaluator (cellType, sideSetName,isVectorField,arcp_str(resid_name),offsetToFirstDOF,scatterName);
     }
 
     //! Function to create parameter list for construction of ScatterResidual
@@ -273,7 +271,6 @@ namespace Albany {
     virtual constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const = 0;
@@ -282,11 +279,10 @@ namespace Albany {
     constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        int tensorRank,
        const std::string& resid_name,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const {
-      return constructScatterSideEqnResidualEvaluator(cellType,sideSetName,residualsAreVolumeFields,tensorRank,arcp_str(resid_name),offsetToFirstDOF,scatterName);
+      return constructScatterSideEqnResidualEvaluator(cellType,sideSetName,tensorRank,arcp_str(resid_name),offsetToFirstDOF,scatterName);
     }
 
     //! Function to create parameter list for construction of GatherScalarNodalParameter
@@ -662,7 +658,6 @@ namespace Albany {
     constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
@@ -688,7 +683,6 @@ namespace Albany {
     constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const;

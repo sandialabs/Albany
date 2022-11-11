@@ -16,7 +16,6 @@ ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
-  cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),

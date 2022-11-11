@@ -415,7 +415,6 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF, std::string scatterName) const
@@ -435,7 +434,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEval
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
-    p->set<bool>("Residuals Are Volume Fields", residualsAreVolumeFields);
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
     p->set<std::string>("Scatter Field Name", scatterName);
 
@@ -498,7 +496,6 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEvaluator(
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
-       bool residualsAreVolumeFields,
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF, std::string scatterName) const
@@ -515,7 +512,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEval
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
-    p->set<bool>("Residuals Are Volume Fields", residualsAreVolumeFields);
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
     p->set<std::string>("Scatter Field Name", scatterName);
 

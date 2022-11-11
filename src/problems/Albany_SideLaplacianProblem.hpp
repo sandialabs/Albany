@@ -252,7 +252,7 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterSideEqnResidualEvaluator(cellType, sideSetName, true, false, resid_names, offset, "Scatter SideLaplacian");
+  ev = evalUtils.constructScatterSideEqnResidualEvaluator(cellType, sideSetName, false, resid_names, offset, "Scatter SideLaplacian");
   fm0.template registerEvaluator<EvalT> (ev);
 
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
@@ -300,7 +300,8 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   //Output
   p->set<std::string> ("Residual Variable Name",resid_names[0]);
 
-  ev = Teuchos::rcp(new PHAL::SideLaplacianResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  auto dl_side = dl->side_layouts.at(sideSetName);
+  ev = Teuchos::rcp(new PHAL::SideLaplacianResidual<EvalT,PHAL::AlbanyTraits>(*p,dl_side));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ----------------------------------------------------- //
