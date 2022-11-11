@@ -14,8 +14,6 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_DOFManager.hpp"
-#include "Shards_Array.hpp"
-#include "Shards_CellTopologyData.h"
 
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
@@ -24,9 +22,14 @@ namespace Albany {
 
 class AbstractDiscretization
 {
- public:
-  typedef std::map<std::string, Teuchos::RCP<AbstractDiscretization>>
-      SideSetDiscretizationsType;
+public:
+  template<typename T>
+  using strmap_t = std::map<std::string,T>;
+
+  using SideSetDiscretizationsType = strmap_t<Teuchos::RCP<AbstractDiscretization>>;
+
+  using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
+  using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
   static const char* solution_dof_name () { return "ordinary_solution"; }
   static const char* nodes_dof_name    () { return "mesh_nodes"; }
@@ -42,22 +45,34 @@ class AbstractDiscretization
   //! Destructor
   virtual ~AbstractDiscretization() = default;
 
-  //! Get the panzer DOF manager
-  virtual Teuchos::RCP<const DOFManager>
-  getNewDOFManager (const std::string& fieldName) const = 0;
-  virtual Teuchos::RCP<const DOFManager>
-  getNodeNewDOFManager (const std::string& fieldName) const = 0;
+  //! Get the DOF manager
+  Teuchos::RCP<const DOFManager>
+  getNewDOFManager (const std::string& fieldName) const {
+    const auto& part_name = getMeshStruct()->getMeshSpecs()[0]->ebName;
+    return m_dof_managers.at(fieldName).at(part_name);
+  }
+  Teuchos::RCP<const DOFManager>
+  getNewDOFManager (const std::string& fieldName, const std::string& part_name) const {
+    return m_dof_managers.at(fieldName).at(part_name);
+  }
+
+  Teuchos::RCP<const DOFManager>
+  getNodeNewDOFManager (const std::string& part_name) const {
+    return m_node_dof_managers.at(part_name);
+  }
 
   Teuchos::RCP<const DOFManager>
   getNewDOFManager () const
   {
-    return getNewDOFManager (solution_dof_name());
+    const auto& whole_mesh = getMeshStruct()->getMeshSpecs()[0]->ebName;
+    return getNewDOFManager (solution_dof_name(), whole_mesh);
   }
 
   Teuchos::RCP<const DOFManager>
   getNodeNewDOFManager () const
   {
-    return getNodeNewDOFManager (solution_dof_name());
+    const auto& whole_mesh = getMeshStruct()->getMeshSpecs()[0]->ebName;
+    return getNodeNewDOFManager(whole_mesh);
   }
 
   //! Get node vector space (owned and overlapped)
@@ -123,6 +138,15 @@ class AbstractDiscretization
   getNodeSetCoords() const = 0;
 
   const WorksetArray<int>& getWorksetsSizes () const { return m_workset_sizes; }
+
+  DualView<const int**>
+  getWsElementLIDs () const { return m_workset_elements; }
+
+  DualView<const int*>::host_t
+  getElementLIDs_host (const int ws) const {
+    constexpr auto ALL = Kokkos::ALL();
+    return Kokkos::subview (m_workset_elements.host(),ws,ALL);
+  }
 
   int getNumWorksets () const { return m_workset_sizes.size(); }
 
@@ -362,7 +386,20 @@ class AbstractDiscretization
 
 protected:
 
+  // One dof mgr per dof per part
+  // Notice that the dof mgr on a side is not the restriction
+  // of the volume dof mgr to that side, since local ids are different.
+  strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
+
+  // Dof manager for a scalar node field
+  strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+
+  // The size of each workset
   WorksetArray<int>   m_workset_sizes;
+
+  // For each workset, the element LID of its elements.
+  // Note: with 1 workset, m_workset_elements(0,i)=i.
+  DualView<int**>     m_workset_elements;
 };
 
 }  // namespace Albany

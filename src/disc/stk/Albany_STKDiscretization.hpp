@@ -16,7 +16,6 @@
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
-#include "STKConnManager.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 
@@ -123,22 +122,6 @@ class STKDiscretization : public AbstractDiscretization
 
   //! Destructor
   virtual ~STKDiscretization();
-
-  // Declaring getNewDOFManager in the derived class hides any overloads
-  // declared in the base class.
-  using AbstractDiscretization::getNewDOFManager;
-
-  Teuchos::RCP<const DOFManager>
-  getNewDOFManager (const std::string& fieldName) const {
-    return m_dof_managers.at(fieldName);
-  }
-
-  Teuchos::RCP<const DOFManager>
-  getNodeNewDOFManager (const std::string& fieldName) const {
-    auto dof_mgr = m_dof_managers.at(fieldName);
-    auto part_name = dof_mgr->parts_names()[0];
-    return m_part_dim_2_dof_manager.at(part_name).at(1);
-  }
 
   void
   printConnectivity() const;
@@ -661,12 +644,6 @@ class STKDiscretization : public AbstractDiscretization
   std::map<std::string, std::map<GO, std::vector<int>>> sideNodeNumerationMap;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>   projectors;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>   ov_projectors;
-
-  // Note: we have multiple Conn managers, since each can be defined on different parts of the mesh,
-  //       restricting connectivity to those parts (which may have different primary entity ranks).
-  std::map<std::string,Teuchos::RCP<STKConnManager>>              m_conn_managers;
-  std::map<std::string,Teuchos::RCP<DOFManager>>                  m_dof_managers;
-  std::map<std::string,std::map<int,Teuchos::RCP<DOFManager>>>    m_part_dim_2_dof_manager;
 
 // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
