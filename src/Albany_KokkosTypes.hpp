@@ -58,6 +58,15 @@ struct DualView {
   using dev_t  = ViewLR<DT,DeviceMemSpace>;
   using host_t = typename dev_t::HostMirror;
 
+  using const_DT      = typename dev_t::traits::const_data_type;
+  using nonconst_DT   = typename dev_t::traits::non_const_data_type;
+
+  using const_type    = DualView<const_DT>;
+  using nonconst_type = DualView<nonconst_DT>;
+
+  // So that conversion-type operator can access internals
+  friend struct DualView<nonconst_DT>;
+
   DualView () = default;
 
   // Construct DualView on the fly.
@@ -70,23 +79,30 @@ struct DualView {
       const size_t n5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
       const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
       const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
-   : d_view(name,n0,n1,n2,n3,n4,n5,n6,n7)
+   : DualView(dev_t(name,n0,n1,n2,n3,n4,n5,n6,n7))
   {
-    h_view = Kokkos::create_mirror_view (d_view);
+    // Nothing else to do
   }
-  DualView (dev_t d_view_) : d_view(d_view_) {
+  DualView (dev_t d_view_)
+   : d_view(d_view_)
+  {
     ALBANY_ASSERT (d_view.data()!=nullptr, "Invalid device view.");
     h_view = Kokkos::create_mirror_view (d_view);
   }
   DualView (const DualView&) = default;
   DualView& operator= (const DualView&) = default;
 
-  DualView& operator= (const dev_t d_view_) {
-    d_view = d_view_;
-    h_view = Kokkos::create_mirror_view (d_view);
+  // Allow implicit conversion to DualView<const DT>;
+  operator const_type() const {
+    const_type ct;
+    ct.d_view = d_view;
+    ct.h_view = h_view;
+    return ct;
   }
 
+  KOKKOS_INLINE_FUNCTION
   const dev_t&  dev  () const { return d_view; }
+  KOKKOS_INLINE_FUNCTION
   const host_t& host () const { return h_view; }
 
   void sync_to_host () {
@@ -96,7 +112,25 @@ struct DualView {
     Kokkos::deep_copy(d_view,h_view);
   }
 
-  int size () const { return d_view().size(); }
+  int size () const { return d_view.size(); }
+
+  void reset (const dev_t& d) {
+    d_view = d;
+    sync_to_host();
+  }
+
+  void resize (const std::string& name,
+               const size_t n0,
+               const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+               const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+               const size_t n3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+               const size_t n4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+               const size_t n5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+               const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+               const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG) {
+    ALBANY_ASSERT (d_view.size()==0, "Cannot resize a non-trivial DualView.");
+    *this = DualView<DT>(name,n0,n1,n2,n3,n4,n5,n6,n7);
+  }
 
 private:
 
