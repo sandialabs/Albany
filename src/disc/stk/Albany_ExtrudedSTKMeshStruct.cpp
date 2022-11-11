@@ -342,9 +342,15 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   int lsideColumnShift   = (Ordering == COLUMN) ? 1 : sides2D.size();
   int sideLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
 
-  this->layered_mesh_numbering = (Ordering==LAYER) ?
+  this->layered_mesh_numbering_nodes = (Ordering==LAYER) ?
       Teuchos::rcp(new LayeredMeshNumbering<GO>(vertexColumnShift,Ordering,layerThicknessRatio)):
       Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(vertexLayerShift),Ordering,layerThicknessRatio));
+  this->layered_mesh_numbering = this->layered_mesh_numbering_nodes;
+
+  this->layered_mesh_numbering_cells = (Ordering==LAYER) ?
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(elemColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(elemLayerShift),Ordering,layerThicknessRatio));
+
 
   std::vector<double> ltr(layerThicknessRatio.size());
   for(size_t i=0; i< ltr.size(); ++i) {

@@ -120,6 +120,10 @@ struct AbstractMeshStruct {
 
     virtual msType meshSpecsType() = 0;
 
+    Teuchos::RCP<LayeredMeshNumbering<GO> > layered_mesh_numbering_nodes;
+    Teuchos::RCP<LayeredMeshNumbering<GO> > layered_mesh_numbering_cells;
+
+    // Keep this, and make it alias the _nodes one, for bwd compatibility
     Teuchos::RCP<LayeredMeshNumbering<GO> > layered_mesh_numbering;
 
     Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
