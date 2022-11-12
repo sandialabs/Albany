@@ -91,6 +91,29 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
   }
 }
 
+void ThyraCrsMatrixFactory::
+insertGlobalIndices (const GO row, const GO col, const bool symmetric)
+{
+  insertGlobalIndices(row,Teuchos::ArrayView<const GO>(&col,1));
+  if (symmetric) {
+    insertGlobalIndices(col,Teuchos::ArrayView<const GO>(&row,1));
+  }
+}
+void ThyraCrsMatrixFactory::
+insertGlobalIndices (const Teuchos::ArrayView<const GO>& rows,
+                     const Teuchos::ArrayView<const GO>& cols,
+                     const bool symmetric)
+{
+  for (const GO row : rows) {
+    insertGlobalIndices(row,cols);
+  }
+  if (symmtric) {
+    for (const GO col : cols) {
+      insertGlobalIndices(col,rows);
+    }
+  }
+}
+
 void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices)
 {
   // Indices are inserted in a temporary local graph. 
