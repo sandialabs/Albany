@@ -351,6 +351,11 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
       Teuchos::rcp(new LayeredMeshNumbering<GO>(elemColumnShift,Ordering,layerThicknessRatio)):
       Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(elemLayerShift),Ordering,layerThicknessRatio));
 
+  // Shards has both Hexa and Wedge with bot and top in the last two side positions
+  this->layered_mesh_numbering_nodes->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+  this->layered_mesh_numbering_nodes->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+  this->layered_mesh_numbering_cells->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+  this->layered_mesh_numbering_cells->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
 
   std::vector<double> ltr(layerThicknessRatio.size());
   for(size_t i=0; i< ltr.size(); ++i) {

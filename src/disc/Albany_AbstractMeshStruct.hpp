@@ -35,6 +35,9 @@ enum class LayeredMeshOrdering
 
 template <typename T>
 struct LayeredMeshNumbering {
+  int bot_side_pos;
+  int top_side_pos;
+
   T stride;
 
   LayeredMeshOrdering ordering;
