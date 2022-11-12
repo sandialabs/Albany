@@ -1242,180 +1242,173 @@ STKDiscretization::computeGraphs()
   m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(
       m_vs, m_vs, m_overlap_vs, m_overlap_vs));
 
-  stk::mesh::Selector select_owned_in_part =
-      stk::mesh::Selector(metaData->universal_part()) &
-      stk::mesh::Selector(metaData->locally_owned_part());
+  Teuchos::Array<GO> rows,cols;
 
-  std::vector<stk::mesh::Entity> cells;
-  stk::mesh::get_selected_entities(
-      select_owned_in_part,
-      bulkData->buckets(stk::topology::ELEMENT_RANK),
-      cells);
-
-  if (comm->getRank() == 0)
-    *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
-
-  GO                     row, col;
-  Teuchos::ArrayView<GO> colAV;
-
-  // determining the equations that are defined on the whole domain
+  // Determine which equations are defined on the whole domain,
+  // as well as what eqn are on each sideset
   std::vector<int> globalEqns;
+  std::map<std::string,std::vector<int>> ss_to_eqns;
   for (unsigned int k(0); k < neq; ++k) {
     if (sideSetEquations.find(k) == sideSetEquations.end()) {
-      globalEqns.push_back(k);
+      volumeEqns.push_back(k);
     }
   }
+  const int numVolumeEqns = volumeEqns.size();
 
-  // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
-  const auto dofMgr = getOverlapDOFManager(solution_dof_name());
-  for (const auto& e : cells) {
-    stk::mesh::Entity const* node_rels = bulkData->begin_nodes(e);
-    const size_t             num_nodes = bulkData->num_nodes(e);
+  // The global solution dof manager
+  const auto sol_dof_mgr = getNewDOFManager();
+  const int num_elems = sol_dof_mgr->cell_vs()->getNumLocalElements();
+  std::vector<GO> elem_gids,side_gids;
+  const int num_nodes = sol_dof_mgr->elem_dof_lids().host().extent(1) / neq;
+  cols.resize(num_nodes);
+  rows.resize(num_nodes);
+  for (int icell=0; icell<num_elems; ++icell) {
+    sol_dof_mgr->getElementGIDs(icell,elem_gids);
 
-    // loop over local nodes
-    for (std::size_t j = 0; j < num_nodes; j++) {
-      stk::mesh::Entity rowNode = node_rels[j];
+    // First, global eqn (row) coupled with global eqn (col)
+    for (int ieq=0; ieq<numVolumeEqns; ++ieq) {
+      const auto& row_gids_offsets = sol_dof_mgr->getGIDFieldOffsets(volumeEqns[ieq]);
 
-      // loop over global eqs
-      for (std::size_t k = 0; k < globalEqns.size(); ++k) {
-        row = dofMgr.getGlobalDOF(stk_gid(rowNode), globalEqns[k]);
-        for (std::size_t l = 0; l < num_nodes; l++) {
-          stk::mesh::Entity colNode = node_rels[l];
-          for (std::size_t m = 0; m < globalEqns.size(); ++m) {
-            col   = dofMgr.getGlobalDOF(stk_gid(colNode), globalEqns[m]);
-            colAV = Teuchos::arrayView(&col, 1);
-            m_jac_factory->insertGlobalIndices(row, colAV);
+      // Couple this eq with itself
+      for (int inode=0; inode<num_nodes; ++inode) {
+        rows[inode] = elem_gids[row_gids_offsets[inode]];
+      }
+      m_jac_factory->insertGlobalIndices(rows(),rows(),false);
+
+      // Couple this eq with other global eqns
+      for (int jeq=0; jeq<ieq; ++jeq) {
+        const auto& col_gids_offsets = sol_dof_mgr->getGIDFieldOffsets(eq_col);
+        for (int inode=0; inode<num_nodes; ++inode) {
+          rows[inode] = elem_gids[row_gids_offsets[inode]];
+          cols[inode] = elem_gids[col_gids_offsets[inode]];
+        }
+        m_jac_factory->insertGlobalIndices(rows(),cols(),true);
+      }
+    }
+
+    // For side set equations, set the diag entry, so that jac pattern
+    // is for sure non-singular in the volume.
+    for (const auto& it : sideSetEquations) {
+      int eq = it.first;
+      const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
+      const int num_nodes = eq_offsets.size();
+      for (int node=0; node<num_nodes; ++node) {
+        row = elem_gids[eq_offsets[node]];
+        m_jac_factory->insertGlobalIndices(row,row,false);
+      }
+    }
+  }
+  const auto lmn = getLayeredMeshNumbering();
+
+  // Given a side GID, get the LID of the element it belongs to
+  auto get_elem_lid = [&](const GO side_GID) -> LO {
+    const auto side_rank = metaData->side_rank();
+    const auto side = bulkData->get_entity(side_rank,side_GID+1);
+    TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
+        "Error! Found a boundary side that has N!=1 elements attached to it.\n");
+    const auto& elem = bulkData->begin_elements(side)[0];
+    const GO elem_GID = stk_gid(elem);
+    const auto& cell_indexer = sol_dof_mgr->cell_indexer();
+    return cell_indexer->getLocalElement(elem_GID);
+  };
+
+  // Create a layered mesh numbering struct for cells LIDs
+  Teuchos::RCP<LayeredMeshNumbering<int>> cell_layers_data_lid;
+  if (not lmn.is_null()) {
+    constexpr auto COL = LayeredMeshOrdering::COLUMN;
+
+    const auto num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
+    const auto numLayers = lmn->numLayers;
+    const auto ordering  = lmn->ordering;
+    const auto stride = ordering==COL ? numLayers : num_elems;
+
+    cell_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<int>(stride,ordering,lmn->layers_ratio));
+  }
+
+  // Now, process rows/cols corresponding to ss equations
+  for (const auto& it : sideSetEquations) {
+    const int side_eq = it.first;
+
+    // First, check which one can be column-coupled.
+    // A side eqn can be coupled to the whole column if
+    //   1) the mesh is layered, and
+    //   2) all sidesets where it's defined are on the top or bottom
+    allowColumnCoupling = not lmn.is_null();
+    Teuchos::RCP<LayeredMeshNumbering<int>> cell_layers_data_lid;
+    if (not lmn.is_null()) {
+      for (const auto& ss_name : it.second) {
+        const auto& ss_node_dof_mgr = getNewDOFManager(node_dof_name(),ss_name);
+        if (ss_node_dof_mgr->cell_indexer()->getNumLocalElements()==0) {
+          continue;
+        }
+
+        // Check the layerId of all nodes of a side
+        ss_node_dof_mgr->getElementGIDs(0,elem_gids);
+        for (auto gid : elem_gids) {
+          auto layer = lmn->getLayerId(gid);
+          if (layer!=0 && layer!=lmn->numLayers) {
+            allowColumnCoupling = false;
+            break;
           }
         }
       }
-      // For sideset equations, we set a diagonal jacobian outside the side set.
-      // Namely, we will set res=solution outside the side set (not res=0, otherwise
-      // jac is singular).
-      // Note: if this node happens to be on the side set, we will add the entry
-      //       again in the next loop. But that's fine, cause ThyraCrsMatrixFactory
-      //       is storing GIDs of each row in a std::set (until fill complete time).
-      for (const auto& it : sideSetEquations) {
-        int eq = it.first;
-        row = dofMgr.getGlobalDOF(stk_gid(rowNode), eq);
-        colAV = Teuchos::arrayView(&row, 1);
-        m_jac_factory->insertGlobalIndices(row, colAV);
-      }
     }
-  }
 
-  if (sideSetEquations.size() > 0) {
-    const auto lmn = getLayeredMeshNumbering();
-    const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
-    const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
-    const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
+    // Loop over all side sets where this eqn is defined
+    for (const auto& ss_name : it.second) {
+      const auto& ss_sol_dof_mgr = getNewDOFManager(solution_dof_name(),ss_name);
+      const int num_sides = ss_sol_dof_mgr->cell_indexer()->getNumLocalElements();
+      const auto& eq_offsets = ss_sol_dof_mgr->getGIDFieldOffsets(side_eq);
+      // Loop over all sides in this side set
+      for (int iside=0; iside<num_sides; ++iside) {
+        ss_sol_dof_mgr->getElementGIDs(iside,side_gids);
+        const LO elem_LID = get_elem_lid(iside);
 
-    // iterator over all sideSet-defined equations
-    for (const auto& it : sideSetEquations) {
-      // Get the eq number
-      int eq = it.first;
+        const int num_side_nodes = side_gids.size();
+        rows.resize(num_side_nodes);
+        cols.resize(num_side_nodes);
 
-      // In case we only have equations on side sets (no "volume" eqns),
-      // there would be problem with linear solvers. To avoid this, we
-      // put one diagonal entry for every side set equation.
-      // NOTE: some nodes will be processed twice, but this is safe:
-      //       the redundant indices will be discarded
-      for (int inode=0; inode<numOverlapNodes; ++inode) {
-        const GO node_gid = ov_node_indexer->getGlobalElement(inode);
-        row                    = dofMgr.getGlobalDOF(node_gid, eq);
-        colAV                  = Teuchos::arrayView(&row, 1);
-        m_jac_factory->insertGlobalIndices(row, colAV);
-      }
+        if (allowColumnCoupling) {
+          const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
+          // Assume the worst, and add coupling with all volume eqns over the whole column
+          for (int eq : volumeEqns) {
+            // Note: only add nodes at bot of element, since top is handled by next layer.
+            //       At last layer, handle both.
+            const auto& bot_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,lmn->bot_side_pos);
+            for (int il=0; il<lnm->numLayers; ++il) {
+              const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
+              sol_dof_mgr->getElementGIDs(layer_elem_lid,elem_gids);
 
-      // Do a first loop on all sideset, to establish whether column couplling is allowed.
-      // We store the sides while we're at it, to avoid redoing it later
-      // Note: column coupling means that 1) the mesh is layered, and 2) the ss eqn is
-      //       defined ONLY on side sets at the top or bottom.
-      bool allowColumnCoupling = !lmn.is_null();
-      std::map<std::string,std::vector<stk::mesh::Entity>> all_sides;
-      GO baseId, iLayer;
-      for (const auto& ss_name : it.second) {
-        stk::mesh::Part& part =
-            *stkMeshStruct->ssPartVec.find(ss_name)->second;
-
-        // Get all owned sides in this side set
-        stk::mesh::Selector select_owned_in_sspart =
-            stk::mesh::Selector(part) &
-            stk::mesh::Selector(metaData->locally_owned_part());
-
-        auto& sides = all_sides[ss_name];
-        stk::mesh::get_selected_entities(
-            select_owned_in_sspart,
-            bulkData->buckets(metaData->side_rank()),
-            sides);  // store the result in "sides"
-
-        if (allowColumnCoupling && sides.size()>0) {
-          const auto& side = sides[0];
-          const auto& node = bulkData->begin_nodes(side)[0];
-          lmn->getIndices(stk_gid(node),baseId,iLayer);
-          allowColumnCoupling = (iLayer==0 || iLayer==lmn->numLayers);
-        }
-      }
-
-      for (const auto& ss_name : it.second) {
-        const auto& sides = all_sides[ss_name];
-
-        // Loop on all the sides of this sideset
-        for (const auto& sidee : sides) {
-          stk::mesh::Entity const* node_rels = bulkData->begin_nodes(sidee);
-          const size_t             num_nodes = bulkData->num_nodes(sidee);
-
-          // loop over local nodes of the side (row)
-          for (std::size_t i = 0; i < num_nodes; i++) {
-            stk::mesh::Entity rowNode = node_rels[i];
-            row                       = dofMgr.getGlobalDOF(stk_gid(rowNode), eq);
-
-            // loop over local nodes of the side (col)
-            for (std::size_t j = 0; j < num_nodes; j++) {
-              stk::mesh::Entity colNode = node_rels[j];
-
-              // TODO: this is to accommodate the scenario where the side equation is coupled with
-              //       the volume equations over a whole column of a layered mesh. However, this
-              //       introduces pointless nonzeros if such coupling is not needed.
-              //       The only way to fix this would be to access more information from the problem.
-              //       Until then, couple with *all* equations, over the whole column.
-              if (allowColumnCoupling) {
-                // It's a layered mesh. Assume the worst, and add coupling of the whole column
-                // with all the equations.
-                lmn->getIndices(stk_gid(colNode),baseId,iLayer);
-                for (int il=0; il<=lmn->numLayers; ++il) {
-                  const GO node3d = lmn->getId(baseId,il);
-                  for (unsigned int m=0; m<neq; ++m) {
-                    col = dofMgr.getGlobalDOF(node3d, m);
-                    m_jac_factory->insertGlobalIndices(
-                        row, Teuchos::arrayView(&col, 1));
-                    m_jac_factory->insertGlobalIndices(
-                        col, Teuchos::arrayView(&row, 1));
-                  }
-                }
-              } else {
-                // Not a layered mesh, or the eqn is not defined on top/bottom.
-                // Couple locally with volume eqn and the other ss eqn on this sideSet
-                for (auto m : globalEqns) {
-                  col = dofMgr.getGlobalDOF(stk_gid(colNode), m);
-                  m_jac_factory->insertGlobalIndices(
-                      row, Teuchos::arrayView(&col, 1));
-                  m_jac_factory->insertGlobalIndices(
-                      col, Teuchos::arrayView(&row, 1));
-                }
-                for (auto ssEqIt : sideSetEquations) {
-                  for (const auto& ssEq_ss_name : ssEqIt.second) {
-                    if (ssEq_ss_name == ss_name) {
-                      col = dofMgr.getGlobalDOF(stk_gid(colNode),ssEqIt.first);
-                      m_jac_factory->insertGlobalIndices(
-                          row, Teuchos::arrayView(&col, 1));
-                      m_jac_factory->insertGlobalIndices(
-                          col, Teuchos::arrayView(&row, 1));
-                    }
-                  }
+              // IMPORTANT: couple one dof at a time, since we only couple dofs *vertically aligned*.
+              for (int node=0; node<num_side_nodes; ++node) {
+                m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[bot_offsets[node]],true);
+              }
+              if (il==(lmn->numLayers-1)) {
+                const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq_col,getNumDim()-1,lmn->top_side_pos);
+                for (int node=0; node<num_side_nodes; ++node) {
+                  m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[top_offsets[node]],true);
                 }
               }
             }
           }
+        }
+
+        // Add local coupling (on this side) with all eqns
+        for (int node=0; node<num_side_nodes; ++node) {
+          rows[node] = side_gids[eq_offsets[node]];
+        }
+        // NOTE: we could be fancier, and couple only with volume eqn or side eqn that are defined
+        //       on this side set. However, if a sideset is a subset of another, we might miss the
+        //       coupling since the side sets have different names. We'd have to inspect if a ss is
+        //       contained in the other, but that starts to get too involved. And we might have to
+        //       redo this when we assemble by blocks.
+        for (int eq_col=0; eq_col<neq; ++eq_col) {
+          const auto& col_offsets = ss_dof_mgr->getGIDFieldOffsets(eq_col);
+          for (int inode=0; inode<num_side_nodes; ++inode) {
+            cols[inode] = side_gids[col_offsets[inode]];
+          }
+
+          m_jac_factory->insertGlobalIndices(rows(),cols(),true);
         }
       }
     }
