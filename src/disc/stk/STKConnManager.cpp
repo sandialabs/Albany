@@ -340,16 +340,16 @@ int STKConnManager::elementLocalId(stk::mesh::Entity elmt) const
 
 void STKConnManager::getMyElements(std::vector<stk::mesh::Entity> & elements) const
 {
-  // setup local ownership
-  stk::mesh::Selector ownedPart;
+  stk::mesh::Selector selector;
   for (const auto& it : m_parts) {
-    ownedPart |= *it.second;
+    selector |= *it.second;
   }
-  ownedPart &= m_metaData->locally_owned_part();
+  selector &= m_metaData->locally_owned_part();
 
-  // grab elements
-  const auto ELEM_RANK = m_parts_topo.rank();
-  stk::mesh::get_selected_entities(ownedPart, m_bulkData->buckets(ELEM_RANK), elements);
+  // NOTE: it could be that rank!=stk::topology::ELEM_RANK. E.g, we could have
+  //       have rank=EDGE_RANK or even rank=NODE_RANK
+  const auto rank = m_parts_topo.rank();
+  stk::mesh::get_selected_entities(selector, m_bulkData->buckets(rank), elements);
 }
 
 void STKConnManager::
@@ -361,12 +361,13 @@ getMyElements (const std::string & blockID,
 
   const auto& part = *m_parts.at(blockID);
 
-  // setup local ownership
-  stk::mesh::Selector ownedBlock = m_metaData->locally_owned_part() & part;
+  stk::mesh::Selector selector = part;
+  selector &= m_metaData->locally_owned_part();
 
-  // grab elements
+  // NOTE: it could be that rank!=stk::topology::ELEM_RANK. E.g, we could have
+  //       have rank=EDGE_RANK or even rank=NODE_RANK
   const auto rank = part.primary_entity_rank();
-  stk::mesh::get_selected_entities(ownedBlock, m_bulkData->buckets(rank), elements);
+  stk::mesh::get_selected_entities(selector, m_bulkData->buckets(rank), elements);
 }
 
 stk::mesh::EntityId STKConnManager::
