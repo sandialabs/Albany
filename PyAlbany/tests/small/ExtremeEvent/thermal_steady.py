@@ -1,4 +1,5 @@
 import numpy as np
+from mpi4py import MPI
 from PyAlbany import Utils
 from PyAlbany import ExtremeEvent as ee
 import os

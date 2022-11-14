@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 import os
+from mpi4py import MPI
 from PyAlbany import Utils
 from PyAlbany import AlbanyInterface as pa
 from PyAlbany.RandomizedCompression import singlePass

@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+from mpi4py import MPI
 from PyAlbany import Utils
 import os
 
