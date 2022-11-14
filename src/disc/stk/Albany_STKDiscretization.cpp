@@ -1844,18 +1844,14 @@ STKDiscretization::computeSideSets()
     sideSets[i].clear();  // empty the ith map
   }
 
-  // iterator over all side_rank parts found in the mesh
-  std::map<std::string, stk::mesh::Part*>::iterator ss =
-      stkMeshStruct->ssPartVec.begin();
-
   int numBuckets = wsEBNames.size();
 
   sideSets.resize(numBuckets);  // Need a sideset list per workset
 
-  while (ss != stkMeshStruct->ssPartVec.end()) {
+  for (const auto& ss : stkMeshStruct->ssPartVec) {
     // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
-        stk::mesh::Selector(*(ss->second)) &
+        stk::mesh::Selector(*(ss.second)) &
         stk::mesh::Selector(metaData->locally_owned_part());
 
     std::vector<stk::mesh::Entity> sides;
@@ -1864,7 +1860,7 @@ STKDiscretization::computeSideSets()
         bulkData->buckets(metaData->side_rank()),
         sides);
 
-    *out << "STKDisc: sideset " << ss->first << " has size " << sides.size()
+    *out << "STKDisc: sideset " << ss.first << " has size " << sides.size()
          << "  on Proc 0." << std::endl;
 
     // loop over the sides to see what they are, then fill in the data holder
@@ -1879,7 +1875,7 @@ STKDiscretization::computeSideSets()
           bulkData->num_elements(sidee) != 1,
           std::logic_error,
           "STKDisc: cannot figure out side set topology for side set "
-              << ss->first << std::endl);
+              << ss.first << std::endl);
 
       stk::mesh::Entity elem = bulkData->begin_elements(sidee)[0];
 
@@ -1911,24 +1907,10 @@ STKDiscretization::computeSideSets()
       sStruct.elem_ebIndex =
           stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[workset]];
 
-      SideSetList& ssList = sideSets[workset];  // Get a ref to the side set map for this ws
-
-      SideSetList::iterator it = ssList.find(ss->first);  // Get an iterator to the correct sideset (if any)
-
-      if (it != ssList.end()) {
-        // The sideset has already been created
-        it->second.push_back(sStruct);  // Save this side to the vector that
-                                        // belongs to the name ss->first
-      } else {
-        // Add the key ss->first to the map, and the side vector to that map
-        std::vector<SideStruct> tmpSSVec;
-        tmpSSVec.push_back(sStruct);
-
-        ssList.insert(SideSetList::value_type(ss->first, tmpSSVec));
-      }
+      // Get or create the vector of side structs for this side set on this workset
+      auto& ss_vec = sideSets[workset][ss.first];
+      ss_vec.push_back(sStruct);
     }
-
-    ss++;
   }
 
   // =============================================================
