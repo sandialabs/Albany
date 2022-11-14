@@ -8,6 +8,8 @@
 #define ALBANY_STK_CONN_MANAGER_HPP
 
 #include "Albany_ConnManager.hpp"
+#include "Albany_ShardsHack.hpp"
+
 #include "stk_mesh/base/MetaData.hpp"
 #include "stk_mesh/base/BulkData.hpp"
 #include "Teuchos_RCP.hpp"
@@ -103,7 +105,13 @@ public:
     elementBlockTopologies.resize(0);
     elementBlockTopologies.reserve(m_parts.size());
     for (const auto& it : m_parts) {
-      elementBlockTopologies.push_back(stk::mesh::get_cell_topology(it.second->topology()));
+      if (it.second->primary_entity_rank()==stk::topology::NODE_RANK) {
+        // Hack, to allow having a DOFManager/ConnManager defined on an arbitrary nodeset,
+        // rather than over some sort of elements
+        elementBlockTopologies.push_back(shards::CellTopology(shards::getCellTopologyData<shards::Node0D>()));
+      } else {
+        elementBlockTopologies.push_back(stk::mesh::get_cell_topology(it.second->topology()));
+      }
     }
   }
 
