@@ -75,6 +75,12 @@ public:
     return getNodeNewDOFManager(whole_mesh);
   }
 
+  // Check if a dof manager for a particular field on a particular part exists
+  bool hasDOFManager (const std::string& field_name, const std::string& part_name) const {
+    return m_dof_managers.count(field_name)>0 &&
+           m_dof_managers.at(field_name).count(part_name)>0;
+  }
+
   //! Get node vector space (owned and overlapped)
   Teuchos::RCP<const Thyra_VectorSpace>
   getNodeVectorSpace() const

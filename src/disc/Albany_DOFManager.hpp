@@ -64,6 +64,10 @@ public:
     return m_conn_mgr->get_topology();
   }
 
+  Teuchos::RCP<const ConnManager> getAlbanyConnManager() const {
+    return m_conn_mgr;
+  }
+
 private:
   Teuchos::RCP<const Teuchos_Comm>          m_comm;
 

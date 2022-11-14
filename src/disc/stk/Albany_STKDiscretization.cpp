@@ -2274,44 +2274,46 @@ STKDiscretization::determine_side_pos(
 void
 STKDiscretization::computeNodeSets()
 {
-  std::map<std::string, stk::mesh::Part*>::iterator ns =
-      stkMeshStruct->nsPartVec.begin();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
-      stkMeshStruct->getCoordinatesField();
+  auto coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  auto node_indexer = createGlobalLocalIndexer(m_node_vs);
-  // A dof manager, to get the correct numbering (interleaved vs blocked)
-  const auto dofMgr = getDOFManager(solution_dof_name());
-  while (ns != stkMeshStruct->nsPartVec.end()) {  // Iterate over Node Sets
-    // Get all owned nodes in this node set
-    stk::mesh::Selector select_owned_in_nspart =
-        stk::mesh::Selector(*(ns->second)) &
-        stk::mesh::Selector(metaData->locally_owned_part());
+  // Loop over all node sets
+  for (const auto& ns : stkMeshStruct->nsPartVec) {
+    auto& ns_gids = nodeSetGIDs[ns.first];
+    auto& ns_eq_lids = nodeSets[ns.first];
+    auto& ns_coords = nodeSetCoords[ns.first];
 
-    std::vector<stk::mesh::Entity> nodes;
-    stk::mesh::get_selected_entities(
-        select_owned_in_nspart,
-        bulkData->buckets(stk::topology::NODE_RANK),
-        nodes);
-
-    nodeSets[ns->first].resize(nodes.size());
-    nodeSetGIDs[ns->first].resize(nodes.size());
-    nodeSetCoords[ns->first].resize(nodes.size());
-    //    nodeSetIDs.push_back(ns->first); // Grab string ID
-    *out << "STKDisc: nodeset " << ns->first << " has size " << nodes.size()
-         << "  on Proc 0." << std::endl;
-    for (std::size_t i = 0; i < nodes.size(); i++) {
-      GO  node_gid              = bulkData->identifier(nodes[i]) - 1;
-      int node_lid              = node_indexer->getLocalElement(node_gid);
-      nodeSetGIDs[ns->first][i] = node_gid;
-      nodeSets[ns->first][i].resize(neq);
-      for (std::size_t eq = 0; eq < neq; ++eq) {
-        nodeSets[ns->first][i][eq] = dofMgr.getLocalDOF(node_lid, eq);
-      }
-      nodeSetCoords[ns->first][i] =
-          stk::mesh::field_data(*coordinates_field, nodes[i]);
+    // Get a solution dof manager for this node set. If one doesn't exist, create it.
+    Teuchos::RCP<const DOFManager> ns_sol_dof_mgr;
+    if (not hasDOFManager(solution_dof_name(),ns.first)) {
+      ns_sol_dof_mgr = create_dof_mgr(ns.first,nodes_dof_name(),FE_Type::P1,neq);
+    } else {
+      ns_sol_dof_mgr = getNewDOFManager(solution_dof_name(),ns.first);
     }
-    ns++;
+
+    ns_gids = ns_sol_dof_mgr->getAlbanyConnManager()->getElementsInBlock(ns.first);
+    const int num_nodes = ns_gids.size();
+    *out << "STKDisc: nodeset " << ns.first << " has size " << ns_gids.size()
+         << "  on Proc 0." << std::endl;
+
+    ns_eq_lids.resize(num_nodes,std::vector<int>(neq));
+    ns_coords.resize(num_nodes);
+
+    auto sol_indexer = getNewDOFManager()->indexer();
+    std::vector<GO> node_eq_gids;
+    for (int i=0; i<num_nodes; ++i) {
+      ns_eq_lids.push_back(std::vector<int>(neq));
+
+      // NOTE: we CAN'T grab LIDs directly, since this dof mgr may have fewer
+      //       elements than the solution itself, and we want the LIDs in the
+      //       solution array. Hence, we have to get GIDs and manually convert.
+      ns_sol_dof_mgr->getElementGIDs(i,node_eq_gids);
+      for (int eq=0; eq<neq; ++eq) {
+        ns_eq_lids[i][eq] = sol_indexer->getLocalElement(node_eq_gids[eq]);
+      }
+
+      auto node = bulkData->get_entity(stk::topology::NODE_RANK,ns_gids[i]+1);
+      ns_coords.push_back(stk::mesh::field_data(*coordinates_field, node));
+    }
   }
 }
 
