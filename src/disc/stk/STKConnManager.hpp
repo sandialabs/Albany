@@ -193,7 +193,7 @@ protected:
   void buildMaxEntityIds();
 
   // Assing local ids to elements
-  void buildLocalElementIDs();
+  void buildLocalElementIDs(const std::vector<stk::mesh::Entity>& elements);
 
   std::vector<stk::mesh::Entity>  m_elements;
 

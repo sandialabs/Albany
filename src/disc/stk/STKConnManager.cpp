@@ -67,7 +67,10 @@ STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
   m_parts_names = part_names;
 
   buildMaxEntityIds();
-  buildLocalElementIDs();
+
+  // get element info from STK_Interface
+  // object and build a local element mapping.
+  buildLocalElementMapping();
 }
 
 Teuchos::RCP<panzer::ConnManager>
@@ -118,7 +121,10 @@ void STKConnManager::buildLocalElementMapping()
     // 2. Concatenate them into element LID lookup table
     m_elements.insert(m_elements.end(),blockElmts.begin(),blockElmts.end());
 
-    // 3. Build block to LID map
+    // 3. Assign local ids
+    buildLocalElementIDs(blockElmts);
+
+    // 4. Build blockName->elemLIDs map
     auto& blockElems = m_elementBlocks[blockId];
     blockElems.reserve(blockElmts.size());
     for (const auto& elem : blockElmts) {
@@ -224,10 +230,6 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
       "[STKConnManager] Error! Field pattern incompatible with stored parts.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
       "  - Parts topo dim: " + std::to_string(m_parts_topo.dimension()) + "\n");
-
-  // get element info from STK_Interface
-  // object and build a local element mapping.
-  buildLocalElementMapping();
 
   // Build sub cell ID counts and offsets
   //    ID counts = How many IDs belong on each subcell (number of mesh DOF used)
@@ -376,13 +378,9 @@ getMaxEntityId (const stk::mesh::EntityRank entityRank) const
   return m_maxEntityId[entityRank];
 }
 
-void STKConnManager::buildLocalElementIDs()
+void STKConnManager::buildLocalElementIDs(const std::vector<stk::mesh::Entity>& elements)
 {
-  int currentLocalId = 0;
-
-  // might be better (faster) to do this by buckets
-  std::vector<stk::mesh::Entity> elements;
-  getMyElements(elements);
+  int currentLocalId = m_localIDHash.size();
 
   for (auto element : elements) {
     m_localIDHash[m_bulkData->identifier(element)] = currentLocalId;
