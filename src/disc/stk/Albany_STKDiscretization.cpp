@@ -1163,28 +1163,6 @@ void STKDiscretization::computeVectorSpaces()
 
   coordinates.resize(3 * getLocalSubdim(m_overlap_node_vs));
 
-  auto create_dof_mgr = [&] (const std::string& part_name,
-                             const std::string& field_name,
-                             const FE_Type fe_type,
-                             const int dof_dim)
-  {
-    auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
-    auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
-
-    const auto topology = conn_mgr->get_topology();
-    const auto fp = createFieldPattern (fe_type, topology);
-
-    // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-    //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
-    for (int i=0; i<dof_dim; ++i) {
-      dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
-    }
-
-    dof_mgr->build();
-
-    return dof_mgr;
-  };
-
   // ====================== NEW DOF MANAGER ========================= //
   for (const auto& it : nodalDOFsStructContainer.fieldToMap) {
     const auto& field_name = it.first;
@@ -2642,6 +2620,30 @@ STKDiscretization::setFieldData(
   } else {
     ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }
+}
+
+Teuchos::RCP<DOFManager>
+STKDiscretization::
+create_dof_mgr (const std::string& part_name,
+                const std::string& field_name,
+                const FE_Type fe_type,
+                const int dof_dim)
+{
+  auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
+  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
+
+  const auto topology = conn_mgr->get_topology();
+  const auto fp = createFieldPattern (fe_type, topology);
+
+  // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
+  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  for (int i=0; i<dof_dim; ++i) {
+    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+  }
+
+  dof_mgr->build();
+
+  return dof_mgr;
 }
 
 }  // namespace Albany

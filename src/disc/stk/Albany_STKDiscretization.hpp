@@ -552,6 +552,12 @@ class STKDiscretization : public AbstractDiscretization
 
   double previous_time_label;
 
+  Teuchos::RCP<DOFManager>
+  create_dof_mgr (const std::string& part_name,
+                  const std::string& field_name,
+                  const FE_Type fe_type,
+                  const int dof_dim);
+
   // ==================== Members =================== //
 
   Teuchos::RCP<Teuchos::FancyOStream> out;
