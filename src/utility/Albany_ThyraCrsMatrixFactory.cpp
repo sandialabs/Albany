@@ -107,7 +107,7 @@ insertGlobalIndices (const Teuchos::ArrayView<const GO>& rows,
   for (const GO row : rows) {
     insertGlobalIndices(row,cols);
   }
-  if (symmtric) {
+  if (symmetric) {
     for (const GO col : cols) {
       insertGlobalIndices(col,rows);
     }

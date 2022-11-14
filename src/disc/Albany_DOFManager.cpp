@@ -129,6 +129,16 @@ DOFManager::ov_indexer () const
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
+DOFManager::cell_vs () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_built, std::runtime_error,
+      "Error! DOFManager::build was not yet called.\n");
+
+  return m_cell_indexer->getVectorSpace();
+}
+
+
+Teuchos::RCP<const Thyra_VectorSpace>
 DOFManager::vs () const
 {
   TEUCHOS_TEST_FOR_EXCEPTION (not m_built, std::runtime_error,

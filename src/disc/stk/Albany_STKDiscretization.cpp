@@ -1246,7 +1246,7 @@ STKDiscretization::computeGraphs()
 
   // Determine which equations are defined on the whole domain,
   // as well as what eqn are on each sideset
-  std::vector<int> globalEqns;
+  std::vector<int> volumeEqns;
   std::map<std::string,std::vector<int>> ss_to_eqns;
   for (unsigned int k(0); k < neq; ++k) {
     if (sideSetEquations.find(k) == sideSetEquations.end()) {
@@ -1257,7 +1257,7 @@ STKDiscretization::computeGraphs()
 
   // The global solution dof manager
   const auto sol_dof_mgr = getNewDOFManager();
-  const int num_elems = sol_dof_mgr->cell_vs()->getNumLocalElements();
+  const int num_elems = getLocalSubdim(sol_dof_mgr->cell_vs());
   std::vector<GO> elem_gids,side_gids;
   const int num_nodes = sol_dof_mgr->elem_dof_lids().host().extent(1) / neq;
   cols.resize(num_nodes);
@@ -1277,7 +1277,7 @@ STKDiscretization::computeGraphs()
 
       // Couple this eq with other global eqns
       for (int jeq=0; jeq<ieq; ++jeq) {
-        const auto& col_gids_offsets = sol_dof_mgr->getGIDFieldOffsets(eq_col);
+        const auto& col_gids_offsets = sol_dof_mgr->getGIDFieldOffsets(jeq);
         for (int inode=0; inode<num_nodes; ++inode) {
           rows[inode] = elem_gids[row_gids_offsets[inode]];
           cols[inode] = elem_gids[col_gids_offsets[inode]];
@@ -1293,7 +1293,7 @@ STKDiscretization::computeGraphs()
       const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
       const int num_nodes = eq_offsets.size();
       for (int node=0; node<num_nodes; ++node) {
-        row = elem_gids[eq_offsets[node]];
+        GO row = elem_gids[eq_offsets[node]];
         m_jac_factory->insertGlobalIndices(row,row,false);
       }
     }
@@ -1333,11 +1333,11 @@ STKDiscretization::computeGraphs()
     // A side eqn can be coupled to the whole column if
     //   1) the mesh is layered, and
     //   2) all sidesets where it's defined are on the top or bottom
-    allowColumnCoupling = not lmn.is_null();
+    bool allowColumnCoupling = not lmn.is_null();
     Teuchos::RCP<LayeredMeshNumbering<int>> cell_layers_data_lid;
     if (not lmn.is_null()) {
       for (const auto& ss_name : it.second) {
-        const auto& ss_node_dof_mgr = getNewDOFManager(node_dof_name(),ss_name);
+        const auto& ss_node_dof_mgr = getNewDOFManager(nodes_dof_name(),ss_name);
         if (ss_node_dof_mgr->cell_indexer()->getNumLocalElements()==0) {
           continue;
         }
@@ -1373,9 +1373,14 @@ STKDiscretization::computeGraphs()
           // Assume the worst, and add coupling with all volume eqns over the whole column
           for (int eq : volumeEqns) {
             // Note: only add nodes at bot of element, since top is handled by next layer.
-            //       At last layer, handle both.
+            //       At last layer, handle both. It would be ok to do both, since the graph
+            //       factory discards duplicates, but why do things twice? Also, we already
+            //       *need* to process one layer at a time in each cell, to ensure we know
+            //       which basal node each dof corresponds to, so we can't do away with the
+            //       bot/top offsets arrays.
             const auto& bot_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,lmn->bot_side_pos);
-            for (int il=0; il<lnm->numLayers; ++il) {
+            const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,lmn->top_side_pos);
+            for (int il=0; il<lmn->numLayers; ++il) {
               const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
               sol_dof_mgr->getElementGIDs(layer_elem_lid,elem_gids);
 
@@ -1383,12 +1388,11 @@ STKDiscretization::computeGraphs()
               for (int node=0; node<num_side_nodes; ++node) {
                 m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[bot_offsets[node]],true);
               }
-              if (il==(lmn->numLayers-1)) {
-                const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq_col,getNumDim()-1,lmn->top_side_pos);
-                for (int node=0; node<num_side_nodes; ++node) {
-                  m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[top_offsets[node]],true);
-                }
-              }
+            }
+            const LO last_layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,lmn->numLayers);
+            sol_dof_mgr->getElementGIDs(last_layer_elem_lid,elem_gids);
+            for (int node=0; node<num_side_nodes; ++node) {
+              m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[top_offsets[node]],true);
             }
           }
         }
@@ -1403,7 +1407,7 @@ STKDiscretization::computeGraphs()
         //       contained in the other, but that starts to get too involved. And we might have to
         //       redo this when we assemble by blocks.
         for (int eq_col=0; eq_col<neq; ++eq_col) {
-          const auto& col_offsets = ss_dof_mgr->getGIDFieldOffsets(eq_col);
+          const auto& col_offsets = ss_sol_dof_mgr->getGIDFieldOffsets(eq_col);
           for (int inode=0; inode<num_side_nodes; ++inode) {
             cols[inode] = side_gids[col_offsets[inode]];
           }
