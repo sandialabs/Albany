@@ -583,7 +583,7 @@ class STKDiscretization : public AbstractDiscretization
   NodalDOFsStructContainer nodalDOFsStructContainer;
 
   //! Number of equations (and unknowns) per node
-  const unsigned int neq;
+  const int neq;
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> sideSetEquations;

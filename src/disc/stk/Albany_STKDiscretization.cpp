@@ -1226,7 +1226,7 @@ STKDiscretization::computeGraphs()
   // as well as what eqn are on each sideset
   std::vector<int> volumeEqns;
   std::map<std::string,std::vector<int>> ss_to_eqns;
-  for (unsigned int k(0); k < neq; ++k) {
+  for (int k=0; k < neq; ++k) {
     if (sideSetEquations.find(k) == sideSetEquations.end()) {
       volumeEqns.push_back(k);
     }
@@ -1634,7 +1634,7 @@ STKDiscretization::computeWorksetInfo()
 
         wsElNodeID[b][i][j] = node_array((int)i, j);
 
-        for (int eq = 0; eq < static_cast<int>(neq); ++eq)
+        for (int eq = 0; eq < neq; ++eq)
           wsElNodeEqID[b](i, j, eq) = node_eq_array((int)i, j, eq);
       }
     }
@@ -2459,7 +2459,7 @@ STKDiscretization::buildSideSetProjectors()
           ss_node_gid =
               disc.stk_gid(ss_cell_nodes[node_numeration_map.at(side_gid)[i]]);
 
-          for (int eq(0); eq < static_cast<int>(neq); ++eq) {
+          for (int eq(0); eq < neq; ++eq) {
             cols[0] = dofMgr.getGlobalDOF(node_gid, eq);
             const GO row = ss_dofMgr.getGlobalDOF(ss_node_gid, eq);
             ov_graphP->insertGlobalIndices(row, cols());
