@@ -1,0 +1,509 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+    Write Residual to MatrixMarket: -1
+    Write Jacobian to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 2
+    Solution Method: Steady
+    Compute Sensitivities: true
+    Name: LandIce Enthalpy 3D
+    Basal Side Name: basalside
+    Needs Dissipation: true
+    Needs Basal Friction: true
+    Required Fields: [ice_thickness]
+    Required Basal Fields: [ice_thickness]
+    Dirichlet BCs:
+      DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
+    LandIce Viscosity:
+      Extract Strain Rate Sq: true
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 0.5e+00
+      # Continuous Homotopy With Constant Initial Viscosity: true
+      # Coefficient For Continuous Homotopy: 8.0e+00
+      Glen's Law A: 2.400304414e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.0e+00
+      Flow Rate Type: Temperature Based
+    LandIce Physical Parameters:
+      Conductivity of ice: 2.1e+00
+      Diffusivity temperate ice: 1.1e-08
+      Heat capacity of ice: 2.009e+03
+      Water Density: 1.0e+03
+      Ice Density: 9.16e+02
+      Gravity Acceleration: 9.81e+00
+      Reference Temperature: 2.65e+02
+      Clausius-Clapeyron Coefficient: 7.9e-08
+      Ice Latent Heat Of Fusion: 3.34e+05
+      Permeability factor: 1.0e-12 #1e-12
+      Viscosity of water: 1.8e-03
+      Omega exponent alpha: 2.0e+00
+      Diffusivity homotopy exponent: -1.1e+00
+    LandIce Enthalpy:
+      Regularization:
+        Flux Regularization:
+          alpha: 2.5
+          beta: 0.0e+02
+        Basal Melting Regularization:
+          alpha: 2.5
+          beta: 0.0e+02
+      Stabilization:
+        Type: Upwind
+        Parameter Delta: 0.5
+      Bed Lubrication:
+        Type: Dry
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: Glen's Law Homotopy Parameter
+    Response Functions:
+      #Collection Method: Sum Responses
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
+    Workset Size: -1
+    Method: Extruded
+    Surface Height Field Name: surface_height
+    Number Of Time Derivatives: 0
+    Cubature Degree: 4
+    Exodus Output File Name: ./humboldt_enthalpy.exo
+    Element Shape: Wedge
+    Use Serial Mesh: true
+    Columnwise Ordering: true
+    NumLayers: 2
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, surface_air_temperature]
+    Basal Node Fields Ranks: [1, 1, 1, 1]
+    Interpolate Basal Node Layered Fields: [velocity, vertical_velocity]
+    Basal Node Layered Fields Ranks: [2, 1]
+
+    Use Glimmer Spacing: true
+    Required Fields Info:
+      Number Of Fields: 10
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2:
+        Field Name: surface_enthalpy
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 3:
+        Field Name: surface_air_temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 4:
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 5:
+        Field Name: melting_temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 6:
+        Field Name: phi
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 7:
+        Field Name: heat_dissipation
+        Field Type: Elem Scalar
+        Field Origin: Mesh
+      Field 8:
+        Field Name: Diff Enth
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 9:
+        Field Name: temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations:
+      Side Sets: [basalside]
+      basalside:
+        Workset Size: -1
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Restart Index: 1
+        Use Serial Mesh: ${USE_SERIAL_MESH}
+        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
+        Cubature Degree: 4
+        Required Fields Info:
+          Number Of Fields: 7
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
+          Field 1:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
+          Field 2:
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/basal_friction_zeroed.ascii
+          Field 3:
+            Field Name: surface_air_temperature
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_air_temperature.ascii
+          Field 4:
+            Field Name: heat_flux
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/basal_heat_flux.ascii
+          Field 5:
+            Number Of Layers: 8
+            Vector Dim: 2
+            Field Name: velocity
+            Field Type: Node Layered Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/horizontal_velocity.ascii
+          Field 6:
+            Number Of Layers: 8
+            Field Name: vertical_velocity
+            Field Type: Node Layered Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/vertical_velocity.ascii
+  Piro:
+    Sensitivity Method: Adjoint
+    Write Only Converged Solution: false
+    NOX:
+      Thyra Group Options:
+        Function Scaling: None
+        Update Row Sum Scaling: Before Each Nonlinear Solve
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 1
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-05
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 60
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: iluk level-of-fill': 0
+                MueLu: 
+                  Matrix: 
+                    PDE equations: 1
+                  Factories: 
+                    mySemiCoarsenPFact: 
+                      factory: SemiCoarsenPFactory
+                      'semicoarsen: coarsen rate': 14                     # approx coarsen rate for semicoarsening P. constant
+                      'semicoarsen: piecewise constant': false            # or linear are alterantives to matrix-dependent P. 
+                      'semicoarsen: piecewise linear': false              # Normally, R=P^T but can use non-symmetric matrix-
+                      'semicoarsen: calculate nonsym restriction': false  # depdendent R. At most one of these 3 can be true.
+                    mySemiCoarsenPToBuildRFact: 
+                      factory: SemiCoarsenPFactory                        # If we wish R = Phat^T where Phat != P,  we need a 
+                      'semicoarsen: coarsen rate': 14                     # Phat  factory.
+                      'semicoarsen: piecewise constant': true
+                      'semicoarsen: piecewise linear': false
+                    myAggregationFact:                                    # aggregation scheme for full coarsening that occurs
+                      factory: UncoupledAggregationFactory                # on coarser levels (after first semicoasening)
+                      'aggregation: ordering': graph
+                      'aggregation: max selected neighbors': 0
+                      'aggregation: min agg size': 2
+                      'aggregation: max agg size': 299
+                      'aggregation: phase3 avoid singletons': true
+                    myCoarseMap:                                          # coarser full coarsening factory to build maps
+                      factory: CoarseMapFactory
+                      Aggregates: myAggregationFact
+                    myTentativePFact:                                     # needed by coarser full coarsening smoothed 
+                      'tentative: calculate qr': true                     # aggregation (mySaFullCoarseningPFact) factory.
+                      factory: TentativePFactory                          # an myPgFullCoarseningPandRFact
+                      Aggregates: myAggregationFact
+                      CoarseMap: myCoarseMap
+                    mySaFullCoarsenPFact:                                 # Standard smoothed aggregation interpolation
+                      'sa: eigenvalue estimate num iterations': 10        # algorithm for  coarser full coarsening
+                      'sa: damping factor': 1.3333                        # levels. Set damping factor to 0 for piecewise
+                      factory: SaPFactory                                 #  constant full coarsening interpolation
+                      P: myTentativePFact
+                    myPgFullCoarsenPandRFact:                             # An alternative non-symmetric version of 
+                      factory: PgPFactory                                 # smoothed aggregatoin that also generates
+                      P: myTentativePFact                                 # restriction operators
+                    myFullCoarsenTransferCoordsFact: 
+                      factory: CoordinatesTransferFactory
+                      CoarseMap: myCoarseMap
+                      Aggregates: myAggregationFact
+                    myChoosePFact:                                        # Used to distinguish betwwen the finest levels
+                      factory: TogglePFactory                             # that invoke semicoasening schemes and the 
+                      'semicoarsen: number of levels': 1                  # coarser levels that use full coarsening
+                      TransferFactories: 
+                        P1: mySemiCoarsenPFact
+                        P2: myPgFullCoarsenPandRFact
+                        Ptent1: mySemiCoarsenPFact
+                        Ptent2: myTentativePFact
+                        Nullspace1: mySemiCoarsenPFact
+                        Nullspace2: myTentativePFact
+                    myChoosePToBuildRFact:                                # needed when different algorithms are needed
+                      factory: TogglePFactory                             # to generate Phat to define R = Phat^T
+                      'semicoarsen: number of levels': 1
+                      TransferFactories: 
+                        P1: mySemiCoarsenPToBuildRFact
+                        P2: mySaFullCoarsenPFact
+                        Ptent1: mySemiCoarsenPToBuildRFact
+                        Ptent2: myTentativePFact
+                        Nullspace1: mySemiCoarsenPToBuildRFact
+                        Nullspace2: myTentativePFact
+                    myRestrictorFact:                                     # parent restriction factory. First checks 
+                      factory: RfromP_Or_TransP                           # if restriction matrix already constructed
+                      P: myChoosePFact                                    # when prolongator was created (e.g., with 
+                      RfromPfactory: myChoosePFact                        # PgPFactory or SemiCoarsenPFactory) and if
+                    myChooseTransferCoordinatesFact:                      # so takes this. Otherwise it transposes
+                      factory: ToggleCoordinatesTransferFactory           # interp matrix created by P factory set    
+                      Chosen P: myChoosePFact                             # here. If this P factory is  the same as the 
+                      TransferFactories:                                  # one in RAPFactory, than it transposes 
+                        Coordinates1: mySemiCoarsenPFact                  # existing P, otherwise it creates a new Phat
+                        Coordinates2: myFullCoarsenTransferCoordsFact
+                    myRAPFact:                                            # build coarse A using P and R generated
+                      factory: RAPFactory                                 # with factories set here
+                      P: myChoosePFact
+                      R: myRestrictorFact
+                      TransferFactories: 
+                        For Coordinates: myChooseTransferCoordinatesFact
+                    myLineDetectionFact: 
+                      factory: LineDetectionFactory
+                      'linedetection: orientation': coordinates
+                    myRepartitionHeuristicFact: 
+                      factory: RepartitionHeuristicFactory
+                      A: myRAPFact
+                      'repartition: min rows per proc': 300
+                      'repartition: max imbalance': 1.127
+                      'repartition: start level': 11
+                    myZoltanInterface: 
+                      factory: ZoltanInterface
+                      A: myRAPFact
+                      Coordinates: myChooseTransferCoordinatesFact
+                      number of partitions: myRepartitionHeuristicFact
+                    myRepartitionFact: 
+                      factory: RepartitionFactory
+                      A: myRAPFact
+                      Partition: myZoltanInterface
+                      'repartition: remap parts': true
+                      number of partitions: myRepartitionHeuristicFact
+                    myRebalanceProlongatorFact: 
+                      factory: RebalanceTransferFactory
+                      type: Interpolation
+                      P: myChoosePFact
+                      Coordinates: myChooseTransferCoordinatesFact
+                      Nullspace: myChoosePFact
+                    myRebalanceRestrictionFact: 
+                      factory: RebalanceTransferFactory
+                      type: Restriction
+                      R: myRestrictorFact
+                    myRebalanceAFact: 
+                      factory: RebalanceAcFactory
+                      A: myRAPFact
+                      TransferFactories: { }
+                    myFineLevLineRelax: 
+                      factory: TrilinosSmoother
+                      type: LINESMOOTHING_BANDEDRELAXATION
+                      'smoother: pre or post': pre
+                      ParameterList: 
+                        'relaxation: type': Symmetric Gauss-Seidel
+                        'relaxation: sweeps': 1
+                        'relaxation: damping factor': 1.0
+                    myCoarseLevGSRelax: 
+                      factory: TrilinosSmoother
+                      type: RELAXATION
+                      'smoother: pre or post': pre
+                      ParameterList: 
+                        'relaxation: type': Gauss-Seidel
+                        'relaxation: sweeps': 2
+                        'relaxation: damping factor': 1.0
+                    myFineLevPlaneRelax:                               # This is an advanced smoothing option that 
+                      factory: TrilinosSmoother                        # corresponds to plane smoothing. The planes
+                      'smoother: pre or post': post                    # are approximately solved by recursively
+                      type: STRATIMIKOS                                # calling muelu via Stratimikos. In order
+                      ParameterList:                                   # to use this option, you must compile 
+                        'smoother: recurMgOnFilteredA': true           # MueLu_StratimikosSmoother_def.hpp with
+                        Linear Solver Type: Belos                      # MUELU_RECURMG  defined. If you don't,
+                        Linear Solver Types:                           # you'll get a message with some details
+                          Belos:
+                            Solver Type: Block GMRES
+                            Solver Types:
+                              Fixed Point:
+                                Block Size: 1
+                                Output Frequency: 2000
+                                Output Style: 1
+                                Verbosity: 35
+                                Timer Label: FixedPoint system
+                                Maximum Iterations: 1
+                              Block GMRES:
+                                Convergence Tolerance: 1.0e-08
+                                Orthogonalization: ICGS
+                                Output Frequency: 2000
+                                Output Style: 1
+                                Verbosity: 35
+                                Maximum Iterations: 10
+                                Block Size: 10
+                                Num Blocks: 10
+                                Flexible Gmres: true
+                                Timer Label: GMRES block system
+                                Implicit Residual Scaling: Norm of Initial Residual
+                            VerboseObject:
+                              Verbosity Level: medium
+                        Preconditioner Type: MueLu
+                        Preconditioner Types:
+                          MueLu:
+                            verbosity: low
+                            'coarse: max size': 990
+                            multigrid algorithm: sa
+                            'problem: symmetric': true
+                            number of equations: 1
+                            max levels: 2
+                            'sa: damping factor': 1.3333
+                            'aggregation: type': uncoupled
+                            'aggregation: min agg size': 2
+                            'aggregation: max agg size': 299
+                            'aggregation: drop tol': 1.0e-12
+                            'smoother: type': RELAXATION
+                            'smoother: params':
+                              'relaxation: type': Symmetric Gauss-Seidel
+                              'relaxation: sweeps': 1
+                              'relaxation: damping factor': 1.0
+                  Hierarchy: 
+                    max levels: 3
+                    'coarse: max size': 150
+                    verbosity: low
+                    DataToWrite:
+                      'Matrices': '{123}'
+                      'Prolongators': '{123}'
+                      'Restrictors': '{123}'
+                    Finest: 
+                      PreSmoother: myFineLevLineRelax
+                      PostSmoother:  NoSmoother
+                      P: myRebalanceProlongatorFact
+                      R: myRebalanceRestrictionFact
+                      Nullspace: myRebalanceProlongatorFact
+                      CoarseNumZLayers: myLineDetectionFact
+                      LineDetection_Layers: myLineDetectionFact
+                      LineDetection_VertLineIds: myLineDetectionFact
+                      A: myRebalanceAFact
+                      Coordinates: myRebalanceProlongatorFact
+                      Importer: myRepartitionFact
+                    All: 
+                      startLevel: 1
+                      PreSmoother: myCoarseLevGSRelax
+                      P: myRebalanceProlongatorFact
+                      R: myRebalanceRestrictionFact
+                      Nullspace: myRebalanceProlongatorFact
+                      CoarseNumZLayers: myLineDetectionFact
+                      LineDetection_Layers: myLineDetectionFact
+                      LineDetection_VertLineIds: myLineDetectionFact
+                      A: myRebalanceAFact
+                      Coordinates: myRebalanceProlongatorFact
+                      Importer: myRepartitionFact                  
+#                 FROSch:
+#                   FROSch Preconditioner Type: TwoLevelPreconditioner        # FROSch preconditioner type. Options: OneLevelPreconditioner, TwoLevelPreconditioner
+#                   OverlappingOperator Type: AlgebraicOverlappingOperator    # First Level: AlgebrAlgebraicOverlappingOperator determines the overlap based on the graph of the matrix
+#                   CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
+#                   Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
+#                   Dimension : 3                                             # Spatial dimension of the problem
+#                   DofsPerNode : 1                                           # Number of degrees of freedom per node
+#                   Overlap: 2                                                # Number of layers of elements in the overlap
+#                   Null Space Type: Laplace                                    # Null space is provided by Albany
+#                   AlgebraicOverlappingOperator:
+#                     'Reuse: Symbolic Factorization': true                   # Reuse of the symbolic factorization
+#                     Adding Layers Strategy: CrsGraph
+#                     Solver:                                                 # Solver on the first level
+#                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+#                       Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+#                   IPOUHarmonicCoarseOperator:
+#                     'Reuse: Coarse Basis': true                             # Reuse of the coarse basis functions
+#                     'Reuse: Coarse Matrix': false                           # Reuse of the coarse matrix
+#                     'Reuse: Coarse Matrix Symbolic Factorization': true     # Reuse of the symbolic factorization of the coarse matrix
+#                     Blocks:
+#                       1:                                                    # For a multiphysics problem, the coarse space may be decomposed into several blocks. Here, we only need one block.
+#                         InterfacePartitionOfUnity:                          # The interface partition of unity defines the specific GDSW type coarse space
+#                           Type: RGDSW                                       # Possible types: GDSW, RGDSW
+#                           GDSW:
+#                             Type: Full                                      # Here, we could select subspaces of the GDSW coarse. Generally, we use "Full".
+#                           RGDSW:
+#                             Type: Full                                      # Here, we could select subspaces of the RGDSW coarse. Generally, we use "Full".
+#                             Distance Function: Inverse Euclidean            # Options 1 and 2.2 differ in the distance function used to compute the interface values: "Constant" (Option 1) and "Inverse Euclidean" (Option 2.2)
+#                     Interface Communication Strategy: CreateOneToOneMap
+#                     ExtensionSolver:                                        # Solver for the energy-minimizing extensions
+#                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+#                       Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+#                     Distribution:                                           # Parallel distribution of the coarse problem
+#                       Type: linear                                          # Specifies the parallel distribution strategy. For now, we use "linear"
+#                       NumProcs: 1                                           # Number of ranks used for the coarse problem
+#                     CoarseSolver:                                           # Solver for the coarse problem
+#                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+#                       Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+          Rescue Bad Newton Solve: true
+      Line Search:
+        Full Step:
+          Full Step: 1.0e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Relative Tolerance: 1.0e-06
+    Test Value: -1.246900214613e+01
+    Sensitivity For Parameter 0:
+      Test Value: 1.485033563141e-05
+    
+    
+...

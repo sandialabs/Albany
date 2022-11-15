@@ -5,18 +5,49 @@ if (ALBANY_PARALELL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (ALBANY_MPI AND NOT ${ALBANY_SEACAS_PATH})
+  if (ALBANY_MPI AND NOT ${ALBANY_SEACAS_PATH})
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
-  ENDIF()
- set (USE_SERIAL_MESH "false")
+  endif()
+  set (USE_SERIAL_MESH "false")
 endif()
 
-
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt.yaml)
- 
-# Create the test
+# Create the tests
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt.yaml)
 add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1semiR1transP2const.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1semiR1transP2const.yaml)
+add_test(${testName}_Humboldt_MueLu_P1semiR1transP2const ${Albany.exe} input_enthalpy_humboldt_muelu_P1semiR1transP2const.yaml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1constR1transP2const.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1constR1transP2const.yaml)
+add_test(${testName}_Humboldt_MueLu_P1constR1transP2const ${Albany.exe} input_enthalpy_humboldt_muelu_P1constR1transP2const.yaml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1linR1transP2const.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1linR1transP2const.yaml)
+add_test(${testName}_Humboldt_MueLu_P1linR1transP2const ${Albany.exe} input_enthalpy_humboldt_muelu_P1linR1transP2const.yaml)
+ 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1semiR1constP2const.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1semiR1constP2const.yaml)
+add_test(${testName}_Humboldt_MueLu_P1semiR1constP2const ${Albany.exe} input_enthalpy_humboldt_muelu_P1semiR1constP2const.yaml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1semiR1linP2const.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1semiR1linP2const.yaml)
+add_test(${testName}_Humboldt_MueLu_P1semiR1linP2const ${Albany.exe} input_enthalpy_humboldt_muelu_P1semiR1linP2const.yaml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1semiR1semiP2const.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1semiR1semiP2const.yaml)
+add_test(${testName}_Humboldt_MueLu_P1semiR1semiP2const ${Albany.exe} input_enthalpy_humboldt_muelu_P1semiR1semiP2const.yaml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1semiR1transP2pg.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1semiR1transP2pg.yaml)
+add_test(${testName}_Humboldt_MueLu_P1semiR1transP2pg ${Albany.exe} input_enthalpy_humboldt_muelu_P1semiR1transP2pg.yaml)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_enthalpy_humboldt_muelu_P1semiR1transP2sa.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_enthalpy_humboldt_muelu_P1semiR1transP2sa.yaml)
+add_test(${testName}_Humboldt_MueLu_P1semiR1transP2sa ${Albany.exe} input_enthalpy_humboldt_muelu_P1semiR1transP2sa.yaml)
+
 # If Iopx is not present, we must decompose the input mesh first
 if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
     add_test (NAME FO_GIS_HUMBOLDT_decompMesh
