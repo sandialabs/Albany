@@ -79,5 +79,5 @@ create_unit_test (NAME    HessianVecFad
 
 #####################################################################
 
+add_subdirectory(disc)
 add_subdirectory(evaluators)
-# add_subdirectory(disc)
