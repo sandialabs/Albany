@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_EVALUATOR_UNIT_TEST_SETUP_HPP
-#define ALBANY_EVALUATOR_UNIT_TEST_SETUP_HPP
+#ifndef ALBANY_UNIT_TEST_SETUP_HELPERS_HPP
+#define ALBANY_UNIT_TEST_SETUP_HELPERS_HPP
 
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_DiscretizationFactory.hpp"
@@ -120,4 +120,4 @@ createTestLayouts (const int worksetSize, const int cubature_degree,
 
 } // namespace UnitTest
 
-#endif // ALBANY_EVALUATOR_UNIT_TEST_SETUP_HPP
+#endif // ALBANY_UNIT_TEST_SETUP_HELPERS_HPP

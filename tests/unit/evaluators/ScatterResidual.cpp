@@ -4,8 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
-#include "Albany_EvaluatorUnitTestSetup.hpp"
+#include "Albany_UnitTestSetupHelpers.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
@@ -370,6 +369,10 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
     phxWorkset.hessianWorkset.hess_vec_prod_f_pp = Teuchos::null;
     phxWorkset.hessianWorkset.overlapped_hess_vec_prod_f_pp = Teuchos::null;
   }
+
+  // Silence compiler warnings due to unused stuff from Teuchos testing framework.
+  (void) out;
+  (void) success;
 }
 
 /**
@@ -723,4 +726,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
     phxWorkset.hessianWorkset.hess_vec_prod_f_pp = Teuchos::null;
     phxWorkset.hessianWorkset.overlapped_hess_vec_prod_f_pp = Teuchos::null;
   }
+
+  // Silence compiler warnings due to unused stuff from Teuchos testing framework.
+  (void) out;
+  (void) success;
 }

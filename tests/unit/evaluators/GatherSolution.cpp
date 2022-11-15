@@ -6,7 +6,7 @@
 
 #include "PHAL_GatherSolution.hpp"
 
-#include "Albany_EvaluatorUnitTestSetup.hpp"
+#include "Albany_UnitTestSetupHelpers.hpp"
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_Utils.hpp"

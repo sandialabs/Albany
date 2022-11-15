@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_EvaluatorUnitTestSetup.hpp"
+#include "Albany_UnitTestSetupHelpers.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
@@ -179,8 +179,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
     auto local_response  = PHX::allocateUnmanagedMDField<Scalar, Cell, Dim>(local_response_name, local_response_layout, deriv_dims);
 
     local_response.deep_copy(0.0);
-    for (int cell=0; cell<local_response.extent(0); ++cell) {
-      for (int dim=0; dim<local_response.extent(1); ++dim) {
+    for (int cell=0; cell<local_response.extent_int(0); ++cell) {
+      for (int dim=0; dim<local_response.extent_int(1); ++dim) {
         for (int node=0; node<nodes_per_element*neq; ++node) {
           local_response(cell, dim).fastAccessDx(node).fastAccessDx(0) = 0.5;
         }
@@ -388,4 +388,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
   // Run vector
   run (3);
+
+  // Silence compiler warnings due to unused stuff from Teuchos testing framework.
+  (void) out;
+  (void) success;
 }

@@ -4,14 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_EvaluatorUnitTestSetup.hpp"
+#include "PHAL_GatherScalarNodalParameter.hpp"
 
+#include "Albany_UnitTestSetupHelpers.hpp"
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "PHAL_GatherScalarNodalParameter.hpp"
 
 #include "Phalanx_Evaluator_UnitTester.hpp"
 #include "Phalanx_MDField_UnmanagedAllocator.hpp"
