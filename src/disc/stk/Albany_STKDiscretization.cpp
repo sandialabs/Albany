@@ -2283,11 +2283,9 @@ STKDiscretization::computeNodeSets()
     auto& ns_coords = nodeSetCoords[ns.first];
 
     // Get a solution dof manager for this node set. If one doesn't exist, create it.
-    Teuchos::RCP<const DOFManager> ns_sol_dof_mgr;
-    if (not hasDOFManager(solution_dof_name(),ns.first)) {
+    auto& ns_sol_dof_mgr = m_dof_managers[solution_dof_name()][ns.first];
+    if (ns_sol_dof_mgr.is_null()) {
       ns_sol_dof_mgr = create_dof_mgr(ns.first,nodes_dof_name(),FE_Type::P1,neq);
-    } else {
-      ns_sol_dof_mgr = getNewDOFManager(solution_dof_name(),ns.first);
     }
 
     ns_gids = ns_sol_dof_mgr->getAlbanyConnManager()->getElementsInBlock(ns.first);
@@ -2301,8 +2299,6 @@ STKDiscretization::computeNodeSets()
     auto sol_indexer = getNewDOFManager()->indexer();
     std::vector<GO> node_eq_gids;
     for (int i=0; i<num_nodes; ++i) {
-      ns_eq_lids.push_back(std::vector<int>(neq));
-
       // NOTE: we CAN'T grab LIDs directly, since this dof mgr may have fewer
       //       elements than the solution itself, and we want the LIDs in the
       //       solution array. Hence, we have to get GIDs and manually convert.
