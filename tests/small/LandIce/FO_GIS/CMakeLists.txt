@@ -145,6 +145,10 @@ if (ALBANY_FROSCH)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_effect_press.yaml)
   add_test(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_effect_press.yaml)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml
+  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml)
+add_test(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
+
   if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
     set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
                        PROPERTIES
