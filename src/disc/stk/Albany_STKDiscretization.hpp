@@ -569,14 +569,6 @@ class STKDiscretization : public AbstractDiscretization
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
 
-  //! Unknown map and node map
-  Teuchos::RCP<const Thyra_VectorSpace> m_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_node_vs;
-
-  //! Overlapped unknown map and node map
-  Teuchos::RCP<const Thyra_VectorSpace> m_overlap_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> m_overlap_node_vs;
-
   //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 

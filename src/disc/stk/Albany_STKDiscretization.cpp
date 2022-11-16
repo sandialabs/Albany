@@ -195,7 +195,7 @@ STKDiscretization::transformMesh()
     *out << "Spherical!" << endl;
 #endif
     const int numDim = stkMeshStruct->numDim;
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       double  r = 0.0;
@@ -215,7 +215,7 @@ STKDiscretization::transformMesh()
     // zshift << '\n';
     const int numDim = stkMeshStruct->numDim;
     //*out << "numDim = " << numDim << '\n';
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     if (numDim >= 0) {
       for (int i = 0; i < numOverlapNodes; i++) {
         double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -270,7 +270,7 @@ STKDiscretization::transformMesh()
       beta  = betas[0];
       scale = scales[0];
       if (abs(beta) > 1.0e-12) {
-        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+        const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -283,7 +283,7 @@ STKDiscretization::transformMesh()
       beta  = betas[1];
       scale = scales[1];
       if (abs(beta) > 1.0e-12) {
-        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+        const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -296,7 +296,7 @@ STKDiscretization::transformMesh()
       beta  = betas[2];
       scale = scales[2];
       if (abs(beta) > 1.0e-12) {
-        const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+        const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
         for (int i = 0; i < numOverlapNodes; i++) {
           double* x =
               stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -326,7 +326,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -357,7 +357,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -389,7 +389,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -409,7 +409,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -429,7 +429,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -454,7 +454,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0]      = L * x[0];
@@ -485,7 +485,7 @@ STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field =
         metaData->get_field<stk::mesh::Field<double>>(
             stk::topology::NODE_RANK, "surface_height");
-    const auto numOverlapNodes = getLocalSubdim(m_overlap_node_vs);
+    const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0] = L * (x[0] - 1.0);  // test case assumes domain is from [-L, L],
@@ -515,10 +515,10 @@ STKDiscretization::setupMLCoords()
   const int                                   numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
-  coordMV           = Thyra::createMembers(m_node_vs, numDim);
+  coordMV           = Thyra::createMembers(getNodeVectorSpace(), numDim);
   auto coordMV_data = getNonconstLocalData(coordMV);
 
-  auto node_indexer = createGlobalLocalIndexer(m_node_vs);
+  auto node_indexer = getNodeNewDOFManager()->indexer();
 
   std::vector<stk::mesh::Entity> ownedNodes;
   const auto& part    = metaData->locally_owned_part();
@@ -533,7 +533,13 @@ STKDiscretization::setupMLCoords()
       coordMV_data[j][node_lid] = X[j];
     }
   }
-  rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, interleavedOrdering, m_vs, m_overlap_vs);
+  const auto vs = getVectorSpace();
+  const auto ov_vs = getOverlapVectorSpace();
+  rigidBodyModes->setCoordinatesAndComputeNullspace(
+      coordMV, interleavedOrdering,
+      getVectorSpace(),
+      getOverlapVectorSpace());
+
   writeCoordsToMatrixMarket();
 }
 
@@ -870,7 +876,7 @@ Teuchos::RCP<Thyra_Vector>
 STKDiscretization::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Thyra_Vector> soln = Thyra::createMember(m_vs);
+  Teuchos::RCP<Thyra_Vector> soln = Thyra::createMember(getVectorSpace());
   this->getSolutionField(*soln, overlapped);
   return soln;
 }
@@ -881,7 +887,7 @@ STKDiscretization::getSolutionMV(bool overlapped) const
   // Copy soln vector into solution field, one node at a time
   int num_time_deriv = stkMeshStruct->num_time_deriv;
   Teuchos::RCP<Thyra_MultiVector> soln =
-      Thyra::createMembers(m_vs, num_time_deriv + 1);
+      Thyra::createMembers(getVectorSpace(), num_time_deriv + 1);
   this->getSolutionMV(*soln, overlapped);
   return soln;
 }
@@ -917,7 +923,7 @@ STKDiscretization::getSolutionField(Thyra_Vector& result, const bool overlapped)
   // over each bucket.
   stk::mesh::Selector locally_owned = metaData->locally_owned_part();
 
-  solutionFieldContainer->fillSolnVector(result, locally_owned, m_node_vs);
+  solutionFieldContainer->fillSolnVector(result, locally_owned, getNodeVectorSpace());
 }
 
 void
@@ -931,7 +937,7 @@ STKDiscretization::getSolutionMV(
   // over each bucket.
   stk::mesh::Selector locally_owned = metaData->locally_owned_part();
 
-  solutionFieldContainer->fillSolnMultiVector(result, locally_owned, m_node_vs);
+  solutionFieldContainer->fillSolnMultiVector(result, locally_owned, getNodeVectorSpace());
 }
 
 /*****************************************************************/
@@ -986,7 +992,7 @@ STKDiscretization::setSolutionField(
   // Select the proper mesh part and node vector space
   stk::mesh::Selector part = metaData->locally_owned_part();
   if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
+  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
 
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, part, node_vs);
 }
@@ -1001,7 +1007,7 @@ STKDiscretization::setSolutionField(
   // Select the proper mesh part and node vector space
   stk::mesh::Selector part = metaData->locally_owned_part();
   if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
+  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
 
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, part, node_vs);
 }
@@ -1017,7 +1023,7 @@ STKDiscretization::setSolutionField(
   // Select the proper mesh part and node vector space
   stk::mesh::Selector part = metaData->locally_owned_part();
   if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
+  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
 
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, part, node_vs);
 }
@@ -1031,7 +1037,7 @@ STKDiscretization::setSolutionFieldMV(
   // Select the proper mesh part and node vector space
   stk::mesh::Selector part = metaData->locally_owned_part();
   if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? m_overlap_node_vs : m_node_vs;
+  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
 
   solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, part, node_vs);
 }
@@ -1147,22 +1153,6 @@ void STKDiscretization::computeVectorSpaces()
     }
   }
 
-  const auto& solDOF  = nodalDOFsStructContainer.getDOFsStruct(solution_dof_name());
-  const auto& meshDOF = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
-
-  m_node_vs = meshDOF.vs;
-  m_vs      = solDOF.vs;
-  m_overlap_node_vs = meshDOF.overlap_vs;
-  m_overlap_vs      = solDOF.overlap_vs;
-
-  auto& ndb = stkMeshStruct->nodal_data_base;
-  if (!ndb.is_null()) {
-    ndb->replaceOwnedVectorSpace(m_node_vs);
-    ndb->replaceOverlapVectorSpace(m_overlap_node_vs);
-  }
-
-  coordinates.resize(3 * getLocalSubdim(m_overlap_node_vs));
-
   // ====================== NEW DOF MANAGER ========================= //
   for (const auto& it : nodalDOFsStructContainer.fieldToMap) {
     const auto& field_name = it.first;
@@ -1209,6 +1199,14 @@ void STKDiscretization::computeVectorSpaces()
     const auto& part_name = it.first;
     it.second = create_dof_mgr(part_name, "node", FE_Type::P1, 1);
   }
+
+  auto& ndb = stkMeshStruct->nodal_data_base;
+  if (!ndb.is_null()) {
+    ndb->replaceOwnedVectorSpace(getNodeVectorSpace());
+    ndb->replaceOverlapVectorSpace(getOverlapNodeVectorSpace());
+  }
+
+  coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
 }
 
 void
@@ -1217,8 +1215,9 @@ STKDiscretization::computeGraphs()
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map,
   // coordinates, graphs
 
-  m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(
-      m_vs, m_vs, m_overlap_vs, m_overlap_vs));
+  const auto vs = getVectorSpace();
+  const auto ov_vs = getOverlapVectorSpace();
+  m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, vs, ov_vs, ov_vs));
 
   Teuchos::Array<GO> rows,cols;
 
@@ -1470,7 +1469,7 @@ STKDiscretization::computeWorksetInfo()
     it->second.wsElNodeID_rawVec.resize(numBuckets);
   }
 
-  auto ov_node_indexer = createGlobalLocalIndexer(m_overlap_node_vs);
+  const auto ov_node_indexer = getNodeNewDOFManager()->ov_indexer();
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeID[b].resize(buck.size());
@@ -2508,8 +2507,8 @@ STKDiscretization::updateMesh()
 
 #ifdef OUTPUT_TO_SCREEN
   // write owned maps to matrix market file for debug
-  writeMatrixMarket(m_vs, "dof_vs");
-  writeMatrixMarket(m_node_vs, "node_vs");
+  writeMatrixMarket(getVectorSpace(), "dof_vs");
+  writeMatrixMarket(getNodeVectorSpace(), "node_vs");
 #endif
     
   setupMLCoords();
