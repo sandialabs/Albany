@@ -18,9 +18,10 @@
       "Condition failed: " << #cond << "\n");
 
 // Check vectors are equal up to permutations
-template<typename T>
-bool sameAs(const std::vector<T>& lhs,
-            const std::vector<T>& rhs)
+template<typename Vec1,
+         typename Vec2>
+bool sameAs(const Vec1& lhs,
+            const Vec2& rhs)
 {
   if (lhs.size()!=rhs.size()) return false;
 
@@ -138,7 +139,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
   (void) success;
 }
 
-TEUCHOS_UNIT_TEST(STKDiscTests, JacPattern)
+TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
 
@@ -164,160 +165,61 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacPattern)
 
   auto run = [&] (int neq) {
     // Create disc
-    auto disc = UnitTest::createTestDisc (comm, num_dims, E, neq);
-    auto node_indexer = disc->getNodeNewDOFManager()->indexer();
-    auto ov_sol_indexer = disc->getNewDOFManager()->ov_indexer();
-    int num_my_nodes = Albany::getLocalSubdim(node_indexer->getVectorSpace());
+    const auto disc = UnitTest::createTestDisc (comm, num_dims, E, neq);
+    const auto sol_dof_mgr = disc->getNewDOFManager();
+    const auto ov_sol_indexer = sol_dof_mgr->ov_indexer();
+    const auto cell_indexer = sol_dof_mgr->cell_indexer();
 
     // Create jacobian
-    auto J = disc->createJacobianOp();
+    const auto J = disc->createJacobianOp();
 
-    // Create expected graph pattern. We expect
-    //  - 4*neq nonzeros on rows at corners
-    //  - 6*neq nonzeros on rows at edges
-    //  - 9*neq nonzeros on rows at internal nodes
-    std::vector<int> expected_nnz(num_my_nodes*neq);
-    std::vector<std::vector<int>> expected_lids(num_my_nodes*neq);
+    // Create expected graph pattern by looping over elems,
+    // and adding a dense pattern to all rows of gids in that element
+    std::vector<std::vector<GO>> expected_gids(N*N*neq);
+    std::vector<std::vector<int>> expected_lids(N*N*neq);
+
     auto lid = [&](const GO gid) -> LO {
-      return ov_sol_indexer->getLocalElement(gid);
+      LO lid = ov_sol_indexer->getLocalElement(gid);
+      return lid;
     };
 
-    auto add_lids = [&](std::vector<int>& lids, const GO node_gid) {
-      for (int eq=0; eq<neq; ++eq) {
-        lids.push_back(lid(node_gid*neq+eq));
-      }
-    };
-    for (int i=0; i<N; ++i) {
-      for (int j=0; j<N; ++j) {
-        GO node_gid = i*N+j;
-        LO node_lid = node_indexer->getLocalElement(node_gid);
-        if (node_lid<0) {
-          continue;
-        }
+    std::vector<GO> elem_dof_gids;
+    for (int i=0; i<E; ++i) {
+      for (int j=0; j<E; ++j) {
+        const GO elem_GID = i*E+j;
+        const LO elem_LID = cell_indexer->getLocalElement(elem_GID);
+        if (elem_LID<0) continue;
 
-        // The easy task: compute nnz
-        if (i % N == 0 || i % N == E) {
-          if (j % N == 0 || j % N == E) {
-            // Corner
-            expected_nnz[node_lid] = neq*4;
-          } else {
-            // Horiz Edge
-            expected_nnz[node_lid] = neq*6;
-          }
-        } else if (j % N == 0 || j % N == E) {
-          // Vert edge
-          expected_nnz[node_lid] = neq*6;
-        } else {
-          // Internal
-          expected_nnz[node_lid] = neq*9;
-        }
-
-        // The boring task: get actual lids
-        for (int eq=0; eq<neq; ++eq) {
-          const LO dof_lid = ov_sol_indexer->getLocalElement(node_gid*neq+eq);
-          auto& lids = expected_lids[dof_lid];
-          if (i%N == 0) {
-            if (j%N == 0) {
-              // Bot left
-              add_lids(lids,0);
-              add_lids(lids,1);
-              add_lids(lids,E+1);
-              add_lids(lids,E+2);
-            } else if (j%N == E) {
-              // Top left
-              add_lids(lids,E*(E+1));
-              add_lids(lids,E*(E+1)+1);
-              add_lids(lids,(E-1)*(E+1));
-              add_lids(lids,(E-1)*(E+1)+1);
-            } else {
-              // Left
-              add_lids(lids,j*(E+1));
-              add_lids(lids,(j-1)*(E+1));
-              add_lids(lids,(j+1)*(E+1));
-              add_lids(lids,j*(E+1)+1);
-              add_lids(lids,(j-1)*(E+1)+1);
-              add_lids(lids,(j+1)*(E+1)+1);
-            }
-          } else if (i%N == E) {
-            if (j%N == 0) {
-              // Bot right
-              add_lids(lids,E);
-              add_lids(lids,E+1);
-              add_lids(lids,2*E);
-              add_lids(lids,2*E+1);
-            } else if (j%N == E) {
-              // Top right
-              add_lids(lids,E*(E+1)-2);
-              add_lids(lids,E*(E+1)-1);
-              add_lids(lids,(E+1)*(E+1)-2);
-              add_lids(lids,(E+1)*(E+1)-1);
-            } else {
-              // Right
-              add_lids(lids,(j-1)*(E+1)+E);
-              add_lids(lids,j*(E+1)+E);
-              add_lids(lids,(j+1)*(E+1)+E);
-              add_lids(lids,(j-1)*(E+1)+E-1);
-              add_lids(lids,j*(E+1)+E-1);
-              add_lids(lids,(j+1)*(E+1)+E-1);
-            }
-          } else {
-            if (j%N == 0) {
-              // Bottom
-              add_lids(lids,i-1);
-              add_lids(lids,i);
-              add_lids(lids,i+1);
-              add_lids(lids,E+1+i-1);
-              add_lids(lids,E+1+i);
-              add_lids(lids,E+1+i+1);
-            } else if (j%N == E) {
-              // Top
-              add_lids(lids,E*(E+1)+i-1);
-              add_lids(lids,E*(E+1)+i);
-              add_lids(lids,E*(E+1)+i+1);
-              add_lids(lids,(E-1)*(E+1)+i-1);
-              add_lids(lids,(E-1)*(E+1)+i);
-              add_lids(lids,(E-1)*(E+1)+i+1);
-            } else {
-              // Internal
-              add_lids(lids,(j-1)*(E+1)+i-1);
-              add_lids(lids,(j-1)*(E+1)+i);
-              add_lids(lids,(j-1)*(E+1)+i+1);
-              add_lids(lids,j*(E+1)+i-1);
-              add_lids(lids,j*(E+1)+i);
-              add_lids(lids,j*(E+1)+i+1);
-              add_lids(lids,(j+1)*(E+1)+i-1);
-              add_lids(lids,(j+1)*(E+1)+i);
-              add_lids(lids,(j+1)*(E+1)+i+1);
-            }
+        sol_dof_mgr->getElementGIDs(elem_LID,elem_dof_gids);
+        for (auto row : elem_dof_gids) {
+          for (auto col : elem_dof_gids) {
+            expected_gids[row].push_back(col);
           }
         }
       }
     }
 
+    // Remove duplicates, and convert to lids
+    for (int i=0; i<neq*N*N; ++i) {
+      auto& v = expected_gids[i];
+      std::sort(v.begin(),v.end());
+      auto it = std::unique(v.begin(),v.end());
+      v.erase(it,v.end());
+      for (auto gid : v) {
+        expected_lids[i].push_back(lid(gid));
+      }
+    }
+
+    // Now check that the pattern of J matches the one we built by hand
     auto range = J->range();
     const int num_local_rows = Albany::getLocalSubdim(range);
     Teuchos::Array<LO> col_lids;
     Teuchos::Array<ST> vals;
     for (int irow=0; irow<num_local_rows; ++irow) {
+      const GO row_gid = ov_sol_indexer->getGlobalElement(irow);
       Albany::getLocalRowValues (J,irow,col_lids,vals);
-      REQUIRE(col_lids.size()==expected_nnz[irow]);
 
-      std::cout << "comparing:\n";
-      std::cout << "  expected:";
-      for (auto v : expected_lids[irow]) {
-        std::cout << " " << v;
-      }
-      std::cout << "\n  actual:";
-      for (auto v : col_lids) {
-        std::cout << " " << v;
-      }
-      std::cout << "\n";
-      std::sort(expected_lids[irow].begin(),expected_lids[irow].end());
-      std::sort(col_lids.begin(),col_lids.end());
-
-      for (int inz=0; inz<expected_nnz[irow]; ++inz) {
-        REQUIRE(col_lids[inz]==expected_lids[irow][inz]);
-      }
+      REQUIRE (sameAs(expected_lids[row_gid],col_lids));
     }
   };
 
