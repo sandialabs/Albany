@@ -68,9 +68,12 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   using std::sqrt;
   using std::pow;
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  auto layersRatio = layeredMeshNumbering.layers_ratio;
+  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const auto& layersRatio = layeredMeshNumbering.layers_ratio;
+
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+
   const int numLayers = layeredMeshNumbering.numLayers;
 
   GO gnodesBase[3], // global ids of the nodes at the base of the prism
@@ -80,8 +83,10 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
       nodesP1[3];    //local (to the prism) ids of the nodes at the top of the prism
   std::vector<std::map<int,LO>> triaLNodesIds(numLayers+1);
   std::vector<std::vector<LO> > triaBaseIds(numLayers+1);
+  std::vector<GO> node_gids;
   for (unsigned int cell=0; cell<workset.numCells; ++cell) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+    const LO elem_LID = elem_lids(cell);
+    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
 
     int iLayer = numLayers, iLayerPlus1 = 0;
     int count=0,countP1=0;
@@ -92,7 +97,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     for (unsigned int inode=0; inode<numNodes; ++inode) {
       residual(cell,inode) = 0;
       GO ilevel, baseId;
-      layeredMeshNumbering.getIndices(elNodeID[inode], baseId, ilevel);
+      layeredMeshNumbering.getIndices(node_gids[inode], baseId, ilevel);
       if(ilevel < iLayer) {count=0; iLayer=ilevel;}
       if(ilevel == iLayer) {
         gnodesBase[count] = baseId;
@@ -100,7 +105,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
       }
       if(ilevel > iLayerPlus1) {countP1=0; iLayerPlus1=ilevel;}
       if(ilevel == iLayerPlus1) {
-        gnodesILP1[countP1] = elNodeID[inode];
+        gnodesILP1[countP1] = node_gids[inode];
         nodesP1_tmp[countP1++] = inode;
       }
     }

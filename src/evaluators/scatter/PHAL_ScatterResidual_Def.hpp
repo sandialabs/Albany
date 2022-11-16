@@ -827,7 +827,6 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   const bool f_pp_is_active = !hws.hess_vec_prod_f_pp.is_null();
 
   // Here we scatter the *local* response derivative
-  // auto nodeID = workset.wsElNodeEqID;
   const auto f_multiplier = hws.overlapped_f_multiplier;
   const auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);
 
@@ -847,7 +846,6 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   const auto& layers_data = workset.disc->getLayeredMeshNumbering();
 
-  // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   const auto dof_mgr      = workset.disc->getNewDOFManager();
   const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto p_dof_mgr    = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);

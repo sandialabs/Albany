@@ -148,22 +148,25 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
   //       still ensuring the following: if an MPI rank has a node on the
   //       sideset (in the owned+shared map), then it also has a side containing
   //       that node on that sideset.
-  const auto& wsElNodeID = disc.getWsElNodeID();
-  const int num_ws = wsElNodeID.size();
+  const int num_ws = disc.getNumWorksets();
+  const auto node_dof_mgr = disc.getNewDOFManager();
+  std::vector<GO> gids;
   for (int ws=0; ws<num_ws; ++ws) {
     const auto& ssMap = disc.getSideSets(ws);
     if (ssMap.find(this->sideSetName)==ssMap.end()) {
       continue;
     }
+    const auto& elem_lids = disc.getElementLIDs_host(ws);
     const auto& ss = ssMap.at(this->sideSetName);
     for (const auto& side : ss) {
       const int icell = side.elem_LID;
-      const int iside = side.side_pos;
+      const int elem_LID = elem_lids(icell);
+      const int side_pos = side.side_pos;
 
-      const auto& side_nodes = this->sideNodes[iside];
-
-      for (int inode=0; inode<this->numSideNodes[iside]; ++inode) {
-        ss_nodes_gids.insert(wsElNodeID[ws][icell][side_nodes[inode]]);
+      const auto& offsets = dof_mgr->getGIDFieldOffsets_subcell(0,side_dim,side_pos);
+      node_dof_mgr->getElementGIDs(elem_LID,gids);
+      for (auto o : offsets) {
+        ss_node_gid.insert(gids[o]);
       }
     }
   }

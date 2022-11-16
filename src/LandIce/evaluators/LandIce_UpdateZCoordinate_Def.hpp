@@ -83,7 +83,6 @@ evaluateFields(typename Traits::EvalData workset)
   const int   numLayers    = layeredMeshNumbering.numLayers;
   const auto& layers_ratio = layeredMeshNumbering.layers_ratio;
 
-  // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i) {
@@ -181,7 +180,6 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const int numLayers = layeredMeshNumbering.numLayers;
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
@@ -290,7 +288,6 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
   const int numLayers = layeredMeshNumbering.numLayers;
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
   const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
