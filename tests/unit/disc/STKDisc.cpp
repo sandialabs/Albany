@@ -84,7 +84,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
       expected_ns_gids["NodeSet2"][i]=i;
       expected_ns_gids["NodeSet3"][i]=E*N+i;
     }
-    expected_ns_gids["NodeSet99"] = {0,E,E*N,N*N-1};
+    expected_ns_gids["NodeSet99"] = {0};
 
     // Check nodesets
     REQUIRE (nodeSets.size()==5);
