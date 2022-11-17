@@ -251,18 +251,13 @@ ANONYMOUS:
     Analysis:
       Analysis Package: ROL
       ROL:
-        Number of Parameters: 1 
+        Number Of Parameters: 1
         Check Gradient: false
-        Gradient Tolerance: 1.0e-04
-        Step Tolerance: 1.0e-04
-        Max Iterations: 1
         Print Output: true
         Parameter Initial Guess Type: Uniform Vector
         Uniform Parameter Guess: -5.7e+00
-        Min And Max Of Random Parameter Guess: [-1.00000000000000000e+00, 2.00000000000000000e+00]
+        Min And Max Of Random Parameter Guess: [-1.0, 2.0]
         Bound Constrained: true
-
-        Step Method: "Trust Region"
 
         Full Space: false
         Use NOX Solver: true        
@@ -297,18 +292,17 @@ ANONYMOUS:
                       Ifpack2 Settings: 
                         Amesos2: {}
                         Amesos2 solver name: klu
-
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
           SimOpt:
             Solve:
               Absolute Residual Tolerance:   1.0e-5
-              Relative Residual Tolerance:   1.0e-0
+              Relative Residual Tolerance:   1.0e-5
               Iteration Limit:               20
               Sufficient Decrease Tolerance: 1.e-4
               Step Tolerance:                1.e-8
               Backtracking Factor:           0.5
-              Output Iteration History:      false
+              Output Iteration History:      true
               Zero Initial Guess:            true
               Solver Type:                   0    
           
@@ -317,50 +311,31 @@ ANONYMOUS:
             Iteration Limit: 0
 
           General: 
+            Output Level: 3
             Variable Objective Function: false
             Scale for Epsilon Active Sets: 1.0
-            Inexact Objective Function: false
-            Inexact Gradient: false
-            Inexact Hessian-Times-A-Vector: false
-            Projected Gradient Criticality Measure: false
+
             Secant: 
               Type: Limited-Memory BFGS
               Use as Preconditioner: false
               Use as Hessian: false
               Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
               Barzilai-Borwein Type: 1
+
             Krylov: 
               Type: Conjugate Gradients
               Absolute Tolerance: 1.0e-04
               Relative Tolerance: 1.0e-02
-              Iteration Limit: 100
+              Iteration Limit: 20
 
           Step:
-            Type: "Augmented Lagrangian" #"Moreau-Yosida Penalty" 
-            Line Search: 
-              Function Evaluation Limit: 60
-              Sufficient Decrease Tolerance: 1.0e-20
-              Initial Step Size: 1.0
-              User Defined Initial Step Size: false
-              Accept Linesearch Minimizer: false
-              Accept Last Alpha: false
-              Descent Method: 
-                Type: Quasi-Newton
-                Nonlinear CG Type: Hestenes-Stiefel
-              Curvature Condition: 
-                Type: Strong Wolfe Conditions
-                General Parameter: 9.0e-01
-                Generalized Wolfe Parameter: 6.0e-01
-              Line-Search Method: 
-                Type: Cubic Interpolation
-                Backtracking Rate: 5.0e-01
-                Bracketing Tolerance: 1.0e-08
-                Path-Based Target Level: 
-                  Target Relaxation Parameter: 1.0e+00
-                  Upper Bound on Path Length: 1.0e+00
+            Type: "Trust Region" 
+
             Trust Region: 
-              Subproblem Solver: Truncated CG
               Subproblem Model: Coleman-Li
+              Subproblem Solver: Truncated CG
               Initial Radius: 10.0
               Step Acceptance Threshold: 5.0e-02
               Radius Shrinking Threshold: 5.0e-02
@@ -380,74 +355,6 @@ ANONYMOUS:
                   Tolerance Scaling: 1.0e-01
                   Relative Tolerance: 2.0
 
-            Moreau-Yosida Penalty:
-              # ===========  PENALTY PARAMETER UPDATE  =========== 
-              Initial Penalty Parameter: 1.0e+2
-              Penalty Parameter Growth Factor: 1.0
-
-              # ===========  SUBPROBLEM SOLVER  =========== 
-              Subproblem:
-                Optimality Tolerance: 1.e-4
-                Feasibility Tolerance: 1.e-5
-                Print History: true
-                Iteration Limit: 1
-
-            # ===========  COMPOSITE STEP  =========== -->
-            Composite Step:
-              Output Level: 2
-              #Initial Radius: 1.0e+2
-              Use Constraint Hessian: false
-              
-              # ===========  OPTIMALITY SYSTEM SOLVER  =========== -->
-              Optimality System Solver:
-                Nominal Relative Tolerance: 2.0e-1
-                Fix Tolerance: true
-      
-              # ===========  TANGENTIAL SUBPROBLEM SOLVER  =========== -->
-              Tangential Subproblem Solver:
-                Iteration Limit: 100
-                Relative Tolerance: 1.0e-2
-
-            # ===========  AUGMENTED LAGRANGIAN  =========== 
-            Augmented Lagrangian:
-              Level of Hessian Approximation: 0
-              #  ===========  PROBLEM SCALING =========== 
-              Use Default Problem Scaling: false
-              Objective Scaling: 1.e+01
-              Constraint Scaling: 1.e+0
-              # ===========  PENALTY PARAMETER UPDATE  =========== 
-              Use Default Initial Penalty Parameter: true
-              Initial Penalty Parameter: 1.e+1
-              Penalty Parameter Growth Factor: 1.e+1
-              Minimum Penalty Parameter Reciprocal: 0.1
-              # ===========  OPTIMALITY TOLERANCE UPDATE  =========== 
-              Initial Optimality Tolerance: 1.0
-              Optimality Tolerance Update Exponent: 1.0
-              Optimality Tolerance Decrease Exponent: 1.0
-              # ==========  FEASIBILITY TOLERANCE UPDATE  =========== 
-              Initial Feasibility Tolerance: 1.0
-              Feasibility Tolerance Update Exponent: 0.1
-              Feasibility Tolerance Decrease Exponent: 0.9
-              # ===========  SUBPROBLEM SOLVER  =========== 
-              Print Intermediate Optimization History: true
-              Subproblem Step Type: "Trust Region"
-              Subproblem Iteration Limit: 50
-
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
-        Method: Constant
-      Stepper: 
-        Initial Value: 0.0
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
-        Continuation Method: Natural
-        Max Steps: 100
-        Max Value: 4.0e-01
-        Min Value: 0.0
-      Step Size: 
-        Initial Step Size: 1.0e-01
-        Max Step Size: 1.0e-01
     NOX: 
       Thyra Group Options: 
         Function Scaling: None
@@ -476,11 +383,13 @@ ANONYMOUS:
             Write Linear System: false
             Tolerance: 1.0e-7
           Stratimikos Linear Solver: 
-            NOX Stratimikos Options: { }
+            NOX Stratimikos Options: {}
             Stratimikos: 
               Linear Solver Type: Belos
               Linear Solver Types:
                 Belos: 
+                  VerboseObject:
+                    Verbosity Level: medium
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
@@ -548,23 +457,9 @@ ANONYMOUS:
         Full Step: 
           Full Step: 1.0
         Method: Backtrack
-        Backtrack:
-          Minimum Step: 1.0e-4
-          Recovery Step: 1.0e-4
       Nonlinear Solver: Line Search Based
       Printing: 
         Output Precision: 3
-        Output Processor: 0
-        Output Information: 
-          Error: true
-          Warning: true
-          Outer Iteration: true
-          Parameters: false
-          Details: false
-          Linear Solver Details: false
-          Stepper Iteration: true
-          Stepper Details: true
-          Stepper Parameters: true
       Solver Options: 
         Status Test Check Type: Minimal
 ...

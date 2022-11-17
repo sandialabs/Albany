@@ -1094,18 +1094,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   // Get the input arguments
   //
 
-  //! If a parameter has changed in value, saved/unsaved fields must be updated
-
-  //IKT, 8/25/2021 QUESTION: can the following go in the constructor?  If so, 
-  //we should move it there to make the code cleaner.
-  bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  if(appParams->sublist("Piro").isSublist("Optimization Status")) {
-    auto& opt_paramList = appParams->sublist("Piro").sublist("Optimization Status");
-    transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
-  }
-  if (adjoint_model == true) transposeJacobian = true; 
 
   // Thyra vectors
   const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
@@ -1240,7 +1230,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         x, x_dot, x_dotdot,
         sacado_param_vec,
         f_out, W_op_out, dt);
-    if(transposeJacobian) {
+    if(adjoint_model) {
       TEUCHOS_FUNC_TIME_MONITOR("Albany Transpose Jacobian");
       Albany::transpose(W_op_out);
     }
@@ -1297,6 +1287,9 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     outArgs.get_hess_vec_prod_f_xx() : Teuchos::null;
 
   if (Teuchos::nonnull(f_hess_xx_v)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(adjoint_model, std::logic_error,
+        std::endl << "ModelEvaluator::evalModelImpl " <<
+        " adjoint Hessian not implemented." << std::endl);
     if (delta_x.is_null()) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
@@ -1331,6 +1324,9 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       outArgs.get_hess_vec_prod_f_px(l1) : Teuchos::null;
 
     if (Teuchos::nonnull(f_hess_xp_v)) {
+      TEUCHOS_TEST_FOR_EXCEPTION(adjoint_model, std::logic_error,
+          std::endl << "ModelEvaluator::evalModelImpl " <<
+          " adjoint Hessian not implemented." << std::endl);
       if (delta_p_l1.is_null()) {
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
@@ -1347,6 +1343,9 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     }
 
     if (Teuchos::nonnull(f_hess_px_v)) {
+      TEUCHOS_TEST_FOR_EXCEPTION(adjoint_model, std::logic_error,
+          std::endl << "ModelEvaluator::evalModelImpl " <<
+          " adjoint Hessian not implemented." << std::endl);
       if (delta_x.is_null()) {
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,

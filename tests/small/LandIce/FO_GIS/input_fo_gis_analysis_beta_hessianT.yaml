@@ -11,9 +11,6 @@ ANONYMOUS:
     Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Equation Set:
-      Type: LandIce
-      Num Equations: 2
     Response Functions:
       Number Of Responses: 2
       Response 0:
@@ -80,9 +77,9 @@ ANONYMOUS:
       Clausius-Clapeyron Coefficient: 0.0e+00
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 1.0e-01
+      Glen's Law Homotopy Parameter: 0.1
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.0e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     LandIce L2 Projected Boundary Laplacian:
       Mass Coefficient: 1.0e-01
@@ -174,20 +171,17 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_Magnitude_RMS.ascii
   Piro:
     Sensitivity Method: Adjoint
+    Output Level: 1
     Analysis:
       Output Final Parameters: false
       Analysis Package: ROL
       ROL:
+        Number Of Parameters: 1
         Check Gradient: false
-        Gradient Tolerance: 1.0e-04
-        Step Tolerance: 1.0e-04
-        Max Iterations: 1
-        Print Output: true
         Parameter Initial Guess Type: Uniform Vector
-        Uniform Parameter Guess: 2.0e+00
-        Min And Max Of Random Parameter Guess: [1.0e+00, 2.0e+00]
+        Uniform Parameter Guess: 2.0
+        Min And Max Of Random Parameter Guess: [1.0, 2.0]
         Bound Constrained: true
-        bound_eps: 1.0e-01
 
         Full Space: false
         Use NOX Solver: false
@@ -223,97 +217,71 @@ ANONYMOUS:
                         Amesos2: {}
                         Amesos2 solver name: klu
         ROL Options:
+
+        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance:   1.0e-5
+              Relative Residual Tolerance:   1.0e-5
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      true
+              Zero Initial Guess:            false
+              Solver Type:                   0    
+          
+          Status Test: 
+            Gradient Tolerance: 1.0e-4
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 2
+
           General:
+            Output Level: 1
             Variable Objective Function: false
-            Scale for Epsilon Active Sets: 1.0e+00
-            Inexact Objective Function: false
-            Inexact Gradient: false
-            Inexact Hessian-Times-A-Vector: false
-            Projected Gradient Criticality Measure: false
+            Scale for Epsilon Active Sets: 1.0
+
             Secant:
               Type: Limited-Memory BFGS
               Use as Preconditioner: false
               Use as Hessian: false
               Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
               Barzilai-Borwein Type: 1
+
             Krylov:
               Type: Conjugate Gradients
               Absolute Tolerance: 1.0e-04
               Relative Tolerance: 1.0e-02
-              Iteration Limit: 100
+              Iteration Limit: 20
+
           Step:
-            Line Search:
-              Function Evaluation Limit: 60
-              Sufficient Decrease Tolerance: 1.0e-20
-              Initial Step Size: 1.0e+00
-              User Defined Initial Step Size: false
-              Accept Linesearch Minimizer: false
-              Accept Last Alpha: false
-              Descent Method:
-                Type: Quasi-Newton
-                Nonlinear CG Type: Hestenes-Stiefel
-              Curvature Condition:
-                Type: Strong Wolfe Conditions
-                General Parameter: 9.0e-01
-                Generalized Wolfe Parameter: 6.0e-01
-              Line-Search Method:
-                Type: Cubic Interpolation
-                Backtracking Rate: 5.0e-01
-                Bracketing Tolerance: 1.0e-08
-                Path-Based Target Level:
-                  Target Relaxation Parameter: 1.0e+00
-                  Upper Bound on Path Length: 1.0e+00
-            Trust Region:
+            Type: "Trust Region" 
+
+            Trust Region: 
+              Subproblem Model: Kelley-Sachs
               Subproblem Solver: Truncated CG
-              Initial Radius: 1.0e+01
+              Initial Radius: -1.0
               Maximum Radius: 5.0e+03
               Step Acceptance Threshold: 5.0e-02
               Radius Shrinking Threshold: 5.0e-02
               Radius Growing Threshold: 9.0e-01
               Radius Shrinking Rate (Negative rho): 6.25e-02
               Radius Shrinking Rate (Positive rho): 2.5e-01
-              Radius Growing Rate: 2.5e+00
-              Safeguard Size: 1.0e+08
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+03
               Inexact:
                 Value:
                   Tolerance Scaling: 1.0e-01
                   Exponent: 9.0e-01
-                  Forcing Sequence Initial Value: 1.0e+00
+                  Forcing Sequence Initial Value: 1.0
                   Forcing Sequence Update Frequency: 10
                   Forcing Sequence Reduction Factor: 1.0e-01
-                Gradient:
+                Gradient: 
                   Tolerance Scaling: 1.0e-01
                   Relative Tolerance: 2.0e+00
-          Status Test:
-            Gradient Tolerance: 1.0e-10
-            Constraint Tolerance: 1.0e-10
-            Step Tolerance: 1.0e-14
-            Iteration Limit: 1
-          SimOpt:
-            Solve:
-              Absolute Residual Tolerance: 1.0e-5
-              Relative Residual Tolerance: 1.0
-              Iteration Limit: 20
-              Sufficient Decrease Tolerance: 1.e-4
-              Step Tolerance: 1.e-8
-              Backtracking Factor: 0.5
-              Output Iteration History: true
-              Zero Initial Guess: false
-              Solver Type: 0
-    LOCA:
-      Bifurcation: {}
-      Constraints: {}
-      Predictor:
-        Method: Constant
-      Stepper:
-        Initial Value: 1.0e-01
-        Continuation Parameter: Glen's Law Homotopy Parameter
-        Continuation Method: Natural
-        Max Steps: 10
-        Max Value: 1.0e+00
-        Min Value: 0.0e+00
-      Step Size:
-        Initial Step Size: 2.0e-01
+
     NOX:
       Status Tests:
         Test Type: Combo
@@ -341,6 +309,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-7
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
@@ -370,22 +339,12 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.0e+00
+          Full Step: 1.0
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:
+        Output Information: 103
         Output Precision: 3
-        Output Processor: 0
-        Output Information:
-          Error: true
-          Warning: true
-          Outer Iteration: true
-          Parameters: false
-          Details: false
-          Linear Solver Details: false
-          Stepper Iteration: true
-          Stepper Details: true
-          Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
@@ -395,5 +354,5 @@ ANONYMOUS:
     Sensitivity For Parameter 0:
       Test Value:  4.508919391803e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [78.7163]
+    Piro Analysis Test Values: [78.4015]
 ...

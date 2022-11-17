@@ -148,7 +148,7 @@ ANONYMOUS:
             Field Name: surface_water_input     # [mm/day]
             Field Type: Node Scalar
             Field Origin: File
-            Field Value: [5.47999999999999972e+01]
+            Field Value: [5.48e+01]
           Field 3:
             Field Name: effective_pressure      # [kPa]
             Field Type: Node Scalar
@@ -203,14 +203,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 5.00000000000000028e-02
+        Initial Value: 5.0e-02
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 50
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 5.00000000000000028e-02
+        Initial Step Size: 5.0e-02
     NOX:
       Thyra Group Options:
         Function Scaling: Row Sum
@@ -249,7 +249,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999955e-07
+                      Convergence Tolerance: 1.0e-07
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -263,8 +263,8 @@ ANONYMOUS:
                   Prec Type: Amesos2
                   Ifpack2 Settings:
                     Amesos2: {}
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
-                    'fact: absolute threshold': 9.99999999999999955e-07
+                    'fact: ilut level-of-fill': 1.0
+                    'fact: absolute threshold': 1.0e-06
                 MueLu:
                   verbosity: none
                   max levels: 10
@@ -275,17 +275,17 @@ ANONYMOUS:
                   'smoother: params':
                     'relaxation: type': Jacobi
                     'relaxation: sweeps': 1
-                    'relaxation: damping factor': 2.50000000000000000e-01
+                    'relaxation: damping factor': 2.5e-01
       Line Search:
         Method: Backtrack
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Backtrack:
           Max Iters: 10
-          Default Step: 1.00000000000000000e+00
-          Minimum Step: 9.99999999999999955e-07
-          Reduction Factor: 5.00000000000000000e-01
-          Recovery Step: 1.00000000000000002e-03
+          Default Step: 1.0
+          Minimum Step: 1.0e-06
+          Reduction Factor: 5.0e-01
+          Recovery Step: 1.0e-03
       Printing:
         Output Precision: 3
         Output Processor: 0
@@ -300,8 +300,8 @@ ANONYMOUS:
           Stepper Details: true
           Stepper Parameters: true
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000004e-04
-    Relative Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-04
+    Relative Tolerance: 1.0e-04
     Test Value: 2.376958764628e+06
     Sensitivity For Parameter 0:
       Test Values: [-1.036460059239e+09, -2.063274094879e+10]
