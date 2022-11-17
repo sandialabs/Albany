@@ -218,10 +218,7 @@ ANONYMOUS:
             Output Level: 1
             Variable Objective Function: false
             Scale for Epsilon Active Sets: 1.0
-            Inexact Objective Function: false
-            Inexact Gradient: false
-            Inexact Hessian-Times-A-Vector: true
-            Projected Gradient Criticality Measure: false
+            
             Secant:
               Type: Limited-Memory BFGS
               Use as Preconditioner: false
@@ -230,6 +227,7 @@ ANONYMOUS:
               Use Default Scaling: true
               Initial Hessian Scale: 1.0
               Barzilai-Borwein Type: 1
+           
             Krylov:
               Type: Conjugate Gradients
               Absolute Tolerance: 1.0e-04

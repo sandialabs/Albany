@@ -240,10 +240,6 @@ ANONYMOUS:
             Output Level: 1
             Variable Objective Function: false
             Scale for Epsilon Active Sets: 1.0
-            Inexact Objective Function: false
-            Inexact Gradient: false
-            Inexact Hessian-Times-A-Vector: true
-            Projected Gradient Criticality Measure: false
 
             Secant:
               Type: Limited-Memory BFGS
@@ -275,8 +271,8 @@ ANONYMOUS:
               Radius Shrinking Rate (Positive rho): 2.5e-01
               Radius Growing Rate: 2.5
               Safeguard Size: 1.0e+03
-              Inexact: 
-                Value: 
+              Inexact:
+                Value:
                   Tolerance Scaling: 1.0e-01
                   Exponent: 9.0e-01
                   Forcing Sequence Initial Value: 1.0
