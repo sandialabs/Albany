@@ -179,13 +179,13 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
       if (tempusParams->isSublist("Sensitivities")) {
         Teuchos::RCP<Teuchos::ParameterList> sensParams = Teuchos::sublist(tempusParams, "Sensitivities", true);
         sens_param_index = sensParams->get<int>("Sensitivity Parameter Index", 0); 
-	resp_fn_index = sensParams->get<int>("Response Function Index", 0);
+	      resp_fn_index = sensParams->get<int>("Response Function Index", 0);
       }
     }
   }
   if (compute_sens == true) { 
     if (sens_method == "Adjoint") {
-      adjoint_trans_sens = true; 
+      adjoint_sens = true; 
     }
     else if (sens_method == "None") {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,

@@ -62,7 +62,8 @@ int main(int argc, char *argv[]) {
     const bool reportMPIInfo = debugParams.get<bool>("Report MPI Info", false);
     if (reportMPIInfo) Albany::PrintMPIInfo(std::cout);
 
-    const auto& bt = slvrfctry.getParameters()->get("Build Type","Tpetra");
+    auto const& bt = slvrfctry.getParameters()->get<std::string>("Build Type","NONE");
+
     if (bt=="Tpetra") {
       // Set the static variable that denotes this as a Tpetra run
       static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
@@ -79,14 +80,27 @@ int main(int argc, char *argv[]) {
     // is created (since in the App ctor the pb factories are queried)
     Albany::register_pb_factories();
 
-    auto albanyApp   = slvrfctry.createApplication(comm);
-    auto albanyModel = slvrfctry.createModel(albanyApp);
+    //sensitivities are always needed when performing analysis
+    if(slvrfctry.getParameters()->sublist("Problem").isParameter("Compute Sensitivities")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(!slvrfctry.getParameters()->sublist("Problem").get<bool>("Compute Sensitivities"),
+                            Teuchos::Exceptions::InvalidArgument,
+                            "Error! Sensitivities are needed for Analysis problems.\n");
+    } else  {
+      slvrfctry.getParameters()->sublist("Problem").set<bool>("Compute Sensitivities", true);
+    }
+
+    // Create app (null initial guess)
+    const auto albanyApp = slvrfctry.createApplication(comm);
+    //Forward model model evaluator
+    const auto albanyModel = slvrfctry.createModel(albanyApp, false);
+
+    //Adjoint model model evaluator 
     
     const bool explicitMatrixTranspose = slvrfctry.getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
                                            slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
                                            false;
 
-    const bool explicitAdjointModel = albanyApp->isAdjointTransSensitivities() && explicitMatrixTranspose;
+    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
     const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
     const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
 
