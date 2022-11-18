@@ -33,7 +33,7 @@ ALBANY:
         Name: 'kappa_x Parameter'
   Discretization:
     1D Elements: 20
-    1D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
     Workset Size: -1
     Method: STK1D
     Exodus Output File Name: thermal1D_with_source_fwd_sens_explicit_out.exo
@@ -53,16 +53,16 @@ ALBANY:
           Storage Type: Unlimited
           Storage Limit: 20
         Time Step Control:
-          Initial Time: 0.00000000000000000e+18
+          Initial Time: 0.0
           Initial Time Index: 0
           Initial Time Step: 1.0e-4
           Final Time: 1.0
           Final Time Index: 10000
-          Maximum Absolute Error: 1.00000000000000002e-08
-          Maximum Relative Error: 1.00000000000000002e-08
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
           Output Time List: ''
           Output Index List: ''
-          #Output Time Interval: 1.00000000000000000e+01
+          #Output Time Interval: 1.0e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
@@ -79,7 +79,7 @@ ALBANY:
             Solver Type: Block GMRES
             Solver Types:
               Block GMRES:
-                Convergence Tolerance: 1.00000000000000002e-02
+                Convergence Tolerance: 1.0e-02
                 Output Frequency: 1
                 Output Style: 1
                 Verbosity: 33
@@ -95,17 +95,20 @@ ALBANY:
             Prec Type: ILUT
             Overlap: 1
             Ifpack2 Settings:
-              'fact: ilut level-of-fill': 1.00000000000000000e+00
+              'fact: ilut level-of-fill': 1.0e+00
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.0e-05
+    Relative Tolerance: 1.0e-03
+    Test Value: -1.983408347195e+00
     Sensitivity For Parameter 0:
       Test Value: 9.395066921520e+00
-    Test Value: -1.983408347195e+00
-    Relative Tolerance: 1.00000000000000002e-03
+    
+    
   Regression For Response 1:
-    Absolute Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.0e-05
+    Relative Tolerance: 1.0e-03
+    Test Value: -3.127535657016e+00
     Sensitivity For Parameter 0:
       Test Value: 1.483766171916e+01
-    Test Value: -3.127535657016e+00
-    Relative Tolerance: 1.00000000000000002e-03
+    
 ...

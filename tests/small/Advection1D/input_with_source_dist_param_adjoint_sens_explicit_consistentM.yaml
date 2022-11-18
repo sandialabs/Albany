@@ -39,6 +39,7 @@ ALBANY:
     Exodus Write Interval: 1
   Piro:
     Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
     Tempus:
       Lump Mass Matrix: false
       Constant Mass Matrix: true

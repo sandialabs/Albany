@@ -31,13 +31,14 @@ ALBANY:
         Mesh Part: ''
   Discretization:
     1D Elements: 20
-    1D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
     Workset Size: -1
     Method: STK1D
     Exodus Output File Name: thermal1D_with_source_dist_param_adjoint_sens_implicit_out.exo
     Exodus Write Interval: 1 
   Piro:
     Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
     Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
@@ -52,16 +53,16 @@ ALBANY:
             Interpolator Type: Lagrange
             Order: 0
         Time Step Control:
-          Initial Time: 0.00000000000000000e+18
+          Initial Time: 0.0
           Initial Time Index: 0
           Initial Time Step: 1.0e-4
           Final Time: 1.0e-2
           Final Time Index: 1000000
-          Maximum Absolute Error: 1.00000000000000002e-08
-          Maximum Relative Error: 1.00000000000000002e-08
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
           Output Time List: ''
           Output Index List: ''
-          #Output Time Interval: 1.00000000000000000e+01
+          #Output Time Interval: 1.0e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
@@ -78,10 +79,10 @@ ALBANY:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
                 Linear Solver:
-                  Tolerance: 9.99999999999999954e-07
+                  Tolerance: 1.0e-06
             Line Search:
               Full Step:
-                Full Step: 1.00000000000000000e+00
+                Full Step: 1.0e+00
               Method: Full Step
             Nonlinear Solver: Line Search Based
             Printing:
@@ -105,7 +106,7 @@ ALBANY:
               Number of Tests: 2
               Test 0:
                 Test Type: NormF
-                Tolerance: 1.00000000000000002e-08
+                Tolerance: 1.0e-08
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
@@ -116,7 +117,7 @@ ALBANY:
             Solver Type: Block GMRES
             Solver Types:
               Block GMRES:
-                Convergence Tolerance: 1.00000000000000002e-02
+                Convergence Tolerance: 1.0e-02
                 Output Frequency: 1
                 Output Style: 1
                 Verbosity: 33
@@ -132,11 +133,12 @@ ALBANY:
             Prec Type: ILUT
             Overlap: 1
             Ifpack2 Settings:
-              'fact: ilut level-of-fill': 1.00000000000000000e+00
+              'fact: ilut level-of-fill': 1.0e+00
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.0e-05
+    Relative Tolerance: 1.0e-03
+    Test Value: 2.533116741287e+00
     Sensitivity For Parameter 0:
       Test Value: 1.561205441637e-01
-    Test Value: 2.533116741287e+00
-    Relative Tolerance: 1.00000000000000002e-03
+
 ...
