@@ -69,6 +69,8 @@ IF(${PYTHON_TEST})
 
   file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
   ADD_TEST(BlockDiscretization_Jacobian_Unit_Test "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/matrices_comparison.py")
+
+  set_tests_properties(BlockDiscretization_Jacobian_Unit_Test PROPERTIES ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
 ENDIF()
 
 # We should always run the unit tests in both serial and parallel if possible (they should run quickly)
