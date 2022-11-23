@@ -1,5 +1,6 @@
 from mpi4py import MPI
 import numpy as np
+from numpy.random import default_rng
 from PyAlbany import Utils
 from PyAlbany import AlbanyInterface as pa
 import os
@@ -45,8 +46,9 @@ p_min = -2.
 p_max = 2.
 
 # Generate N samples randomly chosen in [p_min, p_max]:
-p = np.random.uniform(p_min, p_max, N)
-QoI = np.zeros((N,))
+rng = default_rng()
+p = rng.uniform(p_min, p_max, N)
+QoI = np.empty((N,))
 
 # Loop over the N samples and evaluate the quantity of interest:
 for i in range(0, N):

@@ -26,17 +26,19 @@ ENDIF()
 
 # Get the python version
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c
-                        "import sys; print(sys.version[:3])"
-  OUTPUT_VARIABLE PYTHON_VERSION
+                        "import sys; print(sys.version_info.major)"
+  OUTPUT_VARIABLE PYTHON_MAJOR_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 # Get the python version
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c
-                        "import sys; print(sys.version[:1])"
-  OUTPUT_VARIABLE PYTHON_MAJOR_VERSION
+                        "import sys; print(sys.version_info.minor)"
+  OUTPUT_VARIABLE PYTHON_MINOR_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+SET(PYTHON_VERSION ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION})
 
 MESSAGE("  -- PYTHON_VERSION = ${PYTHON_VERSION}")
 MESSAGE("  -- PYTHON_MAJOR_VERSION = ${PYTHON_MAJOR_VERSION}")
