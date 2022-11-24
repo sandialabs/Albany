@@ -6,17 +6,31 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 
 execute_process(COMMAND bash $ENV{SCRIPT_DIRECTORY}/delete_txt_files.sh
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+#message("IKT mpicc = " $ENV{OPENMPI_ROOT}/bin/mpicc) 
 #message("IKT mpicc = " $ENV{MPI_DIR}/bin/mpicc) 
-execute_process(COMMAND $ENV{MPI_DIR}/bin/mpicc -dumpversion
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                RESULT_VARIABLE COMPILER_VERSION_RESULT
-                OUTPUT_VARIABLE COMPILER_VERSION
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler version = " ${COMPILER_VERSION})
-execute_process(COMMAND $ENV{MPI_DIR}/bin/mpicc --version
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                RESULT_VARIABLE COMPILER_RESULT
-                OUTPUT_FILE "compiler.txt")
+IF((CTEST_BUILD_OPTION MATCHES "intel-trilinos") OR (CTEST_BUILD_OPTION MATCHES "intel-albany")) 
+  execute_process(COMMAND $ENV{MPI_DIR}/bin/mpicc -dumpversion
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  RESULT_VARIABLE COMPILER_VERSION_RESULT
+                  OUTPUT_VARIABLE COMPILER_VERSION
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  #message("IKT compiler version = " ${COMPILER_VERSION})
+  execute_process(COMMAND $ENV{MPI_DIR}/bin/mpicc --version
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  RESULT_VARIABLE COMPILER_RESULT
+                  OUTPUT_FILE "compiler.txt")
+ELSE()
+  execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc -dumpversion
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  RESULT_VARIABLE COMPILER_VERSION_RESULT
+                  OUTPUT_VARIABLE COMPILER_VERSION
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  #message("IKT compiler version = " ${COMPILER_VERSION})
+  execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc --version
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  RESULT_VARIABLE COMPILER_RESULT
+                  OUTPUT_FILE "compiler.txt")
+ENDIF()
 execute_process(COMMAND bash $ENV{SCRIPT_DIRECTORY}/process_compiler.sh
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                 RESULT_VARIABLE CHANGE_COMPILER_RESULT

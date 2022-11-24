@@ -17,6 +17,9 @@ awk '{print $0 "\""}' /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.t
 mv tmp.txt /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
 sed -i 's, \",\",g' /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
 sed -i '$ d' /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
-sed -i "s,{SEMS,ENV{SEMS,g" /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
-sed -i "s,{MPI,ENV{MPI,g" /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
+#sed -i "s,{SEMS,ENV{SEMS,g" /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
+#sed -i "s,{MPI,ENV{MPI,g" /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
+sed -i "s,{,ENV{,g" /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
+sed -i "s,ENV{INSTALL,{INSTALL,g" /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
+sed -i "s,ENV{BTYPE,{BTYPE,g" /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
 cat /projects/albany/nightlyAlbanyCDash/cdash-$compiler-frag.txt
