@@ -49,7 +49,6 @@ cmake -GNinja \
       -D Trilinos_VERBOSE_CONFIGURE=OFF \
       -D TPL_ENABLE_Matio=OFF \
       -D TPL_ENABLE_X11=OFF \
-      -D Kokkos_ARCH_SKX=ON \
       -D Kokkos_ENABLE_EXAMPLES=OFF \
       -D Kokkos_ENABLE_SERIAL=ON \
       -D Kokkos_ENABLE_PTHREAD=OFF \
