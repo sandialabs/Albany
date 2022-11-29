@@ -1,2 +1,2 @@
-00 22 * * 1-7 cd /home/ikalash/albany/nightlyCDash; bash -l -c "bash nightly_cron_script_trilinos_attaway_intel_serial.sh; bash nightly_cron_script_albany_attaway_intel_serial_build.sh; bash nightly_cron_script_albany_attaway_intel_serial_build.sh; sbatch batch.openmpi.bash"
+00 22 * * 1-7 cd /projects/albany/nightlyCDash; bash -l -c "bash nightly_cron_script_trilinos_attaway_intel_serial.sh; bash nightly_cron_script_albany_attaway_intel_serial_build.sh; bash nightly_cron_script_albany_attaway_intel_serial_build.sh; sbatch batch.openmpi.bash"
 
