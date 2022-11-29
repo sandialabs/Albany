@@ -1644,79 +1644,71 @@ STKDiscretization::computeWorksetInfo()
 
   for (std::size_t b = 0; b < buckets.size(); b++) {
     stk::mesh::Bucket& buck = *buckets[b];
-    for (auto css = cell_scalar_states.begin(); css != cell_scalar_states.end();
-         ++css) {
+    for (auto& css : cell_scalar_states) {
       BucketArray<AbstractSTKFieldContainer::ScalarFieldType> array(
-          **css, buck);
+          *css, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SFT dim[1]: " <<
       // array.extent(1) << std::endl;
       MDArray ar                                     = array;
-      stateArrays.elemStateArrays[b][(*css)->name()] = ar;
+      stateArrays.elemStateArrays[b][css->name()] = ar;
     }
-    for (auto cvs = cell_vector_states.begin(); cvs != cell_vector_states.end();
-         ++cvs) {
+    for (auto& cvs : cell_vector_states) {
       BucketArray<AbstractSTKFieldContainer::VectorFieldType> array(
-          **cvs, buck);
+          *cvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " VFT dim[2]: " <<
       // array.extent(2) << std::endl;
       MDArray ar                                     = array;
-      stateArrays.elemStateArrays[b][(*cvs)->name()] = ar;
+      stateArrays.elemStateArrays[b][cvs->name()] = ar;
     }
-    for (auto cts = cell_tensor_states.begin(); cts != cell_tensor_states.end();
-         ++cts) {
+    for (auto& cts : cell_tensor_states) {
       BucketArray<AbstractSTKFieldContainer::TensorFieldType> array(
-          **cts, buck);
+          *cts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " TFT dim[3]: " <<
       // array.extent(3) << std::endl;
       MDArray ar                                     = array;
-      stateArrays.elemStateArrays[b][(*cts)->name()] = ar;
+      stateArrays.elemStateArrays[b][cts->name()] = ar;
     }
-    for (auto qpss = qpscalar_states.begin(); qpss != qpscalar_states.end();
-         ++qpss) {
+    for (auto& qpss : qpscalar_states) {
       BucketArray<AbstractSTKFieldContainer::QPScalarFieldType> array(
-          **qpss, buck);
+          *qpss, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " <<
       // array.extent(1) << std::endl;
       MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
+      stateArrays.elemStateArrays[b][qpss->name()] = ar;
     }
-    for (auto qpvs = qpvector_states.begin(); qpvs != qpvector_states.end();
-         ++qpvs) {
+    for (auto& qpvs : qpvector_states) {
       BucketArray<AbstractSTKFieldContainer::QPVectorFieldType> array(
-          **qpvs, buck);
+          *qpvs, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " <<
       // array.extent(2) << std::endl;
       MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
+      stateArrays.elemStateArrays[b][qpvs->name()] = ar;
     }
-    for (auto qpts = qptensor_states.begin(); qpts != qptensor_states.end();
-         ++qpts) {
+    for (auto& qpts : qptensor_states) {
       BucketArray<AbstractSTKFieldContainer::QPTensorFieldType> array(
-          **qpts, buck);
+          *qpts, buck);
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " <<
       // array.extent(3) << std::endl;
       MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
+      stateArrays.elemStateArrays[b][qpts->name()] = ar;
     }
-    //    for (ScalarValueState::iterator svs = scalarValue_states.begin();
-    //              svs != scalarValue_states.end(); ++svs){
-    for (size_t i = 0; i < scalarValue_states.size(); i++) {
+    for (auto& svs : scalarValue_states) {
       const int                                         size = 1;
       shards::Array<double, shards::NaturalOrder, Cell> array(
-          &time[*scalarValue_states[i]], size);
+          &time[*svs], size);
       MDArray ar = array;
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " <<
       // array.extent(0) << std::endl;
       // std::cout << "SV Name: " << *svs << " address : " << &array <<
       // std::endl;
-      stateArrays.elemStateArrays[b][*scalarValue_states[i]] = ar;
+      stateArrays.elemStateArrays[b][*svs] = ar;
     }
   }
 
@@ -2060,9 +2052,9 @@ STKDiscretization::computeSideSets()
       SideSetList& ssList = sideSets[i];
       std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
-      while (ss_it != ssList.end()) {
-        std::string             ss_key = ss_it->first;
-        std::vector<SideStruct> ss_val = ss_it->second;
+      for (auto& ss_it : ssList) {
+        std::string             ss_key = ss_it.first;
+        std::vector<SideStruct> ss_val = ss_it.second;
         
         Kokkos::View<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
 
@@ -2095,8 +2087,6 @@ STKDiscretization::computeSideSets()
         wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
 
         sideset_idx_offset[ss_key] += ss_val.size();
-
-        ss_it++;
       }
     }
   }
