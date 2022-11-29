@@ -89,17 +89,25 @@ STKDiscretization::printConnectivity() const
   for (int rank = 0; rank < comm->getSize(); ++rank) {
     comm->barrier();
     if (rank == comm->getRank()) {
-      std::cout << std::endl << "Process rank " << rank << std::endl;
-      for (int ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck) {
-        std::cout << "  Bucket " << ibuck << std::endl;
-        for (int ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem) {
-          int numNodes = wsElNodeID[ibuck][ielem].size();
-          std::cout << "    Element " << ielem << ": Nodes = ";
-          for (int inode = 0; inode < numNodes; ++inode)
-            std::cout << wsElNodeID[ibuck][ielem][inode] << " ";
-          std::cout << std::endl;
+      const auto& elem_lids = m_workset_elements.host();
+      const auto& node_dof_mgr = getNodeNewDOFManager();
+      std::vector<GO> node_gids;
+
+      std::ostringstream ss;
+
+      ss << std::endl << "Process rank " << rank << std::endl;
+      for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
+        ss << "  Bucket (aka workset) " << ws << std::endl;
+        for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
+          const int elem_LID = elem_lids(ws,ielem);
+          node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+          ss << "    Element " << ielem << ": Nodes =";
+          for (const auto gid : node_gids)
+            ss << " " << gid;
+          ss << std::endl;
         }
       }
+      std::cout << ss.str();
     }
     comm->barrier();
   }
@@ -1234,7 +1242,7 @@ STKDiscretization::computeGraphs()
 
   // The global solution dof manager
   const auto sol_dof_mgr = getNewDOFManager();
-  const int num_elems = getLocalSubdim(sol_dof_mgr->cell_vs());
+  const int num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
   std::vector<GO> elem_gids,side_gids;
   const int num_nodes = sol_dof_mgr->elem_dof_lids().host().extent(1) / neq;
   cols.resize(num_nodes);
@@ -1268,8 +1276,8 @@ STKDiscretization::computeGraphs()
     for (const auto& it : sideSetEquations) {
       int eq = it.first;
       const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
-      const int num_nodes = eq_offsets.size();
-      for (int node=0; node<num_nodes; ++node) {
+      const int num_ss_nodes = eq_offsets.size();
+      for (int node=0; node<num_ss_nodes; ++node) {
         GO row = elem_gids[eq_offsets[node]];
         m_jac_factory->insertGlobalIndices(row,row,false);
       }
@@ -1294,7 +1302,6 @@ STKDiscretization::computeGraphs()
   if (not lmn.is_null()) {
     constexpr auto COL = LayeredMeshOrdering::COLUMN;
 
-    const auto num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
     const auto numLayers = lmn->numLayers;
     const auto ordering  = lmn->ordering;
     const auto stride = ordering==COL ? numLayers : num_elems;
@@ -1441,9 +1448,6 @@ STKDiscretization::computeWorksetInfo()
     }
   }
 
-  // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
-  wsElNodeEqID.resize(numBuckets);
-  wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
 
   nodesOnElemStateVec.resize(numBuckets);
@@ -1458,32 +1462,12 @@ STKDiscretization::computeWorksetInfo()
   typedef stk::mesh::Cartesian ElemTag;
   typedef stk::mesh::Cartesian CompTag;
 
-  NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs =
-      nodalDOFsStructContainer.mapOfDOFsStructs;
-  for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
-    it->second.wsElNodeEqID.resize(numBuckets);
-    it->second.wsElNodeEqID_rawVec.resize(numBuckets);
-    it->second.wsElNodeID.resize(numBuckets);
-    it->second.wsElNodeID_rawVec.resize(numBuckets);
-  }
-
   const auto ov_node_indexer = getNodeNewDOFManager()->ov_indexer();
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
-    wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
     // Set size of Kokkos views
-    // Note: Assumes nodes_per_element is the same across all elements in a
-    // workset
-    {
-      const int         buckSize          = buck.size();
-      stk::mesh::Entity element           = buck[0];
-      const int         nodes_per_element = bulkData->num_nodes(element);
-      wsElNodeEqID[b] =
-          WorksetConn("wsElNodeEqID", buckSize, nodes_per_element, neq);
-    }
-
     {  // nodalDataToElemNode.
 
       nodesOnElemStateVec[b].resize(nodal_states.size());
@@ -1561,22 +1545,6 @@ STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Entity element           = buck[0];
     int               nodes_per_element = bulkData->num_nodes(element);
-    for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
-         ++it) {
-      int nComp = it->first.second;
-      it->second.wsElNodeEqID_rawVec[b].resize(
-          buck.size() * nodes_per_element * nComp);
-      it->second.wsElNodeEqID[b].assign<ElemTag, NodeTag, CompTag>(
-          it->second.wsElNodeEqID_rawVec[b].data(),
-          (int)buck.size(),
-          nodes_per_element,
-          nComp);
-      it->second.wsElNodeID_rawVec[b].resize(buck.size() * nodes_per_element);
-      it->second.wsElNodeID[b].assign<ElemTag, NodeTag>(
-          it->second.wsElNodeID_rawVec[b].data(),
-          (int)buck.size(),
-          nodes_per_element);
-    }
 
     // i is the element index within bucket b
     for (std::size_t i = 0; i < buck.size(); i++) {
@@ -1592,32 +1560,9 @@ STKDiscretization::computeWorksetInfo()
       stk::mesh::Entity const* node_rels = bulkData->begin_nodes(element);
       nodes_per_element                  = bulkData->num_nodes(element);
 
-      wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
 
-      for (auto it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end();
-           ++it) {
-        const auto& ov_indexer = it->second.overlap_vs_indexer;
-        IDArray&  wsElNodeEqID_array = it->second.wsElNodeEqID[b];
-        GIDArray& wsElNodeID_array   = it->second.wsElNodeID[b];
-        int       nComp              = it->first.second;
-        for (int j = 0; j < nodes_per_element; j++) {
-          stk::mesh::Entity node      = node_rels[j];
-          wsElNodeID_array((int)i, j) = stk_gid(node);
-          for (int k = 0; k < nComp; k++) {
-            const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(
-                stk_gid(node), k);
-            const int node_lid = ov_indexer->getLocalElement(node_gid);
-            wsElNodeEqID_array((int)i, j, k) = node_lid;
-          }
-        }
-      }
-
       // loop over local nodes
-      DOFsStruct& dofs_struct =
-          mapOfDOFsStructs[make_pair(std::string(""), neq)];
-      GIDArray& node_array    = dofs_struct.wsElNodeID[b];
-      IDArray&  node_eq_array = dofs_struct.wsElNodeEqID[b];
       for (int j = 0; j < nodes_per_element; j++) {
         const stk::mesh::Entity rowNode  = node_rels[j];
         const GO                node_gid = stk_gid(rowNode);
@@ -1628,11 +1573,6 @@ STKDiscretization::computeWorksetInfo()
             std::logic_error,
             "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
         coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
-
-        wsElNodeID[b][i][j] = node_array((int)i, j);
-
-        for (int eq = 0; eq < neq; ++eq)
-          wsElNodeEqID[b](i, j, eq) = node_eq_array((int)i, j, eq);
       }
     }
   }
@@ -1677,14 +1617,7 @@ STKDiscretization::computeWorksetInfo()
                   }
                   coords[b][i][j] = xleak;  // replace ptr to coords
                   toDelete.push_back(xleak);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  }}}}}}}}
 
   typedef AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
   typedef AbstractSTKFieldContainer::QPScalarState    QPScalarState;

@@ -211,8 +211,6 @@ saveNodeState(typename Traits::EvalData workset)
   stk::mesh::MetaData& metaData = *mesh->metaData;
   stk::mesh::BulkData& bulkData = *mesh->bulkData;
 
-  const auto& wsElNodeID = disc->getWsElNodeID();
-
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
 
@@ -222,35 +220,41 @@ saveNodeState(typename Traits::EvalData workset)
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
 
-  GO nodeId;
+  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
+
   double* values;
   stk::mesh::Entity e;
-  switch (dims.size())
-  {
+  std::vector<GO> node_gids;
+  switch (dims.size()) {
     case 2:   // node_scalar
       scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
       TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        for (unsigned int node=0; node<dims[1]; ++node)
-        {
-          nodeId = wsElNodeID[workset.wsIndex][cell][node];
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        const int elem_LID = elem_lids[cell];
+        node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+        for (unsigned int node=0; node<dims[1]; ++node) {
+          const auto nodeId = node_gids[node];
           e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
           values = stk::mesh::field_data(*scalar_field, e);
           values[0] = field(cell,node);
         }
+      }
       break;
     case 3:   // node_vector
       vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
       TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        for (unsigned int node=0; node<dims[1]; ++node)
-        {
-          nodeId = wsElNodeID[workset.wsIndex][cell][node];
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        const int elem_LID = elem_lids[cell];
+        node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+        for (unsigned int node=0; node<dims[1]; ++node) {
+          const auto nodeId = node_gids[node];
           e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
           values = stk::mesh::field_data(*vector_field, e);
           for (unsigned int i=0; i<dims[2]; ++i)
             values[i] = field(cell,node,i);
         }
+      }
       break;
     default:  // error!
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");

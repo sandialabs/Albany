@@ -43,10 +43,6 @@ struct DOFsStruct
   Teuchos::RCP<const Thyra_VectorSpace> overlap_vs;
   NodalDOFManager                       dofManager;
   NodalDOFManager                       overlap_dofManager;
-  std::vector<std::vector<LO>>          wsElNodeEqID_rawVec;
-  std::vector<IDArray>                  wsElNodeEqID;
-  std::vector<std::vector<GO>>          wsElNodeID_rawVec;
-  std::vector<GIDArray>                 wsElNodeID;
 
   Teuchos::RCP<const GlobalLocalIndexer> node_vs_indexer;
   Teuchos::RCP<const GlobalLocalIndexer> overlap_node_vs_indexer;
@@ -183,27 +179,6 @@ class STKDiscretization : public AbstractDiscretization
     return elemGIDws;
   }
 
-  //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
-  const Conn&
-  getWsElNodeEqID() const
-  {
-    return wsElNodeEqID;
-  }
-
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>&
-  getWsElNodeID() const
-  {
-    return wsElNodeID;
-  }
-
-  //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for
-  //! both scalar and vector fields
-  const std::vector<IDArray>&
-  getElNodeEqID(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
-  }
-
   const NodalDOFManager&
   getDOFManager(const std::string& field_name) const
   {
@@ -335,7 +310,7 @@ class STKDiscretization : public AbstractDiscretization
   int
   getFADLength() const
   {
-    return neq * wsElNodeID[0][0].size();
+    return getNewDOFManager()->elem_dof_lids().host().extent_int(1);
   }
 
   Teuchos::RCP<LayeredMeshNumbering<GO>>
@@ -597,12 +572,6 @@ class STKDiscretization : public AbstractDiscretization
   //! GatherVerticallyContractedSolution connectivity
   std::map<std::string, Kokkos::View<LO****, PHX::Device>> allLocalDOFViews;
   std::map<int, std::map<std::string, Kokkos::View<LO****, PHX::Device>>> wsLocalDOFViews;
-
-  //! Connectivity array [workset, element, local-node, Eq] => LID
-  Conn wsElNodeEqID;
-
-  //! Connectivity array [workset, element, local-node] => GID
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>        wsElNodeID;
 
   mutable Teuchos::ArrayRCP<double>                                 coordinates;
   Teuchos::RCP<Thyra_MultiVector>                                   coordMV;

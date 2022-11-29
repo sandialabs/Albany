@@ -1001,11 +1001,7 @@ void
       Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
   //! Access to number of worksets - needed for working with StateManager
-  int
-  getNumWorksets()
-  {
-    return disc->getWsElNodeEqID().size();
-  }
+  int getNumWorksets() const { return disc->getNumWorksets(); }
 
   //! Const access to problem parameter list
   Teuchos::RCP<const Teuchos::ParameterList>
