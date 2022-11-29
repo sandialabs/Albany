@@ -609,8 +609,6 @@ class STKDiscretization : public AbstractDiscretization
   WorksetArray<std::string>                                         wsEBNames;
   WorksetArray<int>                                                 wsPhysIndex;
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>       coords;
-  WorksetArray<Teuchos::ArrayRCP<double>>        sphereVolume;
-  WorksetArray<Teuchos::ArrayRCP<double*>>       latticeOrientation;
 
   //! Connectivity map from elementGID to workset and LID in workset
   WsLIDList elemGIDws;

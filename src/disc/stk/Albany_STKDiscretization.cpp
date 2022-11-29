@@ -1445,8 +1445,6 @@ STKDiscretization::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
-  sphereVolume.resize(numBuckets);
-  latticeOrientation.resize(numBuckets);
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
