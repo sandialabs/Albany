@@ -60,7 +60,7 @@ protected:
       case 1:
       {  ref_t ref=valVec(side_idx,node,eq); return ref; }
       case 2:
-      {  ref_t ref=valTensor(side_idx,node,eq/numDim,eq%numDim); return ref; }
+      {  ref_t ref=valTensor(side_idx,node,eq/tensorDim,eq%tensorDim); return ref; }
     }
     Kokkos::abort("Unsupported tensor rank");
   }
@@ -86,7 +86,9 @@ protected:
   Teuchos::Array<Teuchos::Array<int> >  sideNodes;
   int numFields;  // Number of fields gathered in this call
   int offset;     // Offset of first DOF being gathered when numFields<neq
-  int numDim;     // Only for tensor residuals
+  int tensorDim;     // Only for tensor residuals
+
+  int cellDim;
 
   int tensorRank;
 

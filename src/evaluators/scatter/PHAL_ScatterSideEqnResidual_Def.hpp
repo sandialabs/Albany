@@ -88,9 +88,11 @@ ScatterSideEqnResidualBase (const Teuchos::ParameterList& p,
     // tensor
     valTensor = res_type (names[0], res_dl->node_tensor);
     this->addDependentField(valTensor);
-    numDim = res_dl->node_tensor->extent(2);
-    numFields = (res_dl->node_tensor->extent(2))*(res_dl->node_tensor->extent(3));
+    tensorDim = res_dl->node_tensor->extent(2);
+    numFields = tensorDim*tensorDim;
   }
+
+  cellDim = dl->node_gradient->extent(2);
 
   if (p.isType<int>("Offset of First DOF")) {
     offset = p.get<int>("Offset of First DOF");
@@ -148,6 +150,7 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
   //       still ensuring the following: if an MPI rank has a node on the
   //       sideset (in the owned+shared map), then it also has a side containing
   //       that node on that sideset.
+  const int side_dim = cellDim-1;
   const int num_ws = disc.getNumWorksets();
   const auto node_dof_mgr = disc.getNewDOFManager();
   std::vector<GO> gids;
@@ -163,10 +166,10 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
       const int elem_LID = elem_lids(icell);
       const int side_pos = side.side_pos;
 
-      const auto& offsets = dof_mgr->getGIDFieldOffsets_subcell(0,side_dim,side_pos);
+      const auto& offsets = node_dof_mgr->getGIDFieldOffsets_subcell(0,side_dim,side_pos);
       node_dof_mgr->getElementGIDs(elem_LID,gids);
       for (auto o : offsets) {
-        ss_node_gid.insert(gids[o]);
+        ss_nodes_gids.insert(gids[o]);
       }
     }
   }
