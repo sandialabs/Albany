@@ -55,7 +55,7 @@ LayeredFluxDivergenceResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
@@ -83,10 +83,9 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
       nodesP1[3];    //local (to the prism) ids of the nodes at the top of the prism
   std::vector<std::map<int,LO>> triaLNodesIds(numLayers+1);
   std::vector<std::vector<LO> > triaBaseIds(numLayers+1);
-  std::vector<GO> node_gids;
   for (unsigned int cell=0; cell<workset.numCells; ++cell) {
     const LO elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     int iLayer = numLayers, iLayerPlus1 = 0;
     int count=0,countP1=0;

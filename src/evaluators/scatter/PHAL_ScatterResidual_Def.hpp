@@ -136,7 +136,6 @@ gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr) {
   if (m_fields_offsets.size()==0) {
     // For now, only allow dof mgr's defined on a single element part
     const auto& pname = dof_mgr->part_name();
-    constexpr auto ALL = Kokkos::ALL;
     const int neq = dof_mgr->getNumFields();
     m_fields_offsets.resize("",numNodes,neq);
     for (int fid=0; fid<neq; ++fid) {
@@ -482,14 +481,10 @@ evaluateFields(typename Traits::EvalData workset)
   const auto eq_offset = this->offset;
 
   if (trans) {
-    const int neq = dof_mgr->getNumFields();
-
     const auto& pname        = workset.dist_param_deriv_name;
     const auto  node_dof_mgr = workset.disc->getNodeNewDOFManager();
     const auto  p_dof_mgr    = workset.disc->getNewDOFManager(pname);
     const auto  p_indexer    = p_dof_mgr->ov_indexer();
-
-    std::vector<GO> node_gids;
 
     const int num_deriv = numNodes;//local_Vp.size()/numFields;
     for (size_t cell=0; cell<workset.numCells; ++cell) {
@@ -497,7 +492,7 @@ evaluateFields(typename Traits::EvalData workset)
       const auto& local_Vp = workset.local_Vp[cell];
       const auto  dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-      node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+      const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
       for (int i=0; i<num_deriv; ++i) {
         for (int col=0; col<num_cols; ++col) {
           const LO row = p_indexer->getLocalElement(node_gids[i]);
@@ -581,7 +576,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (trans) {
     const int num_deriv = numNodes;
-    const int neq       = dof_mgr->getNumFields();
 
     const auto& layers_data = workset.disc->getLayeredMeshNumbering();
 
@@ -589,13 +583,11 @@ evaluateFields(typename Traits::EvalData workset)
     const auto p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
     const auto p_indexer = p_dof_mgr->ov_indexer();
 
-    std::vector<GO> node_gids;
-
     for (size_t cell=0; cell<workset.numCells; ++cell) {
       const auto elem_LID = elem_lids(cell);
       const auto& local_Vp = workset.local_Vp[cell];
 
-      node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+      const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
       for (int i=0; i<num_deriv; i++) {
         const GO base_id = layers_data->getColumnId(node_gids[i]);
         const GO ginode  = layers_data->getId(base_id, fieldLevel);
@@ -719,7 +711,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto& fields_offsets = m_fields_offsets.host();
   const int eq_offset = this->offset;
-  std::vector<GO> node_gids;
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -733,10 +724,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
-    if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
-      node_dof_mgr->getElementGIDs(elem_LID,node_gids);
-    }
-
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int node=0; node<numNodes; ++node) {
       if (f_xx_is_active || f_xp_is_active) {
         for (int eq=0; eq<numFields; ++eq) {
@@ -857,7 +845,6 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   const auto offsets = m_fields_offsets.host();
-  std::vector<GO> node_gids;
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -871,7 +858,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
       }
     }
 
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int node=0; node<numNodes; ++node) {
       const GO base_id = layers_data->getColumnId(node_gids[node]);
       const GO ginode  = layers_data->getId(base_id, fieldLevel);

@@ -107,8 +107,6 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  constexpr auto ALL = Kokkos::ALL();
-
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
   const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
@@ -121,10 +119,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto ws = workset.wsIndex;
   const auto elem_lids = workset.disc->getElementLIDs_host(ws);
-  std::vector<GO> node_gids;
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (std::size_t node=0; node<this->numNodes; ++node) {
       const GO base_id = layers_data->getColumnId(node_gids[node]);
       const GO ginode  = layers_data->getId(base_id, fieldLevel);
@@ -288,7 +285,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto ws = workset.wsIndex;
   const auto elem_lids = workset.disc->getElementLIDs_host(ws);
-  std::vector<GO> node_gids;
 
   // If active, initialize data needed for differentiation
   if (is_active) {
@@ -298,7 +294,7 @@ evaluateFields(typename Traits::EvalData workset)
     const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
     for (std::size_t cell=0; cell<workset.numCells; ++cell) {
       const auto elem_LID = elem_lids(cell);
-      node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+      const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
       // const auto dof_lids  = Kokkos::subview(el_dof_lids,elem_LID,ALL);
       for (int node=0; node<num_deriv; ++node) {
         const GO base_id = layers_data->getColumnId(node_gids[node]);
@@ -348,7 +344,7 @@ evaluateFields(typename Traits::EvalData workset)
     // If not active, just set the parameter value in the phalanx field
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const auto elem_LID = elem_lids(cell);
-      node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+      const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
       for (std::size_t node=0; node<this->numNodes; ++node) {
         const GO base_id = layers_data->getColumnId(node_gids[node]);
         const GO ginode  = layers_data->getId(base_id, fieldLevel);
@@ -529,11 +525,10 @@ evaluateFields(typename Traits::EvalData workset)
   const auto p_dof_mgr    = workset.disc->getNewDOFManager(this->param_name);
   const auto p_indexer    = p_dof_mgr->ov_indexer();
 
-  std::vector<GO> node_gids;
   using ref_t = typename PHAL::Ref<ParamScalarT>::type;
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int node=0; node<num_deriv; ++node) {
       const GO base_id = layers_data->getColumnId(node_gids[node]);
       const GO ginode  = layers_data->getId(base_id, fieldLevel);

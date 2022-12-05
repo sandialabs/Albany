@@ -92,10 +92,9 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-  std::vector<GO> node_gids;
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     const int elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     for (int node=0; node<numNodes; ++node) {
       const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
@@ -189,10 +188,9 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-  std::vector<GO> node_gids;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     for (int node=0; node<numNodes; ++node) {
       const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
@@ -298,10 +296,9 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-  std::vector<GO> node_gids;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     for (int node=0; node<numNodes; ++node) {
       const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);

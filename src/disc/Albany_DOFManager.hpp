@@ -44,6 +44,10 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace> vs    () const;
   Teuchos::RCP<const Thyra_VectorSpace> ov_vs () const;
 
+  using panzer::DOFManager::getElementGIDs;
+  const std::vector<GO> & getElementGIDs (int ielem) const {
+    return elementGIDs_[ielem];
+  }
   using panzer::DOFManager::getGIDFieldOffsets;
   const std::vector<int> & getGIDFieldOffsets (int fieldNum) const {
     return this->getGIDFieldOffsets(part_name(),fieldNum);

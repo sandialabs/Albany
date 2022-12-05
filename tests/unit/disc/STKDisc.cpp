@@ -90,7 +90,6 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
     // Check nodesets
     REQUIRE (nodeSets.size()==5);
     REQUIRE (nodeSetsGIDs.size()==5);
-    std::vector<GO> ns_dofs_gids;
     for (const auto& nsn : expected_nsn) {
       REQUIRE (nodeSets.find(nsn)!=nodeSets.end());
       REQUIRE (nodeSetsGIDs.find(nsn)!=nodeSetsGIDs.end());
@@ -117,7 +116,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
         REQUIRE(it!=expected_ns_gids[nsn].end());
 
         const auto node_lid = ns_dof_mgr->cell_indexer()->getLocalElement(node_gid);
-        ns_dof_mgr->getElementGIDs(node_lid,ns_dofs_gids);
+        const auto& ns_dofs_gids = ns_dof_mgr->getElementGIDs(node_lid);
 
         REQUIRE (static_cast<int>(ns_dofs[i].size())==neq);
         REQUIRE (static_cast<int>(ns_dofs_gids.size())==neq);
@@ -183,14 +182,13 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
       return lid;
     };
 
-    std::vector<GO> elem_dof_gids;
     for (int i=0; i<E; ++i) {
       for (int j=0; j<E; ++j) {
         const GO elem_GID = i*E+j;
         const LO elem_LID = cell_indexer->getLocalElement(elem_GID);
         if (elem_LID<0) continue;
 
-        sol_dof_mgr->getElementGIDs(elem_LID,elem_dof_gids);
+        const auto& elem_dof_gids = sol_dof_mgr->getElementGIDs(elem_LID);
         for (auto row : elem_dof_gids) {
           for (auto col : elem_dof_gids) {
             expected_gids[row].push_back(col);

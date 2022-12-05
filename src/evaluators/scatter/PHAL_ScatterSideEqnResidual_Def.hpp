@@ -153,7 +153,6 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
   const int side_dim = cellDim-1;
   const int num_ws = disc.getNumWorksets();
   const auto node_dof_mgr = disc.getNewDOFManager();
-  std::vector<GO> gids;
   for (int ws=0; ws<num_ws; ++ws) {
     const auto& ssMap = disc.getSideSets(ws);
     if (ssMap.find(this->sideSetName)==ssMap.end()) {
@@ -167,7 +166,7 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
       const int side_pos = side.side_pos;
 
       const auto& offsets = node_dof_mgr->getGIDFieldOffsets_subcell(0,side_dim,side_pos);
-      node_dof_mgr->getElementGIDs(elem_LID,gids);
+      const auto& gids = node_dof_mgr->getElementGIDs(elem_LID);
       for (auto o : offsets) {
         ss_nodes_gids.insert(gids[o]);
       }
@@ -211,12 +210,11 @@ doPostEvaluate(typename Traits::EvalData workset)
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
-  std::vector<GO> node_gids;
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto elem_LID = elem_lids(icell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int inode=0; inode<this->numCellNodes; ++inode) {
       const auto node = node_gids[inode];
       if (this->ss_nodes_gids.count(node)==0) {
@@ -313,12 +311,11 @@ doPostEvaluate(typename Traits::EvalData workset)
   auto Jac = workset.Jac;
   Teuchos::Array<LO> lrow(1);
   Teuchos::Array<ST> one(1,1.0);
-  std::vector<GO> node_gids;
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto elem_LID = elem_lids(icell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     for (int inode=0; inode<this->numCellNodes; ++inode) {
       const auto node = node_gids[inode];

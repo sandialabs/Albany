@@ -91,7 +91,6 @@ STKDiscretization::printConnectivity() const
     if (rank == comm->getRank()) {
       const auto& elem_lids = m_workset_elements.host();
       const auto& node_dof_mgr = getNodeNewDOFManager();
-      std::vector<GO> node_gids;
 
       std::ostringstream ss;
 
@@ -100,7 +99,7 @@ STKDiscretization::printConnectivity() const
         ss << "  Bucket (aka workset) " << ws << std::endl;
         for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
           const int elem_LID = elem_lids(ws,ielem);
-          node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+          const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
           ss << "    Element " << ielem << ": Nodes =";
           for (const auto gid : node_gids)
             ss << " " << gid;
@@ -1243,12 +1242,11 @@ STKDiscretization::computeGraphs()
   // The global solution dof manager
   const auto sol_dof_mgr = getNewDOFManager();
   const int num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
-  std::vector<GO> elem_gids,side_gids;
   const int num_nodes = sol_dof_mgr->elem_dof_lids().host().extent(1) / neq;
   cols.resize(num_nodes);
   rows.resize(num_nodes);
   for (int icell=0; icell<num_elems; ++icell) {
-    sol_dof_mgr->getElementGIDs(icell,elem_gids);
+    const auto& elem_gids = sol_dof_mgr->getElementGIDs(icell);
 
     // First, global eqn (row) coupled with global eqn (col)
     for (int ieq=0; ieq<numVolumeEqns; ++ieq) {
@@ -1327,7 +1325,7 @@ STKDiscretization::computeGraphs()
         }
 
         // Check the layerId of all nodes of a side
-        ss_node_dof_mgr->getElementGIDs(0,elem_gids);
+        const auto& elem_gids = ss_node_dof_mgr->getElementGIDs(0);
         for (auto gid : elem_gids) {
           auto layer = lmn->getLayerId(gid);
           if (layer!=0 && layer!=lmn->numLayers) {
@@ -1345,7 +1343,7 @@ STKDiscretization::computeGraphs()
       const auto& eq_offsets = ss_sol_dof_mgr->getGIDFieldOffsets(side_eq);
       // Loop over all sides in this side set
       for (int iside=0; iside<num_sides; ++iside) {
-        ss_sol_dof_mgr->getElementGIDs(iside,side_gids);
+        const auto& side_gids = ss_sol_dof_mgr->getElementGIDs(iside);
         const LO elem_LID = get_elem_lid(iside);
 
         const int num_side_nodes = side_gids.size();
@@ -1366,7 +1364,7 @@ STKDiscretization::computeGraphs()
             const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,lmn->top_side_pos);
             for (int il=0; il<lmn->numLayers; ++il) {
               const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
-              sol_dof_mgr->getElementGIDs(layer_elem_lid,elem_gids);
+              const auto& elem_gids = sol_dof_mgr->getElementGIDs(layer_elem_lid);
 
               // IMPORTANT: couple one dof at a time, since we only couple dofs *vertically aligned*.
               for (int node=0; node<num_side_nodes; ++node) {
@@ -1374,7 +1372,7 @@ STKDiscretization::computeGraphs()
               }
             }
             const LO last_layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,lmn->numLayers);
-            sol_dof_mgr->getElementGIDs(last_layer_elem_lid,elem_gids);
+            const auto& elem_gids = sol_dof_mgr->getElementGIDs(last_layer_elem_lid);
             for (int node=0; node<num_side_nodes; ++node) {
               m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[top_offsets[node]],true);
             }

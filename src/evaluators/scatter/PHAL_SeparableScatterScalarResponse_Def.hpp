@@ -200,15 +200,13 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
 
   const auto& sideSet = workset.sideSets->find(sidesetName)->second;
 
-  std::vector<GO> elem_node_gids, basal_node_gids;
-
   for (const auto& side : sideSet) {
     const auto base_elem_GID = side.side_GID;
     const auto& side_topo = cellTopo->side[side.side_pos].topology;
     const int numSideNodes = side_topo->node_count;
 
     // Get the gids of the basal nodes, for later use
-    ss_node_dof_mgr->getElementGIDs(side.side_LID,basal_node_gids);
+    const auto& basal_node_gids = ss_node_dof_mgr->getElementGIDs(side.side_LID);
 
     // Given a basal node gid, figure out it's relative position in the side
     auto get_basal_inode = [&](const GO gid) -> int {
@@ -228,7 +226,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
 
         // Get dof LIDs and node GIDs in this element
         const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-        node_dof_mgr->getElementGIDs(elem_LID,elem_node_gids);
+        const auto& elem_node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
         // Loop over all equations
         for (int eq=0; eq<neq; ++eq) {
@@ -397,11 +395,10 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids    = workset.disc->getElementLIDs_host(ws);
 
   // Loop over cells in workset
-  std::vector<GO> node_gids;
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
 
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     // Loop over responses
     for (size_t res=0; res<this->global_response.size(); ++res) {
@@ -683,10 +680,10 @@ evaluateFields(typename Traits::EvalData workset)
   using mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>;
   mv_data_t hess_vec_prod_g_px_data, hess_vec_prod_g_pp_data;
   if(!hess_vec_prod_g_px.is_null()) {
-    const auto hess_vec_prod_g_px_data = Albany::getNonconstLocalData(hess_vec_prod_g_px);
+    hess_vec_prod_g_px_data = Albany::getNonconstLocalData(hess_vec_prod_g_px);
   }
   if (!hess_vec_prod_g_pp.is_null()) {
-    const auto hess_vec_prod_g_pp_data = Albany::getNonconstLocalData(hess_vec_prod_g_pp);
+    hess_vec_prod_g_pp_data = Albany::getNonconstLocalData(hess_vec_prod_g_pp);
   }
 
   // Get some data from the discretization
@@ -698,11 +695,10 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
 
   // Loop over cells in workset
-  std::vector<GO> node_gids;
   for (size_t cell=0; cell < workset.numCells; ++cell) {
     // Get cell's node GIDs
     const auto elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
@@ -756,10 +752,10 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   using mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>;
   mv_data_t hess_vec_prod_g_xp_data, hess_vec_prod_g_xx_data;
   if(!hess_vec_prod_g_xp.is_null()) {
-    const auto hess_vec_prod_g_xp_data = Albany::getNonconstLocalData(hess_vec_prod_g_xp);
+    hess_vec_prod_g_xp_data = Albany::getNonconstLocalData(hess_vec_prod_g_xp);
   }
   if (!hess_vec_prod_g_xx.is_null()) {
-    const auto hess_vec_prod_g_xx_data = Albany::getNonconstLocalData(hess_vec_prod_g_xx);
+    hess_vec_prod_g_xx_data = Albany::getNonconstLocalData(hess_vec_prod_g_xx);
   }
 
   const auto sol_dof_mgr = workset.disc->getNewDOFManager();
@@ -773,7 +769,6 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   const int numLayers = layeredMeshNumbering.numLayers;
   const int neq = sol_dof_mgr->getNumFields();
 
-  std::vector<GO> node_gids;
   const auto sideSet = workset.sideSets->at(sideset);
   for (size_t iside=0; iside<sideSet.size(); ++iside) {
     // Get the data that corresponds to the side
@@ -786,7 +781,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
     // Get cell node GIDs
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     for (size_t res=0; res<this->global_response.size(); ++res) {
       auto val = this->local_response(elem_LID, res);

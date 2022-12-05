@@ -94,10 +94,9 @@ evaluateFields(typename Traits::EvalData workset)
   const auto p_dof_mgr    = workset.disc->getNewDOFManager(this->param_name);
   const auto p_indexer    = p_dof_mgr->indexer();
 
-  std::vector<GO> node_gids;
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int node=0; node<this->numNodes; ++node) {
       const LO lid = p_indexer->getLocalElement(node_gids[node]);
       if(lid >= 0) {
@@ -139,10 +138,9 @@ evaluateFields(typename Traits::EvalData workset)
   const auto  p_dof_mgr    = workset.disc->getNewDOFManager(this->param_name);
   const auto  p_indexer    = p_dof_mgr->indexer();
 
-  std::vector<GO> node_gids;
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int node=0; node<this->numNodes; ++node) {
       const GO ilayer = layers_data.getLayerId(node_gids[node]);
       if (ilayer==fieldLevel) {
