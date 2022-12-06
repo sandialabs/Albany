@@ -6,6 +6,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_UnitTestSetupHelpers.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_UnitTestHelpers.hpp"
@@ -177,11 +178,6 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
     std::vector<std::vector<GO>> expected_gids(N*N*neq);
     std::vector<std::vector<int>> expected_lids(N*N*neq);
 
-    auto lid = [&](const GO gid) -> LO {
-      LO lid = ov_sol_indexer->getLocalElement(gid);
-      return lid;
-    };
-
     for (int i=0; i<E; ++i) {
       for (int j=0; j<E; ++j) {
         const GO elem_GID = i*E+j;
@@ -197,14 +193,44 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
       }
     }
 
+    // Perform manual global assembly:
+    std::vector<GO> my_rows;
+    for (GO row=0; row<N*N*neq; ++row) {
+      auto& my_row = expected_gids[row];
+      const int row_lid = sol_dof_mgr->indexer()->getLocalElement(row);
+      std::set<GO> glob_row;
+      for (int pid=0; pid<comm->getSize(); ++pid) {
+        int ncols = my_row.size();
+        Teuchos::broadcast(*comm,pid,1,&ncols);
+        std::vector<GO> cols (ncols);
+        if (pid==comm->getRank()) {
+          cols = my_row;
+        }
+
+        Teuchos::broadcast(*comm,pid,ncols,cols.data());
+        for (GO col : cols) {
+          glob_row.insert(col);
+        }
+      }
+      if (row_lid>=0) {
+        my_rows.push_back(row);
+        my_row.clear();
+        for (GO col : glob_row) {
+          my_row.push_back(col);
+        }
+      }
+    }
+
     // Remove duplicates, and convert to lids
+    const auto Tmat = Albany::getTpetraMatrix(J,true);
+    const auto colMap = Tmat->getColMap();
     for (int i=0; i<neq*N*N; ++i) {
       auto& v = expected_gids[i];
       std::sort(v.begin(),v.end());
       auto it = std::unique(v.begin(),v.end());
       v.erase(it,v.end());
       for (auto gid : v) {
-        expected_lids[i].push_back(lid(gid));
+        expected_lids[i].push_back(colMap->getLocalElement(gid));
       }
     }
 

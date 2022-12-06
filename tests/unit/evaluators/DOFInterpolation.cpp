@@ -21,8 +21,7 @@
 
 #include <limits>
 
-
-TEUCHOS_UNIT_TEST(evaluator_unit_tester, scalarinterpolation)
+TEUCHOS_UNIT_TEST(DOFInterpolation, Scalar)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
 
