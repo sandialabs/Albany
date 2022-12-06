@@ -22,7 +22,7 @@ namespace Albany
 /*********************** Helper Functions*********************************/
 
 Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
+getIntrepid2Basis(const CellTopologyData& ctd)
 {
    typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
    using Teuchos::rcp;
