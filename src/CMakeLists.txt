@@ -296,6 +296,7 @@ list (APPEND SOURCES
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
   disc/Albany_DOFManager.cpp
+  disc/Albany_DiscretizationUtils.cpp
   )
 list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp

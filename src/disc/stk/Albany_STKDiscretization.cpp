@@ -23,8 +23,7 @@
 
 #include <Shards_BasicTopologies.hpp>
 
-#include <Intrepid2_Basis.hpp>
-#include <Intrepid2_CellTools.hpp>
+#include <Panzer_IntrepidFieldPattern.hpp>
 
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
@@ -1183,7 +1182,7 @@ void STKDiscretization::computeVectorSpaces()
 
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
-    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::P1,dof_dim);
+    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
     m_dof_managers[field_name][part_name] = dof_mgr;
 
     m_node_dof_managers[part_name] = Teuchos::null;
@@ -1191,7 +1190,7 @@ void STKDiscretization::computeVectorSpaces()
     if (do_sides) {
       for (const auto& ss_it : stkMeshStruct->ssPartVec) {
         const auto& ss_name = ss_it.first;
-        auto ss_dof_mgr = create_dof_mgr(ss_name,field_name,FE_Type::P1,dof_dim);
+        auto ss_dof_mgr = create_dof_mgr(ss_name,field_name,FE_Type::HGRAD,1,dof_dim);
         m_dof_managers[field_name][ss_name] = ss_dof_mgr;
 
         if (m_node_dof_managers[ss_name].is_null() && dof_dim==1) {
@@ -1204,7 +1203,7 @@ void STKDiscretization::computeVectorSpaces()
   // For each part, also make a Node dof manager
   for (auto& it : m_node_dof_managers) {
     const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, "node", FE_Type::P1, 1);
+    it.second = create_dof_mgr(part_name, "node", FE_Type::HGRAD,1,1);
   }
 
   auto& ndb = stkMeshStruct->nodal_data_base;
@@ -2088,7 +2087,6 @@ STKDiscretization::computeSideSets()
       }
     }
   }
-  
 }
 
 int
@@ -2203,7 +2201,8 @@ STKDiscretization::computeNodeSets()
     // Get a solution dof manager for this node set. If one doesn't exist, create it.
     auto& ns_sol_dof_mgr = m_dof_managers[solution_dof_name()][ns.first];
     if (ns_sol_dof_mgr.is_null()) {
-      ns_sol_dof_mgr = create_dof_mgr(ns.first,nodes_dof_name(),FE_Type::P1,neq);
+      // NOTE: we're hard coding P1 for now
+      ns_sol_dof_mgr = create_dof_mgr(ns.first,nodes_dof_name(),FE_Type::HGRAD,1,neq);
     }
 
     ns_gids = ns_sol_dof_mgr->getAlbanyConnManager()->getElementsInBlock(ns.first);
@@ -2525,13 +2524,15 @@ STKDiscretization::
 create_dof_mgr (const std::string& part_name,
                 const std::string& field_name,
                 const FE_Type fe_type,
+                const int order,
                 const int dof_dim)
 {
   auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
   auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
 
-  const auto topology = conn_mgr->get_topology();
-  const auto fp = createFieldPattern (fe_type, topology);
+  const auto ctd = conn_mgr->get_topology().getCellTopologyData();
+  const auto basis = getIntrepid2Basis(*ctd,fe_type,order);
+  const auto fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
 
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
   //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1

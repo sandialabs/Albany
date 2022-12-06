@@ -531,6 +531,7 @@ class STKDiscretization : public AbstractDiscretization
   create_dof_mgr (const std::string& part_name,
                   const std::string& field_name,
                   const FE_Type fe_type,
+                  const int order,
                   const int dof_dim);
 
   // ==================== Members =================== //
