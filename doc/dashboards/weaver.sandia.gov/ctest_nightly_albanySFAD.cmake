@@ -80,8 +80,8 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}-${CTEST_BUILD_OPTION}")
-set (CTEST_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}-${CTEST_BUILD_OPTION}")
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CUDA_VERSION}-${CTEST_CONFIGURATION}-${CTEST_BUILD_OPTION}")
+set (CTEST_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CUDA_VERSION}-${CTEST_CONFIGURATION}-${CTEST_BUILD_OPTION}")
 
 
 if (1)
