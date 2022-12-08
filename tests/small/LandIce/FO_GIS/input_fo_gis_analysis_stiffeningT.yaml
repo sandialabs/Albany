@@ -86,6 +86,58 @@ ANONYMOUS:
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
+    Hessian:
+      Response 1:
+        Parameter 0:
+          Reconstruct H_pp using Hessian-vector products: true
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-7
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+        Parameter 1:
+          Reconstruct H_pp using Hessian-vector products: true
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-7
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
@@ -203,54 +255,7 @@ ANONYMOUS:
           Matrix Types:
             Hessian Of Response:
               Response Index: 1
-              Remove Mean Of The Right-hand Side: false
-              Block Diagonal Solver:
-                Block 0:
-                  Linear Solver Type: Belos
-                  Linear Solver Types:
-                    Belos:
-                      Solver Type: Block GMRES
-                      Solver Types:
-                        Block GMRES:
-                          Maximum Iterations: 200
-                          Convergence Tolerance: 1e-7
-                          Num Blocks: 200
-                          Output Frequency: 20
-                          Output Style: 1
-                          Verbosity: 33
-                      VerboseObject:
-                        Verbosity Level: medium
-                  Preconditioner Type: Ifpack2
-                  Preconditioner Types:
-                    Ifpack2:
-                      Overlap: 0
-                      Prec Type: Amesos2
-                      Ifpack2 Settings: 
-                        Amesos2: {}
-                        Amesos2 solver name: klu
-                Block 1:
-                  Linear Solver Type: Belos
-                  Linear Solver Types:
-                    Belos:
-                      Solver Type: Block GMRES
-                      Solver Types:
-                        Block GMRES:
-                          Maximum Iterations: 200
-                          Convergence Tolerance: 1e-7
-                          Num Blocks: 200
-                          Output Frequency: 20
-                          Output Style: 1
-                          Verbosity: 33
-                      VerboseObject:
-                        Verbosity Level: medium
-                  Preconditioner Type: Ifpack2
-                  Preconditioner Types:
-                    Ifpack2:
-                      Overlap: 0
-                      Prec Type: Amesos2
-                      Ifpack2 Settings: 
-                        Amesos2: {}
-                        Amesos2 solver name: klu
+
         ROL Options:
         
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 

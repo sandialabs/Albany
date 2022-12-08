@@ -58,6 +58,30 @@ ANONYMOUS:
       Response 0:
         Use AD for Hessian-vector products (default): true
         Reconstruct H_pp: true
+        Parameter 0:
+          Linear Solver Type: Belos
+          Linear Solver Types:
+            Belos:
+              Solver Type: Block GMRES
+              Solver Types:
+                Block GMRES:
+                  Maximum Iterations: 200
+                  Convergence Tolerance: 1e-7
+                  Num Blocks: 200
+                  Output Frequency: 20
+                  Output Style: 1
+                  Verbosity: 33
+              VerboseObject:
+                Verbosity Level: medium
+          Preconditioner Type: Ifpack2
+          Preconditioner Types:
+            Ifpack2:
+              Overlap: 0
+              Prec Type: Amesos2
+              Ifpack2 Settings: 
+                Amesos2: {}
+                Amesos2 solver name: klu
+
       Write Hessian MatrixMarket: true
     LandIce Viscosity: 
       Extract Strain Rate Sq: true
@@ -267,31 +291,7 @@ ANONYMOUS:
           Matrix Types:
             Hessian Of Response:
               Response Index: 0
-              Remove Mean Of The Right-hand Side: false
-              Block Diagonal Solver:
-                Block 0:
-                  Linear Solver Type: Belos
-                  Linear Solver Types:
-                    Belos:
-                      Solver Type: Block GMRES
-                      Solver Types:
-                        Block GMRES:
-                          Maximum Iterations: 200
-                          Convergence Tolerance: 1e-7
-                          Num Blocks: 200
-                          Output Frequency: 20
-                          Output Style: 1
-                          Verbosity: 33
-                      VerboseObject:
-                        Verbosity Level: medium
-                  Preconditioner Type: Ifpack2
-                  Preconditioner Types:
-                    Ifpack2:
-                      Overlap: 0
-                      Prec Type: Amesos2
-                      Ifpack2 Settings: 
-                        Amesos2: {}
-                        Amesos2 solver name: klu
+
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
           SimOpt:

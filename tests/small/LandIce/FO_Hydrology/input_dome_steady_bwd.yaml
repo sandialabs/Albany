@@ -59,6 +59,55 @@ ANONYMOUS:
         Use AD for Hessian-vector products (default): false
       Response 0:
         Use AD for Hessian-vector products (default): true
+        Parameter 0:
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 197
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: none
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  # Amesos2 solver name: pardiso_mkl
+        Parameter 1:
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 198
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: none
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  # Amesos2 solver name: pardiso_mkl
+                  
     Initial Condition:
       Function: Constant
       Function Data: [2.0, 2.0, 10.0]
@@ -271,53 +320,6 @@ ANONYMOUS:
           Matrix Types:
             Hessian Of Response:
               Response Index: 0
-              Block Diagonal Solver:
-                Block 0:
-                  Linear Solver Type: Belos
-                  Linear Solver Types:
-                    Belos:
-                      Solver Type: Block GMRES
-                      Solver Types:
-                        Block GMRES:
-                          Maximum Iterations: 200
-                          Convergence Tolerance: 1e-8
-                          Num Blocks: 197
-                          Output Frequency: 20
-                          Output Style: 1
-                          Verbosity: 33
-                      VerboseObject:
-                        Verbosity Level: none
-                  Preconditioner Type: Ifpack2
-                  Preconditioner Types:
-                    Ifpack2:
-                      Overlap: 0
-                      Prec Type: Amesos2
-                      Ifpack2 Settings: 
-                        Amesos2: {}
-                        # Amesos2 solver name: pardiso_mkl
-                Block 1:
-                  Linear Solver Type: Belos
-                  Linear Solver Types:
-                    Belos:
-                      Solver Type: Block GMRES
-                      Solver Types:
-                        Block GMRES:
-                          Maximum Iterations: 200
-                          Convergence Tolerance: 1e-8
-                          Num Blocks: 198
-                          Output Frequency: 20
-                          Output Style: 1
-                          Verbosity: 33
-                      VerboseObject:
-                        Verbosity Level: none
-                  Preconditioner Type: Ifpack2
-                  Preconditioner Types:
-                    Ifpack2:
-                      Overlap: 0
-                      Prec Type: Amesos2
-                      Ifpack2 Settings: 
-                        Amesos2: {}
-                        # Amesos2 solver name: pardiso_mkl
 
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 

@@ -395,6 +395,45 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 #endif
   }
 
+  //validate Hessian parameters
+  if(problemParams->isSublist("Hessian")) {
+    Teuchos::RCP<Teuchos::ParameterList> validHessianParams = Teuchos::rcp(new Teuchos::ParameterList("validHessianParams"));
+    validHessianParams->set<bool>("Write Hessian MatrixMarket", false);
+    validHessianParams->set<bool>("Use AD for Hessian-vector products (default)", true);
+
+    validHessianParams->sublist("Residual").set<bool>("Use AD for Hessian-vector products (default)", false);
+    validHessianParams->sublist("Residual").set<std::string>("Enable AD for Hessian-vector product contributions of", "(x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)");
+    validHessianParams->sublist("Residual").set<std::string>("Disable AD for Hessian-vector product contributions of", "(x,p0) (x,p1) (p0,x) (p1,x)");
+
+    // We want to allow the user to add hessian settings for responses (parameters) even if those responses (parameters) are not used.
+    int maxNumResonses(3),maxNumParameters(3);
+
+    //Make sure that the problem does not require more responses (parameters) than anticipated. 
+    if (problemParams->isSublist("Response Functions")) 
+      maxNumResonses = std::max(maxNumResonses, problemParams->sublist("Response Functions").get<int>("Number Of Responses"));
+    if (problemParams->isSublist("Parameters")) 
+      maxNumParameters = std::max(maxNumParameters, problemParams->sublist("Parameters").get<int>("Number Of Parameters"));
+
+    for(int response_index = 0;  response_index < maxNumResonses; response_index++) {
+      auto& validHessianResponseParams = validHessianParams->sublist(util::strint("Response", response_index));
+      validHessianResponseParams.set<bool>("Use AD for Hessian-vector products (default)", false);
+      validHessianResponseParams.set<bool>("Reconstruct H_pp", false);
+      validHessianResponseParams.set<std::string>("Enable AD for Hessian-vector product contributions of", "(x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)");
+      validHessianResponseParams.set<std::string>("Disable AD for Hessian-vector product contributions of", "(x,p0) (x,p1) (p0,x) (p1,x)");
+      for (int i=0; i<maxNumParameters; ++i) {
+        auto& pl = validHessianResponseParams.sublist(util::strint("Parameter", i), false,"");
+        pl.set<bool>("Replace H_pp with Identity",false);
+        pl.set<bool>("Reconstruct H_pp using Hessian-vector products",true);
+        pl.sublist("H_pp Solver",false,"");
+      }
+    }
+
+    auto hessianParams = problemParams->sublist("Hessian");
+    hessianParams.validateParameters(*validHessianParams,2);
+  }
+
+
+
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
       Teuchos::sublist(params, "Debug Output", true);
@@ -2485,16 +2524,8 @@ Application::evaluateResponseHessian_pp(
   RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
   Ht->resumeFill();
 
-  Teuchos::RCP<Teuchos::ParameterList> validHessianResponseParams = Teuchos::rcp(new Teuchos::ParameterList("validHessianResponseParams"));;
-  validHessianResponseParams->set<bool>("Use AD for Hessian-vector products (default)", false);
-  validHessianResponseParams->set<bool>("Reconstruct H_pp", false);
-
-  for (int i=0; i<problemParams->sublist("Parameters").get<int>("Number Of Parameters"); ++i)
-    validHessianResponseParams->set<bool>(util::strint("Replace H_pp with Identity for Parameter", i), false);
-
   auto hessianResponseParams = problemParams->sublist("Hessian").sublist(util::strint("Response", response_index));
-  hessianResponseParams.validateParametersAndSetDefaults(*validHessianResponseParams, 0);
-  bool replace_by_I = hessianResponseParams.get<bool>(util::strint("Replace H_pp with Identity for Parameter", parameter_index));
+  bool replace_by_I = hessianResponseParams.sublist(util::strint("Parameter", parameter_index)).get("Replace H_pp with Identity", false);
 
   if (replace_by_I) {
     auto rangeMap = Ht->getRangeMap();

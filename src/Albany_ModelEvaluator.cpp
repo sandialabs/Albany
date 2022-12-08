@@ -567,10 +567,19 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
           << "l2 = " << l2
           << std::endl);
 
+  auto pl = app->getProblemPL()->sublist("Hessian").sublist(util::strint("Response",j)).sublist(util::strint("Parameter",l1));
+  bool HessVecProdBasedOp = pl.get("Reconstruct H_pp using Hessian-vector products",true);
+
   if (l1 < num_param_vecs) {
+    TEUCHOS_TEST_FOR_EXCEPTION(!HessVecProdBasedOp, std::logic_error, 
+            std::endl
+                << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+                << "Hessian pp operator for response " << j << " and non-distributed parameter " << l1 << " can only be reconstructed via Hessian-vector products"
+                << std::endl); 
     return Albany::createDenseHessianLinearOp(param_vss[l1]);
   }
   else {
+
     // distributed parameters
     TEUCHOS_TEST_FOR_EXCEPTION(
         l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
@@ -580,13 +589,24 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
             << "Invalid parameter index l1 = "
             << l1
             << std::endl);
+    const Teuchos::ParameterList& rList = app->getProblemPL()->sublist("Response Functions").sublist(util::strint("Response", j));
+    const std::string& name = rList.isParameter("Name") ? rList.get<std::string>("Name") : std::string("");
 
-    Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
-    Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
-    std::vector<IDArray> vElDofs =
-      distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
-
-    return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+    if(HessVecProdBasedOp) {
+      Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
+      Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
+      std::vector<IDArray> vElDofs =
+        distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
+      return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+    } else {
+      Teuchos::RCP<Thyra_LinearOp> linOp = app->getResponse(j)->get_Hess_pp_operator(dist_param_names[l1 - num_param_vecs]);
+      TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(linOp), std::logic_error, 
+            std::endl
+                << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+                << "Hessian pp operator not defined for response " << j << " and parameter " << dist_param_names[l1 - num_param_vecs]
+                << std::endl); 
+      return linOp;
+    }
   }
 }
 
@@ -1515,14 +1535,26 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       const Teuchos::RCP<Thyra_LinearOp> g_hess_pp =
         outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_g_pp, j, l1, l1) ?
         outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
-
       if (Teuchos::nonnull(g_hess_pp)) {
-        app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
-                  sacado_param_vec,
-                  all_param_names[l1],
-                  g_hess_pp);
-        if(appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false))
-          Albany::writeMatrixMarket(Albany::getTpetraMatrix(g_hess_pp).getConst(), "H", l1);
+        auto hessParams = appParams->sublist("Problem").sublist("Hessian");
+        auto hess_pp_matrix_op = Teuchos::rcp_dynamic_cast<MatrixBased_LOWS>(g_hess_pp);
+        if(Teuchos::nonnull(hess_pp_matrix_op)) {
+          app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
+                    sacado_param_vec,
+                    all_param_names[l1],
+                    hess_pp_matrix_op->getMatrix());
+          if(hessParams.get<bool>("Write Hessian MatrixMarket", false))
+            Albany::writeMatrixMarket(Albany::getTpetraMatrix(hess_pp_matrix_op->getMatrix()).getConst(), "H", l1);
+        }
+
+        //Initialize Solver only if Solver sublist is present
+        if(hessParams.sublist(util::strint("Response",j)).sublist(util::strint("Parameter",l1)).isSublist("H_pp Solver")) {
+          auto hess_pp = Teuchos::rcp_dynamic_cast<Init_LOWS>(g_hess_pp);
+          TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(hess_pp), std::runtime_error, 
+                  "hess_g_pp(" << j <<","<< l1  <<","<< l1 << ") is not derived from Hessian_LOWS.\n");
+          auto pl = hessParams.sublist(util::strint("Response",j)).sublist(util::strint("Parameter",l1)).sublist("H_pp Solver");
+          hess_pp->initializeSolver(Teuchos::rcpFromRef(pl));        
+        }
       }
 
       for (int l2 = 0; l2 < num_params; l2++) {
