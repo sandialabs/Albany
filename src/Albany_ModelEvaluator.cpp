@@ -574,7 +574,7 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
     TEUCHOS_TEST_FOR_EXCEPTION(!HessVecProdBasedOp, std::logic_error, 
             std::endl
                 << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
-                << "Hessian pp operator for scalar response " << j << " and parameter " << l1 << " can only be reconstructed via Hessian-vector products"
+                << "Hessian pp operator for response " << j << " and non-distributed parameter " << l1 << " can only be reconstructed via Hessian-vector products"
                 << std::endl); 
     return Albany::createDenseHessianLinearOp(param_vss[l1]);
   }
