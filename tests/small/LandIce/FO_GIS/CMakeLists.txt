@@ -311,6 +311,12 @@ if (ALBANY_IFPACK2)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_hessianT.yaml)
       add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_hessianT.yaml)
       set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+      
+      set (testName ${testNameRoot}_Analysis_BasalFriction_Hessian_matrix_free)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_hessian_matfreeT.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_hessian_matfreeT.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_hessian_matfreeT.yaml)
+      set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
     endif()
   endif()
 endif()

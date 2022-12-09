@@ -76,6 +76,30 @@ ANONYMOUS:
       Boundary Edges Set Name: lateralside
     Body Force:
       Type: FO INTERP SURF GRAD
+    Hessian:
+      Response 1:
+        Parameter 0:
+          Reconstruct H_pp using Hessian-vector products: false
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-9
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
@@ -161,6 +185,7 @@ ANONYMOUS:
     Sensitivity Method: Adjoint
     Analysis:
       Output Level: 1
+      Output Final Parameters: false
       Analysis Package: ROL
       ROL:
         Number Of Parameters: 1
@@ -173,7 +198,14 @@ ANONYMOUS:
         Full Space: false
         Use NOX Solver: false
 
+        Matrix Based Dot Product: 
+          Matrix Type: Hessian Of Response
+          Matrix Types:
+            Hessian Of Response:
+              Response Index: 1
+
         ROL Options:
+
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
           SimOpt:
             Solve:
@@ -190,7 +222,7 @@ ANONYMOUS:
           Status Test: 
             Gradient Tolerance: 1.0e-4
             Step Tolerance: 1.0e-10
-            Iteration Limit: 3
+            Iteration Limit: 1
 
           General:
             Output Level: 1
@@ -320,7 +352,7 @@ ANONYMOUS:
     Sensitivity For Parameter 0:
       Test Value: 4.530749883697e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [88.249]
+    Piro Analysis Test Values: [57.7495]
   Regression For Response 1:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
