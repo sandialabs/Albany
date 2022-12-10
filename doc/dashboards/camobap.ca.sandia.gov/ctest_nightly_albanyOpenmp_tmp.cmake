@@ -6,10 +6,8 @@ set (CTEST_TEST_TYPE Nightly)
 # What to build and test
 set (DOWNLOAD FALSE)
 set (BUILD_ALBANY FALSE)
-set (BUILD_ALBANY_NOEPETRA TRUE)
-set (BUILD_ALBFUNCTOR_OPENMP FALSE)
-set (BUILD_CISM_PISCEES_EPETRA FALSE)
-set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+set (BUILD_ALBANY_NOEPETRA FALSE)
+set (BUILD_ALBFUNCTOR_OPENMP TRUE)
 
 # Begin User inputs:
 set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
@@ -27,7 +25,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-#set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Albany")
+#set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-Openmp-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -55,8 +53,8 @@ set (CTEST_DROP_METHOD "https")
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
-execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+set (INSTALL_LOCATION "/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${INSTALL_LOCATION}/lib/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
 		OUTPUT_FILE "mpicc.txt")
@@ -100,15 +98,14 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-No-Epetra-Serial")
-
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-OpenMP")
 
 if (CTEST_DROP_METHOD STREQUAL "https")
-  set(CTEST_DROP_METHOD "https")
+  set (CTEST_DROP_SITE "cdash.sandia.gov")
   set (CTEST_PROJECT_NAME "Albany")
-  set(CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
-  set(CTEST_DROP_LOCATION "/cdash/submit.php?project=Albany")
-  set(CTEST_DROP_SITE_CDASH TRUE)
+  set (CTEST_DROP_LOCATION "/CDash-2-3-0/submit.php?project=Albany")
+  set (CTEST_TRIGGER_SITE "")
+  set (CTEST_DROP_SITE_CDASH TRUE)
 endif ()
 
 find_program (CTEST_GIT_COMMAND NAMES git)
@@ -220,119 +217,86 @@ if (DOWNLOAD)
 endif ()
 
 
-if (BUILD_ALBANY_NOEPETRA)
-
-  # Builds everything!
-  #
+if (BUILD_ALBFUNCTOR_OPENMP)
+  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build with OpenMP KokkosNode
 
   set (CONFIGURE_OPTIONS
-    "-GNinja"
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DSEACAS_EPU=${TRILINSTALLDIR}/bin/epu"
-    "-DSEACAS_DECOMP=${TRILINSTALLDIR}/bin/decomp"
-    "-DSEACAS_EXODIFF=${TRILINSTALLDIR}/bin/exodiff"
-    "-DSEACAS_ALGEBRA=${TRILINSTALLDIR}/bin/algebra"
-    "-DENABLE_MPAS_INTERFACE:BOOL=OFF"
-    "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=ON"
-    "-DENABLE_CISM_EPETRA:BOOL=OFF"
-    "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
-    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetraInstall"
-    "-DCISM_EXE_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra)
+    CDASH-ALBANY-FILE.TXT
+ )
+
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP)
   endif ()
 
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
+  CTEST_CONFIGURE (
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
-    APPEND
-    )
+    APPEND)
 
   if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
+    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
+    
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
+      message ("Cannot submit Albany configure results!")
+      set (BUILD_ALBFUNCTOR_OPENMP FALSE)
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany build!")
+    message ("Cannot configure Albany build!")
+    set (BUILD_ALBFUNCTOR_OPENMP FALSE)
   endif ()
 
-  #
-  # Build Albany
-  #
+  if (BUILD_ALBFUNCTOR_OPENMP)
+    set (CTEST_BUILD_TARGET all)
 
-  set (CTEST_BUILD_TARGET install)
+    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+    CTEST_BUILD (
+      BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
+      RETURN_VALUE HAD_ERROR
+      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
+      APPEND)
 
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Build
+        RETURN_VALUE S_HAD_ERROR)
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany build results!")
+        set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+      endif ()
+    endif ()
 
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
+    if (HAD_ERROR)
+      message ("Cannot build Albany!")
+      set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+    endif ()
+
+    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+      message ("Encountered build errors in Albany build.")
+      set (BUILD_ALBFUNCTOR_OPENMP FALSE)
     endif ()
   endif ()
 
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
-  endif ()
+  set (CTEST_TEST_TIMEOUT 2400)
 
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
-  endif ()
-
-  #
-  # Run Albany tests
-  #
-  
   #  Over-write default limit for output posted to CDash site
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyNoEpetra"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    RETURN_VALUE  HAD_ERROR
-    )
+  CTEST_TEST (
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
+    RETURN_VALUE HAD_ERROR)
 
   if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
+    ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
+      message ("Cannot submit Albany test results!")
     endif ()
   endif ()
-
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
-
 endif ()
 

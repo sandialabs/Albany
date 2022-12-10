@@ -6,10 +6,7 @@ set (CTEST_TEST_TYPE Nightly)
 # What to build and test
 set (DOWNLOAD FALSE)
 set (BUILD_ALBANY FALSE)
-set (BUILD_ALBANY_NOEPETRA FALSE)
-set (BUILD_CISM_PISCEES_EPETRA FALSE)
-set (BUILD_ALBFUNCTOR_OPENMP FALSE)
-set (BUILD_ALBANY_FPE TRUE)
+set (BUILD_CISM_PISCEES TRUE)
 
 # Begin User inputs:
 set (CTEST_SITE "camobap.ca.sandia.gov" ) # generally the output of hostname
@@ -27,7 +24,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-#set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-FPE-Albany")
+#set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-Cism-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -55,7 +52,7 @@ set (CTEST_DROP_METHOD "https")
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug/install")
+set (TRILINSTALLDIR "/nightlyAlbanyTests/Results/Trilinos/build/install")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -100,8 +97,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-FPE-Serial")
-
+set (CTEST_BUILD_NAME "CismAlbany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-Serial")
 
 if (CTEST_DROP_METHOD STREQUAL "https")
   set(CTEST_DROP_METHOD "https")
@@ -219,47 +215,22 @@ if (DOWNLOAD)
 
 endif ()
 
+if (BUILD_CISM_PISCEES)
 
-if (BUILD_ALBANY_FPE)
-
-  # Builds everything with FPE check enabled!
+  SET(ALBINSTALLDIR ${CTEST_BINARY_DIRECTORY}/IKTAlbanyInstall)
+  # Configure the CISM-Albany build 
   #
-
-  set (TRILINOSBLDDIR "/nightlyAlbanyTests/Results/Trilinos/build-debug")
-  set (TRILINOSSRCDIR "/nightlyAlbanyTests/Results/Trilinos")
-
   set (CONFIGURE_OPTIONS
-    "-GNinja"
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DCMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g'"
-    "-DCMAKE_BUILD_TYPE:STRING=DEBUG"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA:BOOL=ON"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
-    "-DENABLE_MPAS_INTERFACE:BOOL=OFF"
-    "-DENABLE_CISM_INTERFACE:BOOL=OFF"
-    "-DENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF"
-    "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
-    "-DSEACAS_EPU=${TRILINOSSRCDIR}/build/install/bin/epu"
-    "-DSEACAS_DECOMP=${TRILINOSSRCDIR}/build/install/bin/decomp"
-    "-DSEACAS_EXODIFF=${TRILINOSSRCDIR}/build/install/bin/exodiff"
-    "-DSEACAS_ALGEBRA=${TRILINOSSRCDIR}/build/install/bin/algebra"
-    "-DENABLE_ALBANY_PYTHON:BOOL=OFF"
-    "-DTRILINOS_SOURCE_DIR=${TRILINOSSRCDIR}"
-    "-DTRILINOS_BUILD_DIR=${TRILINOSBLDDIR}"
-    "-DPYTHON_EXECUTABLE='/usr/bin/python3.6m'"
-    "-DPYTHON_INCLUDE_PATH='/usr/include/python3.6m'"
-    "-DSWIG_EXECUTABLE='/tpls/install/bin/swig'"
-    "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON")
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg)
+    CDASH-ALBANY-FILE.TXT
+  )
+
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTCismAlbany)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/cism-piscees"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     APPEND
@@ -271,27 +242,26 @@ if (BUILD_ALBANY_FPE)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
+      message(FATAL_ERROR "Cannot submit CISM-Albany configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany build!")
+    message(FATAL_ERROR "Cannot configure CISM-Albany build!")
   endif ()
+ 
+   #
+   # Build CISM-Albany
+   #
+   #
+    set (CTEST_TARGET all)
 
-  #
-  # Build Albany
-  #
-
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+  MESSAGE("\nBuilding target: '${CTEST_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
     RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+    NUMBER_ERRORS  LIBS_NUM_ERRORS
     APPEND
     )
 
@@ -301,33 +271,32 @@ if (BUILD_ALBANY_FPE)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
+      message(FATAL_ERROR "Cannot submit CISM-Albany build results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
+    message(FATAL_ERROR "Cannot build CISM-Albany!")
   endif ()
 
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+  if (LIBS_NUM_ERRORS GREATER 0)
+    message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
   endif ()
 
   #
-  # Run Albany tests
+  # Run CISM-Albany tests
   #
-  
-  set (CTEST_TEST_TIMEOUT 2400)
+  set (CTEST_TEST_TIMEOUT 1500)
   
   #  Over-write default limit for output posted to CDash site
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFPECheckDbg"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+#                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#    NUMBER_FAILED  TEST_NUM_FAILED
     RETURN_VALUE  HAD_ERROR
     )
 
@@ -337,13 +306,13 @@ if (BUILD_ALBANY_FPE)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
+      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
     endif ()
   endif ()
 
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
+#  if (HAD_ERROR)
+#  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
+#  endif ()
 
 endif ()
 

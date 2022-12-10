@@ -10,9 +10,12 @@ export https_proxy="http://proxy.ca.sandia.gov:80"
 export http_proxy="http://proxy.ca.sandia.gov:80"
 export PATH=$PATH:/tpls/install/ninja/build-cmake
 
-LOG_FILE=/nightlyCDash/nightly_log_kokkosnode_openmp.txt
+LOG_FILE=/nightlyCDash/nightly_log_albany_openmp.txt
 
-eval "env  TEST_DIRECTORY=/nightlyCDash SCRIPT_DIRECTORY=/nightlyCDash ctest -VV -S /nightlyCDash/ctest_nightly_kokkosnode_openmp.cmake" > $LOG_FILE 2>&1
+bash convert-cmake-to-cdash.sh openmp
+bash create-new-cdash-cmake-script.sh openmp
+
+eval "env  TEST_DIRECTORY=/nightlyCDash SCRIPT_DIRECTORY=/nightlyCDash ctest -VV -S /nightlyCDash/ctest_nightly_albanyOpenmp.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.
