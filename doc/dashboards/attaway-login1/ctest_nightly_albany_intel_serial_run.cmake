@@ -2,7 +2,13 @@
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
-
+# What to build and test
+set (CLEAN_BUILD FALSE)
+set (DOWNLOAD_TRILINOS FALSE)
+set (BUILD_TRILINOS_SERIAL FALSE)
+set (DOWNLOAD_ALBANY FALSE) 
+set (BUILD_ALBANY_SERIAL FALSE) 
+set (RUN_ALBANY_SERIAL TRUE) 
 
 # Begin User inputs:
 set (CTEST_SITE "attaway.sandia.gov" ) # generally the output of hostname
@@ -157,81 +163,6 @@ endif ()
 
 ctest_start(${CTEST_TEST_TYPE})
 
-
-if (BUILD_ALBANY_SERIAL)
-
-  # Configure the Albany build 
-  #
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DALBANY_CTEST_TIMEOUT=500"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    )
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerial")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerial)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerial"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-  endif ()
-
-  #
-  # Build the rest of Albany and install everything
-  #
-
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerial"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
-    endif ()
-
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot build Albany!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
-  endif ()
-endif ()
 
 if (RUN_ALBANY_SERIAL) 
   #
