@@ -527,12 +527,13 @@ class STKDiscretization : public AbstractDiscretization
 
   double previous_time_label;
 
+  // If node_as_elements=true, build the ConnMgr as if nodes are the "cells".
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
                   const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim);
+                  const int dof_dim) const;
 
   // ==================== Members =================== //
 

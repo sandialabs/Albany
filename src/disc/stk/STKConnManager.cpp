@@ -93,7 +93,7 @@ void STKConnManager::clearLocalElementMapping()
 }
 
 std::vector<GO>
-STKConnManager::getElementsInBlock (const std::string& blockId) const
+STKConnManager::getElementsInBlock (const std::string& /* blockId */) const
 {
   std::vector<GO> gids;
   gids.reserve(m_elements.size());
@@ -226,7 +226,7 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
   RCP<Teuchos::TimeMonitor> tM = rcp(new TimeMonitor(*TimeMonitor::getNewTimer(std::string("panzer_stk::STKConnManager::buildConnectivity"))));
 #endif
 
-  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()!=m_parts_topo.dimension(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()>m_parts_topo.dimension(), std::logic_error,
       "[STKConnManager] Error! Field pattern incompatible with stored parts.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
       "  - Parts topo dim: " + std::to_string(m_parts_topo.dimension()) + "\n");
@@ -245,7 +245,7 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   constexpr auto EDGE_RANK = stk::topology::EDGE_RANK;
   constexpr auto FACE_RANK = stk::topology::FACE_RANK;
-  const auto elem_rank = m_parts_topo.rank();
+  const auto elem_rank = fp.getCellTopology().getDimension();
 
   for (int ielem=0; ielem<numElems; ++ielem) {
     GO numIds = 0;
@@ -338,18 +338,13 @@ int STKConnManager::elementLocalId(stk::mesh::Entity elmt) const
   return it->second;
 }
 
-void STKConnManager::getMyElements(std::vector<stk::mesh::Entity> & elements) const
+void STKConnManager::
+getMyElements(std::vector<stk::mesh::Entity> & elements) const
 {
-  stk::mesh::Selector selector;
-  for (const auto& it : m_parts) {
-    selector |= *it.second;
-  }
-  selector &= m_metaData->locally_owned_part();
+  TEUCHOS_TEST_FOR_EXCEPTION (m_parts.size()>1, std::runtime_error,
+      "Error! More than one element block in this STKConnManager.\n");
 
-  // NOTE: it could be that rank!=stk::topology::ELEM_RANK. E.g, we could have
-  //       have rank=EDGE_RANK or even rank=NODE_RANK
-  const auto rank = m_parts_topo.rank();
-  stk::mesh::get_selected_entities(selector, m_bulkData->buckets(rank), elements);
+  getMyElements(m_parts.begin()->first,elements);
 }
 
 void STKConnManager::
@@ -365,8 +360,8 @@ getMyElements (const std::string & blockID,
   selector &= m_metaData->locally_owned_part();
 
   // NOTE: it could be that rank!=stk::topology::ELEM_RANK. E.g, we could have
-  //       have rank=EDGE_RANK or even rank=NODE_RANK
-  const auto rank = part.primary_entity_rank();
+  //       have rank=EDGE_RANK
+  stk::topology::rank_t rank = m_parts_topo.rank();
   stk::mesh::get_selected_entities(selector, m_bulkData->buckets(rank), elements);
 }
 

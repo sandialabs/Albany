@@ -26,7 +26,9 @@ public:
   virtual std::vector<GO>
   getElementsInBlock (const std::string& blockId) const = 0;
 
-  // MeshEntityType primary_entity_type () const { return m_primary_entity_type; }
+  std::vector<GO> getElementsInBlock () const {
+    return getElementsInBlock(part_name());
+  }
 
   const std::string& part_name () const {
     TEUCHOS_TEST_FOR_EXCEPTION (m_parts_names.size()!=1, std::runtime_error,

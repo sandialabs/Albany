@@ -1315,7 +1315,6 @@ STKDiscretization::computeGraphs()
     //   1) the mesh is layered, and
     //   2) all sidesets where it's defined are on the top or bottom
     bool allowColumnCoupling = not lmn.is_null();
-    Teuchos::RCP<LayeredMeshNumbering<int>> cell_layers_data_lid;
     if (not lmn.is_null()) {
       for (const auto& ss_name : it.second) {
         const auto& ss_node_dof_mgr = getNewDOFManager(nodes_dof_name(),ss_name);
@@ -1405,6 +1404,8 @@ STKDiscretization::computeGraphs()
 void
 STKDiscretization::computeWorksetInfo()
 {
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData->universal_part()) &
       stk::mesh::Selector(metaData->locally_owned_part());
@@ -1413,6 +1414,25 @@ STKDiscretization::computeWorksetInfo()
       bulkData->get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
 
   const int numBuckets = buckets.size();
+
+  m_workset_sizes.resize(numBuckets);
+  int max_ws_size = getMeshStruct()->getMeshSpecs()[0]->worksetSize;
+  m_workset_elements = DualView<int**>("ws_elem",numBuckets,max_ws_size);
+  for (int b=0,lid=0; b<numBuckets; ++b) {
+    const auto& bucket = *buckets[b];
+    m_workset_sizes[b] = bucket.size();
+    // NOTE: STKConnManager is built in such a way that the elements
+    //       in the conn mgr are ordered by bucket, and, if in the same
+    //       bucket, they are ordered in the same way.
+    //       That means that, if elem E1 is in bucket 3 and elem E2 is
+    //       in bucket 4, then elemLid(E1)<elemLid(E2). If they are in
+    //       the same bucket, then elemLid(E1)<elemLid(E2) IIF E1 is
+    //       listed first in the bucket.
+    for (unsigned ie=0; ie<bucket.size(); ++ie, ++lid) {
+      m_workset_elements.host()(b,ie) = lid;
+    }
+  }
+  m_workset_elements.sync_to_dev();
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
@@ -1459,7 +1479,6 @@ STKDiscretization::computeWorksetInfo()
   typedef stk::mesh::Cartesian ElemTag;
   typedef stk::mesh::Cartesian CompTag;
 
-  const auto ov_node_indexer = getNodeNewDOFManager()->ov_indexer();
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     coords[b].resize(buck.size());
@@ -1479,7 +1498,7 @@ STKDiscretization::computeWorksetInfo()
           case 2:  // scalar
           {
             const ScalarFieldType& field = *metaData->get_field<ScalarFieldType>(
-                stk::topology::NODE_RANK, name);
+                NODE_RANK, name);
             stateVec.resize(dim0 * dim[1]);
             array.assign<ElemTag, NodeTag>(stateVec.data(), dim0, dim[1]);
             for (int i = 0; i < dim0; i++) {
@@ -1495,7 +1514,7 @@ STKDiscretization::computeWorksetInfo()
           case 3:  // vector
           {
             const VectorFieldType& field = *metaData->get_field<VectorFieldType>(
-                stk::topology::NODE_RANK, name);
+                NODE_RANK, name);
             stateVec.resize(dim0 * dim[1] * dim[2]);
             array.assign<ElemTag, NodeTag, CompTag>(
                 stateVec.data(), dim0, dim[1], dim[2]);
@@ -1515,7 +1534,7 @@ STKDiscretization::computeWorksetInfo()
           case 4:  // tensor
           {
             const TensorFieldType& field = *metaData->get_field<TensorFieldType>(
-                stk::topology::NODE_RANK, name);
+                NODE_RANK, name);
             stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
             array.assign<ElemTag, NodeTag, CompTag, CompTag>(
                 stateVec.data(), dim0, dim[1], dim[2], dim[3]);
@@ -1541,7 +1560,6 @@ STKDiscretization::computeWorksetInfo()
     }
 
     stk::mesh::Entity element           = buck[0];
-    int               nodes_per_element = bulkData->num_nodes(element);
 
     // i is the element index within bucket b
     for (std::size_t i = 0; i < buck.size(); i++) {
@@ -1554,22 +1572,12 @@ STKDiscretization::computeWorksetInfo()
       // Now, save a map from element GID to local id on this workset on this PE
       elemGIDws[stk_gid(element)].LID = i;
 
-      stk::mesh::Entity const* node_rels = bulkData->begin_nodes(element);
-      nodes_per_element                  = bulkData->num_nodes(element);
-
-      coords[b][i].resize(nodes_per_element);
-
-      // loop over local nodes
-      for (int j = 0; j < nodes_per_element; j++) {
-        const stk::mesh::Entity rowNode  = node_rels[j];
-        const GO                node_gid = stk_gid(rowNode);
-        const LO node_lid = ov_node_indexer->getLocalElement(node_gid);
-
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            node_lid < 0,
-            std::logic_error,
-            "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-        coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
+      // Set coords at nodes
+      const auto* nodes = bulkData->begin_nodes(element);
+      const int num_nodes = bulkData->num_nodes(element);
+      coords[b][i].resize(num_nodes);
+      for (int j=0; j<num_nodes; ++j) {
+        coords[b][i][j] = stk::mesh::field_data(*coordinates_field, nodes[j]);
       }
     }
   }
@@ -1717,7 +1725,7 @@ STKDiscretization::computeWorksetInfo()
         stkMeshStruct->nodal_data_base->getNodeContainer();
 
     stk::mesh::BucketVector const& node_buckets =
-        bulkData->get_buckets(stk::topology::NODE_RANK, select_owned_in_part);
+        bulkData->get_buckets(NODE_RANK, select_owned_in_part);
 
     const size_t numNodeBuckets = node_buckets.size();
 
@@ -1734,25 +1742,6 @@ STKDiscretization::computeWorksetInfo()
       }
     }
   }
-  int max_ws_size = getMeshStruct()->getMeshSpecs()[0]->worksetSize;
-
-  m_workset_sizes.resize(numBuckets);
-  m_workset_elements = DualView<int**>("ws_elem",numBuckets,max_ws_size);
-  for (int b=0,lid=0; b<numBuckets; ++b) {
-    const auto& bucket = *buckets[b];
-    m_workset_sizes[b] = bucket.size();
-    // NOTE: STKConnManager is built in such a way that the elements
-    //       in the conn mgr are ordered by bucket, and, if in the same
-    //       bucket, they are ordered in the same way.
-    //       That means that, if elem E1 is in bucket 3 and elem E2 is
-    //       in bucket 4, then elemLid(E1)<elemLid(E2). If they are in
-    //       the same bucket, then elemLid(E1)<elemLid(E2) IIF E1 is
-    //       listed first in the bucket.
-    for (unsigned ie=0; ie<bucket.size(); ++ie, ++lid) {
-      m_workset_elements.host()(b,ie) = lid;
-    }
-  }
-  m_workset_elements.sync_to_dev();
 }
 
 void
@@ -2000,12 +1989,10 @@ STKDiscretization::computeSideSets()
     }
 
     // Determine total number of sideset indices per each sideset name
-    for (unsigned int ws = 0; ws < sideSets.size(); ++ws) {
-      SideSetList& ssList = sideSets[ws];
-      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
-      while (ss_it != ssList.end()) {
-        std::string             ss_key = ss_it->first;
-        std::vector<SideStruct> ss_val = ss_it->second;
+    for (auto& ssList : sideSets) {
+      for (auto& ss_it : ssList) {
+        std::string             ss_key = ss_it.first;
+        std::vector<SideStruct> ss_val = ss_it.second;
 
         if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
           sideset_idx_offset[ss_key] = 0;
@@ -2013,43 +2000,68 @@ STKDiscretization::computeSideSets()
           total_sideset_idx[ss_key] = 0;
 
         total_sideset_idx[ss_key] += ss_val.size();
-
-        ss_it++;
       }
     }
 
     // Allocate total localDOFView for each sideset name
-    for (auto ss_it=num_local_worksets.begin(); ss_it!=num_local_worksets.end(); ++ss_it) {
-      std::string ss_key = ss_it->first;
+    for (auto& ss_it : num_local_worksets) {
+      std::string ss_key = ss_it.first;
       allLocalDOFViews[ss_key] = Kokkos::View<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
     }
-
   }
 
-  // 7) Populate localDOFViews for GatherVerticallyContractedSolution
-  for (unsigned int i = 0; i < sideSets.size(); ++i) {
+  const auto& node_layers_data = stkMeshStruct->layered_mesh_numbering;
+  // Not all mesh structs that come through here are extruded mesh structs.
+  // If the mesh isn't extruded, we won't need to do any of the following work.
+  if (not node_layers_data.is_null()) {
+    // Get topo data
+    auto ctd = stkMeshStruct->getMeshSpecs()[0]->ctd;
+    const int sideDim = ctd.dimension - 1;
 
-    // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-    std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[i];
+    // Ensure we have ONE cell per layer.
+    const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+    const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        ctd.name==topo_hexa->name ||
+        ctd.name==topo_wedge->name, std::runtime_error,
+        "Layered Meshes are only allowed to have 1 element per layer.\n");
 
-    // Not all mesh structs that come through here are extruded mesh structs. This is to check if
-    //   the mesh struct is an extruded one. If it isn't extruded, it won't need to do any of the following work.
-    if (!stkMeshStruct->layered_mesh_numbering.is_null()) {
+    // Shards has both Hexa and Wedge with bot and top in the last two side positions
+    auto top_side_pos = ctd.side_count-1;
+    auto bot_side_pos = top_side_pos - 1;
 
-      const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
-      const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
-      const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
-      const auto& ov_node_indexer = *(getOverlapGlobalLocalIndexer(nodes_dof_name()));
-      const int numLayers = layeredMeshNumbering.numLayers;
-      const int numComps = solDOFManager.numComponents();
+    const auto& sol_dof_mgr = getNewDOFManager();
+    const auto& node_dof_mgr = getNodeNewDOFManager();
+    const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+
+    // Create top/bot side (within element) offsets for all equation dofs
+    std::vector<std::vector<int>> sol_top_offsets(neq), sol_bot_offsets(neq);
+    for (int eq=0; eq<neq; ++eq) {
+      sol_top_offsets[eq] = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,sideDim,top_side_pos);
+      sol_bot_offsets[eq] = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,sideDim,bot_side_pos);
+    }
+
+    // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
+    using LMMI = Albany::LayeredMeshNumbering<int>;
+    constexpr auto COL = Albany::LayeredMeshOrdering::COLUMN;
+    const auto num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
+    const auto numLayers = node_layers_data->numLayers;
+    const auto ordering  = node_layers_data->ordering;
+    const auto stride = ordering==COL ? numLayers : num_elems;
+    auto cell_layers_data = Teuchos::rcp(new LMMI(stride,ordering,node_layers_data->layers_ratio));
+
+    std::vector<GO> node_gids;
+    // 7) Populate localDOFViews for GatherVerticallyContractedSolution
+    for (int ws=0; ws<getNumWorksets(); ++ws) {
+
+      // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
+      std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
+
+      const auto& elem_lids = getElementLIDs_host(ws);
 
       // Loop over the sides that form the boundary condition
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
-
-      SideSetList& ssList = sideSets[i];
-      std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
-
-      for (auto& ss_it : ssList) {
+      // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
+      for (auto& ss_it : sideSets[ws]) {
         std::string             ss_key = ss_it.first;
         std::vector<SideStruct> ss_val = ss_it.second;
         
@@ -2057,24 +2069,30 @@ STKDiscretization::computeSideSets()
 
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
           // Get the data that corresponds to the side
-          const int elem_LID = ss_val[sideSet_idx].elem_LID;
+          const int ws_elem_idx = ss_val[sideSet_idx].elem_LID;
+          const int elem_LID = elem_lids(ws_elem_idx);
           const int side_pos = ss_val[sideSet_idx].side_pos;
-          const CellTopologyData_Subcell& side =  cell_topo->side[side_pos];
-          const int numSideNodes = side.topology->node_count;
-
-          const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID_i[elem_LID];
+          const auto& ss_nodes_offsets = node_dof_mgr->getGIDFieldOffsets_subcell(0,sideDim,side_pos);
+          node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+          const int numSideNodes = ss_nodes_offsets.size();
 
           //we only consider elements on the top.
-          GO baseId;
-          for (int j=0; j<numSideNodes; ++j) {
-            const std::size_t node = side.node[j];
-            baseId = layeredMeshNumbering.getColumnId(elNodeID[node]);
-            for (int il=0; il<numLayers+1; ++il) {
-              const GO gnode = layeredMeshNumbering.getId(baseId, il);
-              const LO inode = ov_node_indexer.getLocalElement(gnode);
-              for (unsigned int comp = 0; comp < numComps; ++comp) {
-                globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, comp) = solDOFManager.getLocalDOF(inode, comp);
+          // for (int j=0; j<numSideNodes; ++j) {
+            // const GO baseId = layeredMeshNumbering->getColumnId(node_gids[ss_nodes_offsets[j]]);
+            // Use the bot side in each layer
+          for (int eq=0; eq<neq; ++eq) {
+            for (int j=0; j<numSideNodes; ++j) {
+              for (int il=0; il<numLayers; ++il) {
+                const LO layer_elem_LID = cell_layers_data->getId(elem_LID,il);
+                globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
+                  elem_dof_lids(layer_elem_LID,sol_bot_offsets[eq][j]);
               }
+
+              // Add top side in last layer
+              const int il = numLayers-1;
+              const LO layer_elem_LID = cell_layers_data->getId(elem_LID,il);
+              globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
+                elem_dof_lids(layer_elem_LID,sol_top_offsets[eq][j]);
             }
           }
         }
@@ -2085,6 +2103,12 @@ STKDiscretization::computeSideSets()
 
         sideset_idx_offset[ss_key] += ss_val.size();
       }
+    }
+  } else {
+    // We still need this view to be present (even if of size 0), so create them
+    std::map<std::string, Kokkos::View<LO****, PHX::Device>> dummy;
+    for (int ws=0; ws<getNumWorksets(); ++ws) {
+      wsLocalDOFViews.emplace(std::make_pair(ws,dummy));
     }
   }
 }
@@ -2192,40 +2216,66 @@ STKDiscretization::computeNodeSets()
 {
   auto coordinates_field = stkMeshStruct->getCoordinatesField();
 
+  // NOTE: we need to grab dof LIDs from the DOFManager of the WHOLE solution.
+  //       also, we need the "nodal" dof manager (meaning a dof mgr where
+  //       nodes are "elements"), so that we can access the lids given
+  //       the node lids.
+  const auto& whole_mesh = stkMeshStruct->ebNames_[0];
+  const auto& sol_dof_mgr = m_dof_managers[solution_dof_name()][whole_mesh];
+  const auto& cell_indexer = sol_dof_mgr->cell_indexer();
+  const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+
+  auto elem_pos = [&] (const stk::mesh::Entity& n)
+    -> std::pair<stk::mesh::Entity,int>
+  {
+    const auto& e = *bulkData->begin_elements(n);
+    const auto  nodes = bulkData->begin_nodes(e);
+    const int   num_nodes = bulkData->num_nodes(e);
+
+    auto ep = std::make_pair(e,-1);
+    for (int i=0; i<num_nodes; ++i) {
+      if (n==nodes[i])
+        ep.second = i;
+    }
+    return ep;
+  };
+
+  std::vector<std::vector<int>> offsets (sol_dof_mgr->getNumFields());
+  for (int eq=0; eq<neq; ++eq) {
+    offsets[eq] = sol_dof_mgr->getGIDFieldOffsets(eq);
+  }
+
   // Loop over all node sets
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   for (const auto& ns : stkMeshStruct->nsPartVec) {
     auto& ns_gids = nodeSetGIDs[ns.first];
     auto& ns_eq_lids = nodeSets[ns.first];
     auto& ns_coords = nodeSetCoords[ns.first];
 
-    // Get a solution dof manager for this node set. If one doesn't exist, create it.
-    auto& ns_sol_dof_mgr = m_dof_managers[solution_dof_name()][ns.first];
-    if (ns_sol_dof_mgr.is_null()) {
-      // NOTE: we're hard coding P1 for now
-      ns_sol_dof_mgr = create_dof_mgr(ns.first,nodes_dof_name(),FE_Type::HGRAD,1,neq);
-    }
+    // Grab all nodes on this nodeset
+    stk::mesh::Selector ns_selector = *metaData->get_part(ns.first);
+    ns_selector &= metaData->locally_owned_part();
+    std::vector<stk::mesh::Entity> nodes;
+    stk::mesh::get_selected_entities(ns_selector, bulkData->buckets(NODE_RANK), nodes);
+    const int num_nodes = nodes.size();
+    *out << "[STKDisc] nodeset " << ns.first << " has size " << num_nodes
+         << "  on Proc " << comm->getRank() << std::endl;
 
-    ns_gids = ns_sol_dof_mgr->getAlbanyConnManager()->getElementsInBlock(ns.first);
-    const int num_nodes = ns_gids.size();
-    *out << "STKDisc: nodeset " << ns.first << " has size " << ns_gids.size()
-         << "  on Proc 0." << std::endl;
-
+    ns_gids.resize(num_nodes);
     ns_eq_lids.resize(num_nodes,std::vector<int>(neq));
     ns_coords.resize(num_nodes);
 
-    auto sol_indexer = getNewDOFManager()->indexer();
-    std::vector<GO> node_eq_gids;
+    // Grab node GIDs, node coords, and dof LIDs at nodes
     for (int i=0; i<num_nodes; ++i) {
-      // NOTE: we CAN'T grab LIDs directly, since this dof mgr may have fewer
-      //       elements than the solution itself, and we want the LIDs in the
-      //       solution array. Hence, we have to get GIDs and manually convert.
-      ns_sol_dof_mgr->getElementGIDs(i,node_eq_gids);
-      for (int eq=0; eq<neq; ++eq) {
-        ns_eq_lids[i][eq] = sol_indexer->getLocalElement(node_eq_gids[eq]);
-      }
+      const auto& n = nodes[i];
+      ns_gids[i] = stk_gid(n);
+      const auto& ep = elem_pos(n);
+      const auto elem_lid = cell_indexer->getLocalElement(stk_gid(ep.first));
 
-      auto node = bulkData->get_entity(stk::topology::NODE_RANK,ns_gids[i]+1);
-      ns_coords.push_back(stk::mesh::field_data(*coordinates_field, node));
+      for (int eq=0; eq<neq; ++eq) {
+        ns_eq_lids[i][eq] = elem_dof_lids(elem_lid,offsets[eq][ep.second]);
+      }
+      ns_coords.push_back(stk::mesh::field_data(*coordinates_field, n));
     }
   }
 }
@@ -2525,12 +2575,12 @@ create_dof_mgr (const std::string& part_name,
                 const std::string& field_name,
                 const FE_Type fe_type,
                 const int order,
-                const int dof_dim)
+                const int dof_dim) const
 {
   auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
   auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
 
-  const auto ctd = conn_mgr->get_topology().getCellTopologyData();
+  const auto& ctd = conn_mgr->get_topology().getCellTopologyData();
   const auto basis = getIntrepid2Basis(*ctd,fe_type,order);
   const auto fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
 

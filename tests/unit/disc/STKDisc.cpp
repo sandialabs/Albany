@@ -6,7 +6,9 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_UnitTestSetupHelpers.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_CommUtils.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_UnitTestHelpers.hpp"
@@ -60,14 +62,37 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
   const int N = E+1;                // #nodes per side
   const int num_dims = 2;
 
+  auto elem_pos = [&] (const stk::mesh::Entity& n,
+                       const stk::mesh::BulkData& b)
+    -> std::pair<stk::mesh::Entity,int>
+  {
+    const auto& e = *b.begin_elements(n);
+    const auto  nodes = b.begin_nodes(e);
+    const int   num_nodes = b.num_nodes(e);
+
+    auto ep = std::make_pair(e,-1);
+    for (int i=0; i<num_nodes; ++i) {
+      if (n==nodes[i])
+        ep.second = i;
+    }
+    return ep;
+  };
+
   auto run = [&](const int neq) {
 
     // Create disc
     const auto  disc = UnitTest::createTestDisc (comm, num_dims, E, neq);
-    const auto& sol_name     = disc->solution_dof_name();
-    const auto& sol_indexer  = disc->getNewDOFManager()->indexer();
+
+    // Get stuff from disc
+    const auto& sol_dof_mgr   = disc->getNewDOFManager();
+    const auto& cell_indexer  = sol_dof_mgr->cell_indexer();
+    const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+
     const auto& nodeSets     = disc->getNodeSets();
     const auto& nodeSetsGIDs = disc->getNodeSetGIDs();
+
+    const auto  stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
+    const auto& bulk = stk_disc->getSTKBulkData();
 
     // Expected nodesets
     std::list<std::string> expected_nsn = {
@@ -77,7 +102,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
       {"NodeSet0" ,  std::vector<GO>(N)},  // Left
       {"NodeSet1" ,  std::vector<GO>(N)},  // Right
       {"NodeSet2" ,  std::vector<GO>(N)},  // Bottom
-      {"NodeSet3" ,  std::vector<GO>(N)},   // Top
+      {"NodeSet3" ,  std::vector<GO>(N)},  // Top
       {"NodeSet99",  std::vector<GO>(4)}   // Corners
     };
     for (int i=0; i<N; ++i) {
@@ -89,13 +114,12 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
     expected_ns_gids["NodeSet99"] = {0};
 
     // Check nodesets
+    constexpr auto NODE_RANK = stk::topology::NODE_RANK;
     REQUIRE (nodeSets.size()==5);
     REQUIRE (nodeSetsGIDs.size()==5);
     for (const auto& nsn : expected_nsn) {
       REQUIRE (nodeSets.find(nsn)!=nodeSets.end());
       REQUIRE (nodeSetsGIDs.find(nsn)!=nodeSetsGIDs.end());
-
-      const auto& ns_dof_mgr   = disc->getNewDOFManager(sol_name,nsn);
 
       const auto& ns_dofs  = nodeSets.at(nsn);
       const auto& ns_nodes = nodeSetsGIDs.at(nsn);
@@ -104,25 +128,21 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
       const int num_local_nodes = ns_nodes.size();
       int num_global_nodes;
       Teuchos::reduceAll(*comm,Teuchos::REDUCE_SUM,1,&num_local_nodes,&num_global_nodes);
-
+      
       REQUIRE (num_global_nodes==static_cast<int>(expected_ns_gids.at(nsn).size()));
 
-      auto dof_mgr_elems = ns_dof_mgr->getAlbanyConnManager()->getElementsInBlock(nsn);
-      REQUIRE (sameAs(dof_mgr_elems,ns_nodes));
+      std::vector<GO> global_ns_nodes(num_global_nodes);
+      Albany::all_gather_v(ns_nodes.data(),num_local_nodes,global_ns_nodes.data(),comm);
+      REQUIRE (sameAs(global_ns_nodes,expected_ns_gids[nsn]));
 
       for (int i=0; i<num_local_nodes; ++i) {
-
-        const auto node_gid = ns_nodes[i];
-        const auto it = std::find(expected_ns_gids[nsn].begin(),expected_ns_gids[nsn].end(),node_gid);
-        REQUIRE(it!=expected_ns_gids[nsn].end());
-
-        const auto node_lid = ns_dof_mgr->cell_indexer()->getLocalElement(node_gid);
-        const auto& ns_dofs_gids = ns_dof_mgr->getElementGIDs(node_lid);
-
+        const auto& n = bulk.get_entity(NODE_RANK,ns_nodes[i]+1);
+        const auto& ep = elem_pos(n,bulk);
+        const auto elem_lid = cell_indexer->getLocalElement(stk_disc->stk_gid(ep.first));
         REQUIRE (static_cast<int>(ns_dofs[i].size())==neq);
-        REQUIRE (static_cast<int>(ns_dofs_gids.size())==neq);
         for (int eq=0; eq<neq; ++eq) {
-          REQUIRE (sol_indexer->getLocalElement(ns_dofs_gids[eq])==ns_dofs[node_lid][eq]);
+          const auto& offset = sol_dof_mgr->getGIDFieldOffsets(eq)[ep.second];
+          REQUIRE (ns_dofs[i][eq]==elem_dof_lids(elem_lid,offset));
         }
       }
     }
@@ -145,7 +165,8 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
 
   auto comm = Albany::getDefaultComm();
 
-  // Simple square 2d geometry with E elements and N=E+1 nodes per side.
+  // Simple cube-like geometry with E elements and N=E+1 nodes per dimension.
+  // In 2D, the node numbering would look like the following
   //
   //     EN ------ EN+1 ------ EN+2 ....... EN+E
   //      .          .           .            .
@@ -159,13 +180,14 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
   //
 
   // Some constants
-  const int E = 2*comm->getSize();
+  const int E = 2;
   const int N = E+1;
-  const int num_dims = 2;
+  const int num_dims = 3;
 
   auto run = [&] (int neq) {
     // Create disc
     const auto disc = UnitTest::createTestDisc (comm, num_dims, E, neq);
+    const auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc,true);
     const auto sol_dof_mgr = disc->getNewDOFManager();
     const auto ov_sol_indexer = sol_dof_mgr->ov_indexer();
     const auto cell_indexer = sol_dof_mgr->cell_indexer();
@@ -175,27 +197,24 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
 
     // Create expected graph pattern by looping over elems,
     // and adding a dense pattern to all rows of gids in that element
-    std::vector<std::vector<GO>> expected_gids(N*N*neq);
-    std::vector<std::vector<int>> expected_lids(N*N*neq);
+    std::vector<std::vector<GO>> expected_gids(std::pow(N,num_dims)*neq);
+    std::vector<std::vector<int>> expected_lids(std::pow(N,num_dims)*neq);
 
-    for (int i=0; i<E; ++i) {
-      for (int j=0; j<E; ++j) {
-        const GO elem_GID = i*E+j;
-        const LO elem_LID = cell_indexer->getLocalElement(elem_GID);
-        if (elem_LID<0) continue;
+    for (int elem_GID=0; elem_GID<std::pow(E,num_dims); ++elem_GID) {
+      const LO elem_LID = cell_indexer->getLocalElement(elem_GID);
+      if (elem_LID<0) continue;
 
-        const auto& elem_dof_gids = sol_dof_mgr->getElementGIDs(elem_LID);
-        for (auto row : elem_dof_gids) {
-          for (auto col : elem_dof_gids) {
-            expected_gids[row].push_back(col);
-          }
+      const auto& elem_dof_gids = sol_dof_mgr->getElementGIDs(elem_LID);
+      for (auto row : elem_dof_gids) {
+        for (auto col : elem_dof_gids) {
+          expected_gids[row].push_back(col);
         }
       }
     }
 
     // Perform manual global assembly:
     std::vector<GO> my_rows;
-    for (GO row=0; row<N*N*neq; ++row) {
+    for (GO row=0; row<std::pow(N,num_dims)*neq; ++row) {
       auto& my_row = expected_gids[row];
       const int row_lid = sol_dof_mgr->indexer()->getLocalElement(row);
       std::set<GO> glob_row;
@@ -224,7 +243,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
     // Remove duplicates, and convert to lids
     const auto Tmat = Albany::getTpetraMatrix(J,true);
     const auto colMap = Tmat->getColMap();
-    for (int i=0; i<neq*N*N; ++i) {
+    for (int i=0; i<neq*std::pow(N,num_dims); ++i) {
       auto& v = expected_gids[i];
       std::sort(v.begin(),v.end());
       auto it = std::unique(v.begin(),v.end());

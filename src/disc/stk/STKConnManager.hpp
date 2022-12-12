@@ -40,6 +40,8 @@ public:
 
   ~STKConnManager() = default;
 
+  // Do not hide other methods
+  using ConnManager::getElementsInBlock;
   std::vector<GO>
   getElementsInBlock (const std::string& blockId) const override;
 
@@ -169,7 +171,8 @@ protected:
 
   void getMyElements(std::vector<stk::mesh::Entity> & elements) const;
 
-  void getMyElements(const std::string & blockID,std::vector<stk::mesh::Entity> & elements) const;
+  void getMyElements(const std::string & blockID,
+                     std::vector<stk::mesh::Entity> & elements) const;
 
   void clearLocalElementMapping();
   void buildLocalElementMapping();
