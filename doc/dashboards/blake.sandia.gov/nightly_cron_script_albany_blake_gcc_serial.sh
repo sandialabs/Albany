@@ -17,5 +17,8 @@ export OMP_NUM_THREADS=1
 
 LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyGccSerial.txt
 
-eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany_gcc_serial.cmake" > $LOG_FILE 2>&1
+bash convert-cmake-to-cdash-albany.sh gcc-serial
+bash create-new-cdash-cmake-script-albany.sh gcc-serial
+
+eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany-gcc-serial.cmake" > $LOG_FILE 2>&1
 

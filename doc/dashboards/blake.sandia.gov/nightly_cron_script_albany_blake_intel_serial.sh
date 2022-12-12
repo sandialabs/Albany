@@ -19,5 +19,8 @@ export OMP_NUM_THREADS=1
 
 LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyIntelSerial.txt
 
-eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany_intel_serial.cmake" > $LOG_FILE 2>&1
+bash convert-cmake-to-cdash-albany.sh intel-serial
+bash create-new-cdash-cmake-script-albany.sh intel-serial
+
+eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany-intel-serial.cmake" > $LOG_FILE 2>&1
 
