@@ -127,5 +127,11 @@ Teuchos::RCP<const Teuchos::Comm<Teuchos::Ordinal>> createThyraCommFromTeuchosCo
   return Teuchos::createSerialComm<Teuchos::Ordinal>();
 }
 
+template<>
+MPI_Datatype get_mpi_type<int> () { return MPI_INT; }
+template<>
+MPI_Datatype get_mpi_type<long long> () { return MPI_LONG_LONG_INT; }
+template<>
+MPI_Datatype get_mpi_type<double> () { return MPI_DOUBLE; }
 
 } // namespace Albany
