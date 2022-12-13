@@ -35,5 +35,8 @@ if [ "$BUILD_OPT" = "sfad24" ] ; then
   LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad24.txt
 fi
 
-eval "env BUILD_OPTION=$BUILD_OPT TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany_sfad.cmake" > $LOG_FILE 2>&1
+bash convert-cmake-to-cdash-albany.sh sfad
+bash create-new-cdash-cmake-script-albany.sh sfad
+
+eval "env BUILD_OPTION=$BUILD_OPT TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany-sfad.cmake" > $LOG_FILE 2>&1
 

@@ -1,16 +1,18 @@
+
+
 #cmake_minimum_required (VERSION 2.8)
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
-set (CLEAN_BUILD TRUE)
+set (CLEAN_BUILD FALSE)
 set (DOWNLOAD_TRILINOS FALSE)
 set (BUILD_TRILINOS_SERIAL FALSE)
 set (BUILD_TRILINOS_OPENMP FALSE)
-set (DOWNLOAD_ALBANY TRUE) 
-set (BUILD_ALBANY_SERIAL TRUE) 
+set (DOWNLOAD_ALBANY FALSE) 
+set (BUILD_ALBANY_SERIAL FALSE) 
 set (BUILD_ALBANY_SERIAL_SFAD FALSE) 
-set (BUILD_ALBANY_OPENMP FALSE) 
+set (BUILD_ALBANY_OPENMP TRUE) 
 
 
 # Begin User inputs:
@@ -23,9 +25,9 @@ set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
-set (CTEST_SOURCE_NAME repos-gcc)
-#set (CTEST_BUILD_NAME "blake-serial-Albany-gcc-no-warn")
-set (CTEST_BINARY_NAME build-gcc)
+set (CTEST_SOURCE_NAME repos-intel)
+#set (CTEST_BUILD_NAME "blake-openmp-Albany")
+set (CTEST_BINARY_NAME build-intel)
 
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -38,12 +40,9 @@ if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_BINARY_DIRECTORY}")
 endif ()
 
-configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
-  ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
-
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINSTALLDIR "/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosSerialInstallGccNoWarn")
+set (TRILINSTALLDIR "/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosOpenMPInstall")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -88,7 +87,10 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial-No-Warn")
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-OpenMP")
+
+configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
+  ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
@@ -119,6 +121,7 @@ if (CLEAN_BUILD)
   ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
   file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 endif ()
+
 
 if (DOWNLOAD_ALBANY)
 
@@ -165,29 +168,21 @@ endif ()
 ctest_start(${CTEST_TEST_TYPE})
 
 
-if (BUILD_ALBANY_SERIAL)
+if (BUILD_ALBANY_OPENMP)
 
   # Configure the Albany build 
   #
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DALBANY_CTEST_TIMEOUT=2400"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
-    "-DALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4'"
-    "-DENABLE_ALBANY_PYTHON:BOOL=ON"
-    "-DPYTHON_EXECUTABLE='/home/projects/x86-64/python/3.7.3/bin/python'"
+    CDASH-ALBANY-FILE.TXT
     )
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -217,7 +212,7 @@ if (BUILD_ALBANY_SERIAL)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -241,6 +236,7 @@ if (BUILD_ALBANY_SERIAL)
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
     message ("Encountered build errors in Albany build. Exiting!")
   endif ()
+
   #
   # Run Albany tests
   #
@@ -248,10 +244,10 @@ if (BUILD_ALBANY_SERIAL)
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
-  set (CTEST_TEST_TIMEOUT 2400)
+  set (CTEST_TEST_TIMEOUT 500)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildOpenMP"
     RETURN_VALUE  HAD_ERROR
     )
 
@@ -264,4 +260,7 @@ if (BUILD_ALBANY_SERIAL)
       message(FATAL_ERROR "Cannot submit Albany test results!")
     endif ()
   endif ()
+
+
 endif ()
+
