@@ -89,7 +89,7 @@ STKDiscretization::printConnectivity() const
     comm->barrier();
     if (rank == comm->getRank()) {
       const auto& elem_lids = m_workset_elements.host();
-      const auto& node_dof_mgr = getNodeNewDOFManager();
+      const auto& elem_GIDs = getNewDOFManager()->getAlbanyConnManager()->getElementsInBlock();
 
       std::ostringstream ss;
 
@@ -98,10 +98,14 @@ STKDiscretization::printConnectivity() const
         ss << "  Bucket (aka workset) " << ws << std::endl;
         for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
           const int elem_LID = elem_lids(ws,ielem);
-          const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+          const GO elem_GID = elem_GIDs[elem_LID];
+          const auto e = bulkData->get_entity(stk::topology::ELEM_RANK,elem_GID+1);
+          const auto nodes = bulkData->begin_nodes(e);
+          const int num_nodes = bulkData->num_nodes(e);
           ss << "    Element " << ielem << ": Nodes =";
-          for (const auto gid : node_gids)
-            ss << " " << gid;
+          for (int i=0; i<num_nodes; ++i) {
+            ss << " " << bulkData->identifier(nodes[i])-1;
+          }
           ss << std::endl;
         }
       }
@@ -524,23 +528,30 @@ STKDiscretization::setupMLCoords()
   coordMV           = Thyra::createMembers(getNodeVectorSpace(), numDim);
   auto coordMV_data = getNonconstLocalData(coordMV);
 
-  auto node_indexer = getNodeNewDOFManager()->indexer();
-
-  std::vector<stk::mesh::Entity> ownedNodes;
-  const auto& part    = metaData->locally_owned_part();
-  const auto& buckets = bulkData->buckets(stk::topology::NODE_RANK);
-  stk::mesh::get_selected_entities(part, buckets, ownedNodes);
-
-  for (const auto node : ownedNodes) {
-    GO      node_gid = stk_gid(node);
-    int     node_lid = node_indexer->getLocalElement(node_gid);
-    double* X        = stk::mesh::field_data(*coordinates_field, node);
-    for (int j = 0; j < numDim; j++) {
-      coordMV_data[j][node_lid] = X[j];
+  // NOTE: you cannot use DOFManager dof gids as entity ID in stk, and viceversa.
+  // All you can do is loop over dofs/nodes in an element, since you have the following guarantees:
+  //  - elem GIDs are the same in DOFManager and stk mesh
+  //  - nodes ordering is the same in DOFManager and stk mesh
+  // We'll loop over certain nodes more than once, but this is a setup method, so it's fine
+  const auto& node_dof_mgr = getNodeNewDOFManager();
+  const auto& elems = node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+  const int   num_elems = elems.size();
+  for (int ielem=0; ielem<num_elems; ++ielem) {
+    const auto& node_dofs = node_dof_mgr->getElementGIDs(ielem);
+    const auto e = bulkData->get_entity(stk::topology::ELEM_RANK,elems[ielem]+1);
+    const auto nodes = bulkData->begin_nodes (e);
+    const int num_nodes = bulkData->num_nodes(e);
+    for (int i=0; i<num_nodes; ++i) {
+      LO node_lid = node_dof_mgr->indexer()->getLocalElement(node_dofs[i]);
+      if (node_lid>=0) {
+        double* X = stk::mesh::field_data(*coordinates_field,nodes[i]);
+        for (int j=0; j<numDim; ++j) {
+          coordMV_data[j][node_lid] = X[j];
+        }
+      }
     }
   }
-  const auto vs = getVectorSpace();
-  const auto ov_vs = getOverlapVectorSpace();
+
   rigidBodyModes->setCoordinatesAndComputeNullspace(
       coordMV, interleavedOrdering,
       getVectorSpace(),
@@ -2044,7 +2055,6 @@ STKDiscretization::computeSideSets()
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
     const auto numLayers = cell_layers_data->numLayers;
 
-    std::vector<GO> node_gids;
     // 7) Populate localDOFViews for GatherVerticallyContractedSolution
     for (int ws=0; ws<getNumWorksets(); ++ws) {
 
@@ -2067,13 +2077,8 @@ STKDiscretization::computeSideSets()
           const int elem_LID = elem_lids(ws_elem_idx);
           const int side_pos = ss_val[sideSet_idx].side_pos;
           const auto& ss_nodes_offsets = node_dof_mgr->getGIDFieldOffsets_subcell(0,sideDim,side_pos);
-          node_dof_mgr->getElementGIDs(elem_LID,node_gids);
           const int numSideNodes = ss_nodes_offsets.size();
 
-          //we only consider elements on the top.
-          // for (int j=0; j<numSideNodes; ++j) {
-            // const GO baseId = layeredMeshNumbering->getColumnId(node_gids[ss_nodes_offsets[j]]);
-            // Use the bot side in each layer
           for (int eq=0; eq<neq; ++eq) {
             for (int j=0; j<numSideNodes; ++j) {
               for (int il=0; il<numLayers; ++il) {
@@ -2370,7 +2375,6 @@ STKDiscretization::buildSideSetProjectors()
     // Get the vector spaces
     auto ss_ov_vs   = disc.getOverlapVectorSpace();
     auto ss_vs      = disc.getVectorSpace();
-    auto ss_node_vs = disc.getNodeVectorSpace();
 
     auto ss_indexer = createGlobalLocalIndexer(ss_vs);
 
