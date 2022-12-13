@@ -32,7 +32,8 @@ sed -i 's/-D /"-D/g' /nightlyCDash/cdash-$name-frag.txt
 awk '{print $0 "\""}' /nightlyCDash/cdash-$name-frag.txt >& tmp.txt
 mv tmp.txt /nightlyCDash/cdash-$name-frag.txt
 sed -i 's, \",\",g' /nightlyCDash/cdash-$name-frag.txt
-#sed -i '$ d' /nightlyCDash/cdash-$name-frag.txt
 sed -i 's/-G/\"-G/g' /nightlyCDash/cdash-$name-frag.txt
 sed -i 's/-W/\"-W/g' /nightlyCDash/cdash-$name-frag.txt
+#sed -i '$ d' /nightlyCDash/cdash-$name-frag.txt
+sed -i 's,/",,g' /nightlyCDash/cdash-$name-frag.txt
 cat /nightlyCDash/cdash-$name-frag.txt
