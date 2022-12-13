@@ -223,20 +223,21 @@ saveNodeState(typename Traits::EvalData workset)
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
 
+  const auto& cell_indexer = node_dof_mgr->cell_indexer();
+
   double* values;
   stk::mesh::Entity e;
-  std::vector<GO> node_gids;
   switch (dims.size()) {
     case 2:   // node_scalar
       scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
       TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
       for (unsigned int cell=0; cell<workset.numCells; ++cell) {
         const int elem_LID = elem_lids[cell];
-        node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+        const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
+        const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
+        const auto* nodes = bulkData.begin_nodes(elem);
         for (unsigned int node=0; node<dims[1]; ++node) {
-          const auto nodeId = node_gids[node];
-          e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
-          values = stk::mesh::field_data(*scalar_field, e);
+          values = stk::mesh::field_data(*scalar_field, nodes[node]);
           values[0] = field(cell,node);
         }
       }
@@ -246,11 +247,11 @@ saveNodeState(typename Traits::EvalData workset)
       TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
       for (unsigned int cell=0; cell<workset.numCells; ++cell) {
         const int elem_LID = elem_lids[cell];
-        node_dof_mgr->getElementGIDs(elem_LID,node_gids);
+        const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
+        const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
+        const auto* nodes = bulkData.begin_nodes(elem);
         for (unsigned int node=0; node<dims[1]; ++node) {
-          const auto nodeId = node_gids[node];
-          e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
-          values = stk::mesh::field_data(*vector_field, e);
+          values = stk::mesh::field_data(*vector_field, nodes[node]);
           for (unsigned int i=0; i<dims[2]; ++i)
             values[i] = field(cell,node,i);
         }
