@@ -192,8 +192,8 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
   const auto  elem_dof_lids   = dof_mgr->elem_dof_lids().host();
   const auto& cell_indexer    = dof_mgr->cell_indexer();
 
-  const auto& node_layers = disc->getMeshStruct()->layered_mesh_numbering_nodes;
-  const auto& cell_layers = disc->getMeshStruct()->layered_mesh_numbering_cells;
+  const auto& node_layers = disc->getMeshStruct()->global_node_layers_data;
+  const auto& cell_layers = disc->getMeshStruct()->global_cell_layers_data;
   const int   numLayers   = cell_layers->numLayers;
 
   const int neq = dof_mgr->getNumFields();

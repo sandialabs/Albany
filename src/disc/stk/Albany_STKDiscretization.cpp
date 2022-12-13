@@ -2010,10 +2010,10 @@ STKDiscretization::computeSideSets()
     }
   }
 
-  const auto& node_layers_data = stkMeshStruct->layered_mesh_numbering;
+  const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
   // Not all mesh structs that come through here are extruded mesh structs.
   // If the mesh isn't extruded, we won't need to do any of the following work.
-  if (not node_layers_data.is_null()) {
+  if (not cell_layers_data.is_null()) {
     // Get topo data
     auto ctd = stkMeshStruct->getMeshSpecs()[0]->ctd;
     const int sideDim = ctd.dimension - 1;
@@ -2042,13 +2042,7 @@ STKDiscretization::computeSideSets()
     }
 
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
-    using LMMI = Albany::LayeredMeshNumbering<int>;
-    constexpr auto COL = Albany::LayeredMeshOrdering::COLUMN;
-    const auto num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
-    const auto numLayers = node_layers_data->numLayers;
-    const auto ordering  = node_layers_data->ordering;
-    const auto stride = ordering==COL ? numLayers : num_elems;
-    auto cell_layers_data = Teuchos::rcp(new LMMI(stride,ordering,node_layers_data->layers_ratio));
+    const auto numLayers = cell_layers_data->numLayers;
 
     std::vector<GO> node_gids;
     // 7) Populate localDOFViews for GatherVerticallyContractedSolution
