@@ -28,11 +28,10 @@ public:
   // Returns (elem_LID,idof)->dof_lid numbering
   const DualView<const int**>& elem_dof_lids () const;
 
-  // Returns (elem_LID,idof)->dof_lid numbering, but with elements being
-  // the cells of the input dof_mgr. If a certain (elem_LID,idof) pair
-  // refers to an entity that does not belong to this DOFManager part,
-  // we set dof_lid=-1.
-  DualView<const int**> elem_dof_lids (const Teuchos::RCP<const DOFManager>& dof_mgr) const;
+  // Returns (elem_LID,idof)->dof_lid numbering restricted to input
+  // part name. If an entry (elem_LID,idof) corresponds to a geometric
+  // entity not in the input part, the dof LID will be set to -1.
+  DualView<const int**> restrict (const std::string& name) const;
 
   const Teuchos::RCP<const GlobalLocalIndexer>& cell_indexer () const;
 
@@ -70,6 +69,10 @@ public:
 
   Teuchos::RCP<const ConnManager> getAlbanyConnManager() const {
     return m_conn_mgr;
+  }
+
+  Teuchos::RCP<const Teuchos_Comm> getAlbanyComm () const {
+    return m_comm;
   }
 
 private:

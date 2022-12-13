@@ -57,6 +57,7 @@ set (SOURCES
   PHAL_Setup.cpp
   Albany_Application.cpp
   InitialCondition.cpp
+  Albany_DistributedParameter.cpp
   Albany_Memory.cpp
   Albany_ModelEvaluator.cpp
   Albany_NullSpaceUtils.cpp

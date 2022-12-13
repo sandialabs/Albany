@@ -25,7 +25,9 @@ public:
 
   using dof_mgr_ptr_t = Teuchos::RCP<const DOFManager>;
 
-  //! Constructor
+  //! Constructor(s)
+
+  // Parameter defined on all the elements of the dof mgr
   DistributedParameter(const std::string& param_name_,
                        const dof_mgr_ptr_t& dof_mgr)
    : param_name(param_name_)
@@ -35,16 +37,22 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(m_dof_mgr.is_null(), std::runtime_error,
         "Error! Input dof manager is null.\n");
 
-    const auto owned_vs = m_dof_mgr->vs();
-    const auto overlapped_vs = m_dof_mgr->ov_vs();
+    compute_elem_dof_lids (dof_mgr->part_name());
+  }
 
-    owned_vec = Thyra::createMember(owned_vs);
-    overlapped_vec = Thyra::createMember(overlapped_vs);
+  // Parameter defined on a sub-part of the dof_mgr elements,
+  // potentially even a part of lower dimension
+  DistributedParameter(const std::string& param_name_,
+                       const dof_mgr_ptr_t& dof_mgr,
+                       const std::string& mesh_part)
+   : param_name(param_name_)
+   , m_dof_mgr (dof_mgr)
+  {
+    // Sanity checks
+    TEUCHOS_TEST_FOR_EXCEPTION(m_dof_mgr.is_null(), std::runtime_error,
+        "Error! Input dof manager is null.\n");
 
-    lower_bounds_vec = Thyra::createMember(owned_vs);
-    upper_bounds_vec = Thyra::createMember(owned_vs);
-
-    cas_manager = createCombineAndScatterManager(owned_vs, overlapped_vs);
+    compute_elem_dof_lids (mesh_part);
   }
 
   //! Destructor
@@ -53,24 +61,19 @@ public:
   //! Get name
   const std::string& name() const { return param_name; }
 
-  //! Compute elem_dof_lid view
-  void compute_elem_dof_lids(const dof_mgr_ptr_t& volume_dof_mgr) {
-    m_elem_dof_lids = m_dof_mgr->elem_dof_lids(volume_dof_mgr);
-  }
-
   const DualView<const int**>& elem_dof_lids() const { return m_elem_dof_lids; }
 
   //! Get vector space 
-  virtual Teuchos::RCP<const Thyra_VectorSpace> vector_space() const { return owned_vec->space(); }
+  Teuchos::RCP<const Thyra_VectorSpace> vector_space() const { return owned_vec->space(); }
 
   //! Get overlap vector space
-  virtual Teuchos::RCP<const Thyra_VectorSpace> overlap_vector_space() const { return overlapped_vec->space(); }
+  Teuchos::RCP<const Thyra_VectorSpace> overlap_vector_space() const { return overlapped_vec->space(); }
 
   //! Get vector
-  virtual Teuchos::RCP<Thyra_Vector> vector() const { return owned_vec; }
+  Teuchos::RCP<Thyra_Vector> vector() const { return owned_vec; }
 
   //! Get overlapped vector
-  virtual Teuchos::RCP<Thyra_Vector> overlapped_vector() const { return overlapped_vec; }
+  Teuchos::RCP<Thyra_Vector> overlapped_vector() const { return overlapped_vec; }
 
   //! Get lower bounds vector
   Teuchos::RCP<Thyra_Vector> lower_bounds_vector() const { return lower_bounds_vec; }
@@ -97,6 +100,10 @@ public:
   Teuchos::RCP<const CombineAndScatterManager> get_cas_manager () const { return cas_manager; }
 
 protected:
+
+  // Set the m_elem_dof_lids dual view to -1 outside the mesh part,
+  // and builds vectors/vectorSpaces restricted to mesh_part
+  void compute_elem_dof_lids(const std::string& mesh_part);
 
   //! Name of parameter
   std::string param_name;

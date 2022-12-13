@@ -90,15 +90,12 @@ evaluateFields(typename Traits::EvalData workset)
   const auto p_data = Albany::getNonconstLocalData(param->vector());
 
   const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto p_dof_mgr    = workset.disc->getNewDOFManager(this->param_name);
-  const auto p_indexer    = p_dof_mgr->indexer();
+  const auto p_elem_dof_lids = param->elem_dof_lids().host();
 
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int node=0; node<this->numNodes; ++node) {
-      const LO lid = p_indexer->getLocalElement(node_gids[node]);
+      const LO lid = p_elem_dof_lids(elem_LID,node);
       if(lid >= 0) {
        p_data[lid] = this->val(cell,node);
       }
@@ -129,24 +126,27 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
 
-  const auto param = workset.distParamLib->get(this->param_name);
-  const auto p_data = Albany::getNonconstLocalData(param->vector());
+  const auto& param = workset.distParamLib->get(this->param_name);
+  const auto& p_dof_mgr = param->get_dof_mgr();
+  const auto  p_data = Albany::getNonconstLocalData(param->vector());
+  const auto& p_elem_dof_lids = param->elem_dof_lids().host();
+  const auto& sideDim = p_dof_mgr->get_topology().getDimension()-1;
 
-  const auto& layers_data   = *workset.disc->getLayeredMeshNumbering();
-  const auto  elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto  node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto  p_dof_mgr    = workset.disc->getNewDOFManager(this->param_name);
-  const auto  p_indexer    = p_dof_mgr->indexer();
+  const auto& layers_data    = *workset.disc->getMeshStruct()->global_cell_layers_data;
+  const auto elem_lids       = workset.disc->getElementLIDs_host(workset.wsIndex);
 
+  const int fieldLayer = fieldLevel==layers_data.numLayers ? fieldLevel-1 : fieldLevel;
+  const auto pos = fieldLevel==layers_data.numLayers ? layers_data.top_side_pos : layers_data.bot_side_pos;
+
+  const auto& offsets = p_dof_mgr->getGIDFieldOffsets_subcell(0,sideDim,pos);
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
-    for (int node=0; node<this->numNodes; ++node) {
-      const GO ilayer = layers_data.getLayerId(node_gids[node]);
-      if (ilayer==fieldLevel) {
-        const LO lid = p_indexer->getLocalElement(node_gids[node]);
+    const auto layer = layers_data.getLayerId(elem_LID);
+    if (layer==fieldLayer) {
+      for (auto o : offsets) {
+        const LO lid = p_elem_dof_lids(elem_LID,o);
         if (lid>=0) {
-          p_data[lid] = this->val(cell,node);
+          p_data[lid] = this->val(cell,o);
         }
       }
     }

@@ -577,24 +577,28 @@ evaluateFields(typename Traits::EvalData workset)
   if (trans) {
     const int num_deriv = numNodes;
 
-    const auto& layers_data = workset.disc->getLayeredMeshNumbering();
+    const auto& cell_layers_data = workset.disc->getMeshStruct()->local_cell_layers_data;
 
-    const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
-    const auto p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
-    const auto p_indexer = p_dof_mgr->ov_indexer();
+    const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
+    const auto p_elem_dof_lids = p->elem_dof_lids().host();
+
+    // Pick a cell layer that contains the field level. Can be same as fieldLevel,
+    // except for the last level.
+    const auto cell_level = fieldLevel==cell_layers_data->numLayers
+                          ? fieldLevel-1 : fieldLevel;
 
     for (size_t cell=0; cell<workset.numCells; ++cell) {
       const auto elem_LID = elem_lids(cell);
       const auto& local_Vp = workset.local_Vp[cell];
 
-      const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
-      for (int i=0; i<num_deriv; i++) {
-        const GO base_id = layers_data->getColumnId(node_gids[i]);
-        const GO ginode  = layers_data->getId(base_id, fieldLevel);
+      const LO basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
+      const LO field_elem_LID = cell_layers_data->getId(basal_elem_LID,cell_level);
 
-        for (int col=0; col<num_cols; ++col) {
-          const LO row = p_indexer->getLocalElement(ginode);
-          if(row >=0) {
+      for (int i=0; i<num_deriv; i++) {
+
+        const LO row = p_elem_dof_lids(field_elem_LID,i);
+        if(row >=0) {
+          for (int col=0; col<num_cols; ++col) {
             double val = 0.0;
             for (int node=0; node<numNodes; ++node) {
               for (int eq=0; eq<numFields; ++eq) {

@@ -71,30 +71,53 @@ DOFManager::elem_dof_lids () const
 }
 
 DualView<const int**>
-DOFManager::elem_dof_lids (const Teuchos::RCP<const DOFManager>& dof_mgr) const
+DOFManager::restrict (const std::string& sub_part_name) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION (not m_built, std::runtime_error,
       "Error! DOFManager::build was not yet called.\n");
 
-  if (dof_mgr->part_name()==part_name() &&
-      dof_mgr->get_topology()==get_topology()) {
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_conn_mgr->contains(sub_part_name), std::runtime_error,
+      "Error! Input sub-part name not contained in the ConnManager parts.\n");
 
-    // Same part name, same cell topology, so the lids are the same
+  if (part_name()==sub_part_name) {
+    // Same part name, so the lids are the same
     return m_elem_dof_lids;
   }
 
-  const auto dof_lids = dof_mgr->elem_dof_lids().host();
-  const int nelems = dof_lids.extent(0);
-  const int nldofs = dof_lids.extent(1);
-  const auto indexer_in = dof_mgr->ov_indexer();
-  const auto indexer = ov_indexer();
-  
-  DualView<int**> elem_dof_lids ("",nelems,nldofs);
-  for (int ielem=0; ielem<nelems; ++ielem) {
-    for (int idof=0; idof<nldofs; ++idof) {
-      const auto gid = indexer_in->getGlobalElement(dof_lids(ielem,idof));
-      const auto lid = indexer->getLocalElement(gid);
-      elem_dof_lids.host()(ielem,idof) = lid;
+  DualView<int**> elem_dof_lids("",m_elem_dof_lids.host().extent(0),m_elem_dof_lids.host().extent(1));
+  auto& h_elem_dof_lids = elem_dof_lids.host();
+  Kokkos::deep_copy(h_elem_dof_lids,-1);
+  const auto& topo = get_topology ();
+  const int num_elems = m_conn_mgr->getElementsInBlock().size();
+  const int sub_dim = m_conn_mgr->part_dim(sub_part_name);
+
+  // Precompute offsets
+  std::vector<std::vector<std::vector<std::vector<int>>>> offsets(sub_dim+1);
+  for (int dim=0; dim<sub_dim; ++dim) {
+    const int count = topo.getSubcellCount(dim);
+    offsets[dim].resize(count);
+    for (int pos=0; pos<count; ++pos) {
+      for (int f=0; f<getNumFields(); ++f) {
+        offsets[dim][pos].push_back(getGIDFieldOffsets_subcell (f,dim,pos));
+      }
+    }
+  }
+
+  // Loop over elements and their sub cells, and set the correct LID for all
+  // dofs on the sub-part
+  for (int ielem=0; ielem<num_elems; ++ielem) {
+    auto dof_lids = Kokkos::subview(h_elem_dof_lids,ielem,Kokkos::ALL());
+    for (int dim=0; dim<=sub_dim; ++dim) {
+      const int count = topo.getSubcellCount(dim);
+      for (int pos=0; pos<count; ++pos) {
+        if (m_conn_mgr->belongs(sub_part_name,ielem,dim,pos)) {
+          for (int f=0; f<getNumFields(); ++f) {
+            for (auto o : offsets[dim][pos][f]) {
+              dof_lids(o) = m_elem_dof_lids.host()(ielem,o);
+            }
+          }
+        }
+      }
     }
   }
   elem_dof_lids.sync_to_dev();

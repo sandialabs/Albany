@@ -384,4 +384,43 @@ void STKConnManager::buildLocalElementIDs(const std::vector<stk::mesh::Entity>& 
   }
 }
 
+bool STKConnManager::
+contains (const std::string& sub_part_name) const
+{
+  const auto& p = m_metaData->get_part(sub_part_name);
+  for (const auto& it : m_parts) {
+    if (it.second->contains(*p)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
+// local element $ielem belongs to sub part $sub_part_name
+bool STKConnManager::
+belongs (const std::string& sub_part_name,
+         const LO ielem, const int subcell_dim, const int subcell_pos) const
+{
+  using rank_t = stk::topology::rank_t;
+  auto rank = subcell_dim==0 ? rank_t::NODE_RANK :
+             (subcell_dim==1 ? rank_t::EDGE_RANK :
+             (subcell_dim==2 ? rank_t::FACE_RANK : rank_t::ELEM_RANK));
+  const auto& elem = m_elements[ielem];
+  const auto& sub = *(m_bulkData->begin(elem,rank) + subcell_pos);
+  const auto& b = m_bulkData->bucket(sub);
+
+  const auto& p = *m_metaData->get_part(sub_part_name);
+
+  return b.member(p);
+}
+
+// Queries the dimension of a part
+int STKConnManager::
+part_dim (const std::string& part_name) const
+{
+  const auto& p = *m_metaData->get_part(part_name);
+  return p.topology().dimension();
+}
+
 } // namespace Albany

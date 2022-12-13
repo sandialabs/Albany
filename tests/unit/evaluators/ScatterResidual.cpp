@@ -152,7 +152,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   // Create distributed parameter and add it to the library
   auto distParamLib = Teuchos::rcp(new Albany::DistributedParameterLibrary());
   auto parameter    = Teuchos::rcp(new Albany::DistributedParameter(param_name,p_dof_mgr));
-  parameter->compute_elem_dof_lids(disc->getNodeNewDOFManager());
 
   auto dist_param = parameter->vector();
   dist_param->assign(6.0);

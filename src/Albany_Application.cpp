@@ -657,17 +657,14 @@ Application::finalSetUp(
     // Create Distributed parameters and initialize them with data stored in the
     // mesh.
     const StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();
-    auto node_dof_mgr = disc->getNodeNewDOFManager();
-    for (size_t is = 0; is < distParamSIS.size(); is++) {
+    for (const auto& sis : distParamSIS) {
       // Get name of distributed parameter
-      const std::string& param_name = distParamSIS[is]->name;
+      const std::string& param_name = sis->name;
 
       // Get parameter vector spaces and build parameter vector
       // Create distributed parameter and set workset_elem_dofs
       auto parameter = Teuchos::rcp(new DistributedParameter(
-          param_name, disc->getNewDOFManager(param_name)));
-
-      parameter->compute_elem_dof_lids(node_dof_mgr);
+          param_name, disc->getNewDOFManager(param_name), sis->meshPart));
 
       // Get the vector and lower/upper bounds, and fill them with available
       // data

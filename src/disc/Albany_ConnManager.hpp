@@ -30,6 +30,18 @@ public:
     return getElementsInBlock(part_name());
   }
 
+  // Returns whether input part name is topologically contained in the
+  // parts where this ConnManager is defined.
+  virtual bool contains (const std::string& sub_part_name) const = 0;
+
+  // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
+  // local element $ielem belongs to sub part $sub_part_name
+  virtual bool belongs (const std::string& sub_part_name,
+                        const LO ielem, const int subcell_dim, const int subcell_pos) const = 0;
+
+  // Queries the dimension of a part
+  virtual int part_dim (const std::string& part_name) const = 0;
+
   const std::string& part_name () const {
     TEUCHOS_TEST_FOR_EXCEPTION (m_parts_names.size()!=1, std::runtime_error,
         "[ConnManager::part_name] Error! Multiple part names.\n");
