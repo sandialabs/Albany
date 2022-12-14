@@ -24,6 +24,7 @@
 #include <Shards_BasicTopologies.hpp>
 
 #include <Panzer_IntrepidFieldPattern.hpp>
+#include <Panzer_ElemFieldPattern.hpp>
 
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
@@ -2511,9 +2512,17 @@ create_dof_mgr (const std::string& part_name,
   auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
 
   const auto& ctd = conn_mgr->get_topology().getCellTopologyData();
-  const auto basis = getIntrepid2Basis(*ctd,fe_type,order);
-  const auto fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
-
+  Teuchos::RCP<panzer::FieldPattern> fp;
+  if (ctd->name==std::string("Node")) {
+    // This is a hack, to build a dof mgr for arbitrary node sets.
+    // Such dof mgr will be "weird", in that the "elements" are actually
+    // the mesh nodes.
+    auto topo = shards::CellTopology(shards::getCellTopologyData<shards::Node0D>());
+    fp = Teuchos::rcp(new panzer::ElemFieldPattern(topo));
+  } else {
+    const auto basis = getIntrepid2Basis(*ctd,fe_type,order);
+    fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+  }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
   //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
