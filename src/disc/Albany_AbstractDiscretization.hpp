@@ -115,12 +115,14 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace>
   getNodeVectorSpace(const std::string& field_name) const
   {
-    return getNodeNewDOFManager(field_name)->vs();
+    auto part_name = getNewDOFManager(field_name)->part_name();
+    return getNodeNewDOFManager(part_name)->vs();
   }
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapNodeVectorSpace(const std::string& field_name) const
   {
-    return getNodeNewDOFManager(field_name)->ov_vs();
+    auto part_name = getNewDOFManager(field_name)->part_name();
+    return getNodeNewDOFManager(part_name)->ov_vs();
   }
 
   //! Get Field vector space (owned and overlapped)
