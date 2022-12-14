@@ -4,11 +4,9 @@ from numpy.random import default_rng
 from PyAlbany import Utils
 import os
 import sys
+import time
 
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
-
+start = time.time()
 
 parallelEnv = Utils.createDefaultParallelEnv()
 
@@ -28,14 +26,16 @@ parameter_0 = Utils.createVector(parameter_map_0)
 
 parameter_0_view = parameter_0.getLocalView()
 
-N = 200
+N = 50
 p_min = -2.
 p_max = 2.
 
 # Generate N samples randomly chosen in [p_min, p_max]:
-rng = default_rng()
+rng = default_rng(seed=42)
 p = rng.uniform(p_min, p_max, N)
 QoI = np.empty((N,))
+timers = np.empty((N,))
+timers_setup = np.empty((N,))
 
 # Loop over the N samples and evaluate the quantity of interest:
 for i in range(0, N):
@@ -47,28 +47,15 @@ for i in range(0, N):
 
     response = problem.getResponse(0)
     QoI[i] = response.getLocalView()[0]
+    timers[i] = problem.getStackedTimer().baseTimerAccumulatedTime('PyAlbany Total Time')
+    timers_setup[i] = problem.getStackedTimer().baseTimerAccumulatedTime('PyAlbany Total Time@PyAlbany: Setup Time')
 
-if myGlobalRank == 0:
-    f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8,4))
+print(p)
+print(QoI)
+print(timers)
 
-    n_bins = 15
-
-    ax1.hist(p, n_bins)
-    ax1.set_ylabel('Counts')
-    ax1.set_xlabel('Random parameter')
-    ax1.grid()
-
-    ax2.scatter(p, QoI)
-    ax2.set_ylabel('Quantity of interest')
-    ax2.set_xlabel('Random parameter')
-    ax2.grid()
-
-    ax3.hist(QoI, n_bins)
-    ax3.set_ylabel('Counts')
-    ax3.set_xlabel('Quantity of interest')
-    ax3.grid()
-
-    f.tight_layout()
-
-    plt.savefig('UQ.jpeg', dpi=800)
-    plt.close()
+end = time.time()
+elapsed_time = end-start
+print(str(timers[-1])+" "+str(elapsed_time)+" "+str(100*timers[-1]/elapsed_time)+"%")
+np.savetxt('timers_with_interface.txt', timers)
+np.savetxt('timers_setup_with_interface.txt', timers_setup)

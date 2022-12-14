@@ -29,9 +29,9 @@ timerNames = ["PyAlbany: Create Albany Problem",
 
 nTimers = len(timerNames)
 
-timers_sec = np.zeros((nMaxProcs,nTimers))
+timers_sec = np.empty((nMaxProcs,nTimers))
 
-efficiency = np.zeros((nMaxProcs,nTimers))
+efficiency = np.empty((nMaxProcs,nTimers))
 
 for nProcs in range(1, nMaxProcs+1):
     newGroup = comm.group.Incl(np.arange(0, nProcs))
