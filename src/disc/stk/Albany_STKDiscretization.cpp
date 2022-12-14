@@ -1110,7 +1110,7 @@ void STKDiscretization::computeVectorSpaces()
           auto  part_name  = part_dim.first;
     const auto& dof_dim    = part_dim.second;
 
-    // For dofs defined on the whole mesh, we also add a dof mgr for each sideset
+    // For the solution dof, if part_name is the whole mesh, we also add a dof mgr for each sideset
     bool do_sides = false;
 
     // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
@@ -1121,7 +1121,7 @@ void STKDiscretization::computeVectorSpaces()
       TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
           "Error! We currently do not support meshes with 2+ element blocks.\n");
       part_name = stkMeshStruct->ebNames_[0];
-      do_sides = true;
+      do_sides = field_name==solution_dof_name();
     }
 
     // NOTE: for now we hard code P1. In the future, we must be able to
