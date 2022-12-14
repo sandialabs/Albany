@@ -48,8 +48,12 @@ public:
   //! Get the DOF manager
   Teuchos::RCP<const DOFManager>
   getNewDOFManager (const std::string& fieldName) const {
-    const auto& part_name = getMeshStruct()->getMeshSpecs()[0]->ebName;
-    return m_dof_managers.at(fieldName).at(part_name);
+    TEUCHOS_TEST_FOR_EXCEPTION (m_dof_managers.find(fieldName)==m_dof_managers.end(), std::runtime_error,
+        "Error! Could not find a dof manger for field '" + fieldName + "'\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (m_dof_managers.at(fieldName).size()!=1, std::runtime_error,
+        "Error! Multiple dof mangers for field '" + fieldName + "', and no part name specified.\n");
+
+    return m_dof_managers.at(fieldName).begin()->second;
   }
   Teuchos::RCP<const DOFManager>
   getNewDOFManager (const std::string& fieldName, const std::string& part_name) const {
