@@ -46,6 +46,10 @@
 #include <pmmintrin.h>
 #endif
 
+#if defined(ALBANY_OMEGAH)
+#include <Omegah_h_library.hpp>
+#endif
+
 #include "Phalanx_config.hpp"
 
 #include "Kokkos_Core.hpp"
@@ -78,6 +82,10 @@ int main(int argc, char *argv[])
          )
       );
 
+#endif
+
+#if defined(ALBANY_OMEGAH)
+  auto lib = Omega_h::Library(&argc, &argv);
 #endif
 
   using Teuchos::RCP;
