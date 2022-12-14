@@ -9,12 +9,6 @@
 
 #include "PHAL_ScatterResidual.hpp"
 
-// Fwd decl
-namespace Albany {
-template<typename T>
-struct LayeredMeshNumbering; 
-}
-
 namespace PHAL {
 
 // Scatter a cell-based residual field of a 2D equation defined
@@ -28,12 +22,11 @@ public:
   ScatterResidual2D (const Teuchos::ParameterList& p,
                      const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void evaluateFields (typename Traits::EvalData d);
-
-protected:
-  void evaluateFieldsImpl (typename Traits::EvalData d) {
+  void evaluateFields (typename Traits::EvalData d) {
     Base::evaluateFields(d);
   }
+
+protected:
 
   void compute_offsets (const Albany::DOFManager& dof_mgr, const int bot_pos);
 
@@ -45,16 +38,9 @@ protected:
   using Base::numFields;
   using Base::numNodes;
 
-  int m_bot_side_pos;
-  int m_top_side_pos;
-  int numSideNodes;
-  int sideDim;
   int fieldLevel; // The node-layer where the 2d field is defined
 
   std::string meshPart;
-
-  Albany::DualView<int**> m_bot_dofs_offsets;
-  Albany::DualView<int**> m_top_dofs_offsets;
 };
 
 // Scatter a cell-based residual field of a 3D equation when
@@ -69,12 +55,11 @@ public:
   ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
                                    const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void evaluateFields (typename Traits::EvalData d);
-
-protected:
-  void evaluateFieldsImpl (typename Traits::EvalData d) {
+  void evaluateFields (typename Traits::EvalData d) {
     Base::evaluateFields(d);
   }
+
+protected:
 
   // This stuff is really needed only by Jacobian, since the other
   // eval types rely on base class implementation
@@ -83,20 +68,8 @@ protected:
 
   using Base::numFields;
 
-  Teuchos::RCP<Albany::LayeredMeshNumbering<int>> m_cell_layers_data;
-
-  Albany::DualView<int*> m_bot_dofs_offsets;
-  Albany::DualView<int*> m_top_dofs_offsets;
-  Albany::DualView<int*> m_bot_nodes_offsets;
-  Albany::DualView<int*> m_top_nodes_offsets;
-
-  int m_bot_side_pos;
-  int m_top_side_pos;
-  int sideDim;
-  int numSideNodes;
   int offset2DField;
   int fieldLevel; // Node level where field is defined
-  int m_field_layer; // Cell layer containing the field level
 };
 
 } // namespace PHAL
