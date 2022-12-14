@@ -217,7 +217,7 @@ add_library(landIce ${Albany_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(landIce PROPERTIES PUBLIC_HEADER "${HEADERS}")
 target_link_libraries(landIce PUBLIC albanyLib)
 if (ALBANY_OMEGAH)
-  target_link_libraries(LandIce PRIVATE Omega_h::omega_h)
+  target_link_libraries(LandIce PUBLIC Omega_h::omega_h)
 endif()
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(landIce SYSTEM PUBLIC
