@@ -46,6 +46,10 @@
 #include <pmmintrin.h>
 #endif
 
+#if defined(ALBANY_OMEGAH)
+#include <Omega_h_library.hpp>
+#endif
+
 #include "Phalanx_config.hpp"
 
 #include "Kokkos_Core.hpp"
@@ -57,6 +61,12 @@ int main(int argc, char *argv[])
 
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, nullptr);
   Kokkos::initialize(argc, argv);
+
+#if defined(ALBANY_OMEGAH)
+  auto lib = Omega_h::Library(&argc, &argv);
+  fprintf(stderr, "initialized omegah lib\n");
+#endif
+
 
 #if defined(ALBANY_FLUSH_DENORMALS)
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
