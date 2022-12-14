@@ -69,86 +69,66 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
   };
 #endif
 
-  void
-  fillSolnVector(
-      Thyra_Vector&                                soln,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  fillVector(
-      Thyra_Vector&                                field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
-  void
-  fillSolnMultiVector(
-      Thyra_MultiVector&                           soln,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveVector(
-      const Thyra_Vector&                          field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
-  void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      const Thyra_Vector&                          soln_dot,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      const Thyra_Vector&                          soln_dot,
-      const Thyra_Vector&                          soln_dotdot,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveResVector(
-      const Thyra_Vector&                          res,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
-  void
-  saveSolnMultiVector(
-      const Thyra_MultiVector&                     soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs);
+  void fillSolnVector (Thyra_Vector&        soln,
+                       const dof_mgr_ptr_t& soln_dof_mgr,
+                       const bool           overlapped);
 
-  void
-  transferSolutionToCoords();
+  void fillVector (Thyra_Vector&        field_vector,
+                   const std::string&   field_name,
+                   const dof_mgr_ptr_t& field_dof_mgr,
+                   const bool           overlapped);
+
+  void fillSolnMultiVector (Thyra_MultiVector&   soln,
+                            const dof_mgr_ptr_t& soln_dof_mgr,
+                            const bool           overlapped);
+
+  void saveVector (const Thyra_Vector&  field_vector,
+                   const std::string&   field_name,
+                   const dof_mgr_ptr_t& field_dof_mgr,
+                   const bool           overlapped);
+
+  void saveSolnVector (const Thyra_Vector& soln,
+                       const mv_ptr_t&     soln_dxdp,
+                       const dof_mgr_ptr_t& sol_dof_mgr,
+                       const bool           overlapped);
+
+  void saveSolnVector (const Thyra_Vector&  soln,
+                       const mv_ptr_t&      soln_dxdp,
+                       const Thyra_Vector&  soln_dot,
+                       const dof_mgr_ptr_t& sol_dof_mgr,
+                       const bool           overlapped);
+
+  void saveSolnVector (const Thyra_Vector&  soln,
+                       const mv_ptr_t&      soln_dxdp,
+                       const Thyra_Vector&  soln_dot,
+                       const Thyra_Vector&  soln_dotdot,
+                       const dof_mgr_ptr_t& sol_dof_mgr,
+                       const bool           overlapped);
+
+  void saveResVector (const Thyra_Vector&  res,
+                      const dof_mgr_ptr_t& dof_mgr,
+                      const bool           overlapped);
+
+  void saveSolnMultiVector (const Thyra_MultiVector& soln,
+                            const mv_ptr_t&          soln_dxdp,
+                            const dof_mgr_ptr_t&     sol_dof_mgr,
+                            const bool               overlapped);
+
+  void transferSolutionToCoords();
 
 
  private:
-  void
-  fillVectorImpl(
-      Thyra_Vector&                                field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
-  void
-  saveVectorImpl(
-      const Thyra_Vector&                          field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager);
+  void fillVectorImpl (Thyra_Vector&        field_vector,
+                       const std::string&   field_name,
+                       const dof_mgr_ptr_t& field_dof_mgr,
+                       const bool           overlapped);
 
-  void
-  initializeProcRankField();
+  void saveVectorImpl (const Thyra_Vector&  field_vector,
+                       const std::string&   field_name,
+                       const dof_mgr_ptr_t& field_dof_mgr,
+                       const bool           overlapped);
 
+  void initializeProcRankField();
 
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field;
   Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>

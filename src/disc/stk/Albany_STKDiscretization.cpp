@@ -912,35 +912,16 @@ STKDiscretization::getSolutionMV(bool overlapped) const
 void
 STKDiscretization::getField(Thyra_Vector& result, const std::string& name) const
 {
-  // Iterate over the on-processor nodes by getting node buckets and iterating
-  // over each bucket.
-  const std::string& part =
-      nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
-  stk::mesh::Selector selector = metaData->locally_owned_part();
-  if (part.size()) {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it =
-        stkMeshStruct->nsPartVec.find(part);
-    if (it != stkMeshStruct->nsPartVec.end())
-      selector &= stk::mesh::Selector(*(it->second));
-  }
-
-  const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
-
-  solutionFieldContainer->fillVector(
-      result, name, selector, dofsStruct.node_vs, dofsStruct.dofManager);
+  auto dof_mgr = getNewDOFManager(name);
+  solutionFieldContainer->fillVector(result, name, dof_mgr, false);
 }
 
 void
-STKDiscretization::getSolutionField(Thyra_Vector& result, const bool overlapped)
-    const
+STKDiscretization::getSolutionField(Thyra_Vector& result, const bool overlapped) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
-  // Iterate over the on-processor nodes by getting node buckets and iterating
-  // over each bucket.
-  stk::mesh::Selector locally_owned = metaData->locally_owned_part();
-
-  solutionFieldContainer->fillSolnVector(result, locally_owned, getNodeVectorSpace());
+  solutionFieldContainer->fillSolnVector(result, getNewDOFManager(), overlapped);
 }
 
 void
@@ -950,11 +931,7 @@ STKDiscretization::getSolutionMV(
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
-  // Iterate over the on-processor nodes by getting node buckets and iterating
-  // over each bucket.
-  stk::mesh::Selector locally_owned = metaData->locally_owned_part();
-
-  solutionFieldContainer->fillSolnMultiVector(result, locally_owned, getNodeVectorSpace());
+  solutionFieldContainer->fillSolnMultiVector(result, getNewDOFManager(), overlapped);
 }
 
 /*****************************************************************/
@@ -967,37 +944,8 @@ STKDiscretization::setField(
     const std::string&  name,
     bool                overlapped)
 {
-  const std::string& part =
-      nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
-
-  stk::mesh::Selector selector =
-      overlapped ?
-          metaData->locally_owned_part() | metaData->globally_shared_part() :
-          metaData->locally_owned_part();
-
-  // Iterate over the on-processor nodes by getting node buckets and iterating
-  // over each bucket.
-  if (part.size()) {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it =
-        stkMeshStruct->nsPartVec.find(part);
-    if (it != stkMeshStruct->nsPartVec.end()) {
-      selector &= stk::mesh::Selector(*(it->second));
-    }
-  }
-
-  const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
-
-  if (overlapped) {
-    solutionFieldContainer->saveVector(
-        result,
-        name,
-        selector,
-        dofsStruct.overlap_node_vs,
-        dofsStruct.overlap_dofManager);
-  } else {
-    solutionFieldContainer->saveVector(
-        result, name, selector, dofsStruct.node_vs, dofsStruct.dofManager);
-  }
+  const auto dof_mgr = getNewDOFManager(name);
+  solutionFieldContainer->saveVector(result,name,dof_mgr,overlapped);
 }
 
 void
@@ -1006,12 +954,8 @@ STKDiscretization::setSolutionField(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool          overlapped)
 {
-  // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData->locally_owned_part();
-  if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
-
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, part, node_vs);
+  const auto& dof_mgr = getNewDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void
@@ -1021,12 +965,8 @@ STKDiscretization::setSolutionField(
     const Thyra_Vector& soln_dot,
     const bool          overlapped)
 {
-  // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData->locally_owned_part();
-  if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
-
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, part, node_vs);
+  const auto& dof_mgr = getNewDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
 }
 
 void
@@ -1037,12 +977,8 @@ STKDiscretization::setSolutionField(
     const Thyra_Vector& soln_dotdot,
     const bool          overlapped)
 {
-  // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData->locally_owned_part();
-  if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
-
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, part, node_vs);
+  const auto& dof_mgr = getNewDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
 }
 
 void
@@ -1051,12 +987,8 @@ STKDiscretization::setSolutionFieldMV(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool               overlapped)
 {
-  // Select the proper mesh part and node vector space
-  stk::mesh::Selector part = metaData->locally_owned_part();
-  if (overlapped) { part |= metaData->globally_shared_part(); }
-  auto node_vs = overlapped ? getOverlapNodeVectorSpace() : getNodeVectorSpace();
-
-  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, part, node_vs);
+  const auto& dof_mgr = getNewDOFManager();
+  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void STKDiscretization::computeVectorSpaces()

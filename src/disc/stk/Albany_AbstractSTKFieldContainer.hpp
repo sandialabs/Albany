@@ -33,7 +33,7 @@ namespace Albany {
  */
 class AbstractSTKFieldContainer : public AbstractFieldContainer
 {
- public:
+public:
   // Tensor per Node/Cell  - (Node, Dim, Dim) or (Cell,Dim,Dim)
   typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian>
       TensorFieldType;
@@ -73,6 +73,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
   typedef std::map<std::string, GO>               MeshScalarInteger64State;
   typedef std::map<std::string, std::vector<int>> MeshVectorIntegerState;
 
+  using dof_mgr_ptr_t = Teuchos::RCP<const DOFManager>;
+  using mv_ptr_t      = Teuchos::RCP<const Thyra_MultiVector>;
 
   AbstractSTKFieldContainer(bool solutionFieldContainer_) : proc_rank_field(nullptr), solutionFieldContainer(solutionFieldContainer_) {};
 
@@ -189,67 +191,53 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer
     return time;
   }
 
-  virtual void
-  fillSolnVector(
-      Thyra_Vector&                                soln,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void
-  fillVector(
-      Thyra_Vector&                                field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager) = 0;
-  virtual void
-  fillSolnMultiVector(
-      Thyra_MultiVector&                           soln,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void
-  saveVector(
-      const Thyra_Vector&                          field_vector,
-      const std::string&                           field_name,
-      stk::mesh::Selector&                         field_selection,
-      const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-      const NodalDOFManager&                       nodalDofManager) = 0;
-  virtual void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      const Thyra_Vector&                          soln_dot,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void
-  saveSolnVector(
-      const Thyra_Vector&                          soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      const Thyra_Vector&                          soln_dot,
-      const Thyra_Vector&                          soln_dotdot,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void
-  saveResVector(
-      const Thyra_Vector&                          res,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
-  virtual void
-  saveSolnMultiVector(
-      const Thyra_MultiVector&                     soln,
-      const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-      stk::mesh::Selector&                         sel,
-      const Teuchos::RCP<const Thyra_VectorSpace>& node_vs) = 0;
+  virtual void fillSolnVector (Thyra_Vector&        soln,
+                               const dof_mgr_ptr_t& sol_dof_mgr,
+                               const bool           overlapped) = 0;
 
-  virtual void
-  transferSolutionToCoords() = 0;
+  virtual void fillVector (Thyra_Vector&        field_vector,
+                           const std::string&   field_name,
+                           const dof_mgr_ptr_t& field_dof_mgr,
+                           const bool           overlapped) = 0;
 
- protected:
+  virtual void fillSolnMultiVector (Thyra_MultiVector&   soln,
+                                    const dof_mgr_ptr_t& sol_dof_mgr,
+                                    const bool           overlapped) = 0;
+
+  virtual void saveVector (const Thyra_Vector&  field_vector,
+                           const std::string&   field_name,
+                           const dof_mgr_ptr_t& field_dof_mgr,
+                           const bool           overlapped) = 0;
+
+  virtual void saveSolnVector (const Thyra_Vector& soln,
+                               const mv_ptr_t&     soln_dxdp,
+                               const dof_mgr_ptr_t& sol_dof_mgr,
+                               const bool           overlapped) = 0;
+  virtual void saveSolnVector (const Thyra_Vector&  soln,
+                               const mv_ptr_t&      soln_dxdp,
+                               const Thyra_Vector&  soln_dot,
+                               const dof_mgr_ptr_t& sol_dof_mgr,
+                               const bool           overlapped) = 0;
+
+  virtual void saveSolnVector (const Thyra_Vector&  soln,
+                               const mv_ptr_t&      soln_dxdp,
+                               const Thyra_Vector&  soln_dot,
+                               const Thyra_Vector&  soln_dotdot,
+                               const dof_mgr_ptr_t& sol_dof_mgr,
+                               const bool           overlapped) = 0;
+
+  virtual void saveResVector (const Thyra_Vector&  res,
+                              const dof_mgr_ptr_t& dof_mgr,
+                              const bool          overlapped) = 0;
+
+  virtual void saveSolnMultiVector (const Thyra_MultiVector& soln,
+                                    const mv_ptr_t&          soln_dxdp,
+                                    const dof_mgr_ptr_t&     node_vs,
+                                    const bool          overlapped) = 0;
+
+  virtual void transferSolutionToCoords() = 0;
+
+protected:
   // Note: for 3d meshes, coordinates_field3d==coordinates_field (they point to
   // the same field).
   //       Otherwise, coordinates_field3d stores coordinates in 3d (useful for
