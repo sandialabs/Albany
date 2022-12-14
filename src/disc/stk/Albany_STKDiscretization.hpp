@@ -185,13 +185,6 @@ class STKDiscretization : public AbstractDiscretization
     return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
   }
 
-  const NodalDOFManager&
-  getOverlapDOFManager(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name)
-        .overlap_dofManager;
-  }
-
   //! Retrieve coordinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const;

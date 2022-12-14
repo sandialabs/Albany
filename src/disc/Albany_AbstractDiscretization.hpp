@@ -179,10 +179,6 @@ public:
   getDOFManager(const std::string& field_name) const = 0;
 
   //! Get Dof Manager of field field_name
-  virtual const NodalDOFManager&
-  getOverlapDOFManager(const std::string& field_name) const = 0;
-
-  //! Get Dof Manager of field field_name
   Teuchos::RCP<const GlobalLocalIndexer>
   getGlobalLocalIndexer(const std::string& field_name) const
   {
