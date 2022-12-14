@@ -2,11 +2,13 @@
 # Trilinos configure script for cee
 rm -rf CMake*
 
-INSTALL_DIR=
+PWD=`pwd`
+INSTALL_DIR=$PWD/install
+BTYPE=RELEASE
 
 cmake -GNinja \
       -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
-      -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+      -D CMAKE_BUILD_TYPE:STRING=${BTYPE} \
       -D CMAKE_CXX_COMPILER=mpicxx \
       -D CMAKE_C_COMPILER=mpicc \
       -D CMAKE_Fortran_COMPILER=mpif90 \

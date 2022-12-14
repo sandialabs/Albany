@@ -1,12 +1,17 @@
-
+#!/bin/bash
 module purge
-module load sems-env
-module load sems-intel/19.0.5
-module load sems-openmpi/1.10.1 
-module load sems-cmake/3.19.1
-module load sems-boost/1.55.0/base
-module load sems-netcdf/4.4.1/exo_parallel 
-module unload sems-python
-module load sparc-tools/python/3.7.9
-module load sems-ninja_fortran/1.10.0
-module list  
+source /projects/sems/modulefiles/utils/sems-modules-init.sh
+module load sems-dev
+module load sems-dev-intel/2021.3
+module load sems-dev-openmpi/4.0.5
+module load sems-dev-cmake/3.23.1
+module load sems-dev-ninja/1.10.1
+module load sems-dev-boost/1.70.0
+module load sems-dev-hdf5/1.10.7
+module load sems-dev-intel-mkl/2020.4.304
+module load sems-dev-netcdf-c/4.8.1-parallel
+module load sems-dev-parallel-netcdf/1.12.2
+module load sems-dev-superlu/5.3.0
+module load sems-dev-zlib/1.2.11
+module list
+
