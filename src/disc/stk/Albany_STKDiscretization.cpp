@@ -2064,20 +2064,37 @@ STKDiscretization::computeNodeSets()
   const auto& whole_mesh = stkMeshStruct->ebNames_[0];
   const auto& sol_dof_mgr = m_dof_managers[solution_dof_name()][whole_mesh];
   const auto& cell_indexer = sol_dof_mgr->cell_indexer();
-  const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
+  const auto& node_dof_mgr = getNodeNewDOFManager();
   auto elem_pos = [&] (const stk::mesh::Entity& n)
     -> std::pair<int,int>
   {
-    const auto& e = *bulkData->begin_elements(n);
-    const auto  nodes = bulkData->begin_nodes(e);
-    const int   num_nodes = bulkData->num_nodes(e);
-    const int  ielem = cell_indexer->getLocalElement(stk_gid(e));
-    auto ep = std::make_pair(ielem,-1);
-    for (int i=0; i<num_nodes; ++i) {
-      if (n==nodes[i])
-        ep.second = i;
+    const auto elems = bulkData->begin_elements(n);
+    const int num_elems = bulkData->num_elements(n);
+    bool found = false;
+    std::pair<int, int> ep;
+    for (int i=0; i<num_elems && !found; ++i) {
+      const auto e = elems[i];
+      const auto nodes = bulkData->begin_nodes(e);
+      const int  num_nodes = bulkData->num_nodes(e);
+      ep.first = cell_indexer->getLocalElement(stk_gid(e));
+      for (int node=0; node<num_nodes; ++node) {
+        if (n==nodes[i]) {
+          ep.second = i;
+          break;
+        }
+      }
+      // TODO: is this check too much?
+      TEUCHOS_TEST_FOR_EXCEPTION (ep.second==-1, std::runtime_error,
+          "Error! Could not locate node inside one of the elements owning it.\n"
+          "  - node stk gid: " << stk_gid(n) << "\n"
+          "  - elem stk gid: " << stk_gid(e) << "\n");
+      const auto gid = node_dof_mgr->getElementGIDs(ep.first)[ep.second];
+      if (node_dof_mgr->indexer()->isLocallyOwnedElement(gid))
+        found = true;
     }
+    TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
+        "Error! Could not locate element owner of stk node " << stk_gid(n) << "\n");
     return ep;
   };
 
@@ -2110,6 +2127,7 @@ STKDiscretization::computeNodeSets()
     for (int i=0; i<num_nodes; ++i) {
       const auto& n = nodes[i];
       ns_gids[i] = stk_gid(n);
+
       ns_elem_pos[i] = elem_pos(n);
       ns_coords.push_back(stk::mesh::field_data(*coordinates_field, n));
     }
