@@ -47,11 +47,6 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
                    const Teuchos::ArrayView<const GO>& gids,
                    const GO globalDim = Teuchos::OrdinalTraits<GO>::invalid());
 
-// Create a vector VectorSpace from a scalar one.
-Teuchos::RCP<const Thyra_VectorSpace>
-createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
-                   const int numComponents, const DiscType discType);
-
 // Intersects vectors spaces
 Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpacesIntersection (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,

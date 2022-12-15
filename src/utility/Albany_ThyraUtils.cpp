@@ -263,31 +263,6 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
-createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
-                   const int numComponents, const DiscType discType)
-{
-  if (numComponents==1) {
-    return scalar_vs;
-  }
-
-  auto scalar_gids = getGlobalElements(scalar_vs);
-  auto scalar_indexer = createGlobalLocalIndexer(scalar_vs);
-  const GO maxGlobalGID = scalar_indexer->getMaxGlobalGID();
-  const int numMyGids = scalar_indexer->getNumLocalElements();
-  NodalDOFManager mgr;
-  mgr.setup(numComponents,numMyGids,maxGlobalGID,discType);
-
-  Teuchos::Array<GO> indices(numMyGids*numComponents);
-  for (int i=0; i<numMyGids; ++i) {
-    for (int j=0; j<numComponents; ++j) {
-      indices[mgr.getLocalDOF(i,j)] = mgr.getGlobalDOF(scalar_gids[i],j);
-    }
-  }
-
-  return createVectorSpace(getComm(scalar_vs),indices);
-}
-
-Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpacesIntersection(const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
                                const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
                                const Teuchos::RCP<const Teuchos_Comm>& comm)
