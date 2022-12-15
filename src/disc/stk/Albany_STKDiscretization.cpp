@@ -2158,13 +2158,13 @@ STKDiscretization::computeNodeSets()
   const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
   auto elem_pos = [&] (const stk::mesh::Entity& n)
-    -> std::pair<stk::mesh::Entity,int>
+    -> std::pair<int,int>
   {
     const auto& e = *bulkData->begin_elements(n);
     const auto  nodes = bulkData->begin_nodes(e);
     const int   num_nodes = bulkData->num_nodes(e);
-
-    auto ep = std::make_pair(e,-1);
+    const int  ielem = cell_indexer->getLocalElement(stk_gid(e));
+    auto ep = std::make_pair(ielem,-1);
     for (int i=0; i<num_nodes; ++i) {
       if (n==nodes[i])
         ep.second = i;
@@ -2180,9 +2180,9 @@ STKDiscretization::computeNodeSets()
   // Loop over all node sets
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   for (const auto& ns : stkMeshStruct->nsPartVec) {
-    auto& ns_gids = nodeSetGIDs[ns.first];
-    auto& ns_eq_lids = nodeSets[ns.first];
-    auto& ns_coords = nodeSetCoords[ns.first];
+    auto& ns_gids     = nodeSetGIDs[ns.first];
+    auto& ns_elem_pos = nodeSets[ns.first];
+    auto& ns_coords   = nodeSetCoords[ns.first];
 
     // Grab all nodes on this nodeset
     stk::mesh::Selector ns_selector = *metaData->get_part(ns.first);
@@ -2194,19 +2194,14 @@ STKDiscretization::computeNodeSets()
          << "  on Proc " << comm->getRank() << std::endl;
 
     ns_gids.resize(num_nodes);
-    ns_eq_lids.resize(num_nodes,std::vector<int>(neq));
+    ns_elem_pos.resize(num_nodes);
     ns_coords.resize(num_nodes);
 
     // Grab node GIDs, node coords, and dof LIDs at nodes
     for (int i=0; i<num_nodes; ++i) {
       const auto& n = nodes[i];
       ns_gids[i] = stk_gid(n);
-      const auto& ep = elem_pos(n);
-      const auto elem_lid = cell_indexer->getLocalElement(stk_gid(ep.first));
-
-      for (int eq=0; eq<neq; ++eq) {
-        ns_eq_lids[i][eq] = elem_dof_lids(elem_lid,offsets[eq][ep.second]);
-      }
+      ns_elem_pos[i] = elem_pos(n);
       ns_coords.push_back(stk::mesh::field_data(*coordinates_field, n));
     }
   }

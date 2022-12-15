@@ -160,7 +160,7 @@ evaluateResponse(const double /*current_time*/,
   cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
   getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
   if (Teuchos::nonnull(sol_printer_)) {
-    sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
+    sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getDisc()->getNewDOFManager()));
   }
 
   if (g_.is_null())
@@ -195,7 +195,7 @@ evaluateTangent(const double /*alpha*/,
     cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
     getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
     if (Teuchos::nonnull(sol_printer_)) {
-      sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
+      sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getDisc()->getNewDOFManager()));
     }
   }
 
@@ -318,7 +318,7 @@ evaluateGradient(const double /*current_time*/,
     cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
     getNonconstLocalData(g).deepCopy(getLocalData(culledVec.getConst())());
     if (Teuchos::nonnull(sol_printer_))
-      sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getVectorSpace()));
+      sol_printer_->print(g, cullingStrategy_->selectedGIDs(app_->getDisc()->getNewDOFManager()));
   }
 
   if (!dg_dx.is_null()) {
@@ -351,9 +351,10 @@ evaluateGradient(const double /*current_time*/,
 
 void SolutionValuesResponseFunction::updateCASManager()
 {
-  const Teuchos::RCP<const Thyra_VectorSpace> solutionVS = app_->getVectorSpace();
+  const auto& sol_dof_mgr = app_->getDisc()->getNewDOFManager();
+  const auto& solutionVS = app_->getVectorSpace();
   if (cas_manager.is_null() || !sameAs(solutionVS,cas_manager->getOwnedVectorSpace())) {
-    const Teuchos::Array<GO> selectedGIDs = cullingStrategy_->selectedGIDs(solutionVS);
+    const Teuchos::Array<GO> selectedGIDs = cullingStrategy_->selectedGIDs(sol_dof_mgr);
     Teuchos::RCP<const Thyra_VectorSpace> targetVS = createVectorSpace(app_->getComm(),selectedGIDs);
 
     cas_manager = createCombineAndScatterManager(solutionVS,targetVS);

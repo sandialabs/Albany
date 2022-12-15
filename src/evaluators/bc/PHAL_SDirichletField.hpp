@@ -40,6 +40,7 @@ class SDirichletField_Base : public PHAL::DirichletBase<EvalT, Traits> {
     typedef typename EvalT::ScalarT ScalarT;
     SDirichletField_Base(Teuchos::ParameterList& p);
 
+    void preEvaluate(typename Traits::EvalData d);
   protected:
     /// name of the field used to prescribe boundary conditions
     /// Note, the field must be available before the volume field manager evaluation
@@ -57,8 +58,6 @@ class SDirichletField<PHAL::AlbanyTraits::Residual, Traits>
 
     SDirichletField(Teuchos::ParameterList& p);
 
-    void preEvaluate(typename Traits::EvalData d);
-
     void evaluateFields(typename Traits::EvalData d);
 };
 
@@ -72,8 +71,6 @@ class SDirichletField<PHAL::AlbanyTraits::Jacobian, Traits>
     using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
 
     SDirichletField(Teuchos::ParameterList& p);
-
-    void preEvaluate(typename Traits::EvalData d);
 
     void evaluateFields(typename Traits::EvalData d);
 
@@ -92,8 +89,6 @@ class SDirichletField<PHAL::AlbanyTraits::Tangent, Traits>
     : public SDirichletField_Base<PHAL::AlbanyTraits::Tangent, Traits> {
   public:
     using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
-
-    void preEvaluate(typename Traits::EvalData d);
 
     SDirichletField(Teuchos::ParameterList& p);
 

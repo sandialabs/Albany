@@ -23,7 +23,7 @@ public:
   {
     // Nothing to be done here
   }
-  Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const;
+  Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const;
 private:
 
   int numValues_;
@@ -31,19 +31,14 @@ private:
 
 Teuchos::Array<GO>
 UniformSolutionCullingStrategy::
-selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
+selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const
 {
-  auto source_indexer = createGlobalLocalIndexer(sourceVS);
+  auto vs = source_dof_mgr->vs();
+  Teuchos::Array<GO> myGIDs = getGlobalElements(vs);
 
-  const int localDim = source_indexer->getNumLocalElements();
-  Teuchos::Array<GO> allGIDs(sourceVS->dim());
-  Teuchos::Array<GO> myGIDs(localDim);
+  Teuchos::Array<GO> allGIDs(vs->dim());
 
-  for (LO lid=0; lid<localDim; ++lid) {
-    myGIDs[lid] = source_indexer->getGlobalElement(lid);
-  }
-
-  gatherAllV(source_indexer->getComm(),myGIDs(),allGIDs);
+  gatherAllV(source_dof_mgr->getAlbanyComm(),myGIDs(),allGIDs);
   std::sort(allGIDs.begin(), allGIDs.end());
 
   Teuchos::Array<GO> target_gids(numValues_);
@@ -65,7 +60,7 @@ public:
     // Nothing to be done
   }
 
-  Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const;
+  Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const;
 
   void setup () {
     disc_ = app_->getDiscretization();
@@ -82,25 +77,35 @@ private:
 
 Teuchos::Array<GO>
 NodeSetSolutionCullingStrategy::
-selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
+selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const
 {
-  auto source_indexer = createGlobalLocalIndexer(sourceVS);
-
   // Gather gids on given nodeset on this rank
   Teuchos::Array<GO> mySelectedGIDs;
 
-  const NodeSetList& nodeSets = disc_->getNodeSets();
-  auto it = nodeSets.find(nodeSetLabel_);
-  if (it != nodeSets.end()) {
-    typedef NodeSetList::mapped_type NodeSetEntryList;
-    const NodeSetEntryList &sampleNodeEntries = it->second;
+  TEUCHOS_TEST_FOR_EXCEPTION (disc_->getNodeSets().count(nodeSetLabel_)==1, std::runtime_error,
+      "Error! Nodeset '" << nodeSetLabel_ << "' not found in the mesh.\n");
+  const auto& nodeset = disc_->getNodeSets().at(nodeSetLabel_);
+    // typedef NodeSetList::mapped_type NodeSetEntryList;
+    // const NodeSetEntryList &sampleNodeEntries = it->second;
 
-    for (NodeSetEntryList::const_iterator jt = sampleNodeEntries.begin(); jt != sampleNodeEntries.end(); ++jt) {
-      typedef NodeSetEntryList::value_type NodeEntryList;
-      const NodeEntryList &sampleEntries = *jt;
-      for (NodeEntryList::const_iterator kt = sampleEntries.begin(); kt != sampleEntries.end(); ++kt) {
-        mySelectedGIDs.push_back(source_indexer->getGlobalElement(*kt));
-      }
+    // for (NodeSetEntryList::const_iterator jt = sampleNodeEntries.begin(); jt != sampleNodeEntries.end(); ++jt) {
+      // typedef NodeSetEntryList::value_type NodeEntryList;
+      // const NodeEntryList &sampleEntries = *jt;
+  const auto& elem_dof_lids = source_dof_mgr->elem_dof_lids().host();
+  const int num_fields = source_dof_mgr->getNumFields();
+  const auto& indexer = source_dof_mgr->indexer();
+
+  std::vector<std::vector<int>> offsets(num_fields);
+  for (int j=0; j<num_fields; ++j) {
+    offsets[j] = source_dof_mgr->getGIDFieldOffsets(j);
+  }
+  for (const auto& ep : nodeset) {
+    const int elem = ep.first;
+    const int pos  = ep.second;
+    for (int f=0; f<num_fields; ++f) {
+      const int lid = elem_dof_lids(elem,offsets[f][pos]);
+      const GO  gid = indexer->getGlobalElement(lid);
+      mySelectedGIDs.push_back(gid);
     }
   }
 
@@ -131,7 +136,7 @@ public:
     // Nothing to be done
   }
 
-  Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const;
+  Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const;
   void setup ();
 
 private:
@@ -152,12 +157,12 @@ void NodeGIDsSolutionCullingStrategy::setup ()
 
 Teuchos::Array<GO>
 NodeGIDsSolutionCullingStrategy::
-selectedGIDs(const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const
+selectedGIDs(const Teuchos::RCP<const DOFManager>& source_dof_mgr) const
 {
   Teuchos::Array<GO> mySelectedGIDs;
 
   // Subtract 1 to convert exodus GIDs to our GIDs
-  auto source_indexer = createGlobalLocalIndexer(sourceVS);
+  auto source_indexer = source_dof_mgr->indexer();
   for (int i=0; i<nodeGIDs_.size(); ++i) {
     if (source_indexer->isLocallyOwnedElement(nodeGIDs_[i] -1)) {
       mySelectedGIDs.push_back(nodeGIDs_[i] - 1);

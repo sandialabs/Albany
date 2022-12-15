@@ -23,9 +23,9 @@ namespace PHAL {
 // Specialization: Residual
 //
 template <typename Traits>
-ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::ExprEvalSDBC(
-    Teuchos::ParameterList& p)
-    : PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p)
+ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::
+ExprEvalSDBC(Teuchos::ParameterList& p)
+ : PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
   expression = p.get<std::string>("Dirichlet Expression");
 }
@@ -35,8 +35,8 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::ExprEvalSDBC(
 //
 template <typename Traits>
 void
-ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
-    typename Traits::EvalData dbc_workset)
+ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::
+preEvaluate(typename Traits::EvalData dbc_workset)
 {
   auto const          dim = dbc_workset.spatial_dimension_;
   stk::expreval::Eval expr_eval(expression);
@@ -45,16 +45,21 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
   auto rcp_disc = dbc_workset.disc;
   auto x        = dbc_workset.x;
   auto x_view   = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
-  auto const  ns_id     = this->nodeSetID;
-  auto const& ns_nodes  = dbc_workset.nodeSets->find(ns_id)->second;
-  auto const& ns_coords = dbc_workset.nodeSetCoords->find(ns_id)->second;
+  const auto& ns_node_elem_pos = dbc_workset.nodeSets->at(this->nodeSetID);
+  auto const& ns_coords = dbc_workset.nodeSetCoords->at(this->nodeSetID);
+  const auto& sol_dof_mgr   = dbc_workset.disc->getNewDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  for (unsigned inode=0; inode<ns_coords.size(); ++inode) {
+    const int ielem = ns_node_elem_pos[inode].first;
+    const int pos   = ns_node_elem_pos[inode].second;
+    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
 
-  for (unsigned int ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
-    auto const dof = ns_nodes[ns_node][this->offset];
-    if (dim > 0) expr_eval.bindVariable("x", ns_coords[ns_node][0]);
-    if (dim > 1) expr_eval.bindVariable("y", ns_coords[ns_node][1]);
-    if (dim > 2) expr_eval.bindVariable("z", ns_coords[ns_node][2]);
-    x_view[dof] = this->value = expr_eval.evaluate();
+    if (dim > 0) expr_eval.bindVariable("x", ns_coords[inode][0]);
+    if (dim > 1) expr_eval.bindVariable("y", ns_coords[inode][1]);
+    if (dim > 2) expr_eval.bindVariable("z", ns_coords[inode][2]);
+
+    x_view[x_lid] = this->value = expr_eval.evaluate();
   }
 }
 
@@ -63,17 +68,22 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::preEvaluate(
 //
 template <typename Traits>
 void
-ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
-    typename Traits::EvalData dbc_workset)
+ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::
+evaluateFields(typename Traits::EvalData dbc_workset)
 {
-  auto rcp_disc = dbc_workset.disc;
   auto f        = dbc_workset.f;
   auto f_view   = Albany::getNonconstLocalData(f);
-  auto const  ns_id    = this->nodeSetID;
-  auto const& ns_nodes = dbc_workset.nodeSets->find(ns_id)->second;
-  for (unsigned int ns_node = 0; ns_node < ns_nodes.size(); ns_node++) {
-    auto const dof = ns_nodes[ns_node][this->offset];
-    f_view[dof]    = 0.0;
+
+  const auto& ns_node_elem_pos = dbc_workset.nodeSets->at(this->nodeSetID);
+  const auto& sol_dof_mgr   = dbc_workset.disc->getNewDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  for (const auto& ep : ns_node_elem_pos) {
+    const int ielem = ep.first;
+    const int pos   = ep.second;
+    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+
+    f_view[x_lid] = 0.0;
   }
 }
 
@@ -81,10 +91,11 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(
 // Specialization: Jacobian
 //
 template <typename Traits>
-ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::ExprEvalSDBC(
-    Teuchos::ParameterList& p)
-    : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+ExprEvalSDBC(Teuchos::ParameterList& p)
+ : PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
+  // Nothing to do here
 }
 
 //
@@ -92,16 +103,13 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::ExprEvalSDBC(
 //
 template <typename Traits>
 void
-ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
-    typename Traits::EvalData dbc_workset)
+ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+set_row_and_col_is_dbc(typename Traits::EvalData dbc_workset)
 {
   auto rcp_disc = dbc_workset.disc;
   auto J        = dbc_workset.Jac;
   auto range_vs = J->range();
   auto col_vs   = Albany::getColumnSpace(J);
-  auto const  ns_id     = this->nodeSetID;
-  auto const& ns_nodes  = dbc_workset.nodeSets->find(ns_id)->second;
-  auto const  domain_vs = range_vs;  // we are assuming this!
 
   row_is_dbc_ = Thyra::createMember(range_vs);
   col_is_dbc_ = Thyra::createMember(col_vs);
@@ -109,11 +117,18 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
   col_is_dbc_->assign(0.0);
   auto        row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
 
-  for (unsigned int ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
-    auto dof             = ns_nodes[ns_node][this->offset];
-    row_is_dbc_data[dof] = 1;
+  const auto& ns_node_elem_pos = dbc_workset.nodeSets->at(this->nodeSetID);
+  const auto& sol_dof_mgr   = dbc_workset.disc->getNewDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  for (const auto& ep : ns_node_elem_pos) {
+    const int ielem = ep.first;
+    const int pos   = ep.second;
+    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+    row_is_dbc_data[x_lid] = 1;
   }
 
+  auto const  domain_vs = range_vs;  // we are assuming this!
   auto cas_manager = Albany::createCombineAndScatterManager(domain_vs, col_vs);
   cas_manager->scatter(row_is_dbc_, col_is_dbc_, Albany::CombineMode::INSERT);
 }
@@ -123,8 +138,8 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::set_row_and_col_is_dbc(
 //
 template <typename Traits>
 void
-ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
-    typename Traits::EvalData dbc_workset)
+ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+evaluateFields(typename Traits::EvalData dbc_workset)
 {
   auto       x      = dbc_workset.x;
   auto       f      = dbc_workset.f;
@@ -175,21 +190,20 @@ ExprEvalSDBC<PHAL::AlbanyTraits::Jacobian, Traits>::evaluateFields(
 // **********************************************************************
 template<typename Traits>
 ExprEvalSDBC<PHAL::AlbanyTraits::Tangent, Traits>::
-ExprEvalSDBC(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
+ExprEvalSDBC(Teuchos::ParameterList& p)
+ : DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
 template<typename Traits>
 void ExprEvalSDBC<PHAL::AlbanyTraits::Tangent, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
+evaluateFields(typename Traits::EvalData /* dirichletWorkset */)
 {
-  // Not implemented!
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::logic_error,
-      "Tangent specialization of ExprEvalSDBC is not implemented!");
+  // Not implemented!  
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+      "Tangent specialization of ExprEvalSDBC is not implemented!\n");
 } 
 
 // **********************************************************************
@@ -197,22 +211,20 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 template<typename Traits>
 ExprEvalSDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-ExprEvalSDBC(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+ExprEvalSDBC(Teuchos::ParameterList& p)
+ : DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
 template<typename Traits>
 void ExprEvalSDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
+evaluateFields(typename Traits::EvalData /* dirichletWorkset */)
 {
   // Not implemented!  
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::logic_error,
-      "DistParamDeriv specialization of ExprEvalSDBC is not implemented!");
-
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+      "DistParamDeriv specialization of ExprEvalSDBC is not implemented!\n");
 }
 
 // **********************************************************************
@@ -220,23 +232,22 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 template<typename Traits>
 ExprEvalSDBC<PHAL::AlbanyTraits::HessianVec, Traits>::
-ExprEvalSDBC(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits>(p)
+ExprEvalSDBC(Teuchos::ParameterList& p)
+ : DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
 template<typename Traits>
 void ExprEvalSDBC<PHAL::AlbanyTraits::HessianVec, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
+evaluateFields(typename Traits::EvalData /* dirichletWorkset */)
 {
   // Not implemented!  
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::logic_error,
-      "HessianVec specialization of ExprEvalSDBC is not implemented!");
-
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+      "HessianVec specialization of ExprEvalSDBC is not implemented!\n");
 }
+
 }  // namespace PHAL
 
 #endif  // PHAL_EXPREVALSDBC_DEF_HPP

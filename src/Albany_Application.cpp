@@ -3351,15 +3351,24 @@ Application::setScaleBCDofs(
   auto scaleVecLocalData = getNonconstLocalData(scaleVec_);
   for (size_t ns = 0; ns < nodeSetIDs_.size(); ns++) {
     std::string key = nodeSetIDs_[ns];
+    const auto& ns_offsets = offsets_[ns];
     // std::cout << "IKTIKT key = " << key << std::endl;
-    const std::vector<std::vector<int>>& nsNodes =
-        workset.nodeSets->find(key)->second;
-    for (unsigned int i = 0; i < nsNodes.size(); i++) {
+    const auto& ns_node_elem_pos = workset.nodeSets->at(key);
+    const auto& sol_dof_mgr   = disc->getNewDOFManager();
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+
+    std::vector<std::vector<int>> sol_offsets(ns_offsets.size());
+    for (unsigned j=0; j<ns_offsets.size(); ++j) {
+      sol_offsets[j] = sol_dof_mgr->getGIDFieldOffsets(j);
+    }
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
       // std::cout << "IKTIKT ns, offsets size: " << ns << ", " <<
       // offsets_[ns].size() << "\n";
-      for (unsigned j = 0; j < offsets_[ns].size(); j++) {
-        int lunk                = nsNodes[i][offsets_[ns][j]];
-        scaleVecLocalData[lunk] = scale;
+      for (unsigned j=0; j<ns_offsets.size(); ++j) {
+        const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[ns_offsets[j]][pos]);
+        scaleVecLocalData[x_lid] = scale;
       }
     }
   }

@@ -52,8 +52,11 @@ enum class DiscType
   BlockedDisc = 2
 };
 
-using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;
+// list[ns_name][inode] = <ielem,elem_pos> (we pick _any_ elem containing that node)
+using NodeSetList      = std::map<std::string, std::vector<std::pair<int,int>>>;
+// list[ns_name][inode] = node_gid
 using NodeSetGIDsList  = std::map<std::string, std::vector<GO>>;
+// list[ns_name][inode] = ptr_to_coords
 using NodeSetCoordList = std::map<std::string, std::vector<double*>>;
 
 // Legacy SideStruct and SideSetList for compatibility until all problems are converted to new layouts
