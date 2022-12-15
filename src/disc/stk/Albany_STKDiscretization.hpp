@@ -380,6 +380,10 @@ public:
     return solutionFieldContainer;
   }
 
+  //! Find the local position of child entity within parent entity
+  int determine_entity_pos (const stk::mesh::Entity parent,
+                            const stk::mesh::Entity child) const;
+
  protected:
 
   friend class BlockedSTKDiscretization;
@@ -433,10 +437,6 @@ public:
   //! Call stk_io for creating exodus output file
   void
   setupExodusOutput();
-
-  //! Find the local side id number within parent element
-  int
-  determine_side_pos(const stk::mesh::Entity elem, stk::mesh::Entity side);
 
   void
   writeCoordsToMatrixMarket() const;

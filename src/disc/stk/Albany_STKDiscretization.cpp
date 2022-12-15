@@ -1170,7 +1170,7 @@ STKDiscretization::computeGraphs()
 
         const auto& s = bulkData->get_entity(side_rank,sides[0]+1);
         const auto& e = bulkData->begin_elements(s)[0];
-        const auto pos = determine_side_pos(e,s);
+        const auto pos = determine_entity_pos(e,s);
         const auto layer = cell_layers_data_gid->getLayerId(stk_gid(e));
 
         if (layer==cell_layers_data_gid->numLayers) {
@@ -1665,7 +1665,7 @@ STKDiscretization::computeSideSets()
       int workset = elemGIDws[sStruct.elem_GID].ws;
 
       // Save the position of the side within element (0-based).
-      sStruct.side_pos = determine_side_pos(elem, sidee);
+      sStruct.side_pos = determine_entity_pos(elem, sidee);
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
@@ -1955,101 +1955,92 @@ STKDiscretization::computeSideSets()
 }
 
 int
-STKDiscretization::determine_side_pos(
-    const stk::mesh::Entity elem,
-    stk::mesh::Entity       side)
+STKDiscretization::determine_entity_pos(
+    const stk::mesh::Entity parent,
+    const stk::mesh::Entity child) const
 {
   using namespace stk;
 
-  stk::topology elem_top = bulkData->bucket(elem).topology();
-
-  const unsigned num_elem_nodes = bulkData->num_nodes(elem);
-  const unsigned num_side_nodes = bulkData->num_nodes(side);
-
-  stk::mesh::Entity const* elem_nodes = bulkData->begin_nodes(elem);
-  stk::mesh::Entity const* side_nodes = bulkData->begin_nodes(side);
-
-  const stk::topology::rank_t side_rank = metaData->side_rank();
-
-  int side_pos = -1;
-
-  if (num_elem_nodes == 0 || num_side_nodes == 0) {
-    // Node relations are not present, look at elem->face
-
-    const int num_sides = bulkData->num_connectivity(elem, side_rank);
-    stk::mesh::Entity const* elem_sides = bulkData->begin(elem, side_rank);
-
-    for (int i = 0; i < num_sides; ++i) {
-      const stk::mesh::Entity elem_side = elem_sides[i];
-
-      if (bulkData->identifier(elem_side) == bulkData->identifier(side)) {
-        // Found the local side in the element
+  const auto rank = bulkData->entity_rank(child);
+#ifdef ALBANY_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPTION (rank>bulkData->entity_rank(parent), std::logic_error,
+      "Error! Child entity has rank greater than parent one.\n"
+      "  - parent rank: " << bulkData->entity_rank(parent) << "\n"
+      "  - child rank : " << rank << "\n"
+      "  - parent ID  : " << bulkData->identifier(parent) << "\n"
+      "  - child ID   : " << bulkData->identifier(child) << "\n");
+#endif
+  const auto children = bulkData->begin(parent,rank);
+  const auto num_children = bulkData->num_connectivity(parent,rank);
+  if (num_children>0) {
+    // Connectivity to this subentity is present, so use it
+    for (unsigned i=0; i<num_children; ++i) {
+      if (children[i]==child) {
         return i;
       }
     }
+  } else if (rank!=stk::topology::NODE_RANK) {
+    // There's no direct connectivity to this subentity ranks.
+    // If rank!=NODE, we extract nodes of child and compare them
+    // against node of subentities of parent with correct rank.
+    const auto& topo = bulkData->bucket(parent).topology();
+    const auto  num_child_nodes = bulkData->num_nodes(child);
 
-    if (side_pos < 0) {
-      std::ostringstream msg;
-      msg << "determine_side_pos( ";
-      msg << elem_top.name();
-      msg << " , Element[ ";
-      msg << bulkData->identifier(elem);
-      msg << " ]{";
-      for (int i = 0; i < num_sides; ++i) {
-        msg << " " << bulkData->identifier(elem_sides[i]);
-      }
-      msg << " } , Side[ ";
-      msg << bulkData->identifier(side);
-      msg << " ] ) FAILED";
-      throw std::runtime_error(msg.str());
-    }
-  } else {  // Conventional elem->node - side->node connectivity present
+    const auto parent_nodes = bulkData->begin_nodes(parent);
+    const auto child_nodes  = bulkData->begin_nodes(child);
 
-    std::vector<unsigned> side_map;
-    for (unsigned i = 0; side_pos == -1 && i < elem_top.num_sides(); ++i) {
-      stk::topology side_top = elem_top.side_topology(i);
-      side_map.clear();
-      elem_top.side_node_ordinals(i, std::back_inserter(side_map));
+    const int  num_sub_topo = topo.num_sub_topology(rank);
+    for (int isub=0; isub<num_sub_topo; ++isub) {
+      // Check if this sub entity has the right topology. It may not be true
+      // if, e.g., parent is a Wedge, and child is a face, since not all
+      // Wedge's faces have the same number of nodes.
+      if (topo.sub_topology(rank,isub).num_nodes()==num_child_nodes) {
+        std::vector<stk::mesh::Entity> sub_nodes(num_child_nodes);
+        topo.sub_topology_nodes(parent_nodes,rank,isub,sub_nodes.begin());
 
-      if (num_side_nodes == side_top.num_nodes()) {
-
-        bool found = false;
-        for (unsigned j=0; j<side_top.num_nodes(); ++j) {
-          stk::mesh::Entity elem_node = elem_nodes[side_map[j]];
-          found = false;
-
-          for (unsigned k = 0; !found && k < side_top.num_nodes(); ++k) {
-            found = elem_node == side_nodes[k];
+        bool sub_found = true;
+        for (unsigned inode=0; inode<num_child_nodes; ++inode) {
+          bool inode_found = false;
+          for (unsigned jnode=0; jnode<num_child_nodes; ++jnode) {
+            if (child_nodes[inode]==sub_nodes[inode]) {
+              inode_found = true;
+              break;
+            }
           }
-
-          if (!found) { break; }
+          if (not inode_found) {
+            sub_found = false;
+            break;
+          }
         }
-        if (found) side_pos = i;
+        if (sub_found) {
+          return isub;
+        }
       }
     }
   }
 
-  if (side_pos < 0) {
-    std::ostringstream msg;
-    msg << "determine_side_pos( ";
-    msg << elem_top.name();
-    msg << " , Element[ ";
-    msg << bulkData->identifier(elem);
-    msg << " ]{";
-    for (unsigned i=0; i<num_elem_nodes; ++i) {
-      msg << " " << bulkData->identifier(elem_nodes[i]);
-    }
-    msg << " } , Side[ ";
-    msg << bulkData->identifier(side);
-    msg << " ]{";
-    for (unsigned i=0; i<num_side_nodes; ++i) {
-      msg << " " << bulkData->identifier(side_nodes[i]);
-    }
-    msg << " } ) FAILED";
-    throw std::runtime_error(msg.str());
+  std::ostringstream msg;
+  msg << " ERROR! Could not determine sub-entity position in parent entity.\n"
+      << "  parent:\n"
+      << "    topo: " << bulkData->bucket(parent).topology().name() << "\n"
+      << "    ID: " << bulkData->identifier(parent) << "\n"
+      << "    nodes:";
+  for (unsigned i=0; i<bulkData->num_nodes(parent); ++i) {
+    msg << " " << bulkData->identifier(bulkData->begin_nodes(parent)[i]);
   }
+  msg << "\n"
+      << " child:\n"
+      << "    topo: " << bulkData->bucket(child).topology().name() << "\n"
+      << "    ID: " << bulkData->identifier(child) << "\n"
+      << "    nodes:";
+  for (unsigned i=0; i<bulkData->num_nodes(child); ++i) {
+    msg << " " << bulkData->identifier(bulkData->begin_nodes(child)[i]);
+  }
+  msg << "\n";
 
-  return side_pos;
+  throw std::runtime_error(msg.str());
+
+  return -1;
 }
 
 void
@@ -2057,46 +2048,9 @@ STKDiscretization::computeNodeSets()
 {
   auto coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  // NOTE: we need to grab dof LIDs from the DOFManager of the WHOLE solution.
-  //       also, we need the "nodal" dof manager (meaning a dof mgr where
-  //       nodes are "elements"), so that we can access the lids given
-  //       the node lids.
   const auto& whole_mesh = stkMeshStruct->ebNames_[0];
   const auto& sol_dof_mgr = m_dof_managers[solution_dof_name()][whole_mesh];
   const auto& cell_indexer = sol_dof_mgr->cell_indexer();
-
-  const auto& node_dof_mgr = getNodeNewDOFManager();
-  auto elem_pos = [&] (const stk::mesh::Entity& n)
-    -> std::pair<int,int>
-  {
-    const auto elems = bulkData->begin_elements(n);
-    const int num_elems = bulkData->num_elements(n);
-    bool found = false;
-    std::pair<int, int> ep;
-    for (int i=0; i<num_elems && !found; ++i) {
-      const auto e = elems[i];
-      const auto nodes = bulkData->begin_nodes(e);
-      const int  num_nodes = bulkData->num_nodes(e);
-      ep.first = cell_indexer->getLocalElement(stk_gid(e));
-      for (int node=0; node<num_nodes; ++node) {
-        if (n==nodes[i]) {
-          ep.second = i;
-          break;
-        }
-      }
-      // TODO: is this check too much?
-      TEUCHOS_TEST_FOR_EXCEPTION (ep.second==-1, std::runtime_error,
-          "Error! Could not locate node inside one of the elements owning it.\n"
-          "  - node stk gid: " << stk_gid(n) << "\n"
-          "  - elem stk gid: " << stk_gid(e) << "\n");
-      const auto gid = node_dof_mgr->getElementGIDs(ep.first)[ep.second];
-      if (node_dof_mgr->indexer()->isLocallyOwnedElement(gid))
-        found = true;
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
-        "Error! Could not locate element owner of stk node " << stk_gid(n) << "\n");
-    return ep;
-  };
 
   std::vector<std::vector<int>> offsets (sol_dof_mgr->getNumFields());
   for (int eq=0; eq<neq; ++eq) {
@@ -2128,7 +2082,8 @@ STKDiscretization::computeNodeSets()
       const auto& n = nodes[i];
       ns_gids[i] = stk_gid(n);
 
-      ns_elem_pos[i] = elem_pos(n);
+      const auto e = *bulkData->begin_elements(n);
+      ns_elem_pos[i] = std::make_pair(cell_indexer->getLocalElement(stk_gid(e)),determine_entity_pos(e,n));
       ns_coords.push_back(stk::mesh::field_data(*coordinates_field, n));
     }
   }
@@ -2259,7 +2214,7 @@ STKDiscretization::buildSideSetProjectors()
           "  - num elems  : " << bulkData->num_elements(side) << "\n");
 
       const auto elem = bulkData->begin_elements(side)[0];
-      const auto pos = determine_side_pos(elem,side);
+      const auto pos = determine_entity_pos(elem,side);
       const auto elem_dof_gids = dofMgr->getElementGIDs(stk_gid(elem));
       const auto ss_elem_dof_gids = dofMgr->getElementGIDs(disc.stk_gid(side));
 

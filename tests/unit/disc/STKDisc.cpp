@@ -62,22 +62,6 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
   const int N = E+1;                // #nodes per side
   const int num_dims = 2;
 
-  auto elem_pos = [&] (const stk::mesh::Entity& n,
-                       const stk::mesh::BulkData& b)
-    -> std::pair<stk::mesh::Entity,int>
-  {
-    const auto& e = *b.begin_elements(n);
-    const auto  nodes = b.begin_nodes(e);
-    const int   num_nodes = b.num_nodes(e);
-
-    auto ep = std::make_pair(e,-1);
-    for (int i=0; i<num_nodes; ++i) {
-      if (n==nodes[i])
-        ep.second = i;
-    }
-    return ep;
-  };
-
   auto run = [&](const int neq) {
 
     // Create disc
@@ -136,10 +120,11 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
 
       for (int i=0; i<num_local_nodes; ++i) {
         const auto& n = bulk.get_entity(NODE_RANK,ns_nodes[i]+1);
-        const auto& ep = elem_pos(n,bulk);
-        const auto elem_lid = cell_indexer->getLocalElement(stk_disc->stk_gid(ep.first));
+        const auto e = *bulk.begin_elements(n);
+        const auto pos = stk_disc->determine_entity_pos(e,n);
+        const auto elem_lid = cell_indexer->getLocalElement(stk_disc->stk_gid(e));
         REQUIRE (ns_node_elem_pos[i].first==elem_lid);
-        REQUIRE (ns_node_elem_pos[i].second==ep.second);
+        REQUIRE (ns_node_elem_pos[i].second==pos);
       }
     }
   };
