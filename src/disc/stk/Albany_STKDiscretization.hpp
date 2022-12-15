@@ -33,79 +33,11 @@
 
 namespace Albany {
 
-typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
-
-struct DOFsStruct
-{
-  Teuchos::RCP<const Thyra_VectorSpace> node_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> overlap_node_vs;
-  Teuchos::RCP<const Thyra_VectorSpace> vs;
-  Teuchos::RCP<const Thyra_VectorSpace> overlap_vs;
-  NodalDOFManager                       dofManager;
-  NodalDOFManager                       overlap_dofManager;
-
-  Teuchos::RCP<const GlobalLocalIndexer> node_vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> overlap_node_vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> vs_indexer;
-  Teuchos::RCP<const GlobalLocalIndexer> overlap_vs_indexer;
-};
-
-struct NodalDOFsStructContainer
-{
-  typedef std::map<std::pair<std::string, int>, DOFsStruct> MapOfDOFsStructs;
-
-  MapOfDOFsStructs                                        mapOfDOFsStructs;
-  std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
-
-  const DOFsStruct&
-  getDOFsStruct(const std::string& field_name) const
-  {
-    const auto iter = fieldToMap.find(field_name);
-    if (iter == fieldToMap.end())
-      TEUCHOS_TEST_FOR_EXCEPTION(true,
-          std::logic_error, field_name + " does not exist in fieldToMap");
-    return iter->second->second;
-  };
-
-  // IKT: added the following function, which may be useful for debugging.
-  void
-  printFieldToMap() const
-  {
-    typedef std::map<std::string, MapOfDOFsStructs::const_iterator>::
-        const_iterator                  MapIterator;
-    Teuchos::RCP<Teuchos::FancyOStream> out =
-        Teuchos::VerboseObjectBase::getDefaultOStream();
-    for (MapIterator iter = fieldToMap.begin(); iter != fieldToMap.end();
-         iter++) {
-      std::string key = iter->first;
-      *out << "IKT Key: " << key << "\n";
-      auto vs = getDOFsStruct(key).vs;
-      *out << "IKT Vector Space \n: ";
-      describe(vs, *out, Teuchos::VERB_EXTREME);
-    }
-  }
-
-  void
-  addEmptyDOFsStruct(
-      const std::string& field_name,
-      const std::string& meshPart,
-      int                numComps)
-  {
-    if (numComps != 1)
-      mapOfDOFsStructs.insert(make_pair(make_pair(meshPart, 1), DOFsStruct()));
-
-    fieldToMap[field_name] =
-        mapOfDOFsStructs
-            .insert(make_pair(make_pair(meshPart, numComps), DOFsStruct()))
-            .first;
-  }
-};
-
 // ====================== STK Discretization ===================== //
 
 class STKDiscretization : public AbstractDiscretization
 {
- public:
+public:
   //! Constructor
   STKDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
@@ -177,12 +109,6 @@ class STKDiscretization : public AbstractDiscretization
   getElemGIDws() const
   {
     return elemGIDws;
-  }
-
-  const NodalDOFManager&
-  getDOFManager(const std::string& field_name) const
-  {
-    return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
   }
 
   //! Retrieve coordinate vector (num_used_nodes * 3)
@@ -541,8 +467,6 @@ class STKDiscretization : public AbstractDiscretization
 
   //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
-
-  NodalDOFsStructContainer nodalDOFsStructContainer;
 
   //! Number of equations (and unknowns) per node
   const int neq;

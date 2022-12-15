@@ -310,7 +310,6 @@ list (APPEND HEADERS
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_MeshSpecs.hpp
-  disc/Albany_NodalDOFManager.hpp
   disc/Albany_DOFManager.hpp
   )
 

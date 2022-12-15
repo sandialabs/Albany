@@ -7,7 +7,6 @@
 #include "LandIce_ScatterResidual2D.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"

@@ -8,7 +8,6 @@
 #define ALBANY_STK_FIELD_CONTAINER_HELPER_HPP
 
 #include "Albany_ThyraTypes.hpp"
-#include "Albany_NodalDOFManager.hpp"
 #include "Albany_DOFManager.hpp"
 
 #include <stk_mesh/base/Bucket.hpp>

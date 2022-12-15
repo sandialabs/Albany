@@ -11,7 +11,6 @@
 
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_DiscretizationUtils.hpp"
-#include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_DOFManager.hpp"
 
@@ -173,10 +172,6 @@ public:
   //! Get local DOF views for GatherVerticallyContractedSolution
   virtual const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const = 0;
-
-  //! Get Dof Manager of field field_name
-  virtual const NodalDOFManager&
-  getDOFManager(const std::string& field_name) const = 0;
 
   //! Get Dof Manager of field field_name
   Teuchos::RCP<const GlobalLocalIndexer>

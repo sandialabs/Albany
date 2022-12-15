@@ -12,7 +12,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_NodalDOFManager.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "LandIce_UpdateZCoordinate.hpp"

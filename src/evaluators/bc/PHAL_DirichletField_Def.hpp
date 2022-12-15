@@ -9,7 +9,6 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_NodalDOFManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"

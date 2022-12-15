@@ -161,20 +161,24 @@ STKDiscretization::getCoordinates() const
 {
   // Coordinates are computed here, and not precomputed,
   // since the mesh can move in shape opt problems
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
 
   const auto& coordinates_field = *stkMeshStruct->getCoordinatesField();
-
-  const auto& nodeDofStruct = nodalDOFsStructContainer.getDOFsStruct(nodes_dof_name());
-  const auto& ov_node_indexer = nodeDofStruct.overlap_node_vs_indexer;
-  const int numOverlapNodes = ov_node_indexer->getNumLocalElements();
   const int meshDim = stkMeshStruct->numDim;
-  for (int node_lid = 0; node_lid < numOverlapNodes; ++node_lid) {
-    GO node_gid = ov_node_indexer->getGlobalElement(node_lid);
 
-    const auto ov_node = bulkData->get_entity(stk::topology::NODE_RANK, node_gid + 1);
-    double* x = stk::mesh::field_data(coordinates_field, ov_node);
-    for (int dim = 0; dim < meshDim; ++dim) {
-      coordinates[meshDim * node_lid + dim] = x[dim];
+  const auto& node_dof_mgr = getNodeNewDOFManager();
+  const auto& elem_lids = node_dof_mgr->elem_dof_lids().host();
+  const int num_nodes = elem_lids.extent_int(1);
+  const auto& elems = node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+  const int num_elems = elems.size();
+  for (int ielem=0; ielem<num_elems; ++ielem) {
+    const auto elem = bulkData->get_entity(ELEM_RANK,elems[ielem]+1);
+    const auto nodes = bulkData->begin_nodes(elem);
+    for (int node=0; node<num_nodes; ++node) {
+      double* x = stk::mesh::field_data(coordinates_field, nodes[node]);
+      for (int dim=0; dim<meshDim; ++dim) {
+        coordinates[meshDim*elem_lids(ielem,node) + dim] = x[dim];
+      }
     }
   }
 
@@ -588,7 +592,7 @@ STKDiscretization::writeSolution(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const double        time,
     const bool          overlapped,
-    const bool          force_write_solution)  
+    const bool          force_write_solution)
 {
   writeSolutionToMeshDatabase(soln, soln_dxdp, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
@@ -602,7 +606,7 @@ STKDiscretization::writeSolution(
     const Thyra_Vector& soln_dot,
     const double        time,
     const bool          overlapped,
-    const bool          force_write_solution)  
+    const bool          force_write_solution)
 {
   writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and/or soln_dxdp?
@@ -617,7 +621,7 @@ STKDiscretization::writeSolution(
     const Thyra_Vector& soln_dotdot,
     const double        time,
     const bool          overlapped,
-    const bool          force_write_solution)  
+    const bool          force_write_solution)
 {
   writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and soln_dotdot?
@@ -630,7 +634,7 @@ STKDiscretization::writeSolutionMV(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const double             time,
     const bool               overlapped,
-    const bool               force_write_solution) 
+    const bool               force_write_solution)
 {
   writeSolutionMVToMeshDatabase(soln, soln_dxdp, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
@@ -689,7 +693,7 @@ STKDiscretization::writeSolutionToFile(
     const Thyra_Vector& soln,
     const double        time,
     const bool          overlapped,
-    const bool          force_write_solution) 
+    const bool          force_write_solution)
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
@@ -704,7 +708,7 @@ STKDiscretization::writeSolutionToFile(
 
   // Skip this write unless the proper interval has been reached
   if ((stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) || 
+      !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
       (force_write_solution == true) ) {
     double time_label = monotonicTimeLabel(time);
 
@@ -753,7 +757,7 @@ STKDiscretization::writeSolutionMVToFile(
     const Thyra_MultiVector& soln,
     const double             time,
     const bool               overlapped,
-    const bool               force_write_solution) 
+    const bool               force_write_solution)
 {
 #ifdef ALBANY_SEACAS
 
@@ -769,7 +773,7 @@ STKDiscretization::writeSolutionMVToFile(
 
   // Skip this write unless the proper interval has been reached
   if ((stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) || 
+      !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
       (force_write_solution == true) ) {
     double time_label = monotonicTimeLabel(time);
 
@@ -994,135 +998,40 @@ STKDiscretization::setSolutionFieldMV(
 
 void STKDiscretization::computeVectorSpaces()
 {
-  // Loads member data:  ownednodes, numOwnedNodes, node_map, maxGlobalNodeGID,
-  // map
-  // maps for owned nodes and unknowns
+  // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
+  //       That's not the name that stk uses for the whole mesh. So if the
+  //       dof part name is "", we get the part stored in the stk mesh struct
+  //       for the element block, where we REQUIRE that there is only ONE element block.
+  const std::string& whole_mesh = stkMeshStruct->ebNames_[0];
+  TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
+      "Error! We currently do not support meshes with 2+ element blocks.\n");
 
-  const auto& owned_part = metaData->locally_owned_part();
-  const auto& ov_part    = metaData->globally_shared_part();
+  strmap_t<std::pair<std::string,int>> name_to_partAndDim;
+  name_to_partAndDim[solution_dof_name()] = std::make_pair(whole_mesh,neq);
+  name_to_partAndDim[nodes_dof_name()] = std::make_pair(whole_mesh,1);
+  for (const auto& sis : stkMeshStruct->getFieldContainer()->getNodalParameterSIS()) {
+    const auto& dims = sis->dim;
+    int dof_dim = -1;
+    switch (dims.size()) {
+      case 2: dof_dim = 1;               break;
+      case 3: dof_dim = dims[2];         break;
+      case 4: dof_dim = dims[2]*dims[3]; break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+            "Error! Unsupported DOF layout.\n");
+    }
 
-  std::vector<stk::mesh::Entity> nodes, ghosted_nodes;
-
-  const auto& buckets = bulkData->buckets(stk::topology::NODE_RANK);
-  stk::mesh::get_selected_entities(owned_part, buckets, nodes);
-
-  // Compute NumGlobalNodes (the same for both unique and overlapped maps)
-  GO maxID = -1;
-  for (const auto& node : nodes) {
-    maxID = std::max(maxID, stk_gid(node));
-  }
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &maxID, &maxGlobalNodeGID);
-
-  // Use a different container for the dofs struct, just for the purposes of
-  // this method. We do it in order to easily recycle vector spaces, since:
-  //  1) same part dof structs can use the same node_vs
-  //  2) scalar dof structs can use the same vs for node and vs
-
-  // map[part_name][num_components] = dofs_struct;
-  auto& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
-  std::map<std::string, std::map<int, DOFsStruct*>> tmp_map;
-  for (auto& it : mapOfDOFsStructs) {
-    tmp_map[it.first.first][it.first.second] = &it.second;
+    std::string part = sis->meshPart=="" ? whole_mesh : sis->meshPart;
+    name_to_partAndDim[sis->name] = std::make_pair(part,dof_dim);
   }
 
-  // Build vector spaces. First owned, then shared.
-  int numNodes, numGhostedNodes;
-  for (auto& it1 : tmp_map) {
-    stk::mesh::Selector selector(owned_part);
-    stk::mesh::Selector ghosted_selector(ov_part);
-    ghosted_selector &= !selector;
-    const std::string&  name = it1.first;
-    if (name.size()) {
-      auto it2 = stkMeshStruct->nsPartVec.find(name);
-      TEUCHOS_TEST_FOR_EXCEPTION (it2==stkMeshStruct->nsPartVec.end(), std::runtime_error,
-        "STKDiscretization::computeNodalMaps():\n  Part " + name + " is not in  stkMeshStruct->nsPartVec.\n");
-      selector &= *(it2->second);
-      ghosted_selector &= *(it2->second);
-    }
-
-    stk::mesh::get_selected_entities(selector,    buckets, nodes);
-    stk::mesh::get_selected_entities(ghosted_selector, buckets, ghosted_nodes);
-    numNodes = nodes.size();
-    numGhostedNodes = ghosted_nodes.size();
-
-    // First, compute the nodal vs. We compute them once, for all dofs on this part
-    Teuchos::Array<GO> indices;
-    indices.reserve(numNodes+numGhostedNodes);
-
-    // Owned
-    for (const auto& node : nodes) {
-      // STK ids start from 1. Subtract 1 to get 0-based indexing.
-      const GO nodeId = stk_gid(node);
-      indices.push_back(nodeId);
-    }
-    auto part_node_vs = createVectorSpace(comm, indices());
-
-    // Overlapped.
-    // IMPORTANT: make sure the ghosted nodes come *after* the owned ones
-    for (const auto& node : ghosted_nodes) {
-      // STK ids start from 1. Subtract 1 to get 0-based indexing.
-      const GO nodeId = stk_gid(node);
-      indices.push_back(nodeId);
-    }
-    auto ov_part_node_vs = createVectorSpace(comm, indices());
-
-    // Now that the node vs are created, we can loop over the dofs struct on this part
-    for (auto& it2 : it1.second) {
-      const int   numComponents = it2.first;
-      DOFsStruct* dofs   = it2.second;
-
-      // Set nodal vs and indexers right away
-      dofs->overlap_node_vs_indexer = createGlobalLocalIndexer(ov_part_node_vs);
-      dofs->node_vs_indexer = createGlobalLocalIndexer(part_node_vs);
-      dofs->overlap_node_vs = ov_part_node_vs;
-      dofs->node_vs = part_node_vs;
-
-      if (numComponents == 1) {
-        // Life is easy: copy node_vs into the dofs's dof vs
-        dofs->overlap_vs = dofs->overlap_node_vs;
-        dofs->vs         = dofs->node_vs;
-        dofs->overlap_vs_indexer = dofs->overlap_node_vs_indexer;
-        dofs->vs_indexer         = dofs->node_vs_indexer;
-      } else {
-        // Create dof vs by replicating the nodal one (possibly interleaved)
-        dofs->vs         = createVectorSpace(dofs->node_vs,numComponents,interleavedOrdering);
-        dofs->overlap_vs = createVectorSpace(dofs->overlap_node_vs,numComponents,interleavedOrdering);
-        dofs->overlap_vs_indexer = createGlobalLocalIndexer(dofs->overlap_vs);
-        dofs->vs_indexer         = createGlobalLocalIndexer(dofs->vs);
-      }
-
-      dofs->dofManager.setup(numComponents,
-                             numNodes,
-                             maxGlobalNodeGID,
-                             interleavedOrdering);
-
-      dofs->overlap_dofManager.setup(numComponents,
-                             numNodes+numGhostedNodes,
-                             maxGlobalNodeGID,
-                             interleavedOrdering);
-    }
-  }
-
-  // ====================== NEW DOF MANAGER ========================= //
-  for (const auto& it : nodalDOFsStructContainer.fieldToMap) {
+  for (const auto& it : name_to_partAndDim) {
     const auto& field_name = it.first;
-    const auto& part_dim   = it.second->first; 
-          auto  part_name  = part_dim.first;
-    const auto& dof_dim    = part_dim.second;
+    const auto& part_name  = it.second.first;
+    const auto& dof_dim    = it.second.second;
 
-    // For the solution dof, if part_name is the whole mesh, we also add a dof mgr for each sideset
-    bool do_sides = false;
-
-    // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
-    //       That's not the name that stk uses for the whole mesh. So if the
-    //       part name is "", we get the part stored in the stk mesh struct
-    //       for the element block, where we REQUIRE that there is only ONE element block.
-    if (part_name=="") {
-      TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
-          "Error! We currently do not support meshes with 2+ element blocks.\n");
-      part_name = stkMeshStruct->ebNames_[0];
-      do_sides = field_name==solution_dof_name();
-    }
+    // For the solution dof, we also add a dof mgr for each sideset
+    const bool do_sides = field_name==solution_dof_name() || field_name==nodes_dof_name();
 
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
@@ -1162,9 +1071,6 @@ void STKDiscretization::computeVectorSpaces()
 void
 STKDiscretization::computeGraphs()
 {
-  // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map,
-  // coordinates, graphs
-
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
   m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, vs, ov_vs, ov_vs));
@@ -1921,9 +1827,8 @@ STKDiscretization::computeSideSets()
 
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
     const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
-    const Albany::NodalDOFManager& solDOFManager = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_dofManager;
     const unsigned int numLayers = layeredMeshNumbering.numLayers;
-    const unsigned int numComps = solDOFManager.numComponents();
+    const unsigned int numComps = getNewDOFManager()->getNumFields();
 
     // Determine maximum number of side nodes
     for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
@@ -2379,24 +2284,6 @@ STKDiscretization::updateMesh()
 {
   bulkData = stkMeshStruct->bulkData;
 
-  const StateInfoStruct& nodal_param_states =
-      stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
-  nodalDOFsStructContainer.addEmptyDOFsStruct(solution_dof_name(), "", neq);
-  nodalDOFsStructContainer.addEmptyDOFsStruct(nodes_dof_name(), "", 1);
-  for (size_t is = 0; is < nodal_param_states.size(); is++) {
-    const StateStruct&            param_state = *nodal_param_states[is];
-    const StateStruct::FieldDims& dim         = param_state.dim;
-    int                           numComps    = 1;
-    if (dim.size() == 3) {  // vector
-      numComps = dim[2];
-    } else if (dim.size() == 4) {  // tensor
-      numComps = dim[2] * dim[3];
-    }
-
-    nodalDOFsStructContainer.addEmptyDOFsStruct(
-        param_state.name, param_state.meshPart, numComps);
-  }
-
   computeVectorSpaces();
 
 #ifdef OUTPUT_TO_SCREEN
@@ -2404,7 +2291,7 @@ STKDiscretization::updateMesh()
   writeMatrixMarket(getVectorSpace(), "dof_vs");
   writeMatrixMarket(getNodeVectorSpace(), "node_vs");
 #endif
-    
+
   setupMLCoords();
 
   transformMesh();
@@ -2458,7 +2345,7 @@ STKDiscretization::setFieldData(
 
   int num_time_deriv, numDim, num_params;
   Teuchos::RCP<Teuchos::ParameterList> params;
-  
+
   auto gSTKFieldContainer = Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer>(fieldContainer,false);
   params = gSTKFieldContainer->getParams();
   numDim = gSTKFieldContainer->getNumDim();

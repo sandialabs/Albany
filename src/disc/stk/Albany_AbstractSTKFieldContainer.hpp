@@ -17,7 +17,6 @@
 #include "Albany_DataTypes.hpp"
 
 #include "Albany_AbstractFieldContainer.hpp"
-#include "Albany_NodalDOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_Utils.hpp"
 
