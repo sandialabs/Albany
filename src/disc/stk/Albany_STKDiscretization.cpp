@@ -1130,11 +1130,10 @@ STKDiscretization::computeGraphs()
       }
     }
   }
-  const auto lmn = getLayeredMeshNumbering();
 
   // Given a side GID, get the LID of the element it belongs to
+  const auto side_rank = metaData->side_rank();
   auto get_elem_lid = [&](const GO side_GID) -> LO {
-    const auto side_rank = metaData->side_rank();
     const auto side = bulkData->get_entity(side_rank,side_GID+1);
     TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
         "Error! Found a boundary side that has N!=1 elements attached to it.\n");
@@ -1144,17 +1143,8 @@ STKDiscretization::computeGraphs()
     return cell_indexer->getLocalElement(elem_GID);
   };
 
-  // Create a layered mesh numbering struct for cells LIDs
-  Teuchos::RCP<LayeredMeshNumbering<int>> cell_layers_data_lid;
-  if (not lmn.is_null()) {
-    constexpr auto COL = LayeredMeshOrdering::COLUMN;
-
-    const auto numLayers = lmn->numLayers;
-    const auto ordering  = lmn->ordering;
-    const auto stride = ordering==COL ? numLayers : num_elems;
-
-    cell_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<int>(stride,ordering,lmn->layers_ratio));
-  }
+  const auto& cell_layers_data_lid = stkMeshStruct->local_cell_layers_data;
+  const auto& cell_layers_data_gid = stkMeshStruct->global_cell_layers_data;
 
   // Now, process rows/cols corresponding to ss equations
   for (const auto& it : sideSetEquations) {
@@ -1164,25 +1154,38 @@ STKDiscretization::computeGraphs()
     // A side eqn can be coupled to the whole column if
     //   1) the mesh is layered, and
     //   2) all sidesets where it's defined are on the top or bottom
-    bool allowColumnCoupling = not lmn.is_null();
-    if (not lmn.is_null()) {
+    int allowColumnCoupling = not cell_layers_data_gid.is_null();
+    if (not cell_layers_data_gid.is_null()) {
       for (const auto& ss_name : it.second) {
-        const auto& ss_node_dof_mgr = getNewDOFManager(nodes_dof_name(),ss_name);
-        if (ss_node_dof_mgr->cell_indexer()->getNumLocalElements()==0) {
+        const auto& ss_dof_mgr = getNewDOFManager(nodes_dof_name(),ss_name);
+        if (ss_dof_mgr->cell_indexer()->getNumLocalElements()==0) {
           continue;
         }
 
-        // Check the layerId of all nodes of a side
-        const auto& elem_gids = ss_node_dof_mgr->getElementGIDs(0);
-        for (auto gid : elem_gids) {
-          auto layer = lmn->getLayerId(gid);
-          if (layer!=0 && layer!=lmn->numLayers) {
-            allowColumnCoupling = false;
-            break;
-          }
+        // Grab one "element" form the ss dof mgr (a side in this mesh)
+        const auto& sides = ss_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+        if (sides.size()==0) {
+          continue;
+        }
+
+        const auto& s = bulkData->get_entity(side_rank,sides[0]+1);
+        const auto& e = bulkData->begin_elements(s)[0];
+        const auto pos = determine_side_pos(e,s);
+        const auto layer = cell_layers_data_gid->getLayerId(stk_gid(e));
+
+        if (layer==cell_layers_data_gid->numLayers) {
+          allowColumnCoupling = pos==cell_layers_data_gid->top_side_pos;
+        } else if (layer==0) {
+          allowColumnCoupling = pos==cell_layers_data_gid->bot_side_pos;
+        } else {
+          // The mesh is layered, but this sideset is niether top nor bottom
+          allowColumnCoupling = false;
         }
       }
     }
+    // NOTE: Teuchos::reduceAll does not accept bool Packet, despite offerint REDUCE_AND as reduction op, so use int
+    int globalAllowColumnCoupling = allowColumnCoupling;
+    Teuchos::reduceAll(*comm(),Teuchos::REDUCE_AND,1,&allowColumnCoupling,&globalAllowColumnCoupling);
 
     // Loop over all side sets where this eqn is defined
     for (const auto& ss_name : it.second) {
@@ -1198,7 +1201,10 @@ STKDiscretization::computeGraphs()
         rows.resize(num_side_nodes);
         cols.resize(num_side_nodes);
 
-        if (allowColumnCoupling) {
+        if (globalAllowColumnCoupling) {
+          const int numLayers = cell_layers_data_lid->numLayers;
+          const int bot = cell_layers_data_lid->bot_side_pos;
+          const int top = cell_layers_data_lid->top_side_pos;
           const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
           // Assume the worst, and add coupling with all volume eqns over the whole column
           for (int eq : volumeEqns) {
@@ -1208,9 +1214,9 @@ STKDiscretization::computeGraphs()
             //       *need* to process one layer at a time in each cell, to ensure we know
             //       which basal node each dof corresponds to, so we can't do away with the
             //       bot/top offsets arrays.
-            const auto& bot_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,lmn->bot_side_pos);
-            const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,lmn->top_side_pos);
-            for (int il=0; il<lmn->numLayers; ++il) {
+            const auto& bot_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,bot);
+            const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,top);
+            for (int il=0; il<numLayers; ++il) {
               const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
               const auto& elem_gids = sol_dof_mgr->getElementGIDs(layer_elem_lid);
 
@@ -1219,7 +1225,7 @@ STKDiscretization::computeGraphs()
                 m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[bot_offsets[node]],true);
               }
             }
-            const LO last_layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,lmn->numLayers);
+            const LO last_layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,numLayers);
             const auto& elem_gids = sol_dof_mgr->getElementGIDs(last_layer_elem_lid);
             for (int node=0; node<num_side_nodes; ++node) {
               m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[top_offsets[node]],true);
@@ -1823,11 +1829,10 @@ STKDiscretization::computeSideSets()
   std::map<std::string, int> total_sideset_idx;
   std::map<std::string, int> sideset_idx_offset;
   unsigned int maxSideNodes = 0;
-  if (!stkMeshStruct->layered_mesh_numbering.is_null()) {
-
-    const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *(stkMeshStruct->layered_mesh_numbering);
+  const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
+  if (!cell_layers_data.is_null()) {
     const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
-    const unsigned int numLayers = layeredMeshNumbering.numLayers;
+    const unsigned int numLayers = cell_layers_data->numLayers;
     const unsigned int numComps = getNewDOFManager()->getNumFields();
 
     // Determine maximum number of side nodes
@@ -1859,7 +1864,6 @@ STKDiscretization::computeSideSets()
     }
   }
 
-  const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
   // Not all mesh structs that come through here are extruded mesh structs.
   // If the mesh isn't extruded, we won't need to do any of the following work.
   if (not cell_layers_data.is_null()) {
@@ -1906,7 +1910,7 @@ STKDiscretization::computeSideSets()
       for (auto& ss_it : sideSets[ws]) {
         std::string             ss_key = ss_it.first;
         std::vector<SideStruct> ss_val = ss_it.second;
-        
+
         Kokkos::View<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
 
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
