@@ -86,7 +86,6 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
     // Get stuff from disc
     const auto& sol_dof_mgr   = disc->getNewDOFManager();
     const auto& cell_indexer  = sol_dof_mgr->cell_indexer();
-    const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
     const auto& nodeSets     = disc->getNodeSets();
     const auto& nodeSetsGIDs = disc->getNodeSetGIDs();
@@ -103,7 +102,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
       {"NodeSet1" ,  std::vector<GO>(N)},  // Right
       {"NodeSet2" ,  std::vector<GO>(N)},  // Bottom
       {"NodeSet3" ,  std::vector<GO>(N)},  // Top
-      {"NodeSet99",  std::vector<GO>(4)}   // Corners
+      {"NodeSet99",  std::vector<GO>(1)}   // Bottom left corner
     };
     for (int i=0; i<N; ++i) {
       expected_ns_gids["NodeSet0"][i]=i*N;
@@ -121,10 +120,10 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
       REQUIRE (nodeSets.find(nsn)!=nodeSets.end());
       REQUIRE (nodeSetsGIDs.find(nsn)!=nodeSetsGIDs.end());
 
-      const auto& ns_dofs  = nodeSets.at(nsn);
+      const auto& ns_node_elem_pos  = nodeSets.at(nsn);
       const auto& ns_nodes = nodeSetsGIDs.at(nsn);
 
-      TEST_EQUALITY (ns_nodes.size(),ns_dofs.size());
+      TEST_EQUALITY (ns_nodes.size(),ns_node_elem_pos.size());
       const int num_local_nodes = ns_nodes.size();
       int num_global_nodes;
       Teuchos::reduceAll(*comm,Teuchos::REDUCE_SUM,1,&num_local_nodes,&num_global_nodes);
@@ -139,11 +138,8 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
         const auto& n = bulk.get_entity(NODE_RANK,ns_nodes[i]+1);
         const auto& ep = elem_pos(n,bulk);
         const auto elem_lid = cell_indexer->getLocalElement(stk_disc->stk_gid(ep.first));
-        REQUIRE (static_cast<int>(ns_dofs[i].size())==neq);
-        for (int eq=0; eq<neq; ++eq) {
-          const auto& offset = sol_dof_mgr->getGIDFieldOffsets(eq)[ep.second];
-          REQUIRE (ns_dofs[i][eq]==elem_dof_lids(elem_lid,offset));
-        }
+        REQUIRE (ns_node_elem_pos[i].first==elem_lid);
+        REQUIRE (ns_node_elem_pos[i].second==ep.second);
       }
     }
   };
