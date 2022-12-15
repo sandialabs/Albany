@@ -2186,9 +2186,6 @@ STKDiscretization::setupExodusOutput()
 void
 STKDiscretization::buildSideSetProjectors()
 {
-  // Note: the Global index of a node should be the same in both this and the
-  // side discretizations
-  //       since the underlying STK entities should have the same ID
   Teuchos::RCP<ThyraCrsMatrixFactory>   ov_graphP, graphP;
   Teuchos::RCP<Thyra_LinearOp>          P, ov_P;
 
@@ -2197,26 +2194,23 @@ STKDiscretization::buildSideSetProjectors()
   vals[0] = 1.0;
 
   // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
-  const auto dofMgr = getDOFManager(solution_dof_name());
+  const auto dofMgr = getNewDOFManager();
+  const int sideDim = getNumDim()-1;
 
-  Teuchos::ArrayView<const GO> ss_indices;
-  stk::mesh::EntityRank        SIDE_RANK = stkMeshStruct->metaData->side_rank();
-  auto vs = getVectorSpace();
-  auto ov_vs = getOverlapVectorSpace();
+  const auto SIDE_RANK = stkMeshStruct->metaData->side_rank();
+  const auto vs = getVectorSpace();
+  const auto ov_vs = getOverlapVectorSpace();
   for (auto it : sideSetDiscretizationsSTK) {
     // Extract the discretization
     const std::string&           sideSetName = it.first;
     const STKDiscretization&     disc        = *it.second;
-    const AbstractSTKMeshStruct& ss_mesh     = *disc.stkMeshStruct;
 
     // Get the vector spaces
     auto ss_ov_vs   = disc.getOverlapVectorSpace();
     auto ss_vs      = disc.getVectorSpace();
 
-    auto ss_indexer = createGlobalLocalIndexer(ss_vs);
-
     // A dof manager, to figure out interleaved vs blocked numbering
-    const auto ss_dofMgr = disc.getDOFManager(solution_dof_name());
+    const auto ss_dofMgr = disc.getNewDOFManager();
 
     // Extract the sides
     stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.find(it.first)->second;
@@ -2227,43 +2221,42 @@ STKDiscretization::buildSideSetProjectors()
     stk::mesh::get_selected_entities(
         selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
 
+    const auto ss_cells = ss_dofMgr->getAlbanyConnManager()->getElementsInBlock();
+    TEUCHOS_TEST_FOR_EXCEPTION (sides.size()!=ss_cells.size(), std::runtime_error,
+        "Error! Conflicting data between sideset sides and sideset dof manager data.\n"
+        "  - num sides in sideset: " << std::to_string(sides.size()) << "\n"
+        "  - num elems on sideset dof mgr: " << ss_cells.size() << "\n");
+
     // The projector: build both overlapped and non-overlapped range vs
     graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, ss_vs));
     ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(ov_vs, ss_ov_vs));
 
-    const std::map<GO, GO>& side_cell_map = sideToSideSetCellMap.at(it.first);
-    const std::map<GO, std::vector<int>>& node_numeration_map =
-        sideNodeNumerationMap.at(it.first);
-    std::set<GO> processed_node;
-    GO           node_gid, ss_node_gid, side_gid, ss_cell_gid;
-    std::pair<std::set<GO>::iterator, bool> check;
-    stk::mesh::Entity                       ss_cell;
+    // Recall, if map(i,j)=k, then on side_gid=I, the j-th side node corresponds
+    // to the k-th node in the side set cell numeration.
+    const auto& node_numeration_map = sideNodeNumerationMap.at(it.first);
     for (auto side : sides) {
-      side_gid    = stk_gid(side);
-      ss_cell_gid = side_cell_map.at(side_gid);
-      ss_cell     = ss_mesh.bulkData->get_entity(
-          stk::topology::ELEM_RANK, ss_cell_gid + 1);
+      TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
+          "Error! Found a side with not exactly one element attached.\n"
+          "  - side stk ID: " << bulkData->identifier(side) << "\n"
+          "  - num elems  : " << bulkData->num_elements(side) << "\n");
 
-      int num_side_nodes = stkMeshStruct->bulkData->num_nodes(side);
-      const stk::mesh::Entity* side_nodes =
-          stkMeshStruct->bulkData->begin_nodes(side);
-      const stk::mesh::Entity* ss_cell_nodes =
-          ss_mesh.bulkData->begin_nodes(ss_cell);
-      for (int i(0); i < num_side_nodes; ++i) {
-        node_gid = stk_gid(side_nodes[i]);
-        check    = processed_node.insert(node_gid);
-        if (check.second) {
-          // This node was not processed before. Let's do it.
-          ss_node_gid =
-              disc.stk_gid(ss_cell_nodes[node_numeration_map.at(side_gid)[i]]);
+      const auto elem = bulkData->begin_elements(side)[0];
+      const auto pos = determine_side_pos(elem,side);
+      const auto elem_dof_gids = dofMgr->getElementGIDs(stk_gid(elem));
+      const auto ss_elem_dof_gids = dofMgr->getElementGIDs(disc.stk_gid(side));
 
-          for (int eq(0); eq < neq; ++eq) {
-            cols[0] = dofMgr.getGlobalDOF(node_gid, eq);
-            const GO row = ss_dofMgr.getGlobalDOF(ss_node_gid, eq);
-            ov_graphP->insertGlobalIndices(row, cols());
-            if (ss_indexer->isLocallyOwnedElement(row)) {
-              graphP->insertGlobalIndices(row,cols());
-            }
+      const int num_side_nodes = bulkData->num_nodes(side);
+      const auto side_gid    = stk_gid(side);
+      const auto& permutation = node_numeration_map.at(side_gid);
+      for (int eq=0; eq<neq; ++eq) {
+        const auto& offsets    = dofMgr->getGIDFieldOffsets_subcell(eq,sideDim,pos);
+        const auto& ss_offsets = ss_dofMgr->getGIDFieldOffsets(eq);
+        for (int i=0; i<num_side_nodes; ++i) {
+          cols[0] = elem_dof_gids[offsets[i]];
+          const GO row = ss_elem_dof_gids[ss_offsets[permutation[i]]];
+          ov_graphP->insertGlobalIndices(row, cols());
+          if (ss_dofMgr->indexer()->isLocallyOwnedElement(row)) {
+            graphP->insertGlobalIndices(row, cols());
           }
         }
       }
