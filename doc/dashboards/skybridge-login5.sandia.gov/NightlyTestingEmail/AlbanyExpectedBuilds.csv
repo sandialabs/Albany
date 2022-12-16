@@ -22,8 +22,8 @@ Nightly, cee-compute007, Trilinos-Linux-3.10.0-1062.1.2.el7.x86_64-gcc-10.1.0-De
 Nightly, cee-compute007, Albany-Linux-3.10.0-1062.1.2.el7.x86_64-gcc-10.1.0-Debug-Serial
 Nightly, cee-compute010, Albany-Linux-3.10.0-1160.66.1.el7.x86_64-clang-11.0.1-Debug-Serial
 Nightly, cee-compute010, Trilinos-Linux-3.10.0-1160.66.1.el7.x86_64-clang-11.0.1-Debug-Serial
-Nightly, cee-compute020, Trilinos-Linux-3.10.0-1062.9.1.el7.x86_64-icc-19.0.5.281-Release-Serial
-Nightly, cee-compute020, Albany-Linux-3.10.0-1062.9.1.el7.x86_64-icc-19.0.5.281-Release-Serial
+Nightly, cee-compute020, Albany-Linux-3.10.0-1062.9.1.el7.x86_64-icc-2021.3.0-Release-Serial
+Nightly, cee-compute020, Trilinos-Linux-3.10.0-1062.9.1.el7.x86_64-icc-2021.3.0-Release-Serial
 Nightly, cee-compute025, Albany-Linux-3.10.0-1062.9.1.el7.x86_64-gcc-10.1.0-Release-Serial
 Nightly, cee-compute025, Trilinos-Linux-3.10.0-1062.9.1.el7.x86_64-gcc-10.1.0-Release-Serial
 Nightly, cee-compute024, Albany-Linux-3.10.0-1062.9.1.el7.x86_64-clang-11.0.1-Release-Serial
