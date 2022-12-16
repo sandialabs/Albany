@@ -60,12 +60,15 @@ struct DualView {
 
   using const_DT      = typename dev_t::traits::const_data_type;
   using nonconst_DT   = typename dev_t::traits::non_const_data_type;
+  using other_DT      = typename std::conditional<std::is_same<DT,const_DT>::value,
+                                                  nonconst_DT, const_DT>::type;
 
+  using type          = DualView<DT>;
   using const_type    = DualView<const_DT>;
   using nonconst_type = DualView<nonconst_DT>;
 
   // So that conversion-type operator can access internals
-  friend struct DualView<nonconst_DT>;
+  friend struct DualView<other_DT>;
 
   DualView () = default;
 
@@ -90,7 +93,32 @@ struct DualView {
     h_view = Kokkos::create_mirror_view (d_view);
   }
   DualView (const DualView&) = default;
-  DualView& operator= (const DualView&) = default;
+
+  template<typename SrcDT>
+  typename std::enable_if<
+    std::is_same<SrcDT,nonconst_DT>::value,
+    DualView<DT>
+  >::type&
+  operator= (const DualView<SrcDT>& src) {
+    d_view = src.d_view;
+    h_view = src.d_view;
+
+    return *this;
+  }
+
+  template<typename SrcDT>
+  typename std::enable_if<
+    std::is_same<SrcDT,const_DT>::value,
+    DualView<DT>
+  >::type&
+  operator= (const DualView<SrcDT>& src) {
+    static_assert (std::is_same<DT,const_DT>::value,
+        "Error! Cannot assign DualView<const T> to DualView<T>.\n");
+    d_view = src.d_view;
+    h_view = src.h_view;
+
+    return *this;
+  }
 
   // Allow implicit conversion to DualView<const DT>;
   operator const_type() const {
