@@ -1287,6 +1287,10 @@ STKDiscretization::computeWorksetInfo()
     for (unsigned ie=0; ie<bucket.size(); ++ie, ++lid) {
       m_workset_elements.host()(b,ie) = lid;
     }
+    // Fill the remainder (if any) with very invalid numbers
+    for (unsigned ie=bucket.size(); ie<m_workset_elements.host().extent(1); ++ie) {
+      m_workset_elements.host()(b,ie) = -1;
+    }
   }
   m_workset_elements.sync_to_dev();
 

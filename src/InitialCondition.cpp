@@ -49,6 +49,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
   auto soln_data = Albany::getNonconstLocalData(soln);
   const auto& dof_mgr = disc->getNewDOFManager();
   const auto& elem_lids = disc->getWsElementLIDs().host();
+  const auto& ws_sizes = disc->getWorksetsSizes();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& wsEBNames = disc->getWsEBNames();
   const auto& coords = disc->getCoords();
@@ -144,7 +145,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
       std::vector<double> X(neq);
 
-      for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
         for (int eq=0; eq<neq; eq++)
           X[eq] = 0;
 
@@ -175,7 +176,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
   } else if(name == "Coordinates") {
     // Place the coordinate locations of the nodes into the solution vector for an initial guess
     for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
-      for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
         const auto elem_LID = elem_lids(ws,ielem);
         const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
         for (int eq=0; eq<neq; ++eq) {
@@ -200,7 +201,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x(neq);
     for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
-      for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
         const auto elem_LID = elem_lids(ws,ielem);
         const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
         for (int inode=0; inode<numNodes; ++inode) {
@@ -232,7 +233,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     // function of coord
     std::vector<double> x(neq);
     for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
-      for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
         const auto elem_LID = elem_lids(ws,ielem);
         const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
         for (int inode=0; inode<numNodes; ++inode) {
@@ -262,7 +263,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
     std::vector<double> x(neq);
     for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
-      for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
         const auto elem_LID = elem_lids(ws,ielem);
         const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
         for (int inode=0; inode<numNodes; ++inode) {
