@@ -93,7 +93,7 @@ DOFManager::restrict (const std::string& sub_part_name) const
 
   // Precompute offsets
   std::vector<std::vector<std::vector<std::vector<int>>>> offsets(sub_dim+1);
-  for (int dim=0; dim<sub_dim; ++dim) {
+  for (int dim=0; dim<=sub_dim; ++dim) {
     const int count = topo.getSubcellCount(dim);
     offsets[dim].resize(count);
     for (int pos=0; pos<count; ++pos) {

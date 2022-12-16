@@ -387,13 +387,20 @@ void STKConnManager::buildLocalElementIDs(const std::vector<stk::mesh::Entity>& 
 bool STKConnManager::
 contains (const std::string& sub_part_name) const
 {
+  // We cannot rely on parts being fully contianed in one another,
+  // since the input sub_part may be intersect only partially
+  // with each of the stored parts, hence not being a subset of
+  // any of them. Instead, we verify that all the entities of
+  // primary rank in the subpart are contained in the union
+  // of the stored parts. That's equivalent to ask that the
+  // selector sub_part AND !U(m_parts) is empty
   const auto& p = m_metaData->get_part(sub_part_name);
+  stk::mesh::Selector s (*m_metaData->get_part(sub_part_name));
   for (const auto& it : m_parts) {
-    if (it.second->contains(*p)) {
-      return true;
-    }
+    s &= !stk::mesh::Selector(*it.second);
   }
-  return false;
+  const auto buckets = m_bulkData->buckets(p->primary_entity_rank());
+  return stk::mesh::count_selected_entities(s,buckets)==0;
 }
 
 // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in

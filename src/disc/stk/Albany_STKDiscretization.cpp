@@ -2364,21 +2364,43 @@ create_dof_mgr (const std::string& part_name,
                 const int order,
                 const int dof_dim) const
 {
-  auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,part_name));
+  // Figure out which element blocks this part belongs to
+  std::vector<std::string> elem_blocks;
+  const auto& ebn = stkMeshStruct->ebNames_;
+  if (std::find(ebn.begin(),ebn.end(),part_name)!=ebn.end()) {
+    elem_blocks = {part_name};
+  } else {
+    // This part is not an element block.
+    // We need to consider any element block that shares
+    // some entities with this part
+    const auto& part = metaData->get_part(part_name);
+
+    for (const auto& eb : ebn) {
+      const auto& ebp = metaData->get_part(eb);
+      stk::mesh::Selector sel (*part);
+      sel |= *ebp;
+      const auto& buckets = bulkData->buckets(part->primary_entity_rank());
+      if (stk::mesh::count_selected_entities(sel,buckets)>0) {
+        elem_blocks.push_back(eb);
+      }
+    }
+  }
+
+  // Create conn and dof managers
+  auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
   auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
 
-  const auto& ctd = conn_mgr->get_topology().getCellTopologyData();
-  Teuchos::RCP<panzer::FieldPattern> fp;
-  if (ctd->name==std::string("Node")) {
-    // This is a hack, to build a dof mgr for arbitrary node sets.
-    // Such dof mgr will be "weird", in that the "elements" are actually
-    // the mesh nodes.
-    auto topo = shards::CellTopology(shards::getCellTopologyData<shards::Node0D>());
-    fp = Teuchos::rcp(new panzer::ElemFieldPattern(topo));
-  } else {
-    const auto basis = getIntrepid2Basis(*ctd,fe_type,order);
-    fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+  // Ensure that all topologies are the same
+  for (unsigned i=1; i<elem_blocks.size(); ++i) {
+    const auto& topo0 = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
+    const auto& topo  = stkMeshStruct->elementBlockCT_.at(elem_blocks[i]);
+    TEUCHOS_TEST_FOR_EXCEPTION (topo0.getName()!=topo.getName(), std::runtime_error,
+        "Error! DOFManager requires all element blocks to have the same topology.\n");
   }
+
+  const auto& topo = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
+  const auto basis = getIntrepid2Basis(*topo.getBaseCellTopologyData(),fe_type,order);
+  auto fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
   //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
