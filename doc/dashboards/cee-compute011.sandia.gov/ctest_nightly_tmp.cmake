@@ -6,37 +6,23 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 
 execute_process(COMMAND bash $ENV{SCRIPT_DIRECTORY}/delete_txt_files.sh
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-#message("IKT mpicc = " $ENV{OPENMPI_ROOT}/bin/mpicc) 
-#message("IKT mpicc = " $ENV{MPI_DIR}/bin/mpicc) 
-IF((CTEST_BUILD_OPTION MATCHES "intel-trilinos") OR (CTEST_BUILD_OPTION MATCHES "intel-albany")) 
-  execute_process(COMMAND $ENV{MPI_DIR}/bin/mpicc -dumpversion
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  RESULT_VARIABLE COMPILER_VERSION_RESULT
-                  OUTPUT_VARIABLE COMPILER_VERSION
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  #message("IKT compiler version = " ${COMPILER_VERSION})
-  execute_process(COMMAND $ENV{MPI_DIR}/bin/mpicc --version
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  RESULT_VARIABLE COMPILER_RESULT
-                  OUTPUT_FILE "compiler.txt")
-ELSE()
-  execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc -dumpversion
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  RESULT_VARIABLE COMPILER_VERSION_RESULT
-                  OUTPUT_VARIABLE COMPILER_VERSION
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  #message("IKT compiler version = " ${COMPILER_VERSION})
-  execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc --version
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  RESULT_VARIABLE COMPILER_RESULT
-                  OUTPUT_FILE "compiler.txt")
-ENDIF()
+message("IKT mpicc = " $ENV{OPENMPI_ROOT}/bin/mpicc) 
+execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc -dumpversion
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                RESULT_VARIABLE COMPILER_VERSION_RESULT
+                OUTPUT_VARIABLE COMPILER_VERSION
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc --version
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                RESULT_VARIABLE COMPILER_RESULT
+                OUTPUT_FILE "compiler.txt")
 execute_process(COMMAND bash $ENV{SCRIPT_DIRECTORY}/process_compiler.sh
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                 RESULT_VARIABLE CHANGE_COMPILER_RESULT
                 OUTPUT_VARIABLE COMPILER
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler = " ${COMPILER})
+message("IKT compiler = " ${COMPILER})
 find_program(UNAME NAMES uname)
 macro(getuname name flag)
   exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
@@ -419,6 +405,7 @@ endif ()
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
 if (BUILD_INTEL_TRILINOS)
+  set(BTYPE "RELEASE") 
   set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall")
   set (CONF_OPTS
     CDASH-TRILINOS-INTEL-FILE.TXT
