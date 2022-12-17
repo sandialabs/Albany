@@ -20,29 +20,6 @@ using ProblemFactory = AbstractFactory<AbstractProblem,std::string,
                                        const Teuchos::RCP<const Teuchos_Comm>&,
                                        const Teuchos::RCP<Teuchos::ParameterList>&,
                                        const Teuchos::RCP<ParamLib>&>;
-
-// A concrete problem factory class for basic albany problems
-class BasicProblemFactory : public ProblemFactory
-{
-public:
-  obj_ptr_type create (const std::string& key,
-                       const Teuchos::RCP<const Teuchos_Comm>&     comm,
-                       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-                       const Teuchos::RCP<ParamLib>&               paramLib) const;
-
-  bool provides (const std::string& key) const;
-
-  static BasicProblemFactory& instance () {
-    static BasicProblemFactory factory;
-    return factory;
-  }
-
-protected:
-
-  //! Default constructor
-  BasicProblemFactory () = default;
-};
-
 } // namespace Albany
 
 #endif // ALBANY_PROBLEM_FACTORY_HPP

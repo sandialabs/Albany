@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_ProblemFactory.hpp"
+#include "Albany_CoreProblemFactory.hpp"
 
 #include "Albany_HeatProblem.hpp"
 #include "Albany_PopulateMesh.hpp"
@@ -13,7 +13,7 @@
 namespace Albany
 {
 
-bool BasicProblemFactory::provides (const std::string& key) const 
+bool CoreProblemFactory::provides (const std::string& key) const 
 {
   return key == "Heat 1D" ||
          key == "Heat 2D" ||
@@ -22,8 +22,8 @@ bool BasicProblemFactory::provides (const std::string& key) const
          key == "Side Laplacian 3D";
 }
 
-BasicProblemFactory::obj_ptr_type
-BasicProblemFactory::
+CoreProblemFactory::obj_ptr_type
+CoreProblemFactory::
 create (const std::string& key,
         const Teuchos::RCP<const Teuchos_Comm>&     comm,
         const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,

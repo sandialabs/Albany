@@ -13,13 +13,10 @@
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionMinValueResponseFunction.hpp"
 #include "Albany_QuadraticLinearOperatorBasedResponseFunction.hpp"
-#include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_CumulativeScalarResponseFunction.hpp"
 #include "Albany_ScalarResponsePower.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
-#include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
 #include "Albany_SolutionResponseFunction.hpp"
-#include "Albany_KLResponseFunction.hpp"
 #include "Albany_WeightedMisfitResponseFunction.hpp"
 
 #include "Albany_StringUtils.hpp"
@@ -76,16 +73,6 @@ createResponseFunction(
   else if (name == "Quadratic Linear Operator Based") {
     responses.push_back(
       rcp(new Albany::QuadraticLinearOperatorBasedResponseFunction(app, responseParams)));
-  }
-
-  else if (name == "Solution Two Norm File") {
-    responses.push_back(
-      rcp(new Albany::SolutionFileResponseFunction<Albany::NormTwo>(comm)));
-  }
-
-  else if (name == "Solution Inf Norm File") {
-    responses.push_back(
-      rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>(comm)));
   }
 
   else if (name == "Power Of Response") {
@@ -176,33 +163,9 @@ createResponseFunction(
           rcp(new Albany::FieldManagerScalarResponseFunction(
               app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
-  }
-
-  else if (name == "IP to Nodal Field" ||
-           name == "Project IP to Nodal Field") {
-    responseParams.set("Name", name);
-    for (int i=0; i<meshSpecs.size(); i++) {
-      // For these RFs, default to true for this parm.
-      const char* reb_parm = "Restrict to Element Block";
-      if ( ! responseParams.isType<bool>(reb_parm) &&
-          (name == "IP to Nodal Field" ||
-           name == "Project IP to Nodal Field"))
-        responseParams.set<bool>(reb_parm, true);
-      responses.push_back(
-        rcp(new Albany::FieldManagerResidualOnlyResponseFunction(
-              app, prob, meshSpecs[i], stateMgr, responseParams)));
-    }
   } else if (name == "Solution") {
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
-  } else if (name == "KL") {
-    Array< RCP<AbstractResponseFunction> > base_responses;
-    std::string name = responseParams.get<std::string>("Response");
-    createResponseFunction(name, responseParams.sublist("ResponseParams"),
-         base_responses);
-    for (int i=0; i<base_responses.size(); i++)
-      responses.push_back(
-  rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
