@@ -20,7 +20,7 @@ namespace Albany {
 void register_pb_factories () {
   auto& pb_factories = FactoriesContainer<ProblemFactory>::instance();
 
-  pb_factories.add_factory(BasicProblemFactory::instance());
+  pb_factories.add_factory(CoreProblemFactory::instance());
 #ifdef ALBANY_DEMO_PDES
   pb_factories.add_factory(DemoProblemFactory::instance());
 #endif

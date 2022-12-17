@@ -4,6 +4,11 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
+get_filename_component(parentPath ${CMAKE_CURRENT_SOURCE_DIR} PATH)
+get_filename_component(parentDirName ${parentPath} NAME)
+get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set (testNameRoot ${parentDirName}_${dirName})
+
 # Copy Exodus test file from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2D_Blk_Test.e
                  ${CMAKE_CURRENT_BINARY_DIR}/2D_Blk_Test.e COPYONLY)
@@ -68,16 +73,15 @@ IF(${PYTHON_TEST})
   set(TESTFILES matrices_comparison.py ${PYTHON_TEST_HELPERS_DIR}/__init__.py ${PYTHON_TEST_HELPERS_DIR}/matrix_reader.py)
 
   file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
-  ADD_TEST(BlockDiscretization_Jacobian_Unit_Test "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/matrices_comparison.py")
+  ADD_TEST(${testNameRoot}_BlockDiscretization_Jacobian "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/matrices_comparison.py")
 
-  set_tests_properties(BlockDiscretization_Jacobian_Unit_Test PROPERTIES ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
+  set_tests_properties(${testNameRoot}_BlockDiscretization_Jacobian PROPERTIES ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
 ENDIF()
 
 # We should always run the unit tests in both serial and parallel if possible (they should run quickly)
 IF (ALBANY_MPI)
-  ADD_TEST(
-    Discretization_Serial_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
-  )
+  ADD_TEST(${testNameRoot}_discretization_Serial ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
+
 # The parallel test does not run properly.
 # It is set up to use IOSS to decompose the exodus file ("Use Serial Mesh = 1"), but
 # mpirun -np 2 ./disc_unit_tester
@@ -94,12 +98,8 @@ IF (ALBANY_MPI)
 #  
 #  [ThyraCrsMatrixFactory] Error! When providing an overlapped domain vs, the domain vs must be one-to-one.
 #
-  ADD_TEST(
-    Discretization_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
-  )
+  ADD_TEST(${testNameRoot}_discretization_Parallel ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
 ELSE(ALBANY_MPI)
-  ADD_TEST(
-    Discretization_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester
-  )
+  ADD_TEST(${testNameRoot}_discretization ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
 ENDIF(ALBANY_MPI)
 

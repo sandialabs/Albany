@@ -108,52 +108,56 @@ set_target_properties(scatterResidual_unit_tester PROPERTIES
 TARGET_LINK_LIBRARIES(scatterResidual_unit_tester albanyLib ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 
 # We should always run the unit tests in both serial and parallel if possible (they should run quickly)
+get_filename_component(parentPath ${CMAKE_CURRENT_SOURCE_DIR} PATH)
+get_filename_component(parentDirName ${parentPath} NAME)
+get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set (testNameRoot ${parentDirName}_${dirName})
 IF (ALBANY_MPI)
   ADD_TEST(
-    Albany_Serial_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
+    ${testNameRoot}_Serial ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
   )
   ADD_TEST(
-    Albany_Parallel_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
+    ${testNameRoot}_Parallel ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
   )
   ADD_TEST(
-    Albany_Serial_GatherSolution_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
+    ${testNameRoot}_Serial_GatherSolution ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
   )
   ADD_TEST(
-    Albany_Parallel_GatherSolution_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
+    ${testNameRoot}_Parallel_GatherSolution ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
   )
   ADD_TEST(
-    Albany_Serial_GatherDistributedParameters_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
+    ${testNameRoot}_Serial_GatherDistributedParameters ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
   )
   ADD_TEST(
-    Albany_Parallel_GatherDistributedParameters_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
+    ${testNameRoot}_Parallel_GatherDistributedParameters ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
   )
   ADD_TEST(
-    Albany_Serial_ScatterScalarResponse_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
+    ${testNameRoot}_Serial_ScatterScalarResponse ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
   )
   ADD_TEST(
-    Albany_Parallel_ScatterScalarResponse_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
+    ${testNameRoot}_Parallel_ScatterScalarResponse ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
   )
   ADD_TEST(
-    Albany_Serial_ScatterResidual_Unit_Test ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
+    ${testNameRoot}_Serial_ScatterResidual ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
   )
   ADD_TEST(
-    Albany_Parallel_ScatterResidual_Unit_Test ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
+    ${testNameRoot}_Parallel_ScatterResidual ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
   )
 ELSE(ALBANY_MPI)
   ADD_TEST(
-    Albany_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
+    ${testNameRoot}_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/evaluator_unit_tester
   )
   ADD_TEST(
-    Albany_GatherSolution_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
+    ${testNameRoot}_GatherSolution_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherSolution_unit_tester
   )
   ADD_TEST(
-    Albany_GatherDistributedParameters_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
+    ${testNameRoot}_GatherDistributedParameters_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/gatherDistributedParameters_unit_tester
   )
   ADD_TEST(
-    Albany_ScatterScalarResponse_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
+    ${testNameRoot}_ScatterScalarResponse_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/scatterScalarResponse_unit_tester
   )
   ADD_TEST(
-    Albany_ScatterResidual_Unit_Test ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
+    ${testNameRoot}_ScatterResidual ${CMAKE_CURRENT_BINARY_DIR}/scatterResidual_unit_tester
   )
 ENDIF(ALBANY_MPI)
 
