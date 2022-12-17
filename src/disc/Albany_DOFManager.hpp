@@ -67,6 +67,18 @@ public:
   const std::vector<int>&
   getGIDFieldOffsets_subcell (int fieldNum, int subcell_dim, int subcell_pos) const;
 
+  // Special case of the above, for subcell being the top or bottom side
+  // NOTE: only for quad/hexa/wedge
+  const std::vector<int>&
+  getGIDFieldOffsetsSide (int fieldNum, int side) const;
+
+  // Special case of the above, for subcell being the top or bottom side
+  // NOTE: only for quad/hexa/wedge
+  const std::vector<int>&
+  getGIDFieldOffsetsTopSide (int fieldNum) const;
+  const std::vector<int>&
+  getGIDFieldOffsetsBotSide (int fieldNum) const;
+
   const std::string& part_name () const {
     return m_part_name;
   }

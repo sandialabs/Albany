@@ -138,6 +138,48 @@ getGIDFieldOffsets_subcell (int fieldNum,
   return indices_pair.first;
 }
 
+const std::vector<int>&
+DOFManager::
+getGIDFieldOffsetsSide (int fieldNum, int side) const
+{
+  const auto& topo = get_topology();
+
+  return getGIDFieldOffsets_subcell(fieldNum,topo.getDimension()-1,side);
+}
+
+
+const std::vector<int>&
+DOFManager::
+getGIDFieldOffsetsTopSide (int fieldNum) const
+{
+  const auto& topo = get_topology();
+
+#ifdef ALBANY_DEBUG
+  constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  TEUCHOS_TEST_FOR_EXCEPTION (topo!=quad && topo!=hexa && topo!=wedge, std::runtime_error,
+      "Error! DOFManager::getGIDFieldOffsetsBotSide only available for Hexa/Wedge topologies.\n");
+#endif
+  // Shards has both Hexa and Wedge with bot and top in the last two side positions
+  return getGIDFieldOffsetsSide(fieldNum,topo.getSideCount()-1);
+}
+
+const std::vector<int>&
+DOFManager::
+getGIDFieldOffsetsBotSide (int fieldNum) const
+{
+  const auto& topo = get_topology();
+
+#ifdef ALBANY_DEBUG
+  constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  TEUCHOS_TEST_FOR_EXCEPTION (topo!=quad && topo!=hexa && topo!=wedge, std::runtime_error,
+      "Error! DOFManager::getGIDFieldOffsetsBotSide only available for Hexa/Wedge topologies.\n");
+#endif
+  // Shards has both Hexa and Wedge with bot and top in the last two side positions
+  return getGIDFieldOffsetsSide(fieldNum,topo.getSideCount()-2);
+}
+
 void DOFManager::
 restrict (const std::string& sub_part_name)
 {
