@@ -99,8 +99,9 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
 
   this->setName("Response Squared L2 Error Side" + PHX::print<EvalT>());
 
-  if(plist->isParameter("Response Depends On Solution Column") && plist->get<bool>("Response Depends On Solution Column"))
-    cell_topo = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem")->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
+  resp_depends_on_sol_column =
+    plist->isParameter("Response Depends On Solution Column") &&
+    plist->get<bool>("Response Depends On Solution Column");
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -279,8 +280,9 @@ evaluateFields(typename Traits::EvalData workset)
   else
     PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
 
-  if(Teuchos::nonnull(cell_topo))
-    PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,sideSetName, cell_topo);
+  if(resp_depends_on_sol_column) {
+    Base::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,sideSetName);
+  }
 }
 
 // **********************************************************************

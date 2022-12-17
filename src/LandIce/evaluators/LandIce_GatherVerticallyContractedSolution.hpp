@@ -64,7 +64,7 @@ protected:
     }
   }
 
-  void computeQuadWeights(const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering);
+  void computeQuadWeights(const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering);
   void computeSideDOFOffsets (const Albany::DOFManager& dof_mgr);
 
   // Output:
@@ -80,8 +80,6 @@ protected:
   std::string meshPart;
 
   ContractionOperator op;
-
-  Albany::LocalSideSetInfo sideSet;
 
   Albany::DualView<double*>   quadWeights;
   Albany::DualView<int*>      side_node_count;

@@ -90,15 +90,9 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const int   numLayers = layers_data->numLayers;
   const auto  bot = layers_data->bot_side_pos;
   const auto  top = layers_data->top_side_pos;
-  const auto  sideDim = dof_mgr->get_topology().getDimension()-1;
+  const auto  field_pos = fieldLevel==numLayers ? top : bot;
 
-  const auto get_offsets = [&](const int eq, const int pos)
-    -> std::vector<int>
-  {
-    return dof_mgr->getGIDFieldOffsets_subcell(eq,sideDim,pos);
-  };
-
-  const int numSideNodes = get_offsets(0,top).size();
+  const int numSideNodes = dof_mgr->getGIDFieldOffsetsTopSide(0).size();
   const int neq = dof_mgr->getNumFields();
 
   const bool scatter_f = Teuchos::nonnull(workset.f);
@@ -124,7 +118,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
       for (int eq=0; eq<neq; ++eq) {
-        const auto& dof_offsets = get_offsets(eq,pos);
+        const auto& dof_offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos);
         for (int inode=0; inode<numSideNodes; ++inode) {
           const int lrow = dof_lids(dof_offsets[inode]);
 
@@ -135,7 +129,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
       // Diagonalize Jac outisde of the 2d field location.
       if (ilev!=fieldLevel) {
-        const auto& dof_offsets = get_offsets(this->offset,pos);
+        const auto& dof_offsets = dof_mgr->getGIDFieldOffsetsSide(this->offset,pos);
         for (int inode=0; inode<numSideNodes; ++inode) {
           const LO lrow = dof_lids(dof_offsets[inode]);
           Albany::setLocalRowValues(Jac, lrow, arrayView(&lrow,1), diagonal_value);
@@ -145,8 +139,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
     // Cell layer where we'll do the scatter of the 2d residual
     const int layer = fieldLevel==numLayers ? numLayers-1 : 0;
-    const auto& offsets_2d_field = fieldLevel==numLayers
-              ? get_offsets(this->offset,top) : get_offsets(this->offset,bot);
+    const auto& offsets_2d_field = dof_mgr->getGIDFieldOffsetsSide(this->offset,field_pos);
     const int elem_LID = layers_data->getId(basal_elem_LID,layer);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
@@ -186,20 +179,13 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto& dof_mgr       = workset.disc->getNewDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto  sideDim = dof_mgr->get_topology().getDimension()-1;
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   
-  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsets_subcell(0,sideDim,top);
-  const auto& bot_nodes = node_dof_mgr->getGIDFieldOffsets_subcell(0,sideDim,bot);
+  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsTopSide(0);
+  const auto& bot_nodes = node_dof_mgr->getGIDFieldOffsetsBotSide(0);
 
-  const auto get_offsets = [&](const int eq, const int pos)
-    -> std::vector<int>
-  {
-    return dof_mgr->getGIDFieldOffsets_subcell(eq,sideDim,pos);
-  };
-
-  const auto& field_offsets_top = get_offsets(offset2DField,top);
-  const auto& field_offsets_bot = get_offsets(offset2DField,top);
+  const auto& field_offsets_top = dof_mgr->getGIDFieldOffsetsTopSide(offset2DField);
+  const auto& field_offsets_bot = dof_mgr->getGIDFieldOffsetsBotSide(offset2DField);
 
   const int neq = dof_mgr->getNumFields();
   const int nunk = this->numNodes*(neq-1);
@@ -269,7 +255,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
         const auto& nodes = pos==top ? top_nodes : bot_nodes;
         for (int eq=0; eq<this->numFields; ++eq) {
           if(eq != offset2DField) {
-            const auto& offsets = get_offsets(eq,pos);
+            const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos);
             const LO lrow = dof_lids(offsets[node2d]);
             auto res = this->get_resid(cell,nodes[node2d],eq);
 

@@ -481,9 +481,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (trans) {
     const auto& pname        = workset.dist_param_deriv_name;
-    const auto  node_dof_mgr = workset.disc->getNodeNewDOFManager();
-    const auto  p_dof_mgr    = workset.disc->getNewDOFManager(pname);
-    const auto  p_indexer    = p_dof_mgr->ov_indexer();
+    const auto& p_dof_mgr    = workset.disc->getNewDOFManager(pname);
+    const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
     const int num_deriv = numNodes;//local_Vp.size()/numFields;
     for (size_t cell=0; cell<workset.numCells; ++cell) {
@@ -491,10 +490,9 @@ evaluateFields(typename Traits::EvalData workset)
       const auto& local_Vp = workset.local_Vp[cell];
       const auto  dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-      const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
       for (int i=0; i<num_deriv; ++i) {
         for (int col=0; col<num_cols; ++col) {
-          const LO row = p_indexer->getLocalElement(node_gids[i]);
+          const LO row = p_elem_dof_lids(elem_LID,i);
           if(row >=0) {
             double val = 0.0;
             for (int node=0; node<numNodes; ++node) {
@@ -579,7 +577,7 @@ evaluateFields(typename Traits::EvalData workset)
     const auto& cell_layers_data = workset.disc->getMeshStruct()->local_cell_layers_data;
 
     const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
-    const auto p_elem_dof_lids = p->elem_dof_lids().host();
+    const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
 
     // Pick a cell layer that contains the field level. Can be same as fieldLevel,
     // except for the last level.
@@ -698,15 +696,14 @@ evaluateFields(typename Traits::EvalData workset)
   const int ws = workset.wsIndex;
 
   const auto dof_mgr      = workset.disc->getNewDOFManager();
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
 
-  Teuchos::RCP<const Albany::GlobalLocalIndexer> p_indexer;
   // If the parameter associated to workset.dist_param_deriv_name is a distributed parameter,
   // the function needs to access the associated dof manager to deduce the IDs of the entries
   // of the resulting vector.
+  Albany::DualView<const int**>::host_t p_elem_dof_lids;
   if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
     auto p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
-    p_indexer = p_dof_mgr->ov_indexer();
+    p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
   }
 
   const auto elem_lids = workset.disc->getElementLIDs_host(ws);
@@ -727,7 +724,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
     for (int node=0; node<numNodes; ++node) {
       if (f_xx_is_active || f_xp_is_active) {
         for (int eq=0; eq<numFields; ++eq) {
@@ -741,7 +737,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
-        const int row = p_indexer->getLocalElement(node_gids[node]);
+        const int row = p_elem_dof_lids(elem_LID,node);
         if(row >=0){
           const auto& dx = value.dx(node).dx(0);
           if(f_px_is_active)
@@ -812,6 +808,10 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 {
   this->gather_fields_offsets (workset.disc->getNewDOFManager());
 
+  constexpr auto ALL = Kokkos::ALL();
+  const int ws = workset.wsIndex;
+  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+
   const auto& hws = workset.hessianWorkset;
 
   const bool f_px_is_active = !hws.hess_vec_prod_f_px.is_null();
@@ -835,18 +835,21 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   if(f_pp_is_active)
     hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
 
-  const auto& layers_data = workset.disc->getLayeredMeshNumbering();
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
+  const auto field_pos = fieldLevel==fieldLayer ? layers_data->bot_side_pos : layers_data->top_side_pos;
 
   const auto dof_mgr      = workset.disc->getNewDOFManager();
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto p_dof_mgr    = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
-  const auto p_indexer    = p_dof_mgr->ov_indexer();
-
-  constexpr auto ALL = Kokkos::ALL();
-  const int ws = workset.wsIndex;
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
+  const auto p_offsets    = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
+
+  const auto cellDim = p_dof_mgr->get_topology().getDimension();
+  const auto numSideNodes = p_dof_mgr->get_topology().getNodeCount(cellDim-1,layers_data->bot_side_pos);
+  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
+  const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
   const auto offsets = m_fields_offsets.host();
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
@@ -861,20 +864,23 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
       }
     }
 
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
-    for (int node=0; node<numNodes; ++node) {
-      const GO base_id = layers_data->getColumnId(node_gids[node]);
-      const GO ginode  = layers_data->getId(base_id, fieldLevel);
-
-      const LO row     = p_indexer->getLocalElement(ginode);
-      if(row >=0) {
-        const auto& dx = value.dx(node).dx(0);
-        if (f_px_is_active)
-          hess_vec_prod_f_px_data[0][row] += dx;
-        if (f_pp_is_active)
-          hess_vec_prod_f_pp_data[0][row] += dx;
+    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
+    const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+    const auto do_nodes = [&] (const std::vector<int>& offsets) {
+      for (int node=0; node<numSideNodes; ++node) {
+        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[node]);
+        if (row>=0) {
+          const auto& dx = value.dx(offsets[node]).dx(0);
+          if (f_px_is_active)
+            hess_vec_prod_f_px_data[0][row] += dx;
+          if (f_pp_is_active)
+            hess_vec_prod_f_pp_data[0][row] += dx;
+        }
       }
-    }
+    };
+
+    do_nodes (bot_offsets);
+    do_nodes (top_offsets);
   }
 }
 

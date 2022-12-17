@@ -232,12 +232,6 @@ public:
     return getNewDOFManager()->elem_dof_lids().host().extent_int(1);
   }
 
-  Teuchos::RCP<LayeredMeshNumbering<GO>>
-  getLayeredMeshNumbering() const
-  {
-    return stkMeshStruct->layered_mesh_numbering;
-  }
-
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {

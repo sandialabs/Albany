@@ -67,8 +67,8 @@ evaluateFields(typename Traits::EvalData /* workset */)
 template<typename Traits>
 ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+                            const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
 {
   // Create field tag
   nodal_field_tag =
@@ -90,7 +90,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto p_data = Albany::getNonconstLocalData(param->vector());
 
   const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto p_elem_dof_lids = param->elem_dof_lids().host();
+  const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
 
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
@@ -106,14 +106,13 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename Traits>
 ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 ScatterScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+                           const Teuchos::RCP<Albany::Layouts>& dl)
+ : ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
 {
   fieldLevel = p.get<int>("Field Level");
 
   // Create field tag
-  nodal_field_tag =
-    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+  nodal_field_tag = Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
 
   this->addEvaluatedField(*nodal_field_tag);
 }
@@ -129,8 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& param = workset.distParamLib->get(this->param_name);
   const auto& p_dof_mgr = param->get_dof_mgr();
   const auto  p_data = Albany::getNonconstLocalData(param->vector());
-  const auto& p_elem_dof_lids = param->elem_dof_lids().host();
-  const auto& sideDim = p_dof_mgr->get_topology().getDimension()-1;
+  const auto& p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
 
   const auto& layers_data    = *workset.disc->getMeshStruct()->global_cell_layers_data;
   const auto elem_lids       = workset.disc->getElementLIDs_host(workset.wsIndex);
@@ -138,7 +136,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int fieldLayer = fieldLevel==layers_data.numLayers ? fieldLevel-1 : fieldLevel;
   const auto pos = fieldLevel==layers_data.numLayers ? layers_data.top_side_pos : layers_data.bot_side_pos;
 
-  const auto& offsets = p_dof_mgr->getGIDFieldOffsets_subcell(0,sideDim,pos);
+  const auto& offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,pos);
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     const auto layer = layers_data.getLayerId(elem_LID);

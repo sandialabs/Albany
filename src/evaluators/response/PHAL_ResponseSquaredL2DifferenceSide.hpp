@@ -32,6 +32,7 @@ public:
 
 private:
 
+  using Base = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>;
   typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
@@ -59,7 +60,7 @@ private:
   std::vector<ScalarT> diff_1;
   std::vector<std::vector<ScalarT>> diff_2;
 
-  Teuchos::RCP<const CellTopologyData> cell_topo;
+  bool resp_depends_on_sol_column;
 };
 
 //-- SourceScalarT = ScalarT

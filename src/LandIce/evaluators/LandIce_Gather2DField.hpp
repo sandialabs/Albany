@@ -15,13 +15,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-// Fwd decl for this is enough
-namespace Albany {
-class DOFManager;
-template<typename T>
-class LayeredMeshNumbering;
-}
+#include "Shards_CellTopology.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -44,14 +38,14 @@ public:
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields (typename Traits::EvalData d);
+  void evaluateFields (typename Traits::EvalData /* d */) {
+    TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
+        "[Gather2DField::evaluateFields] Not yet implemented for EvalT=" + PHX::print<EvalT>() + "\n");
+  }
+
 
 protected:
-
-  void evaluateFieldsImpl (typename Traits::EvalData /* d */) {
-    TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
-        "[Gather2DField::evaluateFieldsImpl] Not yet implemented for EvalT=" + PHX::print<EvalT>() + "\n");
-  }
+  void check_topology (const shards::CellTopology& topo);
 
   using ScalarT = typename EvalT::ScalarT;
   using ref_t   = typename PHAL::Ref<ScalarT>::type;
@@ -59,26 +53,12 @@ protected:
   // Output:
   PHX::MDField<ScalarT,Cell,Node>  field2D;
 
-  int sideDim;
-  int numSideNodes;
-  int numNodes;
   int offset; // Offset of first DOF being gathered
 
   int fieldLevel;
-  int m_field_layer;  // Only used if extruded=true
   std::string meshPart;
 
   bool extruded;
-  int m_bot_side_pos;
-  int m_top_side_pos;
-
-  Teuchos::RCP<Albany::LayeredMeshNumbering<int>> m_cell_layers_data;
-
-  Albany::DualView<int*> side_node_count;
-  Albany::DualView<int*> m_bot_dofs_offsets;
-  Albany::DualView<int*> m_top_dofs_offsets;
-  Albany::DualView<int*> m_bot_nodes_offsets;
-  Albany::DualView<int*> m_top_nodes_offsets;
 };
 
 } // namespace LandIce

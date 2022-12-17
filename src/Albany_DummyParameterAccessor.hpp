@@ -29,7 +29,7 @@ class DummyParameterAccessor :
 
    public:
      DummyParameterAccessor() { dummy = 0.0;};
-     typename EvalT::ScalarT& getValue(const std::string &name)
+     typename EvalT::ScalarT& getValue(const std::string &/* name */)
      { return dummy;};
    private:
      typename EvalT::ScalarT dummy;

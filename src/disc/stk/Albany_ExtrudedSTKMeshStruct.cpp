@@ -342,11 +342,6 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   int lsideColumnShift   = (Ordering == COLUMN) ? 1 : sides2D.size();
   int sideLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
 
-  this->global_node_layers_data = (Ordering==LAYER) ?
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(vertexColumnShift,Ordering,layerThicknessRatio)):
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(vertexLayerShift),Ordering,layerThicknessRatio));
-  this->layered_mesh_numbering = this->global_node_layers_data;
-
   this->global_cell_layers_data = (Ordering==LAYER) ?
       Teuchos::rcp(new LayeredMeshNumbering<GO>(elemColumnShift,Ordering,layerThicknessRatio)):
       Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(elemLayerShift),Ordering,layerThicknessRatio));
@@ -356,8 +351,6 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
       Teuchos::rcp(new LayeredMeshNumbering<LO>(elemLayerShift,Ordering,layerThicknessRatio));
 
   // Shards has both Hexa and Wedge with bot and top in the last two side positions
-  this->global_node_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-  this->global_node_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
   this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
@@ -369,8 +362,8 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   }
   fieldContainer->getMeshVectorStates()["layer_thickness_ratio"] = ltr;
   fieldContainer->getMeshScalarIntegerStates()["ordering"] = static_cast<int>(Ordering);
-  fieldContainer->getMeshScalarIntegerStates()["stride"] = (Ordering==LAYER) ? lVertexColumnShift : vertexLayerShift;
-  fieldContainer->getMeshScalarInteger64States()["global_stride"] = (Ordering==LAYER) ? vertexColumnShift : vertexLayerShift;
+  fieldContainer->getMeshScalarIntegerStates()["local_stride"] = (Ordering==LAYER) ? lElemColumnShift : elemLayerShift;
+  fieldContainer->getMeshScalarInteger64States()["global_stride"] = (Ordering==LAYER) ? elemColumnShift : elemLayerShift;
 
   metaData->commit();
 

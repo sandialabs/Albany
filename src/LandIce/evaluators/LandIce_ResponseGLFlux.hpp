@@ -39,6 +39,8 @@ public:
   void postEvaluate(typename Traits::PostEvalData d);
 
 private:
+  using Base = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>;
+
   Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
   std::string basalSideName;

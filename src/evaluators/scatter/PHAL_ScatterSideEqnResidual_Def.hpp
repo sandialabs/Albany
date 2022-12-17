@@ -230,7 +230,7 @@ doPostEvaluate(typename Traits::EvalData workset)
 template<typename EvalT, typename Traits>
 void ScatterSideEqnResidualBase<EvalT, Traits>::
 doEvaluateFieldsResidual(typename Traits::EvalData workset,
-                         const std::vector<Albany::SideStruct>& sideSet)
+                         const std::vector<Albany::SideStruct>& sides)
 {
   //get nonconst residual
   const auto f = workset.f;
@@ -245,7 +245,7 @@ doEvaluateFieldsResidual(typename Traits::EvalData workset,
   //       in the volume residual vector
   const int numSides = sideSet.size();
   for (int iside=0; iside<numSides; ++iside) {
-    const auto& side = sideSet[iside];
+    const auto& side = sides[iside];
     const auto& side_nodes = this->sideNodes[side.side_pos];
     const auto icell    = side.elem_LID;
 
@@ -256,8 +256,8 @@ doEvaluateFieldsResidual(typename Traits::EvalData workset,
       const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+this->offset);
       for (size_t inode=0; inode<offsets.size(); ++inode) {
         int cell_node = side_nodes[inode];
-        auto val = Albany::ADValue(this->get_ref(iside,inode,eq));
-        f_data[dof_lids(offsets[cell_node])] += val;
+        auto res = Albany::ADValue(this->get_ref(iside,inode,eq));
+        f_data[dof_lids(offsets[cell_node])] += res;
       }
     }
   }
@@ -497,7 +497,7 @@ doEvaluateFields(typename Traits::EvalData workset,
   Albany::DualView<int**>::host_t p_elem_dof_lids;
   if (trans) {
     const auto dist_param = workset.distParamLib->get(workset.dist_param_deriv_name);
-    p_elem_dof_lids = dist_param->elem_dof_lids().host();
+    p_elem_dof_lids = dist_param->get_dof_mgr()->elem_dof_lids().host();
   }
   const auto elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto dof_mgr       = workset.disc->getNewDOFManager();

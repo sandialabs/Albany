@@ -504,7 +504,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  const auto layers_data  = workset.disc->getLayeredMeshNumbering();
+  const auto layers_data  = workset.disc->getLayeredMeshNumberingLO();
   const auto bot = layers_data->bot_side_pos;
   const auto top = layers_data->top_side_pos;
   const auto ws = workset.wsIndex;
@@ -554,9 +554,8 @@ evaluateFields(typename Traits::EvalData workset)
   // Parameter dof numbering info
   const auto p_dof_mgr        = p->get_dof_mgr();
   const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
-  const auto  sideDim = p->get_dof_mgr()->get_topology().getDimension()-1;
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsets_subcell(0,sideDim,top);
-  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsets_subcell(0,sideDim,bot);
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSide(0);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsBotSide(0);
   const auto& offsets_p = fieldLevel==fieldLayer ? offsets_bot : offsets_top;
   const int num_nodes_2d = offsets_p.size();
 

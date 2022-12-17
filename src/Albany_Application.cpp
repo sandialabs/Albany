@@ -29,7 +29,6 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Zoltan2_TpetraCrsColorer.hpp"
 
-
 #ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
 #endif
@@ -587,7 +586,7 @@ Application::createDiscretization()
       problem->getSideSetFieldRequirements(),
       problem->getNullSpace());
   // For extruded meshes, we need the number of layers in postRegistrationSetup
-  Teuchos::RCP<LayeredMeshNumbering<GO>> layeredMeshNumbering = disc->getLayeredMeshNumbering();
+  auto layeredMeshNumbering = disc->getLayeredMeshNumberingGO();
   if (!layeredMeshNumbering.is_null()) {
     int numLayers = layeredMeshNumbering->numLayers;
     phxSetup->set_num_layers(numLayers);

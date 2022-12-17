@@ -2202,7 +2202,7 @@ STKDiscretization::buildSideSetProjectors()
       const auto elem = bulkData->begin_elements(side)[0];
       const auto pos = determine_entity_pos(elem,side);
       const auto elem_dof_gids = dofMgr->getElementGIDs(stk_gid(elem));
-      const auto ss_elem_dof_gids = dofMgr->getElementGIDs(disc.stk_gid(side));
+      const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(disc.stk_gid(side));
 
       const int num_side_nodes = bulkData->num_nodes(side);
       const auto side_gid    = stk_gid(side);

@@ -273,7 +273,13 @@ public:
 
   //! Get Numbering for layered mesh (mesh structured in one direction)
   virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
-  getLayeredMeshNumbering() const = 0;
+  getLayeredMeshNumberingGO() const {
+    return getMeshStruct()->global_cell_layers_data;
+  }
+  virtual Teuchos::RCP<LayeredMeshNumbering<LO>>
+  getLayeredMeshNumberingLO() const {
+    return getMeshStruct()->local_cell_layers_data;
+  }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   virtual Teuchos::RCP<Thyra_Vector>

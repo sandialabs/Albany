@@ -79,8 +79,7 @@ public:
   void evaluateFields(typename Traits::EvalData /* d */) {}
 
   void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
-                                                        const std::string& /* sidesetName */,
-                                                        Teuchos::RCP<const CellTopologyData> /* cellTopo */) {}
+                                                        const std::string& /* sidesetName */) {}
 
 protected:
   SeparableScatterScalarResponse() {}
@@ -151,7 +150,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo);
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef AlbanyTraits::Jacobian EvalT;
@@ -186,8 +185,7 @@ public:
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
   void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
-                                                        const std::string& /* sidesetName */,
-                                                        Teuchos::RCP<const CellTopologyData> /* cellTopo */) {}
+                                                        const std::string& /* sidesetName */) {}
   void postEvaluate(typename Traits::PostEvalData d);
 
 protected:
@@ -293,7 +291,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo);
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset);
   void postEvaluate(typename Traits::PostEvalData d);
 
 protected:

@@ -63,7 +63,7 @@ UpdateZCoordinateMovingTop (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingTop<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
@@ -73,14 +73,19 @@ template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingTop<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
-    std::runtime_error, "Error! No layered numbering in the mesh.\n");
-
   using ref_t = typename PHAL::Ref<MeshScalarT>::type;
 
-  const auto& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const int   numLayers    = layeredMeshNumbering.numLayers;
-  const auto& layers_ratio = layeredMeshNumbering.layers_ratio;
+  // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
+      "Error! No layered numbering in the mesh.\n");
+
+  const auto& layers_ratio = layers_data->layers_ratio;
+  const int   numLayers = layers_data->numLayers;
+  const int   bot = layers_data->bot_side_pos;
+  const int   top = layers_data->top_side_pos;
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
@@ -88,34 +93,42 @@ evaluateFields(typename Traits::EvalData workset)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
   }
 
+  // We use this dof mgr to figure out which local node in the cell is on the
+  // top or bottom side.
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     const int elem_LID = elem_lids(cell);
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+    const int ilayer = layers_data->getLayerId(elem_LID);
 
-    for (int node=0; node<numNodes; ++node) {
-      const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
-      MeshScalarT h;
-      if(haveThickness) {
-        h = std::max(H(cell,node), MeshScalarT(minH));
-      } else {
-        h = std::max(H0(cell,node) + dH(cell,node), MeshScalarT(minH));
+    const auto f = [&](const int pos) {
+      const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+      const int ilevel = pos==bot ? ilayer : ilayer+1;
+      for (auto node : nodes) {
+        MeshScalarT h;
+        if(haveThickness) {
+          h = std::max(H(cell,node), MeshScalarT(minH));
+        } else {
+          h = std::max(H0(cell,node) + dH(cell,node), MeshScalarT(minH));
+        }
+        MeshScalarT bed = bedTopo(cell,node);
+        auto floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
+
+        MeshScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
+        ref_t vals = topSurface(cell,node);
+        vals = lowSurf+h;
+
+        for(std::size_t icomp=0; icomp< numDims; icomp++) {
+          ref_t val = coordVecOut(cell,node,icomp);
+          val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*h)
+                           : coordVecIn(cell,node,icomp);
+        }
       }
-      MeshScalarT bed = bedTopo(cell,node);
-      auto floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
+    };
 
-      MeshScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
-      ref_t vals = topSurface(cell,node);
-      vals = lowSurf+h;
-
-      for(std::size_t icomp=0; icomp< numDims; icomp++) {
-        ref_t val = coordVecOut(cell,node,icomp);
-        val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*h)
-                         : coordVecIn(cell,node,icomp);
-      }
-    }
+    // Run lambda on both top and bottom nodes of the element.
+    f(bot);
+    f(top);
   }
 }
 
@@ -157,7 +170,7 @@ UpdateZCoordinateMovingBed (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingBed<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
@@ -172,49 +185,62 @@ evaluateFields(typename Traits::EvalData workset)
 {
   using ref_t = typename PHAL::Ref<ScalarOutT>::type;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
-    std::runtime_error, "Error! No layered numbering in the mesh.\n");
+  // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
+      "Error! No layered numbering in the mesh.\n");
 
-  const int numLayers = layeredMeshNumbering.numLayers;
-  const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+  const auto& layers_ratio = layers_data->layers_ratio;
+  const int   numLayers = layers_data->numLayers;
+  const int   bot = layers_data->bot_side_pos;
+  const int   top = layers_data->top_side_pos;
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i)
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
 
+  // We use this dof mgr to figure out which local node in the cell is on the
+  // top or bottom side.
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+    const int ilayer = layers_data->getLayerId(elem_LID);
 
-    for (int node=0; node<numNodes; ++node) {
-      const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
-      ScalarOutT h = H(cell,node);
-      ScalarOutT top = topSurface(cell,node);
-      ref_t vals = topSurfaceOut(cell,node);
-      ref_t valb = bedTopoOut(cell,node);
-      ScalarOutT bed = bedTopo(cell,node);
+    const auto f = [&](const int pos) {
+      const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+      const int ilevel = pos==bot ? ilayer : ilayer+1;
+      for (auto node : nodes) {
+        ScalarOutT h = H(cell,node);
+        ScalarOutT top = topSurface(cell,node);
+        ref_t vals = topSurfaceOut(cell,node);
+        ref_t valb = bedTopoOut(cell,node);
+        ScalarOutT bed = bedTopo(cell,node);
 
-      //floating when the floating condition is met with the old bed
-      // or with the new (top-h) bed.
-      auto floating = (rho_i*h + rho_w*std::min(bed, ScalarOutT(top-h))) < 0.0;
+        //floating when the floating condition is met with the old bed
+        // or with the new (top-h) bed.
+        auto floating = (rho_i*h + rho_w*std::min(bed, ScalarOutT(top-h))) < 0.0;
 
-      top = floating ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
-      vals = top;
-      bed = floating ? std::min(bed, ScalarOutT(-rho_i/rho_w*h)) : top - h;
-      valb = bed;
+        top = floating ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
+        vals = top;
+        bed = floating ? std::min(bed, ScalarOutT(-rho_i/rho_w*h)) : top - h;
+        valb = bed;
 
-      for(int icomp=0; icomp<numDims; ++icomp) {
-        ref_t val = coordVecOut(cell,node,icomp);
-        val = (icomp==2) ?
-            ScalarOutT(top - (1.0- sigmaLevel[ ilevel])*h)
-           : ScalarOutT(coordVecIn(cell,node,icomp));
+        for(int icomp=0; icomp<numDims; ++icomp) {
+          ref_t val = coordVecOut(cell,node,icomp);
+          val = (icomp==2) ?
+              ScalarOutT(top - (1.0- sigmaLevel[ ilevel])*h)
+             : ScalarOutT(coordVecIn(cell,node,icomp));
+        }
       }
-    }
+    };
+
+    // Run lambda on both top and bottom nodes of the element.
+    f(bot);
+    f(top);
   }
 }
 
@@ -241,7 +267,7 @@ UpdateZCoordinateGivenTopAndBedSurfaces (const Teuchos::ParameterList& p,
     this->addDependentField(bedTopo.fieldTag());
   }
 
-  if((isTopSurfParam == true)) {
+  if (isTopSurfParam) {
     topSurfIn = decltype(topSurfIn)(p.get<std::string> ("Top Surface Parameter Name"), dl->node_scalar);
     this->addDependentField(topSurfIn);
     this->addEvaluatedField(topSurf);
@@ -267,7 +293,7 @@ UpdateZCoordinateGivenTopAndBedSurfaces (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits>
 void UpdateZCoordinateGivenTopAndBedSurfaces<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
@@ -279,53 +305,65 @@ evaluateFields(typename Traits::EvalData workset)
 {
   using ref_t = typename PHAL::Ref<MeshScalarT>::type;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
-    std::runtime_error, "Error! No layered numbering in the mesh.\n");
+  // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
+      "Error! No layered numbering in the mesh.\n");
 
-  const int numLayers = layeredMeshNumbering.numLayers;
-  const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+  const auto& layers_ratio = layers_data->layers_ratio;
+  const int   numLayers = layers_data->numLayers;
+  const int   bot = layers_data->bot_side_pos;
+  const int   top = layers_data->top_side_pos;
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i) {
     sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
   }
 
+  // We use this dof mgr to figure out which local node in the cell is on the
+  // top or bottom side.
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+    const int ilayer = layers_data->getLayerId(elem_LID);
 
-    for (int node=0; node<numNodes; ++node) {
-      const GO ilevel = layeredMeshNumbering.getLayerId(node_gids[node]);
+    const auto f = [&](const int pos) {
+      const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+      const int ilevel = pos==bot ? ilayer : ilayer+1;
+      for (auto node : nodes) {
+        if(isTopSurfParam) {
+          if(!isBedTopoParam) {
+            MeshScalarT minTopSurf = bedTopo(cell,node) + minH;
+            topSurf(cell,node) = std::max(topSurfIn(cell,node),minTopSurf);
+          } else
+            topSurf(cell,node) = topSurfIn(cell,node);
+        }
+        if(isBedTopoParam) {
+          MeshScalarT maxBedTopo = topSurf(cell,node) - minH;
+          bedTopo(cell,node) = std::min(bedTopoIn(cell,node),maxBedTopo);
+        }
 
-      if(isTopSurfParam) {
-        if(!isBedTopoParam) {
-          MeshScalarT minTopSurf = bedTopo(cell,node) + minH;
-          topSurf(cell,node) = std::max(topSurfIn(cell,node),minTopSurf);
-        } else
-          topSurf(cell,node) = topSurfIn(cell,node);
+        MeshScalarT h = topSurf(cell,node), bed = bedTopo(cell,node);
+        auto floating = (rho_i*h + (rho_w-rho_i)*bed) < 0.0;
+        MeshScalarT lowSurf = floating ? -h*rho_i/(rho_w-rho_i) : bed;
+
+        H(cell,node) = h-lowSurf;
+
+        for(int icomp=0; icomp<numDims; ++icomp) {
+          ref_t val = coordVecOut(cell,node,icomp);
+          val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*H(cell,node))
+                           : coordVecIn(cell,node,icomp);
+        }
       }
-      if(isBedTopoParam) {
-        MeshScalarT maxBedTopo = topSurf(cell,node) - minH;
-        bedTopo(cell,node) = std::min(bedTopoIn(cell,node),maxBedTopo);
-      }
+    };
 
-      MeshScalarT h = topSurf(cell,node), bed = bedTopo(cell,node);
-      auto floating = (rho_i*h + (rho_w-rho_i)*bed) < 0.0;
-      MeshScalarT lowSurf = floating ? -h*rho_i/(rho_w-rho_i) : bed;
-
-      H(cell,node) = h-lowSurf;
-
-      for(int icomp=0; icomp<numDims; ++icomp) {
-        ref_t val = coordVecOut(cell,node,icomp);
-        val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*H(cell,node))
-                         : coordVecIn(cell,node,icomp);
-      }
-    }
+    // Run lambda on both top and bottom nodes of the element.
+    f(bot);
+    f(top);
   }
 }
 

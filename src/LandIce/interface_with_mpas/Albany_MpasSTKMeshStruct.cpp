@@ -25,8 +25,6 @@
 #include <Ioss_SubSystem.h>
 #endif
 
-#include <boost/algorithm/string/predicate.hpp>
-
 #include <iostream>
 
 namespace Albany
@@ -247,9 +245,13 @@ void MpasSTKMeshStruct::setBulkData(
   int edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
   Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
-  this->layered_mesh_numbering = (Ordering == LAYER) ?
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(vertexColumnShift,Ordering,layerThicknessRatio)):
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(vertexLayerShift,Ordering,layerThicknessRatio));
+  this->global_cell_layers_data = (Ordering==LAYER) ?
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(elemColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(elemLayerShift),Ordering,layerThicknessRatio));
+
+  this->local_cell_layers_data = (Ordering==LAYER) ?
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(lElemColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(elemLayerShift,Ordering,layerThicknessRatio));
 
 
   metaData->commit();

@@ -149,26 +149,10 @@ template<typename Traits>
 void SeparableScatterScalarResponse<AlbanyTraits::Jacobian, Traits>::
 evaluate2DFieldsDerivativesDueToExtrudedSolution(
     typename Traits::EvalData workset,
-    std::string& sidesetName,
-    Teuchos::RCP<const CellTopologyData> cellTopo)
+    std::string& sidesetName)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
-      "THIS CLASS IMPL IS WRONG, NEEDS TO BE REDONE. CANNOT USE NODE layer data anymore\n");
-
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
       "Side sets not properly specified on the mesh.\n");
-
-  // Ensure we have ONE cell per layer.
-  const auto topo_base = cellTopo->base;
-
-  const auto hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  const auto quad  = shards::getCellTopologyData<shards::Quadrilateral<4>>();
-  const auto wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-
-  TEUCHOS_TEST_FOR_EXCEPTION (
-      topo_base==hexa || topo_base==quad || topo_base==wedge, std::logic_error,
-      " [evaluate2DFieldsDerivativesDueToExtrudedSolution]\n"
-      "   Feature only available for extruded meshes with one element per layer.\n");
 
   // Check for early return
   if (workset.sideSets->count(sidesetName)==0) {
@@ -182,78 +166,59 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
 
   auto dg_data = Albany::getNonconstLocalData(dg);
 
-  constexpr auto ALL = Kokkos::ALL();
+  // Layers data
+  const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int top = layers_data->top_side_pos;
+  const int bot = layers_data->bot_side_pos;
+  const int numLayers = layers_data->numLayers;
 
-  const auto& disc            = workset.disc;
-  const auto& dof_mgr         = disc->getNewDOFManager();
-  const auto& sol_name        = disc->solution_dof_name();
-  const auto& part_name       = dof_mgr->part_name();
-  const auto& node_dof_mgr    = disc->getNodeNewDOFManager(part_name);
-  const auto& ss_node_dof_mgr = disc->getNodeNewDOFManager(sidesetName);
-
-  const auto  elem_dof_lids   = dof_mgr->elem_dof_lids().host();
-  const auto& cell_indexer    = dof_mgr->cell_indexer();
-
-  const auto& node_layers = disc->getMeshStruct()->global_node_layers_data;
-  const auto& cell_layers = disc->getMeshStruct()->global_cell_layers_data;
-  const int   numLayers   = cell_layers->numLayers;
-
+  // Dof mgr data
+  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const int neq = dof_mgr->getNumFields();
 
+#ifdef ALBANY_DEBUG
+  // Ensure we have ONE cell per layer.
+  const auto topo_base = dof_mgr->get_topology().getCellTopologyData()->base;
+
+  const auto hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  const auto wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      topo_base==hexa || topo_base==wedge, std::logic_error,
+      " [evaluate2DFieldsDerivativesDueToExtrudedSolution]\n"
+      "   Feature only available for extruded meshes with one element per layer.\n");
+#endif
+
   const auto& sideSet = workset.sideSets->find(sidesetName)->second;
-
   for (const auto& side : sideSet) {
-    const auto base_elem_GID = side.side_GID;
-    const auto& side_topo = cellTopo->side[side.side_pos].topology;
-    const int numSideNodes = side_topo->node_count;
+    const int side_elem_LID = side.elem_LID;
+    const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
 
-    // Get the gids of the basal nodes, for later use
-    const auto& basal_node_gids = ss_node_dof_mgr->getElementGIDs(side.side_LID);
-
-    // Given a basal node gid, figure out it's relative position in the side
-    auto get_basal_inode = [&](const GO gid) -> int {
-      auto it = std::find(basal_node_gids.begin(),basal_node_gids.end(),gid);
-      TEUCHOS_TEST_FOR_EXCEPTION(it!=basal_node_gids.end(), std::runtime_error,
-          "Error! Could not locate basal node gid " << gid << " in basal side.\n");
-      return std::distance(basal_node_gids.begin(),it);
-    };
-
-    // Loop over all responses
     for (std::size_t res=0; res<this->global_response.size(); ++res) {
-      // Loop over layers
-      for (int ilayer=0; ilayer<=numLayers; ++ilayer) {
-        const auto elem_GID = cell_layers->getId(base_elem_GID,ilayer);
-        const auto elem_LID = cell_indexer->getLocalElement(elem_GID);
-        auto val = this->local_response(elem_LID, res);
+      auto val = this->local_response(side_elem_LID, res);
 
-        // Get dof LIDs and node GIDs in this element
-        const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-        const auto& elem_node_gids = node_dof_mgr->getElementGIDs(elem_LID);
-
-        // Loop over all equations
+      const auto f = [&] (const int ilayer, const int pos)
+      {
+        const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
+        const int ilevel = pos==bot ? ilayer : ilayer+1;
         for (int eq=0; eq<neq; ++eq) {
-          // Offsets for this eq in the dof_lids view
-          const auto offsets = dof_mgr->getGIDFieldOffsets(part_name,eq);
-
-          // Loop over all nodes in this cell
-          for (int inode=0; inode<this->numNodes; ++inode) {
-            // Get dof LID and node GID
-            const auto dof_lid = dof_lids(offsets[inode]);
-            const auto node_gid = elem_node_gids[inode];
-
-            // Retrieve basal node GID, and its position in the basal side
-            const auto base_node_gid = node_layers->getColumnId(node_gid);
-            const auto base_inode    = get_basal_inode(base_node_gid);
-
-            // Compute index of derivative.
-            const int deriv = neq*this->numNodes +
-                              ilayer*neq*numSideNodes +
-                              neq*base_inode + eq;
-
-            dg_data[res][dof_lid] += val.dx(deriv);
+          const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos);
+          const int numSideNodes = offsets.size();
+          for (int i=0; i<numSideNodes; ++i) {
+            int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;
+            const LO x_lid = elem_dof_lids(elem_LID,offsets[i]);
+            dg_data[res][x_lid] += val.dx(deriv);
           }
         }
+      };
+
+      // On all layer, execute f on bot nodes
+      for (int ilayer=0; ilayer<numLayers; ++ilayer) {
+        f(ilayer,bot);
       }
+      // On last layer, also execute f on top nodes
+      f(numLayers-1,top);
     }
   }
 }
@@ -327,7 +292,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto elem_lids     = workset.disc->getElementLIDs_host(ws);
   const auto param = workset.distParamLib->get(workset.dist_param_deriv_name);
-  const auto p_elem_dof_lids = param->elem_dof_lids().host();
+  const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -388,35 +353,42 @@ evaluateFields(typename Traits::EvalData workset)
   const auto dgdp_data = Albany::getNonconstLocalData(dgdp);
 
   const int ws = workset.wsIndex;
-  const int fieldLevel = level_it->second;
+  const auto  elem_lids    = workset.disc->getElementLIDs_host(ws);
 
-  const auto& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const auto p_dof_mgr    = workset.disc->getNewDOFManager(param_name);
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto ov_p_indexer = p_dof_mgr->ov_indexer();
-  const auto elem_lids    = workset.disc->getElementLIDs_host(ws);
+  const auto& layers_data     = workset.disc->getLayeredMeshNumberingLO();
+  const auto& p_dof_mgr       = workset.disc->getNewDOFManager(param_name);
+  const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+
+  const int fieldLevel = level_it->second;
+  const int fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
+  const int field_pos  = fieldLevel==fieldLayer ? layers_data->bot_side_pos : layers_data->top_side_pos;
+
+  const auto field_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
+  const int numSideNodes = field_offsets.size();
 
   // Loop over cells in workset
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
+    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
+    const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
 
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+    // const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
 
     // Loop over responses
     for (size_t res=0; res<this->global_response.size(); ++res) {
       const auto lresp = this->local_response(cell,res);
 
-      // Loop over nodes in cell
-      for (int node=0; node<this->numNodes; ++node) {
-        const GO base_id = layeredMeshNumbering.getColumnId(node_gids[node]);
-        const GO ginode  = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const LO row     = ov_p_indexer->getLocalElement(ginode);
-
-        // Set dg/dp
-        if(row >=0) {
-          dgdp_data[res][row] += lresp.dx(node);
+      // Helper lambda. We process bot and bot nodes separately
+      const auto do_nodes = [&](const std::vector<int>& offsets) {
+        for (int node=0; node<numSideNodes; ++node) {
+          const LO row = p_elem_dof_lids(field_elem_LID,field_offsets[node]);
+          if (row>=0) {
+            dgdp_data[res][row] += lresp.dx(offsets[node]);
+          }
         }
-      } // deriv
+      };
+      do_nodes (p_dof_mgr->getGIDFieldOffsetsBotSide(0));
+      do_nodes (p_dof_mgr->getGIDFieldOffsetsTopSide(0));
     } // response
   } // cell
 }
@@ -522,7 +494,7 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::DualView<int**>::host_t p_elem_dof_lids;
   if (distributed) {
     auto dist_param = workset.distParamLib->get(param_name);
-    p_elem_dof_lids = dist_param->elem_dof_lids().host();
+    p_elem_dof_lids = dist_param->get_dof_mgr()->elem_dof_lids().host();
   }
 
   const auto& dof_mgr   = workset.disc->getNewDOFManager();
@@ -688,47 +660,63 @@ evaluateFields(typename Traits::EvalData workset)
     hess_vec_prod_g_pp_data = Albany::getNonconstLocalData(hess_vec_prod_g_pp);
   }
 
-  // Get some data from the discretization
-  const int fieldLevel = level_it->second;
-  const auto& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const auto& p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
-  const auto& ov_p_indexer = p_dof_mgr->ov_indexer();
+  // Mesh data
+  const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int top = layers_data->top_side_pos;
+  const int bot = layers_data->bot_side_pos;
+  const int numLayers = layers_data->numLayers;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+
+  // Solution dof mgr data
+  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const int neq = dof_mgr->getNumFields();
+
+  // Parameter data
+  const int fieldLevel = level_it->second;
+  const int field_pos = fieldLevel==numLayers ? top : bot;
+  const int fieldLayer = fieldLevel==numLayers ? numLayers-1 : numLayers;
+  const auto& p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
+  const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+  const auto& p_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
+  const int numSideNodes = p_offsets.size();
 
   // Loop over cells in workset
   for (size_t cell=0; cell < workset.numCells; ++cell) {
-    // Get cell's node GIDs
     const auto elem_LID = elem_lids(cell);
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
+    const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
 
       auto lresp = this->local_response(cell,res);
-      // Loop over nodes in cell
-      for (int node=0; node<this->numNodes; ++node) {
-
-        const GO base_id = layeredMeshNumbering.getColumnId(node_gids[node]);
-        const GO ginode  = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const LO row     = ov_p_indexer->getLocalElement(ginode);
-
-        if(row >=0) {
-          if (!hess_vec_prod_g_px_data.is_null()) {
-            hess_vec_prod_g_px_data[res][row] += lresp.dx(node).dx(0);
-          }
-          if (!hess_vec_prod_g_pp_data.is_null()) {
-            hess_vec_prod_g_pp_data[res][row] += lresp.dx(node).dx(0);
+      const auto f = [&] (const int pos) {
+        const auto& nodes = p_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+        for (int inode=0; inode<numSideNodes; ++inode) {
+          const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[inode]);
+          if (row>=0) {
+            const int node = nodes[inode];
+            if (!hess_vec_prod_g_px_data.is_null()) {
+              hess_vec_prod_g_px_data[res][row] += lresp.dx(node).dx(0);
+            }
+            if (!hess_vec_prod_g_pp_data.is_null()) {
+              hess_vec_prod_g_pp_data[res][row] += lresp.dx(node).dx(0);
+            }
           }
         }
-      } // node
+      };
+
+      // Run lambda for both top and bottom nodes
+      f(top);
+      f(bot);
     } // response
   } // cell
 }
 
 template<typename Traits>
 void SeparableScatterScalarResponse<AlbanyTraits::HessianVec, Traits>::
-evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo)
+evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset)
 {
   if (workset.sideSets == Teuchos::null) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -760,53 +748,50 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
     hess_vec_prod_g_xx_data = Albany::getNonconstLocalData(hess_vec_prod_g_xx);
   }
 
-  const auto sol_dof_mgr = workset.disc->getNewDOFManager();
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const auto elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  // Layers data
+  const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int top = layers_data->top_side_pos;
+  const int bot = layers_data->bot_side_pos;
+  const int numLayers = layers_data->numLayers;
 
-  const auto ov_node_indexer = node_dof_mgr->ov_indexer();
+  // Dof mgr data
+  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const int neq = dof_mgr->getNumFields();
 
-  const auto ALL = Kokkos::ALL();
-  const int numLayers = layeredMeshNumbering.numLayers;
-  const int neq = sol_dof_mgr->getNumFields();
-
-  const auto sideSet = workset.sideSets->at(sideset);
-  for (size_t iside=0; iside<sideSet.size(); ++iside) {
-    // Get the data that corresponds to the side
-    const int elem_LID = sideSet[iside].elem_LID;
-    const int elem_side = sideSet[iside].side_pos;
-    const CellTopologyData_Subcell& side =  cellTopo->side[elem_side];
-    const int numSideNodes = side.topology->node_count;
-
-    // Get cell dofs lids
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-
-    // Get cell node GIDs
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+  const auto& sideSet = workset.sideSets->at(sideset);
+  for (const auto& side : sideSet) {
+    const int side_elem_LID = side.elem_LID;
+    const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
 
     for (size_t res=0; res<this->global_response.size(); ++res) {
-      auto val = this->local_response(elem_LID, res);
-
-      for (int i = 0; i < numSideNodes; ++i) {
-        const auto node = side.node[i];
-        const GO base_id = layeredMeshNumbering.getColumnId(node_gids[node]);
-        for (int il_col=0; il_col<numLayers+1; il_col++) {
-          const GO ginode = layeredMeshNumbering.getId(base_id, il_col);
-          const LO  inode = ov_node_indexer->getLocalElement(ginode);
-          for (int eq_col=0; eq_col<neq; eq_col++) {
-            const auto& offsets = sol_dof_mgr->getGIDFieldOffsets(eq_col);
-            const LO dof = dof_lids(offsets[inode]);
-            int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
+      auto val = this->local_response(side_elem_LID, res);
+      const auto f = [&] (const int ilayer, const int pos)
+      {
+        const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
+        const int ilevel = pos==bot ? ilayer : ilayer+1;
+        for (int eq=0; eq<neq; ++eq) {
+          const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos);
+          const int numSideNodes = offsets.size();
+          for (int i=0; i<numSideNodes; ++i) {
+            int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;
+            const LO x_lid = elem_dof_lids(elem_LID,offsets[i]);
             if (!hess_vec_prod_g_xx_data.is_null()) {
-              hess_vec_prod_g_xx_data[res][dof] += val.dx(deriv).dx(0);
+              hess_vec_prod_g_xx_data[res][x_lid] += val.dx(deriv).dx(0);
             }
             if (!hess_vec_prod_g_xp_data.is_null()) {
-              hess_vec_prod_g_xp_data[res][dof] += val.dx(deriv).dx(0);
+              hess_vec_prod_g_xp_data[res][x_lid] += val.dx(deriv).dx(0);
             }
           }
         }
+      };
+
+      // On all layer, execute f on bot nodes
+      for (int ilayer=0; ilayer<numLayers; ++ilayer) {
+        f(ilayer,bot);
       }
+      // On last layer, also execute f on top nodes
+      f(numLayers-1,top);
     }
   }
 }

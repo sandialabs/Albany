@@ -477,38 +477,44 @@ Albany::IossSTKMeshStruct::setFieldData (
     }
 
     //Read info for layered mehes.
-    bool hasLayeredStructure=true;
     std::vector<double> ltr;
-    int ordering;
-    GO stride;
-
     std::string state_name = "layer_thickness_ratio";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
-    if(hasLayeredStructure)
+    bool hasLayeredStructure = mesh_data->get_global (state_name, ltr, false);
+    if(hasLayeredStructure) {
       fieldContainer->getMeshVectorStates()[state_name] = ltr;
-    state_name = "ordering";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
-    if(hasLayeredStructure)
-      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
-    state_name = "stride";
-    stk::util::Parameter temp_any;
-    temp_any.type = stk::util::ParameterType::INT64;
-    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
-    if(hasLayeredStructure) {
-      stride = temp_any.get_value<int64_t>();
-      fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
-    }
-
-    if(hasLayeredStructure) {
       Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
       for(decltype(ltr.size()) i=0; i< ltr.size(); ++i) {
         layerThicknessRatio[i] = ltr[i];
       }
-      this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+
+      // Ordering
+      int ordering;
+      state_name = "ordering";
+      TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, ordering, false), std::runtime_error,
+          "Error! Incomplete layered mesh data. Missing 'ordering'.\n") ;
+      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
+
+      // Global numbering stride
+      state_name = "global_stride";
+      stk::util::Parameter temp_any;
+      temp_any.type = stk::util::ParameterType::INT64;
+      TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, temp_any, false), std::runtime_error,
+          "Error! Incomplete layered mesh data. Missing 'global_stride'.\n") ;
+      auto global_stride = temp_any.get_value<int64_t>();
+      fieldContainer->getMeshScalarInteger64States()[state_name] = global_stride;
+
+      // Local numbering stride
+      state_name = "local_stride";
+      temp_any.type = stk::util::ParameterType::INTEGER;
+      TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, temp_any, false), std::runtime_error,
+          "Error! Incomplete layered mesh data. Missing 'local_stride'.\n") ;
+      auto local_stride = temp_any.get_value<int64_t>();
+      fieldContainer->getMeshScalarInteger64States()[state_name] = local_stride;
+
+      this->global_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<GO>(global_stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+      this->local_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<LO>(local_stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
     }
-  }
-  else
-  {
+  } else {
     // We put all the fields as 'missing'
     const stk::mesh::FieldVector& fields = metaData->get_fields();
     for (decltype(fields.size()) i=0; i<fields.size(); ++i) {
@@ -725,34 +731,42 @@ Albany::IossSTKMeshStruct::setBulkData (
     }
 
     //Read info for layered mehes.
-    bool hasLayeredStructure=true;
     std::vector<double> ltr;
-    int ordering;
-    GO stride;
-
     std::string state_name = "layer_thickness_ratio";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
-    if(hasLayeredStructure)
+    bool hasLayeredStructure = mesh_data->get_global (state_name, ltr, false);
+    if(hasLayeredStructure) {
       fieldContainer->getMeshVectorStates()[state_name] = ltr;
-    state_name = "ordering";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
-    if(hasLayeredStructure)
-      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
-    state_name = "stride";
-    stk::util::Parameter temp_any;
-    temp_any.type = stk::util::ParameterType::INT64;
-    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
-    if(hasLayeredStructure) {
-      stride = temp_any.get_value<int64_t>();
-      fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
-    }
-
-    if(hasLayeredStructure) {
       Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
       for(decltype(ltr.size()) i=0; i< ltr.size(); ++i) {
         layerThicknessRatio[i] = ltr[i];
       }
-      this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+
+      // Ordering
+      int ordering;
+      state_name = "ordering";
+      TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, ordering, false), std::runtime_error,
+          "Error! Incomplete layered mesh data. Missing 'ordering'.\n") ;
+      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
+
+      // Global numbering stride
+      state_name = "global_stride";
+      stk::util::Parameter temp_any;
+      temp_any.type = stk::util::ParameterType::INT64;
+      TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, temp_any, false), std::runtime_error,
+          "Error! Incomplete layered mesh data. Missing 'global_stride'.\n") ;
+      auto global_stride = temp_any.get_value<int64_t>();
+      fieldContainer->getMeshScalarInteger64States()[state_name] = global_stride;
+
+      // Local numbering stride
+      state_name = "local_stride";
+      temp_any.type = stk::util::ParameterType::INTEGER;
+      TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, temp_any, false), std::runtime_error,
+          "Error! Incomplete layered mesh data. Missing 'local_stride'.\n") ;
+      auto local_stride = temp_any.get_value<int64_t>();
+      fieldContainer->getMeshScalarInteger64States()[state_name] = local_stride;
+
+      this->global_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<GO>(global_stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+      this->local_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<LO>(local_stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
     }
   } else {
     // We put all the fields as 'missing'
