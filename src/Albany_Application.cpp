@@ -664,7 +664,7 @@ Application::finalSetUp(
       // Get parameter vector spaces and build parameter vector
       // Create distributed parameter and set workset_elem_dofs
       auto parameter = Teuchos::rcp(new DistributedParameter(
-          param_name, disc->getNewDOFManager(param_name), sis->meshPart));
+          param_name, disc->getNewDOFManager(param_name)));
 
       // Get the vector and lower/upper bounds, and fill them with available
       // data

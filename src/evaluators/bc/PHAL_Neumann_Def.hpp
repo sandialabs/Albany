@@ -1027,7 +1027,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (trans) {
     const int neq = workset.numEqs;
     const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
-    const auto p_elem_dof_lids = p->elem_dof_lids().host();
+    const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
     const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
     for (size_t cell=0; cell<workset.numCells; ++cell) {

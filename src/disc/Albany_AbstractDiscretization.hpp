@@ -67,15 +67,13 @@ public:
   Teuchos::RCP<const DOFManager>
   getNewDOFManager () const
   {
-    const auto& whole_mesh = getMeshStruct()->getMeshSpecs()[0]->ebName;
-    return getNewDOFManager (solution_dof_name(), whole_mesh);
+    return getNewDOFManager (solution_dof_name(), "");
   }
 
   Teuchos::RCP<const DOFManager>
   getNodeNewDOFManager () const
   {
-    const auto& whole_mesh = getMeshStruct()->getMeshSpecs()[0]->ebName;
-    return getNodeNewDOFManager(whole_mesh);
+    return getNodeNewDOFManager("");
   }
 
   // Check if a dof manager for a particular field on a particular part exists

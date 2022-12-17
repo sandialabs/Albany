@@ -135,11 +135,10 @@ gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr) {
   // Do this only once
   if (m_fields_offsets.size()==0) {
     // For now, only allow dof mgr's defined on a single element part
-    const auto& pname = dof_mgr->part_name();
     const int neq = dof_mgr->getNumFields();
     m_fields_offsets.resize("",numNodes,neq);
     for (int fid=0; fid<neq; ++fid) {
-      auto panzer_offsets = dof_mgr->getGIDFieldOffsets(pname,fid);
+      auto panzer_offsets = dof_mgr->getGIDFieldOffsets(fid);
       ALBANY_ASSERT (panzer_offsets.size()==numNodes,
           "Something is amiss: panzer field offsets has size != numNodes.\n");
       for (int node=0; node<numNodes; ++node) {

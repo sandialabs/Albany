@@ -27,7 +27,7 @@ public:
   getElementsInBlock (const std::string& blockId) const = 0;
 
   std::vector<GO> getElementsInBlock () const {
-    return getElementsInBlock(part_name());
+    return getElementsInBlock(elem_block_name());
   }
 
   // Returns whether input part name is topologically contained in the
@@ -42,11 +42,11 @@ public:
   // Queries the dimension of a part
   virtual int part_dim (const std::string& part_name) const = 0;
 
-  const std::string& part_name () const {
-    TEUCHOS_TEST_FOR_EXCEPTION (m_parts_names.size()!=1, std::runtime_error,
+  const std::string& elem_block_name () const {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_names.size()!=1, std::runtime_error,
         "[ConnManager::part_name] Error! Multiple part names.\n");
 
-    return m_parts_names[0];
+    return m_elem_blocks_names[0];
   }
 
   shards::CellTopology get_topology () const {
@@ -59,10 +59,7 @@ public:
   }
 
 protected:
-  std::vector<std::string> m_parts_names;
-
-  // MeshEntityType      m_primary_entity_type;
-
+  std::vector<std::string> m_elem_blocks_names;
 };
 
 } // namespace Albany

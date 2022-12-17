@@ -17,54 +17,55 @@ namespace Albany {
 STKConnManager::
 STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
                const Teuchos::RCP<const stk::mesh::BulkData>& bulkData,
-               const std::vector<std::string>& part_names)
+               const std::vector<std::string>& elem_block_names)
 {
   // Sanity check
   TEUCHOS_TEST_FOR_EXCEPTION (metaData.is_null(), std::runtime_error,
       "Error! Input meta data pointer is null.\n");
   TEUCHOS_TEST_FOR_EXCEPTION (bulkData.is_null(), std::runtime_error,
       "Error! Input bulk data pointer is null.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (part_names.size()==0, std::runtime_error,
-      "Error! Input part names vector is empty.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (elem_block_names.size()==0, std::runtime_error,
+      "Error! Input elem_block names vector is empty.\n");
 
   m_bulkData = bulkData;
   m_metaData = metaData;
 
-  // Add parts, and check that 1) compatible dimensions and 2) no intersection
+  // Add elem_blocks, and check that 1) compatible dimensions and 2) no intersection
   constexpr auto INVALID = stk::topology::rank_t::INVALID_RANK;
-  for (const auto& pn : part_names) {
-    auto part = m_metaData->get_part(pn);
-    TEUCHOS_TEST_FOR_EXCEPTION (part==nullptr, std::runtime_error,
-        "[STKConnManager] Error! Part '" + pn + "' not found in the mesh.\n");
+  for (const auto& ebn : elem_block_names) {
+    auto elem_block = m_metaData->get_part(ebn);
+    TEUCHOS_TEST_FOR_EXCEPTION (elem_block==nullptr, std::runtime_error,
+        "[STKConnManager] Error! Elem block '" + ebn + "' not found in the mesh.\n");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (m_parts_topo.rank()!=INVALID && part->topology()!=m_parts_topo, std::logic_error,
-        "[STKConnManager] Error! Input parts do not have the same topology.\n"
-        "  - current topo  : " + m_parts_topo.name() + "\n";
-        "  - new part name : " + pn + "\n"
-        "  - new part topo : " + part->topology().name() + "\n"
+    TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_topo.rank()!=INVALID &&
+                                elem_block->topology()!=m_elem_blocks_topo, std::logic_error,
+        "[STKConnManager] Error! Input elem_blocks do not have the same topology.\n"
+        "  - current topo  : " + m_elem_blocks_topo.name() + "\n";
+        "  - new elem_block name : " + ebn + "\n"
+        "  - new elem_block topo : " + elem_block->topology().name() + "\n"
     );
 
-    for (const auto& p : m_parts) {
+    for (const auto& p : m_elem_blocks) {
       // NOTE: cannot use stk::mesh::intersect, since that function returns true even if the
       //       intersection is on entities of low dimension. We don't want, e.g., to think
       //       that two element blocks intersect only b/c they have some nodes/sides in common.
       //       We are concerned about overlap of the primary entities.
-      stk::mesh::Selector selector(*part);
+      stk::mesh::Selector selector(*elem_block);
       selector &= *p.second;
 
-      TEUCHOS_TEST_FOR_EXCEPTION (stk::mesh::count_entities(*m_bulkData,part->primary_entity_rank(),selector)>0, std::logic_error,
-          "[STKConnManager] Error! Two input parts intersect.\n"
-          "  - first part name : " + p.second->name() + "\n"
-          "  - second part name: " + part->name() + "\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (stk::mesh::count_entities(*m_bulkData,elem_block->primary_entity_rank(),selector)>0, std::logic_error,
+          "[STKConnManager] Error! Two input elem_blocks intersect.\n"
+          "  - first elem_block name : " + p.second->name() + "\n"
+          "  - second elem_block name: " + elem_block->name() + "\n");
     }
 
-    m_parts_topo = part->topology();
+    m_elem_blocks_topo = elem_block->topology();
 
-    m_parts[pn] = part;
+    m_elem_blocks[ebn] = elem_block;
   }
 
   // Init members of base class
-  m_parts_names = part_names;
+  m_elem_blocks_names = elem_block_names;
 
   buildMaxEntityIds();
 
@@ -76,11 +77,11 @@ STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
 Teuchos::RCP<panzer::ConnManager>
 STKConnManager::noConnectivityClone() const
 {
-  std::vector<std::string> pnames;
-  for (const auto& it : m_parts) {
-    pnames.push_back(it.first);
+  std::vector<std::string> elem_blocks_names;
+  for (const auto& it : m_elem_blocks) {
+    elem_blocks_names.push_back(it.first);
   }
-  return Teuchos::rcp(new STKConnManager(m_metaData,m_bulkData,pnames));
+  return Teuchos::rcp(new STKConnManager(m_metaData,m_bulkData,elem_blocks_names));
 }
 
 void STKConnManager::clearLocalElementMapping()
@@ -226,10 +227,10 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
   RCP<Teuchos::TimeMonitor> tM = rcp(new TimeMonitor(*TimeMonitor::getNewTimer(std::string("panzer_stk::STKConnManager::buildConnectivity"))));
 #endif
 
-  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()>m_parts_topo.dimension(), std::logic_error,
-      "[STKConnManager] Error! Field pattern incompatible with stored parts.\n"
+  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()>m_elem_blocks_topo.dimension(), std::logic_error,
+      "[STKConnManager] Error! Field pattern incompatible with stored elem_blocks.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
-      "  - Parts topo dim: " + std::to_string(m_parts_topo.dimension()) + "\n");
+      "  - elem_blocks topo dim: " + std::to_string(m_elem_blocks_topo.dimension()) + "\n");
 
   // Build sub cell ID counts and offsets
   //    ID counts = How many IDs belong on each subcell (number of mesh DOF used)
@@ -282,7 +283,7 @@ std::string STKConnManager::getBlockId (LO localElmtId) const
    stk::mesh::Entity element = m_elements[localElmtId];
 
    const auto& b = m_bulkData->bucket(element);
-   for (const auto& it : m_parts) {
+   for (const auto& it : m_elem_blocks) {
       if (b.member(*it.second)) {
         return it.first;
       }
@@ -341,27 +342,27 @@ int STKConnManager::elementLocalId(stk::mesh::Entity elmt) const
 void STKConnManager::
 getMyElements(std::vector<stk::mesh::Entity> & elements) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (m_parts.size()>1, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks.size()>1, std::runtime_error,
       "Error! More than one element block in this STKConnManager.\n");
 
-  getMyElements(m_parts.begin()->first,elements);
+  getMyElements(m_elem_blocks.begin()->first,elements);
 }
 
 void STKConnManager::
 getMyElements (const std::string & blockID,
                std::vector<stk::mesh::Entity> & elements) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(m_parts.find(blockID)==m_parts.end(),std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(m_elem_blocks.find(blockID)==m_elem_blocks.end(),std::logic_error,
       "[STKConnManager] Could not find element block '" + blockID + "'\n");
 
-  const auto& part = *m_parts.at(blockID);
+  const auto& elem_block = *m_elem_blocks.at(blockID);
 
-  stk::mesh::Selector selector = part;
+  stk::mesh::Selector selector = elem_block;
   selector &= m_metaData->locally_owned_part();
 
   // NOTE: it could be that rank!=stk::topology::ELEM_RANK. E.g, we could have
   //       have rank=EDGE_RANK
-  stk::topology::rank_t rank = m_parts_topo.rank();
+  stk::topology::rank_t rank = m_elem_blocks_topo.rank();
   stk::mesh::get_selected_entities(selector, m_bulkData->buckets(rank), elements);
 }
 
@@ -396,7 +397,7 @@ contains (const std::string& sub_part_name) const
   // selector sub_part AND !U(m_parts) is empty
   const auto& p = m_metaData->get_part(sub_part_name);
   stk::mesh::Selector s (*m_metaData->get_part(sub_part_name));
-  for (const auto& it : m_parts) {
+  for (const auto& it : m_elem_blocks) {
     s &= !stk::mesh::Selector(*it.second);
   }
   const auto buckets = m_bulkData->buckets(p->primary_entity_rank());

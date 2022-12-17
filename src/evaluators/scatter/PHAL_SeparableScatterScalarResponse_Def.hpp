@@ -114,7 +114,6 @@ evaluateFields(typename Traits::EvalData workset)
   const int  ws = workset.wsIndex;
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto elem_lids     = workset.disc->getElementLIDs_host(ws);
-  const auto& part_name = dof_mgr->part_name();
 
   // Loop over cells in workset
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -124,7 +123,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int eq_dof=0; eq_dof<neq; eq_dof++) {
 
       // Get offsets of this dof in the lids array
-      auto offsets = dof_mgr->getGIDFieldOffsets(part_name,eq_dof);
+      auto offsets = dof_mgr->getGIDFieldOffsets(eq_dof);
 
       const int num_nodes = offsets.size();
 
@@ -153,6 +152,9 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
     std::string& sidesetName,
     Teuchos::RCP<const CellTopologyData> cellTopo)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
+      "THIS CLASS IMPL IS WRONG, NEEDS TO BE REDONE. CANNOT USE NODE layer data anymore\n");
+
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
       "Side sets not properly specified on the mesh.\n");
 

@@ -47,14 +47,10 @@ void
 DirichletField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  const auto& p_dof_mgr = dirichletWorkset.disc->getNewDOFManager(this->field_name);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& p = dirichletWorkset.distParamLib->get(this->field_name);
+  const auto& p_dof_mgr = p->get_dof_mgr();
 
-  //MP: If the parameter is scalar, then the parameter offset is seto to zero. Otherwise the parameter offset is the same of the solution's one.
-  const bool isFieldScalar = p_dof_mgr->getNumFields()==1;
-  const int  fieldOffset = isFieldScalar ? 0 : this->offset;
-
-  Teuchos::RCP<const Thyra_Vector> pvec = dirichletWorkset.distParamLib->get(this->field_name)->vector();
+  Teuchos::RCP<const Thyra_Vector> pvec = p->vector();
   Teuchos::ArrayRCP<const ST> p_constView = Albany::getLocalData(pvec);
 
   Teuchos::RCP<const Thyra_Vector> x = dirichletWorkset.x;
@@ -63,12 +59,17 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::ArrayRCP<const ST> x_constView    = Albany::getLocalData(x);
   Teuchos::ArrayRCP<ST>       f_nonconstView = Albany::getNonconstLocalData(f);
 
+  //MP: If the parameter is scalar, then the parameter offset is seto to zero. Otherwise the parameter offset is the same of the solution's one.
+  const bool isFieldScalar = p_dof_mgr->getNumFields()==1;
+  const int  fieldOffset = isFieldScalar ? 0 : this->offset;
+
   const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
 
-  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
-  const auto& p_elem_dof_lids   = p_dof_mgr->elem_dof_lids().host();
-  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
   const auto& p_offsets = p_dof_mgr->getGIDFieldOffsets(fieldOffset);
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
     const int ielem = ep.first;
     const int pos   = ep.second;

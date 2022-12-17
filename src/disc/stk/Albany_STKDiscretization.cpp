@@ -1002,13 +1002,12 @@ void STKDiscretization::computeVectorSpaces()
   //       That's not the name that stk uses for the whole mesh. So if the
   //       dof part name is "", we get the part stored in the stk mesh struct
   //       for the element block, where we REQUIRE that there is only ONE element block.
-  const std::string& whole_mesh = stkMeshStruct->ebNames_[0];
   TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
       "Error! We currently do not support meshes with 2+ element blocks.\n");
 
   strmap_t<std::pair<std::string,int>> name_to_partAndDim;
-  name_to_partAndDim[solution_dof_name()] = std::make_pair(whole_mesh,neq);
-  name_to_partAndDim[nodes_dof_name()] = std::make_pair(whole_mesh,1);
+  name_to_partAndDim[solution_dof_name()] = std::make_pair("",neq);
+  name_to_partAndDim[nodes_dof_name()] = std::make_pair("",1);
   for (const auto& sis : stkMeshStruct->getFieldContainer()->getNodalParameterSIS()) {
     const auto& dims = sis->dim;
     int dof_dim = -1;
@@ -1021,8 +1020,7 @@ void STKDiscretization::computeVectorSpaces()
             "Error! Unsupported DOF layout.\n");
     }
 
-    std::string part = sis->meshPart=="" ? whole_mesh : sis->meshPart;
-    name_to_partAndDim[sis->name] = std::make_pair(part,dof_dim);
+    name_to_partAndDim[sis->name] = std::make_pair(sis->meshPart,dof_dim);
   }
 
   for (const auto& it : name_to_partAndDim) {
@@ -1030,27 +1028,12 @@ void STKDiscretization::computeVectorSpaces()
     const auto& part_name  = it.second.first;
     const auto& dof_dim    = it.second.second;
 
-    // For the solution dof, we also add a dof mgr for each sideset
-    const bool do_sides = field_name==solution_dof_name() || field_name==nodes_dof_name();
-
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
     auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
     m_dof_managers[field_name][part_name] = dof_mgr;
 
     m_node_dof_managers[part_name] = Teuchos::null;
-
-    if (do_sides) {
-      for (const auto& ss_it : stkMeshStruct->ssPartVec) {
-        const auto& ss_name = ss_it.first;
-        auto ss_dof_mgr = create_dof_mgr(ss_name,field_name,FE_Type::HGRAD,1,dof_dim);
-        m_dof_managers[field_name][ss_name] = ss_dof_mgr;
-
-        if (m_node_dof_managers[ss_name].is_null() && dof_dim==1) {
-          m_node_dof_managers[ss_name] = dof_mgr;
-        }
-      }
-    }
   }
 
   // For each part, also make a Node dof manager
@@ -2052,8 +2035,7 @@ STKDiscretization::computeNodeSets()
 {
   auto coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  const auto& whole_mesh = stkMeshStruct->ebNames_[0];
-  const auto& sol_dof_mgr = m_dof_managers[solution_dof_name()][whole_mesh];
+  const auto& sol_dof_mgr = getNewDOFManager();
   const auto& cell_indexer = sol_dof_mgr->cell_indexer();
 
   std::vector<std::vector<int>> offsets (sol_dof_mgr->getNumFields());
@@ -2367,12 +2349,17 @@ create_dof_mgr (const std::string& part_name,
   // Figure out which element blocks this part belongs to
   std::vector<std::string> elem_blocks;
   const auto& ebn = stkMeshStruct->ebNames_;
-  if (std::find(ebn.begin(),ebn.end(),part_name)!=ebn.end()) {
+  if (part_name=="") {
+    // Not specifying a mesh part is considered the same as the whole mesh
+    elem_blocks = ebn;
+  } else if (std::find(ebn.begin(),ebn.end(),part_name)!=ebn.end()) {
+    // The part name is just one of the element blocks.
     elem_blocks = {part_name};
   } else {
     // This part is not an element block.
-    // We need to consider any element block that shares
-    // some entities with this part
+    // We need to consider any element block that has non-empty interesection
+    // with this part. Note: the interesection is at the level of entities
+    // with rank equal to the specified part (e.g., it may be just nodes).
     const auto& part = metaData->get_part(part_name);
 
     for (const auto& eb : ebn) {
@@ -2386,10 +2373,6 @@ create_dof_mgr (const std::string& part_name,
     }
   }
 
-  // Create conn and dof managers
-  auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm));
-
   // Ensure that all topologies are the same
   for (unsigned i=1; i<elem_blocks.size(); ++i) {
     const auto& topo0 = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
@@ -2397,6 +2380,10 @@ create_dof_mgr (const std::string& part_name,
     TEUCHOS_TEST_FOR_EXCEPTION (topo0.getName()!=topo.getName(), std::runtime_error,
         "Error! DOFManager requires all element blocks to have the same topology.\n");
   }
+
+  // Create conn and dof managers
+  auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
+  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
 
   const auto& topo = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
   const auto basis = getIntrepid2Basis(*topo.getBaseCellTopologyData(),fe_type,order);

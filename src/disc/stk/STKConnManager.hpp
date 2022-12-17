@@ -27,13 +27,13 @@ public:
   // The ctor verifies that the conditions are met
   STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
                  const Teuchos::RCP<const stk::mesh::BulkData>& bulkData,
-                 const std::vector<std::string>& part_names);
+                 const std::vector<std::string>& elem_blocks_names);
 
   // Shortcut for single part
   STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
                  const Teuchos::RCP<const stk::mesh::BulkData>& bulkData,
-                 const std::string& part_name)
-   : STKConnManager (metaData,bulkData,std::vector<std::string>(1,part_name))
+                 const std::string& elem_block_name)
+   : STKConnManager (metaData,bulkData,std::vector<std::string>(1,elem_block_name))
   {
     // Nothing to do
   }
@@ -43,7 +43,7 @@ public:
   // Do not hide other methods
   using ConnManager::getElementsInBlock;
   std::vector<GO>
-  getElementsInBlock (const std::string& blockId) const override;
+  getElementsInBlock (const std::string& elem_block_name) const override;
 
   /** Tell the connection manager to build the connectivity assuming
     * a particular field pattern.
@@ -88,15 +88,15 @@ public:
   /** How many element blocks in this mesh?
     */
   std::size_t numElementBlocks() const override {
-    return m_parts.size();
+    return m_elem_blocks.size();
   }
 
   /** Get block IDs from STK mesh object
     */
   void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
     elementBlockIds.resize(0);
-    elementBlockIds.reserve(m_parts.size());
-    for (const auto& it : m_parts) {
+    elementBlockIds.reserve(m_elem_blocks_names.size());
+    for (const auto& it : m_elem_blocks) {
       elementBlockIds.push_back(it.first);
     }
   }
@@ -105,15 +105,9 @@ public:
    */
   void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override {
     elementBlockTopologies.resize(0);
-    elementBlockTopologies.reserve(m_parts.size());
-    for (const auto& it : m_parts) {
-      if (it.second->primary_entity_rank()==stk::topology::NODE_RANK) {
-        // Hack, to allow having a DOFManager/ConnManager defined on an arbitrary nodeset,
-        // rather than over some sort of elements
-        elementBlockTopologies.push_back(shards::CellTopology(shards::getCellTopologyData<shards::Node0D>()));
-      } else {
-        elementBlockTopologies.push_back(stk::mesh::get_cell_topology(it.second->topology()));
-      }
+    elementBlockTopologies.reserve(m_elem_blocks.size());
+    for (const auto& it : m_elem_blocks) {
+      elementBlockTopologies.push_back(stk::mesh::get_cell_topology(it.second->topology()));
     }
   }
 
@@ -124,10 +118,10 @@ public:
     *
     * \returns Vector of local element IDs.
     */
-  const std::vector<LO> & getElementBlock(const std::string & blockId) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION (m_elementBlocks.find(blockId)==m_elementBlocks.end(), std::runtime_error,
-        "[STKConnManager] Error! Block '" + blockId + "' not found in the mesh.\n");
-    return m_elementBlocks.at(blockId);
+  const std::vector<LO> & getElementBlock(const std::string & elem_block_name) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_elementBlocks.find(elem_block_name)==m_elementBlocks.end(), std::runtime_error,
+        "[STKConnManager] Error! Block '" + elem_block_name + "' not found in the mesh.\n");
+    return m_elementBlocks.at(elem_block_name);
   }
 
   /** Get the local element IDs for a paricular element
@@ -138,11 +132,11 @@ public:
     *
     * \returns Vector of local element IDs.
     */
-  const std::vector<LO> & getNeighborElementBlock(const std::string & blockId) const override {
+  const std::vector<LO> & getNeighborElementBlock(const std::string & elem_block_name) const override {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
         "Error! Albany does not use elements halos, so the method\n"
         "       'STKConnManager::getNeighborElementBlock' should not have been called.\n");
-    return m_neighborElementBlocks.at(blockId);
+    return m_neighborElementBlocks.at(elem_block_name);
   }
 
   int getOwnedElementCount() const {
@@ -201,8 +195,6 @@ protected:
        const LO idCnt,
        const GO offset);
 
-  stk::mesh::Part * getElementBlockPart(const std::string & name) const;
-
   // Compute max gid for each entity rank
   // void buildEntityCounts();
   void buildMaxEntityIds();
@@ -235,8 +227,8 @@ protected:
   Teuchos::RCP<const stk::mesh::MetaData>   m_metaData;
   Teuchos::RCP<const stk::mesh::BulkData>   m_bulkData;
 
-  std::map<std::string,stk::mesh::Part*>    m_parts;
-  stk::topology                             m_parts_topo;
+  std::map<std::string,stk::mesh::Part*>    m_elem_blocks;
+  stk::topology                             m_elem_blocks_topo;
 
   std::unordered_map<stk::mesh::EntityId, int> m_localIDHash;
 };

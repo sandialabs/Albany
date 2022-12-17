@@ -38,6 +38,8 @@ fillVector (      Thyra_Vector&    field_thyra,
   using ViewT = Kokkos::View<const ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
 
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const bool restricted = dof_mgr->part_name()!=dof_mgr->elem_block_name();
+
   auto data = getNonconstLocalData(field_thyra);
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
   const auto& elems = dof_mgr->getAlbanyConnManager()->getElementsInBlock();
@@ -81,7 +83,9 @@ fillVector (      Thyra_Vector&    field_thyra,
       for (auto fid : components) {
         const auto& offsets = get_offsets(fid);
         const auto lid = elem_dof_lids(ielem,offsets[i]);
-        data[elem_dof_lids(ielem,offsets[i])] = stk_data[fid];
+        if (!restricted ||lid>=0) {
+          data[lid] = stk_data[fid];
+        }
       }
     }
   }
@@ -118,6 +122,8 @@ saveVector(const Thyra_Vector& field_thyra,
   using ViewT = Kokkos::View<ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
   
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const bool restricted = dof_mgr->part_name()!=dof_mgr->elem_block_name();
+
   auto data = getLocalData(field_thyra);
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
   const auto& elems = dof_mgr->getAlbanyConnManager()->getElementsInBlock();
@@ -161,7 +167,9 @@ saveVector(const Thyra_Vector& field_thyra,
       for (auto fid : components) {
         const auto& offsets = get_offsets(fid);
         const auto lid = elem_dof_lids(ielem,offsets[i]);
-        stk_data[fid] = data[elem_dof_lids(ielem,offsets[i])];
+        if (!restricted or lid>=0) {
+          stk_data[fid] = data[lid];
+        }
       }
     }
   }

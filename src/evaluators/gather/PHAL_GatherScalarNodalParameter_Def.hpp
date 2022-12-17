@@ -73,7 +73,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
 
   // Parameter dof numbering info
-  const auto p_elem_dof_lids = p->elem_dof_lids().host();
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
 
   // Mesh elements
   const auto ws = workset.wsIndex;
@@ -122,7 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto  p_data = Albany::getLocalData(p->overlapped_vector().getConst());
 
   // Parameter dof numbering info
-  const auto& p_elem_dof_lids = p->elem_dof_lids().host();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
   const auto  sideDim = p->get_dof_mgr()->get_topology().getDimension()-1;
   const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsets_subcell(0,sideDim,top);
   const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsets_subcell(0,sideDim,bot);
@@ -193,7 +193,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Parameter/solution/nodes dof numbering info
   const auto dof_mgr      = workset.disc->getNewDOFManager();
-  const auto p_elem_dof_lids = p->elem_dof_lids().host();
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
 
   const auto ws = workset.wsIndex;
   const auto elem_lids = workset.disc->getElementLIDs_host(ws);
@@ -303,7 +303,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& sol_dof_mgr = workset.disc->getNewDOFManager();
   const auto& p_dof_mgr       = p->get_dof_mgr();
   const auto& elem_dof_lids   = sol_dof_mgr->elem_dof_lids().host();
-  const auto& p_elem_dof_lids = p->elem_dof_lids().host();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
 
   // Idea: loop over cells. Grab p data from a cell at the right layer,
   //       using offsets that correspond to the elem-side where the param is defined.
@@ -458,7 +458,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int ws = workset.wsIndex;
 
   // Parameter/nodes dof numbering info
-  const auto p_elem_dof_lids = p->elem_dof_lids().host();
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
   const auto elem_lids    = workset.disc->getElementLIDs_host(ws);
 
   using ref_t = typename PHAL::Ref<ParamScalarT>::type;
@@ -553,7 +553,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Parameter dof numbering info
   const auto p_dof_mgr        = p->get_dof_mgr();
-  const auto& p_elem_dof_lids = p->elem_dof_lids().host();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
   const auto  sideDim = p->get_dof_mgr()->get_topology().getDimension()-1;
   const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsets_subcell(0,sideDim,top);
   const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsets_subcell(0,sideDim,bot);

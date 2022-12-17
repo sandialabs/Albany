@@ -17,21 +17,29 @@
 
 namespace Albany {
 
+
+// A DOF manager is defined over a mesh part. This part can be
+// one of the element blocks, or it can be any sub-part of it.
+// In either case, the dof lids/gids stored in the class will
+// have dimensions as if the DOF mgr is defined over all the
+// conn_mgr elem blocks. However, if part_name refers to a part
+// that is strictly a subset of the blocks, then the lids at
+// entries corresponding to dof outside the part will be -1.
+// The stored vector spaces and indexers will reflect this,
+// having a global/local size corresponding to only the
+// dofs on the given part.
 class DOFManager : public panzer::DOFManager {
 public:
   // Initializes DOF manager
+  // If part_name=="", assume defined over all blocks.
   DOFManager (const Teuchos::RCP<ConnManager>& conn_mgr,
-              const Teuchos::RCP<const Teuchos_Comm>& comm);
+              const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const std::string& part_name);
 
   void build ();
 
   // Returns (elem_LID,idof)->dof_lid numbering
   const DualView<const int**>& elem_dof_lids () const;
-
-  // Returns (elem_LID,idof)->dof_lid numbering restricted to input
-  // part name. If an entry (elem_LID,idof) corresponds to a geometric
-  // entity not in the input part, the dof LID will be set to -1.
-  DualView<const int**> restrict (const std::string& name) const;
 
   const Teuchos::RCP<const GlobalLocalIndexer>& cell_indexer () const;
 
@@ -49,18 +57,22 @@ public:
   }
   using panzer::DOFManager::getGIDFieldOffsets;
   const std::vector<int> & getGIDFieldOffsets (int fieldNum) const {
-    return this->getGIDFieldOffsets(part_name(),fieldNum);
+    return this->getGIDFieldOffsets(elem_block_name(),fieldNum);
   }
   using panzer::DOFManager::getGIDFieldOffsetsKokkos;
   PHX::View<const int*> getGIDFieldOffsetsKokkos (int fieldNum) const {
-    return this->getGIDFieldOffsetsKokkos(part_name(),fieldNum);
+    return this->getGIDFieldOffsetsKokkos(elem_block_name(),fieldNum);
   }
   using panzer::DOFManager::getGIDFieldOffsets_closure;
   const std::vector<int>&
   getGIDFieldOffsets_subcell (int fieldNum, int subcell_dim, int subcell_pos) const;
 
   const std::string& part_name () const {
-    return m_conn_mgr->part_name();
+    return m_part_name;
+  }
+
+  const std::string& elem_block_name () const {
+    return m_conn_mgr->elem_block_name();
   }
 
   shards::CellTopology get_topology () const {
@@ -76,6 +88,19 @@ public:
   }
 
 private:
+  // Create vector spaces and indexers, based on GIDs
+  void buildVectorSpaces (const std::vector<GO>& owned,
+                          const std::vector<GO>& ownedAndGhosted);
+
+  // Restricts valid IDs to the entities belonging to the given part.
+  // This method will maintain the dimensions of elem_dof_lids, but will
+  //  - change all lids to -1 if the dof is not on the given part
+  //  - recompute vector spaces to reflect the lower number of dofs
+  //  - recompute indexers to reflect the change in vector spaces
+  //  - recompute LIDs to reflect the restricted GIDs set.
+  // Called during build phase.
+  void restrict (const std::string& part_name);
+
   Teuchos::RCP<const Teuchos_Comm>          m_comm;
 
   Teuchos::RCP<const GlobalLocalIndexer>    m_cell_indexer;
@@ -84,6 +109,8 @@ private:
   DualView<const int**>                     m_elem_dof_lids;
 
   Teuchos::RCP<const ConnManager>           m_conn_mgr;
+
+  std::string m_part_name;
 
   bool m_built = false;
 };

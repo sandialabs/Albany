@@ -37,22 +37,16 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(m_dof_mgr.is_null(), std::runtime_error,
         "Error! Input dof manager is null.\n");
 
-    compute_elem_dof_lids (dof_mgr->part_name());
-  }
+    auto owned_vs = m_dof_mgr->vs();
+    auto overlapped_vs = m_dof_mgr->ov_vs();
 
-  // Parameter defined on a sub-part of the dof_mgr elements,
-  // potentially even a part of lower dimension
-  DistributedParameter(const std::string& param_name_,
-                       const dof_mgr_ptr_t& dof_mgr,
-                       const std::string& mesh_part)
-   : param_name(param_name_)
-   , m_dof_mgr (dof_mgr)
-  {
-    // Sanity checks
-    TEUCHOS_TEST_FOR_EXCEPTION(m_dof_mgr.is_null(), std::runtime_error,
-        "Error! Input dof manager is null.\n");
+    owned_vec = Thyra::createMember(owned_vs);
+    overlapped_vec = Thyra::createMember(overlapped_vs);
 
-    compute_elem_dof_lids (mesh_part);
+    lower_bounds_vec = Thyra::createMember(owned_vs);
+    upper_bounds_vec = Thyra::createMember(owned_vs);
+
+    cas_manager = createCombineAndScatterManager(owned_vs, overlapped_vs);
   }
 
   //! Destructor
@@ -60,8 +54,6 @@ public:
 
   //! Get name
   const std::string& name() const { return param_name; }
-
-  const DualView<const int**>& elem_dof_lids() const { return m_elem_dof_lids; }
 
   //! Get vector space 
   Teuchos::RCP<const Thyra_VectorSpace> vector_space() const { return owned_vec->space(); }
@@ -121,10 +113,6 @@ protected:
 
   // The DOFManager for this parameter
   dof_mgr_ptr_t m_dof_mgr;
-
-  // View containing the map (elem, idof)->dof_LID, where idof=0,..,ndofs_per_elem,
-  // and dof_LID is relative to the *overlapped* vector space.
-  DualView<const int**> m_elem_dof_lids;
 };
 
 } // namespace Albany
