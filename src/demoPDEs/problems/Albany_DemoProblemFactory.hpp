@@ -7,10 +7,6 @@
 #ifndef ALBANY_DEMO_PROBLEM_FACTORY_HPP
 #define ALBANY_DEMO_PROBLEM_FACTORY_HPP
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
-#include "Albany_AbstractProblem.hpp"
 #include "Albany_ProblemFactory.hpp"
 
 namespace Albany {

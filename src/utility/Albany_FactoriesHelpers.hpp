@@ -8,6 +8,7 @@
 
 #include "Albany_config.h"
 #include "Albany_ProblemFactory.hpp"
+#include "Albany_CoreProblemFactory.hpp"
 #ifdef ALBANY_DEMO_PDES
 #include "Albany_DemoProblemFactory.hpp"
 #endif

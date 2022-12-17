@@ -11,7 +11,7 @@ set(SOURCES_CISM
 add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCES_CISM})
 
 set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERS_CISM}")
-target_link_libraries(cismInterface PUBLIC albanyLib LandIce)
+target_link_libraries(cismInterface PUBLIC albanyLib landIce)
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(cismInterface SYSTEM PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")

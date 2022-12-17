@@ -208,7 +208,7 @@ set(HEADERS
 )
 
 # This is not very satisfactory, since it injects CISM specific stuff into
-# the main LandIce library. But StokesFO needs the definition of these
+# the main landIce library. But StokesFO needs the definition of these
 # when building for CISM, or we run into a link error.
 if(ENABLE_CISM_INTERFACE)
   list (APPEND SOURCES evaluators/LandIce_CismSurfaceGradFO.cpp)
@@ -217,14 +217,14 @@ if(ENABLE_CISM_INTERFACE)
     evaluators/LandIce_CismSurfaceGradFO_Def.hpp)
 endif()
 
-add_library(LandIce ${Albany_LIBRARY_TYPE} ${SOURCES})
-set_target_properties(LandIce PROPERTIES PUBLIC_HEADER "${HEADERS}")
-target_link_libraries(LandIce PUBLIC albanyLib)
+add_library(landIce ${Albany_LIBRARY_TYPE} ${SOURCES})
+set_target_properties(landIce PROPERTIES PUBLIC_HEADER "${HEADERS}")
+target_link_libraries(landIce PUBLIC albanyLib)
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
-  target_include_directories(LandIce SYSTEM PUBLIC
+  target_include_directories(landIce SYSTEM PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 else()
-  target_include_directories(LandIce PUBLIC
+  target_include_directories(landIce PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
 
@@ -235,11 +235,11 @@ set (LANDICE_INCLUDE_DIRS
      ${CMAKE_CURRENT_SOURCE_DIR}/problems
 )
 
-target_include_directories(LandIce PUBLIC
+target_include_directories(landIce PUBLIC
                            "$<BUILD_INTERFACE:${LANDICE_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-install(TARGETS LandIce EXPORT albany-export
+install(TARGETS landIce EXPORT albany-export
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
@@ -249,7 +249,7 @@ install(TARGETS LandIce EXPORT albany-export
 ###################################
 
 if(ENABLE_CISM_INTERFACE)
-  add_subdirectory(interface_with_cism)
+  add_subdirectory(interfaceWithCISM)
 endif()
 
 ###################################
@@ -257,5 +257,5 @@ endif()
 ###################################
 
 if(ENABLE_MPAS_INTERFACE)
-  add_subdirectory(interface_with_mpas)
+  add_subdirectory(interfaceWithMPAS)
 endif()

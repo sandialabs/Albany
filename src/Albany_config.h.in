@@ -4,6 +4,7 @@
 // ======================== Albany packages and subpackages macros ============================== //
 
 #cmakedefine ALBANY_LANDICE
+#cmakedefine ALBANY_DEMO_PDES
 
 // ===================== Macros to identify packages found in Trilinos ======================= //
 
@@ -31,9 +32,6 @@
 
 // Whether Albany was compiled with MPI enabled
 #cmakedefine ALBANY_MPI
-
-// Whether pde examples should be built
-#cmakedefine ALBANY_DEMO_PDES
 
 // Whether mesh and parameters depend on each others and/or solution
 #cmakedefine ALBANY_MESH_DEPENDS_ON_PARAMETERS

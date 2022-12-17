@@ -7,7 +7,7 @@ set(HEADERS_MPAS
 )
 
 add_library(mpasInterface ${SOURCES_MPAS})
-target_link_libraries(mpasInterface PUBLIC albanyLib LandIce)
+target_link_libraries(mpasInterface PUBLIC albanyLib landIce)
 set_target_properties(mpasInterface PROPERTIES PUBLIC_HEADER "${HEADERS_MPAS}")
 
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)

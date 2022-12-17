@@ -56,18 +56,20 @@ set(ALBANY_LIBRARIES
   albanyLib
 )
 
+list(APPEND ALBANY_LIBRARIES corePDEs)
+
 if(ALBANY_DEMO_PDES)
-  list(APPEND ALBANY_LIBRARIES albanyPDEs)
+  list(APPEND ALBANY_LIBRARIES demoPDEs)
 endif()
 
 if (ALBANY_LANDICE)
   list (APPEND ALBANY_INCLUDE_DIRS
-    ${Albany_SOURCE_DIR}/src/LandIce
-    ${Albany_SOURCE_DIR}/src/LandIce/evaluators
-    ${Albany_SOURCE_DIR}/src/LandIce/problems
+    ${Albany_SOURCE_DIR}/src/landIce
+    ${Albany_SOURCE_DIR}/src/landIce/evaluators
+    ${Albany_SOURCE_DIR}/src/landIce/problems
   )
 
-  list (APPEND ALBANY_LIBRARIES LandIce)
+  list (APPEND ALBANY_LIBRARIES landIce)
 
   if (ENABLE_MPAS_INTERFACE)
     list (APPEND ALBANY_LIBRARIES mpasInterface)
