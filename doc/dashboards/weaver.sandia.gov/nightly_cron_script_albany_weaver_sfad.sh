@@ -16,6 +16,9 @@ unset https_proxy
 export jenkins_albany_dir=/home/projects/albany/nightlyCDashWeaver/repos/Albany
 export jenkins_trilinos_dir=/home/projects/albany/nightlyCDashWeaver/repos/Trilinos
 
+bash convert-cmake-to-cdash-albany.sh sfad
+bash create-new-cdash-cmake-script-albany.sh sfad
+
 if [ "$BUILD_OPT" = "sfad4" ] ; then
   LOG_FILE=$BASE_DIR/nightly_log_weaverAlbanySFad4.txt
 fi
