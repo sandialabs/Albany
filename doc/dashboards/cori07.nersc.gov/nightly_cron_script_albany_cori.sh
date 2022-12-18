@@ -14,6 +14,9 @@ cmake --version >& cmake_version_albany.out
 
 LOG_FILE=$BASE_DIR/nightly_log_coriAlbany.txt
 
+bash convert-cmake-to-cdash-albany.sh regular
+bash create-new-cdash-cmake-script-albany.sh regular
+
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
 
 cp -r build/AlbanyInstall/bin/* $EXE_DIR

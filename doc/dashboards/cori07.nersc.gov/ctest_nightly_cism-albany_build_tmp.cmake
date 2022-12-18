@@ -22,7 +22,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "cori-CISM-Albany")
+#set (CTEST_BUILD_NAME "cori-CISM-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -46,6 +46,55 @@ set (CTEST_FLAGS "-j16")
 set (CTEST_BUILD_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "https")
+
+execute_process(COMMAND bash delete_txt_files.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set (TRILINSTALLDIR "${CTEST_BINARY_DIRECTORY}/TrilinosInstall")
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE MPICC_RESULT
+		OUTPUT_FILE "mpicc.txt")
+execute_process(COMMAND bash get_mpicc.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT)
+execute_process(COMMAND cat mpicc.txt 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE GET_MPICC_RESULT
+		OUTPUT_VARIABLE MPICC
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT mpicc = " ${MPICC}) 
+execute_process(COMMAND ${MPICC} -dumpversion 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_VERSION_RESULT
+		OUTPUT_VARIABLE COMPILER_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND ${MPICC} --version 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE COMPILER_RESULT
+		OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash process_compiler.sh 
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE CHANGE_COMPILER_RESULT
+		OUTPUT_VARIABLE COMPILER
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler = " ${COMPILER})
+
+
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+#message("IKT osname = " ${osname}) 
+#message("IKT osrel = " ${osrel}) 
+#message("IKT cpu = " ${cpu}) 
+
+set (CTEST_BUILD_NAME "CismAlbany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
@@ -81,31 +130,10 @@ if (BUILD_CISM_PISCEES)
   # Configure the CISM-Albany build 
   #
 
+  set(ALBINSTALLDIR ${CTEST_BINARY_DIRECTORY}/AlbanyInstall)
+
   set (CONFIGURE_OPTIONS
-    "-Wno-dev"
-    "-DCISM_MPI_MODE:BOOL=ON"
-    "-DCISM_SERIAL_MODE:BOOL=OFF"
-    "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
-    "-DCISM_USE_GPTL_INSTRUMENTATION:BOOL=OFF"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
-    #
-    "-DCISM_USE_TRILINOS:BOOL=ON"
-    "-DCISM_TRILINOS_DIR=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DALBANY_LANDICE_DYCORE:BOOL=ON"
-    "-DALBANY_LANDICE_CTEST:BOOL=ON"
-    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/AlbanyInstall"
-    "-DCISM_NETCDF_DIR=$ENV{NETCDF_DIR}"
-    #
-    "-DCMAKE_CXX_COMPILER=CC"
-    "-DCMAKE_C_COMPILER=cc"
-    "-DCMAKE_Fortran_COMPILER=ftn"
-    #
-    "-DCMAKE_EXE_LINKER_FLAGS:STRING='-Wl,-zmuldefs'"
-    "-DBUILD_SHARED_LIBS:BOOL=ON"
-    "-DCISM_STATIC_LINKING:BOOL=OFF"
-    "-DCISM_Fortran_FLAGS='-ffree-line-length-none'" 
-    "-DCMAKE_C_FLAGS:STRING='-O3 -std=c++1y'"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++1y'"
+    CDASH-ALBANY-FILE.TXT
   )
  
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")

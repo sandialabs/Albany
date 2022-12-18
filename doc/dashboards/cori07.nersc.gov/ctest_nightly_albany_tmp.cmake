@@ -4,12 +4,11 @@ set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
 set (DOWNLOAD_TRILINOS FALSE)
-set (DOWNLOAD_ALBANY FALSE)
+set (DOWNLOAD_ALBANY TRUE)
 set (CLEAN_BUILD FALSE) 
 set (BUILD_TRILINOS FALSE)
-set (BUILD_ALBANY FALSE)
-set (BUILD_CISM_PISCEES TRUE)
-set (RUN_CISM_PISCEES FALSE)
+set (BUILD_ALBANY TRUE)
+set (BUILD_CISM_PISCEES FALSE)
 
 # Begin User inputs:
 set (CTEST_SITE "cori07.nersc.gov" ) # generally the output of hostname
@@ -22,7 +21,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-#set (CTEST_BUILD_NAME "cori-CISM-Albany")
+#set (CTEST_BUILD_NAME "cori-Albany")
 set (CTEST_BINARY_NAME build)
 
 
@@ -94,7 +93,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "CismAlbany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
@@ -122,52 +121,76 @@ if (CLEAN_BUILD)
 endif ()
 
 
+if (DOWNLOAD_ALBANY)
+
+  set (CTEST_CHECKOUT_COMMAND)
+  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+  
+  #
+  # Get Albany
+  #
+
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
+    execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
+      clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
+      OUTPUT_VARIABLE _out
+      ERROR_VARIABLE _err
+      RESULT_VARIABLE HAD_ERROR)
+    
+    message(STATUS "out: ${_out}")
+    message(STATUS "err: ${_err}")
+    message(STATUS "res: ${HAD_ERROR}")
+    if (HAD_ERROR)
+      message(FATAL_ERROR "Cannot clone Albany repository!")
+    endif ()
+  endif ()
+
+  #
+  # Get cism-piscees
+  #
+
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/cism-piscees")
+    execute_process (COMMAND "${CTEST_GIT_COMMAND}"
+      clone ${cism-piscees_REPOSITORY_LOCATION} -b ali_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
+      OUTPUT_VARIABLE _out
+      ERROR_VARIABLE _err
+      RESULT_VARIABLE HAD_ERROR)
+    message(STATUS "out: ${_out}")
+    message(STATUS "err: ${_err}")
+    message(STATUS "res: ${HAD_ERROR}")
+    if (HAD_ERROR)
+      message(FATAL_ERROR "Cannot clone cism-piscees repository!")
+    endif ()
+  endif ()
+
+  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+
+
+endif ()
+
 
 ctest_start(${CTEST_TEST_TYPE})
 
-if (BUILD_CISM_PISCEES)
+if (BUILD_ALBANY)
 
-  # Configure the CISM-Albany build 
+  # Configure the Albany build 
   #
+  set(ALBINSTALLDIR ${CTEST_BINARY_DIRECTORY}/AlbanyInstall)
+  set(CISM_SRC_DIR ${CTEST_SOURCE_DIRECTORY}/cism-piscees)
 
   set (CONFIGURE_OPTIONS
-    "-Wno-dev"
-    "-DCISM_MPI_MODE:BOOL=ON"
-    "-DCISM_SERIAL_MODE:BOOL=OFF"
-    "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
-    "-DCISM_USE_GPTL_INSTRUMENTATION:BOOL=OFF"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
-    #
-    "-DCISM_USE_TRILINOS:BOOL=ON"
-    "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
-    "-DALBANY_LANDICE_DYCORE:BOOL=ON"
-    "-DALBANY_LANDICE_CTEST:BOOL=ON"
-    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/AlbanyInstall"
-    "-DCISM_NETCDF_DIR=$ENV{NETCDF_DIR}"
-    #
-    "-DCMAKE_CXX_COMPILER=CC"
-    "-DCMAKE_C_COMPILER=cc"
-    "-DCMAKE_Fortran_COMPILER=ftn"
-    #
-    "-DCMAKE_EXE_LINKER_FLAGS:STRING='-Wl,-zmuldefs'"
-    "-DBUILD_SHARED_LIBS:BOOL=ON"
-    "-DCISM_STATIC_LINKING:BOOL=OFF"
-    "-DCISM_Fortran_FLAGS='-ffree-line-length-none -Wno-argument-mismatch'"
-    "-DCMAKE_C_FLAGS:STRING='-O2 -std=c++17'"
-    "-DCMAKE_CXX_FLAGS:STRING='-O2 -std=c++17'"
-    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
-  )
- 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/CoriCismAlbany)
+    CDASH-ALBANY-FILE.TXT
+    )
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuild")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuild)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/cism-piscees"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
-    APPEND
     )
 
   if (CTEST_DO_SUBMIT)
@@ -176,26 +199,27 @@ if (BUILD_CISM_PISCEES)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit CISM-Albany configure results!")
+      message ("Cannot submit Albany configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure CISM-Albany build!")
+    message ("Cannot configure Albany build!")
   endif ()
 
   #
-  # Build CISM-Albany
+  # Build the rest of Albany and install everything
   #
 
-  set (CTEST_TARGET all)
+  #set (CTEST_BUILD_TARGET all)
+  set (CTEST_BUILD_TARGET install)
 
-  MESSAGE("\nBuilding target: '${CTEST_TARGET}' ...\n")
+  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
     RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  LIBS_NUM_ERRORS
+    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
     )
 
@@ -205,30 +229,28 @@ if (BUILD_CISM_PISCEES)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit CISM-Albany build results!")
+      message ("Cannot submit Albany build results!")
     endif ()
+
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build CISM-Albany!")
+    message ("Cannot build Albany!")
   endif ()
 
-  if (LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
+  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+    message ("Encountered build errors in Albany build. Exiting!")
   endif ()
-endif ()
 
-IF(RUN_CISM_PISCEES) 
   #
-  # Run CISM-Albany tests
+  # Run Albany tests
   #
-
   #  Over-write default limit for output posted to CDash site
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/CoriCismAlbany"
+	  BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
 #                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
 #                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
 #    NUMBER_FAILED  TEST_NUM_FAILED
@@ -241,12 +263,12 @@ IF(RUN_CISM_PISCEES)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
+      message(FATAL_ERROR "Cannot submit Albany test results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
+    message(FATAL_ERROR "Some Albany tests failed.")
   endif ()
 
-endif ()
+endif()

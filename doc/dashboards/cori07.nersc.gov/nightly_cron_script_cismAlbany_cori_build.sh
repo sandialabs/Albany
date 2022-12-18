@@ -13,7 +13,10 @@ cmake --version >& cmake_version_cism-albany_build.out
 
 LOG_FILE=$BASE_DIR/nightly_log_coriCismAlbanyBuild.txt
 
-eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_cismAlbany_build.cmake" > $LOG_FILE 2>&1
+bash convert-cmake-to-cdash-albany.sh cali
+bash create-new-cdash-cmake-script-albany.sh cali
+
+eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_cism-albany_build.cmake" > $LOG_FILE 2>&1
 
 cp -r build/CoriCismAlbany/cism_driver/cism_driver $EXE_DIR
 chmod -R 0755 $EXE_DIR
