@@ -27,4 +27,5 @@ sed -i 's/-G/\"-G/g' /project/projectdirs/piscees/nightlyCoriCDash/cdash-$name-f
 sed -i 's/-Wno-dev/\"-Wno-dev/g' /project/projectdirs/piscees/nightlyCoriCDash/cdash-$name-frag.txt
 sed -i "s,='\",=',g" /project/projectdirs/piscees/nightlyCoriCDash/cdash-$name-frag.txt
 sed -i 's/-D /"-D/g' /project/projectdirs/piscees/nightlyCoriCDash/cdash-$name-frag.txt
+sed -i "s,{NETCDF,ENV{NETCDF,g" /project/projectdirs/piscees/nightlyCoriCDash/cdash-$name-frag.txt
 cat /project/projectdirs/piscees/nightlyCoriCDash/cdash-$name-frag.txt
