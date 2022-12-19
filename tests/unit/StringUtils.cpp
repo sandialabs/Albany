@@ -17,6 +17,15 @@ TEUCHOS_UNIT_TEST(StringUtils,strint)
   TEST_ASSERT (util::strint(s,0)=="foo 0");
 }
 
+TEUCHOS_UNIT_TEST(StringUtils,join)
+{
+  std::vector<int> v = {-1,0,1};
+  auto s = util::join(v,",");
+  TEST_ASSERT (s=="-1,0,1");
+
+  TEST_ASSERT (util::join({1},"BLAHBLAH")=="1");
+}
+
 TEUCHOS_UNIT_TEST(StringUtils,ParseList)
 {
   std::string valid_1 = "[a]";
