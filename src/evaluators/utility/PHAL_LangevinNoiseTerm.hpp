@@ -4,8 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHAL_LANGEVINNOISETERM_HPP
-#define PHAL_LANGEVINNOISETERM_HPP
+#ifndef PHAL_LANGEVIN_NOISE_TERM_HPP
+#define PHAL_LANGEVIN_NOISE_TERM_HPP
+
+#include "PHAL_Dimension.hpp"
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -13,10 +15,7 @@
 #include "Phalanx_MDField.hpp"
 
 // Random and Gaussian number distribution
-#include <boost/random.hpp>
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/variate_generator.hpp>
+#include <random>
 
 /** \brief Finite Element Interpolation Evaluator
 
@@ -27,9 +26,8 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 class LangevinNoiseTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
-	     public PHX::EvaluatorDerived<EvalT, Traits>
+	                        public PHX::EvaluatorDerived<EvalT, Traits>
 {
-
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -59,16 +57,10 @@ private:
   ScalarT sd;
   Teuchos::Array<int> duration;
 
-  boost::mt19937 rng;
-  Teuchos::RCP<boost::normal_distribution<double> > nd;
-  Teuchos::RCP<boost::variate_generator<boost::mt19937&, boost::normal_distribution<double> > > var_nor;
-//  Teuchos::RCP<boost::normal_distribution<ScalarT> > nd;
-//  Teuchos::RCP<boost::variate_generator<boost::mt19937&, boost::normal_distribution<ScalarT> > > var_nor;
-
-  // generate seed convenience function
-  long seedgen();
-
+  std::mt19937_64 engine;
+  std::normal_distribution<double> normal_pdf;
 };
-}
 
-#endif
+} // namepsace PHAL
+
+#endif // PHAL_LANGEVIN_NOISE_TERM_HPP
