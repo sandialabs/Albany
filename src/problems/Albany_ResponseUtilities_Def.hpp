@@ -7,10 +7,8 @@
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_Utils.hpp"
 
-#include "PHAL_ResponseFieldIntegral.hpp"
 #include "PHAL_ResponseSquaredL2Difference.hpp"
 #include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
-#include "PHAL_SaveNodalField.hpp"
 
 namespace Albany {
 
@@ -123,22 +121,6 @@ ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Squared L2 Difference Side Source MST Target RT")
   {
     res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TRT<EvalT,Traits>(*p,dl));
-  }
-  else if (responseName == "PHAL Field Integral")
-  {
-    res_ev = rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "PHAL Field IntegralT")
-  {
-    // Leave this for backward compatibility
-    std::cout << "WARNING: 'PHAL Field IntegralT' is deprecated. You can just use 'PHAL Field Integral' (no T at the end).\n";
-    res_ev = rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-  }
-  else if (responseName == "Save Nodal Fields")
-  {
-    p->set< StateManager* >("State Manager Ptr", &stateMgr );
-
-    res_ev = rcp(new PHAL::SaveNodalField<EvalT,Traits>(*p, dl));
   }
 
   Teuchos::RCP<const PHX::FieldTag> ev_tag;
