@@ -20,6 +20,9 @@ INSTALL_DIR=/projects/albany/nightlyAlbanyCDash
 # The build area where the nightly products are built
 SCRATCH_DIR=/scratch/albany
 
+unset HTTPS_PROXY
+unset HTTP_PROXY
+
 export LM_LICENSE_FILE=7500@sitelicense.sandia.gov
 
 if [ "${MODULESHOME:-}" = "" ]; then
@@ -68,7 +71,7 @@ LOG_FILE=$SCRATCH_DIR/nightly_log_$BUILD_OPT.txt
 
 echo "Date and time is $now" > $LOG_FILE
 echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH" > ld_lib.path
-eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE INSTALL_DIRECTORY=$INSTALL_DIR SCRATCH_DIRECTORY=$SCRATCH_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR ctest -VV -S /projects/albany/nightlyAlbanyCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
+eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE INSTALL_DIRECTORY=$INSTALL_DIR SCRATCH_DIRECTORY=$SCRATCH_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR MPI_DIR=${SEMS_OPENMPI_ROOT} ctest -VV -S /projects/albany/nightlyAlbanyCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.

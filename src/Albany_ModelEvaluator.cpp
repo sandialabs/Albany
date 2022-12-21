@@ -568,10 +568,18 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
           << "l2 = " << l2
           << std::endl);
 
+  auto pl = app->getProblemPL()->sublist("Hessian").sublist(util::strint("Response",j)).sublist(util::strint("Parameter",l1));
+  bool HessVecProdBasedOp = pl.get("Reconstruct H_pp using Hessian-vector products",true);
+
   if (l1 < num_param_vecs) {
+    TEUCHOS_TEST_FOR_EXCEPTION(!HessVecProdBasedOp, std::logic_error, 
+            std::endl
+                << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+                << "Hessian pp operator for response " << j << " and non-distributed parameter " << l1 << " can only be reconstructed via Hessian-vector products"
+                << std::endl); 
     return Albany::createDenseHessianLinearOp(param_vss[l1]);
-  }
-  else {
+  } else {
+
     // distributed parameters
     TEUCHOS_TEST_FOR_EXCEPTION(
         l1 >= num_param_vecs + num_dist_param_vecs || l1 < num_param_vecs,
@@ -581,9 +589,21 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
             << "Invalid parameter index l1 = "
             << l1
             << std::endl);
+    const Teuchos::ParameterList& rList = app->getProblemPL()->sublist("Response Functions").sublist(util::strint("Response", j));
+    const std::string& name = rList.isParameter("Name") ? rList.get<std::string>("Name") : std::string("");
 
-    const auto p = distParamLib->get(dist_param_names[l1-num_param_vecs]);
-    return Albany::createSparseHessianLinearOp(p);
+    if(HessVecProdBasedOp) {
+      const auto p = distParamLib->get(dist_param_names[l1-num_param_vecs]);
+      return Albany::createSparseHessianLinearOp(p);
+    } else {
+      Teuchos::RCP<Thyra_LinearOp> linOp = app->getResponse(j)->get_Hess_pp_operator(dist_param_names[l1 - num_param_vecs]);
+      TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(linOp), std::logic_error, 
+            std::endl
+                << "Error!  Albany::ModelEvaluator::create_hess_g_pp():  "
+                << "Hessian pp operator not defined for response " << j << " and parameter " << dist_param_names[l1 - num_param_vecs]
+                << std::endl); 
+      return linOp;
+    }
   }
 }
 
@@ -1091,18 +1111,8 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   // Get the input arguments
   //
 
-  //! If a parameter has changed in value, saved/unsaved fields must be updated
-
-  //IKT, 8/25/2021 QUESTION: can the following go in the constructor?  If so, 
-  //we should move it there to make the code cleaner.
-  bool transposeJacobian = false;
   ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  if(appParams->sublist("Piro").isSublist("Optimization Status")) {
-    auto& opt_paramList = appParams->sublist("Piro").sublist("Optimization Status");
-    transposeJacobian = opt_paramList.get("Compute Transposed Jacobian", false);
-  }
-  if (adjoint_model == true) transposeJacobian = true; 
 
   // Thyra vectors
   const Teuchos::RCP<const Thyra_Vector> x = inArgs.get_x();
@@ -1237,7 +1247,7 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
         x, x_dot, x_dotdot,
         sacado_param_vec,
         f_out, W_op_out, dt);
-    if(transposeJacobian) {
+    if(adjoint_model) {
       TEUCHOS_FUNC_TIME_MONITOR("Albany Transpose Jacobian");
       Albany::transpose(W_op_out);
     }
@@ -1294,6 +1304,9 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     outArgs.get_hess_vec_prod_f_xx() : Teuchos::null;
 
   if (Teuchos::nonnull(f_hess_xx_v)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(adjoint_model, std::logic_error,
+        std::endl << "ModelEvaluator::evalModelImpl " <<
+        " adjoint Hessian not implemented." << std::endl);
     if (delta_x.is_null()) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
@@ -1328,6 +1341,9 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       outArgs.get_hess_vec_prod_f_px(l1) : Teuchos::null;
 
     if (Teuchos::nonnull(f_hess_xp_v)) {
+      TEUCHOS_TEST_FOR_EXCEPTION(adjoint_model, std::logic_error,
+          std::endl << "ModelEvaluator::evalModelImpl " <<
+          " adjoint Hessian not implemented." << std::endl);
       if (delta_p_l1.is_null()) {
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
@@ -1344,6 +1360,9 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     }
 
     if (Teuchos::nonnull(f_hess_px_v)) {
+      TEUCHOS_TEST_FOR_EXCEPTION(adjoint_model, std::logic_error,
+          std::endl << "ModelEvaluator::evalModelImpl " <<
+          " adjoint Hessian not implemented." << std::endl);
       if (delta_x.is_null()) {
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
@@ -1513,14 +1532,26 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
       const Teuchos::RCP<Thyra_LinearOp> g_hess_pp =
         outArgs.supports(Thyra_ModelEvaluator::OUT_ARG_hess_g_pp, j, l1, l1) ?
         outArgs.get_hess_g_pp(j, l1, l1) : Teuchos::null;
-
       if (Teuchos::nonnull(g_hess_pp)) {
-        app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
-                  sacado_param_vec,
-                  all_param_names[l1],
-                  g_hess_pp);
-        if(appParams->sublist("Problem").sublist("Hessian").get<bool>("Write Hessian MatrixMarket", false))
-          Albany::writeMatrixMarket(Albany::getTpetraMatrix(g_hess_pp).getConst(), "H", l1);
+        auto hessParams = appParams->sublist("Problem").sublist("Hessian");
+        auto hess_pp_matrix_op = Teuchos::rcp_dynamic_cast<MatrixBased_LOWS>(g_hess_pp);
+        if(Teuchos::nonnull(hess_pp_matrix_op)) {
+          app->evaluateResponseHessian_pp(j, l1, curr_time, x, x_dot, x_dotdot,
+                    sacado_param_vec,
+                    all_param_names[l1],
+                    hess_pp_matrix_op->getMatrix());
+          if(hessParams.get<bool>("Write Hessian MatrixMarket", false))
+            Albany::writeMatrixMarket(Albany::getTpetraMatrix(hess_pp_matrix_op->getMatrix()).getConst(), "H", l1);
+        }
+
+        //Initialize Solver only if Solver sublist is present
+        if(hessParams.sublist(util::strint("Response",j)).sublist(util::strint("Parameter",l1)).isSublist("H_pp Solver")) {
+          auto hess_pp = Teuchos::rcp_dynamic_cast<Init_LOWS>(g_hess_pp);
+          TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(hess_pp), std::runtime_error, 
+                  "hess_g_pp(" << j <<","<< l1  <<","<< l1 << ") is not derived from Hessian_LOWS.\n");
+          auto pl = hessParams.sublist(util::strint("Response",j)).sublist(util::strint("Parameter",l1)).sublist("H_pp Solver");
+          hess_pp->initializeSolver(Teuchos::rcpFromRef(pl));        
+        }
       }
 
       for (int l2 = 0; l2 < num_params; l2++) {

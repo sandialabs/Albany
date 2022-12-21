@@ -11,6 +11,8 @@ source $SCRIPT_DIR/convert-cmake-to-cdash.sh clang
 source $SCRIPT_DIR/create-new-cdash-cmake-script.sh clang 
 source $SCRIPT_DIR/convert-cmake-to-cdash.sh gcc
 source $SCRIPT_DIR/create-new-cdash-cmake-script.sh gcc
+source $SCRIPT_DIR/convert-cmake-to-cdash-albany.sh regular
+source $SCRIPT_DIR/create-new-cdash-cmake-script-albany.sh regular
 cd $SCRIPT_DIR
 mkdir repos
 cd repos

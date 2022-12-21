@@ -1,11 +1,14 @@
 # Albany configure script on weaver
+#For debug build:
+#  -D  CMAKE_CXX_FLAGS:STRING=-g -G \
+#  -g is for host code, -G is for device code
+#
 
 rm -rf CMake*
-
-TRILINSTALLDIR=/home/projects/albany/nightlyCDashWeaver/repos/Trilinos/build/install
+TRILINSTALLDIR=
 
 cmake \
-    -D ALBANY_TRILINOS_DIR:FILEPATH=$TRILINSTALLDIR \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
     -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
     -D ENABLE_DEMO_PDES:BOOL=ON \
     -D ENABLE_LANDICE:BOOL=ON \
@@ -13,13 +16,8 @@ cmake \
     -D ENABLE_PERFORMANCE_TESTS:BOOL=OFF \
     -D ALBANY_LIBRARIES_ONLY=OFF \
     -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
-    -D ENABLE_FAD_TYPE:STRING=SLFad \
-    -D ALBANY_SLFAD_SIZE=90 \
-    -D ENABLE_TAN_FAD_TYPE:STRING=SLFad \
     -D ALBANY_TAN_SLFAD_SIZE=100 \
+    -D ALBANY_SLFAD_SIZE=90 \
+    -D ENABLE_FAD_TYPE:STRING=SLFad \
+    -D ENABLE_TAN_FAD_TYPE:STRING=SLFad \
 ..
-
-#For debug build:
-#  -D CMAKE_CXX_FLAGS:STRING="-g -G" \
-#  -g is for host code, -G is for device code
-#

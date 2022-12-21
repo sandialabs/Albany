@@ -144,11 +144,16 @@ IF(${PYTHON_TEST})
   set(PYTHON_TEST_HELPERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python)
 ENDIF()
 
-add_subdirectory(small)
-IF (ALBANY_LARGE_TESTS)
-  add_subdirectory(large)
-ENDIF()
+add_subdirectory(corePDEs)
 
 IF (ALBANY_UNIT_TESTS)
   add_subdirectory(unit)
+ENDIF()
+
+IF(ALBANY_DEMO_PDES)
+  add_subdirectory(demoPDEs)
+ENDIF()
+
+IF(ALBANY_LANDICE AND ALBANY_SEACAS )
+  add_subdirectory(landIce)
 ENDIF()

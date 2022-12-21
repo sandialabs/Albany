@@ -254,9 +254,6 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
   Piro::SolverFactory piroFactory;
   m_observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
 
-  //IKT, 8/25/2021 TODO: pass adjointModelWithSolve to the following createSolver 
-  //routine once Piro::SolverFactory::createSolver routine is extended to take in a 2nd ME
-
   return piroFactory.createSolver<ST>(
        piroParams, modelWithSolve, adjointModelWithSolve, m_observer);
   TEUCHOS_TEST_FOR_EXCEPTION(

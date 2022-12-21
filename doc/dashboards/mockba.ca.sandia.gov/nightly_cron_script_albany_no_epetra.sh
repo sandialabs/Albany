@@ -23,4 +23,7 @@ unset HTTP_PROXY
 alias python=/projects/sems/install/rhel7-x86_64/sems/compiler/python/2.7.9/bin/python
 alias python3=/projects/sems/install/rhel7-x86_64/sems/compiler/python/2.7.9/bin/python
 
-eval "env TEST_DIRECTORY=/home/ikalash/nightlyAlbanyCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyAlbanyCDash ctest -VV -S /home/ikalash/nightlyAlbanyCDash/ctest_nightly_albany_no_epetra.cmake" > $LOG_FILE 2>&1
+bash convert-cmake-to-cdash.sh no-epetra
+bash create-new-cdash-cmake-script.sh no-epetra
+
+eval "env TEST_DIRECTORY=/home/ikalash/nightlyAlbanyCDash SCRIPT_DIRECTORY=/home/ikalash/nightlyAlbanyCDash ctest -VV -S /home/ikalash/nightlyAlbanyCDash/ctest_nightly_albanyT.cmake" > $LOG_FILE 2>&1

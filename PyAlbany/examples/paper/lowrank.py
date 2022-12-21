@@ -10,15 +10,15 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 class Hessian:
-   def __init__(me, problem, parameterIndex, responseIndex):
-       me.problem = problem
-       me.parameterIndex = parameterIndex
-       me.responseIndex  = responseIndex
-       me.Map            = me.problem.getParameterMap(me.parameterIndex)
+   def __init__(self, problem, parameterIndex, responseIndex):
+       self.problem = problem
+       self.parameterIndex = parameterIndex
+       self.responseIndex  = responseIndex
+       self.Map            = self.problem.getParameterMap(self.parameterIndex)
    def dot(me, x):
-       me.problem.setDirections(me.parameterIndex, x)
-       me.problem.performSolve()
-       return me.problem.getReducedHessian(me.responseIndex, me.parameterIndex) 
+       self.problem.setDirections(self.parameterIndex, x)
+       self.problem.performSolve()
+       return self.problem.getReducedHessian(self.responseIndex, self.parameterIndex) 
 
 
 def main(parallelEnv):

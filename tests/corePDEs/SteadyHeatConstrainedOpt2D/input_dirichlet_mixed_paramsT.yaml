@@ -1,0 +1,189 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Problem: 
+    Name: Heat 2D
+    Compute Sensitivities: true
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T prescribe Field: dirichlet_field
+      DBC on NS NodeSet2 for DOF T: 0.0
+      DBC on NS NodeSet1 for DOF T: -1.0
+    Parameters:
+      Number Of Parameters: 2
+      Parameter 0:
+        Type: Scalar
+        Name: DBC on NS NodeSet2 for DOF T
+        Lower Bound: -2.0
+        Upper Bound: 2.0
+      Parameter 1:
+        Type: Distributed
+        Name: dirichlet_field
+        Lower Bound: -1.0
+        Upper Bound: 2.0
+        Initial Uniform Value: -0.5
+    Response Functions: 
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Squared L2 Difference Source ST Target PST
+        Field Rank: Scalar
+        Source Field Name: Temperature
+        Target Value: 0.0
+    Hessian:
+      Use AD for Hessian-vector products (default): false
+      Residual:
+        Use AD for Hessian-vector products (default): false
+        Enable AD for Hessian-vector product contributions of: (x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)
+        Disable AD for Hessian-vector product contributions of: (x,p0) (x,p1) (p0,x) (p1,x)
+      Response 0:
+        Use AD for Hessian-vector products (default): false
+        Enable AD for Hessian-vector product contributions of: (x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)
+        Disable AD for Hessian-vector product contributions of: (x,p0) (x,p1) (p0,x) (p1,x)
+        Reconstruct H_pp: false
+
+  Discretization: 
+    1D Elements: 40
+    2D Elements: 40
+    Method: STK2D
+    Exodus Output File Name: steady2d_dirichlet_mixed_paramsT.exo
+    Cubature Degree: 9
+  Regression For Response 0:
+    Test Value: 3.53554196849e-01
+    Relative Tolerance: 1.0e-03
+    Absolute Tolerance: 1.0e-04
+    Sensitivity For Parameter 0:
+      Test Value: -1.981199378312e-01
+    Sensitivity For Parameter 1:
+      Test Value: 6.39756401689e-02
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [20.3598]
+  Piro: 
+    Sensitivity Method: Adjoint
+    Analysis: 
+      Output Level: 3
+      Analysis Package: ROL
+      ROL: 
+        Number Of Parameters: 2
+        Check Gradient: true
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 0.0
+        Min And Max Of Random Parameter Guess: [-1.0, 2.0]
+        Bound Constrained: true
+        Objective Recovery Value: 1.0e10
+
+        Full Space: false
+        Use NOX Solver: true
+ 
+        ROL Options: 
+        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance:   1.0e-6
+              Relative Residual Tolerance:   1.0e-1
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      true
+              Zero Initial Guess:            false
+              Solver Type:                   0    
+          
+          Status Test: 
+            Gradient Tolerance: 1.0e-4
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 5
+
+          General: 
+            Output Level: 3
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+
+            Secant: 
+              Type: Limited-Memory BFGS
+              Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein Type: 1
+
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
+
+          Step:
+            Type: "Line Search"
+
+            Line Search: 
+              Function Evaluation Limit: 20
+              Sufficient Decrease Tolerance: 1.0e-6
+              Initial Step Size: 1.0
+              User Defined Initial Step Size: false
+              Use Previous Step Length as Initial Guess: false
+              Use Adaptive Step Size Selection: true
+
+              Descent Method: 
+                Type: Quasi-Newton Method
+
+              Line-Search Method: 
+                Type: Cubic Interpolation
+                Backtracking Rate: 0.5
+                Bracketing Tolerance: 1.0e-08
+                Path-Based Target Level: 
+                  Target Relaxation Parameter: 1.0
+                  Upper Bound on Path Length: 1.0
+
+              Quasi-Newton:
+                Method: L-Secant-B
+                L-Secant-B:
+                  Sufficient Decrease Parameter: 1.0e-02
+                  Relative Tolerance Exponent: 1.0
+
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: iluk level-of-fill': 0
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

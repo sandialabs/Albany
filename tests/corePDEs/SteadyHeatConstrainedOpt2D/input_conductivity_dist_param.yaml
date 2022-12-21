@@ -1,0 +1,94 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Epetra
+  Problem: 
+    Name: Heat 2D
+    Compute Sensitivities: true
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T: 1.0
+      DBC on NS NodeSet1 for DOF T: 0.0
+      DBC on NS NodeSet2 for DOF T: -1.0
+      DBC on NS NodeSet3 for DOF T: 0.0
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Distributed
+        Name: thermal_conductivity
+        Lower Bound: 4.0e-01
+        Upper Bound: 5.0
+        Initial Uniform Value: 1.0
+        Mesh Part: ''
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 0:
+          Name: Squared L2 Difference Source ST Target PST
+          Field Rank: Scalar
+          Source Field Name: Temperature
+          Target Value: 0.0
+        Response 1:
+          Name: Squared L2 Difference Source ST Target PST
+          Field Rank: Scalar
+          Scaling: 1.5e-01
+          Source Field Name: ThermalConductivity
+          Target Value: 0.0
+  Discretization: 
+    1D Elements: 40
+    2D Elements: 40
+    Method: STK2D
+    Exodus Output File Name: steady2d_dist_param.exo
+    Cubature Degree: 9
+  Regression For Response 0:
+    Test Value: 3.23754626956e-01
+    Relative Tolerance: 1.0e-03
+    Sensitivity For Parameter 0:
+      Test Value: 8.94463776844e-03
+  Piro: 
+    Sensitivity Method: Adjoint
+
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.0e-7
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

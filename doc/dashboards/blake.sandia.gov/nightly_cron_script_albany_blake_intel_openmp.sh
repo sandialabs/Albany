@@ -18,5 +18,8 @@ export OMP_PROC_BIND=spread
 
 LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyIntelOpenMP.txt
 
-eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany_intel_openmp.cmake" > $LOG_FILE 2>&1
+bash convert-cmake-to-cdash-albany.sh intel-openmp
+bash create-new-cdash-cmake-script-albany.sh intel-openmp
+
+eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany-intel-openmp.cmake" > $LOG_FILE 2>&1
 

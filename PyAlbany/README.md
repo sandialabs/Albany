@@ -2,6 +2,8 @@
 
 PyAlbany is a Python wrapper for Albany.
 
+PyAlbany can be installed using spack as described in https://github.com/sandialabs/Albany/wiki/Building-Albany-using-Spack or by compiling Albany as described in this README.
+
 ### Prerequisites
 
 PyAlbany requires additional required dependencies:

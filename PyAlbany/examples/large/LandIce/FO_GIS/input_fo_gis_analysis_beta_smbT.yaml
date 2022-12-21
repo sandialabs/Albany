@@ -21,17 +21,17 @@ ANONYMOUS:
         Response 1:
           Cubature Degree: 3
           Name: Surface Mass Balance Mismatch
-          SMB Coefficient: 1.00000000000000000e+02
+          SMB Coefficient: 1.0e+02
           Field Name: Velocity
-          Regularization Coefficient: 1.00000000000000000e+00
-          Scaling Coefficient: 5.88239999999999978e-07
-          H Coefficient: 1.00000000000000000e+00
+          Regularization Coefficient: 1.0
+          Scaling Coefficient: 5.88234e-07
+          H Coefficient: 1.0
         Response 0:
           Cubature Degree: 3
-          Asinh Scaling: 1.00000000000000000e+01
+          Asinh Scaling: 1.0e+01
           Field Name: Velocity
-          Regularization Coefficient: 1.00000000000000000e+00
-          Scaling Coefficient: 5.88239999999999978e-07
+          Regularization Coefficient: 1.0
+          Scaling Coefficient: 5.8824e-07
           Name: Surface Velocity Mismatch
     Dirichlet BCs: {}
     Neumann BCs: {}
@@ -54,23 +54,23 @@ ANONYMOUS:
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
-        Lower Bound: -1.20000000000000000e+01
+        Lower Bound: -1.2e+01
         Mesh Part: bottom
         Type: Distributed
         Name: basal_friction
-        Upper Bound: 1.20000000000000000e+01
+        Upper Bound: 1.2e+01
     Hessian:
       Use AD for Hessian-vector products (default): true
     LandIce Physical Parameters:
-      Water Density: 1.02800000000000000e+03
-      Ice Density: 9.10000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Clausius-Clapeyron Coefficient: 0.00000000000000000e+18
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8e+00
+      Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Type: 'Glen''s Law'
-      'Glen''s Law Homotopy Parameter': 1.00000000000000005e-01
-      'Glen''s Law A': 1.00000000000000004e-04
-      'Glen''s Law n': 3.00000000000000000e+00
+      'Glen''s Law Homotopy Parameter': 1.0e-01
+      'Glen''s Law A': 1.0e-04
+      'Glen''s Law n': 3.0e+00
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
@@ -180,28 +180,22 @@ ANONYMOUS:
     Write Only Converged Solution: false
     On Failure Solve With Zero Initial Guess: true
     Analysis:
+      Output Level: 1
       Output Final Parameters: false
       Analysis Package: ROL
       ROL:
         Number Of Parameters: 1
         Check Gradient: true
-        Gradient Tolerance: 1.00000000000000004e-04
-        Step Tolerance: 1.00000000000000004e-04
-        Max Iterations: 3
-        Print Output: true
         Parameter Initial Guess Type: Uniform Vector
-        Uniform Parameter Guess: 0.00000000000000000e+18
-        Min And Max Of Random Parameter Guess: [1.00000000000000000e+00, 2.00000000000000000e+00]
+        Uniform Parameter Guess: 0.0
+        Min And Max Of Random Parameter Guess: [1.0, 2.0]
         Bound Constrained: true
-        bound_eps: 1.00000000000000005e-01
-
-        Step Method: "Trust Region"
-        #Step Method: "Line Search"
 
         Full Space: false
         Use NOX Solver: true
 
         ROL Options:
+        
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  ===========
           SimOpt:
             Solve:
@@ -217,141 +211,54 @@ ANONYMOUS:
 
           Status Test:
             Gradient Tolerance: 1.0e-4
-            Constraint Tolerance: 1.0e-5
             Step Tolerance: 1.0e-10
             Iteration Limit: 3
 
           General:
+            Output Level: 1
             Variable Objective Function: false
-            Scale for Epsilon Active Sets: 1.00000000000000000e+00
-            Inexact Objective Function: false
-            Inexact Gradient: false
-            Inexact Hessian-Times-A-Vector: false
-            Projected Gradient Criticality Measure: false
+            Scale for Epsilon Active Sets: 1.0
+            
             Secant:
               Type: Limited-Memory BFGS
               Use as Preconditioner: false
               Use as Hessian: false
               Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
               Barzilai-Borwein Type: 1
+           
             Krylov:
               Type: Conjugate Gradients
-              Absolute Tolerance: 1.00000000000000004e-04
-              Relative Tolerance: 1.00000000000000002e-02
-              Iteration Limit: 100
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
 
           Step:
-            Type: "Augmented Lagrangian" #"Moreau-Yosida Penalty"
-            Line Search:
-              Function Evaluation Limit: 60
-              Sufficient Decrease Tolerance: 9.99999999999999945e-21
-              Initial Step Size: 1.00000000000000000e+00
-              User Defined Initial Step Size: false
-              Accept Linesearch Minimizer: false
-              Accept Last Alpha: false
-              Descent Method:
-                Type: Quasi-Newton
-                Nonlinear CG Type: Hestenes-Stiefel
-              Curvature Condition:
-                Type: Strong Wolfe Conditions
-                General Parameter: 9.00000000000000022e-01
-                Generalized Wolfe Parameter: 5.99999999999999977e-01
-              Line-Search Method:
-                Type: Cubic Interpolation
-                Backtracking Rate: 5.00000000000000000e-01
-                Bracketing Tolerance: 1.00000000000000002e-08
-                Path-Based Target Level:
-                  Target Relaxation Parameter: 1.00000000000000000e+00
-                  Upper Bound on Path Length: 1.00000000000000000e+00
+            Type: "Trust Region" 
+
             Trust Region:
+              Subproblem Model: Kelley-Sachs
               Subproblem Solver: Truncated CG
-              #Subproblem Model: Coleman-Li
-              Initial Radius: 10.0
+              Initial Radius: -1.0
               Step Acceptance Threshold: 5.0e-02
               Radius Shrinking Threshold: 5.0e-02
               Radius Growing Threshold: 9.0e-01
-              Radius Shrinking Rate (Negative rho): 6.25000000000000000e-02
-              Radius Shrinking Rate (Positive rho): 2.50000000000000000e-01
-              Radius Growing Rate: 2.50000000000000000e+00
-              Safeguard Size: 1.0e+01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+03
               Inexact:
                 Value:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Exponent: 9.00000000000000022e-01
-                  Forcing Sequence Initial Value: 1.00000000000000000e+00
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
                   Forcing Sequence Update Frequency: 10
-                  Forcing Sequence Reduction Factor: 1.00000000000000005e-01
+                  Forcing Sequence Reduction Factor: 0.1
                 Gradient:
-                  Tolerance Scaling: 1.00000000000000005e-01
-                  Relative Tolerance: 2.00000000000000000e+00
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
 
-            Moreau-Yosida Penalty:
-              # ===========  PENALTY PARAMETER UPDATE  ===========
-              Initial Penalty Parameter: 1.0e+2
-              Penalty Parameter Growth Factor: 1.0
-
-              # ===========  SUBPROBLEM SOLVER  ===========
-              Subproblem:
-                Optimality Tolerance: 1.e-4
-                Feasibility Tolerance: 1.e-5
-                Print History: true
-                Iteration Limit: 1
-
-            # ===========  COMPOSITE STEP  =========== -->
-            Composite Step:
-              Output Level: 2
-              #Initial Radius: 1.0e+2
-              Use Constraint Hessian: false
-
-              # ===========  OPTIMALITY SYSTEM SOLVER  =========== -->
-              Optimality System Solver:
-                Nominal Relative Tolerance: 2.0e-1
-                Fix Tolerance: true
-
-              # ===========  TANGENTIAL SUBPROBLEM SOLVER  =========== -->
-              Tangential Subproblem Solver:
-                Iteration Limit: 100
-                Relative Tolerance: 1.0e-2
-
-            # ===========  AUGMENTED LAGRANGIAN  ===========
-            Augmented Lagrangian:
-              Level of Hessian Approximation: 0
-              #  ===========  PROBLEM SCALING ===========
-              Use Default Problem Scaling: false
-              Objective Scaling: 1.e+01
-              Constraint Scaling: 1.e+0
-              # ===========  PENALTY PARAMETER UPDATE  ===========
-              Use Default Initial Penalty Parameter: true
-              Initial Penalty Parameter: 1.e+1
-              Penalty Parameter Growth Factor: 1.e+1
-              Minimum Penalty Parameter Reciprocal: 0.1
-              # ===========  OPTIMALITY TOLERANCE UPDATE  ===========
-              Initial Optimality Tolerance: 1.0
-              Optimality Tolerance Update Exponent: 1.0
-              Optimality Tolerance Decrease Exponent: 1.0
-              # ==========  FEASIBILITY TOLERANCE UPDATE  ===========
-              Initial Feasibility Tolerance: 1.0
-              Feasibility Tolerance Update Exponent: 0.1
-              Feasibility Tolerance Decrease Exponent: 0.9
-              # ===========  SUBPROBLEM SOLVER  ===========
-              Print Intermediate Optimization History: true
-              Subproblem Step Type: "Trust Region"
-              Subproblem Iteration Limit: 50
-
-    LOCA:
-      Bifurcation: {}
-      Constraints: {}
-      Predictor:
-        Method: Constant
-      Stepper:
-        Initial Value: 1.00000000000000005e-01
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
-        Continuation Method: Natural
-        Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+18
-      Step Size:
-        Initial Step Size: 2.00000000000000011e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -365,44 +272,37 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000008e-05
+            Tolerance: 1.0e-05
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000008e-05
-            Relative Tolerance: 1.00000000000000002e-03
+            Absolute Tolerance: 1.00e-05
+            Relative Tolerance: 1.0e-03
         Test 1:
           Test Type: MaxIters
-          Maximum Iterations: 50
+          Maximum Iterations: 20
       Direction:
         Method: Newton
         Newton:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-7
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
                 Belos:
                   VerboseObject:
                     Verbosity Level: medium
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-08
-                      Output Frequency: 10
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 20
                       Output Style: 1
-                      Maximum Iterations: 100
+                      Verbosity: 33
+                      Maximum Iterations: 200
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
@@ -413,17 +313,10 @@ ANONYMOUS:
                   Prec Type: RILUK
                   Ifpack2 Settings:
                     'fact: iluk level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0e+00
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:
@@ -441,14 +334,15 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
+
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-04
     Sensitivity For Parameter 0:
       Test Value: 2.292741991470e+00
     Test Value: 6.326532799129e+01
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-04
   Regression For Response 1:
-    Absolute Tolerance: 1.00000000000000004e-04
+    Absolute Tolerance: 1.0e-04
     Test Value: 3.907986097654e+03
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-04
 ...

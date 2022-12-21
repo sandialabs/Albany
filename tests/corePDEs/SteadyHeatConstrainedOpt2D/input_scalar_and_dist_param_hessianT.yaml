@@ -1,0 +1,271 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Problem: 
+    Name: Heat 2D
+    Compute Sensitivities: true
+    Dirichlet BCs: 
+      SDBC on NS NodeSet0 for DOF T: 1.0
+      SDBC on NS NodeSet1 for DOF T: 0.0
+      SDBC on NS NodeSet2 for DOF T: -1.0
+      SDBC on NS NodeSet3 for DOF T: 0.0
+    Parameters:
+      Number Of Parameters: 2
+      Parameter 0:
+        Dimension: 2
+        Type: Vector
+        Scalar 0:
+          Name: "Amplitude 0"
+          Lower Bound: 0.4
+          Upper Bound: 5.0
+        Scalar 1:
+          Name: "Radius 0"
+          Lower Bound: 0.4
+          Upper Bound: 5.0
+      Parameter 1:
+        Type: Distributed
+        Name: thermal_conductivity
+        Lower Bound: 0.4
+        Upper Bound: 5.0
+        Initial Uniform Value: 1.0
+        Mesh Part: ''
+    Hessian:
+      Use AD for Hessian-vector products (default): false
+      Residual:
+        Use AD for Hessian-vector products (default): true
+      Response 0:
+        Use AD for Hessian-vector products (default): true
+        Reconstruct H_pp: true
+        Parameter 0:         
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-7
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+
+        Parameter 1:
+          Replace H_pp with Identity: true
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-7
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+                  
+      Write Hessian MatrixMarket: false 
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 3
+        Response 0:
+          Name: Squared L2 Difference Source ST Target PST
+          Field Rank: Scalar
+          Source Field Name: Temperature
+          Target Value: 0.0
+        Response 1:
+          Name: Squared L2 Difference Source ST Target PST
+          Field Rank: Scalar
+          Scaling: 1.5e-01
+          Source Field Name: ThermalConductivity
+          Target Value: 0.0
+        Response 2:
+          Name: Weighted Misfit
+          Number Of Parameters: 1
+          Mean: [1., 1.]
+          Covariance Matrix: [[1., 0.], [0., 1.]]
+    Source Functions: 
+      Point:
+        Number: 1
+        Center 0: [0.5, 0.5]
+        Time Wavelet:
+          Type: Monotone
+        Spatial:
+          Type: Gaussian
+          Amplitude: 10.0
+          Radius: 0.5
+  Discretization: 
+    1D Elements: 40
+    2D Elements: 40
+    Method: STK2D
+    Exodus Output File Name: steady2d_scalar_and_dist_param.exo
+    Cubature Degree: 9
+  Regression For Response 0:
+    Test Value:  3.714619372618e-01
+    Relative Tolerance: 1.0e-03
+    Sensitivity For Parameter 0:
+      Test Values: [9.561048021617e-03, -3.169063814956e-01]
+    Sensitivity For Parameter 1:
+      Test Value: 8.044261077318e-03
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [41.0171]
+      
+  Piro: 
+    Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    Analysis: 
+      Output Level: 3
+      Analysis Package: ROL
+      ROL: 
+        Number Of Parameters: 2
+        Check Gradient: true
+        Parameter Initial Guess Type: Uniform Vector
+        Uniform Parameter Guess: 1.0e+00
+        Min And Max Of Random Parameter Guess: [-1.0, 2.0]
+        Bound Constrained: true       
+
+        Full Space: false
+        Use NOX Solver: true
+ 
+        Matrix Based Dot Product: 
+          Matrix Type: Hessian Of Response
+          Matrix Types:
+            Hessian Of Response:
+              Response Index: 0
+
+        ROL Options: 
+        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance:   1.0e-6
+              Relative Residual Tolerance:   1.0e-1
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      true
+              Zero Initial Guess:            false
+              Solver Type:                   0    
+          
+          Status Test: 
+            Gradient Tolerance: 1.0e-4
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 1
+
+          General: 
+            Output Level: 3
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+
+            Secant: 
+              Type: Limited-Memory BFGS
+              Use as Preconditioner: false
+              Use as Hessian: false
+              Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein Type: 1
+
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
+
+          Step:
+            Type: "Trust Region" 
+
+            Trust Region: 
+              Subproblem Model: Lin-More
+              Subproblem Solver: Truncated CG
+              Initial Radius: -1.0
+              Maximum Radius: 5.0e+03
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+03
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.0e-01
+                Gradient: 
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
+
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: iluk level-of-fill': 0
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

@@ -573,7 +573,7 @@ ENDIF()
 MESSAGE("\nAlbany physics packages:\n")
 
 # set optional dependency on demoPDEs, defaults to Enabled
-OPTION(ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" ON)
+OPTION(ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" OFF)
 IF (ENABLE_DEMO_PDES)
   MESSAGE("-- DEMO_PDES                               Enabled.")
   SET(ALBANY_DEMO_PDES TRUE)

@@ -1,0 +1,115 @@
+%YAML 1.1
+---
+ALBANY:
+  Debug Output: 
+  #  Write Jacobian to MatrixMarket: -1
+  #  Write Residual to MatrixMarket: -1
+    Write DgDp to MatrixMarket: false
+  Problem:
+    Name: Advection 1D
+    Solution Method: Transient
+    Compute Sensitivities: true
+    Dirichlet BCs: {}
+    Initial Condition:
+      Function: Expression Parser All DOFs
+      Function Expressions: ['sin(x)']
+    Advection Coefficient: [10.0]
+    Response Functions:
+      Number Of Responses: 2
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Two Norm
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: 'a_x Parameter'
+  Discretization:
+    1D Elements: 25
+    1D Scale: 6.283185307179586e00
+    Workset Size: -1
+    Method: STK1D
+    Exodus Output File Name: advection1D_scalar_param_adjoint_sens_explicit_out.exo
+    Periodic_x BC: true
+    Exodus Write Interval: 1
+  Piro:
+    Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    Tempus:
+      Integrator Name: Tempus Integrator
+      Lump Mass Matrix: false
+      Constant Mass Matrix: true
+      Sensitivities:
+        Sensitivity Parameter Index: 0
+        Response Function Index: 0
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 20
+          Interpolator:
+            Interpolator Type: Lagrange
+            Order: 3  #All RK methods are at most 4th order
+        Time Step Control:
+          Initial Time: 0.00000000000000000e+18
+          Initial Time Index: 0
+          Initial Time Step: 1.0e-4
+          Final Time: 1.0
+          Final Time Index: 10000000
+          Maximum Absolute Error: 1.00000000000000002e-08
+          Maximum Relative Error: 1.00000000000000002e-08
+          Output Time List: ''
+          Output Index List: ''
+          #Output Time Interval: 1.00000000000000000e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper:
+        Stepper Type: RK Forward Euler
+        #Stepper Type: General ERK
+        Use FSAL: false
+        Initial Condition Consistency Check: false
+        Initial Condition Consistency: None #This is necessary for Forward Euler!
+      Stratimikos:
+        Linear Solver Type: Belos
+        Linear Solver Types:
+          Belos:
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES:
+                Convergence Tolerance: 1.00000000000000002e-02
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 3
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: MueLu
+        Preconditioner Types:
+          MueLu:
+            verbosity: none
+          Ifpack2:
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings:
+              'fact: ilut level-of-fill': 1.00000000000000000e+00
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: 0.0
+    Sensitivity For Parameter 0:
+      Test Value: 0.0
+    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 1:
+    Absolute Tolerance: 1.00000000000000008e-05
+    Test Value: 3.552884918731e+00
+      #Sensitivity For Parameter 0:
+      #Test Value: -1.82404989716553993e-02
+    Relative Tolerance: 1.00000000000000002e-03
+...

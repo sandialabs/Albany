@@ -135,9 +135,15 @@ int main(int argc, char *argv[])
     const auto albanyApp = slvrfctry.createApplication(comm);
     //Forward model model evaluator
     const auto albanyModel = slvrfctry.createModel(albanyApp, false);
-    //Adjoint model model evaluator - only relevant for adjoint transient sensitivities
-    const bool adjointTransSens = albanyApp->isAdjointTransSensitivities(); 
-    const auto albanyAdjointModel = (adjointTransSens == true) ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
+    
+    //Adjoint model model evaluator 
+
+    const bool explicitMatrixTranspose = slvrfctry.getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
+                                        slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
+                                        false;
+
+    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
+    const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
     const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
 
     stackedTimer->stop("Albany: Setup Time");

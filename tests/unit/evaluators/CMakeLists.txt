@@ -4,11 +4,17 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
+get_filename_component(parentPath ${CMAKE_CURRENT_SOURCE_DIR} PATH)
+get_filename_component(parentDirName ${parentPath} NAME)
+get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set (testNameRoot ${parentDirName}_${dirName})
+
 #################################################
 #             Scalar Interpolation              #
 #################################################
 
 create_unit_test (NAME    DOFInterpolation
+                  PREFIX  ${testNameRoot}
                   SOURCES DOFInterpolation.cpp)
 
 #################################################
@@ -16,6 +22,7 @@ create_unit_test (NAME    DOFInterpolation
 #################################################
 
 create_unit_test (NAME    GatherSolution
+                  PREFIX  ${testNameRoot}
                   SOURCES GatherSolution.cpp)
 
 #################################################
@@ -23,6 +30,7 @@ create_unit_test (NAME    GatherSolution
 #################################################
 
 create_unit_test (NAME    GatherDistributedParameter
+                  PREFIX  ${testNameRoot}
                   SOURCES GatherDistributedParameter.cpp)
 
 #################################################
@@ -30,6 +38,7 @@ create_unit_test (NAME    GatherDistributedParameter
 #################################################
 
 create_unit_test (NAME    ScatterResidual
+                  PREFIX  ${testNameRoot}
                   SOURCES ScatterResidual.cpp)
 
 #################################################
@@ -37,4 +46,5 @@ create_unit_test (NAME    ScatterResidual
 #################################################
 
 create_unit_test (NAME    ScatterScalarResponse
+                  PREFIX  ${testNameRoot}
                   SOURCES ScatterScalarResponse.cpp)

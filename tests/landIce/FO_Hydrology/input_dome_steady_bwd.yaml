@@ -1,0 +1,499 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Debug Output:
+    Write Jacobian to MatrixMarket: 0
+    Write Solution to MatrixMarket: 0
+    Write Residual to MatrixMarket: 0
+    Report Timers: false
+  Problem:
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Steady
+    Name: LandIce Stokes FO Hydrology
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Parameters:
+      Number Of Parameters: 2
+      Parameter 0:
+        Type: Vector
+        Dimension: 2
+        Scalar 0:
+          Name: Mu Coefficient
+          Lower Bound: -10.0
+          Upper Bound: 3.0
+          Nominal Value: -2.0
+          Log Of Physical Parameter: true
+        Scalar 1:
+          Name: Transmissivity
+          Lower Bound: -10.0
+          Upper Bound: 0.0
+          Nominal Value: -2.0
+          Log Of Physical Parameter: true
+      Parameter 1:
+        Type: Scalar
+        Name: Glen's Law Homotopy Parameter
+        Nominal Value: 0.3
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Sum Of Responses
+        Scaling Coefficient 0: 1.0
+        Scaling Coefficient 1: 1.0e-3
+        Number Of Responses: 2
+        Response 0:
+          Name: Squared L2 Difference Side Source ST Target RT
+          Side Set Name: upperside
+          Field Rank: Vector
+          Source Field Name: Velocity_upperside
+          Target Field Name: observed_surface_velocity_upperside
+          Scaling: 4.484464262e-07 # This is the integral of surface_velocity (before adding noise)
+        Response 1:
+          Name: Weighted Misfit
+          Number Of Parameters: 1
+          Mean: [-2.0, -2.0]
+          Covariance Matrix: [[1., 0.], [0., 1.]]
+    Hessian:
+      Use AD for Hessian-vector products (default): false
+      Residual:
+        Use AD for Hessian-vector products (default): false
+      Response 0:
+        Use AD for Hessian-vector products (default): true
+        Parameter 0:
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 197
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: none
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  # Amesos2 solver name: pardiso_mkl
+        Parameter 1:
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 198
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: none
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  # Amesos2 solver name: pardiso_mkl
+                  
+    Initial Condition:
+      Function: Constant
+      Function Data: [2.0, 2.0, 10.0]
+    Dirichlet BCs:
+      DBC on NS basal_BoundaryNodeSet1 for DOF water_pressure_basalside: 0.0
+    Neumann BCs: { }
+    LandIce BCs:
+      Number : 1
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Power Law
+          Mu Type: Constant
+          Effective Pressure Type: Field
+          Power Exponent: 0.33
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
+    LandIce Physical Parameters:
+      Water Density:                 1028.0
+      Ice Density:                    910.0
+      Ice Latent Heat Of Fusion:        3.35e+05
+      Gravity Acceleration:             9.8
+      Clausius-Clapeyron Coefficient:   0.0
+    LandIce Viscosity:
+      Type: 'Glen''s Law'
+      Glen's Law A: 3.1689e-24    # [ Pa^-3 s^-1 ]
+      Glen's Law n: 3.0
+      Flow Rate Type: Uniform
+    Body Force:
+      Type: FO INTERP SURF GRAD
+    LandIce Noise:
+      Create surface velocity measures_qp:
+        Side Set Name: upperside
+        Field Name: surface_velocity_upperside
+        Field Layout: Side QuadPoint Vector
+        Noisy Field Name: observed_surface_velocity_upperside
+        PDF Parameters:
+          Noise PDF: Normal
+          Mean: 0.0
+          Standard Deviation: 1.0
+          Relative Noise: 0.2
+          Absolute Noise: 0.0
+      Create surface velocity measures_nodal:
+        Side Set Name: upperside
+        Field Name: surface_velocity_upperside
+        Field Layout: Side Node Vector
+        Noisy Field Name: observed_surface_velocity_upperside
+        PDF Parameters:
+          Noise PDF: Normal
+          Mean: 0.0
+          Standard Deviation: 1.0
+          Relative Noise: 0.2
+          Absolute Noise: 0.0
+    LandIce Field Norm:
+      sliding_velocity_basalside:
+        Regularization Type: Given Value
+        Regularization Value: 1e-10
+    LandIce Hydrology:
+      Use Water Thickness In Effective Pressure Formula: false
+      Eliminate Water Thickness: true
+      Melting Rate:
+        Use Geothermal Melt: true
+        Use Frictional Melt: true
+        Distributed Geothermal Flux: false
+        Given Geothermal Flux: 0.06
+      Cavities Equation:
+        Nodal: true
+        Use Melting: false
+        Creep Closure Coefficient: 4.0e-02
+        Use Log Scalar Parameters: false
+        Bed Bumps Height: 1.0
+        Bed Bumps Length: 2.0
+      Mass Equation:
+        Lump Mass: false
+        Use Melting: false
+      Darcy Law:
+        Water Thickness Exponent: 1.0
+        Potential Gradient Norm Exponent: 2.0
+        Regularization:
+          Regularization Type: Given Parameter
+          Regularization Parameter Name: Regularization
+      Surface Water Input:
+        Type: Given Field
+  Discretization:
+    Number Of Time Derivatives: 0
+    Method: Extruded
+    Cubature Degree: 4
+    Element Shape: Wedge
+    Columnwise Ordering: true
+    NumLayers: 5
+    Thickness Field Name: ice_thickness
+    Use Glimmer Spacing: true
+    Extrude Basal Node Fields: [ice_thickness, surface_height]
+    Basal Node Fields Ranks: [1, 1]
+    Workset Size: -1
+    Required Fields Info:
+      Number Of Fields: 2
+      Field 0:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations:
+      Side Sets: [basalside, upperside]
+      basalside:
+        Number Of Time Derivatives: 0
+        Cubature Degree: 4
+        Workset Size: 100
+        Method: Gmsh
+        Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle_fine.msh
+        Exodus Output File Name: results-bwd/dome_basal.exo
+        Required Fields Info:
+          Number Of Fields: 11
+          Field 0:
+            Field Name: ice_thickness           # [km]
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+          Field 1:
+            Field Name: surface_height          # [km]
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Expression: ['h=0.5', 'R=25', 'h*(1-(x^2+y^2)/R^2)']
+          Field 2:
+            Field Name: surface_water_input     # [mm/day]
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: [5.48e+01]
+          Field 3:
+            Field Name: effective_pressure      # [kPa]
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 4:
+            Field Name: beta                    # [kPa y/m]
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 5:
+            Field Name: water_thickness         # [m]
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 6:
+            Field Name: hydropotential          # [kPa]
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 7:
+            Field Name: ice_overburden          # [kPa]
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 8:
+            Field Name: water_discharge         # [m^2/s]
+            Field Type: Elem Gradient
+            Field Usage: Output
+          Field 9:
+            Field Name: sliding_velocity        # [m/y]
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 10:
+            Field Name: water_pressure          # [kPa]
+            Field Type: Node Scalar
+            Field Usage: Output
+      upperside:
+        Number Of Time Derivatives: 0
+        Cubature Degree: 4
+        Workset Size: 100
+        Method: Ioss
+        Restart Index: 1
+        Exodus Input File Name: results-fwd/dome_surface.exo
+        Exodus Output File Name: results-bwd/dome_surface.exo
+        Required Fields Info:
+          Number Of Fields: 3
+          Field 0:
+            Field Name: surface_velocity
+            Field Type: Node Vector
+            Field Origin: Mesh
+          Field 1:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Field Usage: Output
+          Field 2:
+            Field Name: Velocity
+            Field Type: Node Vector
+            Field Usage: Output
+  Piro:
+    Sensitivity Method: Adjoint
+    Write Only Converged Solution: false
+    Enable Explicit Matrix Transpose: true 
+    On Failure Solve With Zero Initial Guess: true
+    Analysis: 
+      Output Final Parameters: true
+      Output Level: 3
+      Analysis Package: ROL
+      ROL:
+        Number Of Parameters: 1 
+        Check Gradient: false
+        Parameter Initial Guess Type: From Model Evaluator
+        Bound Constrained: true
+
+        Full Space: false
+        Use NOX Solver: true        
+        
+        Matrix Based Dot Product: 
+          Matrix Type: Hessian Of Response
+          # Matrix Type: Identity
+          Matrix Types:
+            Hessian Of Response:
+              Response Index: 0
+
+        ROL Options: 
+        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance:   1.0e-5
+              Relative Residual Tolerance:   1.0e-0
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      false
+              Zero Initial Guess:            false
+              Solver Type:                   0    
+          
+          Status Test: 
+            Gradient Tolerance: 1.0e-4
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 5
+
+          General: 
+            Output Level: 3
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+            
+            Secant: 
+              Type: Limited-Memory BFGS
+              Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein Type: 1
+
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
+
+          Step:
+            Type: "Line Search"
+
+            Line Search: 
+              Function Evaluation Limit: 20
+              Sufficient Decrease Tolerance: 1.0e-6
+              Initial Step Size: 1.0
+              User Defined Initial Step Size: false
+              Use Previous Step Length as Initial Guess: false
+              Use Adaptive Step Size Selection: true
+
+              Descent Method: 
+                Type: Quasi-Newton Method
+
+              Line-Search Method: 
+                Type: Backtracking
+                Backtracking Rate: 0.25
+                Bracketing Tolerance: 1.0e-08
+                Path-Based Target Level: 
+                  Target Relaxation Parameter: 1.0
+                  Upper Bound on Path Length: 1.0
+
+              Quasi-Newton:
+                Method: L-Secant-B
+                L-Secant-B:
+                  Sufficient Decrease Parameter: 1.0e-02
+                  Relative Tolerance Exponent: 1.0
+            Trust Region: 
+              Subproblem Model: Coleman-Li
+              Subproblem Solver: Truncated CG
+              Initial Radius: 1.0
+              Maximum Radius: 5.0e+03
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+01
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.0e-01
+                Gradient: 
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
+
+    NOX:
+      Thyra Group Options:
+        Function Scaling: Row Sum
+        Update Row Sum Scaling: Before Each Nonlinear Solve
+      Solver Options:
+        Status Test Check Type: Minimal
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: MaxIters
+          Maximum Iterations: 30
+        Test 1:
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Unscaled
+          Tolerance: 1.0e-02
+      Nonlinear Solver: Line Search Based
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: { }
+            Stratimikos:
+              Linear Solver Type: Belos
+              Preconditioner Type: Ifpack2
+              Linear Solver Types:
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: none
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-06
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: Amesos2
+                  Ifpack2 Settings:
+                    Amesos2: {}
+                    'fact: ilut level-of-fill': 1.0
+                    'fact: absolute threshold': 1.0e-06
+                MueLu:
+                  verbosity: none
+                  max levels: 5
+                  'coarse: max size': 512
+                  multigrid algorithm: sa
+                  'aggregation: type': uncoupled
+                  'smoother: type': RELAXATION
+                  'smoother: params':
+                    'relaxation: type': Jacobi
+                    'relaxation: sweeps': 1
+                    'relaxation: damping factor': 2.5e-01
+      Line Search:
+        Method: Backtrack
+        Full Step:
+          Full Step: 1.0
+        Backtrack:
+          Max Iters: 10
+          Default Step: 1.0
+          Minimum Step: 1.0e-06
+          Reduction Factor: 5.0e-01
+          Recovery Step: 1.0e-03
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+...

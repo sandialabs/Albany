@@ -44,7 +44,6 @@ cmake -G Ninja \
       -D CMAKE_C_COMPILER=/tpls/install/bin/mpicc \
       -D CMAKE_CXX_COMPILER=/tpls/install/bin/mpicxx \
       -D CMAKE_Fortran_COMPILER=/tpls/install/bin/mpif90 \
-      -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11" \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=/tpls/install/include \
@@ -151,9 +150,7 @@ cmake -G Ninja \
       -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
 \
       -D TPL_ENABLE_Matio=OFF \
-      -D TPL_ENABLE_X11=OFF \
 \
-      -D Trilinos_ENABLE_CXX11:BOOL=ON \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
@@ -164,9 +161,9 @@ cmake -G Ninja \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
+      -D CMAKE_CXX_STANDARD=17 \
        ..
 
-#      -D CMAKE_CXX_STANDARD=17 \
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
 #
 # Optional build capabilities:

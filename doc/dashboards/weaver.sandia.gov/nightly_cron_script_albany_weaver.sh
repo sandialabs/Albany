@@ -14,5 +14,8 @@ export jenkins_trilinos_dir=/home/projects/albany/nightlyCDashWeaver/repos/Trili
 
 LOG_FILE=$BASE_DIR/nightly_log_weaverAlbany.txt
 
+bash convert-cmake-to-cdash-albany.sh regular
+bash create-new-cdash-cmake-script-albany.sh regular
+
 eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
 

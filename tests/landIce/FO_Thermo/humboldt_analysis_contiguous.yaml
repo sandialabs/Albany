@@ -1,0 +1,466 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Debug Output:
+    #Write Solution to MatrixMarket: 0
+    #Write Jacobian to MatrixMarket: -1
+    #Write Residual to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Steady
+    Name: LandIce Stokes FO Thermo Coupled 3D
+    Compute Sensitivities: true
+    Extruded Column Coupled in 2D Response: false
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Required Fields: [mu_log, surface_air_temperature]
+    Needs Dissipation: true
+    Needs Basal Friction: true
+    LandIce Field Norm:
+      sliding_velocity_basalside:
+        Regularization Type: Given Value
+        Regularization Value: 1.0e-04
+    Dirichlet BCs:  
+      DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
+      DBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
+      DBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
+    LandIce BCs:
+      Number : 2
+      BC 0:
+        Cubature Degree: 4
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Power Law
+          Power Exponent: 0.33333333333333
+          Effective Pressure Type: Hydrostatic Computed At Nodes
+          Mu Type: Exponent Of Field At Nodes
+          Mu Field Name: mu_log
+          #Zero Beta On Floating Ice: true
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: extruded_boundary_side_set_1
+        #Immersed Ratio: 0.893
+    Parameters: 
+      Number Of Parameters: 1
+      Parameter 0: 
+        Name: mu_log
+        Type: Distributed
+        Lower Bound: -1.9e+01
+        Upper Bound: 0.5e+01
+        Mesh Part: bottom
+    Hessian:
+      Use AD for Hessian-vector products (default): false
+      Residual:
+        Use AD for Hessian-vector products (default): true
+      Response 0:
+        Use AD for Hessian-vector products (default): true
+        Reconstruct H_pp: true
+        Parameter 0:
+          Linear Solver Type: Belos
+          Linear Solver Types:
+            Belos:
+              Solver Type: Block GMRES
+              Solver Types:
+                Block GMRES:
+                  Maximum Iterations: 200
+                  Convergence Tolerance: 1e-7
+                  Num Blocks: 200
+                  Output Frequency: 20
+                  Output Style: 1
+                  Verbosity: 33
+              VerboseObject:
+                Verbosity Level: medium
+          Preconditioner Type: Ifpack2
+          Preconditioner Types:
+            Ifpack2:
+              Overlap: 0
+              Prec Type: Amesos2
+              Ifpack2 Settings: 
+                Amesos2: {}
+                Amesos2 solver name: klu
+
+      Write Hessian MatrixMarket: true
+    LandIce Viscosity: 
+      Extract Strain Rate Sq: true
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 0.3
+      Continuous Homotopy With Constant Initial Viscosity: true
+      Coefficient For Continuous Homotopy: 8.0
+      Glen's Law A: 2.400304414e-24     # [ Pa^-3 s^-1 ]
+      Glen's Law n: 3.0
+      Flow Rate Type: Temperature Based
+    LandIce Physical Parameters: 
+      Conductivity of ice: 2.1
+      Diffusivity temperate ice: 1.1e-08
+      Heat capacity of ice: 2.009e+03
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.80616
+      Reference Temperature: 2.65e+02
+      Clausius-Clapeyron Coefficient: 7.9e-08
+      Ice Latent Heat Of Fusion: 3.34e+05
+      Permeability factor: 1.0e-12 #1e-12
+      Viscosity of water: 1.8e-03
+      Omega exponent alpha: 2.0
+      Diffusivity homotopy exponent: -1.1
+    Body Force: 
+        Type: FO INTERP SURF GRAD
+    LandIce Enthalpy:
+      Regularization: 
+        Flux Regularization: 
+          alpha: 4.0
+          beta: 0.0
+        Basal Melting Regularization: 
+          alpha: 4.0
+          beta: 0.0
+      Stabilization: 
+        Type: Upwind
+        Parameter Delta: 0.5
+      Bed Lubrication:
+        Type: Dry
+    Response Functions: 
+      Number Of Responses: 1
+      Response 0: 
+        Name: Surface Velocity Mismatch
+        Regularization Coefficient: 1.0e+03
+        Asinh Scaling: 1.0e+01
+        Scaling Coefficient: 4.540693e-06
+        Cubature Degree: 4
+      Response 1: 
+        Name: Surface Mass Balance Mismatch
+        Regularization Coefficient: 1.0e+03
+        H Coefficient: 100.0
+        SMB Coefficient: 1.0
+        Scaling Coefficient: 4.540693e-06
+        Cubature Degree: 4
+  Discretization: 
+    Workset Size: -1
+    Method: Extruded
+    Surface Height Field Name: surface_height
+    Number Of Time Derivatives: 0
+    Cubature Degree: 4
+    Exodus Output File Name: ./humboldt_full.exo
+    Element Shape: Wedge
+    Interleaved Ordering: 1
+    Columnwise Ordering: false
+    NumLayers: 2
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, mu_log, bed_topography, surface_air_temperature]
+    Basal Node Fields Ranks: [1, 1, 1, 1, 1]
+    Interpolate Basal Node Layered Fields: [velocity]
+    Basal Node Layered Fields Ranks: [2]
+    Use Glimmer Spacing: true
+    Required Fields Info: 
+      Number Of Fields: 9
+      Field 0: 
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2: 
+        Field Name: mu_log
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3:
+        Field Name: surface_air_temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 4:
+        Field Name: surface_enthalpy
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 5:
+        Field Name: temperature
+        Field Type: Elem Scalar
+        Field Usage: Output
+      Field 6:
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 7: 
+        Field Name: Diff Enth
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 8: 
+        Field Name: velocity
+        Field Type: Node Vector
+        Field Origin: Mesh
+    Side Set Discretizations: 
+      Side Sets: [basalside, upperside]
+      basalside: 
+        Workset Size: -1
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Restart Index: 1
+        Use Serial Mesh: false
+        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
+        Exodus Output File Name: ./humboldt_basal.exo
+        Cubature Degree: 4
+        Required Fields Info: 
+          Number Of Fields: 8
+          Field 0: 
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
+          Field 1:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
+          Field 2: 
+            Field Name: bed_topography
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii
+          Field 3: 
+            Field Name: mu_log
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
+          Field 4: 
+            Field Name: surface_air_temperature
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_air_temperature.ascii
+          Field 5: 
+            Field Name: heat_flux
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.042
+            #File Name: ../AsciiMeshes/Humboldt/basal_heat_flux.ascii
+          Field 6: 
+            Field Name: velocity
+            Field Origin: File
+            Field Type: Node Layered Vector
+            Number Of Layers: 2
+            Vector Dim: 2
+            File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
+          Field 7: 
+            Field Name: effective_pressure
+            Field Type: Node Scalar
+            #Field Origin: Mesh
+            Field Origin: File
+            File Name:  ../AsciiMeshes/Humboldt/effective_pressure.ascii
+            #Field Value: 1.0
+      upperside:
+        Workset Size: -1
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        #Exodus Output File Name: output/humboldt_upper.exo
+        Cubature Degree: 4
+        Required Fields Info:
+          Number Of Fields: 2
+          Field 0:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Vector Dim: 2
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity.ascii
+          Field 1:
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
+  Piro:
+    Sensitivity Method: Adjoint
+    Write Only Converged Solution: false
+    Enable Explicit Matrix Transpose: true
+    Analysis:
+      Analysis Package: ROL
+      ROL:
+        Number Of Parameters: 1
+        Check Gradient: false
+        Print Output: true
+        Parameter Initial Guess Type: Uniform Vector
+        Uniform Parameter Guess: -5.7e+00
+        Min And Max Of Random Parameter Guess: [-1.0, 2.0]
+        Bound Constrained: true
+
+        Full Space: false
+        Use NOX Solver: true        
+        
+        Matrix Based Dot Product: 
+          Matrix Type: Hessian Of Response
+          Matrix Types:
+            Hessian Of Response:
+              Response Index: 0
+
+        ROL Options: 
+        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance:   1.0e-5
+              Relative Residual Tolerance:   1.0e-5
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      true
+              Zero Initial Guess:            true
+              Solver Type:                   0    
+          
+          Status Test: 
+            Gradient Tolerance: 1.0e+100
+            Iteration Limit: 0
+
+          General: 
+            Output Level: 3
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+
+            Secant: 
+              Type: Limited-Memory BFGS
+              Use as Preconditioner: false
+              Use as Hessian: false
+              Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein Type: 1
+
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
+
+          Step:
+            Type: "Trust Region" 
+
+            Trust Region: 
+              Subproblem Model: Coleman-Li
+              Subproblem Solver: Truncated CG
+              Initial Radius: 10.0
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+01
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.0e-01
+                Gradient: 
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0
+
+    NOX: 
+      Thyra Group Options: 
+        Function Scaling: None
+        Update Row Sum Scaling: Before Each Nonlinear Solve
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 1
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e+08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 1
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Linear Solver: 
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: {}
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject:
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e+08
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 1
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: FROSch
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: Amesos2
+                  Ifpack2 Settings: 
+                    Amesos2: {}
+                    Amesos2 solver name: klu
+                FROSch:
+                  FROSch Preconditioner Type: TwoLevelPreconditioner        # FROSch preconditioner type. Options: OneLevelPreconditioner, TwoLevelPreconditioner
+                  OverlappingOperator Type: AlgebraicOverlappingOperator    # First Level: AlgebrAlgebraicOverlappingOperator determines the overlap based on the graph of the matrix
+                  CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
+                  Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
+                  Dimension : 3                                             # Spatial dimension of the problem
+                  DofsPerNode : 4                                           # Number of degrees of freedom per node
+                  Overlap: 1                                                # Number of layers of elements in the overlap
+                  Null Space Type: Input                                    # Null space is provided by Albany
+                  AlgebraicOverlappingOperator:
+                    'Reuse: Symbolic Factorization': true                   # Reuse of the symbolic factorization
+                    Adding Layers Strategy: CrsGraph
+                    Combine Values in Overlap: Averaging
+                    Solver:                                                 # Solver on the first level
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                  IPOUHarmonicCoarseOperator:
+                    'Reuse: Coarse Basis': true                            # Reuse of the coarse basis functions
+                    'Reuse: Coarse Matrix': false                           # Reuse of the coarse matrix
+                    'Reuse: Coarse Matrix Symbolic Factorization': false     # Reuse of the symbolic factorization of the coarse matrix
+                    Test Unconnected Interface: false
+                    'Extensions: Remove Coupling': true
+                    'Extensions: Coupling IDs to Remove': [[0, 0, 0, 3],[0, 1, 0, 3],[0, 2, 0, 3],[0, 3, 0, 0],[0, 3, 0, 1],[0, 3, 0, 2]]
+                    Blocks:
+                      1:                                                    # For a multiphysics problem, the coarse space may be decomposed into several blocks. Here, we only need one block.
+                        InterfacePartitionOfUnity:                          # The interface partition of unity defines the specific GDSW type coarse space
+                          Type: RGDSW                                       # Possible types: GDSW, RGDSW
+                          GDSW:
+                            Type: Full                                      # Here, we could select subspaces of the GDSW coarse. Generally, we use "Full".
+                          RGDSW:
+                            Type: Full                                      # Here, we could select subspaces of the RGDSW coarse. Generally, we use "Full".
+                            Distance Function: Constant            # Options 1 and 2.2 differ in the distance function used to compute the interface values: "Constant" (Option 1) and "Inverse Euclidean" (Option 2.2)
+                    Interface Communication Strategy: CreateOneToOneMap
+                    ExtensionSolver:                                        # Solver for the energy-minimizing extensions
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                    Distribution:                                           # Parallel distribution of the coarse problem
+                      Type: linear                                          # Specifies the parallel distribution strategy. For now, we use "linear"
+                      NumProcs: 1                                           # Number of ranks used for the coarse problem
+                      GatheringSteps: 2
+                    CoarseSolver:                                           # Solver for the coarse problem
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+          Rescue Bad Newton Solve: true
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...
+

@@ -4,19 +4,53 @@ SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
 SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 
+execute_process(COMMAND bash $ENV{SCRIPT_DIRECTORY}/delete_txt_files.sh
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+message("IKT mpicc = " $ENV{OPENMPI_ROOT}/bin/mpicc) 
+execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc -dumpversion
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                RESULT_VARIABLE COMPILER_VERSION_RESULT
+                OUTPUT_VARIABLE COMPILER_VERSION
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+#message("IKT compiler version = " ${COMPILER_VERSION})
+execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc --version
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                RESULT_VARIABLE COMPILER_RESULT
+                OUTPUT_FILE "compiler.txt")
+execute_process(COMMAND bash $ENV{SCRIPT_DIRECTORY}/process_compiler.sh
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                RESULT_VARIABLE CHANGE_COMPILER_RESULT
+                OUTPUT_VARIABLE COMPILER
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("IKT compiler = " ${COMPILER})
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
+#message("IKT osname = " ${osname}) 
+#message("IKT osrel = " ${osrel}) 
+#message("IKT cpu = " ${cpu}) 
+
 if (1)
   # What to build and test
   IF(CTEST_BUILD_OPTION MATCHES "base-trilinos") 
     set (DOWNLOAD_TRILINOS FALSE)
     set (DOWNLOAD_ALBANY FALSE)
     set (BUILD_TRILINOS TRUE)
-    set (BUILD_ALB64 FALSE) 
+    set (BUILD_ALB64 FALSE)
+    set (BUILD_STRING "Trilinos")  
   ENDIF() 
   IF(CTEST_BUILD_OPTION MATCHES "base-albany") 
     set (DOWNLOAD_TRILINOS FALSE)
     set (DOWNLOAD_ALBANY FALSE)
     set (BUILD_TRILINOS FALSE)
     set (BUILD_ALB64 TRUE) 
+    set (BUILD_STRING "Albany")  
   ENDIF() 
   set (CLEAN_BUILD TRUE)
   set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
@@ -32,6 +66,7 @@ if (1)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
+    set (BUILD_STRING "Trilinos")  
   ELSE()
     set (BUILD_TRILINOSDBG FALSE)
   ENDIF()
@@ -47,6 +82,7 @@ if (1)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
+    set (BUILD_STRING "Albany")  
   ELSE()
     set (BUILD_ALB64DBG FALSE)
   ENDIF() 
@@ -59,6 +95,7 @@ if (1)
     set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (BUILD_STRING "Trilinos")  
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 #    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
@@ -73,6 +110,7 @@ if (1)
     set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (BUILD_STRING "Albany")  
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 #    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
@@ -87,6 +125,7 @@ if (1)
     set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (BUILD_STRING "Trilinos")  
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 #    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
@@ -101,6 +140,7 @@ if (1)
     set (BUILD_ALB64CLANGDBG TRUE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (BUILD_STRING "Albany")  
     set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 #    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
@@ -115,6 +155,7 @@ if (1)
     set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_INTEL_TRILINOS TRUE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (BUILD_STRING "Trilinos")  
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 #    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
@@ -129,6 +170,7 @@ if (1)
     set (BUILD_ALB64CLANGDBG FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY TRUE)
+    set (BUILD_STRING "Albany")  
     set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 #    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
@@ -158,18 +200,6 @@ endif ()
 
 set (extra_cxx_flags "")
 
-find_program(UNAME NAMES uname)
-macro(getuname name flag)
-  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
-endmacro(getuname)
-
-getuname(osname -s)
-getuname(osrel  -r)
-getuname(cpu    -m)
-
-SET (MPI_BIN_DIR $ENV{MPI_BIN})
-SET (MPI_LIB_DIR $ENV{MPI_LIB})
-
 # Begin User inputs:
 #set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
 SITE_NAME(CTEST_SITE) # directly set CTEST_SITE to the output of `hostname`
@@ -187,7 +217,8 @@ set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
 #set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 #set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}-${CTEST_BUILD_CONFIGURATION}")
-set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}")
+#set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}")
+set (CTEST_BUILD_NAME "${BUILD_STRING}-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-Serial")
 set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
@@ -198,6 +229,8 @@ set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 if ((CTEST_BUILD_CONFIGURATION MATCHES "Debug") OR (CTEST_BUILD_OPTION MATCHES "clang-albany"))
 # Runs tests longer if in debug mode
    set (CTEST_TEST_TIMEOUT 4200)
+else () 
+   set (CTEST_TEST_TIMEOUT 900)
 endif ()
 
 set (PREFIX_DIR /projects/albany)
@@ -372,6 +405,7 @@ endif ()
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
 if (BUILD_INTEL_TRILINOS)
+  set(BTYPE "RELEASE") 
   set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall")
   set (CONF_OPTS
     CDASH-TRILINOS-INTEL-FILE.TXT
@@ -447,42 +481,40 @@ if (BUILD_ALB64)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstall) 
   set(BUILDTYPE "RELEASE")
   set(FPE_CHECK "OFF")
+  set(MESH_DEP_ON_SOLN "ON")
   set(MESH_DEP_ON_PARAMS "OFF")
 endif(BUILD_ALB64) 
 if (BUILD_INTEL_ALBANY)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall)
   set(BUILDTYPE "RELEASE")
   set(FPE_CHECK "OFF")
+  set(MESH_DEP_ON_SOLN "OFF")
   set(MESH_DEP_ON_PARAMS "ON")
 endif (BUILD_INTEL_ALBANY)
 if (BUILD_ALB64CLANG)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11)
   set(BUILDTYPE "RELEASE")
   set(FPE_CHECK "OFF")
+  set(MESH_DEP_ON_SOLN "OFF")
   set(MESH_DEP_ON_PARAMS "OFF")
 endif (BUILD_ALB64CLANG)
 if (BUILD_ALB64CLANGDBG)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11Dbg) 
   set(BUILDTYPE "DEBUG")
   set(FPE_CHECK "ON")
+  set(MESH_DEP_ON_SOLN "OFF")
   set(MESH_DEP_ON_PARAMS "OFF")
 endif (BUILD_ALB64CLANGDBG)
 if (BUILD_ALB64DBG)
   set(TRILINSTALLDIR ${CTEST_INSTALL_DIRECTORY}/TrilinosDbg)
   set(BUILDTYPE "DEBUG")
   set(FPE_CHECK "ON")
+  set(MESH_DEP_ON_SOLN "OFF")
   set(MESH_DEP_ON_PARAMS "OFF")
 endif (BUILD_ALB64DBG)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-#    "-DENABLE_ALBANY_EPETRA:BOOL=OFF"
-    "-DENABLE_LANDICE:BOOL=ON"
-    "-DENABLE_UNIT_TESTS:BOOL=ON"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=ON"
-    "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=${MESH_DEP_ON_PARAMS}"
-    "-DCMAKE_BUILD_TYPE:STRING=${BUILDTYPE}"
-    "-DENABLE_STRONG_FPE_CHECK:BOOL=${FPE_CHECK}"
+    CDASH-ALBANY-FILE.TXT
     )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)

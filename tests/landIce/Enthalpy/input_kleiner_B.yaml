@@ -1,0 +1,267 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Epetra
+  Problem:
+    Phalanx Graph Visualization Detail: 2
+    Solution Method: Steady
+    Compute Sensitivities: true
+    Name: LandIce Enthalpy 3D
+    Basal Side Name: basalside
+    Needs Dissipation: true
+    Needs Basal Friction: true
+    Required Fields: [ice_thickness]
+    Required Basal Fields: [ice_thickness]
+    Dirichlet BCs:
+      DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
+    LandIce Viscosity:
+      Extract Strain Rate Sq: true
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 1.0e+00
+      Continuous Homotopy With Constant Initial Viscosity: true
+      Coefficient For Continuous Homotopy: 8.00000000000000000e+00
+      Glen's Law A: 5.30346271e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.00000000000000000e+00
+      Flow Rate Type: Uniform
+    LandIce Physical Parameters:
+      Conductivity of ice: 2.1e+00
+      Diffusivity temperate ice: 1.1487e-11
+      Heat capacity of ice: 2.009e+03
+      Water Density: 1.0e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.81e+00
+      Reference Temperature: 2.2315e+02
+      Clausius-Clapeyron Coefficient: 0.0e+02
+      Ice Latent Heat Of Fusion: 3.35e+05
+      Permeability factor: 0.0e+02
+      Viscosity of water: 1.8e-03
+      Omega exponent alpha: 2.0e+00
+      Diffusivity homotopy exponent: -1.1e+00
+    LandIce Enthalpy:
+      Regularization:
+        Flux Regularization:
+          alpha: 10.0
+          beta: 0.0e+02
+        Basal Melting Regularization:
+          alpha: 10.0
+          beta: 0.0e+02
+      Stabilization:
+        Type: None
+        Parameter Delta: 1.0e+00
+      Bed Lubrication:
+        Type: Dry
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: Glen's Law Homotopy Parameter
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
+    Method: Extruded
+    Number Of Time Derivatives: 0
+    Cubature Degree: 4
+    Exodus Output File Name: kleiner_B.exo
+    Element Shape: Hexahedron
+    Use Serial Mesh: true
+    Columnwise Ordering: true
+    NumLayers: 80
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, surface_air_temperature]
+    Basal Node Fields Ranks: [1, 1, 1]
+    Interpolate Basal Node Layered Fields: [velocity, vertical_velocity]
+    Basal Node Layered Fields Ranks: [2, 1]
+
+    Use Glimmer Spacing: true
+    Required Fields Info:
+      Number Of Fields: 4
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2:
+        Field Name: surface_air_temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3:
+        Field Name: surface_enthalpy
+        Field Type: Node Scalar
+        Field Usage: Output
+    Side Set Discretizations:
+      Side Sets: [basalside]
+      basalside:
+        Method: Exodus
+        Number Of Time Derivatives: 0
+        Exodus Input File Name: ../ExoMeshes/slab_2d_1x1.exo
+        Exodus Output File Name: kleiner_B_basal.exo
+        Cubature Degree: 3
+        Use Serial Mesh: true
+        Required Fields Info:
+          Number Of Fields: 6
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.2
+          Field 1:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.2
+          Field 2:
+            Field Name: surface_air_temperature
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 270.15
+          Field 3:
+            Field Name: heat_flux
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.0
+          Field 4:
+            Number Of Layers: 41
+            Vector Dim: 2
+            Field Name: velocity
+            Field Type: Node Layered Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/Enthalpy/KleinerB/vel_xy.ascii
+          Field 5:
+            Number Of Layers: 2
+            Field Name: vertical_velocity
+            Field Type: Node Layered Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Enthalpy/KleinerB/vel_z.ascii
+  Piro:
+    LOCA:
+      Bifurcation: {}
+      Constraints: {}
+      Predictor:
+        Method: Constant
+      Stepper:
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: Glen's Law Homotopy Parameter
+        Continuation Method: Natural
+        Max Steps: 10
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+      Step Size:
+        Initial Step Size: 1.00000000000000005e-01
+        Max Step Size: 1.00000000000000005e-01
+    NOX:
+      Thyra Group Options:
+        Function Scaling: None
+        Update Row Sum Scaling: Before Each Nonlinear Solve
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 1
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-11
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 500
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-13
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: AztecOO
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 500
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.00000000000000002e-08
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types:
+                Ifpack:
+                  Overlap: 0
+                  Prec Type: Amesos
+                  Ifpack Settings:
+                    'fact: level-of-fill': 0
+                ML:
+                  Base Method Defaults: none
+                  ML Settings:
+                    default values: SA
+                    ML output: 0
+                    'repartition: enable': 1
+                    'repartition: max min ratio': 1.32699999999999995e+00
+                    'repartition: min per proc': 600
+                    'repartition: Zoltan dimensions': 2
+                    'repartition: start level': 4
+                    'semicoarsen: number of levels': 2
+                    'semicoarsen: coarsen rate': 12
+                    'smoother: sweeps': 4
+                    'smoother: type': Chebyshev
+                    'smoother: Chebyshev eig boost': 1.19999999999999995e+00
+                    'smoother: sweeps (level 0)': 1
+                    'smoother: sweeps (level 1)': 4
+                    'smoother: type (level 0)': line Jacobi
+                    'smoother: type (level 1)': line Jacobi
+                    'smoother: damping factor': 5.50000000000000044e-01
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+                    'coarse: pre or post': pre
+                    'coarse: sweeps': 4
+                    max levels: 7
+          Rescue Bad Newton Solve: true
+      Line Search:
+        Full Step:
+          Full Step: 1.00000000000000000e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Sensitivity For Parameter 0:
+      Test Value: 1.203108182905e-12
+    Test Value: 9.077015647556e+01
+    Relative Tolerance: 1.0e-04
+...

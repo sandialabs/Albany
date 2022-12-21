@@ -190,95 +190,80 @@ ANONYMOUS:
       ROL:
         Number Of Parameters: 2
         Check Gradient: false
-        Gradient Tolerance: 1.0e-04
-        Step Tolerance: 0.0
-        Max Iterations: 30
-        Print Output: true
         Parameter Initial Guess Type: From Model Evaluator
         Uniform Parameter Guess: 0.0
         Min And Max Of Random Parameter Guess: [1.0, 2.0]
         Bound Constrained: true
-        bound_eps: 1.0e-01
+
+        Full Space: false
+        Use NOX Solver: false
+
         ROL Options:
+
+        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance:   1.0e-5
+              Relative Residual Tolerance:   1.0e-5
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      true
+              Zero Initial Guess:            false
+              Solver Type:                   0    
+          
+          Status Test: 
+            Gradient Tolerance: 1.0e-4
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 2
+
           General:
+            Output Level: 1
             Variable Objective Function: false
             Scale for Epsilon Active Sets: 1.0
-            Inexact Objective Function: false
-            Inexact Gradient: true
-            Inexact Hessian-Times-A-Vector: true
-            Projected Gradient Criticality Measure: false
+
             Secant:
               Type: Limited-Memory BFGS
               Use as Preconditioner: false
               Use as Hessian: false
-              Maximum Storage: 200
+              Maximum Storage: 50
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
               Barzilai-Borwein Type: 1
+
             Krylov:
               Type: Conjugate Gradients
               Absolute Tolerance: 1.0e-04
               Relative Tolerance: 1.0e-02
-              Iteration Limit: 100
+              Iteration Limit: 50
+
           Step:
-            Line Search:
-              Function Evaluation Limit: 15
-              Sufficient Decrease Tolerance: 1.0e-12
-              Initial Step Size: 1.0
-              User Defined Initial Step Size: false
-              Accept Linesearch Minimizer: true
-              Accept Last Alpha: true
-              Descent Method:
-                Type: Quasi-Newton
-              Curvature Condition:
-                Type: Strong Wolfe Conditions
-                General Parameter: 9.0e-01
-                Generalized Wolfe Parameter: 6.0e-01
-              Line-Search Method:
-                Type: Cubic Interpolation
-                Backtracking Rate: 5.0e-01
-                Bracketing Tolerance: 1.0e-08
-                Path-Based Target Level:
-                  Target Relaxation Parameter: 1.0e+00
-                  Upper Bound on Path Length: 1.0e+00
+            Type: "Trust Region" 
+
             Trust Region:
+              Subproblem Model: Kelley-Sachs
               Subproblem Solver: Truncated CG
-              Initial Radius: 1.0e+01
+              Initial Radius: -1.0
               Maximum Radius: 5.0e+03
               Step Acceptance Threshold: 5.0e-02
               Radius Shrinking Threshold: 5.0e-02
               Radius Growing Threshold: 9.0e-01
               Radius Shrinking Rate (Negative rho): 6.25e-02
               Radius Shrinking Rate (Positive rho): 2.5e-01
-              Radius Growing Rate: 2.5e+00
-              Safeguard Size: 1.0e+08
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+03
               Inexact:
                 Value:
                   Tolerance Scaling: 1.0e-01
                   Exponent: 9.0e-01
-                  Forcing Sequence Initial Value: 1.0e+00
+                  Forcing Sequence Initial Value: 1.0
                   Forcing Sequence Update Frequency: 10
                   Forcing Sequence Reduction Factor: 1.0e-01
                 Gradient:
                   Tolerance Scaling: 1.0e-01
                   Relative Tolerance: 2.0e+00
-          Status Test:
-            Gradient Tolerance: 1.0e-10
-            Constraint Tolerance: 1.0e-10
-            Step Tolerance: 1.0e-14
-            Iteration Limit: 1000
-    LOCA:
-      Bifurcation: {}
-      Constraints: {}
-      Predictor:
-        Method: Constant
-      Stepper:
-        Initial Value: 0.0
-        Continuation Parameter: 'Glen''s Law Homotopy Parameter'
-        Continuation Method: Natural
-        Max Steps: 10
-        Max Value: 1.0
-        Min Value: 0.0
-      Step Size:
-        Initial Step Size: 2.0e-01
+
     NOX:
       Status Tests:
         Test Type: Combo
@@ -306,51 +291,33 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-7
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: high
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-6
                       Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.0e-06
-              Preconditioner Type: ML
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings:
-                    'fact: level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    ML output: 0
-                    'repartition: enable': 1
-                    'repartition: max min ratio': 1.327
-                    'repartition: min per proc': 600
-                    'repartition: Zoltan dimensions': 2
-                    'repartition: start level': 4
-                    'semicoarsen: number of levels': 2
-                    'semicoarsen: coarsen rate': 14
-                    'smoother: sweeps': 2
-                    'smoother: type': Gauss-Seidel
-                    'smoother: Chebyshev eig boost': 1.2
-                    'smoother: sweeps (level 0)': 1
-                    'smoother: type (level 0)': line Gauss-Seidel
-                    'smoother: damping factor': 1.0
-                    'smoother: pre or post': both
-                    'coarse: type': Gauss-Seidel
-                    'coarse: sweeps': 4
-                    'coarse: max size': 2000
-                    'coarse: pre or post': pre
-                    max levels: 7
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: iluk level-of-fill': 0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
@@ -359,17 +326,6 @@ ANONYMOUS:
       Nonlinear Solver: Line Search Based
       Printing:
         Output Precision: 3
-        Output Processor: 0
-        Output Information:
-          Error: true
-          Warning: true
-          Outer Iteration: true
-          Parameters: false
-          Details: false
-          Linear Solver Details: false
-          Stepper Iteration: true
-          Stepper Details: true
-          Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
 ...

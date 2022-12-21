@@ -140,6 +140,9 @@ namespace Albany {
       const std::string& dist_param_name,
       const std::string& dist_param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>& Hv_dp) = 0;
+
+    //! Returns a linear operator for the Hessian of the response with respect of the parameter param_name
+    virtual Teuchos::RCP<Thyra_LinearOp> get_Hess_pp_operator(const std::string& param_name) {return Teuchos::null;}
     //@}
 
     virtual void printResponse(

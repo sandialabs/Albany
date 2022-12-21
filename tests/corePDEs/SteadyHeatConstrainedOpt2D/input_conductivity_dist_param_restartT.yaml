@@ -1,0 +1,99 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Problem: 
+    Name: Heat 2D
+    Compute Sensitivities: true
+    Dirichlet BCs: 
+      DBC on NS nodeset0 for DOF T: 1.0
+      DBC on NS nodeset1 for DOF T: 0.0
+      DBC on NS nodeset2 for DOF T: -1.0
+      DBC on NS nodeset3 for DOF T: 0.00
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Distributed
+        Name: thermal_conductivity
+        Lower Bound: 4.0e-01
+        Upper Bound: 5.0e+00
+        Mesh Part: ''
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 0:
+          Name: Squared L2 Difference Source ST Target PST
+          Field Rank: Scalar
+          Source Field Name: Temperature
+          Target Value: 0.0
+        Response 1:
+          Name: Squared L2 Difference Source ST Target PST
+          Field Rank: Scalar
+          Scaling: 1.5e-01
+          Source Field Name: ThermalConductivity
+          Target Value: 0.0
+  Discretization: 
+    Method: Exodus
+    Number Of Time Derivatives: 0
+    Use Serial Mesh: true
+    Exodus Output File Name: steady2d_conduct_restartT.exo
+    Exodus Input File Name: steady2d_conduct_opt.exo
+    Cubature Degree: 3
+    Restart Index: 1
+  Regression For Response 0:
+    Test Value: 1.78631029271e-01
+    Relative Tolerance: 1.0e-03
+    Sensitivity For Parameter 0:
+      Test Value: 1.07283086607e-02
+  Piro: 
+    Sensitivity Method: Adjoint
+
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: iluk level-of-fill': 0
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

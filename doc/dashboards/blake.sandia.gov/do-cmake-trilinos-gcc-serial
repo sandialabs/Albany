@@ -18,9 +18,8 @@ cmake \
       -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
       -D CMAKE_C_COMPILER:FILEPATH=mpicc \
       -D CMAKE_Fortran_COMPILER:FILEPATH=mpif77 \
-      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Werror' \
+      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Werror -std=c++17' \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-\
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D BLAS_LIBRARY_DIRS=${BLAS_PATH}/lib \
       -D BLAS_INCLUDE_DIRS=${BLAS_PATH}/include \
@@ -39,10 +38,8 @@ cmake \
       -D TPL_ENABLE_Matio:BOOL=OFF \
       -D TPL_ENABLE_METIS:STRING=OFF \
       -D TPL_ENABLE_ParMETIS:STRING=OFF \
-      -D TPL_ENABLE_X11=OFF \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
-\
       -D Anasazi_ENABLE_RBGen:BOOL=ON \
       -D Belos_HIDE_DEPRECATED_CODE=ON  \
       -D Epetra_ENABLE_TESTS:BOOL=OFF \
@@ -63,7 +60,7 @@ cmake \
       -D Phalanx_INDEX_SIZE_TYPE:STRING='INT' \
       -D Phalanx_KOKKOS_DEVICE_TYPE:STRING='SERIAL' \
       -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
-      -D Piro_ENABLE_TESTS:BOOL=ON \
+      -D Piro_ENABLE_TESTS:BOOL=OFF \
       -D ROL_ENABLE_TESTS:BOOL=OFF \
       -D ROL_ENABLE_EXAMPLES:BOOL=OFF \
       -D Sacado_ENABLE_TESTS:BOOL=OFf \
@@ -74,13 +71,11 @@ cmake \
       -D Xpetra_ENABLE_Epetra:BOOL=OFF \
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
       -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
-\
       -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
       -D Trilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF \
       -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING='' \
-\
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_Amesos2:BOOL=ON \
@@ -131,7 +126,9 @@ cmake \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
-\
+      -D CMAKE_CXX_STANDARD=17 \
+      -D TPL_ENABLE_X11:BOOL=OFF \
       -D Tpetra_ENABLE_DEPRECATED_CODE=OFF \
+      -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
       -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
 ..

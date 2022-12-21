@@ -1,0 +1,272 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+  Problem:
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Steady
+    Name: LandIce Stokes First Order 3D
+    Compute Sensitivities: true
+    Extruded Column Coupled in 2D Response: true
+    Adjust Bed Topography to Account for Thickness Changes: true
+    Required Fields: [temperature]
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 1:
+          Cubature Degree: 3
+          Name: Surface Mass Balance Mismatch
+          SMB Coefficient: 1.0e+02
+          Field Name: Velocity
+          Regularization Coefficient: 1.0
+          Scaling Coefficient: 5.8824e-07
+          H Coefficient: 1.0
+        Response 0:
+          Cubature Degree: 3
+          Asinh Scaling: 1.0e+01
+          Field Name: Velocity
+          Regularization Coefficient: 1.0
+          Scaling Coefficient: 5.8824e-07
+          Name: Surface Velocity Mismatch
+    Dirichlet BCs: {}
+    Neumann BCs: {}
+    LandIce BCs:
+      Number: 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Power Law
+          Mu Type: Exponent of Field
+          Mu Field Name: basal_friction
+          Effective Pressure Type: Constant
+          Effective Pressure: 1.0
+          Power Exponent: 1.0
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: lateralside
+    Parameters:
+      Number Of Parameters: 2
+      Parameter 0:
+        Lower Bound: -1.2e+01
+        Mesh Part: bottom
+        Type: Distributed
+        Name: basal_friction
+        Upper Bound: 1.2e+01
+      Parameter 1:
+        Lower Bound: 1.0e-02
+        Name: ice_thickness
+        Extruded: true
+        Mesh Part: bottom
+        Upper Bound: 4.0
+        Type: Distributed
+    LandIce Physical Parameters:
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8
+      Clausius-Clapeyron Coefficient: 0.0
+    LandIce Viscosity:
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 1.0e-01
+      Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
+      Glen's Law n: 3.0
+      Flow Rate Type: Temperature Based
+    Body Force:
+      Type: FO INTERP SURF GRAD
+  Discretization:
+    Method: Extruded
+    Surface Height Field Name: observed_surface_height
+    Number Of Time Derivatives: 0
+    Cubature Degree: 1
+    Exodus Output File Name: gis_unstruct_analysis_two_params.exo
+    Element Shape: Tetrahedron
+    Columnwise Ordering: true
+    NumLayers: 5
+    Use Glimmer Spacing: true
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [basal_friction, ice_thickness, observed_surface_height, observed_bed_topography]
+    Basal Node Fields Ranks: [1, 1, 1, 1]
+    Interpolate Basal Node Layered Fields: [temperature]
+    Basal Node Layered Fields Ranks: [1]
+    Required Fields Info:
+      Number Of Fields: 5
+      Field 0:
+        Field Name: temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: observed_surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3:
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 4:
+        Field Name: observed_bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations:
+      Side Sets: [basalside, upperside]
+      basalside:
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Cubature Degree: 3
+        Exodus Output File Name: gis_unstruct_analysis_two_params_basal.exo
+        Use Serial Mesh: ${USE_SERIAL_MESH}
+        Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
+        Required Fields Info:
+          Number Of Fields: 9
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
+          Field 1:
+            Field Name: observed_surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii
+          Field 2:
+            Field Name: temperature
+            Field Type: Node Layered Scalar
+            Number Of Layers: 11
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
+          Field 3:
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction_log.ascii
+          Field 4:
+            Field Name: observed_ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
+          Field 5:
+            Field Name: observed_ice_thickness_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/thickness_RMS.ascii
+          Field 6:
+            Field Name: apparent_mass_balance
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_mass_balance.ascii
+          Field 7:
+            Field Name: apparent_mass_balance_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_mass_balance_RMS.ascii
+          Field 8:
+            Field Name: observed_bed_topography
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/bed_topography.ascii
+      upperside:
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: gis_unstruct_analysis_two_params_surface.exo
+        Cubature Degree: 3
+        Required Fields Info:
+          Number Of Fields: 2
+          Field 0:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
+          Field 1:
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
+  Piro:
+    Sensitivity Method: Adjoint
+    NOX:
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 1
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-07
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 25
+      Nonlinear Solver: Line Search Based
+      Direction:
+        Method: Newton
+        Newton:
+          Rescue Bad Newton Solve: true
+          Forcing Term Method: Constant
+          Linear Solver:
+            Tolerance: 1.0e-7
+            Write Linear System: false
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: iluk level-of-fill': 0
+      Line Search:
+        Full Step:
+          Full Step: 1.0
+        Method: Backtrack
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-05
+    Sensitivity For Parameter 0:
+      Test Value: 5.677171284308e+02
+    Test Value: 5.35517326e+03
+    Relative Tolerance: 1.0e-05
+...

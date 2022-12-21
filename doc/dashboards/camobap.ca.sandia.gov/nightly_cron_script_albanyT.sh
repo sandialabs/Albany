@@ -11,6 +11,9 @@ export PATH=$PATH:/tpls/install/ninja/build-cmake
 
 LOG_FILE=/nightlyCDash/nightly_logT.txt
 
+bash convert-cmake-to-cdash.sh no-epetra
+bash create-new-cdash-cmake-script.sh no-epetra
+
 eval "env  TEST_DIRECTORY=/nightlyCDash SCRIPT_DIRECTORY=/nightlyCDash ctest -VV -S /nightlyCDash/ctest_nightly_albanyT.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly

@@ -1,0 +1,130 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Epetra
+  Debug Output:
+    Write Jacobian to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Steady
+    Name: LandIce Laplacian Sampling
+    Compute Sensitivities: true
+    Required Fields: [weighted_normal_sample]
+    Side Name: boundary_side_set
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+    Dirichlet BCs: {}
+    Neumann BCs: {}
+    Parameters:
+      Number Of Parameters: 0
+    LandIce Laplacian Regularization:
+      Mass Coefficient: 1.0e-01
+      Laplacian Coefficient: 1.0e+01
+      Robin Coefficient: 1.0
+  Discretization:
+    Method: Ioss
+    Number Of Time Derivatives: 0
+    Cubature Degree: 3
+    Exodus Output File Name: gis_laplacian_sample.exo
+    Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
+    Use Serial Mesh: false
+    Required Fields Info:
+      Number Of Fields: 1
+      Field 0:
+        Field Name: weighted_normal_sample
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
+    Side Set Discretizations:
+      Side Sets: [boundary_side_set]
+      boundary_side_set:
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Cubature Degree: 1
+        Use Serial Mesh: ${USE_SERIAL_MESH}
+  Piro:
+    Sensitivity Method: Adjoint
+    NOX:
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-05
+          Test 1:
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.0e-05
+            Relative Tolerance: 1.0e-03
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Linear Solver:
+            Write Linear System: false
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: AztecOO
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 20
+                    Max Iterations: 200
+                    Tolerance: 1.0e-06
+              Preconditioner Type: Ifpack
+              Preconditioner Types:
+                Ifpack:
+                  Overlap: 0
+                  Prec Type: ILU
+                  Ifpack Settings:
+                    'fact: level-of-fill': 0
+                ML:
+                  Base Method Defaults: none
+                  ML Settings:
+                    default values: SA
+                    'smoother: type': ML symmetric Gauss-Seidel
+                    'smoother: pre or post': both
+                    'coarse: type': Amesos-KLU
+          Rescue Bad Newton Solve: true
+      Line Search:
+        Full Step:
+          Full Step: 1.0
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Test Value: 1.100491108613e+01
+    Relative Tolerance: 1.0e-06
+...
