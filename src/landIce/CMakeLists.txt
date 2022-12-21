@@ -33,19 +33,13 @@ set(SOURCES
   evaluators/LandIce_ScatterResidual2D.cpp
   evaluators/LandIce_SimpleOperationEvaluator.cpp
   evaluators/LandIce_StackFields.cpp
-  evaluators/LandIce_StokesMomentumResid.cpp
   evaluators/LandIce_StokesFOBasalResid.cpp
   evaluators/LandIce_StokesFOLateralResid.cpp
   evaluators/LandIce_StokesFOResid.cpp
   evaluators/LandIce_StokesFOStress.cpp
   evaluators/LandIce_StokesFOSynteticTestBC.cpp
-  evaluators/LandIce_StokesContinuityResid.cpp
-  evaluators/LandIce_StokesContravarientMetricTensor.cpp
-  evaluators/LandIce_StokesBodyForce.cpp
   evaluators/LandIce_StokesFOBodyForce.cpp
   evaluators/LandIce_StokesFOImplicitThicknessUpdateResid.cpp
-  evaluators/LandIce_StokesRm.cpp
-  evaluators/LandIce_StokesTauM.cpp
   evaluators/LandIce_SurfaceAirEnthalpy.cpp
   evaluators/LandIce_Temperature.cpp
   evaluators/LandIce_ThicknessResid.cpp
@@ -60,7 +54,6 @@ set(SOURCES
   problems/LandIce_LaplacianSampling.cpp
   problems/LandIce_ProblemFactory.cpp
   problems/LandIce_ProblemUtils.cpp
-  problems/LandIce_Stokes.cpp
   problems/LandIce_StokesFO.cpp
   problems/LandIce_StokesFOBase.cpp
   problems/LandIce_StokesFOThermoCoupled.cpp
@@ -132,12 +125,6 @@ set(HEADERS
   evaluators/LandIce_SimpleOperationEvaluator_Def.hpp
   evaluators/LandIce_StackFields.hpp
   evaluators/LandIce_StackFields_Def.hpp
-  evaluators/LandIce_StokesBodyForce.hpp
-  evaluators/LandIce_StokesBodyForce_Def.hpp
-  evaluators/LandIce_StokesContinuityResid.hpp
-  evaluators/LandIce_StokesContinuityResid_Def.hpp
-  evaluators/LandIce_StokesContravarientMetricTensor.hpp
-  evaluators/LandIce_StokesContravarientMetricTensor_Def.hpp
   evaluators/LandIce_StokesFOBodyForce.hpp
   evaluators/LandIce_StokesFOBodyForce_Def.hpp
   evaluators/LandIce_StokesFOLateralResid.hpp
@@ -152,12 +139,6 @@ set(HEADERS
   evaluators/LandIce_StokesFOStress_Def.hpp
   evaluators/LandIce_StokesFOSynteticTestBC.hpp
   evaluators/LandIce_StokesFOSynteticTestBC_Def.hpp
-  evaluators/LandIce_StokesMomentumResid.hpp
-  evaluators/LandIce_StokesMomentumResid_Def.hpp
-  evaluators/LandIce_StokesRm.hpp
-  evaluators/LandIce_StokesRm_Def.hpp
-  evaluators/LandIce_StokesTauM.hpp
-  evaluators/LandIce_StokesTauM_Def.hpp
   evaluators/LandIce_SurfaceAirEnthalpy.hpp
   evaluators/LandIce_SurfaceAirEnthalpy_Def.hpp
   evaluators/LandIce_Temperature.hpp
@@ -199,7 +180,6 @@ set(HEADERS
   problems/LandIce_LaplacianSampling.hpp
   problems/LandIce_ParamEnum.hpp
   problems/LandIce_ProblemFactory.hpp
-  problems/LandIce_Stokes.hpp
   problems/LandIce_StokesFOBase.hpp
   problems/LandIce_StokesFO.hpp
   problems/LandIce_StokesFOThermoCoupled.hpp

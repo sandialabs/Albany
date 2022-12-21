@@ -29,11 +29,6 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Zoltan2_TpetraCrsColorer.hpp"
 
-
-#ifdef ALBANY_TEKO
-#include "Teko_InverseFactoryOperator.hpp"
-#endif
-
 #include <stdexcept>
 #include <string>
 

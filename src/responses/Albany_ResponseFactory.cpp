@@ -148,16 +148,13 @@ createResponseFunction(
      name == "Grounding Line Flux" ||
      name == "Boundary Squared L2 Norm" ||
      name == "Region Boundary" ||
-     name == "Save Nodal Fields" ||
      name == "Stiffness Objective" ||
      name == "Interface Energy" ||
      name == "Internal Energy Objective" ||
      name == "Tensor PNorm Objective" ||
      name == "Tensor Average Response" ||
      name == "Homogenized Constants Response" ||
-     name == "Modal Objective" ||
-     name == "PHAL Field Integral" ||
-     name == "PHAL Field IntegralT") {
+     name == "Modal Objective") {
     for (int i=0; i<meshSpecs.size(); i++) {
       responses.push_back(
           rcp(new Albany::FieldManagerScalarResponseFunction(
