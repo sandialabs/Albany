@@ -60,7 +60,7 @@ SideLaplacianResidual (const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void SideLaplacianResidual<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   if (sideSetEquation) {
@@ -80,7 +80,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void SideLaplacianResidual<EvalT,Traits>::
-operator() (const SideLaplacianResidual_Side_Tag& tag, const int& side) const {
+operator() (const SideLaplacianResidual_Side_Tag& /* tag */, const int& side) const {
 
   // Assembling the residual of -\Delta u = 1
   for (int node=0; node<numNodes; ++node) {
@@ -105,7 +105,7 @@ operator() (const SideLaplacianResidual_Side_Tag& tag, const int& side) const {
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void SideLaplacianResidual<EvalT,Traits>::
-operator() (const SideLaplacianResidual_Cell_Tag& tag, const int& cell) const {
+operator() (const SideLaplacianResidual_Cell_Tag& /* tag */, const int& cell) const {
 
   // Assembling the residual of -\Delta u = 1
   for (int node(0); node<numNodes; ++node) {

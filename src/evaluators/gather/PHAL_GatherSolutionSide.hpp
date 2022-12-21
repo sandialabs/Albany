@@ -119,14 +119,7 @@ protected:
 
   std::string sideSetName;
 
-  // Offsets of solution field(s) inside a single element, as per the DOFManager
-  // The only reason we have this view is that the offsets returned by the dof mgr
-  // would have the node striding faster than the field ID. By doing the transposition
-  // once, we can get better cached/coalesced memory access during the evaluation
-  Albany::DualView<int**> m_fields_offsets;
-
   int numFields;
-  int numNodes;
 
   int offset = 0; // Offset of first field being gathered when numFields<neq
 

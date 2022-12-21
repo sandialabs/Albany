@@ -120,30 +120,13 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename EvalT, typename Traits>
 void GatherSolutionSide<EvalT, Traits>::
-gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr) {
-  // Do this only once
-  if (m_fields_offsets.size()==0) {
-    // For now, only allow dof mgr's defined on a single element part
-    m_fields_offsets.resize("",numNodes,numFields);
-    for (int fid=0; fid<numFields; ++fid) {
-      auto panzer_offsets = dof_mgr->getGIDFieldOffsets(fid+offset);
-      ALBANY_ASSERT (panzer_offsets.size()==numNodes,
-          "Something is amiss: panzer field offsets has size != numNodes.\n");
-      for (int node=0; node<numNodes; ++node) {
-        m_fields_offsets.host()(node,fid) = panzer_offsets[node];
-      }
-    }
-    // Not really needed for now, since evaluate_fields is only on host.
-    m_fields_offsets.sync_to_dev();
-  }
-}
-
-template<typename EvalT, typename Traits>
-void GatherSolutionSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->count(sideSetName)==0)
+  // Check for early return
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  if (sideSet.size==0) {
     return;
+  }
 
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
@@ -154,13 +137,9 @@ evaluateFields(typename Traits::EvalData workset)
   const bool gather_xdotdot = enableSolutionDotDot && !xdotdot.is_null();
 
   const auto& disc     = workset.disc;
-  const auto& sol_name = disc->solution_dof_name();
-  const auto& dof_mgr  = disc->getNewDOFManager(sol_name,sideSetName);
+  const auto& dof_mgr  = disc->getNewDOFManager();
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& offsets_h = m_fields_offsets.host();
-
-  // Make sure we have the fields offsets (no-op after first call)
-  this->gather_fields_offsets(dof_mgr);
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
   if (gather_x)
@@ -171,14 +150,16 @@ evaluateFields(typename Traits::EvalData workset)
     xdotdot_data = Albany::getLocalData(xdotdot);
 
   constexpr auto ALL = Kokkos::ALL();
-  auto sideSet = workset.sideSetViews->at(sideSetName);
   for (int iside=0; iside<sideSet.size; ++iside) {
-    const int side_LID = sideSet.side_LID(iside);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,side_LID,ALL);
+    const int ws_elem_idx = sideSet.ws_elem_idx(iside);
+    const int elem_LID = elem_lids(ws_elem_idx);
+    const int side_pos = sideSet.side_pos(iside);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
-        const auto lid = dof_lids(offsets_h(node,eq));
+    for (int eq=0; eq<numFields; ++eq) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      for (unsigned node=0; node<offsets.size(); ++node) {
+        const auto lid = dof_lids(offsets[node]);
         get_ref(iside,node,eq) = x_data[lid];
         if (gather_xdot) {
           get_ref_dot(iside,node,eq) = xdot_data[lid];
@@ -199,8 +180,11 @@ template<>
 inline void GatherSolutionSide<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits>::
 evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 {
-  if (workset.sideSets->count(sideSetName)==0)
+  // Check for early return
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  if (sideSet.size==0) {
     return;
+  }
 
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
@@ -211,13 +195,10 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const bool gather_xdotdot = enableSolutionDotDot && !xdotdot.is_null();
 
   const auto& disc     = workset.disc;
-  const auto& sol_name = disc->solution_dof_name();
-  const auto& dof_mgr  = disc->getNewDOFManager(sol_name,sideSetName);
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
+  const auto& dof_mgr  = disc->getNewDOFManager();
+  const auto& node_dof_mgr = disc->getNodeNewDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& offsets_h = m_fields_offsets.host();
-
-  // Make sure we have the fields offsets
-  this->gather_fields_offsets(dof_mgr);
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
   if (gather_x)
@@ -230,15 +211,20 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const int neq = dof_mgr->getNumFields();
   constexpr auto ALL = Kokkos::ALL();
 
-  auto sideSet = workset.sideSetViews->at(sideSetName);
   for (int iside=0; iside<sideSet.size; ++iside) {
-    const int side_LID = sideSet.side_LID(iside);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,side_LID,ALL);
+    const int icell = sideSet.ws_elem_idx(iside);
+    const int elem_LID = elem_lids(icell);
+    const int side_pos = sideSet.side_pos(iside);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-    for (int node=0; node<numNodes; ++node) {
-      const int start = neq*node + offset;
-      for (int eq=0; eq<numFields; ++eq) {
-        const auto lid = dof_lids(offsets_h(node,eq));
+    for (int eq=0; eq<numFields; ++eq) {
+      // NOTE: node_offsets is to compute the idx of the side node within the cell.
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      const auto& node_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
+      const int numNodes = offsets.size();
+      for (int node=0; node<numNodes; ++node) {
+        const int start = neq*node_offsets[node] + offset;
+        const auto lid = dof_lids(offsets[node]);
         if (gather_x) {
           ref_t val_ref = get_ref(iside,node,eq);
           val_ref = FadType(val_ref.size(),x_data[lid]);
@@ -267,8 +253,11 @@ template<>
 inline void GatherSolutionSide<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits>::
 evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 {
-  if (workset.sideSets->count(sideSetName)==0)
+  // Check for early return
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  if (sideSet.size==0) {
     return;
+  }
 
   const auto& x        = workset.x;
   const auto& xdot     = workset.xdot;
@@ -286,13 +275,9 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const bool gather_Vxdotdot = workset.n_coeff!=0 && !Vxdotdot.is_null();
 
   const auto& disc     = workset.disc;
-  const auto& sol_name = disc->solution_dof_name();
-  const auto& dof_mgr  = disc->getNewDOFManager(sol_name,sideSetName);
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
+  const auto& dof_mgr  = disc->getNewDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& offsets_h = m_fields_offsets.host();
-
-  // Make sure we have the fields offsets
-  this->gather_fields_offsets(dof_mgr);
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
   if (gather_x)
@@ -312,14 +297,17 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
     Vxdotdot_data = Albany::getLocalData(workset.Vxdotdot);
 
   constexpr auto ALL = Kokkos::ALL();
-  auto sideSet = workset.sideSetViews->at(sideSetName);
   for (int iside=0; iside<sideSet.size; ++iside) {
-    const int side_LID = sideSet.side_LID(iside);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,side_LID,ALL);
+    const int icell = sideSet.ws_elem_idx(iside);
+    const int elem_LID = elem_lids(icell);
+    const int side_pos = sideSet.side_pos(iside);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
-        const auto lid = dof_lids(offsets_h(node,eq));
+    for (int eq=0; eq<numFields; ++eq) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      const int numNodes = offsets.size();
+      for (int node=0; node<numNodes; ++node) {
+        const auto lid = dof_lids(offsets[node]);
         if (gather_x) {
           ref_t ref = get_ref(iside,node,eq);
           if (gather_Vx) {
