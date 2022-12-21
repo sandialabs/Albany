@@ -2386,8 +2386,15 @@ create_dof_mgr (const std::string& part_name,
   auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
 
   const auto& topo = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
-  const auto basis = getIntrepid2Basis(*topo.getBaseCellTopologyData(),fe_type,order);
-  auto fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+  Teuchos::RCP<panzer::FieldPattern> fp;
+  if (topo.getName()==std::string("Particle")) {
+    // ODE equations are defined on a Particle geometry, where Intrepid doesn't work.
+    fp = Teuchos::rcp(new panzer::ElemFieldPattern(shards::CellTopology(topo)));
+  } else {
+    // For space-dependent equations, we rely on Intrepid2 for patterns
+    const auto basis = getIntrepid2Basis(*topo.getBaseCellTopologyData(),fe_type,order);
+    fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+  }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
   //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {

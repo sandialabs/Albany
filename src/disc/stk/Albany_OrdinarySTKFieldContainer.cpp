@@ -11,6 +11,7 @@
 #include "Albany_STKFieldContainerHelper.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_StringUtils.hpp"
 
 // Start of STK stuff
 #include <stk_mesh/base/FieldBase.hpp>
@@ -187,7 +188,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   }
 
   //Transient sensitivities output to Exodus
-  const int num_sens = (sens_method == "Forward") ? this->num_params : 1; 
+  const int num_sens = (sens_method == "Forward") ? this->num_params : 1;
   for (int np = 0; np < num_sens; np++) {
     if (output_sens_field == true) {
       solution_field_dxdp[np] = &metaData_->declare_field<VFT>(
@@ -366,24 +367,37 @@ fillVectorImpl(Thyra_Vector&                         field_vector,
   TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
     "Error OrdinarySTKFieldContainer::fillVectorImpl not called from a solution field container.\n");
 
-  using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-  using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
+  // Figure out if it's a nodal or elem field
+  const auto& fp = field_dof_mgr->getGeometricFieldPattern();
+  const auto& ftopo = field_dof_mgr->get_topology();
+  std::vector<int> entity_dims_with_dofs;
+  for (unsigned dim=0; dim<=ftopo.getDimension(); ++dim) {
+    if (fp->getSubcellIndices(dim,0).size()>0) {
+      entity_dims_with_dofs.push_back(dim);
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (entity_dims_with_dofs.size()!=1, std::runtime_error,
+      "Error! We cannot save fields that are defined on n!=1 type of entity.\n"
+      "  - field name: " << field_name << "\n"
+      "  - entities with dofs: " << util::join(entity_dims_with_dofs,",") << "\n");
 
-  auto* raw_field =
-      this->metaData->get_field(stk::topology::NODE_RANK, field_name);
-  ALBANY_EXPECT(
-      raw_field != nullptr,
+  auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
+
+  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
+  ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
   if (rank == 0) {
+    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
     const SFT* field = this->metaData->template get_field<SFT>(
-        stk::topology::NODE_RANK, field_name);
+        field_entity_rank, field_name);
     using Helper = STKFieldContainerHelper<SFT>;
     Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
   } else if (rank == 1) {
+    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
     const VFT* field = this->metaData->template get_field<VFT>(
-        stk::topology::NODE_RANK, field_name);
+        field_entity_rank, field_name);
     using Helper = STKFieldContainerHelper<VFT>;
     Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
   } else {
@@ -403,22 +417,35 @@ saveVectorImpl (const Thyra_Vector&  field_vector,
   TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
     "Error OrdinarySTKFieldContainer::saveVectorImpl not called from a solution field container.\n");
 
-  using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-  using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
+  // Figure out if it's a nodal or elem field
+  const auto& fp = field_dof_mgr->getGeometricFieldPattern();
+  const auto& ftopo = field_dof_mgr->get_topology();
+  std::vector<int> entity_dims_with_dofs;
+  for (unsigned dim=0; dim<=ftopo.getDimension(); ++dim) {
+    if (fp->getSubcellIndices(dim,0).size()>0) {
+      entity_dims_with_dofs.push_back(dim);
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (entity_dims_with_dofs.size()!=1, std::runtime_error,
+      "Error! We cannot save fields that are defined on n!=1 type of entity.\n"
+      "  - field name: " << field_name << "\n"
+      "  - entities with dofs: " << util::join(entity_dims_with_dofs,",") << "\n");
 
-  auto* raw_field =
-      this->metaData->get_field(stk::topology::NODE_RANK, field_name);
-  ALBANY_EXPECT(
-      raw_field != nullptr,
+  auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
+
+  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
+  ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
   if (rank == 0) {
+    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
     SFT* field = this->metaData->template get_field<SFT>(
         stk::topology::NODE_RANK, field_name);
     using Helper = STKFieldContainerHelper<SFT>;
     Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
   } else if (rank == 1) {
+    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
     VFT* field = this->metaData->template get_field<VFT>(
         stk::topology::NODE_RANK, field_name);
     using Helper = STKFieldContainerHelper<VFT>;
