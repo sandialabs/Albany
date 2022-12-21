@@ -492,7 +492,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get some data from the discretization
   const auto param_name = workset.dist_param_deriv_name;
   Albany::DualView<int**>::host_t p_elem_dof_lids;
-  if (distributed) {
+  if (do_dist_pp || do_dist_px) {
     auto dist_param = workset.distParamLib->get(param_name);
     p_elem_dof_lids = dist_param->get_dof_mgr()->elem_dof_lids().host();
   }
