@@ -90,7 +90,7 @@ STKDiscretization::printConnectivity() const
     comm->barrier();
     if (rank == comm->getRank()) {
       const auto& elem_lids = m_workset_elements.host();
-      const auto& elem_GIDs = getNewDOFManager()->getAlbanyConnManager()->getElementsInBlock();
+      const auto& elem_gids = getNewDOFManager()->getAlbanyConnManager()->getElementsInBlock();
 
       std::ostringstream ss;
 
@@ -99,7 +99,7 @@ STKDiscretization::printConnectivity() const
         ss << "  Bucket (aka workset) " << ws << std::endl;
         for (int ielem=0; ielem<elem_lids.extent_int(1); ++ielem) {
           const int elem_LID = elem_lids(ws,ielem);
-          const GO elem_GID = elem_GIDs[elem_LID];
+          const GO elem_GID = elem_gids[elem_LID];
           const auto e = bulkData->get_entity(stk::topology::ELEM_RANK,elem_GID+1);
           const auto nodes = bulkData->begin_nodes(e);
           const int num_nodes = bulkData->num_nodes(e);
@@ -2221,8 +2221,6 @@ STKDiscretization::updateMesh()
 
   transformMesh();
 
-  computeGraphs();
-
   computeWorksetInfo();
 #ifdef OUTPUT_TO_SCREEN
   printConnectivity();
@@ -2232,8 +2230,9 @@ STKDiscretization::updateMesh()
 
   computeSideSets();
 
-  setupExodusOutput();
+  computeGraphs();
 
+  setupExodusOutput();
 
 #ifdef OUTPUT_TO_SCREEN
   printCoords();
