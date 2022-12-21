@@ -8,7 +8,6 @@
 #define ALBANY_STK_CONN_MANAGER_HPP
 
 #include "Albany_ConnManager.hpp"
-#include "Albany_ShardsHack.hpp"
 
 #include "stk_mesh/base/MetaData.hpp"
 #include "stk_mesh/base/BulkData.hpp"
