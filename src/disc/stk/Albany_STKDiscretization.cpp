@@ -1673,12 +1673,9 @@ STKDiscretization::computeSideSets()
   std::map<std::string, int> max_sides;
   std::map<std::string, int> current_local_index;
   for (size_t i = 0; i < sideSets.size(); ++i) {
-    SideSetList& ssList = sideSets[i];
-    std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
-
-    while (ss_it != ssList.end()) {
-      std::string             ss_key = ss_it->first;
-      std::vector<SideStruct> ss_val = ss_it->second;
+    for (const auto& ss_it : sideSets[i]) {
+      std::string             ss_key = ss_it.first;
+      std::vector<SideStruct> ss_val = ss_it.second;
 
       // Initialize values if this is the first time seeing a sideset key
       if (num_local_worksets.find(ss_key) == num_local_worksets.end())
@@ -1695,14 +1692,12 @@ STKDiscretization::computeSideSets()
       max_sideset_length[ss_key] = std::max(max_sideset_length[ss_key], (int) ss_val.size());
       for (size_t j = 0; j < ss_val.size(); ++j)
         max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_pos);
-
-      ss_it++;
     }
   }
 
   // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
-  for (auto ss_it=num_local_worksets.begin(); ss_it!=num_local_worksets.end(); ++ss_it) {
-    std::string             ss_key = ss_it->first;
+  for (const auto& ss_it : num_local_worksets) {
+    std::string             ss_key = ss_it.first;
 
     max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
 
@@ -1722,12 +1717,9 @@ STKDiscretization::computeSideSets()
 
   // 3) Populate global views
   for (size_t i = 0; i < sideSets.size(); ++i) {
-    SideSetList& ssList = sideSets[i];
-    std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
-
-    while (ss_it != ssList.end()) {
-      std::string             ss_key = ss_it->first;
-      std::vector<SideStruct> ss_val = ss_it->second;
+    for (const auto& ss_it : sideSets[i]) {
+      std::string             ss_key = ss_it.first;
+      std::vector<SideStruct> ss_val = ss_it.second;
 
       int current_index = current_local_index[ss_key];
       int numSides = max_sides[ss_key];
@@ -1769,8 +1761,6 @@ STKDiscretization::computeSideSets()
       }
 
       current_local_index[ss_key]++;
-
-      ss_it++;
     }
   }
 
@@ -1784,13 +1774,11 @@ STKDiscretization::computeSideSets()
 
   // 5) Populate map of LocalSideSetInfos
   for (size_t i = 0; i < sideSets.size(); ++i) {
-    SideSetList& ssList = sideSets[i];
     LocalSideSetInfoList& lssList = sideSetViews[i];
-    std::map<std::string, std::vector<SideStruct>>::iterator ss_it = ssList.begin();
 
-    while (ss_it != ssList.end()) {
-      std::string             ss_key = ss_it->first;
-      std::vector<SideStruct> ss_val = ss_it->second;
+    for (const auto& ss_it : sideSets[i]) {
+      std::string             ss_key = ss_it.first;
+      std::vector<SideStruct> ss_val = ss_it.second;
 
       int current_index = current_local_index[ss_key];
       std::pair<int,int> range(0, ss_val.size());
@@ -1807,8 +1795,6 @@ STKDiscretization::computeSideSets()
       lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
 
       current_local_index[ss_key]++;
-
-      ss_it++;
     }
   }
 
