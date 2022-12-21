@@ -1032,7 +1032,6 @@ void STKDiscretization::computeVectorSpaces()
     //       store this info somewhere and retrieve it here.
     auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
     m_dof_managers[field_name][part_name] = dof_mgr;
-
     m_node_dof_managers[part_name] = Teuchos::null;
   }
 
@@ -1114,21 +1113,10 @@ STKDiscretization::computeGraphs()
     }
   }
 
-  // Given a side GID, get the LID of the element it belongs to
-  const auto side_rank = metaData->side_rank();
-  auto get_elem_lid = [&](const GO side_GID) -> LO {
-    const auto side = bulkData->get_entity(side_rank,side_GID+1);
-    TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
-        "Error! Found a boundary side that has N!=1 elements attached to it.\n");
-    const auto& elem = bulkData->begin_elements(side)[0];
-    const GO elem_GID = stk_gid(elem);
-    const auto& cell_indexer = sol_dof_mgr->cell_indexer();
-    return cell_indexer->getLocalElement(elem_GID);
-  };
-
   const auto& cell_layers_data_lid = stkMeshStruct->local_cell_layers_data;
 
   // Now, process rows/cols corresponding to ss equations
+  const auto SIDE_RANK = metaData->side_rank();
   for (const auto& it : sideSetEquations) {
     const int side_eq = it.first;
 
@@ -1139,18 +1127,16 @@ STKDiscretization::computeGraphs()
     int allowColumnCoupling = not cell_layers_data_lid.is_null();
     if (not cell_layers_data_lid.is_null()) {
       for (const auto& ss_name : it.second) {
-        const auto& ss_dof_mgr = getNewDOFManager(nodes_dof_name(),ss_name);
-        if (ss_dof_mgr->cell_indexer()->getNumLocalElements()==0) {
-          continue;
-        }
-
-        // Grab one "element" form the ss dof mgr (a side in this mesh)
-        const auto& sides = ss_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+        std::vector<stk::mesh::Entity> sides;
+        stk::mesh::Selector sel (*stkMeshStruct->sidesets_.at(ss_name));
+        stk::mesh::get_selected_entities(sel,bulkData()->buckets(SIDE_RANK),sides);
         if (sides.size()==0) {
+          // This rank owns 0 sides on this sideset
           continue;
         }
 
-        const auto& s = bulkData->get_entity(side_rank,sides[0]+1);
+        // Grab any side of this side set and check layerId and pos within element
+        const auto& s = sides[0];
         const auto& e = bulkData->begin_elements(s)[0];
         const auto pos = determine_entity_pos(e,s);
         const auto layer = cell_layers_data_lid->getLayerId(stk_gid(e));
@@ -1171,66 +1157,71 @@ STKDiscretization::computeGraphs()
 
     // Loop over all side sets where this eqn is defined
     for (const auto& ss_name : it.second) {
-      const auto& ss_sol_dof_mgr = getNewDOFManager(solution_dof_name(),ss_name);
-      const int num_sides = ss_sol_dof_mgr->cell_indexer()->getNumLocalElements();
-      const auto& eq_offsets = ss_sol_dof_mgr->getGIDFieldOffsets(side_eq);
-      // Loop over all sides in this side set
-      for (int iside=0; iside<num_sides; ++iside) {
-        const auto& side_gids = ss_sol_dof_mgr->getElementGIDs(iside);
-        const LO elem_LID = get_elem_lid(iside);
+      for (int ws=0; ws<getNumWorksets(); ++ws) {
+        const auto& ss = sideSets[ws].at(ss_name);
+        // const auto& ss_sol_dof_mgr = getNewDOFManager(solution_dof_name(),ss_name);
+        // const int num_sides = ss_sol_dof_mgr->cell_indexer()->getNumLocalElements();
+        // Loop over all sides in this side set
+        for (const auto& side : ss) {
+          // int iside=0; iside<num_sides; ++iside) {
+          // const auto& side_gids = ss_sol_dof_mgr->getElementGIDs(iside);
+          const LO elem_LID = side.elem_LID;
+          const auto& side_elem_gids = sol_dof_mgr->getElementGIDs(elem_LID);
+          const int side_pos = side.side_pos;
+          const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(side_eq,side_pos);
 
-        const int num_side_nodes = side_gids.size();
-        rows.resize(num_side_nodes);
-        cols.resize(num_side_nodes);
+          const int num_side_nodes = eq_offsets.size();
+          // rows.resize(num_side_nodes);
+          // cols.resize(num_side_nodes);
 
-        if (globalAllowColumnCoupling) {
-          const int numLayers = cell_layers_data_lid->numLayers;
-          const int bot = cell_layers_data_lid->bot_side_pos;
-          const int top = cell_layers_data_lid->top_side_pos;
-          const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
-          // Assume the worst, and add coupling with all volume eqns over the whole column
-          for (int eq : volumeEqns) {
-            // Note: only add nodes at bot of element, since top is handled by next layer.
-            //       At last layer, handle both. It would be ok to do both, since the graph
-            //       factory discards duplicates, but why do things twice? Also, we already
-            //       *need* to process one layer at a time in each cell, to ensure we know
-            //       which basal node each dof corresponds to, so we can't do away with the
-            //       bot/top offsets arrays.
-            const auto& bot_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,bot);
-            const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,getNumDim()-1,top);
-            for (int il=0; il<numLayers; ++il) {
-              const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
-              const auto& elem_gids = sol_dof_mgr->getElementGIDs(layer_elem_lid);
+          if (globalAllowColumnCoupling) {
+            const int numLayers = cell_layers_data_lid->numLayers;
+            const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
+            // Assume the worst, and add coupling with all volume eqns over the whole column
+            for (int eq : volumeEqns) {
+              // Note: only add nodes at bot of element, since top is handled by next layer.
+              //       At last layer, handle both. It would be ok to do both, since the graph
+              //       factory discards duplicates, but why do things twice? Also, we already
+              //       *need* to process one layer at a time in each cell, to ensure we know
+              //       which basal node each dof corresponds to, so we can't do away with the
+              //       bot/top offsets arrays.
+              const auto& bot_offsets = sol_dof_mgr->getGIDFieldOffsetsBotSide(eq);
+              for (int il=0; il<numLayers; ++il) {
+                const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
+                const auto& elem_gids = sol_dof_mgr->getElementGIDs(layer_elem_lid);
 
-              // IMPORTANT: couple one dof at a time, since we only couple dofs *vertically aligned*.
+                // IMPORTANT: couple one dof at a time, since we only couple dofs *vertically aligned*.
+                for (int node=0; node<num_side_nodes; ++node) {
+                  m_jac_factory->insertGlobalIndices(side_elem_gids[eq_offsets[node]],elem_gids[bot_offsets[node]],true);
+                }
+              }
+
+              const auto& top_offsets = sol_dof_mgr->getGIDFieldOffsetsTopSide(eq);
+              const LO last_layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,numLayers);
+              const auto& elem_gids = sol_dof_mgr->getElementGIDs(last_layer_elem_lid);
               for (int node=0; node<num_side_nodes; ++node) {
-                m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[bot_offsets[node]],true);
+                m_jac_factory->insertGlobalIndices(side_elem_gids[eq_offsets[node]],elem_gids[top_offsets[node]],true);
               }
             }
-            const LO last_layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,numLayers);
-            const auto& elem_gids = sol_dof_mgr->getElementGIDs(last_layer_elem_lid);
-            for (int node=0; node<num_side_nodes; ++node) {
-              m_jac_factory->insertGlobalIndices(side_gids[eq_offsets[node]],elem_gids[top_offsets[node]],true);
+          }
+
+          // Add local coupling (on this side) with all eqns
+          for (int node=0; node<num_side_nodes; ++node) {
+            rows[node] = side_elem_gids[eq_offsets[node]];
+          }
+          // NOTE: we could be fancier, and couple only with volume eqn or side eqn that are defined
+          //       on this side set. However, if a sideset is a subset of another, we might miss the
+          //       coupling since the side sets have different names. We'd have to inspect if a ss is
+          //       contained in the other, but that starts to get too involved. And we might have to
+          //       redo this when we assemble by blocks.
+          for (int eq_col=0; eq_col<neq; ++eq_col) {
+            const auto& col_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq_col,side_pos);
+            for (int inode=0; inode<num_side_nodes; ++inode) {
+              cols[inode] = side_elem_gids[col_offsets[inode]];
             }
-          }
-        }
 
-        // Add local coupling (on this side) with all eqns
-        for (int node=0; node<num_side_nodes; ++node) {
-          rows[node] = side_gids[eq_offsets[node]];
-        }
-        // NOTE: we could be fancier, and couple only with volume eqn or side eqn that are defined
-        //       on this side set. However, if a sideset is a subset of another, we might miss the
-        //       coupling since the side sets have different names. We'd have to inspect if a ss is
-        //       contained in the other, but that starts to get too involved. And we might have to
-        //       redo this when we assemble by blocks.
-        for (int eq_col=0; eq_col<neq; ++eq_col) {
-          const auto& col_offsets = ss_sol_dof_mgr->getGIDFieldOffsets(eq_col);
-          for (int inode=0; inode<num_side_nodes; ++inode) {
-            cols[inode] = side_gids[col_offsets[inode]];
+            m_jac_factory->insertGlobalIndices(rows(),cols(),true);
           }
-
-          m_jac_factory->insertGlobalIndices(rows(),cols(),true);
         }
       }
     }
