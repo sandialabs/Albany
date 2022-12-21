@@ -246,7 +246,7 @@ restrict (const std::string& sub_part_name)
       }
 
       // Check if this GID is owned or ghosted
-      if (indexer()->isLocallyOwnedElement(gids[idof])) {
+      if (m_indexer->isLocallyOwnedElement(gids[idof])) {
         owned.push_back(gids[idof]);
         ghosted.push_back(gids[idof]);
       } else {
@@ -272,7 +272,7 @@ restrict (const std::string& sub_part_name)
         elementGIDs_[ielem][idof] = -1;
       } else {
         // Correct the lid
-        lids_h(ielem,idof) = ov_indexer()->getLocalElement(gids[idof]);
+        lids_h(ielem,idof) = m_ov_indexer->getLocalElement(gids[idof]);
       }
     }
   }

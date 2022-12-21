@@ -75,7 +75,7 @@ getIntrepid2Basis (const CellTopologyData& cell_topo,
               "Error! Wedge supported only for order=1,2. Requested: " + std::to_string(order) + "\n");
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-            "Unrecognized/unsupported topology: " + topo + "\n");
+            "Unrecognized/unsupported topology for HGRAD: " + topo + "\n");
       }
       break;
     default:
