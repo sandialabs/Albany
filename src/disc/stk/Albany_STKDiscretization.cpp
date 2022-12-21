@@ -2157,22 +2157,23 @@ STKDiscretization::buildSideSetProjectors()
   const int sideDim = getNumDim()-1;
 
   const auto SIDE_RANK = stkMeshStruct->metaData->side_rank();
+  const auto ELEM_RANK = stk::topology::ELEM_RANK;
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
   for (auto it : sideSetDiscretizationsSTK) {
     // Extract the discretization
     const std::string&           sideSetName = it.first;
-    const STKDiscretization&     disc        = *it.second;
+    const STKDiscretization&     ss_disc     = *it.second;
 
     // Get the vector spaces
-    auto ss_ov_vs   = disc.getOverlapVectorSpace();
-    auto ss_vs      = disc.getVectorSpace();
+    auto ss_ov_vs   = ss_disc.getOverlapVectorSpace();
+    auto ss_vs      = ss_disc.getVectorSpace();
 
     // A dof manager, to figure out interleaved vs blocked numbering
-    const auto ss_dofMgr = disc.getNewDOFManager();
+    const auto ss_dofMgr = ss_disc.getNewDOFManager();
 
     // Extract the sides
-    stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.find(it.first)->second;
+    stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.at(it.first);
     stk::mesh::Selector selector =
         stk::mesh::Selector(part) &
         stk::mesh::Selector(stkMeshStruct->metaData->locally_owned_part());
@@ -2190,22 +2191,26 @@ STKDiscretization::buildSideSetProjectors()
     graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, ss_vs));
     ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(ov_vs, ss_ov_vs));
 
-    // Recall, if map(i,j)=k, then on side_gid=I, the j-th side node corresponds
+    // Recall, if node_map(i,j)=k, then on side_gid=i, the j-th side node corresponds
     // to the k-th node in the side set cell numeration.
     const auto& node_numeration_map = sideNodeNumerationMap.at(it.first);
+    const auto& side_cell_gid_map   = sideToSideSetCellMap.at(it.first);
     for (auto side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
           "Error! Found a side with not exactly one element attached.\n"
           "  - side stk ID: " << bulkData->identifier(side) << "\n"
           "  - num elems  : " << bulkData->num_elements(side) << "\n");
 
+      const auto side_gid    = stk_gid(side);
+      const int num_side_nodes = bulkData->num_nodes(side);
+      const auto ss_elem_gid = side_cell_gid_map.at(side_gid);
+      const auto ss_elem_lid = ss_dofMgr->cell_indexer()->getLocalElement(ss_elem_gid);
+
       const auto elem = bulkData->begin_elements(side)[0];
       const auto pos = determine_entity_pos(elem,side);
       const auto elem_dof_gids = dofMgr->getElementGIDs(stk_gid(elem));
-      const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(disc.stk_gid(side));
+      const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(ss_elem_lid);
 
-      const int num_side_nodes = bulkData->num_nodes(side);
-      const auto side_gid    = stk_gid(side);
       const auto& permutation = node_numeration_map.at(side_gid);
       for (int eq=0; eq<neq; ++eq) {
         const auto& offsets    = dofMgr->getGIDFieldOffsets_subcell(eq,sideDim,pos);
