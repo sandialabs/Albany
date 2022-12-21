@@ -1127,7 +1127,6 @@ STKDiscretization::computeGraphs()
   };
 
   const auto& cell_layers_data_lid = stkMeshStruct->local_cell_layers_data;
-  const auto& cell_layers_data_gid = stkMeshStruct->global_cell_layers_data;
 
   // Now, process rows/cols corresponding to ss equations
   for (const auto& it : sideSetEquations) {
@@ -1137,8 +1136,8 @@ STKDiscretization::computeGraphs()
     // A side eqn can be coupled to the whole column if
     //   1) the mesh is layered, and
     //   2) all sidesets where it's defined are on the top or bottom
-    int allowColumnCoupling = not cell_layers_data_gid.is_null();
-    if (not cell_layers_data_gid.is_null()) {
+    int allowColumnCoupling = not cell_layers_data_lid.is_null();
+    if (not cell_layers_data_lid.is_null()) {
       for (const auto& ss_name : it.second) {
         const auto& ss_dof_mgr = getNewDOFManager(nodes_dof_name(),ss_name);
         if (ss_dof_mgr->cell_indexer()->getNumLocalElements()==0) {
@@ -1154,12 +1153,12 @@ STKDiscretization::computeGraphs()
         const auto& s = bulkData->get_entity(side_rank,sides[0]+1);
         const auto& e = bulkData->begin_elements(s)[0];
         const auto pos = determine_entity_pos(e,s);
-        const auto layer = cell_layers_data_gid->getLayerId(stk_gid(e));
+        const auto layer = cell_layers_data_lid->getLayerId(stk_gid(e));
 
-        if (layer==cell_layers_data_gid->numLayers) {
-          allowColumnCoupling = pos==cell_layers_data_gid->top_side_pos;
+        if (layer==cell_layers_data_lid->numLayers) {
+          allowColumnCoupling = pos==cell_layers_data_lid->top_side_pos;
         } else if (layer==0) {
-          allowColumnCoupling = pos==cell_layers_data_gid->bot_side_pos;
+          allowColumnCoupling = pos==cell_layers_data_lid->bot_side_pos;
         } else {
           // The mesh is layered, but this sideset is niether top nor bottom
           allowColumnCoupling = false;
@@ -1842,7 +1841,6 @@ STKDiscretization::computeSideSets()
   if (not cell_layers_data.is_null()) {
     // Get topo data
     auto ctd = stkMeshStruct->getMeshSpecs()[0]->ctd;
-    const int sideDim = ctd.dimension - 1;
 
     // Ensure we have ONE cell per layer.
     const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
@@ -1852,10 +1850,6 @@ STKDiscretization::computeSideSets()
         ctd.name==topo_wedge->name, std::runtime_error,
         "Layered Meshes are only allowed to have 1 element per layer.\n");
 
-    // Shards has both Hexa and Wedge with bot and top in the last two side positions
-    auto top_side_pos = ctd.side_count-1;
-    auto bot_side_pos = top_side_pos - 1;
-
     const auto& sol_dof_mgr = getNewDOFManager();
     const auto& node_dof_mgr = getNodeNewDOFManager();
     const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
@@ -1863,8 +1857,8 @@ STKDiscretization::computeSideSets()
     // Create top/bot side (within element) offsets for all equation dofs
     std::vector<std::vector<int>> sol_top_offsets(neq), sol_bot_offsets(neq);
     for (int eq=0; eq<neq; ++eq) {
-      sol_top_offsets[eq] = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,sideDim,top_side_pos);
-      sol_bot_offsets[eq] = sol_dof_mgr->getGIDFieldOffsets_subcell(eq,sideDim,bot_side_pos);
+      sol_top_offsets[eq] = sol_dof_mgr->getGIDFieldOffsetsTopSide(eq);
+      sol_bot_offsets[eq] = sol_dof_mgr->getGIDFieldOffsetsBotSide(eq);
     }
 
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
@@ -1891,7 +1885,7 @@ STKDiscretization::computeSideSets()
           const int ws_elem_idx = ss_val[sideSet_idx].elem_LID;
           const int elem_LID = elem_lids(ws_elem_idx);
           const int side_pos = ss_val[sideSet_idx].side_pos;
-          const auto& ss_nodes_offsets = node_dof_mgr->getGIDFieldOffsets_subcell(0,sideDim,side_pos);
+          const auto& ss_nodes_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
           const int numSideNodes = ss_nodes_offsets.size();
 
           for (int eq=0; eq<neq; ++eq) {
@@ -2143,7 +2137,6 @@ STKDiscretization::buildSideSetProjectors()
   const int sideDim = getNumDim()-1;
 
   const auto SIDE_RANK = stkMeshStruct->metaData->side_rank();
-  const auto ELEM_RANK = stk::topology::ELEM_RANK;
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
   for (auto it : sideSetDiscretizationsSTK) {
