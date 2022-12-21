@@ -383,10 +383,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
   for (auto const& it_side : sideSet) {
     const int iBlock = ordinalEbIndex[it_side.elem_ebIndex];
-    const int elem_LID = it_side.elem_LID;
+    const int ws_elem_idx = it_side.ws_elem_idx;
     const int elem_side = it_side.side_pos;
 
-    cellsOnSidesOnBlocks[iBlock][elem_side](numCellsOnSidesOnBlocks[iBlock][elem_side]++) = elem_LID;
+    cellsOnSidesOnBlocks[iBlock][elem_side](numCellsOnSidesOnBlocks[iBlock][elem_side]++) = ws_elem_idx;
   }
 
   // Loop over the sides that form the boundary condition

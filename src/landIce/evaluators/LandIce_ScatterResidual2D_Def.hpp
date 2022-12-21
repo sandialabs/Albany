@@ -105,7 +105,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   auto diagonal_value = arrayView(&one,1);
   const auto& sideSet = workset.sideSets->at(meshPart);
   for (const auto& side : sideSet) {
-    const int cell = side.elem_LID;
+    const int cell = side.ws_elem_idx;
     const int basal_elem_LID = elem_lids(cell);
 
     // Gather Jac col indices, and set Jac=1 outside of the level where the field is defined

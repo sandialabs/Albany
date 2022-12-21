@@ -128,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
       for (unsigned int inode=0; inode<numSideNodes; ++inode) {
         gl_func(inode) = rho_i*thickness(sideSet_idx,inode)+rho_w*bed(sideSet_idx,inode);

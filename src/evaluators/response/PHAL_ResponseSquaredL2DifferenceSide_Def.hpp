@@ -187,7 +187,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of cell
-          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -208,7 +208,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of cell
-          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -239,7 +239,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of cell
-          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)

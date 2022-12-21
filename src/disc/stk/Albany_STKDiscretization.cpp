@@ -1165,7 +1165,8 @@ STKDiscretization::computeGraphs()
         for (const auto& side : ss) {
           // int iside=0; iside<num_sides; ++iside) {
           // const auto& side_gids = ss_sol_dof_mgr->getElementGIDs(iside);
-          const LO elem_LID = side.elem_LID;
+          const LO ws_elem_idx = side.ws_elem_idx;
+          const LO elem_LID = elem_lids(ws_elem_idx);
           const auto& side_elem_gids = sol_dof_mgr->getElementGIDs(elem_LID);
           const int side_pos = side.side_pos;
           const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(side_eq,side_pos);
@@ -1626,17 +1627,12 @@ STKDiscretization::computeSideSets()
 
       SideStruct sStruct;
 
-      // Save side GID and LID. Here LID is in the sense of "where this side is
-      // in the list of this sideset's sides in this rank".
-      // NOTE: we selected sides in the same way as the STKConnMgr, so the sides are
-      //       ordered in the same way as in the conn mgr, and hence the LID is just
-      //       the iter variable.
+      // Save side stk GID.
       sStruct.side_GID = bulkData->identifier(sidee) - 1;
-      sStruct.side_LID = localSideID;
 
       // Save elem GID and LID. Here, LID is the local id *within* the workset
       sStruct.elem_GID = bulkData->identifier(elem) - 1;
-      sStruct.elem_LID = elemGIDws[sStruct.elem_GID].LID;
+      sStruct.ws_elem_idx = elemGIDws[sStruct.elem_GID].LID;
 
       // Get the ws that this element lives in
       int workset = elemGIDws[sStruct.elem_GID].ws;
@@ -1694,11 +1690,10 @@ STKDiscretization::computeSideSets()
     globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
     globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
     globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_LID         = Kokkos::View<int**,  Kokkos::LayoutRight>("side_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_LID         = Kokkos::View<int**,  Kokkos::LayoutRight>("elem_LID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].ws_elem_idx      = Kokkos::View<int**,  Kokkos::LayoutRight>("ws_elem_idx", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,  Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_pos    = Kokkos::View<int**,  Kokkos::LayoutRight>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_pos         = Kokkos::View<int**,  Kokkos::LayoutRight>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
     globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,  Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
     globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***, Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
@@ -1719,7 +1714,7 @@ STKDiscretization::computeSideSets()
       std::vector<std::vector<int>> cellsOnSide(numSides);
       std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
       for (size_t j = 0; j < ss_val.size(); ++j) {
-        int cell = ss_val[j].elem_LID;
+        int cell = ss_val[j].ws_elem_idx;
         int side = ss_val[j].side_pos;
         cellsOnSide[side].push_back(cell);
         sideSetIdxOnSide[side].push_back(j);
@@ -1743,9 +1738,8 @@ STKDiscretization::computeSideSets()
 
       for (size_t j = 0; j < ss_val.size(); ++j) {
         globalSideSetViews[ss_key].side_GID(current_index, j)      = ss_val[j].side_GID;
-        globalSideSetViews[ss_key].side_LID(current_index, j)      = ss_val[j].side_LID;
         globalSideSetViews[ss_key].elem_GID(current_index, j)      = ss_val[j].elem_GID;
-        globalSideSetViews[ss_key].elem_LID(current_index, j)      = ss_val[j].elem_LID;
+        globalSideSetViews[ss_key].ws_elem_idx(current_index, j)   = ss_val[j].ws_elem_idx;
         globalSideSetViews[ss_key].elem_ebIndex(current_index, j)  = ss_val[j].elem_ebIndex;
         globalSideSetViews[ss_key].side_pos(current_index, j) = ss_val[j].side_pos;
       }
@@ -1776,7 +1770,7 @@ STKDiscretization::computeSideSets()
       lssList[ss_key].size           = ss_val.size();
       lssList[ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
       lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
-      lssList[ss_key].elem_LID       = Kokkos::subview(globalSideSetViews[ss_key].elem_LID, current_index, range );
+      lssList[ss_key].ws_elem_idx    = Kokkos::subview(globalSideSetViews[ss_key].ws_elem_idx, current_index, range );
       lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
       lssList[ss_key].side_pos  = Kokkos::subview(globalSideSetViews[ss_key].side_pos, current_index, range );
       lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
@@ -1873,7 +1867,7 @@ STKDiscretization::computeSideSets()
 
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
           // Get the data that corresponds to the side
-          const int ws_elem_idx = ss_val[sideSet_idx].elem_LID;
+          const int ws_elem_idx = ss_val[sideSet_idx].ws_elem_idx;
           const int elem_LID = elem_lids(ws_elem_idx);
           const int side_pos = ss_val[sideSet_idx].side_pos;
           const auto& ss_nodes_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);

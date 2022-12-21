@@ -129,7 +129,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
     }
 
     for (const auto& side : workset.sideSets->at(meshPart)) {
-      const int cell = side.elem_LID;
+      const int cell = side.ws_elem_idx;
       const int elem_LID = elem_lids(cell);
       const int side_pos = side.side_pos;
       
@@ -208,7 +208,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
 
     for (const auto& side : workset.sideSets->at(meshPart)) {
       // Get the data that corresponds to the side
-      const int cell = side.elem_LID;
+      const int cell = side.ws_elem_idx;
       const int elem_LID = elem_lids(cell);
       const int side_pos = side.side_pos;
       
@@ -327,7 +327,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
 
     const auto& sideSet = workset.sideSets->at(meshPart);
     for (const auto& side : sideSet) {
-      const int cell = side.elem_LID;
+      const int cell = side.ws_elem_idx;
       const int elem_LID = elem_lids(cell);
       const int side_pos = side.side_pos;
       

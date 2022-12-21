@@ -134,7 +134,7 @@ void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
 operator() (const LaplacianRegularization_Side_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx(sideSet_idx);
   const int side = sideSet.side_pos(sideSet_idx);
 
   MeshScalarT side_trapezoid_weights= 0;

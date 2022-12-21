@@ -133,7 +133,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx(sideSet_idx);
       const int side = sideSet.side_pos(sideSet_idx);
 
       MeshScalarT trapezoid_weights= 0;
@@ -165,7 +165,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx(sideSet_idx);
       const int side = sideSet.side_pos(sideSet_idx);
       shards::CellTopology cell2dType(cellType->getCellTopologyData(sideDim,side));
       auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);

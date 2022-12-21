@@ -192,7 +192,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
 
   const auto& sideSet = workset.sideSets->find(sidesetName)->second;
   for (const auto& side : sideSet) {
-    const int side_elem_LID = side.elem_LID;
+    const int side_elem_LID = side.ws_elem_idx;
     const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
 
     for (std::size_t res=0; res<this->global_response.size(); ++res) {
@@ -761,7 +761,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
 
   const auto& sideSet = workset.sideSets->at(sideset);
   for (const auto& side : sideSet) {
-    const int side_elem_LID = side.elem_LID;
+    const int side_elem_LID = side.ws_elem_idx;
     const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
 
     for (size_t res=0; res<this->global_response.size(); ++res) {
