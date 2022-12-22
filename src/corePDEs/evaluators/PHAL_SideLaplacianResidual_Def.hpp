@@ -86,17 +86,17 @@ operator() (const SideLaplacianResidual_Side_Tag& /* tag */, const int& side) co
   for (int node=0; node<numNodes; ++node) {
     ScalarT res = 0;
     for (int qp=0; qp<numQPs; ++qp) {
-      // Laplace part
+      // Laplace part. NOTE: gradients already contain the multiplication by inv_metric
       for (int idim(0); idim<gradDim; ++idim) {
         for (int jdim(0); jdim<gradDim; ++jdim) {
-          res -= grad_u(side,qp,idim)
+          res += grad_u(side,qp,idim)
                * metric(side,qp,idim,jdim)
                * GradBF(side,node,qp,jdim)
                * w_measure(side,qp);
         }
       }
       // Source term part
-      res += BF(side,node,qp) * w_measure(side,qp);
+      res -= BF(side,node,qp) * w_measure(side,qp);
     }
     residual(side,node) = res;
   }
@@ -141,7 +141,6 @@ void SideLaplacianResidual<EvalT, Traits>::evaluateFieldsSide (typename Traits::
     return;
 
   auto sideSet = workset.sideSetViews->at(sideSetName);
-  
   Kokkos::parallel_for(SideLaplacianResidual_Side_Policy(0, sideSet.size), *this);
 }
 
