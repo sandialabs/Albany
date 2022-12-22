@@ -157,7 +157,7 @@ evaluateFields(typename Traits::EvalData workset)
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
     for (int eq=0; eq<numFields; ++eq) {
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side_pos);
       for (unsigned node=0; node<offsets.size(); ++node) {
         const auto lid = dof_lids(offsets[node]);
         get_ref(iside,node,eq) = x_data[lid];
