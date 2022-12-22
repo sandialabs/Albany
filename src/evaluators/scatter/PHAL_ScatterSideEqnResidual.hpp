@@ -51,16 +51,15 @@ public:
   void evaluateFields (typename Traits::EvalData d);
 protected:
   using ScalarT = typename EvalT::ScalarT;
-  using ref_t = typename PHAL::Ref<const ScalarT>::type;
 
-  ref_t get_ref (const int side_idx, const int node, const int eq) const {
+  ScalarT get_resid (const int side_idx, const int node, const int eq) const {
     switch (tensorRank) {
       case 0:
-      {  ref_t ref=val[eq](side_idx,node); return ref; }
+        return val[eq](side_idx,node);
       case 1:
-      {  ref_t ref=valVec(side_idx,node,eq); return ref; }
+        return valVec(side_idx,node,eq);
       case 2:
-      {  ref_t ref=valTensor(side_idx,node,eq/tensorDim,eq%tensorDim); return ref; }
+        return valTensor(side_idx,node,eq/tensorDim,eq%tensorDim);
     }
     Kokkos::abort("Unsupported tensor rank");
   }
@@ -82,20 +81,15 @@ protected:
   std::string             sideSetName;        // The side set where the equation(s) are defined
   std::vector<Albany::SideStruct> sideSet;
 
-  Teuchos::Array<int>     numSideNodes;   // Number of nodes on each side of a cell
-  Teuchos::Array<Teuchos::Array<int> >  sideNodes;
   int numFields;  // Number of fields gathered in this call
   int offset;     // Offset of first DOF being gathered when numFields<neq
   int tensorDim;     // Only for tensor residuals
-
-  int cellDim;
 
   int tensorRank;
 
   // We store the ss_nodes for all worksets, so we can zero residual
   // and diagonalize jacobian OUTSIDE the side set
   std::set<GO> ss_nodes_gids;
-  int numCellNodes;
   bool ss_nodes_gids_gathered = false;
 };
 

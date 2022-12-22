@@ -165,7 +165,6 @@ namespace Albany {
 
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
@@ -173,12 +172,11 @@ namespace Albany {
 
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        bool isVectorField,
        const std::string& resid_name,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const {
-      return constructScatterSideEqnResidualEvaluator (cellType, sideSetName,isVectorField,arcp_str(resid_name),offsetToFirstDOF,scatterName);
+      return constructScatterSideEqnResidualEvaluator (sideSetName,isVectorField,arcp_str(resid_name),offsetToFirstDOF,scatterName);
     }
 
     //! Function to create parameter list for construction of ScatterResidual
@@ -217,7 +215,6 @@ namespace Albany {
     }
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
@@ -225,12 +222,11 @@ namespace Albany {
 
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        int tensorRank,
        const std::string& resid_name,
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const {
-      return constructScatterSideEqnResidualEvaluator(cellType,sideSetName,tensorRank,arcp_str(resid_name),offsetToFirstDOF,scatterName);
+      return constructScatterSideEqnResidualEvaluator(sideSetName,tensorRank,arcp_str(resid_name),offsetToFirstDOF,scatterName);
     }
 
     //! Function to create parameter list for construction of GatherScalarNodalParameter
@@ -597,7 +593,6 @@ namespace Albany {
 
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
@@ -622,7 +617,6 @@ namespace Albany {
        int offsetToFirstDOF=0, std::string scatterName="Scatter") const;
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,

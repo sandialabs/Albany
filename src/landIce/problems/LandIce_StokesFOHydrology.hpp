@@ -194,7 +194,7 @@ StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   ev = evalUtils.constructScatterResidualEvaluator(true, stokes_resids_names, stokes_dof_offset, scatter_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterSideEqnResidualEvaluator(cellType,basalSideName,false,hydro_resids_names,hydro_dof_offset,scatter_names[1]);
+  ev = evalUtils.constructScatterSideEqnResidualEvaluator(basalSideName,false,hydro_resids_names,hydro_dof_offset,scatter_names[1]);
   fm0.template registerEvaluator<EvalT> (ev);
 
   return tag;

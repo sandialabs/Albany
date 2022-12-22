@@ -263,7 +263,7 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterSideEqnResidualEvaluator(cellType, sideSetName, false, resid_names[1], offsetU, "Scatter SideLaplacian");
+  ev = evalUtils.constructScatterSideEqnResidualEvaluator(sideSetName, false, resid_names[1], offsetU, "Scatter SideLaplacian");
   fm0.template registerEvaluator<EvalT> (ev);
 
   ev = evalUtils.constructScatterResidualEvaluator(false, resid_names[0], 0, "Scatter Dummy");

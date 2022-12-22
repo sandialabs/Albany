@@ -400,7 +400,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterResidualEvaluator(
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
@@ -419,7 +418,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEval
     else
       p->set<int>("Tensor Rank", 0);
 
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
     p->set<std::string>("Scatter Field Name", scatterName);
@@ -481,7 +479,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterResidualEvaluator(
 template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEvaluator(
-       const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& sideSetName,
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
@@ -497,7 +494,6 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterSideEqnResidualEval
 
     p->set<int>("Tensor Rank", tensorRank);
 
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
     p->set<std::string>("Scatter Field Name", scatterName);
