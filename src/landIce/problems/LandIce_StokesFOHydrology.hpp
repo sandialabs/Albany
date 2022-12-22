@@ -166,12 +166,14 @@ StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Gather hydro dofs
-  ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_names, basalSideName, cellType, hydro_dof_offset);
-  fm0.template registerEvaluator<EvalT> (ev);
+  for (int i=0; i<hydro_dofs_names.size(); ++i) {
+    ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_names[i], basalSideName, cellType, hydro_dof_offset + i);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
 
-  if (unsteady) {
+  for (int i=0; i<hydro_dofs_dot_names.size(); ++i) {
     // Gather prognostic hydro dofs
-    ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_dot_names,basalSideName, cellType, hydro_dof_dot_offset);
+    ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_dot_names[i],basalSideName, cellType, hydro_dof_dot_offset + i);
     fm0.template registerEvaluator<EvalT> (ev);
   }
 
