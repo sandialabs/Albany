@@ -20,6 +20,7 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_DOFCellToSide.hpp"
 #include "PHAL_DummyResidual.hpp"
+#include "PHAL_ScatterResidual.hpp"
 
 #include "PHAL_SideLaplacianResidual.hpp"
 
@@ -266,7 +267,15 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = evalUtils.constructScatterSideEqnResidualEvaluator(sideSetName, false, resid_names[1], offsetU, "Scatter SideLaplacian");
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names[0], 0, "Scatter Dummy");
+  // We need to build this by hand, since we have to pass the volume eqn indices
+  p = Teuchos::rcp(new Teuchos::ParameterList("Dummy Residual"));
+  p->set<int>("Tensor Rank", 0);
+  p->set<std::string>("Residual Name", resid_names[0]);
+  p->set<int>("Offset of First DOF", 0);
+  p->set<std::string>("Scatter Field Name", "Scatter Dummy");
+  p->set<Teuchos::Array<int>>("Volume Equations",Teuchos::Array<int>(1,0));
+
+  ev = Teuchos::rcp(new PHAL::ScatterResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT> (ev);
 
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);

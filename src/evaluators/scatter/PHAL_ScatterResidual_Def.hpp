@@ -21,16 +21,6 @@
 
 #include "Albany_Hessian.hpp"
 
-namespace {
-
-template<typename T>
-Teuchos::ArrayView<const T>
-av (const T* vals, const int n) {
-  return Teuchos::arrayView(vals,n);
-};
-
-}
-
 // **********************************************************************
 // Base Class Generic Implementation
 // **********************************************************************
@@ -239,7 +229,21 @@ ScatterResidual(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl)
  : ScatterResidualBase<AlbanyTraits::Jacobian,Traits>(p,dl)
 {
-  // Nothing to do here
+  // If there are some sideset eqn, we cannot couple to all neq equations,
+  // since the Jac entries corresponding to SS eqns are not present inside the volume.
+  // The user can specify the idx of the volume eqns, and we'll enter only
+  // those. The contribution of sideset equations to this volume residual
+  // are to be added via ad-hoc contributors on the sideset.
+  // If the 'Volume Equations' array is not passed, we'll assume all equations
+  // are defined over the whole volume.
+  if (p.isType<Teuchos::Array<int>>("Volume Equations")) {
+    const auto& veqn = p.get<Teuchos::Array<int>>("Volume Equations");
+    m_volume_eqns.resize("",veqn.size());
+    for (int i=0; i<veqn.size(); ++i) {
+      m_volume_eqns.host()[i] = veqn[i];
+    }
+    m_volume_eqns.sync_to_dev();
+  }
 }
 
 // **********************************************************************
@@ -249,6 +253,18 @@ void ScatterResidual<AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  if (m_volume_eqns.size()>0 && m_volume_eqns_offsets.size()==0) {
+    const auto& dof_mgr = workset.disc->getNewDOFManager();
+    const int neq_vol = m_volume_eqns.host().size();
+    m_volume_eqns_offsets.resize("",numNodes*neq_vol);
+    for (int ieq=0; ieq<neq_vol; ++ieq) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsets(m_volume_eqns.host()[ieq]);
+      for (int node=0; node<numNodes; ++node) {
+        m_volume_eqns_offsets.host()[node*neq_vol+ieq] = offsets[node];
+      }
+    }
+    m_volume_eqns_offsets.sync_to_dev();
+  }
 
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
@@ -287,7 +303,6 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
 
   const int neq  = dof_mgr->getNumFields();
-  const int nunk = neq*numNodes;
 
   // Get Kokkos vector view and local matrix
   Albany::DeviceView1d<ST> f_data;
@@ -299,6 +314,13 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
 
   const auto& fields_offsets = m_fields_offsets.dev();
   const auto eq_offset = this->offset;
+  const auto vol_eqn_off = m_volume_eqns_offsets.dev();
+  const bool all_vol_eqn = vol_eqn_off.size()==0;
+  int nunk = all_vol_eqn ? neq*numNodes : vol_eqn_off.size();
+  if (not all_vol_eqn and m_lids.size()==0) {
+    m_lids.resize("",nunk);
+  }
+  auto lids = m_lids.dev();
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int cell) {
     ST vals[500];
@@ -307,13 +329,21 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
     for (int node=0; node<numNodes; ++node) {
       for (int eq=0; eq<numFields; ++eq) {
         auto res = get_resid(cell,node,eq);
-        for (int i=0; i<nunk; ++i) {
-          vals[i] = res.fastAccessDx(i);
-        }
 
         const auto row = dof_lids(fields_offsets(node,eq+eq_offset));
-        Jac_kokkos.sumIntoValues(row, dof_lids.data(), nunk, vals, false, is_atomic);
-
+        if (all_vol_eqn) {
+          for (int i=0; i<nunk; ++i) {
+            vals[i] = res.fastAccessDx(i);
+          }
+          Jac_kokkos.sumIntoValues(row, dof_lids.data(), nunk, vals, false, is_atomic);
+        } else {
+          // We need to  pick only the volume equation derivs
+          for (unsigned ioff=0; ioff<vol_eqn_off.size(); ++ioff) {
+            lids[ioff] = dof_lids(vol_eqn_off(ioff));
+            vals[ioff] = res.fastAccessDx(vol_eqn_off(ioff));
+          }
+          Jac_kokkos.sumIntoValues(row, lids.data(), nunk, vals, false, is_atomic);
+        }
         if (scatter_f) {
           KU::atomic_add<ExecutionSpace>(&f_data(row), res.val());
         }
@@ -337,7 +367,6 @@ evaluateFieldsHost(typename Traits::EvalData workset)
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
 
   const int neq  = dof_mgr->getNumFields();
-  const int nunk = neq*numNodes;
 
   // Get local data
   auto f   = workset.f;
@@ -350,8 +379,14 @@ evaluateFieldsHost(typename Traits::EvalData workset)
   const auto& fields_offsets = m_fields_offsets.host();
   const auto eq_offset = this->offset;
 
-  Teuchos::Array<LO> col;
-  col.resize(nunk);
+  const auto vol_eqn_off = m_volume_eqns_offsets.host();
+  const bool all_vol_eqn = vol_eqn_off.size()==0;
+  int nunk = all_vol_eqn ? neq*numNodes : vol_eqn_off.size();
+  if (not all_vol_eqn and m_lids.size()==0) {
+    m_lids.resize("",nunk);
+  }
+  Teuchos::Array<ST> vals (all_vol_eqn ? 0 : nunk);
+  auto lids = m_lids.host();
 
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
@@ -364,11 +399,21 @@ evaluateFieldsHost(typename Traits::EvalData workset)
         if (scatter_f) {
           f_data[row] += res.val();
         }
-        if (res.hasFastAccess()) {
+#ifdef ALBANY_DEBUG
+        TEUCHOS_TEST_FOR_EXCEPTION (not res.hasFastAccess(), std::runtime_error,
+            "[ScatterResidual] Error! Residual FAD has length zero.\n");
+#endif
+        if (all_vol_eqn) {
           // Sum Jacobian entries all at once
-          Albany::addToLocalRowValues(Jac,
-            row, av(dof_lids.data(),nunk), av(&res.fastAccessDx(0), nunk));
-        } // has fast access
+          Albany::addToLocalRowValues(Jac,row,nunk,dof_lids.data(),&res.fastAccessDx(0));
+        } else {
+          // We need to  pick only the volume equation derivs
+          for (unsigned ioff=0; ioff<vol_eqn_off.size(); ++ioff) {
+            lids[ioff] = dof_lids(vol_eqn_off(ioff));
+            vals[ioff] = res.fastAccessDx(vol_eqn_off(ioff));
+          }
+          Albany::addToLocalRowValues(Jac,row,nunk,lids.data(),vals.data());
+        }
       }
     }
   }
