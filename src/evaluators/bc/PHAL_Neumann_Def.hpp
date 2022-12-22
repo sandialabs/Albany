@@ -881,9 +881,8 @@ evaluateFields(typename Traits::EvalData workset)
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
   int lcol;
-  Teuchos::Array<LO> row(1);
-  Teuchos::Array<LO> col(1);
-  Teuchos::Array<ST> value(1);
+  LO row, col;
+  ST value;
 
   const int neq = dof_mgr->getNumFields();
 
@@ -894,10 +893,10 @@ evaluateFields(typename Traits::EvalData workset)
     for (int node=0; node<this->numNodes; ++node) {
       for (int dim = 0; dim < this->numDOFsSet; ++dim){
 
-        row[0] = dof_lids(offsets[node][dim]);
+        row = dof_lids(offsets[node][dim]);
 
         if (f != Teuchos::null) {
-          f_nonconstView[row[0]] += this->neumann(cell, node, dim).val();
+          f_nonconstView[row] += this->neumann(cell, node, dim).val();
         }
 
         // Check derivative array is nonzero
@@ -911,10 +910,10 @@ evaluateFields(typename Traits::EvalData workset)
               lcol = neq * node_col + eq_col;
 
               // Global column
-              col[0] = dof_lids(offsets[node_col][eq_col]);
-              value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
+              col = dof_lids(offsets[node_col][eq_col]);
+              value = this->neumann(cell, node, dim).fastAccessDx(lcol);
               // Sum Jacobian
-              Albany::addToLocalRowValues(jac,row[0],col(),value());
+              Albany::addToLocalRowValue(jac,row,col,value);
             } // column equations
           } // column nodes
         } // has fast access

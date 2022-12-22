@@ -151,7 +151,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
         f_data[lrow] += res.val();
       }
       if (res.hasFastAccess()) {
-        Albany::addToLocalRowValues(Jac,lrow,lcols(), arrayView(&(res.fastAccessDx(0)),lcols.size()));
+        Albany::addToLocalRowValues(Jac,lrow,lcols.size(),lcols.data(),&res.fastAccessDx(0));
       } // has fast access
     }
   }
@@ -230,9 +230,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
           // Need to do derivs one-by-one, since we have a 2-level indirection
           for (int lunk = 0; lunk < nunk; lunk++) {
-            Albany::addToLocalRowValues(Jac,lrow,
-                                        arrayView(&lcols_nunk[lunk],1),
-                                        arrayView(&(res.fastAccessDx(index[lunk])), 1));
+            Albany::addToLocalRowValue(Jac,lrow,lcols_nunk[lunk],res.fastAccessDx(index[lunk]));
           }
         }
       }
@@ -268,9 +266,8 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
             // Need to do derive one-by-one, since they are strided
             for (int i=0; i<this->numNodes; ++i) {
-              Albany::addToLocalRowValues(Jac,lrow,
-                                          arrayView(&lcols_nodes[i],1),
-                                          arrayView(&(res.fastAccessDx(sol_offsets(i,offset2DField))), 1));
+              Albany::addToLocalRowValue(Jac,lrow,lcols_nodes[i],
+                  res.fastAccessDx(sol_offsets(i,offset2DField)));
             }
           }
         }

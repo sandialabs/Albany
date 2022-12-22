@@ -99,6 +99,21 @@ void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values);
 
+inline void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                                 const LO lrow, const int numValues,
+                                 const LO* indices, const ST* values)
+{
+  addToLocalRowValues (lop,lrow,
+                       Teuchos::arrayView(indices,numValues),
+                       Teuchos::arrayView(values,numValues));
+}
+
+inline void addToLocalRowValue (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                                const LO lrow, const LO col, const ST value)
+{
+  addToLocalRowValues (lop,lrow,1,&col,&value);
+}
+
 void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val); 
 
 Teuchos::RCP<Thyra_LinearOp> getTransposedOp (const Teuchos::RCP<const Thyra_LinearOp>& lop);
