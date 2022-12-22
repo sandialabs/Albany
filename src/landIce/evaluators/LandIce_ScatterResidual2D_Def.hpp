@@ -99,8 +99,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   auto f_data = scatter_f ? Albany::getNonconstLocalData(workset.f) : Teuchos::null;
   auto Jac = workset.Jac;
 
-  Teuchos::Array<LO> lcols;
-  lcols.reserve(neq*numNodes*(numLayers+1));
+  Teuchos::Array<LO>lcols(neq*numSideNodes*(numLayers+1));
   double one = 1;
   auto diagonal_value = arrayView(&one,1);
   const auto& sideSet = workset.sideSets->at(meshPart);
@@ -109,7 +108,6 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     const int basal_elem_LID = elem_lids(cell);
 
     // Gather Jac col indices, and set Jac=1 outside of the level where the field is defined
-    lcols.resize(neq*numSideNodes*(numLayers+1));
     for (int ilev=0; ilev<=numLayers; ++ilev) {
       // Get correct cell layer and correct dofs offsets
       const int ilayer = ilev==numLayers ? ilev-1 : ilev;
@@ -123,7 +121,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
           const int lrow = dof_lids(dof_offsets[inode]);
 
           // add to lcols
-          lcols[ilev*neq*numSideNodes*neq*inode + eq] = lrow;
+          lcols[ilev*neq*numSideNodes + neq*inode + eq] = lrow;
         }
       }
 
