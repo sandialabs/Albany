@@ -759,19 +759,6 @@ IF(ALBANY_ENABLE_CUDA)
   ENDIF()
 ENDIF()
 
-# set optional dependency on the BGL, defaults to Enabled
-# This option is added due to issued with compiling BGL with the intel compilers
-# see Trilinos bugzilla bug #6343
-#
-OPTION(ENABLE_BGL "Flag to turn on the Phalanx graphviz capabilities (dependent on BGL)" ON)
-IF (ENABLE_BGL)
-  MESSAGE("-- BGL                       Enabled")
-  SET(ALBANY_BGL TRUE)
-ELSE()
-  MESSAGE("-- BGL                   NOT Enabled. Graph visualization in Phalanx will not be available!")
-  SET(ALBANY_BGL FALSE)
-ENDIF()
-
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception (NAN) checking" OFF)
 
