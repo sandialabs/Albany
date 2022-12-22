@@ -43,7 +43,7 @@ create (const std::string& key,
   } else if (key == "Populate Mesh") {
     problem = Teuchos::rcp(new PopulateMesh(problemParams, discParams, paramLib));
   } else if (key == "Side Laplacian 3D") {
-    problem = Teuchos::rcp(new SideLaplacian(problemParams, paramLib, 1));
+    problem = Teuchos::rcp(new SideLaplacian(problemParams, paramLib));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
       "Error! Unrecognized key in BasicProblemFactory. Did you forget to check with 'provides(key)' first?\n");
