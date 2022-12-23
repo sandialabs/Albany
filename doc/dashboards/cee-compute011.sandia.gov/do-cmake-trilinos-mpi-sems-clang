@@ -41,7 +41,7 @@ cmake -GNinja \
       -D TPL_ENABLE_Zlib=ON \
       -D Zlib_INCLUDE_DIRS:PATH=${ZLIB_ROOT}/include \
       -D Zlib_LIBRARY_DIRS:PATH=${ZLIB_ROOT}/lib \
-      -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
+      -D Trilinos_ASSERT_DEFINED_DEPENDENCIES=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF \
       -D Trilinos_ENABLE_ALL_PACKAGES=OFF \
       -D Trilinos_ENABLE_EXAMPLES=OFF \
