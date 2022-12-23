@@ -1158,6 +1158,7 @@ STKDiscretization::computeGraphs()
     // Loop over all side sets where this eqn is defined
     for (const auto& ss_name : it.second) {
       for (int ws=0; ws<getNumWorksets(); ++ws) {
+        const auto& elem_lids = getElementLIDs_host(ws);
         const auto& ss = sideSets[ws].at(ss_name);
         // const auto& ss_sol_dof_mgr = getNewDOFManager(solution_dof_name(),ss_name);
         // const int num_sides = ss_sol_dof_mgr->cell_indexer()->getNumLocalElements();
@@ -1172,8 +1173,8 @@ STKDiscretization::computeGraphs()
           const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(side_eq,side_pos);
 
           const int num_side_nodes = eq_offsets.size();
-          // rows.resize(num_side_nodes);
-          // cols.resize(num_side_nodes);
+          rows.resize(num_side_nodes);
+          cols.resize(num_side_nodes);
 
           if (globalAllowColumnCoupling) {
             const int numLayers = cell_layers_data_lid->numLayers;
@@ -1591,6 +1592,11 @@ STKDiscretization::computeSideSets()
   sideSets.resize(numBuckets);  // Need a sideset list per workset
 
   for (const auto& ss : stkMeshStruct->ssPartVec) {
+    // Make sure the sideset exist even if no sides are owned
+    for (int i=0; i<numBuckets; ++i) {
+      sideSets[i][ss.first].resize(0);
+    }
+
     // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
         stk::mesh::Selector(*(ss.second)) &
@@ -2124,17 +2130,16 @@ STKDiscretization::buildSideSetProjectors()
   const auto SIDE_RANK = stkMeshStruct->metaData->side_rank();
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
+  const auto cell_indexer = getNewDOFManager()->cell_indexer();
   for (auto it : sideSetDiscretizationsSTK) {
     // Extract the discretization
     const std::string&           sideSetName = it.first;
     const STKDiscretization&     ss_disc     = *it.second;
 
-    // Get the vector spaces
-    auto ss_ov_vs   = ss_disc.getOverlapVectorSpace();
-    auto ss_vs      = ss_disc.getVectorSpace();
-
-    // A dof manager, to figure out interleaved vs blocked numbering
+    // A dof manager defined exclusively on the side
     const auto ss_dofMgr = ss_disc.getNewDOFManager();
+    const auto ss_ov_vs  = ss_dofMgr->ov_vs();
+    const auto ss_vs     = ss_dofMgr->vs();
 
     // Extract the sides
     stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.at(it.first);
@@ -2145,11 +2150,13 @@ STKDiscretization::buildSideSetProjectors()
     stk::mesh::get_selected_entities(
         selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
 
+#ifdef ALBANY_DEBUG
     const auto ss_cells = ss_dofMgr->getAlbanyConnManager()->getElementsInBlock();
     TEUCHOS_TEST_FOR_EXCEPTION (sides.size()!=ss_cells.size(), std::runtime_error,
-        "Error! Conflicting data between sideset sides and sideset dof manager data.\n"
+        "Error! Conflicting data between sideset sides and sideset-dofMgr data.\n"
         "  - num sides in sideset: " << std::to_string(sides.size()) << "\n"
         "  - num elems on sideset dof mgr: " << ss_cells.size() << "\n");
+#endif
 
     // The projector: build both overlapped and non-overlapped range vs
     graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, ss_vs));
@@ -2171,8 +2178,10 @@ STKDiscretization::buildSideSetProjectors()
       const auto ss_elem_lid = ss_dofMgr->cell_indexer()->getLocalElement(ss_elem_gid);
 
       const auto elem = bulkData->begin_elements(side)[0];
+
       const auto pos = determine_entity_pos(elem,side);
-      const auto elem_dof_gids = dofMgr->getElementGIDs(stk_gid(elem));
+      const auto ielem = cell_indexer->getLocalElement(stk_gid(elem));
+      const auto elem_dof_gids = dofMgr->getElementGIDs(ielem);
       const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(ss_elem_lid);
 
       const auto& permutation = node_numeration_map.at(side_gid);
