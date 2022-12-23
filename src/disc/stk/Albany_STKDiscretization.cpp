@@ -2307,8 +2307,12 @@ STKDiscretization::setupExodusOutput()
 
     Ioss::Init::Initializer io;
 
+   Teuchos::Ptr<const Teuchos::MpiComm<int> > mpi_comm =
+             Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*comm));
+    auto raw_mpi_comm = mpi_comm->getRawMpiComm();
+
     mesh_data = Teuchos::rcp(
-        new stk::io::StkMeshIoBroker(getMpiCommFromTeuchosComm(comm)));
+        new stk::io::StkMeshIoBroker(*raw_mpi_comm));
     mesh_data->set_bulk_data(Teuchos::get_shared_ptr(bulkData));
     //IKT, 8/16/19: The following is needed to get correct output file for Schwarz problems
     //Please see: https://github.com/trilinos/Trilinos/issues/5479

@@ -160,7 +160,8 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     comm = MPI_Comm_f2c(cism_communicator);
     //MPI_COMM_size (comm, &cism_process_count);
     //MPI_COMM_rank (comm, &my_cism_rank);
-    mpiCommT = Albany::createTeuchosCommFromMpiComm(comm);
+    //mpiCommT = Albany::createTeuchosCommFromMpiComm(comm);
+    mpiCommT = Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(comm),1984));
 
     //IK, 4/4/14: get verbosity level specified in CISM *.config file
     debug_output_verbosity = *(ftg_ptr -> getLongVar("debug_output_verbosity","options"));
