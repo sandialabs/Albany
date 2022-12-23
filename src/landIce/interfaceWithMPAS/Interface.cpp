@@ -347,7 +347,8 @@ void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 }
 
 int velocity_solver_init_mpi(MPI_Comm comm) {
-  mpiCommMPAS = Albany::createTeuchosCommFromMpiComm(comm);
+  //mpiCommMPAS = Albany::createTeuchosCommFromMpiComm(comm);
+  mpiCommMPAS = Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(comm),1984));
   if(! Kokkos::is_initialized()) {
     Kokkos::initialize();
     kokkosInitializedByAlbany = true;
@@ -398,7 +399,8 @@ void velocity_solver_finalize() {
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   auto grid2DTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Compute 2D Grid"));
   keptMesh = false;
-  mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
+  //mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
+  mpiComm = Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(reducedComm),1984));
 }
 
 void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
