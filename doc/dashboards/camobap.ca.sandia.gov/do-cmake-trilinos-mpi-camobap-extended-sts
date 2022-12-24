@@ -20,7 +20,7 @@
 # not compiled. Version _1_40 or newer.
 #
 # There are two optional build choices, commented below
-#   these are for Dakota and Exodus I/O capabilities.
+#   these are for Dakota and Exodus I/O capabilites.
 #
 # Albany automatically queries the Trilinos build to 
 # know if these capabilities are enabled or disabled.

@@ -11,6 +11,7 @@ cmake \
     -D CMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g' \
     -D CMAKE_BUILD_TYPE:STRING=DEBUG \
     -D ENABLE_LANDICE:BOOL=ON \
+    -D ENABLE_DEMO_PDES:BOOL=ON \
     -D ENABLE_UNIT_TESTS:BOOL=ON \
     -D ENABLE_ALBANY_EPETRA:BOOL=ON \
     -D ENABLE_CHECK_FPE:BOOL=ON \
@@ -27,7 +28,7 @@ cmake \
     -D TRILINOS_BUILD_DIR=${TRILINOSBLDDIR} \
     -D PYTHON_EXECUTABLE='/usr/bin/python3.6m' \
     -D PYTHON_INCLUDE_PATH='/usr/include/python3.6m' \
-    -D SWIG_EXECUTABLE='/tpls/install/bin/swig' \
     -D ENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON \
+    -D SWIG_EXECUTABLE='/tpls/install/bin/swig' \
 ..
   

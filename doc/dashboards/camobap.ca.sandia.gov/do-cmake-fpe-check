@@ -27,5 +27,6 @@ cmake \
     -D PYTHON_EXECUTABLE='/usr/bin/python' \
     -D SWIG_EXECUTABLE='/tpls/install/swig/bin/swig' \
     -D PYTHON_INCLUDE_PATH='/usr/include/python3.9' \
+    -D INSTALL_ALBANY:BOOL=OFF \
     -D ENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON \
 /nightlyCDash/repos/Albany/
