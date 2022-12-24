@@ -46,10 +46,12 @@ cmake -G Ninja \
       -D CMAKE_Fortran_COMPILER=/tpls/install/bin/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/tpls/install/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/tpls/install/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/lib \
 \
-      -D TPL_ENABLE_HDF5:BOOL=OFF \
+      -D TPL_ENABLE_HDF5:BOOL=ON \
+      -D HDF5_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/include \
+      -D HDF5_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/lib \
 \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
