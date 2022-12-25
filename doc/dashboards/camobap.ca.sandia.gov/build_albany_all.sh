@@ -6,7 +6,7 @@ rm -rf nightly_log*
 rm -rf results*
 bash nightly_cron_script_albany.sh #Albany
 bash nightly_cron_script_cismAlbany.sh #CISM-Albany
-bash nightly_cron_script_albanyT.sh #Albany, No Epetra
+#bash nightly_cron_script_albanyT.sh #Albany, No Epetra
 bash nightly_cron_script_albany_fpe.sh #Albany FPE check on
 bash nightly_cron_script_albany_openmp.sh #Albany, OpenMP KokkosNode
 #bash nightly_cron_script_trilinos.sh #Trilinos with extended scalar types                                         
