@@ -34,7 +34,7 @@ ALBANY:
     Method: STK1D
     Exodus Output File Name: advection1D_scalar_param_adjoint_sens_explicit_out.exo
     Periodic_x BC: true
-    Exodus Write Interval: 1
+    Exodus Write Interval: 10
   Piro:
     Sensitivity Method: Adjoint
     Enable Explicit Matrix Transpose: true
@@ -59,7 +59,7 @@ ALBANY:
         Time Step Control:
           Initial Time: 0.00000000000000000e+18
           Initial Time Index: 0
-          Initial Time Step: 1.0e-4
+          Initial Time Step: 2.0e-4
           Final Time: 1.0
           Final Time Index: 10000000
           Maximum Absolute Error: 1.00000000000000002e-08
@@ -108,7 +108,7 @@ ALBANY:
     Relative Tolerance: 1.00000000000000002e-03
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 3.552884918731e+00
+    Test Value: 3.571064945950e+00
       #Sensitivity For Parameter 0:
       #Test Value: -1.82404989716553993e-02
     Relative Tolerance: 1.00000000000000002e-03
