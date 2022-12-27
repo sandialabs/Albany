@@ -63,7 +63,7 @@ set (BOOST_DIR /project/projectdirs/piscees/tpl/boost_1_55_0)
 
 ctest_start(${CTEST_TEST_TYPE})
 
-ctest_submit (FILES "/project/projectdirs/piscees/nightlyCoriCDash/build/Testing/20221226-0100/Test.xml" RETURN_VALUE  S_HAD_ERROR)
+ctest_submit (FILES "/project/projectdirs/piscees/nightlyCoriCDash/build/Testing/XXX-0100/Test.xml" RETURN_VALUE  S_HAD_ERROR)
 
 if (S_HAD_ERROR)
   message ("Cannot submit Albany test results!")
