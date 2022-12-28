@@ -7,6 +7,6 @@
 SET(ALBANY_PYTHON_N_MPI 2)
 
 add_subdirectory(extremeEvent)
-add_subdirectory(iO)
+add_subdirectory(inputOutput)
 add_subdirectory(steadyHeat)
 add_subdirectory(randCompress)
