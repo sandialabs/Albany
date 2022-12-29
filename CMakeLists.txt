@@ -1017,7 +1017,7 @@ ELSE()
 ENDIF()
 
 IF (ALBANY_PYTHON)
-  add_subdirectory( PyAlbany )
+  add_subdirectory( pyAlbany )
 ENDIF()
 
 MESSAGE("\nAnd CMake says...:")
