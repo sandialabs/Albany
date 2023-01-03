@@ -13,6 +13,9 @@ NVCC_WRAPPER=
 # FIXME: update with path to Trilinos source directory
 TRILINOS_SOURCE_DIR=
 
+# FIXME: point to boost install
+BOOST_DIR=
+
 export CRAYPE_LINK_TYPE=dynamic
 
 cmake \
@@ -90,7 +93,6 @@ cmake \
   -D CUDA_cufft_LIBRARY=$CUDATOOLKIT_HOME/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcufft.so \
 \
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
-  -D EpetraExt_USING_HDF5:BOOL=OFF \
   -D Intrepid_ENABLE_TESTS:BOOL=OFF \
   -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
   -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
@@ -100,23 +102,20 @@ cmake \
   -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
   -D Tpetra_INST_INT_INT:BOOL=OFF \
   -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
-  -D Xpetra_ENABLE_Epetra=OFF \
-  -D MueLu_ENABLE_Epetra=OFF \
-  -D Belos_ENABLE_Epetra=OFF \
 \
   -D TPL_ENABLE_Matio:BOOL=OFF \
   -D TPL_ENABLE_X11:BOOL=OFF \
 \
   -D Trilinos_ENABLE_Amesos2:BOOL=ON \
-  -D Trilinos_ENABLE_Amesos:BOOL=ON \
+  -D Trilinos_ENABLE_Amesos:BOOL=OFF \
   -D Trilinos_ENABLE_Anasazi:BOOL=ON \
-  -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+  -D Trilinos_ENABLE_AztecOO:BOOL=OFF \
   -D Trilinos_ENABLE_Belos:BOOL=ON \
   -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Trilinos_ENABLE_Epetra:BOOL=ON \
-  -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+  -D Trilinos_ENABLE_Epetra:BOOL=OFF \
+  -D Trilinos_ENABLE_EpetraExt:BOOL=OFF \
   -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
-  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+  -D Trilinos_ENABLE_Ifpack:BOOL=OFF \
   -D Trilinos_ENABLE_Intrepid:BOOL=ON \
   -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
   -D Trilinos_ENABLE_Isorropia:BOOL=ON \
@@ -125,7 +124,7 @@ cmake \
   -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
   -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
   -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
-  -D Trilinos_ENABLE_ML:BOOL=ON \
+  -D Trilinos_ENABLE_ML:BOOL=OFF \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
   -D Trilinos_ENABLE_NOX:BOOL=ON \
   -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
@@ -154,7 +153,6 @@ cmake \
   -D Trilinos_ENABLE_Teuchos:BOOL=ON \
   -D Trilinos_ENABLE_Thyra:BOOL=ON \
   -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
-  -D Trilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON \
   -D Trilinos_ENABLE_Tpetra:BOOL=ON \
   -D Trilinos_ENABLE_TriKota:BOOL=OFF \
   -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
