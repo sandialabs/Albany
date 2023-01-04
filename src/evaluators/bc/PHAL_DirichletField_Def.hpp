@@ -228,6 +228,40 @@ DirichletField(Teuchos::ParameterList& p) :
 // **********************************************************************
 template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+preEvaluate(typename Traits::EvalData dirichletWorkset) {
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+
+  if (trans) {
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(dirichletWorkset.Vp_bc);
+    bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
+    int num_cols = dirichletWorkset.Vp->domain()->dim();
+    const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+    if(isFieldParameter) {
+      // Note: it is important to set Vp_bc to Vp at Dirichlet dof nodes even if Vp_bc was already initialized with Vp
+      // because other boundary conditions applied before this one could have zeroed it out (if the bcs are applied to the same dofs).
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vp_const2dView = Albany::getLocalData(dirichletWorkset.Vp);
+      for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+        int lunk = nsNodes[inode][this->offset];
+        for (int col=0; col<num_cols; ++col) {
+          Vp_nonconst2dView[col][lunk] = Vp_const2dView[col][lunk];
+        }
+      }
+    } else {
+      for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+        int lunk = nsNodes[inode][this->offset];
+        for (int col=0; col<num_cols; ++col) {
+          Vp_nonconst2dView[col][lunk] = 0.0;
+        }
+      }
+    }
+  }
+}
+
+// **********************************************************************
+template<typename Traits>
+void DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
   bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
@@ -241,10 +275,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
   if (trans) {
     // For (df/dp)^T*V we zero out corresponding entries in V
-    Teuchos::RCP<Thyra_MultiVector> Vp = dirichletWorkset.Vp_bc;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp);
-
     if(isFieldParameter) {
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(dirichletWorkset.Vp_bc);
       const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
       auto fieldNodeVs = dirichletWorkset.disc->getNodeVectorSpace(this->field_name);
       auto fieldVs = dirichletWorkset.disc->getVectorSpace(this->field_name);
@@ -257,18 +289,10 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
         int lunk = nsNodes[inode][this->offset];
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
-        for (int col=0; col<num_cols; ++col) {
+	      for (int col=0; col<num_cols; ++col) {
           fpV_nonconst2dView[col][lfield] -= Vp_nonconst2dView[col][lunk];
           Vp_nonconst2dView[col][lunk] = 0.0;
-         }
-      }
-    } else {
-      for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-        int lunk = nsNodes[inode][this->offset];
-
-        for (int col=0; col<num_cols; ++col) {
-          Vp_nonconst2dView[col][lunk] = 0.0;
-         }
+        }
       }
     }
   } else {
@@ -288,7 +312,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
         for (int col=0; col<num_cols; ++col) {
-          fpV_nonconst2dView[col][lunk] -= Vp_const2dView[col][lfield];
+          fpV_nonconst2dView[col][lunk] = -Vp_const2dView[col][lfield];
         }
       }
     } else {

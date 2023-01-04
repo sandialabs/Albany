@@ -356,26 +356,21 @@ SDirichletField(Teuchos::ParameterList& p) :
 // **********************************************************************
 template<typename Traits>
 void SDirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-evaluateFields(typename Traits::EvalData dirichlet_workset) {
+preEvaluate(typename Traits::EvalData dirichletWorkset) {
 
-  bool isFieldParameter =  dirichlet_workset.dist_param_deriv_name == this->field_name;
-  TEUCHOS_TEST_FOR_EXCEPTION(
+  bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
+    TEUCHOS_TEST_FOR_EXCEPTION(
       isFieldParameter,
       std::logic_error,
       "Error, SDirichletField cannot handle dirichlet parameter " <<  this->field_name << ", use DirichletField instead." << std::endl);
-
-  bool trans = dirichlet_workset.transpose_dist_param_deriv;
-
-  Teuchos::RCP<Thyra_MultiVector> fpV = dirichlet_workset.fpV;
-
-  int num_cols = fpV->domain()->dim();
-
-  const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
 
   if (trans) {
     // For (df/dp)^T*V we zero out corresponding entries in V
-    Teuchos::RCP<Thyra_MultiVector> Vp = dirichlet_workset.Vp_bc;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp);
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(dirichletWorkset.Vp_bc);    
+    int num_cols = dirichletWorkset.Vp->domain()->dim();
+    const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
@@ -383,10 +378,27 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
         Vp_nonconst2dView[col][lunk] = 0.0;
       }
     }
-  } else {
+  }
+}
+
+// **********************************************************************
+template<typename Traits>
+void SDirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+
+  bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      isFieldParameter,
+      std::logic_error,
+      "Error, SDirichletField cannot handle dirichlet parameter " <<  this->field_name << ", use DirichletField instead." << std::endl);
+
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+
+  if (!trans) {
     // for (df/dp)*V we zero out corresponding entries in df/dp
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vp_const2dView = Albany::getLocalData(dirichlet_workset.Vp);
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(dirichletWorkset.fpV);
+    int num_cols = dirichletWorkset.fpV->domain()->dim();
+    const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
       for (int col=0; col<num_cols; ++col) {

@@ -280,45 +280,52 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::SDirichlet(
   return;
 }
 
-//
-//
-//
+// **********************************************************************
+template <typename Traits>
+void
+SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
+    typename Traits::EvalData dirichletWorkset)
+{
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  if (trans) {
+    auto Vp_bc = dirichletWorkset.Vp_bc;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp_bc);
+
+    int num_cols = Vp_bc->domain()->dim();
+
+    const std::vector<std::vector<int> >& nsNodes =
+      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      int lunk = nsNodes[inode][this->offset];
+
+      for (int col=0; col<num_cols; ++col) {
+        Vp_nonconst2dView[col][lunk] = 0.0;
+       }
+    }
+  }
+}
+
+// **********************************************************************
 template <typename Traits>
 void
 SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(
-    typename Traits::EvalData dirichlet_workset)
+    typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Thyra_MultiVector> fpV = dirichlet_workset.fpV;
+  bool trans    = dirichletWorkset.transpose_dist_param_deriv;
 
-  bool trans    = dirichlet_workset.transpose_dist_param_deriv;
-  int  num_cols = fpV->domain()->dim();
-
-  const std::vector<std::vector<int>>& nsNodes =
-      dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
-
-  if (trans) {
-    // For (df/dp)^T*V we zero out corresponding entries in V
-    Teuchos::RCP<Thyra_MultiVector>          Vp = dirichlet_workset.Vp_bc;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView =
-        Albany::getNonconstLocalData(Vp);
-
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      int lunk = nsNodes[inode][this->offset];
-
-      for (int col = 0; col < num_cols; ++col) {
-        //(*Vp)[col][lunk] = 0.0;
-        Vp_nonconst2dView[col][lunk] = 0.0;
-      }
-    }
-  } else {
+  if (!trans) {
     // for (df/dp)*V we zero out corresponding entries in df/dp
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView =
-        Albany::getNonconstLocalData(fpV);
+        Albany::getNonconstLocalData(dirichletWorkset.fpV);
+
+    int  num_cols = dirichletWorkset.fpV->domain()->dim();
+    const std::vector<std::vector<int>>& nsNodes =
+      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+    
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
-
       for (int col = 0; col < num_cols; ++col) {
-        //(*fpV)[col][lunk] = 0.0;
         fpV_nonconst2dView[col][lunk] = 0.0;
       }
     }

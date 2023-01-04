@@ -29,10 +29,10 @@ class TestSteadyHeat(unittest.TestCase):
         problem = Utils.createAlbanyProblem(parameter, cls.parallelEnv)
 
         g_target_before = 0.35681844
-        g_target_after = 0.17388298
-        g_target_2 = 0.19570272
-        p_0_target = 0.39886689
-        p_1_norm_target = 5.37319376038225
+        g_target_after = 0.17388281
+        g_target_2 = 0.1957233
+        p_0_target = 0.39855677
+        p_1_norm_target = 5.366834867170422
         tol = 5e-8
 
         problem.performSolve()

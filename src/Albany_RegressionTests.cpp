@@ -210,7 +210,7 @@ std::pair<int,int> RegressionTests::checkAnalysisTestResults(
 
       if (testParams->get<bool>("Piro Analysis Test Two Norm",false)) {
         const auto norm = tvec->norm_2();
-        *out << "Parameter Vector Two Norm: " << norm << std::endl;
+        *out << "Parameter Vector Two Norm: " << std::setprecision(12) << norm << std::endl;
         failures += scaledCompare(norm, testValues[0], relTol, absTol, "Piro Analysis Test Two Norm");
         comparisons++;
       }
