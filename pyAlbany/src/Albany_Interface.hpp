@@ -73,25 +73,25 @@ namespace PyAlbany
    * This class is used to communicate from Python to c++ the parallel environment information such as
    * a Teuchos communicator and the Kokkos arguments.
    * 
-   * The constructor of this object calls Kokkos::initialize and its destructors calls finalize_all.
+   * The constructor of this object calls Kokkos::initialize and its destructors calls finalize.
     
    */
     class PyParallelEnv
     {
     private:
         RCP_Teuchos_Comm_PyAlbany comm;
-        const int num_threads, num_numa, device_id;
+        const int num_threads, num_devices, device_id;
         int rank;
 
     public:
-        PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads = -1, int _num_numa = -1, int _device_id = -1);
+        PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads = -1, int _num_devices = -1, int _device_id = -1);
         ~PyParallelEnv()
         {
             if (rank == 0)
                 std::cout << "~PyParallelEnv()\n";
         }
         int getNumThreads() const { return num_threads; }
-        int getNumNuma() const { return num_numa; }
+        int getNumDevices() const { return num_devices; }
         int getDeviceID() const { return device_id; }
         RCP_Teuchos_Comm_PyAlbany getComm() const { return comm; }
         void setComm(RCP_Teuchos_Comm_PyAlbany _comm) {comm = _comm;}

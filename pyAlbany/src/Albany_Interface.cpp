@@ -61,15 +61,15 @@ using namespace PyAlbany;
 using Teuchos::RCP;
 using Teuchos::rcp;
 
-PyParallelEnv::PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, int _num_numa, int _device_id) : comm(_comm), num_threads(_num_threads), num_numa(_num_numa), device_id(_device_id)
+PyParallelEnv::PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, int _num_devices, int _device_id) : comm(_comm), num_threads(_num_threads), num_devices(_num_devices), device_id(_device_id)
 {
-    Kokkos::InitArguments args;
-    args.num_threads = this->num_threads;
-    args.num_numa = this->num_numa;
-    args.device_id = this->device_id;
-
-    if(!Kokkos::is_initialized())
+    if(!Kokkos::is_initialized()) {
+        Kokkos::InitializationSettings args;
+        args.set_num_threads(this->num_threads);
+        args.set_num_devices(this->num_devices);
+        args.set_device_id(this->device_id);
         Kokkos::initialize(args);
+    }
 
     rank = comm->getRank();
 }
@@ -572,7 +572,7 @@ void PyAlbany::orthogTpMVecs(Teuchos::RCP<Tpetra_MultiVector> inputVecs, int blk
 void PyAlbany::finalizeKokkos()
 {
     if(Kokkos::is_initialized())
-        Kokkos::finalize_all();
+        Kokkos::finalize();
 }
 
 Teuchos::RCP<const Tpetra_Map> PyAlbany::getRankZeroMap(Teuchos::RCP<const Tpetra_Map> distributedMap)

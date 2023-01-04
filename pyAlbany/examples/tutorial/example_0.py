@@ -5,7 +5,7 @@ from PyAlbany import Utils
 comm = Utils.getDefaultComm()
 parallelEnv = Utils.createDefaultParallelEnv(comm,
                                              n_threads=-1,
-                                             n_numa=-1,
+                                             n_devices=-1,
                                              device_id=-1)
 
 # (Kokkos finalize will be called during the destruction of parallelEnv;

@@ -9,8 +9,8 @@
 
 namespace py = pybind11;
 
-Teuchos::RCP<PyParallelEnv> createPyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, int _num_numa, int _device_id) {
-    return Teuchos::rcp<PyParallelEnv>(new PyAlbany::PyParallelEnv(_comm, _num_threads, _num_numa, _device_id));
+Teuchos::RCP<PyParallelEnv> createPyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, int _num_devices, int _device_id) {
+    return Teuchos::rcp<PyParallelEnv>(new PyAlbany::PyParallelEnv(_comm, _num_threads, _num_devices, _device_id));
 }
 
 Teuchos::RCP<PyParallelEnv> createDefaultKokkosPyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm) {
@@ -22,7 +22,7 @@ void pyalbany_parallelenv(py::module &m) {
         .def(py::init(&createPyParallelEnv))
         .def(py::init(&createDefaultKokkosPyParallelEnv))
         .def("getNumThreads", &PyParallelEnv::getNumThreads)
-        .def("getNumNuma", &PyParallelEnv::getNumNuma)
+        .def("getNumDevices", &PyParallelEnv::getNumDevices)
         .def("getDeviceID", &PyParallelEnv::getDeviceID)
         .def("getComm", &PyParallelEnv::getComm)
         .def("setComm", &PyParallelEnv::setComm);

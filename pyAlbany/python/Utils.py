@@ -50,13 +50,13 @@ def getDefaultComm():
     from mpi4py import MPI
     return pa.getTeuchosComm(MPI.COMM_WORLD)
 
-def createDefaultParallelEnv(comm = getDefaultComm(), n_threads=-1,n_numa=-1,device_id=-1):
+def createDefaultParallelEnv(comm = getDefaultComm(), n_threads=-1,n_devices=-1,device_id=-1):
     """@brief Creates a default parallel environment.
     
     This function initializes Kokkos; Kokkos will be finalized when the destructor of the returned ParallelEnv 
     object is called.
     """
-    return pa.PyParallelEnv(comm,n_threads,n_numa,device_id)
+    return pa.PyParallelEnv(comm,n_threads,n_devices,device_id)
 
 def createAlbanyProblem(filename, parallelEnv):
     """@brief Creates an Albany problem given a yaml file and a parallel environment."""
