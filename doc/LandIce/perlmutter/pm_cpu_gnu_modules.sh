@@ -11,7 +11,6 @@ module unload craype-accel-host
 module unload perftools-base
 module unload perftools
 module unload darshan
-module unload boost
 
 module load PrgEnv-gnu/8.3.3
 module load gcc/11.2.0
