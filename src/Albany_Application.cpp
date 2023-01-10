@@ -851,8 +851,12 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
     if (first_dim_name == PHX::print<Side>() && maxSideSetSizes.find(sideSetName) != maxSideSetSizes.end()) {
 
       t_dims[0] = maxSideSetSizes[sideSetName];
-
-      TEUCHOS_TEST_FOR_EXCEPTION(t_dims[0] == 0, std::logic_error, "Dynamic sizing error: Extent of first rank should not be 0!\n");
+#ifdef ALBANY_DEBUG
+      auto g_dim0 = t_tims[0];
+      Teuchos::reduceAll(*comm,Teuchos::REDUCE_SUM,t_dims[0],g_dim0);
+      ALBANY_ASSERT (g_dim0>0, std::logic_error,
+          "Dynamic sizing error: global extent of first rank should not be 0!\n");
+#endif
 
       switch (t_dims.size()) {
         case 1:
