@@ -301,7 +301,7 @@ SDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
 
       for (int col=0; col<num_cols; ++col) {
         Vp_nonconst2dView[col][lunk] = 0.0;
-       }
+      }
     }
   }
 }

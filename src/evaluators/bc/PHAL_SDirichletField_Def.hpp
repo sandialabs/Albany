@@ -359,11 +359,11 @@ void SDirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 preEvaluate(typename Traits::EvalData dirichletWorkset) {
 
   bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
-    TEUCHOS_TEST_FOR_EXCEPTION(
+  TEUCHOS_TEST_FOR_EXCEPTION(
       isFieldParameter,
       std::logic_error,
       "Error, SDirichletField cannot handle dirichlet parameter " <<  this->field_name << ", use DirichletField instead." << std::endl);
-  
+
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
 
   if (trans) {

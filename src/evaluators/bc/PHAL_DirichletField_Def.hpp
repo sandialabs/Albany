@@ -289,7 +289,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
         int lunk = nsNodes[inode][this->offset];
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(field_node_indexer->getLocalElement(node_gid),fieldOffset);
-	      for (int col=0; col<num_cols; ++col) {
+        for (int col=0; col<num_cols; ++col) {
           fpV_nonconst2dView[col][lfield] -= Vp_nonconst2dView[col][lunk];
           Vp_nonconst2dView[col][lunk] = 0.0;
         }
