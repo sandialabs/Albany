@@ -1722,6 +1722,7 @@ STKDiscretization::computeSideSets()
       for (size_t j = 0; j < ss_val.size(); ++j) {
         int cell = ss_val[j].ws_elem_idx;
         int side = ss_val[j].side_pos;
+
         cellsOnSide[side].push_back(cell);
         sideSetIdxOnSide[side].push_back(j);
       }
@@ -1928,26 +1929,39 @@ STKDiscretization::determine_entity_pos(
       "  - parent ID  : " << bulkData->identifier(parent) << "\n"
       "  - child ID   : " << bulkData->identifier(child) << "\n");
 #endif
-  const auto children = bulkData->begin(parent,rank);
-  const auto num_children = bulkData->num_connectivity(parent,rank);
-  if (num_children>0) {
-    // Connectivity to this subentity is present, so use it
-    for (unsigned i=0; i<num_children; ++i) {
-      if (children[i]==child) {
+  const auto node_child = rank==stk::topology::NODE_RANK;
+
+  const auto& topo = bulkData->bucket(parent).topology();
+
+  const auto num_child_nodes  = bulkData->num_nodes(child);
+  const auto num_parent_nodes = bulkData->num_nodes(parent);
+
+  const auto parent_nodes = bulkData->begin_nodes(parent);
+  const auto child_nodes = bulkData->begin_nodes(child);
+
+  if (node_child) {
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        num_parent_nodes!=topo.num_sub_topology(0), std::runtime_error,
+        "Error! Cannot locate node position in parent. Missing some parent nodes.\n"
+        " - parent gid: " << stk_gid(parent) << "\n"
+        " - child gid: " << stk_gid(child) << "\n"
+        " - child rank: " << rank << "\n"
+        " - num parent nodes: " << num_parent_nodes << "\n"
+        " - expected nodes: " << topo.num_sub_topology(0) << "\n");
+
+    // We're looking for a single node.
+    // Simply loop over the parent nodes, to look for the given node
+    for (unsigned i=0; i<num_parent_nodes; ++i) {
+      if (parent_nodes[i]==child) {
         return i;
       }
     }
-  } else if (rank!=stk::topology::NODE_RANK) {
-    // There's no direct connectivity to this subentity ranks.
-    // If rank!=NODE, we extract nodes of child and compare them
-    // against node of subentities of parent with correct rank.
-    const auto& topo = bulkData->bucket(parent).topology();
-    const auto  num_child_nodes = bulkData->num_nodes(child);
+  } else if (num_child_nodes>0 && num_parent_nodes>0) {
+    // Look for a subentity of dimension>=1, and we have all the nodes,
+    // for both parent and child. Compare nodes of child and parent subentities,
+    // to find the correct subcell id
 
-    const auto parent_nodes = bulkData->begin_nodes(parent);
-    const auto child_nodes  = bulkData->begin_nodes(child);
-
-    const int  num_sub_topo = topo.num_sub_topology(rank);
+    const int num_sub_topo = topo.num_sub_topology(rank);
     for (int isub=0; isub<num_sub_topo; ++isub) {
       // Check if this sub entity has the right topology. It may not be true
       // if, e.g., parent is a Wedge, and child is a face, since not all
@@ -1960,7 +1974,7 @@ STKDiscretization::determine_entity_pos(
         for (unsigned inode=0; inode<num_child_nodes; ++inode) {
           bool inode_found = false;
           for (unsigned jnode=0; jnode<num_child_nodes; ++jnode) {
-            if (child_nodes[inode]==sub_nodes[inode]) {
+            if (child_nodes[inode]==sub_nodes[jnode]) {
               inode_found = true;
               break;
             }
@@ -1974,6 +1988,13 @@ STKDiscretization::determine_entity_pos(
           return isub;
         }
       }
+    }
+  } else {
+    const auto num_children = bulkData->num_connectivity(parent,rank);
+    const auto children = bulkData->begin(parent,rank);
+    for (unsigned isub=0; isub<num_children; ++isub) {
+      if (bulkData->relation_exist(parent,rank,isub) && children[isub]==child)
+        return isub;
     }
   }
 
