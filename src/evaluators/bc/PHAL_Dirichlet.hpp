@@ -115,6 +115,17 @@ class Dirichlet<PHAL::AlbanyTraits::DistParamDeriv,Traits>
    : public DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
 public:
   Dirichlet(Teuchos::ParameterList& p);
+
+  /**
+    * @brief preEvaluate phase for PHAL::AlbanyTraits::DistParamDeriv EvaluationType.
+    *
+    * During the computation of the Distributed parameter derivative, for the transpose case, 
+    * we use a preEvaluate phase to zero out the Lagrange multipliers associated to degrees of freedom constrained
+    * by a Dirichlet boundary condition. It is necessary to do so in a pre-evaluate phase to ensure a correct implemetation when 
+    * two or more Dirichlet bcs are applied to the same degree of freedom (the last one applied is the one that gets prescribed).
+  */
+  void preEvaluate(typename Traits::EvalData d);
+  
   void evaluateFields(typename Traits::EvalData d);
 };
 

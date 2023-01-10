@@ -2143,17 +2143,17 @@ Application::applyGlobalDistParamDerivImpl(
   overlapped_fpV->assign(0.0);
   fpV->assign(0.0);
 
-  Teuchos::RCP<const Thyra_MultiVector> V_bc = V;
+  Teuchos::RCP<Thyra_MultiVector> V_bc;
 
   // For (df/dp)^T*V, we have to evaluate Dirichlet BC's first
   if (trans && dfm != Teuchos::null) {
-    Teuchos::RCP<Thyra_MultiVector> V_bc_nonconst = V->clone_mv();
-    V_bc                                          = V_bc_nonconst;
+    V_bc = V->clone_mv();
 
     PHAL::Workset workset;
 
     workset.fpV                        = fpV;
-    workset.Vp_bc                      = V_bc_nonconst;
+    workset.Vp                         = V;
+    workset.Vp_bc                      = V_bc;
     workset.transpose_dist_param_deriv = trans;
     workset.dist_param_deriv_name      = dist_param_name;
     workset.disc                       = disc;
@@ -2167,6 +2167,7 @@ Application::applyGlobalDistParamDerivImpl(
     loadWorksetNodesetInfo(workset);
 
     // FillType template argument used to specialize Sacado
+    dfm->preEvaluate<EvalT>(workset);
     dfm->evaluateFields<EvalT>(workset);
   }
 
@@ -2179,10 +2180,10 @@ Application::applyGlobalDistParamDerivImpl(
     cas_manager->scatter(V_bc, overlapped_V, CombineMode::INSERT);
   } else {
     const auto& vs = distParamLib->get(dist_param_name)->overlap_vector_space();
-    overlapped_V   = Thyra::createMembers(vs, V_bc->domain()->dim());
+    overlapped_V   = Thyra::createMembers(vs, V->domain()->dim());
     overlapped_V->assign(0.0);
     distParamLib->get(dist_param_name)->get_cas_manager()
-        ->scatter(V_bc, overlapped_V, CombineMode::INSERT);
+        ->scatter(V, overlapped_V, CombineMode::INSERT);
   }
 
   // Set data in Workset struct, and perform fill via field manager
@@ -2243,7 +2244,7 @@ Application::applyGlobalDistParamDerivImpl(
 
     workset.dist_param_deriv_name      = dist_param_name;
     workset.fpV                        = fpV;
-    workset.Vp                         = V_bc;
+    workset.Vp                         = V;
     workset.transpose_dist_param_deriv = trans;
     workset.disc                       = disc;
 
