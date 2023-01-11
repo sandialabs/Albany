@@ -2059,7 +2059,7 @@ STKDiscretization::computeNodeSets()
 
       const auto e = *bulkData->begin_elements(n);
       ns_elem_pos[i] = std::make_pair(cell_indexer->getLocalElement(stk_gid(e)),determine_entity_pos(e,n));
-      ns_coords.push_back(stk::mesh::field_data(*coordinates_field, n));
+      ns_coords[i] = stk::mesh::field_data(*coordinates_field, n);
     }
   }
 }
