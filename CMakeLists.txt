@@ -577,10 +577,8 @@ MESSAGE("\nAlbany physics packages:\n")
 OPTION(ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" OFF)
 IF (ENABLE_DEMO_PDES)
   MESSAGE("-- DEMO_PDES                               Enabled.")
-  SET(ALBANY_DEMO_PDES TRUE)
 ELSE()
   MESSAGE("-- DEMO_PDES                           NOT Enabled.")
-  SET(ALBANY_DEMO_PDES FALSE)
 ENDIF()
 
 # Set optional build of LandIce (Land Ice SciDAC project), defaults to Disabled
@@ -589,7 +587,6 @@ OPTION(ENABLE_CISM_INTERFACE "Flag to turn on LandIce Interface to the CISM code
 OPTION(ENABLE_MPAS_INTERFACE "Flag to turn on LandIce Source code" OFF)
 IF (ENABLE_LANDICE)
   MESSAGE("-- LandIce                                 Enabled.")
-  SET(ALBANY_LANDICE TRUE)
 
   # Set optional build of MPAS Interface for LandIce (Land Ice SciDAC project),
   # defaults to Disabled
@@ -634,11 +631,8 @@ IF (ENABLE_LANDICE)
     MESSAGE("  -- CISM_INTERFACE                    NOT Enabled.")
     SET(CISM_HAS_LANDICE FALSE)
   ENDIF()
-
-
 ELSE()
   MESSAGE("-- LandIce                             NOT Enabled.")
-  SET(ALBANY_LANDICE FALSE)
   IF(ENABLE_MPAS_INTERFACE)
     MESSAGE(FATAL_ERROR "\nError:  ENABLE_MPAS_INTERFACE requires ENABLE_LANDICE
   to be ON\n")

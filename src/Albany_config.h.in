@@ -1,11 +1,6 @@
 #ifndef ALBANY_CONFIG_H
 #define ALBANY_CONFIG_H
 
-// ======================== Albany packages and subpackages macros ============================== //
-
-#cmakedefine ALBANY_LANDICE
-#cmakedefine ALBANY_DEMO_PDES
-
 // ===================== Macros to identify packages found in Trilinos ======================= //
 
 #cmakedefine ALBANY_AMESOS2
