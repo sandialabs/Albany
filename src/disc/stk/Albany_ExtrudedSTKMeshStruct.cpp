@@ -342,28 +342,41 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   int lsideColumnShift   = (Ordering == COLUMN) ? 1 : sides2D.size();
   int sideLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
 
-  this->global_cell_layers_data = (Ordering==LAYER) ?
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(elemColumnShift,Ordering,layerThicknessRatio)):
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(elemLayerShift),Ordering,layerThicknessRatio));
+  auto local_elem_stride = (Ordering==LAYER) ? lElemColumnShift : elemLayerShift;
+  auto local_node_stride = (Ordering==LAYER) ? lVertexColumnShift : vertexLayerShift;
+  auto global_elem_stride = (Ordering==LAYER) ? elemColumnShift : elemLayerShift;
 
-  this->local_cell_layers_data = (Ordering==LAYER) ?
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(lElemColumnShift,Ordering,layerThicknessRatio)):
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(elemLayerShift,Ordering,layerThicknessRatio));
+  this->global_cell_layers_data = 
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(global_elem_stride,Ordering,layerThicknessRatio));
+
+  this->local_cell_layers_data =
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(local_elem_stride,Ordering,layerThicknessRatio));
+
+  this->local_node_layers_data = 
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(local_node_stride,Ordering,layerThicknessRatio));
 
   // Shards has both Hexa and Wedge with bot and top in the last two side positions
   this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
   this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
   this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+  this->local_node_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+  this->local_node_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+
+  auto& vec_states = fieldContainer->getMeshVectorStates();
+  auto& int_states = fieldContainer->getMeshScalarIntegerStates();
+  auto& int64_states = fieldContainer->getMeshScalarInteger64States();
 
   std::vector<double> ltr(layerThicknessRatio.size());
   for(size_t i=0; i< ltr.size(); ++i) {
     ltr[i]=layerThicknessRatio[i];
   }
-  fieldContainer->getMeshVectorStates()["layer_thickness_ratio"] = ltr;
-  fieldContainer->getMeshScalarIntegerStates()["ordering"] = static_cast<int>(Ordering);
-  fieldContainer->getMeshScalarIntegerStates()["local_stride"] = (Ordering==LAYER) ? lElemColumnShift : elemLayerShift;
-  fieldContainer->getMeshScalarInteger64States()["global_stride"] = (Ordering==LAYER) ? elemColumnShift : elemLayerShift;
+
+  vec_states["layer_thickness_ratio"] = ltr;
+  int_states["ordering"] = static_cast<int>(Ordering);
+  int_states["local_elem_stride"] = local_elem_stride;
+  int_states["local_node_stride"] = local_node_stride;
+  int64_states["global_elem_stride"] = global_elem_stride;
 
   metaData->commit();
 

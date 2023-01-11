@@ -125,6 +125,7 @@ struct AbstractMeshStruct {
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
+    Teuchos::RCP<LayeredMeshNumbering<LO> > local_node_layers_data;
 
     Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 
