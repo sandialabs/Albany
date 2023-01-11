@@ -101,7 +101,7 @@ struct DualView {
   >::type&
   operator= (const DualView<SrcDT>& src) {
     d_view = src.d_view;
-    h_view = src.d_view;
+    h_view = src.h_view;
 
     return *this;
   }
