@@ -1838,15 +1838,13 @@ STKDiscretization::computeSideSets()
     const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
     const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
     TEUCHOS_TEST_FOR_EXCEPTION (
-        ctd.name==topo_hexa->name ||
-        ctd.name==topo_wedge->name, std::runtime_error,
-        "Layered Meshes are only allowed to have 1 element per layer.\n");
+        ctd.name!=topo_hexa->name &&
+        ctd.name!=topo_wedge->name, std::runtime_error,
+        "Extruded meshses only allowed if there is one element per layer (hexa or wedges).\n"
+        "  - current topology name: " << ctd.name << "\n");
 
     const auto& sol_dof_mgr = getNewDOFManager();
-    const auto& node_dof_mgr = getNodeNewDOFManager();
     const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
-
-    // Create top/bot side (within element) offsets for all equation dofs
 
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
     const auto numLayers = cell_layers_data->numLayers;
