@@ -1847,11 +1847,6 @@ STKDiscretization::computeSideSets()
     const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
     // Create top/bot side (within element) offsets for all equation dofs
-    std::vector<std::vector<int>> sol_top_offsets(neq), sol_bot_offsets(neq);
-    for (int eq=0; eq<neq; ++eq) {
-      sol_top_offsets[eq] = sol_dof_mgr->getGIDFieldOffsetsTopSide(eq);
-      sol_bot_offsets[eq] = sol_dof_mgr->getGIDFieldOffsetsBotSide(eq);
-    }
 
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
     const auto numLayers = cell_layers_data->numLayers;
@@ -1876,23 +1871,25 @@ STKDiscretization::computeSideSets()
           // Get the data that corresponds to the side
           const int ws_elem_idx = ss_val[sideSet_idx].ws_elem_idx;
           const int elem_LID = elem_lids(ws_elem_idx);
-          const int side_pos = ss_val[sideSet_idx].side_pos;
-          const auto& ss_nodes_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
-          const int numSideNodes = ss_nodes_offsets.size();
+          const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
 
           for (int eq=0; eq<neq; ++eq) {
+            const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsTopSide(eq);
+            const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsBotSide(eq);
+            const int numSideNodes = sol_top_offsets.size();
+
             for (int j=0; j<numSideNodes; ++j) {
               for (int il=0; il<numLayers; ++il) {
-                const LO layer_elem_LID = cell_layers_data->getId(elem_LID,il);
+                const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
                 globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
-                  elem_dof_lids(layer_elem_LID,sol_bot_offsets[eq][j]);
+                  elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
               }
 
               // Add top side in last layer
               const int il = numLayers-1;
-              const LO layer_elem_LID = cell_layers_data->getId(elem_LID,il);
-              globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
-                elem_dof_lids(layer_elem_LID,sol_top_offsets[eq][j]);
+              const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
+              globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
+                elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
             }
           }
         }
