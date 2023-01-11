@@ -161,60 +161,60 @@ void SideSetSTKMeshStruct::setBulkData (
   VectorFieldType&       coordinates_field3d        = *fieldContainer->getCoordinatesField3d();
 
   // Now we can extract the entities
-  std::vector<stk::mesh::Entity> sides, nodes;
+  std::vector<stk::mesh::Entity> sides;
   stk::mesh::get_selected_entities (select_required_ss, inputBulkData.buckets(inputMetaData.side_rank()), sides);
-  stk::mesh::get_selected_entities (select_required_ss, inputBulkData.buckets(stk::topology::NODE_RANK), nodes);
 
   // Insertion of the entities begins
   bulkData->modification_begin();
   stk::mesh::PartVector singlePartVec(1);
 
-  // Adding nodes
+  // Adding elems and nodes
+  std::set<GO> added_nodes;
   stk::mesh::Entity node;
   stk::mesh::EntityId nodeId;
   singlePartVec[0] = nsPartVec["all_nodes"];
-  for (size_t inode(0); inode<nodes.size(); ++inode)
-  {
-    // Adding the node (same Id)
-    nodeId = inputBulkData.identifier(nodes[inode]);
-    node = bulkData->declare_node(nodeId, singlePartVec);
-
-    // Setting the coordinates_field
-    double* coord = stk::mesh::field_data(coordinates_field, node);
-    double const* p_coord = stk::mesh::field_data(parent_coordinates_field, nodes[inode]);
-    for (size_t idim=0; idim<metaData->spatial_dimension(); ++idim)
-      coord[idim] = p_coord[idim];
-
-    // Setting the coordinates_field3d (since this is a side mesh, for sure numDim<3)
-    coord = stk::mesh::field_data(coordinates_field3d, node);
-    p_coord = stk::mesh::field_data(parent_coordinates_field3d, nodes[inode]);
-    for (int idim=0; idim<3; ++idim)
-      coord[idim] = p_coord[idim];
-
-    // Checking for shared node
-    std::vector<int> sharing_procs;
-    inputBulkData.comm_shared_procs( inputBulkData.entity_key(nodes[inode]), sharing_procs );
-    for(size_t iproc(0); iproc<sharing_procs.size(); ++iproc)
-      bulkData->add_node_sharing(node, sharing_procs[iproc]);
-  }
 
   // Adding sides (aka elements in the boundary mesh)
   stk::mesh::Entity elem;
   stk::mesh::EntityId elemId;
   singlePartVec[0] = partVec[0];
-  for (size_t iside(0); iside<sides.size(); ++iside)
-  {
+  for (size_t iside(0); iside<sides.size(); ++iside) {
     // Adding the element (same Id as the side)
     elemId = inputBulkData.identifier(sides[iside]);
     elem = bulkData->declare_element(elemId, singlePartVec);
 
-    // Adding the relation elem->node
-    stk::mesh::Entity const* node_rels = inputBulkData.begin_nodes(sides[iside]);
-    const int num_local_nodes = inputBulkData.num_nodes(sides[iside]);
-    for (int j(0); j<num_local_nodes; ++j)
-    {
-      node = bulkData->get_entity(stk::topology::NODE_RANK, inputBulkData.identifier(node_rels[j]));
+    // Adding the nodes (same Id as on parent mesh)
+    stk::mesh::Entity const* parent_nodes = inputBulkData.begin_nodes(sides[iside]);
+    const int num_side_nodes = inputBulkData.num_nodes(sides[iside]);
+    for (int j=0; j<num_side_nodes; ++j) {
+      nodeId = inputBulkData.identifier(parent_nodes[j]);
+      auto new_node = added_nodes.insert(nodeId).second;
+      if (new_node) {
+        node = bulkData->declare_node(nodeId, singlePartVec);
+      } else {
+        node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
+      }
       bulkData->declare_relation(elem, node, j);
+
+      if (new_node) {
+        // Setting the coordinates_field
+        double* coord = stk::mesh::field_data(coordinates_field, node);
+        double const* p_coord = stk::mesh::field_data(parent_coordinates_field, parent_nodes[j]);
+        for (size_t idim=0; idim<metaData->spatial_dimension(); ++idim)
+          coord[idim] = p_coord[idim];
+
+        // Setting the coordinates_field3d (since this is a side mesh, for sure numDim<3)
+        coord = stk::mesh::field_data(coordinates_field3d, node);
+        p_coord = stk::mesh::field_data(parent_coordinates_field3d, parent_nodes[j]);
+        for (int idim=0; idim<3; ++idim)
+          coord[idim] = p_coord[idim];
+
+        // Checking for shared node
+        std::vector<int> sharing_procs;
+        inputBulkData.comm_shared_procs( inputBulkData.entity_key(parent_nodes[j]), sharing_procs );
+        for(size_t iproc(0); iproc<sharing_procs.size(); ++iproc)
+          bulkData->add_node_sharing(node, sharing_procs[iproc]);
+      }
     }
   }
 
