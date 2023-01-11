@@ -173,7 +173,7 @@ protected:
   std::vector<ScalarT> matScaling;
 
   // Offsets of solution field(s) inside a single element, as per the DOFManager
-  // Note: fields_offsets[inode][ifield] = dof_lid within elem
+  // Note: fields_offsets[inode][ifield] = dof_lid of ifield-th DOF within elem
   std::vector<std::vector<int>> fields_offsets;
 
   MDFieldMemoizer<Traits> memoizer;

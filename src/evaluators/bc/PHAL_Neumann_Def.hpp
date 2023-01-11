@@ -243,10 +243,11 @@ gather_fields_offsets (const Albany::DOFManager& dof_mgr) {
       o.resize(this->numDOFsSet);
     }
 
-    for (int dim=0; dim<this->numDOFsSet; ++dim){
-      const auto& offsets = dof_mgr.getGIDFieldOffsets(this->offset[dim]);
+    const int neq = dof_mgr.getNumFields();
+    for (int eq=0; eq<neq; ++eq){
+      const auto& offsets = dof_mgr.getGIDFieldOffsets(eq);
       for (int i=0; i<this->numNodes; ++i) {
-        fields_offsets[i][dim] = offsets[i];
+        fields_offsets[i][eq] = offsets[i];
       }
     }
   }
@@ -787,7 +788,8 @@ evaluateFields(typename Traits::EvalData workset)
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     for (unsigned node=0; node<this->numNodes; ++node) {
       for (int dim=0; dim<this->numDOFsSet; ++dim) {
-        f_nonconstView[dof_lids(offsets[node][dim])] += this->neumann(cell,node,dim);
+        const int eq = this->offset[dim];
+        f_nonconstView[dof_lids(offsets[node][eq])] += this->neumann(cell,node,dim);
       }
     }
   }
@@ -893,7 +895,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (int node=0; node<this->numNodes; ++node) {
       for (int dim = 0; dim < this->numDOFsSet; ++dim){
 
-        row = dof_lids(offsets[node][dim]);
+        const int row_eq = this->offset[dim];
+        row = dof_lids(offsets[node][row_eq]);
 
         if (f != Teuchos::null) {
           f_nonconstView[row] += this->neumann(cell, node, dim).val();
@@ -974,7 +977,8 @@ evaluateFields(typename Traits::EvalData workset)
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     for (int node=0; node<this->numNodes; ++node) {
       for (int dim = 0; dim < this->numDOFsSet; ++dim){
-        const int row = dof_lids(offsets[node][dim]);
+        const int row_eq = this->offset[dim];
+        const int row = dof_lids(offsets[node][row_eq]);
 
         if (f != Teuchos::null) {
           f_nonconstView[row] += this->neumann(cell, node, dim).val();
@@ -1064,7 +1068,8 @@ evaluateFields(typename Traits::EvalData workset)
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
       for (int node=0; node<this->numNodes; ++node) {
         for (int dim = 0; dim < this->numDOFsSet; ++dim){
-          const int row = dof_lids(offsets[node][dim]);
+          const int row_eq = this->offset[dim];
+          const int row = dof_lids(offsets[node][row_eq]);
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
