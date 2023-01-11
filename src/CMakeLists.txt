@@ -564,17 +564,8 @@ if(ALBANY_DEMO_PDES)
 	list (APPEND ALBANY_LIBRARIES demoPDEs)
 endif()
 
-if (ALBANY_LANDICE)
+if (ENABLE_LANDICE)
   add_subdirectory(landIce)
-  list (APPEND ALBANY_LIBRARIES landIce)
-
-  if (ENABLE_MPAS_INTERFACE)
-    list (APPEND ALBANY_LIBRARIES mpasInterface)
-  endif()
-
-  if (ENABLE_CISM_INTERFACE)
-    list (APPEND ALBANY_LIBRARIES cismInterface)
-  endif()
 endif()
 
 # Now build executables from this library, tailored main()s, and Trilinos
