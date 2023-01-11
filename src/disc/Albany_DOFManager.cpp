@@ -201,14 +201,9 @@ restrict (const std::string& sub_part_name)
 
   // Precompute offsets
   std::vector<std::vector<std::vector<std::vector<int>>>> offsets(sub_dim+1);
-  std::cout << "precomputing offsets...\n";
-  std::cout << "cell topo: " << topo.getName() << "\n";
-  std::cout << "sub_part_name: " << sub_part_name << "\n";
-  std::cout << "sub_part_dim: " << sub_dim << "\n";
   for (int dim=0; dim<=sub_dim; ++dim) {
     const int count = topo.getSubcellCount(dim);
     offsets[dim].resize(count);
-    std::cout << "  subdim " << dim << ", count=" << count << "\n";
     for (int pos=0; pos<count; ++pos) {
       for (int f=0; f<getNumFields(); ++f) {
         offsets[dim][pos].push_back(getGIDFieldOffsets_subcell (f,dim,pos));
