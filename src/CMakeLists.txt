@@ -553,20 +553,22 @@ set(TPL_LIBRARIES
   )
 
 # Add Albany physics libraries, as enabled.
-
 set(ALBANY_LIBRARIES albanyLib)
 
+# Core
 add_subdirectory(corePDEs)
-list (APPEND ALBANY_LIBRARIES corePDEs)
 
-if(ALBANY_DEMO_PDES)
+# Demo
+if(ENABLE_DEMO_PDES)
 	add_subdirectory(demoPDEs)
-	list (APPEND ALBANY_LIBRARIES demoPDEs)
 endif()
 
+# LandIce
 if (ENABLE_LANDICE)
   add_subdirectory(landIce)
 endif()
+
+message ("libs: ${ALBANY_LIBRARIES}")
 
 # Now build executables from this library, tailored main()s, and Trilinos
 if (NOT ALBANY_LIBRARIES_ONLY)
@@ -578,15 +580,6 @@ if (NOT ALBANY_LIBRARIES_ONLY)
 
   add_executable(AlbanyAnalysis Main_Analysis.cpp)
   list (APPEND ALBANY_EXECUTABLES AlbanyAnalysis)
-
-  foreach (exec IN ITEMS ${ALBANY_EXECUTABLES})
-    if (ENABLE_LANDICE)
-      target_compile_definitions (${exec} PUBLIC  ALBANY_LANDICE)
-    endif()
-    if (ENABLE_DEMO_PDES)
-      target_compile_definitions (${exec} PUBLIC  ALBANY_DEMO_PDES)
-    endif()
-  endforeach()
 
   install(TARGETS ${ALBANY_EXECUTABLES} EXPORT albany-export
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

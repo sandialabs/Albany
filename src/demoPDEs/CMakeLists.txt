@@ -102,6 +102,7 @@ else()
 	target_include_directories(demoPDEs PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
+target_compile_definitions (demoPDEs PUBLIC  ALBANY_DEMO_PDES)
 
 set (DEMOPDES_INCLUDE_DIRS
      ${ALBANY_INCLUDE_DIRS}
@@ -113,6 +114,8 @@ set (DEMOPDES_INCLUDE_DIRS
 target_include_directories(demoPDEs PUBLIC
 	"$<BUILD_INTERFACE:${DEMOPDES_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} demoPDEs PARENT_SCOPE)
 
 install(TARGETS demoPDEs EXPORT albany-export
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"

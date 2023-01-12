@@ -225,6 +225,7 @@ else()
   target_include_directories(landIce PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
+target_compile_definitions (landIce PUBLIC  ALBANY_LANDICE)
 if (ENABLE_CISM_INTERFACE)
   target_compile_definitions (landIce PUBLIC CISM_HAS_LANDICE)
 endif()
@@ -240,7 +241,8 @@ set (LANDICE_INCLUDE_DIRS
 target_include_directories(landIce PUBLIC
                            "$<BUILD_INTERFACE:${LANDICE_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-list (APPEND ALBANY_LIBRARIES landIce PARENT_SCOPE)
+
+set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} landIce)
 
 install(TARGETS landIce EXPORT albany-export
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
@@ -253,7 +255,7 @@ install(TARGETS landIce EXPORT albany-export
 
 if(ENABLE_CISM_INTERFACE)
   add_subdirectory(interfaceWithCISM)
-  list (APPEND ALBANY_LIBRARIES cismInterface PARENT_SCOPE)
+  set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
 endif()
 
 ###################################
@@ -262,5 +264,7 @@ endif()
 
 if(ENABLE_MPAS_INTERFACE)
   add_subdirectory(interfaceWithMPAS)
-  list (APPEND ALBANY_LIBRARIES mpasInterface PARENT_SCOPE)
+  set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
 endif()
+
+set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} PARENT_SCOPE)
