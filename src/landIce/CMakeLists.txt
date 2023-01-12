@@ -4,7 +4,25 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-# LandIce
+MESSAGE ("\n ***********************")
+MESSAGE (" *** LandIce Options ***")
+MESSAGE (" ***********************\n")
+
+# Set optional build of MPAS Interface (Land Ice SciDAC project) and CISM Interface
+# Both OFF by default
+option(ENABLE_CISM_INTERFACE "Flag to turn on LandIce Interface to the CISM code" OFF)
+option(ENABLE_MPAS_INTERFACE "Flag to turn on LandIce Source code" OFF)
+if (ENABLE_MPAS_INTERFACE)
+  message("  -- MPAS_INTERFACE                        Enabled.")
+else()
+  message("  -- MPAS_INTERFACE                    NOT Enabled.")
+endif()
+
+if (ENABLE_CISM_INTERFACE)
+  message("  -- CISM_INTERFACE                        Enabled.")
+else()
+  message("  -- CISM_INTERFACE                    NOT Enabled.")
+endif()
 
 set(SOURCES
   evaluators/LandIce_BasalFrictionCoefficient.cpp
@@ -207,9 +225,14 @@ else()
   target_include_directories(landIce PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
+target_compile_definitions (landIce PUBLIC  ALBANY_LANDICE)
+if (ENABLE_CISM_INTERFACE)
+  target_compile_definitions (landIce PUBLIC CISM_HAS_LANDICE)
+endif()
 
 set (LANDICE_INCLUDE_DIRS
      ${ALBANY_INCLUDE_DIRS}
+     ${CMAKE_CURRENT_SOURCE_DIR}
      ${CMAKE_CURRENT_SOURCE_DIR}/evaluators
      ${CMAKE_CURRENT_SOURCE_DIR}/evaluators/hydrology
      ${CMAKE_CURRENT_SOURCE_DIR}/problems
@@ -218,6 +241,8 @@ set (LANDICE_INCLUDE_DIRS
 target_include_directories(landIce PUBLIC
                            "$<BUILD_INTERFACE:${LANDICE_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} landIce)
 
 install(TARGETS landIce EXPORT albany-export
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
@@ -230,6 +255,7 @@ install(TARGETS landIce EXPORT albany-export
 
 if(ENABLE_CISM_INTERFACE)
   add_subdirectory(interfaceWithCISM)
+  set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
 endif()
 
 ###################################
@@ -238,4 +264,7 @@ endif()
 
 if(ENABLE_MPAS_INTERFACE)
   add_subdirectory(interfaceWithMPAS)
+  set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
 endif()
+
+set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} PARENT_SCOPE)

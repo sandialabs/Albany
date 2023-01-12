@@ -60,10 +60,6 @@ ENDIF()
 set(AlbanyPath                         ${Albany_BINARY_DIR}/src/Albany)
 set(AlbanyAnalysisPath                 ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
 
-IF (CISM_EXE_DIR)
-  set(CismAlbanyPath                ${CISM_EXE_DIR}/cism_driver)
-ENDIF()
-
 IF (ALBANY_MPI)
   set(SerialAlbany.exe                 ${SERIAL_CALL} ${AlbanyPath})
   set(SerialAlbanyAnalysis.exe         ${SERIAL_CALL} ${AlbanyAnalysisPath})

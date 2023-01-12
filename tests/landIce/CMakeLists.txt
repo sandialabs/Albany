@@ -18,5 +18,12 @@ if (NOT ENABLE_MESH_DEPENDS_ON_PARAMETERS)
 endif()
 
 IF(ENABLE_CISM_INTERFACE)
-add_subdirectory(CismAlbany)
+  if (NOT CISM_EXE_DIR)
+    message("\n CISM_EXE_DIR not defined.  CismAlbany test will not run.\n")
+  else()
+    message("  -- CISM_EXE_DIR ${CISM_EXE_DIR}")
+
+    set(CismAlbanyPath  ${CISM_EXE_DIR}/cism_driver)
+    add_subdirectory(CismAlbany)
+  endif()
 ENDIF() 

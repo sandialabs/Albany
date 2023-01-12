@@ -577,75 +577,16 @@ MESSAGE("\nAlbany physics packages:\n")
 OPTION(ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" OFF)
 IF (ENABLE_DEMO_PDES)
   MESSAGE("-- DEMO_PDES                               Enabled.")
-  SET(ALBANY_DEMO_PDES TRUE)
 ELSE()
   MESSAGE("-- DEMO_PDES                           NOT Enabled.")
-  SET(ALBANY_DEMO_PDES FALSE)
 ENDIF()
 
 # Set optional build of LandIce (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_LANDICE "Flag to turn on LandIce Source code" OFF)
-OPTION(ENABLE_CISM_INTERFACE "Flag to turn on LandIce Interface to the CISM code" OFF)
-OPTION(ENABLE_MPAS_INTERFACE "Flag to turn on LandIce Source code" OFF)
 IF (ENABLE_LANDICE)
   MESSAGE("-- LandIce                                 Enabled.")
-  SET(ALBANY_LANDICE TRUE)
-
-  # Set optional build of MPAS Interface for LandIce (Land Ice SciDAC project),
-  # defaults to Disabled
-  IF (ENABLE_MPAS_INTERFACE)
-    MESSAGE("  -- MPAS_INTERFACE                        Enabled.")
-    SET(MPAS_HAS_LANDICE TRUE)
-  ELSE()
-    MESSAGE("  -- MPAS_INTERFACE                    NOT Enabled.")
-    SET(MPAS_HAS_LANDICE FALSE)
-  ENDIF()
-
-  # Set optional build of CISM Interface for LandIce (Land Ice SciDAC project),
-  # defaults to Disabled
-  OPTION(ENABLE_CISM_REDUCED_COMM "Flag to turn on reduced communicator for CISM-Albany runs" ON)
-  OPTION(ENABLE_CISM_CHECK_COMPARISONS "Flag to turn on comparisons checking for CISM-Albany" OFF)
-
-  IF (ENABLE_CISM_INTERFACE)
-    MESSAGE("  -- CISM_INTERFACE                        Enabled.")
-    SET(CISM_HAS_LANDICE TRUE)
-    IF (ENABLE_CISM_CHECK_COMPARISONS)
-      SET(CISM_CHECK_COMPARISONS TRUE)
-      MESSAGE("  -- CISM_CHECK_COMPARISONS              Enabled. Error will be thrown if comparisons fail for CISM-Albany run.")
-    ELSE()
-      MESSAGE("  -- CISM_CHECK_COMPARISONS  NOT Enabled.  Error will NOT be thrown if comparisons fail for CISM-Albany run.  Please be cautious when running ctest from CISM!")
-    ENDIF()
-    IF (ENABLE_CISM_REDUCED_COMM)
-      SET(REDUCED_COMM TRUE)
-      MESSAGE("  -- CISM_REDUCED_COMM                   Enabled.  CISM-Albany will use reduced communicator.")
-    ENDIF()
-    SET(CISM_HAS_LANDICE TRUE)
-    IF (NOT CISM_INCLUDE_DIR)
-      MESSAGE("\nError:  CISM_INCLUDE_DIR not defined\n")
-    ELSE()
-      MESSAGE("  -- CISM_INCLUDE_DIR ${CISM_INCLUDE_DIR}")
-    ENDIF()
-    IF (NOT CISM_EXE_DIR)
-      MESSAGE("\n CISM_EXE_DIR not defined.  CismAlbany test will not run.\n")
-    ELSE()
-      MESSAGE("  -- CISM_EXE_DIR ${CISM_EXE_DIR}")
-    ENDIF()
-  ELSE()
-    MESSAGE("  -- CISM_INTERFACE                    NOT Enabled.")
-    SET(CISM_HAS_LANDICE FALSE)
-  ENDIF()
-
-
 ELSE()
   MESSAGE("-- LandIce                             NOT Enabled.")
-  SET(ALBANY_LANDICE FALSE)
-  IF(ENABLE_MPAS_INTERFACE)
-    MESSAGE(FATAL_ERROR "\nError:  ENABLE_MPAS_INTERFACE requires ENABLE_LANDICE
-  to be ON\n")
-  ELSEIF(ENABLE_CISM_INTERFACE)
-    MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires ENABLE_LANDICE
-  to be ON\n")
-  ENDIF()
 ENDIF()
 
 ## Other Albany Template Options here:

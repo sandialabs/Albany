@@ -553,29 +553,22 @@ set(TPL_LIBRARIES
   )
 
 # Add Albany physics libraries, as enabled.
-
 set(ALBANY_LIBRARIES albanyLib)
 
+# Core
 add_subdirectory(corePDEs)
-list (APPEND ALBANY_LIBRARIES corePDEs)
 
-if(ALBANY_DEMO_PDES)
+# Demo
+if(ENABLE_DEMO_PDES)
 	add_subdirectory(demoPDEs)
-	list (APPEND ALBANY_LIBRARIES demoPDEs)
 endif()
 
-if (ALBANY_LANDICE)
+# LandIce
+if (ENABLE_LANDICE)
   add_subdirectory(landIce)
-  list (APPEND ALBANY_LIBRARIES landIce)
-
-  if (ENABLE_MPAS_INTERFACE)
-    list (APPEND ALBANY_LIBRARIES mpasInterface)
-  endif()
-
-  if (ENABLE_CISM_INTERFACE)
-    list (APPEND ALBANY_LIBRARIES cismInterface)
-  endif()
 endif()
+
+message ("libs: ${ALBANY_LIBRARIES}")
 
 # Now build executables from this library, tailored main()s, and Trilinos
 if (NOT ALBANY_LIBRARIES_ONLY)
