@@ -8,7 +8,7 @@ file(GLOB TESTFILES expected_* *.py *.yaml )
 
 file(COPY ${TESTFILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.)
 
-IF(ALBANY_DEMO_PDES) #these tests need Thermal 2D problem
+IF(ENABLE_DEMO_PDES) #these tests need Thermal 2D problem
   add_test(PyAlbany_ExtremeEvent ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/thermal_steady.py")
 
   set_tests_properties(PyAlbany_ExtremeEvent

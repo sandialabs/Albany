@@ -58,11 +58,11 @@ set(ALBANY_LIBRARIES
 
 list(APPEND ALBANY_LIBRARIES corePDEs)
 
-if(ALBANY_DEMO_PDES)
+if(ENABLE_DEMO_PDES)
   list(APPEND ALBANY_LIBRARIES demoPDEs)
 endif()
 
-if (ALBANY_LANDICE)
+if (ENABLE_LANDICE)
   list (APPEND ALBANY_INCLUDE_DIRS
     ${Albany_SOURCE_DIR}/src/landIce
     ${Albany_SOURCE_DIR}/src/landIce/evaluators

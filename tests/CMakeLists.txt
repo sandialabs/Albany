@@ -146,10 +146,10 @@ IF (ALBANY_UNIT_TESTS)
   add_subdirectory(unit)
 ENDIF()
 
-IF(ALBANY_DEMO_PDES)
+IF(ENABLE_DEMO_PDES)
   add_subdirectory(demoPDEs)
 ENDIF()
 
-IF(ALBANY_LANDICE AND ALBANY_SEACAS )
+IF(ENABLE_LANDICE AND ALBANY_SEACAS )
   add_subdirectory(landIce)
 ENDIF()
