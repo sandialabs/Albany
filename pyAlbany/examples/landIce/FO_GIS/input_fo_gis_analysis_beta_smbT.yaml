@@ -78,9 +78,9 @@ ANONYMOUS:
     Columnwise Ordering: true
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_beta_smb.exo
-    Element Shape: Tetrahedron
+    Element Shape: Wedge
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness

@@ -259,7 +259,6 @@ endif()
 
 set (testName ${testNameRoot}_AdjointSensitivity)
 
-# Tetra
 if (ALBANY_EPETRA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity.yaml)
@@ -277,16 +276,6 @@ if (ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_forward_sensitivityT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_forward_sensitivityT.yaml)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
-endif()
-
-# Wedge
-set (testName ${testNameRoot}_AdjointSensitivity_Wedge)
-
-if (ALBANY_EPETRA)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_wedge_adjoint_sensitivity.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_wedge_adjoint_sensitivity.yaml)
-  add_test(${testName} ${Albany.exe} input_fo_gis_wedge_adjoint_sensitivity.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
 endif()
 
 # Basal friction sensitivity

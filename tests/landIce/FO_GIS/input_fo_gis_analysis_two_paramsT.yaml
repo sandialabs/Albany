@@ -50,7 +50,7 @@ ANONYMOUS:
           Power Exponent: 1.0
       BC 1:
         Type: Lateral
-        Cubature Degree: 3
+        Cubature Degree: 4
         Side Set Name: lateralside
     Parameters:
       Number Of Parameters: 2
@@ -84,9 +84,9 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 3
     Exodus Output File Name: gis_unstruct_analysis_two_params.exo
-    Element Shape: Tetrahedron
+    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true

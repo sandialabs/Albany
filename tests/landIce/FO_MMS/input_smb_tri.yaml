@@ -11,7 +11,7 @@
 # V: [2*y*z/(1+x+y/2), y]
 # V_avg: [y, x]
 #
-# 
+#
 # Flux div = x/2+y
 # SMB_mismatch = 1/3
 # H_mismatch = 1/6
@@ -21,15 +21,15 @@
 
 ANONYMOUS:
   Build Type: Tpetra
-  Debug Output: 
+  Debug Output:
     Write Solution to MatrixMarket: 0
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Basal Side Name: basalside
     Extruded Column Coupled in 2D Response: true
-    Response Functions: 
+    Response Functions:
       Number Of Responses: 1
       Response 0:
         Name: Surface Mass Balance Mismatch
@@ -49,29 +49,29 @@ ANONYMOUS:
         Basal Friction Coefficient:
           Type: Constant
           Beta: 1.0
-    LandIce Physical Parameters: 
+    LandIce Physical Parameters:
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
       Gravity Acceleration: 9.8e+00
       Clausius-Clapeyron Coefficient: 0.0e+00
-    LandIce Viscosity: 
+    LandIce Viscosity:
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 1.0e-01
       Glen's Law A: 3.17098e-24    # [ Pa^-3 s^-1 ]
       Glen's Law n: 3.0e+00
       Flow Rate Type: Uniform
-    Body Force: 
+    Body Force:
       Type: FO INTERP SURF GRAD
-    Initial Condition: 
+    Initial Condition:
       Function: Expression Parser
       Function Expression for DOF X: 'value = 2*z*y/(1.0+x+0.5*y)'
       Function Expression for DOF Y: 'value = x'
-  Discretization: 
+  Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
-    Exodus Output File Name: slab_tet_smb.exo
-    Element Shape: Tetrahedron
+    Cubature Degree: 3
+    Exodus Output File Name: slab_smb.exo
+    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
@@ -79,118 +79,124 @@ ANONYMOUS:
     Extrude Basal Node Fields: [ice_thickness, surface_height, bed_topography]
     Basal Node Fields Ranks: [1, 1, 1]
     Workset Size: -1
-    Required Fields Info: 
+    Required Fields Info:
       Number Of Fields: 3
-      Field 0: 
+      Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 1: 
+      Field 1:
         Field Name: surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
-      Field 2: 
+      Field 2:
         Field Name: bed_topography
         Field Type: Node Scalar
         Field Origin: Mesh
-    Side Set Discretizations: 
+    Side Set Discretizations:
       Side Sets: [basalside]
-      basalside: 
-        Method: Ioss
+      basalside:
+        Method: STK2D
+        1D Elements: 5
+        2D Elements: 5
+        Cell Topology: Triangle
         Number Of Time Derivatives: 0
-        Restart Index: 1
         Cubature Degree: 3
-        Exodus Input File Name: ../ExoMeshes/square_tri.exo
-        Required Fields Info: 
-          Number Of Fields: 6
-          Field 0: 
+        Required Fields Info:
+          Number Of Fields: 7
+          Field 0:
             Field Name: ice_thickness
             Field Origin: File
             Field Type: Node Scalar
             Field Expression: ['1.0+x+0.5*y']
-          Field 1: 
+          Field 1:
             Field Name: surface_height
             Field Origin: File
             Field Type: Node Scalar
             Field Expression: ['1.0+x+0.5*y']
-          Field 2: 
+          Field 2:
             Field Name: apparent_mass_balance
             Field Type: Node Scalar
             Field Origin: File
             Field Expression: ['x+y']
-          Field 3: 
+          Field 3:
             Field Name: apparent_mass_balance_RMS
             Field Type: Node Scalar
             Field Origin: File
             Field Expression: ['0.5+0.0*x']
-          Field 4: 
+          Field 4:
             Field Name: observed_ice_thickness
             Field Origin: File
             Field Type: Node Scalar
             Field Expression: ['1.0+0.0*x']
-          Field 5: 
+          Field 5:
             Field Name: observed_ice_thickness_RMS
             Field Origin: File
             Field Type: Node Scalar
             Field Expression: ['2.0+0.0*x']
+          Field 6:
+            Field Name: bed_topography
+            Field Origin: File
+            Field Type: Node Scalar
+            Field Expression: ['rho_i=910', '-rho_i/1000.0*y']
   Regression For Response 0:
     Test Value: 4.0
-  Piro: 
-    LOCA: 
+  Piro:
+    LOCA:
       Bifurcation: { }
       Constraints: { }
-      Predictor: 
+      Predictor:
         Method: Constant
-      Stepper: 
+      Stepper:
         Initial Value: 1.00000000000000006e-01
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.00000000000000000e+00
         Min Value: 0.00000000000000000e+00
-      Step Size: 
+      Step Size:
         Initial Step Size: 2.00000000000000011e-01
-    NOX: 
-      Status Tests: 
+    NOX:
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: Combo
           Combo Type: OR
           Number of Tests: 2
-          Test 0: 
+          Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
             Tolerance: 1.0e+05
-          Test 1: 
+          Test 1:
             Test Type: NormWRMS
             Absolute Tolerance: 1.0e+05
             Relative Tolerance: 1.0e+03
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
           Rescue Bad Newton Solve: true
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.00000000000000000e+00
         Method: Backtrack
       Nonlinear Solver: Line Search Based
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
@@ -200,6 +206,6 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: true
           Stepper Parameters: true
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
 ...

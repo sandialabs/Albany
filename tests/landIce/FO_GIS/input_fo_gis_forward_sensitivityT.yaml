@@ -22,7 +22,7 @@ ANONYMOUS:
           Beta Field Name: basal_friction
       BC 1:
         Type: Lateral
-        Cubature Degree: 3
+        Cubature Degree: 4
         Side Set Name: lateralside
     Response Functions:
       Number Of Responses: 1
@@ -53,9 +53,9 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 3
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity.exo
-    Element Shape: Tetrahedron
+    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true
