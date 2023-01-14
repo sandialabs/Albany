@@ -65,7 +65,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 4
     Exodus Output File Name: kleiner_B.exo
-    Element Shape: Hexahedron
     Use Serial Mesh: true
     Columnwise Ordering: true
     NumLayers: 80

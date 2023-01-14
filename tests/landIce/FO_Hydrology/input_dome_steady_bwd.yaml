@@ -198,7 +198,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Method: Extruded
     Cubature Degree: 4
-    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness

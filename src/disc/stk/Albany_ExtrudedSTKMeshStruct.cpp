@@ -113,25 +113,20 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   sideSetMeshStructs["basalside"] = basalMeshStruct;
 
-  std::string shape = params->get("Element Shape", "Hexahedron");
-  std::string basalside_elem_name;
-  if (shape == "Wedge")  {
-    ElemShape = Wedge;
-    basalside_elem_name = shards::getCellTopologyData<shards::Triangle<3> >()->name;
-  } else if (shape == "Hexahedron") {
-    ElemShape = Hexahedron;
-    basalside_elem_name = shards::getCellTopologyData<shards::Quadrilateral<4> >()->name;
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
-              "[ExtrudedSTKMeshStruct] Invalid element shape.\n"
-              " - valid shapes: Wedge, Hexahedron\n"
-              " - requested shape: " + shape + "\n");
-  }
-
   const auto& basalMeshSpec = basalMeshStruct->getMeshSpecs()[0];
   std::string elem2d_name(basalMeshSpec->ctd.base->name);
-  TEUCHOS_TEST_FOR_EXCEPTION(basalside_elem_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
-                std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_elem_name << " but it is " << elem2d_name);
+  std::string tria = shards::getCellTopologyData<shards::Triangle<3> >()->name;
+  std::string quad = shards::getCellTopologyData<shards::Quadrilateral<4> >()->name;
+  if (elem2d_name==tria) {
+    ElemShape = Wedge;
+  } else if (elem2d_name==quad) {
+    ElemShape = Hexahedron;
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
+      "[ExtrudedSTKMeshStruct] Invalid/unsupported basal mesh element type.\n"
+      "  - valid element types: " + tria + ", " + quad + "\n"
+      "  - basal alement type : " + elem2d_name + "\n");
+  }
 
   stk::topology etopology;
 
@@ -1205,7 +1200,6 @@ ExtrudedSTKMeshStruct::getValidDiscretizationParameters() const {
   validPL->set<TAI>("Basal Elem Layered Fields Ranks",TAI(), "List of basal node layered fields to be interpolated");
   validPL->set<std::string>("GMSH 2D Output File Name", "", "File Name for GMSH 2D Basal Mesh Export");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
-  validPL->set<std::string>("Element Shape", "Hexahedron", "Shape of the Element: Tetrahedron, Wedge, Hexahedron");
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
   validPL->set<bool>("Columnwise Ordering", false, "True for Columnwise ordering, false for Layerwise ordering");

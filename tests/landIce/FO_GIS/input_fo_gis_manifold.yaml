@@ -60,7 +60,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 3
     Exodus Output File Name: gis_manifold.exo
-    Element Shape: Wedge
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness

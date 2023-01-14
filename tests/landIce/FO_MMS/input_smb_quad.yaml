@@ -70,7 +70,6 @@ ANONYMOUS:
     Method: Extruded
     Cubature Degree: 1
     Exodus Output File Name: slab_hex_smb.exo
-    Element Shape: Hexahedron
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness

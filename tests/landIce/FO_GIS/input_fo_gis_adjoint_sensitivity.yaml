@@ -59,7 +59,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 4
     Exodus Output File Name: gis_adjoint_sensitivity.exo
-    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness

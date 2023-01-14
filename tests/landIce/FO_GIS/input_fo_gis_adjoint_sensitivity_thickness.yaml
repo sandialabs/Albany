@@ -65,7 +65,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 3
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity_thickness.exo
-    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true

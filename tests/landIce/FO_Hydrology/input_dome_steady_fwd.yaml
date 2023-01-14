@@ -105,7 +105,6 @@ ANONYMOUS:
     Method: Extruded
     Cubature Degree: 4
     Exodus Output File Name: results-fwd/dome.exo
-    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness

@@ -56,7 +56,6 @@ ANONYMOUS:
     Cubature Degree: 4
     Exodus Output File Name: gis_coupled_shape_opt.exo
     Columnwise Ordering: false
-    Element Shape: Wedge
     NumLayers: 5
     Thickness Field Name: ice_thickness
     Surface Height Field Name: initial_surface_height

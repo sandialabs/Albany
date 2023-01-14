@@ -56,7 +56,6 @@ ANONYMOUS:
     Exodus Output File Name: gis_coupled.exo
     Workset Size: 2000
     Columnwise Ordering: false
-    Element Shape: Wedge
     NumLayers: 5
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true

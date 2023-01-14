@@ -85,7 +85,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 4
     Exodus Output File Name: antarctica_stiff2.exo
-    Element Shape: Tetrahedron
     NumLayers: 10
     Thickness Field Name: ice_thickness
     Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, bed_topography, stiffening_factor]

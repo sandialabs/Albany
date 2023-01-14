@@ -55,7 +55,6 @@ ANONYMOUS:
     Method: Extruded
     Cubature Degree: 3
     Exodus Output File Name: gis_unstruct.exo
-    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness

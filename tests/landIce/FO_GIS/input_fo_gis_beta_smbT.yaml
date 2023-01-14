@@ -72,7 +72,6 @@ ANONYMOUS:
     Cubature Degree: 3
     Exodus Output File Name: gis_beta_smb.exo
     Workset Size: 2500
-    Element Shape: Wedge
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness

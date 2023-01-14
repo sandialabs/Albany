@@ -55,7 +55,6 @@ ANONYMOUS:
     Cubature Degree: 3
     Exodus Output File Name: gis_coupled.exo
     Columnwise Ordering: false
-    Element Shape: Wedge
     NumLayers: 5
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true

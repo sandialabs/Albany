@@ -120,7 +120,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 4
     Exodus Output File Name: gis_analysis_beta.exo
-    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true

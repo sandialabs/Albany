@@ -61,7 +61,6 @@ ANONYMOUS:
     Method: Extruded
     Cubature Degree: 3
     Exodus Output File Name: slab_glf_nonconst_vel.exo
-    Element Shape: Wedge
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
