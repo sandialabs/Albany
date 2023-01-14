@@ -44,10 +44,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis20km_in.exo.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/gis20km_in.exo.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis20km_in.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/gis20km_in.exo.4.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_tri3.jou
-               ${CMAKE_CURRENT_BINARY_DIR}/square_tri3.jou COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_tri6.jou
-               ${CMAKE_CURRENT_BINARY_DIR}/square_tri6.jou COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_quad4.jou
                ${CMAKE_CURRENT_BINARY_DIR}/square_quad4.jou COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.exo
@@ -74,8 +70,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/slab_2d.exo.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/slab_2d.exo.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_quad.exo
                ${CMAKE_CURRENT_BINARY_DIR}/square_quad.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_tri.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/square_tri.exo COPYONLY)
 
 
 if (ALBANY_LARGE_TESTS)

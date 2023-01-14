@@ -39,15 +39,3 @@ nodeset 99 name "nodeset99"
 
 
 export genesis "square_quad4.exo"  overwrite
-
-#refine surf 1 numsplit 1
-#export genesis "square_tri3_ns1.exo" overwrite
-
-#refine surf 1 numsplit 1
-#export genesis "square_tri3_ns2.exo" overwrite
-
-#refine surf 1 numsplit 1
-#export genesis "square_tri3_ns3.exo" overwrite
-
-
-
