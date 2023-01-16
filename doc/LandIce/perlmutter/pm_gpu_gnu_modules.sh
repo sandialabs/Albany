@@ -25,8 +25,8 @@ module load cray-parallel-netcdf/1.12.3.1
 module load cmake/3.22.0
 
 module load e4s
-spack env activate -V e4s
-spack load superlu@5.3.0%gcc@11.2.0
+spack env activate -V gcc
+spack load superlu
 
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
