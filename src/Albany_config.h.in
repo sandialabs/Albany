@@ -1,11 +1,6 @@
 #ifndef ALBANY_CONFIG_H
 #define ALBANY_CONFIG_H
 
-// ======================== Albany packages and subpackages macros ============================== //
-
-#cmakedefine ALBANY_LANDICE
-#cmakedefine ALBANY_DEMO_PDES
-
 // ===================== Macros to identify packages found in Trilinos ======================= //
 
 #cmakedefine ALBANY_AMESOS2
@@ -81,17 +76,6 @@
 #cmakedefine ALBANY_HES_VEC_FAD_TYPE_SLFAD
 #cmakedefine ALBANY_HES_VEC_SLFAD_SIZE ${ALBANY_HES_VEC_SLFAD_SIZE}
 #cmakedefine ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-
-// ================ Package-specific macros ================= //
-
-#ifdef ALBANY_LANDICE
-  // --- LandIce
-  #cmakedefine CISM_HAS_LANDICE
-  #cmakedefine MPAS_HAS_LANDICE
-  #cmakedefine CISM_CHECK_COMPARISONS
-  #cmakedefine REDUCED_COMM
-  #cmakedefine CISM_USE_EPETRA
-#endif
 
 #ifdef ALBANY_DEBUG_BUILD
   #cmakedefine ALBANY_DEBUG_BUILD

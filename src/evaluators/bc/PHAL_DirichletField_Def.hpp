@@ -244,6 +244,38 @@ DirichletField(Teuchos::ParameterList& p)
 // **********************************************************************
 template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+preEvaluate(typename Traits::EvalData dirichletWorkset)
+{
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+
+  if (trans) {
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    auto Vp_data = Albany::getNonconstLocalData(dirichletWorkset.Vp_bc);
+    auto Vp_const_data = Albany::getLocalData(dirichletWorkset.Vp);
+
+    bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
+    int num_cols = dirichletWorkset.Vp->domain()->dim();
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+    const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+    const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+
+    // Note: it is important to set Vp_bc to Vp at Dirichlet dof nodes even if Vp_bc was already initialized with Vp
+    // because other boundary conditions applied before this one could have zeroed it out (if the bcs are applied to the same dofs).
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
+      const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+      for (int col=0; col<num_cols; ++col) {
+        Vp_data[col][x_lid] = isFieldParameter ? Vp_const_data[col][x_lid] : 0.0;
+      }
+    }
+  }
+}
+
+// **********************************************************************
+template<typename Traits>
+void DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
@@ -266,36 +298,24 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const auto& p_offsets = p_dof_mgr->getGIDFieldOffsets(fieldOffset);
   if (trans) {
     // For (df/dp)^T*V we zero out corresponding entries in V
-    Teuchos::RCP<Thyra_MultiVector> Vp = dirichletWorkset.Vp_bc;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp);
-
     if(isFieldParameter) {
-      auto fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
+      auto Vp_data = Albany::getNonconstLocalData(dirichletWorkset.Vp_bc);
+      auto fpV_data = Albany::getNonconstLocalData(fpV);
       for (const auto& ep : ns_node_elem_pos) {
         const int ielem = ep.first;
         const int pos   = ep.second;
         const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
         const int p_lid = p_elem_dof_lids(ielem,p_offsets[pos]);
         for (int col=0; col<num_cols; ++col) {
-          fpV_nonconst2dView[col][p_lid] -= Vp_nonconst2dView[col][x_lid];
-          Vp_nonconst2dView[col][x_lid] = 0.0;
-         }
-      }
-    } else {
-      for (const auto& ep : ns_node_elem_pos) {
-        const int ielem = ep.first;
-        const int pos   = ep.second;
-        const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
-
-        for (int col=0; col<num_cols; ++col) {
-          Vp_nonconst2dView[col][x_lid] = 0.0;
-         }
+          fpV_data[col][p_lid] -= Vp_data[col][x_lid];
+          Vp_data[col][x_lid] = 0.0;
+        }
       }
     }
   } else {
     // for (df/dp)*V we zero out corresponding entries in df/dp
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vp_const2dView = Albany::getLocalData(dirichletWorkset.Vp);
+    auto fpV_data = Albany::getNonconstLocalData(fpV);
+    auto Vp_const_data = Albany::getLocalData(dirichletWorkset.Vp);
     if(isFieldParameter) {
       for (const auto& ep : ns_node_elem_pos) {
         const int ielem = ep.first;
@@ -303,7 +323,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
         const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
         const int p_lid = p_elem_dof_lids(ielem,p_offsets[pos]);
         for (int col=0; col<num_cols; ++col) {
-          fpV_nonconst2dView[col][x_lid] -= Vp_const2dView[col][p_lid];
+          fpV_data[col][x_lid] -= Vp_const_data[col][p_lid];
         }
       }
     } else {
@@ -312,7 +332,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
         const int pos   = ep.second;
         const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
         for (int col=0; col<num_cols; ++col) {
-          fpV_nonconst2dView[col][x_lid] = 0.0;
+          fpV_data[col][x_lid] = 0.0;
         }
       }
     }

@@ -46,7 +46,9 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_ROOT}/include \
       -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_C_ROOT}/lib \
 \
-      -D TPL_ENABLE_HDF5:BOOL=OFF \
+      -D TPL_ENABLE_HDF5=ON \
+      -D HDF5_INCLUDE_DIRS:PATH=${HDF5_ROOT}/include \
+      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \
 \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
@@ -114,7 +116,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_STKExprEval:BOOL=ON \
       -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
       -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
-      -D Trilinos_ENABLE_Teko:BOOL=OFF \
+      -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
       -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \

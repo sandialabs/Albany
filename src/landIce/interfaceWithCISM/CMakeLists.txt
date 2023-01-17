@@ -1,3 +1,9 @@
+if (NOT CISM_INCLUDE_DIR)
+  message(FATAL_ERROR "CISM_INCLUDE_DIR not defined\n")
+else()
+  message("  -- CISM_INCLUDE_DIR ${CISM_INCLUDE_DIR}")
+endif()
+
 set(HEADERS_CISM
   ali_driver.H
   ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H
@@ -20,6 +26,13 @@ else()
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")
 endif()
 target_include_directories(cismInterface SYSTEM PUBLIC ${CISM_INCLUDE_DIR})
+
+# Options for CISM interface
+option(ENABLE_CISM_REDUCED_COMM "Flag to turn on reduced communicator for CISM-Albany runs" ON)
+if (ENABLE_CISM_REDUCED_COMM)
+  MESSAGE("  -- CISM_REDUCED_COMM                   Enabled.  CISM-Albany will use reduced communicator.")
+  target_compile_definitions (cismInterface PUBLIC REDUCED_COMM)
+endif()
 
 set (CISM_INTERFACE_INCLUDE_DIRS
      ${LANDICE_INCLUDE_DIRS}

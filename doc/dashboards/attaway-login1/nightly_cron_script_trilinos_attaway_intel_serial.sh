@@ -11,7 +11,6 @@ rm -rf intel_modules.out
 rm -rf cdash*intel*.txt
 rm -rf ctest_nightly_trilinos_intel_serial.cmake
 rm -rf ctest_nightly_albany_intel_serial_build.cmake
-rm -rf ctest_nightly_albany_intel_serial_run.cmake
 
 unset http_proxy
 unset https_proxy

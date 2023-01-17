@@ -100,13 +100,6 @@ ANONYMOUS:
                       Verbosity: 33
               Preconditioner Type: Ifpack2
               Preconditioner Types:
-                ML:
-                  Base Method Defaults: SA
-                  ML Settings:
-                    'aggregation: damping factor': 1.33299999999999996e+00
-                    'aggregation: local aggregates': 4
-                    'aggregation: nodes per aggregate': 27
-                    'coarse: max size': 220
                 Ifpack2:
                   Overlap: 2
                   Prec Type: ILUT

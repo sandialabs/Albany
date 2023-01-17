@@ -127,14 +127,14 @@ ANONYMOUS:
     Exodus Output File Name: steady2d_scalar_and_dist_param.exo
     Cubature Degree: 9
   Regression For Response 0:
+    Relative Tolerance: 1.0e-07
     Test Value:  3.714619372618e-01
-    Relative Tolerance: 1.0e-03
     Sensitivity For Parameter 0:
       Test Values: [9.561048021617e-03, -3.169063814956e-01]
     Sensitivity For Parameter 1:
       Test Value: 8.044261077318e-03
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [41.0171]
+    Piro Analysis Test Values: [41.0170729034]
       
   Piro: 
     Sensitivity Method: Adjoint

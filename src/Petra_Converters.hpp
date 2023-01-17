@@ -20,7 +20,6 @@
 #include "Epetra_Import.h"
 #include "Epetra_LocalMap.h"
 
-#include "Kokkos_DefaultNode.hpp"
 
 namespace Petra {
 //TpetraMap_To_EpetraMap: takes in Tpetra::Map object, converts it to its equivalent Epetra_Map object,

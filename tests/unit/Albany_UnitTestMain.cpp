@@ -11,7 +11,7 @@
 int main( int argc, char* argv[] )
 {
   // Note that the dtor for GlobalMPISession will call
-  // Kokkos::finalize_all() but does NOT call Kokkos::initialize() for
+  // Kokkos::finalize() but does NOT call Kokkos::initialize() for
   // any node type!
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
   Kokkos::initialize(argc,argv);

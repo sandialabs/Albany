@@ -6,7 +6,6 @@
 
 #include "LandIce_ProblemFactory.hpp"
 
-#include "LandIce_Stokes.hpp"
 #include "LandIce_StokesFO.hpp"
 #include "LandIce_Hydrology.hpp"
 #include "LandIce_Enthalpy.hpp"
@@ -20,8 +19,7 @@ namespace LandIce
 
 bool LandIceProblemFactory::provides (const std::string& key) const
 {
-  return key == "LandIce Stokes" ||
-         key == "LandIce Stokes 3D" ||
+  return key == "LandIce Stokes 3D" ||
          key == "LandIce Stokes 2D" ||
          key == "LandIce Stokes First Order 2D" ||
          key == "LandIce Stokes FO 2D" ||
@@ -50,11 +48,7 @@ create (const std::string& key,
   auto discParams = Teuchos::sublist(topLevelParams, "Discretization");
 
 
-  if (key == "LandIce Stokes" || key == "LandIce Stokes 3D" ) {
-    problem = Teuchos::rcp(new LandIce::Stokes(problemParams, paramLib, 3));
-  } else if (key == "LandIce Stokes 2D" ) {
-    problem = Teuchos::rcp(new LandIce::Stokes(problemParams, paramLib, 2));
-  } else if (key == "LandIce Stokes First Order 2D" || key == "LandIce Stokes FO 2D" ||
+  if (key == "LandIce Stokes First Order 2D" || key == "LandIce Stokes FO 2D" ||
              key == "LandIce Stokes First Order 2D XZ" || key == "LandIce Stokes FO 2D XZ") {
     problem = Teuchos::rcp(new LandIce::StokesFO(problemParams, discParams, paramLib, 2));
   } else if (key == "LandIce Stokes First Order 3D" || key == "LandIce Stokes FO 3D" ) {

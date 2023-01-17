@@ -13,7 +13,7 @@ cmake \
     -D Trilinos_ENABLE_Fortran:BOOL=ON \
     -D TPL_ENABLE_SuperLU:BOOL=OFF \
     -D Amesos2_ENABLE_KLU2:BOOL=ON \
-    -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
+    -D Trilinos_ASSERT_DEFINED_DEPENDENCIES:BOOL=OFF \
     -D Trilinos_ENABLE_Teuchos:BOOL=ON \
     -D HAVE_TEUCHOS_COMM_TIMERS=ON \
     -D Trilinos_ENABLE_Epetra:BOOL=ON \

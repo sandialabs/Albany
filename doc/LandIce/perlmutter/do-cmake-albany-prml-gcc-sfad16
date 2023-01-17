@@ -29,6 +29,7 @@ cmake \
       -D ENABLE_FAD_TYPE:STRING="SFad" \
       -D ALBANY_SFAD_SIZE=16 \
       -D ENABLE_MPAS_INTERFACE:BOOL=ON \
+      -D ENABLE_ALBANY_EPETRA=OFF \
 ${ALBANY_SOURCE_DIR}
 
 # Include these flags if you want to enable PyAlbany

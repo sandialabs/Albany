@@ -130,10 +130,7 @@ endif()
 
 #utility
 list (APPEND SOURCES
-  utility/Counter.cpp
-  utility/CounterMonitor.cpp
   utility/DisplayTable.cpp
-  utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
   utility/Albany_CombineAndScatterManager.cpp
   utility/Albany_CombineAndScatterManagerTpetra.cpp
@@ -148,17 +145,10 @@ list (APPEND SOURCES
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/Albany_UnivariateDistribution.hpp
-  utility/VariableMonitor.cpp
-  utility/StaticAllocator.cpp
   )
 list (APPEND HEADERS
-  utility/Counter.hpp
-  utility/CounterMonitor.hpp
   utility/DisplayTable.hpp
-  utility/MonitorBase.hpp
-  utility/PerformanceContext.hpp
   utility/Albany_StringUtils.hpp
-  utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/Albany_CombineAndScatterManager.hpp
   utility/Albany_CombineAndScatterManagerTpetra.hpp
@@ -172,12 +162,6 @@ list (APPEND HEADERS
   # utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
-  utility/VariableMonitor.hpp
-  utility/StaticAllocator.hpp
-  utility/math/Tensor.hpp
-  utility/math/TensorCommon.hpp
-  utility/math/TensorDetail.hpp
-  utility/math/TensorImpl.hpp
   )
 
 if (ALBANY_EPETRA)
@@ -235,7 +219,6 @@ list (APPEND HEADERS
   problems/Albany_ResponseUtilities.hpp
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_MaterialDatabase.hpp
-  problems/Albany_ParamEnum.hpp
   )
 
 
@@ -395,7 +378,6 @@ list (APPEND SOURCES
   evaluators/interpolation/PHAL_DOFVecInterpolation.cpp
   evaluators/interpolation/PHAL_DOFVecInterpolationSide.cpp
   evaluators/interpolation/PHAL_P0Interpolation.cpp
-  evaluators/response/PHAL_ResponseFieldIntegral.cpp
   evaluators/response/PHAL_ResponseSquaredL2Difference.cpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide.cpp
   evaluators/scatter/PHAL_ScatterResidual.cpp
@@ -405,19 +387,15 @@ list (APPEND SOURCES
   evaluators/scatter/PHAL_SeparableScatterScalarResponse.cpp
   evaluators/state/PHAL_LoadSideSetStateField.cpp
   evaluators/state/PHAL_LoadStateField.cpp
-  evaluators/state/PHAL_SaveCellStateField.cpp
-  evaluators/state/PHAL_SaveNodalField.cpp
   evaluators/state/PHAL_SaveSideSetStateField.cpp
   evaluators/state/PHAL_SaveStateField.cpp
   evaluators/utility/PHAL_Absorption.cpp
   evaluators/utility/PHAL_AddNoise.cpp
   evaluators/utility/PHAL_ComputeBasisFunctions.cpp
   evaluators/utility/PHAL_ComputeBasisFunctionsSide.cpp
-  evaluators/utility/PHAL_Constant.cpp
   evaluators/utility/PHAL_ConvertFieldType.cpp
   evaluators/utility/PHAL_DummyResidual.cpp
   evaluators/utility/PHAL_FieldFrobeniusNorm.cpp
-  evaluators/utility/PHAL_LangevinNoiseTerm.cpp
   evaluators/utility/PHAL_LinearCombinationParameter.cpp
   evaluators/utility/PHAL_LogGaussianDistributedParameter.cpp
   evaluators/utility/PHAL_MapToPhysicalFrame.cpp
@@ -485,8 +463,6 @@ list (APPEND HEADERS
   evaluators/interpolation/PHAL_P0Interpolation.hpp
   evaluators/interpolation/PHAL_P0Interpolation_Def.hpp
   evaluators/utility/PHAL_SharedParameter.hpp
-  evaluators/response/PHAL_ResponseFieldIntegral.hpp
-  evaluators/response/PHAL_ResponseFieldIntegral_Def.hpp
   evaluators/response/PHAL_ResponseSquaredL2Difference.hpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide.hpp
   evaluators/response/PHAL_ResponseSquaredL2DifferenceSide_Def.hpp
@@ -503,10 +479,6 @@ list (APPEND HEADERS
   evaluators/state/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/state/PHAL_LoadStateField.hpp
   evaluators/state/PHAL_LoadStateField_Def.hpp
-  evaluators/state/PHAL_SaveCellStateField.hpp
-  evaluators/state/PHAL_SaveCellStateField_Def.hpp
-  evaluators/state/PHAL_SaveNodalField.hpp
-  evaluators/state/PHAL_SaveNodalField_Def.hpp
   evaluators/state/PHAL_SaveSideSetStateField.hpp
   evaluators/state/PHAL_SaveSideSetStateField_Def.hpp
   evaluators/state/PHAL_SaveStateField.hpp
@@ -519,16 +491,12 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_ComputeBasisFunctions_Def.hpp
   evaluators/utility/PHAL_ComputeBasisFunctionsSide.hpp
   evaluators/utility/PHAL_ComputeBasisFunctionsSide_Def.hpp
-  evaluators/utility/PHAL_Constant.hpp
-  evaluators/utility/PHAL_Constant_Def.hpp
   evaluators/utility/PHAL_ConvertFieldType.hpp
   evaluators/utility/PHAL_ConvertFieldType_Def.hpp
   evaluators/utility/PHAL_DummyResidual.hpp
   evaluators/utility/PHAL_DummyResidual_Def.hpp
   evaluators/utility/PHAL_FieldFrobeniusNorm.hpp
   evaluators/utility/PHAL_FieldFrobeniusNorm_Def.hpp
-  evaluators/utility/PHAL_LangevinNoiseTerm.hpp
-  evaluators/utility/PHAL_LangevinNoiseTerm_Def.hpp
   evaluators/utility/PHAL_LinearCombinationParameter.hpp
   evaluators/utility/PHAL_LogGaussianDistributedParameter.hpp
   evaluators/utility/PHAL_MapToPhysicalFrame.hpp
@@ -584,29 +552,22 @@ set(TPL_LIBRARIES
   )
 
 # Add Albany physics libraries, as enabled.
-
 set(ALBANY_LIBRARIES albanyLib)
 
+# Core
 add_subdirectory(corePDEs)
-list (APPEND ALBANY_LIBRARIES corePDEs)
 
-if(ALBANY_DEMO_PDES)
+# Demo
+if(ENABLE_DEMO_PDES)
 	add_subdirectory(demoPDEs)
-	list (APPEND ALBANY_LIBRARIES demoPDEs)
 endif()
 
-if (ALBANY_LANDICE)
+# LandIce
+if (ENABLE_LANDICE)
   add_subdirectory(landIce)
-  list (APPEND ALBANY_LIBRARIES landIce)
-
-  if (ENABLE_MPAS_INTERFACE)
-    list (APPEND ALBANY_LIBRARIES mpasInterface)
-  endif()
-
-  if (ENABLE_CISM_INTERFACE)
-    list (APPEND ALBANY_LIBRARIES cismInterface)
-  endif()
 endif()
+
+message ("libs: ${ALBANY_LIBRARIES}")
 
 # Now build executables from this library, tailored main()s, and Trilinos
 if (NOT ALBANY_LIBRARIES_ONLY)

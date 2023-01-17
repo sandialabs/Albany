@@ -162,18 +162,11 @@ ANONYMOUS:
                     Tolerance: 9.99999999999999954e-07
               Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 0
                   Prec Type: ILUT
-                  Ifpack Settings:
-                    'fact: level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
+                  Ifpack2 Settings:
+                    'fact: ilut level-of-fill': 1.0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:

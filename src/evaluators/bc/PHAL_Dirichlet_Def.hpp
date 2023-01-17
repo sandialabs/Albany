@@ -277,32 +277,60 @@ Dirichlet(Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
+template <typename Traits>
+void Dirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+preEvaluate(typename Traits::EvalData dirichletWorkset)
+{
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  if (trans) {
+
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    auto Vp_bc = dirichletWorkset.Vp_bc;
+    auto data = Albany::getNonconstLocalData(Vp_bc);
+    int num_cols = Vp_bc->domain()->dim();
+
+    const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+    const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
+      const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+
+      for (int col=0; col<num_cols; ++col) {
+        data[col][x_lid] = 0.0;
+      }
+    }
+  }
+}
+
 template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
 
-  // For (df/dp)^T*V we zero out corresponding entries in V
-  // while for (df/dp)*V we zero out corresponding entries in df/dp
-  auto mv = trans ? dirichletWorkset.Vp_bc : dirichletWorkset.fpV;
-  auto data = Albany::getNonconstLocalData(mv);
-  int num_cols = mv->domain()->dim();
+  if (!trans) {
+    // for (df/dp)*V we zero out corresponding entries in df/dp
+    auto fpV = dirichletWorkset.fpV;
+    auto fpV_data = Albany::getNonconstLocalData(fpV);
 
-  const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
-  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
-  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
-  for (const auto& ep : ns_node_elem_pos) {
-    const int ielem = ep.first;
-    const int pos   = ep.second;
-    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+    int num_cols = dirichletWorkset.fpV->domain()->dim();
 
-    for (int col=0; col<num_cols; ++col) {
-      // Either one is happening:
-      //  (*Vp)[col][x_lid] = 0.0;
-      //  (*fpV)[col][x_lid] = 0.0;
-      data[col][x_lid] = 0.0;
+    const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+    const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
+      const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+
+      for (int col=0; col<num_cols; ++col) {
+        fpV_data[col][x_lid] = 0.0;
+      }
     }
   }
 }
