@@ -67,7 +67,7 @@ public:
 
   DiscType getInterleavedOrdering() const {return this->interleavedOrdering;}
 
-  enum elemShapeType {Tetrahedron, Wedge};
+  enum elemShapeType {Wedge};
 
 private:
 
@@ -99,10 +99,6 @@ private:
   LayeredMeshOrdering Ordering;
 
   int prismType(int const* prismVertexIds, int& minIndex);
-
-  void tetrasFromPrismStructured( int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
-
-  void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
 };
 
 } // namespace Albany

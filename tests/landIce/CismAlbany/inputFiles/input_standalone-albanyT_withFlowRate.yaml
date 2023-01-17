@@ -45,7 +45,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Method: Extruded
     Exodus Output File Name: gis_unstruct.exo
-    Element Shape: Hexahedron
     NumLayers: 10
     Extrude Basal Node Fields: [basal_friction, thickness, surface_height]
     Basal Node Fields Ranks: [1, 1, 1]

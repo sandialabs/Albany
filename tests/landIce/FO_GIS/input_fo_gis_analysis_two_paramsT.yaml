@@ -84,9 +84,8 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
-    Exodus Output File Name: gis_unstruct_analysis_two_params.exo
-    Element Shape: Tetrahedron
+    Cubature Degree: 4
+    Exodus Output File Name: gis_unstruct_analysis_two_paramsT.exo
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true
@@ -123,7 +122,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Cubature Degree: 3
-        Exodus Output File Name: gis_unstruct_analysis_two_params_basal.exo
+        Exodus Output File Name: gis_unstruct_analysis_two_params_basalT.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info:
@@ -177,7 +176,7 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_unstruct_analysis_two_params_surface.exo
+        Exodus Output File Name: gis_unstruct_analysis_two_params_surfaceT.exo
         Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2

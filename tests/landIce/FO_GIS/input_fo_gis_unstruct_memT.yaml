@@ -53,9 +53,8 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_mem.exo
-    Element Shape: Tetrahedron
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
@@ -127,9 +126,9 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.0e-04
     Relative Tolerance: 1.0e-04    
-    Test Value: 1.09129452686e+08
+    Test Value: 1.111601023583e+08
     Sensitivity For Parameter 0:
-      Test Value: 1.882621076489e+07  
+      Test Value: 1.849596738867e+07
   Piro:
     LOCA:
       Bifurcation: { }

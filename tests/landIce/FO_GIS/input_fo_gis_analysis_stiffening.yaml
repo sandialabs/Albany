@@ -72,9 +72,8 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_analysis_stiffening.exo
-    Element Shape: Tetrahedron
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true
@@ -381,10 +380,10 @@ ANONYMOUS:
         Status Test Check Type: Minimal
 
   Regression For Response 0:
-    Test Value: 6.14131581607e+01
+    Test Value: 6.068069886135e+01
     Relative Tolerance: 1.0e-05
     Absolute Tolerance: 1.0e-05
     Sensitivity For Parameter 0:
-      Test Value: 1.06024176845e+00
+      Test Value: 1.231269869500e+00
     
 ...

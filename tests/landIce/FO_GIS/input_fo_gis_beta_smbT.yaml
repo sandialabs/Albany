@@ -69,10 +69,9 @@ ANONYMOUS:
     Columnwise Ordering: true
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
-    Exodus Output File Name: gis_beta_smb.exo
+    Cubature Degree: 4
+    Exodus Output File Name: gis_beta_smbT.exo
     Workset Size: 2500
-    Element Shape: Tetrahedron
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
@@ -101,7 +100,7 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
-        Exodus Output File Name: gis_beta_smb_basal.exo
+        Exodus Output File Name: gis_beta_smb_basalT.exo
         Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 8
@@ -149,7 +148,7 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_beta_smb_surface.exo
+        Exodus Output File Name: gis_beta_smb_surfaceT.exo
         Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
@@ -254,11 +253,11 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000004e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.107433043522e+01
-    Test Value: 6.436521674120e+01
+      Test Value: 1.088007209720e+01
+    Test Value: 6.555972610432e+01
     Relative Tolerance: 1.00000000000000004e-04
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000004e-04
-    Test Value: 3.907406428441e+03
+    Test Value: 6.422658118363e+03
     Relative Tolerance: 1.00000000000000004e-04
 ...

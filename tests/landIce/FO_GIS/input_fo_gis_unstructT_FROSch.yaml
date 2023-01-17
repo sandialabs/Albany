@@ -55,9 +55,8 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
-    Exodus Output File Name: gis_unstruct.exo
-    Element Shape: Tetrahedron
+    Cubature Degree: 4
+    Exodus Output File Name: gis_unstruct_frosh.exo
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
@@ -89,7 +88,7 @@ ANONYMOUS:
         Restart Index: 1
         Cubature Degree: 3
         Exodus Input File Name: gis_unstruct_basal_populated.exo
-        Exodus Output File Name: gis_unstruct_basal.exo
+        Exodus Output File Name: gis_unstruct_basal_frosh.exo
         Required Fields Info:
           Number Of Fields: 4
           Field 0:
@@ -115,7 +114,7 @@ ANONYMOUS:
         Cubature Degree: 3
         Restart Index: 1
         Exodus Input File Name: gis_unstruct_surface_populated.exo
-        Exodus Output File Name: gis_unstruct_surface.exo
+        Exodus Output File Name: gis_unstruct_surface_frosh.exo
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
@@ -127,9 +126,9 @@ ANONYMOUS:
             Field Origin: Mesh
             Field Type: Node Vector
   Regression For Response 0:
-    Test Value: 1.09129452686000004e+08
+    Test Value: 1.111601023583e+08
     Sensitivity For Parameter 0:
-      Test Value: 1.88262107648000008e+07
+      Test Value: 1.849597812028e+07
     Relative Tolerance: 1.00000000000000005e-04
     Absolute Tolerance: 1.00000000000000005e-04
   Piro:

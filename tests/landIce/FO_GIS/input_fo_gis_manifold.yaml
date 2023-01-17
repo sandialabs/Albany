@@ -58,9 +58,8 @@ ANONYMOUS:
     Columnwise Ordering: true
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_manifold.exo
-    Element Shape: Tetrahedron
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
@@ -225,7 +224,7 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.0e-06    
     Relative Tolerance: 1.0e-06
-    Test Value: 1.06697612025e+08
+    Test Value: 1.089173687130e+08
     Sensitivity For Parameter 0:
-      Test Value: 1.753719284188e+07
+      Test Value: 1.720834249957e+07
 ...

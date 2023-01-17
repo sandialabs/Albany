@@ -77,34 +77,20 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   Ordering = (ordering==0) ? LAYER : COLUMN;
 
-  std::string shape = params->get<std::string>("Element Shape");
-  std::string basalside_elem_name;
-  if(shape == "Tetrahedron")  {
-    ElemShape = Tetrahedron;
-  }
-  else if (shape == "Prism")  {
-    ElemShape = Wedge;
-  }
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
-        std::endl << "Error in MpasSTKMeshStruct: Element Shape " << shape << " not recognized. Possible values: Tetrahedron, Prism");
+  ElemShape = Wedge;
 
-  int numElemsInPrism = (ElemShape==Tetrahedron) ? 3 : 1;
+  std::vector<GO> indexToElemID(indexToTriangleID.size()*numLayers);
 
-  std::vector<GO> indexToElemID(numElemsInPrism*indexToTriangleID.size()*numLayers);
-
-  int elemColumnShift = (Ordering == COLUMN) ? numElemsInPrism : numElemsInPrism*globalTrianglesStride;
-  int lElemColumnShift = (Ordering == COLUMN) ? numElemsInPrism : numElemsInPrism*indexToTriangleID.size();
-  int elemLayerShift = (Ordering == LAYER) ? numElemsInPrism : numElemsInPrism*numLayers;
+  int elemColumnShift = (Ordering == COLUMN) ? 1 : globalTrianglesStride;
+  int lElemColumnShift = (Ordering == COLUMN) ? 1 : indexToTriangleID.size();
+  int elemLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
   for(int il=0; il< numLayers; ++il) {
     int shift = il*elemColumnShift;
     int lShift = il*lElemColumnShift;
     for(int j=0; j<static_cast<int>(indexToTriangleID.size()); ++j) {
-      for(int iElem=0; iElem < numElemsInPrism; ++iElem) {
-        int lid = lShift + j*elemLayerShift + iElem;
-        indexToElemID[lid] = shift+elemLayerShift * (indexToTriangleID[j]-1) + iElem;
-      }
+      int lid = lShift + j*elemLayerShift;
+      indexToElemID[lid] = shift+elemLayerShift * (indexToTriangleID[j]-1);
     }
   }
 
@@ -112,7 +98,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
   int nLocalTriangles = indexToTriangleID.size(), nGlobalTriangles;
   Teuchos::reduceAll<int, int> (*comm, Teuchos::REDUCE_SUM, 1, &nLocalTriangles, &nGlobalTriangles);
-  elem_vs = createVectorSpace(comm,indexToElemIDAV,GO(numElemsInPrism*nGlobalTriangles*numLayers));
+  elem_vs = createVectorSpace(comm,indexToElemIDAV,GO(nGlobalTriangles*numLayers));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -163,24 +149,11 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   stk::io::put_io_part_attribute(*ssPartVec[ssnLatFloat]);
 #endif
 
-  stk::topology etopology;
-
-  switch (ElemShape) {
-  case Tetrahedron:
-    etopology = stk::topology::TET_4;
-    stk::mesh::set_topology(*ssPartVec[ssnBottom],stk::topology::TRI_3);
-    stk::mesh::set_topology(*ssPartVec[ssnTop],stk::topology::TRI_3);
-    stk::mesh::set_topology(*ssPartVec[ssnLat],stk::topology::TRI_3);
-    stk::mesh::set_topology(*ssPartVec[ssnLatFloat],stk::topology::TRI_3);
-    break;
-  case Wedge:
-    etopology = stk::topology::WEDGE_6;
-    stk::mesh::set_topology(*ssPartVec[ssnBottom],stk::topology::TRI_3);
-    stk::mesh::set_topology(*ssPartVec[ssnTop],stk::topology::TRI_3);
-    stk::mesh::set_topology(*ssPartVec[ssnLat],stk::topology::QUAD_4);
-    stk::mesh::set_topology(*ssPartVec[ssnLatFloat],stk::topology::QUAD_4);
-    break;
-  }
+  stk::topology etopology = stk::topology::WEDGE_6;
+  stk::mesh::set_topology(*ssPartVec[ssnBottom],stk::topology::TRI_3);
+  stk::mesh::set_topology(*ssPartVec[ssnTop],stk::topology::TRI_3);
+  stk::mesh::set_topology(*ssPartVec[ssnLat],stk::topology::QUAD_4);
+  stk::mesh::set_topology(*ssPartVec[ssnLatFloat],stk::topology::QUAD_4);
 
   std::string ebn = "Element Block 0";
   partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
@@ -226,21 +199,18 @@ void MpasSTKMeshStruct::setBulkData(
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
-  int numElemsInPrism = (ElemShape==Tetrahedron) ? 3 : 1;
-  int numLatSidesInQuad = (ElemShape==Tetrahedron) ? 2 : 1;
-
   auto LAYER  = LayeredMeshOrdering::LAYER;
   auto COLUMN = LayeredMeshOrdering::COLUMN;
 
-  int elemColumnShift = (Ordering == COLUMN) ? numElemsInPrism : numElemsInPrism*globalTrianglesStride;
-  int lElemColumnShift = (Ordering == COLUMN) ? numElemsInPrism : numElemsInPrism*indexToTriangleID.size();
-  int elemLayerShift = (Ordering == LAYER) ? numElemsInPrism : numElemsInPrism*numLayers;
+  int elemColumnShift = (Ordering == COLUMN) ? 1 : globalTrianglesStride;
+  int lElemColumnShift = (Ordering == COLUMN) ? 1 : indexToTriangleID.size();
+  int elemLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
   GO vertexColumnShift = (Ordering == COLUMN) ? 1 : globalVerticesStride;
   int lVertexColumnShift = (Ordering == COLUMN) ? 1 : indexToVertexID.size();
   int vertexLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
 
-  int edgeColumnShift = (Ordering == COLUMN) ? numLatSidesInQuad : numLatSidesInQuad*globalEdgesStride;
+  int edgeColumnShift = (Ordering == COLUMN) ? 1 : globalEdgesStride;
   int lEdgeColumnShift = (Ordering == COLUMN) ? 1 : indexToEdgeID.size();
   int edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
@@ -295,11 +265,10 @@ void MpasSTKMeshStruct::setBulkData(
     bulkData->change_entity_parts(node, singlePartVec);
   }
 
-  int tetrasLocalIdsOnPrism[3][4];
   auto elem_vs_indexer = Albany::createGlobalLocalIndexer(elem_vs);
-  for (unsigned int i=0; i<elem_vs->localSubDim()/numElemsInPrism; i++) {
-    int ib = (Ordering == LAYER)*(i%(lElemColumnShift/numElemsInPrism)) + (Ordering == COLUMN)*(i/(elemLayerShift/numElemsInPrism));
-    int il = (Ordering == LAYER)*(i/(lElemColumnShift/numElemsInPrism)) + (Ordering == COLUMN)*(i%(elemLayerShift/numElemsInPrism));
+  for (unsigned int i=0; i<elem_vs->localSubDim(); i++) {
+    int ib = (Ordering == LAYER)*(i%(lElemColumnShift)) + (Ordering == COLUMN)*(i/(elemLayerShift));
+    int il = (Ordering == LAYER)*(i/(lElemColumnShift)) + (Ordering == COLUMN)*(i%(elemLayerShift));
 
     int shift = il*vertexColumnShift;
 
@@ -312,40 +281,15 @@ void MpasSTKMeshStruct::setBulkData(
       prismGlobalIds[j + 3] = lowerId+vertexColumnShift;
     }
 
-
-    switch (ElemShape)
-    {
-    case Tetrahedron:
-    {
-      tetrasFromPrismStructured(prismGlobalIds, tetrasLocalIdsOnPrism);
-
-      for (unsigned int iTetra = 0; iTetra < 3; iTetra++) {
-        stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_vs_indexer->getGlobalElement(3*i+iTetra)+1, singlePartVec);
-        for(int j=0; j<4; ++j) {
-          stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j]+1);
-          bulkData->declare_relation(elem, node, j);
-        }
-        if(proc_rank_field){
-          int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
-          if(p_rank) 
-			p_rank[0] = comm->getRank();
-        }
-      }
-      break;
+    stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_vs_indexer->getGlobalElement(i) + 1, singlePartVec);
+    for (unsigned int j = 0; j < 6; j++) {
+      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
+      bulkData->declare_relation(elem, node, j);
     }
-    case Wedge:
-    {
-      stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_vs_indexer->getGlobalElement(i) + 1, singlePartVec);
-      for (unsigned int j = 0; j < 6; j++) {
-        stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
-        bulkData->declare_relation(elem, node, j);
-      }
-      if(proc_rank_field){
-        int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
-        if(p_rank)
-          p_rank[0] = comm->getRank();
-      }
-    }
+    if(proc_rank_field){
+      int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
+      if(p_rank)
+        p_rank[0] = comm->getRank();
     }
   }
 
@@ -355,18 +299,18 @@ void MpasSTKMeshStruct::setBulkData(
     maxLocalTriangleId = *std::max_element(indexToTriangleID.begin(), indexToTriangleID.end());
   Teuchos::reduceAll<int, int> (*comm, Teuchos::REDUCE_MAX, 1, &maxLocalTriangleId, &maxGlobalTriangleId);
 
-  //position of side in element depends on how the tetrahedron is located in the Prism.
-  int basalSideLID = 3;
-  int upperSideLID = (ElemShape == Tetrahedron) ? 1 : 4;
+  //position of side in element depends (hardcoded for Wedge)
+  const int basalSidePos = 3;
+  const int upperSidePos = 4;
 
   singlePartVec[0] = ssPartVec["basalside"];
   for (unsigned int i=0; i<indexToTriangleID.size(); ++i) {
     stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i], singlePartVec);
     stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  (indexToTriangleID[i]-1)*elemLayerShift+1);
-    bulkData->declare_relation(elem, side,  basalSideLID);
+    bulkData->declare_relation(elem, side,  basalSidePos);
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
     for(int j=0; j<3; ++j) {
-      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[basalSideLID].node[j]];
+      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[basalSidePos].node[j]];
       bulkData->declare_relation(side, node, j);
     }
   }
@@ -376,11 +320,11 @@ void MpasSTKMeshStruct::setBulkData(
   singlePartVec[0] = ssPartVec["upperside"];
   for (unsigned int i=0; i<indexToTriangleID.size(); ++i) {
     stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]+upperBasalOffset, singlePartVec);
-    stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  (indexToTriangleID[i]-1)*elemLayerShift+(numLayers-1)*elemColumnShift+1+(numElemsInPrism-1));
-    bulkData->declare_relation(elem, side,  upperSideLID);
+    stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  (indexToTriangleID[i]-1)*elemLayerShift+(numLayers-1)*elemColumnShift+1);
+    bulkData->declare_relation(elem, side,  upperSidePos);
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
     for(int j=0; j<3; ++j) {
-      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[upperSideLID].node[j]];
+      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[upperSidePos].node[j]];
       bulkData->declare_relation(side, node, j);
     }
   }
@@ -389,9 +333,6 @@ void MpasSTKMeshStruct::setBulkData(
 
   singlePartVec[0] = ssPartVec["lateralside"];
   //first we store the lateral faces of prisms, which corresponds to edges of the basal mesh
-  int tetraSidePoints[4][3] = {{0, 1, 3}, {1, 2, 3}, {0, 3, 2}, {0, 2, 1}};
-  std::vector<int> tetraPos(2), facePos(2);
-  std::vector<std::vector<std::vector<int> > > prismStruct(3, std::vector<std::vector<int> >(4, std::vector<int>(3)));
   std::vector<int> bdPrismFaceIds(4);
   for (unsigned int i=0; i<indexToEdgeID.size()*numLayers; ++i) {
     int ib = (Ordering == LAYER)*(i%lEdgeColumnShift) + (Ordering == COLUMN)*(i/edgeLayerShift);
@@ -416,63 +357,23 @@ void MpasSTKMeshStruct::setBulkData(
 
       int basalEdgeId = indexToEdgeID[ib]*edgeLayerShift;
 
-      switch (ElemShape) {
-      case Tetrahedron: {
-        tetrasFromPrismStructured (prismGlobalIds, tetrasLocalIdsOnPrism);
+      int faceId0 = prismGlobalIds[0]+1, faceId1 = prismGlobalIds[1]+1, faceId2 = prismGlobalIds[2]+1;
+      int prismFaceLID = (((faceId0==bdPrismFaceIds[0])&&(faceId1==bdPrismFaceIds[1])) ||
+                          ((faceId0==bdPrismFaceIds[1])&&(faceId1==bdPrismFaceIds[0]))) ? 0 :
+                         (((faceId1==bdPrismFaceIds[0])&&(faceId2==bdPrismFaceIds[1])) ||
+                          ((faceId1==bdPrismFaceIds[1])&&(faceId2==bdPrismFaceIds[0]))) ? 1 : 2;
 
-        for(int iTetra = 0; iTetra<3; ++iTetra) {
-          std::vector<std::vector<int> >& tetraStruct =prismStruct[iTetra];
-          stk::mesh::EntityId tetraPoints[4];
-          for(int j=0; j<4; ++j) {
-            tetraPoints[j] = tetrasLocalIdsOnPrism[iTetra][j]+1;
-          }
-          for(int iFace=0; iFace<4; ++iFace) {
-            std::vector<int>&  face = tetraStruct[iFace];
-            for(int j=0; j<3; j++) {
-              face[j] = tetraPoints[tetraSidePoints[iFace][j]];
-            }
-          }
-        }
+      stk::mesh::EntityId sideId = edgeColumnShift*il+basalEdgeId+1 + upperBasalOffset;
+      stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
 
-        setBdFacesOnPrism (prismStruct, bdPrismFaceIds, tetraPos, facePos);
+      stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
+      stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId + 1);
+      bulkData->declare_relation(elem, side, prismFaceLID);
 
-
-        for(int k=0; k<static_cast<int>(tetraPos.size()); ++k) {
-          int iTetra = tetraPos[k];
-          int iFace = facePos[k];
-          stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, il*elemColumnShift+elemLayerShift * basalElemId +iTetra+1);
-          int sideId = edgeColumnShift*il+numLatSidesInQuad*basalEdgeId+k+1 + upperBasalOffset;
-          stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
-          bulkData->declare_relation(elem, side,  iFace );
-          stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
-          for(int j=0; j<3; ++j) {
-            stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[iFace].node[j]];
-            bulkData->declare_relation(side, node, j);
-          }
-        }
-      }
-      break;
-      case Wedge: {
-        int faceId0 = prismGlobalIds[0]+1, faceId1 = prismGlobalIds[1]+1, faceId2 = prismGlobalIds[2]+1;
-        int prismFaceLID = (((faceId0==bdPrismFaceIds[0])&&(faceId1==bdPrismFaceIds[1])) ||
-                            ((faceId0==bdPrismFaceIds[1])&&(faceId1==bdPrismFaceIds[0]))) ? 0 :
-                           (((faceId1==bdPrismFaceIds[0])&&(faceId2==bdPrismFaceIds[1])) ||
-                            ((faceId1==bdPrismFaceIds[1])&&(faceId2==bdPrismFaceIds[0]))) ? 1 : 2;
-
-        stk::mesh::EntityId sideId = edgeColumnShift*il+basalEdgeId+1 + upperBasalOffset;
-        stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
-
-        stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
-        stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId + 1);
-        bulkData->declare_relation(elem, side, prismFaceLID);
-
-        stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
-        for (unsigned int j = 0; j < 4; j++) {
-          stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[prismFaceLID].node[j]];
-          bulkData->declare_relation(side, node, j);
-        }
-      }
-      break;
+      stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
+      for (unsigned int j = 0; j < 4; j++) {
+        stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[prismFaceLID].node[j]];
+        bulkData->declare_relation(side, node, j);
       }
     }
   }
@@ -481,11 +382,9 @@ void MpasSTKMeshStruct::setBulkData(
   for(int i=0; i<static_cast<int>(iceMarginEdgesIds.size()); ++i) {
     int basalEdgeId = iceMarginEdgesIds[i]*edgeLayerShift;
     for(int il=0; il<numLayers; ++il) {
-      for(int k=0; k< numLatSidesInQuad; ++k) {
-        int sideId = edgeColumnShift*il+numLatSidesInQuad*basalEdgeId+k+1 + upperBasalOffset;
-        stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
-        bulkData->change_entity_parts(side, singlePartVec);
-      }
+      int sideId = edgeColumnShift*il+basalEdgeId+1 + upperBasalOffset;
+      stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
+      bulkData->change_entity_parts(side, singlePartVec);
     }
   }
 
@@ -514,13 +413,8 @@ void MpasSTKMeshStruct::setBulkData(
 Teuchos::RCP<const Teuchos::ParameterList>
 MpasSTKMeshStruct::getValidDiscretizationParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-      this->getValidGenericSTKParameters("Valid MpasSTKMeshStructParams");
-  validPL->set<std::string>("Element Shape", "Tetrahedron", "Shape of the Element: Tetrahedron, Prism");
-
-  return validPL;
+  return this->getValidGenericSTKParameters("Valid MpasSTKMeshStructParams");
 }
-
 
 int
 MpasSTKMeshStruct::prismType(int const* prismVertexIds, int& minIndex)
@@ -532,66 +426,6 @@ MpasSTKMeshStruct::prismType(int const* prismVertexIds, int& minIndex)
   int v2 (prismVertexIds[PrismVerticesMap[minIndex][2]]);
 
   return v1  > v2;
-}
-
-void
-MpasSTKMeshStruct::tetrasFromPrismStructured (int const* prismVertexGIds, int tetrasIdsOnPrism[][4])
-{
-  int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
-
-  int tetraOfPrism[2][3][4] = {{{0, 1, 2, 5}, {0, 1, 5, 4}, {0, 4, 5, 3}}, {{0, 1, 2, 4}, {0, 4, 2, 5}, {0, 4, 5, 3}}};
-
-  int minIndex;
-  int prismType = this->prismType(prismVertexGIds, minIndex);
-
-  GO reorderedPrismLIds[6];
-
-  for (unsigned int ii = 0; ii < 6; ii++)
-  {
-    reorderedPrismLIds[ii] = prismVertexGIds[PrismVerticesMap[minIndex][ii]];
-  }
-
-  for (unsigned int iTetra = 0; iTetra < 3; iTetra++)
-    for (unsigned int iVertex = 0; iVertex < 4; iVertex++)
-    {
-      tetrasIdsOnPrism[iTetra][iVertex] = reorderedPrismLIds[tetraOfPrism[prismType][iTetra][iVertex]];
-    }
-}
-
-void
-MpasSTKMeshStruct::setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos)
-{
-  unsigned int numTriaFaces = prismFaceIds.size() - 2;
-  tetraPos.assign(numTriaFaces,-1);
-  facePos.assign(numTriaFaces,-1);
-
-
-  for (unsigned int iTetra (0), k (0); (iTetra < 3 && k < numTriaFaces); iTetra++)
-  {
-    bool found;
-    for (int jFaceLocalId = 0; jFaceLocalId < 4; jFaceLocalId++ )
-    {
-      found = true;
-      for (int ip (0); ip < 3 && found; ip++)
-      {
-        int localId = prismStruct[iTetra][jFaceLocalId][ip];
-        decltype(prismFaceIds.size()) j = 0;
-        found = false;
-        while ( (j < prismFaceIds.size()) && !found )
-        {
-          found = (localId == prismFaceIds[j]);
-          j++;
-        }
-      }
-      if (found)
-      {
-        tetraPos[k] = iTetra;
-        facePos[k] = jFaceLocalId;
-        k += found;
-        break;
-      }
-    }
-  }
 }
 
 } // namespace Albany

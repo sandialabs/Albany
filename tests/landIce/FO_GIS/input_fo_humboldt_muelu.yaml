@@ -95,7 +95,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 4
     Exodus Output File Name: output/humboldt.exo
-    Element Shape: Wedge
     Use Serial Mesh: false
     Columnwise Ordering: true
     NumLayers: 2
