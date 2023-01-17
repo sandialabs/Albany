@@ -54,7 +54,7 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Method: Extruded
     Cubature Degree: 3
-    Exodus Output File Name: gis_unstruct.exo
+    Exodus Output File Name: gis_unstructT.exo
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
@@ -86,7 +86,7 @@ ANONYMOUS:
         Restart Index: 1
         Cubature Degree: 3
         Exodus Input File Name: gis_unstruct_basal_populated.exo
-        Exodus Output File Name: gis_unstruct_basal.exo
+        Exodus Output File Name: gis_unstruct_basalT.exo
         Required Fields Info:
           Number Of Fields: 4
           Field 0:
@@ -112,7 +112,7 @@ ANONYMOUS:
         Cubature Degree: 3
         Restart Index: 1
         Exodus Input File Name: gis_unstruct_surface_populated.exo
-        Exodus Output File Name: gis_unstruct_surface.exo
+        Exodus Output File Name: gis_unstruct_surfaceT.exo
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

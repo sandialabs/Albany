@@ -53,7 +53,7 @@ ANONYMOUS:
     Method: Extruded
     Number Of Time Derivatives: 0
     Cubature Degree: 3
-    Exodus Output File Name: gis_coupled.exo
+    Exodus Output File Name: gis_coupledT.exo
     Workset Size: 2000
     Columnwise Ordering: false
     NumLayers: 5
@@ -83,7 +83,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Cubature Degree: 3
-        Exodus Output File Name: gis_coupled_basal.exo
+        Exodus Output File Name: gis_coupled_basalT.exo
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Required Fields Info:
@@ -112,7 +112,7 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_coupled_surface.exo
+        Exodus Output File Name: gis_coupled_surfaceT.exo
         Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
