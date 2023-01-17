@@ -38,7 +38,7 @@ ANONYMOUS:
           Effective Pressure: 1.0
       BC 1:
         Type: Lateral
-        Cubature Degree: 4
+        Cubature Degree: 3
         Side Set Name: lateralside
     Parameters:
       Number Of Parameters: 2
@@ -73,7 +73,7 @@ ANONYMOUS:
     Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
+    Cubature Degree: 4
     Exodus Output File Name: gis_analysis_stiffening_mem.exo
     Columnwise Ordering: true
     NumLayers: 5

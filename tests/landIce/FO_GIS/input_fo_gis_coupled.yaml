@@ -29,7 +29,7 @@ ANONYMOUS:
           Beta Field Name: basal_friction
       BC 1:
         Type: Lateral
-        Cubature Degree: 4
+        Cubature Degree: 3
         Side Set Name: lateralside
     Parameters:
       Number Of Parameters: 1
@@ -52,7 +52,7 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
+    Cubature Degree: 4
     Exodus Output File Name: gis_coupled.exo
     Columnwise Ordering: false
     NumLayers: 5

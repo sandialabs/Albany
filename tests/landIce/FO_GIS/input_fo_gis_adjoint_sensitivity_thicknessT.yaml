@@ -28,7 +28,7 @@ ANONYMOUS:
           Zero Beta On Floating Ice: false
       BC 1:
         Type: Lateral
-        Cubature Degree: 4
+        Cubature Degree: 3
         Side Set Name: lateralside
     Response Functions:
       Number Of Responses: 2
@@ -96,7 +96,7 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
+    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity_thickness.exo
     Columnwise Ordering: true
     NumLayers: 5

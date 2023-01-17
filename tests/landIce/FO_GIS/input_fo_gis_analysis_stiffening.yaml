@@ -38,7 +38,7 @@ ANONYMOUS:
           Zero Beta On Floating Ice: true
       BC 1:
         Type: Lateral
-        Cubature Degree: 4
+        Cubature Degree: 3
         Side Set Name: lateralside
     Parameters:
       Number Of Parameters: 2
@@ -72,7 +72,7 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
+    Cubature Degree: 4
     Exodus Output File Name: gis_analysis_stiffening.exo
     Columnwise Ordering: true
     NumLayers: 5
