@@ -8,16 +8,6 @@ MESSAGE ("\n ***********************")
 MESSAGE (" *** Testing Options ***")
 MESSAGE (" ***********************\n")
 
-# Add option to enable performance tests. Results are machine-specific
-OPTION(ENABLE_PERFORMANCE_TESTS "Flag to turn on Performance Tests" OFF)
-IF (ENABLE_PERFORMANCE_TESTS)
-  MESSAGE("-- Performance Tests         Enabled, adding tests/*/PerformanceTests")
-  SET(ALBANY_PERFORMANCE_TESTS TRUE)
-ELSE()
-  MESSAGE("-- Performance Tests     NOT Enabled.")
-  SET(ALBANY_PERFORMANCE_TESTS FALSE)
-ENDIF()
-
 # Add option to enable Albany unit tests.
 OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" ON)
 IF (ENABLE_UNIT_TESTS)
