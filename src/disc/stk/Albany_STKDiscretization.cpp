@@ -705,6 +705,7 @@ STKDiscretization::writeSolutionToFile(
   (void) force_write_solution;
 #else
 #ifdef ALBANY_SEACAS
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution to file");
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();
 
@@ -777,6 +778,7 @@ STKDiscretization::writeSolutionMVToFile(
   (void) force_write_solution;
 #else
 #ifdef ALBANY_SEACAS
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution MV to file");
 
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();
