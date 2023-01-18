@@ -90,15 +90,17 @@ if (ALBANY_EPETRA)
                        FIXTURES_REQUIRED PopulateMeshes
                        FIXTURES_SETUP    UnstructRestart)
 
-  # Restart
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.yaml)
-  add_test(${testName}_Restart ${Albany.exe} input_fo_gis_unstruct_restart.yaml)
-  set_tests_properties(${testName}_Restart
-                       PROPERTIES
-                       LABELS "LandIce;Epetra;Forward"
-                       RUN_SERIAL TRUE
-                       FIXTURES_REQUIRED UnstructRestart)
+  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
+    # Restart
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.yaml)
+    add_test(${testName}_Restart ${Albany.exe} input_fo_gis_unstruct_restart.yaml)
+    set_tests_properties(${testName}_Restart
+                         PROPERTIES
+                         LABELS "LandIce;Epetra;Forward"
+                         RUN_SERIAL TRUE
+                         FIXTURES_REQUIRED UnstructRestart)
+  endif()
 endif()
 
 if (ALBANY_IFPACK2)
@@ -415,13 +417,15 @@ if (ALBANY_EPETRA)
   add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_beta_smb.yaml)
   set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Epetra;Forward")
 
-  # Restart
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb_restart.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.yaml)
+  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
+    # Restart
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb_restart.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.yaml)
 
-  add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
-  set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName}_Epetra)
-  set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Epetra;Forward")
+    add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
+    set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName}_Epetra)
+    set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Epetra;Forward")
+  endif()
 endif()
 
 if (ALBANY_IFPACK2)

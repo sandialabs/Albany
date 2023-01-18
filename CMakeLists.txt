@@ -824,6 +824,11 @@ ENDIF()
 
 OPTION (ENABLE_EXPERIMENTAL "Enables experimental features/tests." OFF)
 
+# Disable ability to write to output mesh. On slow filesystems, this can give faster
+# execution time, if one is only interested in regression test against baseline
+# response/sensitivity values.
+option (ALBANY_DISABLE_OUTPUT_MESH "Disable writing of output mesh files" OFF)
+
 ########################## End of CMake options to Albany #########################################
 
 add_subdirectory(src)

@@ -537,6 +537,9 @@ endif()
 target_include_directories(albanyLib PUBLIC
                            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+if (ALBANY_DISABLE_OUTPUT_MESH)
+  target_compile_definitions (albanyLib PUBLIC ALBANY_DISABLE_OUTPUT_MESH)
+endif()
 
 install(TARGETS albanyLib EXPORT albany-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
