@@ -33,7 +33,7 @@ set_tests_properties(${testName} PROPERTIES LABELS
 
 add_test(${testName}_with_Source_Scalar_Param_Fwd_Sens_Implicit
          ${Albany.exe} input_with_source_scalar_param_fwd_sens_implicit.yaml)
-set_tests_properties(${testName}_Scalar_Param_Fwd_Sens_Implicit PROPERTIES LABELS
+set_tests_properties(${testName}_with_Source_Scalar_Param_Fwd_Sens_Implicit PROPERTIES LABELS
                                             "Demo;Tpetra;Forward;Serial")
 
 add_test(${testName}_with_Source_Dist_Param_Adjoint_Sens_Implicit
