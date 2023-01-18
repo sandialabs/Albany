@@ -698,7 +698,7 @@ STKDiscretization::writeSolutionToFile(
     const bool          force_write_solution) 
 {
 #ifdef ALBANY_DISABLE_OUTPUT_MESH
-  *out << "[STKDiscretization::writeCoordsToMatrixMarket] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+  *out << "[STKDiscretization::writeSolutionToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
   (void) soln;
   (void) time;
   (void) overlapped;
@@ -771,7 +771,7 @@ STKDiscretization::writeSolutionMVToFile(
     const bool               force_write_solution) 
 {
 #ifdef ALBANY_DISABLE_OUTPUT_MESH
-  *out << "[STKDiscretization::writeCoordsToMatrixMarket] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+  *out << "[STKDiscretization::writeSolutionMVToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
   (void) soln;
   (void) time;
   (void) overlapped;
