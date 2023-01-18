@@ -37,18 +37,6 @@ ELSE()
   MESSAGE("-- Large Tests           NOT Enabled.")
 ENDIF()
 
-# Set option to disable compiling some code for nightly tests
-# Some code sections take so long to compile with NVCC that nightly tests are
-# timing out. This option allows disabling those sections.
-OPTION(NIGHTLY_TESTING "Flag to turn off selected code during nightly testing" OFF)
-IF (NIGHTLY_TESTING)
-  MESSAGE("-- NIGHTLY_TESTING           Enabled")
-  SET(ALBANY_NIGHTLY_TESTING TRUE)
-ELSE()
-  MESSAGE("-- NIGHTLY_TESTING       NOT Enabled.")
-  SET(ALBANY_NIGHTLY_TESTING FALSE)
-ENDIF()
-
 #  Timeout real long running tests
 IF(ALBANY_CTEST_TIMEOUT)
     MESSAGE("\n-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
