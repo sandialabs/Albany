@@ -761,12 +761,6 @@ ELSE()
   SET(ALBANY_DEBUG FALSE)
 ENDIF()
 
-#Add option to build libraries but not link any executables (for LandIce uner MPAS)
-OPTION(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
-IF (ALBANY_LIBRARIES_ONLY)
-  MESSAGE("-- ALBANY_LIBRARIES_ONLY is ON")
-ENDIF()
-
 # Set which memory analysis system routines are available.
 option(ENABLE_MALLINFO "Use mallinfo() in Albany::printMemoryAnalysis()" OFF)
 option(ENABLE_GETRUSAGE "Use getrusage() in Albany::printMemoryAnalysis()" OFF)
@@ -860,11 +854,9 @@ IF(ALBANY_MPI)
   MESSAGE("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
 ENDIF(ALBANY_MPI)
 
-#Add option to disable all tests 
-OPTION(DISABLE_ALBANY_TESTS "Flag to disable tests" OFF)
-IF (DISABLE_ALBANY_TESTS)
-  MESSAGE("-- DISABLE_ALBANY_TESTS is ON.  Tests will not be built.")
-elseif (ALBANY_LIBRARIES_ONLY)
+#Add option to build libraries but not executables (for LandIce uner MPAS). Disables all tests
+option(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
+if (ALBANY_LIBRARIES_ONLY)
   message("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
 else()
   # Add Albany test -- in the "tests" directory
