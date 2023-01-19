@@ -170,6 +170,13 @@ DiscretizationFactory::createDiscretization(
     setMeshStructFieldData(sis, side_set_sis, req, 
                             side_set_req);
     setFieldData(result, sis, req);
+    Teuchos::RCP<StateInfoStruct> dummy_sis;
+    AbstractFieldContainer::FieldContainerRequirements dummy_req;
+    for (auto it : result->getSideSetDiscretizations()) {
+      const auto& ss_sis = side_set_sis.count(it.first)==1 ? side_set_sis.at(it.first) : dummy_sis;
+      const auto& ss_req = side_set_req.count(it.first)==1 ? side_set_req.at(it.first) : dummy_req;
+      setFieldData(it.second,ss_sis,ss_req);
+    }
     setMeshStructBulkData(sis, side_set_sis, req, 
                             side_set_req);
     completeDiscSetup(result);

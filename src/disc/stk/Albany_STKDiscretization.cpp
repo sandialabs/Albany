@@ -74,7 +74,13 @@ STKDiscretization::STKDiscretization(
       discParams(discParams_),
       interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-  // nothing to do
+  if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
+    for (auto it : stkMeshStruct->sideSetMeshStructs) {
+      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, it.second, comm));
+      sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
+      sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
+    }
+  }
 }
 
 STKDiscretization::~STKDiscretization()
@@ -2287,21 +2293,17 @@ STKDiscretization::updateMesh()
   printCoords();
 #endif
 
-  // If the mesh struct stores sideSet mesh structs, we update them
-  if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
-    for (auto it : stkMeshStruct->sideSetMeshStructs) {
-      Teuchos::RCP<STKDiscretization> side_disc =
-          Teuchos::rcp(new STKDiscretization(discParams, neq, it.second, comm));
-      side_disc->updateMesh();
-      sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
-      sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
+  // Update sideset discretizations (if any)
+  for (auto it : sideSetDiscretizationsSTK) {
+    it.second->updateMesh();
 
-      stkMeshStruct->buildCellSideNodeNumerationMap(
-          it.first,
-          sideToSideSetCellMap[it.first],
-          sideNodeNumerationMap[it.first]);
-    }
+    stkMeshStruct->buildCellSideNodeNumerationMap(
+        it.first,
+        sideToSideSetCellMap[it.first],
+        sideNodeNumerationMap[it.first]);
+  }
 
+  if (sideSetDiscretizations.size()>0) {
     buildSideSetProjectors();
   }
 }
