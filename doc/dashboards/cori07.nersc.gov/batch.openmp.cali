@@ -6,7 +6,7 @@
 #SBATCH --constraint=haswell
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ikalash@sandia.gov
-#SBATCH --account=m1795
+#SBATCH --account=m4274
 
 source cori_modules.sh 
 #export CRAYPE_LINK_TYPE=STATIC
