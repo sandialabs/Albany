@@ -30,10 +30,12 @@ if (ALBANY_PANZER_EXPR_EVAL)
   # -------------------------------------- #
   #            SHMIP suite A               #
   # -------------------------------------- #
-  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_suite_A1.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_suite_A1.yaml COPYONLY)
-	  add_test (${testNameRoot}_suite_A1   ${Albany.exe} input_suite_A1.yaml)
-  set_tests_properties(${testNameRoot}_suite_A1 PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  if (ALBANY_LARGE_TESTS)
+    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_suite_A1.yaml
+                    ${CMAKE_CURRENT_BINARY_DIR}/input_suite_A1.yaml COPYONLY)
+      add_test (${testNameRoot}_suite_A1   ${Albany.exe} input_suite_A1.yaml)
+    set_tests_properties(${testNameRoot}_suite_A1 PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  endif()
 
   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/input_suite_A2.yaml
                   ${CMAKE_CURRENT_BINARY_DIR}/input_suite_A2.yaml COPYONLY)

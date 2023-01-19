@@ -16,7 +16,7 @@ namespace Albany {
 StatelessObserverImpl::
 StatelessObserverImpl (const Teuchos::RCP<Application> &app)
   : app_(app),
-  solOutTime_(Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"))
+  solOutTime_(Teuchos::TimeMonitor::getNewTimer("Albany: Observe Solution"))
 {
   force_write_solution_ = app->getForceWriteSolution(); 
 }

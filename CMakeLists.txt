@@ -760,18 +760,6 @@ ELSE()
   SET(ALBANY_DEBUG FALSE)
 ENDIF()
 
-#Add option to build libraries but not link any executables (for LandIce uner MPAS)
-OPTION(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
-IF (ALBANY_LIBRARIES_ONLY)
-  MESSAGE("-- ALBANY_LIBRARIES_ONLY is ON")
-ENDIF()
-
-#Add option to disable all tests 
-OPTION(DISABLE_ALBANY_TESTS "Flag to disable tests" OFF)
-IF (DISABLE_ALBANY_TESTS)
-  MESSAGE("-- DISABLE_ALBANY_TESTS is ON.  Tests will not be built.")
-ENDIF()
-
 # Set which memory analysis system routines are available.
 option(ENABLE_MALLINFO "Use mallinfo() in Albany::printMemoryAnalysis()" OFF)
 option(ENABLE_GETRUSAGE "Use getrusage() in Albany::printMemoryAnalysis()" OFF)
@@ -823,75 +811,15 @@ ENDIF()
 
 OPTION (ENABLE_EXPERIMENTAL "Enables experimental features/tests." OFF)
 
+# Disable ability to write to output mesh. On slow filesystems, this can give faster
+# execution time, if one is only interested in regression test against baseline
+# response/sensitivity values.
+option (ALBANY_DISABLE_OUTPUT_MESH "Disable writing of output mesh files" OFF)
+
 ########################## End of CMake options to Albany #########################################
 
+# Parse source code folder
 add_subdirectory(src)
-
-MESSAGE ("\n ***********************")
-MESSAGE (" *** Testing Options ***")
-MESSAGE (" ***********************\n")
-
-# Add option to enable performance tests. Results are machine-specific
-OPTION(ENABLE_PERFORMANCE_TESTS "Flag to turn on Performance Tests" OFF)
-IF (ENABLE_PERFORMANCE_TESTS)
-  MESSAGE("-- Performance Tests         Enabled, adding tests/*/PerformanceTests")
-  SET(ALBANY_PERFORMANCE_TESTS TRUE)
-ELSE()
-  MESSAGE("-- Performance Tests     NOT Enabled.")
-  SET(ALBANY_PERFORMANCE_TESTS FALSE)
-ENDIF()
-
-# Add option to enable Albany unit tests.
-OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" ON)
-IF (ENABLE_UNIT_TESTS)
-  MESSAGE("-- Unit Tests                Enabled, adding tests/*/UnitTests")
-  SET(ALBANY_UNIT_TESTS TRUE)
-ELSE()
-  MESSAGE("-- Unit Tests            NOT Enabled.")
-  SET(ALBANY_UNIT_TESTS FALSE)
-ENDIF()
-
-# Add option to enable performance tests. Results are machine-specific
-OPTION(ENABLE_LARGE_TESTS "Run tests from the Albany-large-tests repository" ON)
-IF (ENABLE_LARGE_TESTS)
-  MESSAGE("-- Large Tests               Enabled, adding tests/large/")
-  SET(ALBANY_LARGE_TESTS TRUE)
-ELSE()
-  MESSAGE("-- Large Tests           NOT Enabled.")
-  SET(ALBANY_LARGE_TESTS FALSE)
-ENDIF()
-
-
-# Set option to disable compiling some code for nightly tests
-# Some code sections take so long to compile with NVCC that nightly tests are
-# timing out. This option allows disabling those sections.
-OPTION(NIGHTLY_TESTING "Flag to turn off selected code during nightly testing" OFF)
-IF (NIGHTLY_TESTING)
-  MESSAGE("-- NIGHTLY_TESTING           Enabled")
-  SET(ALBANY_NIGHTLY_TESTING TRUE)
-ELSE()
-  MESSAGE("-- NIGHTLY_TESTING       NOT Enabled.")
-  SET(ALBANY_NIGHTLY_TESTING FALSE)
-ENDIF()
-
-#  Timeout real long running tests
-IF(ALBANY_CTEST_TIMEOUT)
-    MESSAGE("\n-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
-ELSE()
-    MESSAGE("\n-- No limits are set on maximum test run time")
-ENDIF()
-
-# Make a clean build target for convenience
-
-ADD_CUSTOM_TARGET( cmake_clean
-    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CMakeCache.txt
-    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/Makefile
-    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles
-    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
-    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
-)
-
-OPTION(ALBANY_PARALLEL_ONLY "Only run the parallel tests" OFF)
 
 IF(ALBANY_MPI)
   IF(ALBANY_MPI_EXEC)
@@ -925,39 +853,27 @@ IF(ALBANY_MPI)
   MESSAGE("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
 ENDIF(ALBANY_MPI)
 
-#Add option to run any pretest executables in a specific environment (mpiexec.hydra, srun, or other)
-IF (DEFINED ALBANY_PRETEST_EXEC)
-  MESSAGE("-- ALBANY_PRETEST_EXEC is ${ALBANY_PRETEST_EXEC}")
-ELSE()
-  # Not set in configure - set it to be empty
-  SET(ALBANY_PRETEST_EXEC "" CACHE STRING "Command to use to execute pretests")
-ENDIF()
-
-#Add option to specify path to desired SEACAS utils
-IF (DEFINED ALBANY_SEACAS_PATH)
-  MESSAGE("-- ALBANY_SEACAS_PATH is ${ALBANY_SEACAS_PATH}")
-ENDIF()
-
-# Add Albany test -- in the "tests" directory
-IF (ALBANY_LIBRARIES_ONLY OR DISABLE_ALBANY_TESTS)
-  IF (ALBANY_LIBRARIES_ONLY) 
-    MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
-  ENDIF()
-  IF (DISABLE_ALBANY_TESTS) 
-    MESSAGE("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
-  ENDIF()
-  IF (ALBANY_PYTHON)
-    SET(ALBANY_PYTHON_TESTS FALSE)
-  ENDIF()
-ELSE()
+#Add option to build libraries but not executables (for LandIce uner MPAS). Disables all tests
+option(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
+if (ALBANY_LIBRARIES_ONLY)
+  message("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+else()
+  # Add Albany test -- in the "tests" directory
   add_subdirectory(tests)
-  IF (ALBANY_PYTHON)
-    SET(ALBANY_PYTHON_TESTS TRUE)
-  ENDIF()
-ENDIF()
+endif()
 
 IF (ALBANY_PYTHON)
   add_subdirectory( pyAlbany )
 ENDIF()
+
+# Make a clean build target for convenience
+
+ADD_CUSTOM_TARGET( cmake_clean
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CMakeCache.txt
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/Makefile
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
+)
 
 MESSAGE("\nAnd CMake says...:")
