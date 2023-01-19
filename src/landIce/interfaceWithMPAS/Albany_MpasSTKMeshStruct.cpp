@@ -209,24 +209,19 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
 void MpasSTKMeshStruct::setFieldData(
               const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const AbstractFieldContainer::FieldContainerRequirements& /*req*/,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  this->SetupFieldData(comm, req, sis, worksetSize);
-  this->setSideSetFieldData(comm, {}, side_set_sis, worksetSize);
+  this->SetupFieldData(comm, sis, worksetSize);
+  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
 }
 
 void MpasSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Albany::AbstractFieldContainer::FieldContainerRequirements& /*req*/,
     const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
     const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
   int numElemsInPrism = (ElemShape==Tetrahedron) ? 3 : 1;
   int numLatSidesInQuad = (ElemShape==Tetrahedron) ? 2 : 1;
@@ -503,10 +498,9 @@ void MpasSTKMeshStruct::setBulkData(
 
   bulkData->change_entity_owner(node_to_proc);
 
-  Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  this->loadRequiredInputFields (req,comm);
+  this->loadRequiredInputFields (comm);
 
-  this->setSideSetBulkData(comm, {}, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

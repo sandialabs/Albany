@@ -80,7 +80,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void GenericSTKMeshStruct::SetupFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<StateInfoStruct>& sis,
     const int worksetSize)
 {
@@ -139,7 +138,7 @@ void GenericSTKMeshStruct::SetupFieldData(
         metaData, bulkData, interleavedOrdering, numDim, sis, num_params));
   } else {
     this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
-        metaData, bulkData, req, interleavedOrdering, numDim, sis, num_params));
+        metaData, bulkData, interleavedOrdering, numDim, sis, num_params));
   }
 
 // Exodus is only for 2D and 3D. Have 1D version as well
@@ -564,16 +563,14 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
 
 void GenericSTKMeshStruct::setSideSetFieldData (
           const Teuchos::RCP<const Teuchos_Comm>& comm,
-          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
           const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
           int worksetSize)
 {
   if (this->sideSetMeshStructs.size()>0) {
-    // Dummy sis/req if not present in the maps for a given side set.
-    // This could happen if the side discretization has no requirements/states
+    // Dummy sis if not present in the maps for a given side set.
+    // This could happen if the side discretization has no states
     Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
     dummy_sis->createNodalDataBase();
-    AbstractFieldContainer::FieldContainerRequirements dummy_req;
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
@@ -587,14 +584,12 @@ void GenericSTKMeshStruct::setSideSetFieldData (
 
       // We check since the basal mesh for extruded stk mesh should already have it set
       if (!it.second->fieldAndBulkDataSet) {
-        auto it_req = side_set_req.find(it.first);
         auto it_sis = side_set_sis.find(it.first);
 
-        auto& req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setFieldData(comm,req,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
+        it.second->setFieldData(comm,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
       }
     }
   }
@@ -602,16 +597,14 @@ void GenericSTKMeshStruct::setSideSetFieldData (
 
 void GenericSTKMeshStruct::setSideSetBulkData (
           const Teuchos::RCP<const Teuchos_Comm>& comm,
-          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
           const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
           int worksetSize)
 {
   if (this->sideSetMeshStructs.size()>0) {
-    // Dummy sis/req if not present in the maps for a given side set.
-    // This could happen if the side discretization has no requirements/states
+    // Dummy sis if not present in the maps for a given side set.
+    // This could happen if the side discretization has no states
     Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
     dummy_sis->createNodalDataBase();
-    AbstractFieldContainer::FieldContainerRequirements dummy_req;
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
@@ -625,14 +618,12 @@ void GenericSTKMeshStruct::setSideSetBulkData (
 
       // We check since the basal mesh for extruded stk mesh should already have it set
       if (!it.second->fieldAndBulkDataSet) {
-        auto it_req = side_set_req.find(it.first);
         auto it_sis = side_set_sis.find(it.first);
 
-        auto& req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setBulkData(comm,req,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
+        it.second->setBulkData(comm,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
       }
     }
   }
@@ -774,8 +765,8 @@ void GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData)
   }
 }
 
-void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
-                                                            const Teuchos::RCP<const Teuchos_Comm>& comm)
+void GenericSTKMeshStruct::
+loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
   out->setProcRankAndSize(comm->getRank(), comm->getSize());
@@ -864,11 +855,6 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
   auto cas_manager_node = createCombineAndScatterManager(serial_nodes_vs,nodes_vs);
   auto cas_manager_elem = createCombineAndScatterManager(serial_elems_vs,elems_vs);
 
-  std::set<std::string> missing;
-  for (auto rname : req) {
-    missing.insert(rname);
-  }
-
   for (int ifield=0; ifield<num_fields; ++ifield) {
     std::stringstream ss;
     ss << "Field " << ifield;
@@ -889,7 +875,6 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
     // The field is used somehow. Check that it is present in the mesh
     ftype = fparams.get<std::string>("Field Type","INVALID");
     checkFieldIsInMesh(fname, ftype);
-    missing.erase(fname);
 
     // Check if it's an output file (nothing to be done then). If not, check that the usage is a valid string
     if (fusage == "Output") {
@@ -1021,17 +1006,6 @@ void GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer
         values[iDim] = field_mv_view[iDim][lid];
       }
     }
-  }
-
-  if (missing.size()>0) {
-    std::string missing_list;
-    for (auto i : missing) {
-      missing_list += " '" + i + "',";
-    }
-    missing_list.erase(missing_list.size()-1);
-
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                "Error! The following requirements were not found in the discretization list:" << missing_list << ".\n");
   }
 }
 

@@ -332,7 +332,6 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     parameterList = slvrfctry->getParameters();
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
     discParams->set<bool>("Output DTK Field to Exodus", true);
-    Albany::AbstractFieldContainer::FieldContainerRequirements req;
     //IK, 11/14/13, debug output: check that pointers that are passed from CISM are not null
     //std::cout << "DEBUG: xyz_at_nodes_Ptr: " << xyz_at_nodes_Ptr << std::endl;
     //std::cout << "DEBUG: surf_height_at_nodes_Ptr: " << surf_height_at_nodes_Ptr << std::endl;
@@ -373,14 +372,6 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     basalParamList.sublist("Required Fields Info").set<int>("Number Of Fields",1);
     basalParamList.sublist("Required Fields Info").sublist("Field 0").set<std::string>("Field Name",beta_name);
     basalParamList.sublist("Required Fields Info").sublist("Field 0").set<std::string>("Field Type","From Mesh");*/
-
-    Teuchos::Array<std::string> arrayRequiredFields(8);
-    arrayRequiredFields[0]="flow_factor"; arrayRequiredFields[1]="temperature";
-    arrayRequiredFields[2]="ice_thickness"; arrayRequiredFields[3]="surface_height";
-    arrayRequiredFields[4]="basal_friction"; arrayRequiredFields[5]="dirichlet_field";
-    arrayRequiredFields[6]="xgrad_surface_height"; arrayRequiredFields[7]="ygrad_surface_height";
-
-    parameterList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
     // --- LandIce-specific boundary conditions --- //
     int numLandIceBCs;
@@ -526,7 +517,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
 
     albanyApp->createMeshSpecs(meshStruct);
     albanyApp->buildProblem();
-    meshStruct->constructMesh(reducedMpiCommT, discParams, req, albanyApp->getStateMgr().getStateInfoStruct(), meshStruct->getMeshSpecs()[0]->worksetSize);
+    meshStruct->constructMesh(reducedMpiCommT, discParams, albanyApp->getStateMgr().getStateInfoStruct(), meshStruct->getMeshSpecs()[0]->worksetSize);
 
     //Create nodeVS
     //global_node_id_owned_map_Ptr is 1-based, so nodeVS is 1-based

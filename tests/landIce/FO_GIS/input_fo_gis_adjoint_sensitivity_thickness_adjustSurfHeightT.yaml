@@ -11,7 +11,6 @@ ANONYMOUS:
     Compute Sensitivities: true
     Extruded Column Coupled in 2D Response: true
     Adjust Surface Height to Account for Thickness Changes: true
-    Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
     Dirichlet BCs: {}

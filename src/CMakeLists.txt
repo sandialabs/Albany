@@ -274,7 +274,6 @@ list (APPEND HEADERS
   disc/Adapt_NodalFieldUtils.hpp
   disc/Albany_DiscretizationUtils.hpp
   disc/Albany_AbstractDiscretization.hpp
-  disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractMeshStruct.hpp
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp

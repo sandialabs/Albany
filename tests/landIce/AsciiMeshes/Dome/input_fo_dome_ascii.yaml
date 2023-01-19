@@ -7,7 +7,6 @@ ANONYMOUS:
     Solution Method: Continuation
     Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
-    Required Fields: [flow_factor]
     Basal Side Name: Basal
     Parameters: 
       Number Of Parameters: 1

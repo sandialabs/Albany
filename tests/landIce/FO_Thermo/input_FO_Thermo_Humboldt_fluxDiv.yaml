@@ -15,7 +15,6 @@ ANONYMOUS:
     #Adjust Bed Topography to Account for Thickness Changes: true
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Required Fields: [basal_friction_log, surface_air_temperature]
     Needs Dissipation: true
     Needs Basal Friction: true
     LandIce Field Norm:

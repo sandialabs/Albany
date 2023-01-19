@@ -532,9 +532,7 @@ class STKDiscretization : public AbstractDiscretization
     std::pair<unsigned, unsigned> latitude_longitude;
   };
 
-  void setFieldData(
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const Teuchos::RCP<StateInfoStruct>& sis);
+  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis);
 
   Teuchos::RCP<AbstractSTKFieldContainer> getSolutionFieldContainer() {
     return solutionFieldContainer;

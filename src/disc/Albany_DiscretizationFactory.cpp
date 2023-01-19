@@ -85,8 +85,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         Teuchos::RCP<GenericSTKMeshStruct> meshStruct2D;
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
         Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
-        AbstractFieldContainer::FieldContainerRequirements req;
-        meshStruct2D->setFieldAndBulkData(comm, req,
+        meshStruct2D->setFieldAndBulkData(comm,
                 sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -148,10 +147,9 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretization(unsigned int neq,
         const Teuchos::RCP<StateInfoStruct>& sis,
-        const AbstractFieldContainer::FieldContainerRequirements& req,
         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) 
 {
-    return createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, req, empty_side_set_req, rigidBodyModes);
+    return createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, rigidBodyModes);
 }
 
 Teuchos::RCP<AbstractDiscretization>
@@ -159,8 +157,6 @@ DiscretizationFactory::createDiscretization(
         unsigned int neq, const std::map<int, std::vector<std::string> >& sideSetEquations,
         const Teuchos::RCP<StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-        const AbstractFieldContainer::FieldContainerRequirements& req,
-        const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) 
 {
     TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
@@ -170,11 +166,9 @@ DiscretizationFactory::createDiscretization(
     Teuchos::RCP<AbstractDiscretization> result =
             createDiscretizationFromInternalMeshStruct(neq, sideSetEquations, rigidBodyModes);
 
-    setMeshStructFieldData(sis, side_set_sis, req, 
-                            side_set_req);
-    setFieldData(result, sis, req);
-    setMeshStructBulkData(sis, side_set_sis, req, 
-                            side_set_req);
+    setMeshStructFieldData(sis, side_set_sis);
+    setFieldData(result, sis);
+    setMeshStructBulkData(sis, side_set_sis);
     completeDiscSetup(result);
 
     return result;
@@ -188,42 +182,32 @@ DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
 
 void
 DiscretizationFactory::setMeshStructFieldData(
-        const Teuchos::RCP<StateInfoStruct>& sis,
-        const AbstractFieldContainer::FieldContainerRequirements& req) {
-    setMeshStructFieldData(sis, empty_side_set_sis, req, 
-                            empty_side_set_req);
+        const Teuchos::RCP<StateInfoStruct>& sis) {
+    setMeshStructFieldData(sis, empty_side_set_sis);
 }
 
 void
 DiscretizationFactory::setMeshStructFieldData(
         const Teuchos::RCP<StateInfoStruct>& sis,
-        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-        const AbstractFieldContainer::FieldContainerRequirements& req,
-        const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
+        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-    meshStruct->setFieldData(commT, req, sis,
-            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
-            side_set_req);
+    meshStruct->setFieldData(commT, sis,
+            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis); 
+}
+
+void
+DiscretizationFactory::setMeshStructBulkData(
+        const Teuchos::RCP<StateInfoStruct>& sis) {
+    setMeshStructBulkData(sis, empty_side_set_sis);
 }
 
 void
 DiscretizationFactory::setMeshStructBulkData(
         const Teuchos::RCP<StateInfoStruct>& sis,
-        const AbstractFieldContainer::FieldContainerRequirements& req) {
-    setMeshStructBulkData(sis, empty_side_set_sis, req, 
-                            empty_side_set_req);
-}
-
-void
-DiscretizationFactory::setMeshStructBulkData(
-        const Teuchos::RCP<StateInfoStruct>& sis,
-        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-        const AbstractFieldContainer::FieldContainerRequirements& req,
-        const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>& side_set_req) 
+        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-    meshStruct->setBulkData(commT, req, sis,
-            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, 
-            side_set_req);
+    meshStruct->setBulkData(commT, sis,
+            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis);
 }
 
 Teuchos::RCP<AbstractDiscretization>
@@ -264,8 +248,7 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
 void
 DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
-                                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                                    const AbstractFieldContainer::FieldContainerRequirements& req) {
+                                    const Teuchos::RCP<Albany::StateInfoStruct>& sis) {
 
   switch (meshStruct->meshSpecsType()) {
     case AbstractMeshStruct::STK_MS:
@@ -273,11 +256,11 @@ DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
       auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
       if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
         auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
-        stk_disc->setFieldData(req, sis);
+        stk_disc->setFieldData(sis);
       } else
       {
         auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
-        stk_disc->setFieldData(req, sis);
+        stk_disc->setFieldData(sis);
       }
       break;
     }
