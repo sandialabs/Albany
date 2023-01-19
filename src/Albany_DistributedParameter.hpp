@@ -93,10 +93,6 @@ public:
 
 protected:
 
-  // Set the m_elem_dof_lids dual view to -1 outside the mesh part,
-  // and builds vectors/vectorSpaces restricted to mesh_part
-  void compute_elem_dof_lids(const std::string& mesh_part);
-
   //! Name of parameter
   std::string param_name;
 
