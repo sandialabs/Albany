@@ -4,6 +4,52 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+MESSAGE ("\n ***********************")
+MESSAGE (" *** Testing Options ***")
+MESSAGE (" ***********************\n")
+
+# Add option to enable Albany unit tests.
+OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" ON)
+IF (ENABLE_UNIT_TESTS)
+  MESSAGE("-- Unit Tests                Enabled, adding tests/*/UnitTests")
+  SET(ALBANY_UNIT_TESTS TRUE)
+ELSE()
+  MESSAGE("-- Unit Tests            NOT Enabled.")
+  SET(ALBANY_UNIT_TESTS FALSE)
+ENDIF()
+
+# Add option to enable more expensive tests.
+OPTION(ENABLE_LARGE_TESTS "Run more time-consuming tests" ON)
+IF (ENABLE_LARGE_TESTS)
+  set (ALBANY_LARGE_TESTS ON)
+  MESSAGE("-- Large Tests               Enabled/")
+ELSE()
+  MESSAGE("-- Large Tests           NOT Enabled.")
+ENDIF()
+
+#  Timeout real long running tests
+IF(ALBANY_CTEST_TIMEOUT)
+    MESSAGE("\n-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
+ELSE()
+    MESSAGE("\n-- No limits are set on maximum test run time")
+ENDIF()
+
+OPTION(ALBANY_PARALLEL_ONLY "Only run the parallel tests" OFF)
+
+#Add option to run any pretest executables in a specific environment (mpiexec.hydra, srun, or other)
+IF (DEFINED ALBANY_PRETEST_EXEC)
+  MESSAGE("-- ALBANY_PRETEST_EXEC is ${ALBANY_PRETEST_EXEC}")
+ELSE()
+  # Not set in configure - set it to be empty
+  SET(ALBANY_PRETEST_EXEC "" CACHE STRING "Command to use to execute pretests")
+ENDIF()
+
+#Add option to specify path to desired SEACAS utils
+IF (DEFINED ALBANY_SEACAS_PATH)
+  MESSAGE("-- ALBANY_SEACAS_PATH is ${ALBANY_SEACAS_PATH}")
+ENDIF()
+
+
 # Setup paths for SEACAS tools needed to run some of the tests
 IF (ALBANY_SEACAS)
   IF(DEFINED ALBANY_SEACAS_PATH)
