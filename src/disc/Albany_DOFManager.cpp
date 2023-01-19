@@ -233,6 +233,11 @@ restrict (const std::string& sub_part_name)
   auto lids_h = elem_dof_lids.host();
 
   std::vector<GO> owned, owned_or_ghosted, ghosted;
+  auto add_if_not_there = [](std::vector<GO>& v, const GO gid) {
+    if (std::find(v.begin(),v.end(),gid)==v.end()) {
+      v.push_back(gid);
+    }
+  };
   for (int ielem=0; ielem<lids_h.extent_int(0); ++ielem) {
     const auto& gids = getElementGIDs(ielem);
     for (int idof=0; idof<lids_h.extent_int(1); ++idof) {
@@ -242,10 +247,9 @@ restrict (const std::string& sub_part_name)
 
       // Check if this GID is owned or ghosted
       if (m_indexer->isLocallyOwnedElement(gids[idof])) {
-        owned.push_back(gids[idof]);
-        ghosted.push_back(gids[idof]);
+        add_if_not_there(owned,gids[idof]);
       } else {
-        ghosted.push_back(gids[idof]);
+        add_if_not_there(ghosted,gids[idof]);
       }
     }
   }
