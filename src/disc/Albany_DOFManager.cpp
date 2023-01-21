@@ -36,7 +36,7 @@ void DOFManager::build ()
       "Error! DOFManager::build was already called.\n");
 
   // 1. Let base class build the GIDs
-  this->buildGlobalUnknowns ();
+  albanyBuildGlobalUnknowns ();
 
   // 2. Create dual view from base class device view
   using dview = DualView<const int**>;
@@ -49,13 +49,7 @@ void DOFManager::build ()
   auto cell_vs = createVectorSpace (this->getComm(), cell_gids);
   m_cell_indexer = createGlobalLocalIndexer (cell_vs);
 
-  // 4. Build dof vector spaces and indexers
-  std::vector<GO> owned, ownedAndGhosted;
-  this->getOwnedIndices(owned);
-  this->getOwnedAndGhostedIndices(ownedAndGhosted);
-  buildVectorSpaces (owned,ownedAndGhosted);
-
-  // 5. Possibly restrict the DOFs list
+  // 4. Possibly restrict the DOFs list
   restrict (part_name());
 
   // Done
@@ -158,9 +152,9 @@ getGIDFieldOffsetsTopSide (int fieldNum) const
   constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
   constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
   TEUCHOS_TEST_FOR_EXCEPTION (topo!=quad && topo!=hexa && topo!=wedge, std::runtime_error,
-      "Error! DOFManager::getGIDFieldOffsetsBotSide only available for Hexa/Wedge topologies.\n");
+      "Error! DOFManager::getGIDFieldOffsetsTopSide only available for Hexa/Wedge topologies.\n");
 #endif
-  // Shards has both Hexa and Wedge with bot and top in the last two side positions
+  // Shards has both Hexa and Wedge with top in the last side position
   return getGIDFieldOffsetsSide(fieldNum,topo.getSideCount()-1);
 }
 
@@ -176,7 +170,7 @@ getGIDFieldOffsetsBotSide (int fieldNum) const
   TEUCHOS_TEST_FOR_EXCEPTION (topo!=quad && topo!=hexa && topo!=wedge, std::runtime_error,
       "Error! DOFManager::getGIDFieldOffsetsBotSide only available for Hexa/Wedge topologies.\n");
 #endif
-  // Shards has both Hexa and Wedge with bot and top in the last two side positions
+  // Shards has both Hexa and Wedge with bot in the second to last side position
   return getGIDFieldOffsetsSide(fieldNum,topo.getSideCount()-2);
 }
 
@@ -232,12 +226,14 @@ restrict (const std::string& sub_part_name)
 
   auto lids_h = elem_dof_lids.host();
 
-  std::vector<GO> owned, owned_or_ghosted, ghosted;
+  owned_.clear();
+  ghosted_.clear();
   auto add_if_not_there = [](std::vector<GO>& v, const GO gid) {
     if (std::find(v.begin(),v.end(),gid)==v.end()) {
       v.push_back(gid);
     }
   };
+
   for (int ielem=0; ielem<lids_h.extent_int(0); ++ielem) {
     const auto& gids = getElementGIDs(ielem);
     for (int idof=0; idof<lids_h.extent_int(1); ++idof) {
@@ -247,22 +243,18 @@ restrict (const std::string& sub_part_name)
 
       // Check if this GID is owned or ghosted
       if (m_indexer->isLocallyOwnedElement(gids[idof])) {
-        add_if_not_there(owned,gids[idof]);
+        add_if_not_there(owned_,gids[idof]);
       } else {
-        add_if_not_there(ghosted,gids[idof]);
+        add_if_not_there(ghosted_,gids[idof]);
       }
     }
   }
 
   // Make sure ghosted come after owned
-  owned_or_ghosted = owned;
-  for (auto g : ghosted)
-    owned_or_ghosted.push_back(g);
-
   // Re-build vector spaces
-  buildVectorSpaces (owned,owned_or_ghosted);
+  buildVectorSpaces (owned_,ghosted_);
 
-  // Correct the GIDs/LIDs stored in m_elem_dof_lids, to reflect the smaller maps
+  // Correct the GIDs/LIDs stored, to reflect the smaller maps
   for (int ielem=0; ielem<lids_h.extent_int(0); ++ielem) {
     const auto& gids = getElementGIDs(ielem);
     for (int idof=0; idof<lids_h.extent_int(1); ++idof) {
@@ -282,22 +274,138 @@ restrict (const std::string& sub_part_name)
 
 void DOFManager::
 buildVectorSpaces (const std::vector<GO>& owned,
-                   const std::vector<GO>& ownedAndGhosted)
+                   const std::vector<GO>& ghosted)
 {
+#ifdef ALBANY_DEBUG
   // Sanity check
-  TEUCHOS_TEST_FOR_EXCEPTION (owned.size()>ownedAndGhosted.size(), std::logic_error,
-      "Error! Owned GID list is larger than owned+ghosted GID list.\n");
+  auto owned_copy = owned;
+  auto ghosted_copy = ghosted;
+  std::sort(owned_copy.being(),owned_copy.end());
+  std::sort(ghosted_copy.being(),ghosted_copy.end());
+  auto it_owned = std::unique(owned_copy.begin(),owned_copy.end());
+  auto it_ghosted = std::unique(ghosted_copy.begin(),ghosted_copy.end());
+  TEUCHOS_TEST_FOR_EXCEPTION (it_owned!=owned_copy.end(),std::runtime_error,
+      "[DOFManager::buildVectorSpaces]\n"
+      "  Error! Repeated entries in the owned indices vector.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (it_ghosted!=ghosted_copy.end(),std::runtime_error,
+      "[DOFManager::buildVectorSpaces]\n"
+      "  Error! Repeated entries in the ghosted indices vector.\n");
+  for (size_t i=0,j=0; i<owned.size() && j<ghosted.size();) {
+    TEUCHOS_TEST_FOR_EXCEPTION (owned_copy[i]==ghosted_copy[j], std::runtime_error,
+      "[DOFManager::buildVectorSpaces]\n"
+      "  Error! Owned and ghosted indices vector share some entries.\n");
+    if (owned_copy[i]<ghosted_copy[j]) {
+      ++i;
+    } else {
+      ++j;
+    }
+  }
+#endif
 
-  Teuchos::ArrayView<const GO> gids;
-  gids = decltype(gids)(owned.data(),owned.size());
-  auto vs = createVectorSpace (this->getComm(),gids);
+  Teuchos::Array<GO> tmp;
+  // First owned
+  tmp = owned;
+  auto vs = createVectorSpace (this->getComm(),tmp());
 
-  gids = decltype(gids)(ownedAndGhosted.data(),ownedAndGhosted.size());
-  auto ov_vs = createVectorSpace (this->getComm(),gids);
+  // Then add ghosted, for the overlap map
+  for (auto g : ghosted) {
+    tmp.push_back(g);
+  }
+  auto ov_vs = createVectorSpace (this->getComm(),tmp());
 
   // 4. Build indexers
   m_indexer = createGlobalLocalIndexer (vs);
   m_ov_indexer = createGlobalLocalIndexer (ov_vs);
+}
+
+void DOFManager::
+albanyBuildGlobalUnknowns ()
+{
+  // WARNING! This method is CUSTOM MADE for a single element block case
+  // You can generalize to 2+ blocks, but must have same topology
+  using namespace panzer;
+
+  // Build aggregate and geometric field patterns
+  std::vector<std::pair<FieldType,Teuchos::RCP<const FieldPattern>>> tmp;
+  std::vector<std::tuple< int, FieldType, Teuchos::RCP<const FieldPattern> > > faConstruct;
+  for (std::size_t i=0; i<fieldPatterns_.size(); ++i) {
+    tmp.push_back(std::make_pair(fieldTypes_[i],fieldPatterns_[i]));
+    faConstruct.emplace_back(i, fieldTypes_[fieldAIDOrder_[i]], fieldPatterns_[fieldAIDOrder_[i]]);
+  }
+  ga_fp_ = Teuchos::rcp(new GeometricAggFieldPattern(tmp));
+  fa_fps_.push_back(Teuchos::rcp(new FieldAggPattern(faConstruct, ga_fp_)));
+
+  // Build connectivity.
+  // IMPORTANT! Do not use the GeometricAggFieldPattern, since you
+  // *need* to count the same geo node multiple times if there are
+  // multiple fields that need it.
+  connMngr_->buildConnectivity(*fa_fps_.back());
+
+  auto add_if_not_there = [](Teuchos::Array<GO>& v, const GO gid) {
+    if (std::find(v.begin(),v.end(),gid)==v.end()) {
+      v.push_back(gid);
+    }
+  };
+  // Grab GIDs from connectivity
+  const int numElems = m_conn_mgr->getElementsInBlock().size();
+  Teuchos::Array<GO> ownedOrGhosted;
+  elementGIDs_.resize(numElems);
+  elementBlockGIDCount_.resize(1);
+  for (int ielem=0; ielem<numElems; ++ielem) {
+    const int  ndofs = m_conn_mgr->getConnectivitySize(ielem);
+    const auto conn  = m_conn_mgr->getConnectivity(ielem);
+    elementGIDs_[ielem].resize(ndofs);
+    for (int idof=0; idof<ndofs; ++idof) {
+      add_if_not_there(ownedOrGhosted,conn[idof]);
+      elementGIDs_[ielem][idof] = conn[idof];
+    }
+    elementBlockGIDCount_[0] += ndofs;
+  }
+
+  // Create a unique vector space
+  // NOTE: these are NOT the final spaces, since we do not know
+  //       if the owned GIDs appear *before* the ghosted GIDs in
+  //       the overlapped space. 
+  auto ov_vs = createVectorSpace(getComm(),ownedOrGhosted);
+  auto vs = createOneToOneVectorSpace(ov_vs);
+
+  // Store owned/ghosted indices vectors
+  auto vs_gids = getGlobalElements(vs);
+  owned_ = vs_gids.toVector();
+  // The arrays need to be sorted, in order to make the
+  // calculation of the set difference linear in # ov gids.
+  // That's why we need the copy vs_gids to start with.
+  std::sort(vs_gids.begin(),vs_gids.end());
+  std::sort(ownedOrGhosted.begin(),ownedOrGhosted.end());
+  for (int i=0, iov=0; iov<ownedOrGhosted.size(); ++iov) {
+    if (i==vs_gids.size() or vs_gids[i]!=ownedOrGhosted[iov]) {
+      // We ran out of owned gids or this gids does not appear
+      // in the owned list. Either way, it's a ghosted gid
+      ghosted_.push_back(vs_gids[i]);
+    } else {
+      // GID is in the owned list, go to the next
+      ++i;
+    }
+  }
+  vs_gids = owned_;
+  for (auto g : ghosted_) {
+    vs_gids.push_back(g);
+  }
+  buildVectorSpaces(owned_, ghosted_);
+
+  // Set local ids
+  std::vector<std::vector<LO>> elem_lids (numElems);
+  for (int ielem=0; ielem<numElems; ++ielem) {
+    auto gids = elementGIDs_[ielem];
+    elem_lids[ielem].reserve(gids.size());
+    for (auto g : gids) {
+      elem_lids[ielem].push_back(m_ov_indexer->getLocalElement(g));
+    }
+  }
+  setLocalIds(elem_lids);
+
+  // Set flag that some DOFManager getters check
+  buildConnectivityRun_ = true;
 }
 
 } // namespace Albany

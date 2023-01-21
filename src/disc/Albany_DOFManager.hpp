@@ -100,6 +100,8 @@ public:
   }
 
 private:
+  void albanyBuildGlobalUnknowns ();
+
   // Create vector spaces and indexers, based on GIDs
   void buildVectorSpaces (const std::vector<GO>& owned,
                           const std::vector<GO>& ownedAndGhosted);
