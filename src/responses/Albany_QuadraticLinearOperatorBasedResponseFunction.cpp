@@ -10,6 +10,7 @@
 #include "Thyra_VectorStdOps.hpp"
 #include "Albany_TpetraTypes.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 #include "Tpetra_Core.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 
@@ -34,7 +35,7 @@ Albany::QuadraticLinearOperatorBasedResponseFunction::
 
 unsigned int
 Albany::QuadraticLinearOperatorBasedResponseFunction::
-numResponses() const 
+numResponses() const
 {
   return 1;
 }
@@ -61,7 +62,7 @@ evaluateResponse(const double /*current_time*/,
 
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
-evaluateTangent(const double alpha, 
+evaluateTangent(const double /* alpha */,
 		const double /*beta*/,
 		const double /*omega*/,
 		const double /*current_time*/,
@@ -179,12 +180,12 @@ evaluateDistParamDeriv(
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluate_HessVecProd_xx(
-    const double current_time,
-    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const double /* current_time */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* v */,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-    const Teuchos::Array<ParamVec>& param_array,
+    const Teuchos::Array<ParamVec>& /* param_array */,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dxdx)
 {
   if (!Hv_dxdx.is_null()) {
@@ -195,7 +196,7 @@ evaluate_HessVecProd_xx(
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluate_HessVecProd_xp(
-    const double current_time,
+    const double /* current_time */,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -212,7 +213,7 @@ evaluate_HessVecProd_xp(
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluate_HessVecProd_px(
-    const double current_time,
+    const double /* current_time */,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -229,7 +230,7 @@ evaluate_HessVecProd_px(
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluate_HessVecProd_pp(
-    const double current_time,
+    const double /* current_time */,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -449,7 +450,7 @@ applyImpl (const Thyra::EOpTransp /*M_trans*/, //operator is symmetric by constr
 Thyra::SolveStatus<double>
 Albany::AtDinvA_LOWS::
 solveImpl(
-  const Thyra::EOpTransp transp,
+  const Thyra::EOpTransp /* transp */,
   const Thyra_MultiVector &B,
   const Teuchos::Ptr<Thyra_MultiVector> &X,
   const Teuchos::Ptr<const Thyra::SolveCriteria<ST> > solveCriteria
