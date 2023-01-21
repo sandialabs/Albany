@@ -34,8 +34,6 @@ Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace
 bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
              const Teuchos::RCP<const Thyra_VectorSpace>& vs2);
 
-bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
-
 // The complement of the above: the specified components are the ones to keep
 Teuchos::RCP<const Thyra_VectorSpace>
 createSubspace (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
@@ -59,6 +57,12 @@ Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
                               const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
                               const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+// Check/create a 1-1 vector space, where each element is owned by exactly one rank
+bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
 // ========= Thyra_LinearOp utilities ========= //
 

@@ -299,6 +299,32 @@ createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
   return createVectorSpace(comm,gids);
 }
 
+Teuchos::RCP<const Thyra_VectorSpace>
+createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmap = getTpetraMap(vs,false);
+  if (!tmap.is_null()) {
+    auto unique = Tpetra::createOneToOne(tmap);
+    return createThyraVectorSpace (unique);
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emap = getEpetraBlockMap(vs,false);
+  if (!emap.is_null()) {
+    auto unique = Teuchos::rcp(new Epetra_BlockMap(Epetra_Util::Create_OneToOne_BlockMap(*emap)));
+    return createThyraVectorSpace(unique.getConst());
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Error in getColumnSpace! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  return Teuchos::null;
+}
+
 // ========= Thyra_LinearOp utilities ========= //
 
 Teuchos::RCP<const Thyra_VectorSpace>
