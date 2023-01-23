@@ -378,10 +378,10 @@ albanyBuildGlobalUnknowns ()
   std::sort(vs_gids.begin(),vs_gids.end());
   std::sort(ownedOrGhosted.begin(),ownedOrGhosted.end());
   for (int i=0, iov=0; iov<ownedOrGhosted.size(); ++iov) {
-    if (i==vs_gids.size() or vs_gids[i]!=ownedOrGhosted[iov]) {
+    if (i>=vs_gids.size() or vs_gids[i]!=ownedOrGhosted[iov]) {
       // We ran out of owned gids or this gids does not appear
       // in the owned list. Either way, it's a ghosted gid
-      ghosted_.push_back(vs_gids[i]);
+      ghosted_.push_back(ownedOrGhosted[iov]);
     } else {
       // GID is in the owned list, go to the next
       ++i;
