@@ -346,7 +346,7 @@ Albany::IossSTKMeshStruct::setFieldData (
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
    *
-   * This code is only compiled if ALBANY_MPI and ALBANY_ZOLTAN are true
+   * This code is only compiled if ALBANY_ZOLTAN is true
    */
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
@@ -573,7 +573,7 @@ Albany::IossSTKMeshStruct::setBulkData (
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
    *
-   * This code is only compiled if ALBANY_MPI and ALBANY_ZOLTAN are true
+   * This code is only compiled if ALBANY_ZOLTAN is true
    */
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan

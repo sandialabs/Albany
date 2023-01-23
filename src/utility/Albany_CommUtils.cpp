@@ -10,17 +10,12 @@
 
 // Include the concrete Epetra Comm's, if needed
 #if defined(ALBANY_EPETRA)
-  #ifdef ALBANY_MPI
-    #include "Epetra_MpiComm.h"
-  #else
-    #include "Epetra_SerialComm.h"
-  #endif
+  #include "Epetra_MpiComm.h"
 #endif
 
 namespace Albany
 {
 
-#if defined(ALBANY_MPI)
 #if defined(ALBANY_EPETRA)  
 Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
   const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
@@ -64,33 +59,6 @@ Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_C
   return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc),1984));
 }
 
-#else
-
-#if defined(ALBANY_EPETRA)
-
-Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& /* ec */) {
-  return 1;
-}
-
-Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
-  return Teuchos::rcp(new Epetra_SerialComm);
-}
-
-Teuchos::RCP<const Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc) {
-  return Teuchos::rcp(new Epetra_SerialComm);
-}
-
-Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec) {
-  return Teuchos::rcp(new Teuchos::SerialComm<int>());
-}
-#endif // defined(ALBANY_EPETRA)
-
-Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
-  return Teuchos::rcp(new Teuchos::SerialComm<int>());
-}
-
-#endif // defined(ALBANY_MPI)
-
 Teuchos::RCP<const Teuchos_Comm> getDefaultComm()
 {
   return Teuchos::DefaultComm<int>::getComm();
@@ -98,13 +66,11 @@ Teuchos::RCP<const Teuchos_Comm> getDefaultComm()
 
 
 Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromThyraComm(const Teuchos::RCP<const Teuchos::Comm<Teuchos::Ordinal>>& tc_in) {
-#ifdef HAVE_MPI
   const Teuchos::RCP<const Teuchos::MpiComm<Teuchos::Ordinal> > mpiCommIn =
     Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<Teuchos::Ordinal> >(tc_in);
   if (nonnull(mpiCommIn)) {
     return Teuchos::createMpiComm<int>(mpiCommIn->getRawMpiComm());
   }
-#endif // HAVE_MPI
 
   // Assert conversion to Teuchos::SerialComm as a last resort (or throw)
   Teuchos::rcp_dynamic_cast<const Teuchos::SerialComm<Teuchos::Ordinal> >(tc_in, true);
@@ -113,13 +79,11 @@ Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromThyraComm(const Teuchos::R
 }
 
 Teuchos::RCP<const Teuchos::Comm<Teuchos::Ordinal>> createThyraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc_in) {
-#ifdef HAVE_MPI
   const Teuchos::RCP<const Teuchos::MpiComm<int> > mpiCommIn =
     Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int> >(tc_in);
   if (nonnull(mpiCommIn)) {
     return Teuchos::createMpiComm<Teuchos::Ordinal>(mpiCommIn->getRawMpiComm());
   }
-#endif // HAVE_MPI
 
   // Assert conversion to Teuchos::SerialComm as a last resort (or throw)
   Teuchos::rcp_dynamic_cast<const Teuchos::SerialComm<int> >(tc_in, true);

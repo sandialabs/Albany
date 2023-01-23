@@ -147,10 +147,6 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
      Kokkos::initialize();
     // ---------------------------------------------
     //get communicator / communicator info from CISM
-    //TO DO: ifdef to check if CISM and Albany have MPI?
-    //#ifdef HAVE_MPI
-    //#else
-    //#endif
     // ---------------------------------------------
     // The following line needs to change...  It is for a serial run...
     cism_communicator = *(ftg_ptr -> getLongVar("communicator","mpi_vars"));

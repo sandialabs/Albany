@@ -5,10 +5,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
-#ifdef ALBANY_MPI
 #include <mpi.h>
 #include <Teuchos_DefaultMpiComm.hpp>
-#endif
 
 #include "Teuchos_DefaultSerialComm.hpp"
 
@@ -23,7 +21,7 @@ void gatherAllV(const Teuchos::RCP<const Teuchos_Comm>& comm,
                 Teuchos::Array<GO>& allVals)
 {
   const int myCount  = myVals.size();
-#ifdef ALBANY_MPI
+
   if (const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get())) {
     MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
 
@@ -51,7 +49,7 @@ void gatherAllV(const Teuchos::RCP<const Teuchos_Comm>& comm,
         allVals.getRawPtr(), allValCounts.getRawPtr(), allValDisps.getRawPtr(), GO_type,
         rawComm);
   } else
-#endif
+
   if (dynamic_cast<const Teuchos::SerialComm<int>*>(comm.get())) {
     allVals.resize(myCount);
     std::copy(myVals.getRawPtr(), myVals.getRawPtr() + myCount, allVals.getRawPtr());
@@ -66,7 +64,7 @@ void gatherV(const Teuchos::RCP<const Teuchos_Comm>& comm,
              Teuchos::Array<GO>& allVals, const LO root_rank)
 {
   const int myCount  = myVals.size();
-#ifdef ALBANY_MPI
+
   if (const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get())) {
     MPI_Comm rawComm = (*mpiComm->getRawMpiComm().get())();
 
@@ -97,7 +95,7 @@ void gatherV(const Teuchos::RCP<const Teuchos_Comm>& comm,
         allVals.getRawPtr(), allValCounts.getRawPtr(), allValDisps.getRawPtr(), GO_type,
         root_rank,rawComm);
   } else
-#endif
+
   if (dynamic_cast<const Teuchos::SerialComm<int>*>(comm.get())) {
     allVals.resize(myCount);
     std::copy(myVals.getRawPtr(), myVals.getRawPtr() + myCount, allVals.getRawPtr());

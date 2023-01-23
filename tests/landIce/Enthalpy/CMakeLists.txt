@@ -8,7 +8,7 @@ if (ALBANY_PARALELL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (ALBANY_MPI AND NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT ${ALBANY_SEACAS_PATH})
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
@@ -21,7 +21,7 @@ endif()
 # Create the test
 add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
 # If Iopx is not present, we must decompose the input mesh first
-if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
+if (NOT ALBANY_PARALELL_EXODUS)
 	add_test (NAME ${testName}_Humboldt_decompMesh
             COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
