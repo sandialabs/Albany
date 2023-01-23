@@ -17,12 +17,12 @@ namespace Albany
 {
 
 #if defined(ALBANY_EPETRA)  
-Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
+MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
   const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
   return emc.Comm();
 }
 
-Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
+Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const MPI_Comm& mc) {
   return Teuchos::rcp(new Epetra_MpiComm(mc));
 }
 
@@ -45,14 +45,14 @@ Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Co
 }
 #endif // defined(ALBANY_EPETRA)
 
-Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
+MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
   Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
              Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
   return *mpiComm->getRawMpiComm();
 
 }
 
-Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
+Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const MPI_Comm& mc) {
   // The default tag in the MpiComm is used in Teuchos send/recv operations *only if* the user
   // does not specify a tag for the message. Here, I pick a weird large number, unlikely
   // to ever be hit by a tag used by albany.
