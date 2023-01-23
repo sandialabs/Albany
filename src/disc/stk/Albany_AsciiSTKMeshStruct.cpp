@@ -422,10 +422,11 @@ AsciiSTKMeshStruct::setFieldData(
               const AbstractFieldContainer::FieldContainerRequirements& req,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */,
-              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */)
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   this->SetupFieldData(comm, req, sis, worksetSize);
+  this->setSideSetFieldData(comm, side_set_req, side_set_sis, worksetSize);
 }
 
 void

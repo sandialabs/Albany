@@ -168,7 +168,7 @@ DiscretizationFactory::createDiscretization(
             createDiscretizationFromInternalMeshStruct(neq, sideSetEquations, rigidBodyModes);
 
     setMeshStructFieldData(sis, side_set_sis, req, 
-                            side_set_req);
+                           side_set_req);
     setFieldData(result, sis, req);
     Teuchos::RCP<StateInfoStruct> dummy_sis;
     AbstractFieldContainer::FieldContainerRequirements dummy_req;
