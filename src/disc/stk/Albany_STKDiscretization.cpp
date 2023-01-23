@@ -1045,7 +1045,7 @@ void STKDiscretization::computeVectorSpaces()
       case 4: dof_dim = dims[2]*dims[3]; break;
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-            "Error! Unsupported DOF layout.\n");
+            "Error! Unsupported layout for nodal parameter '" + sis->name + ".\n");
     }
 
     name_to_partAndDim[sis->name] = std::make_pair(sis->meshPart,dof_dim);
@@ -1121,7 +1121,6 @@ STKDiscretization::computeGraphs()
       for (int jeq=0; jeq<ieq; ++jeq) {
         const auto& col_gids_offsets = sol_dof_mgr->getGIDFieldOffsets(jeq);
         for (int inode=0; inode<num_nodes; ++inode) {
-          rows[inode] = elem_gids[row_gids_offsets[inode]];
           cols[inode] = elem_gids[col_gids_offsets[inode]];
         }
         m_jac_factory->insertGlobalIndices(rows(),cols(),true);
