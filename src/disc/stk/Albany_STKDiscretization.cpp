@@ -2064,11 +2064,30 @@ STKDiscretization::computeNodeSets()
     auto& ns_elem_pos = nodeSets[ns.first];
     auto& ns_coords   = nodeSetCoords[ns.first];
 
-    // Grab all nodes on this nodeset
-    stk::mesh::Selector ns_selector = *metaData->get_part(ns.first);
-    ns_selector &= metaData->locally_owned_part();
+    // Grab all nodes on this nodeset.
+    // NOTE: we take the globally shared part, since the way Tpetra/Epetra resolved
+    //       sharing might be different from the way STK did. So we loop on ALL
+    //       owned+shared nodes, and pick the ones that Tpetra/Epetra marked as owned
+    stk::mesh::Selector ns_selector = metaData->globally_shared_part();
+    ns_selector |= metaData->locally_owned_part();
+    ns_selector &= *ns.second;
     std::vector<stk::mesh::Entity> nodes;
     stk::mesh::get_selected_entities(ns_selector, bulkData->buckets(NODE_RANK), nodes);
+
+    // Remove nodes that are not owned according to Tpetra/Epetra
+    bool done = false;
+    while (not done) {
+      done = true;
+      auto dof_mgr = getNodeNewDOFManager();
+      for (auto it=nodes.begin(); it!=nodes.end(); ++it) {
+        auto gid = stk_gid(*it);
+        if (not dof_mgr->indexer()->isLocallyOwnedElement(gid)) {
+          nodes.erase(it);
+          done = false;
+          break;
+        }
+      }
+    }
     const int num_nodes = nodes.size();
     *out << "[STKDisc] nodeset " << ns.first << " has size " << num_nodes
          << "  on Proc " << comm->getRank() << std::endl;
