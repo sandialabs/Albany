@@ -26,10 +26,8 @@ target_link_libraries (null_space_utils PUBLIC albany_ut_main)
 add_test(NAME ${testNameRoot}_NullSpaceUtils_Serial
          COMMAND ${SERIAL_CALL} null_space_utils)
 
-if(ALBANY_MPI)
-	add_test(NAME ${testNameRoot}_NullSpaceUtils_Parallel
-    COMMAND ${PARALLEL_CALL} null_space_utils)
-endif(ALBANY_MPI)
+add_test(NAME ${testNameRoot}_NullSpaceUtils_Parallel
+COMMAND ${PARALLEL_CALL} null_space_utils)
 
 # StringUtils unit tests (no MPI test, since it's pointless)
 add_executable (string_utils ./UnitTest_StringUtils.cpp)

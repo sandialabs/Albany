@@ -1442,7 +1442,6 @@ Application::computeGlobalResidualImpl(
   }
 
   // Allocate scaleVec_
-#ifdef ALBANY_MPI
   if (scale != 1.0) {
     if (scaleVec_ == Teuchos::null) {
       scaleVec_ = Thyra::createMember(f->space());
@@ -1456,9 +1455,6 @@ Application::computeGlobalResidualImpl(
       }
     }
   }
-#else
-  ALBANY_ASSERT(scale == 1.0, "non-unity scale implementation requires MPI!");
-#endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100];  // create string for file name

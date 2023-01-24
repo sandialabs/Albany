@@ -8,7 +8,7 @@ if (ALBANY_PARALELL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (ALBANY_MPI AND NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT ${ALBANY_SEACAS_PATH})
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
@@ -34,7 +34,7 @@ if (ALBANY_EPETRA)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
   
   # If Iopx is not present, we must decompose the input mesh first
-  if (NOT ALBANY_PARALELL_EXODUS AND ALBANY_MPI)
+  if (NOT ALBANY_PARALELL_EXODUS)
     add_test (NAME ${testNameRoot}_Humboldt_decompMesh
             COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
@@ -99,16 +99,14 @@ if (ALBANY_FROSCH AND ALBNAY_TEKO)
   set_tests_properties(${testName_Non_Contiguous}_Serial PROPERTIES LABELS "LandIce;Tpetra;Hessian")
   set_tests_properties(${testName_Non_Contiguous}_Serial PROPERTIES DEPENDS  ${testName_Contiguous}_Serial)
 
-  if(ALBANY_MPI)
-    add_test(${testName_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis_contiguous.yaml" "H-ref-000_contiguous.mm")
-    set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
-    # Prevent the two tests to be run at the same time as they rely on written files:
-    set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Non_Contiguous}_Serial)
-    
-    add_test(${testName_Non_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis.yaml" "H-ref-000.mm")
-    set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
-    # Prevent the two tests to be run at the same time as they rely on written files:
-    set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Contiguous}_Parallel)
-  endif()
+  add_test(${testName_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis_contiguous.yaml" "H-ref-000_contiguous.mm")
+  set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  # Prevent the two tests to be run at the same time as they rely on written files:
+  set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Non_Contiguous}_Serial)
+  
+  add_test(${testName_Non_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis.yaml" "H-ref-000.mm")
+  set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  # Prevent the two tests to be run at the same time as they rely on written files:
+  set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Contiguous}_Parallel)
 endif()
 endif()
