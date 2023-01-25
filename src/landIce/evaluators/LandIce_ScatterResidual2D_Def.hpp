@@ -27,14 +27,6 @@ ScatterResidual2D(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (this->numFields!=1, std::logic_error,
       "Error! ScatterResidual2D only supports scalar fields.\n");
 
-  // Ensure we have ONE cell per layer.
-  auto cell_topo  = p.get<Teuchos::RCP<const shards::CellTopology>>("Cell Topology");
-  const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION (
-      cell_topo->getName()==topo_hexa->name || cell_topo->getName()==topo_wedge->name, std::runtime_error,
-      "ScatterResidual2D is only for extruded meshes with 1 element per layer.\n");
-
   fieldLevel = p.get<int>("Field Level");
   meshPart   = p.get<std::string>("Mesh Part");
 }
@@ -45,16 +37,6 @@ ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl)
  : Base(p,dl)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (this->numFields!=1, std::logic_error,
-      "Error! ScatterResidual2D only supports scalar fields.\n");
-
-  // Ensure we have ONE cell per layer.
-  auto cell_topo  = p.get<Teuchos::RCP<const shards::CellTopology>>("Cell Topology");
-  const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION ( *cell_topo==topo_hexa || *cell_topo==topo_wedge, std::runtime_error,
-      "ScatterResidualWithExtrudedField is only for extruded meshes with 1 element per layer.\n");
-
   if (p.isType<int>("Offset 2D Field")) {
     offset2DField = p.get<int>("Offset 2D Field");
   } else {
