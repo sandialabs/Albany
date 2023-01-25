@@ -104,11 +104,11 @@ PrintMPIInfo(std::ostream& os)
 }
 
 int
-CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemParams)
+CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemParams, int * numScalarParams, int * numDistributedParams)
 {
   const Teuchos::ParameterList& parameterParams =
       problemParams->sublist("Parameters");
-  int np = 0;
+  int nsp(0), ndp(0);
   if(parameterParams.isParameter("Number Of Parameters")) {
     int  num_param_vecs = parameterParams.get<int>("Number Of Parameters");
     for (int i = 0; i < num_param_vecs; ++i) {
@@ -116,10 +116,12 @@ CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemPa
           parameterParams.sublist(util::strint("Parameter", i));
       const std::string& parameterType = pList.isParameter("Type") ?
           pList.get<std::string>("Type") : std::string("Scalar");
-      if(parameterType == "Scalar" || parameterType == "Distributed")
-        ++np;
-      else if (parameterType =="Vector")
-        np += pList.get<int>("Dimension");
+      if(parameterType == "Scalar")
+        ++nsp;
+      else if (parameterType == "Vector")
+        nsp += pList.get<int>("Dimension");
+      else if (parameterType == "Distributed")
+        ++ndp;
       else
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
@@ -135,7 +137,14 @@ CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemPa
                 << std::endl);
     }
   }
-  return np; 
+
+  if(numScalarParams != NULL)
+    *numScalarParams = nsp;
+
+  if(numDistributedParams != NULL)
+    *numDistributedParams = ndp; 
+
+  return nsp+ndp; 
 }
 
 void
