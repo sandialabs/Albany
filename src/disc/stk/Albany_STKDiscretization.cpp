@@ -2248,7 +2248,7 @@ STKDiscretization::buildSideSetProjectors()
 
       const auto& permutation = node_numeration_map.at(side_gid);
       for (int eq=0; eq<neq; ++eq) {
-        const auto& offsets    = dofMgr->getGIDFieldOffsets_subcell(eq,sideDim,pos);
+        const auto& offsets    = dofMgr->getGIDFieldOffsetsSubcell(eq,sideDim,pos);
         const auto& ss_offsets = ss_dofMgr->getGIDFieldOffsets(eq);
         for (int i=0; i<num_side_nodes; ++i) {
           cols[0] = elem_dof_gids[offsets[i]];

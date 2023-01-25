@@ -122,14 +122,30 @@ DOFManager::ov_vs () const
 
 const std::vector<int>&
 DOFManager::
-getGIDFieldOffsets_subcell (int fieldNum,
-                            int subcell_dim,
-                            int subcell_pos) const
+getGIDFieldOffsetsSubcell (int fieldNum,
+                           int subcell_dim,
+                           int subcell_pos) const
 {
-  const auto& indices_pair =
-    this->getGIDFieldOffsets_closure(elem_block_name(),fieldNum, subcell_dim, subcell_pos);
+#ifdef ALBANY_DEBUG
+  auto topo = get_topology();
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      fieldNum<0 || fieldNum>getNumFields(), std::runtime_error,
+      "[DOFManager::getGIDFieldOffsetsSubcell] Field index out of bounds.\n"
+      "  - fieldNum: " << fieldNum << "\n"
+      "  - num fields: " << getNumField() << "\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      subcell_dim<0 || subcell_dim>=topo.getDimension(), std::runtime_error,
+      "[DOFManager::getGIDFieldOffsetsSubcell] Subcell dimension out of bounds.\n"
+      "  - subcell_dim: " << subcell_dim << "\n"
+      "  - cell dimension: " << topo.getDimension() << "\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      subcell_pos<0 || subcell_pos>=topo.getSubcellCount(subcell_dim), std::runtime_error,
+      "[DOFManager::getGIDFieldOffsetsSubcell] Subcell dimension out of bounds.\n"
+      "  - subcell_dim: " << subcell_dim << "\n"
+      "  - cell dimension: " << topo.getSubcellCount(subcell_dimDimension) << "\n");
+#endif
 
-  return indices_pair.first;
+  return m_subcell_closures[fieldNum][subcell_dim][subcell_pos];
 }
 
 const std::vector<int>&
@@ -138,7 +154,7 @@ getGIDFieldOffsetsSide (int fieldNum, int side) const
 {
   const auto& topo = get_topology();
 
-  return getGIDFieldOffsets_subcell(fieldNum,topo.getDimension()-1,side);
+  return getGIDFieldOffsetsSubcell(fieldNum,topo.getDimension()-1,side);
 }
 
 
@@ -200,7 +216,7 @@ restrict (const std::string& sub_part_name)
     offsets[dim].resize(count);
     for (int pos=0; pos<count; ++pos) {
       for (int f=0; f<getNumFields(); ++f) {
-        offsets[dim][pos].push_back(getGIDFieldOffsets_subcell (f,dim,pos));
+        offsets[dim][pos].push_back(getGIDFieldOffsetsSubcell (f,dim,pos));
       }
     }
   }
@@ -406,6 +422,88 @@ albanyBuildGlobalUnknowns ()
 
   // Set flag that some DOFManager getters check
   buildConnectivityRun_ = true;
+
+  // Build subcell offsets in a way that matches shards ordering
+  // Do this only if topology is not a Particle
+  constexpr auto nodeDim = 0;
+  constexpr auto edgeDim = 1;
+  constexpr auto faceDim = 2;
+  if (get_topology().getDimension()>nodeDim) {
+    const auto& topo = get_topology();
+    const int dim = topo.getDimension();
+    m_subcell_closures.resize(getNumFields());
+
+    for (int f=0; f<getNumFields(); ++f) {
+      const auto& name = getFieldString(f);
+      const auto& fp = getFieldPattern(name);
+      const auto& field_offsets = getGIDFieldOffsets(f);
+
+      // Helper lambda, to reduce code duplication. Adds indices from
+      // $ord-th subcell of dim $dim to the in/out closure vector.
+      auto add_indices = [&] (const int dim, const int ord,
+                              std::vector<int>& closure)
+      {
+        const auto& indices = fp->getSubcellIndices(dim,ord);
+        for (auto i : indices) {
+          closure.push_back(field_offsets[i]);
+        }
+      };
+
+      m_subcell_closures[f].resize(dim);
+      auto& f_closures = m_subcell_closures[f];
+
+      // Nodes: simply, add offsets at each node
+      const int nodeCount = topo.getNodeCount();
+      f_closures[nodeDim].resize(nodeCount);
+      for (int inode=0; inode<nodeCount; ++inode) {
+        add_indices(nodeDim,inode,f_closures[nodeDim][inode]);
+      }
+
+      // 1D geometries don't have edges/faces
+      if (dim==edgeDim) continue;
+
+      // Edges: add offsets on nodes first, then edges themselves
+      const int edgeCount = topo.getEdgeCount();
+      f_closures[edgeDim].resize(edgeCount);
+      for (int iedge=0; iedge<edgeCount; ++iedge) {
+        // Add edge nodes
+        const int edgeNodeCount = topo.getNodeCount(edgeDim,iedge);
+        for (int inode=0; inode<edgeNodeCount; ++inode) {
+          const int cellNode = topo.getNodeMap(edgeDim,iedge,inode);
+          add_indices(nodeDim,cellNode,f_closures[edgeDim][iedge]);
+        }
+
+        // Add edges
+        add_indices(edgeDim,iedge,f_closures[edgeDim][iedge]);
+      }
+
+      // 2D geometries don't have faces
+      if (dim==faceDim) continue;
+
+      // Faces: add offsets on nodes first, then edges, then faces themselves
+      const int faceCount = topo.getFaceCount();
+      f_closures[faceDim].resize(faceCount);
+      for (int iface=0; iface<faceCount; ++iface) {
+        // Add face nodes
+        const int faceNodeCount = topo.getNodeCount(faceDim,iface);
+        for (int inode=0; inode<faceNodeCount; ++inode) {
+          const int cellNode = topo.getNodeMap(faceDim,iface,inode);
+          add_indices(nodeDim,cellNode,f_closures[faceDim][iface]);
+        }
+
+        // Add face edges
+        auto face_topo = shards::CellTopology(topo.getCellTopologyData(faceDim,iface));
+        const int faceEdges = face_topo.getSideCount();
+        for (int iedge=0; iedge<faceEdges; ++iedge) {
+          const int cellEdge = mapCellFaceEdge(topo.getCellTopologyData(),iface,iedge);
+          add_indices(edgeDim,cellEdge,f_closures[faceDim][iface]);
+        }
+
+        // Add face
+        add_indices(faceDim,iface,f_closures[faceDim][iface]);
+      }
+    }
+  }
 }
 
 } // namespace Albany

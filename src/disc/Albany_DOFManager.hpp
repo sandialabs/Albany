@@ -65,7 +65,7 @@ public:
   }
   using panzer::DOFManager::getGIDFieldOffsets_closure;
   const std::vector<int>&
-  getGIDFieldOffsets_subcell (int fieldNum, int subcell_dim, int subcell_pos) const;
+  getGIDFieldOffsetsSubcell (int fieldNum, int subcell_dim, int subcell_pos) const;
 
   // Special case of the above, for subcell being the top or bottom side
   // NOTE: only for quad/hexa/wedge
@@ -121,6 +121,11 @@ private:
   Teuchos::RCP<const GlobalLocalIndexer>    m_indexer;
   Teuchos::RCP<const GlobalLocalIndexer>    m_ov_indexer;
   DualView<const int**>                     m_elem_dof_lids;
+
+  // m_subcell_closures[ifield][dim][ord] is the vector of the offsets of
+  // field $ifield on the $ord-th subcell of dimension $dim. More precisely,
+  // it's the closure of all offsets on all entities belonging to that subcell
+  std::vector<std::vector<std::vector<std::vector<int>>>>       m_subcell_closures;
 
   Teuchos::RCP<const ConnManager>           m_conn_mgr;
 
