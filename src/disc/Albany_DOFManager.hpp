@@ -79,6 +79,11 @@ public:
   const std::vector<int>&
   getGIDFieldOffsetsBotSide (int fieldNum) const;
 
+  // Offsets of dofs on top side BUT ordered so that the j-th offset points
+  // to a DOF sitting *right above* the j-th offset on the bot side
+  std::vector<int>
+  getGIDFieldOffsetsTopSideBotOrdering (int fieldNum) const;
+
   const std::string& part_name () const {
     return m_part_name;
   }

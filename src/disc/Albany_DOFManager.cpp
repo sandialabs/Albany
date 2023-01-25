@@ -165,13 +165,49 @@ getGIDFieldOffsetsTopSide (int fieldNum) const
   const auto& topo = get_topology();
 
 #ifdef ALBANY_DEBUG
-  constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION (topo!=quad && topo!=hexa && topo!=wedge, std::runtime_error,
+  const auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  const auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
       "Error! DOFManager::getGIDFieldOffsetsTopSide only available for Hexa/Wedge topologies.\n");
 #endif
   // Shards has both Hexa and Wedge with top in the last side position
   return getGIDFieldOffsetsSide(fieldNum,topo.getSideCount()-1);
+}
+
+std::vector<int>
+DOFManager::
+getGIDFieldOffsetsTopSideBotOrdering (int fieldNum) const
+{
+  const auto& topo = get_topology();
+  const auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+#ifdef ALBANY_DEBUG
+  const auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
+      "Error! DOFManager::getGIDFieldOffsetsTopSideBotOrdering only available for Hexa/Wedge topologies.\n");
+  auto fp = getFieldPattern(getFieldString(fieldNum));
+  auto ifp = Teuchos::rcp_dynamic_cast<const panzer::Intrepid2FieldPattern>(fp);
+  auto bName = ifp->getIntrepidBasis()->getName();
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      bName=="Intrepid2_HGRAD_HEX_C2_FEM" || bName=="Intrepid2_HGRAD_WEDGE_C1_FEM", std::logic_error,
+      "Error! [DOFManager::getGIDFieldOffsetsTopSideBotOrdering] has limited support.\n"
+      "  Only available for C1 HGRAD bases on Hexa/Wedge elements.\n");
+#endif
+
+  // Order in which top_offsets must be read
+  std::vector<int> permutation;
+  if (topo==hexa) {
+    permutation = {0, 3, 2, 1};
+  } else {
+    permutation = {0, 2, 1};
+  }
+
+  auto top_offsets = getGIDFieldOffsetsTopSide(fieldNum);
+  std::vector<int> result(top_offsets.size());
+  for (unsigned i=0; i<permutation.size(); ++i) {
+    result[i] = top_offsets[permutation[i]];
+  }
+
+  return result;
 }
 
 const std::vector<int>&
