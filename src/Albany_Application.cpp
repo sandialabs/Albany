@@ -13,7 +13,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Albany_DummyParameterAccessor.hpp"
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Albany_StringUtils.hpp"
 
@@ -61,7 +60,6 @@ Application::Application(
       out(Teuchos::VerboseObjectBase::getDefaultOStream()),
       params_(params),
       physicsBasedPreconditioner(false),
-      shapeParamsHaveBeenReset(false),
       phxGraphVisDetail(0),
       stateGraphVisDetail(0),
       morphFromInit(true),
@@ -81,7 +79,6 @@ Application::Application(const RCP<const Teuchos_Comm>& comm_)
       comm(comm_),
       out(Teuchos::VerboseObjectBase::getDefaultOStream()),
       physicsBasedPreconditioner(false),
-      shapeParamsHaveBeenReset(false),
       phxGraphVisDetail(0),
       stateGraphVisDetail(0),
       morphFromInit(true),
@@ -1996,8 +1993,15 @@ Application::computeGlobalTangent(
   if (Teuchos::nonnull(params)) {
     TanFadType p;
     int        num_cols_tot = param_offset + num_cols_p;
+
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      num_cols_tot >  tangent_deriv_dim,
+      std::logic_error,
+      "Error in Albany::Application::computeGlobalTangent "
+       << "The number of derivative columnes cannot exceed the derivative dimension" 
+       << std::endl);
     for (unsigned int i = 0; i < params->size(); i++) {
-      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
+      p = TanFadType(tangent_deriv_dim, (*params)[i].baseValue);
       if (Teuchos::nonnull(Vp)) {
         // ArrayRCP for const view of Vp's vectors
         Teuchos::ArrayRCP<const ST> Vp_constView;
@@ -2730,9 +2734,9 @@ Application::evaluateResidual_HessVecProd_xp(
 
     HessianVecFad p_val;
     for (unsigned int i = 0; i < num_cols_p_l2; i++) {
-      p_val = params_l2[i].family->getValue<PHAL::AlbanyTraits::HessianVec>();
+      p_val = params_l2[i].family->getValue<EvalT>();
       p_val.val().fastAccessDx(0) = v_constView[i];
-      params_l2[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+      params_l2[i].family->setValue<EvalT>(p_val);
     }
   }
 
@@ -2825,11 +2829,19 @@ Application::evaluateResidual_HessVecProd_px(
     ParamVec params_l1 = param_array[l1];
     unsigned int num_cols_p_l1 = params_l1.size();
 
+    // Assumes that there is only one element block
+    int deriv_size = PHAL::getDerivativeDimensions<EvalT>(this, 0);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        num_cols_p_l1 > deriv_size,
+        std::runtime_error,
+            "\nError in Albany::Application::evaluateResidual_HessVecProd_px  "
+            << "Number of parameters columns cannot be larger than the derivative size\n ");
+
     HessianVecFad p_val;
     for (unsigned int i = 0; i < num_cols_p_l1; i++) {
-      p_val = HessianVecFad(num_cols_p_l1, params_l1[i].baseValue);
+      p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
-      params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+      params_l1[i].family->setValue<EvalT>(p_val);
     }
   }
 
@@ -2954,11 +2966,19 @@ Application::evaluateResidual_HessVecProd_pp(
     ParamVec params_l1 = param_array[l1];
     unsigned int num_cols_p_l1 = params_l1.size();
 
+    // Assumes that there is only one element block
+    int deriv_size = PHAL::getDerivativeDimensions<EvalT>(this, 0);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        num_cols_p_l1 > deriv_size,
+        std::runtime_error,
+            "\nError in Albany::Application::evaluateResidual_HessVecProd_pp  "
+            << "Number of parameters columns cannot be larger than the derivative size\n ");
+
     HessianVecFad p_val;
     for (unsigned int i = 0; i < num_cols_p_l1; i++) {
-      p_val = HessianVecFad(num_cols_p_l1, params_l1[i].baseValue);
+      p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
-      params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+      params_l1[i].family->setValue<EvalT>(p_val);
     }
   }
 
@@ -2975,9 +2995,9 @@ Application::evaluateResidual_HessVecProd_pp(
 
     HessianVecFad p_val;
     for (unsigned int i = 0; i < num_cols_p_l2; i++) {
-      p_val = params_l2[i].family->getValue<PHAL::AlbanyTraits::HessianVec>();
+      p_val = params_l2[i].family->getValue<EvalT>();
       p_val.val().fastAccessDx(0) = v_constView[i];
-      params_l2[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
+      params_l2[i].family->setValue<EvalT>(p_val);
     }
   }
 
@@ -3146,51 +3166,6 @@ Application::evaluateStateFieldManager(
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws, evalName);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
-}
-
-void
-Application::registerShapeParameters()
-{
-  int numShParams = shapeParams.size();
-  if (shapeParamNames.size() == 0) {
-    shapeParamNames.resize(numShParams);
-    for (int i = 0; i < numShParams; i++)
-      shapeParamNames[i] = util::strint("ShapeParam", i);
-  }
-  DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>* dJ =
-      new DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>();
-  DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits>* dT =
-      new DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits>();
-
-  // Register Parameter for Residual fill using "this->getValue" but
-  // create dummy ones for other type that will not be used.
-  for (int i = 0; i < numShParams; i++) {
-    *out << "Registering Shape Param " << shapeParamNames[i] << std::endl;
-    new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Residual, SPL_Traits>(
-        shapeParamNames[i], this, paramLib);
-    new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Jacobian, SPL_Traits>(
-        shapeParamNames[i], dJ, paramLib);
-    new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Tangent, SPL_Traits>(
-        shapeParamNames[i], dT, paramLib);
-  }
-}
-
-PHAL::AlbanyTraits::Residual::ScalarT&
-Application::getValue(const std::string& name)
-{
-  int index = -1;
-  for (unsigned int i = 0; i < shapeParamNames.size(); i++) {
-    if (name == shapeParamNames[i]) index = i;
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      index == -1,
-      std::logic_error,
-      "Error in GatherCoordinateVector::getValue, \n"
-          << "   Unrecognized param name: " << name << std::endl);
-
-  shapeParamsHaveBeenReset = true;
-
-  return shapeParams[index];
 }
 
 void
@@ -3498,8 +3473,9 @@ int
 Application::calcTangentDerivDimension(
     const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
 {
-  int np = Albany::CalculateNumberParams(problemParams);
-  return std::max(1, np);
+  int numScalarParameters(0);
+  Albany::CalculateNumberParams(problemParams, &numScalarParameters);
+  return numScalarParameters;
 }
 
 void
