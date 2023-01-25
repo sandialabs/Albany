@@ -842,8 +842,12 @@ MESSAGE("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
 
 #Add option to build libraries but not executables (for LandIce uner MPAS). Disables all tests
 option(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
+#Add option to disable all tests
+option(DISABLE_ALBANY_TESTS "Flag to disable tests" OFF)
 if (ALBANY_LIBRARIES_ONLY)
   message("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+elseif (DISABLE_ALBANY_TESTS)
+  message("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
 else()
   # Add Albany test -- in the "tests" directory
   add_subdirectory(tests)
