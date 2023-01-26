@@ -65,6 +65,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
   const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto dof_mgr      = workset.disc->getNewDOFManager();
+  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   const auto& mesh = workset.disc->getMeshStruct();
@@ -74,7 +75,8 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const auto  top = layers_data->top_side_pos;
   const auto  field_pos = fieldLevel==numLayers ? top : bot;
 
-  const int numSideNodes = dof_mgr->getGIDFieldOffsetsTopSide(0).size();
+  const auto& topo = dof_mgr->get_topology();
+  const int numSideNodes = topo.getNodeCount(topo.getDimension()-1,top);
   const int neq = dof_mgr->getNumFields();
 
   const bool scatter_f = Teuchos::nonnull(workset.f);
@@ -87,7 +89,9 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const auto& sideSet = workset.sideSets->at(meshPart);
   for (const auto& side : sideSet) {
     const int cell = side.ws_elem_idx;
-    const int basal_elem_LID = elem_lids(cell);
+    // Get column ID of the cell, since it cell might be at the top!
+    const int side_elem_LID = elem_lids(cell);
+    const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
 
     // Gather Jac col indices, and set Jac=1 outside of the level where the field is defined
     for (int ilev=0; ilev<=numLayers; ++ilev) {
@@ -122,11 +126,13 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     const auto& offsets_2d_field = dof_mgr->getGIDFieldOffsetsSide(this->offset,field_pos);
     const int elem_LID = layers_data->getId(basal_elem_LID,layer);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+    const auto cell_node_pos = node_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
 
     // Recall: we scatter a single scalar residual, so no loop on [0,numFields) here.
-    for (int i=0; i<numSideNodes; ++i) {
-      const int lrow = dof_lids(offsets_2d_field[i]);
-      auto res = this->get_resid(cell,i,0);
+    for (int inode=0; inode<numSideNodes; ++inode) {
+      const int lrow = dof_lids(offsets_2d_field[inode]);
+      const int cellNode = cell_node_pos[inode];
+      auto res = this->get_resid(cell,cellNode,0);
       if (scatter_f) {
         f_data[lrow] += res.val();
       }
