@@ -2,7 +2,7 @@
 rm -rf CMake* 
 
 TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
-SFAD_SIZE=4 
+SFAD_SIZE=12
 
 cmake \
   -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
