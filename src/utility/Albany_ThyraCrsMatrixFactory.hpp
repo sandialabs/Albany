@@ -40,11 +40,23 @@ struct ThyraCrsMatrixFactory {
 
   // Inserts global indices in a temporary local structure. 
   // The actual graph is created when fillComplete is called
-  void insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& cols);
   void insertGlobalIndices (const GO row, const GO col, const bool symmetric = true);
+  void insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& cols);
   void insertGlobalIndices (const Teuchos::ArrayView<const GO>& rows,
                             const Teuchos::ArrayView<const GO>& cols,
                             const bool symmetric = true);
+
+  // Versions with std::vector (build array view on the fly)
+  void insertGlobalIndices (const GO row, const std::vector<GO>& cols) {
+    insertGlobalIndices(row,Teuchos::ArrayView<const GO>(cols));
+  }
+  void insertGlobalIndices (const std::vector<GO>& rows,
+                            const std::vector<GO>& cols,
+                            const bool symmetric = true) {
+    insertGlobalIndices(Teuchos::ArrayView<const GO>(rows),
+                        Teuchos::ArrayView<const GO>(cols),
+                        symmetric);
+  }
 
   // Fills the actual graph optimizing storage (exact count of nnz per row).
   void fillComplete ();
