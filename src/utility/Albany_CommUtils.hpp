@@ -33,7 +33,7 @@ Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::
 Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
 #endif
 
-MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
+MPI_Comm getMpiCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
 
 Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const MPI_Comm& mc);
 
