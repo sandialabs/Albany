@@ -282,12 +282,16 @@ restrict (const std::string& sub_part_name)
 
   owned_.clear();
   ghosted_.clear();
-  auto add_if_not_there = [](std::vector<GO>& v, const GO gid) {
-    if (std::find(v.begin(),v.end(),gid)==v.end()) {
+
+  // We take a set as well, since std::find is on avg O(1) for unordered_set, vs O(N) in an array
+  auto add_if_not_there = [](std::vector<GO>& v, std::unordered_set<GO>& s, const GO gid) {
+    auto it_bool = s.insert(gid);
+    if (it_bool.second) {
       v.push_back(gid);
     }
   };
 
+  std::unordered_set<GO> owned_set, ghosted_set;
   for (int ielem=0; ielem<lids_h.extent_int(0); ++ielem) {
     const auto& gids = getElementGIDs(ielem);
     for (int idof=0; idof<lids_h.extent_int(1); ++idof) {
@@ -297,9 +301,9 @@ restrict (const std::string& sub_part_name)
 
       // Check if this GID is owned or ghosted
       if (m_indexer->isLocallyOwnedElement(gids[idof])) {
-        add_if_not_there(owned_,gids[idof]);
+        add_if_not_there(owned_,owned_set,gids[idof]);
       } else {
-        add_if_not_there(ghosted_,gids[idof]);
+        add_if_not_there(ghosted_,ghosted_set,gids[idof]);
       }
     }
   }
