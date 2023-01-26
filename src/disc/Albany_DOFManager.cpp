@@ -6,6 +6,8 @@
 #include "Panzer_NodalFieldPattern.hpp"
 #include "Panzer_ElemFieldPattern.hpp"
 
+#include <unordered_set>
+
 namespace Albany {
 
 DOFManager::
@@ -393,14 +395,17 @@ albanyBuildGlobalUnknowns ()
   // multiple fields that need it.
   connMngr_->buildConnectivity(*fa_fps_.back());
 
-  auto add_if_not_there = [](Teuchos::Array<GO>& v, const GO gid) {
-    if (std::find(v.begin(),v.end(),gid)==v.end()) {
+  // We take a set as well, since std::find is on avg O(1) for unordered_set, vs O(N) in an array
+  auto add_if_not_there = [](Teuchos::Array<GO>& v, std::unordered_set<GO>& s, const GO gid) {
+    auto it_bool = s.insert(gid);
+    if (it_bool.second) {
       v.push_back(gid);
     }
   };
   // Grab GIDs from connectivity
   const int numElems = m_conn_mgr->getElementsInBlock().size();
   Teuchos::Array<GO> ownedOrGhosted;
+  std::unordered_set<GO> ownedOrGhostedSet;
   elementGIDs_.resize(numElems);
   elementBlockGIDCount_.resize(1);
   for (int ielem=0; ielem<numElems; ++ielem) {
@@ -408,7 +413,7 @@ albanyBuildGlobalUnknowns ()
     const auto conn  = m_conn_mgr->getConnectivity(ielem);
     elementGIDs_[ielem].resize(ndofs);
     for (int idof=0; idof<ndofs; ++idof) {
-      add_if_not_there(ownedOrGhosted,conn[idof]);
+      add_if_not_there(ownedOrGhosted,ownedOrGhostedSet,conn[idof]);
       elementGIDs_[ielem][idof] = conn[idof];
     }
     elementBlockGIDCount_[0] += ndofs;
