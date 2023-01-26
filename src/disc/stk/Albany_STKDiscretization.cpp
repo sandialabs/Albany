@@ -1274,7 +1274,10 @@ STKDiscretization::computeWorksetInfo()
   const int numBuckets = buckets.size();
 
   m_workset_sizes.resize(numBuckets);
-  int max_ws_size = getMeshStruct()->getMeshSpecs()[0]->worksetSize;
+  stk::mesh::Bucket::size_type max_ws_size = 0;
+  for (int b=0; b<numBuckets; ++b) {
+    max_ws_size = std::max(max_ws_size,buckets[b]->size());
+  }
   m_workset_elements = DualView<int**>("ws_elem",numBuckets,max_ws_size);
   for (int b=0,lid=0; b<numBuckets; ++b) {
     const auto& bucket = *buckets[b];

@@ -67,8 +67,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
    std::map<std::string, shards::CellTopology > elementBlockCT_; // Element block name to cell topology
    std::map<std::string, int> ebNameToIndex; // Save mapping from element block name to index in partVec
 
-   std::map<std::string, stk::mesh::Part*> sidesets_; // Side set name to parts
-
   void addElementBlockInfo(int ebnum, std::string ebName, stk::mesh::Part* part, shards::CellTopology ct){
    // add element block part and cell topology
    elementBlockParts_.insert(std::make_pair(ebName, part));
