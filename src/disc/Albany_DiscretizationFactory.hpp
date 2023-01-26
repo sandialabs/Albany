@@ -15,7 +15,6 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
-#include "Albany_AbstractFieldContainer.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 
@@ -51,7 +50,6 @@ class DiscretizationFactory {
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                         const AbstractFieldContainer::FieldContainerRequirements& req,
                          const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
@@ -60,33 +58,25 @@ class DiscretizationFactory {
                          const std::map<int,std::vector<std::string> >& sideSetEquations,
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-                         const AbstractFieldContainer::FieldContainerRequirements& req,
-                         const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req, 
                          const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
     void
     setMeshStructFieldData(
-      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-      const AbstractFieldContainer::FieldContainerRequirements& req); 
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
    void
     setMeshStructFieldData(
       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req);
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis);
 
     void
     setMeshStructBulkData(
-      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-      const AbstractFieldContainer::FieldContainerRequirements& req); 
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
    void
     setMeshStructBulkData(
       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req);
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis);
 
     Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
       const int neq,
@@ -111,12 +101,10 @@ class DiscretizationFactory {
 
     const std::map<int,std::vector<std::string> > empty_side_set_equations;
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > empty_side_set_sis;
-    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements> empty_side_set_req;
 
     void
     setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
-                                        const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                                        const AbstractFieldContainer::FieldContainerRequirements& req);
+                                        const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
     void completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc);
 
@@ -140,9 +128,9 @@ class DiscretizationFactory {
     Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
 
     //Number of parameters
-    int num_params{0};
+    int num_params = 0;
 };
 
-}
+} // namespace Albany
 
 #endif // ALBANY_DISCRETIZATIONFACTORY_HPP

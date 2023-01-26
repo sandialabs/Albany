@@ -113,12 +113,10 @@ namespace Albany
 
          RCP<AbstractSTKMeshStruct> ms = rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 
-         const AbstractFieldContainer::FieldContainerRequirements req;
          const RCP<StateInfoStruct> sis = rcp(new StateInfoStruct());
          const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
-         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-         ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+         ms->setFieldAndBulkData(comm, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 
          // Use the Albany STK interface as it is used elsewhere in the code
          auto stkDisc = rcp(new BlockedSTKDiscretization(blockedDiscParams, ms, comm));
@@ -151,12 +149,10 @@ namespace Albany
          RCP<Albany::AbstractMeshStruct> meshStruct = DiscretizationFactory::createMeshStruct(discParams, comm, 0);
          RCP<AbstractSTKMeshStruct> ms = rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 
-         const AbstractFieldContainer::FieldContainerRequirements req;
          const RCP<StateInfoStruct> sis = rcp(new StateInfoStruct());
          const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
-         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-         ms->setFieldAndBulkData(comm, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+         ms->setFieldAndBulkData(comm, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 
          // Use the Albany STK interface as it is used elsewhere in the code
          auto stkDisc = rcp(new STKDiscretization(dDiscParams, neq, ms, comm));

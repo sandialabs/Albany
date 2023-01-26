@@ -15,7 +15,6 @@
 #include "Albany_CommTypes.hpp"
 
 #include "Albany_StateInfoStruct.hpp"
-#include "Albany_AbstractFieldContainer.hpp"
 #include "Albany_MeshSpecs.hpp"
 
 #include "Shards_CellTopology.hpp"
@@ -89,30 +88,24 @@ struct AbstractMeshStruct {
 
     virtual void setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}) = 0;
 
     virtual void setBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}) = 0;
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {})
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {})
                   {
-                    setFieldData(commT, req, sis, worksetSize, side_set_sis, side_set_req);
-                    setBulkData(commT, req, sis, worksetSize, side_set_sis, side_set_req);
+                    setFieldData(commT, sis, worksetSize, side_set_sis);
+                    setBulkData(commT, sis, worksetSize, side_set_sis);
                   }
 
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;

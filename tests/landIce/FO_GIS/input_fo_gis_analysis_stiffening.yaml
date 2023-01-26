@@ -9,7 +9,6 @@ ANONYMOUS:
     Solution Method: Steady
     Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
-    Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
     Response Functions:

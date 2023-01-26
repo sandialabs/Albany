@@ -614,8 +614,6 @@ Application::createDiscretization()
       problem->getSideSetEquations(),
       stateMgr.getStateInfoStruct(),
       stateMgr.getSideSetStateInfoStruct(),
-      problem->getFieldRequirements(),
-      problem->getSideSetFieldRequirements(),
       problem->getNullSpace());
   // The following is for Aeras problems.
   explicit_scheme = disc->isExplicitScheme();

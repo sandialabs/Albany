@@ -214,11 +214,9 @@ Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
 
 void Albany::ExtrudedSTKMeshStruct::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
   out->setProcRankAndSize(comm->getRank(), comm->getSize());
   out->setOutputToRootOnly(0);
@@ -226,38 +224,30 @@ void Albany::ExtrudedSTKMeshStruct::setFieldData(
   // Finish to set up the basal mesh
   Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
   dummy_sis->createNodalDataBase();
-  AbstractFieldContainer::FieldContainerRequirements dummy_req;
-  auto it_req = side_set_req.find("basalside");
   auto it_sis = side_set_sis.find("basalside");
-  auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, basal_req, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, basal_sis, worksetSize);
 
   // Setting up the field container
-  this->SetupFieldData(comm, req, sis, worksetSize);
+  this->SetupFieldData(comm, sis, worksetSize);
 
-  this->setSideSetFieldData(comm, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
 }
 
 void Albany::ExtrudedSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
     const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
   // Finish to set up the basal mesh
   Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
   dummy_sis->createNodalDataBase();
-  AbstractFieldContainer::FieldContainerRequirements dummy_req;
-  auto it_req = side_set_req.find("basalside");
   auto it_sis = side_set_sis.find("basalside");
-  auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_req, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_sis, worksetSize);
 
   LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
   LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
@@ -718,7 +708,7 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,globalElemStride,globalVerticesStride);
 
   // Loading required input fields from file
-  this->loadRequiredInputFields (req,comm);
+  this->loadRequiredInputFields (comm);
 
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
@@ -728,7 +718,7 @@ void Albany::ExtrudedSTKMeshStruct::setBulkData(
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   // We can finally extract the side set meshes and set the fields and bulk data in all of them
-  this->setSideSetBulkData(comm, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm, side_set_sis, worksetSize);
 
   if (params->get("Export 2D Data",false))
   {

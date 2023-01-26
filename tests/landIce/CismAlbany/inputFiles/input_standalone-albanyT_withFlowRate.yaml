@@ -8,7 +8,6 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
-    Required Fields: [flow_rate, temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
     Response Functions:
