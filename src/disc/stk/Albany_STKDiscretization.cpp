@@ -1155,6 +1155,7 @@ STKDiscretization::computeGraphs()
 
   // Now, process rows/cols corresponding to ss equations
   const auto& cell_layers_data_lid = stkMeshStruct->local_cell_layers_data;
+  const auto& cell_layers_data_gid = stkMeshStruct->global_cell_layers_data;
   const auto SIDE_RANK = metaData->side_rank();
   for (const auto& it : sideSetEquations) {
     const int side_eq = it.first;
@@ -1178,7 +1179,7 @@ STKDiscretization::computeGraphs()
         const auto& s = sides[0];
         const auto& e = bulkData->begin_elements(s)[0];
         const auto pos = determine_entity_pos(e,s);
-        const auto layer = cell_layers_data_lid->getLayerId(stk_gid(e));
+        const auto layer = cell_layers_data_gid->getLayerId(stk_gid(e));
 
         if (layer==(cell_layers_data_lid->numLayers-1)) {
           allowColumnCoupling = pos==cell_layers_data_lid->top_side_pos;
