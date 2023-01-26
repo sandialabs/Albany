@@ -242,7 +242,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
           if(eq != offset2DField) {
             const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos);
             const LO lrow = dof_lids(offsets[node2d]);
-            auto res = this->get_resid(cell,nodes[node2d],eq);
+            auto res = this->get_resid(cell,nodes[node2d],this->offset+eq);
 
             // Safety check: FAD derivs should be inited by now
             assert(res.hasFastAccess());
