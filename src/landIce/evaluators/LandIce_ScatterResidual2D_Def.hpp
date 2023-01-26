@@ -161,15 +161,16 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   
-  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsTopSide(0);
+  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
   const auto& bot_nodes = node_dof_mgr->getGIDFieldOffsetsBotSide(0);
 
-  const auto& field_offsets_top = dof_mgr->getGIDFieldOffsetsTopSide(offset2DField);
+  const auto& field_offsets_top = dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset2DField);
   const auto& field_offsets_bot = dof_mgr->getGIDFieldOffsetsBotSide(offset2DField);
+  const auto& field_offsets = fieldLevel==field_layer ? field_offsets_bot : field_offsets_top;
 
   const int neq = dof_mgr->getNumFields();
   const int nunk = this->numNodes*(neq-1);
-  const int numSideNodes = field_offsets_top.size();
+  const int numSideNodes = field_offsets.size();
 
   Teuchos::Array<LO> lcols_nunk, lcols_nodes, index;
   lcols_nunk.resize(nunk), index.resize(nunk), lcols_nodes.resize(this->numNodes);
@@ -224,8 +225,8 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
     const auto field_elem_dof_lids = Kokkos::subview(elem_dof_lids,field_elem_LID,ALL);
     for (int node=0; node<numSideNodes; ++node) {
-      lcols_nodes[bot_nodes[node]] = field_elem_dof_lids(field_offsets_bot[node]);
-      lcols_nodes[top_nodes[node]] = field_elem_dof_lids(field_offsets_top[node]);
+      lcols_nodes[bot_nodes[node]] = field_elem_dof_lids(field_offsets[node]);
+      lcols_nodes[top_nodes[node]] = field_elem_dof_lids(field_offsets[node]);
     }
 
     for (int node2d=0; node2d<numSideNodes; ++node2d) {

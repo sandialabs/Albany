@@ -80,7 +80,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   // top or bottom side.
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   const auto& nodes_bot = node_dof_mgr->getGIDFieldOffsetsBotSide(0);
-  const auto& nodes_top = node_dof_mgr->getGIDFieldOffsetsTopSide(0);
+  const auto& nodes_top = node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
 
   // NOTE: for both Hexa and Wedge, the top/bot sides have their corresponding nodes
   //       lying one on top of the other: nodes_top[i] lies on top of nodes_bot[i]

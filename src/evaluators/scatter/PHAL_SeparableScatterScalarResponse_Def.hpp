@@ -359,11 +359,13 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& p_dof_mgr       = workset.disc->getNewDOFManager(param_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
+  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
+
   const int fieldLevel = level_it->second;
   const int fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
-  const int field_pos  = fieldLevel==fieldLayer ? layers_data->bot_side_pos : layers_data->top_side_pos;
 
-  const auto field_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
+  const auto field_offsets = fieldLayer==fieldLevel ? bot_offsets : top_offsets;
   const int numSideNodes = field_offsets.size();
 
   // Loop over cells in workset
@@ -388,7 +390,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       };
       do_nodes (p_dof_mgr->getGIDFieldOffsetsBotSide(0));
-      do_nodes (p_dof_mgr->getGIDFieldOffsetsTopSide(0));
+      do_nodes (p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
     } // response
   } // cell
 }
@@ -662,23 +664,23 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Mesh data
   const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const int top = layers_data->top_side_pos;
-  const int bot = layers_data->bot_side_pos;
   const int numLayers = layers_data->numLayers;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   // Solution dof mgr data
   const auto dof_mgr = workset.disc->getNewDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const int neq = dof_mgr->getNumFields();
 
   // Parameter data
   const int fieldLevel = level_it->second;
-  const int field_pos = fieldLevel==numLayers ? top : bot;
   const int fieldLayer = fieldLevel==numLayers ? numLayers-1 : numLayers;
+  const bool use_bot = fieldLevel==fieldLayer;
   const auto& p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-  const auto& p_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
+  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
+  const auto& p_offsets = use_bot ? bot_offsets : top_offsets;
+
   const int numSideNodes = p_offsets.size();
 
   // Loop over cells in workset
@@ -691,8 +693,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
 
       auto lresp = this->local_response(cell,res);
-      const auto f = [&] (const int pos) {
-        const auto& nodes = p_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+      const auto f = [&] (const std::vector<int>& nodes) {
         for (int inode=0; inode<numSideNodes; ++inode) {
           const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[inode]);
           if (row>=0) {
@@ -708,8 +709,8 @@ evaluateFields(typename Traits::EvalData workset)
       };
 
       // Run lambda for both top and bottom nodes
-      f(top);
-      f(bot);
+      f(top_offsets);
+      f(bot_offsets);
     } // response
   } // cell
 }

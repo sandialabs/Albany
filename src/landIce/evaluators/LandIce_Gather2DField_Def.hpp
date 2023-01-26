@@ -85,8 +85,6 @@ evaluateFields (typename PHALTraits::EvalData workset)
   // Mesh data
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const int   bot = layers_data->bot_side_pos;
-  const int   top = layers_data->top_side_pos;
 
   const auto  x_data  = Albany::getLocalData(workset.x);
   const auto& dof_mgr       = workset.disc->getNewDOFManager();
@@ -98,16 +96,16 @@ evaluateFields (typename PHALTraits::EvalData workset)
     check_topology(dof_mgr->get_topology());
 #endif
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const int field_pos   = field_layer==0 ? bot : top;
-    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_pos);
+    const bool use_bot = field_layer==0;
+    const auto& field_nodes = use_bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
+                                      : dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset);
 
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
       const int basal_elem_LID = layers_data->getColumnId(elem_LID);
       const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
 
-      const auto f = [&] (const int pos) {
-        const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+      const auto f = [&] (const std::vector<int>& nodes) {
         const int num_nodes = nodes.size();
         for (int inode=0; inode<num_nodes; ++inode) {
           const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
@@ -116,8 +114,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
       };
 
       // Run lambda on both top and bottom nodes in the cell
-      f(top);
-      f(bot);
+      f(node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
+      f(node_dof_mgr->getGIDFieldOffsetsBotSide(0));
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
@@ -172,15 +170,15 @@ evaluateFields (typename PHALTraits::EvalData workset)
     check_topology(dof_mgr->get_topology());
 #endif
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const int field_pos   = field_layer==0 ? bot : top;
-    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_pos);
+    const bool use_bot = field_layer==0;
+    const auto& field_nodes = use_bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
+                                      : dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
       const int basal_elem_LID = layers_data->getColumnId(elem_LID);
       const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
 
-      const auto f = [&] (const int pos) {
-        const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+      const auto f = [&] (const std::vector<int>& nodes) {
         const int num_nodes = nodes.size();
         for (int inode=0; inode<num_nodes; ++inode) {
           LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
@@ -194,8 +192,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
       };
 
       // Run lambda for both bottom and top nodes of the cell
-      f (top);
-      f (bot);
+      f(node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
+      f(node_dof_mgr->getGIDFieldOffsetsBotSide(0));
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
@@ -270,8 +268,6 @@ evaluateFields (typename PHALTraits::EvalData workset)
   // Mesh data
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const int   bot = layers_data->bot_side_pos;
-  const int   top = layers_data->top_side_pos;
 
   const auto x_data = Albany::getLocalData(workset.x);
   const auto& dof_mgr       = workset.disc->getNewDOFManager();
@@ -286,15 +282,15 @@ evaluateFields (typename PHALTraits::EvalData workset)
 #endif
 
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const int field_pos   = field_layer==0 ? bot : top;
-    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_pos);
+    const bool use_bot = field_layer==0;
+    const auto& field_nodes = use_bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
+                                      : dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
       const int basal_elem_LID = layers_data->getColumnId(elem_LID);
       const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
 
-      const auto f = [&] (const int pos) {
-        const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+      const auto f = [&] (const std::vector<int>& nodes) {
         const int num_nodes = nodes.size();
         for (int inode=0; inode<num_nodes; ++inode) {
           const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
@@ -313,8 +309,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
       };
 
       // Run lambda on both top and bottom nodes in the cell
-      f(top);
-      f(bot);
+      f(node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
+      f(node_dof_mgr->getGIDFieldOffsetsBotSide(0));
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,

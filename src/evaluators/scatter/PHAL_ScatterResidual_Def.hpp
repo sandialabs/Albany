@@ -882,19 +882,18 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
   const auto fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
-  const auto field_pos = fieldLevel==fieldLayer ? layers_data->bot_side_pos : layers_data->top_side_pos;
 
   const auto dof_mgr      = workset.disc->getNewDOFManager();
   const auto p_dof_mgr    = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
-  const auto p_offsets    = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
-
   const auto cellDim = p_dof_mgr->get_topology().getDimension();
   const auto numSideNodes = p_dof_mgr->get_topology().getNodeCount(cellDim-1,layers_data->bot_side_pos);
-  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
+  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
   const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
+  const auto p_offsets   = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
+
   const auto offsets = m_fields_offsets.host();
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
