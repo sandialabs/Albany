@@ -27,9 +27,6 @@ macro (create_unit_test)
   else()
     set (PARALLEL ON)
   endif()
-  if (PARALLEL AND NOT ALBANY_MPI)
-    message (FATAL_ERROR "Cannot add PARALLEL version of test ${test_name}, since ALBANY_MPI=OFF.")
-  endif()
 
   set (EXEC_NAME ${PARSE_NAME})
 

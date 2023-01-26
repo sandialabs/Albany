@@ -11,7 +11,6 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Required Fields: [temperature]
     LandIce Field Norm:
       sliding_velocity_basalside:
         Regularization Type: Given Value

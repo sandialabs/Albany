@@ -270,23 +270,19 @@ void Albany::GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teu
 
 void Albany::GmshSTKMeshStruct::setFieldData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
-  this->SetupFieldData(commT, req, sis, worksetSize);
-  this->setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+  this->SetupFieldData(commT, sis, worksetSize);
+  this->setSideSetFieldData(commT, side_set_sis, worksetSize);
 }
 
 void Albany::GmshSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
     const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
   metaData->commit();
 
@@ -390,10 +386,10 @@ void Albany::GmshSTKMeshStruct::setBulkData(
   this->setDefaultCoordinates3d();
 
   // Loading required input fields from file
-  this->loadRequiredInputFields (req,commT);
+  this->loadRequiredInputFields (commT);
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(commT, side_set_sis, worksetSize);
 
   fieldAndBulkDataSet = true;
 }

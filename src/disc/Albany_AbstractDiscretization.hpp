@@ -297,9 +297,7 @@ public:
       bool                overlapped) = 0;
 
   virtual void
-  setFieldData(
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+  setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
 
   // --- Methods to write solution in the output file --- //
 

@@ -16,7 +16,6 @@
 // Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
 #include "Albany_DataTypes.hpp"
 
-#include "Albany_AbstractFieldContainer.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_Utils.hpp"
 
@@ -30,7 +29,7 @@ namespace Albany {
  * \brief Abstract interface for an STK field container
  *
  */
-class AbstractSTKFieldContainer : public AbstractFieldContainer
+class AbstractSTKFieldContainer
 {
 public:
   // Tensor per Node/Cell  - (Node, Dim, Dim) or (Cell,Dim,Dim)

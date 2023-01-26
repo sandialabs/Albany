@@ -14,8 +14,6 @@ ANONYMOUS:
     Basal Side Name: basalside
     Needs Dissipation: true
     Needs Basal Friction: true
-    Required Fields: [ice_thickness]
-    Required Basal Fields: [ice_thickness]
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
     LandIce Viscosity:

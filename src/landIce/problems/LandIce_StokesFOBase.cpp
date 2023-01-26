@@ -19,15 +19,6 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
  , use_sdbcs_(false)
  , params(params_)
 {
-  // Need to allocate a fields in mesh database
-  if (params->isParameter("Required Fields"))
-  {
-    // Need to allocate a fields in mesh database
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (unsigned int i(0); i<req.size(); ++i)
-      this->requirements.push_back(req[i]);
-  }
-
   // Parsing the LandIce boundary conditions sublist
   auto landice_bcs_params = Teuchos::sublist(params,"LandIce BCs");
   unsigned int num_bcs = landice_bcs_params->get<int>("Number",0);

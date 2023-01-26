@@ -24,18 +24,18 @@ namespace Albany {
 Teuchos::RCP<const Teuchos_Comm> getDefaultComm();
 
 #if defined(ALBANY_EPETRA)
-Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
+MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
-Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
+Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const MPI_Comm& mc);
 Teuchos::RCP<const Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
 
 Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
 Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
 #endif
 
-Albany_MPI_Comm getMpiCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
+MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
 
-Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
+Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromMpiComm(const MPI_Comm& mc);
 
 Teuchos::RCP<const Teuchos_Comm>
 createTeuchosCommFromThyraComm(const Teuchos::RCP<const Teuchos::Comm<Teuchos::Ordinal>>& tc_in);
@@ -51,14 +51,6 @@ void all_gather_v (const T* my_vals, const int my_count, T* all_vals,
                   const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   const int size = comm->getSize();
-#ifndef ALBANY_MPI
-  // Assume we're serial
-  TEUCHOS_TEST_FOR_EXCEPTION (size>1, std::runtime_error,
-      "Error! ALBANY_MPI not defined, and yet comm size is " + std::to_string(comm->getSize()) + "\n");
-  std::memcpy(all_vals,my_vals);
-  (void) counts;
-  (void) num_my_vals;
-#else
   auto mpi_comm = getMpiCommFromTeuchosComm(comm);
   std::vector<int> counts (size,0);
   MPI_Allgather (&my_count,1,MPI_INT,counts.data(),1,MPI_INT,mpi_comm);
@@ -69,7 +61,6 @@ void all_gather_v (const T* my_vals, const int my_count, T* all_vals,
   MPI_Allgatherv (my_vals, my_count, get_mpi_type<T>(),
                   all_vals, counts.data(), offsets.data(), get_mpi_type<T>(),
                   mpi_comm);
-#endif
 }
 
 } // namespace Albany

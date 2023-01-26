@@ -87,8 +87,10 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
 {
   const int derivativeDimension_x = getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(app, ms, responseEvaluation);
-  const int derivativeDimension_p = getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);
-  const int derivativeDimension_max = derivativeDimension_x > derivativeDimension_p ? derivativeDimension_x : derivativeDimension_p;
+  const int derivativeDimension_p_dist = getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);
+  const int derivativeDimension_p_scal = getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(app, ms, responseEvaluation);
+  const int derivativeDimension_p_max = derivativeDimension_p_dist > derivativeDimension_p_scal ? derivativeDimension_p_dist : derivativeDimension_p_scal;
+  const int derivativeDimension_max = derivativeDimension_x > derivativeDimension_p_max ? derivativeDimension_x : derivativeDimension_p_max;
   checkDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(derivativeDimension_max);
   return derivativeDimension_max;
 }

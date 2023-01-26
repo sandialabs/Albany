@@ -127,22 +127,18 @@ void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& paren
 
 void SideSetSTKMeshStruct::setFieldData (
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const AbstractFieldContainer::FieldContainerRequirements& req,
       const Teuchos::RCP<StateInfoStruct>& sis,
       const unsigned int worksetSize,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
-      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
-  this->SetupFieldData(commT, req, sis, worksetSize);
+  this->SetupFieldData(commT, sis, worksetSize);
 }
 
 void SideSetSTKMeshStruct::setBulkData (
       const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const AbstractFieldContainer::FieldContainerRequirements& req,
       const Teuchos::RCP<StateInfoStruct>& sis,
       const unsigned int worksetSize,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
-      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (parentMeshStruct->ssPartVec.find(parentMeshSideSetName)==parentMeshStruct->ssPartVec.end(), std::logic_error,
                               "Error! The side set " << parentMeshSideSetName << " is not present in the input mesh.\n");
@@ -219,7 +215,7 @@ void SideSetSTKMeshStruct::setBulkData (
   }
 
   // Loading the fields from file
-  this->loadRequiredInputFields (req,commT);
+  this->loadRequiredInputFields (commT);
 
   // Insertion of entities end
   bulkData->modification_end();

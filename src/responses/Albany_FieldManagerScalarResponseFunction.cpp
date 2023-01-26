@@ -517,10 +517,16 @@ evaluate_HessVecProd_px(
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
     unsigned int num_cols_p_l1 = params_l1.size();
+    int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(application.get(), meshSpecs.get(), true);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        num_cols_p_l1 > deriv_size,
+        std::runtime_error,
+            "\nError in Albany::FieldManagerScalarResponseFunction::evaluate_HessVecProd_pp  "
+            << "Number of parameters columns cannot be larger than the derivative size\n ");
 
     HessianVecFad p_val;
     for (unsigned int i = 0; i < num_cols_p_l1; i++) {
-      p_val = HessianVecFad(num_cols_p_l1, params_l1[i].baseValue);
+      p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
       params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
     }
@@ -602,10 +608,16 @@ evaluate_HessVecProd_pp(
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
     unsigned int num_cols_p_l1 = params_l1.size();
+    int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(application.get(), meshSpecs.get(), true);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        num_cols_p_l1 > deriv_size,
+        std::runtime_error,
+            "\nError in Albany::FieldManagerScalarResponseFunction::evaluate_HessVecProd_pp  "
+            << "Number of parameters columns cannot be larger than the derivative size\n ");
 
     HessianVecFad p_val;
     for (unsigned int i = 0; i < num_cols_p_l1; i++) {
-      p_val = HessianVecFad(num_cols_p_l1, params_l1[i].baseValue);
+      p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
       params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
     }

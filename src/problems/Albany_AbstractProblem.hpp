@@ -9,7 +9,6 @@
 #ifndef ALBANY_ABSTRACTPROBLEM_HPP
 #define ALBANY_ABSTRACTPROBLEM_HPP
 
-#include "Albany_AbstractFieldContainer.hpp"  //has typedef needed to list the field requirements of the problem
 #include "Albany_NullSpaceUtils.hpp"  // has defn of struct that holds null space info for ML
 #include "Albany_StateInfoStruct.hpp"  // contains MeshSpecsStuct
 #include "Albany_StateManager.hpp"
@@ -160,18 +159,6 @@ class AbstractProblem {
           Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
           /* newState_ */) const {};
 
-  //! Get a list of the Special fields needed to implement the problem
-  const AbstractFieldContainer::FieldContainerRequirements
-  getFieldRequirements() {
-    return requirements;
-  }
-
-  const std::map<
-      std::string, AbstractFieldContainer::FieldContainerRequirements>&
-  getSideSetFieldRequirements() const {
-    return ss_requirements;
-  }
-
   //! Allow the Problem to modify the solver settings, for example by adding a
   //! custom status test.
   virtual void
@@ -222,12 +209,6 @@ class AbstractProblem {
 
   //! Field manager for Neumann Conditions Fill
   Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> nfm;
-
-  //! Special fields needed to implement the problem
-  AbstractFieldContainer::FieldContainerRequirements requirements;
-  //! Special fields defined on the side sets needed to implement the problem
-  std::map<std::string, AbstractFieldContainer::FieldContainerRequirements>
-      ss_requirements;
 
   //! Null space object used to communicate with MP
   Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;

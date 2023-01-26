@@ -32,7 +32,7 @@ PrintMPIInfo(std::ostream& os);
 
 //! Helper function to calculate the number of parameters in a problem
 int
-CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemParams);
+CalculateNumberParams(const Teuchos::RCP<const Teuchos::ParameterList> problemParams, int * numScalarParams = NULL, int * numDistributedParams = NULL);
 
 //! Helper function to calculate the number of non-distributed parameters and distributed parameters in a problem
 void

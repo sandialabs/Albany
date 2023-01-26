@@ -38,7 +38,6 @@
 namespace Albany {
 
 class Application
-    : public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits>
 {
 public:
 
@@ -974,10 +973,6 @@ void
       const std::string&                      param_direction_name,
       const Teuchos::RCP<Thyra_MultiVector>&  Hv_f_pp);
 
-  //! Provide access to shapeParameters -- no AD
-  PHAL::AlbanyTraits::Residual::ScalarT&
-  getValue(const std::string& n);
-
   //! Class to manage state variables (a.k.a. history)
   StateManager&
   getStateMgr()
@@ -1032,9 +1027,6 @@ void
   }
 
  private:
-  //! Utility function to set up ShapeParameters through Sacado
-  void
-  registerShapeParameters();
 
   void
   defineTimers();
@@ -1242,11 +1234,6 @@ void
     ABSROWSUM
   };
   SCALETYPE scale_type;
-
-  //! Shape Optimization data
-  bool                     shapeParamsHaveBeenReset;
-  std::vector<RealType>    shapeParams;
-  std::vector<std::string> shapeParamNames;
 
   unsigned int neq, spatial_dimension, tangent_deriv_dim;
 

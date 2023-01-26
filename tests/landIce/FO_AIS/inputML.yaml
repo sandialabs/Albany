@@ -10,7 +10,6 @@ ANONYMOUS:
     LandIce Rigid Body Modes For Preconditioner:
       Compute Constant Modes: true
       Compute Rotation Modes: true
-    Required Fields: [temperature]
     Basal Side Name: basalside
     Compute Sensitivities: true
     Response Functions:

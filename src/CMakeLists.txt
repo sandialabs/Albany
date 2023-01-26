@@ -90,7 +90,6 @@ set(HEADERS
   Albany_DistributedParameter.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
-  Albany_DummyParameterAccessor.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
@@ -276,7 +275,6 @@ list (APPEND HEADERS
   disc/Adapt_NodalFieldUtils.hpp
   disc/Albany_DiscretizationUtils.hpp
   disc/Albany_AbstractDiscretization.hpp
-  disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractMeshStruct.hpp
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp

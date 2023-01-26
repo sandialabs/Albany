@@ -66,8 +66,7 @@ createTestDisc (const Teuchos::RCP<const Teuchos_Comm>& comm,
     layout->dimensions(info->dim);
     sis->push_back(info);
   }
-  Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  return factory.createDiscretization(neq,sis,req);
+  return factory.createDiscretization(neq,sis);
 }
 
 // Helper to get topology/FEBasis/cubature given mesh dim

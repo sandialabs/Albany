@@ -26,15 +26,6 @@ LaplacianSampling( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   discParams(discParams_),
   use_sdbcs_(false)
 {
-
-  // Need to allocate a fields in mesh database
-  if (params->isParameter("Required Fields"))
-  {
-    // Need to allocate a fields in mesh database
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (unsigned int i(0); i<req.size(); ++i)
-      this->requirements.push_back(req[i]);
-  }
   neq =1;
 
   sideName   = params->isParameter("Side Name")   ? params->get<std::string>("Side Name")   : "INVALID";
@@ -189,7 +180,6 @@ LandIce::LaplacianSampling::getValidProblemParameters () const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidLaplacianSamplingProblemParams");
 
-  validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->sublist("LandIce Laplacian Regularization", false, "Parameters needed to compute the Laplacian Regularization");
   validPL->set<std::string> ("Side Name", "", "Name of the lateral side set");
 

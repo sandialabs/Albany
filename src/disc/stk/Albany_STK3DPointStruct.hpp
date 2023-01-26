@@ -29,18 +29,14 @@ namespace Albany {
 
     //! Sets mesh generation parameters
     void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                       const AbstractFieldContainer::FieldContainerRequirements& req,
                        const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                        const unsigned int worksetSize,
-                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                       const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
     void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                      const AbstractFieldContainer::FieldContainerRequirements& req,
                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                       const unsigned int worksetSize,
-                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
-                      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
+                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }

@@ -46,7 +46,6 @@ protected:
 
   void SetupFieldData(
                 const Teuchos::RCP<const Teuchos_Comm>& commT,
-                const AbstractFieldContainer::FieldContainerRequirements& req,
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                 const int worksetSize_);  
 
@@ -79,29 +78,25 @@ protected:
   //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
   void setSideSetFieldData(
         const Teuchos::RCP<const Teuchos_Comm>& commT,
-        const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
         const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
         int worksetSize);
 
   void setSideSetBulkData(
         const Teuchos::RCP<const Teuchos_Comm>& commT,
-        const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
         const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
         int worksetSize);
 
   void setSideSetFieldAndBulkData(
         const Teuchos::RCP<const Teuchos_Comm>& commT,
-        const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
         const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
         int worksetSize)
         {
-          setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
-          setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
+          setSideSetFieldData(commT, side_set_sis, worksetSize);
+          setSideSetBulkData(commT, side_set_sis, worksetSize);
         }
 
   //! Loads from file input required fields not found in the mesh
-  void loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
-                                const Teuchos::RCP<const Teuchos_Comm>& commT);
+  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   // Routines to load, fill, or compute a field
   void loadField (const std::string& field_name,

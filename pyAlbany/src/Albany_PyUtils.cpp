@@ -12,17 +12,11 @@
 
 // Include the concrete Epetra Comm's, if needed
 #if defined(ALBANY_EPETRA)
-#ifdef ALBANY_MPI
 #include "Epetra_MpiComm.h"
-#else
-#include "Epetra_SerialComm.h"
-#endif
 #endif
 
-#ifdef ALBANY_MPI
 #include <mpi.h>
 #include <Teuchos_DefaultMpiComm.hpp>
-#endif
 
 #include <cstdlib>
 #include <stdexcept>

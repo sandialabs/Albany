@@ -2332,10 +2332,8 @@ STKDiscretization::updateMesh()
   }
 }
 
-void
-STKDiscretization::setFieldData(
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const Teuchos::RCP<StateInfoStruct>& sis)
+void STKDiscretization::
+setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 {
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
@@ -2375,7 +2373,7 @@ STKDiscretization::setFieldData(
       params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, numDim, sis, solution_vector, num_params));
   } else if (Teuchos::nonnull(oSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, req, numDim, sis, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, numDim, sis, num_params));
   } else {
     ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }
