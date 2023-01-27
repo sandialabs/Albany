@@ -1693,11 +1693,13 @@ Application::computeGlobalJacobianImpl(
       workset.j_coeff = perturbBetaForDirichlets;
 
     dfm_set(workset, x, xdot, xdotdot);
+    workset.disc = disc;
+    workset.distParamLib = distParamLib;
+
+    loadWorksetNodesetInfo(workset);
 
     if(problem->useSDBCs() == true)
       dfm->preEvaluate<EvalT>(workset);
-
-    loadWorksetNodesetInfo(workset);
 
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset, jac);
