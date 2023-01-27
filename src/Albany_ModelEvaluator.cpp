@@ -589,8 +589,6 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
             << "Invalid parameter index l1 = "
             << l1
             << std::endl);
-    const Teuchos::ParameterList& rList = app->getProblemPL()->sublist("Response Functions").sublist(util::strint("Response", j));
-    const std::string& name = rList.isParameter("Name") ? rList.get<std::string>("Name") : std::string("");
 
     if(HessVecProdBasedOp) {
       const auto p = distParamLib->get(dist_param_names[l1-num_param_vecs]);
