@@ -1,9 +1,5 @@
-
 #include "Albany_Hessian.hpp"
-#include "Albany_KokkosUtils.hpp"
-#include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
-#include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_StringUtils.hpp"
 
 namespace Albany
@@ -12,29 +8,12 @@ namespace Albany
 Teuchos::RCP<MatrixBased_LOWS>
 createDenseHessianLinearOp(Teuchos::RCP<const Thyra_VectorSpace> p_vs)
 {
-  Teuchos::RCP<const Tpetra_Map> p_map = getTpetraMap(p_vs);
-  Teuchos::RCP<Thyra_LinearOp> H;
+  ThyraCrsMatrixFactory H_factory(p_vs,p_vs);
+  auto gids = getGlobalElements(p_vs);
+  H_factory.insertGlobalIndices(gids,gids,false);
+  H_factory.fillComplete();
 
-  Tpetra_GO num_params = p_map->getLocalNumElements();
-
-  Teuchos::RCP<Tpetra_CrsGraph> Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_map, num_params));
-
-  Teuchos::Array<Tpetra_GO> cols(num_params);
-
-  for (Tpetra_GO iparam = 0; iparam < num_params; ++iparam)
-  {
-    cols[iparam] = p_map->getGlobalElement(iparam);
-  }
-
-  for (Tpetra_GO iparam = 0; iparam < num_params; ++iparam)
-  {
-    Hgraph->insertGlobalIndices(cols[iparam], num_params, cols.getRawPtr());
-  }
-
-  Hgraph->fillComplete();
-  Teuchos::RCP<Tpetra_CrsMatrix> Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
-
-  H = createThyraLinearOp(Ht);
+  auto H = H_factory.createOp();
   assign(H, 0.0);
 
   return Teuchos::rcp(new MatrixBased_LOWS(H));
@@ -46,37 +25,24 @@ createSparseHessianLinearOp(const Teuchos::RCP<const DistributedParameter>& p)
   const auto p_owned_vs = p->vector()->space();
   const auto p_overlapped_vs = p->overlapped_vector()->space();
 
-  const auto p_owned_map = getTpetraMap(p_owned_vs);
-  const auto p_overlapped_map = getTpetraMap(p_overlapped_vs);
-
-  Teuchos::RCP<Thyra_LinearOp> H;
-
   const auto p_dof_mgr = p->get_dof_mgr();
-  const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-  const int nelem = p_elem_dof_lids.extent(0);
-  const int ndofs = p_elem_dof_lids.extent(1);
+  const int nelem = p_dof_mgr->getAlbanyConnManager()->getElementBlock().size();
 
-  auto Hgraph = Teuchos::rcp(new Tpetra_CrsGraph(p_owned_map, 30));
+  ThyraCrsMatrixFactory H_factory(p_owned_vs,p_owned_vs,p_overlapped_vs,p_overlapped_vs);
 
-  Tpetra_GO cols[1];
   for (int ielem=0; ielem<nelem; ++ielem) {
-    for (int idof=0; idof<ndofs; ++idof) {
-      const Tpetra_LO ov_node1 = p_elem_dof_lids(ielem,idof);
-
-      const Tpetra_GO row = p_overlapped_map->getGlobalElement(ov_node1);
-      for (int jdof=0; jdof<ndofs; ++jdof) {
-        const Tpetra_LO ov_node2 = p_elem_dof_lids(ielem,jdof);
-
-        cols[0] = p_overlapped_map->getGlobalElement(ov_node2);
-        Hgraph->insertGlobalIndices(row,1,cols);
-      }
+    const auto& p_elem_gids = p_dof_mgr->getElementGIDs(ielem);
+    std::vector<GO> valid_gids;
+    for (auto gid : p_elem_gids) {
+      if (gid>=0)
+        valid_gids.push_back(gid);
     }
+    // Don't say symmetric=true, since you're already doing it by passing rows=cols.
+    H_factory.insertGlobalIndices(valid_gids,valid_gids,false);
   }
+  H_factory.fillComplete();
 
-  Hgraph->fillComplete();
-  auto Ht = Teuchos::rcp(new Tpetra_CrsMatrix(Hgraph));
-
-  H = createThyraLinearOp(Ht);
+  auto H = H_factory.createOp();
   assign(H, 0.0);
   return Teuchos::rcp(new MatrixBased_LOWS(H));
 }
