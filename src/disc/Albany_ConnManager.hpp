@@ -30,6 +30,11 @@ public:
     return getElementsInBlock(elem_block_name());
   }
 
+  using panzer::ConnManager::getElementBlock;
+  const std::vector<LO> getElementBlock () const {
+    return this->getElementBlock(elem_block_name());
+  }
+
   // Returns whether input part name is topologically contained in the
   // parts where this ConnManager is defined.
   virtual bool contains (const std::string& sub_part_name) const = 0;
