@@ -17,9 +17,10 @@ IF(ALBANY_SEACAS)
   # add_subdirectory(HeatQuadTri)
   add_subdirectory(Ioss3D)
   add_subdirectory(IossRestart)
-  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
-    add_subdirectory(SteadyHeat2DRobin)
-  endif()
+  # NOTE: disabling for the moment, since we cannot handle 2 elem blocks
+  # if (NOT ALBANY_DISABLE_OUTPUT_MESH)
+  #   add_subdirectory(SteadyHeat2DRobin)
+  # endif()
   add_subdirectory(SteadyHeat2DSS)
 ENDIF(ALBANY_SEACAS)
 
