@@ -2501,27 +2501,24 @@ Application::evaluateResponseHessian_pp(
   Albany::getParameterVectorID(l1, l1_is_distributed, param_name);
 
   // Get the crs Hessian:
-  RCP<Tpetra_CrsMatrix> Ht = Albany::getTpetraMatrix(H);
-  Ht->resumeFill();
+  auto Ht = Albany::getTpetraMatrix(H);
 
   auto hessianResponseParams = problemParams->sublist("Hessian").sublist(util::strint("Response", response_index));
   bool replace_by_I = hessianResponseParams.sublist(util::strint("Parameter", parameter_index)).get("Replace H_pp with Identity", false);
 
   if (replace_by_I) {
-    auto rangeMap = Ht->getRangeMap();
-    int numElements = rangeMap->getLocalNumElements();
+    auto range= H->range();
+    int numElements = getLocalSubdim(range);
 
-    Tpetra_Vector::scalar_type values[1];
-    Tpetra_Vector::global_ordinal_type cols[1];
-
-    values[0] = 1.;
-
-    for (int i = 0; i < numElements; ++i) {
-      cols[0] = rangeMap->getGlobalElement(i);
-      Ht->replaceGlobalValues(cols[0], 1, values, cols);
+    beginModify(H);
+    Teuchos::Array<ST> val(1,1.0);
+    Teuchos::Array<LO> col(1);
+    for (int i=0; i<numElements; ++i) {
+      col[0] = i;
+      setLocalRowValues(H,i,col,val);
     }
-  }
-  else if (l1_is_distributed) {
+    endModify(H);
+  } else if (l1_is_distributed) {
     Teuchos::ParameterList coloring_params;
     std::string matrixType = "Hessian";
     coloring_params.set("matrixType", matrixType);
@@ -2562,14 +2559,15 @@ Application::evaluateResponseHessian_pp(
 
     // Reconstruct the Hessian matrix based on the Hessian-vector products
     colorer.reconstructMatrix(*HV, *Ht);
-  }
-  else {
+
+  } else {
+    beginFEAssembly(H);
     int numColors = Ht->getDomainMap()->getLocalNumElements();
     RCP<Tpetra_Vector> v = rcp(new Tpetra_Vector(Ht->getDomainMap()));
     RCP<Tpetra_Vector> Hv = rcp(new Tpetra_Vector(Ht->getDomainMap()));
 
-    Tpetra_Vector::scalar_type values[1];
-    Tpetra_Vector::global_ordinal_type cols[1];
+    ST values[1];
+    GO cols[1];
 
     for (int i = 0; i < numColors; ++i) {
       v->replaceGlobalValue (i, 1.);
@@ -2596,9 +2594,8 @@ Application::evaluateResponseHessian_pp(
         Ht->replaceGlobalValues(j, 1, values, cols);
       }
     }
+    endFEAssembly(H);
   }
-
-  Ht->fillComplete();
 
 #ifdef WRITE_TO_MATRIX_MARKET
   writeMatrixMarket(Ht.getConst(), "H", parameter_index);
