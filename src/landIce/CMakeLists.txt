@@ -40,7 +40,6 @@ set(SOURCES
   evaluators/LandIce_LaplacianRegularizationResidual.cpp
   evaluators/LandIce_L2ProjectedBoundaryLaplacianResidual.cpp
   evaluators/LandIce_LiquidWaterFraction.cpp
-  evaluators/LandIce_MapThickness.cpp
   evaluators/LandIce_PressureCorrectedTemperature.cpp
   evaluators/LandIce_PressureMeltingEnthalpy.cpp
   evaluators/LandIce_ResponseUtilities.cpp
@@ -50,7 +49,6 @@ set(SOURCES
   evaluators/LandIce_ResponseBoundarySquaredL2Norm.cpp
   evaluators/LandIce_ScatterResidual2D.cpp
   evaluators/LandIce_SimpleOperationEvaluator.cpp
-  evaluators/LandIce_StackFields.cpp
   evaluators/LandIce_StokesFOBasalResid.cpp
   evaluators/LandIce_StokesFOLateralResid.cpp
   evaluators/LandIce_StokesFOResid.cpp
@@ -63,7 +61,6 @@ set(SOURCES
   evaluators/LandIce_ThicknessResid.cpp
   evaluators/LandIce_UpdateZCoordinate.cpp
   evaluators/LandIce_VerticalVelocity.cpp
-  evaluators/LandIce_Viscosity.cpp
   evaluators/LandIce_ViscosityFO.cpp
   evaluators/LandIce_w_Resid.cpp
   evaluators/LandIce_Time.cpp
@@ -120,8 +117,6 @@ set(HEADERS
   evaluators/LandIce_L2ProjectedBoundaryLaplacianResidual_Def.hpp
   evaluators/LandIce_LiquidWaterFraction.hpp
   evaluators/LandIce_LiquidWaterFraction_Def.hpp
-  evaluators/LandIce_MapThickness_Def.hpp
-  evaluators/LandIce_MapThickness.hpp
   evaluators/LandIce_PressureCorrectedTemperature.hpp
   evaluators/LandIce_PressureCorrectedTemperature_Def.hpp
   evaluators/LandIce_PressureMeltingEnthalpy.hpp
@@ -141,8 +136,6 @@ set(HEADERS
   evaluators/LandIce_SimpleOperation.hpp
   evaluators/LandIce_SimpleOperationEvaluator.hpp
   evaluators/LandIce_SimpleOperationEvaluator_Def.hpp
-  evaluators/LandIce_StackFields.hpp
-  evaluators/LandIce_StackFields_Def.hpp
   evaluators/LandIce_StokesFOBodyForce.hpp
   evaluators/LandIce_StokesFOBodyForce_Def.hpp
   evaluators/LandIce_StokesFOLateralResid.hpp

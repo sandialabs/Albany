@@ -22,7 +22,6 @@
 
 #include "LandIce_StokesFOBase.hpp"
 
-#include "LandIce_MapThickness.hpp"
 #include "LandIce_Gather2DField.hpp"
 #include "LandIce_PressureCorrectedTemperature.hpp"
 #include "LandIce_ScatterResidual2D.hpp"
