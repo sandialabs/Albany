@@ -72,9 +72,8 @@ ANONYMOUS:
     Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_analysis_stiffening_mem.exo
-    Element Shape: Tetrahedron
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true
@@ -316,5 +315,5 @@ ANONYMOUS:
     Sensitivity For Parameter 0:
       Test Value: 1.06024176845e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [9.66706]
+    Piro Analysis Test Values: [9.69016165987]
 ...

@@ -55,7 +55,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 3
     Exodus Output File Name: antarctica_muelu_short_out.exo
-    Element Shape: Hexahedron
     NumLayers: 3
     Use Glimmer Spacing: true
     Columnwise Ordering: false

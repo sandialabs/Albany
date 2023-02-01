@@ -117,10 +117,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
           basal_params->set("Workset Size", -1);
         } else if (!basal_params->isParameter("Workset Size")) {
           // Compute basal workset size based on extruded workset size
-          const int num_cells_per_column_per_layer = disc_params->get<std::string>("Element Shape") ==
-              "Tetrahedron" ? 3 : 1; // number of 3D cells in one extruded 2D cell
-          const int num_cells_per_column = num_cells_per_column_per_layer * disc_params->get<int>("NumLayers");
-          int basal_ws_size = extruded_ws_size / num_cells_per_column;
+          int basal_ws_size = extruded_ws_size / disc_params->get<int>("NumLayers");
           basal_ws_size = std::max(basal_ws_size,1); //makes sure is at least 1.
           basal_params->set("Workset Size", basal_ws_size);
         }

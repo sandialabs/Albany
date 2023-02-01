@@ -52,9 +52,8 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity.exo
-    Element Shape: Tetrahedron
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true
@@ -222,7 +221,7 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000004e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.86580896757000014e+07
-    Test Value: 1.07835792062000006e+08
+      Test Value: 1.826167529143e+07
+    Test Value: 1.096759619809e+08
     Relative Tolerance: 1.00000000000000004e-04
 ...

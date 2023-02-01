@@ -73,8 +73,6 @@ Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 bool keptMesh =false;
 bool kokkosInitializedByAlbany = false;
 
-std::string elemShape;
-
 typedef struct TET_ {
   int verts[4];
   int neighbours[4];
@@ -107,8 +105,6 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     const double& deltat)
 {
   auto solveTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: SolveFO"));
-
-  int numElemsInPrism = (elemShape=="Tetrahedron") ? 3 : 1;
 
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();
@@ -212,13 +208,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / (elemLayerShift));
     int il = (ordering == 0) * (j / (lElemColumnShift))
             + (ordering == 1) * (j % (elemLayerShift));
-    int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1)) + 1;
+    int gId = il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
     int lId = il * lElemColumnShift + elemLayerShift * ib;
-    for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
-      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId++);
-      double* temperature = stk::mesh::field_data(*temperature_field, elem);
-      temperature[0] = temperatureDataOnPrisms[lId];
-    }
+    stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId);
+    double* temperature = stk::mesh::field_data(*temperature_field, elem);
+    temperature[0] = temperatureDataOnPrisms[lId];
   }
 
   meshStruct->setHasRestartSolution(true);//!first_time_step);
@@ -312,25 +306,23 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / (elemLayerShift));
     int il = (ordering == 0) * (j / (lElemColumnShift))
             + (ordering == 1) * (j % (elemLayerShift));
-    int gId = numElemsInPrism * (il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1)) + 1;
+    int gId = il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
     int lId = il * lElemColumnShift + elemLayerShift * ib;
 
     double bf = 0;
-    for (int iElem = 0; iElem < numElemsInPrism; iElem++) {
-      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId++);
-      if(!dissipationHeatOnPrisms.empty() && dissipationHeatField != nullptr) {
-        const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
-        dissipationHeatOnPrisms[lId] += dissipationHeat[0]/numElemsInPrism;
-      }
+    stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId);
+    if(!dissipationHeatOnPrisms.empty() && dissipationHeatField != nullptr) {
+      const double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
+      dissipationHeatOnPrisms[lId] += dissipationHeat[0];
+    }
 
-      if ((il==0) && (bodyForceField!=nullptr)) {
-        const double* bodyForceVal = stk::mesh::field_data(*bodyForceField, elem);
-        const double normSq = bodyForceVal[0]*bodyForceVal[0] + bodyForceVal[1]*bodyForceVal[1];
-        bf += normSq;
-      }
+    if ((il==0) && (bodyForceField!=nullptr)) {
+      const double* bodyForceVal = stk::mesh::field_data(*bodyForceField, elem);
+      const double normSq = bodyForceVal[0]*bodyForceVal[0] + bodyForceVal[1]*bodyForceVal[1];
+      bf += normSq;
     }
     if (!bodyForceMagnitudeOnBasalCell.empty() && (il==0)) {
-      bodyForceMagnitudeOnBasalCell[ib] = std::sqrt(bf)/numElemsInPrism;
+      bodyForceMagnitudeOnBasalCell[ib] = std::sqrt(bf);
     }
   }
 
@@ -580,11 +572,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   auto discretizationList = Teuchos::sublist(paramList, "Discretization", true);
 
   discretizationList->set("Workset Size", discretizationList->get("Workset Size", -1));
-  discretizationList->set("Element Shape", discretizationList->get("Element Shape", "Prism")); //set to Extruded is not defined
-  elemShape = discretizationList->get<std::string>("Element Shape");
 
   discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
-  int cubatureDegree = (elemShape=="Tetrahedron") ? 1 : 4;
+  int cubatureDegree = 4;
   discretizationList->set("Cubature Degree", discretizationList->get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
   discretizationList->set<int>("Interleaved Ordering", discretizationList->get<int>("Interleaved Ordering", 1));  //set to 1 if not define
 

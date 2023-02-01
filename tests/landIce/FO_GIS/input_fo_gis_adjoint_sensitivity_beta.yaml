@@ -57,9 +57,8 @@ ANONYMOUS:
     Columnwise Ordering: true
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
+    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity_beta.exo
-    Element Shape: Tetrahedron
     NumLayers: 5
     Use Glimmer Spacing: true
     Extrude Basal Node Fields: [basal_friction, thickness, surface_height]

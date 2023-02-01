@@ -57,9 +57,8 @@ ANONYMOUS:
   Discretization: 
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
-    Exodus Output File Name: slab_tet_flg_edge_on_gl.exo
-    Element Shape: Tetrahedron
+    Cubature Degree: 3
+    Exodus Output File Name: slab_flg_edge_on_gl.exo
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
@@ -84,11 +83,12 @@ ANONYMOUS:
     Side Set Discretizations: 
       Side Sets: [basalside]
       basalside: 
-        Method: Ioss
+        Method: STK2D
+        1D Elements: 5
+        2D Elements: 5
+        Cell Topology: Triangle
         Number Of Time Derivatives: 0
-        Restart Index: 1
         Cubature Degree: 3
-        Exodus Input File Name: ../ExoMeshes/square_tri.exo
         Required Fields Info: 
           Number Of Fields: 3
           Field 0: 

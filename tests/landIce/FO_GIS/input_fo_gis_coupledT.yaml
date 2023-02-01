@@ -52,11 +52,10 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
-    Exodus Output File Name: gis_coupled.exo
+    Cubature Degree: 4
+    Exodus Output File Name: gis_coupledT.exo
     Workset Size: 2000
     Columnwise Ordering: false
-    Element Shape: Tetrahedron
     NumLayers: 5
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true
@@ -84,7 +83,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Cubature Degree: 3
-        Exodus Output File Name: gis_coupled_basal.exo
+        Exodus Output File Name: gis_coupled_basalT.exo
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Required Fields Info:
@@ -113,7 +112,7 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_coupled_surface.exo
+        Exodus Output File Name: gis_coupled_surfaceT.exo
         Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
@@ -218,7 +217,7 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000004e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.86797608016000017e+07
-    Test Value: 1.07667918238000005e+08
+      Test Value: 1.828924648452e+07
+    Test Value: 1.096538698283e+08
     Relative Tolerance: 1.00000000000000004e-04
 ...

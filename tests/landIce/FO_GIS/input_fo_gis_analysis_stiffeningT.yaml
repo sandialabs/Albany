@@ -140,9 +140,8 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 1
-    Exodus Output File Name: gis_analysis_stiffening.exo
-    Element Shape: Tetrahedron
+    Cubature Degree: 4
+    Exodus Output File Name: gis_analysis_stiffeningT.exo
     Columnwise Ordering: true
     NumLayers: 5
     Use Glimmer Spacing: true
@@ -179,7 +178,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Cubature Degree: 3
-        Exodus Output File Name: gis_analysis_stiffening_basal.exo
+        Exodus Output File Name: gis_analysis_stiffening_basalT.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info:
@@ -218,7 +217,7 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_analysis_stiffening_surface.exo
+        Exodus Output File Name: gis_analysis_stiffening_surfaceT.exo
         Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
@@ -394,11 +393,11 @@ ANONYMOUS:
         Status Test Check Type: Minimal
 
   Regression For Response 0:
-    Test Value: 6.14131581607e+01
+    Test Value: 6.068902002665e+01
     Relative Tolerance: 1.0e-05
     Absolute Tolerance: 1.0e-05
     Sensitivity For Parameter 0:
-      Test Value: 1.06024176845e+00
+      Test Value: 1.224175468183e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [85.2913]
+    Piro Analysis Test Values: [89.1840455471]
 ...
