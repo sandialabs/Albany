@@ -756,19 +756,19 @@ Albany::IossSTKMeshStruct::setBulkData (
       fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
 
       // Global numbering stride
-      state_name = "global_stride";
+      state_name = "global_elem_stride";
       stk::util::Parameter temp_any;
       temp_any.type = stk::util::ParameterType::INT64;
       TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, temp_any, false), std::runtime_error,
-          "Error! Incomplete layered mesh data. Missing 'global_stride'.\n") ;
+          "Error! Incomplete layered mesh data. Missing 'global_elem_stride'.\n") ;
       auto global_stride = temp_any.get_value<int64_t>();
       fieldContainer->getMeshScalarInteger64States()[state_name] = global_stride;
 
       // Local numbering stride
-      state_name = "local_stride";
+      state_name = "local_elem_stride";
       temp_any.type = stk::util::ParameterType::INTEGER;
       TEUCHOS_TEST_FOR_EXCEPTION (not mesh_data->get_global (state_name, temp_any, false), std::runtime_error,
-          "Error! Incomplete layered mesh data. Missing 'local_stride'.\n") ;
+          "Error! Incomplete layered mesh data. Missing 'local_elem_stride'.\n") ;
       auto local_stride = temp_any.get_value<int64_t>();
       fieldContainer->getMeshScalarInteger64States()[state_name] = local_stride;
 
