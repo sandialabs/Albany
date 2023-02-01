@@ -122,7 +122,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     }
 
     // Cell layer where we'll do the scatter of the 2d residual
-    const int layer = fieldLevel==numLayers ? numLayers-1 : 0;
+    const int layer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
     const auto& offsets_2d_field = dof_mgr->getGIDFieldOffsetsSide(this->offset,field_pos);
     const int elem_LID = layers_data->getId(basal_elem_LID,layer);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);

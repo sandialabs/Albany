@@ -374,8 +374,6 @@ evaluateFields(typename Traits::EvalData workset)
     const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
     const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
 
-    // const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
-
     // Loop over responses
     for (size_t res=0; res<this->global_response.size(); ++res) {
       const auto lresp = this->local_response(cell,res);
@@ -389,8 +387,8 @@ evaluateFields(typename Traits::EvalData workset)
           }
         }
       };
-      do_nodes (p_dof_mgr->getGIDFieldOffsetsBotSide(0));
-      do_nodes (p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
+      do_nodes (bot_offsets);
+      do_nodes (top_offsets);
     } // response
   } // cell
 }
@@ -673,7 +671,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Parameter data
   const int fieldLevel = level_it->second;
-  const int fieldLayer = fieldLevel==numLayers ? numLayers-1 : numLayers;
+  const int fieldLayer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
   const bool use_bot = fieldLevel==fieldLayer;
   const auto& p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
