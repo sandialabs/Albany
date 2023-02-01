@@ -323,13 +323,11 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 void
 Albany::IossSTKMeshStruct::setFieldData (
           const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,
-          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
-  this->SetupFieldData(commT, req, sis, worksetSize);
+  this->SetupFieldData(commT, sis, worksetSize);
 
   if(mesh_data->is_bulk_data_null())
     mesh_data->set_bulk_data(*bulkData);
@@ -346,7 +344,7 @@ Albany::IossSTKMeshStruct::setFieldData (
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
    *
-   * This code is only compiled if ALBANY_MPI and ALBANY_ZOLTAN are true
+   * This code is only compiled if ALBANY_ZOLTAN is true
    */
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
@@ -540,7 +538,7 @@ Albany::IossSTKMeshStruct::setFieldData (
   }
 
   // Loading required input fields from file
-  //this->loadRequiredInputFields (req,commT);
+  //this->loadRequiredInputFields (commT);
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
@@ -548,17 +546,15 @@ Albany::IossSTKMeshStruct::setFieldData (
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();
 
-  this->setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetFieldData(commT, side_set_sis, worksetSize);
 }
 
 void
 Albany::IossSTKMeshStruct::setBulkData (
           const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,
-          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
   mesh_data->add_all_mesh_fields_as_input_fields(); // KL: this adds "solution field"
   std::vector<stk::io::MeshField> missing;
@@ -573,7 +569,7 @@ Albany::IossSTKMeshStruct::setBulkData (
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
    *
-   * This code is only compiled if ALBANY_MPI and ALBANY_ZOLTAN are true
+   * This code is only compiled if ALBANY_ZOLTAN is true
    */
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
@@ -786,7 +782,7 @@ Albany::IossSTKMeshStruct::setBulkData (
   }
 
   // Loading required input fields from file
-  this->loadRequiredInputFields (req,commT);
+  this->loadRequiredInputFields (commT);
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
@@ -795,7 +791,7 @@ Albany::IossSTKMeshStruct::setBulkData (
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(commT, side_set_sis, worksetSize);
 
   fieldAndBulkDataSet = true;
 }

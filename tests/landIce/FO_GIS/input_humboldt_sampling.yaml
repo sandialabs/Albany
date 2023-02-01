@@ -9,7 +9,6 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Laplacian Sampling
     Compute Sensitivities: true
-    Required Fields: [weighted_normal_sample]
     Side Name: boundary_side_set
     Response Functions:
       Number Of Responses: 1

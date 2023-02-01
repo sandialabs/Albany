@@ -4,6 +4,52 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+MESSAGE ("\n ***********************")
+MESSAGE (" *** Testing Options ***")
+MESSAGE (" ***********************\n")
+
+# Add option to enable Albany unit tests.
+OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" ON)
+IF (ENABLE_UNIT_TESTS)
+  MESSAGE("-- Unit Tests                Enabled, adding tests/*/UnitTests")
+  SET(ALBANY_UNIT_TESTS TRUE)
+ELSE()
+  MESSAGE("-- Unit Tests            NOT Enabled.")
+  SET(ALBANY_UNIT_TESTS FALSE)
+ENDIF()
+
+# Add option to enable more expensive tests.
+OPTION(ENABLE_LARGE_TESTS "Run more time-consuming tests" ON)
+IF (ENABLE_LARGE_TESTS)
+  set (ALBANY_LARGE_TESTS ON)
+  MESSAGE("-- Large Tests               Enabled/")
+ELSE()
+  MESSAGE("-- Large Tests           NOT Enabled.")
+ENDIF()
+
+#  Timeout real long running tests
+IF(ALBANY_CTEST_TIMEOUT)
+    MESSAGE("\n-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
+ELSE()
+    MESSAGE("\n-- No limits are set on maximum test run time")
+ENDIF()
+
+OPTION(ALBANY_PARALLEL_ONLY "Only run the parallel tests" OFF)
+
+#Add option to run any pretest executables in a specific environment (mpiexec.hydra, srun, or other)
+IF (DEFINED ALBANY_PRETEST_EXEC)
+  MESSAGE("-- ALBANY_PRETEST_EXEC is ${ALBANY_PRETEST_EXEC}")
+ELSE()
+  # Not set in configure - set it to be empty
+  SET(ALBANY_PRETEST_EXEC "" CACHE STRING "Command to use to execute pretests")
+ENDIF()
+
+#Add option to specify path to desired SEACAS utils
+IF (DEFINED ALBANY_SEACAS_PATH)
+  MESSAGE("-- ALBANY_SEACAS_PATH is ${ALBANY_SEACAS_PATH}")
+ENDIF()
+
+
 # Setup paths for SEACAS tools needed to run some of the tests
 IF (ALBANY_SEACAS)
   IF(DEFINED ALBANY_SEACAS_PATH)
@@ -60,35 +106,28 @@ ENDIF()
 set(AlbanyPath                         ${Albany_BINARY_DIR}/src/Albany)
 set(AlbanyAnalysisPath                 ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
 
-IF (ALBANY_MPI)
-  set(SerialAlbany.exe                 ${SERIAL_CALL} ${AlbanyPath})
-  set(SerialAlbanyAnalysis.exe         ${SERIAL_CALL} ${AlbanyAnalysisPath})
-  # Do not test on greater than Trilinos_MPI_EXEC_MAX_NUMPROCS configured in Trilinos build
-  # or explicitly given at Albany configure time -D ALBANY_MPI_EXEC_MAX_NUMPROCS
-  IF(DEFINED MPIMNP)
-    IF(MPIMNP LESS 8)
-      SET(MAX_MPI_RANKS ${MPIMNP})
-    ELSE(MPIMNP LESS 8)
-      SET(MAX_MPI_RANKS 8)
-    ENDIF(MPIMNP LESS 8)
-  ELSE(DEFINED MPIMNP)
-      SET(MAX_MPI_RANKS 4)
-  ENDIF(DEFINED MPIMNP)
-  IF (ALBANY_ENABLE_CUDA) 
-    set(Albany.exe                     ${PARALLEL_CALL} ${AlbanyPath} ${KOKKOS_NDEVICES})
-    set(Albany8.exe                    ${MPIEX} ${MPIPRE} ${MPINPF} ${MAX_MPI_RANKS} ${MPIPOST} ${AlbanyPath} ${KOKKOS_NDEVICES})
-    set(AlbanyAnalysis.exe             ${PARALLEL_CALL} ${AlbanyAnalysisPath} ${KOKKOS_NDEVICES})
-  ELSE() 
-    set(Albany.exe                     ${PARALLEL_CALL} ${AlbanyPath})
-    set(Albany8.exe                    ${MPIEX} ${MPIPRE} ${MPINPF} ${MAX_MPI_RANKS} ${MPIPOST} ${AlbanyPath})
-    set(AlbanyAnalysis.exe             ${PARALLEL_CALL} ${AlbanyAnalysisPath})
-  ENDIF() 
-ELSE()
-  set(SerialAlbany.exe                 ${AlbanyPath})
-  set(SerialAlbanyAnalysis.exe         ${AlbanyAnalysisPath})
-  set(Albany.exe                       ${AlbanyPath})
-  set(AlbanyAnalysis.exe               ${AlbanyAnalysisPath})
-ENDIF()
+set(SerialAlbany.exe                 ${SERIAL_CALL} ${AlbanyPath})
+set(SerialAlbanyAnalysis.exe         ${SERIAL_CALL} ${AlbanyAnalysisPath})
+# Do not test on greater than Trilinos_MPI_EXEC_MAX_NUMPROCS configured in Trilinos build
+# or explicitly given at Albany configure time -D ALBANY_MPI_EXEC_MAX_NUMPROCS
+IF(DEFINED MPIMNP)
+  IF(MPIMNP LESS 8)
+    SET(MAX_MPI_RANKS ${MPIMNP})
+  ELSE(MPIMNP LESS 8)
+    SET(MAX_MPI_RANKS 8)
+  ENDIF(MPIMNP LESS 8)
+ELSE(DEFINED MPIMNP)
+    SET(MAX_MPI_RANKS 4)
+ENDIF(DEFINED MPIMNP)
+IF (ALBANY_ENABLE_CUDA) 
+  set(Albany.exe                     ${PARALLEL_CALL} ${AlbanyPath} ${KOKKOS_NDEVICES})
+  set(Albany8.exe                    ${MPIEX} ${MPIPRE} ${MPINPF} ${MAX_MPI_RANKS} ${MPIPOST} ${AlbanyPath} ${KOKKOS_NDEVICES})
+  set(AlbanyAnalysis.exe             ${PARALLEL_CALL} ${AlbanyAnalysisPath} ${KOKKOS_NDEVICES})
+ELSE() 
+  set(Albany.exe                     ${PARALLEL_CALL} ${AlbanyPath})
+  set(Albany8.exe                    ${MPIEX} ${MPIPRE} ${MPINPF} ${MAX_MPI_RANKS} ${MPIPOST} ${AlbanyPath})
+  set(AlbanyAnalysis.exe             ${PARALLEL_CALL} ${AlbanyAnalysisPath})
+ENDIF() 
 
 set(PYTHON_TEST TRUE)
 

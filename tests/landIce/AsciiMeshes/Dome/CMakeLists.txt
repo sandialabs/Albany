@@ -25,7 +25,7 @@ IF (ALBANY_EPETRA)
   add_test(${testName}_Ascii ${SerialAlbany.exe} input_fo_dome_ascii.yaml)
   set_tests_properties(${testName}_Ascii PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
 
-  IF (ALBANY_SEACAS)
+  IF (ALBANY_SEACAS AND NOT ALBANY_DISABLE_OUTPUT_MESH)
     add_test(${testName}_Restart ${SerialAlbany.exe} input_fo_dome_restart.yaml)
     set_tests_properties(${testName}_Restart PROPERTIES DEPENDS ${testName}_Ascii_Epetra)
     set_tests_properties(${testName}_Restart PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Epetra;Forward;Serial")

@@ -90,7 +90,6 @@ set(HEADERS
   Albany_DistributedParameter.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
-  Albany_DummyParameterAccessor.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
@@ -274,7 +273,6 @@ list (APPEND HEADERS
   disc/Adapt_NodalFieldUtils.hpp
   disc/Albany_DiscretizationUtils.hpp
   disc/Albany_AbstractDiscretization.hpp
-  disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractMeshStruct.hpp
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
@@ -537,6 +535,9 @@ endif()
 target_include_directories(albanyLib PUBLIC
                            "$<BUILD_INTERFACE:${ALBANY_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+if (ALBANY_DISABLE_OUTPUT_MESH)
+  target_compile_definitions (albanyLib PUBLIC ALBANY_DISABLE_OUTPUT_MESH)
+endif()
 
 install(TARGETS albanyLib EXPORT albany-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

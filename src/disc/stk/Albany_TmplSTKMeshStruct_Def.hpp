@@ -414,11 +414,9 @@ template<unsigned Dim, class traits>
 void
 TmplSTKMeshStruct<Dim, traits>::setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
 
   // Create global mesh: Dim-D structured, rectangular
@@ -453,19 +451,17 @@ TmplSTKMeshStruct<Dim, traits>::setFieldData(
 
   }
 
-  SetupFieldData(commT, req, sis, worksetSize);
-  this->setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+  SetupFieldData(commT, sis, worksetSize);
+  this->setSideSetFieldData(commT, side_set_sis, worksetSize);
 }
 
 template<unsigned Dim, class traits>
 void
 TmplSTKMeshStruct<Dim, traits>::setBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<StateInfoStruct>& /* sis */,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   metaData->commit();
 
@@ -479,7 +475,7 @@ TmplSTKMeshStruct<Dim, traits>::setBulkData(
   bulkData->modification_end();
 
   this->setDefaultCoordinates3d();
-  this->loadRequiredInputFields (req,commT);
+  this->loadRequiredInputFields (commT);
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMeshT(commT);
@@ -487,7 +483,7 @@ TmplSTKMeshStruct<Dim, traits>::setBulkData(
   fieldAndBulkDataSet = true;
 
   // Finally, setup the side set meshes (if any)
-  this->setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(commT, side_set_sis, worksetSize);
 }
 
 template <unsigned Dim, class traits>
@@ -682,24 +678,20 @@ template<>
 void
 TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
-  SetupFieldData(commT, req, sis, worksetSize);
+  SetupFieldData(commT, sis, worksetSize);
 }
 
 template<>
 void
 TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& /* req */,
                   const Teuchos::RCP<StateInfoStruct>& /* sis */,
                   const unsigned int /* worksetSize */,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
   metaData->commit();
 

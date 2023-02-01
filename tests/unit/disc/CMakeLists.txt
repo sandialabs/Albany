@@ -78,9 +78,7 @@ IF(${PYTHON_TEST})
   set_tests_properties(${testNameRoot}_BlockDiscretization_Jacobian PROPERTIES ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
 ENDIF()
 
-# We should always run the unit tests in both serial and parallel if possible (they should run quickly)
-IF (ALBANY_MPI)
-  ADD_TEST(${testNameRoot}_discretization_Serial ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
+ADD_TEST(${testNameRoot}_discretization_Serial ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
 
 # The parallel test does not run properly.
 # It is set up to use IOSS to decompose the exodus file ("Use Serial Mesh = 1"), but
@@ -98,8 +96,5 @@ IF (ALBANY_MPI)
 #  
 #  [ThyraCrsMatrixFactory] Error! When providing an overlapped domain vs, the domain vs must be one-to-one.
 #
-  ADD_TEST(${testNameRoot}_discretization_Parallel ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
-ELSE(ALBANY_MPI)
-  ADD_TEST(${testNameRoot}_discretization ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
-ENDIF(ALBANY_MPI)
+ADD_TEST(${testNameRoot}_discretization_Parallel ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/disc_unit_tester)
 

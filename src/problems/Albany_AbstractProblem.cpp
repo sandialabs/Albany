@@ -117,7 +117,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<std::string>("Physics-Based Preconditioner", "None",
                             "Type of preconditioner that problem will create");
 
-  validPL->set<Teuchos::Array<std::string> >("Required Fields",Teuchos::Array<std::string>(),"List of field requirements");
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
   validPL->sublist("Initial Condition DotDot", false, "");

@@ -325,18 +325,6 @@ MESSAGE ("  *** Optional Trilinos Packages ***")
 MESSAGE ("  **********************************\n")
 ### Check for some OPTIONAL trilinos packages, which set DEFINES in Alany build ###
 
-# MPI check -- defaults to TRUE
-# MESSAGE("-- Checking if MPI is enabled in Trilinos:")
-
-LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
-IF (MPI_List_ID GREATER -1)
-  MESSAGE("-- Looking for MPI ...                           Found.")
-  SET(ALBANY_MPI TRUE)
-ELSE()
-  MESSAGE("-- Looking for MPI ...                       NOT found, MPI NOT ENABLED!")
-  SET(ALBANY_MPI FALSE)
-ENDIF()
-
 # set optional dependency on Panzer's ExprEval subpackage
 LIST (FIND Trilinos_PACKAGE_LIST PanzerExprEval PanzerExprEval_List_ID)
 IF (PanzerExprEval_List_ID GREATER -1)
@@ -761,18 +749,6 @@ ELSE()
   SET(ALBANY_DEBUG FALSE)
 ENDIF()
 
-#Add option to build libraries but not link any executables (for LandIce uner MPAS)
-OPTION(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
-IF (ALBANY_LIBRARIES_ONLY)
-  MESSAGE("-- ALBANY_LIBRARIES_ONLY is ON")
-ENDIF()
-
-#Add option to disable all tests 
-OPTION(DISABLE_ALBANY_TESTS "Flag to disable tests" OFF)
-IF (DISABLE_ALBANY_TESTS)
-  MESSAGE("-- DISABLE_ALBANY_TESTS is ON.  Tests will not be built.")
-ENDIF()
-
 # Set which memory analysis system routines are available.
 option(ENABLE_MALLINFO "Use mallinfo() in Albany::printMemoryAnalysis()" OFF)
 option(ENABLE_GETRUSAGE "Use getrusage() in Albany::printMemoryAnalysis()" OFF)
@@ -824,62 +800,61 @@ ENDIF()
 
 OPTION (ENABLE_EXPERIMENTAL "Enables experimental features/tests." OFF)
 
+# Disable ability to write to output mesh. On slow filesystems, this can give faster
+# execution time, if one is only interested in regression test against baseline
+# response/sensitivity values.
+option (ALBANY_DISABLE_OUTPUT_MESH "Disable writing of output mesh files" OFF)
+
 ########################## End of CMake options to Albany #########################################
 
+# Parse source code folder
 add_subdirectory(src)
 
-MESSAGE ("\n ***********************")
-MESSAGE (" *** Testing Options ***")
-MESSAGE (" ***********************\n")
-
-# Add option to enable performance tests. Results are machine-specific
-OPTION(ENABLE_PERFORMANCE_TESTS "Flag to turn on Performance Tests" OFF)
-IF (ENABLE_PERFORMANCE_TESTS)
-  MESSAGE("-- Performance Tests         Enabled, adding tests/*/PerformanceTests")
-  SET(ALBANY_PERFORMANCE_TESTS TRUE)
+IF(ALBANY_MPI_EXEC)
+  SET(MPIEX  ${ALBANY_MPI_EXEC})
 ELSE()
-  MESSAGE("-- Performance Tests     NOT Enabled.")
-  SET(ALBANY_PERFORMANCE_TESTS FALSE)
+  SET(MPIEX  ${Trilinos_MPI_EXEC})
 ENDIF()
-
-# Add option to enable Albany unit tests.
-OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" ON)
-IF (ENABLE_UNIT_TESTS)
-  MESSAGE("-- Unit Tests                Enabled, adding tests/*/UnitTests")
-  SET(ALBANY_UNIT_TESTS TRUE)
+IF(ALBANY_MPI_EXEC_NUMPROCS_FLAG)
+  SET(MPINPF  ${ALBANY_MPI_EXEC_NUMPROCS_FLAG})
 ELSE()
-  MESSAGE("-- Unit Tests            NOT Enabled.")
-  SET(ALBANY_UNIT_TESTS FALSE)
+  SET(MPINPF ${Trilinos_MPI_EXEC_NUMPROCS_FLAG})
 ENDIF()
-
-# Add option to enable performance tests. Results are machine-specific
-OPTION(ENABLE_LARGE_TESTS "Run tests from the Albany-large-tests repository" ON)
-IF (ENABLE_LARGE_TESTS)
-  MESSAGE("-- Large Tests               Enabled, adding tests/large/")
-  SET(ALBANY_LARGE_TESTS TRUE)
+IF(ALBANY_MPI_EXEC_MAX_NUMPROCS)
+  SET(MPIMNP ${ALBANY_MPI_EXEC_MAX_NUMPROCS})
 ELSE()
-  MESSAGE("-- Large Tests           NOT Enabled.")
-  SET(ALBANY_LARGE_TESTS FALSE)
+  SET(MPIMNP ${Trilinos_MPI_EXEC_MAX_NUMPROCS})
 ENDIF()
-
-
-# Set option to disable compiling some code for nightly tests
-# Some code sections take so long to compile with NVCC that nightly tests are
-# timing out. This option allows disabling those sections.
-OPTION(NIGHTLY_TESTING "Flag to turn off selected code during nightly testing" OFF)
-IF (NIGHTLY_TESTING)
-  MESSAGE("-- NIGHTLY_TESTING           Enabled")
-  SET(ALBANY_NIGHTLY_TESTING TRUE)
-ELSE()
-  MESSAGE("-- NIGHTLY_TESTING       NOT Enabled.")
-  SET(ALBANY_NIGHTLY_TESTING FALSE)
+IF(ALBANY_MPI_EXEC_LEADING_OPTIONS)
+  SET(MPIPRE ${ALBANY_MPI_EXEC_LEADING_OPTIONS})
+  SEPARATE_ARGUMENTS(MPIPRE)
 ENDIF()
+IF(ALBANY_MPI_EXEC_TRAILING_OPTIONS)
+  SET(MPIPOST ${ALBANY_MPI_EXEC_TRAILING_OPTIONS})
+  SEPARATE_ARGUMENTS(MPIPOST)
+ENDIF()
+SET(SERIAL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST})
+SET(PARALLEL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST})
+STRING(REPLACE ";" " " SERIAL_CALL_TEXT "${SERIAL_CALL}")
+STRING(REPLACE ";" " " PARALLEL_CALL_TEXT "${PARALLEL_CALL}")
+MESSAGE("-- CTest serial call: ${SERIAL_CALL_TEXT}")
+MESSAGE("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
 
-#  Timeout real long running tests
-IF(ALBANY_CTEST_TIMEOUT)
-    MESSAGE("\n-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
-ELSE()
-    MESSAGE("\n-- No limits are set on maximum test run time")
+#Add option to build libraries but not executables (for LandIce uner MPAS). Disables all tests
+option(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
+#Add option to disable all tests
+option(DISABLE_ALBANY_TESTS "Flag to disable tests" OFF)
+if (ALBANY_LIBRARIES_ONLY)
+  message("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+elseif (DISABLE_ALBANY_TESTS)
+  message("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
+else()
+  # Add Albany test -- in the "tests" directory
+  add_subdirectory(tests)
+endif()
+
+IF (ALBANY_PYTHON)
+  add_subdirectory( pyAlbany )
 ENDIF()
 
 # Make a clean build target for convenience
@@ -891,74 +866,5 @@ ADD_CUSTOM_TARGET( cmake_clean
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
 )
-
-OPTION(ALBANY_PARALLEL_ONLY "Only run the parallel tests" OFF)
-
-IF(ALBANY_MPI)
-  IF(ALBANY_MPI_EXEC)
-    SET(MPIEX  ${ALBANY_MPI_EXEC})
-  ELSE()
-    SET(MPIEX  ${Trilinos_MPI_EXEC})
-  ENDIF()
-  IF(ALBANY_MPI_EXEC_NUMPROCS_FLAG)
-    SET(MPINPF  ${ALBANY_MPI_EXEC_NUMPROCS_FLAG})
-  ELSE()
-    SET(MPINPF ${Trilinos_MPI_EXEC_NUMPROCS_FLAG})
-  ENDIF()
-  IF(ALBANY_MPI_EXEC_MAX_NUMPROCS)
-    SET(MPIMNP ${ALBANY_MPI_EXEC_MAX_NUMPROCS})
-  ELSE()
-    SET(MPIMNP ${Trilinos_MPI_EXEC_MAX_NUMPROCS})
-  ENDIF()
-  IF(ALBANY_MPI_EXEC_LEADING_OPTIONS)
-    SET(MPIPRE ${ALBANY_MPI_EXEC_LEADING_OPTIONS})
-    SEPARATE_ARGUMENTS(MPIPRE)
-  ENDIF()
-  IF(ALBANY_MPI_EXEC_TRAILING_OPTIONS)
-    SET(MPIPOST ${ALBANY_MPI_EXEC_TRAILING_OPTIONS})
-    SEPARATE_ARGUMENTS(MPIPOST)
-  ENDIF()
-  SET(SERIAL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST})
-  SET(PARALLEL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST})
-  STRING(REPLACE ";" " " SERIAL_CALL_TEXT "${SERIAL_CALL}")
-  STRING(REPLACE ";" " " PARALLEL_CALL_TEXT "${PARALLEL_CALL}")
-  MESSAGE("-- CTest serial call: ${SERIAL_CALL_TEXT}")
-  MESSAGE("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
-ENDIF(ALBANY_MPI)
-
-#Add option to run any pretest executables in a specific environment (mpiexec.hydra, srun, or other)
-IF (DEFINED ALBANY_PRETEST_EXEC)
-  MESSAGE("-- ALBANY_PRETEST_EXEC is ${ALBANY_PRETEST_EXEC}")
-ELSE()
-  # Not set in configure - set it to be empty
-  SET(ALBANY_PRETEST_EXEC "" CACHE STRING "Command to use to execute pretests")
-ENDIF()
-
-#Add option to specify path to desired SEACAS utils
-IF (DEFINED ALBANY_SEACAS_PATH)
-  MESSAGE("-- ALBANY_SEACAS_PATH is ${ALBANY_SEACAS_PATH}")
-ENDIF()
-
-# Add Albany test -- in the "tests" directory
-IF (ALBANY_LIBRARIES_ONLY OR DISABLE_ALBANY_TESTS)
-  IF (ALBANY_LIBRARIES_ONLY) 
-    MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
-  ENDIF()
-  IF (DISABLE_ALBANY_TESTS) 
-    MESSAGE("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
-  ENDIF()
-  IF (ALBANY_PYTHON)
-    SET(ALBANY_PYTHON_TESTS FALSE)
-  ENDIF()
-ELSE()
-  add_subdirectory(tests)
-  IF (ALBANY_PYTHON)
-    SET(ALBANY_PYTHON_TESTS TRUE)
-  ENDIF()
-ENDIF()
-
-IF (ALBANY_PYTHON)
-  add_subdirectory( pyAlbany )
-ENDIF()
 
 MESSAGE("\nAnd CMake says...:")

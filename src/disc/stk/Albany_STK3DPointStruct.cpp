@@ -55,25 +55,21 @@ STK3DPointStruct::~STK3DPointStruct() {};
 void
 STK3DPointStruct::setFieldData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   std::cout << "---3DPoint::setFieldData---" << std::endl;
-  SetupFieldData(commT, req, sis, worksetSize);
-  this->setSideSetFieldData(commT, side_set_req, side_set_sis, worksetSize);
+  SetupFieldData(commT, sis, worksetSize);
+  this->setSideSetFieldData(commT, side_set_sis, worksetSize);
 }
 
 void
 STK3DPointStruct::setBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const AbstractFieldContainer::FieldContainerRequirements& /* req */,
                   const Teuchos::RCP<StateInfoStruct>& /* sis */,
                   const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   std::cout << "---3DPoint::setBulkData---" << std::endl;
   metaData->commit();
@@ -93,7 +89,7 @@ STK3DPointStruct::setBulkData(
   bulkData->modification_end();
 
   fieldAndBulkDataSet = true;
-  this->setSideSetBulkData(commT, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetBulkData(commT, side_set_sis, worksetSize);
 }
 
 void

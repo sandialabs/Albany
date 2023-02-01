@@ -93,13 +93,11 @@ tests are a beginning, "work in progress."
          auto ms = rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
          auto gms = rcp_dynamic_cast<GenericSTKMeshStruct>(meshStruct);
 
-         const AbstractFieldContainer::FieldContainerRequirements req;
          const RCP<StateInfoStruct> sis = rcp(new StateInfoStruct());
          const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
-         const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-         ms->setFieldAndBulkData(comm, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
-                                 side_set_sis, side_set_req);
+         ms->setFieldAndBulkData(comm, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE,
+                                 side_set_sis);
 
          // Null for this test
          const RCP<Albany::RigidBodyModes> rigidBodyModes;
@@ -375,12 +373,10 @@ tests are a beginning, "work in progress."
 
       RCP<AbstractSTKMeshStruct> ms = rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
 
-      const AbstractFieldContainer::FieldContainerRequirements req;
       const RCP<StateInfoStruct> sis = rcp(new StateInfoStruct());
       const std::map<std::string, RCP<Albany::StateInfoStruct>> side_set_sis;
-      const std::map<std::string, AbstractFieldContainer::FieldContainerRequirements> side_set_req;
 
-      ms->setFieldAndBulkData(comm, req, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
+      ms->setFieldAndBulkData(comm, sis, AbstractMeshStruct::DEFAULT_WORKSET_SIZE);
 
       // Use the Albany STK interface as it is used elsewhere in the code
       auto stkDisc = rcp(new BlockedSTKDiscretization(blockedDiscParams, ms, comm));

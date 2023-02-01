@@ -11,7 +11,6 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Albany_ScalarParameterAccessors.hpp"
 
-//IKT 6/3/2020 TODO: implement support for vector parameters, which is not available currently.
 
 namespace PHAL
 {
@@ -115,7 +114,7 @@ public:
     d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
   }
 
-  ScalarT getValue ()
+  ScalarT& getValue ()
   {
     return accessor->getValue();
   }

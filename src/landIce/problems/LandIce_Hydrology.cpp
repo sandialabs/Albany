@@ -46,23 +46,6 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
   TEUCHOS_TEST_FOR_EXCEPTION (has_p_dot && !unsteady, std::logic_error,
                               "Error! Englacial porosity model only makes sense in the unsteady case.\n");
 
-  // Need to allocate a fields in mesh database
-  if (params->isParameter("Required Fields")) {
-    // Need to allocate a fields in mesh database
-    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-    for (unsigned int i(0); i<req.size(); ++i) {
-      this->requirements.push_back(req[i]);
-    }
-  }
-
-  // Some fields that we know are FOR SURE required (if not added already)
-  if (std::find(this->requirements.begin(),this->requirements.end(),surface_height_name)==this->requirements.end()) {
-    this->requirements.push_back(surface_height_name);
-  }
-  if (std::find(this->requirements.begin(),this->requirements.end(),ice_thickness_name)==this->requirements.end()) {
-    this->requirements.push_back(ice_thickness_name);
-  }
-
   // Set the num PDEs depending on the problem specs
   if (eliminate_h) {
     this->setNumEquations(1);

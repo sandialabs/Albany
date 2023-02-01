@@ -566,6 +566,9 @@ STKDiscretization::setupMLCoords()
 void
 STKDiscretization::writeCoordsToMatrixMarket() const
 {
+#ifdef ALBANY_DISABLE_OUTPUT_MESH
+  *out << "[STKDiscretization::writeCoordsToMatrixMarket] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+#else
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
   if ((rigidBodyModes->isMLUsed() || rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
@@ -582,6 +585,7 @@ STKDiscretization::writeCoordsToMatrixMarket() const
       writeMatrixMarket(coordMV->col(2), "zCoords");
     }
   }
+#endif
 }
 
 void
@@ -693,7 +697,15 @@ STKDiscretization::writeSolutionToFile(
     const bool          overlapped,
     const bool          force_write_solution) 
 {
+#ifdef ALBANY_DISABLE_OUTPUT_MESH
+  *out << "[STKDiscretization::writeSolutionToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+  (void) soln;
+  (void) time;
+  (void) overlapped;
+  (void) force_write_solution;
+#else
 #ifdef ALBANY_SEACAS
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution to file");
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();
 
@@ -748,6 +760,7 @@ STKDiscretization::writeSolutionToFile(
     }
   }
 #endif
+#endif
 }
 
 void
@@ -757,7 +770,15 @@ STKDiscretization::writeSolutionMVToFile(
     const bool               overlapped,
     const bool               force_write_solution) 
 {
+#ifdef ALBANY_DISABLE_OUTPUT_MESH
+  *out << "[STKDiscretization::writeSolutionMVToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+  (void) soln;
+  (void) time;
+  (void) overlapped;
+  (void) force_write_solution;
+#else
 #ifdef ALBANY_SEACAS
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution MV to file");
 
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();
@@ -814,6 +835,7 @@ STKDiscretization::writeSolutionMVToFile(
       it.second->writeSolutionMVToFile(*ss_soln, time, overlapped, force_write_solution);
     }
   }
+#endif
 #endif
 }
 
@@ -2510,7 +2532,9 @@ STKDiscretization::updateMesh()
 
   computeSideSets();
 
+#ifndef ALBANY_DISABLE_OUTPUT_MESH
   setupExodusOutput();
+#endif
 
 
 #ifdef OUTPUT_TO_SCREEN
@@ -2536,10 +2560,8 @@ STKDiscretization::updateMesh()
   }
 }
 
-void
-STKDiscretization::setFieldData(
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const Teuchos::RCP<StateInfoStruct>& sis)
+void STKDiscretization::
+setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 {
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
@@ -2579,7 +2601,7 @@ STKDiscretization::setFieldData(
       params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, numDim, sis, solution_vector, num_params));
   } else if (Teuchos::nonnull(oSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, req, numDim, sis, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, numDim, sis, num_params));
   } else {
     ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }

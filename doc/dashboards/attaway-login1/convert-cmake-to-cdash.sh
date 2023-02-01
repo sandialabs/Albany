@@ -21,7 +21,7 @@ sed -i 's/-D /"-D/g' /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-f
 awk '{print $0 "\""}' /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt >& tmp.txt
 mv tmp.txt /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt
 sed -i 's, \",\",g' /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt
-sed -i '$ d' /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt
+#sed -i '$ d' /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt
 #sed -i "s,{SEMS,ENV{SEMS,g" /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt
 sed -i "s,{,ENV{,g" /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt
 sed -i "s,ENV{INSTALL,{INSTALL,g" /projects/albany/nightlyCDash/cdash-$compiler-$kokkosnode-frag.txt

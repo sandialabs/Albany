@@ -170,10 +170,10 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       this->addDependentField (N);
     } else if (effectivePressureType == "HYDROSTATIC") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
-      use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level");
+      use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
     } else if (effectivePressureType == "HYDROSTATIC COMPUTED AT NODES") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES;
-      use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level");
+      use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << effectivePressureType << "\" is not a valid parameter for Effective Pressure Type\n");

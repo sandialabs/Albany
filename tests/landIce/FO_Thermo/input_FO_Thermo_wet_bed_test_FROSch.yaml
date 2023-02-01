@@ -10,7 +10,6 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
-    Required Fields: [basal_friction]
     Needs Dissipation: true
     Needs Basal Friction: true
     Dirichlet BCs:

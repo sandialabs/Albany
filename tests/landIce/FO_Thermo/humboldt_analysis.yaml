@@ -14,7 +14,6 @@ ANONYMOUS:
     Extruded Column Coupled in 2D Response: false
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Required Fields: [mu_log, surface_air_temperature]
     Needs Dissipation: true
     Needs Basal Friction: true
     LandIce Field Norm:

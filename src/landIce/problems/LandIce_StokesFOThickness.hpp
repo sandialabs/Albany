@@ -22,7 +22,6 @@
 
 #include "LandIce_StokesFOBase.hpp"
 
-#include "LandIce_MapThickness.hpp"
 #include "LandIce_Gather2DField.hpp"
 #include "LandIce_PressureCorrectedTemperature.hpp"
 #include "LandIce_ScatterResidual2D.hpp"
@@ -235,9 +234,6 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Side Set Name", surfaceSideName);
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<int>("Cubature Degree",3);
-  if (std::find(requirements.begin(),requirements.end(),"apparent_mass_balance")!=requirements.end()) {
-    p->set<std::string>("SMB Name", "apparent_mass_balance");
-  }
   p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   if(this->params->isParameter("Time Step Ptr")) {
     p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));

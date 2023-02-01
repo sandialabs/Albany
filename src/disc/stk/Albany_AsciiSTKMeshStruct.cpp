@@ -419,23 +419,19 @@ AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 void
 AsciiSTKMeshStruct::setFieldData(
               const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const AbstractFieldContainer::FieldContainerRequirements& req,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */,
-              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /* side_set_req */)
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */)
 {
-  this->SetupFieldData(comm, req, sis, worksetSize);
+  this->SetupFieldData(comm, sis, worksetSize);
 }
 
 void
 AsciiSTKMeshStruct::setBulkData(
               const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const AbstractFieldContainer::FieldContainerRequirements& /* req */,
               const Teuchos::RCP<StateInfoStruct>& /* sis */,
               const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   metaData->commit();
 
@@ -725,7 +721,7 @@ AsciiSTKMeshStruct::setBulkData(
   bulkData->modification_end();
 
   fieldAndBulkDataSet = true;
-  this->setSideSetFieldAndBulkData(comm, side_set_req, side_set_sis, worksetSize);
+  this->setSideSetFieldAndBulkData(comm, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
