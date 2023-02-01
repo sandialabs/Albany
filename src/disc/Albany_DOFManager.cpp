@@ -240,11 +240,10 @@ restrict (const std::string& sub_part_name)
       "Error! Input sub-part name not contained in the ConnManager parts.\n");
 
   // We need to discard dofs *not* on the given part
-  DualView<int**> elem_dof_lids("",m_elem_dof_lids.host().extent(0),m_elem_dof_lids.host().extent(1));
-  auto& h_elem_dof_lids = elem_dof_lids.host();
-  Kokkos::deep_copy(h_elem_dof_lids,-1);
+  const int num_elems = m_elem_dof_lids.dev().extent(0);
+  const int num_elem_dofs = m_elem_dof_lids.dev().extent(1);
+
   const auto& topo = get_topology ();
-  const int num_elems = m_conn_mgr->getElementsInBlock().size();
   const int sub_dim = m_conn_mgr->part_dim(sub_part_name);
 
   // Precompute offsets
@@ -261,24 +260,22 @@ restrict (const std::string& sub_part_name)
 
   // Loop over elements and their sub cells, and set the correct LID for all
   // dofs on the sub-part
+  std::vector<std::vector<LO>> new_elem_dof_lids (num_elems,std::vector<LO>(num_elem_dofs,-1));
   for (int ielem=0; ielem<num_elems; ++ielem) {
-    auto dof_lids = Kokkos::subview(h_elem_dof_lids,ielem,Kokkos::ALL());
+    auto& dof_lids = new_elem_dof_lids[ielem];
     for (int dim=0; dim<=sub_dim; ++dim) {
       const int count = topo.getSubcellCount(dim);
       for (int pos=0; pos<count; ++pos) {
         if (m_conn_mgr->belongs(sub_part_name,ielem,dim,pos)) {
           for (int f=0; f<getNumFields(); ++f) {
             for (auto o : offsets[dim][pos][f]) {
-              dof_lids(o) = m_elem_dof_lids.host()(ielem,o);
+              dof_lids[o] = m_elem_dof_lids.host()(ielem,o);
             }
           }
         }
       }
     }
   }
-  elem_dof_lids.sync_to_dev();
-
-  auto lids_h = elem_dof_lids.host();
 
   owned_.clear();
   ghosted_.clear();
@@ -292,10 +289,11 @@ restrict (const std::string& sub_part_name)
   };
 
   std::unordered_set<GO> owned_set, ghosted_set;
-  for (int ielem=0; ielem<lids_h.extent_int(0); ++ielem) {
+  for (int ielem=0; ielem<num_elems; ++ielem) {
     const auto& gids = getElementGIDs(ielem);
-    for (int idof=0; idof<lids_h.extent_int(1); ++idof) {
-      if (lids_h(ielem,idof)==-1) {
+    const auto& dof_lids = new_elem_dof_lids[ielem];
+    for (int idof=0; idof<num_elem_dofs; ++idof) {
+      if (dof_lids[idof]==-1) {
         continue;
       }
 
@@ -313,21 +311,26 @@ restrict (const std::string& sub_part_name)
   buildVectorSpaces (owned_,ghosted_);
 
   // Correct the GIDs/LIDs stored, to reflect the smaller maps
-  for (int ielem=0; ielem<lids_h.extent_int(0); ++ielem) {
+  // Update lids in base class as well, in case we use some base class method
+  for (int ielem=0; ielem<num_elems; ++ielem) {
     const auto& gids = getElementGIDs(ielem);
-    for (int idof=0; idof<lids_h.extent_int(1); ++idof) {
-      if (lids_h(ielem,idof)==-1) {
-        // Invalidate the GID
+    auto& dof_lids = new_elem_dof_lids[ielem];
+    for (int idof=0; idof<num_elem_dofs; ++idof) {
+      if (dof_lids[idof]==-1) {
+        // Invalidate the GID as well, so that, if we accidentally use it,
+        // it will hopefully trigger bad stuff
         elementGIDs_[ielem][idof] = -1;
       } else {
-        // Correct the lid
-        lids_h(ielem,idof) = m_ov_indexer->getLocalElement(gids[idof]);
+        // Correct the lid, reflecting the new vector spaces
+        dof_lids[idof] = m_ov_indexer->getLocalElement(gids[idof]);
       }
     }
   }
 
-  // Update lids
-  m_elem_dof_lids = elem_dof_lids;
+  setLocalIds(new_elem_dof_lids);
+  using dview = DualView<const int**>;
+  m_elem_dof_lids = dview(this->getLIDs());
+  m_elem_dof_lids.sync_to_host();
 }
 
 void DOFManager::
