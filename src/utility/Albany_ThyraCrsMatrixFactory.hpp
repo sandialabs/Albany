@@ -1,8 +1,10 @@
 #ifndef ALBANY_THYRA_CRS_MATRIX_FACTORY_HPP
 #define ALBANY_THYRA_CRS_MATRIX_FACTORY_HPP
 
-#include "Teuchos_RCP.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_ThyraTypes.hpp"
+
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
@@ -83,6 +85,9 @@ private:
   Teuchos::RCP<const Thyra_VectorSpace> m_range_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_ov_domain_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_ov_range_vs;
+
+  // Used during fill, to check that row GIDs are in the ov range space
+  Teuchos::RCP<const GlobalLocalIndexer> m_ov_range_indexer;
 
   bool m_filled;   // Whether fill of the graph has happened
   bool m_fe_crs;   // Whether row_vs and range_vs are the same

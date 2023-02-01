@@ -89,6 +89,8 @@ ThyraCrsMatrixFactory (const Teuchos::RCP<const Thyra_VectorSpace> domain_vs,
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Epetra is not enabled in albany.\n");
 #endif
   }
+
+  m_ov_range_indexer = createGlobalLocalIndexer(m_ov_range_vs);
 }
 
 void ThyraCrsMatrixFactory::
@@ -140,7 +142,7 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
   const GO max_safe_gid = Teuchos::OrdinalTraits<GO>::max();
 #endif
 
-  ALBANY_EXPECT (createGlobalLocalIndexer(m_ov_range_vs)->isLocallyOwnedElement(row),
+  ALBANY_EXPECT (m_ov_range_indexer->isLocallyOwnedElement(row),
                  "Error! Row " + std::to_string(row) + " is not in the overlap range map.\n");
   auto& row_indices = m_graph->temp_graph[row];
   const int size = indices.size();
