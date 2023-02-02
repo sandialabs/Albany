@@ -291,9 +291,9 @@ void ExtrudedSTKMeshStruct::setBulkData(
   }
   auto sides_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
-  const GO maxGlobalCells2dId = cells_map->getMaxAllGlobalIndex() + 1;
-  const GO maxGlobalNodes2dId = nodes_map->getMaxAllGlobalIndex() + 1;
-  const GO maxGlobalSides2dId = sides_map->getMaxAllGlobalIndex() + 1;
+  const GO maxGlobalCells2dId = cells_map->getMaxAllGlobalIndex();
+  const GO maxGlobalNodes2dId = nodes_map->getMaxAllGlobalIndex();
+  const GO maxGlobalSides2dId = sides_map->getMaxAllGlobalIndex();
 
   const LO numLocalCells2D = cells2D.size();
   const LO numLocalNodes2D = nodes2D.size();
