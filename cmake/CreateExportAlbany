@@ -81,6 +81,10 @@ def parse_link_line(items,install_lib_dir,bin_dir,make_dir):
         elif item.startswith("-l"):
             # It's either a -lXYZ lib or a link flag. Keep it as is.
             libs.append(item)
+        elif item.startswith("-") and not item.startswith("-L"):
+            # This is some funky link option (e.g., -mkl or -cxxlib with Intel).
+            # Simply add the item to the "libs" list
+            libs.append(item)
         else:
             # We want to get an abs path, with symlinks resolved *except* for symlinks
             # in the file name, to avoid an error we're seeing where libdl.so points
