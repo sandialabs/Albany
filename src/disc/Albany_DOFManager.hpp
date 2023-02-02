@@ -73,16 +73,14 @@ public:
   getGIDFieldOffsetsSide (int fieldNum, int side) const;
 
   // Special case of the above, for subcell being the top or bottom side
-  // NOTE: only for quad/hexa/wedge
+  // NOTES:
+  //  1. only for quad/hexa/wedge
+  //  2. Top side orders dofs so that they align with Bot. That is,
+  //     dof at offset_top[i] lies atop dof at offset_bot[i]
   const std::vector<int>&
   getGIDFieldOffsetsTopSide (int fieldNum) const;
   const std::vector<int>&
   getGIDFieldOffsetsBotSide (int fieldNum) const;
-
-  // Offsets of dofs on top side BUT ordered so that the j-th offset points
-  // to a DOF sitting *right above* the j-th offset on the bot side
-  std::vector<int>
-  getGIDFieldOffsetsTopSideBotOrdering (int fieldNum) const;
 
   const std::string& part_name () const {
     return m_part_name;
@@ -131,6 +129,10 @@ private:
   // field $ifield on the $ord-th subcell of dimension $dim. More precisely,
   // it's the closure of all offsets on all entities belonging to that subcell
   std::vector<std::vector<std::vector<std::vector<int>>>>       m_subcell_closures;
+
+  // Closure for top side, with ordering such that top_offset[i] is directly
+  // on top of bot_offset[i].
+  std::vector<std::vector<int>> m_top_closure_bot_ordering;
 
   Teuchos::RCP<const ConnManager>           m_conn_mgr;
 

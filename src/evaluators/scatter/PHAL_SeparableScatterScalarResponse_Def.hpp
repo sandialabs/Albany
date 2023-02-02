@@ -359,7 +359,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& p_dof_mgr       = workset.disc->getNewDOFManager(param_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
-  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
   const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
 
   const int fieldLevel = level_it->second;
@@ -675,7 +675,7 @@ evaluateFields(typename Traits::EvalData workset)
   const bool use_bot = fieldLevel==fieldLayer;
   const auto& p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
   const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
   const auto& p_offsets = use_bot ? bot_offsets : top_offsets;
 

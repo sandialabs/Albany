@@ -159,57 +159,19 @@ getGIDFieldOffsetsSide (int fieldNum, int side) const
   return getGIDFieldOffsetsSubcell(fieldNum,topo.getDimension()-1,side);
 }
 
-
 const std::vector<int>&
 DOFManager::
 getGIDFieldOffsetsTopSide (int fieldNum) const
 {
-  const auto& topo = get_topology();
-
 #ifdef ALBANY_DEBUG
-  const auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  const auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  const auto& topo = get_topology();
+  constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
   TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
       "Error! DOFManager::getGIDFieldOffsetsTopSide only available for Hexa/Wedge topologies.\n");
 #endif
-  // Shards has both Hexa and Wedge with top in the last side position
-  return getGIDFieldOffsetsSide(fieldNum,topo.getSideCount()-1);
-}
 
-std::vector<int>
-DOFManager::
-getGIDFieldOffsetsTopSideBotOrdering (int fieldNum) const
-{
-  const auto& topo = get_topology();
-  const auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-#ifdef ALBANY_DEBUG
-  const auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
-      "Error! DOFManager::getGIDFieldOffsetsTopSideBotOrdering only available for Hexa/Wedge topologies.\n");
-  auto fp = getFieldPattern(getFieldString(fieldNum));
-  auto ifp = Teuchos::rcp_dynamic_cast<const panzer::Intrepid2FieldPattern>(fp);
-  auto bName = ifp->getIntrepidBasis()->getName();
-  TEUCHOS_TEST_FOR_EXCEPTION (
-      bName=="Intrepid2_HGRAD_HEX_C2_FEM" || bName=="Intrepid2_HGRAD_WEDGE_C1_FEM", std::logic_error,
-      "Error! [DOFManager::getGIDFieldOffsetsTopSideBotOrdering] has limited support.\n"
-      "  Only available for C1 HGRAD bases on Hexa/Wedge elements.\n");
-#endif
-
-  // Order in which top_offsets must be read
-  std::vector<int> permutation;
-  if (topo==hexa) {
-    permutation = {0, 3, 2, 1};
-  } else {
-    permutation = {0, 2, 1};
-  }
-
-  auto top_offsets = getGIDFieldOffsetsTopSide(fieldNum);
-  std::vector<int> result(top_offsets.size());
-  for (unsigned i=0; i<permutation.size(); ++i) {
-    result[i] = top_offsets[permutation[i]];
-  }
-
-  return result;
+  return m_top_closure_bot_ordering[fieldNum];
 }
 
 const std::vector<int>&
@@ -221,7 +183,7 @@ getGIDFieldOffsetsBotSide (int fieldNum) const
 #ifdef ALBANY_DEBUG
   constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
   constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION (topo!=quad && topo!=hexa && topo!=wedge, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
       "Error! DOFManager::getGIDFieldOffsetsBotSide only available for Hexa/Wedge topologies.\n");
 #endif
   // Shards has both Hexa and Wedge with bot in the second to last side position
@@ -481,6 +443,18 @@ albanyBuildGlobalUnknowns ()
     const int dim = topo.getDimension();
     m_subcell_closures.resize(getNumFields());
 
+    // Pre-build also the special closure for the top side, with dof ordered
+    // so that top_closure[i] sits on top of bot_closure[i]
+    m_top_closure_bot_ordering.resize(getNumFields());
+
+    // Order in which top_offsets must be read
+    std::vector<int> permutation;
+    if (topo.getBaseName()=="Hexahedron_8") {
+      permutation = {0, 3, 2, 1};
+    } else {
+      permutation = {0, 2, 1};
+    }
+
     for (int f=0; f<getNumFields(); ++f) {
       const auto& name = getFieldString(f);
       const auto& fp = getFieldPattern(name);
@@ -549,6 +523,13 @@ albanyBuildGlobalUnknowns ()
 
         // Add face
         add_indices(faceDim,iface,f_closures[faceDim][iface]);
+      }
+
+      // Shards has both Hexa and Wedge with top in the last side position
+      auto tmp_top = f_closures[faceDim][topo.getSideCount()-1];
+      m_top_closure_bot_ordering[f].reserve(tmp_top.size());
+      for (auto p : permutation) {
+        m_top_closure_bot_ordering[f].push_back(tmp_top[p]);
       }
     }
   }

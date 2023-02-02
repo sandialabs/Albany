@@ -167,10 +167,10 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   
-  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsTopSide(0);
   const auto& bot_nodes = node_dof_mgr->getGIDFieldOffsetsBotSide(0);
 
-  const auto& field_offsets_top = dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset2DField);
+  const auto& field_offsets_top = dof_mgr->getGIDFieldOffsetsTopSideBot(offset2DField);
   const auto& field_offsets_bot = dof_mgr->getGIDFieldOffsetsBotSide(offset2DField);
   const auto& field_offsets = fieldLevel==field_layer ? field_offsets_bot : field_offsets_top;
 

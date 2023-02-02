@@ -890,7 +890,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   const auto cellDim = p_dof_mgr->get_topology().getDimension();
   const auto numSideNodes = p_dof_mgr->get_topology().getNodeCount(cellDim-1,layers_data->bot_side_pos);
-  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
   const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
   const auto p_offsets   = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
 

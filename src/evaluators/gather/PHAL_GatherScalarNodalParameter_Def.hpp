@@ -124,7 +124,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Parameter dof numbering info
   const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
   const auto  sideDim = p->get_dof_mgr()->get_topology().getDimension()-1;
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSide(0);
   const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsBotSide(0);
   const auto& offsets_p = fieldLevel==fieldLayer ? offsets_bot : offsets_top;
   const int num_nodes_2d = offsets_p.size();
@@ -309,7 +309,7 @@ evaluateFields(typename Traits::EvalData workset)
   //       using offsets that correspond to the elem-side where the param is defined.
   //       Inside, loop over 2d nodes, and process top/bot sides separately
   const auto  sideDim = p_dof_mgr->get_topology().getDimension()-1;
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSide(0);
   const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsBotSide(0);
   const auto& offsets_p = fieldLevel==fieldLayer ? offsets_bot : offsets_top;
   const int num_nodes_2d = offsets_p.size();
@@ -554,7 +554,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Parameter dof numbering info
   const auto p_dof_mgr        = p->get_dof_mgr();
   const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSideBotOrdering(0);
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSide(0);
   const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsBotSide(0);
   const auto& offsets_p = fieldLevel==fieldLayer ? offsets_bot : offsets_top;
   const int num_nodes_2d = offsets_p.size();

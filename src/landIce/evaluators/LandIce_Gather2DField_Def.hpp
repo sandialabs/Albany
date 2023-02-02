@@ -98,7 +98,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
     const bool use_bot = field_layer==0;
     const auto& field_nodes = use_bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
-                                      : dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset);
+                                      : dof_mgr->getGIDFieldOffsetsTopSide(offset);
 
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
@@ -114,7 +114,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
       };
 
       // Run lambda on both top and bottom nodes in the cell
-      f(node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
+      f(node_dof_mgr->getGIDFieldOffsetsTopSide(0));
       f(node_dof_mgr->getGIDFieldOffsetsBotSide(0));
     }
   } else {
@@ -172,7 +172,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
     const bool use_bot = field_layer==0;
     const auto& field_nodes = use_bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
-                                      : dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset);
+                                      : dof_mgr->getGIDFieldOffsetsTopSide(offset);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
       const int basal_elem_LID = layers_data->getColumnId(elem_LID);
@@ -192,7 +192,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
       };
 
       // Run lambda for both bottom and top nodes of the cell
-      f(node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
+      f(node_dof_mgr->getGIDFieldOffsetsTopSide(0));
       f(node_dof_mgr->getGIDFieldOffsetsBotSide(0));
     }
   } else {
@@ -284,7 +284,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
     const bool use_bot = field_layer==0;
     const auto& field_nodes = use_bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
-                                      : dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(offset);
+                                      : dof_mgr->getGIDFieldOffsetsTopSide(offset);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
       const int basal_elem_LID = layers_data->getColumnId(elem_LID);
@@ -309,7 +309,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
       };
 
       // Run lambda on both top and bottom nodes in the cell
-      f(node_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(0));
+      f(node_dof_mgr->getGIDFieldOffsetsTopSide(0));
       f(node_dof_mgr->getGIDFieldOffsetsBotSide(0));
     }
   } else {

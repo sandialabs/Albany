@@ -1905,7 +1905,7 @@ STKDiscretization::computeSideSets()
           const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
 
           for (int eq=0; eq<neq; ++eq) {
-            const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsTopSideBotOrdering(eq);
+            const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsTopSide(eq);
             const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsBotSide(eq);
             const int numSideNodes = sol_top_offsets.size();
 
