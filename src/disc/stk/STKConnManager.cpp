@@ -268,7 +268,7 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
        // add connectivities: adjust for STK indexing craziness
        const auto cell_id = m_bulkData->identifier(element);
        for(LO i=0; i<cellIdCnt; ++i) {
-          m_connectivity.push_back(cellOffset+cellIdCnt*(cell_id-1));
+          m_connectivity.push_back(cellOffset+cellIdCnt*(cell_id-1)+i);
        }
        numIds += cellIdCnt;
     }
