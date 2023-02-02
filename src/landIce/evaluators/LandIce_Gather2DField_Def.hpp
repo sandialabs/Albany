@@ -210,8 +210,12 @@ evaluateFields (typename PHALTraits::EvalData workset)
       const int elem_LID = elem_lids(cell);
       const int side_pos = side.side_pos;
       
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
-      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
+      // Cannot as for getGIDFieldsOffsetsSide at side_pos, since we need top dofs parsed
+      // in same order as both dofs when we access the Fad derivatives
+      const auto& offsets = side_pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
+                                          : dof_mgr->getGIDFieldOffsetsTopSide(offset);
+      const auto& nodes = side_pos==bot ? node_dof_mgr->getGIDFieldOffsetsBotSide(0)
+                                        : node_dof_mgr->getGIDFieldOffsetsTopSide(0);
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
@@ -267,6 +271,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
 
   // Mesh data
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int   bot = layers_data->bot_side_pos;
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const auto x_data = Albany::getLocalData(workset.x);
@@ -327,8 +332,12 @@ evaluateFields (typename PHALTraits::EvalData workset)
       const int elem_LID = elem_lids(cell);
       const int side_pos = side.side_pos;
       
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
-      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
+      // Cannot as for getGIDFieldsOffsetsSide at side_pos, since we need top dofs parsed
+      // in same order as both dofs when we access the Fad derivatives
+      const auto& offsets = side_pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
+                                          : dof_mgr->getGIDFieldOffsetsTopSide(offset);
+      const auto& nodes = side_pos==bot ? node_dof_mgr->getGIDFieldOffsetsBotSide(0)
+                                        : node_dof_mgr->getGIDFieldOffsetsTopSide(0);
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);

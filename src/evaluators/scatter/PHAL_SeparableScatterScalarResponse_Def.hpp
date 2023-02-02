@@ -203,7 +203,10 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
         const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
         const int ilevel = pos==bot ? ilayer : ilayer+1;
         for (int eq=0; eq<neq; ++eq) {
-          const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos);
+          // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
+          //       be parsed in the same 2D order as the bot nodes
+          const auto& offsets = pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(eq)
+                                         : dof_mgr->getGIDFieldOffsetsTopSide(eq);
           const int numSideNodes = offsets.size();
           for (int i=0; i<numSideNodes; ++i) {
             int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;
@@ -770,7 +773,10 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
         const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
         const int ilevel = pos==bot ? ilayer : ilayer+1;
         for (int eq=0; eq<neq; ++eq) {
-          const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos);
+          // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
+          //       be parsed in the same 2D order as the bot nodes
+          const auto& offsets = pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(eq)
+                                         : dof_mgr->getGIDFieldOffsetsTopSide(eq);
           const int numSideNodes = offsets.size();
           for (int i=0; i<numSideNodes; ++i) {
             int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;
