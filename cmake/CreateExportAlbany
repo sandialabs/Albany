@@ -142,6 +142,10 @@ def run (bin_dir,install_lib_dir, cmake_generator):
         elif item.startswith("-l"):
             # It's either a -lXYZ lib or a link flag. Keep it as is.
             libs.append(item)
+        elif item.startswith("-") and not item.startswith("-L"):
+            # This is some funky link option (e.g., -mkl or -cxxlib with Intel).
+            # Simply add the item to the "libs" list
+            libs.append(item)
         elif item.startswith("-L"):
             # We want to get an abs path, with symlinks resolved (if any)
             lib_dir_full = pathlib.Path(item[2:]).resolve()
