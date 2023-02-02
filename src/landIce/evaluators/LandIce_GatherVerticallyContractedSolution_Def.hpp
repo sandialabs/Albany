@@ -76,7 +76,7 @@ GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits>
 void GatherVerticallyContractedSolution<EvalT, Traits>::
-computeQuadWeights(const Albany::LayeredMeshNumbering<LO>& layers_data)
+computeQuadWeights(const Teuchos::ArrayRCP<double>& layers_ratio)
 {
   if (quad_weights_computed) {
     return;
@@ -84,16 +84,15 @@ computeQuadWeights(const Albany::LayeredMeshNumbering<LO>& layers_data)
 
   // Get layered mesh numbering object
   TEUCHOS_TEST_FOR_EXCEPTION (
-      numLayers!=layers_data.numLayers, std::runtime_error,
+      numLayers!=layers_ratio.size(), std::runtime_error,
       "Error! Inpur discretization number of layers does not match the stored value.\n"
-      "  - disc num layers  : " << layers_data.numLayers << "\n"
+      "  - disc num layers  : " << layers_ratio.size() << "\n"
       "  - stored num layers: " << numLayers << "\n");
 
   if(op == VerticalSum){
     for (int i=0; i<=numLayers; ++i)
       quadWeights.host()(i) = 1.0;
   } else  { //Average
-    const auto& layers_ratio = layers_data.layers_ratio;
 
     quadWeights.host()(0) = 0.5*layers_ratio[0]; 
     quadWeights.host()(numLayers) = 0.5*layers_ratio[numLayers-1];
@@ -139,11 +138,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  // Get layered mesh numbering object
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(*layers_data);
+  computeQuadWeights(layers_ratio);
 
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
@@ -183,11 +181,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  // Get layered mesh numbering object
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(*layers_data);
+  computeQuadWeights(layers_ratio);
 
   const int neq = workset.disc->getNewDOFManager()->getNumFields();
   auto x_data = Albany::getDeviceData(workset.x);
@@ -237,11 +234,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  // Get layered mesh numbering object
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(*layers_data);
+  computeQuadWeights(layers_ratio);
 
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
@@ -282,11 +278,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  // Get layered mesh numbering object
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(*layers_data);
+  computeQuadWeights(layers_ratio);
 
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
@@ -358,11 +353,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  // Get layered mesh numbering object
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(*layers_data);
+  computeQuadWeights(layers_ratio);
 
   const int neq = workset.disc->getNewDOFManager()->getNumFields();
   auto x_data = Albany::getDeviceData(workset.x);

@@ -8,14 +8,11 @@
 #ifndef ALBANY_ABSTRACTMESHSTRUCT_HPP
 #define ALBANY_ABSTRACTMESHSTRUCT_HPP
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_ArrayRCP.hpp"
-#include "Teuchos_RCP.hpp"
-
 #include "Albany_CommTypes.hpp"
 
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_MeshSpecs.hpp"
+#include "Albany_LayeredMeshNumbering.hpp"
 
 #include "Shards_CellTopology.hpp"
 #include "Albany_Layouts.hpp"
@@ -23,58 +20,11 @@
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Adapt_NodalDataBase.hpp"
 
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_ArrayRCP.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
-
-enum class LayeredMeshOrdering
-{
-  LAYER  = 0,
-  COLUMN = 1
-};
-
-template <typename T>
-struct LayeredMeshNumbering {
-  int bot_side_pos;
-  int top_side_pos;
-
-  T stride;
-
-  LayeredMeshOrdering ordering;
-  Teuchos::ArrayRCP<double> layers_ratio;
-  T numLevels, numLayers;
-
-  LayeredMeshNumbering(const T _stride, const LayeredMeshOrdering _ordering, const Teuchos::ArrayRCP<double>& _layers_ratio){
-    stride = _stride;
-    ordering = _ordering;
-    layers_ratio= _layers_ratio;
-    numLayers = layers_ratio.size();
-    numLevels = numLayers+1;
-  }
-
-  T getId(const T column_id, const T level_index) const {
-      return  (ordering == LayeredMeshOrdering::LAYER) ?
-          column_id + level_index*stride :
-          column_id * stride + level_index;
-  }
-
-  void getIndices(const T id, T& column_id, T& level_index) const {
-    if(ordering == LayeredMeshOrdering::COLUMN)  {
-      level_index = id%stride;
-      column_id = id/stride;
-    } else {
-      level_index = id/stride;
-      column_id = id%stride;
-    }
-  }
-
-  T getColumnId (const T id) const {
-    return ordering==LayeredMeshOrdering::COLUMN ? id / stride : id % stride;
-  }
-
-  T getLayerId (const T id) const {
-    return ordering==LayeredMeshOrdering::COLUMN ? id % stride : id / stride;
-  }
-};
 
 struct AbstractMeshStruct {
 
@@ -118,7 +68,7 @@ struct AbstractMeshStruct {
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
-    Teuchos::RCP<LayeredMeshNumbering<LO> > local_node_layers_data;
+    Teuchos::ArrayRCP<double> mesh_layers_ratio;
 
     Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 

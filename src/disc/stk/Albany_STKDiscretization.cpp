@@ -1829,8 +1829,8 @@ STKDiscretization::computeSideSets()
   const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
   if (!cell_layers_data.is_null()) {
     const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
-    const unsigned int numLayers = cell_layers_data->numLayers;
-    const unsigned int numComps = getNewDOFManager()->getNumFields();
+    const int numLayers = cell_layers_data->numLayers;
+    const int numComps = getNewDOFManager()->getNumFields();
 
     // Determine maximum number of side nodes
     for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {

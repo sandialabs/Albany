@@ -72,8 +72,10 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
     iceMarginEdgesIds(iceMarginEdgesIds_),
     numLayers(numLayers_)
 {
-  auto LAYER  = LayeredMeshOrdering::LAYER;
-  auto COLUMN = LayeredMeshOrdering::COLUMN;
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  const     auto SIDE_RANK = metaData->side_rank();
+  constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
+  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
 
   Ordering = (ordering==0) ? LAYER : COLUMN;
 
@@ -105,25 +107,25 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   std::vector<std::string> nsNames;
   std::string nsn="lateral";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, NODE_RANK );
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="internal";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, NODE_RANK );
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="bottom";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, NODE_RANK );
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="dirichlet";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, NODE_RANK );
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
@@ -138,10 +140,10 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   ssNames.push_back(ssnBottom);
   ssNames.push_back(ssnTop);
   ssNames.push_back(ssnLatFloat);
-  ssPartVec[ssnLat] = & metaData->declare_part(ssnLat, metaData->side_rank() );
-  ssPartVec[ssnBottom] = & metaData->declare_part(ssnBottom, metaData->side_rank() );
-  ssPartVec[ssnTop] = & metaData->declare_part(ssnTop, metaData->side_rank() );
-  ssPartVec[ssnLatFloat] = & metaData->declare_part(ssnLatFloat, metaData->side_rank() );
+  ssPartVec[ssnLat] = & metaData->declare_part(ssnLat, SIDE_RANK );
+  ssPartVec[ssnBottom] = & metaData->declare_part(ssnBottom, SIDE_RANK );
+  ssPartVec[ssnTop] = & metaData->declare_part(ssnTop, SIDE_RANK );
+  ssPartVec[ssnLatFloat] = & metaData->declare_part(ssnLatFloat, SIDE_RANK );
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*ssPartVec[ssnLat]);
   stk::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
@@ -194,8 +196,11 @@ void MpasSTKMeshStruct::setBulkData(
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
-  auto LAYER  = LayeredMeshOrdering::LAYER;
-  auto COLUMN = LayeredMeshOrdering::COLUMN;
+  constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
+  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const     auto SIDE_RANK = metaData->side_rank();
 
   int elemColumnShift = (Ordering == COLUMN) ? 1 : globalTrianglesStride;
   int lElemColumnShift = (Ordering == COLUMN) ? 1 : indexToTriangleID.size();
@@ -209,15 +214,11 @@ void MpasSTKMeshStruct::setBulkData(
   int lEdgeColumnShift = (Ordering == COLUMN) ? 1 : indexToEdgeID.size();
   int edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
-  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
-  this->global_cell_layers_data = (Ordering==LAYER) ?
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(elemColumnShift,Ordering,layerThicknessRatio)):
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(static_cast<GO>(elemLayerShift),Ordering,layerThicknessRatio));
-
-  this->local_cell_layers_data = (Ordering==LAYER) ?
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(lElemColumnShift,Ordering,layerThicknessRatio)):
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(elemLayerShift,Ordering,layerThicknessRatio));
-
+  this->global_cell_layers_data =
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(globalTrianglesStride,numLayers,Ordering));
+  this->local_cell_layers_data =
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(indexToTriangleID.size(),numLayers,Ordering));
+  this->mesh_layers_ratio.resize(numLayers,1.0/numLayers);
 
   metaData->commit();
 
@@ -231,8 +232,8 @@ void MpasSTKMeshStruct::setBulkData(
 
   singlePartVec[0] = nsPartVec["bottom"];
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  auto proc_rank_field = fieldContainer->getProcRankField();
+  auto coordinates_field = fieldContainer->getCoordinatesField();
 
   for(int i=0; i< (numLayers+1)*static_cast<int>(indexToVertexID.size()); i++) {
     int ib = (Ordering == LAYER)*(i%lVertexColumnShift) + (Ordering == COLUMN)*(i/vertexLayerShift);
@@ -240,9 +241,9 @@ void MpasSTKMeshStruct::setBulkData(
 
     stk::mesh::Entity node;
     if(il == 0) {
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift*(indexToVertexID[ib]-1)+1, singlePartVec);
+      node = bulkData->declare_entity(NODE_RANK, il*vertexColumnShift+vertexLayerShift*(indexToVertexID[ib]-1)+1, singlePartVec);
     } else {
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift*(indexToVertexID[ib]-1)+1, nodePartVec);
+      node = bulkData->declare_entity(NODE_RANK, il*vertexColumnShift+vertexLayerShift*(indexToVertexID[ib]-1)+1, nodePartVec);
     }
 
     auto sharing_procs = procsSharingVertices[ib];
@@ -251,15 +252,18 @@ void MpasSTKMeshStruct::setBulkData(
     }
 
     double* coord = stk::mesh::field_data(*coordinates_field, node);
-    coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
+    coord[0] = verticesCoords[3*ib];
+    coord[1] = verticesCoords[3*ib+1];
+    coord[2] = double(il)/numLayers;
   }
 
   singlePartVec[0] = nsPartVec["dirichlet"];
   for(int i=0; i<static_cast<int>(dirichletNodesIds.size()); ++i) {
-    stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, dirichletNodesIds[i]);
+    stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, dirichletNodesIds[i]);
     bulkData->change_entity_parts(node, singlePartVec);
   }
 
+  // Add elements and elem-node connectivity
   auto elem_vs_indexer = Albany::createGlobalLocalIndexer(elem_vs);
   for (unsigned int i=0; i<elem_vs->localSubDim(); i++) {
     int ib = (Ordering == LAYER)*(i%(lElemColumnShift)) + (Ordering == COLUMN)*(i/(elemLayerShift));
@@ -276,9 +280,10 @@ void MpasSTKMeshStruct::setBulkData(
       prismGlobalIds[j + 3] = lowerId+vertexColumnShift;
     }
 
-    stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_vs_indexer->getGlobalElement(i) + 1, singlePartVec);
+    auto elemId = elem_vs_indexer->getGlobalElement(i);
+    auto elem = bulkData->declare_entity(ELEM_RANK, elemId + 1, singlePartVec);
     for (unsigned int j = 0; j < 6; j++) {
-      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
+      auto node = bulkData->get_entity(NODE_RANK, prismGlobalIds[j] + 1);
       bulkData->declare_relation(elem, node, j);
     }
     if(proc_rank_field){
@@ -298,10 +303,11 @@ void MpasSTKMeshStruct::setBulkData(
   const int basalSidePos = 3;
   const int upperSidePos = 4;
 
+  // Add basal sideset
   singlePartVec[0] = ssPartVec["basalside"];
   for (unsigned int i=0; i<indexToTriangleID.size(); ++i) {
-    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i], singlePartVec);
-    stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  (indexToTriangleID[i]-1)*elemLayerShift+1);
+    stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, indexToTriangleID[i], singlePartVec);
+    stk::mesh::Entity elem  = bulkData->get_entity(ELEM_RANK,  (indexToTriangleID[i]-1)*elemLayerShift+1);
     bulkData->declare_relation(elem, side,  basalSidePos);
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
     for(int j=0; j<3; ++j) {
@@ -314,8 +320,8 @@ void MpasSTKMeshStruct::setBulkData(
 
   singlePartVec[0] = ssPartVec["upperside"];
   for (unsigned int i=0; i<indexToTriangleID.size(); ++i) {
-    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToTriangleID[i]+upperBasalOffset, singlePartVec);
-    stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  (indexToTriangleID[i]-1)*elemLayerShift+(numLayers-1)*elemColumnShift+1);
+    stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, indexToTriangleID[i]+upperBasalOffset, singlePartVec);
+    stk::mesh::Entity elem  = bulkData->get_entity(ELEM_RANK,  (indexToTriangleID[i]-1)*elemLayerShift+(numLayers-1)*elemColumnShift+1);
     bulkData->declare_relation(elem, side,  upperSidePos);
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
     for(int j=0; j<3; ++j) {
@@ -359,10 +365,10 @@ void MpasSTKMeshStruct::setBulkData(
                           ((faceId1==bdPrismFaceIds[1])&&(faceId2==bdPrismFaceIds[0]))) ? 1 : 2;
 
       stk::mesh::EntityId sideId = edgeColumnShift*il+basalEdgeId+1 + upperBasalOffset;
-      stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
+      stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, sideId, singlePartVec);
 
       stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
-      stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId + 1);
+      stk::mesh::Entity elem = bulkData->get_entity(ELEM_RANK, prismId + 1);
       bulkData->declare_relation(elem, side, prismFaceLID);
 
       stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
@@ -378,7 +384,7 @@ void MpasSTKMeshStruct::setBulkData(
     int basalEdgeId = iceMarginEdgesIds[i]*edgeLayerShift;
     for(int il=0; il<numLayers; ++il) {
       int sideId = edgeColumnShift*il+basalEdgeId+1 + upperBasalOffset;
-      stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
+      stk::mesh::Entity side = bulkData->get_entity(SIDE_RANK, sideId);
       bulkData->change_entity_parts(side, singlePartVec);
     }
   }
@@ -391,7 +397,7 @@ void MpasSTKMeshStruct::setBulkData(
     int ib = (Ordering == LAYER)*(i%lVertexColumnShift) + (Ordering == COLUMN)*(i/vertexLayerShift);
     int il = (Ordering == LAYER)*(i/lVertexColumnShift) + (Ordering == COLUMN)*(i%vertexLayerShift);
 
-    stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift*(indexToVertexID[ib]-1)+1);
+    stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, il*vertexColumnShift+vertexLayerShift*(indexToVertexID[ib]-1)+1);
     int procID = vertexProcIDs[ib];
     if(bulkData->bucket(node).owned() && (procID != bulkData->parallel_rank()))
       node_to_proc.push_back(std::make_pair(node, procID));

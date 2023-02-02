@@ -64,7 +64,7 @@ protected:
     }
   }
 
-  void computeQuadWeights(const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering);
+  void computeQuadWeights(const Teuchos::ArrayRCP<double>& layers_ratio);
   void computeSideDOFOffsets (const Albany::DOFManager& dof_mgr);
 
   // Output:

@@ -36,26 +36,30 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                       const Teuchos::RCP<const Teuchos_Comm>& comm,
                       Teuchos::RCP<AbstractMeshStruct> inputBasalMesh,
 						          const int numParams)
- : GenericSTKMeshStruct(params, 3, numParams), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false)
+ : GenericSTKMeshStruct(params, 3, numParams)
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+ , periodic(false)
 {
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
   std::vector<std::string> nsNames;
   std::string nsn = "lateral";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
+  nsPartVec[nsn] = &metaData->declare_part(nsn, NODE_RANK);
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn = "bottom";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
+  nsPartVec[nsn] = &metaData->declare_part(nsn, NODE_RANK);
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn = "top";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
+  nsPartVec[nsn] = &metaData->declare_part(nsn, NODE_RANK);
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
@@ -92,16 +96,16 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
       stk::io::put_io_part_attribute(*ssPartVecLateral[partName]);
 #endif
     }
-    if(part->primary_entity_rank() == stk::topology::NODE_RANK) {
+    if(part->primary_entity_rank() == NODE_RANK) {
       std::string partName = "extruded_"+part->name();
       nsNames.push_back(partName);
-      nsPartVec[partName] = &metaData->declare_part(partName, stk::topology::NODE_RANK);
+      nsPartVec[partName] = &metaData->declare_part(partName, NODE_RANK);
 #ifdef ALBANY_SEACAS
       stk::io::put_io_part_attribute(*nsPartVec[partName]);
 #endif
       partName = "basal_"+part->name();
       nsNames.push_back(partName);
-      nsPartVec[partName] = &metaData->declare_part(partName, stk::topology::NODE_RANK);
+      nsPartVec[partName] = &metaData->declare_part(partName, NODE_RANK);
 #ifdef ALBANY_SEACAS
       stk::io::put_io_part_attribute(*nsPartVec[partName]);
 #endif
@@ -174,8 +178,7 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
      ebn, ebNameToIndex, this->interleavedOrdering));
 
   // Upon request, add a nodeset for each sideset
-  if (params->get<bool>("Build Node Sets From Side Sets",false))
-  {
+  if (params->get<bool>("Build Node Sets From Side Sets",false)) {
     this->addNodeSetsFromSideSets ();
   }
 
@@ -219,6 +222,10 @@ void ExtrudedSTKMeshStruct::setBulkData(
     const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  const     auto SIDE_RANK = metaData->side_rank();
+
   // Finish to set up the basal mesh
   Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
   dummy_sis->createNodalDataBase();
@@ -227,8 +234,8 @@ void ExtrudedSTKMeshStruct::setBulkData(
 
   this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_sis, worksetSize);
 
-  LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
-  LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
+  constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
+  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
 
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
 
@@ -248,20 +255,15 @@ void ExtrudedSTKMeshStruct::setBulkData(
   for (int i = 0; i < numLayers; i++)
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
 
-  /*std::cout<< "Levels: ";
-  for (int i = 0; i < numLayers+1; i++)
-    std::cout<< levelsNormalizedThickness[i] << " ";
-  std::cout<< "\n";*/
-
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData2D.universal_part()) & stk::mesh::Selector(metaData2D.locally_owned_part());
 
   stk::mesh::Selector select_overlap_in_part = stk::mesh::Selector(metaData2D.universal_part()) & (stk::mesh::Selector(metaData2D.locally_owned_part()) | stk::mesh::Selector(metaData2D.globally_shared_part()));
 
   std::vector<stk::mesh::Entity> cells2D;
-  stk::mesh::get_selected_entities(select_overlap_in_part, bulkData2D.buckets(stk::topology::ELEMENT_RANK), cells2D);
+  stk::mesh::get_selected_entities(select_overlap_in_part, bulkData2D.buckets(ELEM_RANK), cells2D);
 
   std::vector<stk::mesh::Entity> nodes2D;
-  stk::mesh::get_selected_entities(select_overlap_in_part, bulkData2D.buckets(stk::topology::NODE_RANK), nodes2D);
+  stk::mesh::get_selected_entities(select_overlap_in_part, bulkData2D.buckets(NODE_RANK), nodes2D);
 
   // For sides, use the 'select_owned_in_part', since boundary sides should belong to just one rank.
   // This for sure eliminate the risk of finding a side with only one element connected, but that is
@@ -271,65 +273,43 @@ void ExtrudedSTKMeshStruct::setBulkData(
   std::vector<stk::mesh::Entity> sides2D;
   stk::mesh::get_selected_entities(select_owned_in_part, bulkData2D.buckets(metaData2D.side_rank()), sides2D);
 
-  //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << globalVerticesStride<< " " << maxGlobalSides2D << std::endl;
-
   Teuchos::Array<Tpetra_GO> indices(nodes2D.size());
-  for (size_t i = 0; i < nodes2D.size(); ++i)
-  {
+  for (size_t i = 0; i < nodes2D.size(); ++i) {
     indices[i] = bulkData2D.identifier(nodes2D[i]) - 1;
   }
-  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
+  auto nodes_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
   indices.resize(cells2D.size());
-  for (size_t i=0; i<cells2D.size(); ++i)
-  {
+  for (size_t i=0; i<cells2D.size(); ++i) {
     indices[i] = bulkData2D.identifier(cells2D[i]) -1;
   }
-  Teuchos::RCP<const Tpetra_Map> cells_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
+  auto cells_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
   indices.resize(sides2D.size());
-  for (size_t i=0; i<sides2D.size(); ++i)
-  {
+  for (size_t i=0; i<sides2D.size(); ++i) {
     indices[i] = bulkData2D.identifier(sides2D[i]) -1;
   }
-  Teuchos::RCP<const Tpetra_Map> sides_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
+  auto sides_map = Tpetra::createNonContigMapWithNode<LO, Tpetra_GO, KokkosNode>(indices(),comm);
 
-  GO globalElemStride     = cells_map->getMaxAllGlobalIndex() + 1;
-  GO globalVerticesStride = nodes_map->getMaxAllGlobalIndex() + 1;
-  GO globalSidesStride    = sides_map->getMaxAllGlobalIndex() + 1;
+  const GO maxGlobalCells2dId = cells_map->getMaxAllGlobalIndex() + 1;
+  const GO maxGlobalNodes2dId = nodes_map->getMaxAllGlobalIndex() + 1;
+  const GO maxGlobalSides2dId = sides_map->getMaxAllGlobalIndex() + 1;
 
-  GO elemColumnShift     = (Ordering == COLUMN) ? 1 : globalElemStride;
-  int lElemColumnShift   = (Ordering == COLUMN) ? 1 : cells2D.size();
-  int elemLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
+  const LO numLocalCells2D = cells2D.size();
+  const LO numLocalNodes2D = nodes2D.size();
+  const LO numLocalSides2D = sides2D.size();
 
-  GO vertexColumnShift   = (Ordering == COLUMN) ? 1 : globalVerticesStride;
-  int lVertexColumnShift = (Ordering == COLUMN) ? 1 : nodes2D.size();
-  int vertexLayerShift   = (Ordering == LAYER)  ? 1 : numLayers + 1;
-
-  GO sideColumnShift     = (Ordering == COLUMN) ? 1 : globalSidesStride;
-  int lsideColumnShift   = (Ordering == COLUMN) ? 1 : sides2D.size();
-  int sideLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
-
-  auto local_elem_stride = (Ordering==LAYER) ? lElemColumnShift : elemLayerShift;
-  auto local_node_stride = (Ordering==LAYER) ? lVertexColumnShift : vertexLayerShift;
-  auto global_elem_stride = (Ordering==LAYER) ? elemColumnShift : elemLayerShift;
-
+  this->mesh_layers_ratio = layerThicknessRatio;
   this->global_cell_layers_data = 
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(global_elem_stride,Ordering,layerThicknessRatio));
-
+      Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalCells2dId+1,numLayers,Ordering));
   this->local_cell_layers_data =
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(local_elem_stride,Ordering,layerThicknessRatio));
-
-  this->local_node_layers_data = 
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(local_node_stride,Ordering,layerThicknessRatio));
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));
 
   // Shards has both Hexa and Wedge with bot and top in the last two side positions
   this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
   this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
   this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
-  this->local_node_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-  this->local_node_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
 
   auto& vec_states = fieldContainer->getMeshVectorStates();
   auto& int_states = fieldContainer->getMeshScalarIntegerStates();
@@ -339,12 +319,11 @@ void ExtrudedSTKMeshStruct::setBulkData(
   for(size_t i=0; i< ltr.size(); ++i) {
     ltr[i]=layerThicknessRatio[i];
   }
-
   vec_states["layer_thickness_ratio"] = ltr;
-  int_states["ordering"] = static_cast<int>(Ordering);
-  int_states["local_elem_stride"] = local_elem_stride;
-  int_states["local_node_stride"] = local_node_stride;
-  int64_states["global_elem_stride"] = global_elem_stride;
+  int_states["ordering"] = Ordering==LAYER ? 0 : 1;
+  int_states["num_layers"] = numLayers;
+  int64_states["max_2d_elem_gid"] = maxGlobalCells2dId;
+  int64_states["max_2d_node_gid"] = maxGlobalNodes2dId;
 
   metaData->commit();
 
@@ -362,33 +341,34 @@ void ExtrudedSTKMeshStruct::setBulkData(
   singlePartVecTop[0] = nsPartVec["top"];
   singlePartVecLateral[0] = nsPartVec["lateral"];
 
-  typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
+  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
 
   // Fields required for extrusion
   std::string thickness_name = params->get<std::string>("Thickness Field Name","thickness");
   std::string surface_height_name = params->get<std::string>("Surface Height Field Name","surface_height");
 
-  ScalarFieldType* surface_height_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, surface_height_name);
-  ScalarFieldType* thickness_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, thickness_name);
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-  VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-  stk::mesh::FieldBase const* coordinates_field2d = metaData2D.coordinate_field();
-
-  std::vector<GO> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
+  auto surface_height_field = metaData2D.get_field<SFT>(NODE_RANK, surface_height_name);
+  auto thickness_field = metaData2D.get_field<SFT>(NODE_RANK, thickness_name);
+  auto proc_rank_field = fieldContainer->getProcRankField();
+  auto coordinates_field = fieldContainer->getCoordinatesField();
+  auto coordinates_field2d = metaData2D.coordinate_field();
 
   double *thick_val, *sHeight_val;
 
   int num_nodes = (numLayers + 1) * nodes2D.size();
+
   *out << "[ExtrudedSTKMesh] Adding nodes... ";
   out->getOStream()->flush();
+
+  LayeredMeshNumbering<LO> node_layers_data_LO (numLocalNodes2D,numLayers+1,Ordering);
+  LayeredMeshNumbering<GO> node_layers_data_GO (maxGlobalNodes2dId+1,numLayers+1,Ordering);
   for (int i = 0; i < num_nodes; i++) {
-    int ib = (Ordering == LAYER) * (i % lVertexColumnShift) + (Ordering == COLUMN) * (i / vertexLayerShift);
-    int il = (Ordering == LAYER) * (i / lVertexColumnShift) + (Ordering == COLUMN) * (i % vertexLayerShift);
+    int ib = node_layers_data_LO.getColumnId(i);
+    int il = node_layers_data_LO.getLayerId(i);
     stk::mesh::Entity node;
     stk::mesh::Entity node2d = nodes2D[ib];
     stk::mesh::EntityId node2dId = bulkData2D.identifier(node2d) - 1;
-    GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
+    GO nodeId = node_layers_data_GO.getId(node2dId,il) + 1;
     if (il == 0)
       node = bulkData->declare_node(nodeId, singlePartVecBottom);
     else if (il == numLayers)
@@ -420,27 +400,26 @@ void ExtrudedSTKMeshStruct::setBulkData(
   *out << "[ExtrudedSTKMesh] Adding elements... ";
   out->getOStream()->flush();
   GO num_cells = cells2D.size() * numLayers;
+  std::vector<GO> prismGlobalIds(2 * NumBaseElemeNodes);
+
   for (int i = 0; i < num_cells; i++) {
+    int ib = local_cell_layers_data->getColumnId(i);
+    int il = local_cell_layers_data->getLayerId(i);
+    GO cell2dId = bulkData2D.identifier(cells2D[ib])-1;
 
-    int ib = (Ordering == LAYER) * (i % lElemColumnShift) + (Ordering == COLUMN) * (i / elemLayerShift);
-    int il = (Ordering == LAYER) * (i / lElemColumnShift) + (Ordering == COLUMN) * (i % elemLayerShift);
-    int shift = il * vertexColumnShift;
-
-    //TODO: this could be done only in the first layer and then copied into the other layers
     stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[ib]);
     for (int j = 0; j < NumBaseElemeNodes; j++) {
       stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
-      stk::mesh::EntityId mpasLowerId = vertexLayerShift * node2dId;
-      stk::mesh::EntityId lowerId = shift + vertexLayerShift * node2dId;
-      prismMpasIds[j] = mpasLowerId;
+      stk::mesh::EntityId lowerId = node_layers_data_GO.getId(node2dId,il);
+
       prismGlobalIds[j] = lowerId;
-      prismGlobalIds[j + NumBaseElemeNodes] = lowerId + vertexColumnShift;
+      prismGlobalIds[j + NumBaseElemeNodes] = node_layers_data_GO.getId(node2dId,il+1);
     }
 
-    stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (bulkData2D.identifier(cells2D[ib]) - 1);
+    stk::mesh::EntityId prismId = global_cell_layers_data->getId(cell2dId,il);
     stk::mesh::Entity elem = bulkData->declare_element(prismId + 1, singlePartVec);
     for (int j = 0; j < 2 * NumBaseElemeNodes; j++) {
-      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
+      stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, prismGlobalIds[j] + 1);
       bulkData->declare_relation(elem, node, j);
     }
     if(proc_rank_field){
@@ -479,8 +458,9 @@ void ExtrudedSTKMeshStruct::setBulkData(
   out->getOStream()->flush();
   for (const auto& elem2d : cells2D) {
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
-    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), elem2d_id + 1, singlePartVec);
-    stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, elem2d_id * elemLayerShift + 1);
+    stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, elem2d_id + 1, singlePartVec);
+    stk::mesh::EntityId elem3d_id = global_cell_layers_data->getId(elem2d_id,0);
+    stk::mesh::Entity elem = bulkData->get_entity(ELEM_RANK, elem3d_id + 1);
     bulkData->declare_relation(elem, side, basalSideLID);
 
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
@@ -495,14 +475,15 @@ void ExtrudedSTKMeshStruct::setBulkData(
 
   singlePartVec[0] = ssPartVec["upperside"];
 
-  GO upperBasalOffset = globalElemStride;
+  GO upperBasalOffset = maxGlobalCells2dId+1;
 
   *out << "[ExtrudedSTKMesh] Adding upperside sides... ";
   out->getOStream()->flush();
   for (const auto& elem2d : cells2D) {
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
-    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), elem2d_id + upperBasalOffset + 1, singlePartVec);
-    stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, elem2d_id * elemLayerShift + (numLayers - 1) * elemColumnShift + 1);
+    stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, elem2d_id + upperBasalOffset + 1, singlePartVec);
+    stk::mesh::EntityId elem3d_id = global_cell_layers_data->getId(elem2d_id,numLayers-1);
+    stk::mesh::Entity elem = bulkData->get_entity(ELEM_RANK, elem3d_id+1);
     bulkData->declare_relation(elem, side, upperSideLID);
 
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
@@ -519,13 +500,15 @@ void ExtrudedSTKMeshStruct::setBulkData(
 
   //The following two arrays have being computed offline using the computeMap function in .hpp file.
 
-  upperBasalOffset += globalElemStride;
+  upperBasalOffset += maxGlobalCells2dId+1;
 
   *out << "[ExtrudedSTKMesh] Adding lateral sides... ";
   out->getOStream()->flush();
   int num_sides = sides2D.size() * numLayers;
+  LayeredMeshNumbering<LO> side_layers_data_LO(numLocalSides2D,numLayers,Ordering);
+  LayeredMeshNumbering<GO> side_layers_data_GO(maxGlobalSides2dId+1,numLayers,Ordering);
   for (int i = 0; i < num_sides; i++) {
-    int ib = (Ordering == LAYER) * (i % lsideColumnShift) + (Ordering == COLUMN) * (i / sideLayerShift);
+    int ib = side_layers_data_LO.getColumnId(i);
     // if(!isBoundaryside[ib]) continue; //WARNING: assuming that all the edges stored are boundary edges!!
 
     stk::mesh::Entity side2d = sides2D[ib];
@@ -540,17 +523,17 @@ void ExtrudedSTKMeshStruct::setBulkData(
     stk::mesh::Entity const* rel = bulkData2D.begin_elements(side2d);
     stk::mesh::ConnectivityOrdinal const* ordinals = bulkData2D.begin_element_ordinals(side2d);
 
-    int il = (Ordering == LAYER) * (i / lsideColumnShift) + (Ordering == COLUMN) * (i % sideLayerShift);
+    int il = side_layers_data_LO.getLayerId(i);
     stk::mesh::Entity elem2d = rel[0];
     stk::mesh::EntityId sideLID = ordinals[0]; //bulkData2D.identifier(rel[0]);
 
     stk::mesh::EntityId basalElemId = bulkData2D.identifier(elem2d) - 1;
     stk::mesh::EntityId side2dId = bulkData2D.identifier(side2d) - 1;
-    stk::mesh::EntityId sideId = sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1;
-    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), sideId, singlePartVec);
+    stk::mesh::EntityId sideId = side_layers_data_GO.getId(side2dId,il) + upperBasalOffset + 1;
+    stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, sideId, singlePartVec);
 
-    stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * basalElemId;
-    stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId + 1);
+    stk::mesh::EntityId prismId = global_cell_layers_data->getId(basalElemId,il);
+    stk::mesh::Entity elem = bulkData->get_entity(ELEM_RANK, prismId + 1);
     bulkData->declare_relation(elem, side, sideLID);
 
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
@@ -570,8 +553,8 @@ void ExtrudedSTKMeshStruct::setBulkData(
     for (const auto& side2D : sides2D) {
       const stk::mesh::EntityId side2dId = bulkData2D.identifier(side2D) - 1;
       for (int il=0; il<numLayers; ++il) {
-        stk::mesh::EntityId sideId = sideColumnShift * il + side2dId * sideLayerShift + upperBasalOffset + 1;
-        stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
+        stk::mesh::EntityId sideId = side_layers_data_GO.getId(side2dId,il) + upperBasalOffset;
+        stk::mesh::Entity side = bulkData->get_entity(SIDE_RANK, sideId+1);
         bulkData->change_entity_parts(side, singlePartVec);
       }
     }
@@ -581,22 +564,22 @@ void ExtrudedSTKMeshStruct::setBulkData(
   std::vector<stk::mesh::Entity> boundaryNodes2D;
   std::vector<stk::mesh::Entity> nodes;
   for (auto part:nodepartvec) {
-    if(part->primary_entity_rank() != stk::topology::NODE_RANK) {
+    if(part->primary_entity_rank() != NODE_RANK) {
       continue;
     }
-    stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(stk::topology::NODE_RANK), boundaryNodes2D);
+    stk::mesh::get_selected_entities(stk::mesh::Selector(*part), bulkData2D.buckets(NODE_RANK), boundaryNodes2D);
     singlePartVecLateral[0] = nsPartVec["extruded_"+part->name()];
     singlePartVecBottom[0] = nsPartVec["basal_"+part->name()];
 
     for (const auto& node2D : boundaryNodes2D) {
       const stk::mesh::EntityId node2dId = bulkData2D.identifier(node2D) - 1;
       for (int il=0; il<(numLayers+1); ++il) {
-        const GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
-        stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
+        const GO nodeId = node_layers_data_GO.getId(node2dId,il);
+        stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, nodeId+1);
         bulkData->change_entity_parts(node, singlePartVecLateral);
       }
-      const GO nodeId = vertexLayerShift * node2dId + 1;
-      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, nodeId);
+      const GO nodeId = node_layers_data_GO.getId(node2dId,0);
+      stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, nodeId+1);
       bulkData->change_entity_parts(node, singlePartVecBottom);
     }
   }
@@ -605,8 +588,8 @@ void ExtrudedSTKMeshStruct::setBulkData(
   out->getOStream()->flush();
 
   // Extrude fields
-  extrudeBasalFields (nodes2D,cells2D,globalElemStride,globalVerticesStride);
-  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,globalElemStride,globalVerticesStride);
+  extrudeBasalFields (nodes2D,cells2D,maxGlobalCells2dId,maxGlobalNodes2dId);
+  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalCells2dId,maxGlobalNodes2dId);
 
   // Loading required input fields from file
   this->loadRequiredInputFields (comm);
@@ -637,7 +620,7 @@ void ExtrudedSTKMeshStruct::setBulkData(
     stk::mesh::Entity node2d;
     stk::mesh::EntityId nodeId;
     for (size_t i=0; i<nodes2D.size(); ++i) {
-      node2d = bulkData2D.get_entity(stk::topology::NODE_RANK, i + 1);
+      node2d = bulkData2D.get_entity(NODE_RANK, i + 1);
       nodeId = bulkData2D.identifier(nodes2D[i]);
 
       double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
@@ -694,20 +677,23 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
     return;
   }
 
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  const     auto SIDE_RANK = metaData->side_rank();
+
   // Extract 2D cells
   stk::mesh::Selector selector = stk::mesh::Selector(basalMeshStruct->metaData->locally_owned_part());
   std::vector<stk::mesh::Entity> cells2D;
-  stk::mesh::get_selected_entities(selector, basalMeshStruct->bulkData->buckets(stk::topology::ELEM_RANK), cells2D);
+  stk::mesh::get_selected_entities(selector, basalMeshStruct->bulkData->buckets(ELEM_RANK), cells2D);
 
   // If the mesh is already partitioned, this can happen...
   if (cells2D.size()==0)
     return;
 
-  const stk::topology::rank_t SIDE_RANK = metaData->side_rank();
   typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
   typedef AbstractSTKFieldContainer::IntVectorFieldType IVFT;
-  ISFT* side_to_cell_map   = basalMeshStruct->metaData->get_field<ISFT> (stk::topology::ELEM_RANK, "side_to_cell_map");
-  IVFT* side_nodes_ids_map = basalMeshStruct->metaData->get_field<IVFT> (stk::topology::ELEM_RANK, "side_nodes_ids");
+  ISFT* side_to_cell_map   = basalMeshStruct->metaData->get_field<ISFT> (ELEM_RANK, "side_to_cell_map");
+  IVFT* side_nodes_ids_map = basalMeshStruct->metaData->get_field<IVFT> (ELEM_RANK, "side_nodes_ids");
   int num_nodes = basalMeshStruct->bulkData->num_nodes(cells2D[0]);
   int* cell3D_id;
   int* side_nodes_ids;
@@ -717,8 +703,7 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
   const stk::mesh::Entity* side_cells;
   std::vector<stk::mesh::EntityId> cell2D_nodes_ids(num_nodes), side3D_nodes_ids(num_nodes);
   std::vector<stk::mesh::EntityId> original_nodes_ids(num_nodes);
-  for (const auto& cell2D : cells2D)
-  {
+  for (const auto& cell2D : cells2D) {
     // Get the stk field data
     cell3D_id      = stk::mesh::field_data(*side_to_cell_map, cell2D);
     side_nodes_ids = stk::mesh::field_data(*side_nodes_ids_map, cell2D);
@@ -729,7 +714,7 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
 
     // Safety check
     TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side3D)!=1, std::logic_error,
-                                "Error! Side " << side3D_GID << " has more/less than 1 adjacent element.\n");
+        "Error! Side " << side3D_GID << " has more/less than 1 adjacent element.\n");
 
     side_cells = bulkData->begin_elements(side3D);
     stk::mesh::Entity cell3D = side_cells[0];
@@ -742,8 +727,7 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
     // Now we determine the lid of the side within the element and also the node ordering
     cell2D_nodes = basalMeshStruct->bulkData->begin_nodes(cell2D);
     side3D_nodes = bulkData->begin_nodes(side3D);
-    for (int i(0); i<num_nodes; ++i)
-    {
+    for (int i(0); i<num_nodes; ++i) {
       cell2D_nodes_ids[i] = basalMeshStruct->bulkData->identifier(cell2D_nodes[i]);
       side3D_nodes_ids[i] = bulkData->identifier(side3D_nodes[i]);
       // Need to recover the "original" (basal) node id that generated the extrude mesh
@@ -751,8 +735,7 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
       original_nodes_ids[i] = ((bulkData->identifier(side3D_nodes[i]) -1) / (numLayers + 1)) + 1;
     }
 
-    for (int i(0); i<num_nodes; ++i)
-    {
+    for (int i(0); i<num_nodes; ++i) {
       auto it = std::find(cell2D_nodes_ids.begin(),cell2D_nodes_ids.end(),original_nodes_ids[i]);
       sideNodeMap[side3D_GID][i] = std::distance(cell2D_nodes_ids.begin(),it);
       side_nodes_ids[std::distance(cell2D_nodes_ids.begin(),it)] = side3D_nodes_ids[i];
@@ -795,9 +778,9 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
   //       a vector layered field is stored as a tensor field.
 
   // Typedefs
-  typedef AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef AbstractSTKFieldContainer::VectorFieldType VFT;
-  typedef AbstractSTKFieldContainer::TensorFieldType TFT;
+  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
+  using VFT = AbstractSTKFieldContainer::VectorFieldType;
+  using TFT = AbstractSTKFieldContainer::TensorFieldType;
 
   // Utility constants
   const int numNodes2d = nodes2d.size();
@@ -814,7 +797,9 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
   int il0,il1;
   double h0;
 
-  LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
 
   std::string ranks[4] = {"ERROR!","Scalar","Vector","Tensor"};
   std::vector<double> fieldLayersCoords;
@@ -834,6 +819,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
     return stk::mesh::field_data(*field3d,entity3d);
   };
 
+  LayeredMeshNumbering<GO> node_layers_data_GO(maxGlobalNodes2dId+1,numLayers+1,Ordering);
   // Interpolate node fields
   for (int ifield=0; ifield<numNodeFields; ++ifield) {
     const auto& fname = node_fields_names[ifield];
@@ -860,13 +846,13 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       switch (frank) {
         case 1:
         {
-          VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, fname);
+          VFT* field2d = metaData2d.get_field<VFT>(NODE_RANK, fname);
           values2d = get_data_2d(fname,field2d,node2d);
           break;
         }
         case 2:
         {
-          TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, fname);
+          TFT* field2d = metaData2d.get_field<TFT>(NODE_RANK, fname);
           numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
           values2d = get_data_2d(fname,field2d,node2d);
           break;
@@ -878,8 +864,8 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       // Loop on the layers
       for (int il=0; il<=numLayers; ++il) {
         // Retrieve 3D node
-        int node3dId = Ordering==COLUMN ? node2dId*(numLayers+1) + il + 1 : il*maxGlobalNodes2dId + node2dId + 1;
-        stk::mesh::Entity node3d = bulkData->get_entity(stk::topology::NODE_RANK, node3dId);
+        GO node3dId = node_layers_data_GO.getId(node2dId,il);
+        stk::mesh::Entity node3d = bulkData->get_entity(NODE_RANK, node3dId+1);
 
         // Find where the mesh layer stands in the field layers
         double meshLayerCoord = levelsNormalizedThickness[il];
@@ -904,14 +890,14 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
         switch (frank) {
           case 1:
           {
-            SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, fname);
+            SFT* field3d = metaData->get_field<SFT> (NODE_RANK, fname);
             values3d = get_data_3d(fname,field3d,node3d);
             values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
             break;
           }
           case 2:
           {
-            VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, fname);
+            VFT* field3d = metaData->get_field<VFT> (NODE_RANK, fname);
             values3d = get_data_3d(fname,field3d,node3d);
             for (int j=0; j<numScalars/numFieldLayers; ++j)
               values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
@@ -949,14 +935,14 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       switch (frank) {
         case 1:
         {
-          VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, fname);
+          VFT* field2d = metaData2d.get_field<VFT>(ELEM_RANK, fname);
           values2d = get_data_2d(fname,field2d,cell2d);
           values2d = stk::mesh::field_data(*field2d,cell2d);
           break;
         }
         case 2:
         {
-          TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, fname);
+          TFT* field2d = metaData2d.get_field<TFT>(ELEM_RANK, fname);
           numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
           values2d = get_data_2d(fname,field2d,cell2d);
           break;
@@ -968,8 +954,8 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       // Loop on the layers
       for (int il=0; il<numLayers; ++il) {
         // Retrieving the id of the 3d cells
-        stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il : maxGlobalCells2dId*il + cell2dId;
-        auto cell3d = bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1);
+        GO prismId = global_cell_layers_data->getId(cell2dId,il);
+        auto cell3d = bulkData->get_entity(ELEM_RANK, prismId+1);
 
         // Since the
         double meshLayerCoord = 0.5*(levelsNormalizedThickness[il] + levelsNormalizedThickness[il+1]);
@@ -995,7 +981,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
         switch (frank) {
           case 1:
           {
-            SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+            SFT* field3d = metaData->get_field<SFT> (ELEM_RANK, cell_fields_names[ifield]);
 
             values3d = get_data_3d(fname,field3d,cell3d);
             values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
@@ -1003,7 +989,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
           }
           case 2:
           {
-            VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+            VFT* field3d = metaData->get_field<VFT> (ELEM_RANK, cell_fields_names[ifield]);
             values3d = get_data_3d(fname,field3d,cell3d);
             for (int j=0; j<numScalars; ++j)
               values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
@@ -1056,9 +1042,13 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
   // Utility constants
   const int  numNodeFields = node_fields_names.size();
   const int  numCellFields = cell_fields_names.size();
-  const auto COLUMN = LayeredMeshOrdering::COLUMN;
+
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
 
   // Extrude node fields
+  LayeredMeshNumbering<GO> node_layers_data_GO(maxGlobalNodes2dId+1,numLayers+1,Ordering);
   for (int ifield=0; ifield<numNodeFields; ++ifield) {
     const auto& fname = node_fields_names[ifield];
     // Generic lambda, to avoid rewrite same code 3 times...
@@ -1077,8 +1067,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         const int numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
         for (int il=0; il<=numLayers; ++il) {
           // Retrieve 3D node
-          int node3dId = Ordering==COLUMN ? node2dId*(numLayers+1)+il+1 : il*maxGlobalNodes2dId+node2dId + 1;
-          stk::mesh::Entity node3d = bulkData->get_entity(stk::topology::NODE_RANK, node3dId);
+          GO node3dId = node_layers_data_GO.getId(node2dId,il);
+          stk::mesh::Entity node3d = bulkData->get_entity(NODE_RANK, node3dId+1);
 
           auto values3d = stk::mesh::field_data(*field3d,node3d);
           for (int j=0; j<numScalars; ++j)
@@ -1092,8 +1082,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         *out << "  - Extruding Scalar Node field " << fname << "...";
         out->getOStream()->flush();
 
-        SFT* field2d = metaData2d.get_field<SFT>(stk::topology::NODE_RANK, fname);
-        SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, fname);
+        SFT* field2d = metaData2d.get_field<SFT>(NODE_RANK, fname);
+        SFT* field3d = metaData->get_field<SFT> (NODE_RANK, fname);
 
         extrude(field2d, field3d);
         break;
@@ -1103,8 +1093,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         *out << "  - Extruding Vector Node field " << fname << "...";
         out->getOStream()->flush();
 
-        VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, fname);
-        VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, fname);
+        VFT* field2d = metaData2d.get_field<VFT>(NODE_RANK, fname);
+        VFT* field3d = metaData->get_field<VFT> (NODE_RANK, fname);
 
         extrude(field2d, field3d);
         break;
@@ -1114,8 +1104,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         *out << "  - Extruding Tensor Node field " << fname << "...";
         out->getOStream()->flush();
 
-        TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, fname);
-        TFT* field3d = metaData->get_field<TFT> (stk::topology::NODE_RANK, fname);
+        TFT* field2d = metaData2d.get_field<TFT>(NODE_RANK, fname);
+        TFT* field3d = metaData->get_field<TFT> (NODE_RANK, fname);
 
         extrude(field2d, field3d);
         break;
@@ -1145,8 +1135,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         const int numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
         for (int il=0; il<numLayers; ++il) {
           // Retrieving the id of the 3d cells
-          stk::mesh::EntityId cell3dId = Ordering==COLUMN ? numLayers*cell2dId + il : maxGlobalCells2dId*il + cell2dId;
-          const auto cell3d = bulkData->get_entity(stk::topology::ELEMENT_RANK, cell3dId+1);
+          GO cell3dId = global_cell_layers_data->getId(cell2dId,il);
+          const auto cell3d = bulkData->get_entity(ELEM_RANK, cell3dId+1);
 
           // Stuffing the 3d field
           auto values3d = stk::mesh::field_data(*field3d,cell3d);
@@ -1161,8 +1151,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         *out << "  - Extruding Scalar Elem field " << fname << "...";
         out->getOStream()->flush();
 
-        SFT* field2d = metaData2d.get_field<SFT>(stk::topology::ELEMENT_RANK, fname);
-        SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, fname);
+        SFT* field2d = metaData2d.get_field<SFT>(ELEM_RANK, fname);
+        SFT* field3d = metaData->get_field<SFT> (ELEM_RANK, fname);
 
         extrude(field2d,field3d);
         break;
@@ -1172,8 +1162,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         *out << "  - Extruding Vector Elem field " << fname << "...";
         out->getOStream()->flush();
 
-        VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, fname);
-        VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, fname);
+        VFT* field2d = metaData2d.get_field<VFT>(ELEM_RANK, fname);
+        VFT* field3d = metaData->get_field<VFT> (ELEM_RANK, fname);
 
         extrude(field2d,field3d);
         break;
@@ -1183,8 +1173,8 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         *out << "  - Extruding Tensor Elem field " << fname << "...";
         out->getOStream()->flush();
 
-        TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, fname);
-        TFT* field3d = metaData->get_field<TFT> (stk::topology::ELEMENT_RANK, fname);
+        TFT* field2d = metaData2d.get_field<TFT>(ELEM_RANK, fname);
+        TFT* field3d = metaData->get_field<TFT> (ELEM_RANK, fname);
 
         extrude(field2d,field3d);
         break;

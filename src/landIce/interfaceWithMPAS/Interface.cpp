@@ -124,11 +124,10 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   *MPAS_dt =  deltat;
 
-  Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->global_cell_layers_data->layers_ratio;
+  Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->mesh_layers_ratio;
   for (int i = 0; i < nLayers; i++) {
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
   }
-  meshStruct->local_cell_layers_data->layers_ratio = meshStruct->global_cell_layers_data->layers_ratio;
 
   using VectorFieldType = Albany::AbstractSTKFieldContainer::VectorFieldType;
   using ScalarFieldType = Albany::AbstractSTKFieldContainer::ScalarFieldType;

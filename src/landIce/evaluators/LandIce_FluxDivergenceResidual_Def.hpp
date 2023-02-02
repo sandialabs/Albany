@@ -71,7 +71,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 
   // Mesh data
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const auto& layersRatio = layers_data->layers_ratio;
+  const auto& layersRatio = workset.disc->getMeshStruct()->mesh_layers_ratio;
   const int   numLayers = layers_data->numLayers;
   const int   lastLayer = numLayers-1;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);

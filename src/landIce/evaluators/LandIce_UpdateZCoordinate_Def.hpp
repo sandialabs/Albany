@@ -81,7 +81,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = layers_data->layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
   const int   numLayers = layers_data->numLayers;
   const int   bot = layers_data->bot_side_pos;
   const int   top = layers_data->top_side_pos;
@@ -191,7 +191,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = layers_data->layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
   const int   numLayers = layers_data->numLayers;
   const int   bot = layers_data->bot_side_pos;
   const int   top = layers_data->top_side_pos;
@@ -311,7 +311,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = layers_data->layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
   const int   numLayers = layers_data->numLayers;
   const int   bot = layers_data->bot_side_pos;
   const int   top = layers_data->top_side_pos;
