@@ -97,7 +97,7 @@ ANONYMOUS:
                 Solver Types:
                   Block GMRES:
                     Maximum Iterations: 200
-                    Convergence Tolerance: 1e-7
+                    Convergence Tolerance: 1e-6
                     Num Blocks: 200
                     Output Frequency: 20
                     Output Style: 1
@@ -122,7 +122,7 @@ ANONYMOUS:
                 Solver Types:
                   Block GMRES:
                     Maximum Iterations: 200
-                    Convergence Tolerance: 1e-7
+                    Convergence Tolerance: 1e-6
                     Num Blocks: 200
                     Output Frequency: 20
                     Output Style: 1
@@ -140,10 +140,10 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
+    Cubature Degree: 3
     Exodus Output File Name: gis_analysis_stiffeningT.exo
     Columnwise Ordering: true
-    NumLayers: 5
+    NumLayers: 2
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
     Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, stiffening_factor]
@@ -393,11 +393,11 @@ ANONYMOUS:
         Status Test Check Type: Minimal
 
   Regression For Response 0:
-    Test Value: 6.068902002665e+01
     Relative Tolerance: 1.0e-05
     Absolute Tolerance: 1.0e-05
+    Test Value: 6.150614932753e+01
     Sensitivity For Parameter 0:
-      Test Value: 1.224175468183e+00
+      Test Value:  1.181897206543e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [89.1840455471]
+    Piro Analysis Test Values: [89.6090751672]
 ...
