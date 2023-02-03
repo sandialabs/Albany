@@ -98,6 +98,14 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const Teuchos::ArrayView<const LO> indices,
                         const Teuchos::ArrayView<const ST> values);
 
+inline void setLocalRowValue (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                              const LO lrow, const LO lcol, const ST value)
+{
+  Teuchos::ArrayView<const LO> cols(&lcol,1);
+  Teuchos::ArrayView<const ST> vals(&value,1);
+  setLocalRowValues (lop,lrow,cols,vals);
+}
+
 void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,

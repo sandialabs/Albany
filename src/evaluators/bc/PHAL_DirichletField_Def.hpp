@@ -116,9 +116,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     x_constView = Albany::getLocalData(dirichletWorkset.x);
     f_nonconstView = Albany::getNonconstLocalData(dirichletWorkset.f);
   }
-  Teuchos::Array<LO> index(1);
-  Teuchos::Array<ST> value(1);
-  value[0] = j_coeff;
   Teuchos::Array<ST> matrixEntries;
   Teuchos::Array<LO> matrixIndices;
 
@@ -132,13 +129,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     const int ielem = ep.first;
     const int pos   = ep.second;
     const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
-    index[0] = x_lid;
 
     // Extract the row, zero it out, then put j_coeff on diagonal
     Albany::getLocalRowValues(jac,x_lid,matrixIndices,matrixEntries);
     for (auto& val : matrixEntries) { val = 0.0; }
     Albany::setLocalRowValues(jac, x_lid, matrixIndices(), matrixEntries());
-    Albany::setLocalRowValues(jac, x_lid, index(), value());
+    Albany::setLocalRowValue(jac, x_lid, x_lid, j_coeff);
 
     if (fillResid) {
       const int p_lid = p_elem_dof_lids(ielem,p_offsets[pos]);

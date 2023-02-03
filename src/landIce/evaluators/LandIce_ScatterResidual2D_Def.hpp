@@ -85,7 +85,6 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
   Teuchos::Array<LO>lcols(neq*numSideNodes*(numLayers+1));
   double one = 1;
-  auto diagonal_value = arrayView(&one,1);
   const auto& sideSet = workset.sideSets->at(meshPart);
   for (const auto& side : sideSet) {
     const int cell = side.ws_elem_idx;
@@ -119,7 +118,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
         const auto& dof_offsets = dof_mgr->getGIDFieldOffsetsSide(this->offset,pos);
         for (int inode=0; inode<numSideNodes; ++inode) {
           const LO lrow = dof_lids(dof_offsets[inode]);
-          Albany::setLocalRowValues(Jac, lrow, arrayView(&lrow,1), diagonal_value);
+          Albany::setLocalRowValue(Jac, lrow, lrow, one);
         }
       }
     }

@@ -291,8 +291,6 @@ doPostEvaluate(typename Traits::EvalData workset)
 
   // Set J=identity outside of the sideset, so it's not singular
   auto Jac = workset.Jac;
-  Teuchos::Array<LO> lrow(1);
-  Teuchos::Array<ST> one(1,1.0);
   const int numCellNodes = node_dof_mgr->getGIDFieldOffsets(0).size();
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto elem_LID = elem_lids(icell);
@@ -305,8 +303,8 @@ doPostEvaluate(typename Traits::EvalData workset)
       if (this->ss_nodes_gids.count(node)==0) {
         for (int eq = 0; eq < this->numFields; eq++) {
           const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+this->offset);
-          lrow[0] = dof_lids(offsets[inode]);
-          Albany::setLocalRowValues(Jac,lrow[0],lrow, one);
+          const LO lrow = dof_lids(offsets[inode]);
+          Albany::setLocalRowValue(Jac,lrow,lrow, 1.0);
         }
       }
     }
