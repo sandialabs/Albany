@@ -76,11 +76,14 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   const int   lastLayer = numLayers-1;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
+  const auto top = layers_data->top_side_pos;
+  const auto bot = layers_data->bot_side_pos;
+
   // We use these only to figure out which local node in the cell is on the
   // top or bottom side.
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto& nodes_bot = node_dof_mgr->getGIDFieldOffsetsBotSide(0);
-  const auto& nodes_top = node_dof_mgr->getGIDFieldOffsetsTopSide(0);
+  const auto& nodes_bot = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,bot);
+  const auto& nodes_top = node_dof_mgr->getGIDFieldOffsetsSide(0,top,bot);
 
   // NOTE: for both Hexa and Wedge, the top/bot sides have their corresponding nodes
   //       lying one on top of the other: nodes_top[i] lies on top of nodes_bot[i]

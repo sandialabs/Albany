@@ -30,6 +30,13 @@ DOFManager (const Teuchos::RCP<ConnManager>& conn_mgr,
   } else {
     m_part_name = part_name;
   }
+
+  // Shards has both Hexa and Wedge with top side in last position,
+  // and bot side in the second to last side position
+  m_top = get_topology().getSideCount()-1;
+  m_bot = get_topology().getSideCount()-2;
+
+  m_topo_dim = get_topology().getDimension();
 }
 
 void DOFManager::build ()
@@ -136,10 +143,10 @@ getGIDFieldOffsetsSubcell (int fieldNum,
       "  - fieldNum: " << fieldNum << "\n"
       "  - num fields: " << getNumField() << "\n");
   TEUCHOS_TEST_FOR_EXCEPTION (
-      subcell_dim<0 || subcell_dim>=topo.getDimension(), std::runtime_error,
+      subcell_dim<0 || subcell_dim>=m_topo_dim, std::runtime_error,
       "[DOFManager::getGIDFieldOffsetsSubcell] Subcell dimension out of bounds.\n"
       "  - subcell_dim: " << subcell_dim << "\n"
-      "  - cell dimension: " << topo.getDimension() << "\n");
+      "  - cell dimension: " << m_topo_dim << "\n");
   TEUCHOS_TEST_FOR_EXCEPTION (
       subcell_pos<0 || subcell_pos>=topo.getSubcellCount(subcell_dim), std::runtime_error,
       "[DOFManager::getGIDFieldOffsetsSubcell] Subcell dimension out of bounds.\n"
@@ -154,9 +161,19 @@ const std::vector<int>&
 DOFManager::
 getGIDFieldOffsetsSide (int fieldNum, int side) const
 {
-  const auto& topo = get_topology();
+  return getGIDFieldOffsetsSubcell(fieldNum,m_topo_dim-1,side);
+}
 
-  return getGIDFieldOffsetsSubcell(fieldNum,topo.getDimension()-1,side);
+const std::vector<int>&
+DOFManager::
+getGIDFieldOffsetsSide (int fieldNum, int side, const int orderAsInSide) const
+{
+#ifdef ALBANY_DEBUG
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      side!=m_top && side!=m_bot && orderAsInSide!=m_top && orderAsInSide!=m_bot, std::logic_error,
+      "Error! This version of getGIDFieldOffsetsSide only works for top/bot sides.\n");
+#endif
+  return m_side_closure_orderd_as_side[fieldNum][side][orderAsInSide];
 }
 
 const std::vector<int>&
@@ -170,24 +187,22 @@ getGIDFieldOffsetsTopSide (int fieldNum) const
   TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
       "Error! DOFManager::getGIDFieldOffsetsTopSide only available for Hexa/Wedge topologies.\n");
 #endif
-
-  return m_top_closure_bot_ordering[fieldNum];
+  return getGIDFieldOffsetsSide(fieldNum,m_top);
 }
 
 const std::vector<int>&
 DOFManager::
 getGIDFieldOffsetsBotSide (int fieldNum) const
 {
+#ifdef ALBANY_DEBUG
   const auto& topo = get_topology();
 
-#ifdef ALBANY_DEBUG
   constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
   constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
   TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
       "Error! DOFManager::getGIDFieldOffsetsBotSide only available for Hexa/Wedge topologies.\n");
 #endif
-  // Shards has both Hexa and Wedge with bot in the second to last side position
-  return getGIDFieldOffsetsSide(fieldNum,topo.getSideCount()-2);
+  return getGIDFieldOffsetsSide(fieldNum,m_bot);
 }
 
 void DOFManager::
@@ -440,16 +455,15 @@ albanyBuildGlobalUnknowns ()
   constexpr auto faceDim = 2;
   if (get_topology().getDimension()>nodeDim) {
     const auto& topo = get_topology();
-    const int dim = topo.getDimension();
     m_subcell_closures.resize(getNumFields());
 
     // Pre-build also the special closure for the top side, with dof ordered
     // so that top_closure[i] sits on top of bot_closure[i]
-    m_top_closure_bot_ordering.resize(getNumFields());
+    m_side_closure_orderd_as_side.resize(getNumFields());
 
-    // Order in which top_offsets must be read
+    // Order in which to read top (resp, bot) offsets to match bot (resp, top)
     std::vector<int> permutation;
-    if (topo.getBaseName()=="Hexahedron_8") {
+    if (std::string(topo.getBaseName())=="Hexahedron_8") {
       permutation = {0, 3, 2, 1};
     } else {
       permutation = {0, 2, 1};
@@ -471,7 +485,7 @@ albanyBuildGlobalUnknowns ()
         }
       };
 
-      m_subcell_closures[f].resize(dim);
+      m_subcell_closures[f].resize(m_topo_dim);
       auto& f_closures = m_subcell_closures[f];
 
       // Nodes: simply, add offsets at each node
@@ -482,7 +496,7 @@ albanyBuildGlobalUnknowns ()
       }
 
       // 1D geometries don't have edges/faces
-      if (dim==edgeDim) continue;
+      if (m_topo_dim==edgeDim) continue;
 
       // Edges: add offsets on nodes first, then edges themselves
       const int edgeCount = topo.getEdgeCount();
@@ -500,7 +514,7 @@ albanyBuildGlobalUnknowns ()
       }
 
       // 2D geometries don't have faces
-      if (dim==faceDim) continue;
+      if (m_topo_dim==faceDim) continue;
 
       // Faces: add offsets on nodes first, then edges, then faces themselves
       const int faceCount = topo.getFaceCount();
@@ -526,10 +540,22 @@ albanyBuildGlobalUnknowns ()
       }
 
       // Shards has both Hexa and Wedge with top in the last side position
-      auto tmp_top = f_closures[faceDim][topo.getSideCount()-1];
-      m_top_closure_bot_ordering[f].reserve(tmp_top.size());
+      auto tmp_top = f_closures[faceDim][m_top];
+      auto tmp_bot = f_closures[faceDim][m_bot];
+      auto& side_as_side = m_side_closure_orderd_as_side[f];
+      side_as_side.resize(faceCount);
+      for (auto& v : side_as_side) {
+        v.resize(faceCount);
+      }
+
+      // These involve no permutation
+      side_as_side[m_top][m_top] = tmp_top;
+      side_as_side[m_bot][m_bot] = tmp_bot;
+      side_as_side[m_top][m_bot].reserve(tmp_top.size());
+      side_as_side[m_bot][m_top].reserve(tmp_top.size());
       for (auto p : permutation) {
-        m_top_closure_bot_ordering[f].push_back(tmp_top[p]);
+        side_as_side[m_bot][m_top].push_back(tmp_bot[p]);
+        side_as_side[m_top][m_bot].push_back(tmp_top[p]);
       }
     }
   }

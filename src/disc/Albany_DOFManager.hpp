@@ -72,6 +72,13 @@ public:
   const std::vector<int>&
   getGIDFieldOffsetsSide (int fieldNum, int side) const;
 
+  // If side!=orderedAsInSide, this version returns side offsets ordered
+  // in such a way that off[i] on side=$side is directly above/below
+  // off[i] on side=$orderAsInSide.
+  // This makes sense ONLY IF $side and $orderAsInSide are both in {top,bot}
+  const std::vector<int>&
+  getGIDFieldOffsetsSide (int fieldNum, int side, int orderAsInSide) const;
+
   // Special case of the above, for subcell being the top or bottom side
   // NOTES:
   //  1. only for quad/hexa/wedge
@@ -125,14 +132,28 @@ private:
   Teuchos::RCP<const GlobalLocalIndexer>    m_ov_indexer;
   DualView<const int**>                     m_elem_dof_lids;
 
+  using vec4int = std::vector<std::vector<std::vector<std::vector<int>>>>;
   // m_subcell_closures[ifield][dim][ord] is the vector of the offsets of
   // field $ifield on the $ord-th subcell of dimension $dim. More precisely,
   // it's the closure of all offsets on all entities belonging to that subcell
-  std::vector<std::vector<std::vector<std::vector<int>>>>       m_subcell_closures;
+  vec4int       m_subcell_closures;
 
-  // Closure for top side, with ordering such that top_offset[i] is directly
-  // on top of bot_offset[i].
-  std::vector<std::vector<int>> m_top_closure_bot_ordering;
+  // Shortcut for location of top/bot sides in the cell list of sides.
+  int m_top;
+  int m_bot;
+
+  int m_topo_dim;
+
+  // Closure for top/bot side dofs, with dof ordering so that offset[i] lies directly
+  // above/below of side_offset[i].
+  // E.g., if map = m_side_closure_ordered_as_side, then
+  //  - map[F][X][X] return the same as m_subcell_closures[F][side_dim][X]
+  //  - t = map[F][top][bot], then dof at offset t[i] is directly above
+  //    dof at offset m_subcell_closures[F][side_dim][bot]
+  //  - b = map[F][bot][top], then dof at offset t[i] is directly below
+  //    dof at offset m_subcell_closures[F][side_dim][top]
+  // NOTE: this 
+  vec4int       m_side_closure_orderd_as_side;
 
   Teuchos::RCP<const ConnManager>           m_conn_mgr;
 

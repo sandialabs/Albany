@@ -103,8 +103,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
       for (int eq=0; eq<neq; ++eq) {
         // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
         //       be parsed in the same 2D order as the bot nodes
-        const auto& dof_offsets = pos==top ? dof_mgr->getGIDFieldOffsetsTopSide(eq)
-                                           : dof_mgr->getGIDFieldOffsetsBotSide(eq);
+        const auto& dof_offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos,field_pos);
         for (int inode=0; inode<numSideNodes; ++inode) {
           const int lrow = dof_lids(dof_offsets[inode]);
 
@@ -127,12 +126,10 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     const int layer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
     // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
     //       be parsed in the same 2D order as the bot nodes
-    const auto& offsets_2d_field = field_pos==top ? dof_mgr->getGIDFieldOffsetsTopSide(this->offset)
-                                                  : dof_mgr->getGIDFieldOffsetsBotSide(this->offset);
+    const auto& offsets_2d_field = dof_mgr->getGIDFieldOffsetsSide(this->offset,field_pos);
     const int elem_LID = layers_data->getId(basal_elem_LID,layer);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    const auto& cell_node_pos = field_pos==top ? node_dof_mgr->getGIDFieldOffsetsTopSide(0)
-                                               : node_dof_mgr->getGIDFieldOffsetsBotSide(0);
+    const auto& cell_node_pos = node_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
 
     // Recall: we scatter a single scalar residual, so no loop on [0,numFields) here.
     for (int inode=0; inode<numSideNodes; ++inode) {
