@@ -176,35 +176,6 @@ getGIDFieldOffsetsSide (int fieldNum, int side, const int orderAsInSide) const
   return m_side_closure_orderd_as_side[fieldNum][side][orderAsInSide];
 }
 
-const std::vector<int>&
-DOFManager::
-getGIDFieldOffsetsTopSide (int fieldNum) const
-{
-#ifdef ALBANY_DEBUG
-  const auto& topo = get_topology();
-  constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
-      "Error! DOFManager::getGIDFieldOffsetsTopSide only available for Hexa/Wedge topologies.\n");
-#endif
-  return getGIDFieldOffsetsSide(fieldNum,m_top);
-}
-
-const std::vector<int>&
-DOFManager::
-getGIDFieldOffsetsBotSide (int fieldNum) const
-{
-#ifdef ALBANY_DEBUG
-  const auto& topo = get_topology();
-
-  constexpr auto  hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  constexpr auto  wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION (topo!=hexa && topo!=wedge, std::runtime_error,
-      "Error! DOFManager::getGIDFieldOffsetsBotSide only available for Hexa/Wedge topologies.\n");
-#endif
-  return getGIDFieldOffsetsSide(fieldNum,m_bot);
-}
-
 void DOFManager::
 restrict (const std::string& sub_part_name)
 {

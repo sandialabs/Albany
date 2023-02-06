@@ -79,16 +79,6 @@ public:
   const std::vector<int>&
   getGIDFieldOffsetsSide (int fieldNum, int side, int orderAsInSide) const;
 
-  // Special case of the above, for subcell being the top or bottom side
-  // NOTES:
-  //  1. only for quad/hexa/wedge
-  //  2. Top side orders dofs so that they align with Bot. That is,
-  //     dof at offset_top[i] lies atop dof at offset_bot[i]
-  const std::vector<int>&
-  getGIDFieldOffsetsTopSide (int fieldNum) const;
-  const std::vector<int>&
-  getGIDFieldOffsetsBotSide (int fieldNum) const;
-
   const std::string& part_name () const {
     return m_part_name;
   }
