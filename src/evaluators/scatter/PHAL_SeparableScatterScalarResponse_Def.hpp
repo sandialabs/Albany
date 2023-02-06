@@ -373,7 +373,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
   const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
 
-  const auto field_offsets = fieldLayer==fieldLevel ? bot_offsets : top_offsets;
+  const auto& field_offsets = fieldLayer==fieldLevel ? bot_offsets : top_offsets;
   const int numSideNodes = field_offsets.size();
 
   // Loop over cells in workset
@@ -386,17 +386,14 @@ evaluateFields(typename Traits::EvalData workset)
     for (size_t res=0; res<this->global_response.size(); ++res) {
       const auto lresp = this->local_response(cell,res);
 
-      // Helper lambda. We process bot and bot nodes separately
-      const auto do_nodes = [&](const std::vector<int>& offsets) {
-        for (int node=0; node<numSideNodes; ++node) {
-          const LO row = p_elem_dof_lids(field_elem_LID,field_offsets[node]);
-          if (row>=0) {
-            dgdp_data[res][row] += lresp.dx(offsets[node]);
-          }
+      // We process bot and bot nodes separately
+      for (int node=0; node<numSideNodes; ++node) {
+        const LO row = p_elem_dof_lids(field_elem_LID,field_offsets[node]);
+        if (row>=0) {
+          dgdp_data[res][row] += lresp.dx(bot_offsets[node]);
+          dgdp_data[res][row] += lresp.dx(top_offsets[node]);
         }
-      };
-      do_nodes (bot_offsets);
-      do_nodes (top_offsets);
+      }
     } // response
   } // cell
 }
@@ -689,9 +686,9 @@ evaluateFields(typename Traits::EvalData workset)
   //       to guarantee corresponding nodes are vertically aligned.
   const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
   const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
-  const auto& p_offsets = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
+  const auto& field_offsets = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
 
-  const int numSideNodes = p_offsets.size();
+  const int numSideNodes = field_offsets.size();
 
   // Loop over cells in workset
   for (size_t cell=0; cell < workset.numCells; ++cell) {
@@ -703,24 +700,24 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
 
       auto lresp = this->local_response(cell,res);
-      const auto f = [&] (const std::vector<int>& nodes) {
-        for (int inode=0; inode<numSideNodes; ++inode) {
-          const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[inode]);
-          if (row>=0) {
-            const int node = nodes[inode];
-            if (!hess_vec_prod_g_px_data.is_null()) {
-              hess_vec_prod_g_px_data[res][row] += lresp.dx(node).dx(0);
-            }
-            if (!hess_vec_prod_g_pp_data.is_null()) {
-              hess_vec_prod_g_pp_data[res][row] += lresp.dx(node).dx(0);
-            }
-          }
+      const auto f = [&] (const int node, const int row) {
+        if (!hess_vec_prod_g_px_data.is_null()) {
+          hess_vec_prod_g_px_data[res][row] += lresp.dx(node).dx(0);
+        }
+        if (!hess_vec_prod_g_pp_data.is_null()) {
+          hess_vec_prod_g_pp_data[res][row] += lresp.dx(node).dx(0);
         }
       };
 
-      // Run lambda for both top and bottom nodes
-      f(top_offsets);
-      f(bot_offsets);
+      for (int inode=0; inode<numSideNodes; ++inode) {
+        const LO row = p_elem_dof_lids(field_elem_LID,field_offsets[inode]);
+        if (row>=0) {
+          // Run lambda for both top and bottom nodes
+          f(top_offsets[inode],row);
+          f(bot_offsets[inode],row);
+        }
+      }
+
     } // response
   } // cell
 }
@@ -729,6 +726,7 @@ template<typename Traits>
 void SeparableScatterScalarResponse<AlbanyTraits::HessianVec, Traits>::
 evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,"it is used...");
   if (workset.sideSets == Teuchos::null) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Side sets not properly specified on the mesh" << std::endl);
