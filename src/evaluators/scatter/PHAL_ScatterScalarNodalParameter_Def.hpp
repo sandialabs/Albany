@@ -131,12 +131,14 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
 
   const auto& layers_data    = *workset.disc->getMeshStruct()->global_cell_layers_data;
+  const int   top = layers_data.top_side_pos;
+  const int   bot = layers_data.bot_side_pos;
   const auto elem_lids       = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const int fieldLayer = fieldLevel==layers_data.numLayers ? fieldLevel-1 : fieldLevel;
-  const auto pos = fieldLevel==layers_data.numLayers ? layers_data.top_side_pos : layers_data.bot_side_pos;
+  const int field_pos  = fieldLayer==fieldLevel ? bot : top;
 
-  const auto& offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,pos);
+  const auto& offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     const auto layer = layers_data.getLayerId(elem_LID);

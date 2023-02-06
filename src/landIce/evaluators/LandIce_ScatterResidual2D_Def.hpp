@@ -101,8 +101,8 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
       for (int eq=0; eq<neq; ++eq) {
-        // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
-        //       be parsed in the same 2D order as the bot nodes
+        // Note: grab offsets on side ordered in the same way as on side $field_pos
+        //       to guarantee corresponding nodes are vertically aligned.
         const auto& dof_offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos,field_pos);
         for (int inode=0; inode<numSideNodes; ++inode) {
           const int lrow = dof_lids(dof_offsets[inode]);
@@ -114,7 +114,9 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
       // Diagonalize Jac outisde of the 2d field location.
       if (ilev!=fieldLevel) {
-        const auto& dof_offsets = dof_mgr->getGIDFieldOffsetsSide(this->offset,pos);
+        // Note: grab offsets on side ordered in the same way as on side $field_pos
+        //       to guarantee corresponding nodes are vertically aligned.
+        const auto& dof_offsets = dof_mgr->getGIDFieldOffsetsSide(this->offset,pos,field_pos);
         for (int inode=0; inode<numSideNodes; ++inode) {
           const LO lrow = dof_lids(dof_offsets[inode]);
           Albany::setLocalRowValue(Jac, lrow, lrow, one);
@@ -164,18 +166,19 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   // Pick element layer that contains the field level
   const auto field_layer = fieldLevel==layers_data->numLayers
                          ? fieldLevel-1 : fieldLevel;
+  const int field_pos = field_layer==0 ? bot : top;
 
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto& dof_mgr       = workset.disc->getNewDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
   
-  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsTopSide(0);
-  const auto& bot_nodes = node_dof_mgr->getGIDFieldOffsetsBotSide(0);
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& bot_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
 
-  const auto& field_offsets_top = dof_mgr->getGIDFieldOffsetsTopSide(offset2DField);
-  const auto& field_offsets_bot = dof_mgr->getGIDFieldOffsetsBotSide(offset2DField);
-  const auto& field_offsets = fieldLevel==field_layer ? field_offsets_bot : field_offsets_top;
+  const auto& field_offsets = dof_mgr->getGIDFieldOffsetsSide(offset2DField,field_pos);
 
   const int neq = dof_mgr->getNumFields();
   const int nunk = this->numNodes*(neq-1);
@@ -262,8 +265,10 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
           };
 
           if(eq != offset2DField) {
-            f(top_nodes,dof_mgr->getGIDFieldOffsetsTopSide(eq));
-            f(bot_nodes,dof_mgr->getGIDFieldOffsetsBotSide(eq));
+            // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+            //       to guarantee corresponding nodes are vertically aligned.
+            f(top_nodes,dof_mgr->getGIDFieldOffsetsSide(eq,top,field_pos));
+            f(bot_nodes,dof_mgr->getGIDFieldOffsetsSide(eq,bot,field_pos));
           }
         }
       }

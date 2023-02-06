@@ -116,6 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Pick element layer that contains the field level
   const auto fieldLayer = fieldLevel==layers_data->numLayers
                         ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Distributed parameter vector
   const auto& p      = workset.distParamLib->get(this->param_name);
@@ -123,10 +124,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Parameter dof numbering info
   const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
-  const auto  sideDim = p->get_dof_mgr()->get_topology().getDimension()-1;
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSide(0);
-  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsBotSide(0);
-  const auto& offsets_p = fieldLevel==fieldLayer ? offsets_bot : offsets_top;
+
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
   const int num_nodes_2d = offsets_p.size();
 
   // Idea: loop over cells. Grab p data from a cell at the right layer,
@@ -291,6 +294,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Pick element layer that contains the field level
   const auto fieldLayer = fieldLevel==layers_data->numLayers
                         ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
@@ -308,10 +312,12 @@ evaluateFields(typename Traits::EvalData workset)
   // Idea: loop over cells. Grab p data from a cell at the right layer,
   //       using offsets that correspond to the elem-side where the param is defined.
   //       Inside, loop over 2d nodes, and process top/bot sides separately
-  const auto  sideDim = p_dof_mgr->get_topology().getDimension()-1;
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSide(0);
-  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsBotSide(0);
-  const auto& offsets_p = fieldLevel==fieldLayer ? offsets_bot : offsets_top;
+
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
   const int num_nodes_2d = offsets_p.size();
 
   // Are we differentiating w.r.t. this parameter?
@@ -546,6 +552,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Pick element layer that contains the field level
   const auto fieldLayer = fieldLevel==layers_data->numLayers
                         ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
@@ -554,9 +561,12 @@ evaluateFields(typename Traits::EvalData workset)
   // Parameter dof numbering info
   const auto p_dof_mgr        = p->get_dof_mgr();
   const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsTopSide(0);
-  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsBotSide(0);
-  const auto& offsets_p = fieldLevel==fieldLayer ? offsets_bot : offsets_top;
+
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
   const int num_nodes_2d = offsets_p.size();
 
   using ref_t = typename PHAL::Ref<ParamScalarT>::type;

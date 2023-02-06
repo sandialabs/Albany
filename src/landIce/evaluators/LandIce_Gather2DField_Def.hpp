@@ -212,12 +212,9 @@ evaluateFields (typename PHALTraits::EvalData workset)
       const int elem_LID = elem_lids(cell);
       const int side_pos = side.side_pos;
       
-      // Cannot as for getGIDFieldsOffsetsSide at side_pos, since we need top dofs parsed
-      // in same order as both dofs when we access the Fad derivatives
-      const auto& offsets = side_pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
-                                          : dof_mgr->getGIDFieldOffsetsTopSide(offset);
-      const auto& nodes = side_pos==bot ? node_dof_mgr->getGIDFieldOffsetsBotSide(0)
-                                        : node_dof_mgr->getGIDFieldOffsetsTopSide(0);
+      // Note: explicitly as for the offsets to be ordered as the dofs on this side pos
+      const auto& offsets =      dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
+      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,     side_pos);
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
@@ -273,6 +270,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
 
   // Mesh data
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int   top = layers_data->top_side_pos;
   const int   bot = layers_data->bot_side_pos;
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
@@ -281,7 +279,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr  = workset.disc->getNodeNewDOFManager();
 
-  const int   neq = dof_mgr->getNumFields ();
+  const int   neq = dof_mgr->getNumFields();
 
   if (extruded) {
 #ifdef ALBANY_DEBUG
@@ -289,9 +287,10 @@ evaluateFields (typename PHALTraits::EvalData workset)
 #endif
 
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const bool use_bot = field_layer==0;
-    const auto& field_nodes = use_bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
-                                      : dof_mgr->getGIDFieldOffsetsTopSide(offset);
+    const int field_pos = field_layer==0 ? bot : top;
+    // Note: grab sol dofs in same order as the side where the field is defined,
+    //       to ensure that corresponding dofs are vertically aligned
+    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_pos);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
       const int basal_elem_LID = layers_data->getColumnId(elem_LID);
@@ -316,8 +315,10 @@ evaluateFields (typename PHALTraits::EvalData workset)
       };
 
       // Run lambda on both top and bottom nodes in the cell
-      f(node_dof_mgr->getGIDFieldOffsetsTopSide(0));
-      f(node_dof_mgr->getGIDFieldOffsetsBotSide(0));
+      // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+      //       to guarantee corresponding nodes are vertically aligned.
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos));
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos));
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
@@ -336,10 +337,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
       
       // Cannot as for getGIDFieldsOffsetsSide at side_pos, since we need top dofs parsed
       // in same order as both dofs when we access the Fad derivatives
-      const auto& offsets = side_pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(offset)
-                                          : dof_mgr->getGIDFieldOffsetsTopSide(offset);
-      const auto& nodes = side_pos==bot ? node_dof_mgr->getGIDFieldOffsetsBotSide(0)
-                                        : node_dof_mgr->getGIDFieldOffsetsTopSide(0);
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
+      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);

@@ -4,9 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
-
 #include "PHAL_Utilities.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
@@ -17,6 +14,9 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 
 #include "Albany_Hessian.hpp"
+
+#include "Teuchos_TestForException.hpp"
+#include "Phalanx_DataLayout.hpp"
 
 // **********************************************************************
 // Base Class Generic Implementation
@@ -194,6 +194,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
   for (const auto& side : sideSet) {
     const int side_elem_LID = side.ws_elem_idx;
     const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
+    const int side_pos = side.side_pos;
 
     for (std::size_t res=0; res<this->global_response.size(); ++res) {
       auto val = this->local_response(side_elem_LID, res);
@@ -203,10 +204,9 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
         const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
         const int ilevel = pos==bot ? ilayer : ilayer+1;
         for (int eq=0; eq<neq; ++eq) {
-          // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
-          //       be parsed in the same 2D order as the bot nodes
-          const auto& offsets = pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(eq)
-                                         : dof_mgr->getGIDFieldOffsetsTopSide(eq);
+          // Note: grab offsets on top/bot ordered in the same way as on sideset side,
+          //       to guarantee corresponding nodes are vertically aligned.
+          const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos,side_pos);
           const int numSideNodes = offsets.size();
           for (int i=0; i<numSideNodes; ++i) {
             int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;
@@ -359,14 +359,19 @@ evaluateFields(typename Traits::EvalData workset)
   const auto  elem_lids    = workset.disc->getElementLIDs_host(ws);
 
   const auto& layers_data     = workset.disc->getLayeredMeshNumberingLO();
+  const int top = layers_data->top_side_pos;
+  const int bot = layers_data->bot_side_pos;
   const auto& p_dof_mgr       = workset.disc->getNewDOFManager(param_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
-  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
-  const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
-
   const int fieldLevel = level_it->second;
   const int fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
+
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
 
   const auto field_offsets = fieldLayer==fieldLevel ? bot_offsets : top_offsets;
   const int numSideNodes = field_offsets.size();
@@ -665,6 +670,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Mesh data
   const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int top = layers_data->top_side_pos;
+  const int bot = layers_data->bot_side_pos;
   const int numLayers = layers_data->numLayers;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
@@ -675,12 +682,14 @@ evaluateFields(typename Traits::EvalData workset)
   // Parameter data
   const int fieldLevel = level_it->second;
   const int fieldLayer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
-  const bool use_bot = fieldLevel==fieldLayer;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
   const auto& p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
-  const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
-  const auto& p_offsets = use_bot ? bot_offsets : top_offsets;
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto& p_offsets = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
 
   const int numSideNodes = p_offsets.size();
 
@@ -765,6 +774,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   for (const auto& side : sideSet) {
     const int side_elem_LID = side.ws_elem_idx;
     const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
+    const int side_pos = side.side_pos;
 
     for (size_t res=0; res<this->global_response.size(); ++res) {
       auto val = this->local_response(side_elem_LID, res);
@@ -773,10 +783,9 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
         const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
         const int ilevel = pos==bot ? ilayer : ilayer+1;
         for (int eq=0; eq<neq; ++eq) {
-          // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
-          //       be parsed in the same 2D order as the bot nodes
-          const auto& offsets = pos==bot ? dof_mgr->getGIDFieldOffsetsBotSide(eq)
-                                         : dof_mgr->getGIDFieldOffsetsTopSide(eq);
+          // Note: grab offsets on top/bot ordered in the same way as on sideset side,
+          //       to guarantee corresponding nodes are vertically aligned.
+          const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos,side_pos);
           const int numSideNodes = offsets.size();
           for (int i=0; i<numSideNodes; ++i) {
             int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;

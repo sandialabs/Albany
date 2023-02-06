@@ -1881,6 +1881,8 @@ STKDiscretization::computeSideSets()
 
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
     const auto numLayers = cell_layers_data->numLayers;
+    const int top = cell_layers_data->top_side_pos;
+    const int bot = cell_layers_data->bot_side_pos;
 
     // 7) Populate localDOFViews for GatherVerticallyContractedSolution
     for (int ws=0; ws<getNumWorksets(); ++ws) {
@@ -1903,10 +1905,11 @@ STKDiscretization::computeSideSets()
           const int ws_elem_idx = ss_val[sideSet_idx].ws_elem_idx;
           const int elem_LID = elem_lids(ws_elem_idx);
           const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
+          const int side_pos = ss_val[sideSet_idx].side_pos;
 
           for (int eq=0; eq<neq; ++eq) {
-            const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsTopSide(eq);
-            const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsBotSide(eq);
+            const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,top,side_pos);
+            const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,bot,side_pos);
             const int numSideNodes = sol_top_offsets.size();
 
             for (int j=0; j<numSideNodes; ++j) {

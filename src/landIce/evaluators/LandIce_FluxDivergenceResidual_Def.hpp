@@ -82,6 +82,8 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   // We use these only to figure out which local node in the cell is on the
   // top or bottom side.
   const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  // Note: grab offsets on top/bot ordered in the same way (e.g., as in bot side),
+  //       to ensure corresponding nodes are vertically aligned
   const auto& nodes_bot = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,bot);
   const auto& nodes_top = node_dof_mgr->getGIDFieldOffsetsSide(0,top,bot);
 

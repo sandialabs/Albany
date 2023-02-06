@@ -881,18 +881,22 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
     hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
 
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int top = layers_data->top_side_pos;
+  const int bot = layers_data->bot_side_pos;
   const auto fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   const auto dof_mgr      = workset.disc->getNewDOFManager();
   const auto p_dof_mgr    = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
-  const auto cellDim = p_dof_mgr->get_topology().getDimension();
-  const auto numSideNodes = p_dof_mgr->get_topology().getNodeCount(cellDim-1,layers_data->bot_side_pos);
-  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsTopSide(0);
-  const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsBotSide(0);
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
   const auto p_offsets   = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
+  const auto numSideNodes = p_offsets.size();
 
   const auto offsets = m_fields_offsets.host();
   for (size_t cell=0; cell<workset.numCells; ++cell) {
