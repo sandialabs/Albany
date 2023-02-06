@@ -1900,11 +1900,19 @@ STKDiscretization::computeSideSets()
         Kokkos::View<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
 
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
+          const auto& side = ss_val[sideSet_idx];
+
           // Get the data that corresponds to the side
-          const int ws_elem_idx = ss_val[sideSet_idx].ws_elem_idx;
+          const int ws_elem_idx = side.ws_elem_idx;
+          const int side_pos    = side.side_pos;
+
+          // Check if this sideset is the top or bot of the mesh. If not, the data structure
+          // for coupling vertical dofs is not needed.
+          if (side_pos!=top && side_pos!=bot)
+            break;
+
           const int elem_LID = elem_lids(ws_elem_idx);
           const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
-          const int side_pos = ss_val[sideSet_idx].side_pos;
 
           for (int eq=0; eq<neq; ++eq) {
             const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,top,side_pos);

@@ -684,6 +684,12 @@ Albany::IossSTKMeshStruct::setBulkData (
     const LO numLocalCells3D = stk::mesh::count_selected_entities(select_owned_in_part,buckets);
     const LO numLocalCells2D = numLocalCells3D / numLayers;
     this->local_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,ordering));
+
+    // Shards has both Hexa and Wedge with bot and top in the last two side positions
+    this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+    this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+    this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+    this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   }
 
   if(m_hasRestartSolution){

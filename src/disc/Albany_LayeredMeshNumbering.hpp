@@ -18,8 +18,8 @@ enum class LayeredMeshOrdering
 template <typename T>
 struct LayeredMeshNumbering {
   // Position of top/bot side in the local element
-  int bot_side_pos;
-  int top_side_pos;
+  int bot_side_pos = -1;
+  int top_side_pos = -1;
   bool layerOrd;
 
   // T stride;

@@ -170,8 +170,18 @@ getGIDFieldOffsetsSide (int fieldNum, int side, const int orderAsInSide) const
 {
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION (
-      side!=m_top && side!=m_bot && orderAsInSide!=m_top && orderAsInSide!=m_bot, std::logic_error,
-      "Error! This version of getGIDFieldOffsetsSide only works for top/bot sides.\n");
+      (side!=m_top && side!=m_bot) || (orderAsInSide!=m_top && orderAsInSide!=m_bot), std::logic_error,
+      "Error! This version of getGIDFieldOffsetsSide only works for top/bot sides.\n"
+      "  - side: " << side << "\n"
+      "  - orderAsInSide: " << orderAsInSide << "\n"
+      "  - top: " << m_top << "\n"
+      "  - bot: " << m_bot << "\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(fieldNum<0 || fieldNum>=m_side_closure_orderd_as_side.size(),std::runtime_error,
+      "Field id " << fieldNum << " out of bounds [0, " << m_side_closure_orderd_as_side.size() << ")\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(side<0 || side>=m_side_closure_orderd_as_side[fieldNum].size(),std::runtime_error,
+      "Side id " << fieldNum  << " out of bounds [0, " << m_side_closure_orderd_as_side[fieldNum].size() << ")\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(orderAsInSide<0 || orderAsInSide>=m_side_closure_orderd_as_side[fieldNum][side].size(),std::runtime_error,
+      "Order as side id " << orderAsInSide  << " out of bounds [0, " << m_side_closure_orderd_as_side[fieldNum][side].size() << ")\n");
 #endif
   return m_side_closure_orderd_as_side[fieldNum][side][orderAsInSide];
 }
