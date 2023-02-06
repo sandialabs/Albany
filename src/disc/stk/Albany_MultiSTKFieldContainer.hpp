@@ -19,7 +19,6 @@ public:
       const Teuchos::RCP<Teuchos::ParameterList>&     params_,
       const Teuchos::RCP<stk::mesh::MetaData>&        metaData_,
       const Teuchos::RCP<stk::mesh::BulkData>&        bulkData_,
-      const DiscType                                  interleaved_,
       const int                                       numDim_,
       const Teuchos::RCP<StateInfoStruct>&            sis,
       const int                                       num_params);
@@ -28,7 +27,6 @@ public:
       const Teuchos::RCP<Teuchos::ParameterList>&           params_,
       const Teuchos::RCP<stk::mesh::MetaData>&              metaData_,
       const Teuchos::RCP<stk::mesh::BulkData>&              bulkData_,
-      const DiscType                                        interleaved_,
       const int                                             neq_,
       const int                                             numDim_,
       const Teuchos::RCP<Albany::StateInfoStruct>&          sis,

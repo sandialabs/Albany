@@ -174,7 +174,7 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize,
-     ebn, ebNameToIndex, this->interleavedOrdering));
+     ebn, ebNameToIndex));
 
   this->initializeSideSetMeshSpecs(comm);
   this->initializeSideSetMeshStructs(comm);

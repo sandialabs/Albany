@@ -318,7 +318,7 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
-                             ebNameToIndex, this->interleavedOrdering));
+                             ebNameToIndex));
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);

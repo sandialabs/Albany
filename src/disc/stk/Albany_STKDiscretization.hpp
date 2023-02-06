@@ -529,7 +529,6 @@ public:
 
   size_t outputFileIdx;
 #endif
-  DiscType interleavedOrdering;
 
   Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };

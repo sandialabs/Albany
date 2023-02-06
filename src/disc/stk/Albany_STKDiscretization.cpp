@@ -71,8 +71,7 @@ STKDiscretization::STKDiscretization(
       sideSetEquations(sideSetEquations_),
       rigidBodyModes(rigidBodyModes_),
       stkMeshStruct(stkMeshStruct_),
-      discParams(discParams_),
-      interleavedOrdering(stkMeshStruct_->interleavedOrdering)
+      discParams(discParams_)
 {
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
@@ -564,7 +563,7 @@ STKDiscretization::setupMLCoords()
   }
 
   rigidBodyModes->setCoordinatesAndComputeNullspace(
-      coordMV, interleavedOrdering,
+      coordMV,
       getVectorSpace(),
       getOverlapVectorSpace());
 
@@ -2194,7 +2193,6 @@ STKDiscretization::buildSideSetProjectors()
   Teuchos::Array<ST> vals(1);
   vals[0] = 1.0;
 
-  // The global solution dof manager, to get the correct dof id (interleaved vs blocked)
   const auto dofMgr = getNewDOFManager();
   const int sideDim = getNumDim()-1;
 
@@ -2350,7 +2348,6 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
   params = gSTKFieldContainer->getParams();
   numDim = gSTKFieldContainer->getNumDim();
   num_params = gSTKFieldContainer->getNumParams();
-  auto interleaved = gSTKFieldContainer->getOrdering();
 
   num_time_deriv = params->get<int>("Number Of Time Derivatives");
 
@@ -2373,10 +2370,10 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 
   if (Teuchos::nonnull(mSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, numDim, sis, solution_vector, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, solution_vector, num_params));
   } else if (Teuchos::nonnull(oSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, interleaved, neq, numDim, sis, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, num_params));
   } else {
     ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }

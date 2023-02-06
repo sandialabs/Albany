@@ -10,9 +10,6 @@
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
-// Get DiscType
-#include "Albany_DiscretizationUtils.hpp"
-
 namespace Albany
 {
 

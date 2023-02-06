@@ -59,7 +59,6 @@ Teuchos::RCP<Teuchos::ParameterList> parameterList;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 MPI_Comm comm, reducedComm;
-Albany::DiscType interleavedOrdering;
 int nNodes2D; //number global nodes in the domain in 2D
 int nNodesProc2D; //number of nodes on each processor in 2D
 //vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
@@ -613,7 +612,6 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
 
      //Check what kind of ordering you have in the solution & create solutionField object.
-     interleavedOrdering = meshStruct->getInterleavedOrdering();
      Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer>
        (stk_disc->getSolutionFieldContainer())->getSolutionField();
@@ -809,36 +807,18 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     auto ov_vs_indexer = Albany::createGlobalLocalIndexer(overlapVS);
     overlap_vs_num_my_elts = ov_vs_indexer->getNumLocalElements();
 
-    if (interleavedOrdering == Albany::DiscType::Interleaved) {
-      for (unsigned int i=0; i<overlap_vs_num_my_elts; i++) {
-        global_dof = ov_vs_indexer->getGlobalElement(i);
-        sol_value = solutionOverlap_constView[i];
-        int modulo = (global_dof % 2); //check if dof is for u or for v
-        int vel_global_dof;
-        if (modulo == 0) { //u dof
-          vel_global_dof = global_dof/2+1; //add 1 because nodeVS is 1-based
-          uvel_local_vec[vel_global_dof] = sol_value;
-        }
-        else { // v dof
-          vel_global_dof = (global_dof-1)/2+1; //add 1 because nodeVS is 1-based
-          vvel_local_vec[vel_global_dof] = sol_value;
-        }
+    for (unsigned int i=0; i<overlap_vs_num_my_elts; i++) {
+      global_dof = ov_vs_indexer->getGlobalElement(i);
+      sol_value = solutionOverlap_constView[i];
+      int modulo = (global_dof % 2); //check if dof is for u or for v
+      int vel_global_dof;
+      if (modulo == 0) { //u dof
+        vel_global_dof = global_dof/2+1; //add 1 because nodeVS is 1-based
+        uvel_local_vec[vel_global_dof] = sol_value;
       }
-    }
-    else { //note: the case with non-interleaved ordering has not been tested...
-      numDofs = ov_vs_indexer->getNumLocalElements();
-      for (unsigned int i=0; i<overlap_vs_num_my_elts; i++) {
-        global_dof = ov_vs_indexer->getGlobalElement(i);
-        sol_value = solutionOverlap_constView[i];
-        int vel_global_dof;
-        if (global_dof < numDofs/2) { //u dof
-          vel_global_dof = global_dof+1; //add 1 because nodeVS is 1-based
-          uvel_local_vec[vel_global_dof] = sol_value;
-        }
-        else { //v dofs
-          vel_global_dof = global_dof-numDofs/2+1; //add 1 because nodeVS is 1-based
-          vvel_local_vec[vel_global_dof] = sol_value;
-        }
+      else { // v dof
+        vel_global_dof = (global_dof-1)/2+1; //add 1 because nodeVS is 1-based
+        vvel_local_vec[vel_global_dof] = sol_value;
       }
     }
 

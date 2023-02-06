@@ -175,7 +175,7 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, 
-     ebn, ebNameToIndex, this->interleavedOrdering));
+     ebn, ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {

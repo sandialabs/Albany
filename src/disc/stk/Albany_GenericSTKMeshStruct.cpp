@@ -63,7 +63,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
     metaData->initialize(numDim_, entity_rank_names);
   }
 
-  interleavedOrdering = static_cast<DiscType>(params->get<int>("Interleaved Ordering", 1));
   allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
   num_time_deriv = params->get<int>("Number Of Time Derivatives");
@@ -135,10 +134,10 @@ void GenericSTKMeshStruct::SetupFieldData(
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
   if(user_specified_solution_components && (residual_vector.length() > 0)){
     this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(params,
-        metaData, bulkData, interleavedOrdering, numDim, sis, num_params));
+        metaData, bulkData, numDim, sis, num_params));
   } else {
     this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
-        metaData, bulkData, interleavedOrdering, numDim, sis, num_params));
+        metaData, bulkData, numDim, sis, num_params));
   }
 
 // Exodus is only for 2D and 3D. Have 1D version as well
@@ -1550,7 +1549,6 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid2: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
   validPL->set<int>("Workset Size", DEFAULT_WORKSET_SIZE, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Use Automatic Aura", false, "Use automatic aura with BulkData");
-  validPL->set<int>("Interleaved Ordering", 1, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for LandIce problem that require transformation of STK mesh

@@ -120,8 +120,6 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
   int neq = stk_disc->getNumberEquations();
 
-  const Albany::DiscType interleavedOrdering = meshStruct->getInterleavedOrdering();
-
   *MPAS_dt =  deltat;
 
   Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->mesh_layers_ratio;
@@ -280,13 +278,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
     int lId0, lId1;
 
-    if (interleavedOrdering == Albany::DiscType::Interleaved) {
-      lId0 = indexer->getLocalElement(neq * (gId-1));
-      lId1 = lId0 + 1;
-    } else {
-      lId0 = indexer->getLocalElement(gId-1);
-      lId1 = lId0 + numVertices3D;
-    }
+    lId0 = indexer->getLocalElement(neq * (gId-1));
+    lId1 = lId0 + 1;
+
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
 

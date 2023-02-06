@@ -104,7 +104,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   }
 
   int  numDim;
-  DiscType interleavedOrdering;
 
   bool        exoOutput;
   std::string exoOutFile;

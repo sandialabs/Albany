@@ -185,17 +185,12 @@ TEUCHOS_UNIT_TEST(NullSpaceUtils, setCoordinatesAndComputeNullspace)
   const double side = 3.0;
   auto cube = Cube(numGNodesPerDir, side);
   const Teuchos::RCP<Thyra_MultiVector> coordMV = cube.coordMV->clone_mv();
-  auto ordering = DiscType::BlockedMono;
-  TEST_THROW(rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, ordering), std::logic_error); // solnVS not set
+  TEST_THROW(rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV), std::logic_error); // solnVS not set
 
   // Initialize solution vector space
   cube.init_soln_vs(numPDEs);
   const auto solnVS = cube.solnVS;
-  TEST_THROW(rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, ordering, solnVS), std::logic_error); // need interleaved ordering
-
-  // Test func
-  ordering = DiscType::Interleaved;
-  TEST_NOTHROW(rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, ordering, solnVS));
+  TEST_NOTHROW(rigidBodyModes->setCoordinatesAndComputeNullspace(coordMV, solnVS));
 
   // Check coordinates after substractCentroid()
   const auto mueluParams = paramLists.mueluParams;

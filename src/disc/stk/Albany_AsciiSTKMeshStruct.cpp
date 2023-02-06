@@ -398,7 +398,7 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, ebn,
-                             ebNameToIndex, this->interleavedOrdering));
+                             ebNameToIndex));
 
 
   // Create a mesh specs object for EACH side set

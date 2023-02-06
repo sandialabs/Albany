@@ -24,7 +24,6 @@ MeshSpecsStruct::MeshSpecsStruct(
     int                      worksetSize_,
     const std::string        ebName_,
     std::map<std::string, int> ebNameToIndex_,
-    DiscType                   interleavedOrdering_,
     const bool                 sepEvalsByEB_,
     const Intrepid2::EPolyType cubatureRule_)
     : ctd(ctd_),
@@ -35,7 +34,6 @@ MeshSpecsStruct::MeshSpecsStruct(
       worksetSize(worksetSize_),
       ebName(ebName_),
       ebNameToIndex(ebNameToIndex_),
-      interleavedOrdering(interleavedOrdering_),
       sepEvalsByEB(sepEvalsByEB_),
       cubatureRule(cubatureRule_)
 {

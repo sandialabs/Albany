@@ -229,7 +229,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
-        ebNameToIndex, this->interleavedOrdering, false, cub_rule));
+        ebNameToIndex, false, cub_rule));
   } else {
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl;
     this->allElementBlocksHaveSamePhysics=false;
@@ -238,7 +238,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
-          ebNameToIndex, this->interleavedOrdering, true, cub_rule));
+          ebNameToIndex, true, cub_rule));
     }
   }
 

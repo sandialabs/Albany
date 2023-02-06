@@ -378,7 +378,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, EBSpecs[0].name,
-                               ebNameToIndex, this->interleavedOrdering, false, cub_rule));
+                               ebNameToIndex, false, cub_rule));
   } else {
 
     meshSpecs.resize(numEB);
@@ -393,7 +393,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
       this->meshSpecs[eb] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                                 nsNames, ssNames, worksetSize, EBSpecs[eb].name,
-                                ebNameToIndex, this->interleavedOrdering, true, cub_rule));
+                                ebNameToIndex, true, cub_rule));
     }
   }
 
