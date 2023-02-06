@@ -92,8 +92,7 @@ ANONYMOUS:
     Surface Height Field Name: surface_height
     Number Of Time Derivatives: 0
     Cubature Degree: 4
-    Exodus Output File Name: output/humboldt.exo
-    Element Shape: Wedge
+    Exodus Output File Name: output/humboldt_press_bed.exo
     Use Serial Mesh: false
     Columnwise Ordering: true
     NumLayers: 2
@@ -158,7 +157,7 @@ ANONYMOUS:
         Restart Index: 1
         Use Serial Mesh: false
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
-        Exodus Output File Name: output/humboldt_basal.exo
+        Exodus Output File Name: output/humboldt_press_bed_basal.exo
         Cubature Degree: 4
         Required Fields Info:
           Number Of Fields: 11
@@ -222,7 +221,7 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Exodus Output File Name: output/humboldt_upper.exo
+        Exodus Output File Name: output/humboldt_press_bed_upper.exo
         Cubature Degree: 4
         Required Fields Info:
           Number Of Fields: 2

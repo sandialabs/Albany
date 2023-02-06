@@ -2825,7 +2825,7 @@ Application::evaluateResidual_HessVecProd_px(
   // the initialization of the first derivatives must be performed now:
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
-    unsigned int num_cols_p_l1 = params_l1.size();
+    int num_cols_p_l1 = params_l1.size();
 
     // Assumes that there is only one element block
     int deriv_size = PHAL::getDerivativeDimensions<EvalT>(this, 0);
@@ -2836,7 +2836,7 @@ Application::evaluateResidual_HessVecProd_px(
             << "Number of parameters columns cannot be larger than the derivative size\n ");
 
     HessianVecFad p_val;
-    for (unsigned int i = 0; i < num_cols_p_l1; i++) {
+    for (int i = 0; i < num_cols_p_l1; i++) {
       p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
       params_l1[i].family->setValue<EvalT>(p_val);
@@ -2962,7 +2962,7 @@ Application::evaluateResidual_HessVecProd_pp(
   // the initialization of the first derivatives must be performed now:
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
-    unsigned int num_cols_p_l1 = params_l1.size();
+    int num_cols_p_l1 = params_l1.size();
 
     // Assumes that there is only one element block
     int deriv_size = PHAL::getDerivativeDimensions<EvalT>(this, 0);
@@ -2973,7 +2973,7 @@ Application::evaluateResidual_HessVecProd_pp(
             << "Number of parameters columns cannot be larger than the derivative size\n ");
 
     HessianVecFad p_val;
-    for (unsigned int i = 0; i < num_cols_p_l1; i++) {
+    for (int i = 0; i < num_cols_p_l1; i++) {
       p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
       params_l1[i].family->setValue<EvalT>(p_val);
@@ -2984,7 +2984,7 @@ Application::evaluateResidual_HessVecProd_pp(
   // the initialization of the second derivatives must be performed now:
   if (!l2_is_distributed) {
     ParamVec params_l2 = param_array[l2];
-    unsigned int num_cols_p_l2 = params_l2.size();
+    int num_cols_p_l2 = params_l2.size();
 
     Teuchos::ArrayRCP<const ST> v_constView;
     if(!v.is_null()) {
@@ -2992,7 +2992,7 @@ Application::evaluateResidual_HessVecProd_pp(
     }
 
     HessianVecFad p_val;
-    for (unsigned int i = 0; i < num_cols_p_l2; i++) {
+    for (int i = 0; i < num_cols_p_l2; i++) {
       p_val = params_l2[i].family->getValue<EvalT>();
       p_val.val().fastAccessDx(0) = v_constView[i];
       params_l2[i].family->setValue<EvalT>(p_val);

@@ -78,7 +78,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Cubature Degree: 4
     Exodus Output File Name: enth_coupled.exo
-    Element Shape: Hexahedron
     Use Serial Mesh: true
     Columnwise Ordering: true
     NumLayers: 10

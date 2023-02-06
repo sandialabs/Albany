@@ -11,7 +11,6 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Method: Extruded
     Cubature Degree: 0
-    Element Shape: Tetrahedron
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
