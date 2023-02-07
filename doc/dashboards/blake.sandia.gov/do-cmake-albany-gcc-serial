@@ -1,4 +1,3 @@
-
 rm -rf CMake* 
 
 TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosSerialInstallGccNoWarn"
