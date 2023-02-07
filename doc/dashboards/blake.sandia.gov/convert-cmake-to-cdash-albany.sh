@@ -20,16 +20,17 @@ if [ $build = "sfad" ]; then
   name="albany-sfad"
 fi
 
-awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-$name >& /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i "s/\"/'/g" /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i 's/\.\.//g' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i 's,\\,,g' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i '/^$/d' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i 's/-D /"-D/g' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-awk '{print $0 "\""}' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt >& tmp.txt
-mv tmp.txt /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i 's, \",\",g' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i '$ d' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i 's/-G/\"-G/g' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-sed -i 's/-W/\"-W/g' /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
-cat /home/projects/albany/nightlyCDashAlbanyBlake/cdash-$name-frag.txt
+DIR=/home/projects/albany/nightlyCDashAlbanyBlake
+#DIR=`pwd`
+awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-$name >& ${DIR}/cdash-$name-frag.txt
+sed -i "s/\"/'/g" ${DIR}/cdash-$name-frag.txt
+sed -i 's/\.\.//g' ${DIR}/cdash-$name-frag.txt
+sed -i 's,\\,,g' ${DIR}/cdash-$name-frag.txt
+sed -i '/^$/d' ${DIR}/cdash-$name-frag.txt
+sed -i 's/-D /"-D/g' ${DIR}/cdash-$name-frag.txt
+awk '{print $0 "\""}' ${DIR}/cdash-$name-frag.txt >& tmp.txt
+mv tmp.txt ${DIR}/cdash-$name-frag.txt
+sed -i 's, \",\",g' ${DIR}/cdash-$name-frag.txt
+sed -i 's/-G/\"-G/g' ${DIR}/cdash-$name-frag.txt
+sed -i 's/-W/\"-W/g' ${DIR}/cdash-$name-frag.txt
+cat ${DIR}/cdash-$name-frag.txt

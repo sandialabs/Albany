@@ -1,6 +1,6 @@
 rm -rf CMake* 
 
-TRILINSTALLDIR=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosOpenMPInstall
+TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosOpenMPInstall"
 
 cmake \
     -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
