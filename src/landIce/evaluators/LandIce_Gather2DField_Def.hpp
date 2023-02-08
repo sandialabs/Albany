@@ -38,7 +38,6 @@ Gather2DFieldBase(const Teuchos::ParameterList& p,
 
   dl->node_gradient->dimensions(dims);
   numNodes = dims[1];
-  vecDim = dims[2];
 
   this->setName("Gather2DField"+PHX::print<EvalT>());
 
@@ -127,6 +126,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
+  const int neq = nodeID.extent(2);
 
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
@@ -144,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i];
         typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
         val = FadType(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);
-        val.fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset) = workset.j_coeff;
+        val.fastAccessDx(this->numNodes*neq+numSideNodes*neq*this->fieldLevel+neq*i+this->offset) = workset.j_coeff;
       }
     }
   }
@@ -226,6 +226,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
+    const int neq = nodeID.extent(2);
 
     // Loop over the sides that form the boundary condition
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
@@ -243,7 +244,7 @@ evaluateFields(typename Traits::EvalData workset)
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to workset.j_coeff
         if (is_x_active)
-          val.fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset).val() = workset.j_coeff;
+          val.fastAccessDx(this->numNodes*neq+numSideNodes*neq*this->fieldLevel+neq*i+this->offset).val() = workset.j_coeff;
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)

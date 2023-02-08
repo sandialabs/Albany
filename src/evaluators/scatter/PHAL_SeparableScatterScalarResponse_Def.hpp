@@ -662,7 +662,6 @@ evaluateFields(typename Traits::EvalData workset)
     auto hess_vec_prod_g_px_data = Albany::getNonconstLocalData(hess_vec_prod_g_px);
 
     int num_deriv = this->numNodes;
-    auto nodeID = workset.wsElNodeEqID;
     int fieldLevel = level_it->second;
 
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
@@ -698,7 +697,6 @@ evaluateFields(typename Traits::EvalData workset)
     auto hess_vec_prod_g_pp_data = Albany::getNonconstLocalData(hess_vec_prod_g_pp);
 
     int num_deriv = this->numNodes;
-    auto nodeID = workset.wsElNodeEqID;
     int fieldLevel = level_it->second;
 
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
