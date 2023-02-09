@@ -144,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i];
         typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
         val = FadType(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);
-        val.fastAccessDx(numSideNodes*neq*this->fieldLevel+neq*i+this->offset) = workset.j_coeff;
+        val.fastAccessDx(node*neq+this->offset) = workset.j_coeff;
       }
     }
   }
@@ -244,7 +244,7 @@ evaluateFields(typename Traits::EvalData workset)
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to workset.j_coeff
         if (is_x_active)
-          val.fastAccessDx(numSideNodes*neq*this->fieldLevel+neq*i+this->offset).val() = workset.j_coeff;
+          val.fastAccessDx(neq*node+this->offset).val() = workset.j_coeff;
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)

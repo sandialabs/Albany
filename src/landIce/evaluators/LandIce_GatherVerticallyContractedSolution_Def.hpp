@@ -232,6 +232,10 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
+    // The first neq*numNodes derivs are for dofs gathered "normally", without
+    // any knowledge of column contraction operations.
+    const int columnsOffset = neq*this->numNodes;
+
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const unsigned int elem_LID = sideSet.elem_LID(sideSet_idx);
@@ -258,12 +262,12 @@ evaluateFields(typename Traits::EvalData workset)
           for(unsigned int comp=0; comp<this->vecDim; ++comp) {
             this->contractedSol(sideSet_idx,i,comp) = FadType(this->contractedSol(sideSet_idx,i,comp).size(), contrSol[comp]);
             for(int il=0; il<this->numLayers+1; ++il)
-              this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
+              this->contractedSol(sideSet_idx,i,comp).fastAccessDx(columnsOffset+neq*(numSideNodes*il+i)+comp+this->offset) = this->quadWeights(il)*workset.j_coeff;
           }
         } else {
           this->contractedSol(sideSet_idx,i) = FadType(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
           for(int il=0; il<this->numLayers+1; ++il)
-            this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
+            this->contractedSol(sideSet_idx,i).fastAccessDx(columnsOffset+neq*(numSideNodes*il+i)+this->offset) = this->quadWeights(il)*workset.j_coeff;
         }
       }
     }
@@ -482,6 +486,10 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     const auto& ov_node_indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
 
+    // The first neq*numNodes derivs are for dofs gathered "normally", without
+    // any knowledge of column contraction operations.
+    const int columnsOffset = neq*this->numNodes;
+
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const unsigned int elem_LID = sideSet.elem_LID(sideSet_idx);
@@ -520,7 +528,7 @@ evaluateFields(typename Traits::EvalData workset)
               this->contractedSol(sideSet_idx,i,comp).val().fastAccessDx(0) = contrDirection[comp];
             if (g_xx_is_active||g_xp_is_active)
               for(int il=0; il<this->numLayers+1; ++il)
-                this->contractedSol(sideSet_idx,i,comp).fastAccessDx(neq*(numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
+                this->contractedSol(sideSet_idx,i,comp).fastAccessDx(columnsOffset+neq*(numSideNodes*il+i)+comp+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
           }
         } else {
           this->contractedSol(sideSet_idx,i) = HessianVecFad(this->contractedSol(sideSet_idx,i).size(), contrSol[0]);
@@ -528,7 +536,7 @@ evaluateFields(typename Traits::EvalData workset)
             this->contractedSol(sideSet_idx,i).val().fastAccessDx(0) = contrDirection[0];
           if (g_xx_is_active||g_xp_is_active)
             for(int il=0; il<this->numLayers+1; ++il)
-              this->contractedSol(sideSet_idx,i).fastAccessDx(neq*(numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
+              this->contractedSol(sideSet_idx,i).fastAccessDx(columnsOffset+neq*(numSideNodes*il+i)+this->offset).val() = this->quadWeights(il) * workset.j_coeff;
         }
       }
     }

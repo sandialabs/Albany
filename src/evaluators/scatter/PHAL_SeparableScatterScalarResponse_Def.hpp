@@ -173,6 +173,9 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
 
     auto ov_node_indexer = workset.disc->getOverlapNodeGlobalLocalIndexer();
 
+    // The first neq*numNodes derivs are for dofs gathered "normally", without
+    // any knowledge of column contraction operations.
+    const int columnsOffset = neq*this->numNodes;
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
       const int elem_LID = sideSet[iSide].elem_LID;
@@ -192,7 +195,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
             const LO  inode = ov_node_indexer->getLocalElement(ginode);
             for (int eq_col=0; eq_col<neq; eq_col++) {
               const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
-              int deriv = il_col*neq*numSideNodes + neq*i + eq_col;
+              int deriv = columnsOffset + il_col*neq*numSideNodes + neq*i + eq_col;
               dg_data[res][dof] += val.dx(deriv);
             }
           }
@@ -752,6 +755,9 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(sideset);
 
+  // The first neq*numNodes derivs are for dofs gathered "normally", without
+  // any knowledge of column contraction operations.
+  const int columnsOffset = neq*this->numNodes;
   if(!hess_vec_prod_g_xx.is_null())
   {
     auto hess_vec_prod_g_xx_data = Albany::getNonconstLocalData(hess_vec_prod_g_xx);
@@ -781,7 +787,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
               const LO  inode = ov_node_indexer->getLocalElement(ginode);
               for (int eq_col=0; eq_col<neq; eq_col++) {
                 const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
-                int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
+                int deriv = columnsOffset + il_col*neq*numSideNodes + neq*i + eq_col;
                 hess_vec_prod_g_xx_data[res][dof] += val.dx(deriv).dx(0);
               }
             }
@@ -819,7 +825,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
               const LO  inode = ov_node_indexer->getLocalElement(ginode);
               for (int eq_col=0; eq_col<neq; eq_col++) {
                 const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
-                int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
+                int deriv = columnsOffset + il_col*neq*numSideNodes + neq*i + eq_col;
                 hess_vec_prod_g_xp_data[res][dof] += val.dx(deriv).dx(0);
               }
             }
