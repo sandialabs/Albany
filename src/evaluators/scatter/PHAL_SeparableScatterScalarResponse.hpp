@@ -73,7 +73,7 @@ public:
 
   void evaluateFields(typename Traits::EvalData /* d */) {}
 
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData /* d */,
                                                         const std::string& /* sidesetName */,
                                                         Teuchos::RCP<const CellTopologyData> /* cellTopo */) {}
 
@@ -146,7 +146,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo);
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::Jacobian EvalT;
@@ -180,7 +180,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData /* d */,
                                                         const std::string& /* sidesetName */,
                                                         Teuchos::RCP<const CellTopologyData> /* cellTopo */) {}
   void postEvaluate(typename Traits::PostEvalData d);
@@ -289,7 +289,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo);
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo);
   void postEvaluate(typename Traits::PostEvalData d);
 
 protected:

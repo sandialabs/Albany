@@ -143,7 +143,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
-evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo)
+evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData workset, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo)
 {
   // Here we scatter the *local* response derivative
   Teuchos::RCP<Thyra_MultiVector> dgdx = workset.overlapped_dgdx;
@@ -731,7 +731,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::HessianVec, Traits>::
-evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo)
+evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData workset, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo)
 {
   // Here we scatter the *local* response derivative
   Teuchos::RCP<Thyra_MultiVector> hess_vec_prod_g_xx = workset.hessianWorkset.overlapped_hess_vec_prod_g_xx;

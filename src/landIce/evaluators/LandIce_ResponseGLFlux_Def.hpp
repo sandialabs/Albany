@@ -190,7 +190,7 @@ void ResponseGLFlux<EvalT, Traits, ThicknessST>::evaluateFields(typename Traits:
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluateFields(workset);
-  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName, cell_topo);
+  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToColumnContraction(workset,basalSideName, cell_topo);
 }
 
 // **********************************************************************

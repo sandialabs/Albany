@@ -280,7 +280,7 @@ evaluateFields(typename Traits::EvalData workset)
     PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
 
   if(Teuchos::nonnull(cell_topo))
-    PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,sideSetName, cell_topo);
+    PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToColumnContraction(workset,sideSetName, cell_topo);
 }
 
 // **********************************************************************
