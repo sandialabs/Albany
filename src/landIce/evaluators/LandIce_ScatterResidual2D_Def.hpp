@@ -83,10 +83,6 @@ evaluateFields(typename Traits::EvalData workset)
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
-    // The first numNodes*neq fad derivs are related to normal volume operations.
-    // The following numSideNodes*neq*numLevels are related to 2d fields and extruded/contracted stuff
-    const int offset2DFad = this->numNodes*neq;
-
     // Loop over the sides that form the boundary condition
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
@@ -132,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
             f_data[lrow] += valptr.val();
           }
           if (valptr.hasFastAccess()) {
-            Albany::addToLocalRowValues(Jac,lrow,lcols(), Teuchos::arrayView(&(valptr.fastAccessDx(offset2DFad)),lcols.size()));
+            Albany::addToLocalRowValues(Jac,lrow,lcols(), Teuchos::arrayView(&(valptr.fastAccessDx(0)),lcols.size()));
           } // has fast access
         }
       }

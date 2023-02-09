@@ -59,7 +59,8 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
         int side_node_count = ms->ctd.side[3].topology->node_count;
         int node_count = ms->ctd.node_count;
         int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
-        dDims = app->getNumEquations()*(node_count + side_node_count*numLevels);
+        int neq = app->getNumEquations();
+        dDims = neq*std::max(node_count, side_node_count*numLevels);
       }
   }
   checkDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(dDims);

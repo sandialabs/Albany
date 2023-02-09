@@ -192,7 +192,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
             const LO  inode = ov_node_indexer->getLocalElement(ginode);
             for (int eq_col=0; eq_col<neq; eq_col++) {
               const LO dof = solDOFManager.getLocalDOF(inode, eq_col);
-              int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
+              int deriv = il_col*neq*numSideNodes + neq*i + eq_col;
               dg_data[res][dof] += val.dx(deriv);
             }
           }
