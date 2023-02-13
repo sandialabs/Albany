@@ -281,7 +281,7 @@ evaluateFields(typename Traits::EvalData workset)
     PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
 
   if(resp_depends_on_sol_column) {
-    Base::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,sideSetName);
+    Base::evaluate2DFieldsDerivativesDueToColumnContraction(workset,sideSetName);
   }
 }
 

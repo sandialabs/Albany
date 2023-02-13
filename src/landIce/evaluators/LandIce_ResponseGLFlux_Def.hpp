@@ -42,7 +42,6 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   bed            = decltype(bed)(bed_name, dl_basal->node_scalar);
   coords         = decltype(coords)(coords_name, dl_basal->vertices_vector);
 
-  cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
 
@@ -192,7 +191,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Do any local-scattering necessary
   Base::evaluateFields(workset);
-  Base::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName);
+  Base::evaluate2DFieldsDerivativesDueToColumnContraction(workset,basalSideName);
 }
 
 // **********************************************************************

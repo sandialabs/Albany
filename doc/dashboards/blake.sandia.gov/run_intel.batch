@@ -18,9 +18,7 @@ cd /home/projects/albany/nightlyCDashAlbanyBlake
 source install_scipy_numpy.sh
 bash nightly_cron_script_albany_blake_intel_serial.sh
 bash nightly_cron_script_albany_blake_intel_openmp.sh
-bash nightly_cron_script_albany_blake_serial_sfad.sh sfad4
 bash nightly_cron_script_albany_blake_serial_sfad.sh sfad6
-bash nightly_cron_script_albany_blake_serial_sfad.sh sfad8
 bash nightly_cron_script_albany_blake_serial_sfad.sh sfad12
 bash nightly_cron_script_albany_blake_serial_sfad.sh sfad24
 

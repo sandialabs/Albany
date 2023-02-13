@@ -1235,7 +1235,8 @@ void
   };
   SCALETYPE scale_type;
 
-  unsigned int neq, spatial_dimension, tangent_deriv_dim;
+  unsigned int neq, spatial_dimension;
+  int tangent_deriv_dim;
 
   //! Phalanx postRegistration data
   Teuchos::RCP<PHAL::Setup> phxSetup;

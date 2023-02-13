@@ -147,7 +147,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 void SeparableScatterScalarResponse<AlbanyTraits::Jacobian, Traits>::
-evaluate2DFieldsDerivativesDueToExtrudedSolution(
+evaluate2DFieldsDerivativesDueToColumnContraction(
     typename Traits::EvalData workset,
     std::string& sidesetName)
 {
@@ -190,6 +190,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
       "   Feature only available for extruded meshes with one element per layer.\n");
 #endif
 
+  const int columnsOffset = neq*this->numNodes;
   const auto& sideSet = workset.sideSets->find(sidesetName)->second;
   for (const auto& side : sideSet) {
     const int side_elem_LID = side.ws_elem_idx;
@@ -209,7 +210,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(
           const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos,side_pos);
           const int numSideNodes = offsets.size();
           for (int i=0; i<numSideNodes; ++i) {
-            int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;
+            int deriv = columnsOffset+ilevel*neq*numSideNodes+neq*i+eq;
             const LO x_lid = elem_dof_lids(elem_LID,offsets[i]);
             dg_data[res][x_lid] += val.dx(deriv);
           }
@@ -724,7 +725,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 void SeparableScatterScalarResponse<AlbanyTraits::HessianVec, Traits>::
-evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset)
+evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData workset, std::string& sideset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,"it is used...");
   if (workset.sideSets == Teuchos::null) {
@@ -767,6 +768,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
   const auto dof_mgr = workset.disc->getNewDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const int neq = dof_mgr->getNumFields();
+  const int columnsOffset = neq*this->numNodes;
 
   const auto& sideSet = workset.sideSets->at(sideset);
   for (const auto& side : sideSet) {
@@ -786,7 +788,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
           const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,pos,side_pos);
           const int numSideNodes = offsets.size();
           for (int i=0; i<numSideNodes; ++i) {
-            int deriv = neq*this->numNodes+ilevel*neq*numSideNodes+neq*i+eq;
+            int deriv = columnsOffset + ilevel*neq*numSideNodes + neq*i + eq;
             const LO x_lid = elem_dof_lids(elem_LID,offsets[i]);
             if (!hess_vec_prod_g_xx_data.is_null()) {
               hess_vec_prod_g_xx_data[res][x_lid] += val.dx(deriv).dx(0);

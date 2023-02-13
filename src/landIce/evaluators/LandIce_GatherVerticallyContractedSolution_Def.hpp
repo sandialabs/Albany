@@ -179,6 +179,8 @@ evaluateFields(typename PHALTraits::EvalData workset)
   }
 
   const auto sideSet  = workset.sideSetViews->at(meshPart);
+  // TODO: if DOFManager side offsets were dev friently,
+  //       you could use cell layers_data and dof mgr instead
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
   const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
@@ -190,6 +192,11 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
   auto snc = side_node_count.dev();
+
+  // The first neq*numNodes derivs are for dofs gathered "normally", without
+  // any knowledge of column contraction operations.
+  const int columnsOffset = neq*this->numNodes;
+
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_CLASS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos(iside);
@@ -204,7 +211,8 @@ evaluateFields(typename PHALTraits::EvalData workset)
         auto val = get_ref(iside,node,comp);
         val = FadType(val.size(),contrSol[comp]);
         for (int il=0; il<=numLayers; ++il) {
-          const auto deriv = neq*(numNodes+numSideNodes*il+node)+comp+offset;
+          //                 "volume FADs"   Fads of lower levs     offset on this lev
+          const auto deriv = columnsOffset + neq*numSideNodes*il + neq*node + comp+offset;
           val.fastAccessDx(deriv) = w(il)*workset.j_coeff;
         }
       }
@@ -351,6 +359,8 @@ evaluateFields(typename PHALTraits::EvalData workset)
   }
 
   const auto sideSet  = workset.sideSetViews->at(meshPart);
+  // TODO: if DOFManager side offsets were dev friently,
+  //       you could use cell layers_data and dof mgr instead
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
   const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
@@ -362,6 +372,11 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
   auto snc = side_node_count.dev();
+
+  // The first neq*numNodes derivs are for dofs gathered "normally", without
+  // any knowledge of column contraction operations.
+  const int columnsOffset = neq*this->numNodes;
+
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_CLASS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos(iside);
@@ -386,7 +401,8 @@ evaluateFields(typename PHALTraits::EvalData workset)
         }
         if (g_xx_is_active||g_xp_is_active) {
           for (int il=0; il<=numLayers; ++il) {
-            const int deriv = neq*(numNodes+numSideNodes*il+node)+comp+offset;
+            //                 "volume FADs"   Fads of lower levs     offset on this lev
+            const int deriv = columnsOffset + neq*numSideNodes*il + neq*node + comp+offset;
             val.fastAccessDx(deriv).val() = w(il)*workset.j_coeff;
           }
         }

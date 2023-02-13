@@ -79,12 +79,19 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const int numSideNodes = topo.getNodeCount(topo.getDimension()-1,top);
   const int neq = dof_mgr->getNumFields();
 
+  // The first neq*numNodes derivs are for dofs gathered "normally", without
+  // any knowledge of column contraction operations.
+  const int columnsOffset = neq*this->numNodes;
+
   const bool scatter_f = Teuchos::nonnull(workset.f);
   auto f_data = scatter_f ? Albany::getNonconstLocalData(workset.f) : Teuchos::null;
   auto Jac = workset.Jac;
 
-  Teuchos::Array<LO>lcols(neq*numSideNodes*(numLayers+1));
-  double one = 1;
+  const int ncols_volume = neq*this->numNodes;
+  const int ncols_layers = neq*numSideNodes*numLevels;
+  Teuchos::Array<LO> lcols(ncols_volume);
+  Teuchos::Array<LO>lcols_layered(ncols_layers);
+  const double one = 1;
   const auto& sideSet = workset.sideSets->at(meshPart);
   for (const auto& side : sideSet) {
     const int cell = side.ws_elem_idx;
@@ -100,6 +107,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
       const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
+      // Column-coupled cols
       for (int eq=0; eq<neq; ++eq) {
         // Note: grab offsets on side ordered in the same way as on side $field_pos
         //       to guarantee corresponding nodes are vertically aligned.
@@ -108,7 +116,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
           const int lrow = dof_lids(dof_offsets[inode]);
 
           // add to lcols
-          lcols[ilev*neq*numSideNodes + neq*inode + eq] = lrow;
+          lcols_layered[ilev*neq*numSideNodes + neq*inode + eq] = lrow;
         }
       }
 
@@ -124,10 +132,17 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
       }
     }
 
+    // Not column-coupled cols
+    for (unsigned int node=0; node<this->numNodes; ++node) {
+      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+        GO gcol = solDOFManager.getGlobalDOF(elNodeID[node],eq_col);
+        lcols[neq*node + eq_col] = solIndexer->getLocalElement(gcol);
+      }
+    }
+
     // Cell layer where we'll do the scatter of the 2d residual
     const int layer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
-    // Note: cannot use getGIDFieldOffsetsSide with pos, since top nodes must
-    //       be parsed in the same 2D order as the bot nodes
+    // Note: top nodes must be parsed in the same 2D order as the field_pos side
     const auto& offsets_2d_field = dof_mgr->getGIDFieldOffsetsSide(this->offset,field_pos);
     const int elem_LID = layers_data->getId(basal_elem_LID,layer);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -142,8 +157,11 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
         f_data[lrow] += res.val();
       }
       if (res.hasFastAccess()) {
-        Albany::addToLocalRowValues(Jac,lrow,lcols.size(),lcols.data(),&res.fastAccessDx(0));
-      } // has fast access
+        // Column-coupled part
+        Albany::addToLocalRowValues(Jac,lrow,ncols_layers, lcols_layered.data(), &res.fastAccessDx(columnsOffset));
+        // Non-column-coupled part
+        Albany::addToLocalRowValues(Jac,lrow,ncols_volume, lcols.data(), &res.fastAccessDx(0));
+      }
     }
   }
 }

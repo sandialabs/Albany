@@ -253,14 +253,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 1.00000000000000005e-01
+        Initial Value: 1.0e-01
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0e+00
+        Min Value: 0.0e+00
       Step Size:
-        Initial Step Size: 2.00000000000000011e-01
+        Initial Step Size: 2.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -297,7 +297,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-08
+                      Convergence Tolerance: 1.0e-07
                       Output Frequency: 10
                       Output Style: 1
                       Maximum Iterations: 100
@@ -313,7 +313,7 @@ ANONYMOUS:
                     'fact: iluk level-of-fill': 0
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0e+00
         Method: Backtrack
       Printing:
         Output Precision: 3
@@ -333,9 +333,9 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.e-06
     Relative Tolerance: 1.e-06
-    Test Value: 3.908077108980e+01
+    Test Value: 6.206653126610e+01
     Sensitivity For Parameter 0:
-      Test Value: 1.562164673087e+02
+      Test Value: 2.500488473934e+02
     Sensitivity For Parameter 1:
-      Test Value: 2.077378072219e+02
+      Test Value: 3.033911367906e+02
 ...

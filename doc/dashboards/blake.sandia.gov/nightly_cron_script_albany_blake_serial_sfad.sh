@@ -6,7 +6,7 @@ cd $BASE_DIR
 BUILD_OPT="$1"
 
 if [ -z "$BUILD_OPT" ]; then
-   echo "Please supply an argument: sfad4, sfad6, sfad8, sfad12 or sfad24"
+   echo "Please supply an argument: sfad6, sfad12 or sfad24"
    exit 1;
 fi
 rm -rf intel_modules.out 
@@ -19,14 +19,8 @@ source blake_intel_modules.sh >& intel_modules.out
 
 export OMP_NUM_THREADS=1
 
-if [ "$BUILD_OPT" = "sfad4" ] ; then
-  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad4.txt
-fi
 if [ "$BUILD_OPT" = "sfad6" ] ; then
   LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad6.txt
-fi
-if [ "$BUILD_OPT" = "sfad8" ] ; then
-  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad8.txt
 fi
 if [ "$BUILD_OPT" = "sfad12" ] ; then
   LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad12.txt

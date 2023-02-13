@@ -516,7 +516,7 @@ evaluate_HessVecProd_px(
   // the initialization of the first derivatives must be performed now:
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
-    unsigned int num_cols_p_l1 = params_l1.size();
+    int num_cols_p_l1 = params_l1.size();
     int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(application.get(), meshSpecs.get(), true);
     TEUCHOS_TEST_FOR_EXCEPTION(
         num_cols_p_l1 > deriv_size,
@@ -525,7 +525,7 @@ evaluate_HessVecProd_px(
             << "Number of parameters columns cannot be larger than the derivative size\n ");
 
     HessianVecFad p_val;
-    for (unsigned int i = 0; i < num_cols_p_l1; i++) {
+    for (int i = 0; i < num_cols_p_l1; i++) {
       p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
       params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
@@ -607,7 +607,7 @@ evaluate_HessVecProd_pp(
   // the initialization of the first derivatives must be performed now:
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
-    unsigned int num_cols_p_l1 = params_l1.size();
+    int num_cols_p_l1 = params_l1.size();
     int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(application.get(), meshSpecs.get(), true);
     TEUCHOS_TEST_FOR_EXCEPTION(
         num_cols_p_l1 > deriv_size,
@@ -616,7 +616,7 @@ evaluate_HessVecProd_pp(
             << "Number of parameters columns cannot be larger than the derivative size\n ");
 
     HessianVecFad p_val;
-    for (unsigned int i = 0; i < num_cols_p_l1; i++) {
+    for (int i = 0; i < num_cols_p_l1; i++) {
       p_val = HessianVecFad(deriv_size, params_l1[i].baseValue);
       p_val.fastAccessDx(i).val() = 1.0;
       params_l1[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);
@@ -627,7 +627,7 @@ evaluate_HessVecProd_pp(
   // the initialization of the second derivatives must be performed now:
   if (!l2_is_distributed) {
     ParamVec params_l2 = param_array[l2];
-    unsigned int num_cols_p_l2 = params_l2.size();
+    int num_cols_p_l2 = params_l2.size();
 
     Teuchos::ArrayRCP<const ST> v_constView;
     if(!v.is_null()) {
@@ -635,7 +635,7 @@ evaluate_HessVecProd_pp(
     }
 
     HessianVecFad p_val;
-    for (unsigned int i = 0; i < num_cols_p_l2; i++) {
+    for (int i = 0; i < num_cols_p_l2; i++) {
       p_val = params_l2[i].family->getValue<PHAL::AlbanyTraits::HessianVec>();
       p_val.val().fastAccessDx(0) = v_constView[i];
       params_l2[i].family->setValue<PHAL::AlbanyTraits::HessianVec>(p_val);

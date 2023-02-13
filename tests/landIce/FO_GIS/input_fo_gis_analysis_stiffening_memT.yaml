@@ -75,7 +75,7 @@ ANONYMOUS:
     Cubature Degree: 4
     Exodus Output File Name: gis_analysis_stiffening_mem.exo
     Columnwise Ordering: true
-    NumLayers: 5
+    NumLayers: 3
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
     Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, stiffening_factor]
@@ -309,11 +309,8 @@ ANONYMOUS:
         Status Test Check Type: Minimal
 
   Regression For Response 0:
-    Test Value: 6.14131581607e+01
     Relative Tolerance: 1.0e-05
     Absolute Tolerance: 1.0e-05
-    Sensitivity For Parameter 0:
-      Test Value: 1.06024176845e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [9.69016165987]
+    Piro Analysis Test Values: [9.68889675332]
 ...

@@ -62,8 +62,6 @@ private:
   double rho_i, rho_w;  //[kg m^{-3}]
   double scaling;       //[adim]
 
-  Teuchos::RCP<const CellTopologyData> cell_topo;
-
   Albany::LocalSideSetInfo sideSet;
 };
 

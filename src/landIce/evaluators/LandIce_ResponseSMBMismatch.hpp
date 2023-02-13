@@ -65,8 +65,6 @@ private:
 
   ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
   double scaling, alpha, alphaH, alphaSMB;
-
-  Teuchos::RCP<const CellTopologyData> cell_topo;
 };
 
 } // namespace LandIce

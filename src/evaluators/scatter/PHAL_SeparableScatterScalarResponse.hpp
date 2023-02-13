@@ -78,8 +78,8 @@ public:
 
   void evaluateFields(typename Traits::EvalData /* d */) {}
 
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
-                                                        const std::string& /* sidesetName */) {}
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData /* d */,
+                                                        const std::string& /* sidesetName */ ) {}
 
 protected:
   SeparableScatterScalarResponse() {}
@@ -150,7 +150,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset);
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData d, std::string& sideset);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef AlbanyTraits::Jacobian EvalT;
@@ -184,7 +184,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData /* d */,
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData /* d */,
                                                         const std::string& /* sidesetName */) {}
   void postEvaluate(typename Traits::PostEvalData d);
 
@@ -291,7 +291,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset);
+  void evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData d, std::string& sideset);
   void postEvaluate(typename Traits::PostEvalData d);
 
 protected:

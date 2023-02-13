@@ -56,7 +56,6 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   w_measure_2d   = decltype(w_measure_2d)(w_measure_2d_name, dl_basal->qp_scalar);
   tangents       = decltype(tangents)(tangents_name, dl_basal->qp_tensor_cd_sd);
 
-  cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
 
@@ -190,7 +189,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Do any local-scattering necessary
   Base::evaluateFields(workset);
-  Base::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName);
+  Base::evaluate2DFieldsDerivativesDueToColumnContraction(workset,basalSideName);
 }
 
 // **********************************************************************

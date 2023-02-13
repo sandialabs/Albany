@@ -54,6 +54,7 @@ protected:
   PHX::MDField<ScalarT,Cell,Node>  field2D;
 
   int offset; // Offset of first DOF being gathered
+  int numNodes;
 
   int fieldLevel;
   std::string meshPart;

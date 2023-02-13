@@ -37,7 +37,11 @@ Gather2DField(const Teuchos::ParameterList& p,
   fieldLevel = p.get<int>("Field Level");
   TEUCHOS_TEST_FOR_EXCEPTION (fieldLevel<0, Teuchos::Exceptions::InvalidParameter,
       "[Gather2DField] Error! Field level must be non-negative.\n");
+
   extruded   = p.get<bool>("Extruded");
+  numNodes = dl->node_scalar->dimension(1);
+
+  this->setName("Gather2DField"+PHX::print<EvalT>());
 
   if (p.isType<int>("Offset of First DOF")) {
     offset = p.get<int>("Offset of First DOF");
@@ -220,7 +224,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
         ref_t val = field2D(cell,nodes[i]);
         val = ScalarT(val.size(), x_data[ldof]);
-        val.fastAccessDx(numSideNodes*neq*fieldLevel+neq*i+offset) = workset.j_coeff;
+        val.fastAccessDx(nodes[i]*neq + offset) = workset.j_coeff;
       }
     }
   }
@@ -348,7 +352,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to workset.j_coeff
         if (is_x_active)
-          val.fastAccessDx(numSideNodes*neq*fieldLevel+neq*i+offset).val() = workset.j_coeff;
+          val.fastAccessDx(neq*node+this->offset).val() = workset.j_coeff;
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)
