@@ -47,7 +47,6 @@ protected:
   // Output:
   PHX::MDField<ScalarT,Cell,Node>  field2D;
 
-  std::size_t vecDim;
   std::size_t numNodes;
   std::size_t offset; // Offset of first DOF being gathered
 

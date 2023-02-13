@@ -51,7 +51,6 @@ evaluateFields(typename Traits::EvalData workset)
 {
   auto nodeID = workset.wsElNodeEqID;
   const bool loadResid = Teuchos::nonnull(workset.f);
-  Teuchos::Array<LO> lcols;
   const unsigned int neq = nodeID.extent(2);
   unsigned int numDim = 0;
   if (this->tensorRank==2) {
@@ -78,10 +77,16 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
     auto solIndexer = workset.disc->getOverlapGlobalLocalIndexer();
     const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-    unsigned int numLayers = layeredMeshNumbering.numLayers;
-    lcols.reserve(neq*this->numNodes*(numLayers+1));
+    unsigned int numLevels = layeredMeshNumbering.numLayers+1;
 
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+    // The first neq*numNodes derivs are for dofs gathered "normally", without
+    // any knowledge of column contraction operations.
+    const int columnsOffset = neq*this->numNodes;
+
+    Teuchos::Array<LO> lcols(neq*this->numNodes);
+    Teuchos::Array<LO> lcols_layered;
 
     // Loop over the sides that form the boundary condition
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
@@ -91,24 +96,34 @@ evaluateFields(typename Traits::EvalData workset)
       const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
       unsigned int numSideNodes = side.topology->node_count;
 
-      lcols.resize(neq*numSideNodes*(numLayers+1));
+      lcols_layered.resize(neq*numSideNodes*numLevels);
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
 
+      // Column-coupled cols
       GO base_id;
       for (unsigned int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
+
         base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-        for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+        for (unsigned int il_col=0; il_col<numLevels; il_col++) {
           GO gnode = layeredMeshNumbering.getId(base_id, il_col);
           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
             GO gcol  = solDOFManager.getGlobalDOF(gnode, eq_col);
-            lcols[il_col*neq*numSideNodes + neq*i + eq_col] = solIndexer->getLocalElement(gcol);
+            lcols_layered[il_col*neq*numSideNodes + neq*i + eq_col] = solIndexer->getLocalElement(gcol);
           }
           if(il_col != fieldLevel) {
             const GO grow = solDOFManager.getGlobalDOF(gnode, this->offset); //insert diagonal values
             const LO lrow = solIndexer->getLocalElement(grow);
             Albany::setLocalRowValues(Jac,lrow,Teuchos::arrayView(&lrow,1), Teuchos::arrayView(&diagonal_value,1));
           }
+        }
+      }
+
+      // Not column-coupled part
+      for (unsigned int node=0; node<this->numNodes; ++node) {
+        for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+          GO gcol = solDOFManager.getGlobalDOF(elNodeID[node],eq_col);
+          lcols[neq*node + eq_col] = solIndexer->getLocalElement(gcol);
         }
       }
 
@@ -120,14 +135,15 @@ evaluateFields(typename Traits::EvalData workset)
           valptr = (this->tensorRank == 0 ? this->val[eq](elem_LID,node) :
                     this->tensorRank == 1 ? this->valVec(elem_LID,node,eq) :
                     this->valTensor(elem_LID,node, eq/numDim, eq%numDim));
-          // GO gnode = layeredMeshNumbering.getId(base_id, fieldLevel);
-          // GO grow  = solDOFManager.getGlobalDOF(gnode,this->offset + eq);
-          // const LO lrow = solIndexer->getLocalElement(grow);
+
           const LO lrow = nodeID(elem_LID,node,this->offset + eq);
           if (loadResid) {
             f_data[lrow] += valptr.val();
           }
           if (valptr.hasFastAccess()) {
+            // Column-coupled part
+            Albany::addToLocalRowValues(Jac,lrow,lcols_layered(), Teuchos::arrayView(&(valptr.fastAccessDx(columnsOffset)),lcols_layered.size()));
+            // Non-column-coupled part
             Albany::addToLocalRowValues(Jac,lrow,lcols(), Teuchos::arrayView(&(valptr.fastAccessDx(0)),lcols.size()));
           } // has fast access
         }
