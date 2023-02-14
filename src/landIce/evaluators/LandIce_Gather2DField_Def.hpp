@@ -352,7 +352,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to workset.j_coeff
         if (is_x_active)
-          val.fastAccessDx(neq*node+this->offset).val() = workset.j_coeff;
+          val.fastAccessDx(neq*nodes[i]+this->offset).val() = workset.j_coeff;
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)

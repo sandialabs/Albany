@@ -71,6 +71,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const auto& mesh = workset.disc->getMeshStruct();
   const auto& layers_data  = mesh->local_cell_layers_data;
   const int   numLayers = layers_data->numLayers;
+  const int   numLevels = numLayers + 1;
   const auto  bot = layers_data->bot_side_pos;
   const auto  top = layers_data->top_side_pos;
   const auto  field_pos = fieldLevel==numLayers ? top : bot;
@@ -89,7 +90,6 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
   const int ncols_volume = neq*this->numNodes;
   const int ncols_layers = neq*numSideNodes*numLevels;
-  Teuchos::Array<LO> lcols(ncols_volume);
   Teuchos::Array<LO>lcols_layered(ncols_layers);
   const double one = 1;
   const auto& sideSet = workset.sideSets->at(meshPart);
@@ -133,12 +133,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     }
 
     // Not column-coupled cols
-    for (unsigned int node=0; node<this->numNodes; ++node) {
-      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-        GO gcol = solDOFManager.getGlobalDOF(elNodeID[node],eq_col);
-        lcols[neq*node + eq_col] = solIndexer->getLocalElement(gcol);
-      }
-    }
+    auto lcols = Kokkos::subview(elem_dof_lids,side_elem_LID,ALL);
 
     // Cell layer where we'll do the scatter of the 2d residual
     const int layer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
