@@ -52,8 +52,11 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
     const bool landIceCoupledFOH3D = !responseEvaluation && pl->get<std::string>("Name") == "LandIce Coupled FO H 3D";
-    const bool extrudedColumnCoupled = (responseEvaluation && pl->isParameter("Extruded Column Coupled in 2D Response")) ?
+    bool extrudedColumnCoupled = (responseEvaluation && pl->isParameter("Extruded Column Coupled in 2D Response")) ?
         pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
+    if (pl->isParameter("Extruded Column Coupled in 2D Residual")) {
+      extrudedColumnCoupled |= pl->get<bool>("Extruded Column Coupled in 2D Residual");
+    }
     if(landIceCoupledFOH3D || extrudedColumnCoupled)
       { //all column is coupled
         int side_node_count = ms->ctd.side[3].topology->node_count;
