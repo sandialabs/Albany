@@ -27,3 +27,6 @@ IF(ENABLE_CISM_INTERFACE)
     add_subdirectory(CismAlbany)
   endif()
 ENDIF() 
+
+# Some ad-hoc problems to quickly verify certain evaluators
+add_subdirectory(unit)
