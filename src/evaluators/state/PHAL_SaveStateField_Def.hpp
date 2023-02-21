@@ -50,15 +50,28 @@ SaveStateField(const Teuchos::ParameterList& p)
   Teuchos::RCP<PHX::DataLayout> layout = p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout");
   field = decltype(field)(fieldName, layout );
 
-  if (layout->name(0) != PHX::print<Cell>() && layout->name(0) != PHX::print<Node>())
-  {
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      layout->name(0)==PHX::print<Cell>() ||
+      layout->name(0)==PHX::print<Dim>() ||
+      layout->name(0)==PHX::print<Dummy>(), std::runtime_error,
+      "Error! Invalid state layout. Supported cases:\n"
+      " - <Cell, Node [,Dim]>\n"
+      " - <Cell, QuadPoint [,Dim]>\n"
+      " - <Cell [,Dim [,Dim [,Dim]]]\n"
+      " - <Dim [,Dim]>\n"
+      " - <Dummy]>\n");
+  if (layout->name(0) != PHX::print<Cell>()) {
     worksetState = true;
     nodalState = false;
-  }
-  else
-  {
+    TEUCHOS_TEST_FOR_EXCEPTION (layout->size()<3, Teuchos::Exceptions::InvalidParameter,
+        "Error! Only rank<=2 workset states supported.\n");
+  } else {
     worksetState = false;
-    nodalState = p.isParameter("Nodal State") ? p.get<bool>("Nodal State") : false;
+    nodalState = layout->name(1)==PHX::print<Node>();
+    TEUCHOS_TEST_FOR_EXCEPTION (!nodalState || layout->size()<2, Teuchos::Exceptions::InvalidParameter,
+        "Error! Only scalar/vector nodal states supported.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (nodalState || layout->size()<5, Teuchos::Exceptions::InvalidParameter,
+        "Error! Only rank<=4 elem states supported.\n");
   }
 
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
@@ -79,13 +92,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(field,fm);
 
-  if (nodalState)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().size()<2, Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a nodal state, pass the cell-based version of it (<Cell,Node,...>).\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().name(1)!=PHX::print<Node>(), Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a nodal state, the second tag of the layout MUST be 'Node'.\n");
-  }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }

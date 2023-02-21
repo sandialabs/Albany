@@ -492,7 +492,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p = stateMgr.registerStateVariable(stateName, dl->qp_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", fieldName);
       p->set("Field Layout", dl->qp_scalar);
-      p->set<bool>("Nodal State", false);
 
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -553,7 +552,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", fieldName);
       p->set("Field Layout", dl->node_scalar);
-      p->set<bool>("Nodal State", true);
 
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -612,7 +610,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", fieldName);
       p->set("Field Layout", dl->node_scalar);
-      p->set<bool>("Nodal State", true);
 
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -644,7 +641,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", fieldName);
       p->set("Field Layout", dl->node_scalar);
-      p->set<bool>("Nodal State", true);
 
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -679,7 +675,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", fieldName);
       p->set("Field Layout", dl->node_scalar);
-      p->set<bool>("Nodal State", true);
 
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
