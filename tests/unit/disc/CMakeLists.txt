@@ -16,3 +16,8 @@ set (testNameRoot ${parentDirName}_${dirName})
 create_unit_test (NAME    STKDisc
                   PREFIX  ${testNameRoot}
                   SOURCES STKDisc.cpp)
+
+if (ENABLE_OMEGAH)
+  create_unit_test (NAME    OmegahConMgr
+                    SOURCES OmegahConMgr.cpp)
+endif()
