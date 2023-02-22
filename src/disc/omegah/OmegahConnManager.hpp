@@ -1,0 +1,153 @@
+//*****************************************************************//
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
+#ifndef ALBANY_Omegah_CONN_MANAGER_HPP
+#define ALBANY_Omegah_CONN_MANAGER_HPP
+
+#include "Albany_ConnManager.hpp"
+#include "Albany_ShardsHack.hpp"
+
+#include "Omega_h_Mesh.hpp"
+
+#include "Teuchos_RCP.hpp"
+
+#include <vector>
+#include <map>
+
+namespace Albany {
+
+class OmegahConnManager : public ConnManager {
+public:
+  OmegahConnManager(Omega_h::Mesh& in_mesh)
+   : OmegahConnManager(in_mesh)
+  {
+    // Nothing to do
+  }
+
+  ~OmegahConnManager() = default;
+
+  // Do not hide other methods
+  using ConnManager::getElementsInBlock;
+  std::vector<GO>
+  getElementsInBlock (const std::string& blockId) const override; //FIXME
+
+  /** Tell the connection manager to build the connectivity assuming
+    * a particular field pattern.
+    *
+    * \param[in] fp Field pattern to build connectivity for
+    */
+  void buildConnectivity(const panzer::FieldPattern & fp) override; //FIXME
+
+  /** Build a clone of this connection manager, without any assumptions
+    * about the required connectivity (e.g. <code>buildConnectivity</code>
+    * has never been called).
+    */
+  Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override; //FIXME
+
+  /** Get ID connectivity for a particular element
+    *
+    * \param[in] localElmtId Local element ID
+    *
+    * \returns Pointer to beginning of indices, with total size
+    *          equal to <code>getConnectivitySize(localElmtId)</code>
+    */
+  const GO * getConnectivity(LO localElmtId) const override { //FIXME
+    return NULL;
+  }
+
+  /** How many mesh IDs are associated with this element?
+    *
+    * \param[in] localElmtId Local element ID
+    *
+    * \returns Number of mesh IDs that are associated with this element.
+    */
+  LO getConnectivitySize(LO localElmtId) const override { //FIXME
+    return 42;
+  }
+
+  /** Get the block ID for a particular element.
+    *
+    * \param[in] localElmtId Local element ID
+    */
+  std::string getBlockId(LO localElmtId) const override;
+
+  /** How many element blocks in this mesh?
+    */
+  std::size_t numElementBlocks() const override { //FIXME
+    return 1;
+  }
+
+  /** Get block IDs from Omegah mesh object
+    */
+  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override { //FIXME
+  }
+
+  /** What are the cellTopologies linked to element blocks in this connection manager?
+   */
+  void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override { //FIXME
+  }
+
+  /** Get the local element IDs for a paricular element
+    * block. These are only the owned element ids.
+    *
+    * \param[in] blockIndex Block Index
+    *
+    * \returns Vector of local element IDs.
+    */
+  const std::vector<LO> & getElementBlock(const std::string & blockId) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_elementBlocks.find(blockId)==m_elementBlocks.end(), std::runtime_error,
+        "[OmegahConnManager] Error! Block '" + blockId + "' not found in the mesh.\n");
+    return m_elementBlocks.at(blockId);
+  }
+
+  /** Get the local element IDs for a paricular element
+    * block. These element ids are not owned, and the element
+    * will live on another processor.
+    *
+    * \param[in] blockIndex Block Index
+    *
+    * \returns Vector of local element IDs.
+    */
+  const std::vector<LO> & getNeighborElementBlock(const std::string & blockId) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+        "Error! Albany does not use elements halos, so the method\n"
+        "       'OmegahConnManager::getNeighborElementBlock' should not have been called.\n");
+    return m_neighborElementBlocks.at(blockId);
+  }
+
+  int getOwnedElementCount() const {
+    return m_elements.size();
+  }
+
+  /** Get elements, if any, associated with <code>el</code>, excluding
+    * <code>el</code> itself.
+    */
+  const std::vector<LO>& getAssociatedNeighbors(const LO& el) const override;
+
+  /** Return whether getAssociatedNeighbors will return true for at least one
+    * input. Default implementation returns false.
+    */
+  // NOTE: Albany should not use neighbors, so always false.
+  bool hasAssociatedNeighbors() const override {
+    return false;
+  }
+
+  // Returns whether input part name is topologically contained in the
+  // parts where this ConnManager is defined.
+  bool contains (const std::string& sub_part_name) const override;
+
+  // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
+  // local element $ielem belongs to sub part $sub_part_name
+  bool belongs (const std::string& sub_part_name,
+                const LO ielem, const int subcell_dim, const int subcell_pos) const override;
+
+  // Queries the dimension of a part
+  int part_dim (const std::string& part_name) const override;
+};
+
+} // namespace Albany
+
+#endif // ALBANY_Omegah_CONN_MANAGER_HPP
