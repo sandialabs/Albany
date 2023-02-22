@@ -7,26 +7,29 @@
 #ifndef ALBANY_COLUMN_COUPLING_TEST_HPP
 #define ALBANY_COLUMN_COUPLING_TEST_HPP 1
 
-#include "Shards_CellTopology.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
-#include "PHAL_Workset.hpp"
-#include "PHAL_Dimension.hpp"
+#include "LandIce_GatherVerticallyContractedSolution.hpp"
+#include "LandIce_ColumnCouplingTestResidual.hpp"
+#include "LandIce_ScatterResidual2D.hpp"
+#include "LandIce_ResponseUtilities.hpp"
 
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_EvaluatorUtils.hpp"
-
 #include "Albany_StringUtils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 
-#include "LandIce_GatherVerticallyContractedSolution.hpp"
-#include "LandIce_ColumnCouplingTestResidual.hpp"
-#include "LandIce_ScatterResidual2D.hpp"
+#include "PHAL_Workset.hpp"
+#include "PHAL_Dimension.hpp"
+
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
 #include "PHAL_LoadSideSetStateField.hpp"
+
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -96,14 +99,18 @@ protected:
   Teuchos::RCP<Teuchos::ParameterList> discParams;
 
   Teuchos::RCP<shards::CellTopology>   cellType;
-  Teuchos::RCP<shards::CellTopology>   sideType;
 
   Teuchos::RCP<Albany::Layouts> dl, dl_side;
+
+  using IntrepidBasis    = Intrepid2::Basis<PHX::Device, RealType, RealType>;
+  using IntrepidCubature = Intrepid2::Cubature<PHX::Device>;
+  std::map<std::string,Teuchos::RCP<IntrepidBasis>>         sideBasis;
+  std::map<std::string,Teuchos::RCP<IntrepidCubature>>      sideCubature;
 
   std::string sideSetName;
 
   std::string cellEBName;
-  std::string sideEBName;
+  std::map<std::string,std::string> sideEBName;
   
   /// Boolean marking whether SDBCs are used 
   bool use_sdbcs_; 
@@ -158,7 +165,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
 
   p->set<std::string>("Residual Name", resid_name);
   p->set<int>("Tensor Rank", 0);
-  p->set<int>("Field Level", 0);
+  p->set<int>("Field Level", sideSetName=="basalside" ? 0 : 1);
   p->set<std::string>("Mesh Part", sideSetName);
   p->set<int>("Offset of First DOF", 0);
   p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",cellType);
@@ -186,8 +193,42 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+    auto dof_side = dof_name + "_" + sideSetName;
+    auto sh_side = sh_name + "_" + sideSetName;
+    auto coords_side = Albany::coord_vec_name + "_" + sideSetName;
 
+    // --- Solution --- //
+    ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_name, 0);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.getSTUtils().constructDOFCellToSideEvaluator(dof_name, sideSetName, "Node Scalar", cellType, dof_side);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    // --- Coors, basis functions, measure, etc. --- //
+    ev = evalUtils.getMSTUtils().constructGatherCoordinateVectorEvaluator();
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name, sideSetName, "Vertex Vector", cellType, coords_side);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.getSTUtils().constructDOFInterpolationSideEvaluator (dof_side, sideSetName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis[sideSetName], sideCubature[sideSetName], sideSetName, false);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    // --- Surface height --- //
+    ev = evalUtils.getRTUtils().constructDOFInterpolationSideEvaluator (sh_side, sideSetName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    // ----------------------- Responses --------------------- //
+
+    Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
+    paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+
+    ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 
@@ -271,7 +312,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
 
     // Register the state
-    p = stateMgr.registerSideSetStateVariable(sideSetName, stateName, fieldName, state_dl, sideEBName, true, &entity, meshPart);
+    p = stateMgr.registerStateVariable(stateName, state_dl, meshSpecs.ebName, true, &entity, meshPart);
 
     // Create load/save evaluator(s)
     if ( fieldUsage == "Output" || fieldUsage == "Input-Output") {
@@ -295,94 +336,91 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
   }
 
-  // Side set requirements
-  Teuchos::Array<std::string> ss_names;
-  if (discParams->sublist("Side Set Discretizations").isParameter("Side Sets")) {
-    ss_names = discParams->sublist("Side Set Discretizations").get<Teuchos::Array<std::string>>("Side Sets");
-  }
+  auto& ss_discs_params = discParams->sublist("Side Set Discretizations");
+  auto& ss_names = ss_discs_params.get<Teuchos::Array<std::string>>("Side Sets");
+  for (const auto& ss_name : ss_names) {
+    auto& ss_info = ss_discs_params.sublist(ss_name).sublist("Required Fields Info");
+    int num_ss_fields = ss_info.get<int>("Number Of Fields",0);
 
-  auto& ss_disc_params = discParams->sublist("Side Set Discretizations").sublist(sideSetName);
-  auto& ss_info = ss_disc_params.sublist("Required Fields Info");
-  int num_ss_fields = ss_info.get<int>("Number Of Fields",0);
+    Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
+    for (unsigned int ifield=0; ifield<num_ss_fields; ++ifield) {
+      Teuchos::ParameterList& thisFieldList =  ss_info.sublist(util::strint("Field", ifield));
 
-  Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(sideSetName);
-  for (unsigned int ifield=0; ifield<num_ss_fields; ++ifield) {
-    Teuchos::ParameterList& thisFieldList =  ss_info.sublist(util::strint("Field", ifield));
+      // Get current state specs
+      auto fieldName = thisFieldList.get<std::string>("Field Name");
+      auto stateName = thisFieldList.get<std::string>("State Name", fieldName);
+      fieldName = fieldName + "_" + ss_name;
+      auto fieldUsage = thisFieldList.get<std::string>("Field Usage","Input"); // WARNING: assuming Input if not specified
 
-    // Get current state specs
-    auto fieldName = thisFieldList.get<std::string>("Field Name");
-    auto stateName = thisFieldList.get<std::string>("State Name", fieldName);
-    fieldName = fieldName + "_" + sideSetName;
-    auto fieldUsage = thisFieldList.get<std::string>("Field Usage","Input"); // WARNING: assuming Input if not specified
+      if (fieldUsage == "Unused") {
+        continue;
+      }
 
-    if (fieldUsage == "Unused") {
-      continue;
-    }
+      auto meshPart = "";
 
-    auto meshPart = "";
+      auto fieldType  = thisFieldList.get<std::string>("Field Type");
+      auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node : FL::Cell;
 
-    auto fieldType  = thisFieldList.get<std::string>("Field Type");
-    auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node : FL::Cell;
+      TEUCHOS_TEST_FOR_EXCEPTION (
+          fieldType.find("Scalar")==std::string::npos &&
+          fieldType.find("Vector")==std::string::npos &&
+          fieldType.find("Gradient")==std::string::npos &&
+          fieldType.find("Tensor")==std::string::npos, std::runtime_error,
+          "Error! Invalid rank type for state " + stateName + "\n");
 
-    TEUCHOS_TEST_FOR_EXCEPTION (
-        fieldType.find("Scalar")==std::string::npos &&
-        fieldType.find("Vector")==std::string::npos &&
-        fieldType.find("Gradient")==std::string::npos &&
-        fieldType.find("Tensor")==std::string::npos, std::runtime_error,
-        "Error! Invalid rank type for state " + stateName + "\n");
+      auto rank = fieldType.find("Scalar")!=std::string::npos ? FRT::Scalar :
+                 (fieldType.find("Vector")!=std::string::npos ? FRT::Vector :
+                 (fieldType.find("Gradient")!=std::string::npos ? FRT::Gradient : FRT::Tensor));
 
-    auto rank = fieldType.find("Scalar")!=std::string::npos ? FRT::Scalar :
-               (fieldType.find("Vector")!=std::string::npos ? FRT::Vector :
-               (fieldType.find("Gradient")!=std::string::npos ? FRT::Gradient : FRT::Tensor));
+      // Get data layout
+      if (rank == FRT::Scalar) {
+        state_dl = loc == FL::Node
+                 ? ss_dl->node_scalar
+                 : ss_dl->cell_scalar2;
+      } else if (rank == FRT::Vector) {
+        state_dl = loc == FL::Node
+                 ? ss_dl->node_vector
+                 : ss_dl->cell_vector;
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
+            "Error! Only scalar/vector states supported by ColumnCouplingTest.\n");
+      }
 
-    // Get data layout
-    if (rank == FRT::Scalar) {
-      state_dl = loc == FL::Node
-               ? ss_dl->node_scalar
-               : ss_dl->cell_scalar2;
-    } else if (rank == FRT::Vector) {
-      state_dl = loc == FL::Node
-               ? ss_dl->node_vector
-               : ss_dl->cell_vector;
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
-          "Error! Only scalar/vector states supported by ColumnCouplingTest.\n");
-    }
+      // Set entity for state struct
+      if(loc==FL::Cell) {
+        entity = Albany::StateStruct::ElemData;
+      } else {
+        entity = Albany::StateStruct::NodalDataToElemNode;
+      }
 
-    // Set entity for state struct
-    if(loc==FL::Cell) {
-      entity = Albany::StateStruct::ElemData;
-    } else {
-      entity = Albany::StateStruct::NodalDataToElemNode;
-    }
+      // Register the state
+      p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, state_dl, sideEBName.at(ss_name), true, &entity, meshPart);
 
-    // Register the state
-    p = stateMgr.registerSideSetStateVariable(sideSetName, stateName, fieldName, state_dl, sideEBName, true, &entity, meshPart);
+      // Create load/save evaluator(s)
+      if ( fieldUsage == "Output" || fieldUsage == "Input-Output") {
+        // Only save fields in the residual FM (and not in state/response FM)
+        if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+          // An output: save it.
+          // SaveSideSetStateField takes the layout from dl, using FRT and FL to determine it.
+          // It does so, in order to do J*v if v is a Gradient (covariant), where J is the 2x3
+          // matrix of the tangent vectors
+          p->set("Field Rank",rank);
+          p->set("Field Location",loc);
+          ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,ss_dl));
+          fm0.template registerEvaluator<EvalT>(ev);
 
-    // Create load/save evaluator(s)
-    if ( fieldUsage == "Output" || fieldUsage == "Input-Output") {
-      // Only save fields in the residual FM (and not in state/response FM)
-      if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-        // An output: save it.
-        // SaveSideSetStateField takes the layout from dl, using FRT and FL to determine it.
-        // It does so, in order to do J*v if v is a Gradient (covariant), where J is the 2x3
-        // matrix of the tangent vectors
-        p->set("Field Rank",rank);
-        p->set("Field Location",loc);
-        ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,ss_dl));
-        fm0.template registerEvaluator<EvalT>(ev);
-
-        // Only PHAL::AlbanyTraits::Residual evaluates something, others will have empty list of evaluated fields
-        if (ev->evaluatedFields().size()>0) {
-          fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+          // Only PHAL::AlbanyTraits::Residual evaluates something, others will have empty list of evaluated fields
+          if (ev->evaluatedFields().size()>0) {
+            fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+          }
         }
       }
-    }
 
-    if (fieldUsage == "Input" || fieldUsage == "Input-Output") {
-      p->set<std::string>("Field Name", fieldName);
-      ev = Teuchos::rcp(new PHAL::LoadSideSetStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+      if (fieldUsage == "Input" || fieldUsage == "Input-Output") {
+        p->set<std::string>("Field Name", fieldName);
+        ev = Teuchos::rcp(new PHAL::LoadSideSetStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
   }
 }

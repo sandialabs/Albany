@@ -39,6 +39,8 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpe
 {
   TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
 
+  Intrepid2::DefaultCubatureFactory cubFactory;
+
   // Building cell basis and cubature
   const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
@@ -49,21 +51,29 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpe
   const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
 
-  dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellVertices,1,numDim));
-
-  const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
+  dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellVertices,-1,numDim));
 
   // Building also side structures
-  const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
-  sideType = Teuchos::rcp(new shards::CellTopology (side_top));
+  const auto& ss_discs_params = discParams->sublist("Side Set Discretizations");
+  const auto& ss_names = ss_discs_params.get<Teuchos::Array<std::string>>("Side Sets");
+  for (const auto& ss_name : ss_names) {
+    const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
 
-  sideEBName   = sideMeshSpecs.ebName;
+    const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
+    auto sideType = Teuchos::rcp(new shards::CellTopology (side_top));
 
-  int numSideVertices = sideType->getNodeCount();
+    sideEBName[ss_name] = sideMeshSpecs.ebName;
+    sideBasis[ss_name] = Albany::getIntrepid2Basis(*side_top);
 
-  dl_side = Teuchos::rcp(new Albany::Layouts(numSideVertices,numSideVertices,
-                                             1,numDim-1,numDim,numCellSides,2,sideSetName));
-  dl->side_layouts[sideSetName] = dl_side;
+    sideCubature[ss_name] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideMeshSpecs.cubatureDegree);
+
+    int numSideVertices = sideType->getNodeCount();
+    int numSideQPs      = sideCubature[ss_name]->getNumPoints();
+
+    dl->side_layouts[ss_name] = Teuchos::rcp(new Albany::Layouts(numSideVertices,numSideVertices,
+                                             numSideQPs,numDim-1,numDim,numCellSides,2,sideSetName));
+  }
+  dl_side = dl->side_layouts.at(sideSetName);
 
   *out << " Column Coupling Test problem:\n"
        << "   - dimension         : " << numDim          << "\n"
@@ -72,8 +82,9 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpe
        << "   - num cell sides    : " << numCellSides    << "\n"
        << "   - num cell dofs     : " << numCellVertices << "\n"
        << "   - num cell qps      : N/A\n"
-       << "   - num side vertices : " << numSideVertices << "\n"
-       << "   - num side dofs     : " << numSideVertices << "\n"
+       << "   - residual side set : " << sideSetName << "\n"
+       << "   - num side vertices : " << dl->side_layouts.at(sideSetName)->node_scalar->dimension(1) << "\n"
+       << "   - num side dofs     : " << dl->side_layouts.at(sideSetName)->node_scalar->dimension(1) << "\n"
        << "   - num side qps      : N/A\n";
 
   /* Construct All Phalanx Evaluators */

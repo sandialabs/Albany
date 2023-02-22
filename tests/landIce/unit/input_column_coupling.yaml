@@ -1,22 +1,26 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Debug Output:
-    Write Solution to MatrixMarket: -1
-    Write Residual to MatrixMarket: -1
+    Write Solution to MatrixMarket: 0
+    Write Residual to MatrixMarket: 0
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Column Coupling Test
-    Side Set Name: basalside
+    Side Set Name: ${RESIDUAL_SIDE}
+    Extruded Column Coupled in 2D Residual: true
     Response Functions:
-      Number Of Responses: 0
+      Number Of Responses: 1
       Response 0:
-        Type: Scalar Response
-        Name: Surface Velocity Mismatch
+        Name: Squared L2 Difference Side Source ST Target RT
+        Side Set Name: ${RESIDUAL_SIDE}
+        Source Field Name: U_${RESIDUAL_SIDE}
+        Target Field Name: z_s_${RESIDUAL_SIDE}
+        Field Rank: Scalar
     Dirichlet BCs:
-      DBC on NS top for DOF U: 0.0
+      DBC on NS ${DIRICHLET_SIDE} for DOF U: 0.0
     Neumann BCs: {}
   Discretization:
     Method: Extruded
@@ -41,11 +45,29 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
     Side Set Discretizations:
-      Side Sets: [basalside]
+      Side Sets: [basalside,upperside]
       basalside:
         Method: STK2D
         1D Elements: 5
         2D Elements: 5
+        Number Of Time Derivatives: 0
+        Cubature Degree: 3
+        Required Fields Info:
+          Number Of Fields: 2
+          Field 0:
+            Field Name: H
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Usage: Input-Output
+            Field Expression: ['(x+2)*(y+1)']
+          Field 1:
+            Field Name: z_s
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Usage: Input-Output
+            Field Expression: ['(x+2)*(y+1)']
+      upperside:
+        Method: SideSetSTK
         Number Of Time Derivatives: 0
         Cubature Degree: 3
         Required Fields Info:
@@ -93,31 +115,29 @@ ANONYMOUS:
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 9.99999999999999955e-07
                       Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
-              Preconditioner Type: Ifpack
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings:
-                    'fact: level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: iluk level-of-fill': 0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
@@ -139,10 +159,7 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
-  # Regression For Response 0:
-  #   Absolute Tolerance: 1.00000000000000004e-04
-  #   Sensitivity For Parameter 0:
-  #     Test Value: 1.829144244865e+07
-  #   Test Value: 1.096541803121e+08
-  #   Relative Tolerance: 1.00000000000000004e-04
+  Regression For Response 0:
+    Absolute Tolerance: 1.00000000000000004e-10
+    Test Value: 0.0
 ...
