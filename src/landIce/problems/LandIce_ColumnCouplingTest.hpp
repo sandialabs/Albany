@@ -158,7 +158,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
 
   p->set<std::string>("Residual Name", resid_name);
   p->set<int>("Tensor Rank", 0);
-  p->set<int>("Field Level", 0);
+  p->set<int>("Field Level", sideSetName=="basalside" ? 0 : 1);
   p->set<std::string>("Mesh Part", sideSetName);
   p->set<int>("Offset of First DOF", 0);
   p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",cellType);
