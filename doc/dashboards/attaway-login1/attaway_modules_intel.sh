@@ -1,7 +1,7 @@
 #!/bin/bash
 module purge
 source /projects/sems/modulefiles/utils/sems-modules-init.sh
-module load sems-cmake/3.21.1
+module load cmake/3.25.2
 module load sems-git/2.29.0
 module load sems-ninja/1.10.1
 module load sems-python/3.9.0
