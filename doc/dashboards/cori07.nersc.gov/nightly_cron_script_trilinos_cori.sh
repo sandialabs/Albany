@@ -19,7 +19,7 @@ rm -rf $BASE_DIR/ctest_nightly_cismAlbany_submit.cmake
 rm -rf $BASE_DIR/cmake_version*.out 
 
 #IKT, 3/19/2022: older cmake is needed to be able to push to CDash site
-export PATH=/project/projectdirs/piscees/tpl/cmake-3.18.0/bin:$PATH
+export PATH=/project/projectdirs/piscees/nightlyCoriCDash/cmake-3.26.0-rc4-linux-x86_64/bin:$PATH
 cmake --version >& cmake_version_trilinos.out
 
 LOG_FILE=$BASE_DIR/nightly_log_coriTrilinos.txt
