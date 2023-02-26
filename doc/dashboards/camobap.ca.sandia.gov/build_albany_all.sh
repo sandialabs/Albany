@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export PATH=/home/ikalash/Downloads/cmake-3.26.0-rc4-linux-x86_64/bin:$PATH:/tpls/install/ninja/build-cmake
 rm -rf repos
 rm -rf build
 rm -rf nightly_log*
