@@ -168,7 +168,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
   p->set<int>("Field Level", sideSetName=="basalside" ? 0 : 1);
   p->set<std::string>("Mesh Part", sideSetName);
   p->set<int>("Offset of First DOF", 0);
-  p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",cellType);
+  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
   //Output
   p->set<std::string>("Scatter Field Name", scatter_name);
