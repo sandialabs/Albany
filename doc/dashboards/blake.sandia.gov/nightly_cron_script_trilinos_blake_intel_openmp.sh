@@ -8,6 +8,8 @@ rm -rf intel_modules.out
 unset http_proxy
 unset https_proxy
 
+export PATH=/home/projects/cmake-3.24.3/bin:$PATH
+
 #export OMP_DISPLAY_ENV=TRUE
 export OMP_NUM_THREADS=2
 export OMP_PLACES=threads

@@ -3,6 +3,7 @@
 BASE_DIR=/home/projects/albany/nightlyCDashTrilinosBlake
 cd $BASE_DIR
 
+export PATH=/home/projects/cmake-3.24.3/bin:$PATH
 rm -rf build-intel
 rm -rf repos-intel
 rm -rf nightly*Intel*.txt
