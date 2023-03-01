@@ -3,8 +3,9 @@
 BASE_DIR=/home/projects/albany/nightlyCDashTrilinosBlake
 cd $BASE_DIR
 
-export PATH=/home/projects/cmake-3.24.3/bin:$PATH
-
+export PATH=/home/projects/albany/cmake-3.24.3/bin:$PATH
+alias cmake=/home/projects/albany/cmake-3.24.3/bin/cmake
+cmake --version
 
 rm -rf build-gcc
 rm -rf repos-gcc
