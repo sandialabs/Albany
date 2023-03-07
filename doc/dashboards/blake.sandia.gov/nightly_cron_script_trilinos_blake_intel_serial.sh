@@ -3,10 +3,6 @@
 BASE_DIR=/home/projects/albany/nightlyCDashTrilinosBlake
 cd $BASE_DIR
 
-export PATH=/home/projects/albany/cmake-3.24.3/bin:$PATH
-alias cmake=/home/projects/albany/cmake-3.24.3/bin/cmake
-cmake --version
-
 rm -rf build-intel
 rm -rf repos-intel
 rm -rf nightly*Intel*.txt
@@ -22,6 +18,8 @@ export OMP_NUM_THREADS=1
 export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
 
 source blake_intel_modules.sh >& intel_modules.out  
+cmake --version
+
 source convert-cmake-to-cdash.sh intel serial
 source create-new-cdash-cmake-script.sh intel serial
 

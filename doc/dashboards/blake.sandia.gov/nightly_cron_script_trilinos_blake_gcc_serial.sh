@@ -3,10 +3,6 @@
 BASE_DIR=/home/projects/albany/nightlyCDashTrilinosBlake
 cd $BASE_DIR
 
-export PATH=/home/projects/albany/cmake-3.24.3/bin:$PATH
-alias cmake=/home/projects/albany/cmake-3.24.3/bin/cmake
-cmake --version
-
 rm -rf build-gcc
 rm -rf repos-gcc
 rm -rf nightly*Gcc*.txt
@@ -24,6 +20,8 @@ unset https_proxy
 
 #export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
 source blake_gcc_modules.sh >& gcc_modules.out  
+cmake --version
+
 source convert-cmake-to-cdash.sh gcc serial
 source create-new-cdash-cmake-script.sh gcc serial
 
