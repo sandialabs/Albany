@@ -35,12 +35,12 @@ ANONYMOUS:
     Cubature Degree: 9
   Regression For Response 0:
     Test Value: 5.8333333333e-01
-    Relative Tolerance: 1.0e-03
-    Absolute Tolerance: 1.0e-04
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
     Sensitivity For Parameter 0:
       Test Value: 1.04748375675e-01
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [3.18968]
+    Piro Analysis Test Values: [3.196097204375e+00]
       
   Piro: 
     Sensitivity Method: Adjoint
@@ -50,7 +50,12 @@ ANONYMOUS:
       Output Level: 3
       Analysis Package: ROL
       ROL: 
-        Check Gradient: true
+        Check Derivatives: true
+        Derivative Checks:
+          Number Of Derivative Checks: 1
+          Perform Reduced Derivative Checks: true
+          Perfrom Expensive Derivative Checks: false
+
         Parameter Initial Guess Type: From Model Evaluator
         Uniform Parameter Guess: 0.0
         Min And Max Of Random Parameter Guess: [-1.0, 2.0]
@@ -61,6 +66,11 @@ ANONYMOUS:
         
         Matrix Based Dot Product: 
           Matrix Type: Identity
+
+        Custom Secant: 
+          Type: Limited-Memory BFGS
+          Maximum Storage: 50
+          Initialization Type: Identity
 
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
@@ -90,7 +100,9 @@ ANONYMOUS:
             Secant: 
               Type: Limited-Memory BFGS
               Maximum Storage: 50
-              Use Default Scaling: true
+              Use as Preconditioner: true
+              Use as Hessian: false
+              Use Default Scaling: false
               Initial Hessian Scale: 1.0
               Barzilai-Borwein Type: 1
 
@@ -101,32 +113,30 @@ ANONYMOUS:
               Iteration Limit: 20
 
           Step:
-            Type: "Line Search"
+            Type: "Trust Region"
 
-            Line Search: 
-              Function Evaluation Limit: 20
-              Sufficient Decrease Tolerance: 1.0e-6
-              Initial Step Size: 1.0
-              User Defined Initial Step Size: false
-              Use Previous Step Length as Initial Guess: false
-              Use Adaptive Step Size Selection: true
-
-              Descent Method: 
-                Type: Quasi-Newton Method
-
-              Line-Search Method: 
-                Type: Cubic Interpolation
-                Backtracking Rate: 0.5
-                Bracketing Tolerance: 1.0e-08
-                Path-Based Target Level: 
-                  Target Relaxation Parameter: 1.0
-                  Upper Bound on Path Length: 1.0
-
-              Quasi-Newton:
-                Method: L-Secant-B
-                L-Secant-B:
-                  Sufficient Decrease Parameter: 1.0e-02
-                  Relative Tolerance Exponent: 1.0
+            Trust Region: 
+              Subproblem Model: Lin-More
+              Subproblem Solver: Truncated CG
+              Initial Radius: -1.0
+              Maximum Radius: 5.0e+03
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+03
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.0e-01
+                Gradient: 
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
 
     NOX: 
       Direction: 
