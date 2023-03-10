@@ -948,8 +948,12 @@ Thyra_OutArgs ModelEvaluator::createOutArgsImpl() const
     if(analysisParams.isSublist("ROL")) {
       bool reconstructHppROL = false;
       if(analysisParams.sublist("ROL").isSublist("Matrix Based Dot Product"))
-        reconstructHppROL =
+        reconstructHppROL = reconstructHppROL ||
             (analysisParams.sublist("ROL").sublist("Matrix Based Dot Product").get<std::string>("Matrix Type") == "Hessian Of Response");
+
+      if(analysisParams.sublist("ROL").isSublist("Custom Secant"))
+        reconstructHppROL = reconstructHppROL ||
+            (analysisParams.sublist("ROL").sublist("Custom Secant").get<std::string>("Initialization Type") == "Hessian Of Response");
 
       TEUCHOS_TEST_FOR_EXCEPTION(
           (supportHpp == false) && (reconstructHppROL == true),

@@ -188,7 +188,7 @@ ANONYMOUS:
       Analysis Package: ROL
       ROL:
         Number Of Parameters: 2
-        Check Gradient: false
+        Check Derivatives: false
         Parameter Initial Guess Type: From Model Evaluator
         Uniform Parameter Guess: 0.0
         Min And Max Of Random Parameter Guess: [1.0, 2.0]

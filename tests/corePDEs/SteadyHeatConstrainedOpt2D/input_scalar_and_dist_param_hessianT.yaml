@@ -144,7 +144,7 @@ ANONYMOUS:
       Analysis Package: ROL
       ROL: 
         Number Of Parameters: 2
-        Check Gradient: true
+        Check Derivatives: true
         Parameter Initial Guess Type: Uniform Vector
         Uniform Parameter Guess: 1.0e+00
         Min And Max Of Random Parameter Guess: [-1.0, 2.0]
@@ -156,6 +156,15 @@ ANONYMOUS:
         Matrix Based Dot Product: 
           Matrix Type: Hessian Of Response
           Matrix Types:
+            Hessian Of Response:
+              Lump Matrix: true
+              Response Index: 0
+        
+        Custom Secant: 
+          Type: Limited-Memory BFGS
+          Maximum Storage: 50
+          Initialization Type: Hessian Of Response
+          Initialization Types:
             Hessian Of Response:
               Response Index: 0
 
@@ -185,7 +194,7 @@ ANONYMOUS:
 
             Secant: 
               Type: Limited-Memory BFGS
-              Use as Preconditioner: false
+              Use as Preconditioner: true
               Use as Hessian: false
               Maximum Storage: 50
               Use Default Scaling: true

@@ -202,7 +202,7 @@ ANONYMOUS:
       Analysis Package: ROL
       ROL:
         Number Of Parameters: 1
-        Check Gradient: false
+        Check Derivatives: false
         Parameter Initial Guess Type: Uniform Vector
         Uniform Parameter Guess: 2.0
         Min And Max Of Random Parameter Guess: [1.0, 2.0]
@@ -215,6 +215,7 @@ ANONYMOUS:
           Matrix Type: Hessian Of Response
           Matrix Types:
             Hessian Of Response:
+              Lump Matrix: false
               Response Index: 1
 
         ROL Options:
