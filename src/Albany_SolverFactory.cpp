@@ -315,36 +315,12 @@ SolverFactory::getValidAppParameters() const
   validPL->sublist("Problem", false, "Problem sublist");
   validPL->sublist("Debug Output", false, "Debug Output sublist");
   validPL->sublist("Scaling", false, "Jacobian/Residual Scaling sublist");
-  validPL->sublist("DataTransferKit", false, "DataTransferKit sublist");
-  validPL->sublist("DataTransferKit", false, "DataTransferKit sublist")
-      .sublist(
-          "Consistent Interpolation",
-          false,
-          "DTK Consistent Interpolation sublist");
-  validPL->sublist("DataTransferKit", false, "DataTransferKit sublist")
-      .sublist("Search", false, "DTK Search sublist");
-  validPL->sublist("DataTransferKit", false, "DataTransferKit sublist")
-      .sublist("L2 Projection", false, "DTK L2 Projection sublist");
-  validPL->sublist("DataTransferKit", false, "DataTransferKit sublist")
-      .sublist("Point Cloud", false, "DTK Point Cloud sublist");
   validPL->sublist("Discretization", false, "Discretization sublist");
-  validPL->sublist("Quadrature", false, "Quadrature sublist");
   const int maxRegression = 10;
   for (int i = 0; i < maxRegression; i++) {
     validPL->sublist(util::strint("Regression For Response", i), false, "Regression Results sublist");
   }
-  validPL->sublist("VTK", false, "DEPRECATED  VTK sublist");
   validPL->sublist("Piro", false, "Piro sublist");
-  validPL->sublist("Coupled System", false, "Coupled system sublist");
-  validPL->sublist("Alternating System", false, "Alternating system sublist");
-  validPL->sublist("Block ID to Physics ID Mapping", false, "Block to physics sublist");
-  validPL->sublist("Physics Blocks", false, "Physics blocks sublist");
-  validPL->sublist("Field Order", false, "Field order sublist");
-
-  // validPL->set<std::string>("Jacobian Operator", "Have Jacobian", "Flag to
-  // allow Matrix-Free specification in Piro");
-  // validPL->set<double>("Matrix-Free Perturbation", 3.0e-7, "delta in
-  // matrix-free formula");
 
   return validPL;
 }
