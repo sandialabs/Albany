@@ -145,4 +145,5 @@ cmake \
     -D Trilinos_ENABLE_SEACASNemslice:BOOL=ON \
     -D CMAKE_CXX_STANDARD=17 \
     -D CMAKE_CXX_FLAGS:STRING='-std=c++17' \
+    -D Xpetra_ENABLE_EpetraExt=OFF \
 ../

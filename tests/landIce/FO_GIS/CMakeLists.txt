@@ -154,8 +154,8 @@ if (ALBANY_FROSCH)
   add_test(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_effect_press.yaml)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml
-  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml)
-add_test(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml)
+  add_test(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
 
   if (NOT ALBANY_PARALELL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
@@ -315,6 +315,14 @@ if (ALBANY_IFPACK2)
       add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_hessian_matfreeT.yaml)
       set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
     endif()
+
+    if(ALBANY_TEKO AND ALBANY_MUELU)
+      set (testName ${testNameRoot}_Analysis_Humboldt)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis.yaml
+                     ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis.yaml)
+      add_test(${testNameRoot}_Analysis_Humboldt ${AlbanyAnalysis.exe} input_fo_humboldt_analysis.yaml)
+    endif()
+
   endif()
 endif()
 

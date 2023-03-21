@@ -13,7 +13,7 @@
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 // Get Kokkos node wrapper
-#include "KokkosCompat_ClassicNodeAPI_Wrapper.hpp"
+#include "Tpetra_KokkosCompat_ClassicNodeAPI_Wrapper.hpp"
 
 // Get Kokkos graph and matrix
 #include "Kokkos_StaticCrsGraph.hpp"
@@ -26,7 +26,7 @@
 #include "Albany_Macros.hpp"
 
 // The Kokkos node is determined from the Phalanx Device
-typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device>  KokkosNode;
+typedef Tpetra::KokkosCompat::KokkosDeviceWrapperNode<PHX::Device>  KokkosNode;
 
 namespace Albany
 {

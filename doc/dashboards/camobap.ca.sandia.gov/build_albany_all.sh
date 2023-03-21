@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export PATH=/usr/bin:$PATH:/tpls/install/ninja/build-cmake
+alias cmake=/usr/bin/cmake
+echo cmake --version
 rm -rf repos
 rm -rf build
 rm -rf nightly_log*
