@@ -16,14 +16,14 @@
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
-          <a id="forkme_banner" href="https://github.com/SNLComputation/Albany">View on GitHub</a>
+          <a id="forkme_banner" href="https://github.com/sandialabs/Albany">View on GitHub</a>
 
           <h1 id="project_title">Albany</h1>
           <h2 id="project_tagline">Sandia National Laboratories&#39; Albany multiphysics code</h2>
 
             <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/SNLComputation/Albany/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/SNLComputation/Albany/tarball/master">Download this project as a tar.gz file</a>
+              <a class="zip_download_link" href="https://github.com/sandialabs/Albany/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/sandialabs/Albany/tarball/master">Download this project as a tar.gz file</a>
             </section>
         </header>
     </div>
@@ -82,11 +82,11 @@ variety of platforms - MPI + [threads, OpenMP, Cuda, Intel MIC].</p>
 <a name="albany-container" class="anchor" href="#albany-container"><span class="octicon octicon-link"></span></a>Albany Spack Package and Container</h2>
 
 <p>Albany is available as a Spack package. Further details are given on the Wiki
-<a href="https://github.com/sandialabs/Albany/wiki/Building-Albany-using-SPACK">https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-SPACK</a></p>
+<a href="https://github.com/sandialabs/Albany/wiki/Building-Albany-using-SPACK">https://github.com/sandialabs/Albany/wiki/Building-Albany-using-SPACK</a></p>
 
        
 <p>In the past, Albany was maintained in a Docker container. Further instructions are given on the Wiki
-<a href="https://github.com/sandialabs/Albany/wiki/Building-Albany-using-Docker">https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-Docker</a></p>
+<a href="https://github.com/sandialabs/Albany/wiki/Building-Albany-using-Docker">https://github.com/sandialabs/Albany/wiki/Building-Albany-using-Docker</a></p>
         
  Please note that the Albany container has not been used/tested for awhile, so it is not guaranteed to work.
 
@@ -119,6 +119,23 @@ within the build directory. Any individual test/example can be executed by
 changing directories to the desired example, and executing <em>ctest</em> in the
 example directory. The vast majority of Albany tests run in parallel using MPI.</p>
 
+        <h2>
+<a name="older-versions-albany" class="anchor" href="#older-versions-albany"><span class="octicon octicon-link"></span></a>A Note on Older Versions of Albany</h2>
+
+        Prior version of Albany included additional capabilities not present in the current version of the code, 
+        such as Quantum Computer Aided Design (QCAD), Model Order Reduction (MOR), Advanced Topology Optimization (ATO), etc. 
+        These capabilities are still available as <a href="https://github.com/sandialabs/Albany/tags">Albany tags</a>. 
+        Each tag has documentation about the version of Trilinos that can be used to build the tag.
+
+The Laboratory for Computational Mechanics (LCM) capabilities within Albany have been moved to separate repositories: 
+        <a href="https://github.com/sandialabs/LCM">Albany-LCM</a> and 
+        <a href="https://github.com/scorec/Albany">Albany-SCOREC</a>. 
+        The latter repository contains capabilities for adaptive mesh refinement (AMR) using the 
+        <a href="https://scorec.rpi.edu/~seol/PUMI.pdf">Parallel Unstructured Mesh Interface (PUMI)</a> library developed at the 
+        Rennselaer Polytechnic Institute (RPI). While Albany-LCM is developed/maintained by a Sandia team, 
+        the status of the Albany-SCOREC team is unknown at the present time.
+        
+        
       </section>
     </div>
 
