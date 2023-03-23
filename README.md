@@ -4,7 +4,9 @@
 
 Albany is an implicit, unstructured grid, finite element code for the solution and analysis of multiphysics
 problems. The Albany repository on the GitHub site contains over 100 regression tests and examples
-that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, ice-sheet flow and other applications.
+that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, ice-sheet flow and other applications.  
+In particular, Albany houses the land-ice component of the U.S. Department of Energy's [Energy Exascale Earth System Model (E3SM)](https://e3sm.org/) known
+as [MPAS-Albany Land Ice (MALI)](https://mpas-dev.github.io/land_ice/land_ice.html).  
 
 The Albany web page is located at
 [http://sandialabs.github.io/Albany](http://sandialabs.github.io/Albany)
