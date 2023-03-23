@@ -3,13 +3,11 @@
 # Albany
 
 Albany is an implicit, unstructured grid, finite element code for the solution and analysis of multiphysics
-problems. The Albany repository on the GitHub site contains hundreds of regression tests and examples
-that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, solid 
-mechanics (elasticity and plasticity), ice-sheet flow, 
-[quantum device modeling](http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6242832), and many other applications.
+problems. The Albany repository on the GitHub site contains over 100 regression tests and examples
+that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, ice-sheet flow and other applications.
 
 The Albany web page is located at
-[http://SNLComputation.github.io/Albany](http://SNLComputation.github.io/Albany)
+[http://sandialabs.github.io/Albany](http://sandialabs.github.io/Albany)
 
 ## Features
 
@@ -25,33 +23,29 @@ Albany heavily leverages the [Trilinos](https://trilinos.org) Framework, availab
 
 	git clone https://github.com/trilinos/Trilinos.git
 
-and optionally depends on the SCOREC Parallel Unstructured Mesh Infrastructure 
-[http://www.scorec.rpi.edu/pumi](http://www.scorec.rpi.edu/pumi).
-
 Albany supports the solution of very large problems (those over 2.1 billion degrees of freedom) using MPI, and
 also demonstrates the use of the [Kokkos](https://github.com/kokkos) hardware abstraction package to support 
 generic manycore computing across a variety of platforms - MPI + [threads, OpenMP, Cuda, Intel MIC].
 
-In addition to supporting embedded sensitivity analysis and uncertainty quantification, Albany can be tightly-coupled
-to [Dakota](https://dakota.sandia.gov) using the Trilinos TriKota package.
-
 ## Building Albany
 
 Detailed build instructions for both Trilinos and Albany are maintained on the Albany wiki at
-[https://github.com/SNLComputation/Albany/wiki/Building-Albany-and-supporting-tools](https://github.com/SNLComputation/Albany/wiki/Building-Albany-and-supporting-tools)
+[https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools](https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools).  We note that it is also possible to build Albany using spack; for details on how to do this, please see the [Building Albany using Spack](https://github.com/sandialabs/Albany/wiki/Building-Albany-using-SPACK) site.
+
+We note also that there exists a supported Python interface to Albany, known as [PyAlbany](https://github.com/sandialabs/Albany/wiki/PyAlbany).  Please see the following [slides on PyAlbany](https://drive.google.com/file/d/1VQwHbnDeuuiOrwY_yMXfuVirdLhu5VZF/view) for more information.
 
 ## Nightly Build and Test Results
 
 Ths nightly build results for the Trilinos and SCOREC libraries along with
-Albany and the status of the Albany regression tests are posted on the Albany CDash site at
-[http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany)
+Albany and the status of the Albany regression tests are posted on the world-viewable Albany CDash site at
+[http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany), 
+as well as an additional CDash site internal to Sandia National Laboratories.
 
 The regression test suite is contained within the Albany repository in the directories:
 
-	/tests/small
-	/tests/large
+	/tests
 
-These tests are stand-alone and also serve as nice examples about how to describe various multiphysics problems.
+These tests are stand-alone and also serve as nice examples about how to describe various PDEs discretized in Albany.
 They also serve as a template for developing new simulations.
 
 Once Albany is built, the default test suite is executed by typing `ctest`
@@ -61,8 +55,7 @@ sub-directory. Many Albany tests run in parallel using up to 4 MPI ranks.
 
 ## Documentation
 
-The [HTML user guide](http://SNLComputation.github.io/Albany/user-guide/guide.html) is 
-maintained inside the Albany repository at:
+An [HTML user guide](http://sandialabs.github.io/Albany/user-guide/guide.html) can be found inside the Albany repository at:
 
 	/doc/user-guide/guide.html
 
@@ -70,12 +63,13 @@ The LaTeX Developer's Guide is located at:
 
 	/doc/developersGuide
 
+Note that these documents are not maintained and may be out-of-date with respect to the current version of Albany.  For specific questions about using or developing Albany, please contact Irina Tezaur at ikalash@sandia.gov.
+
+
+
 
 ## Note on unsupported code
 
-A few folders (e.g., QCAD, MOR) are empty, containing only a README file.
-These folders refer to Albany packages that, due to a lack of resources, were
-not possible to be maintained anymore. On the README files, you can find information
-on how to rewind git history to a version where the package was supported and
-fully functioning (to the best of our knowledge), together with a sha for the
-trilinos revision to use. 
+Prior version of Albany included additional capabilities not present in the current version of the code, such as Quantum Computer Aided Design (QCAD), Model Order Reduction (MOR), Advanced Topology Optimization (ATO), etc.  These capabilities are still available as Albany [tags](https://github.com/sandialabs/Albany/tags).  Each tag has documentation about the version of Trilinos that can be used to build the tag.  
+
+The Laboratory for Computational Mechanics (LCM) capabilities within Albany have been moved to separate repositories: [Albany-LCM](https://github.com/sandialabs/LCM) and [Albany-SCOREC](https://github.com/scorec/Albany).  The latter repository contains capabilities for adaptive mesh refinement (AMR) using the [Parallel Unstructured Mesh Interface (PUMI)](https://scorec.rpi.edu/~seol/PUMI.pdf) library developed at the Rennselaer Polytechnic Institute (RPI).  While Albany-LCM is developed/maintained by a Sandia team, the status of the Albany-SCOREC team is unknown at the present time.
