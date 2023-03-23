@@ -55,7 +55,7 @@ The LaTeX Developer's Guide is located at:
 
 	/doc/developersGuide
 
-Note that these documents are not maintained and may be out-of-date with respect to the current version of Albany.  For specific questions about using or developing Albany, please contact Irina Tezaur at ikalash@sandia.gov.
+Note that these documents are not maintained and may be out-of-date with respect to the current version of Albany.  For specific questions about using or developing Albany, please contact <a href="https://www.sandia.gov/-ikalash/staff/irina-tezaur/">Irina Tezaur</a> at ikalash@sandia.gov.
 
 
 
