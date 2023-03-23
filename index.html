@@ -42,16 +42,14 @@
         <h1>
 <a name="albany" class="anchor" href="#albany"><span class="octicon octicon-link"></span></a>Albany</h1>
 
-<p>Albany is an implicit, unstructured grid, finite element code for the
-solution and analysis of multiphysics problems. The Albany repository on the
-GitHub site contains hundreds of regression tests and examples that demonstrate
-the code's capabilities on a wide variety of problems including fluid
-mechanics, solid mechanics (elasticity and plasticity), ice-sheet flow, 
-<a href="http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6242832">quantum device modeling</a>, and many other applications.
+<p>Albany is an implicit, unstructured grid, finite element code for the solution and analysis of multiphysics problems. The Albany repository on the GitHub site contains over 100 regression tests and examples that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, ice-sheet flow and other applications.
+In particular, Albany houses the land-ice component of the U.S. Department of Energy's 
+  <a href="https://e3sm.org/">Energy Exascale Earth System Model (E3SM)</a> known as 
+  <a href="https://mpas-dev.github.io/land_ice/land_ice.html">MPAS-Albany Land Ice (MALI)</a>.
 </p>
 
 <p>More details on the capabilities of Albany are available on the 
-<a href="https://github.com/SNLComputation/Albany/wiki/Albany-capabilities">Albany Wiki</a></p>
+<a href="https://github.com/sandialabs/Albany/wiki/Albany-capabilities">Albany Wiki</a></p>
 
 
 <h2>
@@ -72,62 +70,48 @@ mechanics, solid mechanics (elasticity and plasticity), ice-sheet flow,
 <pre><code>git clone https://github.com/trilinos/Trilinos.git
 </code></pre>
 
-<p>and optionally depends on the SCOREC Parallel Unstructured Mesh Infrastructure 
-<a href="http://www.scorec.rpi.edu/pumi">http://www.scorec.rpi.edu/pumi</a></p>
-
 <p>Albany supports the solution of very large problems (those over 2.1 billion
 degrees of freedom) using MPI, and also demonstrates the use of the 
 <a href="https://github.com/kokkos">Kokkos</a>
 hardware abstraction package to support generic manycore computing across a
 variety of platforms - MPI + [threads, OpenMP, Cuda, Intel MIC].</p>
 
-<p>In addition to supporting embedded sensitivity analysis and uncertainty
-quantification, Albany can be tightly-coupled to 
-<a href="https://dakota.sandia.gov">Dakota</a>
-using the Trilinos
-TriKota package.</p>
 
-<p>The SCOREC tools are on GitHub at:</p>
-<a href="http://github.com/SCOREC/core">http://github.com/SCOREC/core</a></p>
-
-<p>The SCOREC repo can be cloned using:</p>
-
-<pre><code>git clone https://github.com/SCOREC/core.git
-</code></pre>
 
 <h2>
-<a name="albany-container" class="anchor" href="#albany-container"><span class="octicon octicon-link"></span></a>Albany Container</h2>
+<a name="albany-container" class="anchor" href="#albany-container"><span class="octicon octicon-link"></span></a>Albany Spack Package and Container</h2>
 
-<p>A recent version of Albany is maintained in a Docker container. Further instructions are given on the Wiki
-<a href="https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-Docker">https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-Docker</a></p>
+<p>Albany is available as a Spack package. Further details are given on the Wiki
+<a href="https://github.com/sandialabs/Albany/wiki/Building-Albany-using-SPACK">https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-SPACK</a></p>
 
-<p>Albany is also available as a SPACK package. Further details are given on the Wiki
-<a href="https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-SPACK">https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-SPACK</a></p>
+       
+<p>In the past, Albany was maintained in a Docker container. Further instructions are given on the Wiki
+<a href="https://github.com/sandialabs/Albany/wiki/Building-Albany-using-Docker">https://github.com/SNLComputation/Albany/wiki/Building-Albany-using-Docker</a></p>
+        
+ Please note that the Albany container has not been used/tested for awhile, so it is not guaranteed to work.
 
+        
 <h2>
 <a name="building-albany" class="anchor" href="#building-albany"><span class="octicon octicon-link"></span></a>Building Albany</h2>
 
-<p>Detailed build instructions for both Trilinos and Albany are maintained on the Albany wiki at
-<a href="https://github.com/SNLComputation/Albany/wiki/Building-Albany-and-supporting-tools">https://github.com/SNLComputation/Albany/wiki/Building-Albany-and-supporting-tools</a></p>
+<p>Detailed build instructions for both Trilinos and Albany can be found on the Albany wiki at
+<a href="https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools">https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools</a></p>
 
-<p>Other build instructions for both Trilinos and Albany are maintained at 
-<a href="http://redmine.scorec.rpi.edu/projects/albany-rpi/wiki">http://redmine.scorec.rpi.edu/projects/albany-rpi/wiki</a>,
-which includes instructions for building on the IBM BG/Q</p>
 
 <h2>
 <a name="nightly-build-and-test-results" class="anchor" href="#nightly-build-and-test-results"><span class="octicon octicon-link"></span></a>Nightly Build and Test Results</h2>
 
-<p>Ths nightly build results for the Trilinos and SCOREC libraries along with Albany
+<p>Ths nightly build results for the Trilinos libraries along with Albany
 and the status of the Albany regression tests 
-are posted on the Albany CDash site at 
+are posted on several CDash sites, including the following world-viewable CDash site: 
 <a href="http://my.cdash.org/index.php?project=Albany">http://my.cdash.org/index.php?project=Albany</a></p>
 
 <p>The regression test suite is contained within the Albany repository in the directory:</p>
 
-<pre><code>/examples
+<pre><code>/tests
 </code></pre>
 
-<p>These tests are stand-alone and also serve as nice examples about how to describe various multiphysics problems.
+<p>These tests are stand-alone and also serve as nice examples about how to describe various PDEs discretized by Albany.
 They also serve as a template for developing new simulations.</p>
 
 <p>Once Albany is built, the default test suite is executed by typing <em>ctest</em>
