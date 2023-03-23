@@ -16,7 +16,7 @@ The Albany web page is located at [http://sandialabs.github.io/Albany](http://sa
 
 Illustration of a von Karman vortex street that forms around a heated tube bundle under certain conditions
 
-### Software architecture
+### Software Architecture
 
 Albany heavily leverages the [Trilinos](https://trilinos.org) Framework, available at:
 
@@ -60,7 +60,7 @@ Note that these documents are not maintained and may be out-of-date with respect
 
 
 
-## Note on unsupported code
+## Note on Unsupported Code and Albany Tags Containing Past Capabilities
 
 Prior version of Albany included additional capabilities not present in the current version of the code, such as Quantum Computer Aided Design (QCAD), Model Order Reduction (MOR), Advanced Topology Optimization (ATO), etc.  These capabilities are still available as [Albany tags](https://github.com/sandialabs/Albany/tags).  Each tag has documentation about the version of Trilinos that can be used to build the tag.  
 
