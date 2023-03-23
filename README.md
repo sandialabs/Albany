@@ -4,12 +4,9 @@
 
 Albany is an implicit, unstructured grid, finite element code for the solution and analysis of multiphysics
 problems. The Albany repository on the GitHub site contains over 100 regression tests and examples
-that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, ice-sheet flow and other applications.  
-In particular, Albany houses the land-ice component of the U.S. Department of Energy's [Energy Exascale Earth System Model (E3SM)](https://e3sm.org/) known
-as [MPAS-Albany Land Ice (MALI)](https://mpas-dev.github.io/land_ice/land_ice.html).  
+that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, ice-sheet flow and other applications.  In particular, Albany houses the land-ice component of the U.S. Department of Energy's [Energy Exascale Earth System Model (E3SM)](https://e3sm.org/) known as [MPAS-Albany Land Ice (MALI)](https://mpas-dev.github.io/land_ice/land_ice.html).  
 
-The Albany web page is located at
-[http://sandialabs.github.io/Albany](http://sandialabs.github.io/Albany)
+The Albany web page is located at [http://sandialabs.github.io/Albany](http://sandialabs.github.io/Albany)
 
 ## Features
 
@@ -31,29 +28,22 @@ generic manycore computing across a variety of platforms - MPI + [threads, OpenM
 
 ## Building Albany
 
-Detailed build instructions for both Trilinos and Albany are maintained on the Albany wiki at
-[https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools](https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools).  We note that it is also possible to build Albany using spack; for details on how to do this, please see the [Building Albany using Spack](https://github.com/sandialabs/Albany/wiki/Building-Albany-using-SPACK) site.
+Detailed build instructions for both Trilinos and Albany are maintained on the Albany wiki at [https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools](https://github.com/sandialabs/Albany/wiki/Building-Albany-and-supporting-tools).  We note that it is also possible to build Albany using spack; for details on how to do this, please see the [Building Albany using Spack](https://github.com/sandialabs/Albany/wiki/Building-Albany-using-SPACK) site.
 
 We note also that there exists a supported Python interface to Albany, known as [PyAlbany](https://github.com/sandialabs/Albany/wiki/PyAlbany).  Please see the following [slides on PyAlbany](https://drive.google.com/file/d/1VQwHbnDeuuiOrwY_yMXfuVirdLhu5VZF/view) for more information.
 
 ## Nightly Build and Test Results
 
-Ths nightly build results for the Trilinos and SCOREC libraries along with
-Albany and the status of the Albany regression tests are posted on the world-viewable Albany CDash site at
-[http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany), 
-as well as an additional CDash site internal to Sandia National Laboratories.
+Ths nightly build results for the Trilinos and SCOREC libraries along with Albany and the status of the Albany regression tests are posted on the world-viewable Albany CDash site at [http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany), as well as an additional CDash site internal to Sandia National Laboratories.
 
 The regression test suite is contained within the Albany repository in the directories:
 
 	/tests
 
-These tests are stand-alone and also serve as nice examples about how to describe various PDEs discretized in Albany.
-They also serve as a template for developing new simulations.
+These tests are stand-alone and also serve as nice examples about how to describe various PDEs discretized in Albany.  They also serve as a template for developing new simulations.
 
-Once Albany is built, the default test suite is executed by typing `ctest`
-within the build directory. Any individual test can be executed by
-moving into its sub-directory, and executing `ctest` in that
-sub-directory. Many Albany tests run in parallel using up to 4 MPI ranks.
+Once Albany is built, the default test suite is executed by typing `ctest` within the build directory. Any individual test can be executed by
+moving into its sub-directory, and executing `ctest` in that sub-directory. Many Albany tests run in parallel using up to 4 MPI ranks.
 
 ## Documentation
 
