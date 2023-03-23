@@ -72,6 +72,6 @@ Note that these documents are not maintained and may be out-of-date with respect
 
 ## Note on unsupported code
 
-Prior version of Albany included additional capabilities not present in the current version of the code, such as Quantum Computer Aided Design (QCAD), Model Order Reduction (MOR), Advanced Topology Optimization (ATO), etc.  These capabilities are still available as Albany [tags](https://github.com/sandialabs/Albany/tags).  Each tag has documentation about the version of Trilinos that can be used to build the tag.  
+Prior version of Albany included additional capabilities not present in the current version of the code, such as Quantum Computer Aided Design (QCAD), Model Order Reduction (MOR), Advanced Topology Optimization (ATO), etc.  These capabilities are still available as [Albany tags](https://github.com/sandialabs/Albany/tags).  Each tag has documentation about the version of Trilinos that can be used to build the tag.  
 
 The Laboratory for Computational Mechanics (LCM) capabilities within Albany have been moved to separate repositories: [Albany-LCM](https://github.com/sandialabs/LCM) and [Albany-SCOREC](https://github.com/scorec/Albany).  The latter repository contains capabilities for adaptive mesh refinement (AMR) using the [Parallel Unstructured Mesh Interface (PUMI)](https://scorec.rpi.edu/~seol/PUMI.pdf) library developed at the Rennselaer Polytechnic Institute (RPI).  While Albany-LCM is developed/maintained by a Sandia team, the status of the Albany-SCOREC team is unknown at the present time.
