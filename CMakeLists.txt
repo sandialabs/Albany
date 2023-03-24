@@ -774,6 +774,14 @@ IF (ENABLE_MESHDB_TOOLS)
   SET(ALBANY_MESHDB_TOOLS TRUE)
 ENDIF()
 
+# Omega_h
+OPTION(ENABLE_OMEGAH "Flag to turn on the Omega_h mesh interface" OFF)
+IF (ENABLE_OMEGAH)
+  MESSAGE("-- Omega_h mesh interface    Enabled.")
+  SET(ALBANY_OMEGAH TRUE)
+  find_package(Omega_h REQUIRED CONFIG)
+ENDIF()
+
 # Repeat this warning.
 
 IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA)

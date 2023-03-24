@@ -45,6 +45,13 @@ set (ALBANY_INCLUDE_DIRS
      ${Albany_SOURCE_DIR}/src/utility
 )
 
+if (ENABLE_OMEGAH)
+  set (ALBANY_INCLUDE_DIRS
+    ${ALBANY_INCLUDE_DIRS}
+    ${Albany_SOURCE_DIR}/src/disc/omegah
+  )
+endif()
+
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
 set (SOURCES
@@ -328,6 +335,15 @@ list (APPEND HEADERS
   disc/stk/Albany_TmplSTKMeshStruct_Def.hpp
   disc/stk/STKConnManager.hpp
 )
+
+if (ENABLE_OMEGAH)
+  list(APPEND SOURCES
+    disc/omegah/OmegahConnManager.cpp
+  )
+  list (APPEND HEADERS
+    disc/omegah/OmegahConnManager.hpp
+  )
+endif()
 
 if (ALBANY_STK_REBALANCE)
   list (APPEND SOURCES
