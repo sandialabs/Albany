@@ -8,9 +8,8 @@
 #define ALBANY_Omegah_CONN_MANAGER_HPP
 
 #include "Albany_ConnManager.hpp"
-#include "Albany_ShardsHack.hpp"
 
-#include "Omega_h_Mesh.hpp"
+#include <Omega_h_Mesh.hpp>
 
 #include "Teuchos_RCP.hpp"
 
