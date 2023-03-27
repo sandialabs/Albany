@@ -28,11 +28,10 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
   auto comm = Albany::getDefaultComm(); //FIXME is there a way to extract the native comm object?
   REQUIRE(comm->getSize() == worldCommSize);
 
-  auto lib = Omega_h::Library();
-  auto commPtr = Omega_h::CommPtr(new Omega_h::Comm(&lib, MPI_COMM_WORLD));
-  auto mesh = Omega_h::build_box(commPtr, OMEGA_H_SIMPLEX, 1, 1, 1, 2, 2, 2, false);
+  auto lib = Omega_h::Library(); //uses MPI_COMM_WORLD by default
+  auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 1, 2, 2, 2, false);
 
-  auto conn_mgr = Teuchos::rcp(new Albany::OmegahConnManager(mesh)); //FIXME - this will fail
+  auto conn_mgr = Teuchos::rcp(new Albany::OmegahConnManager(mesh));
 
   // Silence compiler warnings due to unused stuff from Teuchos testing framework.
   (void) out;
