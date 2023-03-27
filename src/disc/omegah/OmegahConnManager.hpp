@@ -29,12 +29,7 @@ private:
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
 public:
-  OmegahConnManager(Omega_h::Mesh& in_mesh)
-   : mesh(in_mesh)
-  {
-    // are we assuming the omegah conn manager will be recreated after each adapt?
-    initLocalElmIds();
-  }
+  OmegahConnManager(Omega_h::Mesh& in_mesh);
 
   ~OmegahConnManager() = default;
 
