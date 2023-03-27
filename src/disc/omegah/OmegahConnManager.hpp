@@ -9,21 +9,31 @@
 
 #include "Albany_ConnManager.hpp"
 
-#include <Omega_h_Mesh.hpp>
+#include <Omega_h_mesh.hpp>
 
 #include "Teuchos_RCP.hpp"
 
 #include <vector>
 #include <map>
+#include <numeric> //std::iota
 
 namespace Albany {
 
 class OmegahConnManager : public ConnManager {
+private:
+  Omega_h::Mesh& mesh;
+  std::vector<LO> localElmIds;
+  std::vector<LO> emptyHaloVec;
+  void initLocalElmIds() {
+    localElmIds.resize(mesh.nelems());
+    std::iota(localElmIds.begin(), localElmIds.end(), 0);
+  }
 public:
   OmegahConnManager(Omega_h::Mesh& in_mesh)
-   : OmegahConnManager(in_mesh)
+   : mesh(in_mesh)
   {
-    // Nothing to do
+    // are we assuming the omegah conn manager will be recreated after each adapt?
+    initLocalElmIds();
   }
 
   ~OmegahConnManager() = default;
@@ -71,7 +81,7 @@ public:
     *
     * \param[in] localElmtId Local element ID
     */
-  std::string getBlockId(LO localElmtId) const override;
+  std::string getBlockId(LO localElmtId) const override; //FIXME return 0
 
   /** How many element blocks in this mesh?
     */
@@ -91,15 +101,14 @@ public:
 
   /** Get the local element IDs for a paricular element
     * block. These are only the owned element ids.
+    * Albany only uses one block; ignore the blockIndex arg.
     *
     * \param[in] blockIndex Block Index
     *
     * \returns Vector of local element IDs.
     */
-  const std::vector<LO> & getElementBlock(const std::string & blockId) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION (m_elementBlocks.find(blockId)==m_elementBlocks.end(), std::runtime_error,
-        "[OmegahConnManager] Error! Block '" + blockId + "' not found in the mesh.\n");
-    return m_elementBlocks.at(blockId);
+  const std::vector<LO> & getElementBlock(const std::string &) const override {
+    return localElmIds;
   }
 
   /** Get the local element IDs for a paricular element
@@ -114,11 +123,11 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
         "Error! Albany does not use elements halos, so the method\n"
         "       'OmegahConnManager::getNeighborElementBlock' should not have been called.\n");
-    return m_neighborElementBlocks.at(blockId);
+    return emptyHaloVec;
   }
 
   int getOwnedElementCount() const {
-    return m_elements.size();
+    return mesh.nelems();
   }
 
   /** Get elements, if any, associated with <code>el</code>, excluding
