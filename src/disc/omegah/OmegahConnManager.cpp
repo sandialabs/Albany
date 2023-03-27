@@ -31,6 +31,20 @@ OmegahConnManager::getElementsInBlock (const std::string& /* blockId */) const /
   return std::vector<GO>();
 }
 
+
+void
+OmegahConnManager::buildConnectivity(const panzer::FieldPattern &) //FIXME
+{
+  //FIXME what is a 'FieldPattern'?
+}
+
+Teuchos::RCP<panzer::ConnManager>
+OmegahConnManager::noConnectivityClone() const
+{
+  //FIXME what is this supposed to do? do we want to allow empty
+  //FIXME OmegahConnManager ctor?
+}
+
 const std::vector<LO>&
 OmegahConnManager::getAssociatedNeighbors(const LO& /* el */) const
 {

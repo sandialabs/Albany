@@ -73,10 +73,13 @@ public:
   }
 
   /** Get the block ID for a particular element.
+    * Albany only uses one block; return a static string.
     *
     * \param[in] localElmtId Local element ID
     */
-  std::string getBlockId(LO localElmtId) const override; //FIXME return 0
+  std::string getBlockId(LO localElmtId) const override {
+    return "omega_h_mesh";
+  };
 
   /** How many element blocks in this mesh?
     */
