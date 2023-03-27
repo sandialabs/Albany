@@ -17,15 +17,16 @@ namespace Albany {
 OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (mesh.is_null(), std::runtime_error,
-      "Error! Input mesh data pointer is null.\n");
+  //FIXME does albany support processes without elements?
+  TEUCHOS_TEST_FOR_EXCEPTION (mesh.nelems(), std::runtime_error,
+      "Error! Input mesh has no elements!\n");
 
-  // Init members of base class
-  m_parts_names = "omegah_mesh";
+  // FIXME are we assuming the omegah conn manager will be recreated after each adapt?
+  initLocalElmIds();
 }
 
 std::vector<GO>
-STKConnManager::getElementsInBlock (const std::string& /* blockId */) const //FIXME
+OmegahConnManager::getElementsInBlock (const std::string& /* blockId */) const //FIXME
 {
   return std::vector<GO>();
 }
@@ -41,24 +42,21 @@ OmegahConnManager::getAssociatedNeighbors(const LO& /* el */) const
   return ret;
 }
 
-bool STKConnManager::
-contains (const std::string& sub_part_name) const //FIXME
+bool OmegahConnManager::contains (const std::string& sub_part_name) const //FIXME
 {
   return false;
 }
 
 // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
 // local element $ielem belongs to sub part $sub_part_name
-bool STKConnManager::
-belongs (const std::string& sub_part_name, //FIXME
+bool OmegahConnManager::belongs (const std::string& sub_part_name, //FIXME
          const LO ielem, const int subcell_dim, const int subcell_pos) const
 {
   return false;
 }
 
 // Queries the dimension of a part
-int OmegahConnManager::
-part_dim () const
+int OmegahConnManager::part_dim (const std::string&) const
 {
   return mesh.dim();
 }
