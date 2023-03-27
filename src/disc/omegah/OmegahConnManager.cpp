@@ -18,7 +18,7 @@ OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 {
   //FIXME does albany support processes without elements?
-  TEUCHOS_TEST_FOR_EXCEPTION (mesh.nelems(), std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
       "Error! Input mesh has no elements!\n");
 
   // FIXME are we assuming the omegah conn manager will be recreated after each adapt?
