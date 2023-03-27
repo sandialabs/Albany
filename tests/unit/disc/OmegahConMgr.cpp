@@ -13,8 +13,8 @@
 #include "Teuchos_UnitTestHelpers.hpp"
 #include "Teuchos_LocalTestingHelpers.hpp"
 
-// I find assert-style checks more intuitive in unit tests.
-// So throw if the input condition is false:
+#include <Omega_h_build.hpp>
+
 #define REQUIRE(cond) \
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
@@ -23,13 +23,16 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
 
-  auto comm = Albany::getDefaultComm();
+  int worldCommSize;
+  MPI_Comm_size(MPI_COMM_WORLD,&worldCommSize);
+  auto comm = Albany::getDefaultComm(); //FIXME is there a way to extract the native comm object?
+  REQUIRE(comm->getSize() == worldCommSize);
 
   auto lib = Omega_h::Library();
-  auto commPtr = Omega_h::Comm(lib, comm);
+  auto commPtr = Omega_h::CommPtr(new Omega_h::Comm(&lib, MPI_COMM_WORLD));
   auto mesh = Omega_h::build_box(commPtr, OMEGA_H_SIMPLEX, 1, 1, 1, 2, 2, 2, false);
 
-  auto conn_mgr = Teuchos::rcp(new OmegahConnManager(mesh)); //FIXME - this will fail
+  auto conn_mgr = Teuchos::rcp(new Albany::OmegahConnManager(mesh)); //FIXME - this will fail
 
   // Silence compiler warnings due to unused stuff from Teuchos testing framework.
   (void) out;
