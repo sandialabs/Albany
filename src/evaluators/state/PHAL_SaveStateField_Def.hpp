@@ -51,9 +51,9 @@ SaveStateField(const Teuchos::ParameterList& p)
   field = decltype(field)(fieldName, layout );
 
   TEUCHOS_TEST_FOR_EXCEPTION (
-      layout->name(0)==PHX::print<Cell>() ||
-      layout->name(0)==PHX::print<Dim>() ||
-      layout->name(0)==PHX::print<Dummy>(), std::runtime_error,
+      layout->name(0)!=PHX::print<Cell>() &&
+      layout->name(0)!=PHX::print<Dim>() &&
+      layout->name(0)!=PHX::print<Dummy>(), std::runtime_error,
       "Error! Invalid state layout. Supported cases:\n"
       " - <Cell, Node [,Dim]>\n"
       " - <Cell, QuadPoint [,Dim]>\n"
@@ -63,14 +63,14 @@ SaveStateField(const Teuchos::ParameterList& p)
   if (layout->name(0) != PHX::print<Cell>()) {
     worksetState = true;
     nodalState = false;
-    TEUCHOS_TEST_FOR_EXCEPTION (layout->size()<3, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (layout->rank()>2, Teuchos::Exceptions::InvalidParameter,
         "Error! Only rank<=2 workset states supported.\n");
   } else {
     worksetState = false;
-    nodalState = layout->name(1)==PHX::print<Node>();
-    TEUCHOS_TEST_FOR_EXCEPTION (!nodalState || layout->size()<2, Teuchos::Exceptions::InvalidParameter,
+    nodalState = layout->rank()>1 && layout->name(1)==PHX::print<Node>();
+    TEUCHOS_TEST_FOR_EXCEPTION (nodalState && layout->rank()>3, Teuchos::Exceptions::InvalidParameter,
         "Error! Only scalar/vector nodal states supported.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (nodalState || layout->size()<5, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION (!nodalState && layout->rank()>5, Teuchos::Exceptions::InvalidParameter,
         "Error! Only rank<=4 elem states supported.\n");
   }
 
