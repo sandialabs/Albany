@@ -5,17 +5,22 @@ ANONYMOUS:
   Debug Output:
     Write Solution to MatrixMarket: 0
     Report Timers: false
-  Problem:
+
+  # The problem we want to solve:
+  # definition of the equations, boundary conditions, parameters, qoantity of interests we want to compute.
+  Problem:  
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
-    Name: LandIce Stokes First Order 3D
+    Name: LandIce Stokes First Order 3D #problem to be solved
     LandIce Rigid Body Modes For Preconditioner:
       Compute Constant Modes: true
       Compute Rotation Modes: true
     Compute Sensitivities: true
-    Basal Side Name: basalside
+    Basal Side Name: basalside 
     Surface Side Name: upperside
     LandIce Field Norm:
+      # |v| = sqrt(|v|^2 + reg)
+      # used for basal terms, e.g., nonlinear sliding conditions 
       sliding_velocity_basalside:
         Regularization Type: Given Value
         Regularization Value: 1.0e-05
@@ -29,7 +34,7 @@ ANONYMOUS:
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
-          Type: Power Law
+          Type: Power Law  #Budd type BC
           Mu Type: Exponent of Field
           Mu Field Name: basal_friction_log
           Power Exponent: 1.0
@@ -40,9 +45,10 @@ ANONYMOUS:
         Type: Lateral
         Cubature Degree: 3
         Side Set Name: extruded_boundary_side_set_1
+
+        #fro from iceberg melange (default = 0)
         Melange Force: 6.0e+07 #[N/m]
         Melange Submerged Thickness Threshold: 0.1 #[km]
-        #Immersed Ratio: 0.893
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -54,94 +60,86 @@ ANONYMOUS:
     LandIce Viscosity:
       Extract Strain Rate Sq: true
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 0.3
+      Glen's Law Homotopy Parameter: 0.3  # |\nabla u| = sqrt(|\nabla u|^2 + reg),  reg depends on Homotopy.
       Continuous Homotopy With Constant Initial Viscosity: true
       Coefficient For Continuous Homotopy: 8.0
       Glen's Law A: 2.400304414e-24            # [Pa^-n s^-1
       Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
+
     LandIce Physical Parameters:
-      Conductivity of ice: 2.1
-      Diffusivity temperate ice: 1.1e-08
-      Heat capacity of ice: 2.009e+03
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
       Gravity Acceleration: 9.81e+00
-      Reference Temperature: 2.65e+02
       Clausius-Clapeyron Coefficient: 7.9e-08
+
+      #The following are only used when solving the enthalpy prob.
+      Conductivity of ice: 2.1
+      Reference Temperature: 2.65e+02
+      Diffusivity temperate ice: 1.1e-08
+      Heat capacity of ice: 2.009e+03
       Ice Latent Heat Of Fusion: 3.34e+05
       Permeability factor: 1.0e-12 #1e-12
       Viscosity of water: 1.8e-03
       Omega exponent alpha: 2.0e+00
       Diffusivity homotopy exponent: -1.1e+00
+
     Body Force:
       Type: FO INTERP SURF GRAD
-    Response Functions:
+
+    Response Functions: #quantities that depend on the solution and/or parameters (e.g. QoI, misfit, reg terms)
       Number Of Responses: 3
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 3
-
-        Response 0:
+        Response 0:   #regularization term, |log(beta)|^2
           Scaling: 5.8824e-06
           Name: Squared L2 Difference Side Source PST Target MST
           Source Field Name: basal_friction_log_basalside
           Side Set Name: basalside
           Field Rank: Scalar
           Target Value: 0.0
-        Response 1:
-          Scaling: 5.8824e-06
+        Response 1:   #regularization term, |\nabla log(beta)|^2
+          Scaling: 5.8824e-06  
           Name: Squared L2 Difference Side Source PST Target MST
           Source Field Name: basal_friction_log_gradient_basalside
           Side Set Name: basalside
           Field Rank: Gradient
           Target Value: 0.0
-        Response 2:
-          Cubature Degree: 4
-          Scaling Coefficient: 5.8824e-07
-          Asinh Scaling: 1.0e+01
-          Name: Surface Velocity Mismatch
-          Regularization Coefficient: 1.0e+00
-      Response 1:
-        Type: Sum Of Responses
-        Number Of Responses: 1
-        Response 0:
-          Scaling: 5.8824e-06
-          Name: Squared L2 Difference Side Source PST Target MST
-          Source Field Name: basal_friction_log_basalside
-          Side Set Name: basalside
-          Field Rank: Scalar
-          Target Value: 0.0
-        Response 1:
-          Scaling: 5.8824e-06
-          Name: Squared L2 Difference Side Source PST Target MST
-          Source Field Name: basal_friction_log_gradient_basalside
-          Side Set Name: basalside
-          Field Rank: Gradient
-          Target Value: 0.0
+        Response 2:  #velocity misfit term
+          Scaling: 5.8824e-07
+          Name: Squared L2 Difference Side Source ST Target RT
+          Source Field Name: Velocity_upperside
+          Root Mean Square Error Field Name: observed_surface_velocity_RMS_upperside
+          Field Rank: Vector
+          Target Field Name: observed_surface_velocity_upperside
+          Side Set Name: upperside
+      Response 1:  #regularization term, |log(beta)|^2
+        Scaling: 5.8824e-06
+        Name: Squared L2 Difference Side Source PST Target MST
+        Source Field Name: basal_friction_log_basalside
+        Side Set Name: basalside
+        Field Rank: Scalar
+        Target Value: 0.0
       Response 2:
         Type: Sum Of Responses
-        Number Of Responses: 2
-        Response 0:
+        Number Of Responses: 2  
+        Response 0:  #regularization term, |log(beta)|^2
           Scaling: 5.8824e-06
           Name: Squared L2 Difference Side Source PST Target MST
           Source Field Name: basal_friction_log_basalside
           Side Set Name: basalside
           Field Rank: Scalar
           Target Value: 0.0
-        Response 1:
+        Response 1: #regularization term, |\nabla log(beta)|^2
           Scaling: 5.8824e-06
           Name: Squared L2 Difference Side Source PST Target MST
           Source Field Name: basal_friction_log_gradient_basalside
           Side Set Name: basalside
           Field Rank: Gradient
           Target Value: 0.0
-      Response 3:
-        Scaling Coefficient: 5.8824e-06
-        Name: Quadratic Linear Operator Based
-        Linear Operator File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
-        Diagonal Scaling File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
-        Field Name: basal_friction_log
+
+    #Used in optimization probs for dot-product or secant initialization      
     Hessian:
       Response 2:
         Parameter 0:
@@ -169,6 +167,10 @@ ANONYMOUS:
                 Ifpack2 Settings: 
                   Amesos2: {}
                   Amesos2 solver name: klu
+
+
+  # The discretization used:
+  # What mesh, elements to used, what/how to import fields.
   Discretization:
     Workset Size: -1
     Method: Extruded
@@ -178,7 +180,7 @@ ANONYMOUS:
     Exodus Output File Name: output/humboldt.exo
     Use Serial Mesh: false
     Columnwise Ordering: false
-    NumLayers: 2
+    NumLayers: 2  #too small, only for testing
     Thickness Field Name: ice_thickness
     Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction_log, bed_topography, apparent_mass_balance, apparent_mass_balance_RMS]
     Basal Node Fields Ranks: [1, 1, 1, 1, 1, 1]
@@ -273,6 +275,7 @@ ANONYMOUS:
             Field Name: basal_friction_log
             Field Type: Node Scalar
             Field Origin: File
+            Field Usage: Input-Output
             File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
           Field 6:
             Field Name: temperature
@@ -315,10 +318,17 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
+
+
+  #Solvers and Analysis
+  #What linear/nonlinear solvers and preconditioners to use
+  #What analysis (e.g. optimization) problem to solve
   Piro:
     Sensitivity Method: Adjoint
     Write Only Converged Solution: false
     Enable Explicit Matrix Transpose: true
+
+    #Analsis contains all the options for optimization
     Analysis:
       Output Final Parameters: false
       Output Level: 3
@@ -329,7 +339,7 @@ ANONYMOUS:
         Derivative Checks:
           Perform Reduced Derivative Checks: true       
           Perform Expensive Derivative Checks: false
-        Parameter Initial Guess Type: Uniform Vector
+        Parameter Initial Guess Type: Uniform Vector  #From Model Evaluator
         Uniform Parameter Guess: 2.0
         Min And Max Of Random Parameter Guess: [1.0, 2.0]
         Bound Constrained: true
@@ -354,19 +364,7 @@ ANONYMOUS:
               Response Index: 2
 
         ROL Options:
-        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
-          SimOpt:
-            Solve:
-              Absolute Residual Tolerance:   1.0e-6
-              Relative Residual Tolerance:   1.0e-1
-              Iteration Limit:               20
-              Sufficient Decrease Tolerance: 1.e-4
-              Step Tolerance:                1.e-8
-              Backtracking Factor:           0.5
-              Output Iteration History:      true
-              Zero Initial Guess:            false
-              Solver Type:                   0    
-          
+   
           Status Test: 
             Gradient Tolerance: 1.0e-4
             Step Tolerance: 1.0e-10
@@ -388,7 +386,7 @@ ANONYMOUS:
 
             Krylov:
               Type: Conjugate Gradients
-              Absolute Tolerance: 1.0e-04
+              Absolute Tolerance: 1.0e+06 #Only use Relative tolerance
               Relative Tolerance: 1.0e-02
               Iteration Limit: 50
 
@@ -441,6 +439,21 @@ ANONYMOUS:
                 Gradient: 
                   Tolerance Scaling: 1.0e-01
                   Relative Tolerance: 2.0e+00
+
+
+          SimOpt:
+
+            #Not used if using NOX as nonlinear solver
+            Solve:
+              Absolute Residual Tolerance:   1.0e-6
+              Relative Residual Tolerance:   1.0e-1
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      true
+              Zero Initial Guess:            false
+              Solver Type:                   0 
 
     NOX:
       Thyra Group Options:
@@ -659,6 +672,7 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
+
   Regression For Response 0:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
