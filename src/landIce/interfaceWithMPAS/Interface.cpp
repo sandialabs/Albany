@@ -570,7 +570,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
   int cubatureDegree = 4;
   discretizationList->set("Cubature Degree", discretizationList->get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
-  discretizationList->set<int>("Interleaved Ordering", discretizationList->get<int>("Interleaved Ordering", 1));  //set to 1 if not define
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
