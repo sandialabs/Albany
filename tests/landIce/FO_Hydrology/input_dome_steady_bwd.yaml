@@ -306,18 +306,19 @@ ANONYMOUS:
       Analysis Package: ROL
       ROL:
         Number Of Parameters: 1 
-        Check Gradient: false
+        Check Derivatives: false
         Parameter Initial Guess Type: From Model Evaluator
         Bound Constrained: true
 
         Full Space: false
         Use NOX Solver: true        
         
-        Matrix Based Dot Product: 
+        Matrix Based Dot Product:
           Matrix Type: Hessian Of Response
           # Matrix Type: Identity
           Matrix Types:
             Hessian Of Response:
+              Lump Matrix: false
               Response Index: 0
 
         ROL Options: 

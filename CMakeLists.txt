@@ -22,11 +22,13 @@ ENDIF ()
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
+MESSAGE("ALBANY_TRILINOS_DIR = " ${ALBANY_TRILINOS_DIR}) 
+
 # Get Trilinos as one entity
 IF (DEFINED ALBANY_TRILINOS_DIR)
   SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
 ENDIF()
-FIND_PACKAGE(Trilinos 13.1 REQUIRED)
+FIND_PACKAGE(Trilinos 14.1 REQUIRED)
 
 OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
 

@@ -15,6 +15,8 @@ export OMP_PROC_BIND=spread
 
 export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
 source blake_intel_modules.sh >& intel_modules.out  
+cmake --version
+
 source convert-cmake-to-cdash.sh intel openmp
 source create-new-cdash-cmake-script.sh intel openmp
 

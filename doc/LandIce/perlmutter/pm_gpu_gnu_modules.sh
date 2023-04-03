@@ -22,7 +22,7 @@ module load cray-mpich/8.1.22
 module load cray-hdf5-parallel/1.12.2.1
 module load cray-netcdf-hdf5parallel/4.9.0.1
 module load cray-parallel-netcdf/1.12.3.1
-module load cmake/3.22.0
+module load cmake/3.24.3
 
 module load e4s
 spack env activate -V gcc

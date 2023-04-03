@@ -37,7 +37,7 @@ std::pair<int,int> RegressionTests::checkResponse(
   int          failures    = 0;
   int          comparisons = 0;
 
-  if (testParams != NULL) {
+  if ((testParams != NULL) && testParams->isParameter("Test Value")) {
     const double relTol      = testParams->isParameter("Relative Tolerance") ?
         testParams->get<double>("Relative Tolerance") : 1.0e-8;
     const double absTol      = testParams->isParameter("Absolute Tolerance") ?
@@ -232,11 +232,7 @@ RegressionTests::getTestParameters(int response_index) const
 {
   Teuchos::ParameterList* result = &(appParams->sublist(
       util::strint("Regression For Response", response_index)));
-  if(result->isParameter("Test Value"))
-    result->validateParameters(
-        *getValidRegressionResultsParameters(), 0);
-  else
-    result = NULL;
+  result->validateParameters(*getValidRegressionResultsParameters(), 0);
 
   return result;
 }
