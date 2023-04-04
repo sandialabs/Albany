@@ -214,14 +214,14 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
         e20/2.*(0.75*H2+0.25*H0)*((0.75*vel2[0] + 0.25*vel0[0])*e20_norm[0]+(0.75*vel2[1] + 0.25*vel0[1])*e20_norm[1]);
 
     //Each triangle contributes to the flux through the three voronoi cells centered at the triangle vertices
-    residual(cell,node0) += A0 * flux_div(cell, node0) - (hVel_01 - hVel_20) - hVel0_norm;
-    residual(cell,node1) += A1 * flux_div(cell, node1) - (hVel_12 - hVel_01) - hVel1_norm;
-    residual(cell,node2) += A2 * flux_div(cell, node2) - (hVel_20 - hVel_12) - hVel2_norm;
+    residual(cell,node0) = A0 * flux_div(cell, node0) - (hVel_01 - hVel_20) - hVel0_norm;
+    residual(cell,node1) = A1 * flux_div(cell, node1) - (hVel_12 - hVel_01) - hVel1_norm;
+    residual(cell,node2) = A2 * flux_div(cell, node2) - (hVel_20 - hVel_12) - hVel2_norm;
 
     if (ilayer == lastLayer) { //This corresponds to setting the flux_divergence to zero at the top level.
-      residual(cell,node0p1) += A0 * flux_div(cell, node0p1);
-      residual(cell,node1p1) += A1 * flux_div(cell, node1p1);
-      residual(cell,node2p1) += A2 * flux_div(cell, node2p1);
+      residual(cell,node0p1) = A0 * flux_div(cell, node0p1);
+      residual(cell,node1p1) = A1 * flux_div(cell, node1p1);
+      residual(cell,node2p1) = A2 * flux_div(cell, node2p1);
     }
 
   }
