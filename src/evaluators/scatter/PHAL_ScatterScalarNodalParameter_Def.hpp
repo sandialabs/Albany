@@ -91,13 +91,14 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
+  const int  p_local_subdim = p_data.size();
 
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     for (int node=0; node<this->numNodes; ++node) {
       const LO lid = p_elem_dof_lids(elem_LID,node);
-      if(lid >= 0) {
-       p_data[lid] = this->val(cell,node);
+      if (lid>=0 && lid<p_local_subdim) { // Exploit the fact that owned lids come before ghosted lids
+        p_data[lid] = this->val(cell,node);
       }
     }
   }
@@ -129,6 +130,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& p_dof_mgr = param->get_dof_mgr();
   const auto  p_data = Albany::getNonconstLocalData(param->vector());
   const auto& p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
+  const int   p_local_subdim = p_data.size();
 
   const auto& layers_data    = *workset.disc->getMeshStruct()->global_cell_layers_data;
   const int   top = layers_data.top_side_pos;
@@ -145,7 +147,7 @@ evaluateFields(typename Traits::EvalData workset)
     if (layer==fieldLayer) {
       for (auto o : offsets) {
         const LO lid = p_elem_dof_lids(elem_LID,o);
-        if (lid>=0) {
+        if (lid>=0 && lid<p_local_subdim) { // Exploit the fact that owned lids come before ghosted lids
           p_data[lid] = this->val(cell,o);
         }
       }
