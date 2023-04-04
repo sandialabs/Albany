@@ -614,44 +614,56 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto dof_mgr   = workset.disc->getNewDOFManager();
   const auto elem_lids = workset.disc->getElementLIDs_host(ws);
-  const auto offsets   = m_fields_offsets.host();
+
+  const auto resid_offsets = m_fields_offsets.host();
 
   if (trans) {
-    const int num_deriv = numNodes;
-
     const auto& cell_layers_data = workset.disc->getMeshStruct()->local_cell_layers_data;
+    const int top = cell_layers_data->top_side_pos;
+    const int bot = cell_layers_data->bot_side_pos;
+    const int fieldLayer = fieldLevel==cell_layers_data->numLayers
+                          ? fieldLevel-1 : fieldLevel;
+    const int field_pos = fieldLevel==fieldLayer ? bot : top;
 
+    const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
     const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
+    const auto p_dof_mgr = p->get_dof_mgr();
     const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+    const auto p_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
+    const auto top_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
+    const auto bot_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
 
+    const int num_nodes_side = p_offsets.size();
     // Pick a cell layer that contains the field level. Can be same as fieldLevel,
     // except for the last level.
-    const auto cell_level = fieldLevel==cell_layers_data->numLayers
-                          ? fieldLevel-1 : fieldLevel;
-
     for (size_t cell=0; cell<workset.numCells; ++cell) {
       const auto elem_LID = elem_lids(cell);
       const auto& local_Vp = workset.local_Vp[cell];
 
       const LO basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
-      const LO field_elem_LID = cell_layers_data->getId(basal_elem_LID,cell_level);
+      const LO field_elem_LID = cell_layers_data->getId(basal_elem_LID,fieldLayer);
+      const auto p_elem_gids = p->get_dof_mgr()->getElementGIDs(field_elem_LID);
 
-      for (int i=0; i<num_deriv; i++) {
+      auto do_derivatives = [&](const std::vector<int>& derivs) {
+        for (int i=0; i<num_nodes_side; ++i) {
+          const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[i]);
+          if (row<0) continue;
 
-        const LO row = p_elem_dof_lids(field_elem_LID,i);
-        if(row >=0) {
+          const int deriv = derivs[i];
           for (int col=0; col<num_cols; ++col) {
-            double val = 0.0;
+            double val = 0;
             for (int node=0; node<numNodes; ++node) {
               for (int eq=0; eq<numFields; ++eq) {
                 auto res = get_resid(cell,node,eq);
-                val += res.dx(i)*local_Vp[offsets(node,eq+this->offset)][col];
+                val += res.dx(deriv)*local_Vp[resid_offsets(node,eq+this->offset)][col];
               }
             }
             fpV_data[col][row] += val;
           }
         }
-      }
+      };
+      do_derivatives(bot_nodes);
+      do_derivatives(top_nodes);
     }
   } else {
     constexpr auto ALL = Kokkos::ALL();
@@ -665,7 +677,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node<numNodes; ++node) {
         for (int eq=0; eq<numFields; ++eq) {
           auto res = get_resid(cell,node,eq);
-          const int row = dof_lids(offsets(node,eq+this->offset));
+          const int row = dof_lids(resid_offsets(node,eq+this->offset));
           for (int col=0; col<num_cols; ++col) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
