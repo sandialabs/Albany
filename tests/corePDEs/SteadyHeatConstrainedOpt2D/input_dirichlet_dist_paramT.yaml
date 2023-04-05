@@ -65,11 +65,7 @@ ANONYMOUS:
         Use NOX Solver: true        
         
         Matrix Based Dot Product: 
-          Matrix Type: Hessian Of Response
-          Matrix Types:
-            Hessian Of Response:
-              Lump Matrix: true
-              Response Index: 0
+          Matrix Type: Identity
 
         Custom Secant: 
           Type: Limited-Memory BFGS
