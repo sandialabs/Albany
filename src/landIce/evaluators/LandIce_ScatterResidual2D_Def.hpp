@@ -255,34 +255,32 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     }
 
     for (int node2d=0; node2d<numSideNodes; ++node2d) {
-      for (int pos : {bot, top}) {
-        for (int eq=0; eq<this->numFields; ++eq) {
-          // Helper lambda
-          auto f = [&](const std::vector<int>& nodes,
-                       const std::vector<int>& dof_offsets) {
-            const LO lrow = dof_lids(dof_offsets[node2d]);
-            auto res = this->get_resid(cell,nodes[node2d],this->offset+eq);
+      for (int eq=0; eq<this->numFields; ++eq) {
+        // Helper lambda
+        auto f = [&](const std::vector<int>& nodes,
+                     const std::vector<int>& dof_offsets) {
+          const LO lrow = dof_lids(dof_offsets[node2d]);
+          auto res = this->get_resid(cell,nodes[node2d],this->offset+eq);
 
-            // Safety check: FAD derivs should be inited by now
-            assert(res.hasFastAccess());
+          // Safety check: FAD derivs should be inited by now
+          assert(res.hasFastAccess());
 
-            if (scatter_f) {
-              f_data[lrow] += res.val();
-            }
-
-            // Need to do derive one-by-one, since they are strided
-            for (int i=0; i<this->numNodes; ++i) {
-              Albany::addToLocalRowValue(Jac,lrow,lcols_nodes[i],
-                  res.fastAccessDx(sol_offsets(i,offset2DField)));
-            }
-          };
-
-          if(eq != offset2DField) {
-            // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
-            //       to guarantee corresponding nodes are vertically aligned.
-            f(top_nodes,dof_mgr->getGIDFieldOffsetsSide(eq,top,field_pos));
-            f(bot_nodes,dof_mgr->getGIDFieldOffsetsSide(eq,bot,field_pos));
+          if (scatter_f) {
+            f_data[lrow] += res.val();
           }
+
+          // Need to do derive one-by-one, since they are strided
+          for (int i=0; i<this->numNodes; ++i) {
+            Albany::addToLocalRowValue(Jac,lrow,lcols_nodes[i],
+                res.fastAccessDx(sol_offsets(i,offset2DField)));
+          }
+        };
+
+        if(eq != offset2DField) {
+          // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+          //       to guarantee corresponding nodes are vertically aligned.
+          f(top_nodes,dof_mgr->getGIDFieldOffsetsSide(eq,top,field_pos));
+          f(bot_nodes,dof_mgr->getGIDFieldOffsetsSide(eq,bot,field_pos));
         }
       }
     }
