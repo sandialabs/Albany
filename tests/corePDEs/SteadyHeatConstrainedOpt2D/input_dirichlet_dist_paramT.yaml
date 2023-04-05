@@ -35,12 +35,12 @@ ANONYMOUS:
     Cubature Degree: 9
   Regression For Response 0:
     Test Value: 5.8333333333e-01
-    Relative Tolerance: 1.0e-06
-    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-05
+    Absolute Tolerance: 1.0e-05
     Sensitivity For Parameter 0:
       Test Value: 1.04748375675e-01
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [3.196097204375e+00]
+    Piro Analysis Test Values: [3.201562118716]  #exact solution, sqrt(41*0.5^2)
       
   Piro: 
     Sensitivity Method: Adjoint
@@ -65,7 +65,11 @@ ANONYMOUS:
         Use NOX Solver: true        
         
         Matrix Based Dot Product: 
-          Matrix Type: Identity
+          Matrix Type: Hessian Of Response
+          Matrix Types:
+            Hessian Of Response:
+              Lump Matrix: true
+              Response Index: 0
 
         Custom Secant: 
           Type: Limited-Memory BFGS
@@ -87,7 +91,7 @@ ANONYMOUS:
               Solver Type:                   0    
           
           Status Test: 
-            Gradient Tolerance: 1.0e-4
+            Gradient Tolerance: 1.0e-5
             Step Tolerance: 1.0e-10
             Iteration Limit: 10
             Use Relative Tolerances: false
