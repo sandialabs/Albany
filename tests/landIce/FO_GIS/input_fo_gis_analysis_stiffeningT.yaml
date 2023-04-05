@@ -5,6 +5,10 @@ ANONYMOUS:
   Debug Output:
     Write Solution to MatrixMarket: 0
   Problem:
+    Initial Condition:
+      Function: Linear  # v_i = a_i * x + b_i *y + c_i * z
+      Function Data: [1.0, 1.0, 0.1, 1.0, 1.0, 0.1]   #[a_0, b_0, c_0, a_1, b_1, c_1] 
+    
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
@@ -396,9 +400,20 @@ ANONYMOUS:
   Regression For Response 0:
     Relative Tolerance: 1.0e-05
     Absolute Tolerance: 1.0e-05
-    Test Value: 6.150614932753e+01
+    Test Value: 6.150615124783e+01
     Sensitivity For Parameter 0:
-      Test Value:  1.181897206543e+00
+      Test Value:  1.181897157033e+00
+    Sensitivity For Parameter 1:
+      Test Value:   2.140276446622e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [89.6090751672]
+    Piro Analysis Test Values: [89.6090755226]
+
+  Regression For Response 1:
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
+    Test Value: 1.029846023641e+02
+    Sensitivity For Parameter 0:
+      Test Value:  1.181897157033e+00
+    Sensitivity For Parameter 1:
+      Test Value:  2.626904778466e+00
 ...
