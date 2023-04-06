@@ -57,6 +57,7 @@ ENDIF()
 
 MESSAGE("\nFound Trilinos!  Here are the details: ")
 MESSAGE("-- Trilinos_DIR = ${Trilinos_DIR}")
+MESSAGE("-- Trilinos_CMAKE_BUILD_TYPE = ${Trilinos_CMAKE_BUILD_TYPE}")
 MESSAGE("-- Trilinos_VERSION = ${Trilinos_VERSION}")
 MESSAGE("-- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
 MESSAGE("-- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
@@ -112,6 +113,8 @@ else()
   SET(Trilinos_C_COMPILER_ID ${CMAKE_C_COMPILER_ID})
   SET(Trilinos_Fortran_COMPILER_ID ${CMAKE_Fortran_COMPILER_ID})
 endif()
+
+set (CMAKE_BUILD_TYPE ${Trilinos_CMAKE_BUILD_TYPE} CACHE STRING "Build type for Albany (default to Trilinos)")
 
 project(Albany CXX C)
 
