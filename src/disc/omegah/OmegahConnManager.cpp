@@ -17,11 +17,13 @@ namespace Albany {
 OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 {
-  //FIXME does albany support processes without elements?
+  //albany does *not* support processes without elements
   TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
       "Error! Input mesh has no elements!\n");
 
-  // FIXME are we assuming the omegah conn manager will be recreated after each adapt?
+  //the omegah conn manager will be recreated after each topological adaptation
+  // - a change to mesh vertex coordinates (mesh motion) will not require
+  //   recreating the conn manager
   initLocalElmIds();
 }
 
