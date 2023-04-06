@@ -13,7 +13,7 @@ add_subdirectory(SHMIP)
 
 add_subdirectory(Enthalpy)
 
-if (NOT ENABLE_MESH_DEPENDS_ON_PARAMETERS)
+if (ENABLE_EXPERIMENTAL AND NOT ENABLE_MESH_DEPENDS_ON_PARAMETERS)
   add_subdirectory(FO_Hydrology)
 endif()
 
