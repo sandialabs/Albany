@@ -41,8 +41,10 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &) //FIXME
 Teuchos::RCP<panzer::ConnManager>
 OmegahConnManager::noConnectivityClone() const
 {
-  //FIXME what is this supposed to do? do we want to allow empty
-  //FIXME OmegahConnManager ctor?
+  //- for stk this function copies the object without connectivity information
+  //- for omegah there is little to no distinction as the mesh object contains the
+  //  connectivity
+  return Teuchos::RCP(new OmegahConnManager(mesh));
 }
 
 const std::vector<LO>&

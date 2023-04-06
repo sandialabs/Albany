@@ -34,3 +34,21 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
   (void) out;
   (void) success;
 }
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManagerNoConnClone)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
+  auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 1, 2, 2, 2, false);
+
+  auto conn_mgr = Teuchos::rcp(new Albany::OmegahConnManager(mesh));
+
+  auto clone = conn_mgr->noConnectivityClone();
+
+  // Silence compiler warnings due to unused stuff from Teuchos testing framework.
+  (void) out;
+  (void) success;
+}
