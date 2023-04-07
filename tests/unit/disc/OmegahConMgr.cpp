@@ -19,10 +19,30 @@
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
 
+/**
+ * getElementsInBlock needs global mesh element ids and this unit test is
+ * easier to manage if we don't have to read a mesh file from disk.  The
+ * omegah method that easily creates global ids is reorder_by_hilbert (...
+ * there are likely other ways) but it only runs in serial. So, we have to
+ * create the mesh on rank zero, reorder it, then partiton it to the
+ * world comm.
+ */
+Omega_h::Mesh createOmegahMesh(Omega_h::Library& lib) {
+  auto mesh = Omega_h::Mesh(&lib);
+  auto isRankZero = (lib.world()->rank() == 0);
+  auto comm_in = lib.world()->split(int(isRankZero), 0);
+  if( isRankZero ) {
+    mesh = Omega_h::build_box(comm_in, OMEGA_H_SIMPLEX, 1, 1, 1, 2, 2, 2, false);
+    Omega_h::reorder_by_hilbert(&mesh);
+  }
+  mesh.set_comm(lib.world());
+  mesh.balance();
+  return mesh;
+}
+
 auto createOmegahConnManager(MPI_Comm mpiComm) {
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 1, 2, 2, 2, false);
-  //TODO create global entity ids
+  auto mesh = createOmegahMesh(lib);
   return Teuchos::rcp(new Albany::OmegahConnManager(mesh));
 }
 
