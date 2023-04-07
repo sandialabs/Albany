@@ -15,21 +15,25 @@
 namespace Albany {
 
 OmegahConnManager::
-OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
+OmegahConnManager(Omega_h::Mesh in_mesh) : mesh(in_mesh)
 {
   //albany does *not* support processes without elements
   TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
       "Error! Input mesh has no elements!\n");
 
+  m_elem_blocks_names.push_back("omegah_mesh_block");
+
   //the omegah conn manager will be recreated after each topological adaptation
   // - a change to mesh vertex coordinates (mesh motion) will not require
   //   recreating the conn manager
   initLocalElmIds();
+  assert(mesh.has_tag(mesh.dim(), "global"));
 }
 
 std::vector<GO>
 OmegahConnManager::getElementsInBlock (const std::string&) const
 {
+  assert(mesh.has_tag(mesh.dim(), "global"));
   auto globals_d = mesh.globals(mesh.dim());
   Omega_h::HostRead<Omega_h::GO> globalElmIds_h(globals_d);
   return std::vector<GO>(

@@ -21,16 +21,15 @@ namespace Albany {
 
 class OmegahConnManager : public ConnManager {
 private:
-  Omega_h::Mesh& mesh;
+  Omega_h::Mesh mesh;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   void initLocalElmIds() {
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
-  const std::string blockName = "omegah_mesh";
 public:
-  OmegahConnManager(Omega_h::Mesh& in_mesh);
+  OmegahConnManager(Omega_h::Mesh in_mesh);
 
   ~OmegahConnManager() = default;
 
@@ -82,7 +81,7 @@ public:
     std::stringstream ss;
     ss << "Error! requested local elemnt id (" << localElmtId << ") is larger than the number of elements on this process (" << mesh.nelems() << ")\n";
     TEUCHOS_TEST_FOR_EXCEPTION (localElmtId >= mesh.nelems(), std::runtime_error, ss.str());
-    return blockName;
+    return m_elem_blocks_names[0];
   };
 
   /** How many element blocks in this mesh?
@@ -94,7 +93,7 @@ public:
   /** Get block IDs from Omegah mesh object
     */
   void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
-    return elementBlockIds.push_back(blockName);
+    elementBlockIds = m_elem_blocks_names;
   }
 
   /** What are the cellTopologies linked to element blocks in this connection manager?
