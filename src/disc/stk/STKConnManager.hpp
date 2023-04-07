@@ -67,6 +67,20 @@ public:
   const GO * getConnectivity(LO localElmtId) const override {
     return &m_connectivity[m_elmtLidToConn[localElmtId]];
   }
+  
+  /** Get vector of bools associated to connectivity for a particular element, indicating whether the entity is owned by this rank
+    *
+    * \param[in] localElmtId Local element ID
+    *
+    * \returns vector of bools, with total size
+    *          equal to <code>getConnectivitySize(localElmtId)</code>
+    */
+  const std::vector<bool>& getOwnership(LO localElmtId) const override {
+     auto begin = m_ownership.begin()+m_elmtLidToConn[localElmtId];
+     auto end = begin+m_connSize[localElmtId];
+     m_owned.assign(begin,end);
+     return m_owned;
+  }
 
   /** How many mesh IDs are associated with this element?
     *
@@ -219,6 +233,9 @@ protected:
   // List of GIDs of entities in each element, spliced together
   std::vector<GO> m_connectivity;
 
+  // Whether  entities in each element are owned
+  std::vector<bool> m_ownership;
+
   // The max gid for each element rank, across the whole mesh.
   std::vector<stk::mesh::EntityId> m_maxEntityId;
 
@@ -230,6 +247,10 @@ protected:
   stk::topology                             m_elem_blocks_topo;
 
   std::unordered_map<stk::mesh::EntityId, int> m_localIDHash;
+
+private:
+  mutable std::vector<bool> m_owned;
+
 };
 
 } // namespace Albany

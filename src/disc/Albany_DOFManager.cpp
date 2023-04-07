@@ -361,7 +361,7 @@ albanyBuildGlobalUnknowns ()
   connMngr_->buildConnectivity(*fa_fps_.back());
 
   // We take a set as well, since std::find is on avg O(1) for unordered_set, vs O(N) in an array
-  auto add_if_not_there = [](Teuchos::Array<GO>& v, std::unordered_set<GO>& s, const GO gid) {
+  auto add_if_not_there = [](std::vector<GO>& v, std::unordered_set<GO>& s, const GO gid) {
     auto it_bool = s.insert(gid);
     if (it_bool.second) {
       v.push_back(gid);
@@ -369,50 +369,26 @@ albanyBuildGlobalUnknowns ()
   };
   // Grab GIDs from connectivity
   const int numElems = m_conn_mgr->getElementsInBlock().size();
-  Teuchos::Array<GO> ownedOrGhosted;
-  std::unordered_set<GO> ownedOrGhostedSet;
+  owned_.clear(); ghosted_.clear();
+  std::unordered_set<GO> ownedSet;
+  std::unordered_set<GO> ghostedSet;
   elementGIDs_.resize(numElems);
   elementBlockGIDCount_.resize(1);
   for (int ielem=0; ielem<numElems; ++ielem) {
     const int  ndofs = m_conn_mgr->getConnectivitySize(ielem);
     const auto conn  = m_conn_mgr->getConnectivity(ielem);
+    const auto ownership  = m_conn_mgr->getOwnership(ielem);
     elementGIDs_[ielem].resize(ndofs);
     for (int idof=0; idof<ndofs; ++idof) {
-      add_if_not_there(ownedOrGhosted,ownedOrGhostedSet,conn[idof]);
+      if(ownership[idof])
+        add_if_not_there(owned_,ownedSet,conn[idof]);
+      else
+        add_if_not_there(ghosted_,ghostedSet,conn[idof]);
       elementGIDs_[ielem][idof] = conn[idof];
     }
     elementBlockGIDCount_[0] += ndofs;
   }
 
-  // Create a unique vector space
-  // NOTE: these are NOT the final spaces, since we do not know
-  //       if the owned GIDs appear *before* the ghosted GIDs in
-  //       the overlapped space. 
-  auto ov_vs = createVectorSpace(getComm(),ownedOrGhosted);
-  auto vs = createOneToOneVectorSpace(ov_vs);
-
-  // Store owned/ghosted indices vectors
-  auto vs_gids = getGlobalElements(vs);
-  owned_ = vs_gids.toVector();
-  // The arrays need to be sorted, in order to make the
-  // calculation of the set difference linear in # ov gids.
-  // That's why we need the copy vs_gids to start with.
-  std::sort(vs_gids.begin(),vs_gids.end());
-  std::sort(ownedOrGhosted.begin(),ownedOrGhosted.end());
-  for (int i=0, iov=0; iov<ownedOrGhosted.size(); ++iov) {
-    if (i>=vs_gids.size() or vs_gids[i]!=ownedOrGhosted[iov]) {
-      // We ran out of owned gids or this gids does not appear
-      // in the owned list. Either way, it's a ghosted gid
-      ghosted_.push_back(ownedOrGhosted[iov]);
-    } else {
-      // GID is in the owned list, go to the next
-      ++i;
-    }
-  }
-  vs_gids = owned_;
-  for (auto g : ghosted_) {
-    vs_gids.push_back(g);
-  }
   buildVectorSpaces(owned_, ghosted_);
 
   // Set local ids

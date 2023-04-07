@@ -46,6 +46,15 @@ public:
 
   // Queries the dimension of a part
   virtual int part_dim (const std::string& part_name) const = 0;
+  
+  /** Get vector of bools associated to connectivity for a particular element, indicating whether the entity is owned by this rank
+    *
+    * \param[in] localElmtId Local element ID
+    *
+    * \returns Pointer to beginning of bools, with total size
+    *          equal to <code>getConnectivitySize(localElmtId)</code>
+    */
+  virtual const std::vector<bool>& getOwnership(LO localElmtId) const = 0;
 
   const std::string& elem_block_name () const {
     TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_names.size()!=1, std::runtime_error,
