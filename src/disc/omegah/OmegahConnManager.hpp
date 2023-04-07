@@ -28,6 +28,7 @@ private:
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
+  const std::string blockName = "omegah_mesh";
 public:
   OmegahConnManager(Omega_h::Mesh& in_mesh);
 
@@ -78,18 +79,22 @@ public:
     * \param[in] localElmtId Local element ID
     */
   std::string getBlockId(LO localElmtId) const override {
-    return "omega_h_mesh";
+    std::stringstream ss;
+    ss << "Error! requested local elemnt id (" << localElmtId << ") is larger than the number of elements on this process (" << mesh.nelems() << ")\n";
+    TEUCHOS_TEST_FOR_EXCEPTION (localElmtId >= mesh.nelems(), std::runtime_error, ss.str());
+    return blockName;
   };
 
   /** How many element blocks in this mesh?
     */
-  std::size_t numElementBlocks() const override { //FIXME
+  std::size_t numElementBlocks() const override {
     return 1;
   }
 
   /** Get block IDs from Omegah mesh object
     */
-  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override { //FIXME
+  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
+    return elementBlockIds.push_back(blockName);
   }
 
   /** What are the cellTopologies linked to element blocks in this connection manager?

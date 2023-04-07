@@ -28,9 +28,13 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 }
 
 std::vector<GO>
-OmegahConnManager::getElementsInBlock (const std::string& /* blockId */) const //FIXME
+OmegahConnManager::getElementsInBlock (const std::string&) const
 {
-  return std::vector<GO>();
+  auto globals_d = mesh.globals(mesh.dim());
+  Omega_h::HostRead<Omega_h::GO> globalElmIds_h(globals_d);
+  return std::vector<GO>(
+      globalElmIds_h.data(),
+      globalElmIds_h.data()+globalElmIds_h.size());
 }
 
 
@@ -45,7 +49,7 @@ OmegahConnManager::noConnectivityClone() const
 {
   //- for stk this function copies the object without connectivity information
   //- for omegah there is little to no distinction as the mesh object contains the
-  //  connectivity
+  //  connectivity ... unless the host std::vectors for connectivity are 'stored'
   return Teuchos::RCP(new OmegahConnManager(mesh));
 }
 
