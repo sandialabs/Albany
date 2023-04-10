@@ -10,6 +10,7 @@
 #include "Panzer_FieldPattern.hpp"
 
 #include <Omega_h_element.hpp> //topological_singular_name
+#include <Omega_h_for.hpp> //parallel_for
 
 namespace Albany {
 
@@ -42,62 +43,90 @@ OmegahConnManager::getElementsInBlock (const std::string&) const
 
 void OmegahConnManager::buildOffsetsAndIdCounts(
     const panzer::FieldPattern & fp,
-    LO & nodeIdCnt, LO & edgeIdCnt,
-    LO & faceIdCnt, LO & cellIdCnt,
-    GO & nodeOffset, GO & edgeOffset,
-    GO & faceOffset, GO & cellOffset) const
+    LO entIdCnt[4], GO entOffset[4]) const
 {
   // compute ID counts for each sub cell type
   int patternDim = fp.getDimension();
   switch(patternDim) {
     case 3:
-      faceIdCnt = fp.getSubcellIndices(2,0).size();
-      fprintf(stderr, "faceIdCnt %d\n", faceIdCnt);
+      entIdCnt[2] = fp.getSubcellIndices(2,0).size();
       // Intentional fall-through.
     case 2:
-      edgeIdCnt = fp.getSubcellIndices(1,0).size();
-      fprintf(stderr, "edgeIdCnt %d\n", edgeIdCnt);
+      entIdCnt[1] = fp.getSubcellIndices(1,0).size();
       // Intentional fall-through.
     case 1:
-      nodeIdCnt = fp.getSubcellIndices(0,0).size();
-      fprintf(stderr, "nodeIdCnt %d\n", nodeIdCnt);
+      entIdCnt[0] = fp.getSubcellIndices(0,0).size();
       // Intentional fall-through.
     case 0:
-      cellIdCnt = fp.getSubcellIndices(patternDim,0).size();
+      entIdCnt[3] = fp.getSubcellIndices(patternDim,0).size();
       break;
     default:
        TEUCHOS_ASSERT(false);
   };
 
   // compute offsets for each sub cell type
-  nodeOffset = 0;
-  edgeOffset = nodeOffset+(mesh.nverts()+1)*nodeIdCnt;
-  faceOffset = edgeOffset+(mesh.nedges()+1)*edgeIdCnt;
-  cellOffset = faceOffset+(mesh.nfaces()+1)*faceIdCnt;
+  entOffset[0] = 0;
+  for(int dim=1; dim<4; dim++) {
+    entOffset[dim] = entOffset[dim-1]+(mesh.nents(dim-1)+1)*entIdCnt[dim-1];
+  }
 
   // sanity check
-  TEUCHOS_ASSERT(nodeOffset <= edgeOffset
-              && edgeOffset <= faceOffset
-              && faceOffset <= cellOffset);
+  TEUCHOS_ASSERT(entOffset[0] <= entOffset[1]
+              && entOffset[1] <= entOffset[2]
+              && entOffset[2] <= entOffset[3]);
 }
 
+void appendConnectivity(Omega_h::Write<Omega_h::LO>& elmDownAdj_d, Omega_h::Adj elmToDim[3], int dim) {
+  const auto startIdx = ( dim == 0 ) ? 0 : elmToDim[dim-1].a2ab.size();
+  const auto a2ab = elmToDim[dim].a2ab;
+  const auto ab2b = elmToDim[dim].ab2b;
+  auto append = OMEGA_H_LAMBDA(LO i) {
+    for(auto ab = a2ab[i]; ab < a2ab[i]; ab++) {
+      elmDownAdj_d[i+startIdx] = ab2b[ab];
+    }
+  };
+  const std::string kernelName = "appendConnectivity_dim" + std::to_string(dim);
+  Omega_h::parallel_for(a2ab.size(), append, kernelName.c_str());
+}
 
 void
 OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()>mesh.dim(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension() > mesh.dim(), std::logic_error,
       "Error! OmegahConnManager Field pattern incompatible with stored elem_blocks.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
       "  - elem_blocks topo dim: " + Omega_h::topological_singular_name(mesh.family(), mesh.dim()) + "\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension() < 1, std::logic_error,
+      "Error! OmegahConnManager Field pattern must have a dimension of at least 1.\n"
+      "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n");
 
   // Build entity adjacency counts and offsets
   //    ID counts = How many IDs belong on each entity (number of mesh DOF used)
   //    Offset = What is starting index for each sub-array of adjacency information
   //             Global numbering goes like [node ids, edge ids, face ids, cell ids]
-  LO nodeIdCnt=0, edgeIdCnt=0, faceIdCnt=0, cellIdCnt=0;
-  GO nodeOffset=0, edgeOffset=0, faceOffset=0, cellOffset=0;
-  buildOffsetsAndIdCounts(fp, nodeIdCnt,  edgeIdCnt,  faceIdCnt,  cellIdCnt,
-                              nodeOffset, edgeOffset, faceOffset, cellOffset);
+  LO entIdCnt[4] = {0,0,0,0};
+  GO entOffsets[4] = {0,0,0,0};
+  buildOffsetsAndIdCounts(fp, entIdCnt, entOffsets);
+
+  // loop over elements and build global connectivity
+  const int numElems = mesh.nelems();
+  const auto fieldDim = fp.getCellTopology().getDimension();
+
+  // get element-to-[vertex|edge|face] adjacencies
+  Omega_h::Adj elmToDim[3];
+  GO totSize = 0;
+  for(int dim = 0; dim < fieldDim; dim++) {
+    elmToDim[dim] = mesh.ask_down(mesh.dim(),dim);
+    totSize += elmToDim[dim].a2ab.size();
+  }
+
+  // append the ajacency arrays to each other
+  Omega_h::Write<Omega_h::LO> elmDownAdj_d(totSize);
+  for(int dim = 0; dim < fieldDim; dim++)
+    appendConnectivity(elmDownAdj_d, elmToDim, dim);
+
+  // transfer to host
+  Omega_h::HostRead elmDownAdj_h(Omega_h::read(elmDownAdj_d));
 }
 
 Teuchos::RCP<panzer::ConnManager>

@@ -24,16 +24,12 @@ private:
   Omega_h::Mesh mesh;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
+  std::vector<GO> m_connectivity;
   void initLocalElmIds() {
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
-  void buildOffsetsAndIdCounts(
-      const panzer::FieldPattern & fp,
-      LO & nodeIdCnt, LO & edgeIdCnt,
-      LO & faceIdCnt, LO & cellIdCnt,
-      GO & nodeOffset, GO & edgeOffset,
-      GO & faceOffset, GO & cellOffset) const;
+  void buildOffsetsAndIdCounts(const panzer::FieldPattern & fp, LO entIdCnt[4], GO entOffset[4]) const;
 public:
   OmegahConnManager(Omega_h::Mesh in_mesh);
 
