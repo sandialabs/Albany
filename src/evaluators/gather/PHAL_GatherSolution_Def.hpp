@@ -326,7 +326,7 @@ evaluateFields(typename Traits::EvalData workset)
           get_ref_dot(cell,node,eq) = xdot_data(lid);
         }
         if (gather_xdotdot) {
-          get_ref_dot(cell,node,eq) = xdot_data(lid);
+          get_ref_dotdot(cell,node,eq) = xdotdot_data(lid);
         }
       }
     }
