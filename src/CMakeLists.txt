@@ -625,34 +625,36 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
 
 install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake  FILE "albany-targets.cmake")
 
-# Create dummy executable that links against all albany libs and its tpls
-# Then, read its link.txt file, to fetch all the actual library files we're linking against.
-# Note: link.txt will contain something like
-#   /path/to/mpicxx $flag1 ... $flagN /path/to/main.cpp.o -o dummy $lib1 ... $libN
-# We want to remove every string up to dummy, and keep only the libs afterward.
+if (ENABLE_MPAS_INTERFACE)
+  # Create dummy executable that links against all albany libs and its tpls
+  # Then, read its link.txt file, to fetch all the actual library files we're linking against.
+  # Note: link.txt will contain something like
+  #   /path/to/mpicxx $flag1 ... $flagN /path/to/main.cpp.o -o dummy $lib1 ... $libN
+  # We want to remove every string up to dummy, and keep only the libs afterward.
 
-# Parse dummy subproject folder
-add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
-                  ${CMAKE_BINARY_DIR}/dummy)
+  # Parse dummy subproject folder
+  add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
+                    ${CMAKE_BINARY_DIR}/dummy)
 
-if (CMAKE_GENERATOR STREQUAL "Ninja")
-  set (WORK_DIR ${CMAKE_BINARY_DIR})
-elseif(CMAKE_GENERATOR STREQUAL "Unix Makefiles")
-  set (WORK_DIR ${CMAKE_BINARY_DIR}/dummy)
+  if (CMAKE_GENERATOR STREQUAL "Ninja")
+    set (WORK_DIR ${CMAKE_BINARY_DIR})
+  elseif(CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+    set (WORK_DIR ${CMAKE_BINARY_DIR}/dummy)
+  endif()
+
+  add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
+                      COMMAND ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany
+                      ARGS --bin-dir ${CMAKE_BINARY_DIR}
+                           --install-lib-dir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                           --cmake-generator ${CMAKE_GENERATOR}
+                      DEPENDS ${CMAKE_BINARY_DIR}/src/Albany_GitVersion.h
+                      WORKING_DIRECTORY ${WORK_DIR})
+
+  add_custom_target (create_export_albany ALL
+                     DEPENDS ${CMAKE_BINARY_DIR}/export_albany.in)
+  add_dependencies(create_export_albany ${ALBANY_LIBRARIES})
+
+  # Install the file
+  install (FILES ${CMAKE_BINARY_DIR}/export_albany.in
+           DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
-
-add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
-                    COMMAND ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany
-                    ARGS --bin-dir ${CMAKE_BINARY_DIR}
-                         --install-lib-dir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-                         --cmake-generator ${CMAKE_GENERATOR}
-                    DEPENDS ${CMAKE_BINARY_DIR}/src/Albany_GitVersion.h
-                    WORKING_DIRECTORY ${WORK_DIR})
-
-add_custom_target (create_export_albany ALL
-                   DEPENDS ${CMAKE_BINARY_DIR}/export_albany.in)
-add_dependencies(create_export_albany ${ALBANY_LIBRARIES})
-
-# Install the file
-install (FILES ${CMAKE_BINARY_DIR}/export_albany.in
-         DESTINATION ${CMAKE_INSTALL_PREFIX})
