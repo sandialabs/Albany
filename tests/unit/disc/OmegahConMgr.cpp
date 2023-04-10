@@ -15,6 +15,10 @@
 
 #include "Shards_CellTopology.hpp"
 
+//need to test with field patterns
+#include "Panzer_IntrepidFieldPattern.hpp"
+#include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
+
 #include <Omega_h_build.hpp>
 
 #define REQUIRE(cond) \
@@ -26,6 +30,17 @@ auto createOmegahConnManager(MPI_Comm mpiComm) {
   auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
   return Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
 }
+
+/* copied from tests/unit/disc/UnitTest_BlockedDOFManager.cpp */
+template <typename Intrepid2Type>
+Teuchos::RCP<const panzer::FieldPattern> buildFieldPattern()
+{
+  // build a geometric pattern from a single basis
+  Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis = Teuchos::rcp(new Intrepid2Type);
+  Teuchos::RCP<const panzer::FieldPattern> pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+  return pattern;
+}
+
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 {
@@ -95,5 +110,20 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockTopologies)
   shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
   REQUIRE(triTopo == topoTypes[0]);
   out << "Testing OmegahConnManager::getElementBlockTopologies()\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+
+  Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+
+  auto conn_mgr = createOmegahConnManager(mpiComm);
+  conn_mgr->buildConnectivity(*patternC1);
+  out << "Testing OmegahConnManager::buildConnectivity()\n";
   success = true;
 }
