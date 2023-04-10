@@ -207,7 +207,6 @@ gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr) {
   // Do this only once
   if (m_fields_offsets.size()==0) {
     // For now, only allow dof mgr's defined on a single element part
-    constexpr auto ALL = Kokkos::ALL;
     const int neq = dof_mgr->getNumFields();
     m_fields_offsets.resize("",numNodes,neq);
     for (int fid=0; fid<neq; ++fid) {

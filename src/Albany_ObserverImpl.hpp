@@ -23,6 +23,9 @@ public:
 //     const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot);
 // #endif
 
+  // Bring in scope the version we don't override
+  using StatelessObserverImpl::observeSolution;
+
   void observeSolution(
     double stamp, const Thyra_Vector& nonOverlappedSolution,
     const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,

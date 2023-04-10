@@ -35,7 +35,7 @@ ExtrudedSTKMeshStruct::
 ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                       const Teuchos::RCP<const Teuchos_Comm>& comm,
                       Teuchos::RCP<AbstractMeshStruct> inputBasalMesh,
-						          const int numParams)
+                      const int numParams)
  : GenericSTKMeshStruct(params, 3, numParams)
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
  , periodic(false)
@@ -235,7 +235,6 @@ void ExtrudedSTKMeshStruct::setBulkData(
   this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_sis, worksetSize);
 
   constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
-  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
 
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
 
@@ -678,7 +677,6 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
   }
 
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
-  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   const     auto SIDE_RANK = metaData->side_rank();
 
   // Extract 2D cells
@@ -799,7 +797,6 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
 
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
-  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
 
   std::string ranks[4] = {"ERROR!","Scalar","Vector","Tensor"};
   std::vector<double> fieldLayersCoords;
@@ -1045,7 +1042,6 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
 
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
-  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
 
   // Extrude node fields
   LayeredMeshNumbering<GO> node_layers_data_GO(maxGlobalNodes2dId+1,numLayers+1,Ordering);

@@ -121,6 +121,7 @@ struct DualView {
   }
 
   // Allow implicit conversion to DualView<const DT>;
+  template<typename SrcDT = DT, typename = typename std::enable_if<not std::is_same<SrcDT,const_DT>::value>::type>
   operator const_type() const {
     const_type ct;
     ct.d_view = d_view;

@@ -36,7 +36,7 @@ template<unsigned Dim, class traits>
 TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
-		  const int numParams) :
+      const int numParams) :
   GenericSTKMeshStruct(params, traits_type::size, numParams),
   periodic_x(params->get("Periodic_x BC", false)),
   periodic_y(params->get("Periodic_y BC", false)),
@@ -104,26 +104,25 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
       break;
   }
   scales.resize(Dim);
-  for(unsigned i = 0; i < Dim; i++){ // Get the number of elements in each dimension from params
-                                // Note that nelem will default to 0 and scale to 1 if element
-                                // blocks are specified
-
+  if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
+    for(unsigned i = 0; i < Dim; i++){ // Get the number of elements in each dimension from params
+                                  // Note that nelem will default to 0 and scale to 1 if element
+                                  // blocks are specified
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
+      // Read the values for "1D Elements", "2D Elements", "3D Elements"
+       std::stringstream buf;
+       buf << i + 1 << "D Elements";
+       nelem[i] = params->get<int>(buf.str(), 0);
 
-    // Read the values for "1D Elements", "2D Elements", "3D Elements"
-     std::stringstream buf;
-     buf << i + 1 << "D Elements";
-     nelem[i] = params->get<int>(buf.str(), 0);
+      // Read the values for "1D Scale", "2D Scale", "3D Scale"
+       std::stringstream buf2;
+       buf2 << i + 1 << "D Scale";
 
-    // Read the values for "1D Scale", "2D Scale", "3D Scale"
-     std::stringstream buf2;
-     buf2 << i + 1 << "D Scale";
-
-     scale[i] = params->get<double>(buf2.str(),     1.0);
-     scales[i] = scale[i];
-  }
+       scale[i] = params->get<double>(buf2.str(),     1.0);
+       scales[i] = scale[i];
+    }
 
   if(input_nEB <= 0 || Dim == 0){ // If "Element Blocks" are not present in input file
 
@@ -131,150 +130,82 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     // Format and print out information about the mesh that is being generated
 
-    if (commT->getRank()==0 && Dim > 0){ // Not reached for 0D problems
+    if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
+      if (commT->getRank()==0){ // Not reached for 0D problems
 
-     std::cout <<"TmplSTKMeshStruct:: Creating " << Dim << "D mesh of size ";
+        std::cout <<"TmplSTKMeshStruct:: Creating " << Dim << "D mesh of size ";
 
-     std::stringstream nelem_txt, scale_txt;
+        std::stringstream nelem_txt, scale_txt;
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-compare"
-#endif
+        if constexpr (Dim>1)
+          for(unsigned idx=0; idx < Dim - 1; idx++){
+            nelem_txt << nelem[idx] << "x";
+            scale_txt << scale[idx] << "x";
+          }
 
-     for(unsigned idx=0; idx < Dim - 1; idx++){
+        nelem_txt << nelem[Dim - 1];
+        scale_txt << scale[Dim - 1];
 
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+        std::cout << nelem_txt.str() << " elements and scaled to " <<
+                    scale_txt.str() << std::endl;
 
-       nelem_txt << nelem[idx] << "x";
-       scale_txt << scale[idx] << "x";
+        if (triangles)
+          std::cout<<" Quad elements cut to make twice as many triangles " <<std::endl;
+      }
 
-     }
+    // Calculate total number of elements
+    total_elems = nelem[0];
 
-     nelem_txt << nelem[Dim - 1];
-     scale_txt << scale[Dim - 1];
-
-     std::cout << nelem_txt.str() << " elements and scaled to " <<
-                 scale_txt.str() << std::endl;
-
-     if (triangles)
-       std::cout<<" Quad elements cut to make twice as many triangles " <<std::endl;
-
-   }
-
-   // Calculate total number of elements
-   total_elems = nelem[0];
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-compare"
-#endif
-
-   for(unsigned i = 1; i < Dim; i++)
-      total_elems *= nelem[i];
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-  }
-  else { // Element blocks are present in input
+    if constexpr (Dim>1) // Avoid warning for pointless comparison in for loop
+      for(unsigned i = 1; i < Dim; i++)
+         total_elems *= nelem[i];
+  } else {
+    // Element blocks are present in input
 
     std::vector<GO> min(Dim), max(Dim);
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-compare"
-#endif
-
-    for(unsigned i = 0; i < Dim; i++){
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-      min[i] = std::numeric_limits<GO>::max();
-      max[i] = std::numeric_limits<GO>::min();
-
-      nelem[i] = 0;
-
-    }
+    if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
+      for(unsigned i = 0; i < Dim; i++){
+        min[i] = std::numeric_limits<GO>::max();
+        max[i] = std::numeric_limits<GO>::min();
+        nelem[i] = 0;
+      }
 
     // Read the EB extents from the parameter list and initialize the EB structs
     for(unsigned int eb = 0; eb < numEB; eb++){
 
       EBSpecs[eb].Initialize(eb, params);
 
-//      for(int i = 0; i < Dim; i++)
-
-//        nelem[i] += EBSpecs[eb].numElems(i);
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-compare"
-#endif
-
-      for(unsigned i = 0; i < Dim; i++){
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-
-        min[i] = (min[i] < EBSpecs[eb].min[i]) ? min[i] : EBSpecs[eb].min[i];
-        max[i] = (max[i] > EBSpecs[eb].max[i]) ? max[i] : EBSpecs[eb].max[i];
-
-      }
-
+      if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
+        for(unsigned i = 0; i < Dim; i++){
+          min[i] = (min[i] < EBSpecs[eb].min[i]) ? min[i] : EBSpecs[eb].min[i];
+          max[i] = (max[i] > EBSpecs[eb].max[i]) ? max[i] : EBSpecs[eb].max[i];
+        }
     }
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-compare"
-#endif
-
-    for(unsigned i = 0; i < Dim; i++)
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-      nelem[i] = max[i] - min[i];
+    if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
+      for(unsigned i = 0; i < Dim; i++)
+        nelem[i] = max[i] - min[i];
 
     // Calculate total number of elements
     total_elems = nelem[0];
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-compare"
-#endif
-
-    for(unsigned i = 1; i < Dim; i++)
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-      total_elems *= nelem[i];
-
+    if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
+      for(unsigned i = 1; i < Dim; i++)
+        total_elems *= nelem[i];
   }
 
   std::vector<std::string> nsNames;
 
   // Construct the nodeset names
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-compare"
-#endif
+  if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
+    for(unsigned idx=0; idx < Dim*2; idx++){ // 2 nodesets per dimension (one at beginning, one at end)
+      std::stringstream buf;
+      buf << "NodeSet" << idx;
+      nsNames.push_back(buf.str());
+    }
 
-  for(unsigned idx=0; idx < Dim*2; idx++){ // 2 nodesets per dimension (one at beginning, one at end)
-    std::stringstream buf;
-    buf << "NodeSet" << idx;
-    nsNames.push_back(buf.str());
-  }
   // For 2D and 3D, and extra node set of a single node for setting Pressure in confined incompressible flows
   if (Dim==2 || Dim==3) nsNames.push_back("NodeSet99");
 
@@ -282,8 +213,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Construct the sideset names
 
-  if(Dim > 1 ) // Sidesets present only for 2 and 3D problems
-
+  if constexpr (Dim > 1 ) // Sidesets present only for 2 and 3D problems
     for(unsigned idx=0; idx < Dim*2; idx++){ // 2 sidesets per dimension (one at beginning, one at end)
       std::stringstream buf;
       buf << "SideSet" << idx;
@@ -322,19 +252,14 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
 
   for(unsigned int i = 0; i < numEB; i++){
-
-    if (triangles) {
+    if (triangles)
       stk::mesh::set_topology(*partVec[i], optional_element_type);
-    }
-    else {
+    else
       stk::mesh::set_topology(*partVec[i], default_element_type);
-    }
   }
 
-  for(std::map<std::string, stk::mesh::Part*>::const_iterator it = ssPartVec.begin();
-    it != ssPartVec.end(); ++it)
-
-    stk::mesh::set_topology(*it->second, default_element_side_type);
+  for (auto& it : ssPartVec)
+    stk::mesh::set_topology(*it.second, default_element_side_type);
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
@@ -373,22 +298,17 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Construct MeshSpecsStruct
   if (!params->get("Separate Evaluators by Element Block",false)) {
-
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
     this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, EBSpecs[0].name,
                                ebNameToIndex, false, cub_rule));
   } else {
-
     meshSpecs.resize(numEB);
-
     this->allElementBlocksHaveSamePhysics=false;
 
     for (unsigned int eb=0; eb<numEB; eb++) {
-
       // MeshSpecs holds all info needed to set up an Albany problem
-
       const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
 
       this->meshSpecs[eb] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
@@ -398,8 +318,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
 
   // Upon request, add a nodeset for each sideset
-  if (params->get<bool>("Build Node Sets From Side Sets",false))
-  {
+  if (params->get<bool>("Build Node Sets From Side Sets",false)) {
     this->addNodeSetsFromSideSets ();
   }
 
@@ -418,37 +337,22 @@ TmplSTKMeshStruct<Dim, traits>::setFieldData(
                   const unsigned int worksetSize,
                   const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-
   // Create global mesh: Dim-D structured, rectangular
-
-//  std::vector<std::vector<double> > h_dim;
   std::vector<double> h_dim[traits_type::size];
-//  h_dim.resize(traits_type::size);
-//  x.resize(traits_type::size);
-//  x.resize(Dim);
 
-  for(unsigned idx=0; idx < Dim; idx++){
-
-    // Allocate the storage
-
+  for(unsigned idx=0; idx < Dim; idx++) {
     x[idx].resize(nelem[idx] + 1);
     h_dim[idx].resize(nelem[idx] + 1);
-
   }
 
   for(unsigned int eb = 0; eb < numEB; eb++)
-
     EBSpecs[eb].calcElemSizes(h_dim);
 
   for(unsigned idx=0; idx < Dim; idx++){
-
     x[idx][0] = 0;
 
     for(unsigned int i=1; i <= nelem[idx]; i++)
-
       x[idx][i] = x[idx][i - 1] + h_dim[idx][i - 1]; // place the coordinates of the element nodes
-
-
   }
 
   SetupFieldData(commT, sis, worksetSize);
@@ -503,8 +407,7 @@ TmplSTKMeshStruct<Dim, traits>::DeclareParts(
   }
 
   // SideSets
-  for (std::size_t i=0; i<ssNames.size(); i++) {
-    std::string ssn = ssNames[i];
+  for (const auto& ssn : ssNames) {
     ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*ssPartVec[ssn]);
@@ -512,8 +415,7 @@ TmplSTKMeshStruct<Dim, traits>::DeclareParts(
   }
 
   // NodeSets
-  for (std::size_t i=0; i<nsNames.size(); i++) {
-    std::string nsn = nsNames[i];
+  for (const auto& nsn : nsNames) {
     nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
@@ -524,21 +426,17 @@ TmplSTKMeshStruct<Dim, traits>::DeclareParts(
 
 template <unsigned Dim, class traits>
 void
-EBSpecsStruct<Dim, traits>::Initialize(GO nnelems[], double blLen[]){
+EBSpecsStruct<Dim, traits>::Initialize(GO nnelems[], double blLen[]) {
 
     name = "Block0";
-
-    for(unsigned i = 0; i < Dim; i++){
-
+    for(unsigned i = 0; i < Dim; i++) {
       min[i] = 0;
       max[i] = nnelems[i];
       blLength[i] = blLen[i];
-
     }
 }
 
 // Template specialization functions for the different dimensions
-
 
 // Specializations to read the element block information for each dimension
 
@@ -645,7 +543,6 @@ EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
       &min[0], &min[1], &min[2], &max[0], &max[1], &max[2], &blLength[0], &blLength[1], &blLength[2], buf);
 
     name = buf;
-
 }
 
 // Specializations to build the mesh for each dimension
@@ -653,7 +550,6 @@ template<>
 void
 TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
 {
-
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
 
@@ -669,7 +565,6 @@ TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT
     bulkData->declare_relation(pt, node, 0, stk::mesh::DEFAULT_PERMUTATION);
 
     // No node sets or side sets in 0D
-
 }
 
 // Specialized for 0 D
@@ -709,7 +604,6 @@ template<>
 void
 TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
 
@@ -807,8 +701,6 @@ template<>
 void
 TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
 {
-
-  // STK
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   std::vector<GO> elemNumber(2);
@@ -1050,7 +942,6 @@ template<>
 void
 TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   std::vector<GO> elemNumber(3);
@@ -1178,7 +1069,6 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
  */
 
     // Hex sideset construction
-
     if (x_GID==0) { // left edge of mesh, elem has side 3 on left boundary
 
       // Sideset construction
@@ -1194,8 +1084,6 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 
     }
     if ((x_GIDplus1)==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
-
-
       // elem has side 1 (1265) on right boundary
 
        singlePartVec[0] = ssPartVec["SideSet1"];
@@ -1208,8 +1096,7 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 
     }
     if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
-
-    // elem has side 0 (0154) on bottom boundary
+      // elem has side 0 (0154) on bottom boundary
 
        singlePartVec[0] = ssPartVec["SideSet2"];
        stk::mesh::Entity side  = bulkData->declare_element_side(elem, 0, singlePartVec);
@@ -1221,7 +1108,6 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 
     }
     if ((y_GIDplus1)==nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
-
      // elem has side 2 (2376) on top boundary
 
      singlePartVec[0] = ssPartVec["SideSet3"];
@@ -1234,7 +1120,6 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 
   }
   if (z_GID==0) {
-
       // elem has side 4 (0321) on front boundary
 
      singlePartVec[0] = ssPartVec["SideSet4"];
@@ -1247,7 +1132,6 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 
   }
   if ((z_GIDplus1)==nelem[2]) {
-
       // elem has side 5 (4567) on back boundary
 
      singlePartVec[0] = ssPartVec["SideSet5"];
@@ -1373,18 +1257,14 @@ template<>
 Teuchos::RCP<const Teuchos::ParameterList>
 TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getValidGenericSTKParameters("ValidSTK0D_DiscParams");
-
-  return validPL;
+  return  this->getValidGenericSTKParameters("ValidSTK0D_DiscParams");
 }
 
 template<>
 Teuchos::RCP<const Teuchos::ParameterList>
 TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getValidGenericSTKParameters("ValidSTK1D_DiscParams");
+  auto validPL = this->getValidGenericSTKParameters("ValidSTK1D_DiscParams");
   validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimesnsion");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
@@ -1393,14 +1273,12 @@ TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X domain");
 
-  for(unsigned int i = 0; i < numEB; i++){
-
+  for (unsigned int i = 0; i < numEB; i++) {
     std::stringstream ss;
     ss << "Block " << i;
 
     validPL->set<std::string>(ss.str(), "begins at 0 ends at 100 length 1.0 named Bck0",
          "Beginning and ending parametric coordinates of block, block name");
-
   }
 
   return validPL;
@@ -1410,8 +1288,7 @@ template<>
 Teuchos::RCP<const Teuchos::ParameterList>
 TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getValidGenericSTKParameters("ValidSTK2D_DiscParams");
+  auto validPL = this->getValidGenericSTKParameters("ValidSTK2D_DiscParams");
 
   validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimesnsion");
   validPL->set<bool>("Periodic_y BC", false, "Flag to indicate periodic mesh in y-dimesnsion");
@@ -1426,14 +1303,12 @@ TmplSTKMeshStruct<2>::getValidDiscretizationParameters() const
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y domain");
 
-  for(unsigned int i = 0; i < numEB; i++){
-
+  for (unsigned int i = 0; i < numEB; i++) {
     std::stringstream ss;
     ss << "Block " << i;
 
     validPL->set<std::string>(ss.str(), "begins at (0, 0) ends at (100, 100) length (1.0, 1.0) named Bck0",
          "Beginning and ending parametric coordinates of block, block name");
-
   }
 
   return validPL;
@@ -1443,8 +1318,7 @@ template<>
 Teuchos::RCP<const Teuchos::ParameterList>
 TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getValidGenericSTKParameters("ValidSTK3D_DiscParams");
+  auto validPL = this->getValidGenericSTKParameters("ValidSTK3D_DiscParams");
 
   validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimesnsion");
   validPL->set<bool>("Periodic_y BC", false, "Flag to indicate periodic mesh in y-dimesnsion");
@@ -1461,15 +1335,13 @@ TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y-Z domain");
 
-  for(unsigned int i = 0; i < numEB; i++){
-
+  for (unsigned int i = 0; i < numEB; i++) {
     std::stringstream ss;
     ss << "Block " << i;
 
     validPL->set<std::string>(ss.str(),
           "begins at (0, 0, 0) ends at (100, 100, 100) length (1.0, 1.0, 1.0) named Bck0",
           "Beginning and ending parametric coordinates of block, block name");
-
   }
 
   return validPL;

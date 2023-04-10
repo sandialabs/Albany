@@ -29,7 +29,7 @@ namespace LandIce {
 template<typename EvalT, typename Traits>
 class GatherVerticallyContractedSolution
     : public PHX::EvaluatorWithBaseImpl<Traits>,
-		  public PHX::EvaluatorDerived<EvalT, Traits>
+      public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
