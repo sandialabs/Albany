@@ -28,6 +28,12 @@ private:
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
+  void buildOffsetsAndIdCounts(
+      const panzer::FieldPattern & fp,
+      LO & nodeIdCnt, LO & edgeIdCnt,
+      LO & faceIdCnt, LO & cellIdCnt,
+      GO & nodeOffset, GO & edgeOffset,
+      GO & faceOffset, GO & cellOffset) const;
 public:
   OmegahConnManager(Omega_h::Mesh in_mesh);
 
@@ -43,7 +49,7 @@ public:
     *
     * \param[in] fp Field pattern to build connectivity for
     */
-  void buildConnectivity(const panzer::FieldPattern & fp) override; //FIXME
+  void buildConnectivity(const panzer::FieldPattern & fp) override;
 
   /** Build a clone of this connection manager, without any assumptions
     * about the required connectivity (e.g. <code>buildConnectivity</code>
