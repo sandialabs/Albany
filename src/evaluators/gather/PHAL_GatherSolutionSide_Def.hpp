@@ -137,7 +137,7 @@ evaluateFields(typename Traits::EvalData workset)
   const bool gather_xdotdot = enableSolutionDotDot && !xdotdot.is_null();
 
   const auto& disc     = workset.disc;
-  const auto& dof_mgr  = disc->getNewDOFManager();
+  const auto& dof_mgr  = disc->getDOFManager();
   const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
@@ -196,8 +196,8 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 
   const auto& disc     = workset.disc;
   const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
-  const auto& dof_mgr  = disc->getNewDOFManager();
-  const auto& node_dof_mgr = disc->getNodeNewDOFManager();
+  const auto& dof_mgr  = disc->getDOFManager();
+  const auto& node_dof_mgr = disc->getNodeDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
@@ -276,7 +276,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 
   const auto& disc     = workset.disc;
   const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
-  const auto& dof_mgr  = disc->getNewDOFManager();
+  const auto& dof_mgr  = disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;

@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   auto dg_data = Albany::getNonconstLocalData(dg);
 
-  const auto& dof_mgr = workset.disc->getNewDOFManager();
+  const auto& dof_mgr = workset.disc->getDOFManager();
   const int neq = dof_mgr->getNumFields();
   const int  ws = workset.wsIndex;
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
@@ -173,7 +173,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(
   const int numLayers = layers_data->numLayers;
 
   // Dof mgr data
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const int neq = dof_mgr->getNumFields();
 
@@ -362,7 +362,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& layers_data     = workset.disc->getLayeredMeshNumberingLO();
   const int top = layers_data->top_side_pos;
   const int bot = layers_data->bot_side_pos;
-  const auto& p_dof_mgr       = workset.disc->getNewDOFManager(param_name);
+  const auto& p_dof_mgr       = workset.disc->getDOFManager(param_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
   const int fieldLevel = level_it->second;
@@ -503,7 +503,7 @@ evaluateFields(typename Traits::EvalData workset)
     p_elem_dof_lids = dist_param->get_dof_mgr()->elem_dof_lids().host();
   }
 
-  const auto& dof_mgr   = workset.disc->getNewDOFManager();
+  const auto& dof_mgr   = workset.disc->getDOFManager();
 
   const int  ws = workset.wsIndex;
   const int neq = dof_mgr->getNumFields();
@@ -674,14 +674,14 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   // Solution dof mgr data
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   // Parameter data
   const int fieldLevel = level_it->second;
   const int fieldLayer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
-  const auto& p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
+  const auto& p_dof_mgr = workset.disc->getDOFManager(workset.dist_param_deriv_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
   //       to guarantee corresponding nodes are vertically aligned.
@@ -765,7 +765,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
   const int numLayers = layers_data->numLayers;
 
   // Dof mgr data
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const int neq = dof_mgr->getNumFields();
   const int columnsOffset = neq*this->numNodes;

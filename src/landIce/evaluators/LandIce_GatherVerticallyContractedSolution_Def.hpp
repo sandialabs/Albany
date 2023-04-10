@@ -188,7 +188,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   // Compute quadWeights (cached)
   computeQuadWeights(layers_ratio);
 
-  const int neq = workset.disc->getNewDOFManager()->getNumFields();
+  const int neq = workset.disc->getDOFManager()->getNumFields();
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
   auto snc = side_node_count.dev();
@@ -368,7 +368,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   // Compute quadWeights (cached)
   computeQuadWeights(layers_ratio);
 
-  const int neq = workset.disc->getNewDOFManager()->getNumFields();
+  const int neq = workset.disc->getDOFManager()->getNumFields();
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
   auto snc = side_node_count.dev();

@@ -59,7 +59,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const auto& nsNodeCoords = dirichletWorkset.nodeSetCoords->at(this->nodeSetID);
   const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   std::vector<std::vector<int>> sol_offsets(number_of_components);
   for (int j=0; j<number_of_components; ++j) {
@@ -123,7 +123,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   std::vector<ScalarT> BCVals(number_of_components);
 
   const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
   std::vector<std::vector<int>> sol_offsets(number_of_components);
@@ -205,7 +205,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   std::vector<ScalarT> BCVals(number_of_components);
 
   const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
   std::vector<std::vector<int>> sol_offsets(number_of_components);
@@ -276,7 +276,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   // double* coord;
   // std::vector<ScalarT> BCVals(number_of_components);
   const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
   std::vector<std::vector<int>> sol_offsets(number_of_components);

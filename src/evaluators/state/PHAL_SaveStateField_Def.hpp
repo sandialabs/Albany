@@ -226,7 +226,7 @@ saveNodeState(typename Traits::EvalData workset)
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
 
-  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
   const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
 
   const auto& cell_indexer = node_dof_mgr->cell_indexer();

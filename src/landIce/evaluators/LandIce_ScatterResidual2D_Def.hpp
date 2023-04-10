@@ -64,8 +64,8 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   constexpr auto ALL = Kokkos::ALL();
 
   const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto dof_mgr      = workset.disc->getNewDOFManager();
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto dof_mgr      = workset.disc->getDOFManager();
+  const auto node_dof_mgr = workset.disc->getNodeDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   const auto& mesh = workset.disc->getMeshStruct();
@@ -167,7 +167,7 @@ void ScatterResidualWithExtrudedField<AlbanyTraits::Jacobian, AlbanyTraits>::
 evaluateFields(typename AlbanyTraits::EvalData workset)
 {
   // This happens only once
-  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  this->gather_fields_offsets (workset.disc->getDOFManager());
 
   constexpr auto ALL = Kokkos::ALL();
 
@@ -182,9 +182,9 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const int field_pos = field_layer==0 ? bot : top;
 
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto& dof_mgr       = workset.disc->getNewDOFManager();
+  const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
   
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
   //       to guarantee corresponding nodes are vertically aligned.

@@ -95,7 +95,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // We use this dof mgr to figure out which local node in the cell is on the
   // top or bottom side.
-  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
 
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     const int elem_LID = elem_lids(cell);
@@ -204,7 +204,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // We use this dof mgr to figure out which local node in the cell is on the
   // top or bottom side.
-  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);
@@ -325,7 +325,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // We use this dof mgr to figure out which local node in the cell is on the
   // top or bottom side.
-  const auto& node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);

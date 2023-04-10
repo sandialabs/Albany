@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   const int num_dof = this->val_node(0,0).size();
-  const int neq = workset.disc->getNewDOFManager()->getNumFields();
+  const int neq = workset.disc->getDOFManager()->getNumFields();
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < this->numQPs; ++qp) {
@@ -224,7 +224,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
  num_dof = this->val_node(0,0).size();
- neq = workset.disc->getNewDOFManager()->getNumFields();
+ neq = workset.disc->getDOFManager()->getNumFields();
 
  Kokkos::parallel_for(FastSolutionGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
 

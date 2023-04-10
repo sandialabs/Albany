@@ -46,7 +46,7 @@ public:
 
   //! Get the DOF manager
   Teuchos::RCP<const DOFManager>
-  getNewDOFManager (const std::string& fieldName) const {
+  getDOFManager (const std::string& fieldName) const {
     TEUCHOS_TEST_FOR_EXCEPTION (m_dof_managers.find(fieldName)==m_dof_managers.end(), std::runtime_error,
         "Error! Could not find a dof manger for field '" + fieldName + "'\n");
     TEUCHOS_TEST_FOR_EXCEPTION (m_dof_managers.at(fieldName).size()!=1, std::runtime_error,
@@ -55,25 +55,25 @@ public:
     return m_dof_managers.at(fieldName).begin()->second;
   }
   Teuchos::RCP<const DOFManager>
-  getNewDOFManager (const std::string& fieldName, const std::string& part_name) const {
+  getDOFManager (const std::string& fieldName, const std::string& part_name) const {
     return m_dof_managers.at(fieldName).at(part_name);
   }
 
   Teuchos::RCP<const DOFManager>
-  getNodeNewDOFManager (const std::string& part_name) const {
+  getNodeDOFManager (const std::string& part_name) const {
     return m_node_dof_managers.at(part_name);
   }
 
   Teuchos::RCP<const DOFManager>
-  getNewDOFManager () const
+  getDOFManager () const
   {
-    return getNewDOFManager (solution_dof_name(), "");
+    return getDOFManager (solution_dof_name(), "");
   }
 
   Teuchos::RCP<const DOFManager>
-  getNodeNewDOFManager () const
+  getNodeDOFManager () const
   {
-    return getNodeNewDOFManager("");
+    return getNodeDOFManager("");
   }
 
   // Check if a dof manager for a particular field on a particular part exists
@@ -86,52 +86,52 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace>
   getNodeVectorSpace() const
   {
-    return getNodeNewDOFManager()->vs();
+    return getNodeDOFManager()->vs();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapNodeVectorSpace() const
   {
-    return getNodeNewDOFManager()->ov_vs();
+    return getNodeDOFManager()->ov_vs();
   }
 
   //! Get solution DOF vector space (owned and overlapped).
   Teuchos::RCP<const Thyra_VectorSpace>
   getVectorSpace() const
   {
-    return getNewDOFManager()->vs();
+    return getDOFManager()->vs();
   }
 
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapVectorSpace() const
   {
-    return getNewDOFManager()->ov_vs();
+    return getDOFManager()->ov_vs();
   }
 
   //! Get Field node vector space (owned and overlapped)
   Teuchos::RCP<const Thyra_VectorSpace>
   getNodeVectorSpace(const std::string& field_name) const
   {
-    auto part_name = getNewDOFManager(field_name)->part_name();
-    return getNodeNewDOFManager(part_name)->vs();
+    auto part_name = getDOFManager(field_name)->part_name();
+    return getNodeDOFManager(part_name)->vs();
   }
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapNodeVectorSpace(const std::string& field_name) const
   {
-    auto part_name = getNewDOFManager(field_name)->part_name();
-    return getNodeNewDOFManager(part_name)->ov_vs();
+    auto part_name = getDOFManager(field_name)->part_name();
+    return getNodeDOFManager(part_name)->ov_vs();
   }
 
   //! Get Field vector space (owned and overlapped)
   Teuchos::RCP<const Thyra_VectorSpace>
   getVectorSpace(const std::string& field_name) const
   {
-    return getNewDOFManager(field_name)->vs();
+    return getDOFManager(field_name)->vs();
   }
   Teuchos::RCP<const Thyra_VectorSpace>
   getOverlapVectorSpace(const std::string& field_name)
   {
-    return getNewDOFManager(field_name)->ov_vs();
+    return getDOFManager(field_name)->ov_vs();
   }
 
   //! Create a Jacobian operator
@@ -175,14 +175,14 @@ public:
   Teuchos::RCP<const GlobalLocalIndexer>
   getGlobalLocalIndexer(const std::string& field_name) const
   {
-    return getNewDOFManager(field_name)->indexer();
+    return getDOFManager(field_name)->indexer();
   }
 
   //! Get Dof Manager of field field_name
   Teuchos::RCP<const GlobalLocalIndexer>
   getOverlapGlobalLocalIndexer(const std::string& field_name) const
   {
-    return getNewDOFManager(field_name)->ov_indexer();
+    return getDOFManager(field_name)->ov_indexer();
   }
 
   //! Get GlobalLocalIndexer for solution field

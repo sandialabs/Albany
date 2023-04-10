@@ -66,8 +66,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
     auto disc = UnitTest::createTestDisc(comm,num_dims,num_elems_per_dim,neq,{param_name});
 
     // Get parameter/solution dof managers
-    auto p_dof_mgr = disc->getNodeNewDOFManager();
-    auto x_dof_mgr = disc->getNewDOFManager();
+    auto p_dof_mgr = disc->getNodeDOFManager();
+    auto x_dof_mgr = disc->getDOFManager();
     const int num_cells = x_dof_mgr->cell_indexer()->getNumLocalElements();
 
     // Create and init HessianVec related vectors

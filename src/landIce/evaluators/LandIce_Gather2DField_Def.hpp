@@ -91,9 +91,9 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const auto  x_data  = Albany::getLocalData(workset.x);
-  const auto& dof_mgr       = workset.disc->getNewDOFManager();
+  const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& node_dof_mgr  = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
   const auto top = layers_data->top_side_pos;
   const auto bot = layers_data->bot_side_pos;
 
@@ -165,9 +165,9 @@ evaluateFields (typename PHALTraits::EvalData workset)
       "  - num layers : " + std::to_string(layers_data->numLayers) + "\n");
 
   const auto  x_data        = Albany::getLocalData(workset.x);
-  const auto& dof_mgr       = workset.disc->getNewDOFManager();
+  const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& node_dof_mgr  = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
 
   const int   neq = dof_mgr->getNumFields();
 
@@ -279,9 +279,9 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const auto x_data = Albany::getLocalData(workset.x);
-  const auto& dof_mgr       = workset.disc->getNewDOFManager();
+  const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& node_dof_mgr  = workset.disc->getNodeNewDOFManager();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
 
   const int   neq = dof_mgr->getNumFields();
 

@@ -95,7 +95,7 @@ STKDiscretization::printConnectivity() const
     comm->barrier();
     if (rank == comm->getRank()) {
       const auto& elem_lids = m_workset_elements.host();
-      const auto& elem_gids = getNewDOFManager()->getAlbanyConnManager()->getElementsInBlock();
+      const auto& elem_gids = getDOFManager()->getAlbanyConnManager()->getElementsInBlock();
 
       std::ostringstream ss;
 
@@ -171,7 +171,7 @@ STKDiscretization::getCoordinates() const
   const auto& coordinates_field = *stkMeshStruct->getCoordinatesField();
   const int meshDim = stkMeshStruct->numDim;
 
-  const auto& node_dof_mgr = getNodeNewDOFManager();
+  const auto& node_dof_mgr = getNodeDOFManager();
   const auto& elem_lids = node_dof_mgr->elem_dof_lids().host();
   const int num_nodes = elem_lids.extent_int(1);
   const auto& elems = node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
@@ -543,7 +543,7 @@ STKDiscretization::setupMLCoords()
   //  - elem GIDs are the same in DOFManager and stk mesh
   //  - nodes ordering is the same in DOFManager and stk mesh
   // We'll loop over certain nodes more than once, but this is a setup method, so it's fine
-  const auto& node_dof_mgr = getNodeNewDOFManager();
+  const auto& node_dof_mgr = getNodeDOFManager();
   const auto& elems = node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
   const int   num_elems = elems.size();
   for (int ielem=0; ielem<num_elems; ++ielem) {
@@ -944,7 +944,7 @@ STKDiscretization::getSolutionMV(bool overlapped) const
 void
 STKDiscretization::getField(Thyra_Vector& result, const std::string& name) const
 {
-  auto dof_mgr = getNewDOFManager(name);
+  auto dof_mgr = getDOFManager(name);
   solutionFieldContainer->fillVector(result, name, dof_mgr, false);
 }
 
@@ -953,7 +953,7 @@ STKDiscretization::getSolutionField(Thyra_Vector& result, const bool overlapped)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
-  solutionFieldContainer->fillSolnVector(result, getNewDOFManager(), overlapped);
+  solutionFieldContainer->fillSolnVector(result, getDOFManager(), overlapped);
 }
 
 void
@@ -963,7 +963,7 @@ STKDiscretization::getSolutionMV(
 {
   TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
-  solutionFieldContainer->fillSolnMultiVector(result, getNewDOFManager(), overlapped);
+  solutionFieldContainer->fillSolnMultiVector(result, getDOFManager(), overlapped);
 }
 
 /*****************************************************************/
@@ -976,7 +976,7 @@ STKDiscretization::setField(
     const std::string&  name,
     bool                overlapped)
 {
-  const auto dof_mgr = getNewDOFManager(name);
+  const auto dof_mgr = getDOFManager(name);
   solutionFieldContainer->saveVector(result,name,dof_mgr,overlapped);
 }
 
@@ -986,7 +986,7 @@ STKDiscretization::setSolutionField(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool          overlapped)
 {
-  const auto& dof_mgr = getNewDOFManager();
+  const auto& dof_mgr = getDOFManager();
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
@@ -997,7 +997,7 @@ STKDiscretization::setSolutionField(
     const Thyra_Vector& soln_dot,
     const bool          overlapped)
 {
-  const auto& dof_mgr = getNewDOFManager();
+  const auto& dof_mgr = getDOFManager();
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
 }
 
@@ -1009,7 +1009,7 @@ STKDiscretization::setSolutionField(
     const Thyra_Vector& soln_dotdot,
     const bool          overlapped)
 {
-  const auto& dof_mgr = getNewDOFManager();
+  const auto& dof_mgr = getDOFManager();
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
 }
 
@@ -1019,7 +1019,7 @@ STKDiscretization::setSolutionFieldMV(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool               overlapped)
 {
-  const auto& dof_mgr = getNewDOFManager();
+  const auto& dof_mgr = getDOFManager();
   solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
@@ -1096,7 +1096,7 @@ STKDiscretization::computeGraphs()
   const int numVolumeEqns = volumeEqns.size();
 
   // The global solution dof manager
-  const auto sol_dof_mgr = getNewDOFManager();
+  const auto sol_dof_mgr = getDOFManager();
   const int num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
 
   // Handle the simple case, and return immediately
@@ -1829,7 +1829,7 @@ STKDiscretization::computeSideSets()
   if (!cell_layers_data.is_null()) {
     const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
     const int numLayers = cell_layers_data->numLayers;
-    const int numComps = getNewDOFManager()->getNumFields();
+    const int numComps = getDOFManager()->getNumFields();
 
     // Determine maximum number of side nodes
     for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
@@ -1875,7 +1875,7 @@ STKDiscretization::computeSideSets()
         "Extruded meshses only allowed if there is one element per layer (hexa or wedges).\n"
         "  - current topology name: " << ctd.name << "\n");
 
-    const auto& sol_dof_mgr = getNewDOFManager();
+    const auto& sol_dof_mgr = getDOFManager();
     const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
@@ -2065,7 +2065,7 @@ STKDiscretization::computeNodeSets()
 {
   auto coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  const auto& sol_dof_mgr = getNewDOFManager();
+  const auto& sol_dof_mgr = getDOFManager();
   const auto& cell_indexer = sol_dof_mgr->cell_indexer();
 
   std::vector<std::vector<int>> offsets (sol_dof_mgr->getNumFields());
@@ -2094,7 +2094,7 @@ STKDiscretization::computeNodeSets()
     bool done = false;
     while (not done) {
       done = true;
-      auto dof_mgr = getNodeNewDOFManager();
+      auto dof_mgr = getNodeDOFManager();
       for (auto it=nodes.begin(); it!=nodes.end(); ++it) {
         auto gid = stk_gid(*it);
         if (not dof_mgr->indexer()->isLocallyOwnedElement(gid)) {
@@ -2201,20 +2201,20 @@ STKDiscretization::buildSideSetProjectors()
   Teuchos::Array<ST> vals(1);
   vals[0] = 1.0;
 
-  const auto dofMgr = getNewDOFManager();
+  const auto dofMgr = getDOFManager();
   const int sideDim = getNumDim()-1;
 
   const auto SIDE_RANK = stkMeshStruct->metaData->side_rank();
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
-  const auto cell_indexer = getNewDOFManager()->cell_indexer();
+  const auto cell_indexer = getDOFManager()->cell_indexer();
   for (auto it : sideSetDiscretizationsSTK) {
     // Extract the discretization
     const std::string&           sideSetName = it.first;
     const STKDiscretization&     ss_disc     = *it.second;
 
     // A dof manager defined exclusively on the side
-    const auto ss_dofMgr = ss_disc.getNewDOFManager();
+    const auto ss_dofMgr = ss_disc.getDOFManager();
     const auto ss_ov_vs  = ss_dofMgr->ov_vs();
     const auto ss_vs     = ss_dofMgr->vs();
 

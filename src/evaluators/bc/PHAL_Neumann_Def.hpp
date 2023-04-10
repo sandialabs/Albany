@@ -772,7 +772,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   constexpr auto ALL = Kokkos::ALL();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto dof_mgr   = workset.disc->getNewDOFManager();
+  const auto dof_mgr   = workset.disc->getDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   // Get offsets of the residual(s) dofs inside each element
@@ -866,7 +866,7 @@ evaluateFields(typename Traits::EvalData workset)
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   const auto ALL = Kokkos::ALL();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   // Get offsets of the residual(s) dofs inside each element
@@ -943,7 +943,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   const auto ALL = Kokkos::ALL();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   // Get offsets of the residual(s) dofs inside each element
@@ -1056,7 +1056,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else {
     const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
-    const auto dof_mgr = workset.disc->getNewDOFManager();
+    const auto dof_mgr = workset.disc->getDOFManager();
     const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
     const auto& offsets = this->fields_offsets;

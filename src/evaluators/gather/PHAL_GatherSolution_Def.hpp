@@ -257,7 +257,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
-  const auto dof_mgr  = workset.disc->getNewDOFManager();
+  const auto dof_mgr  = workset.disc->getDOFManager();
 
   // Make sure we have the fields offsets
   this->gather_fields_offsets(dof_mgr);
@@ -377,7 +377,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
-  const auto dof_mgr  = workset.disc->getNewDOFManager();
+  const auto dof_mgr  = workset.disc->getDOFManager();
 
   // Make sure we have the fields offsets
   this->gather_fields_offsets(dof_mgr);
@@ -532,7 +532,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto gather_Vxdotdot = !Vxdotdot.is_null() && workset.n_coeff!=0;
 
   // Make sure we have the fields offsets
-  const auto dof_mgr  = workset.disc->getNewDOFManager();
+  const auto dof_mgr  = workset.disc->getDOFManager();
   this->gather_fields_offsets(dof_mgr);
 
   const auto ws = workset.wsIndex;
@@ -635,7 +635,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
 
   // Make sure we have the fields offsets
-  const auto dof_mgr  = workset.disc->getNewDOFManager();
+  const auto dof_mgr  = workset.disc->getDOFManager();
   this->gather_fields_offsets(dof_mgr);
 
   const auto ws = workset.wsIndex;
@@ -747,7 +747,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // Make sure we have the fields offsets
-  const auto dof_mgr  = workset.disc->getNewDOFManager();
+  const auto dof_mgr  = workset.disc->getDOFManager();
   this->gather_fields_offsets(dof_mgr);
 
   const auto ws = workset.wsIndex;

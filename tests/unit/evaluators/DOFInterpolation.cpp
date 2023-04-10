@@ -41,7 +41,7 @@ TEUCHOS_UNIT_TEST(DOFInterpolation, Scalar)
   auto disc = UnitTest::createTestDisc(comm,num_dims,num_elems_per_dim,neq);
 
   // Get dof manager
-  auto x_dof_mgr = disc->getNewDOFManager();
+  auto x_dof_mgr = disc->getDOFManager();
   const int num_cells = x_dof_mgr->cell_indexer()->getNumLocalElements();
 
   // Create layouts

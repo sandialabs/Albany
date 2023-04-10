@@ -65,8 +65,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   auto disc = UnitTest::createTestDisc(comm,num_dims,num_elems_per_dim,neq,{param_name});
 
   // Get parameter/solution dof managers
-  auto p_dof_mgr = disc->getNewDOFManager(param_name);
-  auto x_dof_mgr = disc->getNewDOFManager();
+  auto p_dof_mgr = disc->getDOFManager(param_name);
+  auto x_dof_mgr = disc->getDOFManager();
   const int num_cells = x_dof_mgr->cell_indexer()->getNumLocalElements();
 
   // Create/init HessianVec related vectors
@@ -419,8 +419,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   auto disc = UnitTest::createTestDisc(comm,num_dims,num_elems_per_dim,neq,{param_name});
 
   // Get parameter/solution dof managers
-  auto p_dof_mgr = disc->getNewDOFManager(param_name);
-  auto x_dof_mgr = disc->getNewDOFManager();
+  auto p_dof_mgr = disc->getDOFManager(param_name);
+  auto x_dof_mgr = disc->getDOFManager();
   const int num_cells = x_dof_mgr->cell_indexer()->getNumLocalElements();
 
   // Create/init HessianVec related vectors

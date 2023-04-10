@@ -57,7 +57,7 @@ evaluateFields (typename Traits::EvalData workset)
   }
 
   const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto node_dof_mgr = workset.disc->getNodeDOFManager();
 
   const auto& sideSet = workset.sideSets->at(sideSetName);
   const int numSides = sideSet.size();

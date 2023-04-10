@@ -45,8 +45,8 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
   Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
 
-  const auto& p_dof_mgr = dirichlet_workset.disc->getNewDOFManager(this->field_name);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& p_dof_mgr = dirichlet_workset.disc->getDOFManager(this->field_name);
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
 
   //MP: If the parameter is scalar, then the parameter offset is seto to zero. Otherwise the parameter offset is the same of the solution's one.
   const bool isFieldScalar = p_dof_mgr->getNumFields()==1;
@@ -93,7 +93,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
 
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -140,7 +140,7 @@ set_row_and_col_is_dbc(typename Traits::EvalData dirichlet_workset)
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
 
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -274,7 +274,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset) {
   const RealType j_coeff = dirichlet_workset.j_coeff;
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -329,7 +329,7 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
     int num_cols = Vp_bc->domain()->dim();
 
     const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-    const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+    const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
     const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
 
@@ -364,7 +364,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     int num_cols = fpV->domain()->dim();
 
     const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
-    const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
     const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
 
@@ -406,7 +406,7 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
 
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -437,7 +437,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     hess_vec_prod_f_xp_data = Albany::getNonconstLocalData(dirichlet_workset.hessianWorkset.overlapped_hess_vec_prod_f_xp);
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
 

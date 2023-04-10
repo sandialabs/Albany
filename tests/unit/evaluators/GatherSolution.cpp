@@ -53,7 +53,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   auto disc = UnitTest::createTestDisc(comm,num_dims,num_elems_per_dim,neq);
 
   // Create and fill solution vector
-  auto x_dof_mgr = disc->getNewDOFManager();
+  auto x_dof_mgr = disc->getDOFManager();
   auto overlapped_x_space = x_dof_mgr->ov_indexer()->getVectorSpace();
   const auto overlapped_x = Thyra::createMember(overlapped_x_space);
   auto x_data = Albany::getNonconstLocalData(overlapped_x);
@@ -153,7 +153,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   auto disc = UnitTest::createTestDisc(comm,num_dims,num_elems_per_dim,neq,{param_name});
 
   // Create and fill solution vector
-  auto x_dof_mgr = disc->getNewDOFManager();
+  auto x_dof_mgr = disc->getDOFManager();
   const auto u2_offsets = x_dof_mgr->getGIDFieldOffsets(1);
 
   auto overlapped_x_space = x_dof_mgr->ov_indexer()->getVectorSpace();
@@ -169,7 +169,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   const int num_cells = x_dof_mgr->cell_indexer()->getNumLocalElements();
 
   // Create and fill HessianVec related vectors
-  auto p_dof_mgr = disc->getNodeNewDOFManager();
+  auto p_dof_mgr = disc->getNodeDOFManager();
   auto overlapped_p_space = p_dof_mgr->ov_indexer()->getVectorSpace();
 
   const auto direction_x  = Thyra::createMember(overlapped_x_space);

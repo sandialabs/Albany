@@ -47,7 +47,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
                         Teuchos::ParameterList& icParams)
 {
   auto soln_data = Albany::getNonconstLocalData(soln);
-  const auto& dof_mgr = disc->getNewDOFManager();
+  const auto& dof_mgr = disc->getDOFManager();
   const auto& elem_lids = disc->getWsElementLIDs().host();
   const auto& ws_sizes = disc->getWorksetsSizes();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();

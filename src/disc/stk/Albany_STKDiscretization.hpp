@@ -229,7 +229,7 @@ public:
   int
   getFADLength() const
   {
-    return getNewDOFManager()->elem_dof_lids().host().extent_int(1);
+    return getDOFManager()->elem_dof_lids().host().extent_int(1);
   }
 
   const stk::mesh::MetaData&

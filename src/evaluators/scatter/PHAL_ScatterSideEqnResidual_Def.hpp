@@ -134,7 +134,7 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
   //       sideset (in the owned+shared map), then it also has a side containing
   //       that node on that sideset.
   const int num_ws = disc.getNumWorksets();
-  const auto node_dof_mgr = disc.getNodeNewDOFManager();
+  const auto node_dof_mgr = disc.getNodeDOFManager();
   for (int ws=0; ws<num_ws; ++ws) {
     const auto& ssMap = disc.getSideSets(ws);
     if (ssMap.find(this->sideSetName)==ssMap.end()) {
@@ -189,8 +189,8 @@ doPostEvaluate(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> x_data = Albany::getLocalData(x);
 
   constexpr auto ALL = Kokkos::ALL();
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto node_dof_mgr = workset.disc->getNodeDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
@@ -222,7 +222,7 @@ doEvaluateFieldsResidual(typename Traits::EvalData workset,
   const auto f_data = Albany::getNonconstLocalData(f);
 
   constexpr auto ALL = Kokkos::ALL();
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
@@ -284,8 +284,8 @@ void ScatterSideEqnResidual<AlbanyTraits::Jacobian, Traits>::
 doPostEvaluate(typename Traits::EvalData workset)
 {
   constexpr auto ALL = Kokkos::ALL();
-  const auto dof_mgr = workset.disc->getNewDOFManager();
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
+  const auto node_dof_mgr = workset.disc->getNodeDOFManager();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
@@ -325,8 +325,8 @@ doEvaluateFields(typename Traits::EvalData workset,
   const auto Jac = workset.Jac;
 
   constexpr auto ALL = Kokkos::ALL();
-  const auto dof_mgr = workset.disc->getNewDOFManager();
-  const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
+  const auto node_dof_mgr = workset.disc->getNodeDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
@@ -417,7 +417,7 @@ doEvaluateFields(typename Traits::EvalData workset,
     fp_data = Albany::getNonconstLocalData(fp);
 
   const auto elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto dof_mgr       = workset.disc->getNewDOFManager();
+  const auto dof_mgr       = workset.disc->getDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   constexpr auto ALL = Kokkos::ALL();
@@ -491,8 +491,8 @@ doEvaluateFields(typename Traits::EvalData workset,
     p_elem_dof_lids = dist_param->get_dof_mgr()->elem_dof_lids().host();
   }
   const auto elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto dof_mgr       = workset.disc->getNewDOFManager();
-  const auto node_dof_mgr  = workset.disc->getNodeNewDOFManager();
+  const auto dof_mgr       = workset.disc->getDOFManager();
+  const auto node_dof_mgr  = workset.disc->getNodeDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   constexpr auto ALL = Kokkos::ALL();

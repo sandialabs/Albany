@@ -68,7 +68,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
     const auto  disc = UnitTest::createTestDisc (comm, num_dims, E, neq);
 
     // Get stuff from disc
-    const auto& sol_dof_mgr   = disc->getNewDOFManager();
+    const auto& sol_dof_mgr   = disc->getDOFManager();
     const auto& cell_indexer  = sol_dof_mgr->cell_indexer();
 
     const auto& nodeSets     = disc->getNodeSets();
@@ -169,7 +169,7 @@ TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
     // Create disc
     const auto disc = UnitTest::createTestDisc (comm, num_dims, E, neq);
     const auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc,true);
-    const auto sol_dof_mgr = disc->getNewDOFManager();
+    const auto sol_dof_mgr = disc->getDOFManager();
     const auto ov_sol_indexer = sol_dof_mgr->ov_indexer();
     const auto cell_indexer = sol_dof_mgr->cell_indexer();
 

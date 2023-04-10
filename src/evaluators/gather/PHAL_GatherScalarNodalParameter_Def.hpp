@@ -195,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto Vp_data = !Vp.is_null() ? Albany::getLocalData(Vp) : Teuchos::null;
 
   // Parameter/solution/nodes dof numbering info
-  const auto dof_mgr      = workset.disc->getNewDOFManager();
+  const auto dof_mgr      = workset.disc->getDOFManager();
   const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
 
   const auto ws = workset.wsIndex;
@@ -304,7 +304,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto Vp_data = !Vp.is_null() ? Albany::getLocalData(Vp) : Teuchos::null;
 
   // Parameter/solution dof numbering info
-  const auto& sol_dof_mgr = workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr = workset.disc->getDOFManager();
   const auto& p_dof_mgr       = p->get_dof_mgr();
   const auto& elem_dof_lids   = sol_dof_mgr->elem_dof_lids().host();
   const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();

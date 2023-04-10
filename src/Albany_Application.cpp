@@ -691,7 +691,7 @@ Application::finalSetUp(
 
     // Get parameter vector spaces and build parameter vector
     // Create distributed parameter and set workset_elem_dofs
-    auto p_dof_mgr = disc->getNewDOFManager(param_name,sis->meshPart);
+    auto p_dof_mgr = disc->getDOFManager(param_name,sis->meshPart);
     auto parameter = Teuchos::rcp(new DistributedParameter(param_name, p_dof_mgr));
 
     // Get the vector and lower/upper bounds, and fill them with available
@@ -3350,7 +3350,7 @@ Application::setScaleBCDofs(
     const auto& ns_offsets = offsets_[ns];
     // std::cout << "IKTIKT key = " << key << std::endl;
     const auto& ns_node_elem_pos = workset.nodeSets->at(key);
-    const auto& sol_dof_mgr   = disc->getNewDOFManager();
+    const auto& sol_dof_mgr   = disc->getDOFManager();
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
     std::vector<std::vector<int>> sol_offsets(ns_offsets.size());
@@ -3503,7 +3503,7 @@ Application::setupTangentWorksetInfo(
 {
   setupBasicWorksetInfo(workset, current_time, x, xdot, xdotdot, p);
 
-  auto dof_mgr = disc->getNewDOFManager();
+  auto dof_mgr = disc->getDOFManager();
 
   // Scatter Vx dot the overlapped distribution
   RCP<Thyra_MultiVector> overlapped_Vx;

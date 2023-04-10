@@ -47,7 +47,7 @@ preEvaluate(typename Traits::EvalData dbc_workset)
   auto x_view   = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
   const auto& ns_node_elem_pos = dbc_workset.nodeSets->at(this->nodeSetID);
   auto const& ns_coords = dbc_workset.nodeSetCoords->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dbc_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dbc_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (unsigned inode=0; inode<ns_coords.size(); ++inode) {
@@ -75,7 +75,7 @@ evaluateFields(typename Traits::EvalData dbc_workset)
   auto f_view   = Albany::getNonconstLocalData(f);
 
   const auto& ns_node_elem_pos = dbc_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dbc_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dbc_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -118,7 +118,7 @@ set_row_and_col_is_dbc(typename Traits::EvalData dbc_workset)
   auto        row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
 
   const auto& ns_node_elem_pos = dbc_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dbc_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dbc_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {

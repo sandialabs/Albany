@@ -67,7 +67,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
   const auto& p_offsets = p_dof_mgr->getGIDFieldOffsets(fieldOffset);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -95,8 +95,8 @@ template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  const auto& p_dof_mgr = dirichletWorkset.disc->getNewDOFManager(this->field_name);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& p_dof_mgr = dirichletWorkset.disc->getDOFManager(this->field_name);
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
 
   //MP: If the parameter is scalar, then the parameter offset is seto to zero. Otherwise the parameter offset is the same of the solution's one.
   const bool isFieldScalar = p_dof_mgr->getNumFields()==1;
@@ -159,8 +159,8 @@ template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  const auto& p_dof_mgr = dirichletWorkset.disc->getNewDOFManager(this->field_name);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& p_dof_mgr = dirichletWorkset.disc->getDOFManager(this->field_name);
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
 
   const bool isFieldScalar = p_dof_mgr->getNumFields()==1;
   const int fieldOffset = isFieldScalar ? 0 : this->offset;
@@ -251,7 +251,7 @@ preEvaluate(typename Traits::EvalData dirichletWorkset)
 
     bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
     int num_cols = dirichletWorkset.Vp->domain()->dim();
-    const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
     const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
     const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
@@ -277,8 +277,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
 
-  const auto& p_dof_mgr = dirichletWorkset.disc->getNewDOFManager(this->field_name);
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& p_dof_mgr = dirichletWorkset.disc->getDOFManager(this->field_name);
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
 
   const bool isFieldScalar = p_dof_mgr->getNumFields()==1;
   const int fieldOffset = isFieldScalar ? 0 : this->offset;
@@ -363,7 +363,7 @@ preEvaluate(typename Traits::EvalData dirichletWorkset)
 
   const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
 
-  const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {

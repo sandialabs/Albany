@@ -64,8 +64,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
   auto disc = UnitTest::createTestDisc(comm,num_dims,num_elems_per_dim,neq,{param_name});
 
   // Get parameter/solution dof managers
-  auto p_dof_mgr = disc->getNewDOFManager(param_name);
-  auto x_dof_mgr = disc->getNewDOFManager();
+  auto p_dof_mgr = disc->getDOFManager(param_name);
+  auto x_dof_mgr = disc->getDOFManager();
 
   // Create HessianVec related vectors
   auto overlapped_p_space = p_dof_mgr->ov_indexer()->getVectorSpace();

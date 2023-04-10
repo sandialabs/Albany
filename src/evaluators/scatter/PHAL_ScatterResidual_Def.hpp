@@ -164,7 +164,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   constexpr auto ALL = Kokkos::ALL();
   const int ws = workset.wsIndex;
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
   this->gather_fields_offsets (dof_mgr);
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -252,9 +252,9 @@ template<typename Traits>
 void ScatterResidual<AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  this->gather_fields_offsets (workset.disc->getDOFManager());
   if (m_volume_eqns.size()>0 && m_volume_eqns_offsets.size()==0) {
-    const auto& dof_mgr = workset.disc->getNewDOFManager();
+    const auto& dof_mgr = workset.disc->getDOFManager();
     const int neq_vol = m_volume_eqns.host().size();
     m_volume_eqns_offsets.resize("",numNodes*neq_vol);
     for (int ieq=0; ieq<neq_vol; ++ieq) {
@@ -297,7 +297,7 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
 
   const int ws  = workset.wsIndex;
 
-  const auto dof_mgr       = workset.disc->getNewDOFManager();
+  const auto dof_mgr       = workset.disc->getDOFManager();
   const auto ws_elem_lids  = workset.disc->getWsElementLIDs().dev();
   const auto elem_lids     = Kokkos::subview(ws_elem_lids,ws,ALL);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
@@ -361,7 +361,7 @@ evaluateFieldsHost(typename Traits::EvalData workset)
 
   const int ws  = workset.wsIndex;
 
-  const auto dof_mgr       = workset.disc->getNewDOFManager();
+  const auto dof_mgr       = workset.disc->getDOFManager();
   const auto ws_elem_lids  = workset.disc->getWsElementLIDs().dev();
   const auto elem_lids     = Kokkos::subview(ws_elem_lids,ws,ALL);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
@@ -437,7 +437,7 @@ template<typename Traits>
 void ScatterResidual<AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  this->gather_fields_offsets (workset.disc->getDOFManager());
 
   const auto f  = workset.f;
   const auto JV = workset.JV;
@@ -453,7 +453,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   constexpr auto ALL = Kokkos::ALL();
   const int ws = workset.wsIndex;
-  const auto dof_mgr = workset.disc->getNewDOFManager();
+  const auto dof_mgr = workset.disc->getDOFManager();
 
   const auto elem_lids     = workset.disc->getElementLIDs_host(ws);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
@@ -508,7 +508,7 @@ evaluateFields(typename Traits::EvalData workset)
   // is used only in Dirichlet conditions.
   if(workset.local_Vp[0].size() == 0) { return; }
 
-  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  this->gather_fields_offsets (workset.disc->getDOFManager());
 
   const auto fpV = workset.fpV;
   const auto fpV_data = Albany::getNonconstLocalData(fpV);
@@ -518,7 +518,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int num_cols = workset.Vp->domain()->dim();
   const int ws = workset.wsIndex;
 
-  const auto& dof_mgr   = workset.disc->getNewDOFManager();
+  const auto& dof_mgr   = workset.disc->getDOFManager();
   const auto& elem_lids = workset.disc->getElementLIDs_host(ws);
   const auto& fields_offsets = m_fields_offsets.host();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
@@ -526,7 +526,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (trans) {
     const auto& pname        = workset.dist_param_deriv_name;
-    const auto& p_dof_mgr    = workset.disc->getNewDOFManager(pname);
+    const auto& p_dof_mgr    = workset.disc->getDOFManager(pname);
     const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
     const int num_deriv = numNodes;//local_Vp.size()/numFields;
@@ -601,7 +601,7 @@ evaluateFields(typename Traits::EvalData workset)
     return ScatterResidual<AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(workset);
   }
 
-  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  this->gather_fields_offsets (workset.disc->getDOFManager());
 
   const int fieldLevel = level_it->second;
   const int ws = workset.wsIndex;
@@ -612,7 +612,7 @@ evaluateFields(typename Traits::EvalData workset)
   const bool trans    = workset.transpose_dist_param_deriv;
   const int  num_cols = workset.Vp->domain()->dim();
 
-  const auto dof_mgr   = workset.disc->getNewDOFManager();
+  const auto dof_mgr   = workset.disc->getDOFManager();
   const auto elem_lids = workset.disc->getElementLIDs_host(ws);
 
   const auto resid_offsets = m_fields_offsets.host();
@@ -625,7 +625,7 @@ evaluateFields(typename Traits::EvalData workset)
                           ? fieldLevel-1 : fieldLevel;
     const int field_pos = fieldLevel==fieldLayer ? bot : top;
 
-    const auto node_dof_mgr = workset.disc->getNodeNewDOFManager();
+    const auto node_dof_mgr = workset.disc->getNodeDOFManager();
     const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
     const auto p_dof_mgr = p->get_dof_mgr();
     const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
@@ -723,7 +723,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (!f_xx_is_active && !f_xp_is_active && !f_px_is_active && !f_pp_is_active)
     return;
 
-  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  this->gather_fields_offsets (workset.disc->getDOFManager());
 
   // First, the function checks whether the parameter associated to workset.dist_param_deriv_name
   // is a distributed parameter (l1_is_distributed==true) or a parameter vector
@@ -752,14 +752,14 @@ evaluateFields(typename Traits::EvalData workset)
   constexpr auto ALL = Kokkos::ALL();
   const int ws = workset.wsIndex;
 
-  const auto dof_mgr      = workset.disc->getNewDOFManager();
+  const auto dof_mgr      = workset.disc->getDOFManager();
 
   // If the parameter associated to workset.dist_param_deriv_name is a distributed parameter,
   // the function needs to access the associated dof manager to deduce the IDs of the entries
   // of the resulting vector.
   Albany::DualView<const int**>::host_t p_elem_dof_lids;
   if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
-    auto p_dof_mgr = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
+    auto p_dof_mgr = workset.disc->getDOFManager(workset.dist_param_deriv_name);
     p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
   }
 
@@ -863,7 +863,7 @@ template<typename Traits>
 void ScatterResidualWithExtrudedParams<AlbanyTraits::HessianVec, Traits>::
 evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset)
 {
-  this->gather_fields_offsets (workset.disc->getNewDOFManager());
+  this->gather_fields_offsets (workset.disc->getDOFManager());
 
   constexpr auto ALL = Kokkos::ALL();
   const int ws = workset.wsIndex;
@@ -898,8 +898,8 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   const auto fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
-  const auto dof_mgr      = workset.disc->getNewDOFManager();
-  const auto p_dof_mgr    = workset.disc->getNewDOFManager(workset.dist_param_deriv_name);
+  const auto dof_mgr      = workset.disc->getDOFManager();
+  const auto p_dof_mgr    = workset.disc->getDOFManager(workset.dist_param_deriv_name);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 

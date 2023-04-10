@@ -46,7 +46,7 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
       Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
   // Grab the vector of node GIDs for this Node Set ID
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -69,7 +69,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::ArrayRCP<ST>      f_view = Albany::getNonconstLocalData(f);
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -107,7 +107,7 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
       Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -140,7 +140,7 @@ set_row_and_col_is_dbc(typename Traits::EvalData dirichlet_workset)
   auto row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -232,7 +232,7 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
       Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -276,7 +276,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   const RealType j_coeff = dirichlet_workset.j_coeff;
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
   for (const auto& ep : ns_node_elem_pos) {
@@ -326,7 +326,7 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
     int num_cols = Vp_bc->domain()->dim();
 
     const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-    const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+    const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
     const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
 
@@ -353,7 +353,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     auto fpV_data = Albany::getNonconstLocalData(fpV);
     int  num_cols = fpV->domain()->dim();
     const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
-    const auto& sol_dof_mgr   = dirichletWorkset.disc->getNewDOFManager();
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
     const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
 
@@ -394,7 +394,7 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
   auto f_multiplier_data = Albany::getNonconstLocalData(dirichlet_workset.hessianWorkset.f_multiplier);
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
 
@@ -430,7 +430,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     hess_vec_prod_f_xp_data = Albany::getNonconstLocalData(dirichlet_workset.hessianWorkset.overlapped_hess_vec_prod_f_xp);
 
   const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getNewDOFManager();
+  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
 
