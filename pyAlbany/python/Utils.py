@@ -92,20 +92,24 @@ def loadMVector(filename, n_cols, map, distributedFile = True, useBinary = True,
     nproc = map.getComm().getSize()
     mvector = createMultiVector(map, n_cols)
     if nproc==1:
+        map0 = pa.getRankZeroMap(map)
+        mvector0 = createMultiVector(map0, n_cols)
         if useBinary:
             mVectorNP = np.load(filename+'.npy')
         else:
             mVectorNP = np.loadtxt(filename+'.txt')
 
-        mvector_view = mvector.getLocalView()
+        mvector0_view = mvector0.getLocalView()
         if(mVectorNP.ndim == 1 and n_cols == 1):
-            mvector_view[:,0] = mVectorNP
+            mvector0_view[:,0] = mVectorNP
         else: 
             for i in range(0, n_cols):
-                mvector_view[:,i] = mVectorNP[i,:]
-        mvector.setLocalView(mvector_view)
+                mvector0_view[:,i] = mVectorNP[i,:]
+        mvector0.setLocalView(mvector0_view)
+        mvector = pa.scatterMVector(mvector0, map) 
 
     elif distributedFile:
+        #TODO: check the logic
         if useBinary:
             mVectorNP = np.load(filename+'_'+str(rank)+'.npy')
         else:
