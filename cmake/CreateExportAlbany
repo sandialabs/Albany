@@ -54,57 +54,6 @@ def get_link_line_make(bin_dir):
     return items
 
 ###############################################################################
-def parse_link_line(items,install_lib_dir,bin_dir,make_dir):
-###############################################################################
-    libs = []
-    libs_dirs = [install_lib_dir]
-    for item in items:
-        if "," in item:
-            # This are link options, so process them one by one
-            tokens = item.split(',')
-            for i,t in enumerate(tokens):
-                if ':' in t:
-                  paths = t.split(':')
-                  # Loop over all paths, replace them with install dir
-                  for j,p in enumerate(paths):
-                    path = pathlib.Path(p).resolve()
-                    paths[j] = str(install_lib_dir)
-
-                  # Replace the rpath list with the unique list
-                  tokens[i] = ':'.join(list(set(paths)))
-                else:
-                  # Just a link flag, keep it
-                  tokens[i] = t
-
-            # Re-join proecessed tokens with commas
-            libs.append(",".join(tokens))
-        elif item.startswith("-l"):
-            # It's either a -lXYZ lib or a link flag. Keep it as is.
-            libs.append(item)
-        elif item.startswith("-") and not item.startswith("-L"):
-            # This is some funky link option (e.g., -mkl or -cxxlib with Intel).
-            # Simply add the item to the "libs" list
-            libs.append(item)
-        else:
-            # We want to get an abs path, with symlinks resolved *except* for symlinks
-            # in the file name, to avoid an error we're seeing where libdl.so points
-            # to the file libdl-2.28.so (an odd name: usually we see libdl.so.2.28)
-            lib_file_full = pathlib.Path(item).parent.resolve() / pathlib.Path(item).name
-            if not lib_file_full.exists():
-                print (f"could not locate lib: {lib_file_full}")
-                print (f"cwd: {os.getcwd()}")
-                raise ValueError
-            lib_file      = lib_file_full.name
-            lib_path      = lib_file_full.parent
-            # Remove all extensions (such as .so.5), and remove first 3 chars (lib)
-            lib_name = str(lib_file).split('.')[0][3:]
-            libs.append (f"-l{lib_name}")
-            if not lib_path in libs_dirs and not str(lib_path).startswith(str(bin_dir)):
-                libs_dirs.append(lib_path)
-
-    return libs_dirs, libs
-
-###############################################################################
 def run (bin_dir,install_lib_dir, cmake_generator):
 ###############################################################################
 
@@ -147,6 +96,7 @@ def run (bin_dir,install_lib_dir, cmake_generator):
             # Simply add the item to the "libs" list
             libs.append(item)
         elif item.startswith("-L"):
+            print (f"-L dir: {item}")
             # We want to get an abs path, with symlinks resolved (if any)
             lib_dir_full = pathlib.Path(item[2:]).resolve()
             if not lib_dir_full.exists() or not lib_dir_full.is_dir():
@@ -181,6 +131,7 @@ def run (bin_dir,install_lib_dir, cmake_generator):
     for lib in libs:
         link_line += f"{lib} "
 
+    print (f"writing to {outfile}")
     with outfile.open('w') as fd:
         fd.write(f'ALBANY_LINK_LIBS="{link_line.strip()}"')
 
