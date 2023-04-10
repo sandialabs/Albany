@@ -13,6 +13,8 @@
 #include "Teuchos_UnitTestHelpers.hpp"
 #include "Teuchos_LocalTestingHelpers.hpp"
 
+#include "Shards_CellTopology.hpp"
+
 #include <Omega_h_build.hpp>
 
 #define REQUIRE(cond) \
@@ -21,7 +23,7 @@
 
 auto createOmegahConnManager(MPI_Comm mpiComm) {
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 1, 2, 2, 2, false);
+  auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
   return Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
 }
 
@@ -77,5 +79,21 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockId)
   const auto nelms = conn_mgr->getOwnedElementCount();
   REQUIRE(blockIds[0] == conn_mgr->getBlockId(nelms-1));
   out << "Testing OmegahConnManager::getBlockId()\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockTopologies)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+
+  auto conn_mgr = createOmegahConnManager(mpiComm);
+  std::vector<shards::CellTopology> topoTypes;
+  conn_mgr->getElementBlockTopologies(topoTypes);
+  shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+  REQUIRE(triTopo == topoTypes[0]);
+  out << "Testing OmegahConnManager::getElementBlockTopologies()\n";
   success = true;
 }
