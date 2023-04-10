@@ -380,7 +380,7 @@ albanyBuildGlobalUnknowns ()
     const auto ownership  = m_conn_mgr->getOwnership(ielem);
     elementGIDs_[ielem].resize(ndofs);
     for (int idof=0; idof<ndofs; ++idof) {
-      if(ownership[idof])
+      if(ownership[idof]==Owned)
         add_if_not_there(owned_,ownedSet,conn[idof]);
       else
         add_if_not_there(ghosted_,ghostedSet,conn[idof]);

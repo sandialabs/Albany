@@ -211,7 +211,7 @@ addSubcellConnectivities (const stk::mesh::Entity element,
     stk::mesh::Entity subcell = relations[sc];
     const auto subcell_id = m_bulkData->identifier(subcell);
 
-    bool owned = m_bulkData->bucket(subcell).owned();
+    auto owned = m_bulkData->bucket(subcell).owned() ? Owned : Ghosted;
     // add connectivities: adjust for STK indexing craziness
     for (LO i=0; i<idCnt; ++i) {
       m_connectivity.push_back(offset+idCnt*(subcell_id-1)+i);
@@ -269,7 +269,7 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
     if(cellIdCnt>0) {
        // add connectivities: adjust for STK indexing craziness
        const auto cell_id = m_bulkData->identifier(element);
-       bool owned = m_bulkData->bucket(element).owned();
+       auto owned = m_bulkData->bucket(element).owned() ? Owned : Ghosted;
        for(LO i=0; i<cellIdCnt; ++i) {
           m_connectivity.push_back(cellOffset+cellIdCnt*(cell_id-1)+i);
           m_ownership.push_back(owned);

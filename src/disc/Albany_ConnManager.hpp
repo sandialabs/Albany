@@ -16,6 +16,11 @@
 
 namespace Albany {
 
+enum Ownership {
+  Owned = 1,
+  Ghosted = 2
+};
+
 // The only purpose of this class is to expose one bit of information
 // that the panzer base class doesn't, which is a list of global ids
 // of the elements in a block.
@@ -54,7 +59,7 @@ public:
     * \returns Pointer to beginning of bools, with total size
     *          equal to <code>getConnectivitySize(localElmtId)</code>
     */
-  virtual const std::vector<bool>& getOwnership(LO localElmtId) const = 0;
+  virtual const Ownership* getOwnership(LO localElmtId) const = 0;
 
   const std::string& elem_block_name () const {
     TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_names.size()!=1, std::runtime_error,
