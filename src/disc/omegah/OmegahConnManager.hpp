@@ -36,7 +36,7 @@ public:
   // Do not hide other methods
   using ConnManager::getElementsInBlock;
   std::vector<GO>
-  getElementsInBlock (const std::string& blockId) const override; //FIXME
+  getElementsInBlock (const std::string& blockId) const override;
 
   /** Tell the connection manager to build the connectivity assuming
     * a particular field pattern.
@@ -49,7 +49,7 @@ public:
     * about the required connectivity (e.g. <code>buildConnectivity</code>
     * has never been called).
     */
-  Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override; //FIXME
+  Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override;
 
   /** Get ID connectivity for a particular element
     *
@@ -98,7 +98,16 @@ public:
 
   /** What are the cellTopologies linked to element blocks in this connection manager?
    */
-  void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override { //FIXME
+  void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_names.size() != 1, std::logic_error,
+        "Error! The OmegahConnManager currently only supports a single block on each process\n");
+    auto numTri = mesh.nents(Topo_type::triangle);
+    auto numElms = mesh.nents(mesh.dim());
+    TEUCHOS_TEST_FOR_EXCEPTION (mesh.nents(Topo_type::triangle) == mesh.nents(mesh.dim()),
+        std::logic_error,
+        "Error! The OmegahConnManager currently only supports straight sided triangles\n");
+    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+    elementBlockTopologies.push_back(triTopo);
   }
 
   /** Get the local element IDs for a paricular element
