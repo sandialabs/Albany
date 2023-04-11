@@ -24,12 +24,17 @@ private:
   Omega_h::Mesh mesh;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
-  std::vector<GO> m_connectivity;
+  Omega_h::HostRead<Omega_h::GO> m_connectivity;
   void initLocalElmIds() {
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
-  void buildOffsetsAndIdCounts(const panzer::FieldPattern & fp, LO entIdCnt[4], GO entOffset[4]) const;
+  void getDofsPerEnt(const panzer::FieldPattern & fp, LO entIdCnt[4]) const;
+  void getConnectivityOffsets(const Omega_h::Adj elmToDim[3], const LO dofsPerEnt[4],
+                              GO connectivityOffsets[4], GO connectivityGlobalOffsets[4]);
+  void appendConnectivity(const Omega_h::Adj& elmToDim, LO dofsPerEnt,
+                          GO startIdx, GO globalStartIdx,
+                          LO dim, Omega_h::Write<Omega_h::GO>& elmDownAdj_d) const;
 public:
   OmegahConnManager(Omega_h::Mesh in_mesh);
 
@@ -46,6 +51,8 @@ public:
     * \param[in] fp Field pattern to build connectivity for
     */
   void buildConnectivity(const panzer::FieldPattern & fp) override;
+
+  void writeConnectivity();
 
   /** Build a clone of this connection manager, without any assumptions
     * about the required connectivity (e.g. <code>buildConnectivity</code>
