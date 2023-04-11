@@ -61,8 +61,6 @@ public:
   //! If restarting, convenience function to return restart data time
   double restartDataTime() const {return restartTime;}
 
-  DiscType getInterleavedOrdering() const {return this->interleavedOrdering;}
-
   enum elemShapeType {Wedge};
 
 private:

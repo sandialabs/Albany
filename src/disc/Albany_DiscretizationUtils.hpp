@@ -7,36 +7,60 @@
 #ifndef ALBANY_DISCRETIZATION_UTILS_HPP
 #define ALBANY_DISCRETIZATION_UTILS_HPP
 
+#include "Albany_KokkosTypes.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+
+#include "Intrepid2_Basis.hpp"
+#include "Teuchos_ArrayRCP.hpp"
+
 #include <map>
 #include <string>
 #include <vector>
 
-#include "Albany_KokkosTypes.hpp"
-#include "Albany_ScalarOrdinalTypes.hpp"
-#include "Teuchos_ArrayRCP.hpp"
-
 namespace Albany {
 
-enum class DiscType
-{
-  BlockedMono = 0,
-  Interleaved = 1,
-  BlockedDisc = 2
+enum class FE_Type {
+  HVOL,
+  HDIV,
+  HCURL,
+  HGRAD
 };
 
-using NodeSetList      = std::map<std::string, std::vector<std::vector<int>>>;
+inline std::string e2str (const FE_Type fe_type)
+{
+  std::string s;
+  switch (fe_type) {
+    case FE_Type::HVOL:  s = "HVOL";  break;
+    case FE_Type::HDIV:  s = "HDIV";  break;
+    case FE_Type::HCURL: s = "HCURL"; break;
+    case FE_Type::HGRAD: s = "HGRAD"; break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+          "Error! Unsupported FE_Type.\n");
+  }
+  return s;
+}
+
+Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+getIntrepid2Basis (const CellTopologyData& cell_topo,
+                   const FE_Type fe_type, const int order);
+
+// list[ns_name][inode] = <ielem,elem_pos> (we pick _any_ elem containing that node)
+using NodeSetList      = std::map<std::string, std::vector<std::pair<int,int>>>;
+// list[ns_name][inode] = node_gid
 using NodeSetGIDsList  = std::map<std::string, std::vector<GO>>;
+// list[ns_name][inode] = ptr_to_coords
 using NodeSetCoordList = std::map<std::string, std::vector<double*>>;
 
 // Legacy SideStruct and SideSetList for compatibility until all problems are converted to new layouts
 class SideStruct
 {
  public:
-  GO       side_GID;       // global id of side in the mesh
-  GO       elem_GID;       // global id of element containing side
-  int      elem_LID;       // local id of element containing side
-  int      elem_ebIndex;   // index of element block that contains element
-  unsigned side_local_id;  // local id of side relative to owning element
+  GO    side_GID;       // global id of side in the mesh
+  GO    elem_GID;       // global id of element containing side
+  int   ws_elem_idx;    // index of element containing side within this workset
+  int   elem_ebIndex;   // index of element block that contains element
+  int   side_pos;       // position of side relative to owning element
 };
 using SideSetList = std::map<std::string, std::vector<SideStruct>>;
 
@@ -53,29 +77,37 @@ class GlobalSideSetInfo
 public:
   int num_local_worksets;
   int max_sideset_length;
-  Kokkos::View<int*, Kokkos::LayoutRight> sideset_sizes;       // (num_local_worksets)
-  Kokkos::View<GO**, Kokkos::LayoutRight>       side_GID;      // (num_local_worksets, max_sideset_length)
-  Kokkos::View<GO**, Kokkos::LayoutRight>       elem_GID;      // (num_local_worksets, max_sideset_length)
-  Kokkos::View<int**, Kokkos::LayoutRight>      elem_LID;      // (num_local_worksets, max_sideset_length)
-  Kokkos::View<int**, Kokkos::LayoutRight>      elem_ebIndex;  // (num_local_worksets, max_sideset_length)
-  Kokkos::View<unsigned**, Kokkos::LayoutRight> side_local_id; // (num_local_worksets, max_sideset_length)
+
+  // (num_local_worksets)
+  Kokkos::View<int*, Kokkos::LayoutRight> sideset_sizes;
+
+  // (num_local_worksets, max_sideset_length)
+  Kokkos::View<GO**, Kokkos::LayoutRight>   side_GID;
+  Kokkos::View<GO**, Kokkos::LayoutRight>   elem_GID;
+  Kokkos::View<int**, Kokkos::LayoutRight>  ws_elem_idx;
+  Kokkos::View<int**, Kokkos::LayoutRight>  elem_ebIndex;
+  Kokkos::View<int**, Kokkos::LayoutRight>  side_pos;
 
   int max_sides;
-  Kokkos::View<int**, Kokkos::LayoutRight>      numCellsOnSide;   // (num_local_worksets, max_sides)
-  Kokkos::View<int***, Kokkos::LayoutRight>     cellsOnSide;      // (num_local_worksets, max_sides, max_sideset_length)
-  Kokkos::View<int***, Kokkos::LayoutRight>     sideSetIdxOnSide; // (num_local_worksets, max_sides, max_sideset_length)
+  // (num_local_worksets, max_sides)
+  Kokkos::View<int**, Kokkos::LayoutRight>  numCellsOnSide;
+
+  // (num_local_worksets, max_sides, max_sideset_length)
+  Kokkos::View<int***, Kokkos::LayoutRight>   cellsOnSide;
+  Kokkos::View<int***, Kokkos::LayoutRight>   sideSetIdxOnSide;
 };
+
 using GlobalSideSetList = std::map<std::string, GlobalSideSetInfo>;
 
 class LocalSideSetInfo
 {
 public:
   int size;
-  Kokkos::View<GO*, Kokkos::LayoutRight>       side_GID;      // (size)
-  Kokkos::View<GO*, Kokkos::LayoutRight>       elem_GID;      // (size)
-  Kokkos::View<int*, Kokkos::LayoutRight>      elem_LID;      // (size)
-  Kokkos::View<int*, Kokkos::LayoutRight>      elem_ebIndex;  // (size)
-  Kokkos::View<unsigned*, Kokkos::LayoutRight> side_local_id; // (size)
+  Kokkos::View<GO*, Kokkos::LayoutRight>    side_GID;      // (size)
+  Kokkos::View<GO*, Kokkos::LayoutRight>    elem_GID;      // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>   ws_elem_idx;   // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>   elem_ebIndex;  // (size)
+  Kokkos::View<int*, Kokkos::LayoutRight>   side_pos;      // (size)
 
   int numSides;
   Kokkos::View<int*, Kokkos::LayoutRight>      numCellsOnSide;   // (sides)
@@ -94,10 +126,7 @@ class wsLid
 using WsLIDList = std::map<GO, wsLid>;
 
 template <typename T>
-struct WorksetArray
-{
-  using type = Teuchos::ArrayRCP<T>;
-};
+using WorksetArray = Teuchos::ArrayRCP<T>;
 
 // LB 8/17/18: I moved these out of AbstractDiscretization, so if one only needs
 // these types,
@@ -105,7 +134,7 @@ struct WorksetArray
 //             Albany_AbstractDiscretization.hpp, which has tons of
 //             dependencies.
 using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
-using Conn        = WorksetArray<WorksetConn>::type;
+using Conn        = WorksetArray<WorksetConn>;
 
 }  // namespace Albany
 

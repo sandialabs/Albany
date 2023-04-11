@@ -47,7 +47,6 @@ SolutionManager::SolutionManager(
   // transfer problem at time 0 and specifying a heat source the problem may
   // corresponds to a "thermal shock" problem, causing some instabilities in the
   // time integrator.
-  //  if (disc_->hasRestartSolution()) {
   if (paramLib_->isParameter("Time")) {
     double initialValue = 0.0;
 
@@ -66,44 +65,32 @@ SolutionManager::SolutionManager(
     }
     paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
   }
-  //  }
 
   {
+    auto owned_vs      = disc_->getVectorSpace();
+    auto overlapped_vs = disc_->getOverlapVectorSpace();
 
-  auto owned_vs      = disc_->getVectorSpace();
-  auto overlapped_vs = disc_->getOverlapVectorSpace();
+    overlapped_soln = Thyra::createMembers(overlapped_vs, num_time_deriv + 1);
+    if (num_params_ > 0) {
+      overlapped_soln_dxdp = Thyra::createMembers(overlapped_vs, num_params_);
+    } else {
+      overlapped_soln_dxdp = Teuchos::null;
+    }
 
-  overlapped_soln = Thyra::createMembers(overlapped_vs, num_time_deriv + 1);
-  if (num_params_ > 0) {
-    overlapped_soln_dxdp = Thyra::createMembers(overlapped_vs, num_params_);
-  }
-  else {
-    overlapped_soln_dxdp = Teuchos::null;
-  }
+    // TODO: ditch the overlapped_*T and keep only overlapped_*.
+    //       You need to figure out how to pass the graph in a Tpetra-free way
+    //       though...
+    overlapped_f = Thyra::createMember(overlapped_vs);
 
-  // TODO: ditch the overlapped_*T and keep only overlapped_*.
-  //       You need to figure out how to pass the graph in a Tpetra-free way
-  //       though...
-  overlapped_f = Thyra::createMember(overlapped_vs);
+    // This call allocates the non-overlapped MV
+    current_soln = disc_->getSolutionMV();
 
-  // This call allocates the non-overlapped MV
-  current_soln = disc_->getSolutionMV();
-
-  // Create the CombineAndScatterManager for handling distributed memory linear
-  // algebra communications
-  cas_manager = Albany::createCombineAndScatterManager(owned_vs, overlapped_vs);
-
+    // Create the CombineAndScatterManager for handling distributed memory linear
+    // algebra communications
+    cas_manager = Albany::createCombineAndScatterManager(owned_vs, overlapped_vs);
   }
 
-
-  auto                           wsElNodeEqID = disc_->getWsElNodeEqID();
-  auto                           coords       = disc_->getCoords();
-  Teuchos::ArrayRCP<std::string> wsEBNames    = disc_->getWsEBNames();
-  const int                      numDim       = disc_->getNumDim();
-  const int                      neq          = disc_->getNumEq();
-
-  Teuchos::RCP<Teuchos::ParameterList> pbParams =
-      Teuchos::sublist(appParams_, "Problem", true);
+  auto pbParams = Teuchos::sublist(appParams_, "Problem", true);
 
   if (Teuchos::nonnull(initial_guess)) {
     current_soln->col(0)->assign(*initial_guess);
@@ -114,13 +101,8 @@ SolutionManager::SolutionManager(
         Albany::CombineMode::INSERT);
     InitialConditions(
         overlapped_soln->col(0),
-        wsElNodeEqID,
-        wsEBNames,
-        coords,
-        neq,
-        numDim,
-        pbParams->sublist("Initial Condition"),
-        disc_->hasRestartSolution());
+        disc,
+        pbParams->sublist("Initial Condition"));
     cas_manager->combine(
         overlapped_soln->col(0),
         current_soln->col(0),
@@ -133,13 +115,8 @@ SolutionManager::SolutionManager(
           Albany::CombineMode::INSERT);
       InitialConditions(
           overlapped_soln->col(1),
-          wsElNodeEqID,
-          wsEBNames,
-          coords,
-          neq,
-          numDim,
-          pbParams->sublist("Initial Condition Dot"),
-          disc_->hasRestartSolution());
+          disc,
+          pbParams->sublist("Initial Condition Dot"));
       cas_manager->combine(
           overlapped_soln->col(1),
           current_soln->col(1),
@@ -153,13 +130,8 @@ SolutionManager::SolutionManager(
           Albany::CombineMode::INSERT);
       InitialConditions(
           overlapped_soln->col(2),
-          wsElNodeEqID,
-          wsEBNames,
-          coords,
-          neq,
-          numDim,
-          pbParams->sublist("Initial Condition DotDot"),
-          disc_->hasRestartSolution());
+          disc,
+          pbParams->sublist("Initial Condition DotDot"));
       cas_manager->combine(
           overlapped_soln->col(1),
           current_soln->col(1),

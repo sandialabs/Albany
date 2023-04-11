@@ -6,8 +6,10 @@
 
 #include "PHAL_GatherSolutionSide.hpp"
 
+#include "Albany_DOFManager.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -19,118 +21,91 @@ template<typename EvalT, typename Traits>
 GatherSolutionSide<EvalT,Traits>::
 GatherSolutionSide(const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl)
- : enableSolution       (false)
- , enableSolutionDot    (false)
- , enableSolutionDotDot (false)
 {
   sideSetName = p.get<std::string>("Side Set Name");
 
-  numFields = numFieldsDot = numFieldsDotDot = 0;
-  offset = offsetDot = offsetDotDot = 0;
-  vecDim = dl->node_vector->dimension(2);
-  if (p.isType<Teuchos::ArrayRCP<std::string>>("Solution Names")) {
-    const auto& names = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names");
-    is_dof_vec = p.get<bool>("Is Dof Vector");
-    TEUCHOS_TEST_FOR_EXCEPTION(names.size()>1 && is_dof_vec, std::runtime_error,
-        "Error! Multiple solution names cannot be provided for vector dofs.\n");
+  solRank = p.get<int>("Solution Rank");
+  TEUCHOS_TEST_FOR_EXCEPTION (solRank<0 || solRank>2, std::runtime_error,
+      "Error! Unsupported solution rank (" + std::to_string(solRank) + "\n");
 
-    if (!names.is_null()) {
-      numFields = names.size();
-      if (is_dof_vec) {
-          valvec = PHX::MDField<ScalarT,Side,Node,VecDim> (names[0],dl->node_vector);
-          this->addEvaluatedField(valvec);
-      } else {
-        val.resize(numFields);
-        for (int eq=0; eq<numFields; ++eq) {
-          val[eq] = PHX::MDField<ScalarT,Side,Node> (names[eq],dl->node_scalar);
-          this->addEvaluatedField(val[eq]);
-        }
-      }
-      enableSolution = (numFields>0);
+  if (p.isType<int>("Offset of First DOF")) {
+    offset = p.get<int>("Offset of First DOF");
+  }
 
-      if (p.isType<int>("Offset of First DOF")) {
-        offset = p.get<int>("Offset of First DOF");
-      }
+  if (p.isType<std::string>("Solution Name")) {
+    const auto& name = p.get<std::string>("Solution Name");
+    switch (solRank) {
+      case 0:
+        val = decltype(val) (name,dl->node_scalar);
+        this->addEvaluatedField(val);
+        numFields = 1;
+        break;
+      case 1:
+        valVec = decltype(valVec) (name,dl->node_vector);
+        this->addEvaluatedField(valVec);
+        numFields = dl->node_vector->dimension(2);
+        break;
+      case 2:
+        valTensor = decltype(valTensor) (name,dl->node_tensor);
+        numDim = dl->node_tensor->dimension(2);
+        numFields = numDim*numDim;
+        this->addEvaluatedField(valTensor);
+        break;
     }
+    enableSolution = true;
   }
 
-  // repeat for xdot if transient is enabled
-  if (p.isType<Teuchos::ArrayRCP<std::string>>("Solution Names Dot")) {
-    const auto& names_dot = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names Dot");
-    is_dof_dot_vec = p.get<bool>("Is Dof Vector");
-    TEUCHOS_TEST_FOR_EXCEPTION(names_dot.size()>1 && is_dof_dot_vec, std::runtime_error,
-        "Error! Multiple solution dot names cannot be provided for vector dofs.\n");
-
-    if (!names_dot.is_null()) {
-      numFieldsDot = names_dot.size();
-      if (is_dof_dot_vec) {
-          valvec_dot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dot[0],dl->node_vector);
-          this->addEvaluatedField(valvec_dot);
-      } else {
-        val_dot.resize(numFields);
-        for (int eq=0; eq<numFields; ++eq) {
-          val_dot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dot[eq],dl->node_scalar);
-          this->addEvaluatedField(val_dot[eq]);
-        }
-      }
-      enableSolutionDot = (numFieldsDot>0);
-
-      if (p.isType<int>("Offset of First DOF Dot")) {
-        offsetDot = p.get<int>("Offset of First DOF Dot");
-      }
+  if (p.isType<std::string>("Solution Dot Name")) {
+    const auto& name = p.get<std::string>("Solution Dot Name");
+    switch (solRank) {
+      case 0:
+        val_dot = decltype(val_dot) (name,dl->node_scalar);
+        this->addEvaluatedField(val_dot);
+        numFields = 1;
+        break;
+      case 1:
+        valVec_dot = decltype(valVec_dot) (name,dl->node_vector);
+        this->addEvaluatedField(valVec_dot);
+        numFields = dl->node_vector->dimension(2);
+        break;
+      case 2:
+        valTensor_dot = decltype(valTensor_dot) (name,dl->node_tensor);
+        this->addEvaluatedField(valTensor_dot);
+        numDim = dl->node_tensor->dimension(2);
+        numFields = numDim*numDim;
+        break;
     }
+    enableSolutionDot = true;
   }
 
-  // repeat for xdotdot if acceleration is enabled
-  if (p.isType<Teuchos::ArrayRCP<std::string>>("Solution Names Dot Dot")) {
-    const auto& names_dotdot = p.get< Teuchos::ArrayRCP<std::string> >("Solution Names Dot Dot");
-    is_dof_dotdot_vec = p.get<bool>("Is Dof Vector");
-    TEUCHOS_TEST_FOR_EXCEPTION(names_dotdot.size()>1 && is_dof_dotdot_vec, std::runtime_error,
-        "Error! Multiple solution dotdot names cannot be provided for vector dofs.\n");
-
-    if (!names_dotdot.is_null()) {
-      numFieldsDotDot = names_dotdot.size();
-      if (is_dof_dotdot_vec) {
-          valvec_dotdot = PHX::MDField<ScalarT,Side,Node,VecDim> (names_dotdot[0],dl->node_vector);
-          this->addEvaluatedField(valvec_dotdot);
-      } else {
-        val_dotdot.resize(numFields);
-        for (int eq=0; eq<numFields; ++eq) {
-          val_dotdot[eq] = PHX::MDField<ScalarT,Side,Node> (names_dotdot[eq],dl->node_scalar);
-          this->addEvaluatedField(val_dotdot[eq]);
-        }
-      }
-      enableSolutionDotDot = (numFieldsDotDot>0);
-
-      if (p.isType<int>("Offset of First DOF Dot Dot")) {
-        offsetDotDot = p.get<int>("Offset of First DOF Dot Dot");
-      }
+  if (p.isType<std::string>("Solution DotDot Name")) {
+    const auto& name = p.get<std::string>("Solution DotDot Name");
+    switch (solRank) {
+      case 0:
+        val_dotdot = decltype(val_dotdot) (name,dl->node_scalar);
+        this->addEvaluatedField(val_dotdot);
+        numFields = 1;
+        break;
+      case 1:
+        valVec_dotdot = decltype(valVec_dotdot) (name,dl->node_vector);
+        this->addEvaluatedField(valVec_dotdot);
+        numFields = dl->node_vector->dimension(2);
+        break;
+      case 2:
+        valTensor_dotdot = decltype(valTensor_dotdot) (name,dl->node_tensor);
+        this->addEvaluatedField(valTensor_dotdot);
+        numDim = dl->node_tensor->dimension(2);
+        numFields = numDim*numDim;
+        break;
     }
+    enableSolutionDotDot = true;
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (!enableSolution && !enableSolutionDot && !enableSolutionDotDot,
-                              std::logic_error,
-                              "Error! This GatherSolutionSide evaluator is not gathering any field.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      !enableSolution && !enableSolutionDot && !enableSolutionDotDot,
+      std::logic_error,
+      "Error! This GatherSolutionSide evaluator is not gathering anything.\n");
 
-  // Storing the sideNodeId->cellNodeId map
-  auto cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-  int sideDim = cellType->getDimension()-1;
-  int numSides = cellType->getSideCount();
-
-  int nodeMax = 0;
-  for (int side=0; side<numSides; ++side) {
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    nodeMax = std::max(nodeMax, thisSideNodes);
-  }
-  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
-  for (int side=0; side<numSides; ++side) {
-    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    for (int node=0; node<thisSideNodes; ++node) {
-      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
-    }
-  }
-  
   this->setName("Gather Solution Side"+PHX::print<EvalT>() );
 }
 
@@ -140,13 +115,6 @@ void GatherSolutionSide<EvalT,Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& /* fm */)
 {
-  if (enableSolution) {
-    num_side_nodes = val[0].extent(1);
-  } else if (enableSolutionDot) {
-    num_side_nodes = val_dot[0].extent(1);
-  } else {
-    num_side_nodes = val_dotdot[0].extent(1);
-  }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
 }
 
@@ -154,70 +122,50 @@ template<typename EvalT, typename Traits>
 void GatherSolutionSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) return;
+  // Check for early return
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  if (sideSet.size==0) {
+    return;
+  }
 
-  const bool gather_x       = enableSolution       && !workset.x.is_null();
-  const bool gather_xdot    = enableSolutionDot    && !workset.xdot.is_null();
-  const bool gather_xdotdot = enableSolutionDotDot && !workset.xdotdot.is_null();
+  const auto& x       = workset.x;
+  const auto& xdot    = workset.xdot;
+  const auto& xdotdot = workset.xdotdot;
+
+  const bool gather_x       = enableSolution       && !x.is_null();
+  const bool gather_xdot    = enableSolutionDot    && !xdot.is_null();
+  const bool gather_xdotdot = enableSolutionDotDot && !xdotdot.is_null();
+
+  const auto& disc     = workset.disc;
+  const auto& dof_mgr  = disc->getDOFManager();
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
-  x_data = Albany::getLocalData(workset.x);
-  if (gather_xdot) {
-    xdot_data = Albany::getLocalData(workset.xdot);
-  }
-  if (gather_xdotdot) {
-    xdotdot_data = Albany::getLocalData(workset.xdotdot);
-  }
+  if (gather_x)
+    x_data = Albany::getLocalData(x);
+  if (gather_xdot)
+    xdot_data = Albany::getLocalData(xdot);
+  if (gather_xdotdot)
+    xdotdot_data = Albany::getLocalData(xdotdot);
 
-  auto nodeID = Kokkos::create_mirror_view(workset.wsElNodeEqID);
-  Kokkos::deep_copy(nodeID,workset.wsElNodeEqID);
+  constexpr auto ALL = Kokkos::ALL();
+  for (int iside=0; iside<sideSet.size; ++iside) {
+    const int ws_elem_idx = sideSet.ws_elem_idx(iside);
+    const int elem_LID = elem_lids(ws_elem_idx);
+    const int side_pos = sideSet.side_pos(iside);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-  sideSet = workset.sideSetViews->at(sideSetName);
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the local data of side and cell
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
-
-    for (int node=0; node<num_side_nodes; ++node) {
-      const int cell_node = sideNodes(side,node);
-      if (gather_x) {
-        if (is_dof_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offset+idim);
-            valvec(sideSet_idx,node,idim) = x_data[node_id];
-          }
-        } else {
-          for (int isol=0; isol<numFields; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offset+isol);
-            val[isol](sideSet_idx,node) = x_data[node_id];
-          }
+    for (int eq=0; eq<numFields; ++eq) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side_pos);
+      for (unsigned node=0; node<offsets.size(); ++node) {
+        const auto lid = dof_lids(offsets[node]);
+        get_ref(iside,node,eq) = x_data[lid];
+        if (gather_xdot) {
+          get_ref_dot(iside,node,eq) = xdot_data[lid];
         }
-      }
-      if (gather_xdot) {
-        if (is_dof_dot_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offset+idim);
-            valvec_dot(sideSet_idx,node,idim) = xdot_data[node_id];
-          }
-        } else {
-          for (int isol=0; isol<numFields; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offset+isol);
-            val_dot[isol](sideSet_idx,node) = xdot_data[node_id];
-          }
-        }
-      }
-      if (gather_xdotdot) {
-        if (is_dof_dotdot_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offset+idim);
-            valvec_dotdot(sideSet_idx,node,idim) = xdotdot_data[node_id];
-          }
-        } else {
-          for (int isol=0; isol<numFields; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offset+isol);
-            val_dotdot[isol](sideSet_idx,node) = xdotdot_data[node_id];
-          }
+        if (gather_xdotdot) {
+          get_ref_dotdot(iside,node,eq) = xdotdot_data[lid];
         }
       }
     }
@@ -232,89 +180,65 @@ template<>
 inline void GatherSolutionSide<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits>::
 evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
+  // Check for early return
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  if (sideSet.size==0) {
     return;
   }
 
-  const bool gather_x       = enableSolution       && !workset.x.is_null();
-  const bool gather_xdot    = enableSolutionDot    && !workset.xdot.is_null();
-  const bool gather_xdotdot = enableSolutionDotDot && !workset.xdotdot.is_null();
+  const auto& x       = workset.x;
+  const auto& xdot    = workset.xdot;
+  const auto& xdotdot = workset.xdotdot;
+
+  const bool gather_x       = enableSolution       && !x.is_null();
+  const bool gather_xdot    = enableSolutionDot    && !xdot.is_null();
+  const bool gather_xdotdot = enableSolutionDotDot && !xdotdot.is_null();
+
+  const auto& disc     = workset.disc;
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
+  const auto& dof_mgr  = disc->getDOFManager();
+  const auto& node_dof_mgr = disc->getNodeDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
-  x_data = Albany::getLocalData(workset.x);
-  if (gather_xdot) {
-    xdot_data = Albany::getLocalData(workset.xdot);
-  }
-  if (gather_xdotdot) {
-    xdotdot_data = Albany::getLocalData(workset.xdotdot);
-  }
+  if (gather_x)
+    x_data = Albany::getLocalData(x);
+  if (gather_xdot)
+    xdot_data = Albany::getLocalData(xdot);
+  if (gather_xdotdot)
+    xdotdot_data = Albany::getLocalData(xdotdot);
 
-  auto nodeID = Kokkos::create_mirror_view(workset.wsElNodeEqID);
-  Kokkos::deep_copy(nodeID,workset.wsElNodeEqID);
-  const int neq = nodeID.extent(2);
+  const int neq = dof_mgr->getNumFields();
+  constexpr auto ALL = Kokkos::ALL();
 
-  using RefType = typename PHAL::Ref<ScalarT>::type;
-  const int fad_size = val[0](0,0).size();
+  for (int iside=0; iside<sideSet.size; ++iside) {
+    const int icell = sideSet.ws_elem_idx(iside);
+    const int elem_LID = elem_lids(icell);
+    const int side_pos = sideSet.side_pos(iside);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-  sideSet = workset.sideSetViews->at(sideSetName);
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the local data of side and cell
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
-
-    for (int node=0; node<num_side_nodes; ++node) {
-      const int cell_node = sideNodes(side,node);
-      const int start = neq * node + offset;
-      if (gather_x) {
-        if (is_dof_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offset+idim);
-            RefType val_ref = valvec(sideSet_idx,node,idim);
-            val_ref = FadType(fad_size,x_data[node_id]);
-            val_ref.fastAccessDx(start + idim) = workset.j_coeff;
-          }
-        } else {
-          for (int isol=0; isol<numFields; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offset+isol);
-            RefType val_ref = val[isol](sideSet_idx,node);
-            val_ref = FadType(fad_size,x_data[node_id]);
-            val_ref.fastAccessDx(start + isol) = workset.j_coeff;
-          }
+    for (int eq=0; eq<numFields; ++eq) {
+      // NOTE: node_offsets is to compute the idx of the side node within the cell.
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      const auto& node_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
+      const int numNodes = offsets.size();
+      for (int node=0; node<numNodes; ++node) {
+        const int start = neq*node_offsets[node] + offset;
+        const auto lid = dof_lids(offsets[node]);
+        if (gather_x) {
+          ref_t val_ref = get_ref(iside,node,eq);
+          val_ref = FadType(val_ref.size(),x_data[lid]);
+          val_ref.fastAccessDx(start + eq) = workset.j_coeff;
         }
-      }
-      if (gather_xdot) {
-        if (is_dof_dot_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offset+idim);
-            RefType valdot_ref = valvec_dot(sideSet_idx,node,idim);
-            valdot_ref = FadType(fad_size,xdot_data[node_id]);
-            valdot_ref.fastAccessDx(start + idim) = workset.j_coeff;
-          }
-        } else {
-          for (int isol=0; isol<numFields; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offsetDot+isol);
-            RefType val_dot_ref = val_dot[isol](sideSet_idx,node);
-            val_dot_ref = FadType(fad_size,xdot_data[node_id]);
-            val_dot_ref.fastAccessDx(start + isol) = workset.m_coeff;
-          }
+        if (gather_xdot) {
+          ref_t val_ref = get_ref_dot(iside,node,eq);
+          val_ref = FadType(val_ref.size(),xdot_data[lid]);
+          val_ref.fastAccessDx(start + eq) = workset.m_coeff;
         }
-      }
-      if (gather_xdotdot) {
-        if (is_dof_dotdot_vec) {
-          for (int idim=0; idim<vecDim; ++idim) {
-            const int node_id = nodeID(cell,cell_node,offset+idim);
-            RefType valdotdot_ref = valvec_dotdot(sideSet_idx,node,idim);
-            valdotdot_ref = FadType(fad_size,xdotdot_data[node_id]);
-            valdotdot_ref.fastAccessDx(start + idim) = workset.j_coeff;
-          }
-        } else {
-          for (int isol=0; isol<numFields; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offsetDotDot+isol);
-            RefType val_dotdot_ref = val_dotdot[isol](sideSet_idx,node);
-            val_dotdot_ref = FadType(fad_size,xdotdot_data[node_id]);
-            val_dotdot_ref.fastAccessDx(start + isol) = workset.n_coeff;
-          }
+        if (gather_xdotdot) {
+          ref_t val_ref = get_ref_dotdot(iside,node,eq);
+          val_ref = FadType(val_ref.size(),xdotdot_data[lid]);
+          val_ref.fastAccessDx(start + eq) = workset.n_coeff;
         }
       }
     }
@@ -329,126 +253,94 @@ template<>
 inline void GatherSolutionSide<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits>::
 evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 {
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
+  // Check for early return
+  auto sideSet = workset.sideSetViews->at(sideSetName);
+  if (sideSet.size==0) {
     return;
   }
 
-  const bool gather_Vx       = enableSolution       && !workset.Vx.is_null();
-  const bool gather_Vxdot    = enableSolutionDot    && !workset.Vxdot.is_null();
-  const bool gather_Vxdotdot = enableSolutionDotDot && !workset.Vxdotdot.is_null();
+  const auto& x        = workset.x;
+  const auto& xdot     = workset.xdot;
+  const auto& xdotdot  = workset.xdotdot;
+  const auto& Vx       = workset.Vx;
+  const auto& Vxdot    = workset.Vxdot;
+  const auto& Vxdotdot = workset.Vxdotdot;
+
+  const bool gather_x        = enableSolution       && !x.is_null();
+  const bool gather_xdot     = enableSolutionDot    && !xdot.is_null();
+  const bool gather_xdotdot  = enableSolutionDotDot && !xdotdot.is_null();
+
+  const bool gather_Vx       = workset.j_coeff!=0 && !Vx.is_null();
+  const bool gather_Vxdot    = workset.m_coeff!=0 && !Vxdot.is_null();
+  const bool gather_Vxdotdot = workset.n_coeff!=0 && !Vxdotdot.is_null();
+
+  const auto& disc     = workset.disc;
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
+  const auto& dof_mgr  = disc->getDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
   Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
+  if (gather_x)
+    x_data = Albany::getLocalData(x);
+  if (gather_xdot)
+    xdot_data = Albany::getLocalData(xdot);
+  if (gather_xdotdot)
+    xdotdot_data = Albany::getLocalData(xdotdot);
+
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_data, Vxdot_data, Vxdotdot_data;
 
-  x_data = Albany::getLocalData(workset.x);
-  Vx_data = Albany::getLocalData(workset.Vx);
-  if (gather_Vxdot) {
-    xdot_data = Albany::getLocalData(workset.xdot);
+  if (gather_Vx)
+    Vx_data = Albany::getLocalData(workset.Vx);
+  if (gather_Vxdot)
     Vxdot_data = Albany::getLocalData(workset.Vxdot);
-  }
-  if (gather_Vxdotdot) {
-    xdotdot_data = Albany::getLocalData(workset.xdotdot);
+  if (gather_Vxdotdot)
     Vxdotdot_data = Albany::getLocalData(workset.Vxdotdot);
-  }
 
-  auto nodeID = Kokkos::create_mirror_view(workset.wsElNodeEqID);
-  Kokkos::deep_copy(nodeID,workset.wsElNodeEqID);
+  constexpr auto ALL = Kokkos::ALL();
+  for (int iside=0; iside<sideSet.size; ++iside) {
+    const int icell = sideSet.ws_elem_idx(iside);
+    const int elem_LID = elem_lids(icell);
+    const int side_pos = sideSet.side_pos(iside);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-  using RefType = typename PHAL::Ref<ScalarT>::type;
-  const int fad_size = val[0](0,0).size();
-
-  sideSet = workset.sideSetViews->at(sideSetName);
-  for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-  {
-    // Get the local data of side and cell
-    const int cell = sideSet.elem_LID(sideSet_idx);
-    const int side = sideSet.side_local_id(sideSet_idx);
-
-    for (int node=0; node<num_side_nodes; ++node) {
-      const int cell_node = sideNodes(side,node);
-
-      if (is_dof_vec) {
-        for (int idim=0; idim<vecDim; ++idim) {
-          const int node_id = nodeID(cell,cell_node,offset+idim);
-          if (enableSolution) {
-            RefType val_ref = valvec(sideSet_idx,node,idim);
-            if (gather_Vx && workset.j_coeff!=0.0) {
-              val_ref = TanFadType(fad_size,x_data[node_id]);
-              for (int k=0; k<workset.num_cols_x; k++){
-                val_ref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][node_id];
-              }
-            } else {
-              val_ref = TanFadType(x_data[node_id]);
+    for (int eq=0; eq<numFields; ++eq) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      const int numNodes = offsets.size();
+      for (int node=0; node<numNodes; ++node) {
+        const auto lid = dof_lids(offsets[node]);
+        if (gather_x) {
+          ref_t ref = get_ref(iside,node,eq);
+          if (gather_Vx) {
+            ref = TanFadType(ref.size(),x_data[lid]);
+            for (int k=0; k<workset.num_cols_x; k++){
+              ref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][lid];
             }
-          }
-
-          if (enableSolutionDot) {
-            RefType val_dot_ref = valvec_dot(sideSet_idx,node,idim);
-            if (gather_Vxdot && workset.m_coeff != 0.0) {
-              val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
-              for (int k=0; k<workset.num_cols_x; k++) {
-                val_dot_ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][node_id];
-              }
-            } else {
-              val_dot_ref = TanFadType(xdot_data[node_id]);
-            }
-          }
-
-          if (enableSolutionDotDot) {
-            RefType val_dotdot_ref = valvec_dotdot(sideSet_idx,node,idim);
-            if (gather_Vxdotdot && workset.j_coeff != 0.0) {
-              val_dotdot_ref = TanFadType(fad_size,xdotdot_data[node_id]);
-              for (int k=0; k<workset.num_cols_x; k++) {
-                val_dotdot_ref.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][node_id];
-              }
-            } else {
-              val_dotdot_ref = TanFadType(xdotdot_data[node_id]);
-            }
-          }
-        }
-      } else { // is_dof_vec
-        if (enableSolution) {
-          for (int isol=0; isol<numFields; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offset+isol);
-            RefType val_ref = val[isol](sideSet_idx,node);
-            if (gather_Vx && workset.j_coeff != 0.0) {
-              val_ref = TanFadType(fad_size,x_data[node_id]);
-              for (int k=0; k<workset.num_cols_x; k++){
-                val_ref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][node_id];
-              }
-            } else {
-              val_ref = TanFadType(x_data[node_id]);
-            }
+          } else {
+            ref = TanFadType(x_data[lid]);
           }
         }
 
-        if (enableSolutionDot) {
-          for (int isol=0; isol<numFieldsDot; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offsetDot+isol);
-            RefType val_dot_ref = val_dot[isol](sideSet_idx,node);
-            if (gather_Vxdot && workset.j_coeff != 0.0) {
-              val_dot_ref = TanFadType(fad_size,xdot_data[node_id]);
-              for (int k=0; k<workset.num_cols_x; k++) {
-                val_dot_ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][node_id];
-              }
-            } else {
-              val_dot_ref = TanFadType(xdot_data[node_id]);
+        if (gather_xdot) {
+          ref_t ref = get_ref_dot(iside,node,eq);
+          if (gather_Vxdot) {
+            ref = TanFadType(ref.size(),xdot_data[lid]);
+            for (int k=0; k<workset.num_cols_x; k++){
+              ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][lid];
             }
+          } else {
+            ref = TanFadType(xdot_data[lid]);
           }
         }
 
-        if (enableSolutionDotDot) {
-          for (int isol=0; isol<numFieldsDotDot; ++isol) {
-            const int node_id = nodeID(cell,cell_node,offsetDotDot+isol);
-            RefType val_dotdot_ref = val_dotdot[isol](sideSet_idx,node);
-            if (gather_Vxdot && workset.j_coeff != 0.0) {
-              val_dotdot_ref = TanFadType(fad_size,xdot_data[node_id]);
-              for (int k=0; k<workset.num_cols_x; k++) {
-                val_dotdot_ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][node_id];
-              }
-            } else {
-              val_dotdot_ref = TanFadType(xdot_data[node_id]);
+        if (gather_xdotdot) {
+          ref_t ref = get_ref_dotdot(iside,node,eq);
+          if (gather_Vxdotdot) {
+            ref = TanFadType(ref.size(),xdotdot_data[lid]);
+            for (int k=0; k<workset.num_cols_x; k++) {
+              ref.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][lid];
             }
+          } else {
+            ref = TanFadType(xdotdot_data[lid]);
           }
         }
       }

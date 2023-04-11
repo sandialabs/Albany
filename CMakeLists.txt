@@ -57,6 +57,7 @@ ENDIF()
 
 MESSAGE("\nFound Trilinos!  Here are the details: ")
 MESSAGE("-- Trilinos_DIR = ${Trilinos_DIR}")
+MESSAGE("-- Trilinos_CMAKE_BUILD_TYPE = ${Trilinos_CMAKE_BUILD_TYPE}")
 MESSAGE("-- Trilinos_VERSION = ${Trilinos_VERSION}")
 MESSAGE("-- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
 MESSAGE("-- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
@@ -112,6 +113,8 @@ else()
   SET(Trilinos_C_COMPILER_ID ${CMAKE_C_COMPILER_ID})
   SET(Trilinos_Fortran_COMPILER_ID ${CMAKE_Fortran_COMPILER_ID})
 endif()
+
+set (CMAKE_BUILD_TYPE ${Trilinos_CMAKE_BUILD_TYPE} CACHE STRING "Build type for Albany (default to Trilinos)")
 
 project(Albany CXX C)
 
@@ -189,7 +192,6 @@ ENDIF()
 # Make Albany inherit Trilinos compiler flags. The most important are the
 # presence or absence of -NDEBUG (which can affect linking for complicated
 # reasons) and -std=c++11.
-SET(CMAKE_CXX_FLAGS "${Trilinos_CXX_COMPILER_FLAGS} ${CMAKE_CXX_FLAGS}")
 # GAH - temporarily set Albany flags for clang debugging
 #SET(CMAKE_CXX_FLAGS "-ggdb -std=c++11 -O2 -march=native -DNDEBUG")
 

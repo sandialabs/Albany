@@ -91,6 +91,39 @@ bool validNestedListFormat (const std::string& str);
 
 Teuchos::ParameterList parseNestedList (std::string str);
 
+template<typename Iterable>
+std::string join (const Iterable& c, const std::string& delim) {
+  auto it = std::cbegin(c);
+  auto end = std::cend(c);
+  if (it==end) {
+    return "";
+  }
+
+  std::stringstream ss;
+  ss << *it;
+  for (++it; it!=end; ++it) {
+    ss << delim << *it;
+  }
+  return ss.str();
+}
+
+// Overload to allow passing brace-enclosed initializer lists
+template<typename T>
+std::string join (const std::initializer_list<T>& c, const std::string& delim) {
+  auto it = std::cbegin(c);
+  auto end = std::cend(c);
+  if (it==end) {
+    return "";
+  }
+
+  std::stringstream ss;
+  ss << *it;
+  for (++it; it!=end; ++it) {
+    ss << delim << *it;
+  }
+  return ss.str();
+}
+
 } // namespace util
 
 #endif  // ALBANY_STRING_UTILS_HPP

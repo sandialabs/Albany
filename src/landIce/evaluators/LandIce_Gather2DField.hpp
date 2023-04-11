@@ -4,18 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LANDICE_GATHER2DFIELD_HPP
-#define LANDICE_GATHER2DFIELD_HPP
+#ifndef LANDICE_GATHER_2D_FIELD_HPP
+#define LANDICE_GATHER_2D_FIELD_HPP
+
+#include "Albany_Layouts.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
-
-
-#include "PHAL_AlbanyTraits.hpp"
-
+#include "Shards_CellTopology.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -25,194 +25,43 @@ namespace LandIce {
 */
 
 template<typename EvalT, typename Traits>
-class Gather2DFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-		                      public PHX::EvaluatorDerived<EvalT, Traits>
+class Gather2DField : public PHX::EvaluatorWithBaseImpl<Traits>,
+		                  public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  Gather2DFieldBase(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+  Gather2DField (const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 
-  virtual ~Gather2DFieldBase () = default;
+  virtual ~Gather2DField () = default;
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
-  virtual void evaluateFields(typename Traits::EvalData d) = 0;
+  void evaluateFields (typename Traits::EvalData /* d */) {
+    TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
+        "[Gather2DField::evaluateFields] Not yet implemented for EvalT=" + PHX::print<EvalT>() + "\n");
+  }
+
 
 protected:
+  void check_topology (const shards::CellTopology& topo);
 
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
+  using ref_t   = typename PHAL::Ref<ScalarT>::type;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node>  field2D;
 
-  std::size_t numNodes;
-  std::size_t offset; // Offset of first DOF being gathered
+  int offset; // Offset of first DOF being gathered
+  int numNodes;
 
   int fieldLevel;
   std::string meshPart;
 
-  Teuchos::RCP<const CellTopologyData> cell_topo;
+  bool extruded;
 };
 
-// ================ Gather2DField =============== //
+} // namespace LandIce
 
-template<typename EvalT, typename Traits> class Gather2DField;
-
-template<typename Traits>
-class Gather2DField<PHAL::AlbanyTraits::Residual,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::Residual,Traits> {
-
-public:
-  Gather2DField(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class Gather2DField<PHAL::AlbanyTraits::Jacobian,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian,Traits> {
-
-public:
-
-  Gather2DField(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class Gather2DField<PHAL::AlbanyTraits::Tangent,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::Tangent,Traits> {
-
-public:
-
-  Gather2DField(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData /* d */) {}
-
-private:
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class Gather2DField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
-
-public:
-
-  Gather2DField(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData /* d */) {};
-
-private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class Gather2DField<PHAL::AlbanyTraits::HessianVec,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec,Traits> {
-
-public:
-
-  Gather2DField(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
-};
-
-// ================ GatherExtruded2DField =============== //
-
-template<typename EvalT, typename Traits> class GatherExtruded2DField;
-
-template<typename Traits>
-class GatherExtruded2DField<PHAL::AlbanyTraits::Residual,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::Residual,Traits> {
-
-public:
-
-  GatherExtruded2DField(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian,Traits> {
-
-public:
-
-  GatherExtruded2DField(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class GatherExtruded2DField<PHAL::AlbanyTraits::Tangent,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::Tangent,Traits> {
-
-public:
-
-  GatherExtruded2DField(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData /* d */) {}
-
-private:
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
-
-public:
-
-  GatherExtruded2DField(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData /* d */) {}
-
-private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class GatherExtruded2DField<PHAL::AlbanyTraits::HessianVec,Traits>
-    : public Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec,Traits> {
-
-public:
-
-  GatherExtruded2DField(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
-};
-
-}
-
-#endif
+#endif // LANDICE_GATHER_2D_FIELD_HPP

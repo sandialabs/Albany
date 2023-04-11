@@ -50,42 +50,47 @@ public:
 
   void evaluateFields (typename Traits::EvalData d);
 protected:
+  using ScalarT = typename EvalT::ScalarT;
+
+  ScalarT get_resid (const int side_idx, const int node, const int eq) const {
+    switch (tensorRank) {
+      case 0:
+        return val[eq](side_idx,node);
+      case 1:
+        return valVec(side_idx,node,eq);
+      case 2:
+        return valTensor(side_idx,node,eq/tensorDim,eq%tensorDim);
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
 
   void gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc);
-  void buildSideSetNodeMap (typename Traits::EvalData workset);
 
-  void doEvaluateFieldsCellResidual(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSideResidual(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
+  void doEvaluateFieldsResidual(typename Traits::EvalData d,
+                                const std::vector<Albany::SideStruct>& sideSet);
 
-  virtual void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side) = 0;
-  virtual void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx) = 0;
+  virtual void doEvaluateFields(typename Traits::EvalData d,
+                                const std::vector<Albany::SideStruct>& sideSet) = 0;
   virtual void doPostEvaluate(typename Traits::EvalData d);
 
-  typedef typename EvalT::ScalarT ScalarT;
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   std::vector< PHX::MDField<const ScalarT> > val;
   PHX::MDField<const ScalarT>  valVec;
   PHX::MDField<const ScalarT>  valTensor;
 
   std::string             sideSetName;        // The side set where the equation(s) are defined
-  Albany::LocalSideSetInfo sideSet;
+  std::vector<Albany::SideStruct> sideSet;
 
-  Teuchos::Array<int>     numSideNodes;   // Number of nodes on each side of a cell
-  Teuchos::Array<Teuchos::Array<int> >  sideNodes;
   int numFields;  // Number of fields gathered in this call
   int offset;     // Offset of first DOF being gathered when numFields<neq
-  int numDims;    // Only for tensor residuals
+  int tensorDim;     // Only for tensor residuals
 
-  bool  residualsAreVolumeFields;  // Whether the residuals have the 'Side' dimension in their layout
-
-  unsigned short int tensorRank;
+  int tensorRank;
 
   // We store the ss_nodes for all worksets, so we can zero residual
-  // and diagonalize jacobian OFF the side set
-  std::map<int,std::map<int,std::set<int>>>  ss_ws_cell_nodes_lids;
+  // and diagonalize jacobian OUTSIDE the side set
   std::set<GO> ss_nodes_gids;
-  int numCellNodes;
-  bool ss_node_gids_gathered = false;
+  bool ss_nodes_gids_gathered = false;
 };
 
 template<typename EvalT, typename Traits> class ScatterSideEqnResidual;
@@ -111,8 +116,8 @@ public:
                           const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
-  void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
+  void doEvaluateFields(typename Traits::EvalData d,
+                        const std::vector<Albany::SideStruct>& sideSet);
 };
 
 // **************************************************************
@@ -129,8 +134,8 @@ public:
                           const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
-  void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
+  void doEvaluateFields(typename Traits::EvalData d,
+                        const std::vector<Albany::SideStruct>& sideSet);
   void doPostEvaluate(typename Traits::EvalData d);
 };
 
@@ -148,8 +153,8 @@ public:
                           const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
-  void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
+  void doEvaluateFields(typename Traits::EvalData d,
+                        const std::vector<Albany::SideStruct>& sideSet);
 };
 
 // **************************************************************
@@ -166,8 +171,8 @@ public:
                           const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
-  void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
+  void doEvaluateFields(typename Traits::EvalData d,
+                        const std::vector<Albany::SideStruct>& sideSet);
 };
 
 // **************************************************************
@@ -184,8 +189,8 @@ public:
                           const Teuchos::RCP<Albany::Layouts>& dl);
 
 protected:
-  void doEvaluateFieldsCell(typename Traits::EvalData d, int cell, int side);
-  void doEvaluateFieldsSide(typename Traits::EvalData d, int cell, int side, int sideSet_idx);
+  void doEvaluateFields(typename Traits::EvalData d,
+                        const std::vector<Albany::SideStruct>& sideSet);
 };
 
 } // namespace PHAL

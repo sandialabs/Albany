@@ -17,24 +17,24 @@ namespace Albany
 {
 
 SideLaplacian::SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                        const Teuchos::RCP<ParamLib>& paramLib,
-                        const int numEq) :
-  Albany::AbstractProblem (params, paramLib, numEq),
-  use_sdbcs_(false)
+                        const Teuchos::RCP<ParamLib>& paramLib)
+ : Albany::AbstractProblem (params, paramLib, 2)
+ , use_sdbcs_(false)
 {
   bool solve_as_ss_eqn = params->get<bool>("Solve As Side Set Equation");
   numDim = solve_as_ss_eqn ? 3 : 2;
 
-  dof_names.resize(1);
-  resid_names.resize(1);
+  dof_names.resize(2);
+  resid_names.resize(2);
 
-  dof_names[0] = "u";
-  resid_names[0] = "res";
+  dof_names[0] = "dummy";
+  resid_names[0] = "dummy_res";
+  dof_names[1] = "u";
+  resid_names[1] = "res";
 
-  if (numDim==3)
-  {
+  if (numDim==3) {
     sideSetName = params->get<std::string>("Side Set Name");
-    this->sideSetEquations[0].push_back(sideSetName);
+    this->sideSetEquations[1].push_back(sideSetName);
   }
 }
 
@@ -134,7 +134,7 @@ SideLaplacian::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 void SideLaplacian::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<std::string> dirichletNames(1,"U");
+  std::vector<std::string> dirichletNames = {"DUMMY", "U"};
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);

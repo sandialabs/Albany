@@ -229,7 +229,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
         ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
-        ebNameToIndex, this->interleavedOrdering, false, cub_rule));
+        ebNameToIndex, false, cub_rule));
   } else {
     *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl;
     this->allElementBlocksHaveSamePhysics=false;
@@ -238,7 +238,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
-          ebNameToIndex, this->interleavedOrdering, true, cub_rule));
+          ebNameToIndex, true, cub_rule));
     }
   }
 
@@ -375,10 +375,6 @@ Albany::IossSTKMeshStruct::setFieldData (
         *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
       }
     }
-    else {
-    }
-
-
   } // End UseSerialMesh - reading mesh on PE 0
 
   else
@@ -474,39 +470,14 @@ Albany::IossSTKMeshStruct::setFieldData (
         *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
     }
 
-    //Read info for layered mehes.
-    bool hasLayeredStructure=true;
-    std::vector<double> ltr;
-    int ordering;
-    GO stride;
-
-    std::string state_name = "layer_thickness_ratio";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
-    if(hasLayeredStructure)
-      fieldContainer->getMeshVectorStates()[state_name] = ltr;
-    state_name = "ordering";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
-    if(hasLayeredStructure)
-      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
-    state_name = "stride";
-    stk::util::Parameter temp_any;
-    temp_any.type = stk::util::ParameterType::INT64;
-    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
-    if(hasLayeredStructure) {
-      stride = temp_any.get_value<int64_t>();
-      fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
+    for (auto& it : fieldContainer->getMeshScalarInteger64States()) {
+      stk::util::Parameter temp_any;
+      temp_any.type = stk::util::ParameterType::INT64;
+      bool found = mesh_data->get_global (it.first, temp_any, false); // Last variable is abort_if_not_found. We don't want that.
+      if (!found)
+        *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
     }
-
-    if(hasLayeredStructure) {
-      Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
-      for(decltype(ltr.size()) i=0; i< ltr.size(); ++i) {
-        layerThicknessRatio[i] = ltr[i];
-      }
-      this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
-    }
-  }
-  else
-  {
+  } else {
     // We put all the fields as 'missing'
     const stk::mesh::FieldVector& fields = metaData->get_fields();
     for (decltype(fields.size()) i=0; i<fields.size(); ++i) {
@@ -518,8 +489,7 @@ Albany::IossSTKMeshStruct::setFieldData (
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
   side_maps_present = true;
   bool coherence = true;
-  for (const auto& it : missing)
-  {
+  for (const auto& it : missing) {
     if (it.field()->name()=="side_to_cell_map" || it.field()->name()=="side_nodes_ids")
     {
       side_maps_present = false;
@@ -664,6 +634,64 @@ Albany::IossSTKMeshStruct::setBulkData (
 
   } // End Parallel Read - or running in serial
 
+  // Check if the input mesh is layered (i.e., if it stores layers info)
+  std::string state_name = "layer_thickness_ratio";
+  if(mesh_data->has_input_global(state_name)) {
+    // layer ratios
+    std::vector<double> ltr;
+    mesh_data->get_global (state_name, ltr, true);
+    fieldContainer->getMeshVectorStates()[state_name] = ltr;
+    this->mesh_layers_ratio.assign(ltr.begin(),ltr.end());
+
+    // Ordering
+    int orderingAsInt;
+    state_name = "ordering";
+    mesh_data->get_global (state_name, orderingAsInt, true);
+    TEUCHOS_TEST_FOR_EXCEPTION (orderingAsInt!=0 && orderingAsInt!=1, std::runtime_error,
+        "Error! Invalid ordering (" << orderingAsInt << "). Valid values:\n"
+        "   0: LAYER ordering, 1: COLUMN ordering\n");
+    fieldContainer->getMeshScalarIntegerStates()[state_name] = orderingAsInt;
+
+    // number of layers
+    int numLayers;
+    state_name = "num_layers";
+    mesh_data->get_global (state_name, numLayers, true);
+    TEUCHOS_TEST_FOR_EXCEPTION (numLayers<=0, std::runtime_error,
+        "Error! Non-positive number of layers in input mesh (" << numLayers << "\n");
+    fieldContainer->getMeshScalarIntegerStates()[state_name] = numLayers;
+
+    // Max global elem id
+    state_name = "max_2d_elem_gid";
+    stk::util::Parameter temp_any;
+    temp_any.type = stk::util::ParameterType::INT64;
+    mesh_data->get_global (state_name, temp_any, true);
+    auto max_2d_elem_gid = temp_any.get_value<int64_t>();
+    fieldContainer->getMeshScalarInteger64States()[state_name] = max_2d_elem_gid ;
+
+    // Max global node id
+    state_name = "max_2d_node_gid";
+    mesh_data->get_global (state_name, temp_any, true);
+    auto max_2d_node_gid = temp_any.get_value<int64_t>();
+    fieldContainer->getMeshScalarInteger64States()[state_name] = max_2d_node_gid;
+
+    // Build GO cell layers data
+    auto ordering = orderingAsInt==0 ? LayeredMeshOrdering::LAYER : LayeredMeshOrdering::COLUMN;
+    this->global_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_2d_elem_gid,numLayers,ordering));
+
+    // Build LO cell layers data
+    stk::mesh::Selector select_owned_in_part(metaData->locally_owned_part());
+    const auto& buckets = bulkData->buckets(stk::topology::ELEM_RANK);
+    const LO numLocalCells3D = stk::mesh::count_selected_entities(select_owned_in_part,buckets);
+    const LO numLocalCells2D = numLocalCells3D / numLayers;
+    this->local_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,ordering));
+
+    // Shards has both Hexa and Wedge with bot and top in the last two side positions
+    this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+    this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+    this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+    this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+  }
+
   if(m_hasRestartSolution){
 
     Teuchos::Array<std::string> default_field = {{"solution", "solution_dot", "solution_dotdot"}};
@@ -718,37 +746,6 @@ Albany::IossSTKMeshStruct::setBulkData (
       bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
       if (!found)
         *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
-    }
-
-    //Read info for layered mehes.
-    bool hasLayeredStructure=true;
-    std::vector<double> ltr;
-    int ordering;
-    GO stride;
-
-    std::string state_name = "layer_thickness_ratio";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ltr, false);
-    if(hasLayeredStructure)
-      fieldContainer->getMeshVectorStates()[state_name] = ltr;
-    state_name = "ordering";
-    hasLayeredStructure &= mesh_data->get_global (state_name, ordering, false);
-    if(hasLayeredStructure)
-      fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
-    state_name = "stride";
-    stk::util::Parameter temp_any;
-    temp_any.type = stk::util::ParameterType::INT64;
-    hasLayeredStructure &= mesh_data->get_global (state_name, temp_any, false);
-    if(hasLayeredStructure) {
-      stride = temp_any.get_value<int64_t>();
-      fieldContainer->getMeshScalarInteger64States()[state_name] = stride;
-    }
-
-    if(hasLayeredStructure) {
-      Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
-      for(decltype(ltr.size()) i=0; i< ltr.size(); ++i) {
-        layerThicknessRatio[i] = ltr[i];
-      }
-      this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<GO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
     }
   } else {
     // We put all the fields as 'missing'

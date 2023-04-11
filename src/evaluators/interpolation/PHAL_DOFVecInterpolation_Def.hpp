@@ -3,13 +3,17 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifdef ALBANY_TIMER
-#include <chrono>
-#endif
+
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
+
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 
 namespace PHAL {
 
@@ -192,7 +196,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = this->val_node(0,0,0).size();
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const int neq = workset.wsElNodeEqID.extent(2);
+  const int neq = workset.disc->getDOFManager()->getNumFields();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < this->numQPs; ++qp) {

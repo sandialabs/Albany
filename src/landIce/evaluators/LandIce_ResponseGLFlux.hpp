@@ -39,6 +39,8 @@ public:
   void postEvaluate(typename Traits::PostEvalData d);
 
 private:
+  using Base = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>;
+
   Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
   std::string basalSideName;
@@ -59,8 +61,6 @@ private:
 
   double rho_i, rho_w;  //[kg m^{-3}]
   double scaling;       //[adim]
-
-  Teuchos::RCP<const CellTopologyData> cell_topo;
 
   Albany::LocalSideSetInfo sideSet;
 };

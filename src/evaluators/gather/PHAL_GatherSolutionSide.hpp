@@ -21,6 +21,14 @@
 
 #include "Kokkos_Vector.hpp"
 
+namespace Albany {
+  class DOFManager;
+}
+namespace shards {
+  class CellTopology;
+}
+
+
 namespace PHAL {
 /** \brief Gathers solution values from the Newton solution vector into
     the nodal fields of the field manager
@@ -51,38 +59,77 @@ public:
 
 protected:
   typedef typename EvalT::ScalarT ScalarT;
+  using ref_t = typename PHAL::Ref<typename EvalT::ScalarT>::type;
 
-  // For f,fdot,fdotdot, can either gather a bunch of scalar fields or one vector field
-  std::vector< PHX::MDField<ScalarT,Side,Node> > val;
-  std::vector< PHX::MDField<ScalarT,Side,Node> > val_dot;
-  std::vector< PHX::MDField<ScalarT,Side,Node> > val_dotdot;
-  PHX::MDField<ScalarT,Side,Node,VecDim> valvec;
-  PHX::MDField<ScalarT,Side,Node,VecDim> valvec_dot;
-  PHX::MDField<ScalarT,Side,Node,VecDim> valvec_dotdot;
+  // These functions are used to select the correct field based on rank.
+  // They are called from *inside* for loops, but the switch statement
+  // is constant for all iterations, so the compiler branch predictor
+  // can easily guess the correct branch, making the conditional jump
+  // cheap.
+  KOKKOS_INLINE_FUNCTION
+  ref_t get_ref (const int side, const int node, const int eq) const {
+    switch (solRank) {
+      case 0:
+        return val(side,node);
+      case 1:
+        return valVec(side,node,eq);
+      case 2:
+        return valTensor(side,node,eq/numDim,eq%numDim);
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  ref_t get_ref_dot (const int side, const int node, const int eq) const {
+    switch (solRank) {
+      case 0:
+        return val_dot(side,node);
+      case 1:
+        return valVec_dot(side,node,eq);
+      case 2:
+        return valTensor_dot(side,node,eq/numDim,eq%numDim);
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  ref_t get_ref_dotdot (const int side, const int node, const int eq) const {
+    switch (solRank) {
+      case 0:
+        return val_dotdot(side,node);
+      case 1:
+        return valVec_dotdot(side,node,eq);
+      case 2:
+        return valTensor_dotdot(side,node,eq/numDim,eq%numDim);
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
+
+  void gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr);
+
+  PHX::MDField<ScalarT,Side,Node> val;
+  PHX::MDField<ScalarT,Side,Node> val_dot;
+  PHX::MDField<ScalarT,Side,Node> val_dotdot;
+  PHX::MDField<ScalarT,Side,Node,Dim> valVec;
+  PHX::MDField<ScalarT,Side,Node,Dim> valVec_dot;
+  PHX::MDField<ScalarT,Side,Node,Dim> valVec_dotdot;
+  PHX::MDField<ScalarT,Side,Node,Dim,Dim> valTensor;
+  PHX::MDField<ScalarT,Side,Node,Dim,Dim> valTensor_dot;
+  PHX::MDField<ScalarT,Side,Node,Dim,Dim> valTensor_dotdot;
 
   std::string sideSetName;
-  Kokkos::View<int**, PHX::Device> sideNodes;
-  Albany::LocalSideSetInfo sideSet;
 
-  int num_side_nodes;
+  int numFields;
 
-  int numFields;        // Number of fields in std::vector val
-  int numFieldsDot;     // Number of fields in std::vector val_dot
-  int numFieldsDotDot;  // Number of fields in std::vector val_dotdot
+  int offset = 0; // Offset of first field being gathered when numFields<neq
 
-  int offset;           // Offset of first field being gathered when numFields<neq
-  int offsetDot;        // Offset of first dot field being gathered when numFields<neq
-  int offsetDotDot;     // Offset of first dotdot field being gathered when numFields<neq
+  int numDim;
 
-  int vecDim;
+  int solRank;
 
-  bool is_dof_vec;
-  bool is_dof_dot_vec;
-  bool is_dof_dotdot_vec;
-
-  bool enableSolution;
-  bool enableSolutionDot;
-  bool enableSolutionDotDot;
+  bool enableSolution       = false;
+  bool enableSolutionDot    = false;
+  bool enableSolutionDotDot = false;
 };
 
 // Full specialization of the evaluateFields method for all Evaluation types

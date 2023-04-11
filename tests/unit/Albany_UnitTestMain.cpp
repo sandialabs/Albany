@@ -6,11 +6,7 @@
 
 #include "Teuchos_UnitTestRepository.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
-#include "Phalanx_config.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
-
-// This is the same as the Trilinos/packages/phalanx/test/Utilities/Phalanx_UnitTestMain.cpp
-// and should be kept "in sync" with that as things evolve
 
 int main( int argc, char* argv[] )
 {

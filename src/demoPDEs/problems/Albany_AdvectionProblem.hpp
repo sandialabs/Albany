@@ -127,7 +127,6 @@ Albany::AdvectionProblem::constructEvaluators(
 {
   using PHAL::AlbanyTraits;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::string;
   using std::vector;
   using Teuchos::ParameterList;
@@ -154,13 +153,15 @@ Albany::AdvectionProblem::constructEvaluators(
   // Get the solution method type
   SolutionMethodType SolutionType = getSolutionMethod();
 
-  ALBANY_PANIC(
-      SolutionType != SolutionMethodType::Transient,
+  ALBANY_ASSERT(
+      SolutionType == SolutionMethodType::Transient,
       "Solution Method must be Transient for Advection Problem!\n "); 
   
-  ALBANY_PANIC(
-      number_of_time_deriv != 1,
-      "You are using a transient solution method in Albany::AdvectionProblem but number of time derivatives != 1!"); 
+  ALBANY_ASSERT(
+      number_of_time_deriv == 1,
+      "Wrong number of time derivatives fo Albany::AdvectionProblem.\n"
+      "  - expected number: 1\n"
+      "  - actual number: " + std::to_string(number_of_time_deriv) + "\n");
 
   *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices << ", Nodes= " << numNodes

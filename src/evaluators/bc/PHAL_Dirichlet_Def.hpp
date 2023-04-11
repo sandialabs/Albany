@@ -4,13 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "PHAL_Dirichlet.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+
+#include "Phalanx_DataLayout_MDALayout.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "PHAL_Dirichlet.hpp"
-#include "Albany_ThyraUtils.hpp"
-#include "Phalanx_DataLayout_MDALayout.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -101,16 +103,18 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::ArrayRCP<const ST> x_constView    = Albany::getLocalData(x);
   Teuchos::ArrayRCP<ST>       f_nonconstView = Albany::getNonconstLocalData(f);
 
-  // Grab the vector off node GIDs for this Node Set ID from the std::map
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-
   if(this->isRandom)
     this->value = this->distribution->fromNormalMapping(this->theta_as_field(0));
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      int lunk = nsNodes[inode][this->offset];
-      // (*f)[lunk] = ((*x)[lunk] - this->value);
-      f_nonconstView[lunk] = x_constView[lunk] - this->value;
+  const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  for (const auto& ep : ns_node_elem_pos) {
+    const int ielem = ep.first;
+    const int pos   = ep.second;
+    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+    f_nonconstView[x_lid] = x_constView[x_lid] - this->value;
   }
 }
 
@@ -119,9 +123,10 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 template<typename Traits>
 Dirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::
-Dirichlet(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+Dirichlet(Teuchos::ParameterList& p)
+ : DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
@@ -137,7 +142,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::ArrayRCP<ST>       f_nonconstView;
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   bool fillResid = (f != Teuchos::null);
   if (fillResid) {
@@ -145,27 +149,29 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     f_nonconstView  = Albany::getNonconstLocalData(f);
   }
 
-  Teuchos::Array<LO> index(1);
-  Teuchos::Array<ST> value(1);
-  value[0] = j_coeff;
   Teuchos::Array<ST> matrixEntries;
   Teuchos::Array<LO> matrixIndices;
 
   if(this->isRandom)
     this->value.val() = this->distribution->fromNormalMapping(this->theta_as_field(0).val());  
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    int lunk = nsNodes[inode][this->offset];
-    index[0] = lunk;
+  const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  for (const auto& ep : ns_node_elem_pos) {
+    const int ielem = ep.first;
+    const int pos   = ep.second;
+    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
 
     // Extract the row, zero it out, then put j_coeff on diagonal
-    Albany::getLocalRowValues(jac,lunk,matrixIndices,matrixEntries);
+    Albany::getLocalRowValues(jac,x_lid,matrixIndices,matrixEntries);
     for (auto& val : matrixEntries) { val = 0.0; }
-    Albany::setLocalRowValues(jac, lunk, matrixIndices(), matrixEntries());
-    Albany::setLocalRowValues(jac, lunk, index(), value());
+    Albany::setLocalRowValues(jac, x_lid, matrixIndices(), matrixEntries());
+    Albany::setLocalRowValue(jac, x_lid, x_lid, j_coeff);
 
     if (fillResid) {
-      f_nonconstView[lunk] = x_constView[lunk] - this->value.val();
+      f_nonconstView[x_lid] = x_constView[x_lid] - this->value.val();
     }
   }
 }
@@ -175,9 +181,10 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 template<typename Traits>
 Dirichlet<PHAL::AlbanyTraits::Tangent, Traits>::
-Dirichlet(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
+Dirichlet(Teuchos::ParameterList& p)
+ : DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
@@ -212,7 +219,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   }
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   if(this->isRandom) {
     this->value = this->theta_as_field(0);
@@ -228,22 +234,28 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
         << this->value << " theta " << this->theta_as_field(0) << std::endl;
   }
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    int lunk = nsNodes[inode][this->offset];
+  const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+  const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  for (const auto& ep : ns_node_elem_pos) {
+    const int ielem = ep.first;
+    const int pos   = ep.second;
+    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
 
     if (dirichletWorkset.f != Teuchos::null) {
-      f_nonconstView[lunk] = x_constView[lunk] - this->value.val();
+      f_nonconstView[x_lid] = x_constView[x_lid] - this->value.val();
     }
 
     if (JV != Teuchos::null) {
       for (int i=0; i<dirichletWorkset.num_cols_x; i++) {
-        JV_nonconst2dView[i][lunk] = j_coeff*Vx_const2dView[i][lunk];
+        JV_nonconst2dView[i][x_lid] = j_coeff*Vx_const2dView[i][x_lid];
       }
     }
 
     if (fp != Teuchos::null) {
       for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
-        fp_nonconst2dView[i][lunk] = -this->value.dx(dirichletWorkset.param_offset+i);
+        fp_nonconst2dView[i][x_lid] = -this->value.dx(dirichletWorkset.param_offset+i);
       }
     }
   }
@@ -254,33 +266,37 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 template<typename Traits>
 Dirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-Dirichlet(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+Dirichlet(Teuchos::ParameterList& p)
+ : DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
 template <typename Traits>
-void
-Dirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::preEvaluate(
-    typename Traits::EvalData dirichletWorkset)
+void Dirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+preEvaluate(typename Traits::EvalData dirichletWorkset)
 {
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
   if (trans) {
-    auto Vp_bc = dirichletWorkset.Vp_bc;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> Vp_nonconst2dView = Albany::getNonconstLocalData(Vp_bc);
 
+    // For (df/dp)^T*V we zero out corresponding entries in V
+    auto Vp_bc = dirichletWorkset.Vp_bc;
+    auto data = Albany::getNonconstLocalData(Vp_bc);
     int num_cols = Vp_bc->domain()->dim();
 
-    const std::vector<std::vector<int> >& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      int lunk = nsNodes[inode][this->offset];
+    const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+    const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
+      const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
 
       for (int col=0; col<num_cols; ++col) {
-        Vp_nonconst2dView[col][lunk] = 0.0;
-       }
+        data[col][x_lid] = 0.0;
+      }
     }
   }
 }
@@ -293,18 +309,23 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   if (!trans) {
     // for (df/dp)*V we zero out corresponding entries in df/dp
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = 
-      Albany::getNonconstLocalData(dirichletWorkset.fpV);
+    auto fpV = dirichletWorkset.fpV;
+    auto fpV_data = Albany::getNonconstLocalData(fpV);
 
     int num_cols = dirichletWorkset.fpV->domain()->dim();
-    const std::vector<std::vector<int> >& nsNodes =
-      dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      int lunk = nsNodes[inode][this->offset];
+    const auto& ns_node_elem_pos = dirichletWorkset.nodeSets->at(this->nodeSetID);
+    const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+    const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
+      const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
 
       for (int col=0; col<num_cols; ++col) {
-        fpV_nonconst2dView[col][lunk] = 0.0;
+        fpV_data[col][x_lid] = 0.0;
       }
     }
   }
@@ -315,26 +336,31 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 // **********************************************************************
 template<typename Traits>
 Dirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::
-Dirichlet(Teuchos::ParameterList& p) :
-  DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits>(p)
+Dirichlet(Teuchos::ParameterList& p)
+ : DirichletBase<PHAL::AlbanyTraits::HessianVec, Traits>(p)
 {
+  // Nothing to do here
 }
 
 template <typename Traits>
 void
-Dirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::preEvaluate(
-    typename Traits::EvalData dirichlet_workset)
+Dirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::
+preEvaluate(typename Traits::EvalData dirichlet_workset)
 {
   const bool f_multiplier_is_active = !dirichlet_workset.hessianWorkset.f_multiplier.is_null();
-
-  const std::vector<std::vector<int> >& nsNodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
   if(f_multiplier_is_active) {
     auto f_multiplier_data = Albany::getNonconstLocalData(dirichlet_workset.hessianWorkset.f_multiplier);
 
-    for (size_t ns_node = 0; ns_node < nsNodes.size(); ns_node++) {
-      int const dof = nsNodes[ns_node][this->offset];
-      f_multiplier_data[dof] = 0.;
+    const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
+    const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+    const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
+      const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+      f_multiplier_data[x_lid] = 0.;
     }
   }
 }
@@ -342,8 +368,9 @@ Dirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::preEvaluate(
 // **********************************************************************
 template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::HessianVec, Traits>::
-evaluateFields(typename Traits::EvalData dirichletWorkset)
+evaluateFields(typename Traits::EvalData /* dirichletWorkset */)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************

@@ -27,6 +27,7 @@ endif()
 set(SOURCES
   evaluators/LandIce_BasalFrictionCoefficient.cpp
   evaluators/LandIce_BasalMeltRate.cpp
+  evaluators/LandIce_ColumnCouplingTestResidual.cpp
   evaluators/LandIce_Dissipation.cpp
   evaluators/LandIce_DOFDivInterpolationSide.cpp
   evaluators/LandIce_EnthalpyResid.cpp
@@ -64,6 +65,7 @@ set(SOURCES
   evaluators/LandIce_ViscosityFO.cpp
   evaluators/LandIce_w_Resid.cpp
   evaluators/LandIce_Time.cpp
+  problems/LandIce_ColumnCouplingTest.cpp
   problems/LandIce_Enthalpy.cpp
   problems/LandIce_Hydrology.cpp
   problems/LandIce_LaplacianSampling.cpp
@@ -91,6 +93,8 @@ set(HEADERS
   evaluators/LandIce_BasalFrictionCoefficient_Def.hpp
   evaluators/LandIce_BasalMeltRate.hpp
   evaluators/LandIce_BasalMeltRate_Def.hpp
+  evaluators/LandIce_ColumnCouplingTestResidual.hpp
+  evaluators/LandIce_ColumnCouplingTestResidual_Def.hpp
   evaluators/LandIce_Dissipation.hpp
   evaluators/LandIce_Dissipation_Def.hpp
   evaluators/LandIce_DOFDivInterpolationSide.hpp
@@ -186,6 +190,7 @@ set(HEADERS
   evaluators/hydrology/LandIce_HydrologyWaterDischarge_Def.hpp
   evaluators/hydrology/LandIce_HydrologyWaterThickness.hpp
   evaluators/hydrology/LandIce_HydrologyWaterThickness_Def.hpp
+  problems/LandIce_ColumnCouplingTest.hpp
   problems/LandIce_Enthalpy.hpp
   problems/LandIce_Hydrology.hpp
   problems/LandIce_LaplacianSampling.hpp

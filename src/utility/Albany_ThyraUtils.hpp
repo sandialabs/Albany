@@ -10,9 +10,6 @@
 // Get Kokkos types (for the 1d device view)
 #include "Albany_KokkosTypes.hpp"
 
-// Get DiscType
-#include "Albany_DiscretizationUtils.hpp"
-
 namespace Albany
 {
 
@@ -34,8 +31,6 @@ Teuchos::Array<GO> getGlobalElements (const Teuchos::RCP<const Thyra_VectorSpace
 bool sameAs (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
              const Teuchos::RCP<const Thyra_VectorSpace>& vs2);
 
-bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
-
 // The complement of the above: the specified components are the ones to keep
 Teuchos::RCP<const Thyra_VectorSpace>
 createSubspace (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
@@ -46,11 +41,6 @@ Teuchos::RCP<const Thyra_SpmdVectorSpace>
 createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
                    const Teuchos::ArrayView<const GO>& gids,
                    const GO globalDim = Teuchos::OrdinalTraits<GO>::invalid());
-
-// Create a vector VectorSpace from a scalar one.
-Teuchos::RCP<const Thyra_VectorSpace>
-createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
-                   const int numComponents, const DiscType discType);
 
 // Intersects vectors spaces
 Teuchos::RCP<const Thyra_VectorSpace>
@@ -64,6 +54,12 @@ Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
                               const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
                               const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+// Check/create a 1-1 vector space, where each element is owned by exactly one rank
+bool isOneToOne (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
 // ========= Thyra_LinearOp utilities ========= //
 
@@ -99,10 +95,33 @@ void setLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                         const Teuchos::ArrayView<const LO> indices,
                         const Teuchos::ArrayView<const ST> values);
 
+inline void setLocalRowValue (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                              const LO lrow, const LO lcol, const ST value)
+{
+  Teuchos::ArrayView<const LO> cols(&lcol,1);
+  Teuchos::ArrayView<const ST> vals(&value,1);
+  setLocalRowValues (lop,lrow,cols,vals);
+}
+
 void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
                           const LO lrow,
                           const Teuchos::ArrayView<const LO> indices,
                           const Teuchos::ArrayView<const ST> values);
+
+inline void addToLocalRowValues (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                                 const LO lrow, const int numValues,
+                                 const LO* indices, const ST* values)
+{
+  addToLocalRowValues (lop,lrow,
+                       Teuchos::arrayView(indices,numValues),
+                       Teuchos::arrayView(values,numValues));
+}
+
+inline void addToLocalRowValue (const Teuchos::RCP<Thyra_LinearOp>& lop,
+                                const LO lrow, const LO col, const ST value)
+{
+  addToLocalRowValues (lop,lrow,1,&col,&value);
+}
 
 void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val); 
 

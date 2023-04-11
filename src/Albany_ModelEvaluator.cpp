@@ -6,8 +6,6 @@
 
 #include "Albany_ModelEvaluator.hpp"
 
-#include "Teuchos_ScalarTraits.hpp"
-#include "Teuchos_TestForException.hpp"
 #include "Albany_ObserverImpl.hpp"
 #include "Albany_ThyraUtils.hpp"
 
@@ -15,7 +13,11 @@
 
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Hessian.hpp"
+#include "Albany_Utils.hpp"
 #include "Albany_StringUtils.hpp"
+
+#include "Teuchos_ScalarTraits.hpp"
+#include "Teuchos_TestForException.hpp"
 
 // uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -347,9 +349,8 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
     const std::string param_expr = param_list.get<std::string>("Parameter Analytic Expression");
     Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDisc();
     const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
-    Teuchos::RCP<const Thyra_VectorSpace> vec_space = disc->getVectorSpace();
     const int num_dims = app->getSpatialDimension();
-    const int num_nodes = vec_space->dim(); 
+    const int num_nodes = disc->getVectorSpace()->dim();
     /*const int num_dofs = ov_coords.size();
       std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs
                 << ", " << num_nodes << "\n"; 
@@ -577,8 +578,7 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
                 << "Hessian pp operator for response " << j << " and non-distributed parameter " << l1 << " can only be reconstructed via Hessian-vector products"
                 << std::endl); 
     return Albany::createDenseHessianLinearOp(param_vss[l1]);
-  }
-  else {
+  } else {
 
     // distributed parameters
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -589,15 +589,10 @@ ModelEvaluator::create_hess_g_pp( int j, int l1, int l2 ) const
             << "Invalid parameter index l1 = "
             << l1
             << std::endl);
-    const Teuchos::ParameterList& rList = app->getProblemPL()->sublist("Response Functions").sublist(util::strint("Response", j));
-    const std::string& name = rList.isParameter("Name") ? rList.get<std::string>("Name") : std::string("");
 
     if(HessVecProdBasedOp) {
-      Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOverlappedVectorSpace();
-      Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs = distParamLib->get(dist_param_names[l1 - num_param_vecs])->get_cas_manager()->getOwnedVectorSpace();
-      std::vector<IDArray> vElDofs =
-        distParamLib->get(dist_param_names[l1 - num_param_vecs])->workset_elem_dofs();
-      return Albany::createSparseHessianLinearOp(p_owned_vs, p_overlapped_vs, vElDofs);
+      const auto p = distParamLib->get(dist_param_names[l1-num_param_vecs]);
+      return Albany::createSparseHessianLinearOp(p);
     } else {
       Teuchos::RCP<Thyra_LinearOp> linOp = app->getResponse(j)->get_Hess_pp_operator(dist_param_names[l1 - num_param_vecs]);
       TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(linOp), std::logic_error, 

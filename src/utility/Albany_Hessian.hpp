@@ -2,8 +2,8 @@
 #define ALBANY_HESSIAN_HPP
 
 #include "Albany_LinearOpWithSolveDecorators.hpp"
-#include "Thyra_MultiVectorBase_decl.hpp"
-#include "Albany_StateInfoStruct.hpp"
+#include "Albany_DistributedParameter.hpp"
+#include "Albany_ThyraTypes.hpp"
 
 namespace Albany
 {
@@ -25,16 +25,10 @@ namespace Albany
    * This function computes the Thyra::LinearOp associated to
    * the Hessian w.r.t a distributed parameter.
    *
-   * \param p_owned_vs [in] Thyra::VectorSpace which specifies the owned entries of the current distributed parameter.
-   *
-   * \param p_overlapped_vs [in] Thyra::VectorSpace which specifies the overlapped entries of the current distributed parameter.
-   *
-   * \param wsElDofs [in] Vector of IDArray associated to the mesh used.
+   * \param p [in] Albany::DistributedParameter w.r.t which the Hessian is computed
    */
-  Teuchos::RCP<MatrixBased_LOWS> createSparseHessianLinearOp(
-      Teuchos::RCP<const Thyra_VectorSpace> p_owned_vs,
-      Teuchos::RCP<const Thyra_VectorSpace> p_overlapped_vs,
-      const std::vector<IDArray> wsElDofs);
+   Teuchos::RCP<Thyra_LinearOp> createSparseHessianLinearOp(
+        const Teuchos::RCP<const DistributedParameter>& p);
 
   /**
    * \brief getHessianBlockIDs function

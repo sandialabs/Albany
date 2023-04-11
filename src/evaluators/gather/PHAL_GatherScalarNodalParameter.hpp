@@ -46,9 +46,10 @@ public:
   virtual ~GatherScalarNodalParameterBase() = default;
 
 protected:
+
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  const std::size_t numNodes;
+  const int numNodes;
   const std::string param_name;
 
   // Output:

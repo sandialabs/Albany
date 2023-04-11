@@ -24,6 +24,10 @@
 #include "PHAL_Utilities.hpp"
 #include "Albany_MaterialDatabase.hpp"
 
+namespace Albany {
+  class DOFManager;
+}
+
 namespace PHAL {
 
 /** \brief Neumann boundary condition evaluator
@@ -107,6 +111,8 @@ protected:
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
 
+  void gather_fields_offsets (const Albany::DOFManager& dof_mgr);
+
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
@@ -165,6 +171,10 @@ protected:
   std::vector<ScalarT> dudx;
 
   std::vector<ScalarT> matScaling;
+
+  // Offsets of solution field(s) inside a single element, as per the DOFManager
+  // Note: fields_offsets[inode][ifield] = dof_lid of ifield-th DOF within elem
+  std::vector<std::vector<int>> fields_offsets;
 
   MDFieldMemoizer<Traits> memoizer;
 };

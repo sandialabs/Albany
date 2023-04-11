@@ -166,12 +166,14 @@ StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Gather hydro dofs
-  ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_names, basalSideName, cellType, hydro_dof_offset);
-  fm0.template registerEvaluator<EvalT> (ev);
+  for (int i=0; i<hydro_dofs_names.size(); ++i) {
+    ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_names[i], basalSideName, cellType, hydro_dof_offset + i);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
 
-  if (unsteady) {
+  for (int i=0; i<hydro_dofs_dot_names.size(); ++i) {
     // Gather prognostic hydro dofs
-    ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_dot_names,basalSideName, cellType, hydro_dof_dot_offset);
+    ev = evalUtils.constructGatherSolutionSideEvaluator (hydro_dofs_dot_names[i],basalSideName, cellType, hydro_dof_dot_offset + i);
     fm0.template registerEvaluator<EvalT> (ev);
   }
 
@@ -192,7 +194,7 @@ StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   ev = evalUtils.constructScatterResidualEvaluator(true, stokes_resids_names, stokes_dof_offset, scatter_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructScatterSideEqnResidualEvaluator(cellType,basalSideName,false,false,hydro_resids_names,hydro_dof_offset,scatter_names[1]);
+  ev = evalUtils.constructScatterSideEqnResidualEvaluator(basalSideName,false,hydro_resids_names,hydro_dof_offset,scatter_names[1]);
   fm0.template registerEvaluator<EvalT> (ev);
 
   return tag;

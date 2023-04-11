@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_AbstractDiscretization.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -74,7 +76,7 @@ void FastSolutionTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, t
 evaluateFields(typename Traits::EvalData workset)
 {
   const int num_dof = this->val_node(0,0,0,0).size();
-  const int neq = workset.wsElNodeEqID.extent(2);
+  const int neq = workset.disc->getDOFManager()->getNumFields();
   const auto vecDim = this->vecDim;
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < this->numQPs; ++qp) {

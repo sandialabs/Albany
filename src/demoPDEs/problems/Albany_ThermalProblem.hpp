@@ -134,7 +134,6 @@ Albany::ThermalProblem::constructEvaluators(
 {
   using PHAL::AlbanyTraits;
   using PHX::DataLayout;
-  using PHX::MDALayout;
   using std::string;
   using std::vector;
   using Teuchos::ParameterList;
@@ -161,19 +160,19 @@ Albany::ThermalProblem::constructEvaluators(
   // Get the solution method type
   SolutionMethodType SolutionType = getSolutionMethod();
 
-  ALBANY_PANIC(
-      SolutionType == SolutionMethodType::Unknown,
+  ALBANY_ASSERT(
+      SolutionType != SolutionMethodType::Unknown,
       "Solution Method must be Steady, Transient, "
       "Continuation");
   
   if (SolutionType == SolutionMethodType::Transient) { // Problem is transient
-    ALBANY_PANIC(
-        number_of_time_deriv != 1,
+    ALBANY_ASSERT(
+        number_of_time_deriv == 1,
         "You are using a transient solution method in Albany::ThermalProblem but number of time derivatives != 1!"); 
   }
   else { //Problem is steady
-    ALBANY_PANIC(
-        number_of_time_deriv > 0,
+    ALBANY_ASSERT(
+        number_of_time_deriv == 0,
         "You are using a steady solution method in Albany::ThermalProblem but number of time derivatives > 0!");
   } 
 

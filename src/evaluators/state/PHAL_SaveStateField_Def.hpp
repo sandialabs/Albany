@@ -50,15 +50,28 @@ SaveStateField(const Teuchos::ParameterList& p)
   Teuchos::RCP<PHX::DataLayout> layout = p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout");
   field = decltype(field)(fieldName, layout );
 
-  if (layout->name(0) != PHX::print<Cell>() && layout->name(0) != PHX::print<Node>())
-  {
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      layout->name(0)!=PHX::print<Cell>() &&
+      layout->name(0)!=PHX::print<Dim>() &&
+      layout->name(0)!=PHX::print<Dummy>(), std::runtime_error,
+      "Error! Invalid state layout. Supported cases:\n"
+      " - <Cell, Node [,Dim]>\n"
+      " - <Cell, QuadPoint [,Dim]>\n"
+      " - <Cell [,Dim [,Dim [,Dim]]]\n"
+      " - <Dim [,Dim]>\n"
+      " - <Dummy]>\n");
+  if (layout->name(0) != PHX::print<Cell>()) {
     worksetState = true;
     nodalState = false;
-  }
-  else
-  {
+    TEUCHOS_TEST_FOR_EXCEPTION (layout->rank()>2, Teuchos::Exceptions::InvalidParameter,
+        "Error! Only rank<=2 workset states supported.\n");
+  } else {
     worksetState = false;
-    nodalState = p.isParameter("Nodal State") ? p.get<bool>("Nodal State") : false;
+    nodalState = layout->rank()>1 && layout->name(1)==PHX::print<Node>();
+    TEUCHOS_TEST_FOR_EXCEPTION (nodalState && layout->rank()>3, Teuchos::Exceptions::InvalidParameter,
+        "Error! Only scalar/vector nodal states supported.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (!nodalState && layout->rank()>5, Teuchos::Exceptions::InvalidParameter,
+        "Error! Only rank<=4 elem states supported.\n");
   }
 
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
@@ -79,13 +92,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(field,fm);
 
-  if (nodalState)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().size()<2, Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a nodal state, pass the cell-based version of it (<Cell,Node,...>).\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().name(1)!=PHX::print<Node>(), Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a nodal state, the second tag of the layout MUST be 'Node'.\n");
-  }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
@@ -211,8 +217,6 @@ saveNodeState(typename Traits::EvalData workset)
   stk::mesh::MetaData& metaData = *mesh->metaData;
   stk::mesh::BulkData& bulkData = *mesh->bulkData;
 
-  const auto& wsElNodeID = disc->getWsElNodeID();
-
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
 
@@ -222,35 +226,42 @@ saveNodeState(typename Traits::EvalData workset)
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
 
-  GO nodeId;
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
+  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
+
+  const auto& cell_indexer = node_dof_mgr->cell_indexer();
+
   double* values;
   stk::mesh::Entity e;
-  switch (dims.size())
-  {
+  switch (dims.size()) {
     case 2:   // node_scalar
       scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
       TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        for (unsigned int node=0; node<dims[1]; ++node)
-        {
-          nodeId = wsElNodeID[workset.wsIndex][cell][node];
-          e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
-          values = stk::mesh::field_data(*scalar_field, e);
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        const int elem_LID = elem_lids[cell];
+        const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
+        const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
+        const auto* nodes = bulkData.begin_nodes(elem);
+        for (unsigned int node=0; node<dims[1]; ++node) {
+          values = stk::mesh::field_data(*scalar_field, nodes[node]);
           values[0] = field(cell,node);
         }
+      }
       break;
     case 3:   // node_vector
       vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
       TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        for (unsigned int node=0; node<dims[1]; ++node)
-        {
-          nodeId = wsElNodeID[workset.wsIndex][cell][node];
-          e = bulkData.get_entity(stk::topology::NODE_RANK, nodeId+1);
-          values = stk::mesh::field_data(*vector_field, e);
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        const int elem_LID = elem_lids[cell];
+        const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
+        const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
+        const auto* nodes = bulkData.begin_nodes(elem);
+        for (unsigned int node=0; node<dims[1]; ++node) {
+          values = stk::mesh::field_data(*vector_field, nodes[node]);
           for (unsigned int i=0; i<dims[2]; ++i)
             values[i] = field(cell,node,i);
         }
+      }
       break;
     default:  // error!
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");

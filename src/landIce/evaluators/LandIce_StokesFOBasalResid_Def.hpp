@@ -101,8 +101,8 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::
 operator() (const StokesFOBasalResid_Tag&, const int& sideSet_idx) const {
   
   // Get the local data of side and cell
-  const int cell = sideSet.elem_LID(sideSet_idx);
-  const int side = sideSet.side_local_id(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx(sideSet_idx);
+  const int side = sideSet.side_pos(sideSet_idx);
 
   ScalarT local_res[2];
 

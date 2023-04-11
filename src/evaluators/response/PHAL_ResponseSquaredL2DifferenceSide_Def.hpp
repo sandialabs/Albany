@@ -99,8 +99,9 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
 
   this->setName("Response Squared L2 Error Side" + PHX::print<EvalT>());
 
-  if(plist->isParameter("Response Depends On Solution Column") && plist->get<bool>("Response Depends On Solution Column"))
-    cell_topo = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem")->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
+  resp_depends_on_sol_column =
+    plist->isParameter("Response Depends On Solution Column") &&
+    plist->get<bool>("Response Depends On Solution Column");
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -186,7 +187,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of cell
-          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -207,7 +208,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of cell
-          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -238,7 +239,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of cell
-          const int cell = sideSet.elem_LID(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -279,8 +280,9 @@ evaluateFields(typename Traits::EvalData workset)
   else
     PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
 
-  if(Teuchos::nonnull(cell_topo))
-    PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToColumnContraction(workset,sideSetName, cell_topo);
+  if(resp_depends_on_sol_column) {
+    Base::evaluate2DFieldsDerivativesDueToColumnContraction(workset,sideSetName);
+  }
 }
 
 // **********************************************************************

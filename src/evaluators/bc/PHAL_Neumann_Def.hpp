@@ -3,17 +3,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "PHAL_Neumann.hpp"
+
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
+#include "Albany_DOFManager.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-
-#include "Albany_ThyraUtils.hpp"
-#include "Albany_ProblemUtils.hpp"
-#include "Albany_DistributedParameterLibrary.hpp"
-#include "PHAL_Neumann.hpp"
-
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -234,6 +235,26 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
+gather_fields_offsets (const Albany::DOFManager& dof_mgr) {
+  // Do this only once
+  if (fields_offsets.size()==0) {
+    fields_offsets.resize(this->numNodes);
+    for (auto& o : fields_offsets) {
+      o.resize(this->numDOFsSet);
+    }
+
+    const int neq = dof_mgr.getNumFields();
+    for (int eq=0; eq<neq; ++eq){
+      const auto& offsets = dof_mgr.getGIDFieldOffsets(eq);
+      for (int i=0; i<this->numNodes; ++i) {
+        fields_offsets[i][eq] = offsets[i];
+      }
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+void NeumannBase<EvalT, Traits>::
 evaluateNeumannContribution(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
@@ -343,7 +364,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   std::vector<std::vector<Kokkos::DynRankView<int, PHX::Device> > > cellsOnSidesOnBlocks;
   for (auto const& it_side : sideSet) {
     const int ebIndex = it_side.elem_ebIndex;
-    const int elem_side = it_side.side_local_id;
+    const int elem_side = it_side.side_pos;
 
     if(ordinalEbIndex.insert(std::pair<int,int>(ebIndex,ordinalEbIndex.size())).second) {
       numCellsOnSidesOnBlocks.push_back(std::vector<int>(numSidesOnElem, 0));
@@ -363,10 +384,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
   for (auto const& it_side : sideSet) {
     const int iBlock = ordinalEbIndex[it_side.elem_ebIndex];
-    const int elem_LID = it_side.elem_LID;
-    const int elem_side = it_side.side_local_id;
+    const int ws_elem_idx = it_side.ws_elem_idx;
+    const int elem_side = it_side.side_pos;
 
-    cellsOnSidesOnBlocks[iBlock][elem_side](numCellsOnSidesOnBlocks[iBlock][elem_side]++) = elem_LID;
+    cellsOnSidesOnBlocks[iBlock][elem_side](numCellsOnSidesOnBlocks[iBlock][elem_side]++) = ws_elem_idx;
   }
 
   // Loop over the sides that form the boundary condition
@@ -746,18 +767,30 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_Vector> f = workset.f;
   Teuchos::ArrayRCP<ST> f_nonconstView = Albany::getNonconstLocalData(f);
+
+  constexpr auto ALL = Kokkos::ALL();
+  const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto dof_mgr   = workset.disc->getDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+
+  // Get offsets of the residual(s) dofs inside each element
+  this->gather_fields_offsets(*dof_mgr);
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
 
   // Place it at the appropriate offset into F
+  const auto& offsets = this->fields_offsets;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (int node = 0; node < this->numNodes; ++node)
-      for (int dim = 0; dim < this->numDOFsSet; ++dim){
-        f_nonconstView[nodeID(cell,node,this->offset[dim])] += this->neumann(cell, node, dim);
+    const auto elem_LID = elem_lids(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+    for (unsigned node=0; node<this->numNodes; ++node) {
+      for (int dim=0; dim<this->numDOFsSet; ++dim) {
+        const int eq = this->offset[dim];
+        f_nonconstView[dof_lids(offsets[node][eq])] += this->neumann(cell,node,dim);
+      }
     }
   }
 }
@@ -831,7 +864,13 @@ evaluateFields(typename Traits::EvalData workset)
 //to be looked into.
 //
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  auto nodeID = workset.wsElNodeEqID;
+  const auto ALL = Kokkos::ALL();
+  const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto dof_mgr = workset.disc->getDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+
+  // Get offsets of the residual(s) dofs inside each element
+  this->gather_fields_offsets(*dof_mgr);
 
   Teuchos::RCP<Thyra_Vector>   f   = workset.f;
   Teuchos::RCP<Thyra_LinearOp> jac = workset.Jac;
@@ -844,42 +883,46 @@ evaluateFields(typename Traits::EvalData workset)
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
   int lcol;
-  Teuchos::Array<LO> row(1);
-  Teuchos::Array<LO> col(1);
-  Teuchos::Array<ST> value(1);
+  LO row, col;
+  ST value;
 
+  const int neq = dof_mgr->getNumFields();
+
+  const auto& offsets = this->fields_offsets;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (int node = 0; node < this->numNodes; ++node)
+    const auto elem_LID = elem_lids(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+    for (int node=0; node<this->numNodes; ++node) {
       for (int dim = 0; dim < this->numDOFsSet; ++dim){
 
-      row[0] = nodeID(cell,node,this->offset[dim]);
+        const int row_eq = this->offset[dim];
+        row = dof_lids(offsets[node][row_eq]);
 
-      int neq = nodeID.extent(2);
+        if (f != Teuchos::null) {
+          f_nonconstView[row] += this->neumann(cell, node, dim).val();
+        }
 
-      if (f != Teuchos::null) {
-        f_nonconstView[row[0]] += this->neumann(cell, node, dim).val();
-      }
+        // Check derivative array is nonzero
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
 
-      // Check derivative array is nonzero
-      if (this->neumann(cell, node, dim).hasFastAccess()) {
+          // Loop over nodes in element
+          for (int node_col=0; node_col<this->numNodes; node_col++){
 
-        // Loop over nodes in element
-        for (int node_col=0; node_col<this->numNodes; node_col++){
+            // Loop over equations per node
+            for (int eq_col=0; eq_col<neq; eq_col++) {
+              lcol = neq * node_col + eq_col;
 
-          // Loop over equations per node
-          for (int eq_col=0; eq_col<neq; eq_col++) {
-            lcol = neq * node_col + eq_col;
-
-            // Global column
-            col[0] =  nodeID(cell,node_col,eq_col);
-            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
-            // Sum Jacobian
-            Albany::addToLocalRowValues(jac,row[0],col(),value());
-          } // column equations
-        } // column nodes
-      } // has fast access
-    }
-  }
+              // Global column
+              col = dof_lids(offsets[node_col][eq_col]);
+              value = this->neumann(cell, node, dim).fastAccessDx(lcol);
+              // Sum Jacobian
+              Albany::addToLocalRowValue(jac,row,col,value);
+            } // column equations
+          } // column nodes
+        } // has fast access
+      } // dim loop
+    } // node loop
+  } // cell loop
 }
 
 // **********************************************************************
@@ -898,7 +941,13 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
+  const auto ALL = Kokkos::ALL();
+  const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto dof_mgr = workset.disc->getDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+
+  // Get offsets of the residual(s) dofs inside each element
+  this->gather_fields_offsets(*dof_mgr);
 
   Teuchos::RCP<Thyra_Vector>       f = workset.f;
   Teuchos::RCP<Thyra_MultiVector> JV = workset.JV;
@@ -922,11 +971,14 @@ evaluateFields(typename Traits::EvalData workset)
 
   this->evaluateNeumannContribution(workset);
 
+  const auto& offsets = this->fields_offsets;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (int node = 0; node < this->numNodes; ++node) {
+    const auto elem_LID = elem_lids(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+    for (int node=0; node<this->numNodes; ++node) {
       for (int dim = 0; dim < this->numDOFsSet; ++dim){
-
-        int row = nodeID(cell,node,this->offset[dim]);
+        const int row_eq = this->offset[dim];
+        const int row = dof_lids(offsets[node][row_eq]);
 
         if (f != Teuchos::null) {
           f_nonconstView[row] += this->neumann(cell, node, dim).val();
@@ -956,6 +1008,7 @@ Neumann<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
@@ -963,27 +1016,32 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
   Teuchos::RCP<Thyra_MultiVector> fpV = workset.fpV;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> fpV_nonconst2dView = Albany::getNonconstLocalData(fpV);
 
-  bool trans = workset.transpose_dist_param_deriv;
-  int num_cols = workset.Vp->domain()->dim();
+  const bool trans = workset.transpose_dist_param_deriv;
+  const int num_cols = workset.Vp->domain()->dim();
 
   // Fill the local "neumann" array with cell contributions
 
   this->evaluateNeumannContribution(workset);
 
+  constexpr auto ALL = Kokkos::ALL();
   if (trans) {
-    int neq = workset.numEqs;
-    const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
+    const int neq = workset.numEqs;
+    const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
+    const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+    const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
+    for (size_t cell=0; cell<workset.numCells; ++cell) {
+      const auto& local_Vp = workset.local_Vp[cell];
       const int num_deriv = local_Vp.size()/neq;
+      const auto elem_LID = elem_lids(cell);
+      const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
       for (int i=0; i<num_deriv; i++) {
-        const LO row = wsElDofs((int)cell,i,0);
+        const LO row = p_dof_lids(i);
         if(row<0) { continue; }
+
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
           for (int node = 0; node < this->numNodes; ++node) {
@@ -997,13 +1055,21 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   } else {
+    const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+    const auto dof_mgr = workset.disc->getDOFManager();
+    const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+
+    const auto& offsets = this->fields_offsets;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
+      const auto elem_LID = elem_lids(cell);
+      const auto& local_Vp = workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
 
-      for (int node = 0; node < this->numNodes; ++node) {
+      const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+      for (int node=0; node<this->numNodes; ++node) {
         for (int dim = 0; dim < this->numDOFsSet; ++dim){
-          const int row = nodeID(cell,node,this->offset[dim]);
+          const int row_eq = this->offset[dim];
+          const int row = dof_lids(offsets[node][row_eq]);
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
@@ -1026,12 +1092,13 @@ Neumann<PHAL::AlbanyTraits::HessianVec, Traits>::
 Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::HessianVec,Traits>(p)
 {
+  // Nothing to do here
 }
 
 // **********************************************************************
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::HessianVec, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "HessianVec specialization of Neumann::evaluateFields is not implemented yet"<< std::endl);
 }
@@ -1063,7 +1130,7 @@ NeumannAggregator(const Teuchos::ParameterList& p)
 template<typename EvalT, typename Traits>
 void NeumannAggregator<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm)
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }

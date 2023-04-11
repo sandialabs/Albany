@@ -18,6 +18,8 @@
 #include "LandIce_w_Resid.hpp"
 #include "LandIce_SurfaceAirEnthalpy.hpp"
 
+#include "PHAL_GatherCoordinateVector.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 

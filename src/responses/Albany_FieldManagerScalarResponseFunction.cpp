@@ -223,15 +223,14 @@ template<typename EvalT>
 void FieldManagerScalarResponseFunction::
 evaluate(PHAL::Workset& workset)
 {
-  const WorksetArray<int>::type&
-    wsPhysIndex = application->getDiscretization()->getWsPhysIndex();
+  const auto& wsPhysIndex = application->getDiscretization()->getWsPhysIndex();
   rfm->preEvaluate<EvalT>(workset);
   for (int ws = 0, numWorksets = application->getNumWorksets();
        ws < numWorksets; ws++) {
     if (element_block_index >= 0 && element_block_index != wsPhysIndex[ws])
       continue;
     const std::string evalName = PHAL::evalName<EvalT>("RFM", wsPhysIndex[ws]) + "_" + vis_response_name;
-    application->loadWorksetBucketInfo<EvalT>(workset, ws, evalName);
+    application->loadWorksetBucketInfo(workset, ws, evalName);
     rfm->evaluateFields<EvalT>(workset);
   }
   rfm->postEvaluate<EvalT>(workset);

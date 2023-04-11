@@ -27,7 +27,6 @@ namespace Albany {
 class AbstractDiscretization;
 class CombineAndScatterManager;
 class DistributedParameterLibrary;
-
 }  // namespace Albany
 
 namespace PHAL {
@@ -66,11 +65,6 @@ struct HessianWorkset
 
 struct Workset
 {
-  Workset()
-      : transientTerms(false), accelerationTerms(false), ignore_residual(false)
-  {
-  }
-
   unsigned int numCells;
   unsigned int wsIndex;
   unsigned int numEqs;
@@ -135,8 +129,6 @@ struct Workset
   bool                                              transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>> local_Vp;
 
-  Albany::WorksetConn                           wsElNodeEqID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>      wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>> wsCoords;
   std::string                                   EBName;
 
@@ -148,15 +140,15 @@ struct Workset
 
   Albany::StateArray* stateArrayPtr;
 
-  bool transientTerms;
-  bool accelerationTerms;
+  bool transientTerms     = false;
+  bool accelerationTerms  = false;
 
   // Flag indicating whether to ignore residual calculations in the
   // Jacobian calculation.  This only works for some problems where the
   // the calculation of the Jacobian doesn't require calculation of the
   // residual (such as linear problems), but if it does work it can
   // significantly reduce Jacobian calculation cost.
-  bool ignore_residual;
+  bool ignore_residual    = false;
 
   // New field manager response stuff
   Teuchos::RCP<const Teuchos_Comm> comm;
@@ -208,25 +200,6 @@ struct Workset
       typedef Teuchos::RCP<Teuchos::ValueTypeSerializer<int, T>> type;
     };
   };
-
-  void
-  print(std::ostream& os)
-  {
-    os << "Printing workset data:" << std::endl;
-    os << "\tEB name : " << EBName << std::endl;
-    os << "\tnumCells : " << numCells << std::endl;
-    os << "\twsElNodeEqID : " << std::endl;
-    for (unsigned int i = 0; i < wsElNodeEqID.extent(0); i++)
-      for (unsigned int j = 0; j < wsElNodeEqID.extent(1); j++)
-        for (unsigned int k = 0; k < wsElNodeEqID.extent(2); k++)
-          os << "\t\twsElNodeEqID(" << i << "," << j << "," << k
-             << ") = " << wsElNodeEqID(i, j, k) << std::endl;
-    os << "\twsCoords : " << std::endl;
-    for (int i = 0; i < wsCoords.size(); i++)
-      for (int j = 0; j < wsCoords[i].size(); j++)
-        os << "\t\tcoord0:" << wsCoords[i][j][0] << "][" << wsCoords[i][j][1]
-           << std::endl;
-  }
 };
 
 }  // namespace PHAL

@@ -42,7 +42,6 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   bed            = decltype(bed)(bed_name, dl_basal->node_scalar);
   coords         = decltype(coords)(coords_name, dl_basal->vertices_vector);
 
-  cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
 
@@ -75,7 +74,7 @@ ResponseGLFlux(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::setup(p, dl);
+  Base::setup(p, dl);
 }
 
 // **********************************************************************
@@ -83,7 +82,7 @@ template<typename EvalT, typename Traits, typename ThicknessST>
 void ResponseGLFlux<EvalT, Traits,ThicknessST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
-  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
+  Base::postRegistrationSetup(d, fm);
   gl_func = Kokkos::createDynRankView(bed.get_view(), "gl_func", numSideNodes);
   H = Kokkos::createDynRankView(bed.get_view(), "H", 2);
 
@@ -101,17 +100,19 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessST>
-void ResponseGLFlux<EvalT, Traits, ThicknessST>::preEvaluate(typename Traits::PreEvalData workset) {
+void ResponseGLFlux<EvalT, Traits, ThicknessST>::
+preEvaluate(typename Traits::PreEvalData workset)
+{
   PHAL::set(this->global_response_eval, 0.0);
 
-
   // Do global initialization
-  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
+  Base::preEvaluate(workset);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessST>
-void ResponseGLFlux<EvalT, Traits, ThicknessST>::evaluateFields(typename Traits::EvalData workset)
+void ResponseGLFlux<EvalT, Traits, ThicknessST>::
+evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets == Teuchos::null)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
@@ -126,7 +127,7 @@ void ResponseGLFlux<EvalT, Traits, ThicknessST>::evaluateFields(typename Traits:
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of cell
-      const int cell = sideSet.elem_LID(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx(sideSet_idx);
 
       for (unsigned int inode=0; inode<numSideNodes; ++inode) {
         gl_func(inode) = rho_i*thickness(sideSet_idx,inode)+rho_w*bed(sideSet_idx,inode);
@@ -189,13 +190,15 @@ void ResponseGLFlux<EvalT, Traits, ThicknessST>::evaluateFields(typename Traits:
   }
 
   // Do any local-scattering necessary
-  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluateFields(workset);
-  PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::evaluate2DFieldsDerivativesDueToColumnContraction(workset,basalSideName, cell_topo);
+  Base::evaluateFields(workset);
+  Base::evaluate2DFieldsDerivativesDueToColumnContraction(workset,basalSideName);
 }
 
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessST>
-void ResponseGLFlux<EvalT, Traits, ThicknessST>::postEvaluate(typename Traits::PostEvalData workset) {
+void ResponseGLFlux<EvalT, Traits, ThicknessST>::
+postEvaluate(typename Traits::PostEvalData workset)
+{
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response_eval);
@@ -207,7 +210,9 @@ void ResponseGLFlux<EvalT, Traits, ThicknessST>::postEvaluate(typename Traits::P
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessST>
 Teuchos::RCP<const Teuchos::ParameterList>
-ResponseGLFlux<EvalT, Traits, ThicknessST>::getValidResponseParameters() const {
+ResponseGLFlux<EvalT, Traits, ThicknessST>::
+getValidResponseParameters() const
+{
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("Valid ResponseGLFlux Params"));
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);

@@ -142,8 +142,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
 
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
+      const int elem_LID = sideSet[iSide].ws_elem_idx;
+      const int elem_side = sideSet[iSide].side_pos;
 
       const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
       sideType = Teuchos::rcp(new shards::CellTopology(side.topology));

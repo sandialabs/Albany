@@ -9,13 +9,6 @@
 
 #include "Albany_config.h"
 
-#include "Teuchos_ArrayRCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_SerialDenseMatrix.hpp"
-#include "Teuchos_TimeMonitor.hpp"
-#include "Teuchos_VerboseObject.hpp"
-
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
@@ -24,26 +17,29 @@
 #include "SolutionManager.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
-#include "Sacado_ScalarParameterLibrary.hpp"
-#include "Sacado_ScalarParameterVector.hpp"
-
-#include <set>
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Setup.hpp"
 #include "PHAL_Workset.hpp"
+
+#include "Sacado_ParameterAccessor.hpp"
+#include "Sacado_ParameterRegistration.hpp"
+#include "Sacado_ScalarParameterLibrary.hpp"
+#include "Sacado_ScalarParameterVector.hpp"
+
+#include "Teuchos_ArrayRCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_SerialDenseMatrix.hpp"
+#include "Teuchos_TimeMonitor.hpp"
+#include "Teuchos_VerboseObject.hpp"
+
+#include <set>
 
 namespace Albany {
 
 class Application
 {
 public:
-
-  enum SolutionMethod
-  {
-    Steady,
-    Transient,
-    Continuation
-  };
 
   enum SolutionStatus
   {
@@ -94,10 +90,6 @@ public:
   Teuchos::RCP<const Thyra_VectorSpace>
   getVectorSpace() const;
 
-  //! Get Thyra DOF dual vector space
-  Teuchos::RCP<const Thyra_VectorSpace>
-  getDualVectorSpace() const;
-
   //! Create Jacobian operator
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const;
@@ -139,7 +131,7 @@ public:
   getDistributedParameterLibrary() const;
 
   //! Get solution method
-  SolutionMethod
+  SolutionMethodType
   getSolutionMethod() const
   {
     return solMethod;
@@ -1004,11 +996,7 @@ void
       Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
   //! Access to number of worksets - needed for working with StateManager
-  int
-  getNumWorksets()
-  {
-    return disc->getWsElNodeEqID().size();
-  }
+  int getNumWorksets() const { return disc->getNumWorksets(); }
 
   //! Const access to problem parameter list
   Teuchos::RCP<const Teuchos::ParameterList>
@@ -1048,7 +1036,6 @@ void
 
  public:
   //! Routine to get workset (bucket) size info needed by all Evaluation types
-  template <typename EvalT>
   void
   loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
       const std::string& evalName);
@@ -1210,15 +1197,13 @@ void
   //! Phalanx Field Manager for states
   Teuchos::Array<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
 
-  bool explicit_scheme;
-
   //! Data for Physics-Based Preconditioners
   bool                                 physicsBasedPreconditioner;
   Teuchos::RCP<Teuchos::ParameterList> precParams;
   std::string                          precType;
 
   //! Type of solution method
-  SolutionMethod solMethod;
+  SolutionMethodType solMethod;
 
   //! Integer specifying whether user wants to write Jacobian to MatrixMarket
   //! file
@@ -1294,39 +1279,6 @@ void
   mutable bool adjoint_sens{false}; 
 
 };
-
-template <typename EvalT>
-void
-Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
-    const std::string& evalName)
-{
-  auto const& wsElNodeEqID       = disc->getWsElNodeEqID();
-  auto const& wsElNodeID         = disc->getWsElNodeID();
-  auto const& coords             = disc->getCoords();
-  auto const& wsEBNames          = disc->getWsEBNames();
-
-  workset.numCells             = wsElNodeEqID[ws].extent(0);
-  workset.wsElNodeEqID         = wsElNodeEqID[ws];
-  workset.wsElNodeID           = wsElNodeID[ws];
-  workset.wsCoords             = coords[ws];
-  workset.EBName               = wsEBNames[ws];
-  workset.wsIndex              = ws;
-
-  workset.local_Vp.resize(workset.numCells);
-
-  workset.savedMDFields = phxSetup->get_saved_fields(evalName);
-
-  //  workset.print(*out);
-
-  // Sidesets are integrated within the Cells
-  loadWorksetSidesetInfo(workset, ws);
-
-  workset.stateArrayPtr =
-      &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
-#if defined(ALBANY_EPETRA)
-  workset.disc         = disc;  // Needed by LandIce for sideset DOF save
-#endif
-}
 
 }  // namespace Albany
 

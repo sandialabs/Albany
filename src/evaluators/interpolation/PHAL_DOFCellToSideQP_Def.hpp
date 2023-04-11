@@ -122,8 +122,8 @@ evaluateFields(typename Traits::EvalData workset)
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
   for (auto const& it_side : sideSet) {
     // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
+    const int cell = it_side.ws_elem_idx;
+    const int side = it_side.side_pos;
 
     switch (layout) {
       case CELL_SCALAR:

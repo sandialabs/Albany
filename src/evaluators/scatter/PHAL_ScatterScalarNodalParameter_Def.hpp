@@ -48,7 +48,8 @@ template<typename EvalT, typename Traits>
 void ScatterScalarNodalParameter<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData /* workset */)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "PHAL::ScatterScalarNodalParameter is supposed to be used only for Residual evaluation Type.");
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+    "PHAL::ScatterScalarNodalParameter is supposed to be used only for EvalT=Residual\n");
 }
 
 // **********************************************************************
@@ -66,8 +67,8 @@ evaluateFields(typename Traits::EvalData /* workset */)
 template<typename Traits>
 ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+                            const Teuchos::RCP<Albany::Layouts>& dl)
+  : ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
 {
   // Create field tag
   nodal_field_tag =
@@ -76,31 +77,28 @@ ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
   this->addEvaluatedField(*nodal_field_tag);
 }
 
-
 // **********************************************************************
 template<typename Traits>
 void ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+  // Check for early return
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
+    return;
 
-  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
-  Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
-  Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
+  const auto param = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getNonconstLocalData(param->vector());
 
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
-  auto param_overlap_vs = workset.distParamLib->get(this->param_name)->overlap_vector_space();
-  auto param_vs = pvec->range();
+  const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
+  const int  p_local_subdim = p_data.size();
 
-  auto param_indexer = Albany::createGlobalLocalIndexer(param_vs);
-  auto param_ov_indexer = Albany::createGlobalLocalIndexer(param_overlap_vs);
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lid_overlap = wsElDofs((int)cell,(int)node,0);
-      const GO gid_overlap = param_ov_indexer->getGlobalElement(lid_overlap);
-      const LO lid = param_indexer->getLocalElement(gid_overlap);
-      if(lid >= 0) {
-       pvec_view[lid] = (this->val)(cell,node);
+  for (size_t cell=0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    for (int node=0; node<this->numNodes; ++node) {
+      const LO lid = p_elem_dof_lids(elem_LID,node);
+      if (lid>=0 && lid<p_local_subdim) { // Exploit the fact that owned lids come before ghosted lids
+        p_data[lid] = this->val(cell,node);
       }
     }
   }
@@ -109,14 +107,13 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename Traits>
 ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 ScatterScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+                           const Teuchos::RCP<Albany::Layouts>& dl)
+ : ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
 {
   fieldLevel = p.get<int>("Field Level");
 
   // Create field tag
-  nodal_field_tag =
-    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+  nodal_field_tag = Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
 
   this->addEvaluatedField(*nodal_field_tag);
 }
@@ -125,26 +122,33 @@ template<typename Traits>
 void ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
+  // Check for early return
+  if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
+    return;
 
-  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
-  Teuchos::RCP<Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->vector();
-  Teuchos::ArrayRCP<ST> pvec_view = Albany::getNonconstLocalData(pvec);
+  const auto& param = workset.distParamLib->get(this->param_name);
+  const auto& p_dof_mgr = param->get_dof_mgr();
+  const auto  p_data = Albany::getNonconstLocalData(param->vector());
+  const auto& p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
+  const int   p_local_subdim = p_data.size();
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const auto& layers_data    = *workset.disc->getMeshStruct()->global_cell_layers_data;
+  const int   top = layers_data.top_side_pos;
+  const int   bot = layers_data.bot_side_pos;
+  const auto elem_lids       = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  auto param_vs = pvec->range();
+  const int fieldLayer = fieldLevel==layers_data.numLayers ? fieldLevel-1 : fieldLevel;
+  const int field_pos  = fieldLayer==fieldLevel ? bot : top;
 
-  auto param_indexer = Albany::createGlobalLocalIndexer(param_vs);
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const GO ilayer = layeredMeshNumbering.getLayerId(elNodeID[node]);
-      if(ilayer==fieldLevel) {
-        const LO lid = param_indexer->getLocalElement(elNodeID[node]);
-        if(lid>=0) {
-          pvec_view[ lid ] = (this->val)(cell,node);
+  const auto& offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
+  for (size_t cell=0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    const auto layer = layers_data.getLayerId(elem_LID);
+    if (layer==fieldLayer) {
+      for (auto o : offsets) {
+        const LO lid = p_elem_dof_lids(elem_LID,o);
+        if (lid>=0 && lid<p_local_subdim) { // Exploit the fact that owned lids come before ghosted lids
+          p_data[lid] = this->val(cell,o);
         }
       }
     }

@@ -5,208 +5,221 @@
 //*****************************************************************//
 
 #include "STKConnManager.hpp"
+#include "Albany_config.h"
 
-#include <vector>
+#include "Panzer_FieldPattern.hpp"
 
 #include <stk_util/parallel/ParallelReduce.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/Comm.hpp>       // for comm_mesh_counts
-
-#include "Teuchos_FancyOStream.hpp"
 
 namespace Albany {
 
-using Teuchos::RCP;
-using Teuchos::rcp;
-
-// Object describing how to sort a vector of elements using
-// local ID as the key
-class LocalIdCompare {
-public:
-
-  LocalIdCompare(const STKConnManager& stk_disc) : stkDisc_(stk_disc) {}
-
-  // Compares two stk mesh entities based on local ID
-  bool operator() (stk::mesh::Entity a, stk::mesh::Entity b)
-  { return stkDisc_.elementLocalId(a) < stkDisc_.elementLocalId(b);}
-
-private:
-
-  const STKConnManager&   stkDisc_;
-
-};
-
-STKConnManager::STKConnManager(const Teuchos::RCP<AbstractSTKMeshStruct>& absSTKMeshStruct)
-   : ownedElementCount_(0), metaData_(absSTKMeshStruct->metaData),
-     bulkData_(absSTKMeshStruct->bulkData), stkMeshStruct_(absSTKMeshStruct), useFieldCoordinates_(false)
+STKConnManager::
+STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
+               const Teuchos::RCP<const stk::mesh::BulkData>& bulkData,
+               const std::vector<std::string>& elem_block_names)
 {
+  // Sanity check
+  TEUCHOS_TEST_FOR_EXCEPTION (metaData.is_null(), std::runtime_error,
+      "Error! Input meta data pointer is null.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (bulkData.is_null(), std::runtime_error,
+      "Error! Input bulk data pointer is null.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (elem_block_names.size()==0, std::runtime_error,
+      "Error! Input elem_block names vector is empty.\n");
 
-     buildEntityCounts();
-     buildMaxEntityIds();
-     buildLocalElementIDs();
+  m_bulkData = bulkData;
+  m_metaData = metaData;
 
+  // Add elem_blocks, and check that 1) compatible dimensions and 2) no intersection
+  constexpr auto INVALID = stk::topology::rank_t::INVALID_RANK;
+  for (const auto& ebn : elem_block_names) {
+    auto elem_block = m_metaData->get_part(ebn);
+    TEUCHOS_TEST_FOR_EXCEPTION (elem_block==nullptr, std::runtime_error,
+        "[STKConnManager] Error! Elem block '" + ebn + "' not found in the mesh.\n");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_topo.rank()!=INVALID &&
+                                elem_block->topology()!=m_elem_blocks_topo, std::logic_error,
+        "[STKConnManager] Error! Input elem_blocks do not have the same topology.\n"
+        "  - current topo  : " + m_elem_blocks_topo.name() + "\n";
+        "  - new elem_block name : " + ebn + "\n"
+        "  - new elem_block topo : " + elem_block->topology().name() + "\n"
+    );
+
+    for (const auto& p : m_elem_blocks) {
+      // NOTE: cannot use stk::mesh::intersect, since that function returns true even if the
+      //       intersection is on entities of low dimension. We don't want, e.g., to think
+      //       that two element blocks intersect only b/c they have some nodes/sides in common.
+      //       We are concerned about overlap of the primary entities.
+      stk::mesh::Selector selector(*elem_block);
+      selector &= *p.second;
+
+      TEUCHOS_TEST_FOR_EXCEPTION (stk::mesh::count_entities(*m_bulkData,elem_block->primary_entity_rank(),selector)>0, std::logic_error,
+          "[STKConnManager] Error! Two input elem_blocks intersect.\n"
+          "  - first elem_block name : " + p.second->name() + "\n"
+          "  - second elem_block name: " + elem_block->name() + "\n");
+    }
+
+    m_elem_blocks_topo = elem_block->topology();
+
+    m_elem_blocks[ebn] = elem_block;
+  }
+
+  // Init members of base class
+  m_elem_blocks_names = elem_block_names;
+
+  buildMaxEntityIds();
+
+  // get element info from STK_Interface
+  // object and build a local element mapping.
+  buildLocalElementMapping();
 }
 
 Teuchos::RCP<panzer::ConnManager>
 STKConnManager::noConnectivityClone() const
 {
-  return Teuchos::rcp(new STKConnManager(stkMeshStruct_));
+  std::vector<std::string> elem_blocks_names;
+  for (const auto& it : m_elem_blocks) {
+    elem_blocks_names.push_back(it.first);
+  }
+  return Teuchos::rcp(new STKConnManager(m_metaData,m_bulkData,elem_blocks_names));
 }
 
 void STKConnManager::clearLocalElementMapping()
 {
-   elements_ = Teuchos::null;
+  m_elements.clear();
+  m_elementBlocks.clear();
+  m_elmtLidToConn.clear();
+  m_connSize.clear();
+  m_connectivity.clear();
+}
 
-   elementBlocks_.clear();
-   elmtLidToConn_.clear();
-   connSize_.clear();
-   elmtToAssociatedElmts_.clear();
+std::vector<GO>
+STKConnManager::getElementsInBlock (const std::string& /* blockId */) const
+{
+  std::vector<GO> gids;
+  gids.reserve(m_elements.size());
+  for (const auto& e : m_elements) {
+    gids.push_back (m_bulkData->identifier(e)-1);
+  }
+  return gids;
 }
 
 void STKConnManager::buildLocalElementMapping()
 {
-   clearLocalElementMapping(); // forget the past
+  // Start from scratch
+  clearLocalElementMapping(); // forget the past
 
-   // build element block information
-   //////////////////////////////////////////////
-   elements_ = Teuchos::rcp(new std::vector<stk::mesh::Entity>);
+  // Get blocks names
+  std::vector<std::string> blockIds;
+  getElementBlockIds(blockIds);
 
-   // defines ordering of blocks
-   std::vector<std::string> blockIds;
-//   stkDisc_->getElementBlockNames(blockIds);
-   getElementBlockNames(blockIds);
+  // Loop over element blocks, and gather elements for each block
+  for (const auto& blockId : blockIds) {
+    // 1. Grab elements on this block
+    std::vector<stk::mesh::Entity> blockElmts;
+    getMyElements(blockId,blockElmts);
 
-   std::size_t blockIndex=0;
-   for(std::vector<std::string>::const_iterator idItr=blockIds.begin();
-       idItr!=blockIds.end();++idItr,++blockIndex) {
-      std::string blockId = *idItr;
+    // 2. Concatenate them into element LID lookup table
+    m_elements.insert(m_elements.end(),blockElmts.begin(),blockElmts.end());
 
-      // grab elements on this block
-      std::vector<stk::mesh::Entity> blockElmts;
-      getMyElements(blockId,blockElmts);
+    // 3. Assign local ids
+    buildLocalElementIDs(blockElmts);
 
-      // concatenate them into element LID lookup table
-      elements_->insert(elements_->end(),blockElmts.begin(),blockElmts.end());
+    // 4. Build blockName->elemLIDs map
+    auto& blockElems = m_elementBlocks[blockId];
+    blockElems.reserve(blockElmts.size());
+    for (const auto& elem : blockElmts) {
+      blockElems.push_back (elementLocalId(elem));
+    }
+  }
 
-      // build block to LID map
-      elementBlocks_[blockId] = Teuchos::rcp(new std::vector<LocalOrdinal>);
-      for(std::size_t i=0;i<blockElmts.size();i++)
-         elementBlocks_[blockId]->push_back(elementLocalId(blockElmts[i]));
-   }
+#ifdef ALBANY_DEBUG
+  // this expensive operation checks ordering of local IDs
+  auto cmpLids = [&](stk::mesh::Entity a, stk::mesh::Entity b)->bool{
+     return elementLocalId(a) < elementLocalId(b);
+  };
+  auto copy = m_elements;
+  std::sort(copy.begin(), copy.end(), cmpLids);
+  TEUCHOS_TEST_FOR_EXCEPTION (copy!=m_elements, std::runtime_error,
+      "Error! Elements were supposed to be already sorted.\n"
+      "       Something is off, please, contact developers.\n");
+#endif
 
-   ownedElementCount_ = elements_->size();
-
-   blockIndex=0;
-   for(std::vector<std::string>::const_iterator idItr=blockIds.begin();
-       idItr!=blockIds.end();++idItr,++blockIndex) {
-      std::string blockId = *idItr;
-
-      // grab elements on this block
-      std::vector<stk::mesh::Entity> blockElmts;
-      getNeighborElements(blockId,blockElmts);
-
-      // concatenate them into element LID lookup table
-      elements_->insert(elements_->end(),blockElmts.begin(),blockElmts.end());
-
-      // build block to LID map
-      neighborElementBlocks_[blockId] = Teuchos::rcp(new std::vector<LocalOrdinal>);
-      for(std::size_t i=0;i<blockElmts.size();i++)
-         neighborElementBlocks_[blockId]->push_back(elementLocalId(blockElmts[i]));
-   }
-
-   // this expensive operation guarantees ordering of local IDs
-   std::sort(elements_->begin(), elements_->end(), LocalIdCompare(*this));
-
-   // allocate space for element LID to Connectivity map
-   // connectivity size
-   elmtLidToConn_.clear();
-   elmtLidToConn_.resize(elements_->size(),0);
-
-   connSize_.clear();
-   connSize_.resize(elements_->size(),0);
+  // Pre allocate space for internal connectivity offsets/sizes
+  m_elmtLidToConn.resize(m_elements.size(),0);
+  m_connSize.resize(m_elements.size(),0);
 }
 
-void
-STKConnManager::buildOffsetsAndIdCounts(const panzer::FieldPattern & fp,
-                                        LocalOrdinal & nodeIdCnt, LocalOrdinal & edgeIdCnt,
-                                        LocalOrdinal & faceIdCnt, LocalOrdinal & cellIdCnt,
-                                        GlobalOrdinal & nodeOffset, GlobalOrdinal & edgeOffset,
-                                        GlobalOrdinal & faceOffset, GlobalOrdinal & cellOffset) const
+void STKConnManager::
+buildOffsetsAndIdCounts(
+    const panzer::FieldPattern & fp,
+    LO & nodeIdCnt, LO & edgeIdCnt,
+    LO & faceIdCnt, LO & cellIdCnt,
+    GO & nodeOffset, GO & edgeOffset,
+    GO & faceOffset, GO & cellOffset) const
 {
-   // get the global counts for all the nodes, faces, edges and cells
-   GlobalOrdinal maxNodeId = getMaxEntityId(getNodeRank());
-   GlobalOrdinal maxEdgeId = getMaxEntityId(getEdgeRank());
-   GlobalOrdinal maxFaceId = getMaxEntityId(getFaceRank());
+  // get the global counts for all the nodes, faces, edges and cells
+  GO maxNodeId = getMaxEntityId(stk::topology::NODE_RANK);
+  GO maxEdgeId = getMaxEntityId(stk::topology::EDGE_RANK);
+  GO maxFaceId = getMaxEntityId(stk::topology::FACE_RANK);
 
-   // compute ID counts for each sub cell type
-   int patternDim = fp.getDimension();
-   switch(patternDim) {
-   case 3:
-     faceIdCnt = fp.getSubcellIndices(2,0).size();
-     // Intentional fall-through.
-   case 2:
-     edgeIdCnt = fp.getSubcellIndices(1,0).size();
-     // Intentional fall-through.
-   case 1:
-     nodeIdCnt = fp.getSubcellIndices(0,0).size();
-     cellIdCnt = fp.getSubcellIndices(patternDim,0).size();
-     break;
-   case 0:
-   default:
-      TEUCHOS_ASSERT(false);
-   };
+  // compute ID counts for each sub cell type
+  int patternDim = fp.getDimension();
+  switch(patternDim) {
+    case 3:
+      faceIdCnt = fp.getSubcellIndices(2,0).size();
+      // Intentional fall-through.
+    case 2:
+      edgeIdCnt = fp.getSubcellIndices(1,0).size();
+      // Intentional fall-through.
+    case 1:
+      nodeIdCnt = fp.getSubcellIndices(0,0).size();
+      // Intentional fall-through.
+    case 0:
+      cellIdCnt = fp.getSubcellIndices(patternDim,0).size();
+      break;
+    default:
+       TEUCHOS_ASSERT(false);
+  };
 
-   // compute offsets for each sub cell type
-   nodeOffset = 0;
-   edgeOffset = nodeOffset+(maxNodeId+1)*nodeIdCnt;
-   faceOffset = edgeOffset+(maxEdgeId+1)*edgeIdCnt;
-   cellOffset = faceOffset+(maxFaceId+1)*faceIdCnt;
+  // compute offsets for each sub cell type
+  nodeOffset = 0;
+  edgeOffset = nodeOffset+(maxNodeId+1)*nodeIdCnt;
+  faceOffset = edgeOffset+(maxEdgeId+1)*edgeIdCnt;
+  cellOffset = faceOffset+(maxFaceId+1)*faceIdCnt;
 
-   // sanity check
-   TEUCHOS_ASSERT(nodeOffset <= edgeOffset
-               && edgeOffset <= faceOffset
-               && faceOffset <= cellOffset);
+  // sanity check
+  TEUCHOS_ASSERT(nodeOffset <= edgeOffset
+              && edgeOffset <= faceOffset
+              && faceOffset <= cellOffset);
 }
 
-STKConnManager::LocalOrdinal
-STKConnManager::addSubcellConnectivities(stk::mesh::Entity element,
-                                         unsigned subcellRank,
-                                         LocalOrdinal idCnt,
-                                         GlobalOrdinal offset)
+LO STKConnManager::
+addSubcellConnectivities (const stk::mesh::Entity element,
+                          const stk::mesh::EntityRank subcellRank,
+                          const LO idCnt,
+                          const GO offset)
 {
-   if(idCnt<=0)
-      return 0 ;
+  if(idCnt<=0)
+     return 0;
 
-   // loop over all relations of specified type
-   LocalOrdinal numIds = 0;
-   const stk::mesh::EntityRank rank = static_cast<stk::mesh::EntityRank>(subcellRank);
-   const size_t num_rels = bulkData_->num_connectivity(element, rank);
-   stk::mesh::Entity const* relations = bulkData_->begin(element, rank);
-   for(std::size_t sc=0; sc<num_rels; ++sc) {
-     stk::mesh::Entity subcell = relations[sc];
+  // loop over all relations of specified type
+  LO numIds = 0;
+  const int num_rels = m_bulkData->num_connectivity(element, subcellRank);
+  stk::mesh::Entity const* relations = m_bulkData->begin(element, subcellRank);
+  for(int sc=0; sc<num_rels; ++sc) {
+    stk::mesh::Entity subcell = relations[sc];
+    const auto subcell_id = m_bulkData->identifier(subcell);
 
-     // add connectivities: adjust for STK indexing craziness
-     for(LocalOrdinal i=0;i<idCnt;i++)
-       connectivity_.push_back(offset+idCnt*(bulkData_->identifier(subcell)-1)+i);
-
-     numIds += idCnt;
-   }
-   return numIds;
-}
-
-void
-STKConnManager::modifySubcellConnectivities(const panzer::FieldPattern & fp, stk::mesh::Entity element,
-                                            unsigned subcellRank,unsigned subcellId,GlobalOrdinal newId,
-                                            GlobalOrdinal offset)
-{
-   LocalOrdinal elmtLID = elementLocalId(element);
-   auto * conn = this->getConnectivity(elmtLID);
-   const std::vector<int> & subCellIndices = fp.getSubcellIndices(subcellRank,subcellId);
-
-   // add connectivities: adjust for STK indexing craziness
-   for(std::size_t i=0;i<subCellIndices.size();i++) {
-      conn[subCellIndices[i]] = offset+subCellIndices.size()*(newId-1)+i;
-   }
+    auto owned = m_bulkData->bucket(subcell).owned() ? Owned : Ghosted;
+    // add connectivities: adjust for STK indexing craziness
+    for (LO i=0; i<idCnt; ++i) {
+      m_connectivity.push_back(offset+idCnt*(subcell_id-1)+i);
+      m_ownership.push_back(owned);
+    }
+    numIds += idCnt;
+  }
+  return numIds;
 }
 
 void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
@@ -216,563 +229,210 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
   RCP<Teuchos::TimeMonitor> tM = rcp(new TimeMonitor(*TimeMonitor::getNewTimer(std::string("panzer_stk::STKConnManager::buildConnectivity"))));
 #endif
 
-   // get element info from STK_Interface
-   // object and build a local element mapping.
-   buildLocalElementMapping();
+  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension()>m_elem_blocks_topo.dimension(), std::logic_error,
+      "[STKConnManager] Error! Field pattern incompatible with stored elem_blocks.\n"
+      "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
+      "  - elem_blocks topo dim: " + std::to_string(m_elem_blocks_topo.dimension()) + "\n");
 
-   // Build sub cell ID counts and offsets
-   //    ID counts = How many IDs belong on each subcell (number of mesh DOF used)
-   //    Offset = What is starting index for subcell ID type?
-   //             Global numbering goes like [node ids, edge ids, face ids, cell ids]
-   LocalOrdinal nodeIdCnt=0, edgeIdCnt=0, faceIdCnt=0, cellIdCnt=0;
-   GlobalOrdinal nodeOffset=0, edgeOffset=0, faceOffset=0, cellOffset=0;
-   buildOffsetsAndIdCounts(fp, nodeIdCnt,  edgeIdCnt,  faceIdCnt,  cellIdCnt,
-                               nodeOffset, edgeOffset, faceOffset, cellOffset);
+  // Build sub cell ID counts and offsets
+  //    ID counts = How many IDs belong on each subcell (number of mesh DOF used)
+  //    Offset = What is starting index for subcell ID type?
+  //             Global numbering goes like [node ids, edge ids, face ids, cell ids]
+  LO nodeIdCnt=0, edgeIdCnt=0, faceIdCnt=0, cellIdCnt=0;
+  GO nodeOffset=0, edgeOffset=0, faceOffset=0, cellOffset=0;
+  buildOffsetsAndIdCounts(fp, nodeIdCnt,  edgeIdCnt,  faceIdCnt,  cellIdCnt,
+                              nodeOffset, edgeOffset, faceOffset, cellOffset);
 
-    // std::cout << "node: count = " << nodeIdCnt << ", offset = " << nodeOffset << std::endl;
-    // std::cout << "edge: count = " << edgeIdCnt << ", offset = " << edgeOffset << std::endl;
-    // std::cout << "face: count = " << faceIdCnt << ", offset = " << faceOffset << std::endl;
-    // std::cout << "cell: count = " << cellIdCnt << ", offset = " << cellOffset << std::endl;
+  // loop over elements and build global connectivity
+  const int numElems = m_elements.size();
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  constexpr auto EDGE_RANK = stk::topology::EDGE_RANK;
+  constexpr auto FACE_RANK = stk::topology::FACE_RANK;
+  const auto elem_rank = fp.getCellTopology().getDimension();
 
-   // loop over elements and build global connectivity
-   for(std::size_t elmtLid=0;elmtLid!=elements_->size();++elmtLid) {
-      GlobalOrdinal numIds = 0;
-      stk::mesh::Entity element = (*elements_)[elmtLid];
+  for (int ielem=0; ielem<numElems; ++ielem) {
+    GO numIds = 0;
+    stk::mesh::Entity element = m_elements[ielem];
 
-      // get index into connectivity array
-      elmtLidToConn_[elmtLid] = connectivity_.size();
+    // Current size of m_connectivity is the offset for this element
+    m_elmtLidToConn[ielem] = m_connectivity.size();
 
-      // add connecviities for sub cells
-      numIds += addSubcellConnectivities(element,getNodeRank(),nodeIdCnt,nodeOffset);
-      numIds += addSubcellConnectivities(element,getEdgeRank(),edgeIdCnt,edgeOffset);
-      numIds += addSubcellConnectivities(element,getFaceRank(),faceIdCnt,faceOffset);
+    // add connecviities for sub cells
+    if (elem_rank>NODE_RANK)
+      numIds += addSubcellConnectivities(element,NODE_RANK,nodeIdCnt,nodeOffset);
+    if (elem_rank>EDGE_RANK)
+      numIds += addSubcellConnectivities(element,EDGE_RANK,edgeIdCnt,edgeOffset);
+    if (elem_rank>FACE_RANK)
+      numIds += addSubcellConnectivities(element,FACE_RANK,faceIdCnt,faceOffset);
 
-      // add connectivity for parent cells
-      if(cellIdCnt>0) {
-         // add connectivities: adjust for STK indexing craziness
-         for(LocalOrdinal i=0;i<cellIdCnt;i++)
-            connectivity_.push_back(cellOffset+cellIdCnt*(bulkData_->identifier(element)-1));
+    // add connectivity for parent cells
+    if(cellIdCnt>0) {
+       // add connectivities: adjust for STK indexing craziness
+       const auto cell_id = m_bulkData->identifier(element);
+       auto owned = m_bulkData->bucket(element).owned() ? Owned : Ghosted;
+       for(LO i=0; i<cellIdCnt; ++i) {
+          m_connectivity.push_back(cellOffset+cellIdCnt*(cell_id-1)+i);
+          m_ownership.push_back(owned);
+       }
+       numIds += cellIdCnt;
+    }
 
-         numIds += cellIdCnt;
-      }
-
-      connSize_[elmtLid] = numIds;
-   }
-
-//   applyPeriodicBCs( fp, nodeOffset, edgeOffset, faceOffset, cellOffset);
-
-   // This method does not modify connectivity_. But it should be called here
-   // because the data it initializes should be available at the same time as
-   // connectivity_.
-   if (hasAssociatedNeighbors())
-     applyInterfaceConditions();
+    m_connSize[ielem] = numIds;
+  }
 }
 
-std::string STKConnManager::getBlockId(STKConnManager::LocalOrdinal localElmtId) const
+std::string STKConnManager::getBlockId (LO localElmtId) const
 {
    // walk through the element blocks and figure out which this ID belongs to
-   stk::mesh::Entity element = (*elements_)[localElmtId];
+   stk::mesh::Entity element = m_elements[localElmtId];
 
-   return containingBlockId(element);
-}
-
-#if 0
-void STKConnManager::applyPeriodicBCs(const panzer::FieldPattern & fp, GlobalOrdinal nodeOffset, GlobalOrdinal edgeOffset,
-                                      GlobalOrdinal faceOffset, GlobalOrdinal /* cellOffset */)
-{
-   using Teuchos::RCP;
-   using Teuchos::rcp;
-
-#ifdef HAVE_EXTRA_TIMERS
-  using Teuchos::TimeMonitor;
-  RCP<Teuchos::TimeMonitor> tM = rcp(new TimeMonitor(*TimeMonitor::getNewTimer(std::string("panzer_stk::STKConnManager::applyPeriodicBCs"))));
-#endif
-
-   std::pair<Teuchos::RCP<std::vector<std::pair<std::size_t,std::size_t> > >, Teuchos::RCP<std::vector<unsigned int> > > matchedValues
-            = getPeriodicNodePairing();
-
-   Teuchos::RCP<std::vector<std::pair<std::size_t,std::size_t> > > matchedNodes
-            = matchedValues.first;
-   Teuchos::RCP<std::vector<unsigned int> > matchTypes
-            = matchedValues.second;
-
-   // no matchedNodes means nothing to do!
-   if(matchedNodes==Teuchos::null) return;
-
-   for(std::size_t m=0;m<matchedNodes->size();m++) {
-      stk::mesh::EntityId oldNodeId = (*matchedNodes)[m].first;
-      std::size_t newNodeId = (*matchedNodes)[m].second;
-
-      std::vector<stk::mesh::Entity> elements;
-      std::vector<int> localIds;
-
-      GlobalOrdinal offset0 = 0; // to make numbering consistent with that in PeriodicBC_Matcher
-      GlobalOrdinal offset1 = 0; // offset for dof indexing
-      if((*matchTypes)[m] == 0)
-        offset1 = nodeOffset-offset0;
-      else if((*matchTypes)[m] == 1){
-        offset0 = getMaxEntityId(getNodeRank());
-        offset1 = edgeOffset-offset0;
-      } else if((*matchTypes)[m] == 2){
-        offset0 = getMaxEntityId(getNodeRank())+getMaxEntityId(getEdgeRank());
-        offset1 = faceOffset-offset0;
-      } else
-        TEUCHOS_ASSERT(false);
-
-      // get relevant elements and node IDs
-      getOwnedElementsSharingNode(oldNodeId-offset0,elements,localIds,(*matchTypes)[m]);
-
-      // modify global numbering already built for each element
-      for(std::size_t e=0;e<elements.size();e++){
-         modifySubcellConnectivities(fp,elements[e],(*matchTypes)[m],localIds[e],newNodeId,offset1);
+   const auto& b = m_bulkData->bucket(element);
+   for (const auto& it : m_elem_blocks) {
+      if (b.member(*it.second)) {
+        return it.first;
       }
-
    }
-}
-#endif
 
-/** Get the coordinates for a specified element block and field pattern.
-  */
-void STKConnManager::getDofCoords(const std::string & blockId,
-                                  const panzer::Intrepid2FieldPattern & coordProvider,
-                                  std::vector<std::size_t> & localCellIds,
-                                  Kokkos::DynRankView<double,PHX::Device> & points) const
-{
-   int dim = coordProvider.getDimension();
-   int numIds = coordProvider.numberIds();
-
-   // grab element vertices
-   Kokkos::DynRankView<double,PHX::Device> vertices;
-   getIdsAndVertices<Kokkos::DynRankView<double, PHX::Device> >(blockId, localCellIds, vertices);
-
-   // setup output array
-   points = Kokkos::DynRankView<double,PHX::Device>("points",localCellIds.size(),numIds,dim);
-   coordProvider.getInterpolatoryCoordinates(vertices,points);
-}
-
-bool STKConnManager::hasAssociatedNeighbors() const
-{
-  return ! sidesetsToAssociate_.empty();
-}
-
-void STKConnManager::associateElementsInSideset(const std::string sideset_id)
-{
-  sidesetsToAssociate_.push_back(sideset_id);
-  sidesetYieldedAssociations_.push_back(false);
-}
-
-inline std::size_t
-getElementIdx(const std::vector<stk::mesh::Entity>& elements,
-              stk::mesh::Entity const e)
-{
-  return static_cast<std::size_t>(
-    std::distance(elements.begin(), std::find(elements.begin(), elements.end(), e)));
-}
-
-void STKConnManager::applyInterfaceConditions()
-{
-  elmtToAssociatedElmts_.resize(elements_->size());
-  for (std::size_t i = 0; i < sidesetsToAssociate_.size(); ++i) {
-    std::vector<stk::mesh::Entity> sides;
-    getAllSides(sidesetsToAssociate_[i], sides);
-    sidesetYieldedAssociations_[i] = ! sides.empty();
-    for (std::vector<stk::mesh::Entity>::const_iterator si = sides.begin();
-         si != sides.end(); ++si) {
-      stk::mesh::Entity side = *si;
-      const size_t num_elements = bulkData_->num_elements(side);
-      stk::mesh::Entity const* elements = bulkData_->begin_elements(side);
-      if (num_elements != 2) {
-        // If relations.size() != 2 for one side in the sideset, then it's true
-        // for all, including the first.
-        TEUCHOS_ASSERT(si == sides.begin());
-        sidesetYieldedAssociations_[i] = false;
-        break;
-      }
-      const std::size_t ea_id = getElementIdx(*elements_, elements[0]),
-        eb_id = getElementIdx(*elements_, elements[1]);
-      elmtToAssociatedElmts_[ea_id].push_back(eb_id);
-      elmtToAssociatedElmts_[eb_id].push_back(ea_id);
-    }
-  }
-}
-
-std::size_t STKConnManager::
-get_parent_cell_id(stk::mesh::Entity side) const
-{
-   stk::mesh::Entity const* elements = bulkData_->begin_elements(side);
-   const std::size_t ea_id = getElementIdx(*elements_, elements[0]);
-   return ea_id;
-}
-
-std::vector<std::string> STKConnManager::
-checkAssociateElementsInSidesets(const Teuchos::Comm<int>& comm) const
-{
-  std::vector<std::string> sidesets;
-  for (std::size_t i = 0; i < sidesetYieldedAssociations_.size(); ++i) {
-    int sya, my_sya = sidesetYieldedAssociations_[i] ? 1 : 0;
-    Teuchos::reduceAll(comm, Teuchos::REDUCE_MAX, 1, &my_sya, &sya);
-    if (sya == 0)
-      sidesets.push_back(sidesetsToAssociate_[i]);
-  }
-  return sidesets;
-}
-
-const std::vector<STKConnManager::LocalOrdinal>&
-STKConnManager::getAssociatedNeighbors(const LocalOrdinal& el) const
-{
-  return elmtToAssociatedElmts_[el];
-}
-
-void STKConnManager::buildEntityCounts()
-{
-   entityCounts_.clear();
-   stk::mesh::comm_mesh_counts(*bulkData_,entityCounts_);
-}
-
-void STKConnManager::buildMaxEntityIds() {
-
-      // developed to mirror "comm_mesh_counts" in stk_mesh/base/Comm.cpp
-   
-      const auto entityRankCount =  metaData_->entity_rank_count();
-      const size_t   commCount        = 10; // entityRankCount
-   
-      TEUCHOS_ASSERT(entityRankCount<10);
-   
-      stk::ParallelMachine mach = bulkData_->parallel();
-//      stk::ParallelMachine mach = stkDisc_*mpiComm_->getRawMpiComm();
-      procRank_ = stk::parallel_machine_rank(mach);
-   
-      std::vector<stk::mesh::EntityId> local(commCount,0);
-   
-      // determine maximum ID for this processor for each entity type
-      stk::mesh::Selector ownedPart = metaData_->locally_owned_part();
-      for(stk::mesh::EntityRank i=stk::topology::NODE_RANK;
-          i < static_cast<stk::mesh::EntityRank>(entityRankCount); ++i) {
-         std::vector<stk::mesh::Entity> entities;
-   
-         stk::mesh::get_selected_entities(ownedPart, bulkData_->buckets(i), entities);
-   
-         // determine maximum ID for this processor
-         std::vector<stk::mesh::Entity>::const_iterator itr;
-         for(itr=entities.begin();itr!=entities.end();++itr) {
-            stk::mesh::EntityId id = bulkData_->identifier(*itr);
-            if(id>local[i])
-               local[i] = id;
-         }
-      }
-   
-      // get largest IDs across processors
-      stk::all_reduce(mach,stk::ReduceMax<10>(&local[0]));
-      maxEntityId_.assign(local.begin(),local.begin()+entityRankCount+1);
-}
-
-
-std::size_t STKConnManager::elementLocalId(stk::mesh::Entity elmt) const
-{
-   return elementLocalId(bulkData_->identifier(elmt));
-   // const std::size_t * fieldCoords = stk::mesh::field_data(*localIdField_,*elmt);
-   // return fieldCoords[0];
-}
-
-std::size_t STKConnManager::elementLocalId(stk::mesh::EntityId gid) const
-{
-   // stk::mesh::EntityRank elementRank = getElementRank();
-   // stk::mesh::Entity elmt = bulkData_->get_entity(elementRank,gid);
-   // TEUCHOS_ASSERT(elmt->owner_rank()==procRank_);
-   // return elementLocalId(elmt);
-   std::unordered_map<stk::mesh::EntityId,std::size_t>::const_iterator itr = localIDHash_.find(gid);
-   TEUCHOS_ASSERT(itr!=localIDHash_.end());
-   return itr->second;
-}
-
-void STKConnManager::getMyElements(std::vector<stk::mesh::Entity> & elements) const
-{
-   // setup local ownership
-   stk::mesh::Selector ownedPart = metaData_->locally_owned_part();
-
-   // grab elements
-   stk::mesh::EntityRank elementRank = getElementRank();
-   stk::mesh::get_selected_entities(ownedPart, bulkData_->buckets(elementRank), elements);
-}
-
-void STKConnManager::getMyElements(const std::string & blockID,std::vector<stk::mesh::Entity> & elements) const
-{
-   stk::mesh::Part * elementBlock = getElementBlockPart(blockID);
-
-   TEUCHOS_TEST_FOR_EXCEPTION(elementBlock==0,std::logic_error,"Could not find element block \"" << blockID << "\"");
-
-   // setup local ownership
-   // stk::mesh::Selector block = *elementBlock;
-   stk::mesh::Selector ownedBlock = metaData_->locally_owned_part() & (*elementBlock);
-
-   // grab elements
-   stk::mesh::EntityRank elementRank = getElementRank();
-   stk::mesh::get_selected_entities(ownedBlock, bulkData_->buckets(elementRank), elements);
-}
-
-void STKConnManager::getNeighborElements(std::vector<stk::mesh::Entity> & elements) const
-{
-   // setup local ownership
-   stk::mesh::Selector neighborBlock = (!metaData_->locally_owned_part());
-
-   // grab elements
-   stk::mesh::EntityRank elementRank = getElementRank();
-   stk::mesh::get_selected_entities(neighborBlock, bulkData_->buckets(elementRank), elements);
-}
-
-void STKConnManager::getNeighborElements(const std::string & blockID,std::vector<stk::mesh::Entity> & elements) const
-{
-   stk::mesh::Part * elementBlock = getElementBlockPart(blockID);
-
-   TEUCHOS_TEST_FOR_EXCEPTION(elementBlock==0,std::logic_error,"Could not find element block \"" << blockID << "\"");
-
-   // setup local ownership
-   stk::mesh::Selector neighborBlock = (!metaData_->locally_owned_part()) & (*elementBlock);
-
-   // grab elements
-   stk::mesh::EntityRank elementRank = getElementRank();
-   stk::mesh::get_selected_entities(neighborBlock, bulkData_->buckets(elementRank), elements);
-}
-
-std::size_t STKConnManager::getEntityCounts(unsigned entityRank) const
-{
-   TEUCHOS_TEST_FOR_EXCEPTION(entityRank>=entityCounts_.size(),std::logic_error,
-                      "STKCOnnManager::getEntityCounts: Entity counts do not include rank: " << entityRank);
-
-   return entityCounts_[entityRank];
-}
-
-stk::mesh::EntityId STKConnManager::getMaxEntityId(unsigned entityRank) const
-{
-   TEUCHOS_TEST_FOR_EXCEPTION(entityRank>=maxEntityId_.size(),std::logic_error,
-                      "STK_Interface::getMaxEntityId: Max entity ids do not include rank: " << entityRank);
-
-   return maxEntityId_[entityRank];
-}
-
-std::string STKConnManager::containingBlockId(stk::mesh::Entity elmt) const
-{
-   for(const auto & eb_pair : stkMeshStruct_->elementBlockParts_)
-      if(bulkData_->bucket(elmt).member(*(eb_pair.second)))
-         return eb_pair.first;
    return "";
 }
 
-#if 0
-std::pair<Teuchos::RCP<std::vector<std::pair<std::size_t,std::size_t> > >, Teuchos::RCP<std::vector<unsigned int> > >
-STKConnManager::getPeriodicNodePairing() const
+const std::vector<LO>&
+STKConnManager::getAssociatedNeighbors(const LO& /* el */) const
 {
-   Teuchos::RCP<std::vector<std::pair<std::size_t,std::size_t> > > vec;
-   Teuchos::RCP<std::vector<unsigned int > > type_vec = rcp(new std::vector<unsigned int>);
-   const std::vector<Teuchos::RCP<const PeriodicBC_MatcherBase> > & matchers = getPeriodicBCVector();
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Error! Albany does not use elements halos in the mesh, so the method\n"
+      "       'STKConnManager::getAssociatedNeighbors' should not have been called.\n");
 
-   // build up the vectors by looping over the matched pair
-   for(std::size_t m=0;m<matchers.size();m++){
-      vec = matchers[m]->getMatchedPair(*this,vec);
-      unsigned int type;
-      if(matchers[m]->getType() == "coord")
-        type = 0;
-      else if(matchers[m]->getType() == "edge")
-        type = 1;
-      else if(matchers[m]->getType() == "face")
-        type = 2;
-      else
-        TEUCHOS_ASSERT(false);
-      type_vec->insert(type_vec->begin(),vec->size()-type_vec->size(),type);
-   }
-
-   return std::make_pair(vec,type_vec);
-
-}
-#endif
-
-void STKConnManager::getOwnedElementsSharingNode(stk::mesh::Entity node,std::vector<stk::mesh::Entity> & elements,
-                                                std::vector<int> & relIds) const
-{
-   // get all relations for node
-   const size_t numElements = bulkData_->num_elements(node);
-   stk::mesh::Entity const* relations = bulkData_->begin_elements(node);
-   stk::mesh::ConnectivityOrdinal const* rel_ids = bulkData_->begin_element_ordinals(node);
-
-   // extract elements sharing nodes
-   for (size_t i = 0; i < numElements; ++i) {
-      stk::mesh::Entity element = relations[i];
-
-     // if owned by this processor
-      if(bulkData_->parallel_owner_rank(element) == static_cast<int>(procRank_)) {
-         elements.push_back(element);
-         relIds.push_back(rel_ids[i]);
-      }
-   }
+  static std::vector<LO> ret;
+  return ret;
 }
 
-#if 0
-void STKConnManager::getOwnedElementsSharingNode(stk::mesh::EntityId nodeId,std::vector<stk::mesh::Entity> & elements,
-                                                                           std::vector<int> & relIds, unsigned int matchType) const
-{
-   stk::mesh::EntityRank rank;
-   if(matchType == 0)
-     rank = getNodeRank();
-   else if(matchType == 1)
-     rank = getEdgeRank();
-   else if(matchType == 2)
-     rank = getFaceRank();
-   else
-     TEUCHOS_ASSERT(false);
-
-   stk::mesh::Entity node = bulkData_->get_entity(rank,nodeId);
-
-   getOwnedElementsSharingNode(node,elements,relIds);
-}
-#endif
-
-template<typename ArrayT>
-void STKConnManager::getIdsAndVertices(
-			 std::string blockId,
-			 std::vector<std::size_t>& localIds,
-			 ArrayT & vertices) const {
+void STKConnManager::buildMaxEntityIds() {
+  // developed to mirror "comm_mesh_counts" in stk_mesh/base/Comm.cpp
+  const auto entityRankCount = m_metaData->entity_rank_count();
   
-  std::vector<stk::mesh::Entity> elements;
-  getMyElements(blockId,elements);
+  stk::ParallelMachine mach = m_bulkData->parallel();
+  // procRank_ = stk::parallel_machine_rank(mach);
   
-  // loop over elements of this block
-  for(std::size_t elm=0;elm<elements.size();++elm) {
-    stk::mesh::Entity element = elements[elm];
-    
-    localIds.push_back(elementLocalId(element));
+  std::vector<stk::mesh::EntityId> local(entityRankCount,0);
+  m_maxEntityId.resize(entityRankCount);
+  
+  // determine maximum ID for this processor for each entity type
+  stk::mesh::Selector ownedPart = m_metaData->locally_owned_part();
+  for (auto rank=stk::topology::NODE_RANK; rank<entityRankCount; ++rank) {
+    std::vector<stk::mesh::Entity> entities;
+  
+    stk::mesh::get_selected_entities(ownedPart, m_bulkData->buckets(rank), entities);
+  
+    // determine maximum ID for this processor
+    for (const auto& entity : entities) {
+      stk::mesh::EntityId id = m_bulkData->identifier(entity);
+      local[rank] = std::max(local[rank],id);
+    }
   }
-
-  // get vertices (this is slightly faster then the local id version)
-  getElementVertices(elements,blockId,vertices);
+  
+  // get largest IDs across processors
+  stk::all_reduce_max(mach,local.data(),m_maxEntityId.data(),entityRankCount);
 }
 
-void STKConnManager::getAllSides(const std::string & sideName,std::vector<stk::mesh::Entity> & sides) const
+int STKConnManager::elementLocalId(stk::mesh::Entity elmt) const
 {
-   stk::mesh::Part * sidePart = getSideset(sideName);
-   TEUCHOS_TEST_FOR_EXCEPTION(sidePart==0,std::logic_error,
-                      "Unknown side set \"" << sideName << "\"");
-
-   stk::mesh::Selector side = *sidePart;
-
-   // grab elements
-   stk::mesh::get_selected_entities(side, bulkData_->buckets(getSideRank()), sides);
+  const auto gid = m_bulkData->identifier(elmt);
+  auto it = m_localIDHash.find(gid);
+  TEUCHOS_ASSERT(it!=m_localIDHash.end());
+  return it->second;
 }
 
-void STKConnManager::getAllSides(const std::string & sideName,const std::string & blockName,std::vector<stk::mesh::Entity> & sides) const
+void STKConnManager::
+getMyElements(std::vector<stk::mesh::Entity> & elements) const
 {
-   stk::mesh::Part * sidePart = getSideset(sideName);
-   stk::mesh::Part * elmtPart = getElementBlockPart(blockName);
-   TEUCHOS_TEST_FOR_EXCEPTION(sidePart==0,SidesetException,
-                      "Unknown side set \"" << sideName << "\"");
-   TEUCHOS_TEST_FOR_EXCEPTION(elmtPart==0,ElementBlockException,
-                      "Unknown element block \"" << blockName << "\"");
+  TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks.size()>1, std::runtime_error,
+      "Error! More than one element block in this STKConnManager.\n");
 
-   stk::mesh::Selector side = *sidePart;
-   stk::mesh::Selector block = *elmtPart;
-   stk::mesh::Selector sideBlock = block & side;
-
-   // grab elements
-   stk::mesh::get_selected_entities(sideBlock, bulkData_->buckets(getSideRank()), sides);
+  getMyElements(m_elem_blocks.begin()->first,elements);
 }
 
-Teuchos::RCP<const std::vector<stk::mesh::Entity> > 
-STKConnManager::getElementsOrderedByLID() const
+void STKConnManager::
+getMyElements (const std::string & blockID,
+               std::vector<stk::mesh::Entity> & elements) const
 {
-   using Teuchos::RCP;
-   using Teuchos::rcp;
+  TEUCHOS_TEST_FOR_EXCEPTION(m_elem_blocks.find(blockID)==m_elem_blocks.end(),std::logic_error,
+      "[STKConnManager] Could not find element block '" + blockID + "'\n");
 
-   if(orderedElementVector_==Teuchos::null) {
-      // safe because essentially this is a call to modify a mutable object
-      //const_cast<STK_Interface*>(this)->buildLocalElementIDs();
-      const_cast<STKConnManager*>(this)->buildLocalElementIDs();
-      //buildLocalElementIDs();
-   }
+  const auto& elem_block = *m_elem_blocks.at(blockID);
 
-   return orderedElementVector_.getConst();
+  stk::mesh::Selector selector = elem_block;
+  selector &= m_metaData->locally_owned_part();
+
+  // NOTE: it could be that rank!=stk::topology::ELEM_RANK. E.g, we could have
+  //       have rank=EDGE_RANK
+  stk::topology::rank_t rank = m_elem_blocks_topo.rank();
+  stk::mesh::get_selected_entities(selector, m_bulkData->buckets(rank), elements);
 }
 
-void STKConnManager::buildLocalElementIDs()
+stk::mesh::EntityId STKConnManager::
+getMaxEntityId (const stk::mesh::EntityRank entityRank) const
 {
-   currentLocalId_ = 0;
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_metaData->check_rank(entityRank), std::logic_error,
+      "[STKConnManager::getMaxEntityId] Invalid entity rank: " + std::to_string(entityRank) + "\n");
 
-   orderedElementVector_ = Teuchos::null; // forces rebuild of ordered lists
-
-   // might be better (faster) to do this by buckets
-   std::vector<stk::mesh::Entity> elements;
-   getMyElements(elements);
-
-   for(std::size_t index=0;index<elements.size();++index) {
-      stk::mesh::Entity element = elements[index];
-
-//GAH
-      // set processor rank
-//      ProcIdData * procId = stk::mesh::field_data(*processorIdField_,element);
-//      procId[0] = Teuchos::as<ProcIdData>(procRank_);
-
-      localIDHash_[bulkData_->identifier(element)] = currentLocalId_;
-
-      currentLocalId_++;
-   }
-
-   // copy elements into the ordered element vector
-   orderedElementVector_ = Teuchos::rcp(new std::vector<stk::mesh::Entity>(elements));
-
-   elements.clear();
-   getNeighborElements(elements);
-
-   for(std::size_t index=0;index<elements.size();++index) {
-      stk::mesh::Entity element = elements[index];
-
-//GAH
-      // set processor rank
-//      ProcIdData * procId = stk::mesh::field_data(*processorIdField_,element);
-//      procId[0] = Teuchos::as<ProcIdData>(procRank_);
-
-      localIDHash_[bulkData_->identifier(element)] = currentLocalId_;
-
-      currentLocalId_++;
-   }
-
-   orderedElementVector_->insert(orderedElementVector_->end(),elements.begin(),elements.end());
+  return m_maxEntityId[entityRank];
 }
 
-const double * STKConnManager::getNodeCoordinates(stk::mesh::Entity node) const
+void STKConnManager::buildLocalElementIDs(const std::vector<stk::mesh::Entity>& elements)
 {
-   return stk::mesh::field_data(*coordinatesField_,node);
+  int currentLocalId = m_localIDHash.size();
+
+  for (auto element : elements) {
+    m_localIDHash[m_bulkData->identifier(element)] = currentLocalId;
+    ++currentLocalId;
+  }
 }
 
-stk::mesh::Field<double> * STKConnManager::getSolutionField(const std::string & fieldName,
-                                                           const std::string & blockId) const
+bool STKConnManager::
+contains (const std::string& sub_part_name) const
 {
-   // look up field in map
-   std::map<std::pair<std::string,std::string>, SolutionFieldType*>::const_iterator
-         iter = fieldNameToSolution_.find(std::make_pair(fieldName,blockId));
-
-   // check to make sure field was actually found
-   TEUCHOS_TEST_FOR_EXCEPTION(iter==fieldNameToSolution_.end(),std::runtime_error,
-                      "Solution field name \"" << fieldName << "\" in block ID \"" << blockId << "\" was not found");
-
-   return iter->second;
+  // We cannot rely on parts being fully contianed in one another,
+  // since the input sub_part may be intersect only partially
+  // with each of the stored parts, hence not being a subset of
+  // any of them. Instead, we verify that all the entities of
+  // primary rank in the subpart are contained in the union
+  // of the stored parts. That's equivalent to ask that the
+  // selector sub_part AND !U(m_parts) is empty
+  const auto& p = m_metaData->get_part(sub_part_name);
+  stk::mesh::Selector s (*m_metaData->get_part(sub_part_name));
+  for (const auto& it : m_elem_blocks) {
+    s &= !stk::mesh::Selector(*it.second);
+  }
+  const auto buckets = m_bulkData->buckets(p->primary_entity_rank());
+  return stk::mesh::count_selected_entities(s,buckets)==0;
 }
 
-/* This is done in IOSSSTKMeshStruct now
-void STKConnManager::addElementBlock(const std::string & name,const CellTopologyData * ctData)
+// Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
+// local element $ielem belongs to sub part $sub_part_name
+bool STKConnManager::
+belongs (const std::string& sub_part_name,
+         const LO ielem, const int subcell_dim, const int subcell_pos) const
 {
+  using rank_t = stk::topology::rank_t;
+  auto rank = subcell_dim==0 ? rank_t::NODE_RANK :
+             (subcell_dim==1 ? rank_t::EDGE_RANK :
+             (subcell_dim==2 ? rank_t::FACE_RANK : rank_t::ELEM_RANK));
+  const auto& elem = m_elements[ielem];
+  const auto& sub = *(m_bulkData->begin(elem,rank) + subcell_pos);
+  const auto& b = m_bulkData->bucket(sub);
 
-   stk::mesh::Part * block = metaData_->get_part(name);
-   if(block==0) {
-     block = &metaData_->declare_part_with_topology(name, stk::mesh::get_topology(shards::CellTopology(ctData), dimension_));
-   }
+  const auto& p = *m_metaData->get_part(sub_part_name);
 
-   // construct cell topology object for this block
-   Teuchos::RCP<shards::CellTopology> ct
-         = Teuchos::rcp(new shards::CellTopology(ctData));
-
-   // add element block part and cell topology
-   stkMeshStruct_->elementBlockParts_.insert(std::make_pair(name,block));
-   stkMeshStruct_->elementBlockCT_.insert(std::make_pair(name,ct));
+  return b.member(p);
 }
-*/
 
-
+// Queries the dimension of a part
+int STKConnManager::
+part_dim (const std::string& part_name) const
+{
+  const auto& p = *m_metaData->get_part(part_name);
+  return p.topology().dimension();
 }
+
+} // namespace Albany

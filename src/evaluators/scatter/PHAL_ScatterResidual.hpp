@@ -26,6 +26,10 @@
 #include "Kokkos_Vector.hpp"
 #endif
 
+namespace Albany {
+class DOFManager;
+}
+
 namespace PHAL {
 /** \brief Scatters result from the residual fields into the
     global (epetra) data structures.  This includes the
@@ -47,29 +51,77 @@ public:
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   virtual void evaluateFields(typename Traits::EvalData d)=0;
 
 protected:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
+  void gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr);
+
+  // These functions are used to select the correct field based on rank.
+  // They are called from *inside* for loops, but the switch statement
+  // is constant for all iterations, so the compiler branch predictor
+  // can easily guess the correct branch, making the conditional jump
+  // cheap.
+  ScalarT get_resid (const int cell, const int node, const int eq) const {
+    switch (tensorRank) {
+      case 0:
+        return val[eq](cell,node);
+      case 1:
+        return valVec(cell,node,eq);
+      case 2:
+        return valTensor(cell,node,eq/numDim,eq%numDim);
+    }
+    Kokkos::abort("Unsupported tensor rank");
+  }
+
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
-  std::vector< PHX::MDField<ScalarT const,Cell,Node> > val;
-  PHX::MDField<ScalarT const,Cell,Node,Dim>  valVec;
-  PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> valTensor;
-  std::size_t numNodes;
-  std::size_t numFieldsBase; // Number of fields gathered in this call
-  std::size_t offset; // Offset of first DOF being gathered when numFields<neq
 
-  unsigned short int tensorRank;
+  std::vector<PHX::MDField<const ScalarT,Cell,Node>>  val;
+  PHX::MDField<const ScalarT,Cell,Node,Dim>           valVec;
+  PHX::MDField<const ScalarT,Cell,Node,Dim,Dim>       valTensor;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-protected:
-  Albany::WorksetConn nodeID;
-  Albany::DeviceView1d<ST> f_kokkos;
-  Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> val_kokkos;
+  // Offsets of solution field(s) inside a single element, as per the DOFManager
+  // The only reason we have this view is that the offsets returned by the
+  // dof manager would have the node striding faster. By doing the transposition
+  // once, we can get better cached/coalesced memory access during the evaluation
+  Albany::DualView<int**> m_fields_offsets;
 
-#endif
+  int numNodes;
+  int numFields;  // Number of fields gathered in this call
+  int offset;     // Offset of first DOF being gathered when numFields<neq
+  int numDim;
+  int tensorRank;
+
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
+public:
+  struct ResidAccessor {
+    using DynRankView = Kokkos::DynRankView<const ScalarT, PHX::Device>;
+    using KV = Kokkos::vector<DynRankView, PHX::Device>;
+    using t_dev = typename KV::t_dev;
+
+    KOKKOS_INLINE_FUNCTION
+    ScalarT get (const int cell, const int node, const int eq) const {
+      switch (tensorRank) {
+        case 0:
+          return d_val[eq](cell,node);
+        case 1:
+          return d_valVec(cell,node,eq);
+        case 2:
+          return d_valTensor(cell,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
+    }
+
+    int tensorRank;
+    int numDim;
+    KV val_kokkos;
+    t_dev d_val;
+    DynRankView d_valVec, d_valTensor;
+  };
+  ResidAccessor device_resid;
 };
 
 template<typename EvalT, typename Traits> class ScatterResidual;
@@ -97,7 +149,11 @@ public:
 
 protected:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  using Base = ScatterResidualBase<EvalT, Traits>;
+  using ScalarT = typename Base::ScalarT;
+  using Base::get_resid;
+  using Base::m_fields_offsets;
+  using Base::numNodes;
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 
@@ -112,169 +168,120 @@ protected:
 // Residual
 // **************************************************************
 template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
+class ScatterResidual<AlbanyTraits::Residual,Traits>
+  : public ScatterResidualBase<AlbanyTraits::Residual, Traits>  {
 public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  using Base = ScatterResidualBase<AlbanyTraits::Residual, Traits>;
+  using ExecutionSpace = typename Base::ExecutionSpace;
+  using RangePolicy = typename Base::RangePolicy;
+  using ScalarT = typename Base::ScalarT;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-public:
-  struct PHAL_ScatterResRank0_Tag{};
-  struct PHAL_ScatterResRank1_Tag{};
-  struct PHAL_ScatterResRank2_Tag{};
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const;
-
-private:
-  int numDims;
-
-  typedef ScatterResidualBase<PHAL::AlbanyTraits::Residual, Traits> Base;
-  using Base::nodeID;
-  using Base::f_kokkos;
-  using Base::val_kokkos;
-
-  typedef typename PHX::Device::execution_space ExecutionSpace;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank0_Tag> PHAL_ScatterResRank0_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank1_Tag> PHAL_ScatterResRank1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank2_Tag> PHAL_ScatterResRank2_Policy;
-
-#endif
+  using Base::get_resid;
+  using Base::numFields;
+  using Base::numNodes;
+  using Base::m_fields_offsets;
 };
 
 // **************************************************************
 // Jacobian
 // **************************************************************
 template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+class ScatterResidual<AlbanyTraits::Jacobian,Traits>
+  : public ScatterResidualBase<AlbanyTraits::Jacobian, Traits>  {
 public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+
+// The following should be protected, but a KOKKOS_CLASS_LAMBDA
+// must be in a public method for CUDA
+#ifndef KOKKOS_ENABLE_CUDA
 protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-public:
-  struct PHAL_ScatterResRank0_Tag{};
-  struct PHAL_ScatterJacRank0_Adjoint_Tag{};
-  struct PHAL_ScatterJacRank0_Tag{};
-  struct PHAL_ScatterResRank1_Tag{};
-  struct PHAL_ScatterJacRank1_Adjoint_Tag{};
-  struct PHAL_ScatterJacRank1_Tag{};
-  struct PHAL_ScatterResRank2_Tag{};
-  struct PHAL_ScatterJacRank2_Adjoint_Tag{};
-  struct PHAL_ScatterJacRank2_Tag{};
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const;
-
-private:
-  void evaluateFieldsDevice(typename Traits::EvalData d);
-  void evaluateFieldsHost(typename Traits::EvalData d);
-  int neq, nunk, numDims;
-  Albany::DeviceLocalMatrix<ST> Jac_kokkos;
-
-  typedef ScatterResidualBase<PHAL::AlbanyTraits::Jacobian, Traits> Base;
-  using Base::nodeID;
-  using Base::f_kokkos;
-  using Base::val_kokkos;
-
-  typedef typename PHX::Device::execution_space ExecutionSpace;
-  static constexpr bool is_atomic = KU::NeedsAtomic<ExecutionSpace>::value;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank0_Tag> PHAL_ScatterResRank0_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank0_Adjoint_Tag> PHAL_ScatterJacRank0_Adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank0_Tag> PHAL_ScatterJacRank0_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank1_Tag> PHAL_ScatterResRank1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank1_Adjoint_Tag> PHAL_ScatterJacRank1_Adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank1_Tag> PHAL_ScatterJacRank1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterResRank2_Tag> PHAL_ScatterResRank2_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank2_Adjoint_Tag> PHAL_ScatterJacRank2_Adjoint_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, PHAL_ScatterJacRank2_Tag> PHAL_ScatterJacRank2_Policy;
-
 #endif
+  void evaluateFieldsDevice(typename Traits::EvalData d);
+
+protected:
+  void evaluateFieldsHost(typename Traits::EvalData d);
+
+  using Base = ScatterResidualBase<AlbanyTraits::Jacobian, Traits>;
+  using ScalarT = typename Base::ScalarT;
+  using ExecutionSpace = typename Base::ExecutionSpace;
+  using RangePolicy = typename Base::RangePolicy;
+
+  using Base::get_resid;
+  using Base::numFields;
+  using Base::numNodes;
+  using Base::m_fields_offsets;
+
+  static constexpr bool is_atomic = KU::NeedsAtomic<PHX::Device::execution_space>::value;
+
+  Albany::DualView<int*> m_volume_eqns;
+  Albany::DualView<int*> m_volume_eqns_offsets;
+  Albany::DualView<int*> m_lids;
 };
 
 // **************************************************************
 // Tangent
 // **************************************************************
 template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::Tangent,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
+class ScatterResidual<AlbanyTraits::Tangent,Traits>
+  : public ScatterResidualBase<AlbanyTraits::Tangent, Traits>  {
 public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+  using Base = ScatterResidualBase<AlbanyTraits::Tangent, Traits>;
+  using ScalarT = typename Base::ScalarT;
+
+  using Base::get_resid;
+  using Base::numFields;
+  using Base::numNodes;
+  using Base::m_fields_offsets;
 };
 
 // **************************************************************
 // Distributed parameter derivative
 // **************************************************************
 template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+class ScatterResidual<AlbanyTraits::DistParamDeriv,Traits>
+  : public ScatterResidualBase<AlbanyTraits::DistParamDeriv, Traits>  {
 public:
   ScatterResidual(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  using Base = ScatterResidualBase<AlbanyTraits::DistParamDeriv, Traits>;
+  using ScalarT = typename Base::ScalarT;
+
+  using Base::get_resid;
+  using Base::numNodes;
+  using Base::numFields;
+  using Base::m_fields_offsets;
 };
 
 template<typename Traits>
-class ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+class ScatterResidualWithExtrudedParams<AlbanyTraits::DistParamDeriv,Traits>
+  : public ScatterResidual<AlbanyTraits::DistParamDeriv, Traits>
+{
 public:
   ScatterResidualWithExtrudedParams(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl)  :
-                    ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl) {
-    extruded_params_levels = p.get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
-  };
+                                    const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm) {
-    ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::postRegistrationSetup(d,vm);
-  }
   void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+protected:
+  using Base = ScatterResidual<AlbanyTraits::DistParamDeriv, Traits>;
+  using ScalarT = typename Base::ScalarT;
+
+  using Base::get_resid;
+  using Base::m_fields_offsets;
+  using Base::numNodes;
+  using Base::numFields;
+
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 
@@ -283,7 +290,7 @@ private:
 // **************************************************************
 
 /**
- * @brief Template specialization of the ScatterResidual Class for PHAL::AlbanyTraits::HessianVec EvaluationType.
+ * @brief Template specialization of the ScatterResidual Class for AlbanyTraits::HessianVec EvaluationType.
  *
  * This specialization is used to scatter the residual for the computation of:
  * <ul>
@@ -312,30 +319,34 @@ private:
  * where \f$\boldsymbol{x}\f$ is the solution, \f$\boldsymbol{p}_1\f$ is a first parameter, \f$\boldsymbol{p}_2\f$ is a potentially different second parameter,
  * \f$\boldsymbol{f}\f$ is the residual, \f$\boldsymbol{z}\f$ is the Lagrange multiplier vector, \f$\boldsymbol{v}_{\boldsymbol{x}}\f$ is a direction vector
  * with the same dimension as the vector \f$\boldsymbol{x}\f$, and \f$\boldsymbol{v}_{\boldsymbol{p}_1}\f$ is a direction vector with the same dimension as the vector \f$\boldsymbol{p}_1\f$.
- * 
+ *
  * This scatter is used when calling:
  * <ul>
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xx,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xp,
- *   <li> Albany::Application::evaluateResidual_HessVecProd_px, 
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_px,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_pp.
  * </ul>
  */
 template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::HessianVec,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::HessianVec, Traits>  {
+class ScatterResidual<AlbanyTraits::HessianVec,Traits>
+  : public ScatterResidualBase<AlbanyTraits::HessianVec, Traits>  {
 public:
   ScatterResidual(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 protected:
-  const std::size_t numFields;
-private:
-  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+  using Base = ScatterResidualBase<AlbanyTraits::HessianVec, Traits>;
+  using ScalarT = typename Base::ScalarT;
+
+  using Base::get_resid;
+  using Base::m_fields_offsets;
+  using Base::numNodes;
+  using Base::numFields;
 };
 
 /**
- * @brief Template specialization of the ScatterResidualWithExtrudedParams Class for PHAL::AlbanyTraits::HessianVec EvaluationType.
+ * @brief Template specialization of the ScatterResidualWithExtrudedParams Class for AlbanyTraits::HessianVec EvaluationType.
  *
  * This specialization is used to scatter the residual for the computation of:
  * <ul>
@@ -354,31 +365,32 @@ private:
  *  where  \f$\boldsymbol{x}\f$  is the solution, \f$\boldsymbol{p}_1\f$  is a first parameter, \f$\boldsymbol{p}_2\f$  is a potentially different second parameter
  *  which is extruded, \f$\boldsymbol{f}\f$  is the residual, \f$\boldsymbol{z}\f$ is the Lagrange multiplier vector, \f$\boldsymbol{v}_{\boldsymbol{x}}\f$ is a direction vector
  *  with the same dimension as the vector \f$\boldsymbol{x}\f$, and \f$\boldsymbol{v}_{\boldsymbol{p}_1}\f$ is a direction vector with the same dimension as the vector \f$\boldsymbol{p}_1\f$.
- * 
+ *
  * This scatter is used when calling:
  * <ul>
- *   <li> Albany::Application::evaluateResidual_HessVecProd_px, 
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_px,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_pp.
  * </ul>
  */
 template<typename Traits>
-class ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::HessianVec,Traits>
-  : public ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>  {
+class ScatterResidualWithExtrudedParams<AlbanyTraits::HessianVec,Traits>
+  : public ScatterResidual<AlbanyTraits::HessianVec, Traits>
+{
 public:
   ScatterResidualWithExtrudedParams(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl)  :
-                    ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl) {
-    extruded_params_levels = p.get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
-  };
+                                    const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm) {
-    ScatterResidual<PHAL::AlbanyTraits::HessianVec, Traits>::postRegistrationSetup(d,vm);
-  }
   void evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData d);
   void evaluateFields(typename Traits::EvalData d);
-private:
-  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
+protected:
+  using Base = ScatterResidual<AlbanyTraits::HessianVec, Traits>;
+  using ScalarT = typename Base::ScalarT;
+
+  using Base::get_resid;
+  using Base::m_fields_offsets;
+  using Base::numNodes;
+  using Base::numFields;
+
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 

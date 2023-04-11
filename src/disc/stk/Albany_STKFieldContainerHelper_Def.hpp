@@ -9,9 +9,9 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_ThyraUtils.hpp"
 
-#include <Kokkos_Core.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <type_traits>
+#include <numeric>
 
 namespace Albany
 {
@@ -21,15 +21,14 @@ namespace Albany
 // solution field data for this bucket of nodes.
 // The array is two dimensional (NumberNodes, FieldDim)
 // where FieldDim=1 for scalar field, and 1+ for vector fields
-
 template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
 fillVector (      Thyra_Vector&    field_thyra,
             const FieldType& field_stk,
-            const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
-            const stk::mesh::Bucket& bucket,
-            const NodalDOFManager& nodalDofManager,
-            const int offset)
+            const stk::mesh::BulkData& bulkData,
+            const Teuchos::RCP<const DOFManager>& dof_mgr,
+            const bool overlapped,
+            const std::vector<int>& components)
 {
   constexpr int rank = FieldRank<FieldType>::n;
   static_assert(rank==0 || rank==1,
@@ -38,33 +37,82 @@ fillVector (      Thyra_Vector&    field_thyra,
   using ScalarT = typename FieldScalar<FieldType>::type;
   using ViewT = Kokkos::View<const ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
 
-  auto stk_data = stk::mesh::field_data(field_stk,bucket);
-  const int num_nodes_in_bucket = bucket.size();
-  const int num_vec_components = nodalDofManager.numComponents();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const bool restricted = dof_mgr->part_name()!=dof_mgr->elem_block_name();
 
-  ViewT field_view (stk_data,num_nodes_in_bucket,num_vec_components);
-
-  const stk::mesh::BulkData& mesh = field_stk.get_mesh();
   auto data = getNonconstLocalData(field_thyra);
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const auto& elems = dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+  const int num_elems = elems.size();
+  const auto indexer = dof_mgr->indexer();
 
-  for(int i=0; i<num_nodes_in_bucket; ++i)  {
-    const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    const LO node_lid = indexer->getLocalElement(node_gid);
+#ifdef ALBANY_DEBUG
+  // Safety check
+  if (elems.size()>0) {
+    const auto& e0 = bulkData.get_entity(ELEM_RANK,elems[0]+1);
+    const auto& n0 = *bulkData.begin_nodes(e0);
+    TEUCHOS_TEST_FOR_EXCEPTION (stk::mesh::field_scalars_per_entity(field_stk,n0)<components.size(),
+        std::runtime_error,
+        "Error! Number of components exceeds number of scalars per node of the STK field.\n"
+        "  - number of components: " << components.size() << "\n"
+        "  - number scalars/node : " << stk::mesh::field_scalars_per_entity(field_stk,n0) << "\n");
+  }
+#endif
 
-    for(int j=0; j<num_vec_components; ++j) {
-      data[nodalDofManager.getLocalDOF(node_lid,offset+j)] = field_view(i,j);
+  const auto get_offsets = [&] (const int eq) -> const std::vector<int>&
+  {
+    return dof_mgr->getGIDFieldOffsets(eq);
+  };
+  for (int ielem=0; ielem<num_elems; ++ielem) {
+    const auto elem_gid = elems[ielem];
+    const auto e = bulkData.get_entity(ELEM_RANK,elem_gid+1);
+    const int num_nodes = bulkData.num_nodes(e);
+    const auto nodes = bulkData.begin_nodes(e);
+    const auto& gids = dof_mgr->getElementGIDs(ielem);
+    for (int i=0; i<num_nodes; ++i) {
+      if (not overlapped) {
+        // Check right away if this node is owned. We can pick fieldId=0 from the
+        // dof manager, since we are guaranteed to own all or none of the gids on
+        // each node.
+        const auto owned_lid = indexer->getLocalElement(gids[get_offsets(0)[i]]);
+        if (owned_lid<0) {
+          continue;
+        }
+      }
+      auto stk_data = stk::mesh::field_data(field_stk,nodes[i]);
+      for (auto fid : components) {
+        const auto& offsets = get_offsets(fid);
+        const auto lid = elem_dof_lids(ielem,offsets[i]);
+        if (!restricted ||lid>=0) {
+          data[lid] = stk_data[fid];
+        }
+      }
     }
   }
+}
+
+// Shortcut for 'get all fields'
+template<class FieldType>
+void STKFieldContainerHelper<FieldType>::
+fillVector (      Thyra_Vector&    field_thyra,
+            const FieldType& field_stk,
+            const stk::mesh::BulkData& bulkData,
+            const Teuchos::RCP<const DOFManager>& dof_mgr,
+            const bool overlapped)
+{
+  std::vector<int> components(dof_mgr->getNumFields());
+  std::iota(components.begin(),components.end(),0);
+  fillVector(field_thyra,field_stk,bulkData,dof_mgr,overlapped,components);
 }
 
 template<class FieldType>
 void STKFieldContainerHelper<FieldType>::
 saveVector(const Thyra_Vector& field_thyra,
-           FieldType& field_stk,
-           const Teuchos::RCP<const GlobalLocalIndexer>& indexer,
-           const stk::mesh::Bucket& bucket,
-           const NodalDOFManager& nodalDofManager,
-           const int offset)
+                 FieldType& field_stk,
+           const stk::mesh::BulkData& bulkData,
+           const Teuchos::RCP<const DOFManager>& dof_mgr,
+           const bool overlapped,
+           const std::vector<int>& components)
 {
   constexpr int rank = FieldRank<FieldType>::n;
   static_assert(rank==0 || rank==1,
@@ -73,21 +121,56 @@ saveVector(const Thyra_Vector& field_thyra,
   using ScalarT = typename FieldScalar<FieldType>::type;
   using ViewT = Kokkos::View<ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
   
-  auto stk_data = stk::mesh::field_data(field_stk,bucket);
-  const int num_nodes_in_bucket = bucket.size();
-  const int num_vec_components = nodalDofManager.numComponents();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const bool restricted = dof_mgr->part_name()!=dof_mgr->elem_block_name();
 
-  ViewT field_view (stk_data,num_nodes_in_bucket,num_vec_components);
-
-  const auto& mesh = field_stk.get_mesh();
   auto data = getLocalData(field_thyra);
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const auto& elems = dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+  const int num_elems = elems.size();
+  const auto indexer = dof_mgr->indexer();
 
-  for(int i=0; i<num_nodes_in_bucket; ++i) {
-    const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    const LO node_lid = indexer->getLocalElement(node_gid);
+#ifdef ALBANY_DEBUG
+  // Safety check
+  if (elems.size()>0) {
+    const auto& e0 = bulkData.get_entity(ELEM_RANK,elems[0]+1);
+    const auto& n0 = *bulkData.begin_nodes(e0);
+    TEUCHOS_TEST_FOR_EXCEPTION (stk::mesh::field_scalars_per_entity(field_stk,n0)<components.size(),
+        std::runtime_error,
+        "Error! Number of components exceeds number of scalars per node of the STK field.\n"
+        "  - number of components: " << components.size() << "\n"
+        "  - number scalars/node : " << stk::mesh::field_scalars_per_entity(field_stk,n0) << "\n");
+  }
+#endif
 
-    for(int j = 0; j<num_vec_components; ++j) {
-      field_view(i,j) = data[nodalDofManager.getLocalDOF(node_lid,offset+j)];
+  const auto get_offsets = [&] (const int eq) -> const std::vector<int>&
+  {
+    return dof_mgr->getGIDFieldOffsets(eq);
+  };
+  for (int ielem=0; ielem<num_elems; ++ielem) {
+    const auto elem_gid = elems[ielem];
+    const auto e = bulkData.get_entity(ELEM_RANK,elem_gid+1);
+    const int num_nodes = bulkData.num_nodes(e);
+    const auto nodes = bulkData.begin_nodes(e);
+    const auto& gids = dof_mgr->getElementGIDs(ielem);
+    for (int i=0; i<num_nodes; ++i) {
+      if (not overlapped) {
+        // Check right away if this node is owned. We can pick fieldId=0 from the
+        // dof manager, since we are guaranteed to own all or none of the gids on
+        // each node.
+        const auto owned_lid = indexer->getLocalElement(gids[get_offsets(0)[i]]);
+        if (owned_lid<0) {
+          continue;
+        }
+      }
+      auto stk_data = stk::mesh::field_data(field_stk,nodes[i]);
+      for (auto fid : components) {
+        const auto& offsets = get_offsets(fid);
+        const auto lid = elem_dof_lids(ielem,offsets[i]);
+        if (!restricted or lid>=0) {
+          stk_data[fid] = data[lid];
+        }
+      }
     }
   }
 }
@@ -134,5 +217,20 @@ copySTKField(const FieldType& source,
     }
   }
 }
+
+// Shortcut for 'save all fields'
+template<class FieldType>
+void STKFieldContainerHelper<FieldType>::
+saveVector (const Thyra_Vector&    field_thyra,
+                  FieldType& field_stk,
+            const stk::mesh::BulkData& bulkData,
+            const Teuchos::RCP<const DOFManager>& dof_mgr,
+            const bool overlapped)
+{
+  std::vector<int> components(dof_mgr->getNumFields());
+  std::iota(components.begin(),components.end(),0);
+  saveVector(field_thyra,field_stk,bulkData,dof_mgr,overlapped,components);
+}
+
 
 } // namespace Albany

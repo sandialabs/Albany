@@ -140,7 +140,7 @@ list (APPEND SOURCES
   utility/Albany_LinearOpWithSolveDecorators.cpp
   utility/Albany_StringUtils.cpp
   utility/Albany_ThyraCrsMatrixFactory.cpp
-  utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
+  # utility/Albany_ThyraBlockedCrsMatrixFactory.cpp
   utility/Albany_ThyraUtils.cpp
   utility/Albany_TpetraThyraUtils.cpp
   utility/Albany_UnivariateDistribution.hpp
@@ -158,7 +158,7 @@ list (APPEND HEADERS
   utility/Albany_Hessian.hpp
   utility/Albany_LinearOpWithSolveDecorators.hpp
   utility/Albany_ThyraCrsMatrixFactory.hpp
-  utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
+  # utility/Albany_ThyraBlockedCrsMatrixFactory.hpp
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
   )
@@ -266,6 +266,8 @@ list (APPEND SOURCES
   disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
+  disc/Albany_DOFManager.cpp
+  disc/Albany_DiscretizationUtils.cpp
   )
 list (APPEND HEADERS
   disc/Adapt_NodalDataBase.hpp
@@ -277,14 +279,14 @@ list (APPEND HEADERS
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_MeshSpecs.hpp
-  disc/Albany_NodalDOFManager.hpp
+  disc/Albany_DOFManager.hpp
   )
 
 #stk
 list(APPEND SOURCES
   disc/stk/Albany_AsciiSTKMesh2D.cpp
   disc/stk/Albany_AsciiSTKMeshStruct.cpp
-  disc/stk/Albany_BlockedSTKDiscretization.cpp
+  # disc/stk/Albany_BlockedSTKDiscretization.cpp
   disc/stk/Albany_ExtrudedSTKMeshStruct.cpp
   disc/stk/Albany_GenericSTKFieldContainer.cpp
   disc/stk/Albany_GenericSTKMeshStruct.cpp
@@ -306,7 +308,7 @@ list (APPEND HEADERS
   disc/stk/Albany_AbstractSTKMeshStruct.hpp
   disc/stk/Albany_AsciiSTKMeshStruct.hpp
   disc/stk/Albany_AsciiSTKMesh2D.hpp
-  disc/stk/Albany_BlockedSTKDiscretization.hpp
+  # disc/stk/Albany_BlockedSTKDiscretization.hpp
   disc/stk/Albany_ExtrudedSTKMeshStruct.hpp
   disc/stk/Albany_GenericSTKMeshStruct.hpp
   disc/stk/Albany_GmshSTKMeshStruct.hpp
@@ -383,7 +385,6 @@ list (APPEND SOURCES
   evaluators/scatter/PHAL_SeparableScatterScalarResponse.cpp
   evaluators/state/PHAL_LoadSideSetStateField.cpp
   evaluators/state/PHAL_LoadStateField.cpp
-  evaluators/state/PHAL_ReadStateField.cpp
   evaluators/state/PHAL_SaveSideSetStateField.cpp
   evaluators/state/PHAL_SaveStateField.cpp
   evaluators/utility/PHAL_Absorption.cpp
@@ -476,8 +477,6 @@ list (APPEND HEADERS
   evaluators/state/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/state/PHAL_LoadStateField.hpp
   evaluators/state/PHAL_LoadStateField_Def.hpp
-  evaluators/state/PHAL_ReadStateField.hpp
-  evaluators/state/PHAL_ReadStateField_Def.hpp
   evaluators/state/PHAL_SaveSideSetStateField.hpp
   evaluators/state/PHAL_SaveSideSetStateField_Def.hpp
   evaluators/state/PHAL_SaveStateField.hpp

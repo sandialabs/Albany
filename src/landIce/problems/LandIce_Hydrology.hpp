@@ -290,7 +290,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   std::string fieldType, fieldUsage, meshPart;
-  bool nodal_state, scalar_state;
+  bool scalar_state;
   std::map<std::string, bool> is_input_state_scalar;
   // Loop over the number of required fields
   for (unsigned int ifield=0; ifield<num_fields; ++ifield)
@@ -328,7 +328,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if(fieldType == "Elem Scalar") {
       entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity, meshPart);
-      nodal_state = false;
       scalar_state = true;
 
       // Sanity check: dist parameters and dirichlet field MUST be node scalars
@@ -338,12 +337,10 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // Note: a Dirichlet field must be registered as a NodalDistParameter, since it must end up in the DistributedParameterLibrary
       entity = is_dist_param[stateName] || is_dirichlet_field[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, meshPart);
-      nodal_state = true;
       scalar_state = true;
     } else if(fieldType == "Elem Vector") {
       entity = Albany::StateStruct::ElemData;
       p = stateMgr.registerStateVariable(stateName, dl->cell_vector, elementBlockName, true, &entity, meshPart);
-      nodal_state = false;
       scalar_state = false;
 
       // Sanity check: dist parameters and dirichlet field MUST be node scalars
@@ -352,7 +349,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     } else if(fieldType == "Node Vector") {
       entity = is_dist_param[stateName] ? Albany::StateStruct::NodalDistParameter : Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, meshPart);
-      nodal_state = true;
       scalar_state = false;
 
       // Sanity check: dist parameters and dirichlet field MUST be node scalars
@@ -375,7 +371,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // Hence, a dirichlet field is also already taken care of.
       if (!is_dist_param[stateName] || !is_dirichlet_field[stateName]) {
         // A 'regular' field output: save it.
-        p->set<bool>("Nodal State", nodal_state);
         ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }

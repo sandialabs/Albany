@@ -22,7 +22,7 @@ public:
   //! Default constructor
   SolutionMaxValueResponseFunction(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
-    int neq = 1, int eq = 0, DiscType interleavedOrdering = DiscType::Interleaved);
+    int neq = 1, int eq = 0);
 
   //! Destructor
   ~SolutionMaxValueResponseFunction() = default;
@@ -131,9 +131,6 @@ protected:
   int eq;
 
   Teuchos::RCP<const Teuchos_Comm> comm_;
-
-  //! Flag for interleaved verus blocked unknown ordering
-  DiscType interleavedOrdering;
 
   //! Compute max value
   void computeMaxValue(const Teuchos::RCP<const Thyra_Vector>& x, ST& val);

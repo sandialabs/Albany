@@ -4,194 +4,244 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Teuchos_TestForException.hpp"
-#include "Teuchos_VerboseObject.hpp"
-#include "Phalanx_DataLayout.hpp"
-#include "Phalanx_Print.hpp"
-#include "Sacado.hpp"
+#include "LandIce_Gather2DField.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
-#include "LandIce_Gather2DField.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
-//uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
+#include "Phalanx_DataLayout.hpp"
+#include "Phalanx_Print.hpp"
+#include "Shards_CellTopology.hpp"
+
+// Nobody includes this file other than the cpp file for ETI,
+// so it's ok to inject this name in the LandIce namespace.
+using PHALTraits = PHAL::AlbanyTraits;
 
 namespace LandIce {
 
 //**********************************************************************
 
 template<typename EvalT, typename Traits>
-Gather2DFieldBase<EvalT, Traits>::
-Gather2DFieldBase(const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl)
+Gather2DField<EvalT, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl)
  : field2D(p.get<std::string>("2D Field Name"), dl->node_scalar)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
   this->addEvaluatedField(field2D);
-  cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  fieldLevel = p.get<int>("Field Level");
+  TEUCHOS_TEST_FOR_EXCEPTION (fieldLevel<0, Teuchos::Exceptions::InvalidParameter,
+      "[Gather2DField] Error! Field level must be non-negative.\n");
 
-  dl->node_gradient->dimensions(dims);
-  numNodes = dims[1];
+  extruded   = p.get<bool>("Extruded");
+  numNodes = dl->node_scalar->dimension(1);
 
   this->setName("Gather2DField"+PHX::print<EvalT>());
 
   if (p.isType<int>("Offset of First DOF")) {
     offset = p.get<int>("Offset of First DOF");
   } else {
+    // Hard-coded for StokesFOThickness
     offset = 2;
   }
 
-  fieldLevel = p.get<int>("Field Level");
+  if (p.isType<const std::string>("Mesh Part")) {
+    meshPart = p.get<const std::string>("Mesh Part");
+  } else {
+    meshPart = "upperside";
+  }
+
+  this->setName("Gather2DField"+PHX::print<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void Gather2DFieldBase<EvalT, Traits>::
+void Gather2DField<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
-    this->utils.setFieldData(field2D,fm);
+  this->utils.setFieldData(field2D,fm);
+}
+
+template<typename EvalT, typename Traits>
+void Gather2DField<EvalT, Traits>::
+check_topology (const shards::CellTopology& cell_topo) {
+  // Get node counts
+  if (extruded) {
+    const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+    const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        cell_topo.getName()==topo_hexa->name || cell_topo.getName()==topo_wedge->name, std::runtime_error,
+        "Error! Extruded mesh capabilities require HEXA or WEDGE element types.\n");
+  }
 }
 
 //**********************************************************************
-
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::Residual, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+template<>
+void Gather2DField<PHALTraits::Residual, PHALTraits>::
+evaluateFields (typename PHALTraits::EvalData workset)
 {
-  if (p.isType<const std::string>("Mesh Part")) {
-    this->meshPart = p.get<const std::string>("Mesh Part");
+  // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
+
+  const auto  x_data  = Albany::getLocalData(workset.x);
+  const auto& dof_mgr       = workset.disc->getDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
+  const auto top = layers_data->top_side_pos;
+  const auto bot = layers_data->bot_side_pos;
+
+  if (extruded) {
+#ifdef ALBANY_DEBUG
+    check_topology(dof_mgr->get_topology());
+#endif
+    const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
+    const int field_side_pos = field_layer==0 ? bot : top;
+    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
+
+    for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
+      const int elem_LID = elem_lids(cell);
+      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+
+      const auto f = [&] (const std::vector<int>& nodes) {
+        const int num_nodes = nodes.size();
+        for (int inode=0; inode<num_nodes; ++inode) {
+          const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
+          field2D(cell,nodes[inode]) = x_data[ldof];
+        }
+      };
+
+      // Run lambda on both top and bottom nodes in the cell, but make sure
+      // we order them in whatever way the nodes on $field_side_pos would be ordered
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_side_pos));
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_side_pos));
+    }
   } else {
-    this->meshPart = "upperside";
-  }
-}
+    TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
+        "Side sets defined in input file but not properly specified on the mesh.\n");
 
-template<typename Traits>
-void Gather2DField<PHAL::AlbanyTraits::Residual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
+    // Check for early return
+    if (workset.sideSets->count(meshPart)==0) {
+      return;
+    }
 
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
-
-  if (it != ssList.end()) {
-    const std::vector<Albany::SideStruct>& sideSet = it->second;
-
-    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
-      // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
-      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      unsigned int numSideNodes = side.topology->node_count;
-      for (unsigned int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i];
-        this->field2D(elem_LID,node) = x_constView[nodeID(elem_LID,node,this->offset)];
+    for (const auto& side : workset.sideSets->at(meshPart)) {
+      const int cell = side.ws_elem_idx;
+      const int elem_LID = elem_lids(cell);
+      const int side_pos = side.side_pos;
+      
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
+      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
+      const int numSideNodes = nodes.size();
+      for (int i=0; i<numSideNodes; ++i){
+        const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
+        field2D(cell,nodes[i]) = x_data[ldof];
       }
     }
   }
 }
 
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl)
+//**********************************************************************
+template<>
+void Gather2DField<PHALTraits::Jacobian, PHALTraits>::
+evaluateFields (typename PHALTraits::EvalData workset)
 {
-  if (p.isType<const std::string>("Mesh Part")) {
-    this->meshPart = p.get<const std::string>("Mesh Part");
+  // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const int   bot = layers_data->bot_side_pos;
+  const int   top = layers_data->top_side_pos;
+
+  ALBANY_EXPECT (fieldLevel==0 || fieldLevel==layers_data->numLayers,
+      "Field level must be 0 or match the number of layers in the mesh.\n"
+      "  - field level: " + std::to_string(fieldLevel) + "\n"
+      "  - num layers : " + std::to_string(layers_data->numLayers) + "\n");
+
+  const auto  x_data        = Albany::getLocalData(workset.x);
+  const auto& dof_mgr       = workset.disc->getDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
+
+  const int   neq = dof_mgr->getNumFields();
+
+  if (extruded) {
+#ifdef ALBANY_DEBUG
+    check_topology(dof_mgr->get_topology());
+#endif
+    const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
+    const int field_side_pos = field_layer==0 ? bot : top;
+    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
+    for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
+      const int elem_LID = elem_lids(cell);
+      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+
+      const auto f = [&] (const std::vector<int>& nodes) {
+        const int num_nodes = nodes.size();
+        for (int inode=0; inode<num_nodes; ++inode) {
+          LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
+          int firstunk = neq*nodes[inode] + offset;
+
+          ref_t val = field2D(cell,nodes[inode]);
+          val = ScalarT(val.size(),x_data[ldof]);
+          val.setUpdateValue(!workset.ignore_residual);
+          val.fastAccessDx(firstunk) = workset.j_coeff;
+        }
+      };
+
+      // Run lambda on both top and bottom nodes in the cell, but make sure
+      // we order them in whatever way the nodes on $field_side_pos would be ordered
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_side_pos));
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_side_pos));
+    }
   } else {
-    this->meshPart = "upperside";
-  }
-}
+    TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
+        "Side sets defined in input file but not properly specified on the mesh.\n");
 
-template<typename Traits>
-void Gather2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
+    // Check for early return
+    if (workset.sideSets->count(meshPart)==0) {
+      return;
+    }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSets.is_null(), std::logic_error,
-                             "Side sets defined in input file but not properly specified on the mesh.\n");
-
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
-  const int neq = nodeID.extent(2);
-
-  if (it != ssList.end()) {
-    const std::vector<Albany::SideStruct>& sideSet = it->second;
-
-    // Loop over the sides that form the boundary condition
-    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
-
+    for (const auto& side : workset.sideSets->at(meshPart)) {
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
-      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      unsigned int numSideNodes = side.topology->node_count;
-
-      for (unsigned int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i];
-        typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
-        val = FadType(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);
-        val.fastAccessDx(node*neq+this->offset) = workset.j_coeff;
+      const int cell = side.ws_elem_idx;
+      const int elem_LID = elem_lids(cell);
+      const int side_pos = side.side_pos;
+      
+      // Note: explicitly as for the offsets to be ordered as the dofs on this side pos
+      const auto& offsets =      dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
+      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,     side_pos);
+      const int numSideNodes = nodes.size();
+      for (int i=0; i<numSideNodes; ++i){
+        const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
+        ref_t val = field2D(cell,nodes[i]);
+        val = ScalarT(val.size(), x_data[ldof]);
+        val.fastAccessDx(nodes[i]*neq + offset) = workset.j_coeff;
       }
     }
   }
 }
 
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::Tangent, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl)
+//**********************************************************************
+template<>
+void Gather2DField<PHALTraits::HessianVec, PHALTraits>::
+evaluateFields (typename PHALTraits::EvalData workset)
 {
-  // Nothing to do here
-}
-
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-template<typename Traits>
-Gather2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
-Gather2DField(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl)
-{
-  // Nothing to do here
-}
-
-template<typename Traits>
-void Gather2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
-  Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
-  Teuchos::ArrayRCP<const ST> direction_x_constView;
-
-  bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
-  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
-  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
-  bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
-  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
-  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
+  const auto& hws = workset.hessianWorkset;
+  const bool g_xx_is_active = !hws.hess_vec_prod_g_xx.is_null();
+  const bool g_xp_is_active = !hws.hess_vec_prod_g_xp.is_null();
+  const bool g_px_is_active = !hws.hess_vec_prod_g_px.is_null();
+  const bool f_xx_is_active = !hws.hess_vec_prod_f_xx.is_null();
+  const bool f_xp_is_active = !hws.hess_vec_prod_f_xp.is_null();
+  const bool f_px_is_active = !hws.hess_vec_prod_f_px.is_null();
 
   // is_x_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
@@ -205,232 +255,109 @@ evaluateFields(typename Traits::EvalData workset)
   // .val().fastAccessDx().
   const bool is_x_direction_active = g_xx_is_active || g_px_is_active || f_xx_is_active || f_px_is_active;
 
-  if(is_x_direction_active) {
+  if (!is_x_active && !is_x_direction_active) {
+    return;
+  }
+
+  Teuchos::ArrayRCP<const ST> direction_x_data;
+  if (is_x_direction_active) {
+    auto direction_x = workset.hessianWorkset.direction_x;
+
     TEUCHOS_TEST_FOR_EXCEPTION(
         direction_x.is_null(),
         Teuchos::Exceptions::InvalidParameter,
-        "\nError in Gather2DField<HessianVec, Traits>: "
+        "\nError in Gather2DField<HessianVec, PHALTraits>: "
         "direction_x is not set and hess_vec_prod_g_xx or"
         "hess_vec_prod_g_px is set.\n");
-    direction_x_constView = Albany::getLocalData(direction_x->col(0));
+    direction_x_data = Albany::getLocalData(direction_x->col(0).getConst());
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(workset.sideSets.is_null(), std::logic_error,
-                             "Side sets defined in input file but not properly specified on the mesh.\n");
+  // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const int   top = layers_data->top_side_pos;
+  const int   bot = layers_data->bot_side_pos;
+  const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-  int numLayers = workset.disc->getLayeredMeshNumbering()->numLayers;
-  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
+  const auto x_data = Albany::getLocalData(workset.x);
+  const auto& dof_mgr       = workset.disc->getDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
 
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
+  const int   neq = dof_mgr->getNumFields();
 
-  if (it != ssList.end()) {
-    const std::vector<Albany::SideStruct>& sideSet = it->second;
-    const int neq = nodeID.extent(2);
+  if (extruded) {
+#ifdef ALBANY_DEBUG
+    check_topology(dof_mgr->get_topology());
+#endif
 
-    // Loop over the sides that form the boundary condition
-    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
+    const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
+    const int field_pos = field_layer==0 ? bot : top;
+    // Note: grab sol dofs in same order as the side where the field is defined,
+    //       to ensure that corresponding dofs are vertically aligned
+    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_pos);
+    for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
+      const int elem_LID = elem_lids(cell);
+      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
 
-      // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
-      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
-      unsigned int numSideNodes = side.topology->node_count;
+      const auto f = [&] (const std::vector<int>& nodes) {
+        const int num_nodes = nodes.size();
+        for (int inode=0; inode<num_nodes; ++inode) {
+          const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
+          ref_t val = field2D(cell,nodes[inode]);
+          val = HessianVecFad(val.size(), x_data[ldof]);
+          if (is_x_active) {
+            int firstunk = neq*nodes[inode] + offset;
+            val.fastAccessDx(firstunk).val() = workset.j_coeff;
+          }
+          // If we differentiate w.r.t. the solution direction, we have to set
+          // the second derivative to the related direction value
+          if (is_x_direction_active) {
+            val.val().fastAccessDx(0) = direction_x_data[ldof];
+          }
+        }
+      };
 
-      for (unsigned int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i];
-        typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
-        val = HessianVecFad(val.size(), x_constView[nodeID(elem_LID,node,this->offset)]);
+      // Run lambda on both top and bottom nodes in the cell
+      // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+      //       to guarantee corresponding nodes are vertically aligned.
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos));
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos));
+    }
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
+        "Side sets defined in input file but not properly specified on the mesh.\n");
+
+    // Check for early return
+    if (workset.sideSets->count(meshPart)==0) {
+      return;
+    }
+
+    const auto& sideSet = workset.sideSets->at(meshPart);
+    for (const auto& side : sideSet) {
+      const int cell = side.ws_elem_idx;
+      const int elem_LID = elem_lids(cell);
+      const int side_pos = side.side_pos;
+      
+      // Cannot as for getGIDFieldsOffsetsSide at side_pos, since we need top dofs parsed
+      // in same order as both dofs when we access the Fad derivatives
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
+      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
+      const int numSideNodes = nodes.size();
+      for (int i=0; i<numSideNodes; ++i){
+        const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
+        ref_t val = field2D(cell,nodes[i]);
+        val = HessianVecFad(val.size(), x_data[ldof]);
+
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to workset.j_coeff
         if (is_x_active)
-          val.fastAccessDx(neq*node+this->offset).val() = workset.j_coeff;
+          val.fastAccessDx(neq*nodes[i]+this->offset).val() = workset.j_coeff;
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)
-          val.val().fastAccessDx(0) = direction_x_constView[nodeID(elem_LID,node,this->offset)];
+          val.val().fastAccessDx(0) = direction_x_data[ldof];
       }
-    }
-  }
-}
-
-//********************************
-
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::Residual, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
-{
-  this->setName("GatherExtruded2DField Residual");
-}
-
-template<typename Traits>
-void GatherExtruded2DField<PHAL::AlbanyTraits::Residual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
-
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
-    std::runtime_error, "Error! No layered numbering in the mesh.\n");
-
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager(workset.disc->solution_dof_name());
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  const auto& indexer = *workset.disc->getOverlapNodeGlobalLocalIndexer();
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      // Retrieve corresponding 2D node
-      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-      GO gnode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
-      LO lnode = indexer.getLocalElement(gnode);
-      (this->field2D)(cell,node) = x_constView[solDOFManager.getLocalDOF(lnode, this->offset)];
-    }
-  }
-}
-
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl)
-{
-  this->setName("GatherExtruded2DField Jacobian");
-}
-
-template<typename Traits>
-void GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
-
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getLayeredMeshNumbering().is_null(),
-    std::runtime_error, "Error! No layered numbering in the mesh.\n");
-
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-  const auto& indexer = *workset.disc->getOverlapGlobalLocalIndexer();
-
-  int numLayers = layeredMeshNumbering.numLayers;
-  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const int neq = nodeID.extent(2);
-
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstunk = neq * node + this->offset;
-      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-      GO gnode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
-      GO gdof = solDOFManager.getGlobalDOF(gnode, this->offset);
-      typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
-
-      LO ldof = indexer.getLocalElement(gdof);
-      val = FadType(val.size(), x_constView[ldof]);
-      val.setUpdateValue(!workset.ignore_residual);
-      val.fastAccessDx(firstunk) = workset.j_coeff;
-    }
-  }
-}
-
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::Tangent, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl)
-{
-  this->setName("GatherExtruded2DField Tangent");
-}
-
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
-{
-  this->setName("GatherExtruded2DField DistParamDeriv");
-}
-
-template<typename Traits>
-GatherExtruded2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
-GatherExtruded2DField(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl)
- : Gather2DFieldBase<PHAL::AlbanyTraits::HessianVec, Traits>(p,dl)
-{
-  this->setName("GatherExtruded2DField HessianVec");
-}
-
-template<typename Traits>
-void GatherExtruded2DField<PHAL::AlbanyTraits::HessianVec, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::ArrayRCP<const ST> x_constView = Albany::getLocalData(workset.x);
-  Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
-  Teuchos::ArrayRCP<const ST> direction_x_constView;
-
-  bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
-  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
-  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
-  bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
-  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
-  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
-
-  // is_x_active is true if we compute the Hessian-vector product contributions of either:
-  // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
-  // If one of those is active, we have to initialize the first level of AD derivatives:
-  // .fastAccessDx().val().
-  const bool is_x_active = g_xx_is_active || g_xp_is_active || f_xx_is_active || f_xp_is_active;
-
-  // is_x_direction_active is true if we compute the Hessian-vector product contributions of either:
-  // Hv_g_xx, Hv_g_px, Hv_f_xx, or Hv_f_px, i.e. if the second derivative is w.r.t. the solution direction.
-  // If one of those is active, we have to initialize the second level of AD derivatives:
-  // .val().fastAccessDx().
-  const bool is_x_direction_active = g_xx_is_active || g_px_is_active || f_xx_is_active || f_px_is_active;
-
-  if(is_x_direction_active) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        direction_x.is_null(),
-        Teuchos::Exceptions::InvalidParameter,
-        "\nError in GatherExtruded2DField<HessianVec, Traits>: "
-        "direction_x is not set and hess_vec_prod_g_xx or"
-        "hess_vec_prod_g_px is set.\n");
-    direction_x_constView = Albany::getLocalData(direction_x->col(0));
-  }
-
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-
-  int numLayers = layeredMeshNumbering.numLayers;
-  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-
-  const auto& indexer = *workset.disc->getOverlapGlobalLocalIndexer();
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    const int neq = nodeID.extent(2);
-
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstunk = neq * node + this->offset;
-      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-      GO gnode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
-      GO gdof = solDOFManager.getGlobalDOF(gnode, this->offset);
-      LO ldof = indexer.getLocalElement(gdof);
-      typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
-      val = HessianVecFad(val.size(), x_constView[ldof]);
-      // If we differentiate w.r.t. the solution, we have to set the first
-      // derivative to workset.j_coeff
-      if (is_x_active)
-        val.fastAccessDx(firstunk).val() = workset.j_coeff;
-      // If we differentiate w.r.t. the solution direction, we have to set
-      // the second derivative to the related direction value
-      if (is_x_direction_active)
-        val.val().fastAccessDx(0) = direction_x_constView[ldof];
     }
   }
 }

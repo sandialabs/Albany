@@ -188,9 +188,10 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
 
   //Input
   p->set<int>("Field Level",discParams->get<int>("NumLayers"));
+  p->set("Extruded",false);
   p->set<std::string>("2D Field Name", dof_names[1]);
   p->set<int>("Offset of First DOF", dof_offsets[1]);
-  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+  p->set<Teuchos::RCP<const shards::CellTopology>>("Cell Topology",cellType);
 
   ev = Teuchos::rcp(new LandIce::Gather2DField<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
@@ -200,11 +201,12 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
 
   //Input
   p->set<int>("Field Level",discParams->get<int>("NumLayers"));
+  p->set("Extruded",true);
   p->set<std::string>("2D Field Name", "Extruded " + dof_names[1]);
   p->set<int>("Offset of First DOF", dof_offsets[1]);
-  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+  p->set<Teuchos::RCP<const shards::CellTopology>>("Cell Topology",cellType);
 
-  ev = Teuchos::rcp(new LandIce::GatherExtruded2DField<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new LandIce::Gather2DField<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // --- FO Stokes Implicit Thickness Update Resid --- //
@@ -275,7 +277,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<int>("Field Level", discParams->get<int>("NumLayers"));
   p->set<std::string>("Mesh Part", surfaceSideName);
   p->set<int>("Offset of First DOF", dof_offsets[1]);
-  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+  p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",cellType);
 
   //Output
   p->set<std::string>("Scatter Field Name", scatter_names[1]);

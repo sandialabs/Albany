@@ -650,7 +650,7 @@ Albany::StateManager::getDiscretization() const
 void
 Albany::StateManager::importStateData(Albany::StateArrays& states_from)
 {
-  ALBANY_ASSERT(stateVarsAreAllocated == true);
+  ALBANY_ASSERT(stateVarsAreAllocated == true, "State vars not allocated.\n");
 
   // Get states from STK mesh
   Albany::StateArrays&   sa                   = getStateArrays();
@@ -790,7 +790,7 @@ Albany::StateManager::importStateData(Albany::StateArrays& states_from)
 Albany::StateArray&
 Albany::StateManager::getStateArray(SAType type, const int ws) const
 {
-  ALBANY_ASSERT(stateVarsAreAllocated == true);
+  ALBANY_ASSERT(stateVarsAreAllocated == true, "State vars not allocated.\n");
 
   switch (type) {
     case ELEM: return getStateArrays().elemStateArrays[ws]; break;
@@ -807,7 +807,7 @@ Albany::StateManager::getStateArray(SAType type, const int ws) const
 Albany::StateArrays&
 Albany::StateManager::getStateArrays() const
 {
-  ALBANY_ASSERT(stateVarsAreAllocated == true);
+  ALBANY_ASSERT(stateVarsAreAllocated == true, "State vars not allocated.\n");
   Albany::StateArrays& sa = disc->getStateArrays();
   return sa;
 }
@@ -815,7 +815,7 @@ Albany::StateManager::getStateArrays() const
 void
 Albany::StateManager::setStateArrays(Albany::StateArrays& sa)
 {
-  ALBANY_ASSERT(stateVarsAreAllocated == true);
+  ALBANY_ASSERT(stateVarsAreAllocated == true, "State vars not allocated.\n");
   disc->setStateArrays(sa);
   return;
 }
@@ -825,7 +825,7 @@ Albany::StateManager::updateStates()
 {
   // Swap boolean that defines old and new (in terms of state1 and 2) in
   // accessors
-  ALBANY_ASSERT(stateVarsAreAllocated == true);
+  ALBANY_ASSERT(stateVarsAreAllocated == true, "State vars not allocated.\n");
 
   // Get states from STK mesh
   Albany::StateArrays&   sa              = disc->getStateArrays();

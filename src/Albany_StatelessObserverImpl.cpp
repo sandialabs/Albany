@@ -24,10 +24,9 @@ StatelessObserverImpl (const Teuchos::RCP<Application> &app)
 RealType StatelessObserverImpl::
 getTimeParamValueOrDefault (RealType defaultValue) const {
   const std::string label("Time");
-  //IKT, NOTE: solMethod == 1 corresponds to Transient
   bool const
     use_time_param = (app_->getParamLib()->isParameter(label) == true) &&
-      (app_->getSolutionMethod() != 1);
+      (app_->getSolutionMethod() != Transient);
 
   double const
     this_time = use_time_param == true ?

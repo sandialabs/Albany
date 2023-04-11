@@ -11,8 +11,8 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#include "Albany_ThyraTypes.hpp" 
-#include "Albany_CommTypes.hpp" 
+#include "Albany_DOFManager.hpp"
+#include "Albany_CommTypes.hpp"
 
 namespace Albany {
 
@@ -20,7 +20,7 @@ class SolutionCullingStrategyBase {
 public:
   virtual void setup () {}
 
-  virtual Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const Thyra_VectorSpace>& sourceVS) const = 0;
+  virtual Teuchos::Array<GO> selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const = 0;
 
   virtual ~SolutionCullingStrategyBase()  = default;
 };

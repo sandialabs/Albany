@@ -398,7 +398,7 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, ebn,
-                             ebNameToIndex, this->interleavedOrdering));
+                             ebNameToIndex));
 
 
   // Create a mesh specs object for EACH side set
@@ -421,9 +421,10 @@ AsciiSTKMeshStruct::setFieldData(
               const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */)
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   this->SetupFieldData(comm, sis, worksetSize);
+  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
 }
 
 void

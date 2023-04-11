@@ -25,7 +25,6 @@ template <class Traits>
 void ComputeNullSpace(
     Traits& nullSpace,
     const Teuchos::RCP<Thyra_MultiVector> &coordMV,
-    DiscType interleavedOrdering,
     int numPDEs, bool computeConstantModes,
     int physVectorDim, bool computeRotationModes)
 {
@@ -41,11 +40,6 @@ void ComputeNullSpace(
   if(numSpaceDim > 2) z = data[2];
 
   nullSpace.zero();
-
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    (interleavedOrdering != DiscType::Interleaved),
-    std::logic_error,
-    "ComputeNullSpace: Currently implemented only for interleaved ordering");
 
   for (int node = 0 ; node < numNodes; node++) {
 
@@ -169,7 +163,7 @@ struct TraitsImpl : public TraitsImplBase {
 
 RigidBodyModes::RigidBodyModes()
   : numPDEs(0),
-    interleavedOrdering(DiscType::BlockedMono), computeConstantModes(false),
+    computeConstantModes(false),
     physVectorDim(0), computeRotationModes(false),
     nullSpaceDim(0),
     mlUsed(false), mueLuUsed(false), froschUsed(false), setNonElastRBM(false),
@@ -313,12 +307,10 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
 
 void RigidBodyModes::
 setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
-                           DiscType interleavedOrdering_,
                            const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs,
                            const Teuchos::RCP<const Thyra_VectorSpace>& soln_overlap_vs)
 {
   setCoordinates(coordMV_in);
-  interleavedOrdering = interleavedOrdering_;
 
   const int numNodes = getSpmdVectorSpace(coordMV->range())->localSubDim();
 
@@ -334,7 +326,7 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
       EpetraNullSpaceTraits nullSpace(epetraTraitsArray, numNodes * numPDEs);
 
 
-      ComputeNullSpace(nullSpace, coordMV, interleavedOrdering, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
+      ComputeNullSpace(nullSpace, coordMV, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
 
       plist->set("null space: type", "pre-computed");
       plist->set("null space: dimension", nullSpaceDim);
@@ -352,7 +344,7 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
           Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), nullSpaceDim, false));
       NullSpaceTraits nullSpace(tpetraTraitsArray);
 
-      ComputeNullSpace(nullSpace, coordMV, interleavedOrdering, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
+      ComputeNullSpace(nullSpace, coordMV, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
 
       if (isMueLuUsed()) {
         plist->set("Nullspace", tpetraTraitsArray);

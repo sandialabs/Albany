@@ -18,7 +18,8 @@ namespace Albany {
 static const double pi = 4.0 * std::atan(4.0);
 
 Teuchos::ParameterList
-getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNames) {
+getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNames)
+{
   Teuchos::ParameterList validPL ("ValidInitialConditionParams");
   validPL.set<std::string>("Function", "", "");
   Teuchos::Array<double> defaultData;
@@ -32,7 +33,6 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
   // Validate element block constant data
 
   for(int i = 0; i < wsEBNames.size(); i++)
-
     validPL.set<Teuchos::Array<double> >(wsEBNames[i], defaultData, "");
 
   // For EBConstant data, we can optionally randomly perturb the IC on each variable some amount
@@ -43,13 +43,25 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
 }
 
 void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
-                       const Albany::Conn& wsElNodeEqID,
-                       const Teuchos::ArrayRCP<std::string>& wsEBNames,
-                       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
-                       const int neq, const int numDim,
-                       Teuchos::ParameterList& icParams, const bool hasRestartSolution)
+                        const Teuchos::RCP<AbstractDiscretization>& disc,
+                        Teuchos::ParameterList& icParams)
 {
   auto soln_data = Albany::getNonconstLocalData(soln);
+  const auto& dof_mgr = disc->getDOFManager();
+  const auto& elem_lids = disc->getWsElementLIDs().host();
+  const auto& ws_sizes = disc->getWorksetsSizes();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto& wsEBNames = disc->getWsEBNames();
+  const auto& coords = disc->getCoords();
+  const auto  numDim = disc->getNumDim();
+  const auto  neq = dof_mgr->getNumFields();
+  const auto  hasRestartSolution = disc->hasRestartSolution();
+
+  constexpr auto ALL = Kokkos::ALL();
+
+  // TODO: this won't be correct if/when we allow multiple solution fields with
+  //       different discretization order/type
+  const auto numNodes = dof_mgr->elem_dof_lids().host().extent_int(1) / neq;
 
   // Called three times, with x, xdot, and xdotdot. Different param lists are sent in.
   icParams.validateParameters(getValidInitialConditionParameters(wsEBNames), 0);
@@ -108,12 +120,11 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     }
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord and wsEBName
-    std::vector<double> x;
-    x.resize(neq);
+    std::vector<double> x(neq);
 
     Teuchos::RCP<AnalyticFunction> initFunc;
 
-    for (int ws=0; ws < wsElNodeEqID.size(); ws++) { // loop over worksets
+    for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
 
       Teuchos::Array<double> data = icParams.get(wsEBNames[ws], defaultData);
       // Call factory method from library of initial condition functions
@@ -134,52 +145,47 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
       std::vector<double> X(neq);
 
-      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) { // loop over elements in workset
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
+        for (int eq=0; eq<neq; eq++)
+          X[eq] = 0;
 
-        for (int i=0; i<neq; i++)
-            X[i] = 0;
+        for (int inode=0; inode<numNodes; ++inode)
+          for (int eq=0; eq<neq; eq++)
+            X[eq] += coords[ws][ielem][inode][eq]; // nodal coords
 
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) // loop over node local to the element
-          for (int i=0; i<neq; i++)
-            X[i] += coords[ws][el][ln][i]; // nodal coords
-
-        for (int i=0; i<neq; i++)
-          X[i] /= (double)neq;
+        for (int eq=0; eq<neq; eq++)
+          X[eq] /= (double)neq;
 
         initFunc->compute(&x[0], &X[0]);
 
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) { // loop over node local to the element
-          for (int i=0; i<neq; i++){
-
-             soln_data[wsElNodeEqID[ws](el,ln,i)] += x[i];
-//             (*soln)[wsElNodeEqID[ws](el,ln,i)] += X[i]; // Test with coord values
-             lumpedMMT_data[wsElNodeEqID[ws](el,ln,i)] += 1.0;
+        const auto elem_LID = elem_lids(ws,ielem);
+        const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+        for (int eq=0; eq<neq; eq++){
+          const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+          for (int inode=0; inode<numNodes; ++inode) {
+             soln_data[dof_lids[offsets[inode]]] += x[eq];
+             lumpedMMT_data[dof_lids[offsets[inode]]] += 1.0;
           }
-    } } }
+    }}}
 
 //  Apply the inverted lumped mass matrix to get the final nodal projection
 
     for(int i = 0; i < soln_data.size(); ++i) {
       soln_data[i] /= lumpedMMT_data[i];
     }
-
-    return;
-  }
-
-  if(name == "Coordinates") {
+  } else if(name == "Coordinates") {
     // Place the coordinate locations of the nodes into the solution vector for an initial guess
-
-    int numDOFsPerDim = neq / numDim;
-
-    for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for(unsigned el = 0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for(unsigned ln = 0; ln < wsElNodeEqID[ws].extent(1); ln++) {
-
-          const double* X = coords[ws][el][ln];
-          for(int j = 0; j < numDOFsPerDim; j++)
-            for(int i = 0; i < numDim; i++)
-             soln_data[wsElNodeEqID[ws](el,ln,j * numDim + i)] = X[i];
-        }
+    for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
+        const auto elem_LID = elem_lids(ws,ielem);
+        const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+        for (int eq=0; eq<neq; ++eq) {
+          const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+          const int idim = eq % numDim;
+          for (int inode=0; inode<numNodes; ++inode) {
+            const double* X = coords[ws][ielem][inode];
+            soln_data[dof_lids[offsets[inode]]] += X[idim];
+        }}
       }
     }
   } else if(name == "Expression Parser") {
@@ -193,17 +199,21 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
     Teuchos::RCP<AnalyticFunction> initFunc = Teuchos::rcp(new ExpressionParser(neq, numDim, expressionX, expressionY, expressionZ));
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
-    std::vector<double> x; x.resize(neq);
-    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) {
-          const double* X = coords[ws][el][ln];
-          for (int i=0; i<neq; i++) {
-            x[i] = soln_data[wsElNodeEqID[ws](el,ln,i)];
+    std::vector<double> x(neq);
+    for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
+        const auto elem_LID = elem_lids(ws,ielem);
+        const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+        for (int inode=0; inode<numNodes; ++inode) {
+          const double* X = coords[ws][ielem][inode];
+          for (int eq=0; eq<neq; ++eq) {
+            const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+            x[eq] = soln_data[dof_lids[offsets[inode]]];
           }
           initFunc->compute(&x[0],X);
-          for (int i=0; i<neq; i++) {
-            soln_data[wsElNodeEqID[ws](el,ln,i)] = x[i];
+          for (int eq=0; eq<neq; eq++) {
+            const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+            soln_data[dof_lids[offsets[inode]]] = x[eq];
           }
         }
       }
@@ -221,18 +231,21 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
 
     // Loop over all worksets, elements, all local nodes: compute soln as a
     // function of coord
-    std::vector<double> x;
-    x.resize(neq);
-    for (int ws = 0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el = 0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for (unsigned ln = 0; ln < wsElNodeEqID[ws].extent(1); ln++) {
-          double const* X = coords[ws][el][ln];
-          for (int i = 0; i < neq; i++) {
-            x[i] = soln_data[wsElNodeEqID[ws](el, ln, i)];
+    std::vector<double> x(neq);
+    for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
+        const auto elem_LID = elem_lids(ws,ielem);
+        const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+        for (int inode=0; inode<numNodes; ++inode) {
+          double const* X = coords[ws][ielem][inode];
+          for (int eq=0; eq<neq; ++eq) {
+            const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+            x[eq] = soln_data[dof_lids[offsets[inode]]];
           }
           initFunc->compute(&x[0], X);
-          for (int i = 0; i < neq; i++) {
-            soln_data[wsElNodeEqID[ws](el, ln, i)] = x[i];
+          for (int eq=0; eq<neq; ++eq) {
+            const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+            soln_data[dof_lids[offsets[inode]]] = x[eq];
           }
         }
       }
@@ -248,17 +261,21 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
       = createAnalyticFunction(name, neq, numDim, data);
 
     // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
-    std::vector<double> x; x.resize(neq);
-    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
-      for (unsigned el=0; el < wsElNodeEqID[ws].extent(0); el++) {
-        for (unsigned ln=0; ln < wsElNodeEqID[ws].extent(1); ln++) {
-          const double* X = coords[ws][el][ln];
-          for (int i=0; i<neq; i++) {
-            x[i] = soln_data[wsElNodeEqID[ws](el,ln,i)];
+    std::vector<double> x(neq);
+    for (int ws=0; ws<elem_lids.extent_int(0); ++ws) {
+      for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
+        const auto elem_LID = elem_lids(ws,ielem);
+        const auto& dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+        for (int inode=0; inode<numNodes; ++inode) {
+          const double* X = coords[ws][ielem][inode];
+          for (int eq=0; eq<neq; eq++) {
+            const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+            x[eq] = soln_data[dof_lids[offsets[inode]]];
           }
           initFunc->compute(&x[0],X);
-          for (int i=0; i<neq; i++) {
-            soln_data[wsElNodeEqID[ws](el,ln,i)] = x[i];
+          for (int eq=0; eq<neq; eq++) {
+            const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+            soln_data[dof_lids[offsets[inode]]] = x[eq];
           }
         }
       }

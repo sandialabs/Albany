@@ -12,6 +12,7 @@
 #include "Albany_STKFieldContainerHelper.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_StringUtils.hpp"
 
 // Start of STK stuff
 #include <stk_mesh/base/FieldBase.hpp>
@@ -21,6 +22,8 @@
 #endif
 
 #include "Teuchos_VerboseObject.hpp"
+
+#include <numeric>
 
 namespace Albany {
 
@@ -36,7 +39,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
-    const DiscType                              interleaved_,
     const int                                   numDim_,
     const Teuchos::RCP<StateInfoStruct>&        sis,
     const int                                   num_params_)
@@ -44,7 +46,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
           params_,
           metaData_,
           bulkData_,
-          interleaved_,
           numDim_,
           num_params_)
 {
@@ -84,7 +85,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>&        params_,
     const Teuchos::RCP<stk::mesh::MetaData>&           metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&           bulkData_,
-    const DiscType                                     interleaved_,
     const int                                          neq_,
     const int                                          numDim_,
     const Teuchos::RCP<StateInfoStruct>&               sis,
@@ -94,7 +94,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
           params_,
           metaData_,
           bulkData_,
-          interleaved_,
           neq_,
           numDim_,
           num_params_)
@@ -235,8 +234,8 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
 
 }
 
-void
-MultiSTKFieldContainer::initializeProcRankField()
+void MultiSTKFieldContainer::
+initializeProcRankField()
 {
   using ISFT = AbstractSTKFieldContainer::IntScalarFieldType;
   using SFT  = AbstractSTKFieldContainer::ScalarFieldType;
@@ -253,326 +252,219 @@ MultiSTKFieldContainer::initializeProcRankField()
 #endif
 }
 
-void
-MultiSTKFieldContainer::fillVector(
-    Thyra_Vector&                                field_vector,
-    const std::string&                           field_name,
-    stk::mesh::Selector&                         field_selection,
-    const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-    const NodalDOFManager&                       nodalDofManager)
+void MultiSTKFieldContainer::
+fillVector(Thyra_Vector&        field_vector,
+           const std::string&   field_name,
+           const dof_mgr_ptr_t& field_dof_mgr,
+           const bool           overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::fillVector not called from a solution field container."
-    << std::endl);
-
-  fillVectorImpl(
-      field_vector,
-      field_name,
-      field_selection,
-      field_node_vs,
-      nodalDofManager,
-      0);
+  fillVectorImpl(field_vector, field_name, field_dof_mgr, overlapped);
 }
 
-void
-MultiSTKFieldContainer::fillSolnVector(
-    Thyra_Vector&                                solution,
-    stk::mesh::Selector&                         sel,
-    const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
+void MultiSTKFieldContainer::
+fillSolnVector(Thyra_Vector&        solution,
+               const dof_mgr_ptr_t& solution_dof_mgr,
+               const bool           overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::fillSolnVector not called from a solution field container."
-    << std::endl);
+  // Helper vector. Same as sol_index, but with extra entry=neq at the end,
+  // to make computing components idx easier
+  std::vector<int> offsets (sol_index[0].size()+1,0);
+  for (int k=0; k<sol_index[0].size(); ++k) {
+    offsets[k] = sol_index[0][k];
+  }
+  offsets.back() = this->neq;
 
-  const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
-  NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  for (int k=0; k<sol_index[0].size(); ++k) {
+    // Compute components indices
+    std::vector<int> components(offsets[k+1]-offsets[k]);
+    std::iota(components.begin(),components.end(),sol_index[0][k]);
 
-  int offset = 0;
-  for (int k = 0; k < sol_index[0].size(); k++) {
-    fillVectorImpl(
-        solution, sol_vector_name[0][k], sel, node_vs, nodalDofManager, offset);
-    offset += sol_index[0][k];
+    fillVectorImpl(solution, sol_vector_name[0][k], solution_dof_mgr, overlapped, components);
   }
 }
 
-void
-MultiSTKFieldContainer::fillSolnMultiVector(
-    Thyra_MultiVector&                           solution,
-    stk::mesh::Selector&                         sel,
-    const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
+void MultiSTKFieldContainer::
+fillSolnMultiVector (      Thyra_MultiVector& solution,
+                     const dof_mgr_ptr_t&     solution_dof_mgr,
+                     const bool               overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::fillSolnMultiVector not called from a solution field container."
-    << std::endl);
+  // Loop over time derivatives
+  for (int ideriv=0; ideriv<solution.domain()->dim(); ++ideriv) {
+    // Helper vector. Same as sol_index, but with extra entry=neq at the end,
+    // to make computing components idx easier
+    std::vector<int> offsets (sol_index[0].size()+1,0);
+    for (int k=0; k<sol_index[ideriv].size(); ++k) {
+      offsets[k] = sol_index[ideriv][k];
+    }
+    offsets.back() = this->neq;
 
-  using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-  using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
+    for (int k=0; k<sol_index[ideriv].size(); k++) {
+      // Compute components indices
+      std::vector<int> components(offsets[k+1]-offsets[k]);
+      std::iota(components.begin(),components.end(),sol_index[ideriv][k]);
 
-  // Build a dof manager on the fly (it's cheap anyways).
-  // We don't care about global dofs (hence, the -1), since it's used only
-  // to retrieve the local entry id in the thyra vector.
-  const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
-  NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
-
-  for (int icomp = 0; icomp < solution.domain()->dim(); ++icomp) {
-    int offset = 0;
-
-    for (int k = 0; k < sol_index[icomp].size(); k++) {
-      fillVectorImpl(
-          *solution.col(icomp),
-          sol_vector_name[icomp][k],
-          sel,
-          node_vs,
-          nodalDofManager,
-          offset);
-      offset += sol_index[icomp][k];
+      fillVectorImpl(*solution.col(ideriv), sol_vector_name[ideriv][k], solution_dof_mgr, overlapped, components);
     }
   }
 }
 
-void
-MultiSTKFieldContainer::saveVector(
-    const Thyra_Vector&                          field_vector,
-    const std::string&                           field_name,
-    stk::mesh::Selector&                         field_selection,
-    const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-    const NodalDOFManager&                       nodalDofManager)
+void MultiSTKFieldContainer::
+saveVector (const Thyra_Vector&  field_vector,
+            const std::string&   field_name,
+            const dof_mgr_ptr_t& field_dof_mgr,
+            const bool           overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::saveVector not called from a solution field container."
-    << std::endl);
-
-  saveVectorImpl(
-      field_vector,
-      field_name,
-      field_selection,
-      field_node_vs,
-      nodalDofManager,
-      0);
+  saveVectorImpl (field_vector, field_name, field_dof_mgr, overlapped);
 }
 
-void
-MultiSTKFieldContainer::saveSolnVector(
-    const Thyra_Vector&                          solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    stk::mesh::Selector&                         sel,
-    const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
+void MultiSTKFieldContainer::
+saveSolnVector (const Thyra_Vector& soln,
+                const mv_ptr_t&     /* soln_dxdp */,
+                const dof_mgr_ptr_t& sol_dof_mgr,
+                const bool           overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::saveSolnVector not called from a solution field container."
-    << std::endl);
+  // Helper vector. Same as sol_index, but with extra entry=neq at the end,
+  // to make computing components idx easier
+  std::vector<int> offsets (sol_index[0].size()+1,0);
+  for (int k=0; k<sol_index[0].size(); ++k) {
+    offsets[k] = sol_index[0][k];
+  }
+  offsets.back() = this->neq;
 
-  // Setup a dof manager on the fly (it's cheap anyways).
-  // We don't care about global dofs (hence, the -1), since it's used only
-  // to retrieve the local entry id in the thyra vector.
-  // The number of equations is given by sol_index
-  const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
-  NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+  for (int k=0; k<sol_index[0].size(); ++k) {
+    // Compute components indices
+    std::vector<int> components(offsets[k+1]-offsets[k]);
+    std::iota(components.begin(),components.end(),sol_index[0][k]);
 
-  int offset = 0;
-  for (int k = 0; k < sol_index[0].size(); ++k) {
-    // Recycle saveVectorImpl method
-    saveVectorImpl(
-        solution, sol_vector_name[0][k], sel, node_vs, nodalDofManager, offset);
-    offset += sol_index[0][k];
+    saveVectorImpl (soln, sol_vector_name[0][k], sol_dof_mgr, overlapped, components);
   }
 }
 
-void
-MultiSTKFieldContainer::saveSolnVector(
-    const Thyra_Vector& solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& /* solution_dot */,
-    stk::mesh::Selector&                         sel,
-    const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
+void MultiSTKFieldContainer::
+saveSolnVector (const Thyra_Vector&  soln,
+                const mv_ptr_t&      soln_dxdp,
+                const Thyra_Vector&  /* soln_dot */,
+                const dof_mgr_ptr_t& sol_dof_mgr,
+                const bool           overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::saveSolnVector not called from a solution field container."
-    << std::endl);
-
   // TODO: why can't we save also solution_dot?
-  Teuchos::RCP<Teuchos::FancyOStream> out =
-      Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVectorT with "
-          "soln_dotT, but "
-       << "this function has not been extended to write soln_dotT properly to "
-          "the Exodus file.  Exodus "
-       << "file will contain only soln, not soln_dot.\n";
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVectorT with soln_dot,\n"
+       << "but this function has not been extended to write soln_dot properly to the Exodus file.\n"
+       << "Exodus file will contain only soln, not soln_dot.\n";
 
-  saveSolnVector(solution, soln_dxdp, sel, node_vs);
+  saveSolnVector(soln, soln_dxdp, sol_dof_mgr, overlapped);
 }
 
-void
-MultiSTKFieldContainer::saveSolnVector(
-    const Thyra_Vector& solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& /* solution_dot */,
-    const Thyra_Vector& /* solution_dotdot */,
-    stk::mesh::Selector&                         sel,
-    const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
+void MultiSTKFieldContainer::
+saveSolnVector (const Thyra_Vector&  soln,
+                const mv_ptr_t&      soln_dxdp,
+                const Thyra_Vector&  /* soln_dot */,
+                const Thyra_Vector&  /* soln_dotdot */,
+                const dof_mgr_ptr_t& sol_dof_mgr,
+                const bool           overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::saveSolnVector not called from a solution field container."
-    << std::endl);
-
   // TODO: why can't we save also solution_dot?
-  Teuchos::RCP<Teuchos::FancyOStream> out =
-      Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVectorT with "
-          "soln_dotT and "
-       << "soln_dotdotT, but this function has not been extended to write "
-          "soln_dotT "
-       << "and soln_dotdotT properly to the Exodus file.  Exodus "
-       << "file will contain only soln, not soln_dot and soln_dotdot.\n";
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVectorT with soln_dot and soln_dotdot,\n"
+       << "but this function has not been extended to write soln_dot[dot] properly to the Exodus file.\n"
+       << "Exodus file will contain only soln, not soln_dot nor soln_dotdot.\n";
 
-  saveSolnVector(solution, soln_dxdp, sel, node_vs);
+  saveSolnVector(soln, soln_dxdp, sol_dof_mgr, overlapped);
 }
 
-void
-MultiSTKFieldContainer::saveSolnMultiVector(
-    const Thyra_MultiVector&                     solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    stk::mesh::Selector&                         sel,
-    const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
+void MultiSTKFieldContainer::
+saveSolnMultiVector (const Thyra_MultiVector& soln,
+                     const mv_ptr_t&          /* soln_dxdp */,
+                     const dof_mgr_ptr_t&     sol_dof_mgr,
+                     const bool               overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::saveSolnMultiVector not called from a solution field container."
-    << std::endl);
+  const auto ncomp = soln.domain()->dim();
+  switch (ncomp) {
+    case 1:
+      saveSolnVector (*soln.col(0), Teuchos::null, sol_dof_mgr, overlapped); break;
+    case 2:
+      saveSolnVector (*soln.col(0), Teuchos::null, *soln.col(1), sol_dof_mgr, overlapped); break;
+    case 3:
+      saveSolnVector (*soln.col(0), Teuchos::null, *soln.col(1), *soln.col(2), sol_dof_mgr, overlapped); break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+          "Error! Unexpected number of vectors in solution multivector: " << ncomp << "\n");
+  }
+}
 
-  // Setup a dof manager on the fly (it's cheap anyways).
-  // We don't care about global dofs (hence, the -1), since it's used only
-  // to retrieve the local entry id in the thyra vector.
-  // The number of equations is given by sol_index
-  const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
-  NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
+void MultiSTKFieldContainer::
+saveResVector (const Thyra_Vector&  res,
+               const dof_mgr_ptr_t& dof_mgr,
+               const bool           overlapped)
+{
+  // Helper vector. Same as res_index, but with extra entry=neq at the end,
+  // to make computing components idx easier
+  std::vector<int> offsets (res_index.size()+1,0);
+  for (int k=0; k<res_index.size(); ++k) {
+    offsets[k] = res_index[k];
+  }
+  offsets.back() = this->neq;
 
-  for (int icomp = 0; icomp < solution.domain()->dim(); ++icomp) {
-    int offset = 0;
-    for (int k = 0; k < sol_index[icomp].size(); k++) {
-      saveVectorImpl(
-          *solution.col(icomp),
-          sol_vector_name[icomp][k],
-          sel,
-          node_vs,
-          nodalDofManager,
-          offset);
-      offset += sol_index[icomp][k];
+  for (int k=0; k<res_index.size(); ++k) {
+    // Compute components indices
+    std::vector<int> components(offsets[k+1]-offsets[k]);
+    std::iota(components.begin(),components.end(),sol_index[0][k]);
+
+    saveVectorImpl(res, res_vector_name[k], dof_mgr, overlapped, components);
+  }
+}
+
+void MultiSTKFieldContainer::
+transferSolutionToCoords()
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+    "Error MultiSTKFieldContainer::transferSolutionToCoords not yet implemented.\n");
+}
+
+void MultiSTKFieldContainer::
+fillVectorImpl (Thyra_Vector&           field_vector,
+                const std::string&      field_name,
+                const dof_mgr_ptr_t&    field_dof_mgr,
+                const bool              overlapped,
+                const std::vector<int>& components)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
+    "Error MultiSTKFieldContainer::fillVectorImpl not called from a solution field container.\n");
+
+  // Figure out if it's a nodal or elem field
+  const auto& fp = field_dof_mgr->getGeometricFieldPattern();
+  const auto& ftopo = field_dof_mgr->get_topology();
+  std::vector<int> entity_dims_with_dofs;
+  for (unsigned dim=0; dim<=ftopo.getDimension(); ++dim) {
+    if (fp->getSubcellIndices(dim,0).size()>0) {
+      entity_dims_with_dofs.push_back(dim);
     }
   }
-}
+  TEUCHOS_TEST_FOR_EXCEPTION (entity_dims_with_dofs.size()>1, std::runtime_error,
+      "Error! We cannot save fields that are defined one more than one type of entity.\n"
+      "  - field name: " << field_name << "\n"
+      "  - entities with dofs: " << util::join(entity_dims_with_dofs,",") << "\n");
 
-void
-MultiSTKFieldContainer::saveResVector(
-    const Thyra_Vector&                          res,
-    stk::mesh::Selector&                         sel,
-    const Teuchos::RCP<const Thyra_VectorSpace>& node_vs)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::saveResVector not called from a solution field container."
-    << std::endl);
+  auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
 
-  // Setup a dof manager on the fly (it's cheap anyways).
-  // We don't care about global dofs (hence, the -1), since it's used only
-  // to retrieve the local entry id in the thyra vector.
-  // The number of equations is given by sol_index
-  const LO        numLocalNodes = getSpmdVectorSpace(node_vs)->localSubDim();
-  NodalDOFManager nodalDofManager;
-  nodalDofManager.setup(this->neq, numLocalNodes, -1, interleaved);
-
-  int offset = 0;
-  for (int k = 0; k < res_index.size(); k++) {
-    saveVectorImpl(
-        res, res_vector_name[k], sel, node_vs, nodalDofManager, offset);
-    offset += res_index[k];
-  }
-}
-
-void
-MultiSTKFieldContainer::transferSolutionToCoords()
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::transferSolutionToCoords not called from a solution field container."
-    << std::endl);
-
-  const bool MultiSTKFieldContainer_transferSolutionToCoords_not_implemented =
-      true;
-  TEUCHOS_TEST_FOR_EXCEPT(
-      MultiSTKFieldContainer_transferSolutionToCoords_not_implemented);
-}
-
-void
-MultiSTKFieldContainer::fillVectorImpl(
-    Thyra_Vector&                                field_vector,
-    const std::string&                           field_name,
-    stk::mesh::Selector&                         field_selection,
-    const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-    const NodalDOFManager&                       nodalDofManager,
-    const int                                    offset)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::fillVectorImpl not called from a solution field container."
-    << std::endl);
-
-  using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-  using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
-
-  // Iterate over the on-processor nodes by getting node buckets and iterating
-  // over each bucket.
-  const stk::mesh::BucketVector& all_elements =
-      this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
-
-  auto* raw_field =
-      this->metaData->get_field(stk::topology::NODE_RANK, field_name);
-  ALBANY_EXPECT(
-      raw_field != nullptr,
+  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
+  ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
-  auto field_node_vs_indexer = createGlobalLocalIndexer(field_node_vs);
   if (rank == 0) {
-    using Helper     = STKFieldContainerHelper<SFT>;
+    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
     const SFT* field = this->metaData->template get_field<SFT>(
-        stk::topology::NODE_RANK, field_name);
-    for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      Helper::fillVector(
-          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
-    }
+        field_entity_rank, field_name);
+    using Helper     = STKFieldContainerHelper<SFT>;
+    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else if (rank == 1) {
-    using Helper     = STKFieldContainerHelper<VFT>;
+    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
     const VFT* field = this->metaData->template get_field<VFT>(
-        stk::topology::NODE_RANK, field_name);
-    for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      Helper::fillVector(
-          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
-    }
+        field_entity_rank, field_name);
+    using Helper     = STKFieldContainerHelper<VFT>;
+    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
@@ -581,59 +473,51 @@ MultiSTKFieldContainer::fillVectorImpl(
   }
 }
 
-void
-MultiSTKFieldContainer::saveVectorImpl(
-    const Thyra_Vector&                          field_vector,
-    const std::string&                           field_name,
-    stk::mesh::Selector&                         field_selection,
-    const Teuchos::RCP<const Thyra_VectorSpace>& field_node_vs,
-    const NodalDOFManager&                       nodalDofManager,
-    const int                                    offset)
+void MultiSTKFieldContainer::
+saveVectorImpl (const Thyra_Vector&     field_vector,
+                const std::string&      field_name,
+                const dof_mgr_ptr_t&    field_dof_mgr,
+                const bool              overlapped,
+                const std::vector<int>& components)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !(this->solutionFieldContainer),
-    std::logic_error,
-    "Error MultiSTKFieldContainer::saveVectorImpl not called from a solution field container."
-    << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
+    "Error MultiSTKFieldContainer::saveVectorImpl not called from a solution field container.\n");
 
-  using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-  using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
+  // Figure out if it's a nodal or elem field
+  const auto& fp = field_dof_mgr->getGeometricFieldPattern();
+  const auto& ftopo = field_dof_mgr->get_topology();
+  std::vector<int> entity_dims_with_dofs;
+  for (unsigned dim=0; dim<=ftopo.getDimension(); ++dim) {
+    if (fp->getSubcellIndices(dim,0).size()>0) {
+      entity_dims_with_dofs.push_back(dim);
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (entity_dims_with_dofs.size()!=1, std::runtime_error,
+      "Error! We cannot save fields that are defined on n!=1 type of entity.\n"
+      "  - field name: " << field_name << "\n"
+      "  - entities with dofs: " << util::join(entity_dims_with_dofs,",") << "\n");
 
-  auto* raw_field =
-      this->metaData->get_field(stk::topology::NODE_RANK, field_name);
-  ALBANY_EXPECT(
-      raw_field != nullptr,
+  auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
+
+  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
+  ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
-  // Iterate over the on-processor nodes by getting node buckets and iterating
-  // over each bucket.
-  stk::mesh::BucketVector const& all_elements =
-      this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
-
-  auto field_node_vs_indexer = createGlobalLocalIndexer(field_node_vs);
   if (rank == 0) {
-    using Helper = STKFieldContainerHelper<SFT>;
+    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
     SFT* field   = this->metaData->template get_field<SFT>(
         stk::topology::NODE_RANK, field_name);
-    for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      Helper::saveVector(
-          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
-    }
+    using Helper = STKFieldContainerHelper<SFT>;
+    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else if (rank == 1) {
-    using Helper = STKFieldContainerHelper<VFT>;
+    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
     VFT* field   = this->metaData->template get_field<VFT>(
         stk::topology::NODE_RANK, field_name);
-    for (auto it = all_elements.begin(); it != all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      Helper::saveVector(
-          field_vector, *field, field_node_vs_indexer, bucket, nodalDofManager, offset);
-    }
+    using Helper = STKFieldContainerHelper<VFT>;
+    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
         "Error! Only scalar and vector fields supported so far.\n");
   }
 }

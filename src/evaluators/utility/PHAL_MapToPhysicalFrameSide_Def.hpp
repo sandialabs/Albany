@@ -87,7 +87,7 @@ void MapToPhysicalFrameSide<EvalT, Traits>::
 operator() (const MapToPhysicalFrameSide_Tag& tag, const int& sideSet_idx) const {
   
   // Get the local data of side
-  const int side = sideSet.side_local_id(sideSet_idx);
+  const int side = sideSet.side_pos(sideSet_idx);
 
   for (int qp=0; qp<numSideQPs; ++qp) {
     for (int dim=0; dim<numDim; ++dim) {

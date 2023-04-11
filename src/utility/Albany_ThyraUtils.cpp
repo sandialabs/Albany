@@ -263,31 +263,6 @@ createVectorSpace (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 Teuchos::RCP<const Thyra_VectorSpace>
-createVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& scalar_vs,
-                   const int numComponents, const DiscType discType)
-{
-  if (numComponents==1) {
-    return scalar_vs;
-  }
-
-  auto scalar_gids = getGlobalElements(scalar_vs);
-  auto scalar_indexer = createGlobalLocalIndexer(scalar_vs);
-  const GO maxGlobalGID = scalar_indexer->getMaxGlobalGID();
-  const int numMyGids = scalar_indexer->getNumLocalElements();
-  NodalDOFManager mgr;
-  mgr.setup(numComponents,numMyGids,maxGlobalGID,discType);
-
-  Teuchos::Array<GO> indices(numMyGids*numComponents);
-  for (int i=0; i<numMyGids; ++i) {
-    for (int j=0; j<numComponents; ++j) {
-      indices[mgr.getLocalDOF(i,j)] = mgr.getGlobalDOF(scalar_gids[i],j);
-    }
-  }
-
-  return createVectorSpace(getComm(scalar_vs),indices);
-}
-
-Teuchos::RCP<const Thyra_VectorSpace>
 createVectorSpacesIntersection(const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
                                const Teuchos::RCP<const Thyra_VectorSpace>& vs2,
                                const Teuchos::RCP<const Teuchos_Comm>& comm)
@@ -322,6 +297,32 @@ createVectorSpacesDifference (const Teuchos::RCP<const Thyra_VectorSpace>& vs1,
                       std::back_inserter(gids));
 
   return createVectorSpace(comm,gids);
+}
+
+Teuchos::RCP<const Thyra_VectorSpace>
+createOneToOneVectorSpace (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tmap = getTpetraMap(vs,false);
+  if (!tmap.is_null()) {
+    auto unique = Tpetra::createOneToOne(tmap);
+    return createThyraVectorSpace (unique);
+  }
+
+#if defined(ALBANY_EPETRA)
+  auto emap = getEpetraBlockMap(vs,false);
+  if (!emap.is_null()) {
+    auto unique = Teuchos::rcp(new Epetra_BlockMap(Epetra_Util::Create_OneToOne_BlockMap(*emap)));
+    return createThyraVectorSpace(unique.getConst());
+  }
+#endif
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Error in getColumnSpace! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  return Teuchos::null;
 }
 
 // ========= Thyra_LinearOp utilities ========= //

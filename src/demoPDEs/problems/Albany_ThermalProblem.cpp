@@ -66,7 +66,7 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
       Teuchos::ParameterList p = params->sublist("Parameters").sublist(util::strint("Parameter", 
-			                 i+num_param_vecs));
+                       i+num_param_vecs));
       if(p.get<std::string>("Name") == "thermal_conductivity" && p.get<std::string>("Type") == "Distributed")
         conductivityIsDistParam = true;
     }
@@ -128,7 +128,7 @@ buildEvaluators(
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<ThermalProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
+  Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
@@ -152,7 +152,7 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", 0.);
     ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl, *this);
-    Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
+    Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
    }
    {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Theta 1"));
@@ -162,7 +162,7 @@ Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::stri
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", 0.);
     ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl, *this);
-    Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
+    Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
    }
 
    use_sdbcs_ = bcUtils.useSDBCs(); 

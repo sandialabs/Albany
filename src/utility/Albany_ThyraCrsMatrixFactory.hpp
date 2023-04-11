@@ -1,8 +1,10 @@
 #ifndef ALBANY_THYRA_CRS_MATRIX_FACTORY_HPP
 #define ALBANY_THYRA_CRS_MATRIX_FACTORY_HPP
 
-#include "Teuchos_RCP.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_ThyraTypes.hpp"
+
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
@@ -40,7 +42,23 @@ struct ThyraCrsMatrixFactory {
 
   // Inserts global indices in a temporary local structure. 
   // The actual graph is created when fillComplete is called
-  void insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& indices);
+  void insertGlobalIndices (const GO row, const GO col, const bool symmetric = true);
+  void insertGlobalIndices (const GO row, const Teuchos::ArrayView<const GO>& cols);
+  void insertGlobalIndices (const Teuchos::ArrayView<const GO>& rows,
+                            const Teuchos::ArrayView<const GO>& cols,
+                            const bool symmetric = true);
+
+  // Versions with std::vector (build array view on the fly)
+  void insertGlobalIndices (const GO row, const std::vector<GO>& cols) {
+    insertGlobalIndices(row,Teuchos::ArrayView<const GO>(cols));
+  }
+  void insertGlobalIndices (const std::vector<GO>& rows,
+                            const std::vector<GO>& cols,
+                            const bool symmetric = true) {
+    insertGlobalIndices(Teuchos::ArrayView<const GO>(rows),
+                        Teuchos::ArrayView<const GO>(cols),
+                        symmetric);
+  }
 
   // Fills the actual graph optimizing storage (exact count of nnz per row).
   void fillComplete ();
@@ -67,6 +85,9 @@ private:
   Teuchos::RCP<const Thyra_VectorSpace> m_range_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_ov_domain_vs;
   Teuchos::RCP<const Thyra_VectorSpace> m_ov_range_vs;
+
+  // Used during fill, to check that row GIDs are in the ov range space
+  Teuchos::RCP<const GlobalLocalIndexer> m_ov_range_indexer;
 
   bool m_filled;   // Whether fill of the graph has happened
   bool m_fe_crs;   // Whether row_vs and range_vs are the same

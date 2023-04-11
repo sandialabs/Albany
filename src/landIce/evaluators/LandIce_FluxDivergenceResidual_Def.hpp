@@ -4,10 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <fstream>
-#include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
-#include "Teuchos_CommHelpers.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
@@ -15,6 +11,11 @@
 #include "PHAL_Utilities.hpp"
 #include "Albany_Macros.hpp"
 
+#include "Teuchos_TestForException.hpp"
+#include "Phalanx_DataLayout.hpp"
+#include "Teuchos_CommHelpers.hpp"
+
+#include <fstream>
 
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::
@@ -55,7 +56,7 @@ LayeredFluxDivergenceResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
 // **********************************************************************
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
@@ -68,57 +69,38 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   using std::sqrt;
   using std::pow;
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-  auto layersRatio = layeredMeshNumbering.layers_ratio;
-  const int numLayers = layeredMeshNumbering.numLayers;
+  // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layersRatio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const int   numLayers = layers_data->numLayers;
+  const int   lastLayer = numLayers-1;
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-  GO gnodesBase[3], // global ids of the nodes at the base of the prism
-     gnodesILP1[3]; // global ids of the nodes at the top of the prism
-  int nodes[3],      //local (to the prism) ids of the nodes at the base of the prism
-      nodesP1_tmp[3],
-      nodesP1[3];    //local (to the prism) ids of the nodes at the top of the prism
-  std::vector<std::map<int,LO>> triaLNodesIds(numLayers+1);
-  std::vector<std::vector<LO> > triaBaseIds(numLayers+1);
+  const auto top = layers_data->top_side_pos;
+  const auto bot = layers_data->bot_side_pos;
+
+  // We use these only to figure out which local node in the cell is on the
+  // top or bottom side.
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
+  // Note: grab offsets on top/bot ordered in the same way (e.g., as in bot side),
+  //       to ensure corresponding nodes are vertically aligned
+  const auto& nodes_bot = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,bot);
+  const auto& nodes_top = node_dof_mgr->getGIDFieldOffsetsSide(0,top,bot);
+
+  // NOTE: for both Hexa and Wedge, the top/bot sides have their corresponding nodes
+  //       lying one on top of the other: nodes_top[i] lies on top of nodes_bot[i]
+  int node0 = nodes_bot[0];
+  int node1 = nodes_bot[1];
+  int node2 = nodes_bot[2];
+  int node0p1 = nodes_top[0];
+  int node1p1 = nodes_top[1];
+  int node2p1 = nodes_top[2];
+
   for (unsigned int cell=0; cell<workset.numCells; ++cell) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+    const LO elem_LID = elem_lids(cell);
+    const int ilayer = layers_data->getLayerId(elem_LID);
 
-    int iLayer = numLayers, iLayerPlus1 = 0;
-    int count=0,countP1=0;
-
-    //Here we split the prisms nodes into nodes at the base of the prisms (nodes) and
-    //corresponding nodes at the top of the prism (nodesP1) .
-    //we also detect in what layer the prism is, so that we can compute the layer thickness
-    for (unsigned int inode=0; inode<numNodes; ++inode) {
-      residual(cell,inode) = 0;
-      GO ilevel, baseId;
-      layeredMeshNumbering.getIndices(elNodeID[inode], baseId, ilevel);
-      if(ilevel < iLayer) {count=0; iLayer=ilevel;}
-      if(ilevel == iLayer) {
-        gnodesBase[count] = baseId;
-        nodes[count++] = inode;
-      }
-      if(ilevel > iLayerPlus1) {countP1=0; iLayerPlus1=ilevel;}
-      if(ilevel == iLayerPlus1) {
-        gnodesILP1[countP1] = elNodeID[inode];
-        nodesP1_tmp[countP1++] = inode;
-      }
-    }
-    for(int i=0; i<3; i++) {
-      const GO nodeId = layeredMeshNumbering.getId(gnodesBase[i], iLayerPlus1);
-      int j=0;
-      while ((gnodesILP1[j++] != nodeId) && (j<3));
-      nodesP1[i] = nodesP1_tmp[j-1];
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION ((count != 3) || (countP1 != 3) || (iLayerPlus1 != iLayer+1), std::runtime_error,
-        "Error! Something Went Wrong Here.\n");
-
-
-    auto lRatio = layersRatio[iLayer];
-
-    int node0 = nodes[0];
-    int node1 = nodes[1];
-    int node2 = nodes[2];
+    auto lRatio = layersRatio[ilayer];
 
     //computing coordinates of the vertices of the triangle at the base of the prism
     MeshScalarT x0 = coords(cell, node0, 0);
@@ -182,9 +164,9 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     ThicknessScalarT H0 = H(cell,node0)*lRatio, H1 = H(cell,node1)*lRatio, H2 = H(cell,node2)*lRatio;
 
     //computing the vertically averaged velocity at the triangles nodes
-    ScalarT vel0[2] = {(vel(cell, node0, 0)+vel(cell, nodesP1[0], 0))/2., (vel(cell, node0, 1)+vel(cell, nodesP1[0], 1))/2.},
-        vel1[2] = {(vel(cell, node1, 0)+vel(cell, nodesP1[1], 0))/2., (vel(cell, node1, 1)+vel(cell, nodesP1[1], 1))/2.},
-        vel2[2] = {(vel(cell, node2, 0)+vel(cell, nodesP1[2], 0))/2., (vel(cell, node2, 1)+vel(cell, nodesP1[2], 1))/2.};
+    ScalarT vel0[2] = {(vel(cell, node0, 0)+vel(cell, node0p1, 0))/2., (vel(cell, node0, 1)+vel(cell, node0p1, 1))/2.},
+        vel1[2] = {(vel(cell, node1, 0)+vel(cell, node1p1, 0))/2., (vel(cell, node1, 1)+vel(cell, node1p1, 1))/2.},
+        vel2[2] = {(vel(cell, node2, 0)+vel(cell, node2p1, 0))/2., (vel(cell, node2, 1)+vel(cell, node2p1, 1))/2.};
 //*/
 
     //interpolating the thickness and the velocities at the circumcenter
@@ -232,14 +214,14 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
         e20/2.*(0.75*H2+0.25*H0)*((0.75*vel2[0] + 0.25*vel0[0])*e20_norm[0]+(0.75*vel2[1] + 0.25*vel0[1])*e20_norm[1]);
 
     //Each triangle contributes to the flux through the three voronoi cells centered at the triangle vertices
-    residual(cell,node0) += A0 * flux_div(cell, node0) - (hVel_01 - hVel_20) - hVel0_norm;
-    residual(cell,node1) += A1 * flux_div(cell, node1) - (hVel_12 - hVel_01) - hVel1_norm;
-    residual(cell,node2) += A2 * flux_div(cell, node2) - (hVel_20 - hVel_12) - hVel2_norm;
+    residual(cell,node0) = A0 * flux_div(cell, node0) - (hVel_01 - hVel_20) - hVel0_norm;
+    residual(cell,node1) = A1 * flux_div(cell, node1) - (hVel_12 - hVel_01) - hVel1_norm;
+    residual(cell,node2) = A2 * flux_div(cell, node2) - (hVel_20 - hVel_12) - hVel2_norm;
 
-    if(iLayerPlus1 == numLayers) { //This corresponds to setting the flux_divergence to zero at the top level.
-      residual(cell,nodesP1[0]) += A0 * flux_div(cell, nodesP1[0]);
-      residual(cell,nodesP1[1]) += A1 * flux_div(cell, nodesP1[1]);
-      residual(cell,nodesP1[2]) += A2 * flux_div(cell, nodesP1[2]);
+    if (ilayer == lastLayer) { //This corresponds to setting the flux_divergence to zero at the top level.
+      residual(cell,node0p1) = A0 * flux_div(cell, node0p1);
+      residual(cell,node1p1) = A1 * flux_div(cell, node1p1);
+      residual(cell,node2p1) = A2 * flux_div(cell, node2p1);
     }
 
   }
@@ -329,8 +311,8 @@ void LandIce::FluxDivergenceResidual<EvalT, Traits>::evaluateFields(typename Tra
     for (auto const& it_side : sideSet)
     {
       // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
+      const int cell = it_side.ws_elem_idx;
+      const int side = it_side.side_pos;
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (int snode=0; snode<numSideNodes; ++snode) {
         auto inode = sideNodes[side][snode];
@@ -342,8 +324,8 @@ void LandIce::FluxDivergenceResidual<EvalT, Traits>::evaluateFields(typename Tra
     for (auto const& it_side : sideSet)
     {
       // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
+      const int cell = it_side.ws_elem_idx;
+      const int side = it_side.side_pos;
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
 
       int node0 = sideNodes[side][0];

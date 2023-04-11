@@ -94,6 +94,7 @@ namespace Albany
   template<typename ToST,typename FromST>
   struct ScalarConversionHelper
   {
+    KOKKOS_INLINE_FUNCTION
     static typename std::enable_if<std::is_constructible<ToST,FromST>::value,ToST>::type
     apply (const FromST& x)
     {
@@ -104,6 +105,7 @@ namespace Albany
   template<typename FromST>
   struct ScalarConversionHelper<typename Sacado::ScalarType<FromST>::type,FromST>
   {
+    KOKKOS_INLINE_FUNCTION
     static typename Sacado::ScalarType<FromST>::type apply (const FromST& x)
     {
       return ADValue(x);
@@ -111,6 +113,7 @@ namespace Albany
   };
 
   template<typename ToST,typename FromST>
+  KOKKOS_INLINE_FUNCTION
   ToST convertScalar (const FromST& x)
   {
     return ScalarConversionHelper<ToST,FromST>::apply(x);

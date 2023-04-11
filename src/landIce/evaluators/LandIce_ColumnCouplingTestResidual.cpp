@@ -4,8 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "PHAL_ReadStateField.hpp"
 #include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_ReadStateField_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ReadStateField)
+#include "LandIce_ColumnCouplingTestResidual.hpp"
+#include "LandIce_ColumnCouplingTestResidual_Def.hpp"
+
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::ColumnCouplingTestResidual)

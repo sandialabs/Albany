@@ -51,7 +51,6 @@ struct MeshSpecsStruct
       int                      worksetSize_,
       const std::string        ebName_,
       std::map<std::string, int> ebNameToIndex_,
-      DiscType                   interleavedOrdering_,
       const bool                 sepEvalsByEB_ = false,
       const Intrepid2::EPolyType cubatureRule_ = Intrepid2::POLYTYPE_GAUSS);
 
@@ -70,7 +69,6 @@ struct MeshSpecsStruct
   // If there are multiple element blocks, store the name and index of all blocks
   std::map<std::string, int> ebNameToIndex;
 
-  DiscType interleavedOrdering;
   // Records "Separate Evaluators by Element Block". This says whether there
   // are as many MeshSpecsStructs as there are element blocks. If there is
   // only one element block in the problem, then the value of this boolean

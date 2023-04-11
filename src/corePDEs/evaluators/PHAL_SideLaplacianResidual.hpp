@@ -25,8 +25,6 @@ class SideLaplacianResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-
   SideLaplacianResidual (const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -40,26 +38,22 @@ private:
   void evaluateFieldsCell (typename Traits::EvalData d);
   void evaluateFieldsSide (typename Traits::EvalData d);
 
-  typedef typename EvalT::MeshScalarT                   MeshScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
+  using ScalarT     = typename EvalT::ScalarT;
 
   // Input:
-  PHX::MDField<RealType>                                BF;
-  PHX::MDField<MeshScalarT>                             GradBF;
-  PHX::MDField<MeshScalarT>                             w_measure;
-  PHX::MDField<MeshScalarT> metric; // Only used in 2D, so we know the layout (Cell,Side,QuadPoint,Dim,Dim)
+  PHX::MDField<const RealType>      BF;
+  PHX::MDField<const MeshScalarT>   GradBF;
+  PHX::MDField<const MeshScalarT>   w_measure;
+  PHX::MDField<const MeshScalarT>   metric; // Only used if sideSetEquation=true
+  PHX::MDField<const ScalarT>       u;
+  PHX::MDField<const ScalarT>       grad_u;
 
-  PHX::MDField<ScalarT>                                 u;
-  PHX::MDField<ScalarT>                                 grad_u;
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node>                       residual; // Always a 3D residual, so we know the layout
-
-  Albany::LocalSideSetInfo sideSet;
+  // Output: <Cell,Node> when in 2D, <Side,Node> when in 3d
+  PHX::MDField<ScalarT>             residual;
 
   std::string                     sideSetName;
-  Kokkos::View<int**, PHX::Device> sideNodes;
 
-  int spaceDim;
   int gradDim;
   int numNodes;
   int numQPs;

@@ -16,57 +16,56 @@ namespace LandIce {
 /**
  * \brief Response Description
  */
-  template<typename EvalT, typename Traits, typename ThicknessScalarType>
-  class ResponseSMBMismatch :
-    public PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>
-  {
-  public:
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef typename EvalT::ParamScalarT ParamScalarT;
+template<typename EvalT, typename Traits, typename ThicknessScalarType>
+class ResponseSMBMismatch :
+  public PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>
+{
+public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
-    ResponseSMBMismatch(Teuchos::ParameterList& p,
-       const Teuchos::RCP<Albany::Layouts>& dl);
+  ResponseSMBMismatch(Teuchos::ParameterList& p,
+     const Teuchos::RCP<Albany::Layouts>& dl);
 
-    void postRegistrationSetup(typename Traits::SetupData d,
-             PHX::FieldManager<Traits>& vm);
+  void postRegistrationSetup(typename Traits::SetupData d,
+           PHX::FieldManager<Traits>& vm);
 
-    void preEvaluate(typename Traits::PreEvalData d);
+  void preEvaluate(typename Traits::PreEvalData d);
 
-    void evaluateFields(typename Traits::EvalData d);
+  void evaluateFields(typename Traits::EvalData d);
 
-    void postEvaluate(typename Traits::PostEvalData d);
+  void postEvaluate(typename Traits::PostEvalData d);
 
-  private:
-    Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
+private:
+  using Base = PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT,Traits>;
 
-    using GradThicknessScalarType = typename Albany::StrongestScalarType<MeshScalarT,ThicknessScalarType>::type;
+  Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    std::string surfaceSideName;
-    std::string basalSideName;
+  using GradThicknessScalarType = typename Albany::StrongestScalarType<MeshScalarT,ThicknessScalarType>::type;
 
-    Albany::LocalSideSetInfo sideSet;
+  std::string surfaceSideName;
+  std::string basalSideName;
 
-    unsigned int numSideNodes;
-    unsigned int numBasalQPs;
-    unsigned int numSideDims;
+  Albany::LocalSideSetInfo sideSet;
 
-    PHX::MDField<const ScalarT,Side,QuadPoint>                     flux_div;
-    PHX::MDField<const RealType,Side,QuadPoint>                    SMB;
-    PHX::MDField<const RealType,Side,QuadPoint>                    SMBRMS;
-    PHX::MDField<const RealType,Side,QuadPoint>                    obs_thickness;
-    PHX::MDField<const RealType,Side,QuadPoint>                    thicknessRMS;
-    PHX::MDField<const ThicknessScalarType,Side,QuadPoint>         thickness;
-    PHX::MDField<const GradThicknessScalarType,Side,QuadPoint,Dim> grad_thickness;
-    PHX::MDField<const MeshScalarT,Side,QuadPoint>                 w_measure_2d;
-    PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>         tangents;
+  unsigned int numSideNodes;
+  unsigned int numBasalQPs;
+  unsigned int numSideDims;
 
-    ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
-    double scaling, alpha, alphaH, alphaSMB;
+  PHX::MDField<const ScalarT,Side,QuadPoint>                     flux_div;
+  PHX::MDField<const RealType,Side,QuadPoint>                    SMB;
+  PHX::MDField<const RealType,Side,QuadPoint>                    SMBRMS;
+  PHX::MDField<const RealType,Side,QuadPoint>                    obs_thickness;
+  PHX::MDField<const RealType,Side,QuadPoint>                    thicknessRMS;
+  PHX::MDField<const ThicknessScalarType,Side,QuadPoint>         thickness;
+  PHX::MDField<const GradThicknessScalarType,Side,QuadPoint,Dim> grad_thickness;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint>                 w_measure_2d;
+  PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>         tangents;
 
-    Teuchos::RCP<const CellTopologyData> cell_topo;
-    
-  };
+  ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
+  double scaling, alpha, alphaH, alphaSMB;
+};
 
 } // namespace LandIce
 

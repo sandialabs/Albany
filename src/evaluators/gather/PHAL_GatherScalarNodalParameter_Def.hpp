@@ -4,14 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "PHAL_GatherScalarNodalParameter.hpp"
+
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DistributedParameterLibrary.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_ThyraUtils.hpp"
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
-#include "PHAL_GatherScalarNodalParameter.hpp"
-#include "Albany_ThyraUtils.hpp"
-#include "Albany_DistributedParameterLibrary.hpp"
-#include "Albany_AbstractDiscretization.hpp"
-#include "Albany_GlobalLocalIndexer.hpp"
 
 namespace PHAL {
 
@@ -65,15 +66,25 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+  constexpr auto ALL = Kokkos::ALL();
 
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+  // Distributed parameter vector
+  const auto p      = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lid = wsElDofs((int)cell,(int)node,0);
-      (this->val)(cell,node) = (lid >= 0 ) ? pvec_constView[lid] : 0;
+  // Parameter dof numbering info
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+
+  // Mesh elements
+  const auto ws = workset.wsIndex;
+  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+
+  for (std::size_t cell = 0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    const auto dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
+    for (std::size_t node=0; node<this->numNodes; ++node) {
+      const LO lid = dof_lids(node);
+      this->val(cell,node) = lid>=0 ? p_data[lid] : 0;
     }
   }
 }
@@ -96,28 +107,48 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
-  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+  const auto layers_data  = workset.disc->getMeshStruct()->local_cell_layers_data;
+  const auto bot = layers_data->bot_side_pos;
+  const auto top = layers_data->top_side_pos;
+  const auto ws = workset.wsIndex;
+  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  // Pick element layer that contains the field level
+  const auto fieldLayer = fieldLevel==layers_data->numLayers
+                        ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  // Distributed parameter vector
+  const auto& p      = workset.distParamLib->get(this->param_name);
+  const auto  p_data = Albany::getLocalData(p->overlapped_vector().getConst());
 
-  // auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-  // auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
-  auto pspace_indexer = Albany::createGlobalLocalIndexer(pvec->space());
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-      const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
-      const LO p_lid= pspace_indexer->getLocalElement(ginode);
-      (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
+  // Parameter dof numbering info
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
+  const int num_nodes_2d = offsets_p.size();
+
+  // Idea: loop over cells. Grab p data from a cell at the right layer,
+  //       using offsets that correspond to the elem-side where the param is defined.
+  //       Inside, loop over 2d nodes, and process top/bot sides separately
+  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
+    const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+
+    for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
+      const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
+      const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
+      for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
+        this->val(cell,node) = p_val;
+      }
     }
   }
 }
-
 
 // **************************************************************
 // **************************************************************
@@ -154,60 +185,68 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
+  constexpr auto ALL = Kokkos::ALL();
+
   // Distributed parameter vector
-  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+  const auto p      = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
 
-  Teuchos::RCP<const Thyra_MultiVector> Vp = workset.Vp;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vp_data;
-  if (!Vp.is_null()) {
-    Vp_data = Albany::getLocalData(workset.Vp);
-  }
+  const auto Vp = workset.Vp;
+  const auto Vp_data = !Vp.is_null() ? Albany::getLocalData(Vp) : Teuchos::null;
 
-  auto nodeID = workset.wsElNodeEqID;
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+  // Parameter/solution/nodes dof numbering info
+  const auto dof_mgr      = workset.disc->getDOFManager();
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+
+  const auto ws = workset.wsIndex;
+  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
 
   // Are we differentiating w.r.t. this parameter?
-  bool is_active = (workset.dist_param_deriv_name == this->param_name);
+  const bool is_active = (workset.dist_param_deriv_name == this->param_name);
 
   // If active, initialize data needed for differentiation
   if (is_active) {
+    const int neq = dof_mgr->getNumFields();
     const int num_deriv = this->numNodes;
-    const int num_nodes_res = this->numNodes;
     bool trans = workset.transpose_dist_param_deriv;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (int node = 0; node < num_deriv; ++node) {
+    const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+    for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+      const auto elem_LID = elem_lids(cell);
+      const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
+      for (int node=0; node<num_deriv; ++node) {
+        const LO lid = p_dof_lids(node);
 
         // Initialize Fad type for parameter value
-        const LO id = wsElDofs((int)cell,(int)node,0);
-        double pvec_id = (id >= 0) ? pvec_constView[id] : 0;
-        ParamScalarT v(num_deriv, node, pvec_id);
-        (this->val)(cell,node) = v;
+        const auto p_val = lid>=0 ? p_data[lid] : 0;
+        ParamScalarT v(num_deriv, node, p_val);
+        this->val(cell,node) = v;
       }
 
-      if (workset.Vp != Teuchos::null) {
+      if (Vp != Teuchos::null) {
         const int num_cols = Vp->domain()->dim();
 
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
+        auto& local_Vp = workset.local_Vp[cell];
 
         if (trans) {
-          local_Vp.resize(num_nodes_res*workset.numEqs);
-          for (int node = 0; node < num_nodes_res; ++node) {
-            // Store Vp entries
-            for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
-              local_Vp[node*workset.numEqs+eq].resize(num_cols);
-              const LO id = nodeID(cell,node,eq);
+          auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+          // const auto& offsets = this->m_sol_fields_offsets;
+          local_Vp.resize(dof_lids.size());
+          for (int eq=0; eq<neq; ++eq) {
+            const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+            for (const auto o : offsets) {
+              local_Vp[o].resize(num_cols);
+              const LO lid = dof_lids(o);
               for (int col=0; col<num_cols; ++col)
-                local_Vp[node*workset.numEqs+eq][col] = Vp_data[col][id];
+                local_Vp[o][col] = Vp_data[col][lid];
             }
           }
         } else {
           local_Vp.resize(num_deriv);
           for (int node=0; node<num_deriv; ++node) {
-            const LO id = wsElDofs((int)cell,node,0);
+            const LO lid = p_dof_lids(node);
             local_Vp[node].resize(num_cols);
             for (int col=0; col<num_cols; ++col)
-              local_Vp[node][col] = (id >= 0) ? Vp_data[col][id] : 0;
+              local_Vp[node][col] = lid>=0 ? Vp_data[col][lid] : 0;
           }
         }
       }
@@ -215,9 +254,11 @@ evaluateFields(typename Traits::EvalData workset)
   } else {
     // If not active, just set the parameter value in the phalanx field
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      for (std::size_t node = 0; node < this->numNodes; ++node) {
-        const LO lid = wsElDofs((int)cell,(int)node,0);
-        (this->val)(cell,node) = (lid >= 0) ? pvec_constView[lid] : 0;
+      const auto elem_LID = elem_lids(cell);
+      const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
+      for (std::size_t node=0; node<this->numNodes; ++node) {
+        const LO lid = p_dof_lids(node);
+        this->val(cell,node) = lid>=0 ? p_data[lid] : 0;
       }
     }
   }
@@ -242,65 +283,92 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
-  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+  constexpr auto ALL = Kokkos::ALL();
+
+  const auto layers_data  = workset.disc->getMeshStruct()->local_cell_layers_data;
+  const auto bot = layers_data->bot_side_pos;
+  const auto top = layers_data->top_side_pos;
+  const auto ws = workset.wsIndex;
+  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+
+  // Pick element layer that contains the field level
+  const auto fieldLayer = fieldLevel==layers_data->numLayers
+                        ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
+
+  // Distributed parameter vector
+  const auto p      = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
+
+  const auto Vp = workset.Vp;
+  const auto Vp_data = !Vp.is_null() ? Albany::getLocalData(Vp) : Teuchos::null;
+
+  // Parameter/solution dof numbering info
+  const auto& sol_dof_mgr = workset.disc->getDOFManager();
+  const auto& p_dof_mgr       = p->get_dof_mgr();
+  const auto& elem_dof_lids   = sol_dof_mgr->elem_dof_lids().host();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+
+  // Idea: loop over cells. Grab p data from a cell at the right layer,
+  //       using offsets that correspond to the elem-side where the param is defined.
+  //       Inside, loop over 2d nodes, and process top/bot sides separately
+
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
+  const int num_nodes_2d = offsets_p.size();
 
   // Are we differentiating w.r.t. this parameter?
-  bool is_active = (workset.dist_param_deriv_name == this->param_name);
-
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  auto nodeID = workset.wsElNodeEqID;
+  const bool is_active = (workset.dist_param_deriv_name == this->param_name);
 
   // If active, initialize data needed for differentiation
-  auto p_indexer = Albany::createGlobalLocalIndexer(pvec->space());
   if (is_active) {
+    const int neq = sol_dof_mgr->getNumFields();
     const int num_deriv = this->numNodes;
-    const int num_nodes_res = this->numNodes;
-    bool trans = workset.transpose_dist_param_deriv;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-      for (int node = 0; node < num_deriv; ++node) {
-        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-        const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const LO p_lid= p_indexer->getLocalElement(ginode);
-        double pvec_id = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
-
-        ParamScalarT v(num_deriv, node, pvec_id);
-        if(p_lid < 0) {
-          v.fastAccessDx(node) = 0;
+    const bool trans = workset.transpose_dist_param_deriv;
+    for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+      const auto elem_LID = elem_lids(cell);
+      const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
+      const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+      for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
+        const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
+        const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
+        for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
+          ParamScalarT v(num_deriv, node, p_val);
+          if(p_lid < 0) {
+            v.fastAccessDx(node) = 0;
+          }
+          this->val(cell,node) = v;
         }
-        (this->val)(cell,node) = v;
       }
 
-      if (workset.Vp != Teuchos::null) {
-        const std::size_t num_cols = workset.Vp->domain()->dim();
-        auto Vp_data = Albany::getLocalData(workset.Vp);
+      if (Vp != Teuchos::null) {
+        const int num_cols = workset.Vp->domain()->dim();
 
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
-
+        auto& local_Vp = workset.local_Vp[cell];
         if (trans) {
-          local_Vp.resize(num_nodes_res*workset.numEqs);
-          for (int node = 0; node < num_nodes_res; ++node) {
-            // Store Vp entries
-            for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
-              local_Vp[node*workset.numEqs+eq].resize(num_cols);
-              const LO id = nodeID(cell,node,eq);
-              for (std::size_t col=0; col<num_cols; ++col)
-                local_Vp[node*workset.numEqs+eq][col] = Vp_data[col][id];
+          auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+          local_Vp.resize(dof_lids.size());
+          for (int eq=0; eq<neq; ++eq) {
+            const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
+            for (const auto o : sol_offsets) {
+              local_Vp[o].resize(num_cols);
+              const LO lid = dof_lids(o);
+              for (int col=0; col<num_cols; ++col)
+                local_Vp[o][col] = Vp_data[col][lid];
             }
           }
         } else {
           local_Vp.resize(num_deriv);
-          for (int node = 0; node < num_deriv; ++node) {
-            const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-            const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
-            const LO id = p_indexer->getLocalElement(ginode);
-            local_Vp[node].resize(num_cols);
-            for (std::size_t col=0; col<num_cols; ++col) {
-              local_Vp[node][col] = (id >= 0) ? Vp_data[col][id] : 0;
+          for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
+            const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
+            for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
+              local_Vp[node].resize(num_cols);
+              for (int col=0; col<num_cols; ++col) {
+                local_Vp[node][col] = p_lid>=0 ? Vp_data[col][p_lid] : 0;
+              }
             }
           }
         }
@@ -309,12 +377,15 @@ evaluateFields(typename Traits::EvalData workset)
   } else {
     // If not active, just set the parameter value in the phalanx field
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-      for (std::size_t node = 0; node < this->numNodes; ++node) {
-        const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-        const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
-        const LO p_lid= p_indexer->getLocalElement(ginode);
-        (this->val)(cell,node) = ( p_lid >= 0) ? pvec_constView[p_lid] : 0;
+      const auto elem_LID = elem_lids(cell);
+      const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
+      const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+      for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
+        const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
+        const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
+        for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
+          this->val(cell,node) = p_val;
+        }
       }
     }
   }
@@ -348,59 +419,66 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
+  constexpr auto ALL = Kokkos::ALL();
+
   // Distributed parameter vector
-  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+  const auto p      = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
 
   // Direction vector for the Hessian-vector product
-  Teuchos::RCP<const Thyra_MultiVector> vvec = workset.hessianWorkset.direction_p;
+  const auto vvec = workset.hessianWorkset.direction_p;
 
-  auto nodeID = workset.wsElNodeEqID;
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+  const auto& hessian_ws = workset.hessianWorkset;
 
-  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
-  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
-  bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
-  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
-  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
-  bool f_pp_is_active = !workset.hessianWorkset.hess_vec_prod_f_pp.is_null();
+  const bool g_xp_is_active = !hessian_ws.hess_vec_prod_g_xp.is_null();
+  const bool g_px_is_active = !hessian_ws.hess_vec_prod_g_px.is_null();
+  const bool g_pp_is_active = !hessian_ws.hess_vec_prod_g_pp.is_null();
+  const bool f_xp_is_active = !hessian_ws.hess_vec_prod_f_xp.is_null();
+  const bool f_px_is_active = !hessian_ws.hess_vec_prod_f_px.is_null();
+  const bool f_pp_is_active = !hessian_ws.hess_vec_prod_f_pp.is_null();
 
   // is_p_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_px, Hv_g_pp, Hv_f_px, or Hv_f_pp, i.e. if the first derivative is w.r.t. this parameter.
   // If one of those is active, we have to initialize the first level of AD derivatives:
   // .fastAccessDx().val().
   const bool is_p_active = (workset.dist_param_deriv_name == this->param_name)
-    && (g_px_is_active||g_pp_is_active||f_px_is_active||f_pp_is_active);
+    && (g_px_is_active || g_pp_is_active || f_px_is_active || f_pp_is_active);
 
   // is_p_direction_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_xp, Hv_g_pp, Hv_f_xp, or Hv_f_pp, i.e. if the second derivative is w.r.t. this parameter direction.
   // If one of those is active, we have to initialize the second level of AD derivatives:
   // .val().fastAccessDx().
-  const bool is_p_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name)
+  const bool is_p_direction_active = (hessian_ws.dist_param_deriv_direction_name == this->param_name)
     && (g_xp_is_active || g_pp_is_active || f_xp_is_active || f_pp_is_active);
 
-  Teuchos::ArrayRCP<const ST> vvec_constView;
-  if(is_p_direction_active) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        vvec.is_null(),
-        Teuchos::Exceptions::InvalidParameter,
-        "\nError in GatherScalarNodalParameter<HessianVec, Traits>: "
-        "direction_p is not set and the direction is active.\n");
-    vvec_constView = Albany::getLocalData(vvec->col(0));
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      is_p_direction_active && vvec.is_null(),
+      Teuchos::Exceptions::InvalidParameter,
+      "\nError in GatherScalarNodalParameter<HessianVec, Traits>: "
+      "direction_p is not set and the direction is active.\n");
+  
+  const auto vvec_data = is_p_direction_active ? Albany::getLocalData(vvec->col(0).getConst()) : Teuchos::null;
 
   const int num_nodes = this->numNodes;
+  const int num_deriv = this->val(0,0).size();
+  const int ws = workset.wsIndex;
 
-  const int num_deriv = (this->val)(0,0).size();
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (int node = 0; node < num_nodes; ++node) {
+  // Parameter/nodes dof numbering info
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+  const auto elem_lids    = workset.disc->getElementLIDs_host(ws);
+
+  using ref_t = typename PHAL::Ref<ParamScalarT>::type;
+  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
+    for (int node=0; node<num_nodes; ++node) {
+      const LO lid = p_dof_lids(node);
 
       // Initialize Fad type for parameter value
-      const LO id = wsElDofs((int)cell,(int)node,0);
-      RealType pvec_val = (id >= 0) ? pvec_constView[id] : 0;
+      const auto p_val = lid>=0 ? p_data[lid] : 0;
 
-      auto val = (this->val)(cell,node);
-      val = HessianVecFad(num_deriv, pvec_val);
+      ref_t val = this->val(cell,node);
+      val = HessianVecFad(num_deriv, p_val);
       // If we differentiate w.r.t. this parameter, we have to set the first
       // derivative to 1
       if (is_p_active)
@@ -408,7 +486,7 @@ evaluateFields(typename Traits::EvalData workset)
       // If we differentiate w.r.t. this parameter direction, we have to set
       // the second derivative to the related direction value
       if (is_p_direction_active)
-        val.val().fastAccessDx(0) = (id >= 0) ? vvec_constView[id] : 0;
+        val.val().fastAccessDx(0) = lid>=0 ? vvec_data[lid] : 0;
     }
   }
 }
@@ -432,73 +510,85 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  // TODO: find a way to abstract away from the map concept. Perhaps using Panzer::ConnManager?
-  Teuchos::RCP<const Thyra_Vector> pvec = workset.distParamLib->get(this->param_name)->overlapped_vector();
-  Teuchos::ArrayRCP<const ST> pvec_constView = Albany::getLocalData(pvec);
+  const auto layers_data  = workset.disc->getLayeredMeshNumberingLO();
+  const auto bot = layers_data->bot_side_pos;
+  const auto top = layers_data->top_side_pos;
+  const auto ws = workset.wsIndex;
+  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
 
   // Direction vector for the Hessian-vector product
-  Teuchos::RCP<const Thyra_MultiVector> vvec = workset.hessianWorkset.direction_p;
+  const auto vvec = workset.hessianWorkset.direction_p;
 
-  const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  const auto& hessian_ws = workset.hessianWorkset;
 
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-  auto nodeID = workset.wsElNodeEqID;
-
-  // If active, initialize data needed for differentiation
-  auto overlapNodeVS = workset.disc->getOverlapNodeVectorSpace();
-  auto ov_node_indexer = Albany::createGlobalLocalIndexer(overlapNodeVS);
-  auto p_indexer = Albany::createGlobalLocalIndexer(pvec->space());
-
-  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
-  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
-  bool g_pp_is_active = !workset.hessianWorkset.hess_vec_prod_g_pp.is_null();
-  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
-  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
-  bool f_pp_is_active = !workset.hessianWorkset.hess_vec_prod_f_pp.is_null();
+  const bool g_xp_is_active = !hessian_ws.hess_vec_prod_g_xp.is_null();
+  const bool g_px_is_active = !hessian_ws.hess_vec_prod_g_px.is_null();
+  const bool g_pp_is_active = !hessian_ws.hess_vec_prod_g_pp.is_null();
+  const bool f_xp_is_active = !hessian_ws.hess_vec_prod_f_xp.is_null();
+  const bool f_px_is_active = !hessian_ws.hess_vec_prod_f_px.is_null();
+  const bool f_pp_is_active = !hessian_ws.hess_vec_prod_f_pp.is_null();
 
   // is_p_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_px, Hv_g_pp, Hv_f_px, or Hv_f_pp, i.e. if the first derivative is w.r.t. this parameter.
   // If one of those is active, we have to initialize the first level of AD derivatives:
   // .dx().fastAccessDx().
-  const bool is_p_active = (workset.dist_param_deriv_name == this->param_name)
-    && (g_px_is_active||g_pp_is_active||f_px_is_active||f_pp_is_active);
+  const bool is_p_active = workset.dist_param_deriv_name==this->param_name
+    && (g_px_is_active || g_pp_is_active || f_px_is_active || f_pp_is_active);
 
   // is_p_direction_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_xp, Hv_g_pp, Hv_f_xp, or Hv_f_pp, i.e. if the second derivative is w.r.t. this parameter direction.
   // If one of those is active, we have to initialize the second level of AD derivatives:
   // .fastAccessDx().dx().
-  const bool is_p_direction_active = (workset.hessianWorkset.dist_param_deriv_direction_name == this->param_name)
+  const bool is_p_direction_active = hessian_ws.dist_param_deriv_direction_name==this->param_name
     && (g_xp_is_active || g_pp_is_active || f_xp_is_active || f_pp_is_active);
 
-  Teuchos::ArrayRCP<const ST> vvec_constView;
-  if(is_p_direction_active) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        vvec.is_null(),
-        Teuchos::Exceptions::InvalidParameter,
-        "\nError in GatherScalarExtruded2DNodalParameter<HessianVec, Traits>: "
-        "direction_p is not set and the direction is acrive.\n");
-    vvec_constView = Albany::getLocalData(vvec->col(0));
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      is_p_direction_active && vvec.is_null(),
+      Teuchos::Exceptions::InvalidParameter,
+      "\nError in GatherScalarExtruded2DNodalParameter<HessianVec, Traits>: "
+      "direction_p is not set and the direction is acrive.\n");
+  const auto vvec_data = is_p_direction_active ? Albany::getLocalData(vvec->col(0).getConst()) : Teuchos::null;
 
-  const int num_deriv = this->numNodes;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
-    for (int node = 0; node < num_deriv; ++node) {
-      const GO base_id = layeredMeshNumbering.getColumnId(elNodeID[node]);
-      const GO ginode = layeredMeshNumbering.getId(base_id, fieldLevel);
-      const LO p_lid= p_indexer->getLocalElement(ginode);
-      RealType pvec_val = (p_lid >= 0) ? pvec_constView[p_lid] : 0;
+  // Pick element layer that contains the field level
+  const auto fieldLayer = fieldLevel==layers_data->numLayers
+                        ? fieldLevel-1 : fieldLevel;
+  const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
-      auto val = (this->val)(cell,node);
-      val = HessianVecFad(val.size(), pvec_val);
-      // If we differentiate w.r.t. this parameter, we have to set the first
-      // derivative to 1
-      if (is_p_active)
-        val.fastAccessDx(node).val() = 1;
-      // If we differentiate w.r.t. this parameter direction, we have to set
-      // the second derivative to the related direction value
-      if (is_p_direction_active)
-        val.val().fastAccessDx(0) = (p_lid >= 0) ? vvec_constView[p_lid] : 0;
+  // Distributed parameter vector
+  const auto p      = workset.distParamLib->get(this->param_name);
+  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
+
+  // Parameter dof numbering info
+  const auto p_dof_mgr        = p->get_dof_mgr();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+
+  // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
+  //       to guarantee corresponding nodes are vertically aligned.
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
+  const int num_nodes_2d = offsets_p.size();
+
+  using ref_t = typename PHAL::Ref<ParamScalarT>::type;
+  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+    const auto elem_LID = elem_lids(cell);
+    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
+    const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+    for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
+      const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
+      const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
+      for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
+        ref_t val = this->val(cell,node);
+        val = HessianVecFad(val.size(), p_val);
+        // If we differentiate w.r.t. this parameter, we have to set the first
+        // derivative to 1
+        if (is_p_active)
+          val.fastAccessDx(node).val() = 1;
+        // If we differentiate w.r.t. this parameter direction, we have to set
+        // the second derivative to the related direction value
+        if (is_p_direction_active)
+          val.val().fastAccessDx(0) = p_lid>=0 ? vvec_data[p_lid] : 0;
+      }
     }
   }
 }

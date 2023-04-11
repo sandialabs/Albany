@@ -13,6 +13,8 @@
 
 #include "Albany_Macros.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DOFManager.hpp"
 
 #include "PHAL_GatherSolution.hpp"
 
@@ -136,11 +138,11 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if ( tensorRank == 0 ) {
-    val_kokkos.resize(numFields);
+    device_sol.val_kokkos.resize(numFields);
     if (enableTransient)
-      val_dot_kokkos.resize(numFields);
+      device_sol.val_dot_kokkos.resize(numFields);
     if (enableAcceleration)
-      val_dotdot_kokkos.resize(numFields);
+      device_sol.val_dotdot_kokkos.resize(numFields);
   }
 #endif
 
@@ -172,18 +174,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     // Get MDField views from std::vector
     for (int i =0; i<numFields;i++){
-      val_kokkos[i]=this->val[i].get_static_view();
+      device_sol.val_kokkos[i]=this->val[i].get_static_view();
       if (enableTransient){
-        val_dot_kokkos[i]=this->val_dot[i].get_static_view();
+        device_sol.val_dot_kokkos[i]=this->val_dot[i].get_static_view();
       }
       if (enableAcceleration){
-        val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
+        device_sol.val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
       }
     }
-
-    d_val=val_kokkos.template view<ExecutionSpace>();
-    d_val_dot=val_dot_kokkos.template view<ExecutionSpace>();
-    d_val_dotdot=val_dotdot_kokkos.template view<ExecutionSpace>();
 #endif
   } else if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
@@ -197,6 +195,41 @@ postRegistrationSetup(typename Traits::SetupData d,
     numNodes = valTensor.extent(1);
   }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
+
+  device_sol.d_val        = device_sol.val_kokkos.view_device();
+  device_sol.d_val_dot    = device_sol.val_dot_kokkos.view_device();
+  device_sol.d_val_dotdot = device_sol.val_dotdot_kokkos.view_device();
+
+  device_sol.d_valVec        = valVec.get_static_view();
+  device_sol.d_valVec_dot    = valVec_dot.get_static_view();
+  device_sol.d_valVec_dotdot = valVec_dotdot.get_static_view();
+
+  device_sol.d_valTensor        = valTensor.get_static_view();
+  device_sol.d_valTensor_dot    = valTensor_dot.get_static_view();
+  device_sol.d_valTensor_dotdot = valVec_dotdot.get_static_view();
+
+  device_sol.numDim = numDim;
+  device_sol.tensorRank = tensorRank;
+}
+
+template<typename EvalT, typename Traits>
+void GatherSolutionBase<EvalT, Traits>::
+gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr) {
+  // Do this only once
+  if (m_fields_offsets.size()==0) {
+    // For now, only allow dof mgr's defined on a single element part
+    const int neq = dof_mgr->getNumFields();
+    m_fields_offsets.resize("",numNodes,neq);
+    for (int fid=0; fid<neq; ++fid) {
+      auto panzer_offsets = dof_mgr->getGIDFieldOffsets(fid);
+      ALBANY_ASSERT (panzer_offsets.size()==numNodes,
+          "Something is amiss: panzer field offsets has size != numNodes.\n");
+      for (int node=0; node<numNodes; ++node) {
+        m_fields_offsets.host()(node,fid) = panzer_offsets[node];
+      }
+    }
+    m_fields_offsets.sync_to_dev();
+  }
 }
 
 // **********************************************************************
@@ -222,100 +255,97 @@ GatherSolution(const Teuchos::ParameterList& p)
   // Nothing else to do
 }
 
-// ********************************************************************
-// Kokkos functors for Residual
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-operator() (const PHAL_GatherSol_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
-    for (int eq = 0; eq < numFields; eq++)
-      get_ref(cell,node,eq) = x_constView(nodeID(cell, node, this->offset+eq));
-}
-
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-operator() (const PHAL_GatherSol_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
-    for (int eq = 0; eq < numFields; eq++)
-      get_ref_dot(cell,node,eq)= xdot_constView(nodeID(cell, node, this->offset+eq));
-}
-
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-operator() (const PHAL_GatherSol_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node)
-    for (int eq = 0; eq < numFields; eq++)
-      get_ref_dotdot(cell,node,eq)= xdotdot_constView(nodeID(cell, node, this->offset+eq));
-}
-#endif
-
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const auto& x       = workset.x;
-  const auto& xdot    = workset.xdot;
-  const auto& xdotdot = workset.xdotdot;
-
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::ArrayRCP<const ST> x_constView, xdot_constView, xdotdot_constView;
-  x_constView = Albany::getLocalData(x);
-  if(!xdot.is_null()) {
-    xdot_constView = Albany::getLocalData(xdot);
-  }
-  if(!xdotdot.is_null()) {
-    xdotdot_constView = Albany::getLocalData(xdotdot);
-  }
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++)
-        get_ref(cell,node,eq) = x_constView[nodeID(cell,node,this->offset + eq)];
-        if (workset.transientTerms && this->enableTransient) {
-          get_ref_dot(cell,node,eq) = xdot_constView[nodeID(cell,node,this->offset + eq)];
-        }
-        if (workset.accelerationTerms && this->enableAcceleration) {
-          get_ref_dotdot(cell,node,eq) = xdotdot_constView[nodeID(cell,node,this->offset + eq)];
-        }
-      }
-    }
-  }
-
-#else
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-  // Get map for local data structures
-  nodeID = workset.wsElNodeEqID;
+  const auto& x       = workset.x;
+  const auto& xdot    = workset.xdot;
+  const auto& xdotdot = workset.xdotdot;
+  const auto dof_mgr  = workset.disc->getDOFManager();
 
-  // Get vector view from a specific device
-  x_constView = Albany::getDeviceData(x);
+  // Make sure we have the fields offsets
+  this->gather_fields_offsets(dof_mgr);
+
+  const auto ws = workset.wsIndex;
+  const auto elem_lids  = workset.disc->getWsElementLIDs();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids();
+  constexpr auto ALL = Kokkos::ALL;
+
+  const auto gather_xdot    = workset.transientTerms && this->enableTransient;
+  const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
+
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // Do everything on host
+  Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
+  x_data = Albany::getLocalData(x);
   if(!xdot.is_null()) {
-    xdot_constView = Albany::getDeviceData(xdot);
+    xdot_data = Albany::getLocalData(xdot);
   }
   if(!xdotdot.is_null()) {
-    xdotdot_constView = Albany::getDeviceData(xdotdot);
+    xdotdot_data = Albany::getLocalData(xdotdot);
   }
 
-  Kokkos::parallel_for(PHAL_GatherSol_Policy(0,workset.numCells),*this);
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const auto elem_LID = elem_lids.host()(ws,cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids.host(),elem_LID,ALL);
+    for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < numFields; ++eq)
+        const auto lid = dof_lids(m_fields_offsets.host()(node,eq));
+        get_ref(cell,node,eq) = x_data[lid];
+        if (gather_xdot) {
+          get_ref_dot(cell,node,eq) = xdot_data[lid];
+        }
+        if (gather_xdotdot) {
+          get_ref_dotdot(cell,node,eq) = xdotdot_data[lid];
+        }
+      }
+    }
+  }
+#else
+  // Do everything on device
+
+  // Get kokkos views from thyra vectors
+  Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
+  x_data = Albany::getDeviceData(x);
+  if(!xdot.is_null()) {
+    xdot_data = Albany::getDeviceData(xdot);
+  }
+  if(!xdotdot.is_null()) {
+    xdotdot_data = Albany::getDeviceData(xdotdot);
+  }
+
+  const auto elem_lids_dev     = Kokkos::subview(elem_lids.dev(),ws,ALL);
+  const auto elem_dof_lids_dev = elem_dof_lids.dev();
+  const auto fields_offsets = m_fields_offsets.dev();
+  const auto first_dof = this->offset;
+  auto nnodes = this->numNodes;
+  auto nfields = this->numFields;
+  auto sol = this->device_sol;
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int& cell) {
+    const auto elem_LID = elem_lids_dev(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
+    for (int node=0; node<nnodes; ++node) {
+      for (int eq=0; eq<nfields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
+        sol.get_ref(cell,node,eq) = x_data(lid);
+        if (gather_xdot) {
+          sol.get_ref_dot(cell,node,eq) = xdot_data(lid);
+        }
+        if (gather_xdotdot) {
+          sol.get_ref_dotdot(cell,node,eq) = xdotdot_data(lid);
+        }
+      }
+    }
+  });
   cudaCheckError();
-
-  if (workset.transientTerms && this->enableTransient) {
-    Kokkos::parallel_for(PHAL_GatherSol_Transient_Policy(0,workset.numCells),*this);
-    cudaCheckError();
-  }
-
-  if (workset.accelerationTerms && this->enableAcceleration) {
-    Kokkos::parallel_for(PHAL_GatherSol_Acceleration_Policy(0,workset.numCells),*this);
-    cudaCheckError();
-  }
+#endif
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
@@ -323,7 +353,6 @@ evaluateFields(typename Traits::EvalData workset)
   long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
   long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
   std::cout<< "GaTher Solution Residual time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
 #endif
 }
 
@@ -348,133 +377,121 @@ GatherSolution(const Teuchos::ParameterList& p)
   // Nothing else to do
 }
 
-//********************************************************************
-////Kokkos functors for Jacobian
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
-operator() (const PHAL_GatherJac_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
-    int firstunk = neq * node + this->offset;
-    for (int eq = 0; eq < numFields; eq++){
-      ref_t valref = get_ref(cell,node,eq);
-      valref=FadType(valref.size(), x_constView(nodeID(cell,node,this->offset+eq)));
-      valref.fastAccessDx(firstunk + eq) =j_coeff;
-    }
-  }
-}
-
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
-operator() (const PHAL_GatherJac_Transient_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
-    int firstunk = neq * node + this->offset;
-    for (int eq = 0; eq < numFields; eq++){
-      ref_t valref = get_ref_dot(cell,node,eq);
-      valref =FadType(valref.size(), xdot_constView(nodeID(cell,node,this->offset+eq)));
-      valref.fastAccessDx(firstunk + eq) =m_coeff;
-    }
-  }
-}
-
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
-operator() (const PHAL_GatherJac_Acceleration_Tag&, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node){
-    int firstunk = neq * node + this->offset;
-    for (int eq = 0; eq < numFields; eq++){
-      ref_t valref = get_ref_dotdot(cell,node,eq);
-      valref=FadType(valref.size(), xdotdot_constView(nodeID(cell,node,this->offset+eq)));
-      valref.fastAccessDx(firstunk + eq) =n_coeff;
-    }
-  }
-}
-
-#endif
-
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
+
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
+  const auto dof_mgr  = workset.disc->getDOFManager();
+
+  // Make sure we have the fields offsets
+  this->gather_fields_offsets(dof_mgr);
+
+  const auto ws = workset.wsIndex;
+  const auto elem_lids  = workset.disc->getWsElementLIDs();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids();
+  constexpr auto ALL = Kokkos::ALL;
+
+  const auto gather_xdot    = workset.transientTerms && this->enableTransient;
+  const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  auto nodeID = workset.wsElNodeEqID;
-  Teuchos::ArrayRCP<const ST> x_constView, xdot_constView, xdotdot_constView;
-  x_constView = Albany::getLocalData(x);
+  Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
+  x_data = Albany::getLocalData(x);
   if(!xdot.is_null()) {
-    xdot_constView = Albany::getLocalData(xdot);
+    xdot_data = Albany::getLocalData(xdot);
   }
   if(!xdotdot.is_null()) {
-    xdot_constView = Albany::getLocalData(xdot);
+    xdot_data = Albany::getLocalData(xdot);
   }
 
+  const auto& fields_offsets = m_fields_offsets.host();
+  const int first_dof = this->offset;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const int neq = nodeID.extent(2);
-
+    const auto elem_LID = elem_lids.host()(ws,cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids.host(),elem_LID,ALL);
     for (int node = 0; node < this->numNodes; ++node) {
-      int firstunk = neq * node + this->offset;
-      for (int eq = 0; eq < numFields; eq++) {
+      int firstunk = fields_offsets(node,first_dof);
+      for (int eq = 0; eq < numFields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
         ref_t valref = get_ref(cell,node,eq);
-        valref = FadType(valref.size(), x_constView[nodeID(cell,node,this->offset + eq)]);
+        valref = FadType(valref.size(), x_data[lid]);
         valref.fastAccessDx(firstunk + eq) = workset.j_coeff;
 
-        if (workset.transientTerms && this->enableTransient) {
+        if (gather_xdot) {
           ref_t valref_dot = get_ref_dot (cell,node,eq);
-          valref_dot = FadType(valref_dot.size(), xdot_constView[nodeID(cell,node,this->offset + eq)]);
+          valref_dot = FadType(valref_dot.size(), xdot_data[lid];
           valref_dot.fastAccessDx(firstunk + eq) = workset.m_coeff;
         }
-
-        if (workset.accelerationTerms && this->enableAcceleration) {
+        if (gather_xdotdot) {
           ref_t valref_dotdot = get_ref_dotdot(cell,node,eq);
-          valref_dotdot = FadType(valref_dotdot.size(), xdotdot_constView[nodeID(cell,node,this->offset + eq)]);
+          valref_dotdot = FadType(valref_dotdot.size(), xdotdot_data[lid];
           valref_dotdot.fastAccessDx(firstunk + eq) = workset.n_coeff;
         }
       }
     }
   }
-
 #else
-#ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
-#endif
-
-  // Get map for local data structures
-  nodeID = workset.wsElNodeEqID;
 
   // Get dimensions and coefficients
-  neq = nodeID.extent(2);
-  j_coeff=workset.j_coeff;
-  m_coeff=workset.m_coeff;
-  n_coeff=workset.n_coeff;
+  const auto neq = dof_mgr->getNumFields();
+  const auto j_coeff = workset.j_coeff;
+  const auto m_coeff = workset.m_coeff;
+  const auto n_coeff = workset.n_coeff;
 
-  // Get vector view from a specific device
-  x_constView = Albany::getDeviceData(x);
+  // Get kokkos views from thyra vectors
+  Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
+  x_data = Albany::getDeviceData(x);
   if(!xdot.is_null()) {
-    xdot_constView = Albany::getDeviceData(xdot);
+    xdot_data = Albany::getDeviceData(xdot);
   }
   if(!xdotdot.is_null()) {
-    xdotdot_constView = Albany::getDeviceData(xdotdot);
+    xdotdot_data = Albany::getDeviceData(xdotdot);
   }
 
-  Kokkos::parallel_for(PHAL_GatherJac_Policy(0,workset.numCells),*this);
+  const auto first_dof   = this->offset;
+  const auto elem_lids_dev     = Kokkos::subview(elem_lids.dev(),ws,ALL);
+  const auto elem_dof_lids_dev = elem_dof_lids.dev();
+  const auto fields_offsets = m_fields_offsets.dev();
+  auto nnodes = this->numNodes;
+  auto nfields = this->numFields;
+  auto sol = this->device_sol;
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA (const int& cell) {
+    const auto elem_LID = elem_lids_dev(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
+    for (int node=0; node<nnodes; ++node) {
+      int firstunk = fields_offsets(node,first_dof);
+      for (int eq=0; eq<nfields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
+
+        ref_t valref = sol.get_ref(cell,node,eq);
+        valref = FadType(valref.size(), x_data(lid));
+        valref.fastAccessDx(firstunk + eq) = j_coeff;
+
+        if (gather_xdot) {
+          ref_t valref = sol.get_ref_dot(cell,node,eq);
+          valref = FadType(valref.size(), xdot_data(lid));
+          valref.fastAccessDx(firstunk + eq) = m_coeff;
+        }
+
+        if (gather_xdotdot) {
+          ref_t valref = sol.get_ref_dotdot(cell,node,eq);
+          valref = FadType(valref.size(), xdotdot_data(lid));
+          valref.fastAccessDx(firstunk + eq) = n_coeff;
+        }
+      }
+    }
+  });
   cudaCheckError();
-
-  if (workset.transientTerms && this->enableTransient) {
-    Kokkos::parallel_for(PHAL_GatherJac_Transient_Policy(0,workset.numCells),*this);
-    cudaCheckError();
-  }
-
-  if (workset.accelerationTerms && this->enableAcceleration) {
-    Kokkos::parallel_for(PHAL_GatherJac_Acceleration_Policy(0,workset.numCells),*this);
-    cudaCheckError();
-  }
+#endif
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
@@ -482,7 +499,6 @@ evaluateFields(typename Traits::EvalData workset)
   long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
   long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
   std::cout<< "GaTher Solution Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
 #endif
 }
 
@@ -514,8 +530,6 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
-
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
@@ -523,6 +537,22 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& Vx       = workset.Vx;
   const auto& Vxdot    = workset.Vxdot;
   const auto& Vxdotdot = workset.Vxdotdot;
+
+  const auto gather_xdot    = workset.transientTerms && this->enableTransient;
+  const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
+
+  const auto gather_Vx       = !Vx.is_null()       && workset.j_coeff!=0;
+  const auto gather_Vxdot    = !Vxdot.is_null()    && workset.m_coeff!=0;
+  const auto gather_Vxdotdot = !Vxdotdot.is_null() && workset.n_coeff!=0;
+
+  // Make sure we have the fields offsets
+  const auto dof_mgr  = workset.disc->getDOFManager();
+  this->gather_fields_offsets(dof_mgr);
+
+  const auto ws = workset.wsIndex;
+  const auto elem_lids  = workset.disc->getWsElementLIDs().host();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().host();
+  constexpr auto ALL = Kokkos::ALL;
 
   //get const (read-only) view of x
   using const_data_t = Teuchos::ArrayRCP<const ST>;
@@ -544,36 +574,38 @@ evaluateFields(typename Traits::EvalData workset)
   if (Vxdotdot!=Teuchos::null)
     Vxdotdot_data = Albany::getLocalData(Vx);
 
+  const auto& fields_offsets = m_fields_offsets.host();
+  const int first_dof = this->offset;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const auto elem_LID = elem_lids(ws,cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
+      for (int eq = 0; eq < numFields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
         ref_t valref = get_ref(cell,node,eq);
-        if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-          valref = TanFadType(valref.size(), x_data[nodeID(cell,node,this->offset + eq)]);
-          for (int k=0; k<workset.num_cols_x; k++)
-            valref.fastAccessDx(k) =
-              workset.j_coeff*Vx_data[k][nodeID(cell,node,this->offset + eq)];
+        if (gather_Vx) {
+          valref = TanFadType(valref.size(), x_data[lid]);
+          for (int k=0; k<workset.num_cols_x; ++k)
+            valref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][lid];
         } else {
-          valref = TanFadType(x_data[nodeID(cell,node,this->offset + eq)]);
+          valref = TanFadType(x_data[lid]);
         }
 
-        if (workset.transientTerms && this->enableTransient) {
+        if (gather_xdot) {
           ref_t valref_dot = get_ref_dot(cell,node,eq);
-          valref_dot = TanFadType(valref_dot.size(), xdot_data[nodeID(cell,node,this->offset + eq)]);
-          if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-            for (int k=0; k<workset.num_cols_x; k++)
-              valref_dot.fastAccessDx(k) =
-                workset.m_coeff*Vxdot_data[k][nodeID(cell,node,this->offset + eq)];
+          valref_dot = TanFadType(valref_dot.size(), xdot_data[lid]);
+          if (gather_Vxdot) {
+            for (int k=0; k<workset.num_cols_x; ++k)
+              valref_dot.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][lid];
           }
         }
 
-        if (workset.accelerationTerms && this->enableAcceleration) {
+        if (gather_xdotdot) {
           ref_t valref_dotdot = get_ref_dotdot(cell,node,eq);
-          valref_dotdot = TanFadType(valref_dotdot.size(), xdotdot_data[nodeID(cell,node,this->offset + eq)]);
-          if (Vxdotdot != Teuchos::null && workset.n_coeff != 0.0) {
-            for (int k=0; k<workset.num_cols_x; k++)
-              valref_dotdot.fastAccessDx(k) =
-                workset.n_coeff*Vxdotdot_data[k][nodeID(cell,node,this->offset + eq)];
+          valref_dotdot = TanFadType(valref_dotdot.size(), xdotdot_data[lid]);
+          if (gather_Vxdotdot) {
+            for (int k=0; k<workset.num_cols_x; ++k)
+              valref_dotdot.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][lid];
           }
         }
       }
@@ -609,10 +641,21 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  auto nodeID = workset.wsElNodeEqID;
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
+
+  const auto gather_xdot    = workset.transientTerms && this->enableTransient;
+  const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
+
+  // Make sure we have the fields offsets
+  const auto dof_mgr  = workset.disc->getDOFManager();
+  this->gather_fields_offsets(dof_mgr);
+
+  const auto ws = workset.wsIndex;
+  const auto elem_lids  = workset.disc->getWsElementLIDs().host();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().host();
+  constexpr auto ALL = Kokkos::ALL;
 
   //get const (read-only) view of x and xdot
   using const_data_t = Teuchos::ArrayRCP<const ST>;
@@ -624,18 +667,20 @@ evaluateFields(typename Traits::EvalData workset)
   if (xdotdot!=Teuchos::null)
     xdotdot_data = Albany::getLocalData(xdotdot);
 
+  const auto& fields_offsets = m_fields_offsets.host();
+  const int first_dof = this->offset;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const auto elem_LID = elem_lids(ws,cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
-        get_ref(cell,node,eq) = x_data[nodeID(cell,node,this->offset + eq)];
+      for (int eq = 0; eq < numFields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
 
-        if (workset.transientTerms && this->enableTransient) {
-          get_ref_dot(cell,node,eq) = xdot_data[nodeID(cell,node,this->offset + eq)];
-        }
-
-        if (workset.accelerationTerms && this->enableAcceleration) {
-          get_ref_dotdot(cell,node,eq) = xdotdot_data[nodeID(cell,node,this->offset + eq)];
-        }
+        get_ref(cell,node,eq) = x_data[lid];
+        if (gather_xdot)
+          get_ref_dot(cell,node,eq) = xdot_data[lid];
+        if (gather_xdotdot)
+          get_ref_dotdot(cell,node,eq) = xdotdot_data[lid];
       }
     }
   }
@@ -671,16 +716,18 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
 
-  Teuchos::RCP<const Thyra_MultiVector> direction_x = workset.hessianWorkset.direction_x;
+  const auto gather_xdot    = workset.transientTerms && this->enableTransient;
+  const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
 
-  auto nodeID = workset.wsElNodeEqID;
+  auto direction_x = workset.hessianWorkset.direction_x;
 
-  bool g_xx_is_active = !workset.hessianWorkset.hess_vec_prod_g_xx.is_null();
-  bool g_xp_is_active = !workset.hessianWorkset.hess_vec_prod_g_xp.is_null();
-  bool g_px_is_active = !workset.hessianWorkset.hess_vec_prod_g_px.is_null();
-  bool f_xx_is_active = !workset.hessianWorkset.hess_vec_prod_f_xx.is_null();
-  bool f_xp_is_active = !workset.hessianWorkset.hess_vec_prod_f_xp.is_null();
-  bool f_px_is_active = !workset.hessianWorkset.hess_vec_prod_f_px.is_null();
+  const auto& hessian_ws = workset.hessianWorkset;
+  bool g_xx_is_active = !hessian_ws.hess_vec_prod_g_xx.is_null();
+  bool g_xp_is_active = !hessian_ws.hess_vec_prod_g_xp.is_null();
+  bool g_px_is_active = !hessian_ws.hess_vec_prod_g_px.is_null();
+  bool f_xx_is_active = !hessian_ws.hess_vec_prod_f_xx.is_null();
+  bool f_xp_is_active = !hessian_ws.hess_vec_prod_f_xp.is_null();
+  bool f_px_is_active = !hessian_ws.hess_vec_prod_f_px.is_null();
 
   //get const (read-only) view of x and xdot
   using const_data_t = Teuchos::ArrayRCP<const ST>;
@@ -710,17 +757,29 @@ evaluateFields(typename Traits::EvalData workset)
         Teuchos::Exceptions::InvalidParameter,
         "\nError in GatherSolution<HessianVec, Traits>: "
         "direction_x is not set and the direction is active.\n");
-    direction_x_data = Albany::getLocalData(direction_x->col(0));
+    direction_x_data = Albany::getLocalData(direction_x->col(0).getConst());
   }
 
-  const int neq = nodeID.extent(2);
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  // Make sure we have the fields offsets
+  const auto dof_mgr  = workset.disc->getDOFManager();
+  this->gather_fields_offsets(dof_mgr);
 
-    for (int node = 0; node < this->numNodes; ++node) {
-      int firstunk = neq * node + this->offset;
-      for (int eq = 0; eq < numFields; eq++) {
+  const auto ws = workset.wsIndex;
+  const auto elem_lids  = workset.disc->getWsElementLIDs().host();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().host();
+  constexpr auto ALL = Kokkos::ALL;
+
+  const auto& fields_offsets = m_fields_offsets.host();
+  const auto& first_dof = this->offset;
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const auto elem_LID = elem_lids(ws,cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+    for (int node=0; node<this->numNodes; ++node) {
+      int firstunk = fields_offsets(node,first_dof);
+      for (int eq=0; eq<numFields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
         ref_t valref = get_ref(cell,node,eq);
-        RealType xvec_val = x_data[nodeID(cell,node,this->offset + eq)];
+        RealType xvec_val = x_data[lid];
 
         valref = HessianVecFad(valref.size(), xvec_val);
         // If we differentiate w.r.t. the solution, we have to set the first
@@ -730,16 +789,14 @@ evaluateFields(typename Traits::EvalData workset)
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)
-          valref.val().fastAccessDx(0) = direction_x_data[nodeID(cell,node,this->offset + eq)];
+          valref.val().fastAccessDx(0) = direction_x_data[lid];
 
-        if (workset.transientTerms && this->enableTransient) {
-          ref_t valref_dot = get_ref_dot(cell,node,eq);
-          valref_dot = xdot_data[nodeID(cell,node,this->offset + eq)];
+        if (gather_xdot) {
+          get_ref_dot(cell,node,eq) = xdot_data[lid];
         }
 
-        if (workset.accelerationTerms && this->enableAcceleration) {
-          ref_t valref_dotdot = get_ref_dotdot(cell,node,eq);
-          valref_dotdot = xdotdot_data[nodeID(cell,node,this->offset + eq)];
+        if (gather_xdotdot) {
+          get_ref_dotdot(cell,node,eq) = xdotdot_data[lid];
         }
       }
     }

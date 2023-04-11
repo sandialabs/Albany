@@ -52,13 +52,16 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
     const bool landIceCoupledFOH3D = !responseEvaluation && pl->get<std::string>("Name") == "LandIce Coupled FO H 3D";
-    const bool extrudedColumnCoupled = (responseEvaluation && pl->isParameter("Extruded Column Coupled in 2D Response")) ?
+    bool extrudedColumnCoupled = (responseEvaluation && pl->isParameter("Extruded Column Coupled in 2D Response")) ?
         pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
+    if (pl->isParameter("Extruded Column Coupled in 2D Residual")) {
+      extrudedColumnCoupled |= pl->get<bool>("Extruded Column Coupled in 2D Residual");
+    }
     if(landIceCoupledFOH3D || extrudedColumnCoupled)
       { //all column is coupled
         int side_node_count = ms->ctd.side[3].topology->node_count;
         int node_count = ms->ctd.node_count;
-        int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+        int numLevels = app->getDiscretization()->getLayeredMeshNumberingGO()->numLayers+1;
         dDims = app->getNumEquations()*(node_count + side_node_count*numLevels);
       }
   }
@@ -96,7 +99,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
 }
 
 template <typename EvalT>
-int getDerivativeDimensions(const Albany::Application* app, const int ebi, const bool /* explicit_scheme */)
+int getDerivativeDimensions(const Albany::Application* app, const int ebi)
 {
   return getDerivativeDimensions<EvalT>(app, app->getEnrichedMeshSpecs()[ebi].get());
 }
@@ -209,13 +212,13 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
 }
 
 template int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 template int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 template int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 template int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
-    const Albany::Application*, const int, const bool);
+    const Albany::Application*, const int);
 
 #  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \

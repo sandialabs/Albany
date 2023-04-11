@@ -27,20 +27,19 @@ namespace LandIce {
 */
 
 template<typename EvalT, typename Traits>
-class GatherVerticallyContractedSolutionBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits> {
-
+class GatherVerticallyContractedSolution
+    : public PHX::EvaluatorWithBaseImpl<Traits>,
+      public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
-  GatherVerticallyContractedSolutionBase(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  virtual ~GatherVerticallyContractedSolutionBase(){};
+  GatherVerticallyContractedSolution (const Teuchos::ParameterList& p,
+                                      const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
-  virtual void evaluateFields(typename Traits::EvalData d)=0;
+  void evaluateFields(typename Traits::EvalData d);
 
   enum ContractionOperator {VerticalAverage, VerticalSum};
 
@@ -48,9 +47,22 @@ public:
 
 protected:
 
-  void computeQuadWeights(const Albany::LayeredMeshNumbering<GO>& layeredMeshNumbering);
+  using ScalarT     = typename EvalT::ScalarT;
+  using ExecSpace   = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecSpace>;
 
-  typedef typename EvalT::ScalarT ScalarT;
+  using ref_t       = typename PHAL::Ref<ScalarT>::type;
+
+  ref_t get_ref (const int iside, const int node, const int cmp) const {
+    if (isVector) {
+      return contractedSol(iside,node,cmp);
+    } else {
+      return contractedSol(iside,node);
+    }
+  }
+
+  void computeQuadWeights(const Teuchos::ArrayRCP<double>& layers_ratio);
+  void computeSideDOFOffsets (const Albany::DOFManager& dof_mgr);
 
   // Output:
   PHX::MDField<ScalarT>  contractedSol;
@@ -59,134 +71,39 @@ protected:
 
   int offset;
 
-  std::size_t vecDim;
-  std::size_t numNodes;
+  int vecDim;
+  int numNodes;
 
   std::string meshPart;
 
-  Teuchos::RCP<const CellTopologyData> cell_topo;
-
   ContractionOperator op;
 
-  Albany::LocalSideSetInfo sideSet;
-
-  Kokkos::View<double*, PHX::Device> quadWeights;
-  Kokkos::View<int*, PHX::Device> numSideNodes;
+  Albany::DualView<double*>   quadWeights;
+  Albany::DualView<int*>      side_node_count;
 
   int numLayers;
 
-};
-
-
-template<typename EvalT, typename Traits> class GatherVerticallyContractedSolution;
-
-
-
-template<typename Traits>
-class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Residual,Traits>
-    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::Residual,Traits> {
+  bool quad_weights_computed = false;
 
 public:
+  struct SolAccessor {
+    bool isVector;
+    Kokkos::DynRankView<ScalarT,PHX::Device> d_sol;
 
-  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref (const int iside, const int node, const int cmp) const {
+      if (isVector) {
+        return d_sol(iside,node,cmp);
+      } else {
+        return d_sol(iside,node);
+      }
+    }
+  };
 
-  void evaluateFields(typename Traits::EvalData d);
-
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-  struct ResidualScalar_Tag{};
-  struct ResidualVector_Tag{};
-
-  typedef Kokkos::RangePolicy<ExecutionSpace,ResidualScalar_Tag> ResidualScalar_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,ResidualVector_Tag> ResidualVector_Policy;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const ResidualScalar_Tag& tag, const int& i) const;
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const ResidualVector_Tag& tag, const int& i) const;
-
-  Kokkos::View<LO****, PHX::Device> localDOFView;
-
-  Albany::DeviceView1d<const ST> x_constView_device;
-
-private:
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Jacobian,Traits>
-    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::Jacobian,Traits> {
-
-public:
-
-  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::Tangent,Traits>
-    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::Tangent,Traits> {
-
-public:
-
-  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-};
-
-template<typename Traits>
-class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
-
-public:
-
-  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  SolAccessor device_sol;
 };
 
 
-template<typename Traits>
-class GatherVerticallyContractedSolution<PHAL::AlbanyTraits::HessianVec,Traits>
-    : public GatherVerticallyContractedSolutionBase<PHAL::AlbanyTraits::HessianVec,Traits> {
+} // namespace LandIce
 
-public:
-
-  GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
-private:
-  typedef typename PHAL::AlbanyTraits::HessianVec::ScalarT ScalarT;
-};
-
-}
-
-#endif
+#endif // LANDICE_GATHER_VERTICALLY_CONTRACTED_SOLUTION_HPP

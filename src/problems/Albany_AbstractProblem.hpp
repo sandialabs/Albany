@@ -9,27 +9,22 @@
 #ifndef ALBANY_ABSTRACTPROBLEM_HPP
 #define ALBANY_ABSTRACTPROBLEM_HPP
 
-#include <string>
-#include <vector>
-
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
 #include "Albany_NullSpaceUtils.hpp"  // has defn of struct that holds null space info for ML
 #include "Albany_StateInfoStruct.hpp"  // contains MeshSpecsStuct
 #include "Albany_StateManager.hpp"
-
 #include "Albany_DataTypes.hpp"
-#include "PHAL_SharedParameter.hpp"
+#include "Albany_ScalarParameterAccessors.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_Dimension.hpp"
-#include "PHAL_Workset.hpp"
+
+#include "Phalanx_FieldManager.hpp"
 
 #include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_RCP.hpp"
 
-#include "PHAL_FactoryTraits.hpp"
-#include "Shards_CellTopology.hpp"
+#include <string>
+#include <vector>
 
 namespace Albany {
 

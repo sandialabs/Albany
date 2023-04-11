@@ -6,8 +6,7 @@
 
 #include "LandIce_Gather2DField.hpp"
 #include "LandIce_Gather2DField_Def.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 
-
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::Gather2DField)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LandIce::GatherExtruded2DField)
