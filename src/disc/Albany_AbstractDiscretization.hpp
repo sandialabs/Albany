@@ -237,6 +237,15 @@ public:
   virtual StateArrays&
   getStateArrays() = 0;
 
+  //! Get stateArray of given type
+  StateArrayVec& getStateArrays(const StateArrays::StateArrayType type) {
+    if (type==StateArrays::ELEM) {
+      return getStateArrays().elemStateArrays;
+    } else {
+      return getStateArrays().nodeStateArrays;
+    }
+  }
+
   //! Get nodal parameters state info struct
   virtual const StateInfoStruct&
   getNodalParameterSIS() const = 0;

@@ -673,7 +673,7 @@ Application::finalSetUp(
 
   // Now that space is allocated in STK for state fields, initialize states.
   // If the states have been already allocated, skip this.
-  if (!stateMgr.areStateVarsAllocated()) stateMgr.setupStateArrays(disc);
+  if (!stateMgr.areStateVarsAllocated()) stateMgr.initStateArrays(disc);
 
   solMgr = rcp(new SolutionManager(
       params,
@@ -3205,8 +3205,7 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);
 
-  workset.stateArrayPtr =
-      &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
+  workset.stateArrayPtr = &disc->getStateArrays(StateArrays::ELEM)[ws];
 }
 
 void
