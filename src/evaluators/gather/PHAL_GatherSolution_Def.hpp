@@ -138,11 +138,11 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if ( tensorRank == 0 ) {
-    val_kokkos.resize(numFields);
+    device_sol.val_kokkos.resize(numFields);
     if (enableTransient)
-      val_dot_kokkos.resize(numFields);
+      device_sol.val_dot_kokkos.resize(numFields);
     if (enableAcceleration)
-      val_dotdot_kokkos.resize(numFields);
+      device_sol.val_dotdot_kokkos.resize(numFields);
   }
 #endif
 
@@ -174,18 +174,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     // Get MDField views from std::vector
     for (int i =0; i<numFields;i++){
-      val_kokkos[i]=this->val[i].get_static_view();
+      device_sol.val_kokkos[i]=this->val[i].get_static_view();
       if (enableTransient){
-        val_dot_kokkos[i]=this->val_dot[i].get_static_view();
+        device_sol.val_dot_kokkos[i]=this->val_dot[i].get_static_view();
       }
       if (enableAcceleration){
-        val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
+        device_sol.val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
       }
     }
-
-    d_val=val_kokkos.template view<ExecutionSpace>();
-    d_val_dot=val_dot_kokkos.template view<ExecutionSpace>();
-    d_val_dotdot=val_dotdot_kokkos.template view<ExecutionSpace>();
 #endif
   } else if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
@@ -199,6 +195,21 @@ postRegistrationSetup(typename Traits::SetupData d,
     numNodes = valTensor.extent(1);
   }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
+
+  device_sol.d_val        = device_sol.val_kokkos.view_device();
+  device_sol.d_val_dot    = device_sol.val_dot_kokkos.view_device();
+  device_sol.d_val_dotdot = device_sol.val_dotdot_kokkos.view_device();
+
+  device_sol.d_valVec        = valVec.get_static_view();
+  device_sol.d_valVec_dot    = valVec_dot.get_static_view();
+  device_sol.d_valVec_dotdot = valVec_dotdot.get_static_view();
+
+  device_sol.d_valTensor        = valTensor.get_static_view();
+  device_sol.d_valTensor_dot    = valTensor_dot.get_static_view();
+  device_sol.d_valTensor_dotdot = valVec_dotdot.get_static_view();
+
+  device_sol.numDim = numDim;
+  device_sol.tensorRank = tensorRank;
 }
 
 template<typename EvalT, typename Traits>
@@ -311,22 +322,24 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto elem_lids_dev     = Kokkos::subview(elem_lids.dev(),ws,ALL);
   const auto elem_dof_lids_dev = elem_dof_lids.dev();
-  const auto numNodes = this->numNodes;
   const auto fields_offsets = m_fields_offsets.dev();
   const auto first_dof = this->offset;
+  auto nnodes = this->numNodes;
+  auto nfields = this->numFields;
+  auto sol = this->device_sol;
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_CLASS_LAMBDA(const int& cell) {
+                       KOKKOS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
+    for (int node=0; node<nnodes; ++node) {
+      for (int eq=0; eq<nfields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
-        get_ref(cell,node,eq) = x_data(lid);
+        sol.get_ref(cell,node,eq) = x_data(lid);
         if (gather_xdot) {
-          get_ref_dot(cell,node,eq) = xdot_data(lid);
+          sol.get_ref_dot(cell,node,eq) = xdot_data(lid);
         }
         if (gather_xdotdot) {
-          get_ref_dotdot(cell,node,eq) = xdotdot_data(lid);
+          sol.get_ref_dotdot(cell,node,eq) = xdotdot_data(lid);
         }
       }
     }
@@ -443,32 +456,34 @@ evaluateFields(typename Traits::EvalData workset)
     xdotdot_data = Albany::getDeviceData(xdotdot);
   }
 
-  const auto numNodes    = this->numNodes;
   const auto first_dof   = this->offset;
   const auto elem_lids_dev     = Kokkos::subview(elem_lids.dev(),ws,ALL);
   const auto elem_dof_lids_dev = elem_dof_lids.dev();
   const auto fields_offsets = m_fields_offsets.dev();
+  auto nnodes = this->numNodes;
+  auto nfields = this->numFields;
+  auto sol = this->device_sol;
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_CLASS_LAMBDA (const int& cell) {
+                       KOKKOS_LAMBDA (const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
-    for (int node=0; node<numNodes; ++node){
+    for (int node=0; node<nnodes; ++node) {
       int firstunk = fields_offsets(node,first_dof);
-      for (int eq=0; eq<numFields; ++eq){
+      for (int eq=0; eq<nfields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
 
-        ref_t valref = get_ref(cell,node,eq);
+        ref_t valref = sol.get_ref(cell,node,eq);
         valref = FadType(valref.size(), x_data(lid));
         valref.fastAccessDx(firstunk + eq) = j_coeff;
 
         if (gather_xdot) {
-          ref_t valref = get_ref_dot(cell,node,eq);
+          ref_t valref = sol.get_ref_dot(cell,node,eq);
           valref = FadType(valref.size(), xdot_data(lid));
           valref.fastAccessDx(firstunk + eq) = m_coeff;
         }
 
         if (gather_xdotdot) {
-          ref_t valref = get_ref_dotdot(cell,node,eq);
+          ref_t valref = sol.get_ref_dotdot(cell,node,eq);
           valref = FadType(valref.size(), xdotdot_data(lid));
           valref.fastAccessDx(firstunk + eq) = n_coeff;
         }

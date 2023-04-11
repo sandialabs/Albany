@@ -53,14 +53,11 @@ protected:
 
   using ref_t       = typename PHAL::Ref<ScalarT>::type;
 
-  KOKKOS_INLINE_FUNCTION
   ref_t get_ref (const int iside, const int node, const int cmp) const {
     if (isVector) {
-      ref_t val = contractedSol(iside,node,cmp);
-      return val;
+      return contractedSol(iside,node,cmp);
     } else {
-      ref_t val = contractedSol(iside,node);
-      return val;
+      return contractedSol(iside,node);
     }
   }
 
@@ -87,7 +84,25 @@ protected:
   int numLayers;
 
   bool quad_weights_computed = false;
+
+public:
+  struct SolAccessor {
+    bool isVector;
+    Kokkos::DynRankView<ScalarT,PHX::Device> d_sol;
+
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref (const int iside, const int node, const int cmp) const {
+      if (isVector) {
+        return d_sol(iside,node,cmp);
+      } else {
+        return d_sol(iside,node);
+      }
+    }
+  };
+
+  SolAccessor device_sol;
 };
+
 
 } // namespace LandIce
 

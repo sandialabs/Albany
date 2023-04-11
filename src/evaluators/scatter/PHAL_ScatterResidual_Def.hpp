@@ -75,7 +75,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (tensorRank == 0) {
-    val_kokkos.resize(numFields);
+    device_resid.val_kokkos.resize(numFields);
   }
 #endif
 
@@ -103,9 +103,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     for (int eq =0; eq<numFields;eq++){
       // Get MDField views from std::vector
-      val_kokkos[eq]=this->val[eq].get_static_view();
+      device_resid.val_kokkos[eq]=this->val[eq].get_static_view();
     }
-    d_val=val_kokkos.template view<ExecutionSpace>();
 #endif
     numNodes = val[0].extent(1);
   } else  if (tensorRank == 1) {
@@ -117,6 +116,12 @@ postRegistrationSetup(typename Traits::SetupData d,
     numDim   = valTensor.extent(2);
   }
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
+
+  device_resid.d_val = device_resid.val_kokkos.view_device();
+  device_resid.d_valVec = valVec.get_static_view();
+  device_resid.d_valTensor = valTensor.get_static_view();
+  device_resid.numDim = numDim;
+  device_resid.tensorRank = tensorRank;
 }
 
 template<typename EvalT, typename Traits>
@@ -196,14 +201,17 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto& fields_offsets = m_fields_offsets.dev();
   const auto eq_offset = this->offset;
+  int nnodes = numNodes;
+  int nfields = numFields;
+  auto resid = this->device_resid;
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_CLASS_LAMBDA(const int& cell) {
+                       KOKKOS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
+    for (int node=0; node<nnodes; ++node) {
+      for (int eq=0; eq<nfields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+eq_offset));
-        KU::atomic_add<ExecutionSpace>(&f_data(lid), get_resid(cell,node,eq));
+        KU::atomic_add<ExecutionSpace>(&f_data(lid), resid.get(cell,node,eq));
       }
     }
   });
@@ -321,14 +329,17 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
     m_lids.resize("",nunk);
   }
   auto lids = m_lids.dev();
+  auto resid = this->device_resid;
+  int nnodes = numNodes;
+  int nfields = numFields;
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_CLASS_LAMBDA(const int cell) {
+                       KOKKOS_LAMBDA(const int cell) {
     ST vals[500];
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
-        auto res = get_resid(cell,node,eq);
+    for (int node=0; node<nnodes; ++node) {
+      for (int eq=0; eq<nfields; ++eq) {
+        auto res = resid.get(cell,node,eq);
 
         const auto row = dof_lids(fields_offsets(node,eq+eq_offset));
         if (all_vol_eqn) {

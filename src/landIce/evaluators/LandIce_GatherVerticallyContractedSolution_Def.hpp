@@ -116,6 +116,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(contractedSol,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);
+
+  device_sol.isVector = isVector;
+  device_sol.d_sol = contractedSol.get_static_view();
 }
 
 //**********************************************************************
@@ -146,18 +149,22 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
   auto snc = side_node_count.dev();
+  auto nlayers = numLayers;
+  auto l_offset = offset;
+  auto ncomps = vecDim;
+  auto sol = device_sol;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int iside) {
+                       KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
-      for(int il=0; il<=numLayers; ++il) {
-        for(int comp=0; comp<vecDim; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+offset))*w(il);
+      for(int il=0; il<=nlayers; ++il) {
+        for(int comp=0; comp<ncomps; ++comp)
+          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
       }
-      for (int comp=0; comp<vecDim; ++comp) {
-        get_ref(iside,node,comp) = contrSol[comp];
+      for (int comp=0; comp<ncomps; ++comp) {
+        sol.get_ref(iside,node,comp) = contrSol[comp];
       }
     }
   });
@@ -197,23 +204,28 @@ evaluateFields(typename PHALTraits::EvalData workset)
   // any knowledge of column contraction operations.
   const int columnsOffset = neq*this->numNodes;
 
+  auto ncomps = vecDim;
+  auto nlayers = numLayers;
+  auto l_offset = offset;
+  auto sol = device_sol;
+  auto j_coeff = workset.j_coeff;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int iside) {
+                       KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
-      for(int il=0; il<=numLayers; ++il) {
-        for(int comp=0; comp<vecDim; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+offset))*w(il);
+      for(int il=0; il<=nlayers; ++il) {
+        for(int comp=0; comp<ncomps; ++comp)
+          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
       }
-      for (int comp=0; comp<vecDim; ++comp) {
-        auto val = get_ref(iside,node,comp);
+      for (int comp=0; comp<ncomps; ++comp) {
+        auto val = sol.get_ref(iside,node,comp);
         val = FadType(val.size(),contrSol[comp]);
-        for (int il=0; il<=numLayers; ++il) {
+        for (int il=0; il<=nlayers; ++il) {
           //                 "volume FADs"   Fads of lower levs     offset on this lev
-          const auto deriv = columnsOffset + neq*numSideNodes*il + neq*node + comp+offset;
-          val.fastAccessDx(deriv) = w(il)*workset.j_coeff;
+          const auto deriv = columnsOffset + neq*numSideNodes*il + neq*node + comp+l_offset;
+          val.fastAccessDx(deriv) = w(il)*j_coeff;
         }
       }
     }
@@ -250,18 +262,22 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
   auto snc = side_node_count.dev();
+  auto ncomps = vecDim;
+  auto nlayers = numLayers;
+  auto l_offset = offset;
+  auto sol = device_sol;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int iside) {
+                       KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
-      for(int il=0; il<=numLayers; ++il) {
-        for(int comp=0; comp<vecDim; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+offset))*w(il);
+      for(int il=0; il<=nlayers; ++il) {
+        for(int comp=0; comp<ncomps; ++comp)
+          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
       }
-      for (int comp=0; comp<vecDim; ++comp) {
-        get_ref(iside,node,comp) = contrSol[comp];
+      for (int comp=0; comp<ncomps; ++comp) {
+        sol.get_ref(iside,node,comp) = contrSol[comp];
       }
     }
   });
@@ -294,18 +310,22 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
   auto snc = side_node_count.dev();
+  auto ncomps = vecDim;
+  auto nlayers = numLayers;
+  auto l_offset = offset;
+  auto sol = device_sol;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int iside) {
+                       KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
-      for(int il=0; il<=numLayers; ++il) {
-        for(int comp=0; comp<vecDim; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+offset))*w(il);
+      for(int il=0; il<=nlayers; ++il) {
+        for(int comp=0; comp<ncomps; ++comp)
+          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
       }
-      for (int comp=0; comp<vecDim; ++comp) {
-        get_ref(iside,node,comp) = contrSol[comp];
+      for (int comp=0; comp<ncomps; ++comp) {
+        sol.get_ref(iside,node,comp) = contrSol[comp];
       }
     }
   });
@@ -377,33 +397,38 @@ evaluateFields(typename PHALTraits::EvalData workset)
   // any knowledge of column contraction operations.
   const int columnsOffset = neq*this->numNodes;
 
+  auto ncomps = vecDim;
+  auto nlayers = numLayers;
+  auto l_offset = offset;
+  auto sol = device_sol;
+  auto j_coeff = workset.j_coeff;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int iside) {
+                       KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
       double contrDir[3] = {0.0, 0.0, 0.0};
-      for(int il=0; il<=numLayers; ++il) {
-        for(int comp=0; comp<vecDim; ++comp) {
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+offset))*w(il);
+      for(int il=0; il<=nlayers; ++il) {
+        for(int comp=0; comp<ncomps; ++comp) {
+          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
           if (g_xx_is_active||g_px_is_active) {
-            contrDir[comp] += direction_x_data(localDOF(iside,node,il,comp+offset))*w(il);
+            contrDir[comp] += direction_x_data(localDOF(iside,node,il,comp+l_offset))*w(il);
           }
         }
       }
 
-      for (int comp=0; comp<vecDim; ++comp) {
-        auto val = get_ref(iside,node,comp);
+      for (int comp=0; comp<ncomps; ++comp) {
+        auto val = sol.get_ref(iside,node,comp);
         val = ScalarT(val.size(),contrSol[comp]);
         if (g_xx_is_active||g_px_is_active) {
           val.val().fastAccessDx(0) = contrDir[comp];
         }
         if (g_xx_is_active||g_xp_is_active) {
-          for (int il=0; il<=numLayers; ++il) {
+          for (int il=0; il<=nlayers; ++il) {
             //                 "volume FADs"   Fads of lower levs     offset on this lev
-            const int deriv = columnsOffset + neq*numSideNodes*il + neq*node + comp+offset;
-            val.fastAccessDx(deriv).val() = w(il)*workset.j_coeff;
+            const int deriv = columnsOffset + neq*numSideNodes*il + neq*node + comp+l_offset;
+            val.fastAccessDx(deriv).val() = w(il)*j_coeff;
           }
         }
       }

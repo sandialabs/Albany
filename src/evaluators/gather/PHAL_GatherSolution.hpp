@@ -60,12 +60,10 @@ protected:
   // is constant for all iterations, so the compiler branch predictor
   // can easily guess the correct branch, making the conditional jump
   // cheap.
-  KOKKOS_INLINE_FUNCTION
   ref_t get_ref (const int cell, const int node, const int eq) const {
     switch (tensorRank) {
       case 0:
-        KOKKOS_IF_ON_HOST  (return val[eq](cell,node);)
-        KOKKOS_IF_ON_DEVICE(return d_val[eq](cell,node);)
+        return val[eq](cell,node);
       case 1:
         return valVec(cell,node,eq);
       case 2:
@@ -74,12 +72,10 @@ protected:
     Kokkos::abort("Unsupported tensor rank");
   }
 
-  KOKKOS_INLINE_FUNCTION
   ref_t get_ref_dot (const int cell, const int node, const int eq) const {
     switch (tensorRank) {
       case 0:
-        KOKKOS_IF_ON_HOST  (return val_dot[eq](cell,node);)
-        KOKKOS_IF_ON_DEVICE(return d_val_dot[eq](cell,node);)
+        return val_dot[eq](cell,node);
       case 1:
         return valVec_dot(cell,node,eq);
       case 2:
@@ -88,12 +84,10 @@ protected:
     Kokkos::abort("Unsupported tensor rank");
   }
 
-  KOKKOS_INLINE_FUNCTION
   ref_t get_ref_dotdot (const int cell, const int node, const int eq) const {
     switch (tensorRank) {
       case 0:
-        KOKKOS_IF_ON_HOST  (return val_dotdot[eq](cell,node);)
-        KOKKOS_IF_ON_DEVICE(return d_val_dotdot[eq](cell,node);)
+        return val_dotdot[eq](cell,node);
       case 1:
         return valVec_dotdot(cell,node,eq);
       case 2:
@@ -131,15 +125,62 @@ protected:
   bool enableTransient;
   bool enableAcceleration;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-protected:
   using ExecutionSpace = typename PHX::Device::execution_space;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 
-  typedef Kokkos::vector<Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> KV;
-  KV val_kokkos, val_dot_kokkos, val_dotdot_kokkos;
-  typename KV::t_dev d_val, d_val_dot, d_val_dotdot;
-#endif
+public:
+  struct SolAccessor {
+    using DynRankView = Kokkos::DynRankView<ScalarT, PHX::Device>;
+    using KV = Kokkos::vector<DynRankView, PHX::Device>;
+    using t_dev = typename KV::t_dev;
+    
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref (const int cell, const int node, const int eq) const {
+      switch (tensorRank) {
+        case 0:
+          return d_val[eq](cell,node);
+        case 1:
+          return d_valVec(cell,node,eq);
+        case 2:
+          return d_valTensor(cell,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref_dot (const int cell, const int node, const int eq) const {
+      switch (tensorRank) {
+        case 0:
+          return d_val_dot[eq](cell,node);
+        case 1:
+          return d_valVec_dot(cell,node,eq);
+        case 2:
+          return d_valTensor_dot(cell,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref_dotdot (const int cell, const int node, const int eq) const {
+      switch (tensorRank) {
+        case 0:
+          return d_val_dotdot[eq](cell,node);
+        case 1:
+          return d_valVec_dotdot(cell,node,eq);
+        case 2:
+          return d_valTensor_dotdot(cell,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
+    }
+
+    int tensorRank;
+    int numDim;
+    KV val_kokkos, val_dot_kokkos, val_dotdot_kokkos;
+    t_dev d_val, d_val_dot, d_val_dotdot;
+    DynRankView d_valVec, d_valVec_dot, d_valVec_dotdot;
+    DynRankView d_valTensor, d_valTensor_dot, d_valTensor_dotdot;
+  };
+  SolAccessor device_sol;
 };
 
 template<typename EvalT, typename Traits> class GatherSolution;
@@ -178,9 +219,6 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 private:
   using RangePolicy = typename Base::RangePolicy;
-  using Base::d_val;
-  using Base::d_val_dot;
-  using Base::d_val_dotdot;
 #endif
 };
 
@@ -210,9 +248,6 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 private:
   using RangePolicy = typename Base::RangePolicy;
-  using Base::d_val;
-  using Base::d_val_dot;
-  using Base::d_val_dotdot;
 #endif
 };
 

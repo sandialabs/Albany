@@ -64,16 +64,14 @@ protected:
   // is constant for all iterations, so the compiler branch predictor
   // can easily guess the correct branch, making the conditional jump
   // cheap.
-  KOKKOS_INLINE_FUNCTION
   ScalarT get_resid (const int cell, const int node, const int eq) const {
     switch (tensorRank) {
       case 0:
-        KOKKOS_IF_ON_HOST  (return val[eq](cell,node););
-        KOKKOS_IF_ON_DEVICE(return d_val[eq](cell,node););
+        return val[eq](cell,node);
       case 1:
-      {  return valVec(cell,node,eq); }
+        return valVec(cell,node,eq);
       case 2:
-      {  return valTensor(cell,node,eq/numDim,eq%numDim); }
+        return valTensor(cell,node,eq/numDim,eq%numDim);
     }
     Kokkos::abort("Unsupported tensor rank");
   }
@@ -96,16 +94,34 @@ protected:
   int numDim;
   int tensorRank;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-protected:
   using ExecutionSpace = typename PHX::Device::execution_space;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
+public:
+  struct ResidAccessor {
+    using DynRankView = Kokkos::DynRankView<const ScalarT, PHX::Device>;
+    using KV = Kokkos::vector<DynRankView, PHX::Device>;
+    using t_dev = typename KV::t_dev;
 
-  Albany::DeviceView1d<ST> f_data;
-  typedef Kokkos::vector<Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> KV;
-  KV val_kokkos;
-  typename KV::t_dev d_val;
-#endif
+    KOKKOS_INLINE_FUNCTION
+    ScalarT get (const int cell, const int node, const int eq) const {
+      switch (tensorRank) {
+        case 0:
+          return d_val[eq](cell,node);
+        case 1:
+          return d_valVec(cell,node,eq);
+        case 2:
+          return d_valTensor(cell,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
+    }
+
+    int tensorRank;
+    int numDim;
+    KV val_kokkos;
+    t_dev d_val;
+    DynRankView d_valVec, d_valTensor;
+  };
+  ResidAccessor device_resid;
 };
 
 template<typename EvalT, typename Traits> class ScatterResidual;
@@ -303,12 +319,12 @@ protected:
  * where \f$\boldsymbol{x}\f$ is the solution, \f$\boldsymbol{p}_1\f$ is a first parameter, \f$\boldsymbol{p}_2\f$ is a potentially different second parameter,
  * \f$\boldsymbol{f}\f$ is the residual, \f$\boldsymbol{z}\f$ is the Lagrange multiplier vector, \f$\boldsymbol{v}_{\boldsymbol{x}}\f$ is a direction vector
  * with the same dimension as the vector \f$\boldsymbol{x}\f$, and \f$\boldsymbol{v}_{\boldsymbol{p}_1}\f$ is a direction vector with the same dimension as the vector \f$\boldsymbol{p}_1\f$.
- * 
+ *
  * This scatter is used when calling:
  * <ul>
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xx,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_xp,
- *   <li> Albany::Application::evaluateResidual_HessVecProd_px, 
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_px,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_pp.
  * </ul>
  */
@@ -349,10 +365,10 @@ protected:
  *  where  \f$\boldsymbol{x}\f$  is the solution, \f$\boldsymbol{p}_1\f$  is a first parameter, \f$\boldsymbol{p}_2\f$  is a potentially different second parameter
  *  which is extruded, \f$\boldsymbol{f}\f$  is the residual, \f$\boldsymbol{z}\f$ is the Lagrange multiplier vector, \f$\boldsymbol{v}_{\boldsymbol{x}}\f$ is a direction vector
  *  with the same dimension as the vector \f$\boldsymbol{x}\f$, and \f$\boldsymbol{v}_{\boldsymbol{p}_1}\f$ is a direction vector with the same dimension as the vector \f$\boldsymbol{p}_1\f$.
- * 
+ *
  * This scatter is used when calling:
  * <ul>
- *   <li> Albany::Application::evaluateResidual_HessVecProd_px, 
+ *   <li> Albany::Application::evaluateResidual_HessVecProd_px,
  *   <li> Albany::Application::evaluateResidual_HessVecProd_pp.
  * </ul>
  */
