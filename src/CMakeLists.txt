@@ -111,7 +111,6 @@ set(HEADERS
   PHAL_Dimension.hpp
   PHAL_FactoryTraits.hpp
   PHAL_Setup.hpp
-  PHAL_TypeKeyMap.hpp
   PHAL_Utilities.hpp
   PHAL_Utilities_Def.hpp
   PHAL_Workset.hpp
