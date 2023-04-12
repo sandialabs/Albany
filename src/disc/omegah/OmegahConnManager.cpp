@@ -86,21 +86,28 @@ void OmegahConnManager::getConnectivityOffsets(const Omega_h::Adj elmToDim[3], c
 void OmegahConnManager::appendConnectivity(const Omega_h::Adj& elmToDim, LO dofsPerEnt,
     GO startIdx, GO globalStartIdx, LO dim, Omega_h::Write<Omega_h::GO>& elmDownAdj_d) const
 {
-  const auto a2ab = elmToDim.a2ab; //offset array
   const auto ab2b = elmToDim.ab2b; //values array
-  auto append = OMEGA_H_LAMBDA(LO i) {
-    for(auto ab = a2ab[i]; ab < a2ab[i+1]; ab++) {
-      const auto downEntId = ab2b[ab];
+  TEUCHOS_ASSERT(mesh.family() == OMEGA_H_SIMPLEX);
+  const auto numDownAdjEnts= Omega_h::element_degree(mesh.family(), mesh.dim(), dim);
+  fprintf(stderr, "\ndim startIdx globalStartIdx ab2b.size() numDown %d %d %d %d %d\n", dim, startIdx, globalStartIdx, ab2b.size(), numDownAdjEnts);
+  auto append = OMEGA_H_LAMBDA(LO elm) {
+    printf("0.1 %d\n", elm);
+    for(int i=0; i<numDownAdjEnts; i++) {
+      const auto downEntIdx = elm*numDownAdjEnts+i;
+      const auto downEntId = ab2b[downEntIdx];
+      printf("0.2 %d %d\n", elm, downEntId);
       for(int dof=0; dof<dofsPerEnt; dof++) {
-        const auto dofIdx = (dofsPerEnt * downEntId) + dof;
-        const auto idx = startIdx + dofIdx;
-        const GO id = globalStartIdx + dofIdx;
+        const auto idx = startIdx + (downEntIdx*dofsPerEnt) + dof;
+        const GO id = globalStartIdx + (dofsPerEnt * downEntId) + dof;
+        printf("0.3 %d %d\n", idx, id);
         elmDownAdj_d[idx] = id;
       }
     }
   };
   const std::string kernelName = "appendConnectivity_dim" + std::to_string(dim);
-  Omega_h::parallel_for(a2ab.size(), append, kernelName.c_str());
+  Omega_h::parallel_for(mesh.nelems(), append, kernelName.c_str());
+  Kokkos::fence();
+
 }
 
 void
