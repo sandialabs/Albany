@@ -30,7 +30,7 @@ private:
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
   void getDofsPerEnt(const panzer::FieldPattern & fp, LO entIdCnt[4]) const;
-  void getConnectivityOffsets(const Omega_h::Adj elmToDim[3], const LO dofsPerEnt[4],
+  void getConnectivityOffsets(LO fieldDim, const Omega_h::Adj elmToDim[3], const LO dofsPerEnt[4],
                               GO connectivityOffsets[4], GO connectivityGlobalOffsets[4]);
   void appendConnectivity(const Omega_h::Adj& elmToDim, LO dofsPerEnt,
                           GO startIdx, GO globalStartIdx,
