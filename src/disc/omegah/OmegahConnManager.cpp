@@ -69,37 +69,61 @@ void OmegahConnManager::getDofsPerEnt(const panzer::FieldPattern & fp, LO dofsPe
   TEUCHOS_ASSERT(dofsPerEnt[0] || dofsPerEnt[1] || dofsPerEnt[2] || dofsPerEnt[3]);
 }
 
-void OmegahConnManager::getConnectivityOffsets(const Omega_h::Adj elmToDim[3], const LO dofsPerEnt[4],
-    GO connectivityOffsets[4], GO connectivityGlobalOffsets[4])
+void OmegahConnManager::getConnectivityOffsets(LO fieldDim, const Omega_h::Adj elmToDim[3],
+    const LO dofsPerEnt[4], GO connectivityOffsets[4], GO connectivityGlobalOffsets[4])
 {
   // compute offsets for each sub cell type
   connectivityOffsets[0] = 0;
   connectivityGlobalOffsets[0] = 0;
-  for(int dim=1; dim<4; dim++) {
+  for(int dim=1; dim<fieldDim; dim++) {
     const auto numDownAdj = elmToDim[dim-1].ab2b.size();
     connectivityOffsets[dim] = connectivityOffsets[dim-1]+(numDownAdj*dofsPerEnt[dim-1]);
-    const auto numGlobalEnts = mesh.nglobal_ents(dim-1);
-    connectivityGlobalOffsets[dim] = connectivityGlobalOffsets[dim-1]+(numGlobalEnts*dofsPerEnt[dim-1]);
+  }
+  // compute totalsize
+  Omega_h::GO totSize = 0;
+  for(int dim=0; dim<fieldDim; dim++) {
+    totSize += connectivityOffsets[dim];
+  }
+  // get the starting id on this rank so that the dofs on this rank will have
+  // globally unique ids
+  auto worldComm = mesh.library()->world();
+  const auto globalOffset = worldComm->exscan(totSize, OMEGA_H_SUM);
+  fprintf(stderr, "\n%d totSize %d globalOffset %d\n", worldComm->rank(), totSize, globalOffset);
+  // create the global offsets for each group of local dof ids
+  // associated with vtx, edge, face, and elements
+  for(int dim=0; dim<fieldDim; dim++) {
+    connectivityGlobalOffsets[dim] = globalOffset + connectivityOffsets[dim];
+  }
+  for(int rank=0; rank<worldComm->size(); rank++) {
+    if(worldComm->rank() == rank) {
+      fprintf(stderr, "\n");
+      for(int dim=0; dim<fieldDim; dim++) {
+        fprintf(stderr, "%d dim co cgo %d %d %d\n",
+            rank, dim, connectivityOffsets[dim], connectivityGlobalOffsets[dim]);
+      }
+    }
+    worldComm->barrier();
   }
 }
 
 void OmegahConnManager::appendConnectivity(const Omega_h::Adj& elmToDim, LO dofsPerEnt,
     GO startIdx, GO globalStartIdx, LO dim, Omega_h::Write<Omega_h::GO>& elmDownAdj_d) const
 {
+  auto worldComm = mesh.library()->world();
+  const auto rank = worldComm->rank();
   const auto ab2b = elmToDim.ab2b; //values array
   TEUCHOS_ASSERT(mesh.family() == OMEGA_H_SIMPLEX);
   const auto numDownAdjEnts= Omega_h::element_degree(mesh.family(), mesh.dim(), dim);
-  fprintf(stderr, "\ndim startIdx globalStartIdx ab2b.size() numDown %d %d %d %d %d\n", dim, startIdx, globalStartIdx, ab2b.size(), numDownAdjEnts);
+  fprintf(stderr, "\n%d dim startIdx globalStartIdx ab2b.size() numDown %d %d %d %d %d\n",
+                     rank, dim, startIdx, globalStartIdx, ab2b.size(), numDownAdjEnts);
   auto append = OMEGA_H_LAMBDA(LO elm) {
-    printf("0.1 %d\n", elm);
     for(int i=0; i<numDownAdjEnts; i++) {
       const auto downEntIdx = elm*numDownAdjEnts+i;
       const auto downEntId = ab2b[downEntIdx];
-      printf("0.2 %d %d\n", elm, downEntId);
       for(int dof=0; dof<dofsPerEnt; dof++) {
         const auto idx = startIdx + (downEntIdx*dofsPerEnt) + dof;
         const GO id = globalStartIdx + (dofsPerEnt * downEntId) + dof;
-        printf("0.3 %d %d\n", idx, id);
+        printf("%d 0.3 %d %d %d %d\n", rank, elm, downEntIdx, idx, id);
         elmDownAdj_d[idx] = id;
       }
     }
@@ -107,7 +131,6 @@ void OmegahConnManager::appendConnectivity(const Omega_h::Adj& elmToDim, LO dofs
   const std::string kernelName = "appendConnectivity_dim" + std::to_string(dim);
   Omega_h::parallel_for(mesh.nelems(), append, kernelName.c_str());
   Kokkos::fence();
-
 }
 
 void
@@ -153,7 +176,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 
   GO connectivityOffsets[4] = {0,0,0,0};
   GO connectivityGlobalOffsets[4] = {0,0,0,0};
-  getConnectivityOffsets(elmToDim, dofsPerEnt, connectivityOffsets, connectivityGlobalOffsets);
+  getConnectivityOffsets(fieldDim, elmToDim, dofsPerEnt, connectivityOffsets, connectivityGlobalOffsets);
   GO totSize = 0;
   for(int dim = 0; dim < fieldDim; dim++)
     totSize+=connectivityOffsets[dim];
