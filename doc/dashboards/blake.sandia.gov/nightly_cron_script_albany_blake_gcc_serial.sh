@@ -11,7 +11,7 @@ rm -rf gcc_modules.out
 unset http_proxy
 unset https_proxy
 
-source blake_gcc_modules_submit.sh >& gcc_modules.out
+source blake_gcc_modules.sh >& gcc_modules.out
 
 export OMP_NUM_THREADS=1
 

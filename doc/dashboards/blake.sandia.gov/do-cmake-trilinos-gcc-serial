@@ -7,7 +7,7 @@ INSTALL_DIR=$PWD/install
 #and are hence hard-coded below - need to fix this.
 
 BOOST_PATH=${BOOST_ROOT}
-NETCDF_PATH=${NETCDF_ROOT}
+NETCDF_PATH=${NETCDF_C_ROOT}
 HDF5_PATH=${HDF5_ROOT}
 SUPERLU_PATH=${SUPERLU_ROOT}
 BLAS_PATH=${BLAS_ROOT} 
@@ -18,7 +18,7 @@ cmake \
       -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
       -D CMAKE_C_COMPILER:FILEPATH=mpicc \
       -D CMAKE_Fortran_COMPILER:FILEPATH=mpif77 \
-      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Werror -std=c++17' \
+      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Wno-mismatched-new-delete -Wno-catch-value -Werror' \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D BLAS_LIBRARY_DIRS=${BLAS_PATH}/lib \
@@ -46,9 +46,8 @@ cmake \
       -D Epetra_HIDE_DEPRECATED_CODE=ON  \
       -D Ifpack2_HIDE_DEPRECATED_CODE=ON \
       -D Ifpack2_ENABLE_DEPRECATED_CODE=OFF \
-      -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
-      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-      -D Kokkos_ENABLE_Serial:BOOL=ON \
+      -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
+      -D Kokkos_ENABLE_SERIAL:BOOL=ON \
       -D ML_ENABLE_TESTS:BOOL=OFF \
       -D MueLu_ENABLE_DEPRECATED_CODE=OFF \
       -D MueLu_ENABLE_Epetra:BOOL=OFF \
@@ -63,11 +62,10 @@ cmake \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
       -D ROL_ENABLE_TESTS:BOOL=OFF \
       -D ROL_ENABLE_EXAMPLES:BOOL=OFF \
-      -D Sacado_ENABLE_TESTS:BOOL=OFf \
+      -D Sacado_ENABLE_TESTS:BOOL=OFF \
       -D STK_HIDE_DEPRECATED_CODE=ON \
       -D Teuchos_HIDE_DEPRECATED_CODE=OFF\
       -D Thyra_HIDE_DEPRECATED_CODE=ON \
-      -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
       -D Xpetra_ENABLE_Epetra:BOOL=OFF \
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
       -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
@@ -126,9 +124,7 @@ cmake \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
-      -D CMAKE_CXX_STANDARD=17 \
       -D TPL_ENABLE_X11:BOOL=OFF \
       -D Tpetra_ENABLE_DEPRECATED_CODE=OFF \
-      -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
       -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
 ..
