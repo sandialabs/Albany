@@ -1029,8 +1029,10 @@ void STKDiscretization::computeVectorSpaces()
   //       That's not the name that stk uses for the whole mesh. So if the
   //       dof part name is "", we get the part stored in the stk mesh struct
   //       for the element block, where we REQUIRE that there is only ONE element block.
-  TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size() > 1,std::logic_error,
       "Error! We currently only support meshes with 1 element block.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size() < 1,std::logic_error,
+      "Error! Albany problems must have at least 1 element block.  Your mesh has 0 element blocks.\n");
 
   strmap_t<std::pair<std::string,int>> name_to_partAndDim;
   name_to_partAndDim[solution_dof_name()] = std::make_pair("",neq);
