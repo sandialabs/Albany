@@ -1030,7 +1030,7 @@ void STKDiscretization::computeVectorSpaces()
   //       dof part name is "", we get the part stored in the stk mesh struct
   //       for the element block, where we REQUIRE that there is only ONE element block.
   TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size()!=1,std::logic_error,
-      "Error! We currently do not support meshes with 2+ element blocks.\n");
+      "Error! We currently only support meshes with 1 element block.\n");
 
   strmap_t<std::pair<std::string,int>> name_to_partAndDim;
   name_to_partAndDim[solution_dof_name()] = std::make_pair("",neq);
