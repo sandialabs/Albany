@@ -68,7 +68,7 @@ double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_s
     MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
 bool MPAS_useGLP(true);
 
-bool depthIntegratedModel(true);
+bool depthIntegratedModel(false);
 
 std::vector<int> dirichletNodesIdsSepthInt;
 
@@ -531,6 +531,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   Teuchos::ParameterList& physParamList = paramList->sublist("Problem").sublist("LandIce Physical Parameters");
 
+  depthIntegratedModel = paramList->sublist("Problem").get("Depth Integrated Model",false);
+
   double rho_ice, rho_seawater;
   physParamList.set("Gravity Acceleration", physParamList.get("Gravity Acceleration", MPAS_gravity));
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
@@ -539,7 +541,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   physParamList.set<bool>("Use GLP", physParamList.get("Use GLP", MPAS_useGLP)); //use GLP (Grounding line parametrization) unless actively disabled
 
   paramList->sublist("Problem").set("Name", paramList->sublist("Problem").get("Name", "LandIce Stokes First Order 3D"));
-  paramList->sublist("Problem").set("Depth Integrated Model", paramList->sublist("Problem").get("Depth Integrated Model", false));
 
   MPAS_dt = Teuchos::rcp(new double(0.0));
   if (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") {

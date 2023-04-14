@@ -1112,7 +1112,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Parameter Name", param_name);
   p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-  p->set<double>("Default Nominal Value", 1.);
+  p->set<double>("Default Nominal Value", 0.);
   Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_theta_0;
   ptr_theta_0 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_theta_0);
