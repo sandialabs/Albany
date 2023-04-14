@@ -46,11 +46,13 @@ private:
   int                             num_side_nodes;
 
   // Input:
-  PHX::MDField<const ScalarT>                           val_cell;
-  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint> BF;
+  PHX::MDField<const ScalarT>                              val_cell;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint> BF;
 
   // Output:
-  PHX::MDField<ScalarT>                                 val_side_qp;
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
+  PHX::MDField<OutputScalarT>                              val_side_qp;
 
   enum LayoutType
   {

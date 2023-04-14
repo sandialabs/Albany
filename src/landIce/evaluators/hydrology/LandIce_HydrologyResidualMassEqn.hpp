@@ -57,7 +57,7 @@ private:
   void evaluateFieldsSide(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const RealType>      BF;
+  PHX::MDField<const MeshScalarT>   BF;
   PHX::MDField<const MeshScalarT>   GradBF;
   PHX::MDField<const MeshScalarT>   w_measure;
   PHX::MDField<const ScalarT>       q;

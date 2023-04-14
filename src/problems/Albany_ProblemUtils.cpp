@@ -14,6 +14,11 @@
 #include "Intrepid2_HGRAD_HEX_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_WEDGE_C1_FEM.hpp"
 
+#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_SIA_LINE_FEM.hpp"
+#include "Intrepid2_DerivedBasis_HGRAD_WEDGE.hpp"
+
 #include "Kokkos_DynRankView.hpp"
 
 namespace Albany
@@ -117,6 +122,7 @@ getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
    {
      if (numNodes == 6)
        intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_WEDGE_C1_FEM<PHX::Device>() );
+       //intrepidBasis = rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device>, Intrepid2::Basis_HGRAD_SIA_LINE_FEM<PHX::Device> > (1));
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,

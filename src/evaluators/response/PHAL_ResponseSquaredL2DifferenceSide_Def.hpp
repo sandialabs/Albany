@@ -193,7 +193,7 @@ evaluateFields(typename Traits::EvalData workset)
           {
             ScalarT sq = 0;
             // Computing squared difference at qp
-            RealType rms = rmsScaling ? rootMeanSquareField(sideSet_idx,qp) : 1.0;
+            MeshScalarT rms = rmsScaling ? rootMeanSquareField(sideSet_idx,qp) : MeshScalarT(1.0);
             TargetScalarT trgt = target_value ? target_value_val : targetField(sideSet_idx,qp);
             sq += std::pow((sourceField(sideSet_idx,qp)-trgt)/rms,2);
             sum += sq * w_measure(sideSet_idx,qp);
@@ -213,7 +213,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int qp=0; qp<numQPs; ++qp)
           {
             ScalarT sq = 0;
-            RealType rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : 1.0;
+            MeshScalarT rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : MeshScalarT(1.0);
             // Computing squared difference at qp
             // Precompute differentce and access fields only n times (not n^2)
             for (size_t i=0; i<dims[2]; ++i)
@@ -244,7 +244,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int qp=0; qp<numQPs; ++qp)
           {
             ScalarT sq = 0;
-            RealType rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : 1.0;
+            MeshScalarT rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : MeshScalarT(1.0);
             // Computing squared difference at qp
             // Precompute differentce and access fields only n^2 times (not n^4)
             for (size_t i=0; i<dims[2]; ++i)

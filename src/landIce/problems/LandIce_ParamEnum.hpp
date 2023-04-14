@@ -22,6 +22,7 @@ enum class ParamEnum
   GLHomotopy,
   Theta_0,
   Theta_1,
+  Theta_2,
   Kappa
 };
 
@@ -35,6 +36,7 @@ namespace ParamEnumName
   static const std::string GLHomotopyParam = "Glen's Law Homotopy Parameter";
   static const std::string theta_0         = "Theta 0"; 
   static const std::string theta_1         = "Theta 1";
+  static const std::string theta_2         = "Theta 2";
   static const std::string Kappa           = "Transmissivity";
 } // ParamEnum
 

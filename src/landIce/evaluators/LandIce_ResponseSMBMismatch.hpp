@@ -52,10 +52,10 @@ namespace LandIce {
     unsigned int numSideDims;
 
     PHX::MDField<const ScalarT,Side,QuadPoint>                     flux_div;
-    PHX::MDField<const RealType,Side,QuadPoint>                    SMB;
-    PHX::MDField<const RealType,Side,QuadPoint>                    SMBRMS;
-    PHX::MDField<const RealType,Side,QuadPoint>                    obs_thickness;
-    PHX::MDField<const RealType,Side,QuadPoint>                    thicknessRMS;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint>                 SMB;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint>                 SMBRMS;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint>                 obs_thickness;
+    PHX::MDField<const MeshScalarT,Side,QuadPoint>                 thicknessRMS;
     PHX::MDField<const ThicknessScalarType,Side,QuadPoint>         thickness;
     PHX::MDField<const GradThicknessScalarType,Side,QuadPoint,Dim> grad_thickness;
     PHX::MDField<const MeshScalarT,Side,QuadPoint>                 w_measure_2d;

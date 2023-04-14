@@ -41,12 +41,15 @@ private:
   // Input:
   //! Values at nodes
   PHX::MDField<const ScalarT,Cell,Node> val_node;
+
   //! Basis Functions
-  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> BF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint> val_qp;
+  typedef typename Albany::StrongestScalarType<ScalarT,MeshScalarT>::type OutputScalarT;
+  PHX::MDField<OutputScalarT,Cell,QuadPoint> val_qp;
 
   std::size_t numNodes;
   std::size_t numQPs;

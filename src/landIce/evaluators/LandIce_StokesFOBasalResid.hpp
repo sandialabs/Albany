@@ -46,7 +46,7 @@ private:
   // Input:
   PHX::MDField<const BetaScalarT,Side,QuadPoint>     beta;
   PHX::MDField<const ScalarT,Side,QuadPoint,VecDim>  u;
-  PHX::MDField<const RealType,Side,Node,QuadPoint>   BF;
+  PHX::MDField<const MeshScalarT,Side,Node,QuadPoint>   BF;
   PHX::MDField<const MeshScalarT,Side,QuadPoint>     w_measure;
   PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim> normals;
   

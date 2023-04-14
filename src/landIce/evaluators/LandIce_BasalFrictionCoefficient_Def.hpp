@@ -190,7 +190,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
       this->addDependentField (thickness_field);
       if(!nodal) {
-        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+        BF = PHX::MDField<const MeshScalarT>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
         this->addDependentField (BF);
       }
       Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
@@ -231,7 +231,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
       auto layout_mu_field = layout;
       if(!nodal && (mu_type == FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES)) {
-        BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+        BF = PHX::MDField<const MeshScalarT>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
         layout_mu_field = nodal_layout;
         this->addDependentField (BF);
       }
@@ -255,7 +255,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       } else if (lambdaType == "EXPONENT OF FIELD AT NODES") {
         lambda_type = FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES;
         if(!nodal) {
-          BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+          BF = PHX::MDField<const MeshScalarT>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
           layout_lambda_field = nodal_layout;
           this->addDependentField (BF);
         }

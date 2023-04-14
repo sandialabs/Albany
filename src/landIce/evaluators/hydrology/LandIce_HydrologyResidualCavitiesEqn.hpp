@@ -61,7 +61,7 @@ private:
   void evaluateFieldsSide(typename Traits::EvalData d);
 
   // Input:
-  PHX::MDField<const RealType>      BF;           // Basis functions
+  PHX::MDField<const MeshScalarT>   BF;           // Basis functions
   PHX::MDField<const MeshScalarT>   w_measure;    // Weighted measure (for quadrature)
   PHX::MDField<const ScalarT>       h;            // Water thickness [m]
   PHX::MDField<const ScalarT>       h_node;       // Water thickness nodal [m]

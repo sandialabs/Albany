@@ -59,7 +59,7 @@ private:
   double N_val; // effective pressure value [kPa]
 
   // Input:
-  PHX::MDField<const RealType>          BF;
+  PHX::MDField<const MeshScalarT>       BF;
   PHX::MDField<const VelocityST>        u_norm;          // [m yr^{-1}]
   PHX::MDField<const ParamScalarT>      lambdaField;     // [km], characteristic length
   PHX::MDField<const ParamScalarT>      muField;         // [yr^q m^{-q}] or [adim], Power Law with exponent q, Coulomb Friction

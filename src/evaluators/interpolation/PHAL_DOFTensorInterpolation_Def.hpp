@@ -55,7 +55,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t i=0; i<vecDim; i++) {
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
+          typename PHAL::Ref<OutputScalarT>::type vqp = val_qp(cell,qp,i,j);
           vqp = val_node(cell, 0, i, j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
             vqp += val_node(cell, node, i, j) * BF(cell, node, qp);
@@ -81,10 +81,10 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t i=0; i< vecDim; i++) {
         for (std::size_t j=0; j< vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          typename PHAL::Ref<ScalarT>::type vqp = this->val_qp(cell,qp,i,j);
+          typename PHAL::Ref<OutputScalarT>::type vqp = this->val_qp(cell,qp,i,j);
 
           vqp = this->val_node(cell, 0, i, j) * this->BF(cell, 0, qp);
-          vqp = ScalarT(num_dof, this->val_node(cell, 0, i, j).val() * this->BF(cell, 0, qp));
+          vqp = OutputScalarT(num_dof, this->val_node(cell, 0, i, j).val() * this->BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = this->val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * this->BF(cell, 0, qp);
           for (std::size_t node=1; node < this->numNodes; ++node) {
             vqp.val() += this->val_node(cell, node, i, j).val() * this->BF(cell, node, qp);

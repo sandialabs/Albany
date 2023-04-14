@@ -190,7 +190,7 @@ void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Average_Scalar_Field_Tag&, const int& cell) const{
   using FL = Albany::FieldLocation;
 
-  ScalarT field_qp_device;
+  CellAvgScalarT field_qp_device;
 
   // Precompute cell measure
   MeshScalarT meas_device = 0.0;
@@ -224,7 +224,7 @@ void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Average_Vector_Field_Tag&, const int& cell) const{
   using FL = Albany::FieldLocation;
 
-  ScalarT field_qp_device;
+  CellAvgScalarT field_qp_device;
 
   // Precompute cell measure
   MeshScalarT meas_device = 0.0;
@@ -264,7 +264,7 @@ void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Average_Tensor_Field_Tag&, const int& cell) const{
   using FL = Albany::FieldLocation;
 
-  ScalarT field_qp_device;
+  CellAvgScalarT field_qp_device;
 
   // Precompute cell measure
   MeshScalarT meas_device = 0.0;

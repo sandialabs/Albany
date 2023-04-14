@@ -33,6 +33,8 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   l2ProjectedBoundaryEquation = params->isSublist("LandIce L2 Projected Boundary Laplacian");
 
+  this->depthIntegratedModel = params->get("Depth Integrated Model",false);
+
 
   //Set # of PDEs per node based on the Equation Set.
   //Equation Set is LandIce by default (2 dofs / node -- usual LandIce Stokes FO).

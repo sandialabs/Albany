@@ -42,6 +42,8 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
+  typedef typename EvalT::ScalarT ScalarT;
   unsigned int numVertices, numDims, numNodes, numQPs, numCells;
   MDFieldMemoizer<Traits> memoizer;
 
@@ -51,19 +53,28 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, MeshScalarT, RealType> > depthIntegratedBasis;
+  //Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > depthIntegratedBasis;
+  bool depthIntegrated;
 
-  Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;
-  Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points_RT;
+  Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points_RT;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> val_at_cub_points;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> grad_at_cub_points;
+  //Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;
+  //Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
   Kokkos::DynRankView<RealType, PHX::Device> refPoints;
   Kokkos::DynRankView<RealType, PHX::Device> refWeights;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_inv;
 
+  PHX::MDField<const ScalarT> c0_, c1_, c2_;
+
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; 
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;

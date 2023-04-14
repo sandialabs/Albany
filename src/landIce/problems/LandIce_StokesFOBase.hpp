@@ -49,11 +49,18 @@
 #include "LandIce_UpdateZCoordinate.hpp"
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 #include "LandIce_FluxDivergenceResidual.hpp"
+#include "PHAL_ComputeBasisFunctions.hpp"
+
 
 #include "PHAL_LinearCombinationParameter.hpp"
 #include "PHAL_RandomPhysicalParameter.hpp"
 #include "PHAL_LogGaussianDistributedParameter.hpp"
 #include "PHAL_IsAvailable.hpp"
+
+#include "PHAL_DOFGradInterpolation.hpp"
+#include "PHAL_DOFInterpolation.hpp"
+#include "PHAL_DOFVecGradInterpolation.hpp"
+#include "PHAL_DOFVecInterpolation.hpp"
 
 #include "Albany_StringUtils.hpp" // for 'upper_case'
 
@@ -251,6 +258,9 @@ protected:
 
   /// Boolean marking whether SDBCs are used
   bool use_sdbcs_;
+
+  /// Boolean marking whether to use the depth-integrated model
+  bool depthIntegratedModel;
 
   // Whether to use corrected temperature in the viscosity
   bool viscosity_use_corrected_temperature;
@@ -715,7 +725,27 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
           ev = utils.constructDOFInterpolationEvaluator(fname, offset);
           break;
         case FRT::Vector:
-          ev = utils.constructDOFVecInterpolationEvaluator(fname, offset);
+          if(depthIntegratedModel && (fname == "Velocity")) {
+            std::cout << "Interpolating Velocity" << std::endl;
+            using Teuchos::RCP;
+            using Teuchos::rcp;
+            using Teuchos::ParameterList;
+
+            RCP<ParameterList> p = rcp(new ParameterList("DOFVec Interpolation "+fname));
+          
+            // Input
+            p->set<std::string>("Variable Name", fname);
+            p->set<std::string>("BF Name", Albany::bf_name_depthIntU);
+            p->set<int>("Offset of First DOF", offset);
+
+            // Output (assumes same Name as input)
+            if(offset == -1)
+              ev = rcp(new PHAL::DOFVecInterpolationBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+            else  //works only for solution or a set of solution components
+              ev = rcp(new PHAL::FastSolutionVecInterpolationBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+          }
+          else
+            ev = utils.constructDOFVecInterpolationEvaluator(fname, offset);
           break;
         case FRT::Tensor:
           ev = utils.constructDOFTensorInterpolationEvaluator(fname, offset);
@@ -733,6 +763,27 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
           ev = utils.constructDOFGradInterpolationEvaluator(fname, offset);
           break;
         case FRT::Vector:
+          if(depthIntegratedModel && (fname == "Velocity")) {
+            std::cout << "Interpolating Velocity Gradient" << std::endl;
+
+            using Teuchos::RCP;
+            using Teuchos::rcp;
+            using Teuchos::ParameterList;
+
+            RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+fname));
+            // Input
+            p->set<std::string>("Variable Name", fname);
+            p->set<std::string>("Gradient BF Name", Albany::grad_bf_name_depthIntU);
+            p->set<int>("Offset of First DOF", offset);
+
+            // Output (assumes same Name as input)
+            p->set<std::string>("Gradient Variable Name", fname+" Gradient");
+
+            if(offset == -1)
+              ev = rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+            else  //works only for solution or a set of solution components
+              ev = rcp(new PHAL::FastSolutionVecGradInterpolationBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+          } else
           ev = utils.constructDOFVecGradInterpolationEvaluator(fname, offset);
           break;
         case FRT::Tensor:
@@ -976,6 +1027,39 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
+  if(depthIntegratedModel)
+  {
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList("Compute Depth Integrated Basis Functions U"));
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<std::string>("Coordinate Vector Name",Albany::coord_vec_name);
+    p->set< RCP<IntrepidCubature> >("Cubature", cellCubature);
+
+    p->set< RCP<IntrepidBasis> > ("Intrepid2 Basis", cellBasis);
+
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<std::string>("Weights Name",              Albany::weights_name);
+    p->set<std::string>("Jacobian Det Name",         Albany::jacobian_det_name);
+    p->set<std::string>("BF Name",                   Albany::bf_name_depthIntU);
+    p->set<std::string>("Weighted BF Name",          Albany::weighted_bf_name_depthIntU);
+    p->set<std::string>("Gradient BF Name",          Albany::grad_bf_name_depthIntU);
+    p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name_depthIntU);
+    p->set<std::string>("C_0 Parameter Name",        ParamEnumName::theta_0);
+    p->set<std::string>("C_1 Parameter Name",        ParamEnumName::theta_1);
+    p->set<std::string>("C_2 Parameter Name",        ParamEnumName::theta_2);
+    p->set<bool>("Depth-integrated Model", true);
+
+    ev = rcp(new PHAL::ComputeBasisFunctions<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
+
+
+
+
   // Get coordinate of cell baricenter
   ev = evalUtils.getMSTUtils().constructCellAverageEvaluator(Albany::coord_vec_name, FL::QuadPoint, FRT::Gradient);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -1028,7 +1112,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Parameter Name", param_name);
   p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-  p->set<double>("Default Nominal Value", 0.);
+  p->set<double>("Default Nominal Value", 1.);
   Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_theta_0;
   ptr_theta_0 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_theta_0);
@@ -1043,6 +1127,19 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_theta_1;
   ptr_theta_1 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_theta_1);
+
+  p = rcp(new Teuchos::ParameterList("Theta 2"));
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  param_name = "Theta 2";
+  p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", 0.);
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_theta_2;
+  ptr_theta_2 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ptr_theta_2);
+
+
 
   if(params->isSublist("Random Parameters")){
     auto rparams = params->sublist("Random Parameters");

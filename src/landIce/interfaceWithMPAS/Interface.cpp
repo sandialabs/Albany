@@ -68,6 +68,10 @@ double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_s
     MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
 bool MPAS_useGLP(true);
 
+bool depthIntegratedModel(true);
+
+std::vector<int> dirichletNodesIdsSepthInt;
+
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 
 bool keptMesh =false;
@@ -125,8 +129,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   *MPAS_dt =  deltat;
 
   Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->layered_mesh_numbering->layers_ratio;
-  for (int i = 0; i < nLayers; i++) {
-    layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+  if(depthIntegratedModel)
+    layerThicknessRatio[0] = 1.0;
+  else {
+    for (int i = 0; i < nLayers; i++)
+      layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
   }
 
   using VectorFieldType = Albany::AbstractSTKFieldContainer::VectorFieldType;
@@ -161,7 +168,17 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / vertexLayerShift);
     int il = (ordering == 0) * (j / lVertexColumnShift)
             + (ordering == 1) * (j % vertexLayerShift);
-    int gId = il * vertexColumnShift + vertexLayerShift * (indexToVertexID[ib]-1) + 1;
+    
+    int gId(0);
+    if(depthIntegratedModel) {
+       if ((il != 0) && (il != nLayers)) continue;
+       int layer = il/nLayers; // 0 or 1
+       int depthVertexLayerShift = (ordering == 0) ? 1 : 2;
+       gId = layer * vertexColumnShift + depthVertexLayerShift * (indexToVertexID[ib]-1) + 1;
+    } else {
+      gId = il * vertexColumnShift + vertexLayerShift * (indexToVertexID[ib]-1) + 1;
+    }
+    
     stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gId);
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
     coord[2] = elevationData[ib] + (levelsNormalizedThickness[il]-1.0) * thicknessData[ib];
@@ -210,9 +227,19 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j % (elemLayerShift));
     int gId = il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
     int lId = il * lElemColumnShift + elemLayerShift * ib;
-    stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId);
-    double* temperature = stk::mesh::field_data(*temperature_field, elem);
-    temperature[0] = temperatureDataOnPrisms[lId];
+    if(depthIntegratedModel) {
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
+      double* temperature = stk::mesh::field_data(*temperature_field, elem);
+      double tempFraction = temperatureDataOnPrisms[lId]*(levelsNormalizedThickness[il+1]-levelsNormalizedThickness[il]);
+      if(il ==0)
+        temperature[0] = tempFraction;
+      else
+        temperature[0] += tempFraction;        
+    } else {
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId);
+      double* temperature = stk::mesh::field_data(*temperature_field, elem);
+      temperature[0] = temperatureDataOnPrisms[lId];
+    }
   }
 
   meshStruct->setHasRestartSolution(true);//!first_time_step);
@@ -271,26 +298,61 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
 
   auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
-  for (int j = 0; j < numVertices3D; ++j) {
-    int ib = (ordering == 0) * (j % lVertexColumnShift)
-            + (ordering == 1) * (j / vertexLayerShift);
-    int il = (ordering == 0) * (j / lVertexColumnShift)
-            + (ordering == 1) * (j % vertexLayerShift);
-    int gId = il * vertexColumnShift + vertexLayerShift * (indexToVertexID[ib]-1) + 1;
 
-    int lId0, lId1;
 
-    if (interleavedOrdering == Albany::DiscType::Interleaved) {
-      lId0 = indexer->getLocalElement(neq * (gId-1));
-      lId1 = lId0 + 1;
-    } else {
-      lId0 = indexer->getLocalElement(gId-1);
-      lId1 = lId0 + numVertices3D;
+  if(depthIntegratedModel) {
+    for(int ib = 0; ib < indexToVertexID.size(); ++ib) {
+      int depthVertexLayerShift = (ordering == 0) ? 1 : 2;
+      int gIdBed =  vertexLayerShift * (indexToVertexID[ib]-1) + 1;
+      int gIdTop = gIdBed + vertexColumnShift;
+      int lIdBed0, lIdBed1, lIdTop0, lIdTop1;
+      if (interleavedOrdering == Albany::DiscType::Interleaved) {
+        lIdBed0 = indexer->getLocalElement(neq * (gIdBed-1));
+        lIdBed1 = lIdBed0 + 1;
+        lIdTop0 = indexer->getLocalElement(neq * (gIdTop-1));
+        lIdTop1 = lIdTop0 + 1;
+      } else {
+        lIdBed0 = indexer->getLocalElement(gIdBed-1);
+        lIdBed1 = lIdBed0 + 2*indexToVertexID.size();
+        lIdTop0 = indexer->getLocalElement(gIdTop-1);
+        lIdTop1 = lIdTop0 + 2*indexToVertexID.size();
+      }
+      double solBed0 = solution_constView[lIdBed0];
+      double solBed1 = solution_constView[lIdBed1];
+      double solTop0 = solution_constView[lIdTop0];
+      double solTop1 = solution_constView[lIdTop1];
+
+      for(int il=0; il<nLayers+1; ++il) {
+        int j = il * lVertexColumnShift + vertexLayerShift * ib;
+        double fz = 1.0 - std::pow(1.0 - levelsNormalizedThickness[il],4);
+        velocityOnVertices[j] = solBed0 + fz * (solTop0-solBed0);
+        velocityOnVertices[j + numVertices3D]  = solBed1 + fz * (solTop1-solBed1);
+      }
     }
-    velocityOnVertices[j] = solution_constView[lId0];
-    velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
+  } else {
+    for (int j = 0; j < numVertices3D; ++j) {
+      int ib = (ordering == 0) * (j % lVertexColumnShift)
+              + (ordering == 1) * (j / vertexLayerShift);
+      int il = (ordering == 0) * (j / lVertexColumnShift)
+              + (ordering == 1) * (j % vertexLayerShift);
+      int gId = il * vertexColumnShift + vertexLayerShift * (indexToVertexID[ib]-1) + 1;
 
-   if (Teuchos::nonnull(ss_ms) && !betaData.empty() && (betaField!=nullptr) && (il == 0)) {
+      int lId0, lId1;
+
+      if (interleavedOrdering == Albany::DiscType::Interleaved) {
+        lId0 = indexer->getLocalElement(neq * (gId-1));
+        lId1 = lId0 + 1;
+      } else {
+        lId0 = indexer->getLocalElement(gId-1);
+        lId1 = lId0 + numVertices3D;
+      }
+      velocityOnVertices[j] = solution_constView[lId0];
+      velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
+    }
+  }
+
+  if (Teuchos::nonnull(ss_ms) && !betaData.empty() && (betaField!=nullptr)) {
+    for(int ib = 0; ib < indexToVertexID.size(); ++ib) {
       stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
       const double* betaVal = stk::mesh::field_data(*betaField,node);
       betaData[ib] = betaVal[0];
@@ -306,7 +368,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
             + (ordering == 1) * (j / (elemLayerShift));
     int il = (ordering == 0) * (j / (lElemColumnShift))
             + (ordering == 1) * (j % (elemLayerShift));
-    int gId = il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
+    int gId = depthIntegratedModel ? indexToTriangleID[ib] : il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
     int lId = il * lElemColumnShift + elemLayerShift * ib;
 
     double bf = 0;
@@ -477,6 +539,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   physParamList.set<bool>("Use GLP", physParamList.get("Use GLP", MPAS_useGLP)); //use GLP (Grounding line parametrization) unless actively disabled
 
   paramList->sublist("Problem").set("Name", paramList->sublist("Problem").get("Name", "LandIce Stokes First Order 3D"));
+  paramList->sublist("Problem").set("Depth Integrated Model", paramList->sublist("Problem").get("Depth Integrated Model", false));
 
   MPAS_dt = Teuchos::rcp(new double(0.0));
   if (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") {
@@ -670,13 +733,37 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
   //Get number of params in problem - needed for MeshStruct constructor
   int num_params = Albany::CalculateNumberParams(Teuchos::sublist(paramList, "Problem", true));
-  meshStruct = Teuchos::rcp(
-      new Albany::MpasSTKMeshStruct(discretizationList, mpiComm, indexToVertexID,
-          vertexProcIDs, verticesCoords, globalVerticesStride,
-          verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
-          verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
-          dirichletNodesIds, iceMarginEdgesIds,
-          nLayers, num_params, Ordering));
+
+  
+  if(depthIntegratedModel && nLayers != 1) {
+    int numLayers = depthIntegratedModel ? 1 : nLayers;
+    dirichletNodesIdsSepthInt.reserve(2*dirichletNodesIds.size()/nLayers);
+    int numVertices = indexToVertexID.size();
+    for(int i=0; i < static_cast<int>(dirichletNodesIds.size()); ++i) {
+      int dnode = dirichletNodesIds[i];
+      int ib = (Ordering == 0)*(dnode%numVertices) + (Ordering == 1)*(dnode/(nLayers+1));
+      int il = (Ordering == 0)*(dnode/numVertices) + (Ordering == 1)*(dnode%(nLayers+1));
+      if((il == 0) || (il == nLayers)) {
+        int layer = il/nLayers;
+        dirichletNodesIdsSepthInt.push_back((Ordering == 0)*(ib+layer*numVertices) + (Ordering == 1)*(layer + ib*(numLayers+1)));
+      }
+    }
+    meshStruct = Teuchos::rcp(
+    new Albany::MpasSTKMeshStruct(discretizationList, mpiComm, indexToVertexID,
+        vertexProcIDs, verticesCoords, globalVerticesStride,
+        verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
+        verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
+        dirichletNodesIdsSepthInt, iceMarginEdgesIds,
+        numLayers, num_params, Ordering));
+  } else {
+    meshStruct = Teuchos::rcp(
+        new Albany::MpasSTKMeshStruct(discretizationList, mpiComm, indexToVertexID,
+            vertexProcIDs, verticesCoords, globalVerticesStride,
+            verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
+            verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
+            dirichletNodesIds, iceMarginEdgesIds,
+            nLayers, num_params, Ordering));
+  }
 
   albanyApp->createMeshSpecs(meshStruct);
 

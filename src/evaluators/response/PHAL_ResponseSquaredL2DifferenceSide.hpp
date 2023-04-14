@@ -51,7 +51,7 @@ private:
 
   PHX::MDField<const SourceScalarT> sourceField;
   PHX::MDField<const TargetScalarT> targetField;
-  PHX::MDField<const RealType> rootMeanSquareField;
+  PHX::MDField<const MeshScalarT> rootMeanSquareField;
 
   PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>   metric;
   PHX::MDField<const MeshScalarT,Side,QuadPoint>   w_measure;
@@ -73,7 +73,7 @@ template<typename EvalT, typename Traits>
 using ResponseSquaredL2DifferenceSideSST_TPST = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>;
 
 template<typename EvalT, typename Traits>
-using ResponseSquaredL2DifferenceSideSST_TRT = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::ScalarT,RealType>;
+using ResponseSquaredL2DifferenceSideSST_TRT = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::ScalarT,typename EvalT::MeshScalarT>;
 
 //-- SourceScalarT = ParamScalarT
 template<typename EvalT, typename Traits>
@@ -86,7 +86,7 @@ template<typename EvalT, typename Traits>
 using ResponseSquaredL2DifferenceSideSPST_TPST = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>;
 
 template<typename EvalT, typename Traits>
-using ResponseSquaredL2DifferenceSideSPST_TRT = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::ParamScalarT,RealType>;
+using ResponseSquaredL2DifferenceSideSPST_TRT = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::ParamScalarT,typename EvalT::MeshScalarT>;
 
 //-- SourceScalarT = MeshScalarT
 template<typename EvalT, typename Traits>
@@ -99,7 +99,7 @@ template<typename EvalT, typename Traits>
 using ResponseSquaredL2DifferenceSideSMST_TPST = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::MeshScalarT,typename EvalT::ParamScalarT>;
 
 template<typename EvalT, typename Traits>
-using ResponseSquaredL2DifferenceSideSMST_TRT = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::MeshScalarT,RealType>;
+using ResponseSquaredL2DifferenceSideSMST_TRT = ResponseSquaredL2DifferenceSideBase<EvalT,Traits,typename EvalT::MeshScalarT,typename EvalT::MeshScalarT>;
 
 } // Namespace PHAL
 

@@ -117,7 +117,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   } else {
     layout = dl->qp_scalar;
 
-    BF        = PHX::MDField<const RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
+    BF        = PHX::MDField<const MeshScalarT>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
     w_measure = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
 
     this->addDependentField(BF);

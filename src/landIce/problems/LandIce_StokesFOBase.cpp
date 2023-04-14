@@ -118,9 +118,14 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
-
   Intrepid2::DefaultCubatureFactory cubFactory;
-  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
+  if(cellType->getKey() == shards::Wedge<6>::key) {
+    std::cout <<  "\nUsing tensor cubature\n" <<std::endl;
+    std::vector<int> degree(2); degree[0] = meshSpecs[0]->cubatureDegree;  degree[1] = std::max(meshSpecs[0]->cubatureDegree, this->depthIntegratedModel ? 6 : 4); 
+    cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, degree);
+  } else {
+    cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
+  }
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
   const int numCellSides    = cellType->getSideCount();
@@ -296,6 +301,7 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
   validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
   validPL->sublist("LandIce Rigid Body Modes For Preconditioner", false, "");
+  validPL->set<bool>("Depth Integrated Model", false, "");
   return validPL;
 }
 

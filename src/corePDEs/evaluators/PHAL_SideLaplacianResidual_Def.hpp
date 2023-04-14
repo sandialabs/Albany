@@ -33,7 +33,7 @@ SideLaplacianResidual<EvalT, Traits>::SideLaplacianResidual (const Teuchos::Para
 
     u          = PHX::MDField<ScalarT>(p.get<std::string> ("Solution QP Variable Name"), dl_side->qp_scalar);
     grad_u     = PHX::MDField<ScalarT>(p.get<std::string> ("Solution Gradient QP Variable Name"), dl_side->qp_gradient);
-    BF         = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl_side->node_qp_scalar);
+    BF         = PHX::MDField<MeshScalarT>(p.get<std::string> ("BF Variable Name"), dl_side->node_qp_scalar);
     GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Variable Name"), dl_side->node_qp_gradient);
     w_measure  = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Variable Name"), dl_side->qp_scalar);
     metric     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Metric Name"), dl_side->qp_tensor);
@@ -64,7 +64,7 @@ SideLaplacianResidual<EvalT, Traits>::SideLaplacianResidual (const Teuchos::Para
   {
     u          = PHX::MDField<ScalarT>(p.get<std::string> ("Solution QP Variable Name"), dl->qp_scalar);
     grad_u     = PHX::MDField<ScalarT>(p.get<std::string> ("Solution Gradient QP Variable Name"), dl->qp_gradient);
-    BF         = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+    BF         = PHX::MDField<MeshScalarT>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
     GradBF     = PHX::MDField<MeshScalarT>(p.get<std::string> ("Gradient BF Variable Name"), dl->node_qp_gradient);
     w_measure  = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Variable Name"), dl->qp_scalar);
 

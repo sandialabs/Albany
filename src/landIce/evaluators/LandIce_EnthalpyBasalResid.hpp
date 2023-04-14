@@ -43,7 +43,7 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<const RealType>         BF;          // []
+  PHX::MDField<const MeshScalarT>         BF;          // []
   PHX::MDField<const MeshScalarT>           w_measure;   // [km^2]
   // PHX::MDField<const RealType,Cell,Side,QuadPoint>              geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
   // PHX::MDField<const Type,Cell,Side,QuadPoint>                  beta; // [kPa m / yr]

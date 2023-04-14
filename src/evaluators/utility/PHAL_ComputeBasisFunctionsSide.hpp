@@ -71,7 +71,7 @@ private:
   PHX::MDField<MeshScalarT>                               metric;
   PHX::MDField<MeshScalarT>                               w_measure;
   PHX::MDField<MeshScalarT>                               inv_metric;
-  PHX::MDField<RealType>                                  BF;
+  PHX::MDField<MeshScalarT>                               BF;
   PHX::MDField<MeshScalarT>                               GradBF;
   PHX::MDField<MeshScalarT,Side,QuadPoint,Dim>            normals;
 

@@ -56,7 +56,7 @@ private:
   PHX::MDField<const MeshScalarT,Side,Node,Dim>       coords_qp;
   PHX::MDField<const ThicknessScalarT,Side,QuadPoint> thickness;
   PHX::MDField<const ThicknessScalarT,Side,QuadPoint> elevation;
-  PHX::MDField<const RealType,Side,Node,QuadPoint>    BF;
+  PHX::MDField<const MeshScalarT,Side,Node,QuadPoint> BF;
   PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim>  normals;
   PHX::MDField<const MeshScalarT,Side,QuadPoint>      w_measure;
 

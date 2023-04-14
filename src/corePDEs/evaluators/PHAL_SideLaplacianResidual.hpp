@@ -43,7 +43,7 @@ private:
   typedef typename EvalT::MeshScalarT                   MeshScalarT;
 
   // Input:
-  PHX::MDField<RealType>                                BF;
+  PHX::MDField<MeshScalarT>                             BF;
   PHX::MDField<MeshScalarT>                             GradBF;
   PHX::MDField<MeshScalarT>                             w_measure;
   PHX::MDField<MeshScalarT> metric; // Only used in 2D, so we know the layout (Cell,Side,QuadPoint,Dim,Dim)

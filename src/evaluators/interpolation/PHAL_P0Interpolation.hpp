@@ -75,7 +75,7 @@ private:
 
   // Input:
   PHX::MDField<const ScalarT>       field;
-  PHX::MDField<const RealType>      BF;
+  PHX::MDField<const MeshScalarT>   BF;
   PHX::MDField<const MeshScalarT>   w_measure;
 
   // Output:
