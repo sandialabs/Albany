@@ -75,7 +75,7 @@ ANONYMOUS:
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
                 AztecOO:
                   Forward Solve:
@@ -100,13 +100,15 @@ ANONYMOUS:
                       Verbosity: 33
               Preconditioner Type: Ifpack2
               Preconditioner Types:
+                MueLu:
+                  verbosity: none
                 Ifpack2:
-                  Overlap: 2
+                  Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings:
                     'fact: drop tolerance': 0.00000000000000000e+00
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
-                    'fact: level-of-fill': 1
+                    'fact: ilut level-of-fill': 2.00000000000000000e+00
+                    'fact: level-of-fill': 2
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
