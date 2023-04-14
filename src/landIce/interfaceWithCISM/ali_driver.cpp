@@ -16,6 +16,9 @@
 //computation of sensitivities and responses will be off in the case
 //we have an epetra build + reduced comm, as this was causing a hang.
 
+//uncomment to check comparison in CISM tests
+#define CISM_CHECK_COMPARISONS
+
 #include "ali_driver.H"
 #include "Albany_CismSTKMeshStruct.hpp"
 
