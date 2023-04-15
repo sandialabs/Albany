@@ -738,15 +738,15 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   
   if(depthIntegratedModel && nLayers != 1) {
     int numLayers = 1;
-    dirichletNodesIdsSepthInt.reserve(2*dirichletNodesIds.size()/nLayers);
+    dirichletNodesIdsSepthInt.reserve(2*dirichletNodesIds.size()/(nLayers+1));
     int numVertices = indexToVertexID.size();
     for(int i=0; i < static_cast<int>(dirichletNodesIds.size()); ++i) {
-      int dnode = dirichletNodesIds[i];
+      int dnode = dirichletNodesIds[i]-1;
       int ib = (Ordering == 0)*(dnode%numVertices) + (Ordering == 1)*(dnode/(nLayers+1));
       int il = (Ordering == 0)*(dnode/numVertices) + (Ordering == 1)*(dnode%(nLayers+1));
       if((il == 0) || (il == nLayers)) {
         int layer = il/nLayers;
-        dirichletNodesIdsSepthInt.push_back((Ordering == 0)*(ib+layer*numVertices) + (Ordering == 1)*(layer + ib*(numLayers+1)));
+        dirichletNodesIdsSepthInt.push_back((Ordering == 0)*(ib+layer*numVertices) + (Ordering == 1)*(layer + ib*(numLayers+1))+1);
       }
     }
     meshStruct = Teuchos::rcp(
