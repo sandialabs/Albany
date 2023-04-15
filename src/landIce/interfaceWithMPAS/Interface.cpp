@@ -303,7 +303,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   if(depthIntegratedModel) {
     for(int ib = 0; ib < indexToVertexID.size(); ++ib) {
       int depthVertexLayerShift = (ordering == 0) ? 1 : 2;
-      int gIdBed =  vertexLayerShift * (indexToVertexID[ib]-1) + 1;
+      int gIdBed =  depthVertexLayerShift * (indexToVertexID[ib]-1) + 1;
       int gIdTop = gIdBed + vertexColumnShift;
       int lIdBed0, lIdBed1, lIdTop0, lIdTop1;
       if (interleavedOrdering == Albany::DiscType::Interleaved) {
@@ -737,7 +737,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   
   if(depthIntegratedModel && nLayers != 1) {
-    int numLayers = depthIntegratedModel ? 1 : nLayers;
+    int numLayers = 1;
     dirichletNodesIdsSepthInt.reserve(2*dirichletNodesIds.size()/nLayers);
     int numVertices = indexToVertexID.size();
     for(int i=0; i < static_cast<int>(dirichletNodesIds.size()); ++i) {
