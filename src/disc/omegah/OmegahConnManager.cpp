@@ -69,41 +69,56 @@ void OmegahConnManager::getDofsPerEnt(const panzer::FieldPattern & fp, LO dofsPe
   TEUCHOS_ASSERT(dofsPerEnt[0] || dofsPerEnt[1] || dofsPerEnt[2] || dofsPerEnt[3]);
 }
 
-void OmegahConnManager::getConnectivityOffsets(LO fieldDim, const Omega_h::Adj elmToDim[3],
+//FIXME need to count dofs for each element-to-[vtx|edge|face] adjacency
+//FIXME Why not number the dof globally as defined by each mesh entity instead
+//FIXME   of going through adjacencies????
+LO OmegahConnManager::getConnectivityOffsets(const Omega_h::Adj elmToDim[3],
     const LO dofsPerEnt[4], GO connectivityOffsets[4], GO connectivityGlobalOffsets[4])
 {
-  // compute offsets for each sub cell type
+  LO dofsPerDim[4];
+  //dofs associated with vtx|edge|face bounding each element
+  for(int dim=0; dim<mesh.dim(); dim++) {
+    const auto numDownAdj = elmToDim[dim].ab2b.size();
+    dofsPerDim[dim] = numDownAdj*dofsPerEnt[dim];
+  }
+  //dofs associated with the element
+  dofsPerDim[mesh.dim()] = dofsPerEnt[mesh.dim()]*mesh.nents(mesh.dim());
+  //if the mesh is 2d then set the dofs associated with regions to zero
+  if(mesh.dim() == 2)
+    dofsPerDim[3] = 0;
+
   connectivityOffsets[0] = 0;
   connectivityGlobalOffsets[0] = 0;
-  for(int dim=1; dim<fieldDim; dim++) {
-    const auto numDownAdj = elmToDim[dim-1].ab2b.size();
-    connectivityOffsets[dim] = connectivityOffsets[dim-1]+(numDownAdj*dofsPerEnt[dim-1]);
+  for(int dim=1; dim<4; dim++) {
+    connectivityOffsets[dim] = connectivityOffsets[dim-1]+dofsPerDim[dim-1];
   }
-  // compute totalsize
-  Omega_h::GO totSize = 0;
-  for(int dim=0; dim<fieldDim; dim++) {
-    totSize += connectivityOffsets[dim];
+  // compute total number of dofs
+  Omega_h::LO totDofs = 0;
+  for(int dim=0; dim<=mesh.dim(); dim++) {
+    totDofs += dofsPerDim[dim];
   }
   // get the starting id on this rank so that the dofs on this rank will have
   // globally unique ids
   auto worldComm = mesh.library()->world();
-  const auto globalOffset = worldComm->exscan(totSize, OMEGA_H_SUM);
-  fprintf(stderr, "\n%d totSize %d globalOffset %d\n", worldComm->rank(), totSize, globalOffset);
+  const auto globalOffset = worldComm->exscan(totDofs, OMEGA_H_SUM);
+  fprintf(stderr, "\n%d totDofs %d globalOffset %d\n", worldComm->rank(), totDofs, globalOffset);
   // create the global offsets for each group of local dof ids
   // associated with vtx, edge, face, and elements
-  for(int dim=0; dim<fieldDim; dim++) {
-    connectivityGlobalOffsets[dim] = globalOffset + connectivityOffsets[dim];
+  for(int dim=0; dim<4; dim++) {
+    if(dofsPerEnt[dim]>0)
+      connectivityGlobalOffsets[dim] = globalOffset + connectivityOffsets[dim];
   }
   for(int rank=0; rank<worldComm->size(); rank++) {
     if(worldComm->rank() == rank) {
       fprintf(stderr, "\n");
-      for(int dim=0; dim<fieldDim; dim++) {
+      for(int dim=0; dim<4; dim++) {
         fprintf(stderr, "%d dim co cgo %d %d %d\n",
             rank, dim, connectivityOffsets[dim], connectivityGlobalOffsets[dim]);
       }
     }
     worldComm->barrier();
   }
+  return totDofs;
 }
 
 void OmegahConnManager::appendConnectivity(const Omega_h::Adj& elmToDim, LO dofsPerEnt,
@@ -116,13 +131,16 @@ void OmegahConnManager::appendConnectivity(const Omega_h::Adj& elmToDim, LO dofs
   const auto numDownAdjEnts= Omega_h::element_degree(mesh.family(), mesh.dim(), dim);
   fprintf(stderr, "\n%d dim startIdx globalStartIdx ab2b.size() numDown %d %d %d %d %d\n",
                      rank, dim, startIdx, globalStartIdx, ab2b.size(), numDownAdjEnts);
+  auto downEntGlobalIds = mesh.globals(dim);
+  fprintf(stderr, "\nrank 0.3 elm downEntIdx idx id\n");
   auto append = OMEGA_H_LAMBDA(LO elm) {
     for(int i=0; i<numDownAdjEnts; i++) {
       const auto downEntIdx = elm*numDownAdjEnts+i;
       const auto downEntId = ab2b[downEntIdx];
+      const auto downEntGlobalId = downEntGlobalIds[downEntId];
       for(int dof=0; dof<dofsPerEnt; dof++) {
         const auto idx = startIdx + (downEntIdx*dofsPerEnt) + dof;
-        const GO id = globalStartIdx + (dofsPerEnt * downEntId) + dof;
+        const GO id = globalStartIdx + (dofsPerEnt * downEntGlobalId) + dof;
         printf("%d 0.3 %d %d %d %d\n", rank, elm, downEntIdx, idx, id);
         elmDownAdj_d[idx] = id;
       }
@@ -164,29 +182,42 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   LO dofsPerEnt[4] = {0,0,0,0};
   getDofsPerEnt(fp, dofsPerEnt);
 
+  { //debug
+   std::stringstream ss;
+   ss << "dofsPerEnt: ";
+   for(int i=0; i<4; i++) ss << dofsPerEnt[i] << " ";
+   ss << "\n";
+   std::cout << ss.str();
+  }
+
   // loop over elements and build global connectivity
   const int numElems = mesh.nelems();
   const auto fieldDim = fp.getCellTopology().getDimension();
 
   // get element-to-[vertex|edge|face] adjacencies
   Omega_h::Adj elmToDim[3];
-  for(int dim = 0; dim < fieldDim; dim++) {
-    elmToDim[dim] = mesh.ask_down(mesh.dim(),dim);
+  for(int dim = 0; dim < mesh.dim(); dim++) {
+    if(dofsPerEnt[dim] > 0) {
+      elmToDim[dim] = mesh.ask_down(mesh.dim(),dim);
+    }
   }
 
   GO connectivityOffsets[4] = {0,0,0,0};
   GO connectivityGlobalOffsets[4] = {0,0,0,0};
-  getConnectivityOffsets(fieldDim, elmToDim, dofsPerEnt, connectivityOffsets, connectivityGlobalOffsets);
-  GO totSize = 0;
-  for(int dim = 0; dim < fieldDim; dim++)
-    totSize+=connectivityOffsets[dim];
+  LO totDofs = getConnectivityOffsets(elmToDim, dofsPerEnt, connectivityOffsets, connectivityGlobalOffsets);
 
+  auto world = mesh.library()->world();
+  auto rank = world->rank();
   // append the ajacency arrays to each other
-  Omega_h::Write<Omega_h::GO> elmDownAdj_d(totSize);
-  for(int dim = 0; dim < fieldDim; dim++)
-    appendConnectivity(elmToDim[dim], dofsPerEnt[dim],
-                       connectivityOffsets[dim], connectivityGlobalOffsets[dim],
-                       dim, elmDownAdj_d);
+  fprintf(stderr, "%d totDofs %d\n", rank, totDofs);
+  Omega_h::Write<Omega_h::GO> elmDownAdj_d(totDofs);
+  for(int dim = 0; dim < 4; dim++) {
+    if(dofsPerEnt[dim] > 0) {
+      appendConnectivity(elmToDim[dim], dofsPerEnt[dim],
+          connectivityOffsets[dim], connectivityGlobalOffsets[dim],
+          dim, elmDownAdj_d);
+    }
+  }
 
   // transfer to host
   m_connectivity = Omega_h::HostRead(Omega_h::read(elmDownAdj_d));
