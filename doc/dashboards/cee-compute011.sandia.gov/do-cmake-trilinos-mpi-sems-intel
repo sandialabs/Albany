@@ -31,10 +31,6 @@ cmake -GNinja \
       -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_ROOT}/include \
       -D TPL_ENABLE_Boost=ON \
       -D Boost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
-      -D Boost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
-      -D TPL_ENABLE_BoostLib=ON \
-      -D BoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
-      -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
       -D TPL_ENABLE_Netcdf=ON \
       -D TPL_Netcdf_PARALLEL=ON \
       -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_ROOT}/include \
@@ -62,7 +58,6 @@ cmake -GNinja \
       -D Kokkos_ENABLE_PTHREAD=OFF \
       -D Kokkos_ENABLE_TESTS=OFF \
       -D Amesos2_ENABLE_KLU2=ON \
-      -D EpetraExt_USING_HDF5=OFF \
       -D Intrepid_ENABLE_TESTS=OFF \
       -D Intrepid2_ENABLE_TESTS=OFF \
       -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
