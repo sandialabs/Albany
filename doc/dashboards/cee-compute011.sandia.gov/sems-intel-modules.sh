@@ -8,8 +8,7 @@ module load sems-intel/2021.3
 module load sems-intel-mkl/2020.4.304
 export LIBRARY_PATH=${INTEL_MKL_ROOT}/mkl/lib/intel64:${LIBRARY_PATH} # mkl module does not set the correct path
 export LD_LIBRARY_PATH=${INTEL_MKL_ROOT}/mkl/lib/intel64:${LD_LIBRARY_PATH} # mkl module does not set the correct path
-#module load sems-boost/1.70.0
-module load cde/v3/boost/1.79.0-intel-2021.1.2-openmpi-4.1.2 
+module load sems-boost/1.70.0
 module load sems-superlu/5.3.0
 module load sems-zlib/1.2.11
 module load sems-openmpi/4.1.4
