@@ -231,7 +231,8 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    enableIfpack2(linearSolverBuilder);
+    if (stratList->get<std::string>("Preconditioner Type", "None") == "Ifpack2")
+      enableIfpack2(linearSolverBuilder);
     enableMueLu(linearSolverBuilder);
     enableFROSch(linearSolverBuilder);
 #ifdef ALBANY_TEKO
