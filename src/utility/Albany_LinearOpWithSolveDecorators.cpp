@@ -44,12 +44,6 @@ namespace Albany
 #ifdef ALBANY_MUELU
     Stratimikos::enableMueLu<double, LO, Tpetra_GO, KokkosNode>(strat);
 #endif
-#ifdef ALBANY_IFPACK2
-    strat.setPreconditioningStrategyFactory(
-        Teuchos::abstractFactoryStd<Thyra::PreconditionerFactoryBase<ST>,
-                                    Thyra::Ifpack2PreconditionerFactory<Tpetra_CrsMatrix>>(),
-        "Ifpack2", true);
-#endif
     strat.setParameterList(solverParamList);
     auto lows_factory = strat.createLinearSolveStrategy(solverType);
     solver_ = lows_factory->createOp();
