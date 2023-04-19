@@ -48,17 +48,6 @@
 namespace {
 
 void
-enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
-{
-#ifdef ALBANY_IFPACK2
-  typedef Thyra::PreconditionerFactoryBase<ST>                  Base;
-  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra_CrsMatrix> Impl;
-  linearSolverBuilder.setPreconditioningStrategyFactory(
-      Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-#endif
-}
-
-void
 enableMueLu(
     Stratimikos::DefaultLinearSolverBuilder&    linearSolverBuilder)
 {
@@ -231,8 +220,6 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    if (stratList->get<std::string>("Preconditioner Type", "None") == "Ifpack2")
-      enableIfpack2(linearSolverBuilder);
     enableMueLu(linearSolverBuilder);
     enableFROSch(linearSolverBuilder);
 #ifdef ALBANY_TEKO
