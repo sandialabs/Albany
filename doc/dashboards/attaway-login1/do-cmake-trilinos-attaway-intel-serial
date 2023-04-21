@@ -13,22 +13,19 @@ cmake -GNinja \
       -D CMAKE_CXX_COMPILER=mpicxx \
       -D CMAKE_C_COMPILER=mpicc \
       -D CMAKE_Fortran_COMPILER=mpif90 \
+      -D CMAKE_C_FLAGS:STRING="-mkl" \
+      -D CMAKE_CXX_FLAGS:STRING="-mkl" \
+      -D CMAKE_Fortran_FLAGS:STRING="-mkl" \
+      -D CMAKE_EXE_LINKER_FLAGS:STRING="-mkl" \
       -D TPL_ENABLE_MPI=ON \
       -D MPI_BASE_DIR:PATH=${OPENMPI_ROOT} \
       -D TPL_ENABLE_BLAS=ON \
-      -D BLAS_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
-      -D BLAS_LIBRARY_NAMES:STRING="mkl_rt" \
+      -D TPL_BLAS_LIBRARIES:PATH=${MKLROOT}/lib/intel64/libmkl_core.a \
       -D TPL_ENABLE_LAPACK=ON \
-      -D LAPACK_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
-      -D LAPACK_LIBRARY_NAMES:STRING="mkl_rt" \
-      -D TPL_ENABLE_MKL=ON \
-      -D MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
-      -D MKL_LIBRARY_NAMES:STRING="mkl_rt" \
-      -D MKL_INCLUDE_DIRS:FILEPATH="${MKLROOT}/include" \
+      -D TPL_LAPACK_LIBRARIES:PATH=${MKLROOT}/lib/intel64/libmkl_core.a \
       -D TPL_ENABLE_PARDISO_MKL:BOOL=ON \
-      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
-      -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
-      -D PARDISO_MKL_INCLUDE_DIRS:FILEPATH="${MKLROOT}/include" \
+      -D TPL_PARDISO_MKL_LIBRARIES:PATH=${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
+      -D PARDISO_MKL_INCLUDE_DIRS:PATH=${MKLROOT}/include \
       -D TPL_ENABLE_SuperLU=ON \
       -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu_4.3.a \
       -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_ROOT}/include \
@@ -118,5 +115,4 @@ cmake -GNinja \
       -D Trilinos_ENABLE_PanzerDofMgr=ON \
       -D Trilinos_ENABLE_ShyLU_DDFROSch=ON \
       -D Trilinos_ENABLE_PanzerExprEval=ON \
-      -D CMAKE_CXX_STANDARD=17 \
 ..
