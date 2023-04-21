@@ -69,7 +69,7 @@ void OmegahConnManager::getDofsPerEnt(const panzer::FieldPattern & fp, LO dofsPe
   TEUCHOS_ASSERT(dofsPerEnt[0] || dofsPerEnt[1] || dofsPerEnt[2] || dofsPerEnt[3]);
 }
 
-Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt) {
+Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt, const GO startingOffset) {
   if(!dofsPerEnt)
     return Omega_h::GOs();
   const int numDofs = mesh.nents(entityDim)*dofsPerEnt;
@@ -77,7 +77,7 @@ Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim
   const auto offset = worldComm->exscan(numDofs, OMEGA_H_SUM);
   Omega_h::Write<Omega_h::GO> dofNum(numDofs);
   auto setNumber = OMEGA_H_LAMBDA(int i) {
-    dofNum[i] = offset+i;
+    dofNum[i] = startingOffset+offset+i;
   };
   const std::string kernelName = "setGlobalDofId_entityDim" + std::to_string(entityDim);
   Omega_h::parallel_for(numDofs, setNumber, kernelName.c_str());
@@ -86,10 +86,10 @@ Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim
 
 std::array<Omega_h::GOs,4>
 OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
-  return {createGlobalEntDofNumbering(mesh, 0, dofsPerEnt[0]),
-          createGlobalEntDofNumbering(mesh, 1, dofsPerEnt[1]),
-          createGlobalEntDofNumbering(mesh, 2, dofsPerEnt[2]),
-          createGlobalEntDofNumbering(mesh, 3, dofsPerEnt[3])};
+  return {createGlobalEntDofNumbering(mesh, 0, dofsPerEnt[0], 0),
+          createGlobalEntDofNumbering(mesh, 1, dofsPerEnt[1], 0), //FIXME get vtx offset
+          createGlobalEntDofNumbering(mesh, 2, dofsPerEnt[2], 0), //FIXME get vtx+edge offset
+          createGlobalEntDofNumbering(mesh, 3, dofsPerEnt[3], 0)};//FIXME get vtx+edge+face offset
 }
 
 //FIXME need to count dofs for each element-to-[vtx|edge|face] adjacency
