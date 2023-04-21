@@ -12,7 +12,6 @@
 #include <Omega_h_element.hpp> //topological_singular_name
 #include <Omega_h_for.hpp> //parallel_for
 #include <Omega_h_file.hpp> //write_array
-#include <Omega_h_scan.hpp> //transform_inclusive_scan
 
 #include <fstream>
 
