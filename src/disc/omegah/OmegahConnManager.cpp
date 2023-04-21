@@ -12,6 +12,7 @@
 #include <Omega_h_element.hpp> //topological_singular_name
 #include <Omega_h_for.hpp> //parallel_for
 #include <Omega_h_file.hpp> //write_array
+#include <Omega_h_scan.hpp> //transform_inclusive_scan
 
 #include <fstream>
 
@@ -67,6 +68,43 @@ void OmegahConnManager::getDofsPerEnt(const panzer::FieldPattern & fp, LO dofsPe
 
   // sanity check
   TEUCHOS_ASSERT(dofsPerEnt[0] || dofsPerEnt[1] || dofsPerEnt[2] || dofsPerEnt[3]);
+}
+
+Omega_h::GOs createGlobalVertexDofNumbering(Omega_h::Mesh& mesh, const LO dofsPerVtx) {
+  const auto globalVtxIds = mesh.globals(0);
+  const int numDofs = mesh.nents(0)*dofsPerVtx;
+  Omega_h::Write<Omega_h::GO> vtxNum(numDofs);
+  const auto first = Omega_h::IntIterator(0);
+  const auto last = Omega_h::IntIterator(numDofs);
+  const auto result = vtxNum.begin();
+  const auto op = Omega_h::plus<GO>();
+  auto transform = OMEGA_H_LAMBDA(int i)->Omega_h::GO {
+    const auto vtxIdx = i / dofsPerVtx;
+    const auto dofIdx = i % dofsPerVtx;
+    const auto vtxGlobalId = globalVtxIds[vtxIdx];
+    const auto dofGlobalId = vtxGlobalId+dofIdx;
+    printf("i vtxIdx dofIdx gid dofGid %d %d %d %d %d\n", i, vtxIdx, dofIdx, vtxGlobalId, dofGlobalId);
+    return dofGlobalId;
+  };
+  Omega_h::transform_inclusive_scan(first, last, result, op, std::move(transform));
+  return vtxNum;
+}
+Omega_h::GOs createGlobalEdgeDofNumbering(Omega_h::Mesh& mesh, const LO dofsPerEdge) {
+  return Omega_h::GOs(1);
+}
+Omega_h::GOs createGlobalFaceDofNumbering(Omega_h::Mesh& mesh, const LO dofsPerFace) {
+  return Omega_h::GOs(1);
+}
+Omega_h::GOs createGlobalRegionDofNumbering(Omega_h::Mesh& mesh, const LO dofsPerRegion) {
+  return Omega_h::GOs(1);
+}
+
+std::array<Omega_h::GOs,4>
+OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
+  return {createGlobalVertexDofNumbering(mesh, 2),
+          createGlobalEdgeDofNumbering(mesh, dofsPerEnt[1]),
+          createGlobalFaceDofNumbering(mesh, dofsPerEnt[2]),
+          createGlobalRegionDofNumbering(mesh, dofsPerEnt[3])};
 }
 
 //FIXME need to count dofs for each element-to-[vtx|edge|face] adjacency
@@ -189,6 +227,18 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
    ss << "\n";
    std::cout << ss.str();
   }
+
+  auto globalNumbering = createGlobalDofNumbering(dofsPerEnt);
+
+  { //debug
+    std::stringstream ss;
+    ss << "vtxGlobalNumbering: ";
+    auto vtxNum = globalNumbering[0];
+    for(int i=0; i<vtxNum.size(); i++) ss << vtxNum[i] << " ";
+    ss << "\n";
+    std::cout << ss.str();
+  }
+  return;
 
   // loop over elements and build global connectivity
   const int numElems = mesh.nelems();
