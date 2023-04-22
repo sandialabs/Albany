@@ -34,6 +34,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   l2ProjectedBoundaryEquation = params->isSublist("LandIce L2 Projected Boundary Laplacian");
 
   this->depthIntegratedModel = params->get("Depth Integrated Model",false);
+  this->depthIntegratedTestFunctions = params->get("Depth Integrated Test Functions",false);
 
 
   //Set # of PDEs per node based on the Equation Set.
@@ -249,7 +250,7 @@ void StokesFO::setupEvaluatorRequests () {
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
     ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
-  if (viscosity_use_corrected_temperature) {
+  if (viscosity_use_corrected_temperature && viscosity_use_p0_temperature) {
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
   }
 

@@ -203,6 +203,7 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Pressure Corrected Temperature"));
 
     //Input
+    p->set<bool>("Use P0 Temperature", viscosity_use_p0_temperature);
     p->set<std::string>("Surface Height Variable Name", surface_height_name);
     p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
     p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));

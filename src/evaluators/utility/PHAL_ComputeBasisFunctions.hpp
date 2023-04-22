@@ -55,7 +55,7 @@ private:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, MeshScalarT, RealType> > depthIntegratedBasis;
   //Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > depthIntegratedBasis;
-  bool depthIntegrated;
+  bool depthIntegrated, computeWeights;
 
   Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points_RT;
   Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points_RT;
@@ -67,6 +67,7 @@ private:
   Kokkos::DynRankView<RealType, PHX::Device> refWeights;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_inv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> c3_;
 
   PHX::MDField<const ScalarT> c0_, c1_, c2_;
 

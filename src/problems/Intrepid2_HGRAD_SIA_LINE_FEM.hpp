@@ -97,7 +97,8 @@ namespace Intrepid2 {
                    const inputViewType input,
                    const coeffType c1,
                    const coeffType c2,
-                   const coeffType c3);
+                   const coeffType c3,
+                   const coeffType c4);
 
       };
 
@@ -111,6 +112,7 @@ namespace Intrepid2 {
                  const coeffType c1,
                  const coeffType c2,
                  const coeffType c3,
+                 const coeffType c4,
                  const EOperator operatorType);
 
       /**
@@ -126,14 +128,16 @@ namespace Intrepid2 {
         const coeffType  _c1;
         const coeffType  _c2;
         const coeffType  _c3;
+        const coeffType  _c4;
 
         KOKKOS_INLINE_FUNCTION
         Functor(       outputValueViewType outputValues_,
                        inputPointViewType  inputPoints_,
                        coeffType c1_,
                        coeffType c2_,
-                       coeffType c3_)
-          : _outputValues(outputValues_), _inputPoints(inputPoints_), _c1(c1_), _c2(c2_), _c3(c3_) {}
+                       coeffType c3_,
+                       coeffType c4_)
+          : _outputValues(outputValues_), _inputPoints(inputPoints_), _c1(c1_), _c2(c2_), _c3(c3_), _c4(c4_) {}
 
         KOKKOS_INLINE_FUNCTION
         void operator()(const ordinal_type pt) const {
@@ -142,14 +146,14 @@ namespace Intrepid2 {
           case OPERATOR_VALUE : {
             auto       output = Kokkos::subview( _outputValues, Kokkos::ALL(), pt );
             const auto input  = Kokkos::subview( _inputPoints,                 pt, Kokkos::ALL() );
-            Serial<opType>::getValues( output, input, _c1, _c2, _c3);
+            Serial<opType>::getValues( output, input, _c1, _c2, _c3, _c4);
             break;
           }
           case OPERATOR_GRAD :
           case OPERATOR_MAX : {
             auto       output = Kokkos::subview( _outputValues, Kokkos::ALL(), pt, Kokkos::ALL() );
             const auto input  = Kokkos::subview( _inputPoints,                 pt, Kokkos::ALL() );
-            Serial<opType>::getValues( output, input, _c1, _c2, _c3 );
+            Serial<opType>::getValues( output, input, _c1, _c2, _c3, _c4 );
             break;
           }
           default: {
@@ -189,10 +193,10 @@ namespace Intrepid2 {
 
     using BasisBase::getValues;
 
-    outputValueType c1_, c2_, c3_;
+    outputValueType c1_, c2_, c3_, c4_;
 
-    void setCoefficients (const outputValueType c1, const outputValueType c2, const outputValueType c3) {
-      c1_=c1; c2_ = c2; c3_ = c3;
+    void setCoefficients (const outputValueType c1, const outputValueType c2, const outputValueType c3, const outputValueType c4) {
+      c1_=c1; c2_ = c2; c3_ = c3; c4_ = c4;
     }
 
     virtual
@@ -215,35 +219,10 @@ namespace Intrepid2 {
                                   c1_,
                                   c2_,
                                   c3_,
+                                  c4_,
                                   operatorType );
     }
 
-    /*
-    template<typename OutViewType, typename CoeffType>
-    void
-    getValues(       OutViewType outputValues,
-               const PointViewType  inputPoints,
-               const CoeffType& c1, 
-               const CoeffType& c2,
-               const CoeffType& c3,
-               const EOperator operatorType = OPERATOR_VALUE) const {
-#ifdef HAVE_INTREPID2_DEBUG
-      // Verify arguments
-      Intrepid2::getValues_HGRAD_Args(outputValues,
-                                      inputPoints,
-                                      operatorType,
-                                      this->getBaseCellTopology(),
-                                      this->getCardinality() );
-#endif
-      Impl::Basis_HGRAD_SIA_LINE_FEM::
-        getValues<DeviceType>( outputValues,
-                                  inputPoints,
-                                  c1,
-                                  c2,
-                                  c3,
-                                  operatorType );
-    }
-*/
     virtual
     void
     getDofCoords( ScalarViewType dofCoords ) const override {

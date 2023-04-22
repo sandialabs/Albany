@@ -14,15 +14,6 @@
 
 namespace PHAL {
 
-
-  template<class T>
-  constexpr typename std::enable_if< std::is_pod< T >::value,  T >::type
-  initC(int deriv_dimension, int index, double val) {return val;}
-
-  template<class T>
-  constexpr typename std::enable_if< !std::is_pod< T >::value, T >::type
-  initC(int deriv_dimension, int index, double val) {return T(deriv_dimension, index, val);}
-
   template<class T, class MDField>
   constexpr typename std::enable_if< std::is_pod< T >::value,  T >::type
   getADValue(const MDField& field) {return Albany::ADValue(field(0));}
@@ -31,6 +22,7 @@ namespace PHAL {
   constexpr typename std::enable_if< !std::is_pod< T >::value, T >::type
   getADValue(const MDField& field) {return field(0);}
 
+/*
     template<class T>
   constexpr typename std::enable_if< std::is_pod< T >::value,  double>::type
   getDevNorm2(const T& val) {return 0.0;}
@@ -38,6 +30,28 @@ namespace PHAL {
   template<class T>
   constexpr typename std::enable_if< !std::is_pod< T >::value, typename T::value_type >::type
   getDevNorm2(const T& val) {typename T::value_type dx, norm=0; for(int i=0; i<val.size(); ++i) {dx = val.dx(i); norm += std::pow(dx,2);} return norm;}
+*/
+
+// We need the following two functions because the parameters (inView) are ScalarT whereas the outViews are MeshScalarT.
+// When in Jacobian evaluation mode, MeshScalarT is RealType whereas ScalarT is a Fad type.
+
+  template<class outViewT, class inViewT>
+  constexpr typename std::enable_if< !std::is_pod< typename outViewT::value_type >::value, void >::type
+  initView(outViewT& outView, const inViewT inView, std::string outViewName, int extent0, int extent1, int extent2=0) {
+    if(extent2>0)
+      outView = Kokkos::createDynRankView(inView, outViewName, extent0, extent1, extent2);
+    else
+      outView = Kokkos::createDynRankView(inView, outViewName, extent0, extent1);
+  }
+
+  template<class outViewT, class inViewT>
+  constexpr typename std::enable_if< std::is_pod< typename outViewT::value_type >::value, void >::type
+  initView(outViewT& outView, const inViewT /*inView*/, std::string outViewName, int extent0, int extent1, int extent2=0) {
+    if(extent2>0)
+      outView = outViewT(outViewName, extent0, extent1, extent2);
+    else
+      outView = outViewT(outViewName, extent0, extent1);
+  }
 
 
 template<typename EvalT, typename Traits>
@@ -48,23 +62,28 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
-  weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
-  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
-  wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
-  GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
-  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
+  GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient)
 {
-  this->addDependentField(coordVec.fieldTag());
-  this->addEvaluatedField(weighted_measure);
-  this->addEvaluatedField(jacobian_det);
-  this->addEvaluatedField(BF);
-  this->addEvaluatedField(wBF);
-  this->addEvaluatedField(GradBF);
-  this->addEvaluatedField(wGradBF);
-
   depthIntegrated = (intrepidBasis->getBaseCellTopology().getKey() == shards::Wedge<6>::key) && 
     (p.isParameter("Depth-integrated Model") ? p.get<bool>("Depth-integrated Model") : false);
+
+  this->addDependentField(coordVec.fieldTag());
+  this->addEvaluatedField(BF);  
+  this->addEvaluatedField(GradBF);
+  
+  computeWeights = p.isParameter("Weights Name");
+
+  if(computeWeights) {
+    weighted_measure = decltype(weighted_measure)(p.get<std::string>  ("Weights Name"), dl->qp_scalar );
+    jacobian_det  = decltype(jacobian_det)(p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar );
+    wBF = decltype(wBF)(p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar);
+    wGradBF  = decltype(wGradBF)(p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient);
+    this->addEvaluatedField(weighted_measure);
+    this->addEvaluatedField(jacobian_det);
+    this->addEvaluatedField(wBF);
+    this->addEvaluatedField(wGradBF);
+  }
 
   if(depthIntegrated) {
     c0_ = decltype(c0_)(p.get<std::string>("C_0 Parameter Name"), dl->shared_param);
@@ -98,32 +117,28 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
-  this->utils.setFieldData(weighted_measure,fm);
-  this->utils.setFieldData(jacobian_det,fm);
   this->utils.setFieldData(BF,fm);
-  this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
+  if(computeWeights) {
+    this->utils.setFieldData(jacobian_det,fm);
+    this->utils.setFieldData(weighted_measure,fm);
+    this->utils.setFieldData(wBF,fm);
+    this->utils.setFieldData(wGradBF,fm);
+  }
 
-  jacobian = Kokkos::createDynRankView(jacobian_det.get_view(), "jacobian", numCells, numQPs, numDims, numDims);
-  jacobian_inv = Kokkos::createDynRankView(jacobian_det.get_view(), "jacobian_inv", numCells, numQPs, numDims, numDims);
+  jacobian = Kokkos::createDynRankView(coordVec.get_view(), "jacobian", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Kokkos::createDynRankView(coordVec.get_view(), "jacobian_inv", numCells, numQPs, numDims, numDims);
+  
 
   // Allocate Temporary Kokkos Views
-  
-  val_at_cub_points_RT = Kokkos::DynRankView<RealType, PHX::Device>("val_at_cub_points_RT", numNodes, numQPs);
-  grad_at_cub_points_RT = Kokkos::DynRankView<RealType, PHX::Device>("grad_at_cub_points_RT", numNodes, numQPs, numDims);
-  //val_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("val_at_cub_points", numNodes, numQPs);
-  //grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("grad_at_cub_points", numNodes, numQPs, numDims);
-  
-  if(std::is_pod<MeshScalarT>::value) {
-    val_at_cub_points = Kokkos::DynRankView<MeshScalarT, PHX::Device>("val_at_cub_points", numNodes, numQPs);
-    grad_at_cub_points = Kokkos::DynRankView<MeshScalarT, PHX::Device>("grad_at_cub_points", numNodes, numQPs, numDims);
+  if(depthIntegrated) {
+    initView(val_at_cub_points, c0_.get_view(), "val_at_cub_points", numNodes, numQPs);
+    initView(grad_at_cub_points, c0_.get_view(), "val_at_cub_points", numNodes, numQPs, numDims);
+    c3_ = Kokkos::createDynRankView(c0_.get_view(), "c3", c0_.extent(0));
   } else {
-    val_at_cub_points = Kokkos::DynRankView<MeshScalarT, PHX::Device>("val_at_cub_points", numNodes, numQPs, Kokkos::dimension_scalar(c0_.get_view()));
-    grad_at_cub_points = Kokkos::DynRankView<MeshScalarT, PHX::Device>("grad_at_cub_points", numNodes, numQPs, numDims, Kokkos::dimension_scalar(c0_.get_view()));
-  } 
-
-  
+    val_at_cub_points_RT = Kokkos::DynRankView<RealType, PHX::Device>("val_at_cub_points_RT", numNodes, numQPs);
+    grad_at_cub_points_RT = Kokkos::DynRankView<RealType, PHX::Device>("grad_at_cub_points_RT", numNodes, numQPs, numDims);
+  }
 
   refPoints = Kokkos::DynRankView<RealType, PHX::Device>("refPoints", numQPs, numDims);
   refWeights = Kokkos::DynRankView<RealType, PHX::Device>("refWeights", numQPs);
@@ -132,7 +147,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   cubature->getCubature(refPoints, refWeights);
   if(depthIntegrated) {
     depthIntegratedBasis = Teuchos::rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, MeshScalarT>, Intrepid2::Basis_HGRAD_SIA_LINE_FEM<PHX::Device, MeshScalarT> >(1));
-    //depthIntegratedBasis = Teuchos::rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, RealType>, Intrepid2::Basis_HGRAD_SIA_LINE_FEM<PHX::Device, RealType> >(1));
   } else {
     intrepidBasis->getValues(val_at_cub_points_RT, refPoints, Intrepid2::OPERATOR_VALUE);
     intrepidBasis->getValues(grad_at_cub_points_RT, refPoints, Intrepid2::OPERATOR_GRAD);
@@ -163,20 +177,15 @@ evaluateFields(typename Traits::EvalData workset)
 
   ICT::setJacobian(jacobian, refPoints, coordVec.get_view(), intrepidBasis);
   ICT::setJacobianInv (jacobian_inv, jacobian);
-  ICT::setJacobianDet (jacobian_det.get_view(), jacobian);
   
+
+  bool isJacobianDetNegative(false);
   if(Teuchos::nonnull(depthIntegratedBasis)) {
     auto wedgebasis = Teuchos::rcp_dynamic_cast<Intrepid2::Basis_Derived_HGRAD_WEDGE<Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, MeshScalarT>, Intrepid2::Basis_HGRAD_SIA_LINE_FEM<PHX::Device, MeshScalarT> > >(depthIntegratedBasis);
     auto lineBasisSIA = Teuchos::rcp_dynamic_cast<Intrepid2::Basis_HGRAD_SIA_LINE_FEM<PHX::Device, MeshScalarT>>(wedgebasis->getLineBasis());
-    //auto wedgebasis = Teuchos::rcp_dynamic_cast<Intrepid2::Basis_Derived_HGRAD_WEDGE<Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, RealType>, Intrepid2::Basis_HGRAD_SIA_LINE_FEM<PHX::Device, RealType> > >(depthIntegratedBasis);
-    //auto lineBasisSIA = Teuchos::rcp_dynamic_cast<Intrepid2::Basis_HGRAD_SIA_LINE_FEM<PHX::Device, RealType>>(wedgebasis->getLineBasis());
-    //std::cout << "coefficients: " << c0_ << " " << c1_ << " " << c2_ <<std::endl;
 
-    //if(!std::is_pod<MeshScalarT>::value) {
-    //  std::cout << "Scalar Here: " << Kokkos::dimension_scalar(c0_.get_view()) << " " << Kokkos::dimension_scalar(c1_.get_view()) << " " << Kokkos::dimension_scalar(c2_.get_view()) <<std::endl;
-    //} 
-
-    lineBasisSIA->setCoefficients(getADValue<MeshScalarT>(c0_),getADValue<MeshScalarT>(c1_),getADValue<MeshScalarT>(c2_));
+    c3_(0) = 1.0 - c0_(0) - c1_(0) - c2_(0);
+    lineBasisSIA->setCoefficients(getADValue<MeshScalarT>(c0_),getADValue<MeshScalarT>(c1_),getADValue<MeshScalarT>(c2_),getADValue<MeshScalarT>(c3_));
     //lineBasisSIA->setCoefficients(getADValue<RealType>(c0_),getADValue<RealType>(c1_),getADValue<RealType>(c2_));
     depthIntegratedBasis->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
     depthIntegratedBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
@@ -288,12 +297,16 @@ evaluateFields(typename Traits::EvalData workset)
     IFST::HGRADtransformGRAD (GradBF.get_view(), jacobian_inv, grad_at_cub_points_RT);
   }
 
+  if(computeWeights) {
+    ICT::setJacobianDet (jacobian_det.get_view(), jacobian);
+    isJacobianDetNegative = IFST::computeCellMeasure (weighted_measure.get_view(), jacobian_det.get_view(), refWeights);
+    IFST::multiplyMeasure    (wBF.get_view(), weighted_measure.get_view(), BF.get_view());  
+    IFST::multiplyMeasure    (wGradBF.get_view(), weighted_measure.get_view(), GradBF.get_view());
+  }
 
 
-  bool isJacobianDetNegative =
-    IFST::computeCellMeasure (weighted_measure.get_view(), jacobian_det.get_view(), refWeights);
-  IFST::multiplyMeasure    (wBF.get_view(), weighted_measure.get_view(), BF.get_view());  
-  IFST::multiplyMeasure    (wGradBF.get_view(), weighted_measure.get_view(), GradBF.get_view());
+
+
 
   (void)isJacobianDetNegative;
 }

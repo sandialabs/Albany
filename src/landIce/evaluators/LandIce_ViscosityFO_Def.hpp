@@ -57,6 +57,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+  useP0Temp = visc_list->isParameter("Use P0 Temperature") ? visc_list->get<bool>("Use P0 Temperature") : true;
 
   if(useStereographicMap)
     U = decltype(U)(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector);
@@ -118,7 +119,11 @@ ViscosityFO(const Teuchos::ParameterList& p,
 #endif
     } else if (flowRateType == "Temperature Based") {
       flowRate_type = TEMPERATUREBASED;
-      temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
+      if(useP0Temp) {
+        temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
+      } else {        
+        temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->qp_scalar);
+      }
       this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate computed using temperature field." << std::endl;
@@ -165,24 +170,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(Ugrad,fm);
-  this->utils.setFieldData(mu,fm);
-  if(useStiffeningFactor)
-    this->utils.setFieldData(stiffeningFactor,fm);
-  if (extractStrainRateSq)
-    this->utils.setFieldData(epsilonSq,fm);
-
-  if (visc_type == EXPTRIG) this->utils.setFieldData(coordVec,fm);
-  if (flowRate_type == TEMPERATUREBASED)
-    this->utils.setFieldData(temperature,fm);
-  if (flowRate_type == FROMFILE || flowRate_type == FROMCISM)
-    this->utils.setFieldData(flowFactorA,fm);
-  if (useStereographicMap) {
-    this->utils.setFieldData(U, fm);
-    this->utils.setFieldData(coordVec,fm);
-  }
-  this->utils.setFieldData(homotopyParam, fm);
-
+  flowFactorVec = Kokkos::createDynRankView(mu.get_view(), "flowFactorVec", numCells, numQPs);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
@@ -222,7 +210,15 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_EX
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFactorVec, const int& cell) const
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT& flowFactor, const int& cell) const {
+  for (int i=0; i<numQPs; i++)
+    flowFactorVec(cell,i) = flowFactor;
+  glenslaw (cell);
+}
+
+template<typename EvalT, typename Traits, typename VelT, typename TemprT>
+KOKKOS_INLINE_FUNCTION
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const int& cell) const
 {
   double power = 0.5*(1.0/n - 1.0);
   //ScalarT scale = std::pow(1.0-homotopyParam(0),8);
@@ -231,7 +227,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
     //set constant viscosity
     for (unsigned int qp=0; qp < numQPs; ++qp)
     {
-      mu(cell,qp) = flowFactorVec;
+      mu(cell,qp) = flowFactorVec(cell,qp);
     }
   } else {
     ScalarT ff = pow(10.0, -10.0*homotopyParam(0));
@@ -255,7 +251,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
           epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
           epsilonSq(cell,qp) = epsilonEqpSq;
           epsilonEqpSq += ff; //add regularization "fudge factor"
-          mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+          mu(cell,qp) = flowFactorVec(cell,qp)*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
         }
       } else {
         for (unsigned int qp=0; qp < numQPs; ++qp) {
@@ -273,7 +269,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
 
           epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
           epsilonEqpSq += ff; //add regularization "fudge factor"
-          mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+          mu(cell,qp) = flowFactorVec(cell,qp)*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
         }
       }
     } else {
@@ -290,7 +286,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
 
           epsilonSq(cell,qp) = epsilonEqpSq;
           epsilonEqpSq += ff; //add regularization "fudge factor"
-          mu(cell,qp) = flowFactorVec*(scale + (1.0-scale)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
+          mu(cell,qp) = flowFactorVec(cell,qp)*(scale + (1.0-scale)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
         }
       } else {
         for (unsigned int qp=0; qp < numQPs; ++qp) {
@@ -304,7 +300,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
             epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
 
           epsilonEqpSq += ff; //add regularization "fudge factor"
-          mu(cell,qp) = flowFactorVec*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+          mu(cell,qp) = flowFactorVec(cell,qp)*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
         }
       }
     }
@@ -317,28 +313,36 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_UNIFORM_Tag&, const int& cell) const{
-  TemprT flowFactorVec;
-  flowFactorVec = 1.0/2.0*pow(A, -1.0/n);
-  glenslaw(flowFactorVec,cell);
+  TemprT flowFactor= 1.0/2.0*pow(A, -1.0/n); 
+  glenslaw(flowFactor, cell);
 }
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag&, const int& cell) const
 {
-  ScalarT flowFactorVec;
-  flowFactorVec =1.0/2.0*pow(flowRate<TemprT>(temperature(cell)), -1.0/n);
-  //flowFactorVec =1.0/2.0*homotopyParam(0)*pow(flowRate<TemprT>(temperature(cell)), -1.0/n)+1./2.*(1.-homotopyParam(0))*pow(A, -1.0/n);
-  glenslaw(flowFactorVec,cell);
+  ScalarT flowFactor;
+  flowFactor =1.0/2.0*pow(flowRate<TemprT>(temperature(cell)), -1.0/n);
+  //flowFactor =1.0/2.0*homotopyParam(0)*pow(flowRate<TemprT>(temperature(cell)), -1.0/n)+1./2.*(1.-homotopyParam(0))*pow(A, -1.0/n); 
+  glenslaw(flowFactor,cell);
+}
+
+template<typename EvalT, typename Traits, typename VelT, typename TemprT>
+KOKKOS_INLINE_FUNCTION
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASEDQP_Tag&, const int& cell) const
+{
+  for(int qp=0; qp< numQPs; ++qp)
+    flowFactorVec(cell,qp) = 1.0/2.0*pow(flowRate<TemprT>(temperature(cell,qp)), -1.0/n);
+  glenslaw(cell);
 }
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_FROMFILE_Tag&, const int& cell) const
 {
-   TemprT flowFactorVec;
-   flowFactorVec =1.0/2.0*pow(flowFactorA(cell), -1.0/n);
-   glenslaw(flowFactorVec,cell);
+   TemprT flowFactor;
+   flowFactor =1.0/2.0*pow(flowFactorA(cell), -1.0/n);
+   glenslaw(flowFactor,cell);
 }
 
 //**********************************************************************
@@ -377,7 +381,10 @@ evaluateFields(typename Traits::EvalData workset)
           Kokkos::parallel_for(ViscosityFO_GLENSLAW_UNIFORM_Policy(0,workset.numCells),*this);
           break;
         case TEMPERATUREBASED:
-          Kokkos::parallel_for(ViscosityFO_GLENSLAW_TEMPERATUREBASED_Policy(0,workset.numCells),*this);
+          if(useP0Temp)
+            Kokkos::parallel_for(ViscosityFO_GLENSLAW_TEMPERATUREBASED_Policy(0,workset.numCells),*this);
+          else
+            Kokkos::parallel_for(ViscosityFO_GLENSLAW_TEMPERATUREBASED_QP_Policy(0,workset.numCells),*this);
           break;
         case FROMFILE:
         case FROMCISM:

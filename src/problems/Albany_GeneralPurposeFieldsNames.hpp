@@ -23,10 +23,10 @@ static const std::string metric_name           = "Metric";
 static const std::string metric_det_name       = "Metric Det";
 static const std::string metric_inv_name       = "Metric Inv";
 static const std::string normal_name           = "Normal";
-static const std::string bf_name_depthIntU      = "BF Depth Integrated U";
-static const std::string grad_bf_name_depthIntU          = "Grad BF Depth Integrated U";
-static const std::string weighted_bf_name_depthIntU      = "wBF Depth Integrated U";
-static const std::string weighted_grad_bf_name_depthIntU = "wGrad BF Depth Integrated U";
+static const std::string bf_name_depthIntU      = "BF Depth Integrated for Velocity";
+static const std::string grad_bf_name_depthIntU = "Grad BF Depth Integrated for Velocity";
+static const std::string bf_name_depthIntE      = "BF Depth Integrated for Enthalpy";
+static const std::string grad_bf_name_depthIntE = "Grad BF Depth Integrated for Enthalpy";
 
 } // namespace Albany
 

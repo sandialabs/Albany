@@ -54,6 +54,9 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   } else {
     viscosity_use_corrected_temperature = false;
   }
+
+  viscosity_use_p0_temperature = params->sublist("LandIce Viscosity").get("Use P0 Temperature",true);
+
   compute_dissipation = params->sublist("LandIce Viscosity").get("Extract Strain Rate Sq", false);
 
   if (!physics_list.isParameter("Atmospheric Pressure Melting Temperature")) {
@@ -302,6 +305,7 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
   validPL->sublist("LandIce Rigid Body Modes For Preconditioner", false, "");
   validPL->set<bool>("Depth Integrated Model", false, "");
+  validPL->set<bool>("Depth Integrated Test Functions", false, "");
   return validPL;
 }
 
@@ -380,6 +384,8 @@ void StokesFOBase::parseInputFields ()
       loc = FL::Node;
     } else if (fieldType.find("Elem")!=std::string::npos) {
       loc = FL::Cell;
+    } else if (fieldType.find("QuadPoint")!=std::string::npos) {
+      loc = FL::QuadPoint;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Error! Failed to deduce location for field '" + fieldName + "' from type '" + fieldType + "'.\n");
@@ -453,6 +459,8 @@ void StokesFOBase::parseInputFields ()
         loc = FL::Node;
       } else if (fieldType.find("Elem")!=std::string::npos) {
         loc = FL::Cell;
+      } else if (fieldType.find("QuadPoint")!=std::string::npos) {
+        loc = FL::QuadPoint;
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Error! Failed to deduce location for field '" + fieldName + "' from type '" + fieldType + "'.\n");
@@ -522,7 +530,7 @@ void StokesFOBase::setupEvaluatorRequests ()
   if (is_input_field[temperature_name]) {
     build_interp_ev[temperature_name][IReq::CELL_VAL] = true;
   }
-  if (is_input_field[stiffening_factor_name]) {
+  if (is_input_field[stiffening_factor_name]) { 
     build_interp_ev[stiffening_factor_name][IReq::QP_VAL] = true;
   }
   if (viscosity_use_corrected_temperature && is_input_field[surface_height_name]) {

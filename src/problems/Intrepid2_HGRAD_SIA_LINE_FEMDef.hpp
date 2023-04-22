@@ -68,34 +68,20 @@ namespace Intrepid2 {
                const inputViewType input,
                const coeffType c1,
                const coeffType c2,
-               const coeffType c3) {
-                //int dimension = std::is_pod<coeffType>::value ? 1 : 1+c1.size();
-              //  std::cout << " ecco2:  " << Kokkos::dimension_scalar(output) << std::endl;
+               const coeffType c3,
+               const coeffType c4) {
                 
       switch (opType) {        
       case OPERATOR_VALUE : {
-       // std::cout << " ecco: " << output.extent_int(0) << " " << output.extent_int(1) << " " << output.extent_int(2)  << std::endl;
         const auto x = (1.0 - input(0))/2.0;  //(input(0)+1.0)/2.0;
-      //  std::cout << " ecco3: " << std::endl;
-        const coeffType c4 = 1.0 - c1 - c2 - c3;
-      //  std::cout << " ecco4: "  << std::endl;
         const typename OutputViewType::value_type f = x*(c1+x*(c2+x*(c3+x*c4)));
-     //   std::cout << " ecco5: " << std::endl;
-     //   std::cout << " ecco6: " << f << "   " <<std::endl;
         output.access(0) = f; 
-     //   std::cout << " ecco7: " << std::endl;        
         output.access(1) = 1.0 - f;       
-    //    std::cout << " ecco8: "<< std::endl;
         break;
       }
       case OPERATOR_GRAD : {  
-   //     std::cout << " decco: " << output.extent(0) << " " << output.extent(1) << " " << output.extent(2)  << std::endl;
         const auto x = (1.0 - input(0))/2.0;  //(input(0)+1.0)/2.0;
-        const coeffType c4 = 1.0 - c1 - c2 - c3;
         const typename OutputViewType::value_type df = - (c1+x*(2*c2+x*(3*c3+x*4*c4)))/2.0;
-
-        //std::cout << " decco: " << output.extent(0) << " " << output.extent(1)  << " " << output.extent(2) << " " << df << "   "<<std::endl;
-
         output.access(0, 0) = df;
         output.access(1, 0) = -df;
         break;
@@ -121,6 +107,7 @@ namespace Intrepid2 {
                const coeffType c1,
                const coeffType c2,
                const coeffType c3,
+               const coeffType c4,
                const EOperator operatorType ) {
                 //std::cout << " ecco1: "  <<std::endl; 
       typedef          Kokkos::DynRankView<outputValueValueType,outputValueProperties...>         outputValueViewType;
@@ -135,7 +122,7 @@ namespace Intrepid2 {
 
       case OPERATOR_VALUE: {
         typedef Functor<outputValueViewType,inputPointViewType,coeffType,OPERATOR_VALUE> FunctorType;
-        Kokkos::parallel_for( policy, FunctorType(outputValues, inputPoints, c1, c2, c3) );
+        Kokkos::parallel_for( policy, FunctorType(outputValues, inputPoints, c1, c2, c3, c4) );
         break;
       }
       case OPERATOR_GRAD:
@@ -143,7 +130,7 @@ namespace Intrepid2 {
       case OPERATOR_CURL:
       case OPERATOR_D1: {
         typedef Functor<outputValueViewType,inputPointViewType,coeffType,OPERATOR_GRAD> FunctorType;
-        Kokkos::parallel_for( policy, FunctorType(outputValues, inputPoints, c1, c2, c3) );
+        Kokkos::parallel_for( policy, FunctorType(outputValues, inputPoints, c1, c2, c3, c4) );
         break;
       }
       default: {
@@ -170,7 +157,7 @@ namespace Intrepid2 {
     this->basisCoordinates_  = COORDINATES_CARTESIAN;
     this->functionSpace_     = FUNCTION_SPACE_HGRAD;
 
-    c1_=1.0; c2_ = 0; c3_ = 0;
+    c1_=1.0; c2_ = 0; c3_ = 0; c4_ =0;
 
     // initialize tags
     {

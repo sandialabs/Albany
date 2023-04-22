@@ -44,6 +44,10 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include "PHAL_ComputeBasisFunctions.hpp"
+#include "PHAL_DOFGradInterpolation.hpp"
+#include "PHAL_DOFInterpolation.hpp"
+
 #include <set>
 
 namespace LandIce
@@ -125,6 +129,8 @@ namespace LandIce
 
     /// Boolean marking whether SDBCs are used
     bool use_sdbcs_;
+
+    bool depthIntegratedModel;
   };
 
 } // end of the namespace LandIce
@@ -300,9 +306,42 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     fm0.template registerEvaluator<EvalT> (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Enthalpy"));
 
-    fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+    if(depthIntegratedModel) {
+      std::cout << "Interpolating Enthalpy" << std::endl;
 
-    fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+      Teuchos::RCP<ParameterList> p = rcp(new Teuchos::ParameterList("DOF Interpolation "+dof_names[0]));
+    
+      // Input
+      p->set<std::string>("Variable Name", dof_names[0]);
+      p->set<std::string>("BF Name", Albany::bf_name_depthIntE);
+      p->set<int>("Offset of First DOF", offset);
+
+      // Output (assumes same Name as input)
+      ev = Teuchos::rcp(new PHAL::DOFInterpolationBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+    }
+    else
+      ev = evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset);
+
+    fm0.template registerEvaluator<EvalT> (ev);
+
+
+    if(depthIntegratedModel) {
+      std::cout << "Interpolating Enthalpy Gradient" << std::endl;
+
+      RCP<ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("DOFGrad Interpolation "+dof_names[0]));
+      // Input
+      p->set<std::string>("Variable Name", dof_names[0]);
+      p->set<std::string>("Gradient BF Name", Albany::grad_bf_name_depthIntE);
+      p->set<int>("Offset of First DOF", offset);
+
+      // Output (assumes same Name as input)
+      p->set<std::string>("Gradient Variable Name", dof_names[0]+" Gradient");
+
+      ev = Teuchos::rcp(new PHAL::DOFGradInterpolationBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+    } else
+      ev = evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset);
+
+    fm0.template registerEvaluator<EvalT> (ev);
 
     // --- Restrict enthalpy from cell-based to cell-side-based
     fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator(dof_names[0],basalSideName,"Node Scalar",cellType));
@@ -315,6 +354,29 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   fm0.template registerEvaluator<EvalT> (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature));
 
   fm0.template registerEvaluator<EvalT> (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature));
+
+  if(depthIntegratedModel)
+  {
+    RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList("Compute Depth Integrated Basis Functions E"));
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<std::string>("Coordinate Vector Name",Albany::coord_vec_name);
+    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cellCubature);
+
+    p->set< RCP<Intrepid2::Basis<PHX::Device> > > ("Intrepid2 Basis", cellBasis);
+
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<std::string>("BF Name",                   Albany::bf_name_depthIntE);
+    p->set<std::string>("Gradient BF Name",          Albany::grad_bf_name_depthIntE);
+    p->set<std::string>("C_0 Parameter Name",        ParamEnumName::c_enth_0);
+    p->set<std::string>("C_1 Parameter Name",        ParamEnumName::c_enth_1);
+    p->set<std::string>("C_2 Parameter Name",        ParamEnumName::c_enth_2);
+    p->set<bool>("Depth-integrated Model", true);
+
+    ev = rcp(new PHAL::ComputeBasisFunctions<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
 
   fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecInterpolationEvaluator("velocity"));
 
@@ -715,6 +777,37 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     ev = Teuchos::rcp(new LandIce::BasalMeltRate<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+
+  p = rcp(new Teuchos::ParameterList("Enthalpy Basis Coefficient 0"));
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<std::string>("Parameter Name", ParamEnumName::c_enth_0);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", 0.);
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_c_enth_0;
+  ptr_c_enth_0 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ptr_c_enth_0);
+
+  p = rcp(new Teuchos::ParameterList("Enthalpy Basis Coefficient 1"));
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<std::string>("Parameter Name", ParamEnumName::c_enth_1);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", 0.);
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_c_enth_1;
+  ptr_c_enth_1 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ptr_c_enth_1);
+
+  p = rcp(new Teuchos::ParameterList("Enthalpy Basis Coefficient 2"));
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<std::string>("Parameter Name", ParamEnumName::c_enth_2);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", 0.);
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_c_enth_2;
+  ptr_c_enth_2 = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ptr_c_enth_2);
 
 
   p = Teuchos::rcp(new Teuchos::ParameterList("Glen's Law Homotopy Parameter"));

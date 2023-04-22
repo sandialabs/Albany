@@ -138,6 +138,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   using VectorFieldType = Albany::AbstractSTKFieldContainer::VectorFieldType;
   using ScalarFieldType = Albany::AbstractSTKFieldContainer::ScalarFieldType;
+  using QPScalarFieldType = Albany::AbstractSTKFieldContainer::QPScalarFieldType;
   using SolFldContainerType = Albany::OrdinarySTKFieldContainer;
 
   auto fld_container = stk_disc->getSolutionFieldContainer();
@@ -152,6 +153,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   ScalarFieldType* muField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "mu");
   ScalarFieldType* stiffeningFactorField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "stiffening_factor");
   ScalarFieldType* effectivePressureField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "effective_pressure");
+  
+
+
+
+  
   ScalarFieldType* betaField;
 
   const auto& landiceBcList = paramList->sublist("Problem").sublist("LandIce BCs");
@@ -218,8 +224,64 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
-  ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+  
+ 
 
+  
+
+
+  if(depthIntegratedModel) {
+
+    Intrepid2::DefaultCubatureFactory cubFactory;
+    int cubatureDegree = paramList->sublist("Discretization").get<int>("Cubature Degree");
+    auto cellTopo = shards::getCellTopologyData<shards::Wedge<6> >();
+    std::vector<int> degree(2); degree[0] = cubatureDegree;  degree[1] = std::max(cubatureDegree, 6); 
+    auto cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopo, degree);
+    int numQPs = cellCubature->getNumPoints();
+    Kokkos::DynRankView<double, PHX::Device> quadPointCoords("refPoints", numQPs, 3);
+    Kokkos::DynRankView<double, PHX::Device> quadPointWeights("refWeights", numQPs);
+
+    // Pre-Calculate reference element quantities
+    cellCubature->getCubature(quadPointCoords, quadPointWeights);
+
+    std::vector<int> layerVec(numQPs);
+    for(int i=0; i< levelsNormalizedThickness.size(); ++i)
+      std::cout << "zl: " <<  levelsNormalizedThickness[i] << std::endl;
+    for(int qp=0; qp<numQPs; qp++) {
+      int il=0; 
+      auto z = (quadPointCoords(qp,2)+1.0)/2; //quad points are defined on [-1,1]
+      while ((z > levelsNormalizedThickness[il+1]) && (il<nLayers)) il++;
+      layerVec[qp] = il;
+      std::cout << "il: " <<  layerVec[qp] << " " << z << std::endl;
+    }
+    
+     
+
+    QPScalarFieldType* temperature_field = meshStruct->metaData->get_field <QPScalarFieldType> (stk::topology::ELEMENT_RANK, "temperature");
+
+    std::cout << "Temperature size: " << numQPs << " " << temperature_field->number_of_states() << std::endl;
+
+    for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
+      double* temperature = stk::mesh::field_data(*temperature_field, elem);
+      for(int qp=0; qp<numQPs; qp++) {
+        int lId = layerVec[qp] * lElemColumnShift + elemLayerShift * ib;        
+        temperature[qp] = temperatureDataOnPrisms[lId];
+      }
+    }
+  } else {
+    ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+    for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
+      for(int il=0; il<nLayers; il++) {
+        int lId = il * lElemColumnShift + elemLayerShift * ib;
+        int gId = il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
+        stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId);
+        double* temperature = stk::mesh::field_data(*temperature_field, elem);
+        temperature[0] = temperatureDataOnPrisms[lId];
+      }
+    }
+  }
+/*
   for (int j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift))
             + (ordering == 1) * (j / (elemLayerShift));
@@ -230,6 +292,10 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     if(depthIntegratedModel) {
       stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
       double* temperature = stk::mesh::field_data(*temperature_field, elem);
+      
+//number_of_states()
+
+
       double tempFraction = temperatureDataOnPrisms[lId]*(levelsNormalizedThickness[il+1]-levelsNormalizedThickness[il]);
       if(il ==0)
         temperature[0] = tempFraction;
@@ -241,6 +307,10 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       temperature[0] = temperatureDataOnPrisms[lId];
     }
   }
+  */
+
+  
+
 
   meshStruct->setHasRestartSolution(true);//!first_time_step);
 
@@ -621,6 +691,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
   viscosityList.set("Use Stiffening Factor", viscosityList.get("Use Stiffening Factor", true));
   viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
+  viscosityList.set("Use P0 Temperature", viscosityList.get("Use P0 Temperature", !depthIntegratedModel)); 
 
 
   paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
@@ -659,7 +730,10 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");
-  field0.set<std::string>("Field Type", "Elem Scalar");
+  if(depthIntegratedModel)
+    field0.set<std::string>("Field Type", "QuadPoint Scalar");
+  else
+    field0.set<std::string>("Field Type", "Elem Scalar");
   field0.set<std::string>("Field Origin", "Mesh");
 
   //set ice thickness
