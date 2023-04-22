@@ -193,7 +193,7 @@ evaluateFields(typename Traits::EvalData workset)
     IFST::HGRADtransformGRAD (GradBF.get_view(), jacobian_inv, grad_at_cub_points);
 
     if(std::is_pod<ScalarT>::value) {
-      std::cout << "coefficients: " << c0_(0) << " " << c1_(0) << " " << c2_(0) <<std::endl;
+      std::cout << "coefficients: " << c0_(0) << " " << c1_(0) << " " << c2_(0) " " << c3_(0) <<std::endl;
     }
 
 /*

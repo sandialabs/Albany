@@ -224,49 +224,53 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
-  
- 
-
-  
-
-
   if(depthIntegratedModel) {
+    bool usePOTemp = paramList->sublist("Problem").sublist("LandIce Viscosity").get<bool>("Use P0 Temperature");
+    if(!usePOTemp) {
+      Intrepid2::DefaultCubatureFactory cubFactory;
+      int cubatureDegree = paramList->sublist("Discretization").get<int>("Cubature Degree");
+      auto cellTopo = shards::getCellTopologyData<shards::Wedge<6> >();
+      std::vector<int> degree(2); degree[0] = cubatureDegree;  degree[1] = std::max(cubatureDegree, 6); 
+      auto cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopo, degree);
+      int numQPs = cellCubature->getNumPoints();
+      Kokkos::DynRankView<double, PHX::Device> quadPointCoords("refPoints", numQPs, 3);
+      Kokkos::DynRankView<double, PHX::Device> quadPointWeights("refWeights", numQPs);
 
-    Intrepid2::DefaultCubatureFactory cubFactory;
-    int cubatureDegree = paramList->sublist("Discretization").get<int>("Cubature Degree");
-    auto cellTopo = shards::getCellTopologyData<shards::Wedge<6> >();
-    std::vector<int> degree(2); degree[0] = cubatureDegree;  degree[1] = std::max(cubatureDegree, 6); 
-    auto cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopo, degree);
-    int numQPs = cellCubature->getNumPoints();
-    Kokkos::DynRankView<double, PHX::Device> quadPointCoords("refPoints", numQPs, 3);
-    Kokkos::DynRankView<double, PHX::Device> quadPointWeights("refWeights", numQPs);
+      // Pre-Calculate reference element quantities
+      cellCubature->getCubature(quadPointCoords, quadPointWeights);
 
-    // Pre-Calculate reference element quantities
-    cellCubature->getCubature(quadPointCoords, quadPointWeights);
-
-    std::vector<int> layerVec(numQPs);
-    for(int i=0; i< levelsNormalizedThickness.size(); ++i)
-      std::cout << "zl: " <<  levelsNormalizedThickness[i] << std::endl;
-    for(int qp=0; qp<numQPs; qp++) {
-      int il=0; 
-      auto z = (quadPointCoords(qp,2)+1.0)/2; //quad points are defined on [-1,1]
-      while ((z > levelsNormalizedThickness[il+1]) && (il<nLayers)) il++;
-      layerVec[qp] = il;
-      std::cout << "il: " <<  layerVec[qp] << " " << z << std::endl;
-    }
-    
-     
-
-    QPScalarFieldType* temperature_field = meshStruct->metaData->get_field <QPScalarFieldType> (stk::topology::ELEMENT_RANK, "temperature");
-
-    std::cout << "Temperature size: " << numQPs << " " << temperature_field->number_of_states() << std::endl;
-
-    for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
-      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
-      double* temperature = stk::mesh::field_data(*temperature_field, elem);
+      std::vector<int> layerVec(numQPs);
       for(int qp=0; qp<numQPs; qp++) {
-        int lId = layerVec[qp] * lElemColumnShift + elemLayerShift * ib;        
-        temperature[qp] = temperatureDataOnPrisms[lId];
+        int il=0; 
+        auto z = (quadPointCoords(qp,2)+1.0)/2; //quad points are defined on [-1,1]
+        while ((z > levelsNormalizedThickness[il+1]) && (il<nLayers)) il++;
+        layerVec[qp] = il;
+      }    
+      
+
+      QPScalarFieldType* temperature_field = meshStruct->metaData->get_field <QPScalarFieldType> (stk::topology::ELEMENT_RANK, "temperature");
+
+      for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
+        stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
+        double* temperature = stk::mesh::field_data(*temperature_field, elem);
+        for(int qp=0; qp<numQPs; qp++) {
+          int lId = layerVec[qp] * lElemColumnShift + elemLayerShift * ib;        
+          temperature[qp] = temperatureDataOnPrisms[lId];
+        }
+      }
+    } else {
+      ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+      for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
+        stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
+        double* temperature = stk::mesh::field_data(*temperature_field, elem);
+        for(int il=0; il<nLayers; il++) {
+          int lId = il * lElemColumnShift + elemLayerShift * ib;  
+          double tempFraction = temperatureDataOnPrisms[lId]*(levelsNormalizedThickness[il+1]-levelsNormalizedThickness[il]);
+          if(il ==0)
+            temperature[0] = tempFraction;
+          else
+            temperature[0] += tempFraction;
+        }
       }
     }
   } else {
@@ -371,6 +375,15 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
 
   if(depthIntegratedModel) {
+    double c1,c2,c3,c4;
+    Teuchos::ParameterList problist = paramList->sublist("Problem");
+    auto param0list = problist.sublist("Parameters").sublist("Parameter 0");
+    c1 = param0list.sublist("Scalar 0").get("Nominal Value",0.0);
+    c2 = param0list.sublist("Scalar 1").get("Nominal Value",0.0);
+    c3 = param0list.sublist("Scalar 2").get("Nominal Value",0.0);
+    c4 = 1.0 -c1-c2-c3;
+    std::cout << "Interface coeffs: " << c1 << " " << c2 << " " << c3 << " " << c4 <<std::endl;
+
     for(int ib = 0; ib < indexToVertexID.size(); ++ib) {
       int depthVertexLayerShift = (ordering == 0) ? 1 : 2;
       int gIdBed =  depthVertexLayerShift * (indexToVertexID[ib]-1) + 1;
@@ -392,9 +405,12 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       double solTop0 = solution_constView[lIdTop0];
       double solTop1 = solution_constView[lIdTop1];
 
+      
+
       for(int il=0; il<nLayers+1; ++il) {
         int j = il * lVertexColumnShift + vertexLayerShift * ib;
-        double fz = 1.0 - std::pow(1.0 - levelsNormalizedThickness[il],4);
+        double z = 1.0 - levelsNormalizedThickness[il];
+        double fz = 1.0 - z*(c1+ z*(c2 + z*(c3 + z*c4)));
         velocityOnVertices[j] = solBed0 + fz * (solTop0-solBed0);
         velocityOnVertices[j + numVertices3D]  = solBed1 + fz * (solTop1-solBed1);
       }
