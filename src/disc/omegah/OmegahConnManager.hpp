@@ -24,18 +24,20 @@ private:
   Omega_h::Mesh mesh;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
+  LO m_dofsPerElm;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
   void initLocalElmIds() {
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
   void getDofsPerEnt(const panzer::FieldPattern & fp, LO entIdCnt[4]) const;
+  void setConnectivitySize(const LO dofsPerEnt[4]);
   std::array<Omega_h::GOs,4> createGlobalDofNumbering(const LO dofsPerEnt[4]);
   Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const LO dofsPerEnt[4], const std::array<Omega_h::GOs,4>& globalDofNumbering);
-  void setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset, const LO dofsPerElm,
+  void setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
-  void setElementDofConnectivity(const LO dofOffset, const LO dofsPerElm,
+  void setElementDofConnectivity(const LO dofOffset,
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
 public:
   OmegahConnManager(Omega_h::Mesh in_mesh);
@@ -71,7 +73,7 @@ public:
     *          For the given element, the connectivity is ordered as:
     *          [vtx dofs][edge dofs][face dofs][element dofs]
     */
-  const GO * getConnectivity(LO localElmtId) const override { //FIXME
+  const GO * getConnectivity(LO localElmtId) const override {
     return NULL;
   }
 
@@ -81,8 +83,8 @@ public:
     *
     * \returns Number of mesh IDs that are associated with this element.
     */
-  LO getConnectivitySize(LO localElmtId) const override { //FIXME
-    return 42;
+  LO getConnectivitySize(LO localElmtId) const override {
+    return m_dofsPerElm; //FIXME - how can this not be constant?
   }
 
   /** Get the block ID for a particular element.

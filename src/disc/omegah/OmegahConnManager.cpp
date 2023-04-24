@@ -116,10 +116,11 @@ OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset, const LO dofsPerElm,
+void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
   const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
   const auto adjEnts = elmToDim.ab2b;
+  const auto dofsPerElm = m_dofsPerElm;
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     const auto firstDown = elm*numDownAdjEntsPerElm;
     //loop over element-to-ent adjacencies and fill in the dofs
@@ -142,8 +143,9 @@ void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void OmegahConnManager::setElementDofConnectivity(const LO dofOffset, const LO dofsPerElm,
+void OmegahConnManager::setElementDofConnectivity(const LO dofOffset,
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
+  const auto dofsPerElm = m_dofsPerElm;
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     for(int k=0; k<dofsPerEnt; k++) {
       const auto dofIndex = elm*dofsPerEnt+k;
@@ -156,14 +158,19 @@ void OmegahConnManager::setElementDofConnectivity(const LO dofOffset, const LO d
   Omega_h::parallel_for(mesh.nelems(), setNumber, kernelName.c_str());
 }
 
+void OmegahConnManager::setConnectivitySize(const LO dofsPerEnt[4]) {
+  m_dofsPerElm = 0;
+  for(int i=0; i<=mesh.dim(); i++) {
+    m_dofsPerElm += dofsPerEnt[i];
+  }
+}
+
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const LO dofsPerEnt[4], const std::array<Omega_h::GOs,4>& globalDofNumbering) {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
   Omega_h::LO totalNumDofs = 0;
-  Omega_h::LO dofsPerElm = 0;
   for(int i=0; i<=mesh.dim(); i++) {
     totalNumDofs += dofsPerEnt[i]*mesh.nents(i);
-    dofsPerElm += dofsPerEnt[i];
   }
   for(int i=mesh.dim()+1; i<4; i++)
     assert(!dofsPerEnt[i]);//watch out for stragglers
@@ -172,13 +179,13 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
   for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
     if(dofsPerEnt[adjDim]) {
       const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+adjDim, 0);
-      setElementToEntDofConnectivity(adjDim, dofOffset, dofsPerElm, elmToDim[adjDim],
+      setElementToEntDofConnectivity(adjDim, dofOffset, elmToDim[adjDim],
           dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
     }
   }
   if(dofsPerEnt[mesh.dim()]) {
     const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+mesh.dim(), 0);
-    setElementDofConnectivity(dofOffset, dofsPerElm, dofsPerEnt[mesh.dim()],
+    setElementDofConnectivity(dofOffset, dofsPerEnt[mesh.dim()],
         globalDofNumbering[mesh.dim()], elm2dof);
   }
   return elm2dof;
@@ -214,6 +221,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   //             Global numbering goes like [node ids, edge ids, face ids, cell ids]
   LO dofsPerEnt[4] = {0,0,0,0};
   getDofsPerEnt(fp, dofsPerEnt);
+  setConnectivitySize(dofsPerEnt);
 
   auto globalDofNumbering = createGlobalDofNumbering(dofsPerEnt);
 
