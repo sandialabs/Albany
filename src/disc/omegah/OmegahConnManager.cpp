@@ -11,7 +11,7 @@
 
 #include <Omega_h_element.hpp> //topological_singular_name
 #include <Omega_h_for.hpp> //parallel_for
-#include <Omega_h_file.hpp> //write_array
+#include <Omega_h_file.hpp> //write_array, write_parallel
 #include <Omega_h_array_ops.hpp> //get_max
 
 #include <fstream>
@@ -73,15 +73,21 @@ void OmegahConnManager::getDofsPerEnt(const panzer::FieldPattern & fp, LO dofsPe
 Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt, const GO startingOffset) {
   if(!dofsPerEnt)
     return Omega_h::GOs();
-  const int numDofs = mesh.nents(entityDim)*dofsPerEnt;
+  const int numEnts = mesh.nents(entityDim);
+  const int numDofs = numEnts*dofsPerEnt;
   auto worldComm = mesh.library()->world();
-  const auto offset = worldComm->exscan(numDofs, OMEGA_H_SUM);
+  const auto entGlobalIds = mesh.globals(entityDim);
   Omega_h::Write<Omega_h::GO> dofNum(numDofs);
   auto setNumber = OMEGA_H_LAMBDA(int i) {
-    dofNum[i] = startingOffset+offset+i;
+    for(int j=0; j<dofsPerEnt; j++) {
+      const auto dofIndex = i*dofsPerEnt+j;
+      const auto dofGlobalId = entGlobalIds[i]*dofsPerEnt+j;
+      //printf("dofIdx entGid j dofGid %d %d %d %d\n", dofIndex, entGlobalIds[i], j, dofGlobalId);
+      dofNum[dofIndex] = startingOffset+dofGlobalId;
+    }
   };
   const std::string kernelName = "setGlobalDofId_entityDim" + std::to_string(entityDim);
-  Omega_h::parallel_for(numDofs, setNumber, kernelName.c_str());
+  Omega_h::parallel_for(numEnts, setNumber, kernelName.c_str());
   return mesh.sync_array(entityDim, Omega_h::read(dofNum), dofsPerEnt);
 }
 
@@ -97,10 +103,10 @@ OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
   std::array<Omega_h::GOs,4> gdn;
   GO startingOffset = 0;
   for(int i=0; i<gdn.size(); i++) {
+    printf("%d startingOffset %ld\n", mesh.library()->world()->rank(), startingOffset);
     gdn[i] = createGlobalEntDofNumbering(mesh, i, dofsPerEnt[i], startingOffset);
     const auto offset = getMaxGlobalEntDofId(mesh, gdn[i]);
     startingOffset = offset == 0 ? startingOffset : offset;
-    printf("%d startingOffset %ld\n", mesh.library()->world()->rank(), startingOffset);
   }
   return gdn;
 }
@@ -232,11 +238,14 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
     auto world = mesh.library()->world();
     auto rank = world->rank();
     std::stringstream ss;
-    ss << rank << " vtxGlobalNumbering: ";
+    ss << rank << " vtxGlobalDofNumbering: ";
     auto vtxNum = globalDofNumbering[0];
     for(int i=0; i<vtxNum.size(); i++) ss << vtxNum[i] << " ";
     ss << "\n";
     std::cout << ss.str();
+    mesh.add_tag<Omega_h::GO>(0,"vtxGlobalDofNumbering",
+        dofsPerEnt[0],globalDofNumbering[0]);
+    Omega_h::vtk::write_parallel("vtxGlobalDofNumbering",&mesh,mesh.dim());
   }
   return;
 
