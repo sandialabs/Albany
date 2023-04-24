@@ -12,6 +12,7 @@
 #include <Omega_h_element.hpp> //topological_singular_name
 #include <Omega_h_for.hpp> //parallel_for
 #include <Omega_h_file.hpp> //write_array
+#include <Omega_h_array_ops.hpp> //get_max
 
 #include <fstream>
 
@@ -84,12 +85,24 @@ Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim
   return mesh.sync_array(entityDim, Omega_h::read(dofNum), dofsPerEnt);
 }
 
+GO getMaxGlobalEntDofId(Omega_h::Mesh& mesh, Omega_h::GOs& dofGlobalIds) {
+  if(!dofGlobalIds.size())
+    return 0;
+  auto worldComm = mesh.library()->world();
+  return Omega_h::get_max(worldComm,dofGlobalIds);
+}
+
 std::array<Omega_h::GOs,4>
 OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
-  return {createGlobalEntDofNumbering(mesh, 0, dofsPerEnt[0], 0),
-          createGlobalEntDofNumbering(mesh, 1, dofsPerEnt[1], 0), //FIXME get vtx offset
-          createGlobalEntDofNumbering(mesh, 2, dofsPerEnt[2], 0), //FIXME get vtx+edge offset
-          createGlobalEntDofNumbering(mesh, 3, dofsPerEnt[3], 0)};//FIXME get vtx+edge+face offset
+  std::array<Omega_h::GOs,4> gdn;
+  GO startingOffset = 0;
+  for(int i=0; i<gdn.size(); i++) {
+    gdn[i] = createGlobalEntDofNumbering(mesh, i, dofsPerEnt[i], startingOffset);
+    const auto offset = getMaxGlobalEntDofId(mesh, gdn[i]);
+    startingOffset = offset == 0 ? startingOffset : offset;
+    printf("%d startingOffset %ld\n", mesh.library()->world()->rank(), startingOffset);
+  }
+  return gdn;
 }
 
 //FIXME need to count dofs for each element-to-[vtx|edge|face] adjacency
