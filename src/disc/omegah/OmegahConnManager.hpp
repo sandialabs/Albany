@@ -83,7 +83,7 @@ public:
     *
     * \returns Number of mesh IDs that are associated with this element.
     */
-  LO getConnectivitySize(LO localElmtId) const override {
+  LO getConnectivitySize(LO /*localElmtId*/) const override {
     return m_dofsPerElm; //FIXME - how can this not be constant?
   }
 

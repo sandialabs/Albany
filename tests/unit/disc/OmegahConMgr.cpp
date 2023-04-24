@@ -130,7 +130,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
   auto conn_mgr = Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
   conn_mgr->buildConnectivity(*patternC1);
-  conn_mgr->writeConnectivity();
+  REQUIRE(1 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
   out << "Testing OmegahConnManager::buildConnectivity()\n";
   success = true;
 }
