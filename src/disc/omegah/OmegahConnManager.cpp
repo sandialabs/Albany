@@ -102,7 +102,6 @@ OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
   std::array<Omega_h::GOs,4> gdn;
   GO startingOffset = 0;
   for(int i=0; i<gdn.size(); i++) {
-    printf("%d startingOffset %ld\n", mesh.library()->world()->rank(), startingOffset);
     gdn[i] = createGlobalEntDofNumbering(mesh, i, dofsPerEnt[i], startingOffset);
     const auto offset = getMaxGlobalEntDofId(mesh, gdn[i]);
     startingOffset = offset == 0 ? startingOffset : offset;
@@ -125,7 +124,6 @@ void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO
     const auto firstDown = elm*numDownAdjEntsPerElm;
     //loop over element-to-ent adjacencies and fill in the dofs
     for(int j=0; j<numDownAdjEntsPerElm; j++) {
-      //printf("elm numDown firstDown %d %d %d\n", elm, numDownAdjEntsPerElm, firstDown);
       const auto adjEnt = adjEnts[firstDown+j]; //FIXME likely not legal on GPU
       for(int k=0; k<dofsPerEnt; k++) {
         const auto dofIndex = adjEnt*dofsPerEnt+k;
@@ -174,14 +172,12 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
   for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
     if(dofsPerEnt[adjDim]) {
       const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+adjDim, 0);
-      printf("adjDim %d dofOffset %d\n", adjDim, dofOffset);
       setElementToEntDofConnectivity(adjDim, dofOffset, dofsPerElm, elmToDim[adjDim],
           dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
     }
   }
   if(dofsPerEnt[mesh.dim()]) {
     const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+mesh.dim(), 0);
-    printf("adjDim %d dofOffset %d\n", mesh.dim(), dofOffset);
     setElementDofConnectivity(dofOffset, dofsPerElm, dofsPerEnt[mesh.dim()],
         globalDofNumbering[mesh.dim()], elm2dof);
   }
@@ -219,33 +215,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   LO dofsPerEnt[4] = {0,0,0,0};
   getDofsPerEnt(fp, dofsPerEnt);
 
-  { //debug
-   std::stringstream ss;
-   ss << "dofsPerEnt: ";
-   for(int i=0; i<4; i++) ss << dofsPerEnt[i] << " ";
-   ss << "\n";
-   std::cout << ss.str();
-  }
-
   auto globalDofNumbering = createGlobalDofNumbering(dofsPerEnt);
-
-  { //debug
-    auto world = mesh.library()->world();
-    auto rank = world->rank();
-    std::stringstream ss;
-    ss << rank << " vtxGlobalDofNumbering: ";
-    auto vtxNum = globalDofNumbering[0];
-    for(int i=0; i<vtxNum.size(); i++) ss << vtxNum[i] << " ";
-    ss << "\n";
-    std::cout << ss.str();
-    mesh.add_tag<Omega_h::GO>(0,"vtxGlobalDofNumbering",
-        dofsPerEnt[0],globalDofNumbering[0]);
-    Omega_h::vtk::write_parallel("vtxGlobalDofNumbering",&mesh,mesh.dim());
-  }
-
-  // loop over elements and build global connectivity
-  const int numElems = mesh.nelems();
-  const auto fieldDim = fp.getCellTopology().getDimension();
 
   // get element-to-[vertex|edge|face] adjacencies
   Omega_h::Adj elmToDim[3];
