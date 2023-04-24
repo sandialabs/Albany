@@ -31,11 +31,12 @@ private:
   }
   void getDofsPerEnt(const panzer::FieldPattern & fp, LO entIdCnt[4]) const;
   std::array<Omega_h::GOs,4> createGlobalDofNumbering(const LO dofsPerEnt[4]);
-  LO getConnectivityOffsets(const Omega_h::Adj elmToDim[3], const LO dofsPerEnt[4],
-                              GO connectivityOffsets[4], GO connectivityGlobalOffsets[4]);
-  void appendConnectivity(const Omega_h::Adj& elmToDim, LO dofsPerEnt,
-                          GO startIdx, GO globalStartIdx,
-                          LO dim, Omega_h::Write<Omega_h::GO>& elmDownAdj_d) const;
+  Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
+    const LO dofsPerEnt[4], const std::array<Omega_h::GOs,4>& globalDofNumbering);
+  void setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset, const LO dofsPerElm,
+    const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
+  void setElementDofConnectivity(const LO dofOffset, const LO dofsPerElm,
+    const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
 public:
   OmegahConnManager(Omega_h::Mesh in_mesh);
 
@@ -67,6 +68,8 @@ public:
     *
     * \returns Pointer to beginning of indices, with total size
     *          equal to <code>getConnectivitySize(localElmtId)</code>
+    *          For the given element, the connectivity is ordered as:
+    *          [vtx dofs][edge dofs][face dofs][element dofs]
     */
   const GO * getConnectivity(LO localElmtId) const override { //FIXME
     return NULL;

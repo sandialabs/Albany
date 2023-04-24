@@ -82,7 +82,6 @@ Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim
     for(int j=0; j<dofsPerEnt; j++) {
       const auto dofIndex = i*dofsPerEnt+j;
       const auto dofGlobalId = entGlobalIds[i]*dofsPerEnt+j;
-      //printf("dofIdx entGid j dofGid %d %d %d %d\n", dofIndex, entGlobalIds[i], j, dofGlobalId);
       dofNum[dofIndex] = startingOffset+dofGlobalId;
     }
   };
@@ -111,86 +110,82 @@ OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
   return gdn;
 }
 
-//FIXME need to count dofs for each element-to-[vtx|edge|face] adjacency
-//FIXME Why not number the dof globally as defined by each mesh entity instead
-//FIXME   of going through adjacencies????
-LO OmegahConnManager::getConnectivityOffsets(const Omega_h::Adj elmToDim[3],
-    const LO dofsPerEnt[4], GO connectivityOffsets[4], GO connectivityGlobalOffsets[4])
-{
-  LO dofsPerDim[4];
-  //dofs associated with vtx|edge|face bounding each element
-  for(int dim=0; dim<mesh.dim(); dim++) {
-    const auto numDownAdj = elmToDim[dim].ab2b.size();
-    dofsPerDim[dim] = numDownAdj*dofsPerEnt[dim];
-  }
-  //dofs associated with the element
-  dofsPerDim[mesh.dim()] = dofsPerEnt[mesh.dim()]*mesh.nents(mesh.dim());
-  //if the mesh is 2d then set the dofs associated with regions to zero
-  if(mesh.dim() == 2)
-    dofsPerDim[3] = 0;
 
-  connectivityOffsets[0] = 0;
-  connectivityGlobalOffsets[0] = 0;
-  for(int dim=1; dim<4; dim++) {
-    connectivityOffsets[dim] = connectivityOffsets[dim-1]+dofsPerDim[dim-1];
-  }
-  // compute total number of dofs
-  Omega_h::LO totDofs = 0;
-  for(int dim=0; dim<=mesh.dim(); dim++) {
-    totDofs += dofsPerDim[dim];
-  }
-  // get the starting id on this rank so that the dofs on this rank will have
-  // globally unique ids
-  auto worldComm = mesh.library()->world();
-  const auto globalOffset = worldComm->exscan(totDofs, OMEGA_H_SUM);
-  fprintf(stderr, "\n%d totDofs %d globalOffset %d\n", worldComm->rank(), totDofs, globalOffset);
-  // create the global offsets for each group of local dof ids
-  // associated with vtx, edge, face, and elements
-  for(int dim=0; dim<4; dim++) {
-    if(dofsPerEnt[dim]>0)
-      connectivityGlobalOffsets[dim] = globalOffset + connectivityOffsets[dim];
-  }
-  for(int rank=0; rank<worldComm->size(); rank++) {
-    if(worldComm->rank() == rank) {
-      fprintf(stderr, "\n");
-      for(int dim=0; dim<4; dim++) {
-        fprintf(stderr, "%d dim co cgo %d %d %d\n",
-            rank, dim, connectivityOffsets[dim], connectivityGlobalOffsets[dim]);
-      }
-    }
-    worldComm->barrier();
-  }
-  return totDofs;
-}
-
-void OmegahConnManager::appendConnectivity(const Omega_h::Adj& elmToDim, LO dofsPerEnt,
-    GO startIdx, GO globalStartIdx, LO dim, Omega_h::Write<Omega_h::GO>& elmDownAdj_d) const
-{
-  auto worldComm = mesh.library()->world();
-  const auto rank = worldComm->rank();
-  const auto ab2b = elmToDim.ab2b; //values array
-  TEUCHOS_ASSERT(mesh.family() == OMEGA_H_SIMPLEX);
-  const auto numDownAdjEnts= Omega_h::element_degree(mesh.family(), mesh.dim(), dim);
-  fprintf(stderr, "\n%d dim startIdx globalStartIdx ab2b.size() numDown %d %d %d %d %d\n",
-                     rank, dim, startIdx, globalStartIdx, ab2b.size(), numDownAdjEnts);
-  auto downEntGlobalIds = mesh.globals(dim);
-  fprintf(stderr, "\nrank 0.3 elm downEntIdx idx id\n");
-  auto append = OMEGA_H_LAMBDA(LO elm) {
-    for(int i=0; i<numDownAdjEnts; i++) {
-      const auto downEntIdx = elm*numDownAdjEnts+i;
-      const auto downEntId = ab2b[downEntIdx];
-      const auto downEntGlobalId = downEntGlobalIds[downEntId];
-      for(int dof=0; dof<dofsPerEnt; dof++) {
-        const auto idx = startIdx + (downEntIdx*dofsPerEnt) + dof;
-        const GO id = globalStartIdx + (dofsPerEnt * downEntGlobalId) + dof;
-        printf("%d 0.3 %d %d %d %d\n", rank, elm, downEntIdx, idx, id);
-        elmDownAdj_d[idx] = id;
+/**
+ * \brief set the global dof ids for entities of dimension adjDim that bound
+ * each element
+ *
+ * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
+ */
+void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset, const LO dofsPerElm,
+    const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
+  const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+  const auto adjEnts = elmToDim.ab2b;
+  auto setNumber = OMEGA_H_LAMBDA(int elm) {
+    const auto firstDown = elm*numDownAdjEntsPerElm;
+    //loop over element-to-ent adjacencies and fill in the dofs
+    for(int j=0; j<numDownAdjEntsPerElm; j++) {
+      //printf("elm numDown firstDown %d %d %d\n", elm, numDownAdjEntsPerElm, firstDown);
+      const auto adjEnt = adjEnts[firstDown+j]; //FIXME likely not legal on GPU
+      for(int k=0; k<dofsPerEnt; k++) {
+        const auto dofIndex = adjEnt*dofsPerEnt+k;
+        const auto dofGlobalId = globalDofNumbering[dofIndex];
+        const auto connIdx = (elm*dofsPerElm)+(dofOffset+k);
+        elm2dof[connIdx] = dofGlobalId;
       }
     }
   };
-  const std::string kernelName = "appendConnectivity_dim" + std::to_string(dim);
-  Omega_h::parallel_for(mesh.nelems(), append, kernelName.c_str());
-  Kokkos::fence();
+  const auto kernelName = "setElementToEntDofConnectivity_dim" + std::to_string(mesh.dim());
+  Omega_h::parallel_for(mesh.nelems(), setNumber, kernelName.c_str());
+}
+
+/**
+ * \brief set the global dof ids for each element
+ *
+ * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
+ */
+void OmegahConnManager::setElementDofConnectivity(const LO dofOffset, const LO dofsPerElm,
+    const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
+  auto setNumber = OMEGA_H_LAMBDA(int elm) {
+    for(int k=0; k<dofsPerEnt; k++) {
+      const auto dofIndex = elm*dofsPerEnt+k;
+      const auto dofGlobalId = globalDofNumbering[dofIndex];
+      const auto connIdx = (elm*dofsPerElm)+(dofOffset+k);
+      elm2dof[connIdx] = dofGlobalId;
+    }
+  };
+  const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(mesh.dim());
+  Omega_h::parallel_for(mesh.nelems(), setNumber, kernelName.c_str());
+}
+
+Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
+    const LO dofsPerEnt[4], const std::array<Omega_h::GOs,4>& globalDofNumbering) {
+  //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
+  Omega_h::LO totalNumDofs = 0;
+  Omega_h::LO dofsPerElm = 0;
+  for(int i=0; i<=mesh.dim(); i++) {
+    totalNumDofs += dofsPerEnt[i]*mesh.nents(i);
+    dofsPerElm += dofsPerEnt[i];
+  }
+  for(int i=mesh.dim()+1; i<4; i++)
+    assert(!dofsPerEnt[i]);//watch out for stragglers
+  Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
+
+  for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
+    if(dofsPerEnt[adjDim]) {
+      const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+adjDim, 0);
+      printf("adjDim %d dofOffset %d\n", adjDim, dofOffset);
+      setElementToEntDofConnectivity(adjDim, dofOffset, dofsPerElm, elmToDim[adjDim],
+          dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
+    }
+  }
+  if(dofsPerEnt[mesh.dim()]) {
+    const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+mesh.dim(), 0);
+    printf("adjDim %d dofOffset %d\n", mesh.dim(), dofOffset);
+    setElementDofConnectivity(dofOffset, dofsPerElm, dofsPerEnt[mesh.dim()],
+        globalDofNumbering[mesh.dim()], elm2dof);
+  }
+  return elm2dof;
 }
 
 void
@@ -247,7 +242,6 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
         dofsPerEnt[0],globalDofNumbering[0]);
     Omega_h::vtk::write_parallel("vtxGlobalDofNumbering",&mesh,mesh.dim());
   }
-  return;
 
   // loop over elements and build global connectivity
   const int numElems = mesh.nelems();
@@ -261,25 +255,9 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
     }
   }
 
-  GO connectivityOffsets[4] = {0,0,0,0};
-  GO connectivityGlobalOffsets[4] = {0,0,0,0};
-  LO totDofs = getConnectivityOffsets(elmToDim, dofsPerEnt, connectivityOffsets, connectivityGlobalOffsets);
-
-  auto world = mesh.library()->world();
-  auto rank = world->rank();
-  // append the ajacency arrays to each other
-  fprintf(stderr, "%d totDofs %d\n", rank, totDofs);
-  Omega_h::Write<Omega_h::GO> elmDownAdj_d(totDofs);
-  for(int dim = 0; dim < 4; dim++) {
-    if(dofsPerEnt[dim] > 0) {
-      appendConnectivity(elmToDim[dim], dofsPerEnt[dim],
-          connectivityOffsets[dim], connectivityGlobalOffsets[dim],
-          dim, elmDownAdj_d);
-    }
-  }
-
+  auto elm2dof = createElementToDofConnectivity(elmToDim, dofsPerEnt, globalDofNumbering);
   // transfer to host
-  m_connectivity = Omega_h::HostRead(Omega_h::read(elmDownAdj_d));
+  m_connectivity = Omega_h::HostRead(elm2dof);
 }
 
 Teuchos::RCP<panzer::ConnManager>
