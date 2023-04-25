@@ -74,7 +74,9 @@ public:
     *          [vtx dofs][edge dofs][face dofs][element dofs]
     */
   const GO * getConnectivity(LO localElmtId) const override {
-    return NULL;
+    static_assert(sizeof(Omega_h::GO) == sizeof(GO));
+    auto ptr = m_connectivity.data() + (localElmtId*m_dofsPerElm);
+    return reinterpret_cast<const GO*>(ptr);
   }
 
   /** How many mesh IDs are associated with this element?
