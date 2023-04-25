@@ -127,8 +127,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
-  auto conn_mgr = Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
+  auto conn_mgr = createOmegahConnManager(lib);
   conn_mgr->buildConnectivity(*patternC1);
   REQUIRE(3 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
   const auto localElmIds = conn_mgr->getElementBlock("ignored");
