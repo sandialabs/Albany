@@ -125,11 +125,11 @@ void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO
     const auto firstDown = elm*numDownAdjEntsPerElm;
     //loop over element-to-ent adjacencies and fill in the dofs
     for(int j=0; j<numDownAdjEntsPerElm; j++) {
-      const auto adjEnt = adjEnts[firstDown+j]; //FIXME likely not legal on GPU
+      const auto adjEnt = adjEnts[firstDown+j];
       for(int k=0; k<dofsPerEnt; k++) {
         const auto dofIndex = adjEnt*dofsPerEnt+k;
         const auto dofGlobalId = globalDofNumbering[dofIndex];
-        const auto connIdx = (elm*dofsPerElm)+(dofOffset+k);
+        const auto connIdx = (elm*dofsPerElm)+(dofOffset+j+k);
         elm2dof[connIdx] = dofGlobalId;
       }
     }
@@ -161,30 +161,30 @@ void OmegahConnManager::setElementDofConnectivity(const LO dofOffset,
 void OmegahConnManager::setConnectivitySize(const LO dofsPerEnt[4]) {
   m_dofsPerElm = 0;
   for(int i=0; i<=mesh.dim(); i++) {
-    m_dofsPerElm += dofsPerEnt[i];
+    const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), i);
+    m_dofsPerElm += dofsPerEnt[i]*numDownAdjEntsPerElm;
   }
+  m_dofsPerElm += dofsPerEnt[mesh.dim()];
 }
 
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const LO dofsPerEnt[4], const std::array<Omega_h::GOs,4>& globalDofNumbering) {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
-  Omega_h::LO totalNumDofs = 0;
-  for(int i=0; i<=mesh.dim(); i++) {
-    totalNumDofs += dofsPerEnt[i]*mesh.nents(i);
-  }
+  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nelems();
   for(int i=mesh.dim()+1; i<4; i++)
     assert(!dofsPerEnt[i]);//watch out for stragglers
   Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
 
+  LO dofOffset = 0;
   for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
     if(dofsPerEnt[adjDim]) {
-      const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+adjDim, 0);
       setElementToEntDofConnectivity(adjDim, dofOffset, elmToDim[adjDim],
           dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
+      const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+      dofOffset += dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
     }
   }
   if(dofsPerEnt[mesh.dim()]) {
-    const auto dofOffset = std::accumulate(dofsPerEnt, dofsPerEnt+mesh.dim(), 0);
     setElementDofConnectivity(dofOffset, dofsPerEnt[mesh.dim()],
         globalDofNumbering[mesh.dim()], elm2dof);
   }
