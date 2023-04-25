@@ -21,6 +21,8 @@
 
 #include <Omega_h_build.hpp>
 
+#include <array> //std::array
+
 #define REQUIRE(cond) \
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
@@ -117,8 +119,20 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockTopologies)
   success = true;
 }
 
+
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
 {
+  const std::map<GO,std::array<GO,3>> elementGidToDofs = {
+    {0, {0, 7, 3}},
+    {1, {1, 3, 4}},
+    {2, {3, 1, 0}},
+    {3, {3, 6, 5}},
+    {4, {4, 2, 1}},
+    {5, {5, 4, 3}},
+    {6, {6, 3, 7}},
+    {7, {7, 8, 6}}
+  };
+
   Albany::build_type (Albany::BuildType::Tpetra);
 
   auto teuchosComm = Albany::getDefaultComm();
@@ -132,8 +146,11 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   REQUIRE(3 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
   const auto localElmIds = conn_mgr->getElementBlock("ignored");
   for( auto lid : localElmIds ) {
-    auto ptr = conn_mgr->getConnectivity(lid); //ignore the return
-    printf("elm %d dofs %ld %ld %ld\n", lid, ptr[0], ptr[1], ptr[2]);
+    auto ptr = conn_mgr->getConnectivity(lid);
+    auto elmGid = conn_mgr->getElementGlobalId(lid);
+    const std::array<GO,3> dofs = {ptr[0], ptr[1], ptr[2]};
+    const auto expectedDofs = elementGidToDofs.at(elmGid);
+    REQUIRE( expectedDofs == dofs );
   }
   out << "Testing OmegahConnManager::buildConnectivity()\n";
   success = true;

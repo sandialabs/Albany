@@ -64,6 +64,21 @@ public:
     */
   Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override;
 
+  /** Get global id of the specified element.
+    * Note, this function requires a device-to-host
+    * memory transfer if the mesh is on the device.
+    * In its current form it should only be used for
+    * debugging.
+    *
+    * \param[in] localElmtId Local element ID
+    *
+    * \returns global id of mesh element
+    */
+  GO getElementGlobalId(LO localElmtId) const {
+    auto gids = mesh.globals(mesh.dim());
+    return gids.get(localElmtId);
+  }
+
   /** Get ID connectivity for a particular element
     *
     * \param[in] localElmtId Local element ID
