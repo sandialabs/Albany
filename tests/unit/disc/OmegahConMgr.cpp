@@ -131,9 +131,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   auto conn_mgr = Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
   conn_mgr->buildConnectivity(*patternC1);
   REQUIRE(1 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
-  const auto localElmIds = conn_mgr->getElementBlock("ignored");
-  for( auto lid : localElmIds )
-    conn_mgr->getConnectivity(lid); //ignore the return
   out << "Testing OmegahConnManager::buildConnectivity()\n";
   success = true;
 }

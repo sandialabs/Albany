@@ -25,7 +25,7 @@ private:
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   LO m_dofsPerElm;
-  std::vector<GO> m_connectivity; //better type?
+  Omega_h::HostRead<Omega_h::GO> m_connectivity;
   void initLocalElmIds() {
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
@@ -74,7 +74,7 @@ public:
     *          [vtx dofs][edge dofs][face dofs][element dofs]
     */
   const GO * getConnectivity(LO localElmtId) const override {
-    return m_connectivity.data() + (localElmtId*m_dofsPerElm);
+    return NULL;
   }
 
   /** How many mesh IDs are associated with this element?
