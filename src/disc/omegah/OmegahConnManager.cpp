@@ -235,11 +235,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 
   auto elm2dof = createElementToDofConnectivity(elmToDim, dofsPerEnt, globalDofNumbering);
   // transfer to host
-  auto elm2dof_h = Omega_h::HostRead(elm2dof);
-  // set GO array (not the same type as Omega_h::GO) - ideally, this would be avoided
-  m_connectivity.resize(elm2dof_h.size());
-  for(int i=0; i<elm2dof_h.size(); i++)
-    m_connectivity[i] = static_cast<GO>(elm2dof_h[i]);
+  m_connectivity = Omega_h::HostRead(elm2dof);
 }
 
 Teuchos::RCP<panzer::ConnManager>
