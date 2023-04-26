@@ -173,25 +173,29 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
 
 
   int num_parameters = model_tmp->Np();
-  if (piroParams->isSublist("Analysis")) {
-    auto analysisParams = piroParams->sublist("Analysis");
-    if (analysisParams.isSublist("ROL")) {
-      auto rolParams = analysisParams.sublist("ROL");
-      if (rolParams.isParameter("Number Of Parameters"))
-        num_parameters = rolParams.get<int>("Number Of Parameters");
-    }
+  if (piroParams->isSublist("Analysis") && piroParams->sublist("Analysis").isSublist("ROL")) {
+    auto rolParams = piroParams->sublist("Analysis").sublist("ROL");
+    if (rolParams.isParameter("Number Of Parameters"))
+      num_parameters = rolParams.get<int>("Number Of Parameters");
   }
+
+  std::vector<int> p_indices(num_parameters);
 
   Teuchos::RCP<Thyra::ModelEvaluator<ST>> model, adjointModel;
 
-  if ( model_tmp->Np() > 1) {
-    std::vector<int> p_indices(num_parameters);
-
+  if (piroParams->isSublist("Analysis") && piroParams->sublist("Analysis").isSublist("ROL")) {
+    auto rolParams = piroParams->sublist("Analysis").sublist("ROL");
     for(int i=0; i<num_parameters; ++i) {
       std::ostringstream ss; ss << "Parameter Vector Index " << i;
-      p_indices[i] = i; //rolParams.get<int>(ss.str(), i);
+      p_indices[i] = rolParams.get<int>(ss.str(), i);
     }
+  } else {
+    for(int i=0; i<num_parameters; ++i) {
+      p_indices[i] = i;
+    }    
+  }
 
+  if ( model_tmp->Np() > 1) {
     model = rcp(new Piro::ProductModelEvaluator<double>(model_tmp,p_indices));
     adjointModel = adjointModel_tmp.is_null() ? Teuchos::null : rcp(new Piro::ProductModelEvaluator<double>(adjointModel_tmp,p_indices));
   }
