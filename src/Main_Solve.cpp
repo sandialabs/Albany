@@ -282,6 +282,11 @@ int main(int argc, char *argv[])
             *out << "\nDistributed Parameter " << i << ", (two-norm): "  << norm2 << std::endl;
           }
         }
+      } else if (num_param_vecs == 0) {
+        for (int i = 0; i < num_p; i++) {
+          ST norm2 = p_prod->getVectorBlock(i)->norm_2();
+          *out << "\nDistributed Parameter " << i << ", (two-norm): "  << norm2 << std::endl;
+        }
       } else {
         // Thyra product vector case
         for (int i = 0; i < num_p; i++) {
@@ -322,7 +327,16 @@ int main(int argc, char *argv[])
       //check sensitivities
       for (int j = 0; j < num_p; j++) {
         std::pair<int,int> sensStatus(0,0);
-        Teuchos::RCP<const Thyra_MultiVector> dgdp = thyraSensitivities[i][j];
+        if (thyraSensitivities[i][0].is_null())
+          continue;
+        Teuchos::RCP<const Thyra_ProductMultiVector> prodvec_thyraSensitivity
+          = Teuchos::rcp_dynamic_cast<const Thyra_ProductMultiVector>(thyraSensitivities[i][0]);
+
+        TEUCHOS_TEST_FOR_EXCEPTION (prodvec_thyraSensitivity.is_null() && num_p != 1, 
+                                    Teuchos::Exceptions::InvalidParameter,
+                                    "Error! thyraSensitivities["<< i <<"][0] is not null and not a Thyra_ProductMultiVector.\n");
+
+        Teuchos::RCP<const Thyra_MultiVector> dgdp = (Teuchos::nonnull(prodvec_thyraSensitivity)) ? prodvec_thyraSensitivity->getMultiVectorBlock(j) : thyraSensitivities[i][0];
         if (Teuchos::nonnull(dgdp)) {
           if (writeToMatrixMarketDgDp) {
             std::string name = "dgdp_" + std::to_string(i) + "_" + std::to_string(j);
