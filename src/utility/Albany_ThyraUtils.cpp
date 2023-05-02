@@ -992,8 +992,11 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Teuchos::RCP<const Thyra_Vector>
     if (!spmd_v.is_null()) {
       spmd_v->getLocalData(Teuchos::outArg(vals));
     } else {
-      // If all the tries above are unsuccessful, throw an error.
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getLocalData! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+      auto prodvec_v = Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(v);
+
+      TEUCHOS_TEST_FOR_EXCEPTION (prodvec_v.is_null(), std::runtime_error, "Error in getLocalData! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (prodvec_v->productSpace()->numBlocks() != 1, std::runtime_error, "Error in getLocalData! The Thyra_Vector is a Thyra_ProductVector but does not have a supported number of blocks.\n");
+      return getLocalData(prodvec_v->getVectorBlock(0));
     }
   }
 
