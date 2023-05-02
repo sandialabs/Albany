@@ -30,6 +30,7 @@
 #include "Teuchos_VerboseObject.hpp"
 
 #include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_DefaultProductMultiVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_MultiVectorStdOps.hpp"
@@ -115,8 +116,10 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
     albanyModel = slvrfctry->createModel(albanyApp);
     solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
 
-    thyraDirections.resize(solver->Np());
-    thyraParameter.resize(solver->Np());
+    n_params = albanyModel->Np();
+
+    thyraDirections.resize(n_params);
+    thyraParameter.resize(n_params);
 
     forwardHasBeenSolved = false;
     inverseHasBeenSolved = false;
@@ -166,8 +169,10 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
     albanyModel = slvrfctry->createModel(albanyApp);
     solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
 
-    thyraDirections.resize(solver->Np());
-    thyraParameter.resize(solver->Np());
+    n_params = albanyModel->Np();
+
+    thyraDirections.resize(n_params);
+    thyraParameter.resize(n_params);
 
     forwardHasBeenSolved = false;
     inverseHasBeenSolved = false;
@@ -231,7 +236,7 @@ Teuchos::RCP<const Tpetra_Map> PyProblem::getParameterMap(const int p_index)
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: getParameterMap");
-    auto p_space = solver->get_p_space(p_index);
+    auto p_space = albanyModel->get_p_space(p_index);
     auto outputMap = Albany::getTpetraMap(p_space);
     stackedTimer->stop("PyAlbany: getParameterMap");
     stackedTimer->stopBaseTimer();
@@ -247,7 +252,7 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<Tpetra_MultiVector
 
     const unsigned int n_directions = direction->getNumVectors();
 
-    for (int l = 0; l < solver->Np(); l++)
+    for (int l = 0; l < n_params; l++)
     {
         if (p_index == l)
         {
@@ -258,7 +263,7 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<Tpetra_MultiVector
         bool is_null = Teuchos::is_null(thyraDirections[l]);
         if (is_null)
         {
-            auto p_space = solver->getNominalValues().get_p(l)->space();
+            auto p_space = albanyModel->getNominalValues().get_p(l)->space();
             thyraDirections[l] = Thyra::createMembers(p_space, n_directions);
             for (size_t i_direction = 0; i_direction < n_directions; i_direction++)
                 thyraDirections[l]->col(i_direction)->assign(0.0);
@@ -289,7 +294,7 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p)
     forwardHasBeenSolved = false;
     inverseHasBeenSolved = false;
 
-    for (int l = 0; l < solver->Np(); l++)
+    for (int l = 0; l < n_params; l++)
     {
         if (p_index == l)
         {
@@ -301,7 +306,7 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p)
         bool is_null = Teuchos::is_null(thyraParameter[l]);
         if (is_null)
         {
-            auto p_space = solver->getNominalValues().get_p(l)->space();
+            auto p_space = albanyModel->getNominalValues().get_p(l)->space();
             thyraParameter[l] = Thyra::createMember(p_space);
             thyraParameter[l]->assign(0.0);
         }
@@ -418,9 +423,45 @@ bool PyProblem::performSolve()
     Teuchos::ParameterList &solveParams =
         slvrfctry->getAnalysisParameters().sublist(
             "Solve", /*mustAlreadyExist =*/false);
+    
+    if (n_params < 2) {
+        Piro::PerformSolve(
+            *solver, solveParams, thyraResponses, thyraSensitivities, thyraDirections, thyraReducedHessian);   
+    }
+    else {
+        Teuchos::Array<Teuchos::Array<Teuchos::RCP<Thyra_MultiVector>>> thyraSensitivities_in;
+        Teuchos::Array<Teuchos::Array<Teuchos::RCP<Thyra_MultiVector>>> thyraReducedHessian_in;
+        Teuchos::Array<Teuchos::RCP<Thyra_MultiVector>> thyraDirections_in;
 
-    Piro::PerformSolve(
-        *solver, solveParams, thyraResponses, thyraSensitivities, thyraDirections, thyraReducedHessian);
+        Teuchos::RCP<Thyra::DefaultProductVectorSpace<double> const> p_space =
+            Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVectorSpace<double> const> (solver->get_p_space(0));
+
+        thyraDirections_in.resize(1);
+
+        if (!thyraDirections[0].is_null())
+            thyraDirections_in[0] = Thyra::defaultProductMultiVector<double>(p_space, thyraDirections());
+
+        Piro::PerformSolve(
+            *solver, solveParams, thyraResponses, thyraSensitivities_in, thyraDirections_in, thyraReducedHessian_in);
+
+        thyraSensitivities.resize(solver->Ng());
+        thyraReducedHessian.resize(solver->Ng());
+
+        for (int g_index = 0; g_index < solver->Ng(); g_index++) {
+            thyraSensitivities[g_index].resize(n_params);
+            thyraReducedHessian[g_index].resize(n_params);
+            Teuchos::RCP<Thyra_ProductMultiVector> prodvec_thyraSensitivity
+                = Teuchos::rcp_dynamic_cast<Thyra_ProductMultiVector>(thyraSensitivities_in[g_index][0]);
+            Teuchos::RCP<Thyra_ProductMultiVector> prodvec_thyraReducedHessian
+                = Teuchos::rcp_dynamic_cast<Thyra_ProductMultiVector>(thyraReducedHessian_in[g_index][0]);
+            for (int j = 0; j < n_params; j++) {
+                if (!prodvec_thyraSensitivity.is_null())
+                    thyraSensitivities[g_index][j] = prodvec_thyraSensitivity->getNonconstMultiVectorBlock(j);
+                if (!prodvec_thyraReducedHessian.is_null())
+                    thyraReducedHessian[g_index][j] = prodvec_thyraReducedHessian->getNonconstMultiVectorBlock(j);
+            }
+        }
+    }
 
     forwardHasBeenSolved = true;
 
@@ -447,8 +488,8 @@ bool PyProblem::performAnalysis()
 
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
-    size_t n_params = solver->Np() > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : solver->Np();
-    for (size_t l = 0; l < n_params; l++)
+    size_t n_params_in = n_params > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : n_params;
+    for (size_t l = 0; l < n_params_in; l++)
     {
         thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);
         albanyModel->setNominalValue(l, thyraParameter[l]);

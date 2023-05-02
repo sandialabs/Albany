@@ -146,6 +146,9 @@ namespace PyAlbany
     private:
         bool forwardHasBeenSolved;
         bool inverseHasBeenSolved;
+
+        int n_params;
+
         Teuchos::RCP<PyParallelEnv> pyParallelEnv;
 
         Teuchos::RCP<Teuchos::StackedTimer> stackedTimer;

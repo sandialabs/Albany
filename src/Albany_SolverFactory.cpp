@@ -116,7 +116,7 @@ setup(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   if(!appParams->sublist("Problem").isSublist("Response Functions"))
      appParams->sublist("Problem").sublist("Response Functions").set("Number Of Responses", 0);
 
-  Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = rcp(new Teuchos::ParameterList());
+  Teuchos::RCP<Teuchos::ParameterList> defaultSolverParams = Teuchos::rcp(new Teuchos::ParameterList());
   setSolverParamDefaults(defaultSolverParams.get(), comm->getRank());
   appParams->setParametersNotAlreadySet(*defaultSolverParams);
 
@@ -196,8 +196,8 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
   }
 
   if ( model_tmp->Np() > 1) {
-    model = rcp(new Piro::ProductModelEvaluator<double>(model_tmp,p_indices));
-    adjointModel = adjointModel_tmp.is_null() ? Teuchos::null : rcp(new Piro::ProductModelEvaluator<double>(adjointModel_tmp,p_indices));
+    model = Teuchos::rcp(new Piro::ProductModelEvaluator<double>(model_tmp,p_indices));
+    adjointModel = adjointModel_tmp.is_null() ? Teuchos::null : Teuchos::rcp(new Piro::ProductModelEvaluator<double>(adjointModel_tmp,p_indices));
   }
   else {
     model = model_tmp;
@@ -264,9 +264,9 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
     const Teuchos::RCP<Thyra_LOWS_Factory> lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
 
-    modelWithSolve = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(model, lowsFactory));
+    modelWithSolve = Teuchos::rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(model, lowsFactory));
     if (adjointModel != Teuchos::null) {
-      adjointModelWithSolve = rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(adjointModel, lowsFactory));
+      adjointModelWithSolve = Teuchos::rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(adjointModel, lowsFactory));
     }
   }
 
@@ -330,7 +330,7 @@ setSolverParamDefaults(Teuchos::ParameterList* appParams,
 Teuchos::RCP<const Teuchos::ParameterList>
 SolverFactory::getValidAppParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidAppParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
 
   validPL->set("Build Type", "Tpetra", "The type of run (e.g., Epetra, Tpetra)");
 
@@ -351,7 +351,7 @@ SolverFactory::getValidAppParameters() const
 Teuchos::RCP<const Teuchos::ParameterList>
 SolverFactory::getValidDebugParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidDebugParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidDebugParams"));
   validPL->set<int>("Write Jacobian to MatrixMarket", 0, "Jacobian Number to Dump to MatrixMarket");
   validPL->set<int>("Compute Jacobian Condition Number", 0, "Jacobian Condition Number to Compute");
   validPL->set<int>("Write Residual to MatrixMarket", 0, "Residual Number to Dump to MatrixMarket");
@@ -373,7 +373,7 @@ SolverFactory::getValidDebugParameters() const
 Teuchos::RCP<const Teuchos::ParameterList>
 SolverFactory::getValidScalingParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidScalingParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidScalingParams"));
   validPL->set<double>("Scale", 0.0, "Value of Scaling to Apply to Jacobian/Residual");
   validPL->set<bool>("Scale BC Dofs", false, "Flag to Scale Jacobian/Residual Rows Corresponding to DBC Dofs");
   validPL->set<std::string>("Type", "Constant", "Scaling Type (Constant, Diagonal, AbsRowSum)");
@@ -383,7 +383,7 @@ SolverFactory::getValidScalingParameters() const
 Teuchos::RCP<const Teuchos::ParameterList>
 SolverFactory::getValidParameterParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidParameterParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidParameterParams"));
   ;
 
   validPL->set<int>("Number", 0);
@@ -397,7 +397,7 @@ SolverFactory::getValidParameterParameters() const
 Teuchos::RCP<const Teuchos::ParameterList>
 SolverFactory::getValidResponseParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList("ValidResponseParams"));
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidResponseParams"));
   validPL->set<int>("Number Of Responses", 0);
   validPL->set<bool>("Observe Responses", true);
   validPL->set<int>("Responses Observation Frequency", 1);
