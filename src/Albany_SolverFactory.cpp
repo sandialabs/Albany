@@ -17,6 +17,7 @@
 #include "Piro_NOXSolver.hpp"
 #include "Piro_SolverFactory.hpp"
 #include "Piro_StratimikosUtils.hpp"
+#include "Piro_ProductModelEval.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
