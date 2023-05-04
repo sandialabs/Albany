@@ -142,7 +142,7 @@ void apply_rotation (std::vector<double> &coor)
     coor[0] = temp[0] ;
   }
   else {
-    ThrowRequireMsg(false, "Spatial Dimension not 1, 2, or 3, can not apply rotation."); // Should never make it here
+    STK_ThrowRequireMsg(false, "Spatial Dimension not 1, 2, or 3, can not apply rotation."); // Should never make it here
   }
   return;
 }

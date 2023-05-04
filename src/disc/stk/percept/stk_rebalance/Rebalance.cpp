@@ -194,7 +194,7 @@ bool stk::rebalance::rebalance(mesh::BulkData   & bulk_data  ,
     if(rebal_elem_weight_ref)
     {
       double * const w = mesh::field_data( *rebal_elem_weight_ref, *iA );
-      ThrowRequireMsg( NULL != w,
+      STK_ThrowRequireMsg( NULL != w,
         "Rebalance weight field is not defined on entities but should be defined on all entities.");
       // Should this be a throw instead???
       if ( *w <= 0.0 ) {
