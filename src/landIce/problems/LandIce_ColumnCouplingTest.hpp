@@ -261,7 +261,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   auto& info = discParams->sublist("Required Fields Info");
   int num_fields = info.get<int>("Number Of Fields",0);
 
-  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
+  for (int ifield=0; ifield<num_fields; ++ifield) {
     Teuchos::ParameterList& thisFieldList =  info.sublist(util::strint("Field", ifield));
 
     // Get current state specs
@@ -343,7 +343,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     int num_ss_fields = ss_info.get<int>("Number Of Fields",0);
 
     Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
-    for (unsigned int ifield=0; ifield<num_ss_fields; ++ifield) {
+    for (int ifield=0; ifield<num_ss_fields; ++ifield) {
       Teuchos::ParameterList& thisFieldList =  ss_info.sublist(util::strint("Field", ifield));
 
       // Get current state specs

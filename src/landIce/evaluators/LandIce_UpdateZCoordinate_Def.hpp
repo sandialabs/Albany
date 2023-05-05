@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
         ref_t vals = topSurface(cell,node);
         vals = lowSurf+h;
 
-        for(std::size_t icomp=0; icomp< numDims; icomp++) {
+        for(int icomp=0; icomp< numDims; icomp++) {
           ref_t val = coordVecOut(cell,node,icomp);
           val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*h)
                            : coordVecIn(cell,node,icomp);

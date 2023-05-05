@@ -64,7 +64,6 @@ evaluateFields (typename Traits::EvalData workset)
   for (auto iside=0; iside<numSides; ++iside) {
     const auto& side = sideSet[iside];
     const int cell = side.ws_elem_idx;
-    const int side_elem_LID = elem_lids(cell);
     const int pos = side.side_pos;
     const auto& node_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
     const int numSideNodes = node_offsets.size();
