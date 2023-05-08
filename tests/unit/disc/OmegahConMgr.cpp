@@ -32,6 +32,7 @@ auto createOmegahConnManager(Omega_h::Library& lib, std::string name) {
   REQUIRE(!name.empty());
   Omega_h::Mesh mesh(&lib);
   Omega_h::binary::read(name, lib.world(), &mesh);
+  mesh.balance(); // re-partition to the number of ranks in world communicator
   return Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
 }
 
