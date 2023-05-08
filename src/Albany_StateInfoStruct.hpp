@@ -46,12 +46,6 @@ using StateArrayVec = std::vector<StateArray>;
 
 struct StateArrays
 {
-  enum StateArrayType
-  {
-    ELEM,
-    NODE
-  };
-
   StateArrayVec elemStateArrays;
   StateArrayVec nodeStateArrays;
 };
@@ -61,6 +55,12 @@ struct StateArrays
 
 struct StateStruct
 {
+  enum StateType
+  {
+    ElemState = 1,
+    NodeState
+  };
+  
   enum MeshFieldEntity
   {
     WorksetValue,

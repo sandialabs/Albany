@@ -3205,7 +3205,7 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);
 
-  workset.stateArrayPtr = &disc->getStateArrays(StateArrays::ELEM)[ws];
+  workset.stateArrayPtr = &disc->getStateArrays(StateStruct::ElemState)[ws];
 }
 
 void

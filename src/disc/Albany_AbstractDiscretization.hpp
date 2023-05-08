@@ -239,8 +239,8 @@ public:
   getStateArrays() = 0;
 
   //! Get stateArray of given type
-  StateArrayVec& getStateArrays(const StateArrays::StateArrayType type) {
-    if (type==StateArrays::ELEM) {
+  StateArrayVec& getStateArrays(const StateStruct::StateType type) {
+    if (type==StateStruct::ElemState) {
       return getStateArrays().elemStateArrays;
     } else {
       return getStateArrays().nodeStateArrays;
