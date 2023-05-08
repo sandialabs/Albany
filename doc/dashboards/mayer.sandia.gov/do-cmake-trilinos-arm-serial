@@ -67,8 +67,6 @@ cmake \
     \
     -DTPL_ENABLE_Matio=OFF \
     -DTrilinos_ENABLE_TESTS:BOOL=OFF \
-    -DTrilinos_ENABLE_MiniTensor:BOOL=ON \
-    -DTrilinos_ENABLE_TriKota:BOOL=OFF \
     -DTrilinos_ENABLE_Teuchos:BOOL=ON \
     -DTrilinos_ENABLE_Shards:BOOL=ON \
     -DTrilinos_ENABLE_Sacado:BOOL=ON \
@@ -84,7 +82,6 @@ cmake \
     -DTrilinos_ENABLE_Phalanx:BOOL=ON \
     -DPhalanx_ENABLE_TESTS:BOOL=ON \
     -DPhalanx_ENABLE_EXAMPLES:BOOL=ON \
-    -DTrilinos_ENABLE_Intrepid:BOOL=ON \
     -DTrilinos_ENABLE_Intrepid2:BOOL=ON \
     -DIntrepid2_ENABLE_TESTS:BOOL=ON \
     -DIntrepid2_ENABLE_EXAMPLES:BOOL=ON \
@@ -92,7 +89,6 @@ cmake \
     -DTrilinos_ENABLE_NOX:BOOL=ON \
     -DTrilinos_ENABLE_Stratimikos:BOOL=ON \
     -DTrilinos_ENABLE_Thyra:BOOL=ON \
-    -DTrilinos_ENABLE_Rythmos:BOOL=ON \
     -DTrilinos_ENABLE_GlobiPack:BOOL=ON \
     -DTrilinos_ENABLE_MOOCHO:BOOL=ON \
     -DTrilinos_ENABLE_Stokhos:BOOL=OFF \

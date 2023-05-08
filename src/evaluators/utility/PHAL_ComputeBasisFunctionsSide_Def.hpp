@@ -66,7 +66,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   effectiveCoordDim = p.get<bool>("Side Set Is Planar") ? 2 : numCellDims;
 
   cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side");
-  intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid Basis Side");
+  intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis Side");
 
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -233,7 +233,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  //TODO: use Intrepid routines as much as possible
+  //TODO: use Intrepid2 routines as much as possible
   if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
     return;
 

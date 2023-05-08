@@ -25,14 +25,6 @@ do
 done
 
 #
-# Do Dakota checkout
-#
-if [ ${TRILINOS_TRIKOTA:-OFF} = "ON" ]
-then
-    $ALBDIR/tools/checkout_scripts/dakota-checkout 2>&1 | tee $DAKOUTDIR/checkout
-fi
-
-#
 # Do Trilinos build
 #
 

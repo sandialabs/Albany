@@ -777,14 +777,6 @@ IF (ENABLE_MESHDB_TOOLS)
   SET(ALBANY_MESHDB_TOOLS TRUE)
 ENDIF()
 
-# Repeat this warning.
-
-IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA)
-  MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with
-ENABLE_ALBANY_EPETRA turned off!  Turn on ENABLE_ALBANY_EPETRA if you
-want to useTriKota.")
-ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA)
-
 # add a target to generate API documentation with Doxygen
 IF( NOT DISABLE_DOXYGEN )
   find_package(Doxygen)

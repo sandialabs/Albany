@@ -98,7 +98,6 @@ cmake \
     -DTrilinos_ENABLE_EpetraExt:BOOL=ON \
     -DTrilinos_ENABLE_Ifpack2:BOOL=ON \
     -DTrilinos_ENABLE_Ifpack:BOOL=ON \
-    -DTrilinos_ENABLE_Intrepid:BOOL=ON \
     -DTrilinos_ENABLE_Intrepid2:BOOL=ON \
     -DTrilinos_ENABLE_Kokkos:BOOL=ON \
     -DTrilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
@@ -106,7 +105,6 @@ cmake \
     -DTrilinos_ENABLE_KokkosCore:BOOL=ON \
     -DTrilinos_ENABLE_ML:BOOL=OFF \
     -DTrilinos_ENABLE_OpenMP:BOOL=OFF \
-    -DTrilinos_ENABLE_MiniTensor:BOOL=ON \
     -DTrilinos_ENABLE_MueLu:BOOL=ON \
     -DMueLu_ENABLE_Tutorial:BOOL=OFF \
     -DTrilinos_ENABLE_NOX:BOOL=ON \
@@ -115,7 +113,6 @@ cmake \
     -DTrilinos_ENABLE_Phalanx:BOOL=ON \
     -DTrilinos_ENABLE_Piro:BOOL=ON \
     -DTrilinos_ENABLE_ROL:BOOL=ON \
-    -DTrilinos_ENABLE_Rythmos:BOOL=ON \
     -DTrilinos_ENABLE_SEACAS:BOOL=ON \
     -DTrilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \
     -DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF \

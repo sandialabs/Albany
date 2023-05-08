@@ -183,8 +183,6 @@ if (BUILD_TRILINOS)
     #
     "-DTPL_ENABLE_Matio=OFF"
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
-    "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
-    "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
     "-DTrilinos_ENABLE_Shards:BOOL=ON"
     "-DTrilinos_ENABLE_Sacado:BOOL=ON"
@@ -208,7 +206,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
-    "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTrilinos_ENABLE_PanzerExprEval:BOOL=ON"

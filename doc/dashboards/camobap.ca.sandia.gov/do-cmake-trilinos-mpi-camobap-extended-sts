@@ -19,9 +19,6 @@
 # Boost is required, but just needs to be unpacked,
 # not compiled. Version _1_40 or newer.
 #
-# There are two optional build choices, commented below
-#   these are for Dakota and Exodus I/O capabilites.
-#
 # Albany automatically queries the Trilinos build to 
 # know if these capabilities are enabled or disabled.
 #
@@ -62,7 +59,6 @@ cmake -G Ninja \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
-      -D Rythmos_ENABLE_TESTS:BOOL=OFF \
       -D ROL_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -82,13 +78,11 @@ cmake -G Ninja \
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
       -D Ifpack2_ENABLE_TESTS:BOOL=ON \
-      -D Trilinos_ENABLE_Intrepid:BOOL=OFF \
       -D Trilinos_ENABLE_Intrepid2:BOOL=OFF \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Kokkos_ENABLE_SERIAL:BOOL=ON \
       -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
       -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
-      -D Trilinos_ENABLE_MiniTensor:BOOL=OFF \
       -D Trilinos_ENABLE_ML:BOOL=OFF \
       -D Trilinos_ENABLE_MueLu:BOOL=OFF \
       -D Trilinos_ENABLE_NOX:BOOL=OFF \
@@ -98,7 +92,6 @@ cmake -G Ninja \
       -D Trilinos_ENABLE_Piro:BOOL=OFF \
       -D Anasazi_ENABLE_RBGen:BOOL=OFF \
       -D Trilinos_ENABLE_ROL:BOOL=OFF \
-      -D Trilinos_ENABLE_Rythmos:BOOL=OFF \
       -D Trilinos_ENABLE_Sacado:BOOL=OFF \
       -D Trilinos_ENABLE_SEACAS:BOOL=OFF \
       -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=OFF \
@@ -124,7 +117,6 @@ cmake -G Ninja \
       -D Trilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
       -D Trilinos_ENABLE_TrilinosCouplings:BOOL=OFF \
-      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan2:BOOL=OFF\
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=OFF \

@@ -58,7 +58,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
-      -D Rythmos_ENABLE_TESTS:BOOL=OFF \
       -D ROL_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
@@ -80,7 +79,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
-      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
@@ -90,7 +88,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
       -D Kokkos_ENABLE_Pthread:BOOL=OFF \
       -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
-      -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
@@ -100,7 +97,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Anasazi_ENABLE_RBGen:BOOL=ON \
       -D Trilinos_ENABLE_ROL:BOOL=ON \
-      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
       -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
@@ -118,7 +114,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
       -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
-      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON\
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
@@ -150,13 +145,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
 #
 # Optional build capabilities:
-# (1) TriKota is a Trilinos package that builds the
-#     Dakota libraries, for optimization and UQ. See
-#     TriKota web page for how to unpack Dakota.
-#
-#        -D Trilinos_ENABLE_TriKota:BOOL=ON \
-#
-# (2) These 6 lines regarding  SEACAS/netcdf  are needed
+# (1) These 6 lines regarding  SEACAS/netcdf  are needed
 #     for reading exodus meshes, but require an
 #     installed netcdf. Also used for Pamgen meshes.
 #        -D Trilinos_ENABLE_SEACAS:BOOL=ON \

@@ -83,7 +83,6 @@ cmake \
     -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
     -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
     -D Trilinos_ENABLE_Ifpack:BOOL=ON \
-    -D Trilinos_ENABLE_Intrepid:BOOL=ON \
     -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
     -D Trilinos_ENABLE_Kokkos:BOOL=ON \
     -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
@@ -91,7 +90,6 @@ cmake \
     -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
     -D Trilinos_ENABLE_ML:BOOL=ON \
     -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
-    -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
     -D Trilinos_ENABLE_MueLu:BOOL=ON \
     -D MueLu_ENABLE_Tutorial:BOOL=OFF \
     -D Trilinos_ENABLE_NOX:BOOL=ON \
@@ -100,7 +98,6 @@ cmake \
     -D Trilinos_ENABLE_Phalanx:BOOL=ON \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
     -D Trilinos_ENABLE_ROL:BOOL=OFF \
-    -D Trilinos_ENABLE_Rythmos:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=OFF \
     -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \

@@ -63,7 +63,6 @@ cmake \
 \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
- -D MiniTensor_ENABLE_TESTS:BOOL=ON \
  -D ROL_ENABLE_TESTS:BOOL=OFF \
  -D Phalanx_INDEX_SIZE_TYPE:STRING="lcm_phalanx_index_type" \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="lcm_kokkos_device" \
@@ -99,7 +98,6 @@ cmake \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
- -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
  -D Trilinos_ENABLE_ML:BOOL=ON \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
@@ -109,7 +107,6 @@ cmake \
  -D Trilinos_ENABLE_Phalanx:BOOL=ON \
  -D Trilinos_ENABLE_Piro:BOOL=ON \
  -D Trilinos_ENABLE_ROL:BOOL=ON \
- -D Trilinos_ENABLE_Rythmos:BOOL=ON \
  -D Trilinos_ENABLE_SEACAS:BOOL=ON \
  -D Trilinos_ENABLE_STKClassic:BOOL=OFF \
  -D Trilinos_ENABLE_STKIO:BOOL=ON \

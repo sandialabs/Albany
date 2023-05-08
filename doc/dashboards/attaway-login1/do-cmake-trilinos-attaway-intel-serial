@@ -93,7 +93,6 @@ cmake -GNinja \
       -D Trilinos_ENABLE_Phalanx=ON \
       -D Trilinos_ENABLE_Piro=ON \
       -D Trilinos_ENABLE_ROL=ON \
-      -D Trilinos_ENABLE_Rythmos=ON \
       -D Trilinos_ENABLE_SEACAS=ON \
       -D Trilinos_ENABLE_SEACASAprepro_lib=ON \
       -D Trilinos_ENABLE_STK=ON \

@@ -32,7 +32,6 @@ cmake \
     -D Trilinos_ENABLE_Kokkos:BOOL=ON \
     -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
     -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
-    -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
     -D Trilinos_ENABLE_ML:BOOL=ON \
     -D Trilinos_ENABLE_MueLu:BOOL=ON \
     -D MueLu_ENABLE_TESTS:BOOL=OFF \
@@ -53,7 +52,6 @@ cmake \
     -D Kokkos_ENABLE_Serial:BOOL=ON \
     -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
     -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-    -D Trilinos_ENABLE_TriKota:BOOL=OFF \
     -D TPL_ENABLE_BLAS:BOOL=ON \
     -D BLAS_LIBRARY_NAMES:STRING='' \
     -D LAPACK_LIBRARY_NAMES:STRING='' \
@@ -94,7 +92,6 @@ cmake \
     -D Trilinos_ENABLE_Intrepid:BOOL=ON \
     -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
     -D Trilinos_ENABLE_NOX:BOOL=ON \
-    -D Trilinos_ENABLE_Rythmos:BOOL=ON \
     -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
     -D Trilinos_ENABLE_Teko:BOOL=ON \
@@ -106,7 +103,6 @@ cmake \
     -D Ifpack_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
     -D NOX_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
     -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=OFF \
-    -D Rythmos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
     -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
     -D Thyra_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
     -D Tempus_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
