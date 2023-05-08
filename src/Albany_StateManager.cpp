@@ -458,24 +458,26 @@ StateManager::doSetStateArrays(
           esa[ws][stateName].dimensions(dims);
           int size = dims.size();
 
+          auto& esa_h = esa[ws][stateName].host();
+
           if (init_type == "scalar") {
             switch (size) {
               case 1:
                 for (size_t cell = 0; cell < dims[0]; ++cell)
-                  esa[ws][stateName](cell) = init_val;
+                  esa_h(cell) = init_val;
                 break;
 
               case 2:
                 for (size_t cell = 0; cell < dims[0]; ++cell)
                   for (size_t qp = 0; qp < dims[1]; ++qp)
-                    esa[ws][stateName](cell, qp) = init_val;
+                    esa_h(cell, qp) = init_val;
                 break;
 
               case 3:
                 for (size_t cell = 0; cell < dims[0]; ++cell)
                   for (size_t qp = 0; qp < dims[1]; ++qp)
                     for (size_t i = 0; i < dims[2]; ++i)
-                      esa[ws][stateName](cell, qp, i) = init_val;
+                      esa_h(cell, qp, i) = init_val;
                 break;
 
               case 4:
@@ -483,7 +485,7 @@ StateManager::doSetStateArrays(
                   for (size_t qp = 0; qp < dims[1]; ++qp)
                     for (size_t i = 0; i < dims[2]; ++i)
                       for (size_t j = 0; j < dims[3]; ++j)
-                        esa[ws][stateName](cell, qp, i, j) = init_val;
+                        esa_h(cell, qp, i, j) = init_val;
                 break;
 
               case 5:
@@ -492,7 +494,7 @@ StateManager::doSetStateArrays(
                     for (size_t i = 0; i < dims[2]; ++i)
                       for (size_t j = 0; j < dims[3]; ++j)
                         for (size_t k = 0; k < dims[4]; ++k)
-                          esa[ws][stateName](cell, qp, i, j, k) = init_val;
+                          esa_h(cell, qp, i, j, k) = init_val;
                 break;
 
               default:
@@ -519,10 +521,11 @@ StateManager::doSetStateArrays(
                 for (size_t i = 0; i < dims[2]; ++i)
                   for (size_t j = 0; j < dims[3]; ++j)
                     if (i == j)
-                      esa[ws][stateName](cell, qp, i, i) = 1.0;
+                      esa_h(cell, qp, i, i) = 1.0;
                     else
-                      esa[ws][stateName](cell, qp, i, j) = 0.0;
+                      esa_h(cell, qp, i, j) = 0.0;
           }
+          esa[ws][stateName].sync_to_dev();
         }
         break;
 
@@ -554,23 +557,25 @@ StateManager::doSetStateArrays(
           nsa[ws][stateName].dimensions(dims);
           int size = dims.size();
 
+          auto& nsa_h = nsa[ws][stateName].host();
+
           if (init_type == "scalar") switch (size) {
               case 1:  // node scalar
                 for (size_t node = 0; node < dims[0]; ++node)
-                  nsa[ws][stateName](node) = init_val;
+                  nsa_h(node) = init_val;
                 break;
 
               case 2:  // node vector
                 for (size_t node = 0; node < dims[0]; ++node)
                   for (size_t dim = 0; dim < dims[1]; ++dim)
-                    nsa[ws][stateName](node, dim) = init_val;
+                    nsa_h(node, dim) = init_val;
                 break;
 
               case 3:  // node tensor
                 for (size_t node = 0; node < dims[0]; ++node)
                   for (size_t dim = 0; dim < dims[1]; ++dim)
                     for (size_t i = 0; i < dims[2]; ++i)
-                      nsa[ws][stateName](node, dim, i) = init_val;
+                      nsa_h(node, dim, i) = init_val;
                 break;
 
               default:
@@ -594,10 +599,11 @@ StateManager::doSetStateArrays(
               for (size_t i = 0; i < dims[1]; ++i)
                 for (size_t j = 0; j < dims[2]; ++j)
                   if (i == j)
-                    nsa[ws][stateName](node, i, i) = 1.0;
+                    nsa_h(node, i, i) = 1.0;
                   else
-                    nsa[ws][stateName](node, i, j) = 0.0;
+                    nsa_h(node, i, j) = 0.0;
           }
+          nsa[ws][stateName].sync_to_dev();
         }
         break;
 

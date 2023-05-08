@@ -116,52 +116,47 @@ saveElemState(typename Traits::EvalData workset)
 {
   // Get shards Array (from STK) for this state
   // Need to check if we can just copy full size -- can assume same ordering?
-  Albany::StateArray::const_iterator it;
-  it = workset.stateArrayPtr->find(stateName);
-
+  auto it = workset.stateArrayPtr->find(stateName);
   TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
          std::endl << "Error: cannot locate " << stateName << " in PHAL_SaveStateField_Def" << std::endl);
 
-  Albany::MDArray sta = it->second;
-  std::vector<PHX::DataLayout::size_type> dims;
-  sta.dimensions(dims);
-  int size = dims.size();
-
-  switch (size) {
+  auto state = it->second.host();
+  switch (state.rank()) {
   case 1:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
-    sta(cell) = field(cell);
+    state(cell) = field(cell);
     break;
   case 2:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
-      for (unsigned int qp = 0; qp < dims[1]; ++qp)
-        sta(cell, qp) = field(cell,qp);;
+      for (unsigned int qp = 0; qp < state.extent(1); ++qp)
+        state(cell, qp) = field(cell,qp);;
     break;
   case 3:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
-      for (unsigned int qp = 0; qp < dims[1]; ++qp)
-        for (unsigned int i = 0; i < dims[2]; ++i)
-          sta(cell, qp, i) = field(cell,qp,i);
+      for (unsigned int qp = 0; qp < state.extent(1); ++qp)
+        for (unsigned int i = 0; i < state.extent(2); ++i)
+          state(cell, qp, i) = field(cell,qp,i);
     break;
   case 4:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
-      for (unsigned int qp = 0; qp < dims[1]; ++qp)
-        for (unsigned int i = 0; i < dims[2]; ++i)
-          for (unsigned int j = 0; j < dims[3]; ++j)
-            sta(cell, qp, i, j) = field(cell,qp,i,j);
+      for (unsigned int qp = 0; qp < state.extent(1); ++qp)
+        for (unsigned int i = 0; i < state.extent(2); ++i)
+          for (unsigned int j = 0; j < state.extent(3); ++j)
+            state(cell, qp, i, j) = field(cell,qp,i,j);
     break;
   case 5:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
-      for (unsigned int qp = 0; qp < dims[1]; ++qp)
-        for (unsigned int i = 0; i < dims[2]; ++i)
-          for (unsigned int j = 0; j < dims[3]; ++j)
-            for (unsigned int k = 0; k < dims[4]; ++k)
-            sta(cell, qp, i, j, k) = field(cell,qp,i,j,k);
+      for (unsigned int qp = 0; qp < state.extent(1); ++qp)
+        for (unsigned int i = 0; i < state.extent(2); ++i)
+          for (unsigned int j = 0; j < state.extent(3); ++j)
+            for (unsigned int k = 0; k < state.extent(4); ++k)
+            state(cell, qp, i, j, k) = field(cell,qp,i,j,k);
     break;
   default:
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>5,
-                        "Unexpected Array dimensions in SaveStateField: " << size);
+    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,
+                        "Unexpected state rank in SaveStateField: " << state.rank());
   }
+  it->second.sync_to_dev();
 }
 
 template<typename Traits>
@@ -170,31 +165,26 @@ saveWorksetState(typename Traits::EvalData workset)
 {
   // Get shards Array (from STK) for this state
   // Need to check if we can just copy full size -- can assume same ordering?
-  Albany::StateArray::const_iterator it;
-  it = workset.stateArrayPtr->find(stateName);
-
+  auto it = workset.stateArrayPtr->find(stateName);
   TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
          std::endl << "Error: cannot locate " << stateName << " in PHAL_SaveStateField_Def" << std::endl);
 
-  Albany::MDArray sta = it->second;
-  std::vector<PHX::DataLayout::size_type> dims;
-  sta.dimensions(dims);
-  int size = dims.size();
-
-  switch (size) {
+  auto state = it->second.host();
+  switch (state.rank()) {
   case 1:
-    for (unsigned int cell = 0; cell < dims[0]; ++cell)
-    sta(cell) = field(cell);
+    for (unsigned int cell = 0; cell < state.extent(0); ++cell)
+    state(cell) = field(cell);
     break;
   case 2:
-    for (unsigned int cell = 0; cell < dims[0]; ++cell)
-      for (unsigned int qp = 0; qp < dims[1]; ++qp)
-        sta(cell, qp) = field(cell,qp);;
+    for (unsigned int cell = 0; cell < state.extent(0); ++cell)
+      for (unsigned int qp = 0; qp < state.extent(1); ++qp)
+        state(cell, qp) = field(cell,qp);;
     break;
   default:
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>5,
-                        "Unexpected (workset) Array dimensions in SaveStateField: " << size);
+    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,
+                        "Unexpected state rank in SaveStateField: " << state.rank());
   }
+  it->second.sync_to_dev();
 }
 
 template<typename Traits>

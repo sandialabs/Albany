@@ -11,7 +11,7 @@
 #include "Albany_BucketArray.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
-#include "Albany_StateInfoStruct.hpp" // For MDArray
+#include "Albany_StateInfoStruct.hpp" // For StateView
 
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -32,7 +32,7 @@ public:
   AbstractSTKNodeFieldContainer () = default;
   virtual ~AbstractSTKNodeFieldContainer () = default;
 
-  virtual MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
+  virtual StateView getMDA(const stk::mesh::Bucket& buck) = 0;
 };
 
 Teuchos::RCP<AbstractNodeFieldContainer>
@@ -63,7 +63,7 @@ public:
 
   virtual ~STKNodeField () = default;
 
-  MDArray getMDA(const stk::mesh::Bucket& buck) override;
+  StateView getMDA(const stk::mesh::Bucket& buck) override;
 
 private:
 

@@ -93,13 +93,10 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
       }
     }
   } else {
-    Albany::StateArray::const_iterator it;
-    it = workset.stateArrayPtr->find(*dispVecName);
+    TEUCHOS_TEST_FOR_EXCEPTION((workset.stateArrayPtr->count(*dispVecName)==1), std::logic_error,
+           "Error: cannot locate " << *dispVecName << " in PHAL::GatherCoordinateVector\n");
 
-    TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
-           std::endl << "Error: cannot locate " << *dispVecName << " in PHAL_GatherCoordinateVector_Def" << std::endl);
-
-    Albany::MDArray dVec = it->second;
+    auto dVec = workset.stateArrayPtr->at(*dispVecName).host();
 
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t node = 0; node < numVertices; ++node) {
@@ -144,14 +141,10 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
       }
     }
   } else {
-    Albany::StateArray::const_iterator it;
-    it = workset.stateArrayPtr->find(*dispVecName);
+    TEUCHOS_TEST_FOR_EXCEPTION((workset.stateArrayPtr->count(*dispVecName)==1), std::logic_error,
+           "Error: cannot locate " << *dispVecName << " in PHAL::GatherCoordinateVector\n");
 
-    TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
-           std::endl << "Error: cannot locate " << *dispVecName << " in PHAL_GatherCoordinateVector_Def" << std::endl);
-
-    Albany::MDArray dVec = it->second;
-
+    auto dVec = workset.stateArrayPtr->at(*dispVecName).host();
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t node = 0; node < numVertices; ++node) {
         for (std::size_t eq=0; eq < numDim; ++eq) {
@@ -169,7 +162,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   } 
   // Kokkos::deep_copy (coordVec.get_view(), coordVecHost);
   Kokkos::deep_copy (coordVec.get_static_view(), coordVecHost);
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+}
 
-#endif
-}
-}
+} // namespace PHAL
