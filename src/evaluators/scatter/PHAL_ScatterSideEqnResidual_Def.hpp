@@ -346,7 +346,7 @@ doEvaluateFields(typename Traits::EvalData workset,
     // Note: we couple the eq with ALL other dofs on the side, so loop on [0,neq)
     for (int eq=0; eq<neq; ++eq) {
       const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side.side_pos);
-      for (unsigned inode=0; inode<numNodes; ++inode){
+      for (int inode=0; inode<numNodes; ++inode){
         cols[neq * inode + eq] = dof_lids(offsets[inode]);
       }
     }

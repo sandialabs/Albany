@@ -82,7 +82,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell = 0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
-    for (std::size_t node=0; node<this->numNodes; ++node) {
+    for (int node=0; node<this->numNodes; ++node) {
       const LO lid = dof_lids(node);
       this->val(cell,node) = lid>=0 ? p_data[lid] : 0;
     }
@@ -256,7 +256,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const auto elem_LID = elem_lids(cell);
       const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
-      for (std::size_t node=0; node<this->numNodes; ++node) {
+      for (int node=0; node<this->numNodes; ++node) {
         const LO lid = p_dof_lids(node);
         this->val(cell,node) = lid>=0 ? p_data[lid] : 0;
       }

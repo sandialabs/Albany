@@ -26,7 +26,7 @@ template<typename Vec1,
 bool sameAs(const Vec1& lhs,
             const Vec2& rhs)
 {
-  if (lhs.size()!=rhs.size()) return false;
+  if ((long int)lhs.size()!=(long int)rhs.size()) return false;
 
   for (auto l : lhs) {
     auto it = std::find(rhs.begin(),rhs.end(),l);

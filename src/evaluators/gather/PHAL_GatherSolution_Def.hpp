@@ -222,7 +222,7 @@ gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr) {
     m_fields_offsets.resize("",numNodes,neq);
     for (int fid=0; fid<neq; ++fid) {
       auto panzer_offsets = dof_mgr->getGIDFieldOffsets(fid);
-      ALBANY_ASSERT (panzer_offsets.size()==numNodes,
+      ALBANY_ASSERT ((int)panzer_offsets.size()==numNodes,
           "Something is amiss: panzer field offsets has size != numNodes.\n");
       for (int node=0; node<numNodes; ++node) {
         m_fields_offsets.host()(node,fid) = panzer_offsets[node];
@@ -441,7 +441,6 @@ evaluateFields(typename Traits::EvalData workset)
 #else
 
   // Get dimensions and coefficients
-  const auto neq = dof_mgr->getNumFields();
   const auto j_coeff = workset.j_coeff;
   const auto m_coeff = workset.m_coeff;
   const auto n_coeff = workset.n_coeff;

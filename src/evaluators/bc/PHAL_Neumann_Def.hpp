@@ -786,7 +786,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (unsigned node=0; node<this->numNodes; ++node) {
+    for (int node=0; node<this->numNodes; ++node) {
       for (int dim=0; dim<this->numDOFsSet; ++dim) {
         const int eq = this->offset[dim];
         f_nonconstView[dof_lids(offsets[node][eq])] += this->neumann(cell,node,dim);

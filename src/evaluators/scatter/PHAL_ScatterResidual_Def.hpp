@@ -54,7 +54,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     numFields = names.size();
     const std::size_t num_val = numFields;
     val.resize(num_val);
-    for (std::size_t eq = 0; eq < numFields; ++eq) {
+    for (int eq = 0; eq < numFields; ++eq) {
       PHX::MDField<ScalarT const,Cell,Node> mdf(names[eq],dl->node_scalar);
       val[eq] = mdf;
       this->addDependentField(val[eq]);
@@ -134,7 +134,7 @@ gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr) {
     m_fields_offsets.resize("",numNodes,neq);
     for (int fid=0; fid<neq; ++fid) {
       auto panzer_offsets = dof_mgr->getGIDFieldOffsets(fid);
-      ALBANY_ASSERT (panzer_offsets.size()==numNodes,
+      ALBANY_ASSERT ((int)panzer_offsets.size()==numNodes,
           "Something is amiss: panzer field offsets has size != numNodes.\n");
       for (int node=0; node<numNodes; ++node) {
         m_fields_offsets.host()(node,fid) = panzer_offsets[node];
@@ -938,7 +938,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
     const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
     const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
     const auto do_nodes = [&] (const std::vector<int>& offsets) {
-      for (int node=0; node<numSideNodes; ++node) {
+      for (std::size_t node=0; node<numSideNodes; ++node) {
         const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[node]);
         if (row>=0) {
           const auto& dx = value.dx(offsets[node]).dx(0);

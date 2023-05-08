@@ -42,12 +42,12 @@ private:
   using ScalarT     = typename EvalT::ScalarT;
 
   // Input:
+  PHX::MDField<const ScalarT>       u;  
+  PHX::MDField<const ScalarT>       grad_u;
   PHX::MDField<const RealType>      BF;
   PHX::MDField<const MeshScalarT>   GradBF;
   PHX::MDField<const MeshScalarT>   w_measure;
   PHX::MDField<const MeshScalarT>   metric; // Only used if sideSetEquation=true
-  PHX::MDField<const ScalarT>       u;
-  PHX::MDField<const ScalarT>       grad_u;
 
   // Output: <Cell,Node> when in 2D, <Side,Node> when in 3d
   PHX::MDField<ScalarT>             residual;
