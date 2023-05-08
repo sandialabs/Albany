@@ -193,15 +193,6 @@ public:
   Teuchos::RCP<Adapt::NodalDataBase>     nodal_data_base;
 };
 
-void
-printStateArrays(StateArrays const& sa, std::string const& where = "");
-
-void
-printElementStates(StateArrays const& sa);
-
-void
-printNodeStates(StateArrays const& sa);
-
 }  // namespace Albany
 
 #endif  // ALBANY_STATEINFOSTRUCT
