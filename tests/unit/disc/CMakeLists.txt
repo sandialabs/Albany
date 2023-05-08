@@ -9,6 +9,11 @@ get_filename_component(parentDirName ${parentPath} NAME)
 get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${parentDirName}_${dirName})
 
+# Copy mesh files from source to binary dir
+set(meshName "gis_unstruct_basal_populated.osh")
+file(COPY        ${CMAKE_CURRENT_SOURCE_DIR}/OmegahMeshes/${meshName}
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 #################################################
 #          STK Discretization tests             #
 #################################################
@@ -16,6 +21,10 @@ set (testNameRoot ${parentDirName}_${dirName})
 create_unit_test (NAME    STKDisc
                   PREFIX  ${testNameRoot}
                   SOURCES STKDisc.cpp)
+
+#################################################
+#          Omega_h Discretization tests         #
+#################################################
 
 if (ENABLE_OMEGAH)
   create_unit_test (NAME    OmegahConMgr
