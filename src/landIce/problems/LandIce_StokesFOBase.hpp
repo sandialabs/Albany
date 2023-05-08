@@ -1280,7 +1280,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Weights Name",Albany::weights_name);
     p->set("Weights Layout", dl->qp_scalar);
     p->set("Field Layout", dl->cell_scalar2);
-    p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
@@ -1305,7 +1304,6 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p = stateMgr.registerStateVariable(stateName, dl->cell_tensor, meshSpecs.ebName, true, &entity);
     p->set< Teuchos::RCP<PHX::DataLayout> >("State Field Layout",dl->cell_tensor);
     p->set<std::string>("Field Name", "Stress Tensor");
-    p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -1366,7 +1364,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Delta Time Name", "Delta Time");
     ev = Teuchos::rcp(new Time<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerStateVariable("Time", dl->workset_scalar, dl->dummy, meshSpecs.ebName, "scalar", 0.0, true);
+    p = stateMgr.registerStateVariable("Time", dl->workset_scalar, meshSpecs.ebName, "scalar", 0.0, true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }

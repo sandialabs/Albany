@@ -33,61 +33,25 @@ namespace Albany {
 
 class StateManager
 {
- public:
-  enum SAType
-  {
-    ELEM,
-    NODE
-  };
-
+public:
   StateManager();
 
-  ~StateManager(){};
+  ~StateManager() = default;
 
-  typedef std::map<std::string, Teuchos::RCP<PHX::DataLayout>> RegisteredStates;
-
-  /// Method to call multiple times (before allocate) to register which states
-  /// will be saved.
-  void
+  // Register a state (may be called multiple times)
+  Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(
       const std::string&                   stateName,
       const Teuchos::RCP<PHX::DataLayout>& dl,
       const std::string&                   ebName,
       const std::string&                   init_type           = "scalar",
       const double                         init_val            = 0.0,
-      const bool                           registerOldState    = false,
       const bool                           outputToExodus      = true,
       const std::string&                   responseIDtoRequire = "",
       StateStruct::MeshFieldEntity const*  fieldEntity         = 0,
       const std::string&                   meshPartName        = "");
 
-  void
-  registerNodalVectorStateVariable(
-      const std::string&                   stateName,
-      const Teuchos::RCP<PHX::DataLayout>& dl,
-      const std::string&                   ebName,
-      const std::string&                   init_type           = "scalar",
-      const double                         init_val            = 0.0,
-      const bool                           registerOldState    = false,
-      const bool                           outputToExodus      = true,
-      const std::string&                   responseIDtoRequire = "");
-
-  /// Method to call multiple times (before allocate) to register which states
-  /// will be saved.
-  /// Returns param vector with all info to build a SaveStateField or
-  /// LoadStateField evaluator
-  Teuchos::RCP<Teuchos::ParameterList>
-  registerStateVariable(
-      const std::string&                   name,
-      const Teuchos::RCP<PHX::DataLayout>& dl,
-      const Teuchos::RCP<PHX::DataLayout>& dummy,
-      const std::string&                   ebName,
-      const std::string&                   init_type        = "scalar",
-      const double                         init_val         = 0.0,
-      const bool                           registerOldState = false);
-
-  // Field entity is known. Useful for NodalDataToElemNode field. Input dl is of
-  // ElemNode type
+  // Shortcut: allow to specify fieldEntity without bothering with initialization options
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(
       const std::string&                   stateName,
@@ -97,48 +61,22 @@ class StateManager
       StateStruct::MeshFieldEntity const*  fieldEntity,
       const std::string&                   meshPartName = "");
 
-  /// If field name to save/load is different from state name
+  // Register state living on side set (may be called multiple times)
   Teuchos::RCP<Teuchos::ParameterList>
-  registerStateVariable(
+  registerSideSetStateVariable(
+      const std::string&                   sideSetName,
       const std::string&                   stateName,
+      const std::string&                   fieldName,
       const Teuchos::RCP<PHX::DataLayout>& dl,
-      const Teuchos::RCP<PHX::DataLayout>& dummy,
       const std::string&                   ebName,
       const std::string&                   init_type,
       const double                         init_val,
-      const bool                           registerOldState,
-      const std::string&                   fieldName);
+      const bool                           outputToExodus,
+      const std::string&                   responseIDtoRequire,
+      StateStruct::MeshFieldEntity const*  fieldEntity,
+      const std::string&                   meshPartName = "");
 
-  /// If you want to give more control over whether or not to output to Exodus
-  Teuchos::RCP<Teuchos::ParameterList>
-  registerStateVariable(
-      const std::string&                   stateName,
-      const Teuchos::RCP<PHX::DataLayout>& dl,
-      const Teuchos::RCP<PHX::DataLayout>& dummy,
-      const std::string&                   ebName,
-      const std::string&                   init_type,
-      const double                         init_val,
-      const bool                           registerOldState,
-      const bool                           outputToExodus);
-
-  Teuchos::RCP<Teuchos::ParameterList>
-  registerNodalVectorStateVariable(
-      const std::string&                   stateName,
-      const Teuchos::RCP<PHX::DataLayout>& dl,
-      const Teuchos::RCP<PHX::DataLayout>& dummy,
-      const std::string&                   ebName,
-      const std::string&                   init_type,
-      const double                         init_val,
-      const bool                           registerOldState,
-      const bool                           outputToExodus);
-
-  /// Very basic
-  void
-  registerStateVariable(
-      const std::string&                   stateName,
-      const Teuchos::RCP<PHX::DataLayout>& dl,
-      const std::string&                   init_type);
-
+  // Shortcut: allow to specify fieldEntity without bothering with initialization options
   Teuchos::RCP<Teuchos::ParameterList>
   registerSideSetStateVariable(
       const std::string&                   sideSetName,
@@ -150,40 +88,6 @@ class StateManager
       StateStruct::MeshFieldEntity const*  fieldEntity  = NULL,
       const std::string&                   meshPartName = "");
 
-  Teuchos::RCP<Teuchos::ParameterList>
-  registerSideSetStateVariable(
-      const std::string&                   sideSetName,
-      const std::string&                   stateName,
-      const std::string&                   fieldName,
-      const Teuchos::RCP<PHX::DataLayout>& dl,
-      const std::string&                   ebName,
-      const std::string&                   init_type,
-      const double                         init_val,
-      const bool                           registerOldState,
-      const bool                           outputToExodus,
-      const std::string&                   responseIDtoRequire,
-      StateStruct::MeshFieldEntity const*  fieldEntity,
-      const std::string&                   meshPartName = "");
-
-  /// Method to re-initialize state variables, which can be called multiple
-  /// times after allocating
-  void
-  importStateData(Albany::StateArrays& statesToCopyFrom);
-
-  /// Method to get the Names of the state variables
-  const std::map<std::string, RegisteredStates>&
-  getRegisteredStates() const
-  {
-    return statesToStore;
-  }
-
-  /// Method to get the Names of the state variables
-  const std::map<std::string, std::map<std::string, RegisteredStates>>&
-  getRegisteredSideSetStates() const
-  {
-    return sideSetStatesToStore;
-  }
-
   /// Method to get the ResponseIDs for states which have been registered and
   /// (should)
   ///  have a SaveStateField evaluator associated with them that evaluates the
@@ -192,8 +96,7 @@ class StateManager
   getResidResponseIDsToRequire(std::string& elementBlockName);
 
   /// Method to make the current newState the oldState, and vice versa
-  void
-  updateStates();
+  void updateStates(const Teuchos::RCP<AbstractDiscretization>& disc);
 
   /// Method to get a StateInfoStruct of info needed by STK to output States as
   /// Fields
@@ -206,23 +109,7 @@ class StateManager
 
   /// Method to set discretization object
   void
-  setupStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
-
-  /// Method to get discretization object
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  getDiscretization() const;
-
-  /// Method to get state information for a specific workset
-  Albany::StateArray&
-  getStateArray(SAType type, int ws) const;
-
-  /// Method to get state information for all worksets
-  Albany::StateArrays&
-  getStateArrays() const;
-
-  // Set the state array for all worksets.
-  void
-  setStateArrays(Albany::StateArrays& sa);
+  initStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc);
 
   Albany::StateArrays&
   getSideSetStateArrays(const std::string& sideSet);
@@ -238,9 +125,6 @@ class StateManager
   {
     return sideSetStateInfo.at(sideSet)->createNodalDataBase();
   }
-
-  void
-  printStates(std::string const& where = "") const;
 
   bool
   areStateVarsAllocated() const
@@ -267,15 +151,14 @@ class StateManager
   /// and before gets
   bool stateVarsAreAllocated;
 
-  /// Container to hold the states that have been registered, by element block,
-  /// to be allocated later
-  std::map<std::string, RegisteredStates> statesToStore;
-  std::map<std::string, std::map<std::string, RegisteredStates>>
-      sideSetStatesToStore;
+  template<typename T>
+  using strmap_t = std::map<std::string,T>;
+  using RegisteredStates = strmap_t<Teuchos::RCP<PHX::DataLayout>>; // name->layout
 
-  /// Discretization object which allows StateManager to perform input/output
-  /// with exodus and Epetra vectors
-  Teuchos::RCP<Albany::AbstractDiscretization> disc;
+  // Keep track of registered states elem block and layout,
+  // to ensure we don't re-register with different ones later
+  strmap_t<RegisteredStates> statesToStore; // ebName->RegisteredStates
+  strmap_t<strmap_t<RegisteredStates>> sideSetStatesToStore; // sideSetName->ebName->RegisteredStates
 
   /// NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;

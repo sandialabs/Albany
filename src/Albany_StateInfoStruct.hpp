@@ -46,6 +46,12 @@ using StateArrayVec = std::vector<StateArray>;
 
 struct StateArrays
 {
+  enum StateArrayType
+  {
+    ELEM,
+    NODE
+  };
+
   StateArrayVec elemStateArrays;
   StateArrayVec nodeStateArrays;
 };
