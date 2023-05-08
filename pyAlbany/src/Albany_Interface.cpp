@@ -113,8 +113,16 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
 
     // Create app (null initial guess)
     albanyApp = slvrfctry->createApplication(comm);
+    //Forward model model evaluator
     albanyModel = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
+    //Adjoint model model evaluator
+    const bool explicitMatrixTranspose = slvrfctry->getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
+                                           slvrfctry->getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
+                                           false;
+
+    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
+    albanyAdjointModel = explicitAdjointModel ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
+    solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel);
 
     n_params = albanyModel->Np();
 
@@ -166,8 +174,16 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
 
     // Create app (null initial guess)
     albanyApp = slvrfctry->createApplication(comm);
+    //Forward model model evaluator
     albanyModel = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(comm, albanyModel, Teuchos::null);
+    //Adjoint model model evaluator
+    const bool explicitMatrixTranspose = slvrfctry->getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
+                                           slvrfctry->getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
+                                           false;
+
+    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
+    albanyAdjointModel = explicitAdjointModel ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
+    solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel);
 
     n_params = albanyModel->Np();
 
