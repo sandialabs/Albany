@@ -91,6 +91,7 @@ set(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
   Albany_DualView.hpp
+  Albany_DualDynRankView.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
