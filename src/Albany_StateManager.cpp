@@ -306,11 +306,6 @@ StateManager::registerSideSetStateVariable(
       stateRef.layered && (dl->extent(dl->rank() - 1) <= 0), std::logic_error,
       "Error! Invalid number of layers for layered state " << stateName << ".\n");
 
-  // If space is needed for old state
-  // if (registerOldState) {
-  //   stateRef.saveOldState = true;
-
-
   // insert
   stateRef.nameMap[stateName] = ebName;
 
@@ -357,68 +352,6 @@ StateManager::initStateArrays(
       sis->createNodalDataBase();
     }
     doSetStateArrays(it.second, sis);  // If sis was null, this should basically do nothing
-  }
-}
-
-void
-StateManager::updateStates(const Teuchos::RCP<AbstractDiscretization>& disc)
-{
-  // Swap boolean that defines old and new (in terms of state1 and 2) in
-  // accessors
-  ALBANY_ASSERT(stateVarsAreAllocated == true, "State vars not allocated.\n");
-
-  // Get states from STK mesh
-  StateArrays&   sa  = disc->getStateArrays();
-  StateArrayVec& esa = sa.elemStateArrays;
-  StateArrayVec& nsa = sa.nodeStateArrays;
-
-  int numElemWorksets = esa.size();
-  int numNodeWorksets = nsa.size();
-
-  // For each workset, loop over registered states
-
-  for (unsigned int i = 0; i < stateInfo->size(); i++) {
-    if ((*stateInfo)[i]->saveOldState) {
-      const std::string stateName     = (*stateInfo)[i]->name;
-      const std::string stateName_old = stateName + "_old";
-
-      switch ((*stateInfo)[i]->entity) {
-        case StateStruct::NodalDataToElemNode:
-          for (int ws = 0; ws < numNodeWorksets; ws++)
-            for (int j = 0; j < nsa[ws][stateName].size(); j++)
-              nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
-
-          break;
-
-        case StateStruct::WorksetValue:
-        case StateStruct::ElemData:
-        case StateStruct::QuadPoint:
-        case StateStruct::ElemNode:
-
-          for (int ws = 0; ws < numElemWorksets; ws++)
-            for (int j = 0; j < esa[ws][stateName].size(); j++)
-              esa[ws][stateName_old][j] = esa[ws][stateName][j];
-
-          break;
-
-        case StateStruct::NodalData:
-
-          for (int ws = 0; ws < numNodeWorksets; ws++)
-            for (int j = 0; j < nsa[ws][stateName].size(); j++)
-              nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
-
-          break;
-
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION(
-              true,
-              std::logic_error,
-              "Error: Cannot match state entity : " << (*stateInfo)[i]->entity
-                                                    << " in state manager. "
-                                                    << std::endl);
-          break;
-      }
-    }
   }
 }
 

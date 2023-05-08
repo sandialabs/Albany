@@ -95,9 +95,6 @@ public:
   std::vector<std::string>
   getResidResponseIDsToRequire(std::string& elementBlockName);
 
-  /// Method to make the current newState the oldState, and vice versa
-  void updateStates(const Teuchos::RCP<AbstractDiscretization>& disc);
-
   /// Method to get a StateInfoStruct of info needed by STK to output States as
   /// Fields
   Teuchos::RCP<Albany::StateInfoStruct>
