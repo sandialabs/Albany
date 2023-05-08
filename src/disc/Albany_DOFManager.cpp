@@ -194,9 +194,6 @@ restrict (const std::string& sub_part_name)
     return;
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (not m_conn_mgr->contains(sub_part_name), std::runtime_error,
-      "Error! Input sub-part name not contained in the ConnManager parts.\n");
-
   // We need to discard dofs *not* on the given part
   const int num_elems = m_elem_dof_lids.dev().extent(0);
   const int num_elem_dofs = m_elem_dof_lids.dev().extent(1);
@@ -263,6 +260,17 @@ restrict (const std::string& sub_part_name)
       }
     }
   }
+
+#ifndef NDEBUG
+  // Check that, at least globally, the sub-part has *some* dofs
+  int lcount = owned_.size();
+  int gcount = 0;
+  Teuchos::reduceAll(*m_comm,Teuchos::REDUCE_SUM,1,&lcount,&gcount);
+  TEUCHOS_TEST_FOR_EXCEPTION (gcount>0, std::logic_error,
+      "Error! Attempt to restrict a DOFManager to an empty sub-part.\n"
+      " - dof mgr part name: " + part_name() + "\n"
+      " - sub part name    : " + sub_part_name + "\n");
+#endif
 
   // Make sure ghosted come after owned
   // Re-build vector spaces
