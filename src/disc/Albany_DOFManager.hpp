@@ -9,7 +9,7 @@
 
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_ThyraTypes.hpp"
-#include "Albany_KokkosTypes.hpp"
+#include "Albany_DualView.hpp"
 
 #include "Panzer_DOFManager.hpp"
 #include "Albany_ConnManager.hpp"

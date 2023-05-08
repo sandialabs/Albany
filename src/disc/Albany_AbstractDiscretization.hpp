@@ -16,6 +16,7 @@
 
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_DualView.hpp"
 
 namespace Albany {
 

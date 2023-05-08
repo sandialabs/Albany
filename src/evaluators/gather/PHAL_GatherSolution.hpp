@@ -14,6 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "Albany_DiscretizationUtils.hpp"
+#include "Albany_DualView.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
 

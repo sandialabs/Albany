@@ -16,6 +16,7 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_DualView.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 
