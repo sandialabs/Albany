@@ -69,20 +69,6 @@ STKNodeField(const std::string& name_,
 }
 
 template<typename DataType, unsigned ArrayDim, class traits>
-void STKNodeField<DataType, ArrayDim, traits>::
-saveFieldVector(const Teuchos::RCP<const Thyra_MultiVector>& mv, int offset)
-{
- // Iterate over the processor-visible nodes
- const stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
-
- // Iterate over the overlap nodes by getting node buckets and iterating over each bucket.
- stk::mesh::BulkData& mesh = node_field->get_mesh();
- const stk::mesh::BucketVector& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, select_owned_or_shared);
-
- traits_type::saveFieldData(mv, all_elements, node_field, offset);
-}
-
-template<typename DataType, unsigned ArrayDim, class traits>
 MDArray STKNodeField<DataType, ArrayDim, traits>::getMDA(const stk::mesh::Bucket& buck){
 
   BucketArray<field_type> array(*node_field, buck);

@@ -25,9 +25,6 @@ public:
 
   AbstractNodeFieldContainer () = default;
   virtual ~AbstractNodeFieldContainer () = default;
-
-  // MV version
-  virtual void saveFieldVector(const Teuchos::RCP<const Thyra_MultiVector>& mv, int offset) = 0;
 };
 
 typedef std::map<std::string, Teuchos::RCP<AbstractNodeFieldContainer> > NodeFieldContainer;

@@ -63,8 +63,6 @@ public:
 
   virtual ~STKNodeField () = default;
 
-  void saveFieldVector(const Teuchos::RCP<const Thyra_MultiVector>& mv, int offset) override;
-
   MDArray getMDA(const stk::mesh::Bucket& buck) override;
 
 private:
@@ -93,29 +91,6 @@ struct NodeData_Traits<T, 1> {
 
     return fld; // Address is held by stk
   }
-
-  static void saveFieldData(const Teuchos::RCP<const Thyra_MultiVector>& overlap_node_vec,
-                            const stk::mesh::BucketVector& all_elements,
-                            field_type *fld, int offset)
-  {
-    Teuchos::ArrayRCP<const ST> const_overlap_node_view = getLocalData(overlap_node_vec->col(offset));
-
-    auto indexer = createGlobalLocalIndexer(overlap_node_vec->range());
-    for(auto it=all_elements.begin(); it!=all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      const stk::mesh::BulkData& bulkData = bucket.mesh();
-
-      BucketArray<field_type> solution_array(*fld, bucket);
-
-      const int num_nodes_in_bucket = solution_array.dimension(0);
-
-      for (int i = 0; i < num_nodes_in_bucket; i++) {
-        const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
-        const LO local_id = indexer->getLocalElement(global_id);
-        solution_array(i) = const_overlap_node_view[local_id];
-      }
-    }
-  }
 };
 
 // Node Vector
@@ -133,34 +108,6 @@ struct NodeData_Traits<T, 2> {
     stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[1], nullptr);
 
     return fld; // Address is held by stk
-  }
-
-  static void saveFieldData(const Teuchos::RCP<const Thyra_MultiVector>& overlap_node_vec,
-                            const stk::mesh::BucketVector& all_elements,
-                            field_type *fld, int offset)
-  {
-    auto indexer = createGlobalLocalIndexer(overlap_node_vec->range());
-    for(auto it=all_elements.begin(); it!=all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-
-      BucketArray<field_type> solution_array(*fld, bucket);
-      stk::mesh::BulkData const& bulkData = bucket.mesh();
-
-      const int num_vec_components = solution_array.dimension(0);
-      const int num_nodes_in_bucket = solution_array.dimension(1);
-
-      for(int j=0; j<num_vec_components; ++j) {
-        Teuchos::ArrayRCP<const ST> const_overlap_node_view = getLocalData(overlap_node_vec->col(offset + j));
-
-        for(int i=0; i<num_nodes_in_bucket; ++i) {
-
-          const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
-          const LO local_id = indexer->getLocalElement(global_id);
-
-          solution_array(j, i) = const_overlap_node_view[local_id];
-        }
-      }
-    }
   }
 };
 
@@ -180,34 +127,6 @@ struct NodeData_Traits<T, 3> {
 
     return fld; // Address is held by stk
   }
-
-  static void saveFieldData(const Teuchos::RCP<const Thyra_MultiVector>& overlap_node_vec,
-                            const stk::mesh::BucketVector& all_elements,
-                            field_type *fld, int offset)
-  {
-    auto indexer = createGlobalLocalIndexer(overlap_node_vec->range());
-    for(auto it=all_elements.begin(); it!=all_elements.end(); ++it) {
-      const stk::mesh::Bucket& bucket = **it;
-      stk::mesh::BulkData const& bulkData = bucket.mesh();
-
-      BucketArray<field_type> solution_array(*fld, bucket);
-
-      const int num_i_components = solution_array.dimension(0);
-      const int num_j_components = solution_array.dimension(1);
-      const int num_nodes_in_bucket = solution_array.dimension(2);
-
-      for(int j=0; j<num_j_components; ++j) {
-        for(int k=0; k<num_i_components; ++k) {
-          Teuchos::ArrayRCP<const ST> const_overlap_node_view = getLocalData(overlap_node_vec->col(offset + j*num_i_components + k));
-
-          for(int i=0; i<num_nodes_in_bucket; ++i)  {
-            const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
-            const LO local_id = indexer->getLocalElement(global_id);
-            solution_array(k, j, i) = const_overlap_node_view[local_id];
-      }}}
-    }
-  }
-
 };
 
 } // namespace Albany

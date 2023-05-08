@@ -1070,12 +1070,6 @@ void STKDiscretization::computeVectorSpaces()
     it.second = create_dof_mgr(part_name, "node", FE_Type::HGRAD,1,1);
   }
 
-  auto& ndb = stkMeshStruct->nodal_data_base;
-  if (!ndb.is_null()) {
-    ndb->replaceOwnedVectorSpace(getNodeVectorSpace());
-    ndb->replaceOverlapVectorSpace(getOverlapNodeVectorSpace());
-  }
-
   coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
 }
 
