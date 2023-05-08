@@ -155,7 +155,7 @@ namespace PyAlbany
         Teuchos::RCP<const Teuchos_Comm> comm;
         Teuchos::RCP<Albany::SolverFactory> slvrfctry;
         Teuchos::RCP<Albany::Application> albanyApp;
-        Teuchos::RCP<Albany::ModelEvaluator> albanyModel;
+        Teuchos::RCP<Albany::ModelEvaluator> albanyModel, albanyAdjointModel;
         Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double>> solver;
 
         Teuchos::Array<Teuchos::RCP<Thyra_Vector>> thyraResponses;
