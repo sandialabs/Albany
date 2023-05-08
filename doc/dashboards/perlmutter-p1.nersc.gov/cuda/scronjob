@@ -1,0 +1,8 @@
+#SCRON -A m4274_g
+#SCRON -q regular
+#SCRON -t 02:00:00
+#SCRON -o MALITesting.cuda.%j.out
+#SCRON --open-mode=append
+#SCRON --constraint=gpu
+#SCRON --job-name=MALITestingGPU
+0 19 8-14,22-28 * 6 source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda/scronscript.sh

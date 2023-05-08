@@ -2,7 +2,7 @@
 # This is a sample MPAS configuration script, should be run from ${MALI_ROOT}/components/mpas-albany-landice/ directory
 
 # FIXME: these need to be updated to point to the appropriate install directories
-PIO_INSTALL_DIR=
+SCORPIO_INSTALL_DIR=
 ALBANY_INSTALL_DIR=
 TRILINOS_INSTALL_DIR=
 
@@ -12,13 +12,15 @@ source ${ALBANY_INSTALL_DIR}/export_albany.in
 make clean \
   CORE=landice
 
-make -j 16 gnu-nersc \
-  CORE=landice \
+make -j 16 gnu-cray \
   ALBANY=true \
   USE_PIO2=true \
+  CORE=landice \
+  PIO=${SCORPIO_INSTALL_DIR} \
   NETCDF=${NETCDF_DIR} \
   PNETCDF=${PARALLEL_NETCDF_DIR} \
-  PIO=${PIO_INSTALL_DIR} \
   MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL_DIR}/lib -Wl,-R${TRILINOS_INSTALL_DIR}/lib -lstdc++ -L${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu_mpi.a" \
-  MPAS_EXTERNAL_INCLUDES="-I${ALBANY_INSTALL_DIR}/include -I${CRAY_LIBSCI_PREFIX_DIR}/include"
+  MPAS_EXTERNAL_INCLUDES="-I${ALBANY_INSTALL_DIR}/include -I${CRAY_LIBSCI_PREFIX_DIR}/include" \
+  DEBUG=false \
+  EXE_NAME=landice_model
 

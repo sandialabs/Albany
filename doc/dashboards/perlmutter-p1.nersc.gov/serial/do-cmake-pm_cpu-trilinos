@@ -1,25 +1,8 @@
-#!/bin/bash
-# This is a sample Trilinos configuration script for Albany on perlmutter
 
-# Cleanup old cmake files
 rm -rf CMake*
 
-# Set Trilinos build path
-BUILD_DIR=`pwd`
-
-# FIXME: update with path to Trilinos source directory
-TRILINOS_SOURCE_DIR=
-
-# FIXME: point to boost install or use boost from project directory
-BOOST_DIR=
-#BOOST_DIR=/global/cfs/cdirs/m1041/mcarlson/boost-1.72.0/gcc-11.2.0
-
-TRILINOS_INSTALL_DIR="./install"
-
-export CRAYPE_LINK_TYPE=dynamic
-
 cmake \
-  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINOS_INSTALL_DIR} \
+  -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_CXX_STANDARD=17 \
 \
@@ -147,4 +130,4 @@ cmake \
   -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
 \
-${TRILINOS_SOURCE_DIR}
+../

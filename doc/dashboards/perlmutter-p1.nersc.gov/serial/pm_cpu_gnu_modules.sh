@@ -23,9 +23,13 @@ module load cray-netcdf-hdf5parallel/4.9.0.3
 module load cray-parallel-netcdf/1.12.3.3
 module load cmake/3.24.3
 
+module load cray-python/3.9.13.1
+
 module load e4s
 spack env activate -V gcc
 spack load superlu
+
+export BOOST_DIR=/global/common/software/fanssie/boost-1.72.0/gcc-11.2.0
 
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
@@ -33,5 +37,4 @@ export OMP_STACKSIZE=128M
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 export HDF5_USE_FILE_LOCKING=FALSE
-export MPICH_GPU_SUPPORT_ENABLED=0
 export FI_CXI_RX_MATCH_MODE=software

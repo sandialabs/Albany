@@ -17,10 +17,12 @@ TRILINOS_SOURCE_DIR=
 BOOST_DIR=
 #BOOST_DIR=/global/cfs/cdirs/m1041/mcarlson/boost-1.72.0/gcc-11.2.0
 
+TRILINOS_INSTALL_DIR="./install"
+
 export CRAYPE_LINK_TYPE=dynamic
 
 cmake \
-  -D CMAKE_INSTALL_PREFIX:PATH=${BUILD_DIR}/install \
+  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINOS_INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_CXX_STANDARD=17 \
 \
@@ -89,12 +91,12 @@ cmake \
   -D Kokkos_ARCH_ZEN3:BOOL=ON \
   -D Kokkos_ARCH_AMPERE80:BOOL=ON \
   -D TPL_ENABLE_Thrust:BOOL=ON \
-  -D Thrust_INCLUDE_DIRS=$CUDA_HOME/targets/x86_64-linux/include \
+  -D Thrust_INCLUDE_DIRS=${CUDA_HOME}/targets/x86_64-linux/include \
   -D TPL_ENABLE_CUDA:BOOL=ON \
   -D TPL_ENABLE_CUSPARSE:BOOL=OFF \
-  -D CUDA_cublas_LIBRARY=$CUDATOOLKIT_HOME/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcublas.so \
-  -D CUDA_cusolver_LIBRARY=$CUDATOOLKIT_HOME/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcusolver.so \
-  -D CUDA_cufft_LIBRARY=$CUDATOOLKIT_HOME/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcufft.so \
+  -D CUDA_cublas_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcublas.so \
+  -D CUDA_cusolver_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcusolver.so \
+  -D CUDA_cufft_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CRAY_CUDATOOLKIT_VERSION#*_}/lib64/libcufft.so \
 \
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
   -D Intrepid_ENABLE_TESTS:BOOL=OFF \
@@ -159,6 +161,7 @@ cmake \
 \
   -D Kokkos_ENABLE_LIBDL:BOOL=ON \
   -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
+  -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
 \
 ${TRILINOS_SOURCE_DIR}
