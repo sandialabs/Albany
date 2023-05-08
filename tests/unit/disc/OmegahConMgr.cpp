@@ -19,13 +19,21 @@
 #include "Panzer_IntrepidFieldPattern.hpp"
 #include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
 
-#include <Omega_h_build.hpp>
+#include <Omega_h_build.hpp> // Omega_h::build_box
+#include <Omega_h_file.hpp> // Omega_h::binary::read
 
 #include <array> //std::array
 
 #define REQUIRE(cond) \
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
+
+auto createOmegahConnManager(Omega_h::Library& lib, std::string name) {
+  REQUIRE(!name.empty());
+  Omega_h::Mesh mesh(&lib);
+  Omega_h::binary::read(name, lib.world(), &mesh);
+  return Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
+}
 
 auto createOmegahConnManager(Omega_h::Library& lib) {
   auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
@@ -153,5 +161,19 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
     REQUIRE( expectedDofs == dofs );
   }
   out << "Testing OmegahConnManager::buildConnectivity()\n";
+  success = true;
+}
+
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_contains)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+
+  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
+  auto conn_mgr = createOmegahConnManager(lib, "gis_unstruct_basal_populated.osh");
+  out << "Testing OmegahConnManager::contains()\n";
   success = true;
 }
