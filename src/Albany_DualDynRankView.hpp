@@ -21,10 +21,11 @@ struct DualDynRankView {
   using dev_t  = Kokkos::DynRankView<DT,Kokkos::LayoutRight,DeviceMemSpace>;
   using host_t = typename dev_t::HostMirror;
 
-  using const_DT      = typename dev_t::traits::const_data_type;
-  using nonconst_DT   = typename dev_t::traits::non_const_data_type;
-  using other_DT      = typename std::conditional<std::is_same<DT,const_DT>::value,
-                                                  nonconst_DT, const_DT>::type;
+  using drvtraits   = typename dev_t::drvtraits;
+  using const_DT    = typename drvtraits::const_data_type;
+  using nonconst_DT = typename drvtraits::non_const_data_type;
+  using other_DT    = typename std::conditional<std::is_same<DT,const_DT>::value,
+                                                nonconst_DT, const_DT>::type;
 
   using type          = DualDynRankView<DT>;
   using const_type    = DualDynRankView<const_DT>;
@@ -54,6 +55,24 @@ struct DualDynRankView {
   {
     ALBANY_ASSERT (d_view.data()!=nullptr, "Invalid device view.");
     h_view = Kokkos::create_mirror_view (d_view);
+  }
+  template<typename HostT, typename =
+    typename std::enable_if<not std::is_same<dev_t,host_t>::value and
+                                std::is_same<HostT,host_t>::value>::type
+  >
+  DualDynRankView (HostT t_view_)
+   : h_view(t_view_)
+  {
+    ALBANY_ASSERT (h_view.data()!=nullptr, "Invalid host view.");
+    d_view = dev_t(h_view.label(),
+        (h_view.rank()>0 ? h_view.extent(0) : KOKKOS_INVALID_INDEX),
+        (h_view.rank()>1 ? h_view.extent(1) : KOKKOS_INVALID_INDEX),
+        (h_view.rank()>2 ? h_view.extent(2) : KOKKOS_INVALID_INDEX),
+        (h_view.rank()>3 ? h_view.extent(3) : KOKKOS_INVALID_INDEX),
+        (h_view.rank()>4 ? h_view.extent(4) : KOKKOS_INVALID_INDEX),
+        (h_view.rank()>5 ? h_view.extent(5) : KOKKOS_INVALID_INDEX),
+        (h_view.rank()>6 ? h_view.extent(6) : KOKKOS_INVALID_INDEX),
+        (h_view.rank()>7 ? h_view.extent(7) : KOKKOS_INVALID_INDEX));
   }
   DualDynRankView (const DualDynRankView&) = default;
 
@@ -110,6 +129,20 @@ struct DualDynRankView {
   void reset (const dev_t& d) {
     d_view = d;
     sync_to_host();
+  }
+
+  void reset_from_host_ptr (DT* ptr,
+                            const size_t n0,
+                            const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                            const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                            const size_t n3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                            const size_t n4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                            const size_t n5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                            const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                            const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
+  {
+    dev_t v_dev(ptr,n0,n1,n2,n3,n4,n5,n6,n7);
+    reset (v_dev);
   }
 
   void resize (const std::string& name,
