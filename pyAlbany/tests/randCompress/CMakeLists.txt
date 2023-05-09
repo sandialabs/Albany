@@ -48,3 +48,13 @@ add_test(PyAlbany_HODLR_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${P
 set_tests_properties(PyAlbany_HODLR_MPI
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
 
+add_test(PyAlbany_adjointSolve ${SERIAL_CALL} "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/adjointSolve.py")
+
+set_tests_properties(PyAlbany_adjointSolve
+    PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+
+add_test(PyAlbany_adjointSolve_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/adjointSolve.py")
+
+set_tests_properties(PyAlbany_adjointSolve_MPI
+    PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
+
