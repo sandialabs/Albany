@@ -127,7 +127,9 @@ struct DualDynRankView {
   int size () const { return d_view.size(); }
 
   void reset (const dev_t& d) {
+    ALBANY_ASSERT (d.data()!=nullptr, "Invalid device view.");
     d_view = d;
+    h_view = Kokkos::create_mirror_view(d_view);
     sync_to_host();
   }
 
