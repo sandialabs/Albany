@@ -80,15 +80,6 @@ int main(int argc, char *argv[]) {
     // is created (since in the App ctor the pb factories are queried)
     Albany::register_pb_factories();
 
-    //sensitivities are always needed when performing analysis
-    if(slvrfctry.getParameters()->sublist("Problem").isParameter("Compute Sensitivities")) {
-      TEUCHOS_TEST_FOR_EXCEPTION(!slvrfctry.getParameters()->sublist("Problem").get<bool>("Compute Sensitivities"),
-                            Teuchos::Exceptions::InvalidArgument,
-                            "Error! Sensitivities are needed for Analysis problems.\n");
-    } else  {
-      slvrfctry.getParameters()->sublist("Problem").set<bool>("Compute Sensitivities", true);
-    }
-
     // Create app (null initial guess)
     const auto albanyApp = slvrfctry.createApplication(comm);
     //Forward model model evaluator
@@ -100,8 +91,7 @@ int main(int argc, char *argv[]) {
                                            slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
                                            false;
 
-    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
-    const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
+    const auto albanyAdjointModel = explicitMatrixTranspose ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
     const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
 
     stackedTimer->stop("Albany: Setup Time");

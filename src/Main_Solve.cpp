@@ -142,6 +142,7 @@ int main(int argc, char *argv[])
                                         slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
                                         false;
 
+    // Explicit adjoint model is not needed if we are not computing adjoint sensitivities
     const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
     const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
     const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);

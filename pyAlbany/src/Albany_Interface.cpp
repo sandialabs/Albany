@@ -120,8 +120,7 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
                                            slvrfctry->getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
                                            false;
 
-    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
-    albanyAdjointModel = explicitAdjointModel ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
+    albanyAdjointModel = explicitMatrixTranspose ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
     solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel);
 
     n_params = albanyModel->Np();
@@ -181,8 +180,7 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
                                            slvrfctry->getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
                                            false;
 
-    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
-    albanyAdjointModel = explicitAdjointModel ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
+    albanyAdjointModel = explicitMatrixTranspose ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
     solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel);
 
     n_params = albanyModel->Np();
