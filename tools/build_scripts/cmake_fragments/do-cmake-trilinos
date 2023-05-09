@@ -65,7 +65,6 @@ cmake \
     -D Trilinos_ENABLE_Pamgen:BOOL=ON \
     -D Trilinos_ENABLE_ML:BOOL=ON \
     -D Trilinos_ENABLE_Phalanx:BOOL=ON \
-    -D Trilinos_ENABLE_Intrepid:BOOL=ON \
     -D Trilinos_ENABLE_NOX:BOOL=ON \
     -D Trilinos_ENABLE_Kokkos:BOOL=ON \
     -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
@@ -79,8 +78,6 @@ cmake \
     -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
     -D Trilinos_ENABLE_Thyra:BOOL=ON \
     -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
-    -D Trilinos_ENABLE_Rythmos:BOOL=ON \
-    -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
     -D Trilinos_ENABLE_Stokhos:BOOL=ON \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
     -D Piro_ENABLE_TESTS:BOOL=ON \

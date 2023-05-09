@@ -26,7 +26,7 @@ input_fo_dome.xml
 
 input_fo_dome_interpSurf.xml
    Same as input_fo_dome.xml except the source terms are evaluated 
-   by interpolating s(x,y) and b(x,y) from nodal values using Intrepid, rather 
+   by interpolating s(x,y) and b(x,y) from nodal values using Intrepid2, rather 
    than hard-coding the exact analytic derivatives of these functions. 
 
 input_fo_domeAnalysis.xml

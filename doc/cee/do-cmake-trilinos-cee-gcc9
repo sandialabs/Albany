@@ -86,13 +86,11 @@ cmake \
     -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
 \
     -D Trilinos_ENABLE_ROL:BOOL=ON \
-    -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
     -D Trilinos_ENABLE_ML:BOOL=ON \
     -D Trilinos_ENABLE_MueLu:BOOL=ON \
     -D MueLu_ENABLE_Tutorial:BOOL=OFF \
     -D Trilinos_ENABLE_Moertel:BOOL=OFF \
     -D Trilinos_ENABLE_NOX:BOOL=ON \
-    -D Trilinos_ENABLE_Rythmos:BOOL=ON \
     -D Trilinos_ENABLE_Sacado:BOOL=ON \
     -D Trilinos_ENABLE_SEACAS:BOOL=ON \
     -D Trilinos_ENABLE_Shards:BOOL=ON \
@@ -111,7 +109,6 @@ cmake \
     -D Trilinos_ENABLE_Thyra:BOOL=ON \
     -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 \
-    -D Rythmos_ENABLE_DEBUG:BOOL=ON \
     -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
     -D Tpetra_INST_INT_LONG:BOOL=OFF \
     -D Tpetra_INST_INT_INT:BOOL=OFF \
@@ -179,8 +176,6 @@ cmake \
 \
     -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -L${LIB_DIR}/lib64 -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran -Wl,-rpath,${LIB_DIR}/lib:${LIB_DIR}/lib64" \
     -D CMAKE_SKIP_RPATH:BOOL=ON \
-\
-    -D Trilinos_ENABLE_TriKota:BOOL=OFF \
 \
 $EXTRA_ARGS \
 ${TRILINOS_HOME}

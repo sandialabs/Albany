@@ -28,17 +28,16 @@
     This approach uses Phalanx for rapid and flexible addition of 
     physics, which works closely
     with Sacado and Stokhos for automatic propagation of
-    derivatives and UQ. Intrepid and Shards packages are used for
+    derivatives and UQ. Intrepid2 and Shards packages are used for
     the local discretization. 
     
     <br>
     
     A second strength of Albany is the demonstration of
     transformational analysis algorithms.  Albany demonstrates
-    the clean use of all Solver/Analysis tools in Trilinosi
+    the clean use of all Solver/Analysis tools in Trilinos
     (through Piro, which was developed in Albany) including NOX, 
-    LOCA, Rythmos, Stokhos,
-    and all of Dakota. On any problem we not only get a solution,
+    LOCA, ROL. On any problem we not only get a solution,
     but can also get sensitivities, run optimization problems, and 
     perform uncertainty quantification.  All of these approaches
     can access all of the linear solver options in Trilinos that

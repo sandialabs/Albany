@@ -361,19 +361,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   }
 
   bool        expl = false;
-  std::string stepperType;
-  if (solMethod == Transient) {
-    // Get Piro PL
-    Teuchos::RCP<Teuchos::ParameterList> piroParams =
-        Teuchos::sublist(params, "Piro", true);
-    // Check if there is Tempus Solver sublist, and get the stepper type
-    if (piroParams->isSublist("Tempus")) {
-      Teuchos::RCP<Teuchos::ParameterList> rythmosSolverParams =
-          Teuchos::sublist(piroParams, "Tempus", true);
-    }
-    // IKT, 10/26/16, FIXME: get whether method is explicit from Tempus
-    // parameter list  expl = true;
-  }
 
   determinePiroSolver(params);
 

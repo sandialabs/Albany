@@ -26,9 +26,6 @@ ALBANY_BUILD_TYPES = \
 {
     "basic" : [
     ],
-    "trikota" : [
-        ("TRILINOS_TRIKOTA",  "ON"),
-    ],
     "landice" : [
         ("ALBANY_LANDICE", "ON"),
     ],
@@ -44,7 +41,6 @@ ALBANY_BUILD_TYPES = \
         ("ALBANY_PERFORMANCE_TESTS", "ON"),
     ],
     "complete" : [
-        "trikota",
         "landice",
         "performance"
     ],
@@ -90,11 +86,8 @@ JENKINS_ENVS = \
     ("TRILINSTALLDIR", "$TRILBUILDDIR/install"),
     ("ALBDIR",         "$WORKSPACE/Albany"),
     ("ALBBUILDDIR",    "$ALBDIR/build"),
-    ("TRIKOTADIR",     "$TRILDIR/packages/TriKota"),
     ("TRILOUTDIR",     "$WORKSPACE/Trilinos_out"),
     ("ALBOUTDIR",      "$WORKSPACE/Albany_out"),
-    ("DAKOUTDIR",      "$WORKSPACE/Dakota_out"),
-    ("SCOROUTDIR",     "$WORKSPACE/Dakota_out"),
 ]
 
 ALBANY_BUILD_MODES = \
@@ -389,8 +382,6 @@ is already configured for a certain compiler."""
             print "The necessary scripts have been created, to test, run:"
             print " > source jenkins_env_setup"
             print " # Set up compiler env"
-            if ("TRILINOS_TRIKOTA" in os.environ and os.environ["TRILINOS_TRIKOTA"] == "ON"):
-                print " > $ALBDIR/tools/checkout_scripts/dakota-checkout"
             print " > %s" % tril_fragment
             print " > make -j N"
             print " > make install"

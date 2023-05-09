@@ -639,7 +639,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideE
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<std::string>("Side Coordinate Vector Name",coord_vec_name + "_" + sideSetName);
     p->set< RCP<IntrepidCubature> >("Cubature Side", cubatureSide);
-    p->set< RCP<IntrepidBasis> >("Intrepid Basis Side", intrepidBasisSide);
+    p->set< RCP<IntrepidBasis> >("Intrepid2 Basis Side", intrepidBasisSide);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name",sideSetName);
 

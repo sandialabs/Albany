@@ -91,7 +91,6 @@ cmake \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
-      -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
@@ -101,7 +100,6 @@ cmake \
       -D Trilinos_ENABLE_Phalanx:BOOL=ON \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_ROL:BOOL=ON \
-      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
       -D Trilinos_ENABLE_SCOREC:BOOL=OFF \
       -D Trilinos_ENABLE_SEACAS:BOOL=ON \
@@ -121,7 +119,6 @@ cmake \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
-      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
       -D TPL_ENABLE_X11:BOOL=OFF \

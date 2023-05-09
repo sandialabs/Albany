@@ -114,7 +114,6 @@ cmake \
   -D Trilinos_ENABLE_Phalanx:BOOL=ON \
   -D Trilinos_ENABLE_Piro:BOOL=ON \
   -D Trilinos_ENABLE_ROL:BOOL=ON \
-  -D Trilinos_ENABLE_Rythmos:BOOL=ON \
   -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
   -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \
   -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
