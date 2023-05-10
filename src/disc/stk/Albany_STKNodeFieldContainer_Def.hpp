@@ -69,24 +69,29 @@ STKNodeField(const std::string& name_,
 }
 
 template<typename DataType, unsigned ArrayDim, class traits>
-void STKNodeField<DataType, ArrayDim, traits>::
-saveFieldVector(const Teuchos::RCP<const Thyra_MultiVector>& mv, int offset)
-{
- // Iterate over the processor-visible nodes
- const stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
+StateView STKNodeField<DataType, ArrayDim, traits>::
+getMDA(const stk::mesh::Bucket& buck){
+  auto data = reinterpret_cast<double*>(buck.field_data_location(*node_field));
+  StateView dv;
 
- // Iterate over the overlap nodes by getting node buckets and iterating over each bucket.
- stk::mesh::BulkData& mesh = node_field->get_mesh();
- const stk::mesh::BucketVector& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, select_owned_or_shared);
+  int dim0,dim1;
+  switch (ArrayDim) {
+    case 1:
+      dv.reset_from_host_ptr(data,buck.size());
+      break;
+    case 2:
+      dim0 = stk::mesh::field_scalars_per_entity(*node_field,buck);
+      dv.reset_from_host_ptr(data,buck.size(),dim0);
+    case 3:
+      dim0 = stk::mesh::field_extent0_per_entity(*node_field,buck);
+      dim0 = stk::mesh::field_extent1_per_entity(*node_field,buck);
+      dv.reset_from_host_ptr(data,buck.size(),dim0,dim1);
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+          "Invalid/unsupported array dimension (" << ArrayDim << ")\n");
+  }
 
- traits_type::saveFieldData(mv, all_elements, node_field, offset);
-}
-
-template<typename DataType, unsigned ArrayDim, class traits>
-MDArray STKNodeField<DataType, ArrayDim, traits>::getMDA(const stk::mesh::Bucket& buck){
-
-  BucketArray<field_type> array(*node_field, buck);
-  return array;
+  return dv;
 }
 
 } // namespace Albany

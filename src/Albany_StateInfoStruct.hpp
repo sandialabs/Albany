@@ -12,46 +12,26 @@
 // This includes name, number of quantities (scalar,vector,tensor),
 // Element vs Node location, etc.
 
-#include <map>
-#include <string>
-#include <vector>
+#include "Adapt_NodalDataBase.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
+#include "Albany_DualDynRankView.hpp"
 
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_Array.hpp"
 #include "Shards_CellTopologyData.h"
 
-#include "Adapt_NodalDataBase.hpp"
-#include "Albany_ScalarOrdinalTypes.hpp"
-
-//! Container for minimal mesh specification info needed to
-//  construct an Albany Problem
+#include <map>
+#include <string>
+#include <vector>
 
 namespace Albany {
 
-//
-// Using these most of the Albany code compiles, but there are some errors
-// with converting from STK data structures.
-// In any case, the operator= still does a shallow copym which was the
-// motivation to try Kokkos::View
-//
-// using MDArray = Kokkos::View<double*, PHX::Device>;
-// using IDArray = Kokkos::View<LO*, PHX::Device>;
-// using StateArray = std::map<std::string, MDArray>;
-// using StateArrayVec = std::vector<StateArray>;
-
-using MDArray       = shards::Array<double, shards::NaturalOrder>;
-using IDArray       = shards::Array<LO, shards::NaturalOrder>;
-using StateArray    = std::map<std::string, MDArray>;
+using StateView     = DualDynRankView<double>;
+using StateArray    = std::map<std::string,StateView>;
 using StateArrayVec = std::vector<StateArray>;
 
 struct StateArrays
 {
-  enum StateArrayType
-  {
-    ELEM,
-    NODE
-  };
-
   StateArrayVec elemStateArrays;
   StateArrayVec nodeStateArrays;
 };
@@ -61,6 +41,12 @@ struct StateArrays
 
 struct StateStruct
 {
+  enum StateType
+  {
+    ElemState = 1,
+    NodeState
+  };
+  
   enum MeshFieldEntity
   {
     WorksetValue,
@@ -145,6 +131,22 @@ struct StateStruct
     std::cout << "Entity : " << entity << std::endl;
   }
 
+  StateType stateType () const {
+    switch (entity) {
+      case StateStruct::WorksetValue:
+      case StateStruct::ElemData:
+      case StateStruct::QuadPoint:
+      case StateStruct::ElemNode:
+        return ElemState;
+      case StateStruct::NodalData:
+      case StateStruct::NodalDataToElemNode:
+        return NodeState;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+            "Error! Unhandled/unsupported state type.\n");
+    }
+  }
+
   const std::string                  name{""};
   FieldDims                          dim;
   MeshFieldEntity                    entity;
@@ -192,15 +194,6 @@ public:
  private:
   Teuchos::RCP<Adapt::NodalDataBase>     nodal_data_base;
 };
-
-void
-printStateArrays(StateArrays const& sa, std::string const& where = "");
-
-void
-printElementStates(StateArrays const& sa);
-
-void
-printNodeStates(StateArrays const& sa);
 
 }  // namespace Albany
 

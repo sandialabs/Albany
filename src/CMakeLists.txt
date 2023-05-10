@@ -63,7 +63,6 @@ set (SOURCES
   Albany_PiroObserver.cpp
   Albany_StatelessObserverImpl.cpp
   Albany_StateManager.cpp
-  Albany_StateInfoStruct.cpp
   PHAL_Utilities.cpp
   SolutionManager.cpp
   )
@@ -90,6 +89,8 @@ set(HEADERS
   Albany_DistributedParameter.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
+  Albany_DualView.hpp
+  Albany_DualDynRankView.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp

@@ -14,6 +14,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+#include "Albany_DualView.hpp"
 
 // **********************************************************************
 // Base Class Generic Implementation

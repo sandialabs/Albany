@@ -33,8 +33,6 @@ observeSolution(double stamp,
                                    nonOverlappedSolutionDotDot,
                                    nonOverlappedSolution_dxdp);
 
-  app_->getStateMgr().updateStates(app_->getDisc());
-
   //! update distributed parameters in the mesh
   auto distParamLib = app_->getDistributedParameterLibrary();
   auto disc = app_->getDiscretization();
@@ -59,7 +57,6 @@ observeSolution(double stamp,
 {
   app_->evaluateStateFieldManager(stamp, nonOverlappedSolution, 
                                   nonOverlappedSolution_dxdp);
-  app_->getStateMgr().updateStates(app_->getDisc());
   StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution, 
                                          nonOverlappedSolution_dxdp);
 }

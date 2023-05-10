@@ -1070,12 +1070,6 @@ void STKDiscretization::computeVectorSpaces()
     it.second = create_dof_mgr(part_name, "node", FE_Type::HGRAD,1,1);
   }
 
-  auto& ndb = stkMeshStruct->nodal_data_base;
-  if (!ndb.is_null()) {
-    ndb->replaceOwnedVectorSpace(getNodeVectorSpace());
-    ndb->replaceOverlapVectorSpace(getOverlapNodeVectorSpace());
-  }
-
   coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
 }
 
@@ -1352,83 +1346,77 @@ STKDiscretization::computeWorksetInfo()
     stk::mesh::Bucket& buck = *buckets[b];
     coords[b].resize(buck.size());
 
-    // Set size of Kokkos views
-    {  // nodalDataToElemNode.
+    nodesOnElemStateVec[b].resize(nodal_states.size());
 
-      nodesOnElemStateVec[b].resize(nodal_states.size());
-
-      for (size_t is = 0; is < nodal_states.size(); ++is) {
-        const std::string&            name = nodal_states[is]->name;
-        const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
-        MDArray&             array    = stateArrays.elemStateArrays[b][name];
-        std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
-        int dim0 = buck.size();  // may be different from dim[0];
-        switch (dim.size()) {
-          case 2:  // scalar
-          {
-            const ScalarFieldType& field = *metaData->get_field<ScalarFieldType>(
-                NODE_RANK, name);
-            stateVec.resize(dim0 * dim[1]);
-            array.assign<ElemTag, NodeTag>(stateVec.data(), dim0, dim[1]);
-            for (int i = 0; i < dim0; i++) {
-              stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-                stk::mesh::Entity rowNode = rel[j];
-                array(i, j) = *stk::mesh::field_data(field, rowNode);
+    for (size_t is = 0; is < nodal_states.size(); ++is) {
+      const std::string&            name = nodal_states[is]->name;
+      const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
+      auto& state = stateArrays.elemStateArrays[b][name];
+      std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
+      int dim0 = buck.size();  // may be different from dim[0];
+      switch (dim.size()) {
+        case 2:  // scalar
+        {
+          const auto& field = *metaData->get_field<ScalarFieldType>(NODE_RANK, name);
+          stateVec.resize(dim0 * dim[1]);
+          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1]);
+          auto state_h = state.host();
+          for (int i = 0; i < dim0; i++) {
+            stk::mesh::Entity        element = buck[i];
+            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
+            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
+              stk::mesh::Entity rowNode = rel[j];
+              state_h(i, j) = *stk::mesh::field_data(field, rowNode);
+            }
+          }
+          break;
+        }
+        case 3:  // vector
+        {
+          const auto& field = *metaData->get_field<VectorFieldType>(NODE_RANK, name);
+          stateVec.resize(dim0 * dim[1] * dim[2]);
+          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2]);
+          auto state_h = state.host();
+          for (int i = 0; i < dim0; i++) {
+            stk::mesh::Entity        element = buck[i];
+            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
+            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
+              stk::mesh::Entity rowNode = rel[j];
+              double*           entry = stk::mesh::field_data(field, rowNode);
+              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
+                state_h(i, j, k) = entry[k];
               }
             }
-            break;
           }
-          case 3:  // vector
-          {
-            const VectorFieldType& field = *metaData->get_field<VectorFieldType>(
-                NODE_RANK, name);
-            stateVec.resize(dim0 * dim[1] * dim[2]);
-            array.assign<ElemTag, NodeTag, CompTag>(
-                stateVec.data(), dim0, dim[1], dim[2]);
-            for (int i = 0; i < dim0; i++) {
-              stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-                stk::mesh::Entity rowNode = rel[j];
-                double*           entry = stk::mesh::field_data(field, rowNode);
-                for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                  array(i, j, k) = entry[k];
+          break;
+        }
+        case 4:  // tensor
+        {
+          const auto& field = *metaData->get_field<TensorFieldType>(NODE_RANK, name);
+          stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
+          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2],dim[3]);
+          auto state_h = state.host();
+          for (int i = 0; i < dim0; i++) {
+            stk::mesh::Entity        element = buck[i];
+            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
+            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
+              stk::mesh::Entity rowNode = rel[j];
+              double*           entry = stk::mesh::field_data(field, rowNode);
+              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
+                for (int l = 0; l < static_cast<int>(dim[3]); l++) {
+                  state_h(i, j, k, l) = entry[k * dim[3] + l];  // check this,
+                                                              // is stride
+                                                              // Correct?
                 }
               }
             }
-            break;
           }
-          case 4:  // tensor
-          {
-            const TensorFieldType& field = *metaData->get_field<TensorFieldType>(
-                NODE_RANK, name);
-            stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
-            array.assign<ElemTag, NodeTag, CompTag, CompTag>(
-                stateVec.data(), dim0, dim[1], dim[2], dim[3]);
-            for (int i = 0; i < dim0; i++) {
-              stk::mesh::Entity        element = buck[i];
-              stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-              for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-                stk::mesh::Entity rowNode = rel[j];
-                double*           entry = stk::mesh::field_data(field, rowNode);
-                for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                  for (int l = 0; l < static_cast<int>(dim[3]); l++) {
-                    array(i, j, k, l) = entry[k * dim[3] + l];  // check this,
-                                                                // is stride
-                                                                // Correct?
-                  }
-                }
-              }
-            }
-            break;
-          }
+          break;
         }
       }
     }
-
-    stk::mesh::Entity element           = buck[0];
+    
+    stk::mesh::Entity element = buck[0];
 
     // i is the element index within bucket b
     for (std::size_t i = 0; i < buck.size(); i++) {
@@ -1454,6 +1442,11 @@ STKDiscretization::computeWorksetInfo()
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
       for (int b = 0; b < numBuckets; b++) {
+        auto has_sheight = stateArrays.elemStateArrays[b].count("surface_height")==1;
+        DualDynRankView<double> sHeight;
+        if (has_sheight) {
+          sHeight = stateArrays.elemStateArrays[b]["surface_height"];
+        }
         for (std::size_t i = 0; i < buckets[b]->size(); i++) {
           int  nodes_per_element = buckets[b]->num_nodes(i);
           bool anyXeqZero        = false;
@@ -1483,15 +1476,20 @@ STKDiscretization::computeWorksetInfo()
                        transformType == "ISMIP-HOM Test D") &&
                       d == 0) {
                     xleak[2] -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
-                    StateArray::iterator sHeight =
-                        stateArrays.elemStateArrays[b].find("surface_height");
-                    if (sHeight != stateArrays.elemStateArrays[b].end())
-                      sHeight->second(int(i), j) -=
+                    if (has_sheight) {
+                      sHeight.host()(i, j) -=
                           stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+                    }
                   }
                   coords[b][i][j] = xleak;  // replace ptr to coords
                   toDelete.push_back(xleak);
-  }}}}}}}}
+        }}}}}
+        if (has_sheight) {
+          sHeight.sync_to_dev();
+        }
+      }
+    }
+  }
 
   typedef AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
   typedef AbstractSTKFieldContainer::QPScalarState    QPScalarState;
@@ -1516,73 +1514,63 @@ STKDiscretization::computeWorksetInfo()
   QPTensorState&    qptensor_states    = container.getQPTensorStates();
   std::map<std::string, double>& time  = container.getTime();
 
+  // Setup state arrays DualDynRankView's, so that host view stores a pointer
+  // to the stk field data
   for (std::size_t b = 0; b < buckets.size(); b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     for (auto& css : cell_scalar_states) {
-      BucketArray<AbstractSTKFieldContainer::ScalarFieldType> array(
-          *css, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " SFT dim[1]: " <<
-      // array.extent(1) << std::endl;
-      MDArray ar                                     = array;
-      stateArrays.elemStateArrays[b][css->name()] = ar;
+      auto data = reinterpret_cast<double*>(buck.field_data_location(*css));
+
+      auto& state = stateArrays.elemStateArrays[b][css->name()];
+      state.reset_from_host_ptr(data,buck.size());
     }
     for (auto& cvs : cell_vector_states) {
-      BucketArray<AbstractSTKFieldContainer::VectorFieldType> array(
-          *cvs, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " VFT dim[2]: " <<
-      // array.extent(2) << std::endl;
-      MDArray ar                                     = array;
-      stateArrays.elemStateArrays[b][cvs->name()] = ar;
+      auto data = reinterpret_cast<double*>(buck.field_data_location(*cvs));
+      auto vec_dim = stk::mesh::field_scalars_per_entity(*cvs,buck);
+
+      auto& state = stateArrays.elemStateArrays[b][cvs->name()];
+      state.reset_from_host_ptr(data,buck.size(),vec_dim);
     }
     for (auto& cts : cell_tensor_states) {
-      BucketArray<AbstractSTKFieldContainer::TensorFieldType> array(
-          *cts, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " TFT dim[3]: " <<
-      // array.extent(3) << std::endl;
-      MDArray ar                                     = array;
-      stateArrays.elemStateArrays[b][cts->name()] = ar;
+      auto data = reinterpret_cast<double*>(buck.field_data_location(*cts));
+      auto dim0 = stk::mesh::field_extent0_per_entity(*cts,buck);
+      auto dim1 = stk::mesh::field_extent1_per_entity(*cts,buck);
+
+      auto& state = stateArrays.elemStateArrays[b][cts->name()];
+      state.reset_from_host_ptr(data,buck.size(),dim0,dim1);
     }
     for (auto& qpss : qpscalar_states) {
-      BucketArray<AbstractSTKFieldContainer::QPScalarFieldType> array(
-          *qpss, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " <<
-      // array.extent(1) << std::endl;
-      MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][qpss->name()] = ar;
+      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpss));
+      auto num_qps = stk::mesh::field_scalars_per_entity(*qpss,buck);
+
+      auto& state = stateArrays.elemStateArrays[b][qpss->name()];
+      state.reset_from_host_ptr(data,buck.size(),num_qps);
     }
     for (auto& qpvs : qpvector_states) {
-      BucketArray<AbstractSTKFieldContainer::QPVectorFieldType> array(
-          *qpvs, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " <<
-      // array.extent(2) << std::endl;
-      MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][qpvs->name()] = ar;
+      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpvs));
+      auto num_qps = stk::mesh::field_extent0_per_entity(*qpvs,buck);
+      auto vec_dim = stk::mesh::field_extent1_per_entity(*qpvs,buck);
+
+      auto& state = stateArrays.elemStateArrays[b][qpvs->name()];
+      state.reset_from_host_ptr(data,buck.size(),num_qps,vec_dim);
     }
     for (auto& qpts : qptensor_states) {
-      BucketArray<AbstractSTKFieldContainer::QPTensorFieldType> array(
-          *qpts, buck);
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " <<
-      // array.extent(3) << std::endl;
-      MDArray ar                                      = array;
-      stateArrays.elemStateArrays[b][qpts->name()] = ar;
+      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpts));
+      auto num_qps = stk::mesh::field_extent0_per_entity(*qpts,buck);
+      auto dimSq   = stk::mesh::field_extent1_per_entity(*qpts,buck);
+
+      auto dim = static_cast<int>(std::floor(std::sqrt(double(dimSq))));
+      TEUCHOS_TEST_FOR_EXCEPTION (dimSq!=(dim*dim), std::logic_error,
+          "Error! QP Tensor states only supported for square tensors.\n"
+          " - state name: " + qpts->name() + "\n"
+          " - num scalars per qp: " + std::to_string(dimSq) + "\n");
+
+      auto& state = stateArrays.elemStateArrays[b][qpts->name()];
+      state.reset_from_host_ptr(data,buck.size(),num_qps,dim,dim);
     }
     for (auto& svs : scalarValue_states) {
-      const int                                         size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(
-          &time[*svs], size);
-      MDArray ar = array;
-      // Debug
-      // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " <<
-      // array.extent(0) << std::endl;
-      // std::cout << "SV Name: " << *svs << " address : " << &array <<
-      // std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
+      auto& state = stateArrays.elemStateArrays[b][*svs];
+      state.reset_from_host_ptr(&time[*svs],1);
     }
   }
 
@@ -1590,24 +1578,16 @@ STKDiscretization::computeWorksetInfo()
 
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base) &&
       stkMeshStruct->nodal_data_base->isNodeDataPresent()) {
-    Teuchos::RCP<NodeFieldContainer> node_states =
-        stkMeshStruct->nodal_data_base->getNodeContainer();
-
-    stk::mesh::BucketVector const& node_buckets =
-        bulkData->get_buckets(NODE_RANK, select_owned_in_part);
-
+    auto node_states = stkMeshStruct->nodal_data_base->getNodeContainer();
+    const auto& node_buckets = bulkData->get_buckets(NODE_RANK, select_owned_in_part);
     const size_t numNodeBuckets = node_buckets.size();
 
     stateArrays.nodeStateArrays.resize(numNodeBuckets);
     for (std::size_t b = 0; b < numNodeBuckets; b++) {
       stk::mesh::Bucket& buck = *node_buckets[b];
-      for (NodeFieldContainer::iterator nfs = node_states->begin();
-           nfs != node_states->end();
-           ++nfs) {
-        stateArrays.nodeStateArrays[b][(*nfs).first] =
-            Teuchos::rcp_dynamic_cast<AbstractSTKNodeFieldContainer>(
-                (*nfs).second)
-                ->getMDA(buck);
+      for (auto it : *node_states) {
+        auto stk_node_state = Teuchos::rcp_dynamic_cast<AbstractSTKNodeFieldContainer>(it.second);
+        stateArrays.nodeStateArrays[b][it.first] = stk_node_state->getMDA(buck);
       }
     }
   }

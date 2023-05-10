@@ -32,10 +32,6 @@ public:
 
   Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer() { return nodeContainer; }
 
-  void updateNodalGraph(const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& nGraph);
-
-  const Teuchos::RCP<const Albany::ThyraCrsMatrixFactory>& getNodalOpFactory() const { return nodalOpFactory; }
-
   void replaceOwnedVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
   void replaceOverlapVectorSpace(const Teuchos::RCP<const Thyra_VectorSpace>& vs);
@@ -50,42 +46,13 @@ public:
 
   void registerVectorState(const std::string &stateName, int ndofs);
 
-  LO getVecsize() { return vectorsize; }
-
-  Teuchos::RCP<Adapt::NodalDataVector> getNodalDataVector() {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      nodal_data_vector.is_null(), std::logic_error,
-      "nodal_data_vector has not been allocated.");
-    return nodal_data_vector;
-  }
-
-  // The following are for use by response functions.
-  //   Inherit from Manager to make an object shared by the several response
-  // function field managers constructed when there are multiple element
-  // blocks. Register the Manager holder.
-  class Manager {
-  public:
-    virtual ~Manager() {}
-  };
-  // Register a manager. Throws if the key is already in use.
-  void registerManager(const std::string& key,
-                       const Teuchos::RCP<Manager>& manager);
-  // Check whether a manager has been registered with this key.
-  bool isManagerRegistered(const std::string& key) const;
-  // Get a manager. Throws if there is no manager associated with key.
-  const Teuchos::RCP<Manager>& getManager(const std::string& key) const;
-
 private:
   Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
-  Teuchos::RCP<const Albany::ThyraCrsMatrixFactory> nodalOpFactory;
   NodeFieldSizeVector nodeVectorLayout;
   NodeFieldSizeMap nodeVectorMap;
   LO vectorsize;
   Teuchos::RCP<Adapt::NodalDataVector> nodal_data_vector;
   bool initialized;
-
-  typedef std::map<std::string, Teuchos::RCP<Manager> > ManagerMap;
-  ManagerMap mgr_map;
 
   void initialize();
 };

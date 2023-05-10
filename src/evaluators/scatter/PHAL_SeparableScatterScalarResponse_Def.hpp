@@ -14,6 +14,7 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 
 #include "Albany_Hessian.hpp"
+#include "Albany_DualView.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"

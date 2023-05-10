@@ -95,12 +95,9 @@ public:
   std::vector<std::string>
   getResidResponseIDsToRequire(std::string& elementBlockName);
 
-  /// Method to make the current newState the oldState, and vice versa
-  void updateStates(const Teuchos::RCP<AbstractDiscretization>& disc);
-
   /// Method to get a StateInfoStruct of info needed by STK to output States as
   /// Fields
-  Teuchos::RCP<Albany::StateInfoStruct>
+  Teuchos::RCP<StateInfoStruct>
   getStateInfoStruct() const;
 
   /// Equivalent of previous method for the sideSets states
@@ -109,9 +106,9 @@ public:
 
   /// Method to set discretization object
   void
-  initStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc);
+  initStateArrays(const Teuchos::RCP<AbstractDiscretization>& disc);
 
-  Albany::StateArrays&
+  StateArrays&
   getSideSetStateArrays(const std::string& sideSet);
 
   Teuchos::RCP<Adapt::NodalDataBase>
@@ -143,9 +140,8 @@ public:
   /// Sets states arrays from a given StateInfoStruct into a given
   /// discretization
   void
-  doSetStateArrays(
-      const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
-      const Teuchos::RCP<StateInfoStruct>&                stateInfoPtr);
+  doSetStateArrays (const Teuchos::RCP<AbstractDiscretization>& disc,
+                    const Teuchos::RCP<StateInfoStruct>&        stateInfoPtr);
 
   /// boolean to enforce that allocate gets called once, and after registration
   /// and before gets

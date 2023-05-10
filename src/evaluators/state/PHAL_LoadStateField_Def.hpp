@@ -46,13 +46,14 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  //cout << "LoadStateFieldBase importing state " << stateName << " to field "
-  //     << fieldName << " with size " << data.size() << endl;
-
-  const Albany::MDArray& stateToLoad = (*workset.stateArrayPtr)[stateName];
+  // NOTE: we don't sync to host, since we don't know if it's needed.
+  //       If dev data has changed, it should be synced to host by
+  //       whomever changed the data.
+  const auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
+  auto stateData   = stateToLoad.host().data();
   PHAL::MDFieldIterator<ScalarType> d(data);
   for (int i = 0; ! d.done() && i < stateToLoad.size(); ++d, ++i)
-    *d = stateToLoad[i];
+    *d = stateData[i];
   for ( ; ! d.done(); ++d) *d = 0.;
 }
 
@@ -87,13 +88,15 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  //cout << "LoadStateField importing state " << stateName << " to field " 
-  //     << fieldName << " with size " << data.size() << endl;
+  // NOTE: we don't sync to host, since we don't know if it's needed.
+  //       If dev data has changed, it should be synced to host by
+  //       whomever changed the data.
+  auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
+  auto stateData   = stateToLoad.host().data();
 
-  const Albany::MDArray& stateToLoad = (*workset.stateArrayPtr)[stateName];
   PHAL::MDFieldIterator<ParamScalarT> d(data);
   for (int i = 0; ! d.done() && i < stateToLoad.size(); ++d, ++i)
-    *d = stateToLoad[i];
+    *d = stateData[i];
   for ( ; ! d.done(); ++d) *d = 0.;
 }
 

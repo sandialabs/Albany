@@ -42,51 +42,6 @@ public:
   void replaceOverlapVectorSpace(const Teuchos::Array<GO>& overlap_nodeGIDs,
                                  const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
-  // Methods to get multivectors (or their data)
-  const Teuchos::RCP<Thyra_MultiVector>& getOwnedNodeVector() const {
-    return owned_node_vec;
-  }
-  const Teuchos::RCP<Thyra_MultiVector>& getOverlapNodeVector() const {
-    return overlap_node_vec;
-  }
-
-  Teuchos::ArrayRCP<ST> getOwnedNodeView(std::size_t i) {
-    return Albany::getNonconstLocalData(owned_node_vec->col(i));
-  }
-  Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i) {
-    return Albany::getNonconstLocalData(overlap_node_vec->col(i));
-  }
-
-  Teuchos::ArrayRCP<const ST> getOwnedNodeConstView(std::size_t i) const {
-    return Albany::getLocalData(owned_node_vec->col(i).getConst());
-  }
-  Teuchos::ArrayRCP<const ST> getOverlapNodeConstView(std::size_t i) const {
-    return Albany::getLocalData(overlap_node_vec->col(i).getConst());
-  }
-
-  Teuchos::RCP<const Thyra_VectorSpace> getOverlappedVectorSpace() const { return overlap_node_vs; }
-  Teuchos::RCP<const Thyra_VectorSpace> getOwnedVectorSpace()      const { return owned_node_vs;   }
-
-  void initializeVectors (ST value);
-
-  Teuchos::RCP<const Albany::CombineAndScatterManager> initializeCASManager ();
-
-  void exportAddNodalDataVector();
-
-  void saveNodalDataState() const;
-  // In this version, mv may have fewer columns than there are vectors in the
-  // database. start_col indicates the offset into the database.
-  void saveNodalDataState(const Teuchos::RCP<const Thyra_MultiVector>& mv,
-                          const int start_col) const;
-
-  void saveNodalDataVector(const std::string& name,
-                           const Teuchos::RCP<const Thyra_MultiVector>& overlap_node_vec,
-                           const int offset) const;
-
-  void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
-
-  LO getVecSize() { return vectorsize; }
-
 private:
 
   NodalDataVector();
@@ -105,10 +60,6 @@ private:
   NodeFieldSizeMap& nodeVectorMap;
 
   LO& vectorsize;
-
-  bool mapsHaveChanged;
-
-  int num_preeval_calls, num_posteval_calls;
 };
 
 } // namespace Adapt
