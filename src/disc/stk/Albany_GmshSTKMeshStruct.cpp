@@ -125,13 +125,12 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   }
 
   shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(etopology);
-  int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
-      new Albany::MeshSpecsStruct (ctd, numDim, cub, nsNames, ssNames,
+      new Albany::MeshSpecsStruct (ctd, numDim, nsNames, ssNames,
                                    worksetSize, partVec[0]->name(),
                                    ebNameToIndex));
 

@@ -142,10 +142,11 @@ Albany::AdvectionProblem::constructEvaluators(
   int const numNodes    = intrepidBasis->getCardinality();
   int const worksetSize = meshSpecs.worksetSize;
 
+  int cubDegree = params->get("Cubature Degree", 3);
   Intrepid2::DefaultCubatureFactory     cubFactory;
   RCP<Intrepid2::Cubature<PHX::Device>> cellCubature =
       cubFactory.create<PHX::Device, RealType, RealType>(
-          *cellType, meshSpecs.cubatureDegree);
+          *cellType, cubDegree);
 
   int const numQPtsCell = cellCubature->getNumPoints();
   int const numVertices = cellType->getNodeCount();

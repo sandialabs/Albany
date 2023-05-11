@@ -86,7 +86,6 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   }
 
   std::vector<std::string> ssNames; // Empty
-  int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax,inputMeshSpecs.worksetSize);
 
@@ -101,7 +100,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 #endif
 
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, this->numDim, cub, nsNames, ssNames, worksetSize,
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, this->numDim, nsNames, ssNames, worksetSize,
                                                                 ebn, ebNameToIndex));
 
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());

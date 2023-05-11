@@ -40,12 +40,12 @@ ANONYMOUS:
           Type: Scalar Response
           Name: Solution Average
         Scaling Coefficient 1: -1.
+    Cubature Degree: 9
   Discretization: 
     1D Elements: 10
     2D Elements: 10
     Method: STK2D
     Exodus Output File Name: steady2d.exo
-    Cubature Degree: 9
   Piro: 
     Sensitivity Method: Adjoint
     Analysis: 

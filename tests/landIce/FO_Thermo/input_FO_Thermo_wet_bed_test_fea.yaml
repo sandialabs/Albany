@@ -10,6 +10,8 @@ ANONYMOUS:
     Compute Sensitivities: false
     Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
+    Cubature Degree: 4
+    Basal Cubature Degree: 4
     Needs Dissipation: true
     Needs Basal Friction: true
     Dirichlet BCs:
@@ -76,7 +78,6 @@ ANONYMOUS:
     Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: enth_coupled.exo
     Use Serial Mesh: true
     Columnwise Ordering: true
@@ -114,7 +115,6 @@ ANONYMOUS:
         Method: Exodus
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
-        Cubature Degree: 4
         Use Serial Mesh: false
         Required Fields Info:
           Number Of Fields: 5

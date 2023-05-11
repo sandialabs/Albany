@@ -34,7 +34,7 @@ struct MeshSpecsStruct
   // or, if possible, invalid values. This will be used to create mesh specs for
   // sideSets that will have no mesh. Having no mesh allows to specify long
   // parameter lists in the input file. For instance, if all we need is to know
-  // topological (and quadrature) information on a sideset, there is no need to
+  // topological information on a sideset, there is no need to
   // create a (potentially heavy) side mesh/discretization. Hence, we instead
   // create mesh specs, with bare minimum information.
   // To facilitate this, we offer an empty constructor, and the routines that
@@ -45,19 +45,15 @@ struct MeshSpecsStruct
   MeshSpecsStruct(
       const CellTopologyData&  ctd_,
       int                      numDim_,
-      int                      cubatureDegree_,
       std::vector<std::string> nsNames_,
       std::vector<std::string> ssNames_,
       int                      worksetSize_,
       const std::string        ebName_,
-      std::map<std::string, int> ebNameToIndex_,
-      const bool                 sepEvalsByEB_ = false,
-      const Intrepid2::EPolyType cubatureRule_ = Intrepid2::POLYTYPE_GAUSS);
+      std::map<std::string, int> ebNameToIndex_);
 
   // nonconst to allow replacement when the mesh adapts
   CellTopologyData ctd;
   int              numDim;
-  int              cubatureDegree;
   // Node Sets Names
   std::vector<std::string> nsNames;
   // Side Sets Names
@@ -68,14 +64,6 @@ struct MeshSpecsStruct
 
   // If there are multiple element blocks, store the name and index of all blocks
   std::map<std::string, int> ebNameToIndex;
-
-  // Records "Separate Evaluators by Element Block". This says whether there
-  // are as many MeshSpecsStructs as there are element blocks. If there is
-  // only one element block in the problem, then the value of this boolean
-  // doesn't matter. It is intended that interface blocks (LCM) don't count,
-  // but the user must enforce this intention.
-  bool                       sepEvalsByEB;
-  Intrepid2::EPolyType       cubatureRule;
 
   // We store the side meshes names so we have a way to index them with a number
   std::map<std::string, Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>> sideSetMeshSpecs;

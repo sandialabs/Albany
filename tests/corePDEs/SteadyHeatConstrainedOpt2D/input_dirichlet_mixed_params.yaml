@@ -41,13 +41,13 @@ ANONYMOUS:
         Enable AD for Hessian-vector product contributions of: (x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)
         Disable AD for Hessian-vector product contributions of: (x,p0) (x,p1) (p0,x) (p1,x)
         Reconstruct H_pp: false
+    Cubature Degree: 9
 
   Discretization: 
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
     Exodus Output File Name: steady2d_dirichlet_mixed_params.exo
-    Cubature Degree: 9
   Regression For Response 0:
     Relative Tolerance: 1.0e-07
     Absolute Tolerance: 1.0e-07

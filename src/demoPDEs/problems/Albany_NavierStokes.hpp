@@ -174,9 +174,9 @@ Albany::NavierStokes::constructEvaluators(
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
-  
+  const int cubDegree = params->get("Cubature Degree", 3);
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -758,128 +758,6 @@ Albany::NavierStokes::constructEvaluators(
     ev = rcp(new PHAL::NSBodyForce<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
-/*  if (haveFlowEq && haveNeumannx) { // Neumann BC's listed in input file and sidesets are present
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    // cell side
-
-    const CellTopologyData * const elem_top = &meshSpecs.ctd;
-    const CellTopologyData * const side_top = elem_top->side[0].topology;
-
-    p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
-    
-    RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid2::Cubature<PHX::Device> > sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, meshSpecs.cubatureDegree);
-  
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Node Variable Name", "Neumannx");
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
-    
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Side Cubature", sideCubature);
-    
-    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
-        ("Intrepid2 Basis", intrepidBasis);
-
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<RCP<shards::CellTopology> >("Side Type", sideType);
-
-    // Output
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-  
-//    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Neumann BCs");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-    
-    ev = rcp(new PHAL::Neumann<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
- if (haveFlowEq && haveNeumanny) { // Neumann BC's listed in input file and sidesets are present
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    // cell side
-
-    const CellTopologyData * const side_top = elem_top->side[0].topology;
-
-    p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
-
-    RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid2::Cubature<PHX::Device> > sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, meshSpecs.cubatureDegree);
-
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Node Variable Name", "Neumanny");
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
-
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Side Cubature", sideCubature);
-
-    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
-        ("Intrepid2 Basis", intrepidBasis);
-
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<RCP<shards::CellTopology> >("Side Type", sideType);
-
-    // Output
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-//    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Neumann BCs");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::Neumann<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  if (haveFlowEq && haveNeumannz) { // Neumann BC's listed in input file and sidesets are present
-
-    RCP<ParameterList> p = rcp(new ParameterList);
-    // cell side
-
-    const CellTopologyData * const side_top = elem_top->side[0].topology;
-
-    p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
-
-    RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid2::Cubature<PHX::Device> > sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, meshSpecs.cubatureDegree);
-
-    // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<string>("Node Variable Name", "Neumannz");
-    p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
-
-    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Side Cubature", sideCubature);
-
-    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
-        ("Intrepid2 Basis", intrepidBasis);
-
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<RCP<shards::CellTopology> >("Side Type", sideType);
-
-    // Output
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-//    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Neumann BCs");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-    ev = rcp(new PHAL::Neumann<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-   }
-*/
 
    if (porousMedia) { // Permeability term in momentum equation
     std::cout <<"This is flow through porous media problem" << std::endl;

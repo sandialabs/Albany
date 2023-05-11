@@ -786,12 +786,16 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
           p->set<RCP<MeshSpecsStruct>>("Mesh Specs Struct", meshSpecs);
 
           p->set<string>("Coordinate Vector Name", "Coord Vec");
-          p->set<int>(
-              "Cubature Degree",
-              BCparams.get("Cubature Degree", 0));  // if set to zero, the
-                                                    // cubature degree of the
-                                                    // side will be set to that
-                                                    // of the element
+
+          int cubDegree = BCparams.isParameter("Cubature Degree") ? BCparams.get<int>("Cubature Degree") :
+                          params->isParameter("Cubature Degree") ? params->get<int>("Cubature Degree") : -1;
+          
+          TEUCHOS_TEST_FOR_EXCEPTION (cubDegree<0, std::runtime_error, "Error! Missing cubature degree information for NBC: " << ss << ".\n"
+                                                                       "       Either provide 'Cubature Degree' in the Neumann BCs sublist, or provide 'Cubature Degree' in the Problem sublist\n");
+
+
+
+          p->set<int>("Cubature Degree", cubDegree); 
 
           if (conditions[k] == "robin" || conditions[k] == "radiate") {
             p->set<string>("DOF Name", dof_names[j]);

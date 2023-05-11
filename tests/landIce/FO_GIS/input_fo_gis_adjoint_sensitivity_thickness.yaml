@@ -13,6 +13,9 @@ ANONYMOUS:
     Adjust Bed Topography to Account for Thickness Changes: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3
     LandIce BCs:
       Number: 2
       BC 0:
@@ -62,7 +65,6 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity_thickness.exo
     Columnwise Ordering: true
     NumLayers: 5
@@ -95,7 +97,6 @@ ANONYMOUS:
       basalside:
         Method: Ioss
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_thickness_basal.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
@@ -151,7 +152,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_thickness_surface.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

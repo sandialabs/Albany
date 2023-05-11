@@ -47,11 +47,12 @@ ANONYMOUS:
       Number Of Responses: 1
       Response 0:
         Name: Solution Two Norm
+    Cubature Degree: 3
+    
   Discretization: 
     Exodus Output File Name: ascii.exo
     Workset Size: 100
     Method: Ascii
-    Cubature Degree: 3
   Regression For Response 0:
     Test Value: 5.64511798500000026e+01
     Relative Tolerance: 1.00000000000000002e-03

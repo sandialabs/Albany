@@ -22,12 +22,13 @@ ANONYMOUS:
       Number Of Responses: 1
       Response 0:
         Name: Solution Max Value
+    Cubature Degree: 3
+    
   Discretization: 
     Method: Exodus
     Exodus Input File Name: quad_tri.exo
     Exodus Output File Name: qt_out_tpetra.exo
     Separate Evaluators by Element Block: true
-    Cubature Degree: 3
   Regression For Response 0: 
     Test Value: 1.41229222e+00
     Relative Tolerance: 1.0

@@ -28,6 +28,8 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Basal Side Name: basalside
+    Cubature Degree: 1
+    Basal Cubature Degree: 3
     Extruded Column Coupled in 2D Response: true
     Response Functions: 
       Number Of Responses: 1
@@ -37,7 +39,6 @@ ANONYMOUS:
         H Coefficient: 3.0
         SMB Coefficient: 1.0
         Scaling Coefficient: 1.0
-        Cubature Degree: 3
         Field Name: Velocity
     Dirichlet BCs: { }
     Neumann BCs: { }
@@ -68,7 +69,6 @@ ANONYMOUS:
   Discretization: 
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 1
     Exodus Output File Name: slab_hex_smb.exo
     Columnwise Ordering: true
     NumLayers: 5
@@ -97,7 +97,6 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Cubature Degree: 3
         Exodus Input File Name: ../ExoMeshes/square_quad.exo
         Required Fields Info: 
           Number Of Fields: 6

@@ -29,12 +29,12 @@ ANONYMOUS:
         Field Rank: Scalar
         Source Field Name: Temperature
         Target Value: 0.0
+    Cubature Degree: 9
   Discretization: 
     1D Elements: 10
     2D Elements: 10
     Method: STK2D
     Exodus Output File Name: steady2d.exo
-    Cubature Degree: 9
   Regression For Response 0:
     Test Value: 3.53554196849e-01
     Relative Tolerance: 1.0e-03

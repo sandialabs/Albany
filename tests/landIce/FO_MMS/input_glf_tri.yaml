@@ -21,6 +21,8 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Basal Side Name: basalside
+    Cubature Degree: 3
+    Basal Cubature Degree: 3
     Extruded Column Coupled in 2D Response: true
     Response Functions: 
       Number Of Responses: 1
@@ -57,7 +59,6 @@ ANONYMOUS:
   Discretization: 
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 3
     Exodus Output File Name: slab_glf.exo
     Columnwise Ordering: true
     NumLayers: 5
@@ -88,7 +89,6 @@ ANONYMOUS:
         2D Elements: 5
         Cell Topology: Triangle
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Required Fields Info: 
           Number Of Fields: 3
           Field 0: 

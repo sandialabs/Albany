@@ -8,6 +8,8 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Enthalpy 3D
     Basal Side Name: basalside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
     Needs Dissipation: true
     Needs Basal Friction: true
     Dirichlet BCs:
@@ -61,7 +63,6 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: kleiner_B.exo
     Use Serial Mesh: true
     Columnwise Ordering: true
@@ -98,7 +99,6 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d_1x1.exo
         Exodus Output File Name: kleiner_B_basal.exo
-        Cubature Degree: 3
         Use Serial Mesh: true
         Required Fields Info:
           Number Of Fields: 6

@@ -13,13 +13,17 @@ ANONYMOUS:
     Required Fields: [temperature]
     Basal Side Name: basalside
     Surface Side Name: upperside
+
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3
+
     Response Functions:
       Number Of Responses: 1
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 2
         Response 1:
-          Cubature Degree: 3
           Name: Surface Mass Balance Mismatch
           SMB Coefficient: 1.0e+02
           Field Name: Velocity
@@ -27,7 +31,6 @@ ANONYMOUS:
           Scaling Coefficient: 5.88234e-07
           H Coefficient: 1.0
         Response 0:
-          Cubature Degree: 3
           Asinh Scaling: 1.0e+01
           Field Name: Velocity
           Regularization Coefficient: 1.0
@@ -78,7 +81,6 @@ ANONYMOUS:
     Columnwise Ordering: true
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 4
     Exodus Output File Name: gis_beta_smb.exo
     NumLayers: 5
     Use Glimmer Spacing: true
@@ -113,7 +115,6 @@ ANONYMOUS:
         Use Serial Mesh: false
         Exodus Input File Name: gis_unstruct_2d.exo
         Exodus Output File Name: gis_beta_smb_basal.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 8
           Field 0:
@@ -161,7 +162,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_beta_smb_surface.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

@@ -36,6 +36,8 @@ ANONYMOUS:
       Response 1:
         Type: Scalar Response
         Name: Solution Two Norm
+    Cubature Degree: 9
+    
   Regression For Response 0:
     Test Value: 1.39149999999999996e+00
     Relative Tolerance: 1.00000000000000002e-03
@@ -51,7 +53,6 @@ ANONYMOUS:
     2D Elements: 40
     Method: STK2D
     Exodus Output File Name: steady2d_tpetra.exo
-    Cubature Degree: 9
   Piro: 
     LOCA: 
       Bifurcation: { }

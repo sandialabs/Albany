@@ -12,6 +12,9 @@ ANONYMOUS:
     Time Step: 2.00000000000000011e-01
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -52,7 +55,6 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: gis_coupledT.exo
     Workset Size: 2000
     Columnwise Ordering: false
@@ -82,7 +84,6 @@ ANONYMOUS:
       basalside:
         Method: Ioss
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Exodus Output File Name: gis_coupled_basalT.exo
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
@@ -113,7 +114,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_coupled_surfaceT.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

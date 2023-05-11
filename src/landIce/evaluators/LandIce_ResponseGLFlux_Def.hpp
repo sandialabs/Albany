@@ -221,7 +221,6 @@ getValidResponseParameters() const
   validPL->set<std::string>("Type", "Scalar Response", "Type of response function");
   validPL->set<double>("Scaling Coefficient", 1.0, "Coefficient that scales the response");
   validPL->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::RCP<const CellTopologyData>(),"Cell Topology Data");
-  validPL->set<int>("Cubature Degree", 3, "degree of cubature used to compute the velocity mismatch");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
   validPL->set<std::string> ("Basal Side Name", "", "Name of the side set corresponding to the ice-bedrock interface");

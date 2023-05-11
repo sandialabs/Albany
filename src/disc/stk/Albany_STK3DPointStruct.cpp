@@ -31,14 +31,13 @@ STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& p
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
   std::cout << "finished extracting cell topology data" << std::endl;
-  int cubDegree = 1;
   std::vector<std::string> nsNames;
   std::vector<std::string> ssNames;
   int worksetSize = 1;
 
   std::cout << "--- creating a new MeshSpecsStruct ---" << std::endl;
   this->meshSpecs[0] =
-    Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cubDegree,
+    Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
                                              nsNames, ssNames, worksetSize, "Block0",
                                              ebNameToIndex));
   std::cout << "---3DPoint constructor done---" << std::endl;

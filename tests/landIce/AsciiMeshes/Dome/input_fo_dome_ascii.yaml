@@ -8,6 +8,7 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
     Basal Side Name: Basal
+    Basal Cubature Degree: 3
     Parameters: 
       Number Of Parameters: 1
       Parameter 0:
@@ -63,7 +64,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: dome_ascii_basal_out.exo
-        Cubature Degree: 3
   Regression For Response 0:
     Test Value: 7.79162527533e+01
     Relative Tolerance: 1.0e-04

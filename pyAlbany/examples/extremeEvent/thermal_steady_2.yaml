@@ -6,6 +6,7 @@ ANONYMOUS:
     Name: Thermal 2D
     Solution Method: Steady
     Compute Sensitivities: true
+    Cubature Degree: 9
     Dirichlet BCs:
       DBC on NS NodeSet0 for DOF T: 0.0
       DBC on NS NodeSet1 for DOF T: -1.0
@@ -49,7 +50,6 @@ ANONYMOUS:
     2D Elements: 10
     Method: STK2D
     Exodus Output File Name: steady2d.exo
-    Cubature Degree: 9
   Piro: 
     Sensitivity Method: Adjoint
     Analysis: 

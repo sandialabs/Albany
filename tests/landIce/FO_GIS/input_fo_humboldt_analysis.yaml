@@ -18,6 +18,9 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside 
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 4
     LandIce Field Norm:
       # |v| = sqrt(|v|^2 + reg)
       # used for basal terms, e.g., nonlinear sliding conditions 
@@ -30,7 +33,6 @@ ANONYMOUS:
     LandIce BCs:
       Number: 2
       BC 0:
-        Cubature Degree: 3
         Type: Basal Friction
         Side Set Name: basalside
         Basal Friction Coefficient:
@@ -176,7 +178,6 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: surface_height
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: output/humboldt.exo
     Use Serial Mesh: false
     Columnwise Ordering: false
@@ -243,7 +244,6 @@ ANONYMOUS:
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
         Exodus Output File Name: output/humboldt_basal.exo
-        Cubature Degree: 4
         Required Fields Info:
           Number Of Fields: 10
           Field 0:
@@ -304,7 +304,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: output/humboldt_upper.exo
-        Cubature Degree: 4
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

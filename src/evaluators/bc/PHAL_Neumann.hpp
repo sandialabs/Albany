@@ -120,7 +120,6 @@ protected:
 
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureCell;
   Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatureSide;
 
   // The basis

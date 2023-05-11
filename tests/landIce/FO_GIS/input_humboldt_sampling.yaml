@@ -23,10 +23,10 @@ ANONYMOUS:
       Mass Coefficient: 1.0e-01
       Laplacian Coefficient: 1.0e+01
       Robin Coefficient: 1.0
+    Cubature Degree: 3
   Discretization:
     Method: Ioss
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
     Exodus Output File Name: gis_laplacian_sample.exo
     Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
     Use Serial Mesh: false
@@ -42,7 +42,6 @@ ANONYMOUS:
       boundary_side_set:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Cubature Degree: 1
         Use Serial Mesh: ${USE_SERIAL_MESH}
   Piro:
     Sensitivity Method: Adjoint

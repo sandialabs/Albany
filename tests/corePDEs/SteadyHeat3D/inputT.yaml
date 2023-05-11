@@ -47,13 +47,13 @@ ANONYMOUS:
       Number Of Responses: 1
       Response 0:
         Name: Solution Two Norm
+    Cubature Degree: 3
   Discretization: 
     1D Elements: 10
     2D Elements: 11
     3D Elements: 13
     Workset Size: 100
     Method: STK3D
-    Cubature Degree: 3
   Regression For Response 0:
     Test Value: 6.68057000000000016e+01
     Relative Tolerance: 1.00000000000000002e-03

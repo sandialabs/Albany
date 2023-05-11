@@ -53,12 +53,13 @@ ANONYMOUS:
           Type: Gaussian
           Amplitude: 10.0
           Radius: 0.5
+    Cubature Degree: 9
+    
   Discretization: 
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
     Exodus Output File Name: steady2d_scalar_and_dist_param.exo
-    Cubature Degree: 9
   Regression For Response 0:
     Relative Tolerance: 1.0e-07
     Test Value:  3.714619372618e-01

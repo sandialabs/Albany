@@ -10,6 +10,8 @@ ANONYMOUS:
     Basal Side Name: basalside
     Needs Dissipation: true
     Needs Basal Friction: true
+    Cubature Degree: 4
+    Basal Cubature Degree: 4
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
       DBC on NS bottom for DOF U1: 0.00000000000000000e+00
@@ -74,7 +76,6 @@ ANONYMOUS:
     Workset Size: -1
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: enth_coupled.exo
     Use Serial Mesh: true
     Columnwise Ordering: true
@@ -112,7 +113,6 @@ ANONYMOUS:
         Method: Exodus
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
-        Cubature Degree: 4
         Use Serial Mesh: false
         Required Fields Info:
           Number Of Fields: 5

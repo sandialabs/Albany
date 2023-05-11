@@ -22,11 +22,13 @@ ANONYMOUS:
     Dirichlet BCs:
       DBC on NS ${DIRICHLET_SIDE} for DOF U: 0.0
     Neumann BCs: {}
+
+    Cubature Degree: 4
+    
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: column_coupling_test.exo
-    Cubature Degree: 4
     Columnwise Ordering: true
     NumLayers: 1
     Use Glimmer Spacing: true
@@ -51,7 +53,6 @@ ANONYMOUS:
         1D Elements: 5
         2D Elements: 5
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
@@ -69,7 +70,6 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

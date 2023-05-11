@@ -69,10 +69,10 @@ ANONYMOUS:
       Mu Type: Constant
       Bed Roughness Type: Constant
       Effective Pressure Type: Field
+    Cubature Degree: 3
   Discretization: 
     Number Of Time Derivatives: 0
     Method: Gmsh
-    Cubature Degree: 3
     Workset Size: 100
     Gmsh Input Mesh File Name: ./circle.msh
     Exodus Output File Name: ./shmip_bueler_steady.exo

@@ -10,6 +10,9 @@ ANONYMOUS:
     Name: LandIce Stokes First Order 3D
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3
     Equation Set:
       Type: LandIce
     Response Functions:
@@ -78,7 +81,6 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: gis_analysis_beta.exo
     Columnwise Ordering: false
     NumLayers: 5
@@ -112,7 +114,6 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_analysis_basal.exo
-        Cubature Degree: 3
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info:
@@ -142,7 +143,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_analysis_surface.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
