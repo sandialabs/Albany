@@ -14,8 +14,8 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Cubature Degree: 4
-    Basal Cubature Degree: 3
+    Cubature Degrees (Horiz Vert): [4, 2]
+    Basal Cubature Degree: 4
     Surface Cubature Degree: 4
     LandIce Field Norm:
       sliding_velocity_basalside:
@@ -479,6 +479,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 2.057700602643e+01
+    Test Value: 2.058840213564e+01
     Relative Tolerance: 1.0e-06
 ...

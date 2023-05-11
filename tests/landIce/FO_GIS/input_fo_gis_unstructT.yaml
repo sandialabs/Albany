@@ -12,7 +12,7 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
-    Cubature Degree: 4
+    Cubature Degrees (Horiz Vert): [4, 2]
     Basal Cubature Degree: 3
     Surface Cubature Degree: 3
     Response Functions:
@@ -40,15 +40,15 @@ ANONYMOUS:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
     LandIce Physical Parameters:
-      Water Density: 1.02800000000000000e+03
-      Ice Density: 9.10000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8
+      Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 1.00000000000000006e-01
+      Glen's Law Homotopy Parameter: 1.0e-01
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
@@ -123,11 +123,11 @@ ANONYMOUS:
             Field Origin: Mesh
             Field Type: Node Vector
   Regression For Response 0:
-    Test Value: 1.109508809174e+08
+    Test Value: 1.109508809230e+08
     Sensitivity For Parameter 0:
-      Test Value: 1.852226833925e+07
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
+      Test Value: 1.852225594771e+07
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
   Piro:
     LOCA:
       Bifurcation: { }
@@ -135,14 +135,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 1.00000000000000006e-01
+        Initial Value: 1.0e-01
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 2.00000000000000011e-01
+        Initial Step Size: 2.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -156,11 +156,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000008e-05
+            Tolerance: 1.0e-05
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000008e-05
-            Relative Tolerance: 1.00000000000000002e-03
+            Absolute Tolerance: 1.0e-05
+            Relative Tolerance: 1.0e-03
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -181,7 +181,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999955e-07
+                      Convergence Tolerance: 1.0e-06
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -199,7 +199,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:
