@@ -120,8 +120,30 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   cellType = rcp(new shards::CellTopology (cell_top));
 
   Intrepid2::DefaultCubatureFactory cubFactory;
-  int cubDegree = params->get("Cubature Degree", 3);
-  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
+
+  int defaultCubDegree = 3;
+  bool tensorProductCell = (discParams->get<std::string>("Method") == "Extruded") && ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
+  std::string tensorCubDegName = "Cubature Degrees (Horiz Vert)";
+  if(tensorProductCell && params->isParameter(tensorCubDegName)) {
+    TEUCHOS_TEST_FOR_EXCEPTION (params->isParameter("Cubature Degree") && params->isParameter(tensorCubDegName), std::logic_error,
+                                  "Error! Either provide parameter 'Cubatur Degree' or 'Cubature Degrees (Horiz Vert)', not both\n");
+    Teuchos::Array<int> tensorCubDegrees;
+    tensorCubDegrees = params->get<Teuchos::Array<int>>(tensorCubDegName);
+    if(cellType->getKey() == shards::Wedge<6>::key)
+      cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, tensorCubDegrees.toVector());
+    else {  // (cellType->getKey() == shards::Hexahedron<8>::key)
+      std::vector<int> degree(3); 
+      degree[0] = degree[1] = tensorCubDegrees[0]; 
+      degree[2] = tensorCubDegrees[1]; 
+      cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, degree);
+    }    
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (!tensorProductCell && params->isParameter(tensorCubDegName), std::logic_error,
+                                  "Error! Parameter 'Cubature Degrees (Horiz Vert)' should be provided only for extruded meshes with Wedge or Hexaedron cells\n"
+                                  "        Use 'Cubature Degree instead'");
+    int cubDegree = params->get("Cubature Degree", defaultCubDegree);
+    cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
+  }  
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
   const int numCellSides    = cellType->getSideCount();
@@ -310,9 +332,10 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
   validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
   validPL->sublist("LandIce Rigid Body Modes For Preconditioner", false, "");
+  Teuchos::Array<int> cubDegrees(2); cubDegrees[0] = 4; cubDegrees[1] = 3;
+  validPL->set<Teuchos::Array<int>>("Cubature Degrees (Horiz Vert)",cubDegrees, "Tensor Product Cubature Degrees: [degree for horizontal dimension (for triangular or quadrilateral elements), degree for vertical dimension (line element)]");
   validPL->set<int>("Basal Cubature Degree", 3, "Cubature degree used on the basal side");
   validPL->set<int>("Surface Cubature Degree", 3, "Cubature degree used on the surface side");
-  validPL->set<int>("Lateral Cubature Degree", 3, "Cubature degree used on the lateral side");
   return validPL;
 }
 

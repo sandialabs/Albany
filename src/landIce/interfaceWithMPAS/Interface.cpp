@@ -568,8 +568,11 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     rbmList.set<bool>("Compute Rotation Modes", true);
   }
 
-  int cubatureDegree = 4;
-  probParamList.set("Cubature Degree", probParamList.get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
+  Teuchos::Array<int> defaultCubatureDegrees(2); 
+  defaultCubatureDegrees[0] = 4; defaultCubatureDegrees[1]= 3; 
+
+  if(!probParamList.isParameter("Cubature Degree"))
+    probParamList.set("Cubature Degrees (Horiz Vert)", probParamList.get("Cubature Degrees (Horiz Vert)", defaultCubatureDegrees));  //set Cubature Degrees if not defined
 
 
   auto discretizationList = Teuchos::sublist(paramList, "Discretization", true);
