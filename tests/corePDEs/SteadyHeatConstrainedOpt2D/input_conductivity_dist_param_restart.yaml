@@ -34,13 +34,14 @@ ANONYMOUS:
           Scaling: 1.5e-01
           Source Field Name: ThermalConductivity
           Target Value: 0.0
+    Cubature Degree: 3
+    
   Discretization: 
     Method: Exodus
     Number Of Time Derivatives: 0
     Use Serial Mesh: true
     Exodus Output File Name: steady2d_conduct_restart.exo
     Exodus Input File Name: steady2d_conduct_opt.exo
-    Cubature Degree: 3
     Restart Index: 1
   Regression For Response 0:
     Test Value: 1.78631029271e-01

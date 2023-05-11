@@ -10,7 +10,6 @@ ANONYMOUS:
   Discretization: 
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 0
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
@@ -23,7 +22,6 @@ ANONYMOUS:
         Use Serial Mesh: false
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_unstruct_basal_populated.exo
-        Cubature Degree: 0
         Required Fields Info: 
           Number Of Fields: 4
           Field 0: 
@@ -51,7 +49,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_unstruct_surface_populated.exo
-        Cubature Degree: 0
         Required Fields Info: 
           Number Of Fields: 2
           Field 0: 

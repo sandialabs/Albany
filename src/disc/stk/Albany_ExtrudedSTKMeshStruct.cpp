@@ -166,7 +166,6 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   numLayers = params->get<int>("NumLayers");
   Ordering = params->get("Columnwise Ordering", false) ? LayeredMeshOrdering::COLUMN : LayeredMeshOrdering::LAYER;
 
-  int cub = params->get("Cubature Degree", 3);
   int basalWorksetSize = basalMeshSpec->worksetSize;
   int worksetSizeMax = params->get<int>("Workset Size");
   int ebSizeMaxEstimate = basalWorksetSize * numLayers; // This is ebSizeMax when basalWorksetSize is max
@@ -174,7 +173,7 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, 
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, nsNames, ssNames, worksetSize, 
      ebn, ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset

@@ -14,6 +14,9 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -54,7 +57,6 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_frosh.exo
     Columnwise Ordering: true
     NumLayers: 5
@@ -85,7 +87,6 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Cubature Degree: 3
         Exodus Input File Name: gis_unstruct_basal_populated.exo
         Exodus Output File Name: gis_unstruct_basal_frosh.exo
         Required Fields Info:
@@ -110,7 +111,6 @@ ANONYMOUS:
       upperside:
         Method: Ioss
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Restart Index: 1
         Exodus Input File Name: gis_unstruct_surface_populated.exo
         Exodus Output File Name: gis_unstruct_surface_frosh.exo

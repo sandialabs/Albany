@@ -145,7 +145,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   ScalarFieldType* effectivePressureField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "effective_pressure");
   ScalarFieldType* betaField;
 
-  const auto& landiceBcList = paramList->sublist("Problem").sublist("LandIce BCs");
+  auto& probParamList = paramList->sublist("Problem");
+  const auto& landiceBcList = probParamList.sublist("LandIce BCs");
   const auto& basalParams = landiceBcList.sublist("BC 0");
   const auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
   const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
@@ -217,12 +218,12 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   if (!first_time_step) {
     meshStruct->setRestartDataTime(
-        paramList->sublist("Problem").get("Homotopy Restart Step", 1.));
+        probParamList.get("Homotopy Restart Step", 1.));
     double homotopy =
-        paramList->sublist("Problem").sublist("LandIce Viscosity").get(
+        probParamList.sublist("LandIce Viscosity").get(
             "Glen's Law Homotopy Parameter", 1.0);
     if (meshStruct->restartDataTime() == homotopy) {
-      paramList->sublist("Problem").set("Solution Method", "Steady");
+      probParamList.set("Solution Method", "Steady");
       paramList->sublist("Piro").set("Solver Type", "NOX");
     }
   }
@@ -455,13 +456,14 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   //paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
   paramList->set("Overwrite Nominal Values With Final Point", true);
+  Teuchos::ParameterList& probParamList = paramList->sublist("Problem");
 
   //Physical Parameters
-  if(paramList->sublist("Problem").isSublist("LandIce Physical Parameters")) {
+  if(probParamList.isSublist("LandIce Physical Parameters")) {
     std::cout<<"\nWARNING: Using Physical Parameters (gravity, ice/ocean densities) provided in Albany input file. In order to use those provided by MPAS, remove \"LandIce Physical Parameters\" sublist from Albany input file.\n"<<std::endl;
   }
 
-  Teuchos::ParameterList& physParamList = paramList->sublist("Problem").sublist("LandIce Physical Parameters");
+  Teuchos::ParameterList& physParamList = probParamList.sublist("LandIce Physical Parameters");
 
   double rho_ice, rho_seawater;
   physParamList.set("Gravity Acceleration", physParamList.get("Gravity Acceleration", MPAS_gravity));
@@ -470,23 +472,23 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   physParamList.set("Clausius-Clapeyron Coefficient", physParamList.get("Clausius-Clapeyron Coefficient", MPAS_ClausiusClapeyoronCoeff));
   physParamList.set<bool>("Use GLP", physParamList.get("Use GLP", MPAS_useGLP)); //use GLP (Grounding line parametrization) unless actively disabled
 
-  paramList->sublist("Problem").set("Name", paramList->sublist("Problem").get("Name", "LandIce Stokes First Order 3D"));
+  probParamList.set("Name", probParamList.get("Name", "LandIce Stokes First Order 3D"));
 
   MPAS_dt = Teuchos::rcp(new double(0.0));
-  if (paramList->sublist("Problem").get<std::string>("Name") == "LandIce Coupled FO H 3D") {
-    // paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
-    *MPAS_dt = paramList->sublist("Problem").get("Time Step", 0.0);
-    paramList->sublist("Problem").set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
+  if (probParamList.get<std::string>("Name") == "LandIce Coupled FO H 3D") {
+    // probParamList.sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
+    *MPAS_dt = probParamList.get("Time Step", 0.0);
+    probParamList.set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
   }
 
-  if(paramList->sublist("Problem").isSublist("LandIce BCs"))
+  if(probParamList.isSublist("LandIce BCs"))
     std::cout<<"\nWARNING: Using LandIce BCs provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"LandIce BCs\" sublist from Albany input file.\n"<<std::endl;
   
   // ---- Setting Memoization ---- //
-  paramList->sublist("Problem").set<bool>("Use MDField Memoization", paramList->sublist("Problem").get<bool>("Use MDField Memoization", true));
+  probParamList.set<bool>("Use MDField Memoization", probParamList.get<bool>("Use MDField Memoization", true));
 
   // ---- Setting parameters for LandIce BCs ---- //
-  Teuchos::ParameterList& landiceBcList = paramList->sublist("Problem").sublist("LandIce BCs");
+  Teuchos::ParameterList& landiceBcList = probParamList.sublist("LandIce BCs");
   landiceBcList.set<int>("Number",2);
 
   // Basal Friction BC
@@ -494,7 +496,11 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
   bool zeroBetaOnShelf = basalFrictionParams.get<bool>("Zero Beta On Floating Ice", true);
   int basal_cub_degree = physParamList.get<bool>("Use GLP") ? 8 : (zeroBetaOnShelf ? 4 : 3);
-  basalParams.set<int>("Cubature Degree",basalParams.get<int>("Cubature Degree", basal_cub_degree));
+
+  //TODO: remove this after fixing MPAS
+  basal_cub_degree = basalParams.get<int>("Cubature Degree", basal_cub_degree);
+
+  probParamList.set<int>("Basal Cubature Degree",probParamList.get<int>("Basal Cubature Degree", basal_cub_degree));
   basalParams.set("Side Set Name", basalParams.get("Side Set Name", "basalside"));
   basalParams.set("Type", basalParams.get("Type", "Basal Friction"));
   auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type","Power Law"));
@@ -517,30 +523,30 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   lateralParams.set("Type", lateralParams.get("Type", "Lateral"));
 
   //Dirichlet BCs
-  if(!paramList->sublist("Problem").isSublist("Dirichlet BCs")) {
-    paramList->sublist("Problem").sublist("Dirichlet BCs").set("SDBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
-    paramList->sublist("Problem").sublist("Dirichlet BCs").set("SDBC on NS dirichlet for DOF U1 prescribe Field", "dirichlet_field");
+  if(!probParamList.isSublist("Dirichlet BCs")) {
+    probParamList.sublist("Dirichlet BCs").set("SDBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
+    probParamList.sublist("Dirichlet BCs").set("SDBC on NS dirichlet for DOF U1 prescribe Field", "dirichlet_field");
   }
   else {
     std::cout<<"\nWARNING: Using Dirichlet BCs options provided in Albany input file. In order to use those provided by MPAS, remove \"Dirichlet BCs\" sublist from Albany input file.\n"<<std::endl;
   }
 
-  if(paramList->sublist("Problem").isSublist("LandIce Field Norm") && paramList->sublist("Problem").sublist("LandIce Field Norm").isSublist("sliding_velocity_basalside"))
+  if(probParamList.isSublist("LandIce Field Norm") && probParamList.sublist("LandIce Field Norm").isSublist("sliding_velocity_basalside"))
     std::cout<<"\nWARNING: Using options for Velocity Norm provided in Albany input file. In order to use those provided by MPAS, remove \"LandIce Velocity Norm\" sublist from Albany input file.\n"<<std::endl;
 
-  Teuchos::ParameterList& fieldNormList =  paramList->sublist("Problem").sublist("LandIce Field Norm").sublist("sliding_velocity_basalside"); //empty list if LandIceViscosity not in input file.
+  Teuchos::ParameterList& fieldNormList =  probParamList.sublist("LandIce Field Norm").sublist("sliding_velocity_basalside"); //empty list if LandIceViscosity not in input file.
   fieldNormList.set("Regularization Type", fieldNormList.get("Regularization Type", "Given Value"));
   double reg_value = 1e-6;
   fieldNormList.set("Regularization Value", fieldNormList.get("Regularization Value", reg_value));
 
 
-  if(paramList->sublist("Problem").isSublist("LandIce Viscosity"))
+  if(probParamList.isSublist("LandIce Viscosity"))
     std::cout<<"\nWARNING: Using Viscosity options provided in Albany input file. In order to use those provided by MPAS, remove \"LandIce Viscosity\" sublist from Albany input file.\n"<<std::endl;
 
-  Teuchos::ParameterList& viscosityList =  paramList->sublist("Problem").sublist("LandIce Viscosity"); //empty list if LandIceViscosity not in input file.
+  Teuchos::ParameterList& viscosityList =  probParamList.sublist("LandIce Viscosity"); //empty list if LandIceViscosity not in input file.
 
   viscosityList.set("Type", viscosityList.get("Type", "Glen's Law"));
-  double homotopy_param = (paramList->sublist("Problem").get("Solution Method", "Steady") == "Steady") ? 0.3 : 1.0;
+  double homotopy_param = (probParamList.get("Solution Method", "Steady") == "Steady") ? 0.3 : 1.0;
   viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", homotopy_param));
   // Convert MPAS value for A from [k^-1 kPa^-n yr^-1] to [Pa^-n s^-1]
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
@@ -553,14 +559,17 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
 
 
-  paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
+  probParamList.sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
 
   //! set Rigid body modes for prec. near null space
-  if(!paramList->sublist("Problem").isSublist("LandIce Rigid Body Modes For Preconditioner")) {
-    Teuchos::ParameterList& rbmList = paramList->sublist("Problem").sublist("LandIce Rigid Body Modes For Preconditioner");
+  if(!probParamList.isSublist("LandIce Rigid Body Modes For Preconditioner")) {
+    Teuchos::ParameterList& rbmList = probParamList.sublist("LandIce Rigid Body Modes For Preconditioner");
     rbmList.set<bool>("Compute Constant Modes", true);
     rbmList.set<bool>("Compute Rotation Modes", true);
   }
+
+  int cubatureDegree = 4;
+  probParamList.set("Cubature Degree", probParamList.get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
 
 
   auto discretizationList = Teuchos::sublist(paramList, "Discretization", true);
@@ -568,8 +577,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   discretizationList->set("Workset Size", discretizationList->get("Workset Size", -1));
 
   discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
-  int cubatureDegree = 4;
-  discretizationList->set("Cubature Degree", discretizationList->get("Cubature Degree", cubatureDegree));  //set cubatureDegree if not defined
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);

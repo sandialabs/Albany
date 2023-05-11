@@ -12,6 +12,8 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Enthalpy 3D
     Basal Side Name: basalside
+    Basal Cubature Degree: 4
+    Cubature Degree: 4
     Needs Dissipation: true
     Needs Basal Friction: true
     Dirichlet BCs:
@@ -68,7 +70,6 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: surface_height
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: ./humboldt_enthalpy.exo
     Use Serial Mesh: true
     Columnwise Ordering: true
@@ -131,7 +132,6 @@ ANONYMOUS:
         Restart Index: 1
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
-        Cubature Degree: 4
         Required Fields Info:
           Number Of Fields: 7
           Field 0:

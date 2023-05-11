@@ -149,9 +149,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
   Intrepid2::DefaultCubatureFactory cubFactory;
-  cubatureCell = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs->cubatureDegree);
-
-  int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
+  int cubDegree = p.get<int>("Cubature Degree");
 
   numSidesOnElem = elem_top->side_count;
   sideType.resize(numSidesOnElem);
@@ -164,7 +162,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   maxSideDim = maxNumQpSide =0;
   for(int i=0; i<numSidesOnElem; ++i) {
     sideType[i] = Teuchos::rcp(new shards::CellTopology(elem_top->side[i].topology));
-    cubatureSide[i] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[i], cubatureDegree);
+    cubatureSide[i] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[i], cubDegree);
     maxSideDim = std::max( maxSideDim, (int)sideType[i]->getDimension());
     maxNumQpSide = std::max(maxNumQpSide, (int)cubatureSide[i]->getNumPoints());
     sideTypeName = sideType[i]->getName();

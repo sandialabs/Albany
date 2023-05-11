@@ -48,7 +48,8 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
   cellType = rcp(new shards::CellTopology (cell_top));
 
   Intrepid2::DefaultCubatureFactory cubFactory;
-  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
+  int cubDegree = params->get("Cubature Degree", 3);
+  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
 
@@ -67,7 +68,8 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
     sideBasis = Albany::getIntrepid2Basis(*side_top);
     sideType = rcp(new shards::CellTopology (side_top));
-    sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideMeshSpecs.cubatureDegree);
+    int sideCubDegree = params->get("Side Cubature Degree", 3);
+    sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideCubDegree);
 
 
     auto numSideVertices = sideType->getNodeCount();
@@ -182,6 +184,7 @@ LandIce::LaplacianSampling::getValidProblemParameters () const
 
   validPL->sublist("LandIce Laplacian Regularization", false, "Parameters needed to compute the Laplacian Regularization");
   validPL->set<std::string> ("Side Name", "", "Name of the lateral side set");
+  validPL->set<int>("Side Cubature Degree", 3, "Cubature degree used on the mesh side");
 
   return validPL;
 }

@@ -11,6 +11,9 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -51,7 +54,6 @@ ANONYMOUS:
   Discretization:
     Method: Exodus
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_restart.exo
     Exodus Input File Name: gis_unstruct.exo
     Restart Index: 1
@@ -74,7 +76,6 @@ ANONYMOUS:
       basalside:
         Method: Exodus
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Exodus Output File Name: gis_unstruct_basal_restart.exo
         Exodus Input File Name: gis_unstruct_basal.exo
         Restart Index: 1
@@ -87,7 +88,6 @@ ANONYMOUS:
       upperside:
         Method: Exodus
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Exodus Output File Name: gis_unstruct_surface_restart.exo
         Exodus Input File Name: gis_unstruct_surface.exo
         Restart Index: 1

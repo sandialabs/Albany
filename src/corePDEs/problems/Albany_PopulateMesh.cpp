@@ -42,7 +42,8 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
   cellEBName    = meshSpecs[0]->ebName;
   cellTopology  = Teuchos::rcp(new shards::CellTopology (cell_top_data));
   cellBasis     = getIntrepid2Basis(*cell_top_data);
-  cellCubature  = cubFactory.create<PHX::Device, RealType, RealType>(*cellTopology, meshSpecs[0]->cubatureDegree);
+  int cubDegree = this->params->get("Cubature Degree", 0);
+  cellCubature  = cubFactory.create<PHX::Device, RealType, RealType>(*cellTopology, cubDegree);
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
   const int numCellSides    = cellTopology->getFaceCount();
@@ -68,7 +69,8 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
       sideEBName[ss_name]   = meshSpecs[0]->ebName;
       sideTopology[ss_name] = Teuchos::rcp(new shards::CellTopology (side_top_data));
       sideBasis[ss_name]    = getIntrepid2Basis(*side_top_data);
-      sideCubature[ss_name] = cubFactory.create<PHX::Device, RealType, RealType>(*sideTopology[ss_name], ssMeshSpecs.cubatureDegree);
+      int sideCubDegree = this->params->get("Side Cubature Degree", 0);
+      sideCubature[ss_name] = cubFactory.create<PHX::Device, RealType, RealType>(*sideTopology[ss_name], sideCubDegree);
 
       const int numSideVertices = sideTopology[ss_name]->getNodeCount();
       const int numSideNodes    = sideBasis[ss_name]->getCardinality();

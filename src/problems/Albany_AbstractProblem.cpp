@@ -153,6 +153,8 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   // Deprecated parameters, kept solely for backward compatibility
   validPL->set<bool>("Compute Sensitivities", true, "Deprecated; Use parameter located under \"Piro\"/\"Analysis\"/\"Solve\" instead.");
 
+  validPL->set<int>("Cubature Degree", 3, "Cubature Degree");
+
   // NOX status test that allows constutive models to cut the global time step
   // needed at the Problem scope when running Schwarz coupling
   validPL->set<Teuchos::RCP<NOX::StatusTest::Generic>>("Constitutive Model NOX Status Test", Teuchos::RCP<NOX::StatusTest::Generic>(), "NOX status test that facilitates communication between a ModelEvaluator and a NOX solver");

@@ -13,13 +13,15 @@ ANONYMOUS:
     Adjust Bed Topography to Account for Thickness Changes: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3
     Response Functions:
       Number Of Responses: 1
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 2
         Response 1:
-          Cubature Degree: 3
           Name: Surface Mass Balance Mismatch
           SMB Coefficient: 1.0e+02
           Field Name: Velocity
@@ -27,7 +29,6 @@ ANONYMOUS:
           Scaling Coefficient: 5.8824e-07
           H Coefficient: 1.0
         Response 0:
-          Cubature Degree: 3
           Asinh Scaling: 1.0e+01
           Field Name: Velocity
           Regularization Coefficient: 1.0
@@ -83,7 +84,6 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: gis_unstruct_analysis_two_paramsT.exo
     Columnwise Ordering: true
     NumLayers: 5
@@ -120,7 +120,6 @@ ANONYMOUS:
       basalside:
         Method: Ioss
         Number Of Time Derivatives: 0
-        Cubature Degree: 3
         Exodus Output File Name: gis_unstruct_analysis_two_params_basalT.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
@@ -176,7 +175,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_unstruct_analysis_two_params_surfaceT.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

@@ -35,12 +35,13 @@ ANONYMOUS:
           Scaling: 1.5e-01
           Source Field Name: ThermalConductivity
           Target Value: 0.0
+    Cubature Degree: 9
+    
   Discretization: 
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
     Exodus Output File Name: steady2d_dist_param.exo
-    Cubature Degree: 9
   Regression For Response 0:
     Test Value: 3.23754626956e-01
     Relative Tolerance: 1.0e-03

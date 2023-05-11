@@ -71,6 +71,7 @@ ANONYMOUS:
         Given Value: 6.3072 # m/yr * (kg/m^3)
       Surface Water Input: 
         Type: Given Field
+    Cubature Degree: 5
   Discretization: 
     Number Of Time Derivatives: 0
     Method: STK2D
@@ -79,7 +80,6 @@ ANONYMOUS:
     1D Scale: 1000.0
     2D Scale: 10.0
     Periodic_y BC: true
-    Cubature Degree: 5
     Workset Size: 100
     Exodus Output File Name: ./shmip_hewitt_steady.exo
     Required Fields Info: 

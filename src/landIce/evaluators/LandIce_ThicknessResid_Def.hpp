@@ -74,7 +74,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   cellType = Teuchos::rcp(new shards::CellTopology(elem_top));
 
-  cubatureDegree = p.isParameter("Cubature Degree") ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
+  cubatureDegree = p.get<int>("Cubature Degree");
   numNodes = intrepidBasis->getCardinality();
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());

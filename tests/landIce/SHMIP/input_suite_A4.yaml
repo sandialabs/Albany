@@ -70,10 +70,10 @@ ANONYMOUS:
       Mu Type: Constant
       Bed Roughness Type: Constant
       Effective Pressure Type: Field
+    Cubature Degree: 5
   Discretization: 
     Number Of Time Derivatives: 0
     Method: STK2D
-    Cubature Degree: 5
     Workset Size: 100
     Exodus Output File Name: ./shmip_suite_A4.exo
     1D Elements: 100

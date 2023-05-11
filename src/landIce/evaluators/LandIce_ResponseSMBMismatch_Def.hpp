@@ -275,7 +275,6 @@ getValidResponseParameters() const
   validPL->set<double>("Scaling Coefficient", 1.0, "Coefficient that scales the response");
   validPL->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::RCP<const CellTopologyData>(),"Cell Topology Data");
   validPL->set<double>("Asinh Scaling", 1.0, "Scaling s in asinh(s*x)/s. Used to penalize high values of velocity");
-  validPL->set<int>("Cubature Degree", 3, "degree of cubature used to compute the velocity mismatch");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 

@@ -10,7 +10,6 @@ ANONYMOUS:
   Discretization: 
     Number Of Time Derivatives: 0
     Method: STK2D
-    Cubature Degree: 1
     Workset Size: 10
     Exodus Output File Name: ./populated_mesh.exo
     1D Elements: 2

@@ -277,7 +277,6 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
   stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::LINE_2);
   numDim = 2;
-  int cub = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   Teuchos::broadcast<LO,LO>(*commT, 0, &NumElems);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
@@ -287,7 +286,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
-      new Albany::MeshSpecsStruct (ctd, numDim, cub, nsNames, ssNames,
+      new Albany::MeshSpecsStruct (ctd, numDim, nsNames, ssNames,
                                    worksetSize, partVec[0]->name(), ebNameToIndex));
 
   // Create a mesh specs object for EACH side set

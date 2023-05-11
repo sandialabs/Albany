@@ -34,12 +34,13 @@ ANONYMOUS:
         Name: Solution Average
       Response 1:
         Name: Solution Two Norm
+    Cubature Degree: 9
+    
   Discretization: 
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
     Exodus Output File Name: steady2d_tpetra_muelu.exo
-    Cubature Degree: 9
   Regression For Response 0:
     Test Value: -4.20000000000000000e+01
     Relative Tolerance: 1.00000000000000002e-03

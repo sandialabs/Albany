@@ -153,7 +153,8 @@ Albany::HeatProblem::constructEvaluators(
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid2::DefaultCubatureFactory cubFactory;
-   RCP <Intrepid2::Cubature<PHX::Device> > cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+   int cubDegree = params->get("Cubature Degree", 3);
+   RCP <Intrepid2::Cubature<PHX::Device> > cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
    const int numQPtsCell = cellCubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();

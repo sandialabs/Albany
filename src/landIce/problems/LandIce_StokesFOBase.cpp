@@ -120,7 +120,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   cellType = rcp(new shards::CellTopology (cell_top));
 
   Intrepid2::DefaultCubatureFactory cubFactory;
-  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
+  int cubDegree = params->get("Cubature Degree", 3);
+  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
   const int numCellSides    = cellType->getSideCount();
@@ -131,6 +132,13 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDimFO));
 
   unsigned int sideDim = numDim-1;
+  
+  std::map<std::string,int> sideCubatureDegree;
+  if (!isInvalid(surfaceSideName))
+    sideCubatureDegree[surfaceSideName] = params->isParameter("Surface Cubature Degree") ? params->get<int>("Surface Cubature Degree") : -1;
+  if (!isInvalid(basalSideName))
+    sideCubatureDegree[basalSideName] = params->isParameter("Basal Cubature Degree") ? params->get<int>("Basal Cubature Degree") : -1;
+
   for (auto it : landice_bcs) {
     for (auto pl: it.second) {
       std::string ssName = pl->get<std::string>("Side Set Name");
@@ -143,13 +151,17 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       sideBasis[ssName] = Albany::getIntrepid2Basis(*side_top);
       sideType[ssName] = rcp(new shards::CellTopology (side_top));
 
-      // If there's no side discretiation, then sideMeshSpecs.cubatureDegree will be -1, and the user need to specify a cubature degree somewhere else
-      int sideCubDegree = sideMeshSpecs.cubatureDegree;
+      int sideCubDegree = (sideCubatureDegree.find(ssName) != sideCubatureDegree.end()) ? sideCubatureDegree[ssName] : -1;
       if (pl->isParameter("Cubature Degree")) {
-        sideCubDegree = pl->get<int>("Cubature Degree");
+        if(sideCubDegree == -1 )
+          sideCubDegree = pl->get<int>("Cubature Degree");
+        else {
+          TEUCHOS_TEST_FOR_EXCEPTION (sideCubDegree != pl->get<int>("Cubature Degree"), std::runtime_error, 
+                                        "Error! Cubature Degree specified in sublist " + pl->name() + " is different than the one for sideset " << ssName << ".\n");
+        }
       }
       TEUCHOS_TEST_FOR_EXCEPTION (sideCubDegree<0, std::runtime_error, "Error! Missing cubature degree information on side '" << ssName << ".\n"
-                                                                       "       Either add a side discretization, or specify 'Cubature Degree' in sublist '" + pl->name() + "'.\n");
+                                                                       "       Specify 'Cubature Degree' in sublist '" + pl->name() + "'.\n");
       sideCubature[ssName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[ssName], sideCubDegree);
 
       unsigned int numSideVertices = sideType[ssName]->getNodeCount();
@@ -174,7 +186,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     sideBasis[surfaceSideName] = Albany::getIntrepid2Basis(*side_top);
     sideType[surfaceSideName]= rcp(new shards::CellTopology (side_top));
 
-    sideCubature[surfaceSideName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[surfaceSideName], surfaceMeshSpecs.cubatureDegree);
+    TEUCHOS_TEST_FOR_EXCEPTION (sideCubatureDegree[surfaceSideName]<0, std::runtime_error, "Error! Missing cubature degree information on side '" << surfaceSideName << ".\n");
+    sideCubature[surfaceSideName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[surfaceSideName], sideCubatureDegree[surfaceSideName]);
 
     int numSurfaceSideVertices = sideType[surfaceSideName]->getNodeCount();
     int numSurfaceSideNodes    = sideBasis[surfaceSideName]->getCardinality();
@@ -197,7 +210,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     sideBasis[basalSideName] = Albany::getIntrepid2Basis(*side_top);
     sideType[basalSideName]= rcp(new shards::CellTopology (side_top));
 
-    sideCubature[basalSideName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[basalSideName], basalMeshSpecs.cubatureDegree);
+    TEUCHOS_TEST_FOR_EXCEPTION (sideCubatureDegree[basalSideName]<0, std::runtime_error, "Error! Missing cubature degree information on side '" << basalSideName << ".\n");
+    sideCubature[basalSideName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[basalSideName], sideCubatureDegree[basalSideName]);
 
     int numbasalSideVertices = sideType[basalSideName]->getNodeCount();
     int numbasalSideNodes    = sideBasis[basalSideName]->getCardinality();
@@ -296,6 +310,9 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
   validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
   validPL->sublist("LandIce Rigid Body Modes For Preconditioner", false, "");
+  validPL->set<int>("Basal Cubature Degree", 3, "Cubature degree used on the basal side");
+  validPL->set<int>("Surface Cubature Degree", 3, "Cubature degree used on the surface side");
+  validPL->set<int>("Lateral Cubature Degree", 3, "Cubature degree used on the lateral side");
   return validPL;
 }
 

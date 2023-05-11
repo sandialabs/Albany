@@ -310,7 +310,6 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   stk::mesh::set_topology(*ssPartVec[ssnLateral],stk::topology::QUAD_4);
 
   numDim = 3;
-  int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, Albany::getLocalSubdim(elem_vs)); 
 
@@ -319,7 +318,7 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   shards::CellTopology cell_topo = stk::mesh::get_cell_topology(etopology);
   this->addElementBlockInfo(0, ebn, partVec[0], cell_topo);
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex));
 

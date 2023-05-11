@@ -126,7 +126,8 @@ Albany::AdvDiffProblem::constructEvaluators(
   const int worksetSize = meshSpecs.worksetSize;
   
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+  int cubDegree = this->params->get("Cubature Degree", 3);
+  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();

@@ -14,6 +14,9 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 4
+    Surface Cubature Degree: 4
     Parameters:
       Number Of Parameters: 2
       Parameter 0:
@@ -103,7 +106,6 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Cubature Degree: 4
     Exodus Output File Name: results-fwd/dome.exo
     Columnwise Ordering: true
     NumLayers: 5
@@ -126,7 +128,6 @@ ANONYMOUS:
       Side Sets: [basalside, upperside]
       basalside:
         Number Of Time Derivatives: 0
-        Cubature Degree: 4
         Workset Size: 100
         Method: Gmsh
         Gmsh Input Mesh File Name: ../AsciiMeshes/Dome/circle_fine.msh
@@ -182,7 +183,6 @@ ANONYMOUS:
             Field Usage: Output
       upperside:
         Number Of Time Derivatives: 0
-        Cubature Degree: 4
         Workset Size: 100
         Method: SideSetSTK
         Exodus Output File Name: results-fwd/dome_surface.exo

@@ -188,23 +188,6 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // end debugging
 #endif
 
-  const int cub      = params->get("Cubature Degree",3);
-
-  //Get Cubature Rule
-  const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");
-  Intrepid2::EPolyType cub_rule;
-  if (cub_rule_string == "GAUSS")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS);
-  else if (cub_rule_string == "GAUSS_RADAU_LEFT")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_RADAU_LEFT);
-  else if (cub_rule_string == "GAUSS_RADAU_RIGHT")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_RADAU_RIGHT);
-  else if (cub_rule_string == "GAUSS_LOBATTO")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_LOBATTO);
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
-                                "Invalid Cubature Rule: " << cub_rule_string << "; valid options are GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, and GAUSS_LOBATTO");
-
   int worksetSizeMax = params->get<int>("Workset Size", -1);
 
   // Get number of elements per element block using Ioss for use
@@ -225,21 +208,11 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   }
 
   // Construct MeshSpecsStruct
-  if (!params->get("Separate Evaluators by Element Block",false)) {
+  {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
-        ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(),
-        ebNameToIndex, false, cub_rule));
-  } else {
-    *out << "MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? " << std::endl;
-    this->allElementBlocksHaveSamePhysics=false;
-    this->meshSpecs.resize(numEB);
-    for (int eb=0; eb<numEB; eb++) {
-      const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
-          ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
-          ebNameToIndex, true, cub_rule));
-    }
+        ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
+        ebNameToIndex));
   }
 
   {

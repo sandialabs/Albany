@@ -11,6 +11,8 @@ ANONYMOUS:
       Compute Constant Modes: true
       Compute Rotation Modes: true
     Basal Side Name: basalside
+    Cubature Degree: 3
+    Basal Cubature Degree: 3
     Compute Sensitivities: true
     Response Functions:
       Number Of Responses: 1
@@ -23,7 +25,6 @@ ANONYMOUS:
       Number: 2
       BC 0:
         Type: Basal Friction
-        Cubature Degree: 3
         Side Set Name: basalside
         Basal Friction Coefficient:
           Type: Field
@@ -53,7 +54,6 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 3
     Exodus Output File Name: antarctica_muelu_short_out.exo
     NumLayers: 3
     Use Glimmer Spacing: true
@@ -88,7 +88,6 @@ ANONYMOUS:
         Number Of Time Derivatives: 0
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: antarctica_2d.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 4
           Field 0:

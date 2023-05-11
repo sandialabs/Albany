@@ -259,23 +259,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   for (auto& it : ssPartVec)
     stk::mesh::set_topology(*it.second, default_element_side_type);
 
-  int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
-
-  //Get Cubature Rule
-  const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");
-  Intrepid2::EPolyType cub_rule;
-  if (cub_rule_string == "GAUSS")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS);
-  else if (cub_rule_string == "GAUSS_RADAU_LEFT")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_RADAU_LEFT);
-  else if (cub_rule_string == "GAUSS_RADAU_RIGHT")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_RADAU_RIGHT);
-  else if (cub_rule_string == "GAUSS_LOBATTO")
-    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_LOBATTO);
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
-                                "Invalid Cubature Rule: " << cub_rule_string << "; valid options are GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, and GAUSS_LOBATTO");
 
   // Create just enough of the mesh to figure out number of owned elements
   // so that the problem setup can know the worksetSize
@@ -295,24 +279,12 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
 
   // Construct MeshSpecsStruct
-  if (!params->get("Separate Evaluators by Element Block",false)) {
+  {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
+    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
                                nsNames, ssNames, worksetSize, EBSpecs[0].name,
-                               ebNameToIndex, false, cub_rule));
-  } else {
-    meshSpecs.resize(numEB);
-    this->allElementBlocksHaveSamePhysics=false;
-
-    for (unsigned int eb=0; eb<numEB; eb++) {
-      // MeshSpecs holds all info needed to set up an Albany problem
-      const CellTopologyData& ctd = *elementBlockTopologies_[eb].getCellTopologyData();
-
-      this->meshSpecs[eb] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
-                                nsNames, ssNames, worksetSize, EBSpecs[eb].name,
-                                ebNameToIndex, true, cub_rule));
-    }
+                               ebNameToIndex));
   }
 
   // Upon request, add a nodeset for each sideset

@@ -35,12 +35,13 @@ ANONYMOUS:
           Scaling: 1.
           Source Field Name: ThermalConductivity
           Target Value: 1.0
+    Cubature Degree: 9
+    
   Discretization: 
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
     Exodus Output File Name: steady2d.exo
-    Cubature Degree: 9
     Required Fields Info: 
       Number Of Fields: 1
       Field 0: 

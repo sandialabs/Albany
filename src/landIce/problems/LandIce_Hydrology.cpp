@@ -113,7 +113,8 @@ void Hydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsSt
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
   Intrepid2::DefaultCubatureFactory cubFactory;
-  cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
+  int cubDegree = params->get("Cubature Degree", 3);
+  cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
 

@@ -390,13 +390,12 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::QUAD_4); 
 
   numDim = 3;
-  int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getLocalNumElements());
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, cub,
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
                              nsNames, ssNames, worksetSize, ebn,
                              ebNameToIndex));
 

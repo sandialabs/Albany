@@ -65,7 +65,8 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpe
     sideEBName[ss_name] = sideMeshSpecs.ebName;
     sideBasis[ss_name] = Albany::getIntrepid2Basis(*side_top);
 
-    sideCubature[ss_name] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideMeshSpecs.cubatureDegree);
+    int cubDegree = this->params->get("Cubature Degree", 3);
+    sideCubature[ss_name] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, cubDegree);
 
     int numSideVertices = sideType->getNodeCount();
     int numSideQPs      = sideCubature[ss_name]->getNumPoints();

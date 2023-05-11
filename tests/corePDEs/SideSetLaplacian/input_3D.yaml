@@ -23,9 +23,10 @@ ANONYMOUS:
       DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet4 for DOF U: 0.00000000000000000e+00
       DBC on NS NodeSet5 for DOF U: 0.00000000000000000e+00
+    Cubature Degree: 2
+
   Discretization: 
     Method: STK3D
-    Cubature Degree: 2
     1D Elements: 2
     2D Elements: 2
     3D Elements: 2
@@ -36,7 +37,6 @@ ANONYMOUS:
       SideSet2: 
         Method: SideSetSTK
         Exodus Output File Name: side_laplacian_3d.exo
-        Cubature Degree: 2
   Regression For Response 0: 
     Test Value: 9.76562500000000000e-04
     Relative Tolerance: 1.00000000000000005e-04

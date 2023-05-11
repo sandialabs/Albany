@@ -54,7 +54,8 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
   Intrepid2::DefaultCubatureFactory   cubFactory;
-  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
+  int cubDegree = this->params->get("Cubature Degree", 3);
+  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
   cellEBName = meshSpecs[0]->ebName;
 
@@ -84,7 +85,8 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
     sideType = Teuchos::rcp(new shards::CellTopology (side_top));
 
     sideEBName   = sideMeshSpecs.ebName;
-    sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideMeshSpecs.cubatureDegree);
+    int sideCubDegree = this->params->get("Side Cubature Degree", 3);
+    sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideCubDegree);
 
     numSideVertices = sideType->getNodeCount();
     numSideNodes    = sideBasis->getCardinality();
@@ -148,6 +150,7 @@ SideLaplacian::getValidProblemParameters () const
 
   validPL->set<bool>("Solve As Side Set Equation",true,"If false, solves laplacian on a 2D geometry. If 3, solves laplacian as a sideset equation of a 3D geometry");
   validPL->set<std::string>("Side Set Name","","The name of the sideset where the side laplacian has to be solved (only for Dimension=3).");
+  validPL->set<int>("Side Cubature Degree", 3, "Cubature degree used on the mesh side");
 
   return validPL;
 }

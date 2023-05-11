@@ -11,6 +11,9 @@ ANONYMOUS:
     Required Fields: [temperature, basal_friction, bed_topography, stiffening_factor]
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Cubature Degree: 4
+    Basal Cubature Degree: 5
+    Surface Cubature Degree: 3
     Equation Set:
       Type: LandIce
       Num Equations: 3
@@ -83,7 +86,6 @@ ANONYMOUS:
     Columnwise Ordering: true
     Method: Extruded
     Number Of Time Derivatives: 0
-    Cubature Degree: 4
     Exodus Output File Name: antarctica_stiff2.exo
     NumLayers: 10
     Thickness Field Name: ice_thickness
@@ -126,7 +128,6 @@ ANONYMOUS:
         Use Serial Mesh: true
         Exodus Input File Name: mesh/antarctica_2d.exo
         Exodus Output File Name: antactica_basal2.exo
-        Cubature Degree: 5
         Required Fields Info:
           Number Of Fields: 7
           Field 0:
@@ -168,7 +169,6 @@ ANONYMOUS:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: antactica_surface2.exo
-        Cubature Degree: 3
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
