@@ -19,6 +19,7 @@ ANONYMOUS:
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
     LandIce Viscosity:
+      Use P0 Temperature: false
       Extract Strain Rate Sq: true
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.5e+00
@@ -287,9 +288,9 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value: -1.246900214613e+01
+    Test Value: -1.251507530710e+01
     Sensitivity For Parameter 0:
-      Test Value: 1.485033563141e-05
+      Test Value: 1.414057848721e-05
     
     
 ...

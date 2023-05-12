@@ -254,6 +254,7 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
 
   build_interp_ev[temperature_name          ][IReq::CELL_VAL   ] = true;
   build_interp_ev[corrected_temperature_name][IReq::CELL_VAL   ] = true;
+  build_interp_ev[corrected_temperature_name][IReq::QP_VAL     ] = true;
   build_interp_ev[stiffening_factor_name    ][IReq::QP_VAL     ] = true;
   build_interp_ev[surface_height_name       ][IReq::QP_VAL     ] = true;
   build_interp_ev[surface_height_name       ][IReq::GRAD_QP_VAL] = true;

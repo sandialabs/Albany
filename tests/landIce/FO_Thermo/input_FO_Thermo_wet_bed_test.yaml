@@ -33,6 +33,7 @@ ANONYMOUS:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
     LandIce Viscosity:
+      Use P0 Temperature: false
       Extract Strain Rate Sq: true
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.4e+00
@@ -200,7 +201,7 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 20
                     Max Iterations: 500
-                    Tolerance: 9.99999999999999954e-08
+                    Tolerance: 1.0e-7
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
@@ -226,7 +227,7 @@ ANONYMOUS:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
-                    'repartition: max min ratio': 1.32699999999999995e+00
+                    'repartition: max min ratio': 1.3267e+00
                     'repartition: min per proc': 600
                     'repartition: Zoltan dimensions': 2
                     'repartition: start level': 4
@@ -234,12 +235,12 @@ ANONYMOUS:
                     'semicoarsen: coarsen rate': 12
                     'smoother: sweeps': 4
                     'smoother: type': Chebyshev
-                    'smoother: Chebyshev eig boost': 1.19999999999999995e+00
+                    'smoother: Chebyshev eig boost': 1.2e+00
                     'smoother: sweeps (level 0)': 1
                     'smoother: sweeps (level 1)': 4
                     'smoother: type (level 0)': line Jacobi
                     'smoother: type (level 1)': line Jacobi
-                    'smoother: damping factor': 5.50000000000000044e-01
+                    'smoother: damping factor': 5.5e-01
                     'smoother: pre or post': both
                     'coarse: type': Amesos-KLU
                     'coarse: pre or post': pre
@@ -248,7 +249,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -267,8 +268,8 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
+    Relative Tolerance: 1.0e-06
+    Test Value: 9.193763151141e-01
     Sensitivity For Parameter 0:
-      Test Value: -4.047248515945e-01
-    Test Value: 9.189270361967e-01
-    Relative Tolerance: 1.0e-02
+      Test Value: -4.124427136211e-01
 ...

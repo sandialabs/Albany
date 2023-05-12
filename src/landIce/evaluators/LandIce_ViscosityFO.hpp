@@ -44,9 +44,8 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  template<typename TemperatureT>
   KOKKOS_INLINE_FUNCTION
-  TemperatureT flowRate(const TemperatureT& T) const;
+  TemprT flowRate(const TemprT& T) const;
 
   const double pi, actenh, actenl, gascon, switchingT;
   const double arrmlh, arrmll, scyr, k4scyr;
@@ -55,6 +54,7 @@ private:
   bool extractStrainRateSq;
   bool useStereographicMap;
   bool useStiffeningFactor;
+  bool useP0Temp;
   Teuchos::ParameterList* stereographicMapList;
 
   // Coefficients for Glen's law
@@ -65,7 +65,7 @@ private:
   PHX::MDField<const VelT,Cell,QuadPoint,VecDim,Dim> Ugrad; //[(k yr)^{-1}], k=1000
   PHX::MDField<const VelT,Cell,QuadPoint,VecDim> U; //[m/yr]
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
-  PHX::MDField<const TemprT,Cell> temperature; // [K]
+  PHX::MDField<const TemprT> temperature; // [K]
   PHX::MDField<const RealType,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
   PHX::MDField<const ParamScalarT,Cell,QuadPoint> stiffeningFactor;
   PHX::MDField<const ScalarT> homotopyParam;
@@ -95,12 +95,14 @@ public:
   struct ViscosityFO_CONSTANT_Tag{};
   struct ViscosityFO_GLENSLAW_UNIFORM_Tag{};
   struct ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag{};
+  struct ViscosityFO_GLENSLAW_TEMPERATUREBASEDQP_Tag{};
   struct ViscosityFO_GLENSLAW_FROMFILE_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_EXPTRIG_Tag> ViscosityFO_EXPTRIG_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_CONSTANT_Tag> ViscosityFO_CONSTANT_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_UNIFORM_Tag> ViscosityFO_GLENSLAW_UNIFORM_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag> ViscosityFO_GLENSLAW_TEMPERATUREBASED_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_TEMPERATUREBASEDQP_Tag> ViscosityFO_GLENSLAW_TEMPERATUREBASED_QP_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_FROMFILE_Tag> ViscosityFO_GLENSLAW_FROMFILE_Policy;
 
   KOKKOS_INLINE_FUNCTION
@@ -116,10 +118,13 @@ public:
   void operator() (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_TEMPERATUREBASEDQP_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
   void operator() (const ViscosityFO_GLENSLAW_FROMFILE_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
-  void glenslaw (const ScalarT &flowFactorVec, const int& cell) const;
+  void glenslaw (const int& cell) const;
 
   double R, x_0, y_0, R2;
 };

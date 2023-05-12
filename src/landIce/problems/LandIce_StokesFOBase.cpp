@@ -54,6 +54,9 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   } else {
     viscosity_use_corrected_temperature = false;
   }
+
+  viscosity_use_p0_temperature = params->sublist("LandIce Viscosity").get("Use P0 Temperature",true);
+
   compute_dissipation = params->sublist("LandIce Viscosity").get("Extract Strain Rate Sq", false);
 
   if (!physics_list.isParameter("Atmospheric Pressure Melting Temperature")) {
@@ -414,6 +417,8 @@ void StokesFOBase::parseInputFields ()
       loc = FL::Node;
     } else if (fieldType.find("Elem")!=std::string::npos) {
       loc = FL::Cell;
+    } else if (fieldType.find("QuadPoint")!=std::string::npos) {
+      loc = FL::QuadPoint;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Error! Failed to deduce location for field '" + fieldName + "' from type '" + fieldType + "'.\n");
@@ -487,6 +492,8 @@ void StokesFOBase::parseInputFields ()
         loc = FL::Node;
       } else if (fieldType.find("Elem")!=std::string::npos) {
         loc = FL::Cell;
+      } else if (fieldType.find("QuadPoint")!=std::string::npos) {
+        loc = FL::QuadPoint;
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Error! Failed to deduce location for field '" + fieldName + "' from type '" + fieldType + "'.\n");

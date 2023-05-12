@@ -56,6 +56,7 @@ ANONYMOUS:
         Name: basal_friction_log
         Upper Bound: 12.0
     LandIce Viscosity:
+      Use P0 Temperature: false
       Extract Strain Rate Sq: true
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.5e+00
@@ -404,14 +405,14 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value:  8.853557373397e+00
+    Test Value:  8.794803492345e+00
     Sensitivity For Parameter 0:
-      Test Value: 2.286186416967e+00
+      Test Value: 2.229417788390e+00
   Regression For Response 1:
     Relative Tolerance: 1.0e-06
-    Test Value: 6.986714588061e-04
+    Test Value: 6.990490666634e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.544850310382e-04
+      Test Value: 1.543749302241e-04
   Regression For Response 2:
     Relative Tolerance: 1.0e-06
     Test Value: 5.967986097162e+00

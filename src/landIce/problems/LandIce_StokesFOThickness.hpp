@@ -123,6 +123,7 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
   p->set<std::string>("Temperature Variable Name", temperature_name);
+  p->set<bool>("Use P0 Temperature", viscosity_use_p0_temperature);  
 
   //Output
   p->set<std::string>("Corrected Temperature Variable Name", "corrected " + temperature_name);
