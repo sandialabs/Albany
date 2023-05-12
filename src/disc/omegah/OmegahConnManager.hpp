@@ -24,6 +24,7 @@ private:
   Omega_h::Mesh mesh;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
+  std::vector<Ownership> owners; //FIXME
   LO m_dofsPerElm;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
   void initLocalElmIds() {
@@ -203,6 +204,8 @@ public:
 
   // Queries the dimension of a part
   int part_dim (const std::string& part_name) const override;
+
+  const Ownership* getOwnership(LO localElmtId) const override;
 };
 
 } // namespace Albany

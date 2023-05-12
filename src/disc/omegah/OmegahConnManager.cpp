@@ -32,6 +32,8 @@ OmegahConnManager(Omega_h::Mesh in_mesh) : mesh(in_mesh)
   //   recreating the conn manager
   initLocalElmIds();
   assert(mesh.has_tag(mesh.dim(), "global"));
+
+  owners = std::vector<Ownership>(1); //FIXME
 }
 
 std::vector<GO>
@@ -273,6 +275,11 @@ bool OmegahConnManager::belongs (const std::string& sub_part_name, //FIXME
 int OmegahConnManager::part_dim (const std::string&) const
 {
   return mesh.dim();
+}
+
+const Ownership* OmegahConnManager::getOwnership(LO) const //FIXME
+{
+  return &owners[0];
 }
 
 } // namespace Albany
