@@ -325,8 +325,10 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
   fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructDOFGradInterpolationEvaluator("melting_temperature"));
 
-  // Interpolate temperature from nodes to cell
-  fm0.template registerEvaluator<EvalT> (evalUtils.constructBarycenterEvaluator("temperature", cellBasis, FRT::Scalar));
+
+  // Interpolate corrected temperature from nodes to cell (used when viscosity uses P0 Temperature) and from nodes to quad points
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructBarycenterEvaluator("corrected_temperature", cellBasis, FRT::Scalar));
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("corrected_temperature"));
 
   // Interpolate pressure melting temperature gradient from nodes to QPs
   //fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("melting temp",basalSideName));
@@ -508,8 +510,9 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
       p->set<std::string>("Velocity QP Variable Name", "velocity");
       p->set<std::string>("Velocity Gradient QP Variable Name", "velocity Gradient");
-      p->set<std::string>("Temperature Variable Name", "temperature");
+      p->set<std::string>("Temperature Variable Name", "corrected_temperature");
       p->set<std::string>("Flow Factor Variable Name", "flow_factor");
+      p->set<bool>("Use P0 Temperature", params->sublist("LandIce Viscosity").get("Use P0 Temperature",true));
 
       p->set<ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
       p->set<ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));

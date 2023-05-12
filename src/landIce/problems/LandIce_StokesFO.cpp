@@ -247,7 +247,7 @@ void StokesFO::setupEvaluatorRequests () {
     ss_utils_needed[ssName][UtilityRequest::QP_COORDS] = true;
     ss_utils_needed[ssName][UtilityRequest::NORMALS  ] = true;
   }
-  if (viscosity_use_corrected_temperature) {
+  if (viscosity_use_corrected_temperature && viscosity_use_p0_temperature) {
     build_interp_ev[surface_height_name][InterpolationRequest::CELL_VAL] = true;
   }
 

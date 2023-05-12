@@ -254,6 +254,7 @@ protected:
 
   // Whether to use corrected temperature in the viscosity
   bool viscosity_use_corrected_temperature;
+  bool viscosity_use_p0_temperature;
   bool compute_dissipation;
 
   //Whether to compute rigid body modes
@@ -413,7 +414,9 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     meshPart = is_dist[stateName] ? dist_params_name_to_mesh_part[stateName] : "";
 
-    auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node : FL::Cell;
+    auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node : 
+               fieldType.find("Elem")!=std::string::npos ? FL::Cell :
+               FL::QuadPoint;
     TEUCHOS_TEST_FOR_EXCEPTION (
         fieldType.find("Scalar")==std::string::npos &&
         fieldType.find("Vector")==std::string::npos &&
@@ -431,7 +434,9 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // Get data layout
     if (rank == FRT::Scalar) {
-      state_dl = loc == FL::Node ? dl->node_scalar : dl->cell_scalar2;
+      state_dl = loc == FL::Node ? dl->node_scalar :
+                        loc == FL::Cell ? dl->cell_scalar2 :
+                        dl->qp_scalar;
     } else if (rank == FRT::Vector) {
       state_dl = loc == FL::Node ? dl->node_vector : dl->cell_vector;
     } else if (rank == FRT::Gradient) {
@@ -443,6 +448,8 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // Set entity for state struct
     if(loc == FL::Cell) {
       entity = Albany::StateStruct::ElemData;
+    } else if (loc == FL::QuadPoint) {
+      entity = Albany::StateStruct::QuadPoint;
     } else {
       if (is_dist[stateName]) {
         entity = Albany::StateStruct::NodalDistParameter;
@@ -484,6 +491,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         // Only save fields in the residual FM (and not in state/response FM)
         if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
           // An output: save it.
+          p->set<bool>("Nodal State", loc==FL::Node);
           ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
           fm0.template registerEvaluator<EvalT>(ev);
 
@@ -546,7 +554,9 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       meshPart = ""; // Distributed parameters are defined either on the whole volume mesh or on a whole side mesh. Either way, here we want "" as part (the whole mesh).
 
       fieldType  = thisFieldList.get<std::string>("Field Type");
-      auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node : FL::Cell;
+      auto loc = fieldType.find("Node")!=std::string::npos ? FL::Node :
+                 fieldType.find("Elem")!=std::string::npos ? FL::Cell :
+                 FL::QuadPoint;
 
       TEUCHOS_TEST_FOR_EXCEPTION (
           fieldType.find("Scalar")==std::string::npos &&
@@ -591,6 +601,8 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // Set entity for state struct
       if(loc==FL::Cell) {
         entity = Albany::StateStruct::ElemData;
+      } else if (loc==FL::QuadPoint) {
+        entity = Albany::StateStruct::QuadPoint; 
       } else {
         if (is_dist[stateName]) {
           entity = Albany::StateStruct::NodalDistParameter;
@@ -1235,6 +1247,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
   p->set<std::string>("Continuation Parameter Name",ParamEnumName::GLHomotopyParam);
+  p->set<bool>("Use P0 Temperature", viscosity_use_p0_temperature);
 
   //Output
   p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");

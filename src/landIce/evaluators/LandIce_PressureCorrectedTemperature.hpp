@@ -43,18 +43,20 @@ public:
 private:
   // Input:
   typedef typename Albany::StrongestScalarType<typename Albany::StrongestScalarType<TempST,MeshScalarT>::type, SurfHeightST>::type OutputScalarT;
-  PHX::MDField<const SurfHeightST,Cell> sHeight;
-  PHX::MDField<const TempST,Cell> temp;
-  PHX::MDField<const MeshScalarT,Cell,Dim> coord;
-
+  PHX::MDField<const SurfHeightST> sHeight;
+  PHX::MDField<const TempST> temp;
+  PHX::MDField<const MeshScalarT> coord;
   // Output:
-  PHX::MDField<OutputScalarT,Cell> correctedTemp;
+  PHX::MDField<OutputScalarT> correctedTemp;
 
   double beta;     //[K Pa^{-1}]
   double rho_i;    //[kg m^{-3}]
   double g;        //[m s^{-2}]
   double coeff;    //[K km^{-1}]
   double meltingT; //[K], 273.15
+
+  bool useP0Temp;
+  int numQPs;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 };

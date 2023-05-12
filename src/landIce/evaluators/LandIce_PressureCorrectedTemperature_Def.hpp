@@ -21,12 +21,28 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
   coord (p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient),
   correctedTemp (p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2)
 {
-	this->addDependentField(sHeight);
-	this->addDependentField(coord);
-	this->addDependentField(temp);
-	this->addEvaluatedField(correctedTemp);
+  useP0Temp = p.get<bool>("Use P0 Temperature");
+  if(useP0Temp) {
+    sHeight = decltype(sHeight)(p.get<std::string> ("Surface Height Variable Name"), dl->cell_scalar2);
+    temp = decltype(temp)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
+    coord = decltype(coord)(p.get<std::string> ("Coordinate Vector Variable Name"), dl->cell_gradient);
+    correctedTemp  = decltype(correctedTemp)(p.get<std::string> ("Corrected Temperature Variable Name"), dl->cell_scalar2);
+    numQPs = 0;
+  } else {
+    sHeight = decltype(sHeight)(p.get<std::string> ("Surface Height Variable Name"), dl->qp_scalar);
+    temp = decltype(temp)(p.get<std::string> ("Temperature Variable Name"), dl->qp_scalar);
+    coord = decltype(coord)(p.get<std::string> ("Coordinate Vector Variable Name"), dl->qp_gradient);
+    correctedTemp  = decltype(correctedTemp)(p.get<std::string> ("Corrected Temperature Variable Name"), dl->qp_scalar);
+    std::vector<PHX::DataLayout::size_type> dims;
+    dl->qp_scalar->dimensions(dims);
+    numQPs  = dims[1];
+  }
 
-	this->setName("Pressure Corrected Temperature"+PHX::print<EvalT>());
+  this->addDependentField(sHeight);
+  this->addDependentField(coord);
+  this->addDependentField(temp);
+  this->addEvaluatedField(correctedTemp);
+  this->setName("Pressure Corrected Temperature"+PHX::print<EvalT>());
 
   auto physicsList = p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
   rho_i = physicsList->get<double>("Ice Density");
@@ -54,8 +70,14 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-    correctedTemp(cell) = std::min(temp(cell) +coeff * (sHeight(cell) - coord(cell,2)), meltingT);
+  if(useP0Temp) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+      correctedTemp(cell) = std::min(temp(cell) + coeff * (sHeight(cell) - coord(cell,2)), meltingT);
+  } else {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+      for (int qp = 0; qp < numQPs; ++qp)
+        correctedTemp(cell,qp) = std::min(temp(cell,qp) + coeff * (sHeight(cell,qp) - coord(cell,qp,2)), meltingT);
+  }
 }
 
 } // namespace LandIce
