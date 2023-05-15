@@ -44,14 +44,14 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set(MPICC $ENV{MPI_ROOT}/bin/mpicc)
-#message("IKT MPICC = " ${MPICC}) 
+set(MPICC $ENV{OPENMPI_ROOT}/bin/mpicc)
+message("IKT MPICC = " ${MPICC}) 
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT
 		OUTPUT_VARIABLE COMPILER_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler version = " ${COMPILER_VERSION})
+message("IKT compiler version = " ${COMPILER_VERSION})
 execute_process(COMMAND ${MPICC} --version 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_RESULT
@@ -61,7 +61,7 @@ execute_process(COMMAND bash process_compiler.sh
 		RESULT_VARIABLE CHANGE_COMPILER_RESULT
 		OUTPUT_VARIABLE COMPILER
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler = " ${COMPILER})
+message("IKT compiler = " ${COMPILER})
 
 
 find_program(UNAME NAMES uname)
