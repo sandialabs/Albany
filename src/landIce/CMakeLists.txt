@@ -190,6 +190,8 @@ set(HEADERS
   evaluators/hydrology/LandIce_HydrologyWaterDischarge_Def.hpp
   evaluators/hydrology/LandIce_HydrologyWaterThickness.hpp
   evaluators/hydrology/LandIce_HydrologyWaterThickness_Def.hpp
+  utility/Intrepid2_HGRAD_LINE_I4_FEM.hpp
+  utility/Intrepid2_HGRAD_LINE_I4_FEMDef.hpp
   problems/LandIce_ColumnCouplingTest.hpp
   problems/LandIce_Enthalpy.hpp
   problems/LandIce_Hydrology.hpp
@@ -233,6 +235,7 @@ set (LANDICE_INCLUDE_DIRS
      ${CMAKE_CURRENT_SOURCE_DIR}
      ${CMAKE_CURRENT_SOURCE_DIR}/evaluators
      ${CMAKE_CURRENT_SOURCE_DIR}/evaluators/hydrology
+     ${CMAKE_CURRENT_SOURCE_DIR}/utility
      ${CMAKE_CURRENT_SOURCE_DIR}/problems
 )
 

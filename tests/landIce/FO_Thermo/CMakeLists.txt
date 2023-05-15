@@ -67,6 +67,9 @@ if (ALBANY_FROSCH)
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_Humboldt_fluxDiv.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_fluxDiv.yaml)
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_Humboldt_depthInt_fluxDiv.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_depthInt_fluxDiv.yaml)
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_Humboldt_lubricated.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_lubricated.yaml)
@@ -78,6 +81,10 @@ if (ALBANY_FROSCH)
   
   set (testName ${testNameRoot}_Humboldt_fluxDiv)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_fluxDiv.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+
+  set (testName ${testNameRoot}_Humboldt_depthIntegrated_fluxDiv)
+  add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_depthInt_fluxDiv.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
   
   set (testName ${testNameRoot}_Humboldt_lubricated)

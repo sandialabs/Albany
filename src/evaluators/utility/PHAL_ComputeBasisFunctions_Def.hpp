@@ -15,19 +15,18 @@ template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
-  weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
-  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
-  BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
-  wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
-  GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
-  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
+  coordVec          (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
+  cubature          (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
+  intrepid2FEBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 FE Basis") ),
+  intrepid2MapBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Ref-To-Phys Map Basis") ),
+  weighted_measure  (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
+  BF                (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
+  wBF               (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
+  GradBF            (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
+  wGradBF           (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
 {
   this->addDependentField(coordVec.fieldTag());
   this->addEvaluatedField(weighted_measure);
-  this->addEvaluatedField(jacobian_det);
   this->addEvaluatedField(BF);
   this->addEvaluatedField(wBF);
   this->addEvaluatedField(GradBF);
@@ -58,14 +57,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weighted_measure,fm);
-  this->utils.setFieldData(jacobian_det,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
 
-  jacobian = Kokkos::createDynRankView(jacobian_det.get_view(), "jacobian", numCells, numQPs, numDims, numDims);
-  jacobian_inv = Kokkos::createDynRankView(jacobian_det.get_view(), "jacobian_inv", numCells, numQPs, numDims, numDims);
+  jacobian_det = Kokkos::createDynRankView(coordVec.get_view(), "jacobian_det", numCells, numQPs);
+  jacobian = Kokkos::createDynRankView(coordVec.get_view(), "jacobian", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Kokkos::createDynRankView(coordVec.get_view(), "jacobian_inv", numCells, numQPs, numDims, numDims);
 
   // Allocate Temporary Kokkos Views
   val_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("val_at_cub_points", numNodes, numQPs);
@@ -75,8 +74,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   // Pre-Calculate reference element quantities
   cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
+  intrepid2FEBasis->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
+  intrepid2FEBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
@@ -100,12 +99,12 @@ evaluateFields(typename Traits::EvalData workset)
   typedef typename Intrepid2::CellTools<PHX::Device>   ICT;
   typedef Intrepid2::FunctionSpaceTools<PHX::Device>   IFST;
 
-  ICT::setJacobian(jacobian, refPoints, coordVec.get_view(), intrepidBasis);
+  ICT::setJacobian(jacobian, refPoints, coordVec.get_view(), intrepid2MapBasis);
   ICT::setJacobianInv (jacobian_inv, jacobian);
-  ICT::setJacobianDet (jacobian_det.get_view(), jacobian);
+  ICT::setJacobianDet (jacobian_det, jacobian);
 
   bool isJacobianDetNegative =
-    IFST::computeCellMeasure (weighted_measure.get_view(), jacobian_det.get_view(), refWeights);
+    IFST::computeCellMeasure (weighted_measure.get_view(), jacobian_det, refWeights);
   IFST::HGRADtransformVALUE(BF.get_view(), val_at_cub_points);
   IFST::multiplyMeasure    (wBF.get_view(), weighted_measure.get_view(), BF.get_view());
   IFST::HGRADtransformGRAD (GradBF.get_view(), jacobian_inv, grad_at_cub_points);

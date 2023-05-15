@@ -49,6 +49,7 @@
 #include "LandIce_UpdateZCoordinate.hpp"
 #include "LandIce_L2ProjectedBoundaryLaplacianResidual.hpp"
 #include "LandIce_FluxDivergenceResidual.hpp"
+#include "PHAL_ComputeBasisFunctions.hpp"
 
 #include "PHAL_LinearCombinationParameter.hpp"
 #include "PHAL_RandomPhysicalParameter.hpp"
@@ -218,6 +219,7 @@ protected:
   // Topology, basis and cubature of cells
   Teuchos::RCP<shards::CellTopology>  cellType;
   Teuchos::RCP<IntrepidBasis>         cellBasis;
+  Teuchos::RCP<IntrepidBasis>         cellDepthIntegratedBasis;
   Teuchos::RCP<IntrepidCubature>      cellCubature;
 
   // Topology, basis and cubature of side sets
@@ -251,6 +253,9 @@ protected:
 
   /// Boolean marking whether SDBCs are used
   bool use_sdbcs_;
+
+  /// Boolean marking whether to use the depth-integrated model
+  bool depthIntegratedModel;
 
   // Whether to use corrected temperature in the viscosity
   bool viscosity_use_corrected_temperature;
@@ -984,8 +989,36 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Compute basis functions
-  ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
-  fm0.template registerEvaluator<EvalT> (ev);
+  if(depthIntegratedModel) {
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList("Compute Depth Integrated Test Functions"));
+
+    // Inputs: X, Y at nodes, Cubature, and Basis
+    p->set<std::string>("Coordinate Vector Name",Albany::coord_vec_name);
+    p->set< RCP<IntrepidCubature> >("Cubature", cellCubature);
+
+    p->set< RCP<IntrepidBasis> > ("Intrepid2 FE Basis", cellDepthIntegratedBasis);
+    p->set< RCP<IntrepidBasis> > ("Intrepid2 Ref-To-Phys Map Basis", cellBasis);
+
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<std::string>("BF Name",                   Albany::bf_name);
+    p->set<std::string>("Gradient BF Name",          Albany::grad_bf_name);
+
+
+    // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
+    p->set<std::string>("Weights Name",              Albany::weights_name);
+    p->set<std::string>("Jacobian Det Name",         Albany::jacobian_det_name);
+    p->set<std::string>("Weighted BF Name",          Albany::weighted_bf_name);
+    p->set<std::string>("Weighted Gradient BF Name", Albany::weighted_grad_bf_name);
+
+    ev = rcp(new PHAL::ComputeBasisFunctions<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT> (ev);
+  } else {
+    ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
 
   // Get coordinate of cell baricenter
   ev = evalUtils.getMSTUtils().constructCellAverageEvaluator(Albany::coord_vec_name, FL::QuadPoint, FRT::Gradient);

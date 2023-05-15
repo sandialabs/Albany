@@ -82,6 +82,10 @@ public:
   template <typename EvalT>
   void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
+  const Teuchos::RCP<IntrepidCubature> getCellCubature() const {
+    return this->cellCubature;
+  }
+
 protected:
 
   void setFieldsProperties();
