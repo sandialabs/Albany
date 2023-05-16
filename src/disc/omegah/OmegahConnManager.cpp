@@ -13,6 +13,7 @@
 #include <Omega_h_for.hpp> //parallel_for
 #include <Omega_h_file.hpp> //write_array, write_parallel
 #include <Omega_h_array_ops.hpp> //get_max
+#include <Omega_h_atomics.hpp> //atomic_fetch_add
 
 #include <fstream>
 
@@ -40,24 +41,43 @@ OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim) :
   mesh(in_mesh)
 {
+  auto world = mesh.library()->world();
+  auto rank = world->rank();
+
   assert(partDim <= mesh.dim());
-  assert(mesh.has_tag(partDim, partId));
+  //FIXME we will allow the process to NOT have the tag - change to global
+  //reduction to ensure at least one process has it {
+  assert(mesh.has_tag(partDim, partId)); 
   auto isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
   const auto numInPart = Omega_h::get_sum(isInPart);
+  std::cerr << rank << " numInPart " << numInPart << "\n";
+  world->barrier();
   std::stringstream ss;
   ss << "Error! Input mesh has no elements of dimension "
      << partDim << " with tag " << partId << "\n";
   auto err = ss.str();
-  //albany does *not* support processes without elements
   TEUCHOS_TEST_FOR_EXCEPTION (!numInPart, std::runtime_error, err.c_str());
+  // }
 
   m_elem_blocks_names.push_back(partId);
 
-  //the omegah conn manager will be recreated after each topological adaptation
-  // - a change to mesh vertex coordinates (mesh motion) will not require
-  //   recreating the conn manager
-  initLocalElmIds();
   assert(mesh.has_tag(mesh.dim(), "global"));
+
+  //HERE - something is failing in parallel runs...
+
+  //create the host array of entities in the part {
+  // no attempt to make this 'fast' was made...
+  Omega_h::Write<Omega_h::LO> localPartEntIds(numInPart);
+  Omega_h::Write<Omega_h::LO> index(1);
+  auto getLocalPartEntIds = OMEGA_H_LAMBDA(int i) {
+    if(isInPart[i]) {
+      const auto idx = Omega_h::atomic_fetch_add(&index[0],1);
+      localPartEntIds[idx] = i;
+    }
+  };
+  const std::string kernelName = "getLocalPartEntIds" + std::to_string(partDim);
+  Omega_h::parallel_for(mesh.nents(partDim), getLocalPartEntIds, kernelName.c_str());
+  //}
 
   owners = std::vector<Ownership>(1); //FIXME
 }
