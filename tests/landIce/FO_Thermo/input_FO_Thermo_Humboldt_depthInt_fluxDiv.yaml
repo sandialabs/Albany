@@ -1,0 +1,423 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+    #Write Jacobian to MatrixMarket: -1
+    #Write Residual to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 0
+    Depth Integrated Model: true
+    Solution Method: Steady
+    Name: LandIce Stokes FO Thermo Coupled 3D
+    Compute Sensitivities: true
+    Extruded Column Coupled in 2D Response: true
+    #Adjust Bed Topography to Account for Thickness Changes: true
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Cubature Degrees (Horiz Vert): [4, 6]
+    Basal Cubature Degree: 4
+    Surface Cubature Degree: 4
+    Needs Dissipation: true
+    Needs Basal Friction: true
+    LandIce Field Norm:
+      sliding_velocity_basalside:
+        Regularization Type: Given Value
+        Regularization Value: 1.0e-05
+    Dirichlet BCs:
+      DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
+      DBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
+      DBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
+    LandIce BCs:
+      Number: 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          #Type: Exponent Of Given Field
+          Type: Power Law
+          Mu Type: Exponent of Field
+          Mu Field Name: basal_friction_log
+          Power Exponent: 1.0
+          Effective Pressure Type: Constant
+          Effective Pressure: 1.0
+          Zero Beta On Floating Ice: true
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 3
+        Side Set Name: extruded_boundary_side_set_1
+        #Immersed Ratio: 0.893
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Lower Bound: -12.0
+        Mesh Part: bottom
+        Type: Distributed
+        Name: basal_friction_log
+        Upper Bound: 12.0
+    LandIce Viscosity:
+      Use P0 Temperature: false
+      Extract Strain Rate Sq: true
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 0.5e+00
+      Continuous Homotopy With Constant Initial Viscosity: true
+      Coefficient For Continuous Homotopy: 8.0
+      Glen's Law A: 2.400304414e-24     # [ Pa^-3 s^-1 ]
+      Glen's Law n: 3.0
+      Flow Rate Type: Temperature Based
+    LandIce Physical Parameters:
+      Conductivity of ice: 2.1
+      Diffusivity temperate ice: 1.1e-08
+      Heat capacity of ice: 2.009e+03
+      Water Density: 1028.0
+      Ice Density: 910.0
+      Gravity Acceleration: 9.81
+      Reference Temperature: 2.65e+02
+      Clausius-Clapeyron Coefficient: 7.9e-08
+      Ice Latent Heat Of Fusion: 3.34e+05
+      Permeability factor: 1.0e-12
+      Viscosity of water: 1.8e-03
+      Omega exponent alpha: 2.0
+      Diffusivity homotopy exponent: -1.1
+    Body Force:
+      Type: FO INTERP SURF GRAD
+    LandIce Flux Divergence:
+      Use Upwind Stabilization: false
+      Flux Divergence Is Part Of Solution: true
+    LandIce L2 Projected Boundary Laplacian:
+      Field Name: basal_friction_log
+      Mass Coefficient: 1.0e-01
+      Laplacian Coefficient: 1.0e+01
+      Robin Coefficient: 1.0
+      Boundary Edges Set Name: boundary_side_set
+    LandIce Enthalpy:
+      Regularization:
+        Flux Regularization:
+          alpha: 4.0
+          beta: 0.0
+        Basal Melting Regularization:
+          alpha: 4.0
+          beta: 0.0
+      Stabilization:
+        Type: Upwind
+        Parameter Delta: 0.5
+      Bed Lubrication:
+        Type: Dry
+    Response Functions:
+      Number Of Responses: 3
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 1
+        Response 0:
+          Scaling: 5.8824e-07
+          Name: Squared L2 Difference Side Source ST Target RT
+          Source Field Name: flux_divergence_basalside
+          Response Depends On Solution Column: true
+          Root Mean Square Error Field Name: apparent_mass_balance_RMS_basalside
+          Field Rank: Scalar
+          Target Field Name: apparent_mass_balance_basalside
+          Side Set Name: basalside
+          Is Side Set Planar: true
+      Response 1:
+        Scaling: 5.8824e-07
+        Name: Squared L2 Difference Side Source ST Target RT
+        Source Field Name: flux_divergence_gradient_basalside
+        Response Depends On Solution Column: true
+        Side Set Name: basalside
+        Field Rank: Gradient
+        Is Side Set Planar: true
+        Target Value: 0.0
+      Response 2:
+        Scaling Coefficient: 5.8824e-05
+        Name: Boundary Squared L2 Norm
+        Field Name: L2 Projected Boundary Laplacian_basalside 
+  Discretization:
+    Workset Size: -1
+    Method: Extruded
+    Surface Height Field Name: surface_height
+    Number Of Time Derivatives: 0
+    Exodus Output File Name: ./humboldt_full.exo
+    Use Serial Mesh: false
+    Columnwise Ordering: true
+    NumLayers: 1
+    Thickness Field Name: ice_thickness
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction_log, bed_topography, apparent_mass_balance, apparent_mass_balance_RMS, surface_air_temperature]
+    Basal Node Fields Ranks: [1, 1, 1, 1, 1, 1, 1]
+    Interpolate Basal Node Layered Fields: [velocity]
+    Basal Node Layered Fields Ranks: [2]
+    Use Glimmer Spacing: true
+    Required Fields Info:
+      Number Of Fields: 13
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2:
+        Field Name: basal_friction_log
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3:
+        Field Name: surface_air_temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 4:
+        Field Name: surface_enthalpy
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 5:
+        Field Name: temperature
+        Field Type: Elem Scalar
+        Field Usage: Output
+      Field 6:
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 7:
+        Field Name: apparent_mass_balance
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 8:
+        Field Name: apparent_mass_balance_RMS
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 9:
+        Field Name: Diff Enth
+        Field Type: Node Scalar
+        Field Usage: Output
+      Field 10:
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+        Field Usage: Output
+      Field 11:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+        Field Usage: Output
+      Field 12:
+        Field Name: velocity
+        Field Type: Node Vector
+        Field Origin: Mesh
+    Side Set Discretizations:
+      Side Sets: [basalside, upperside]
+      basalside:
+        Workset Size: -1
+        Method: Ioss
+        Number Of Time Derivatives: 0
+        Restart Index: 1
+        Use Serial Mesh: false
+        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
+        Exodus Output File Name: ./humboldt_basal.exo
+        Required Fields Info:
+          Number Of Fields: 12
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
+          Field 1:
+            Field Name: observed_ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
+          Field 2:
+            Field Name: observed_ice_thickness_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/thickness_uncertainty.ascii
+          Field 3:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
+          Field 4:
+            Field Name: bed_topography
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii
+          Field 5:
+            Field Name: flux_divergence
+            Field Type: Node Scalar
+            Field Usage: Output
+          Field 6:
+            Field Name: basal_friction_log
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
+          Field 7:
+            Field Name: surface_air_temperature
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_air_temperature.ascii
+          Field 8:
+            Field Name: heat_flux
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.042
+            #File Name: ../AsciiMeshes/Humboldt/basal_heat_flux.ascii
+          Field 9:
+            Field Name: apparent_mass_balance
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/apparent_mass_balance.ascii
+          Field 10:
+            Field Name: apparent_mass_balance_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/apparent_mass_balance_uncertainty.ascii
+          Field 11:
+            Field Name: velocity
+            Field Origin: File
+            Field Type: Node Layered Vector
+            Number Of Layers: 2
+            Vector Dim: 2
+            File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
+      upperside:
+        Workset Size: -1
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        #Exodus Output File Name: output/humboldt_upper.exo
+        Required Fields Info:
+          Number Of Fields: 0
+          Field 0:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Vector Dim: 2
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity.ascii
+          Field 1:
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
+  Piro:
+    Sensitivity Method: Adjoint
+    Write Only Converged Solution: false
+    Enable Explicit Matrix Transpose: true
+    NOX:
+      Thyra Group Options:
+        Function Scaling: None
+        Update Row Sum Scaling: Before Each Nonlinear Solve
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 1
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-08
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 60
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7  # used for forward solves
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-7  # used for adjoint solve
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
+              Preconditioner Type: FROSch
+              Preconditioner Types:
+                FROSch:
+                  FROSch Preconditioner Type: OneLevelPreconditioner        # FROSch preconditioner type. Options: OneLevelPreconditioner, TwoLevelPreconditioner
+                  OverlappingOperator Type: AlgebraicOverlappingOperator    # First Level: AlgebrAlgebraicOverlappingOperator determines the overlap based on the graph of the matrix
+                  CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
+                  Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
+                  Dimension: 3                                              # Spatial dimension of the problem
+                  DofsPerNode: 6                                            # Number of degrees of freedom per node
+                  Overlap: 0                                                # Number of layers of elements in the overlap
+                  Null Space Type: Input                                    # Null space is provided by Albany
+                  AlgebraicOverlappingOperator:
+                    'Reuse: Symbolic Factorization': true                   # Reuse of the symbolic factorization
+                    Solver:                                                 # Solver on the first level
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                  IPOUHarmonicCoarseOperator:
+                    'Reuse: Coarse Basis': true                             # Reuse of the coarse basis functions
+                    'Reuse: Coarse Matrix': false                           # Reuse of the coarse matrix
+                    'Reuse: Coarse Matrix Symbolic Factorization': true     # Reuse of the symbolic factorization of the coarse matrix
+                    Blocks:
+                      1:                                                    # For a multiphysics problem, the coarse space may be decomposed into several blocks. Here, we only need one block.
+                        InterfacePartitionOfUnity:                          # The interface partition of unity defines the specific GDSW type coarse space
+                          Type: RGDSW                                       # Possible types: GDSW, RGDSW
+                          GDSW:
+                            Type: Full                                      # Here, we could select subspaces of the GDSW coarse. Generally, we use "Full".
+                          RGDSW:
+                            Type: Full                                      # Here, we could select subspaces of the RGDSW coarse. Generally, we use "Full".
+                            Distance Function: Inverse Euclidean            # Options 1 and 2.2 differ in the distance function used to compute the interface values: "Constant" (Option 1) and "Inverse Euclidean" (Option 2.2)
+                    ExtensionSolver:                                        # Solver for the energy-minimizing extensions
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                    Distribution:                                           # Parallel distribution of the coarse problem
+                      Type: linear                                          # Specifies the parallel distribution strategy. For now, we use "linear"
+                      NumProcs: 1                                           # Number of ranks used for the coarse problem
+                    CoarseSolver:                                           # Solver for the coarse problem
+                      SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
+                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+          Rescue Bad Newton Solve: true
+      Line Search:
+        Full Step:
+          Full Step: 1.0e+00
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Relative Tolerance: 1.0e-06
+    Test Value:  1.005134707194e+01
+    Sensitivity For Parameter 0:
+      Test Value: 2.547069319315e+00
+  Regression For Response 1:
+    Relative Tolerance: 1.0e-06
+    Test Value: 6.504639411833e-04
+    Sensitivity For Parameter 0:
+      Test Value: 1.489447982684e-04
+  Regression For Response 2:
+    Relative Tolerance: 1.0e-06
+    Test Value:  5.967986097162e+00
+    Sensitivity For Parameter 0:
+      Test Value: 4.713654424891e-01
+...
+...

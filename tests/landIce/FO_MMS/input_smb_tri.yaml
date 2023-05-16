@@ -39,7 +39,6 @@ ANONYMOUS:
         H Coefficient: 3.0
         SMB Coefficient: 3.0
         Scaling Coefficient: 1.0
-        Cubature Degree: 3
         Field Name: Velocity
     Dirichlet BCs: { }
     Neumann BCs: { }

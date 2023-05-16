@@ -3,6 +3,9 @@
 
 #include "Albany_ProblemUtils.hpp"  // For 'getIntrepidwBasis'
 #include "Albany_StringUtils.hpp" // for 'upper_case'
+#include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_LINE_I4_FEM.hpp"
+#include "Intrepid2_DerivedBasis_HGRAD_WEDGE.hpp"
 
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 
@@ -19,6 +22,9 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
  , use_sdbcs_(false)
  , params(params_)
 {
+
+  depthIntegratedModel =   params_->get("Depth Integrated Model",false);
+
   // Parsing the LandIce boundary conditions sublist
   auto landice_bcs_params = Teuchos::sublist(params,"LandIce BCs");
   unsigned int num_bcs = landice_bcs_params->get<int>("Number",0);
@@ -147,6 +153,17 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int cubDegree = params->get("Cubature Degree", defaultCubDegree);
     cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   }  
+
+  if(depthIntegratedModel) {
+
+    TEUCHOS_TEST_FOR_EXCEPTION ((discParams->get<std::string>("Method") != "Extruded") || (discParams->isParameter("NumLayers") && (discParams->get<int>("NumLayers") != 1)) || (cellType->getKey() != shards::Wedge<6>::key), std::logic_error,
+                                  "Error! Depth Integrated Model can be used only for 1-layer extruded meshes with Wedge cells\n");
+
+    using tri_basis = Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, RealType, RealType>;
+    using line_basis = Intrepid2::Basis_HGRAD_LINE_I4_FEM<PHX::Device, RealType, RealType>;
+    int degree = 1; //used only for the triangular basis
+    cellDepthIntegratedBasis = Teuchos::rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<tri_basis, line_basis>(degree));
+  }
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
   const int numCellSides    = cellType->getSideCount();
@@ -339,6 +356,7 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->set<Teuchos::Array<int>>("Cubature Degrees (Horiz Vert)",cubDegrees, "Tensor Product Cubature Degrees: [degree for horizontal dimension (for triangular or quadrilateral elements), degree for vertical dimension (line element)]");
   validPL->set<int>("Basal Cubature Degree", 3, "Cubature degree used on the basal side");
   validPL->set<int>("Surface Cubature Degree", 3, "Cubature degree used on the surface side");
+  validPL->set<bool>("Depth Integrated Model", false, "");
   return validPL;
 }
 

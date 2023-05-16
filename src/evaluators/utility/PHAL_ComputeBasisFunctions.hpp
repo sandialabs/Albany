@@ -49,7 +49,8 @@ private:
   //! Coordinate vector at vertices
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepid2FEBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepid2MapBasis;
 
   Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;
   Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
@@ -57,11 +58,11 @@ private:
   Kokkos::DynRankView<RealType, PHX::Device> refWeights;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_inv;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_det;
 
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; 
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;

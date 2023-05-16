@@ -69,7 +69,8 @@ TEUCHOS_UNIT_TEST(DOFInterpolation, Scalar)
 
   bfp.set("Coordinate Vector Name", Albany::coord_vec_name);
   bfp.set("Cubature", cubature);
-  bfp.set("Intrepid2 Basis", intrepidBasis);
+  bfp.set("Intrepid2 FE Basis", intrepidBasis);
+  bfp.set("Intrepid2 Ref-To-Phys Map Basis", intrepidBasis);
 
   // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
   bfp.set("Weights Name",              Albany::weights_name);

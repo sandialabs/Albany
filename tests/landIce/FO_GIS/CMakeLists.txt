@@ -196,15 +196,28 @@ if (ALBANY_MUELU)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_muelu.yaml)
   add_test(${testNameRoot}_Humboldt_Tpetra_MueLu ${Albany.exe} input_fo_humboldt_muelu.yaml)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_depthInt_muelu.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_depthInt_muelu.yaml)
+  add_test(${testNameRoot}_Humboldt_DepthIntegrated_Tpetra_MueLu ${Albany.exe} input_fo_humboldt_depthInt_muelu.yaml)
+
   if (NOT ALBANY_PARALELL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_Tpetra_MueLu
                        PROPERTIES
-                       LABELS            "LandIce;Epetra;Forward"
+                       LABELS            "LandIce;Tpetra;Forward"
+                       FIXTURES_REQUIRED humboldtMeshSetup)
+
+    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_Tpetra_MueLu
+                       PROPERTIES
+                       LABELS            "LandIce;Tpetra;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
   else ()
     set_tests_properties(${testNameRoot}_Humboldt_Tpetra_MueLu
                        PROPERTIES
-                       LABELS         "LandIce;Epetra;Forward")
+                       LABELS         "LandIce;Tpetra;Forward")
+
+    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_Tpetra_MueLu
+                       PROPERTIES
+                       LABELS         "LandIce;Tpetra;Forward")
   endif()
   
 endif()
