@@ -71,7 +71,7 @@ bool MPAS_useGLP(true);
 
 bool depthIntegratedModel(false);
 
-std::vector<int> dirichletNodesIdsSepthInt;
+std::vector<int> dirichletNodesIdsDepthInt;
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 
@@ -221,12 +221,15 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
+  //In the following we import the temperature field temperatureDataOnPrisms from MPAS, 
+  //which is stored as a constant in each Prism (wedge), into a temperature filed in Albany mesh.
   if(depthIntegratedModel) {
+    //In this case the Albany mesh only has one layer, but the MPAS mesh can still have multiple layers
     bool usePOTemp = probParamList.sublist("LandIce Viscosity").get<bool>("Use P0 Temperature");
-    if(!usePOTemp) {
-      // In this case we compute the temperature at quadrature points. 
-      // For each quadrature point we identify what MPAS layer it belongs to, 
-      // and use the temperature at that layer
+    if(!usePOTemp) { 
+      // In this case we compute the temperature at Albany quadrature points. 
+      // For each quadrature point we identify what MPAS wedge/layer it belongs to, 
+      // and assign the temperature at that wedge to Albany temperature QuadPoint field at that quad point.
       const auto problem = Teuchos::rcp_dynamic_cast<LandIce::StokesFO>(albanyApp->getProblem());
       TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(problem), std::runtime_error,
           "Error! Stokes FO Problem not defined. At the moment the depth integrated model only works for Stokes FO.\n");
@@ -260,6 +263,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
         }
       }
     } else {  //P0 temperature
+      // In this case we compute a column average of the MPAS temperature and save it as a P0 field in the 1-layer Albany mesh.
       ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
       for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
@@ -274,7 +278,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
         }
       }
     }
-  } else {
+  } else { // Here we copy the temperature on Prisms from MPAS into a P0 field in the Albany mesh.
     ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
     for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
       for(int il=0; il<nLayers; il++) {
@@ -779,15 +783,15 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   if(depthIntegratedModel && nLayers != 1) {
     int numLayers = 1;
-    dirichletNodesIdsSepthInt.clear();
-    dirichletNodesIdsSepthInt.reserve(2*dirichletNodesIds.size()/(nLayers+1));
+    dirichletNodesIdsDepthInt.clear();
+    dirichletNodesIdsDepthInt.reserve(2*dirichletNodesIds.size()/(nLayers+1));
     for(int i=0; i < static_cast<int>(dirichletNodesIds.size()); ++i) {
       int dnode = dirichletNodesIds[i]-1;
       int ib = (Ordering == 0)*(dnode%globalVerticesStride) + (Ordering == 1)*(dnode/(nLayers+1));
       int il = (Ordering == 0)*(dnode/globalVerticesStride) + (Ordering == 1)*(dnode%(nLayers+1));
       if((il == 0) || (il == nLayers)) {
         int layer = il/nLayers;
-        dirichletNodesIdsSepthInt.push_back((Ordering == 0)*(ib+layer*globalVerticesStride) + (Ordering == 1)*(layer + ib*(numLayers+1))+1);
+        dirichletNodesIdsDepthInt.push_back((Ordering == 0)*(ib+layer*globalVerticesStride) + (Ordering == 1)*(layer + ib*(numLayers+1))+1);
       }
     }
     meshStruct = Teuchos::rcp(
@@ -795,7 +799,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
         vertexProcIDs, verticesCoords, globalVerticesStride,
         verticesOnTria, procsSharingVertices, isBoundaryEdge, trianglesOnEdge,
         verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
-        dirichletNodesIdsSepthInt, iceMarginEdgesIds,
+        dirichletNodesIdsDepthInt, iceMarginEdgesIds,
         numLayers, num_params, Ordering));
   } else {
     meshStruct = Teuchos::rcp(
