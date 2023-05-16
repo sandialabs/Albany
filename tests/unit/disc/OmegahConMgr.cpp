@@ -28,17 +28,20 @@
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
 
-auto createOmegahConnManager(Omega_h::Library& lib, std::string name) {
+Omega_h::Mesh createOmegahBoxMesh(Omega_h::Library& lib) {
+  return Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
+}
+
+Omega_h::Mesh createOmegahMesh(Omega_h::Library& lib, std::string name) {
   REQUIRE(!name.empty());
   Omega_h::Mesh mesh(&lib);
   Omega_h::binary::read(name, lib.world(), &mesh);
   mesh.balance(); // re-partition to the number of ranks in world communicator
-  return Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
+  return mesh;
 }
 
-auto createOmegahConnManager(Omega_h::Library& lib) {
-  auto mesh = Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
-  return Teuchos::rcp(new Albany::OmegahConnManager(std::move(mesh)));
+auto createOmegahConnManager(Omega_h::Mesh& mesh) {
+  return Teuchos::rcp(new Albany::OmegahConnManager(mesh));
 }
 
 /* copied from tests/unit/disc/UnitTest_BlockedDOFManager.cpp */
@@ -59,7 +62,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
   auto teuchosComm = Albany::getDefaultComm();
   auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto conn_mgr = createOmegahConnManager(lib);
+  auto mesh = createOmegahBoxMesh(lib);
+  auto conn_mgr = createOmegahConnManager(mesh);
   out << "Testing OmegahConnManager constructor\n";
   success = true;
 }
@@ -71,8 +75,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManagerNoConnClone)
   auto teuchosComm = Albany::getDefaultComm();
   auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto conn_mgr = createOmegahConnManager(lib);
-
+  auto mesh = createOmegahBoxMesh(lib);
+  auto conn_mgr = createOmegahConnManager(mesh);
   auto clone = conn_mgr->noConnectivityClone();
   out << "Testing OmegahConnManager::noConnectivityClone()\n";
   success = true;
@@ -86,7 +90,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
   auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto conn_mgr = createOmegahConnManager(lib);
+  auto mesh = createOmegahBoxMesh(lib);
+  auto conn_mgr = createOmegahConnManager(mesh);
   auto elmGids = conn_mgr->getElementsInBlock();
   REQUIRE(elmGids.size() == conn_mgr->getOwnedElementCount());
   out << "Testing OmegahConnManager::getElementsInBlock()\n";
@@ -101,7 +106,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockId)
   auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto conn_mgr = createOmegahConnManager(lib);
+  auto mesh = createOmegahBoxMesh(lib);
+  auto conn_mgr = createOmegahConnManager(mesh);
   std::vector<std::string> blockIds;
   conn_mgr->getElementBlockIds(blockIds);
   REQUIRE(conn_mgr->getBlockId(0) == blockIds[0]);
@@ -119,7 +125,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockTopologies)
   auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto conn_mgr = createOmegahConnManager(lib);
+  auto mesh = createOmegahBoxMesh(lib);
+  auto conn_mgr = createOmegahConnManager(mesh);
   std::vector<shards::CellTopology> topoTypes;
   conn_mgr->getElementBlockTopologies(topoTypes);
   shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
@@ -150,7 +157,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto conn_mgr = createOmegahConnManager(lib);
+  auto mesh = createOmegahBoxMesh(lib);
+  auto conn_mgr = createOmegahConnManager(mesh);
   conn_mgr->buildConnectivity(*patternC1);
   REQUIRE(3 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
   const auto localElmIds = conn_mgr->getElementBlock("ignored");
@@ -165,7 +173,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   success = true;
 }
 
-
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_contains)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
@@ -174,7 +181,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_contains)
   auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto conn_mgr = createOmegahConnManager(lib, "gis_unstruct_basal_populated.osh");
+  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
+  auto conn_mgr = createOmegahConnManager(mesh);
   out << "Testing OmegahConnManager::contains()\n";
   success = true;
 }

@@ -21,7 +21,7 @@ namespace Albany {
 
 class OmegahConnManager : public ConnManager {
 private:
-  Omega_h::Mesh mesh;
+  Omega_h::Mesh& mesh;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   std::vector<Ownership> owners; //FIXME
@@ -41,7 +41,7 @@ private:
   void setElementDofConnectivity(const LO dofOffset,
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
 public:
-  OmegahConnManager(Omega_h::Mesh in_mesh);
+  OmegahConnManager(Omega_h::Mesh& in_mesh);
 
   ~OmegahConnManager() = default;
 

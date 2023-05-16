@@ -19,7 +19,7 @@
 namespace Albany {
 
 OmegahConnManager::
-OmegahConnManager(Omega_h::Mesh in_mesh) : mesh(in_mesh)
+OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 {
   //albany does *not* support processes without elements
   TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
