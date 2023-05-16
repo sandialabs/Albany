@@ -42,6 +42,7 @@ private:
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
 public:
   OmegahConnManager(Omega_h::Mesh& in_mesh);
+  OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim);
 
   ~OmegahConnManager() = default;
 

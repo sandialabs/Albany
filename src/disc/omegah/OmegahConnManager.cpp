@@ -36,6 +36,32 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
   owners = std::vector<Ownership>(1); //FIXME
 }
 
+OmegahConnManager::
+OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim) :
+  mesh(in_mesh)
+{
+  assert(partDim <= mesh.dim());
+  assert(mesh.has_tag(partDim, partId));
+  auto isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+  const auto numInPart = Omega_h::get_sum(isInPart);
+  std::stringstream ss;
+  ss << "Error! Input mesh has no elements of dimension "
+     << partDim << " with tag " << partId << "\n";
+  auto err = ss.str();
+  //albany does *not* support processes without elements
+  TEUCHOS_TEST_FOR_EXCEPTION (!numInPart, std::runtime_error, err.c_str());
+
+  m_elem_blocks_names.push_back(partId);
+
+  //the omegah conn manager will be recreated after each topological adaptation
+  // - a change to mesh vertex coordinates (mesh motion) will not require
+  //   recreating the conn manager
+  initLocalElmIds();
+  assert(mesh.has_tag(mesh.dim(), "global"));
+
+  owners = std::vector<Ownership>(1); //FIXME
+}
+
 std::vector<GO>
 OmegahConnManager::getElementsInBlock (const std::string&) const
 {

@@ -21,6 +21,7 @@
 
 #include <Omega_h_build.hpp> // Omega_h::build_box
 #include <Omega_h_file.hpp> // Omega_h::binary::read
+#include <Omega_h_mark.hpp> // Omega_h::mark_by_class
 
 #include <array> //std::array
 
@@ -42,6 +43,10 @@ Omega_h::Mesh createOmegahMesh(Omega_h::Library& lib, std::string name) {
 
 auto createOmegahConnManager(Omega_h::Mesh& mesh) {
   return Teuchos::rcp(new Albany::OmegahConnManager(mesh));
+}
+
+auto createOmegahConnManager(Omega_h::Mesh& mesh, std::string partId, const int partDim) {
+  return Teuchos::rcp(new Albany::OmegahConnManager(mesh, partId, partDim));
 }
 
 /* copied from tests/unit/disc/UnitTest_BlockedDOFManager.cpp */
@@ -173,7 +178,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   success = true;
 }
 
-TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_contains)
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
 
@@ -182,7 +187,29 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_contains)
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
   auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
-  auto conn_mgr = createOmegahConnManager(mesh);
+  //The omegah 'exo2osh' converter creates geometric model entities from node
+  //and side sets that exist within the exodus file.
+  //The mesh entities in the sets are then 'classified' (sets the association)
+  //on those model entities.
+  //'Classification' of mesh entities to the geometric model is an alternative
+  //to the generic creation of 'parts' (sets of mesh entities with a label) and
+  //provides a subset of the functionality.
+  //Note, 'classification' is the approach taken when having (at a minimum) a
+  //topological definition of the domain is a common part of the mesh
+  //generation/adaptation workflow.
+  //The 'lateralside' side set in the exodus file is given class_id=1 and
+  //class_dim=1 by exo2osh.
+  //A dimension and id uniquely defines a geometric model entity.
+  const int lateralSide_classId = 1;
+  const int lateralSide_classDim = 1;
+  const auto lateralSide_name = "lateralside";
+  for(int dim=0; dim<=lateralSide_classDim; dim++) {
+    auto isInSet = Omega_h::mark_by_class(&mesh, dim,
+        lateralSide_classDim, lateralSide_classId);
+    mesh.add_tag(dim, lateralSide_name, 1, isInSet);
+  }
+
+  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
   out << "Testing OmegahConnManager::contains()\n";
   success = true;
 }
