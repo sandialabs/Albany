@@ -22,6 +22,7 @@
 #include <Omega_h_build.hpp> // Omega_h::build_box
 #include <Omega_h_file.hpp> // Omega_h::binary::read
 #include <Omega_h_mark.hpp> // Omega_h::mark_by_class
+#include <Omega_h_simplex.hpp> // Omega_h::simplex_down_template
 
 #include <array> //std::array
 
@@ -175,6 +176,34 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
     REQUIRE( expectedDofs == dofs );
   }
   out << "Testing OmegahConnManager::buildConnectivity()\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_checkTetrahedronCanonicalEntityOrder)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  const int elem_dim = 3;
+  const int bdry_dim = 2;
+  const int vtx_dim = 0;
+  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+      int which_vert = 0;
+      auto ohIdx = Omega_h::simplex_down_template(elem_dim, bdry_dim, bdry, vert);
+
+      shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
+      auto shIdx = tetTopo.getNodeMap(bdry_dim,bdry,vert);
+
+      if(ohIdx != shIdx) {
+        std::cerr << "\ntet: bdry_dim which_bdry which_vert:"
+                  << bdry_dim << " " << bdry << " "<< vert
+                  << " Omega_h index " << ohIdx << " Shards index " << shIdx << "\n";
+      }
+      REQUIRE(ohIdx == shIdx);
+    }
+  }
+
+  out << "Testing OmegahConnManager:: canonical entity order - Omega_h vs Shards()\n";
   success = true;
 }
 
