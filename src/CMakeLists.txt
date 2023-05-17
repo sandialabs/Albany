@@ -538,6 +538,10 @@ if (ALBANY_DISABLE_OUTPUT_MESH)
   target_compile_definitions (albanyLib PUBLIC ALBANY_DISABLE_OUTPUT_MESH)
 endif()
 
+if (ALBANY_OMEGAH)
+  target_link_libraries(albanyLib Omega_h::omega_h)
+endif()
+
 install(TARGETS albanyLib EXPORT albany-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
