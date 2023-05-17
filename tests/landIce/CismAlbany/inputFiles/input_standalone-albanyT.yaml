@@ -32,13 +32,15 @@ ANONYMOUS:
       Number: 1
       BC 0:
         Type: Basal Friction
-        Cubature Degree: 3
         Side Set Name: basalside
         Basal Friction Coefficient:
           Type: Field
           Beta Field Name: basal_friction
     Body Force:
       Type: FO INTERP SURF GRAD
+    Cubature Degree: 3
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3      
   Discretization:
     Columnwise Ordering: true
     Number Of Time Derivatives: 0
