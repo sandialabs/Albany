@@ -63,12 +63,10 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim)
 
   assert(mesh.has_tag(mesh.dim(), "global"));
 
-  //HERE - something is failing in parallel runs...
-
   //create the host array of entities in the part {
   // no attempt to make this 'fast' was made...
   Omega_h::Write<Omega_h::LO> localPartEntIds(numInPart);
-  Omega_h::Write<Omega_h::LO> index(1);
+  Omega_h::Write<Omega_h::LO> index({0},"localEntIndex");
   auto getLocalPartEntIds = OMEGA_H_LAMBDA(int i) {
     if(isInPart[i]) {
       const auto idx = Omega_h::atomic_fetch_add(&index[0],1);
