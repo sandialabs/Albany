@@ -45,19 +45,21 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim)
   auto rank = world->rank();
 
   assert(partDim <= mesh.dim());
-  //FIXME we will allow the process to NOT have the tag - change to global
-  //reduction to ensure at least one process has it {
-  assert(mesh.has_tag(partDim, partId)); 
-  auto isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
-  const auto numInPart = Omega_h::get_sum(isInPart);
-  std::cerr << rank << " numInPart " << numInPart << "\n";
+
+  //TODO this needs to be tested for a tag that has no entries on some processes
+  Omega_h::Read<Omega_h::I8> isInPart;
+  if(mesh.has_tag(partDim, partId)) {
+    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+  }
+  const auto numInPartGlobal = Omega_h::get_sum(world,isInPart);
+  assert(numInPartGlobal > 0);
+  std::cerr << rank << " numInPart " << numInPartGlobal << "\n";
   world->barrier();
   std::stringstream ss;
-  ss << "Error! Input mesh has no elements of dimension "
+  ss << "Error! Input mesh has no mesh entities of dimension "
      << partDim << " with tag " << partId << "\n";
   auto err = ss.str();
-  TEUCHOS_TEST_FOR_EXCEPTION (!numInPart, std::runtime_error, err.c_str());
-  // }
+  TEUCHOS_TEST_FOR_EXCEPTION (!numInPartGlobal, std::runtime_error, err.c_str());
 
   m_elem_blocks_names.push_back(partId);
 
@@ -65,6 +67,7 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim)
 
   //create the host array of entities in the part {
   // no attempt to make this 'fast' was made...
+  const auto numInPart = Omega_h::get_sum(isInPart);
   Omega_h::Write<Omega_h::LO> localPartEntIds(numInPart);
   Omega_h::Write<Omega_h::LO> index({0},"localEntIndex");
   auto getLocalPartEntIds = OMEGA_H_LAMBDA(int i) {
