@@ -180,7 +180,17 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
 }
 
 struct Omegah2ShardsPerm {
+  /**
+   * tetFace[i] contains the Shards face index for the i'th Omegah face
+   */
   const int tetFace[4] = {3,0,1,2};
+  /**
+   * triVtx[i][j] contains the Shards vertex index for the j'th vertex of the
+   * i'th Omegah face, after applying the 'tetFace' face permutation to i
+   * For example, to get the Shards vertex index for the 1st vertex
+   * of the 2nd Omegah face:
+   * auto shardsVtxIdx = triVtx[tetFace[1]][0];
+   */
   const int triVtx[4][3] = {{0,1,2},
                             {0,1,2},
                             {0,1,2},
@@ -188,6 +198,9 @@ struct Omegah2ShardsPerm {
 };
 
 struct Shards2OmegahPerm {
+  /**
+   * this is the inverse of Omegah2ShardsPerm
+   */
   const int tetFace[4] = {1,2,3,0};
   const int triVtx[4][3] = {{0,1,2},
                             {0,1,2},
@@ -270,22 +283,28 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_checkTetrahedronCanonical
   }
   Omegah2ShardsPerm oh2sh;
 
-  std::cerr << ss.str() << "\n";
-  int oh2shPerm[4];
+  //compute the shards to omegah permutation
+  int oh2shFaceVtxPerm[4][3];
   shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
   for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
     auto oh2shBdry = oh2sh.tetFace[bdry];
-    oh2shPerm[bdry] = shards::findPermutation(triTopo.getCellTopologyData(),ohFaceVtx[bdry],shFaceVtx[oh2shBdry]);
-    std::cerr << "bdry perm " << bdry << " " << oh2shPerm[bdry] << "\n";
+    auto perm = shards::findPermutation(triTopo.getCellTopologyData(),ohFaceVtx[bdry],shFaceVtx[oh2shBdry]);
     for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
-      const auto vertPerm = triTopo.getNodePermutationInverse(oh2shPerm[bdry],vert);
-      std::cerr << vert << " " << vertPerm << "\n";
-      shFaceVtx[oh2shBdry][vert] = tetTopo.getNodeMap(bdry_dim, oh2shBdry, vertPerm);
-      std::cerr << "(" << bdry << ", " << vert << ")=" << ohFaceVtx[bdry][vert] << " "
-                << "(" << oh2shBdry << ", " << vert << ")=" << shFaceVtx[oh2shBdry][vert] << "\n";
+      oh2shFaceVtxPerm[bdry][vert] = triTopo.getNodePermutationInverse(perm,vert);
     }
   }
 
+  std::cerr << "\ncheck perm\n";
+  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+      if(oh2shFaceVtxPerm[bdry][vert] != oh2sh.triVtx[bdry][vert]) {
+        std::cerr << "(" << bdry << ", " << vert << ") " 
+                  << oh2sh.triVtx[bdry][vert] << " "
+                  << oh2shFaceVtxPerm[bdry][vert] << "\n";
+      }
+      REQUIRE(oh2shFaceVtxPerm[bdry][vert] == oh2sh.triVtx[bdry][vert]);
+    }
+  }
 
   out << "Testing OmegahConnManager:: canonical entity order - Omega_h vs Shards()\n";
   success = true;
