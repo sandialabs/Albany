@@ -248,6 +248,49 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_checkTetrahedronCanonical
   success = true;
 }
 
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_checkTetrahedronCanonicalEntityOrder2)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
+  const int elem_dim = 3;
+  const int bdry_dim = 2;
+  const int vtx_dim = 0;
+
+  std::stringstream ss;
+  ss  << "\ntet: Omega_h(bdry,vert)=idx Shards(bdry,vert)=idx ";
+  //fill the face-to-node arrays
+  int ohFaceVtx[4][3];
+  int shFaceVtx[4][3];
+  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+       ohFaceVtx[bdry][vert] = Omega_h::simplex_down_template(elem_dim, bdry_dim, bdry, vert);
+       shFaceVtx[bdry][vert] = tetTopo.getNodeMap(bdry_dim,bdry,vert);
+    }
+  }
+  Omegah2ShardsPerm oh2sh;
+
+  std::cerr << ss.str() << "\n";
+  int oh2shPerm[4];
+  shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+    auto oh2shBdry = oh2sh.tetFace[bdry];
+    oh2shPerm[bdry] = shards::findPermutation(triTopo.getCellTopologyData(),ohFaceVtx[bdry],shFaceVtx[oh2shBdry]);
+    std::cerr << "bdry perm " << bdry << " " << oh2shPerm[bdry] << "\n";
+    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+      const auto vertPerm = triTopo.getNodePermutationInverse(oh2shPerm[bdry],vert);
+      std::cerr << vert << " " << vertPerm << "\n";
+      shFaceVtx[oh2shBdry][vert] = tetTopo.getNodeMap(bdry_dim, oh2shBdry, vertPerm);
+      std::cerr << "(" << bdry << ", " << vert << ")=" << ohFaceVtx[bdry][vert] << " "
+                << "(" << oh2shBdry << ", " << vert << ")=" << shFaceVtx[oh2shBdry][vert] << "\n";
+    }
+  }
+
+
+  out << "Testing OmegahConnManager:: canonical entity order - Omega_h vs Shards()\n";
+  success = true;
+}
+
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
