@@ -179,33 +179,68 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   success = true;
 }
 
+struct Omegah2ShardsPerm {
+  const int tetFace[4] = {3,0,1,2};
+  const int triVtx[4][3] = {{0,1,2},
+                            {0,1,2},
+                            {0,1,2},
+                            {2,0,1}}; //face 2 is the only one which has a different order
+};
+
+struct Shards2OmegahPerm {
+  const int tetFace[4] = {1,2,3,0};
+  const int triVtx[4][3] = {{0,1,2},
+                            {0,1,2},
+                            {1,2,0}, //face 2 is the only one which has a different order
+                            {0,1,2}};
+};
+
+
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_checkTetrahedronCanonicalEntityOrder)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
 
-  auto tetFacePermOmegah2Shards = {3,0,1,2};
-  auto triVtxPermOmegah2Shards = {{0,1,2},
-                                  {0,1,2},
-                                  {0,1,2},
-                                  {2,0,1}}; //face 2 is the only one which has a different order
-
+  shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
   const int elem_dim = 3;
   const int bdry_dim = 2;
   const int vtx_dim = 0;
+
+
+  std::stringstream ss;
+  ss  << "\ntet: Omega_h(bdry,vert)=idx Shards(bdry,vert)=idx ";
+  Omegah2ShardsPerm oh2sh;
   for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
     for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
-      int which_vert = 0;
       auto ohIdx = Omega_h::simplex_down_template(elem_dim, bdry_dim, bdry, vert);
 
-      shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
+      auto oh2shBdry = oh2sh.tetFace[bdry];
+      auto oh2shVert = oh2sh.triVtx[bdry][vert];
+      auto shIdx = tetTopo.getNodeMap(bdry_dim,oh2shBdry,oh2shVert);
+
+      if(ohIdx != shIdx) {
+        std::cerr << ss.str()
+                  << "(" << oh2shBdry << ", " << oh2shBdry << ")=" << ohIdx << " "
+                  << "(" << bdry << ", " << vert << ")=" << shIdx << "\n";
+      }
+      REQUIRE(ohIdx == shIdx);
+    }
+  }
+
+  Shards2OmegahPerm sh2oh;
+  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
       auto shIdx = tetTopo.getNodeMap(bdry_dim,bdry,vert);
 
-      //if(ohIdx != shIdx) {
-        std::cerr << "\ntet: bdry_dim which_bdry which_vert:"
-                  << bdry_dim << " " << bdry << " "<< vert
-                  << " Omega_h index " << ohIdx << " Shards index " << shIdx << "\n";
-      //}
-      //REQUIRE(ohIdx == shIdx);
+      auto sh2ohBdry = sh2oh.tetFace[bdry];
+      auto sh2ohVert = sh2oh.triVtx[bdry][vert];
+      auto ohIdx = Omega_h::simplex_down_template(elem_dim, bdry_dim, sh2ohBdry, sh2ohVert);
+
+      if(ohIdx != shIdx) {
+        std::cerr << ss.str()
+                  << "(" << sh2ohBdry << ", " << sh2ohVert << ")=" << ohIdx << " "
+                  << "(" << bdry << ", " << vert << ")=" << shIdx << "\n";
+      }
+      REQUIRE(ohIdx == shIdx);
     }
   }
 
