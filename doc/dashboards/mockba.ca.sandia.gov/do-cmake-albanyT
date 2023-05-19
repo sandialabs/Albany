@@ -16,7 +16,6 @@ cmake \
     -D SEACAS_EXODIFF=${TRILINSTALLDIR}/bin/exodiff \
     -D SEACAS_ALGEBRA=$TRILINSTALLDIR/bin/algebra \
     -D INSTALL_ALBANY:BOOL=OFF \
-    -D ENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON \
     -D PYTHON_EXECUTABLE=/projects/sems/install/rhel7-x86_64/sems/compiler/python/2.7.9/bin/python \
     -D ENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON \
     -D ENABLE_CISM_INTERFACE:BOOL=ON \
