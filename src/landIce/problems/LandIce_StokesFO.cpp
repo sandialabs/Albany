@@ -261,6 +261,10 @@ void StokesFO::setupEvaluatorRequests () {
     ss_build_interp_ev[ssName][dof_names[1]][IReq::QP_VAL] = true;
     ss_build_interp_ev[ssName][field_name][IReq::GRAD_QP_VAL] = true;
   }
+  
+  if(fluxDivIsPartOfSolution) {
+    ss_build_interp_ev[basalSideName][flux_divergence_name][IReq::GRAD_QP_VAL] = true;
+  }
 }
 
 } // namespace LandIce

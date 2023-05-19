@@ -728,7 +728,6 @@ template<typename Traits>
 void SeparableScatterScalarResponse<AlbanyTraits::HessianVec, Traits>::
 evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData workset, std::string& sideset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,"it is used...");
   if (workset.sideSets == Teuchos::null) {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Side sets not properly specified on the mesh" << std::endl);
