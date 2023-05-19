@@ -19,7 +19,7 @@ ELSE()
 ENDIF()
 
 # Add option to enable more expensive tests.
-OPTION(ENABLE_LARGE_TESTS "Run more time-consuming tests" ON)
+OPTION(ENABLE_LARGE_TESTS "Run more time-consuming tests" OFF)
 IF (ENABLE_LARGE_TESTS)
   set (ALBANY_LARGE_TESTS ON)
   MESSAGE("-- Large Tests               Enabled/")

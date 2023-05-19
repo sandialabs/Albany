@@ -330,10 +330,10 @@ if (ALBANY_IFPACK2)
     endif()
 
     if(ALBANY_TEKO AND ALBANY_MUELU)
-      set (testName ${testNameRoot}_Analysis_Humboldt)
+      set (testName ${testNameRoot}_Humboldt_Analysis)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis.yaml
                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis.yaml)
-      add_test(${testNameRoot}_Analysis_Humboldt ${AlbanyAnalysis.exe} input_fo_humboldt_analysis.yaml)
+      add_test(${testNameRoot}_Humboldt_Analysis ${AlbanyAnalysis.exe} input_fo_humboldt_analysis.yaml)
     endif()
 
   endif()
@@ -411,6 +411,14 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_paramsT.yaml)
     add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_two_paramsT.yaml)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  endif()
+
+  set (testName ${testNameRoot}_Humboldt_Analysis_ThreeParameters)
+  if (ALBANY_IFPACK2 AND ALBANY_TEKO AND ALBANY_LARGE_TESTS)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis_three_params.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_three_params.yaml)
+    add_test(${testName}_Tpetra ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_three_params.yaml)
+    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Large;Analysis")
   endif()
 endif()
 

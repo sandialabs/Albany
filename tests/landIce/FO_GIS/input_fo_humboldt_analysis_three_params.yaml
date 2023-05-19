@@ -12,13 +12,15 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D #problem to be solved
+    Depth Integrated Model: true
     LandIce Rigid Body Modes For Preconditioner:
       Compute Constant Modes: true
       Compute Rotation Modes: true
     Compute Sensitivities: true
+    Extruded Column Coupled in 2D Response: true
     Basal Side Name: basalside 
     Surface Side Name: upperside
-    Cubature Degree: 4
+    Cubature Degrees (Horiz Vert): [4,6]
     Basal Cubature Degree: 4
     Surface Cubature Degree: 4
     LandIce Field Norm:
@@ -48,18 +50,29 @@ ANONYMOUS:
         Cubature Degree: 4
         Side Set Name: extruded_boundary_side_set_1
 
-        #fro from iceberg melange (default = 0)
-        Melange Force: 6.0e+07 #[N/m]
-        Melange Submerged Thickness Threshold: 0.1 #[km]
     Parameters:
-      Number Of Parameters: 1
+      Number Of Parameters: 3
       Parameter 0:
-        Lower Bound: -12.0e+00
-        Mesh Part: bottom
-        Type: Distributed
         Name: basal_friction_log
+        Type: Distributed
+        Lower Bound: -12.0e+00
         Upper Bound: 12.0e+00
+        Mesh Part: bottom
+      Parameter 1:
+        Lower Bound: 1.0e-04
+        Name: surface_height_param
+        Extruded: true
+        Mesh Part: bottom
+        Extruded Param Level: 0
+        Type: Distributed
+      Parameter 2:
+        Name: bed_topography_param
+        Extruded: true
+        Mesh Part: bottom
+        Extruded Param Level: 0
+        Type: Distributed
     LandIce Viscosity:
+      Use P0 Temperature: false
       Extract Strain Rate Sq: true
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.3  # |\nabla u| = sqrt(|\nabla u|^2 + reg),  reg depends on Homotopy.
@@ -88,12 +101,14 @@ ANONYMOUS:
 
     Body Force:
       Type: FO INTERP SURF GRAD
-
+    LandIce Flux Divergence:
+      Use Upwind Stabilization: true
+      Flux Divergence Is Part Of Solution: true
     Response Functions: #quantities that depend on the solution and/or parameters (e.g. QoI, misfit, reg terms)
       Number Of Responses: 3
       Response 0:
         Type: Sum Of Responses
-        Number Of Responses: 3
+        Number Of Responses: 9
         Response 0:   #regularization term, |log(beta)|^2
           Scaling: 5.8824e-06
           Name: Squared L2 Difference Side Source PST Target MST
@@ -116,16 +131,66 @@ ANONYMOUS:
           Field Rank: Vector
           Target Field Name: observed_surface_velocity_upperside
           Side Set Name: upperside
-      Response 1:  #regularization term, |log(beta)|^2
-        Scaling: 5.8824e-06
-        Name: Squared L2 Difference Side Source PST Target MST
-        Source Field Name: basal_friction_log_basalside
-        Side Set Name: basalside
-        Field Rank: Scalar
-        Target Value: 0.0
-      Response 2:
+        Response 3:
+          Scaling: 4.540693e-03
+          Name: Squared L2 Difference Side Source ST Target RT
+          Source Field Name: flux_divergence_basalside
+          Response Depends On Solution Column: true
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Root Mean Square Error Field Name: apparent_mass_balance_RMS_basalside
+          Target Field Name: apparent_mass_balance_basalside
+        Response 4:
+          Scaling: 4.540693e-05
+          Name: Squared L2 Difference Side Source ST Target RT
+          Source Field Name: flux_divergence_gradient_basalside
+          Response Depends On Solution Column: true
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Is Side Set Planar: true
+          Target Value: 0.0
+        Response 5:
+          Scaling: 4.540693e-03
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: surface_height_param_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Response Depends On Extruded Parameters: true
+          Root Mean Square Error Field Name: observed_ice_thickness_RMS_basalside
+          Target Field Name: observed_surface_height_basalside
+        Response 6:
+          Scaling: 4.540693e-03
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: surface_height_param_gradient_basalside
+          Response Depends On Extruded Parameters: true
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Is Side Set Planar: true
+          Target Value: 0.0
+        Response 7:
+          Scaling: 4.540693e-05
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: bed_topography_param_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Response Depends On Extruded Parameters: true
+          Root Mean Square Error Field Name: observed_ice_thickness_RMS_basalside
+          Target Field Name: observed_bed_topography_basalside
+        Response 8:
+          Scaling: 4.540693e-05
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: bed_topography_param_gradient_basalside
+          Response Depends On Extruded Parameters: true
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Is Side Set Planar: true
+          Target Value: 0.0
+      Response 1:
         Type: Sum Of Responses
-        Number Of Responses: 2  
+        Number Of Responses: 3
         Response 0:  #regularization term, |log(beta)|^2
           Scaling: 5.8824e-06
           Name: Squared L2 Difference Side Source PST Target MST
@@ -133,13 +198,79 @@ ANONYMOUS:
           Side Set Name: basalside
           Field Rank: Scalar
           Target Value: 0.0
-        Response 1: #regularization term, |\nabla log(beta)|^2
+        Response 1:
+          Scaling: 4.540693e-03
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: surface_height_param_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Response Depends On Extruded Parameters: true
+          Target Value: 0.0
+        Response 2:
+          Scaling: 4.540693e-05
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: bed_topography_param_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Response Depends On Extruded Parameters: true
+          Target Value: 0.0
+
+      Response 2:
+        Type: Sum Of Responses
+        Number Of Responses: 6
+        Response 0:   #regularization term, |log(beta)|^2
           Scaling: 5.8824e-06
+          Name: Squared L2 Difference Side Source PST Target MST
+          Source Field Name: basal_friction_log_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Target Value: 0.0
+        Response 1:   #regularization term, |\nabla log(beta)|^2
+          Scaling: 5.8824e-06  
           Name: Squared L2 Difference Side Source PST Target MST
           Source Field Name: basal_friction_log_gradient_basalside
           Side Set Name: basalside
           Field Rank: Gradient
           Target Value: 0.0
+        Response 2:
+          Scaling: 4.540693e-03
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: surface_height_param_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Response Depends On Extruded Parameters: true
+          Target Value: 0.0
+        Response 3:
+          Scaling: 4.540693e-05
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: bed_topography_param_basalside
+          Side Set Name: basalside
+          Field Rank: Scalar
+          Is Side Set Planar: true
+          Response Depends On Extruded Parameters: true
+          Target Value: 0.0
+        Response 4:
+          Scaling: 4.540693e-03
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: surface_height_param_gradient_basalside
+          Response Depends On Extruded Parameters: true
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Is Side Set Planar: true
+          Target Value: 0.0
+        Response 5:
+          Scaling: 4.540693e-05
+          Name: Squared L2 Difference Side Source PST Target RT
+          Source Field Name: bed_topography_param_gradient_basalside
+          Response Depends On Extruded Parameters: true
+          Side Set Name: basalside
+          Field Rank: Gradient
+          Is Side Set Planar: true
+          Target Value: 0.0
+
 
     #Used in optimization probs for dot-product or secant initialization      
     Hessian:
@@ -154,7 +285,57 @@ ANONYMOUS:
                 Solver Types:
                   Block GMRES:
                     Maximum Iterations: 200
-                    Convergence Tolerance: 1e-7
+                    Convergence Tolerance: 1.0e-6
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+        Parameter 1:
+          Reconstruct H_pp using Hessian-vector products: true
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1.0e-6
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+        Parameter 2:
+          Reconstruct H_pp using Hessian-vector products: true
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1.0e-6
                     Num Blocks: 200
                     Output Frequency: 20
                     Output Style: 1
@@ -176,28 +357,27 @@ ANONYMOUS:
   Discretization:
     Workset Size: -1
     Method: Extruded
-    Surface Height Field Name: surface_height
+    Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
     Exodus Output File Name: output/humboldt.exo
     Use Serial Mesh: false
     Columnwise Ordering: false
-    NumLayers: 2  #too small, only for testing
-    Thickness Field Name: ice_thickness
-    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction_log, bed_topography, apparent_mass_balance, apparent_mass_balance_RMS]
-    Basal Node Fields Ranks: [1, 1, 1, 1, 1, 1]
-    Interpolate Basal Elem Layered Fields: [temperature]
-    Basal Elem Layered Fields Ranks: [1]
-    Interpolate Basal Node Layered Fields: [velocity]
-    Basal Node Layered Fields Ranks: [2]
+    NumLayers: 1  #too small, only for testing
+    Thickness Field Name: observed_ice_thickness
+    Extrude Basal Node Fields: [basal_friction_log, surface_height_param, bed_topography_param, apparent_mass_balance, apparent_mass_balance_RMS]
+    Basal Node Fields Ranks: [1, 1, 1, 1, 1]
+    Interpolate Basal Node Layered Fields: [temperature, velocity]
+    Basal Node Layered Fields Ranks: [1,2]
     Use Glimmer Spacing: true
     Required Fields Info:
-      Number Of Fields: 10
+      Number Of Fields: 11
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
         Field Origin: Mesh
+        Field Usage: Output
       Field 1:
-        Field Name: surface_height
+        Field Name: surface_height_param
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 2:
@@ -206,10 +386,10 @@ ANONYMOUS:
         Field Origin: Mesh
       Field 3:
         Field Name: temperature
-        Field Type: Elem Scalar
+        Field Type: Node Scalar
         Field Origin: Mesh
       Field 4:
-        Field Name: bed_topography
+        Field Name: bed_topography_param
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 5:
@@ -234,6 +414,10 @@ ANONYMOUS:
         Field Name: velocity
         Field Type: Node Vector
         Field Origin: Mesh
+      Field 10:
+        Field Name: layered_flux_divergence
+        Field Type: Node Scalar
+        Field Usage: Output
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
@@ -245,56 +429,60 @@ ANONYMOUS:
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
         Exodus Output File Name: output/humboldt_basal.exo
         Required Fields Info:
-          Number Of Fields: 10
+          Number Of Fields: 11
           Field 0:
-            Field Name: ice_thickness
-            Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
-          Field 1:
             Field Name: observed_ice_thickness
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/thickness.ascii
-          Field 2:
+          Field 1:
             Field Name: observed_ice_thickness_RMS
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/thickness_uncertainty.ascii
+          Field 2:
+            Field Name: observed_surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
           Field 3:
-            Field Name: surface_height
+            Field Name: surface_height_param
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
           Field 4:
-            Field Name: bed_topography
+            Field Name: observed_bed_topography
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii
           Field 5:
+            Field Name: bed_topography_param
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii
+          Field 6:
             Field Name: basal_friction_log
             Field Type: Node Scalar
             Field Origin: File
             Field Usage: Input-Output
-            Field Value: 1.0
-            #File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
-          Field 6:
-            Field Name: temperature
-            Field Type: Elem Layered Scalar
-            Number Of Layers: 7
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/cell_temperature.ascii
+            File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
           Field 7:
+            Field Name: temperature
+            Field Type: Node Layered Scalar
+            Number Of Layers: 8
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/nodal_temperature.ascii
+          Field 8:
             Field Name: apparent_mass_balance
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/apparent_mass_balance.ascii
-          Field 8:
+          Field 9:
             Field Name: apparent_mass_balance_RMS
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/apparent_mass_balance_uncertainty.ascii
-          Field 9:
+          Field 10:
             Field Name: velocity
             Field Origin: File
             Field Type: Node Layered Vector
@@ -334,10 +522,10 @@ ANONYMOUS:
       Output Level: 3
       Analysis Package: ROL
       ROL:
-        Number Of Parameters: 1
+        Number Of Parameters: 3
         Check Derivatives: false
         Derivative Checks:
-          Perform Reduced Derivative Checks: true       
+          Perform Reduced Derivative Checks: false       
           Perform Expensive Derivative Checks: false
         Parameter Initial Guess Type: From Model Evaluator
         Uniform Parameter Guess: 2.0
@@ -420,7 +608,7 @@ ANONYMOUS:
             Trust Region: 
               Subproblem Model: Lin-More
               Subproblem Solver: Truncated CG
-              Initial Radius: 0.2
+              Initial Radius: 0.05
               Maximum Radius: 1.0e+08
               Step Acceptance Threshold: 5.0e-02
               Radius Shrinking Threshold: 5.0e-02
@@ -471,7 +659,7 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.0e-08
+            Tolerance: 1.0e-05
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 25
@@ -481,7 +669,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
-            Tolerance: 1.0e-7
+            Tolerance: 1.0e-8
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
@@ -498,14 +686,17 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-                      Convergence Tolerance: 1.0e-8
+                      Convergence Tolerance: 1.0e-9
                   VerboseObject:
                     Verbosity Level: low
-              Preconditioner Type: MueLu
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
                 Ifpack2:
                   Overlap: 0
                   Prec Type: Amesos2
+                  Ifpack2 Settings:
+                    Amesos2: {}
+                    Amesos2 solver name: klu
                 MueLu: 
                   Matrix: 
                     PDE equations: 2
@@ -677,5 +868,5 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [39.3557952729]
+    Piro Analysis Test Values: [92.5613714418]
 ...
