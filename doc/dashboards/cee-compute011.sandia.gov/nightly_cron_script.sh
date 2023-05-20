@@ -32,17 +32,25 @@ fi
 
 if [ "$BUILD_OPT" = "intel-trilinos" ] || [ "$BUILD_OPT" = "intel-albany" ]; then
 
+  echo "Intel release build" 
   source $SCRIPT_DIR/sems-intel-modules.sh >& $SCRATCH_DIR/sems-intel-modules.out 
 
 elif [ "$BUILD_OPT" = "base-trilinos" ] || [ "$BUILD_OPT" = "base-albany" ] || [ "$BUILD_OPT" = "debug-trilinos" ] || [ "$BUILD_OPT" = "debug-albany" ]; then
   
+  echo "Gcc build" 
   #gcc builds
   source $SCRIPT_DIR/sems-gcc-modules.sh >& $SCRATCH_DIR/sems-gcc-modules.out 
 
-else
+elif [ "$BUILD_OPT" = "clang-trilinos" ] || [ "$BUILD_OPT" = "clang-albany" ]; then
 
-  # clang builds
-  source $SCRIPT_DIR/sems-clang-modules.sh >& $SCRATCH_DIR/sems-clang-modules.out 
+  echo "Clang release build" 
+  # clang release builds
+  source $SCRIPT_DIR/sems-clang-modules-rhel8.sh >& $SCRATCH_DIR/sems-clang-modules-rhel8.out
+
+else  
+  echo "Clang debug build" 
+  # clang debug builds
+  source $SCRIPT_DIR/sems-clang-modules.sh >& $SCRATCH_DIR/sems-clang-modules.out
 
 fi
 
