@@ -1,17 +1,19 @@
 #SCRON -A m4274
 #SCRON -q regular
-#SCRON -t 04:00:00
+#SCRON -t 02:00:00
 #SCRON -o MALITesting.%j.out
 #SCRON --open-mode=append
 #SCRON --constraint=cpu
 #SCRON --job-name=MALITestingCPU
-0 19 8-14,22-28 * 6 source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/scronscript.sh
+0 12 1-7,14-20 * 6 source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/scronscript.sh
 
 #SCRON -A m4274_g
 #SCRON -q regular
-#SCRON -t 04:00:00
+#SCRON -t 02:00:00
 #SCRON -o MALITesting.cuda.%j.out
 #SCRON --open-mode=append
 #SCRON --constraint=gpu
+#SCRON --gpus-per-node=4
+#SCRON --gpu-bind=none
 #SCRON --job-name=MALITestingGPU
-0 19 8-14,22-28 * 6 source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda/scronscript.sh
+0 12 1-7,14-20 * 6 source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda/scronscript.sh
