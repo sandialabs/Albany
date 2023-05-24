@@ -858,7 +858,11 @@ else()
 endif()
 
 IF (ALBANY_PYTHON)
-  add_subdirectory( pyAlbany )
+  IF (ALBANY_ROL)
+    add_subdirectory( pyAlbany )
+  ELSE()
+    MESSAGE(FATAL_ERROR "PyAlbany requires a Trilinos installation that enables ROL.")
+  ENDIF()
 ENDIF()
 
 # Make a clean build target for convenience
