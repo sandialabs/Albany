@@ -1,6 +1,6 @@
 #!/bin/bash
 module purge 
-module load gcc/8.3.1
+module load gcc/8.5.0
 module load openmpi/4.1.4
 module load cuda/11.8.0
 module load git/2.39.1
