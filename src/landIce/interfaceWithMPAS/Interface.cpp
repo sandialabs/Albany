@@ -254,7 +254,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       // Populate the temperature mesh field, defined at quad points 
       QPScalarFieldType* temperature_field = meshStruct->metaData->get_field <QPScalarFieldType> (stk::topology::ELEMENT_RANK, "temperature");
 
-      for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
+      for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
         double* temperature = stk::mesh::field_data(*temperature_field, elem);
         for(int qp=0; qp<numQPs; qp++) {
@@ -265,7 +265,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     } else {  //P0 temperature
       // In this case we compute a column average of the MPAS temperature and save it as a P0 field in the 1-layer Albany mesh.
       ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
-      for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
+      for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
         double* temperature = stk::mesh::field_data(*temperature_field, elem);
         for(int il=0; il<nLayers; il++) {
@@ -280,7 +280,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   } else { // Here we copy the temperature on Prisms from MPAS into a P0 field in the Albany mesh.
     ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
-    for(int ib=0; ib <indexToTriangleID.size(); ++ib ) {
+    for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
       for(int il=0; il<nLayers; il++) {
         int lId = il * lElemColumnShift + elemLayerShift * ib;
         int gId = il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
@@ -349,7 +349,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
 
   if(depthIntegratedModel) {
-    for(int ib = 0; ib < indexToVertexID.size(); ++ib) {
+    for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
       int depthVertexLayerShift = (ordering == 0) ? 1 : 2;
       int gIdBed =  depthVertexLayerShift * (indexToVertexID[ib]-1) + 1;
       int gIdTop = gIdBed + vertexColumnShift;
@@ -387,7 +387,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   }
 
   if (Teuchos::nonnull(ss_ms) && !betaData.empty() && (betaField!=nullptr)) {
-    for(int ib = 0; ib < indexToVertexID.size(); ++ib) {
+    for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
       stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
       const double* betaVal = stk::mesh::field_data(*betaField,node);
       betaData[ib] = betaVal[0];

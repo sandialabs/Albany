@@ -317,7 +317,7 @@ KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASEDQP_Tag&, const int& cell) const
 {
   //We start setting mu=flowFactor, then we multiply it by other terms in glenslaw function
-  for(int qp=0; qp< numQPs; ++qp)
+  for(int qp=0; qp< (int) numQPs; ++qp)
     mu(cell,qp) = 1.0/2.0*pow(flowRate(temperature(cell,qp)), -1.0/n);
   glenslaw(cell);
 }
