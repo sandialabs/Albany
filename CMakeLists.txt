@@ -1,3 +1,23 @@
+function(dump_cmake_variables)
+  set (opts)
+  set (args1v REGEX)
+  set (argsMv)
+  cmake_parse_arguments (dcv "${opts}" "${args1v}" "${argsMv}" ${ARGN})
+
+  get_cmake_property(dcv_var_names VARIABLES)
+
+  foreach (var_name IN LISTS dcv_var_names)
+    if (dcv_REGEX)
+      string(REGEX MATCH ${dcv_REGEX} MATCHES ${var_name})
+      if (MATCHES)
+        message(STATUS "${var_name}=${${var_name}}")
+      endif()
+    else ()
+      message(STATUS "${var_name}=${${var_name}}")
+    endif ()
+  endforeach()
+endfunction()
+
 ##*****************************************************************//
 ##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
@@ -181,6 +201,7 @@ ENDIF()
 # AGS: Adding these lines so Ctest can be run to submit to cdash dashboard
 #   Uses CTestConfig.cmake file for Cdash info.
 ENABLE_TESTING()
+option(BUILD_TESTING "" OFF) # Avoid creating folder "Testing" at config time
 INCLUDE(CTest)
 
 set(ALBANY_ENABLE_FORTRAN ON CACHE BOOL "enable fortran" )
@@ -782,7 +803,59 @@ OPTION(ENABLE_OMEGAH "Flag to turn on the Omega_h mesh interface" OFF)
 IF (ENABLE_OMEGAH)
   MESSAGE("-- Omega_h mesh interface    Enabled.")
   SET(ALBANY_OMEGAH TRUE)
-  find_package(Omega_h REQUIRED CONFIG)
+  message (STATUS "Looking for Omega_h installation ...")
+  find_package(Omega_h CONFIG
+               HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
+  if (NOT Omega_h_FOUND)
+    message (STATUS "Looking for Omega_h installation ... NOT Found.")
+    message ("  +--------------------------------------------------------+")
+    message ("  |      Begin local installation of Omega_h dependency    |")
+    message ("  +--------------------------------------------------------+")
+    # The first external project will be built at *configure stage*
+    # Configure
+    execute_process(
+      COMMAND ${CMAKE_COMMAND}
+              -B ${Albany_BINARY_DIR}/tpls/omegah/tmp -Wno-dev
+              -S ${CMAKE_SOURCE_DIR}/cmake/omegah
+              -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      OUTPUT_VARIABLE CONFIG_OMEGAH_OUT
+      ERROR_VARIABLE CONFIG_OMEGAH_OUT
+      RESULT_VARIABLE CONFIG_OMEGAH_RES
+      ECHO_OUTPUT_VARIABLE
+    )
+    if (NOT CONFIG_OMEGAH_RES EQUAL 0)
+      message ("Could not configure omegah")
+      message (" output:")
+      message ("${CONFIG_OMEGAH_OUT}")
+      message (FATAL_ERROR "Die")
+    endif()
+    # Build/install
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} --build
+              ${Albany_BINARY_DIR}/tpls/omegah/tmp
+              --parallel 8
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      OUTPUT_VARIABLE BUILD_OMEGAH_OUT
+      ERROR_VARIABLE BUILD_OMEGAH_OUT
+      RESULT_VARIABLE BUILD_OMEGAH_RES
+    )
+    if (NOT BUILD_OMEGAH_RES EQUAL 0)
+      message ("Could not build omegah")
+      message (" output:")
+      message ("${BUILD_OMEGAH_OUT}")
+      message (FATAL_ERROR "Die")
+    endif()
+    message ("  +--------------------------------------------------------+")
+    message ("  |       End local installation of Omega_h dependency     |")
+    message ("  +--------------------------------------------------------+")
+    find_package (Omega_h REQUIRED INSTALL
+                  HINTS ${Albany_BINARY_DIR}/tpls/omega/install)
+  else()
+    message (STATUS "Looking for Omega_h installation ... Found.")
+    message ("  -- Omega_h prefix: ${Omega_h_DIR}")
+    message ("  -- Omega_h version: ${Omega_h_VERSION}")
+  endif()
 ENDIF()
 
 # add a target to generate API documentation with Doxygen

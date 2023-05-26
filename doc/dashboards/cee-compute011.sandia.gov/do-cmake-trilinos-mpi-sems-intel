@@ -28,7 +28,7 @@ cmake -GNinja \
       -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
       -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
       -D PARDISO_MKL_INCLUDE_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/include" \
-      -D TPL_ENABLE_SuperLU=ON \
+      -D TPL_ENABLE_SuperLU=OFF \
       -D Trilinos_ENABLE_SuperLU5_API=ON \
       -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu.a \
       -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_ROOT}/include \
@@ -97,6 +97,7 @@ cmake -GNinja \
       -D Trilinos_ENABLE_Phalanx=ON \
       -D Trilinos_ENABLE_Piro=ON \
       -D Trilinos_ENABLE_ROL=ON \
+      -D Trilinos_ENABLE_Rythmos=ON \
       -D Trilinos_ENABLE_SEACAS=ON \
       -D Trilinos_ENABLE_SEACASAprepro_lib=ON \
       -D Trilinos_ENABLE_STK=ON \
@@ -119,4 +120,7 @@ cmake -GNinja \
       -D Trilinos_ENABLE_ShyLU_DDFROSch=ON \
       -D Trilinos_ENABLE_PanzerExprEval=ON \
       -D CMAKE_CXX_STANDARD=17 \
+      -D TPL_FIND_SHARED_LIBS=ON \
+      -D BUILD_SHARED_LIBS=ON \
+      -D Trilinos_LINK_SEARCH_START_STATIC=OFF \
 ..
