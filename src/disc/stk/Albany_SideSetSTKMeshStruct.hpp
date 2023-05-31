@@ -16,7 +16,7 @@ class SideSetSTKMeshStruct : public GenericSTKMeshStruct
 {
 public:
 
-  SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
+  SideSetSTKMeshStruct (const MeshSpecs& inputMeshSpecs,
                         const Teuchos::RCP<Teuchos::ParameterList>& params,
                         const Teuchos::RCP<const Teuchos_Comm>& commT,
                         const int numParams);

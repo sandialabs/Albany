@@ -59,7 +59,7 @@ public:
   // Build evaluators
   Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                   const Albany::MeshSpecsStruct& meshSpecs,
+                   const Albany::MeshSpecs& meshSpecs,
                    Albany::StateManager& stateMgr,
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -74,7 +74,7 @@ public:
   template <typename EvalT>
   Teuchos::RCP<const PHX::FieldTag>
   constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       const Albany::MeshSpecsStruct& meshSpecs,
+                       const Albany::MeshSpecs& meshSpecs,
                        Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -86,11 +86,11 @@ protected:
 
   template <typename EvalT>
   void constructThicknessEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0, 
-                                     const Albany::MeshSpecsStruct& meshSpecs,
+                                     const Albany::MeshSpecs& meshSpecs,
                                      Albany::FieldManagerChoice fmchoice);
 
-  void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
-  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+  void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
+  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
 
   void setFieldsProperties ();
 
@@ -100,7 +100,7 @@ protected:
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                        const Albany::MeshSpecsStruct& meshSpecs,
+                                        const Albany::MeshSpecs& meshSpecs,
                                         Albany::StateManager& stateMgr,
                                         Albany::FieldManagerChoice fieldManagerChoice,
                                         const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -160,7 +160,7 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
 template<typename EvalT>
 void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0, 
-                                                      const Albany::MeshSpecsStruct& meshSpecs,
+                                                      const Albany::MeshSpecs& meshSpecs,
                                                       Albany::FieldManagerChoice fieldManagerChoice)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -237,7 +237,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Side Set Name", surfaceSideName);
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<int>("Cubature Degree",3);
-  p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
+  p->set<Teuchos::RCP<const Albany::MeshSpecs> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   if(this->params->isParameter("Time Step Ptr")) {
     p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
   } else {

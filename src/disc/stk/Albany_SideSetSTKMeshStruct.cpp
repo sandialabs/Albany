@@ -27,7 +27,7 @@
 namespace Albany
 {
 
-SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
+SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecs& inputMeshSpecs,
                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
                                             const int numParams) :
@@ -100,7 +100,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 #endif
 
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, this->numDim, nsNames, ssNames, worksetSize,
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecs(ctd, this->numDim, nsNames, ssNames, worksetSize,
                                                                 ebn, ebNameToIndex));
 
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());

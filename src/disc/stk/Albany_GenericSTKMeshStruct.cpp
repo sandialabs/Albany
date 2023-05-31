@@ -238,7 +238,7 @@ This function gets rid of the subset in the list.
   }
 }
 
-Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
+Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >&
 GenericSTKMeshStruct::getMeshSpecs()
 {
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
@@ -247,7 +247,7 @@ GenericSTKMeshStruct::getMeshSpecs()
   return meshSpecs;
 }
 
-const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
+const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >&
 GenericSTKMeshStruct::getMeshSpecs() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
@@ -475,7 +475,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
       }
 
       ss_ms.resize(1);
-      ss_ms[0] = Teuchos::rcp( new MeshSpecsStruct() );
+      ss_ms[0] = Teuchos::rcp( new MeshSpecs() );
       ss_ms[0]->ctd = *ctd;
       ss_ms[0]->numDim = this->numDim-1;
     }

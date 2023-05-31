@@ -28,7 +28,7 @@ namespace Albany {
     ResponseFactory(
       const Teuchos::RCP<Albany::Application>& application,
       const Teuchos::RCP<Albany::AbstractProblem>& problem,
-      const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&  ms,
+      const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >&  ms,
       const Teuchos::RCP<Albany::StateManager>& state_manager) :
       app(application), prob(problem), meshSpecs(ms), stateMgr(state_manager) 
       {};
@@ -58,7 +58,7 @@ namespace Albany {
     Teuchos::RCP<Albany::AbstractProblem> prob;
 
     //! Meshspecs for field manager response functions
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs;
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs;
 
     //! State manager for field manager response functions
     Teuchos::RCP<Albany::StateManager> stateMgr;

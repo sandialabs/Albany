@@ -42,7 +42,7 @@ DiscretizationFactory::DiscretizationFactory(
 }
 
 
-Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
+Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >
 DiscretizationFactory::createMeshSpecs() {
     // First, create the mesh struct
     meshStruct = createMeshStruct(discParams, commT, num_params);
@@ -179,7 +179,7 @@ DiscretizationFactory::createDiscretization(
     return result;
 }
 
-Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
+Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >
 DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
     meshStruct = mesh;
     return meshStruct->getMeshSpecs();

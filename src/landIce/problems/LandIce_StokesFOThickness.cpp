@@ -54,7 +54,7 @@ StokesFOThickness::StokesFOThickness(
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 StokesFOThickness::buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
+  const Albany::MeshSpecs& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -82,7 +82,7 @@ StokesFOThickness::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 }
 
-void StokesFOThickness::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
+void StokesFOThickness::constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
@@ -101,7 +101,7 @@ void StokesFOThickness::constructDirichletEvaluators(const Albany::MeshSpecsStru
 
 // Neumann BCs
 void
-LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file

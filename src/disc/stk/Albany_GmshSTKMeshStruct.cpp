@@ -130,7 +130,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
-      new Albany::MeshSpecsStruct (ctd, numDim, nsNames, ssNames,
+      new Albany::MeshSpecs (ctd, numDim, nsNames, ssNames,
                                    worksetSize, partVec[0]->name(),
                                    ebNameToIndex));
 

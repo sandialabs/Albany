@@ -6,7 +6,7 @@
 
 namespace Albany {
 
-MeshSpecsStruct::MeshSpecsStruct()
+MeshSpecs::MeshSpecs()
 {
   ctd.name       = "NULL";
   numDim         = -1;
@@ -14,7 +14,7 @@ MeshSpecsStruct::MeshSpecsStruct()
   ebName         = "";
 }
 
-MeshSpecsStruct::MeshSpecsStruct(
+MeshSpecs::MeshSpecs(
     const CellTopologyData&  ctd_,
     int                      numDim_,
     std::vector<std::string> nsNames_,

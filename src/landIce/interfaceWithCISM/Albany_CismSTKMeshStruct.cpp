@@ -318,7 +318,7 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   shards::CellTopology cell_topo = stk::mesh::get_cell_topology(etopology);
   this->addElementBlockInfo(0, ebn, partVec[0], cell_topo);
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim,
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecs(ctd, numDim,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex));
 

@@ -207,10 +207,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->addElementBlockInfo(eb, partVec[eb]->name(), partVec[eb], shards_ctd);
   }
 
-  // Construct MeshSpecsStruct
+  // Construct MeshSpecs
   {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecs(
         ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex));
   }

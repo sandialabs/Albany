@@ -46,7 +46,7 @@ public:
   // Build evaluators
   virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                   const Albany::MeshSpecsStruct& meshSpecs,
+                   const Albany::MeshSpecs& meshSpecs,
                    Albany::StateManager& stateMgr,
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -60,7 +60,7 @@ public:
   //! Main problem setup routine. Not directly called, but indirectly by following functions
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       const Albany::MeshSpecsStruct& meshSpecs,
+                       const Albany::MeshSpecs& meshSpecs,
                        Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -68,8 +68,8 @@ public:
   template <typename EvalT>
   void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
-  void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
-  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+  void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
+  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
 
 protected:
 
@@ -80,7 +80,7 @@ protected:
   template<typename EvalT>
   void constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0, 
                                             Albany::FieldManagerChoice fieldManagerChoice,
-                                            const Albany::MeshSpecsStruct& meshSpecs);
+                                            const Albany::MeshSpecs& meshSpecs);
 
   void setupEvaluatorRequests ();
   void setFieldsProperties ();
@@ -107,7 +107,7 @@ template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 StokesFOThermoCoupled::
 constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                     const Albany::MeshSpecsStruct& meshSpecs,
+                     const Albany::MeshSpecs& meshSpecs,
                      Albany::StateManager& stateMgr,
                      Albany::FieldManagerChoice fieldManagerChoice,
                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -238,7 +238,7 @@ template <typename EvalT>
 void StokesFOThermoCoupled::
 constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                      Albany::FieldManagerChoice fieldManagerChoice,
-                                     const Albany::MeshSpecsStruct&)
+                                     const Albany::MeshSpecs&)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;

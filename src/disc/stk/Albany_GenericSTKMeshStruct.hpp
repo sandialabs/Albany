@@ -19,8 +19,8 @@ class CombineAndScatterManager;
 class GenericSTKMeshStruct : public AbstractSTKMeshStruct
 {
 public:
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
-  const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >& getMeshSpecs();
+  const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >& getMeshSpecs() const;
 
   //! Re-load balance adapted mesh
   void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -152,7 +152,7 @@ protected:
 
   Teuchos::RCP<Teuchos::ParameterList> params;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> > meshSpecs;
 
   bool requiresAutomaticAura;
 
