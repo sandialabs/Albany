@@ -262,14 +262,17 @@ list (APPEND HEADERS
 
 #discretization
 list (APPEND SOURCES
-  disc/Albany_NodalDataBase.cpp
+  disc/Adapt_NodalDataBase.cpp
+  disc/Adapt_NodalDataVector.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
   disc/Albany_DOFManager.cpp
   disc/Albany_DiscretizationUtils.cpp
   )
 list (APPEND HEADERS
-  disc/Albany_NodalDataBase.hpp
+  disc/Adapt_NodalDataBase.hpp
+  disc/Adapt_NodalDataVector.hpp
+  disc/Adapt_NodalFieldUtils.hpp
   disc/Albany_DiscretizationUtils.hpp
   disc/Albany_AbstractDiscretization.hpp
   disc/Albany_AbstractMeshStruct.hpp
