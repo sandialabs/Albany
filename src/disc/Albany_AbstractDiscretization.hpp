@@ -255,10 +255,6 @@ public:
   virtual const WorksetArray<std::string>&
   getWsEBNames() const = 0;
 
-  //! Retrieve Vector (length num worksets) of Physics Index
-  virtual const WorksetArray<int>&
-  getWsPhysIndex() const = 0;
-
   //! Retrieve connectivity map from elementGID to workset
   virtual WsLIDList&
   getElemGIDws() = 0;

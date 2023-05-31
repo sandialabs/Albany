@@ -24,7 +24,7 @@ FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
   const Teuchos::RCP<Application>& application_,
   const Teuchos::RCP<AbstractProblem>& problem_,
-  const Teuchos::RCP<MeshSpecs>&  meshSpecs_,
+  const Teuchos::RCP<const MeshSpecs>&  meshSpecs_,
   const Teuchos::RCP<StateManager>& stateMgr_,
   Teuchos::ParameterList& responseParams) 
  : ScalarResponseFunction(application_->getComm())
@@ -91,7 +91,7 @@ setup(Teuchos::ParameterList& responseParams)
   const bool
     reb_parm_present = responseParams.isType<bool>(reb_parm),
     reb = reb_parm_present && responseParams.get<bool>(reb_parm, false);
-  element_block_index = reb ? meshSpecs->ebNameToIndex[meshSpecs->ebName] : -1;
+  element_block_index = reb ? meshSpecs->ebNameToIndex.at(meshSpecs->ebName) : -1;
   if (reb_parm_present) {
     responseParams.remove(reb_parm, false);
   }
@@ -123,7 +123,7 @@ postRegDerivImpl()
   const auto phxSetup = application->getPhxSetup();
   std::vector<PHX::index_size_type> derivative_dimensions;
   derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<EvalT>(application.get(), meshSpecs.get(), true));
+      PHAL::getDerivativeDimensions<EvalT>(*application, *meshSpecs, true));
   rfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
   application->setDynamicLayoutSizes<EvalT>(rfm);
   rfm->postRegistrationSetupForType<EvalT>(*phxSetup);
@@ -173,7 +173,7 @@ postReg()
 {
   const auto phxSetup = application->getPhxSetup();
 
-  const std::string evalName = PHAL::evalName<EvalT>("RFM",0) + "_" + vis_response_name;
+  const std::string evalName = PHAL::evalName<EvalT>("RFM") + "_" + vis_response_name;
   phxSetup->insert_eval(evalName);
 
   postRegImpl<EvalT>();
@@ -223,13 +223,9 @@ template<typename EvalT>
 void FieldManagerScalarResponseFunction::
 evaluate(PHAL::Workset& workset)
 {
-  const auto& wsPhysIndex = application->getDiscretization()->getWsPhysIndex();
   rfm->preEvaluate<EvalT>(workset);
-  for (int ws = 0, numWorksets = application->getNumWorksets();
-       ws < numWorksets; ws++) {
-    if (element_block_index >= 0 && element_block_index != wsPhysIndex[ws])
-      continue;
-    const std::string evalName = PHAL::evalName<EvalT>("RFM", wsPhysIndex[ws]) + "_" + vis_response_name;
+  for (int ws = 0; ws<application->getNumWorksets(); ++ws) {
+    const std::string evalName = PHAL::evalName<EvalT>("RFM") + "_" + vis_response_name;
     application->loadWorksetBucketInfo(workset, ws, evalName);
     rfm->evaluateFields<EvalT>(workset);
   }
@@ -517,7 +513,7 @@ evaluate_HessVecProd_px(
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
     int num_cols_p_l1 = params_l1.size();
-    int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(application.get(), meshSpecs.get(), true);
+    int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(*application, *meshSpecs, true);
     TEUCHOS_TEST_FOR_EXCEPTION(
         num_cols_p_l1 > deriv_size,
         std::runtime_error,
@@ -608,7 +604,7 @@ evaluate_HessVecProd_pp(
   if (!l1_is_distributed) {
     ParamVec params_l1 = param_array[l1];
     int num_cols_p_l1 = params_l1.size();
-    int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(application.get(), meshSpecs.get(), true);
+    int deriv_size = PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(*application, *meshSpecs, true);
     TEUCHOS_TEST_FOR_EXCEPTION(
         num_cols_p_l1 > deriv_size,
         std::runtime_error,

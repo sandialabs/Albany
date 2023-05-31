@@ -33,13 +33,13 @@ LaplacianSampling (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 void LaplacianSampling::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
+buildProblem (Teuchos::RCP<Albany::MeshSpecs> meshSpecs,
               Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
 
   // Building cell basis and cubature
-  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
+  const CellTopologyData * const cell_top = &meshSpecs->ctd;
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
@@ -47,9 +47,9 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
   int cubDegree = params->get("Cubature Degree", 3);
   cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
-  elementBlockName = meshSpecs[0]->ebName;
+  elementBlockName = meshSpecs->ebName;
 
-  const int worksetSize     = meshSpecs[0]->worksetSize;
+  const int worksetSize     = meshSpecs->worksetSize;
   const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
@@ -58,20 +58,18 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
   dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,1));
 
   if(sideName != "INVALID") {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                "Error! Either 'Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideName)[0];
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs->sideSetMeshSpecs.find(sideName)==meshSpecs->sideSetMeshSpecs.end(), std::logic_error,
+        "Error! Either 'Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(sideName);
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
     sideBasis = Albany::getIntrepid2Basis(*side_top);
     sideType = rcp(new shards::CellTopology (side_top));
     int sideCubDegree = params->get("Side Cubature Degree", 3);
     sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideCubDegree);
 
-
     auto numSideVertices = sideType->getNodeCount();
     auto numSideNodes    = sideBasis->getCardinality();
     auto numSideQPs      = sideCubature->getNumPoints();
-
 
     dl_side = rcp(new Albany::Layouts(numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,numCellSides,1,sideName));
     dl->side_layouts[sideName] = dl_side;
@@ -92,11 +90,9 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
 #endif
 
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
+  fm  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
+  constructDirichletEvaluators(*meshSpecs);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -156,11 +152,9 @@ void LaplacianSampling::constructNeumannEvaluators (const Teuchos::RCP<Albany::M
   Teuchos::ArrayRCP<std::string> dof_names(1);
   dof_names[0] = "sample";
 
-  nfm.resize(1); // LandIce problem only has one element block
-
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
+  nfm = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                       condNames, offsets, dl,
+                                       this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

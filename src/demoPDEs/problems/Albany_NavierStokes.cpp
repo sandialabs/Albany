@@ -106,31 +106,28 @@ variableTypeToString(NavierStokes::NS_VAR_TYPE variableType)
 
 void
 NavierStokes::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+buildProblem (Teuchos::RCP<MeshSpecs> meshSpecs,
               StateManager& stateMgr)
 {
   using Teuchos::rcp;
 
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+  fm  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, BUILD_RESID_FM, Teuchos::null);
 
-  fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, Teuchos::null);
-
-  if (meshSpecs[0]->nsNames.size() > 0) { // Build a nodeset evaluator if nodesets are present
-     constructDirichletEvaluators(meshSpecs[0]->nsNames);
+  if (meshSpecs->nsNames.size() > 0) { // Build a nodeset evaluator if nodesets are present
+     constructDirichletEvaluators(meshSpecs->nsNames);
   }
 
   // Check if have Neumann sublist; throw error if attempting to specify
   // Neumann BCs, but there are no sidesets in the input mesh
   bool isNeumannPL = params->isSublist("Neumann BCs");
-  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+  if (isNeumannPL && !(meshSpecs->ssNames.size() > 0)) {
     ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
   }
 
-  if (meshSpecs[0]->ssNames.size() > 0) { // Build a sideset evaluator if sidesets are present
-     constructNeumannEvaluators(meshSpecs[0]);
+  if (meshSpecs->ssNames.size() > 0) { // Build a sideset evaluator if sidesets are present
+     constructNeumannEvaluators(meshSpecs);
   }
 }
 
@@ -246,12 +243,10 @@ constructNeumannEvaluators(const Teuchos::RCP<MeshSpecs>& meshSpecs)
 
    condNames[1] = "dudn";
 
-   nfm.resize(1);
-
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames,
-					   Teuchos::arcp(dof_names),
-					   false, 0, condNames, offsets, dl,
-					   this->params, this->paramLib);
+   nfm = nbcUtils.constructBCEvaluators(meshSpecs, nbcNames,
+			                                  Teuchos::arcp(dof_names),
+                                        false, 0, condNames, offsets, dl,
+                                        this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

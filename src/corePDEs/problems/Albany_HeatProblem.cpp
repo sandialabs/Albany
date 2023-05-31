@@ -61,37 +61,28 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 void
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-  Albany::StateManager& stateMgr)
 HeatProblem::
+buildProblem(Teuchos::RCP<MeshSpecs>  meshSpecs,
+    StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
-  int physSets = meshSpecs.size();
-  std::cout << "Heat Problem Num MeshSpecs: " << physSets << std::endl;
-  fm.resize(physSets);
+  fm  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, BUILD_RESID_FM, Teuchos::null);
 
-  for (int ps=0; ps<physSets; ps++) {
-    fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
-                    Teuchos::null);
-  }
-
-  if (meshSpecs[0]->nsNames.size() > 0) { // Build a nodeset evaluator if nodesets are present
-    constructDirichletEvaluators(meshSpecs[0]->nsNames);
+  if (meshSpecs->nsNames.size() > 0) { // Build a nodeset evaluator if nodesets are present
+    constructDirichletEvaluators(meshSpecs->nsNames);
   }
   
   // Check if have Neumann sublist; throw error if attempting to specify
   // Neumann BCs, but there are no sidesets in the input mesh 
   bool isNeumannPL = params->isSublist("Neumann BCs");
-  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+  if (isNeumannPL && !(meshSpecs->ssNames.size() > 0)) {
     ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
   }
 
-  if (meshSpecs[0]->ssNames.size() > 0) { // Build a sideset evaluator if sidesets are present
-    constructNeumannEvaluators(meshSpecs[0]);
+  if (meshSpecs->ssNames.size() > 0) { // Build a sideset evaluator if sidesets are present
+    constructNeumannEvaluators(meshSpecs);
   }
-
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
@@ -170,9 +161,8 @@ constructNeumannEvaluators(const Teuchos::RCP<MeshSpecs>& meshSpecs)
   condNames[3] = "robin";
   condNames[4] = "radiate";
 
-  nfm.resize(1); // Heat problem only has one physics set
-  nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-                                         condNames, offsets, dl, this->params, this->paramLib, materialDB);
+  nfm = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
+                                      condNames, offsets, dl, this->params, this->paramLib, materialDB);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

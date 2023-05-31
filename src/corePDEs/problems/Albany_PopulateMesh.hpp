@@ -50,8 +50,8 @@ public:
   int spatialDimension() const { return 0; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                             Albany::StateManager& stateMgr);
+  void buildProblem (Teuchos::RCP<Albany::MeshSpecs>  meshSpecs,
+                     Albany::StateManager& stateMgr);
 
   // Build evaluators
   Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

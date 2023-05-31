@@ -29,7 +29,7 @@ public:
   FieldManagerScalarResponseFunction(
     const Teuchos::RCP<Application>& application,
     const Teuchos::RCP<AbstractProblem>& problem,
-    const Teuchos::RCP<MeshSpecs>&  ms,
+    const Teuchos::RCP<const MeshSpecs>&  ms,
     const Teuchos::RCP<StateManager>& stateMgr,
     Teuchos::ParameterList& responseParams);
 
@@ -160,7 +160,7 @@ protected:
   Teuchos::RCP<AbstractProblem> problem;
 
   //! Mesh specs
-  Teuchos::RCP<MeshSpecs> meshSpecs;
+  Teuchos::RCP<const MeshSpecs> meshSpecs;
 
   //! State manager
   Teuchos::RCP<StateManager> stateMgr;

@@ -105,11 +105,11 @@ Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
 }
 
 void Hydrology::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
+buildProblem (Teuchos::RCP<Albany::MeshSpecs> meshSpecs,
               Albany::StateManager& stateMgr)
 {
   // Building cell basis and cubature
-  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
+  const CellTopologyData * const cell_top = &meshSpecs->ctd;
   intrepidBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
@@ -117,9 +117,9 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
   int cubDegree = params->get("Cubature Degree", 3);
   cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
-  elementBlockName = meshSpecs[0]->ebName;
+  elementBlockName = meshSpecs->ebName;
 
-  const int worksetSize     = meshSpecs[0]->worksetSize;
+  const int worksetSize     = meshSpecs->worksetSize;
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = intrepidBasis->getCardinality();
   const int numCellQPs      = cubature->getNumPoints();
@@ -127,26 +127,24 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
   dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim));
 
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
+  fm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
 
-  if(meshSpecs[0]->nsNames.size() > 0) {
+  if(meshSpecs->nsNames.size() > 0) {
     // Build a nodeset evaluator if nodesets are present
-    constructDirichletEvaluators(*meshSpecs[0]);
+    constructDirichletEvaluators(*meshSpecs);
   }
   
   // Check if have Neumann sublist; throw error if attempting to specify
   // Neumann BCs, but there are no sidesets in the input mesh 
   bool isNeumannPL = params->isSublist("Neumann BCs");
-  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+  if (isNeumannPL && !(meshSpecs->ssNames.size() > 0)) {
     ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
   }
 
-  if(meshSpecs[0]->ssNames.size() > 0) {
+  if(meshSpecs->ssNames.size() > 0) {
     // Build a sideset evaluator if sidesets are present
-     constructNeumannEvaluators(meshSpecs[0]);
+     constructNeumannEvaluators(meshSpecs);
   }
 }
 
@@ -158,7 +156,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  Albany::FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*fm0, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<Hydrology> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
@@ -185,7 +183,6 @@ void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs
 {
   // Note: we only enter this function if sidesets are defined in the mesh file
   // i.e. meshSpecs.ssNames.size() > 0
-
   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
   // Check to make sure that Neumann BCs are given in the input file
@@ -195,7 +192,6 @@ void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs
 
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset, so ordering is important
-
   std::vector<std::string> neumannNames(neq + 1);
   Teuchos::Array<Teuchos::Array<int> > offsets;
   offsets.resize(neq);
@@ -217,11 +213,9 @@ void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs
   std::vector<std::string> condNames(1);
   condNames[0] = "neumann";
 
-  nfm.resize(1); // LandIce problem only has one element block
-
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dofs_names, false, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
+  nfm = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dofs_names, false, 0,
+                                       condNames, offsets, dl,
+                                       this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -99,7 +99,7 @@ public:
   bool useSDBCs() const {return use_sdbcs_; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+  void buildProblem (Teuchos::RCP<Albany::MeshSpecs> meshSpecs,
                      Albany::StateManager& stateMgr);
 
 protected:
@@ -540,7 +540,7 @@ constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     num_fields = info.get<int>("Number Of Fields",0);
     int numLayers;
 
-    const std::string& sideEBName = meshSpecs.sideSetMeshSpecs.at(ss_name)[0]->ebName;
+    const std::string& sideEBName = meshSpecs.sideSetMeshSpecs.at(ss_name)->ebName;
     Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
     for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
       Teuchos::ParameterList& thisFieldList =  info.sublist(util::strint("Field", ifield));

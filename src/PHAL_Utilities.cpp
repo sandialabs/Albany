@@ -45,11 +45,11 @@ void checkDerivativeDimensions(const int dDims)
 
 namespace PHAL {
 
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
-  const Albany::Application* app, const Albany::MeshSpecs* ms, bool responseEvaluation)
+template<> int getDerivativeDimensions<AlbanyTraits::Jacobian> (
+  const Albany::Application& app, const Albany::MeshSpecs& ms, bool responseEvaluation)
 {
-  int dDims = app->getNumEquations() * ms->ctd.node_count;
-  const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
+  int dDims = app.getNumEquations() * ms.ctd.node_count;
+  const auto& pl = app.getProblemPL();
   if (Teuchos::nonnull(pl)) {
     const bool landIceCoupledFOH3D = !responseEvaluation && pl->get<std::string>("Name") == "LandIce Coupled FO H 3D";
     bool extrudedColumnCoupled = (responseEvaluation && pl->isParameter("Extruded Column Coupled in 2D Response")) ?
@@ -59,51 +59,44 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     }
     if(landIceCoupledFOH3D || extrudedColumnCoupled)
       { //all column is coupled
-        int side_node_count = ms->ctd.side[3].topology->node_count;
-        int node_count = ms->ctd.node_count;
-        int numLevels = app->getDiscretization()->getLayeredMeshNumberingGO()->numLayers+1;
-        dDims = app->getNumEquations()*(node_count + side_node_count*numLevels);
+        int side_node_count = ms.ctd.side[3].topology->node_count;
+        int node_count = ms.ctd.node_count;
+        int numLevels = app.getDiscretization()->getLayeredMeshNumberingGO()->numLayers+1;
+        dDims = app.getNumEquations()*(node_count + side_node_count*numLevels);
       }
   }
-  checkDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(dDims);
+  checkDerivativeDimensions<AlbanyTraits::Jacobian>(dDims);
   return dDims;
 }
 
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
-  const Albany::Application* app, const Albany::MeshSpecs* /* ms */, bool /* responseEvaluation */)
+template<> int getDerivativeDimensions<AlbanyTraits::Tangent> (
+  const Albany::Application& app, const Albany::MeshSpecs& /* ms */, bool /* responseEvaluation */)
 {
-  const int dDims = app->getTangentDerivDimension();
-  checkDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(dDims);
+  const int dDims = app.getTangentDerivDimension();
+  checkDerivativeDimensions<AlbanyTraits::Tangent>(dDims);
   return dDims;
 }
 
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
-  const Albany::Application* /* app */, const Albany::MeshSpecs* ms, bool /* responseEvaluation */)
+template<> int getDerivativeDimensions<AlbanyTraits::DistParamDeriv> (
+  const Albany::Application& /* app */, const Albany::MeshSpecs& ms, bool /* responseEvaluation */)
 {
   //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
-  const int dDims = ms->ctd.node_count;
-  checkDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(dDims);
+  const int dDims = ms.ctd.node_count;
+  checkDerivativeDimensions<AlbanyTraits::DistParamDeriv>(dDims);
   return dDims;
 }
 
-template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
-  const Albany::Application* app, const Albany::MeshSpecs* ms, bool responseEvaluation)
+template<> int getDerivativeDimensions<AlbanyTraits::HessianVec> (
+  const Albany::Application& app, const Albany::MeshSpecs& ms, bool responseEvaluation)
 {
-  const int derivativeDimension_x = getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(app, ms, responseEvaluation);
-  const int derivativeDimension_p_dist = getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);
-  const int derivativeDimension_p_scal = getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(app, ms, responseEvaluation);
+  const int derivativeDimension_x = getDerivativeDimensions<AlbanyTraits::Jacobian>(app, ms, responseEvaluation);
+  const int derivativeDimension_p_dist = getDerivativeDimensions<AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);
+  const int derivativeDimension_p_scal = getDerivativeDimensions<AlbanyTraits::Tangent>(app, ms, responseEvaluation);
   const int derivativeDimension_p_max = derivativeDimension_p_dist > derivativeDimension_p_scal ? derivativeDimension_p_dist : derivativeDimension_p_scal;
   const int derivativeDimension_max = derivativeDimension_x > derivativeDimension_p_max ? derivativeDimension_x : derivativeDimension_p_max;
-  checkDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(derivativeDimension_max);
+  checkDerivativeDimensions<AlbanyTraits::HessianVec>(derivativeDimension_max);
   return derivativeDimension_max;
 }
-
-template <typename EvalT>
-int getDerivativeDimensions(const Albany::Application* app, const int ebi)
-{
-  return getDerivativeDimensions<EvalT>(app, app->getEnrichedMeshSpecs()[ebi].get());
-}
-
 
 namespace {
 template<typename ScalarT>
@@ -210,15 +203,6 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   Teuchos::broadcast<int, ScalarT>(comm, root_rank, v.size(), &v[0]);
   copy<ScalarT>(v, a);
 }
-
-template int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    const Albany::Application*, const int);
-template int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-    const Albany::Application*, const int);
-template int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    const Albany::Application*, const int);
-template int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
-    const Albany::Application*, const int);
 
 #  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \

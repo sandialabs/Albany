@@ -34,18 +34,13 @@ AdvDiffProblem (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 void
 AdvDiffProblem::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+buildProblem (Teuchos::RCP<MeshSpecs> meshSpecs,
               StateManager& stateMgr)
 {
-  using Teuchos::rcp;
-
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
-		  Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
+  fm  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, BUILD_RESID_FM, Teuchos::null);
+  constructDirichletEvaluators(*meshSpecs);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -56,7 +51,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*rfm, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<AdvDiffProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);

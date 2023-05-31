@@ -218,11 +218,9 @@ constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
   condNames[4] = "lateral";
   condNames[5] = "basal_scalar_field";
 
-  nfm.resize(1); // LandIce problem only has one element block
-
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_name, true, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
+  nfm = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_name, true, 0,
+                                       condNames, offsets, dl,
+                                       this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

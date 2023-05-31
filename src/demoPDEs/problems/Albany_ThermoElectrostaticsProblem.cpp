@@ -28,15 +28,13 @@ ThermoElectrostaticsProblem (const Teuchos::RCP<Teuchos::ParameterList>& params_
 
 void
 ThermoElectrostaticsProblem::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+buildProblem (Teuchos::RCP<MeshSpecs> meshSpecs,
               StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
+  fm  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, BUILD_RESID_FM, Teuchos::null);
+  constructDirichletEvaluators(*meshSpecs);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

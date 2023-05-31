@@ -26,26 +26,27 @@ PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   neq = 1;
 }
 
-void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs,
-                                 StateManager& stateMgr)
+void PopulateMesh::
+buildProblem (Teuchos::RCP<MeshSpecs> meshSpecs,
+              StateManager& stateMgr)
 {
   Intrepid2::DefaultCubatureFactory   cubFactory;
 
   // Building cell type, basis and cubature
-  const CellTopologyData * const cell_top_data = &meshSpecs[0]->ctd;
+  const CellTopologyData * const cell_top_data = &meshSpecs->ctd;
 
-  cellEBName    = meshSpecs[0]->ebName;
+  cellEBName    = meshSpecs->ebName;
   cellTopology  = Teuchos::rcp(new shards::CellTopology (cell_top_data));
   cellBasis     = getIntrepid2Basis(*cell_top_data);
   int cubDegree = this->params->get("Cubature Degree", 0);
   cellCubature  = cubFactory.create<PHX::Device, RealType, RealType>(*cellTopology, cubDegree);
 
-  const int worksetSize     = meshSpecs[0]->worksetSize;
+  const int worksetSize     = meshSpecs->worksetSize;
   const int numCellSides    = cellTopology->getFaceCount();
   const int numCellVertices = cellTopology->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
-  const int numCellDim      = meshSpecs[0]->numDim;
+  const int numCellDim      = meshSpecs->numDim;
   const int numCellVecDim   = -1;
 
   dl = Teuchos::rcp(new Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numCellDim,numCellVecDim));
@@ -54,12 +55,12 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
     Teuchos::ParameterList& ss_disc_pl = discParams->sublist("Side Set Discretizations");
     const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
     for (auto ss_name : ss_names) {
-      const MeshSpecs& ssMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
+      const MeshSpecs& ssMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(ss_name);
 
       // Building also side structures
       const CellTopologyData * const side_top_data = &ssMeshSpecs.ctd;
 
-      sideEBName[ss_name]   = meshSpecs[0]->ebName;
+      sideEBName[ss_name]   = meshSpecs->ebName;
       sideTopology[ss_name] = Teuchos::rcp(new shards::CellTopology (side_top_data));
       sideBasis[ss_name]    = getIntrepid2Basis(*side_top_data);
       int sideCubDegree = this->params->get("Side Cubature Degree", 0);
@@ -182,10 +183,8 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
 
 
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,Teuchos::null);
+  fm  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, BUILD_RESID_FM,Teuchos::null);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -196,7 +195,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*fm0, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<PopulateMesh> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);

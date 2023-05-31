@@ -42,14 +42,10 @@ struct PeriodicBCStruct
 
 struct AbstractSTKMeshStruct : public AbstractMeshStruct
 {
+public:
   virtual ~AbstractSTKMeshStruct() = default;
 
- public:
-  msType
-  meshSpecsType()
-  {
-    return STK_MS;
-  }
+  std::string type () const { return "STK"; }
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
@@ -163,9 +159,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   // boolean flag for writing coordinates to matrix market file (e.g., for ML
   // analysis)
   bool writeCoordsToMMFile;
-
-  // Info to map element block to physics set
-  bool allElementBlocksHaveSamePhysics;
 
   // Info for periodic BCs -- only for hand-coded STK meshes
   struct PeriodicBCStruct PBCStruct;

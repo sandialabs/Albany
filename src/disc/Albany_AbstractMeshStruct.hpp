@@ -27,10 +27,7 @@ public:
 
   enum { DEFAULT_WORKSET_SIZE = 1000 };
 
-  //! Internal mesh specs type needed
-  enum msType {
-    STK_MS
-  };
+  virtual std::string type () const = 0;
 
   virtual void setFieldData(
                 const Teuchos::RCP<const Teuchos_Comm>& comm,
@@ -54,10 +51,7 @@ public:
     setBulkData(comm, sis, worksetSize, side_set_sis);
   }
 
-  virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
-  virtual const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs(    ) const = 0;
-
-  virtual msType meshSpecsType() = 0;
+  Teuchos::RCP<MeshSpecs> meshSpecs;
 
   Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
   Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;

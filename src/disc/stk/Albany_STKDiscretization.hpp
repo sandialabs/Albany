@@ -152,12 +152,6 @@ public:
   {
     return wsEBNames;
   }
-  //! Retrieve Vector (length num worksets) of physics set index
-  const WorksetArray<int>&
-  getWsPhysIndex() const
-  {
-    return wsPhysIndex;
-  }
 
   // Retrieve mesh struct
   Teuchos::RCP<AbstractSTKMeshStruct>

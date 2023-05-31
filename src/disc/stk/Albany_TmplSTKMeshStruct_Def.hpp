@@ -282,9 +282,9 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecs(ctd, numDim,
-                               nsNames, ssNames, worksetSize, EBSpecs[0].name,
-                               ebNameToIndex));
+    this->meshSpecs = Teuchos::rcp(new MeshSpecs(ctd, numDim,
+                            nsNames, ssNames, worksetSize, EBSpecs[0].name,
+                            ebNameToIndex));
   }
 
   // Upon request, add a nodeset for each sideset

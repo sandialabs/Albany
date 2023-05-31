@@ -59,7 +59,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  Albany::FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*fm0, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
 
   Albany::ConstructEvaluatorsOp<StokesFOThickness> op(
@@ -160,11 +160,9 @@ StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpe
   condNames[1] = "dFluxdn";
   condNames[2] = "P";
 
-  nfm.resize(1); // LandIce problem only has one element block
-
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
+  nfm = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                       condNames, offsets, dl,
+                                       this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

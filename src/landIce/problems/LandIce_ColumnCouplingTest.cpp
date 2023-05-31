@@ -33,20 +33,18 @@ ColumnCouplingTest (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 void ColumnCouplingTest::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+buildProblem (Teuchos::RCP<Albany::MeshSpecs> meshSpecs,
               Albany::StateManager& stateMgr)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-
   Intrepid2::DefaultCubatureFactory cubFactory;
 
   // Building cell basis and cubature
-  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
+  const CellTopologyData * const cell_top = &meshSpecs->ctd;
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
-  cellEBName = meshSpecs[0]->ebName;
+  cellEBName = meshSpecs->ebName;
 
-  const int worksetSize     = meshSpecs[0]->worksetSize;
+  const int worksetSize     = meshSpecs->worksetSize;
   const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
 
@@ -56,7 +54,7 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
   const auto& ss_discs_params = discParams->sublist("Side Set Discretizations");
   const auto& ss_names = ss_discs_params.get<Teuchos::Array<std::string>>("Side Sets");
   for (const auto& ss_name : ss_names) {
-    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
+    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(ss_name);
 
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
     auto sideType = Teuchos::rcp(new shards::CellTopology (side_top));
@@ -88,13 +86,12 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
        << "   - num side qps      : N/A\n";
 
   /* Construct All Phalanx Evaluators */
-  fm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  fm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 
   // Build evaluators
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
 
-  constructDirichletEvaluators (*meshSpecs[0]);
+  constructDirichletEvaluators (*meshSpecs);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -105,7 +102,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  Albany::FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*fm0, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<ColumnCouplingTest> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);

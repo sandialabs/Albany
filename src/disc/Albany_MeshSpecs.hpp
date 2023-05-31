@@ -66,7 +66,7 @@ struct MeshSpecs
   std::map<std::string, int> ebNameToIndex;
 
   // We store the side meshes names so we have a way to index them with a number
-  std::map<std::string, Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>>> sideSetMeshSpecs;
+  std::map<std::string, Teuchos::RCP<MeshSpecs>> sideSetMeshSpecs;
   std::vector<std::string> sideSetMeshNames;
 };
 

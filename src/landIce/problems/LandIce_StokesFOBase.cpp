@@ -21,7 +21,6 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
  , numDim(numDim_)
  , params(params_)
 {
-
   depthIntegratedModel =   params_->get("Depth Integrated Model",false);
 
   // Parsing the LandIce boundary conditions sublist
@@ -117,22 +116,24 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 }
 
-void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                                 Albany::StateManager& stateMgr)
+void StokesFOBase::
+buildProblem (Teuchos::RCP<Albany::MeshSpecs> meshSpecs,
+              Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
 
   // Building cell basis and cubature
-  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
+  const CellTopologyData * const cell_top = &meshSpecs->ctd;
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
   Intrepid2::DefaultCubatureFactory cubFactory;
 
   int defaultCubDegree = 3;
-  bool tensorProductCell = (discParams->get<std::string>("Method") == "Extruded") && ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
+  bool tensorProductCell = (discParams->get<std::string>("Method") == "Extruded") &&
+                           ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
   std::string tensorCubDegName = "Cubature Degrees (Horiz Vert)";
-  if(tensorProductCell && params->isParameter(tensorCubDegName)) {
+  if (tensorProductCell && params->isParameter(tensorCubDegName)) {
     TEUCHOS_TEST_FOR_EXCEPTION (params->isParameter("Cubature Degree") && params->isParameter(tensorCubDegName), std::logic_error,
                                   "Error! Either provide parameter 'Cubatur Degree' or 'Cubature Degrees (Horiz Vert)', not both\n");
     Teuchos::Array<int> tensorCubDegrees;
@@ -164,7 +165,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     cellDepthIntegratedBasis = Teuchos::rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<tri_basis, line_basis>(degree));
   }
 
-  const int worksetSize     = meshSpecs[0]->worksetSize;
+  const int worksetSize     = meshSpecs->worksetSize;
   const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
@@ -183,9 +184,9 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   for (auto it : landice_bcs) {
     for (auto pl: it.second) {
       std::string ssName = pl->get<std::string>("Side Set Name");
-      TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(ssName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+      TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs->sideSetMeshSpecs.find(ssName)==meshSpecs->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either the side set name is wrong or something went wrong while building the side mesh specs.\n");
-      const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ssName)[0];
+      const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(ssName);
 
       // Building also side structures
       const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
@@ -215,19 +216,19 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   }
 
   // If we have velocity diagnostics, we need surface side stuff
-  if (!isInvalid(surfaceSideName) && dl->side_layouts.find(surfaceSideName)==dl->side_layouts.end())
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+  if (!isInvalid(surfaceSideName) && dl->side_layouts.find(surfaceSideName)==dl->side_layouts.end()) {
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
 
-    const Albany::MeshSpecs& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
+    const Albany::MeshSpecs& surfaceMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(surfaceSideName);
 
     // Building also surface side structures
     const CellTopologyData * const side_top = &surfaceMeshSpecs.ctd;
     sideBasis[surfaceSideName] = Albany::getIntrepid2Basis(*side_top);
     sideType[surfaceSideName]= rcp(new shards::CellTopology (side_top));
 
-    TEUCHOS_TEST_FOR_EXCEPTION (sideCubatureDegree[surfaceSideName]<0, std::runtime_error, "Error! Missing cubature degree information on side '" << surfaceSideName << ".\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (sideCubatureDegree[surfaceSideName]<0, std::runtime_error,
+        "Error! Missing cubature degree information on side '" << surfaceSideName << ".\n");
     sideCubature[surfaceSideName] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[surfaceSideName], sideCubatureDegree[surfaceSideName]);
 
     int numSurfaceSideVertices = sideType[surfaceSideName]->getNodeCount();
@@ -241,10 +242,10 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   // If we have thickness or surface velocity diagnostics, we may need basal side stuff
   if (!isInvalid(basalSideName) && dl->side_layouts.find(basalSideName)==dl->side_layouts.end())
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs->sideSetMeshSpecs.find(basalSideName)==meshSpecs->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
 
-    const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
+    const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(basalSideName);
 
     // Building also basal side structures
     const CellTopologyData * const side_top = &basalMeshSpecs.ctd;
@@ -298,27 +299,25 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   setupEvaluatorRequests ();
 
   /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-  fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
-  buildFields(*fm[0]);
+  fm  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
+  buildFields(*fm);
 
   // Build a dirichlet fm if nodesets are present
-  if (meshSpecs[0]->nsNames.size() >0) {
-    constructDirichletEvaluators(*meshSpecs[0]);
+  if (meshSpecs->nsNames.size() >0) {
+    constructDirichletEvaluators(*meshSpecs);
   }
 
   // Check if have Neumann sublist; throw error if attempting to specify
   // Neumann BCs, but there are no sidesets in the input mesh
   bool isNeumannPL = params->isSublist("Neumann BCs");
-  if (isNeumannPL && !(meshSpecs[0]->ssNames.size() > 0)) {
+  if (isNeumannPL && !(meshSpecs->ssNames.size() > 0)) {
     ALBANY_ASSERT(false, "You are attempting to set Neumann BCs on a mesh with no sidesets!");
   }
 
   // Build a neumann fm if sidesets are present
-  if(meshSpecs[0]->ssNames.size() > 0) {
-     constructNeumannEvaluators(meshSpecs[0]);
+  if(meshSpecs->ssNames.size() > 0) {
+     constructNeumannEvaluators(meshSpecs);
   }
 }
 

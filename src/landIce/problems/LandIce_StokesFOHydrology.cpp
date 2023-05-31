@@ -149,7 +149,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  Albany::FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*fm0, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<StokesFOHydrology> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
@@ -228,11 +228,9 @@ constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
   std::vector<std::string> stokes_cond_names(1);
   stokes_cond_names[0] = "lateral";
 
-  nfm.resize(1); // LandIce problem only has one element block
-
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, stokes_neumann_names, stokes_dofs_names, true, 0,
-                                          stokes_cond_names, stokes_offsets, dl,
-                                          this->params, this->paramLib);
+  nfm = nbcUtils.constructBCEvaluators(meshSpecs, stokes_neumann_names, stokes_dofs_names, true, 0,
+                                       stokes_cond_names, stokes_offsets, dl,
+                                       this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -100,8 +100,8 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecs& inputMeshSpecs,
 #endif
 
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecs(ctd, this->numDim, nsNames, ssNames, worksetSize,
-                                                                ebn, ebNameToIndex));
+  this->meshSpecs = Teuchos::rcp(new Albany::MeshSpecs(ctd, this->numDim, nsNames, ssNames, worksetSize,
+                                                       ebn, ebNameToIndex));
 
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get());
   stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(*mpiComm->getRawMpiComm());

@@ -200,7 +200,7 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Construct MeshSpecs
   {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecs(
+    this->meshSpecs = Teuchos::rcp(new MeshSpecs(
         ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex));
   }
@@ -224,38 +224,19 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Get upper bound on sideset workset sizes by using Ioss element counts on side blocks
   if (worksetSize == ebSizeMax) {
-    if (!params->get("Separate Evaluators by Element Block",false)) {
-      for (auto ss : sss) {
-        // Get maximum sideset size from Ioss
-        auto& ssb = ss->get_side_blocks();
-        if (ssb.size()==0) { continue; }
-        const std::string ssName = ss->name();
-        const auto sidesetSizeMax = ssb[0]->entity_count();
+    for (auto ss : sss) {
+      // Get maximum sideset size from Ioss
+      auto& ssb = ss->get_side_blocks();
+      if (ssb.size()==0) { continue; }
+      const std::string ssName = ss->name();
+      const auto sidesetSizeMax = ssb[0]->entity_count();
 
-        // Set sideset workset size to maximum
-        const auto& sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
-        const auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
-        TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-            "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
-        sideSetMeshSpecIter->second[0]->worksetSize = sidesetSizeMax;
-      }
-    } else { // FIXME: All element blocks have the same sidesets?
-      for (int eb = 0; eb < numEB; ++eb) {
-        for (auto ss : sss) {
-          // Get maximum sideset size from Ioss
-          auto& ssb = ss->get_side_blocks();
-          if (ssb.size()==0) { continue; }
-          const std::string ssName = ss->name();
-          const auto sidesetSizeMax = ssb[0]->entity_count();
-
-          // Set sideset workset size to maximum
-          const auto& sideSetMeshSpecs = this->meshSpecs[eb]->sideSetMeshSpecs;
-          const auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
-          TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-              "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
-          sideSetMeshSpecIter->second[0]->worksetSize = sidesetSizeMax;
-        }
-      }
+      // Set sideset workset size to maximum
+      const auto& sideSetMeshSpecs = this->meshSpecs->sideSetMeshSpecs;
+      const auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ssName);
+      TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
+          "Cannot find " << ssName << " in sideSetMeshSpecs!\n");
+      sideSetMeshSpecIter->second->worksetSize = sidesetSizeMax;
     }
   }
 
@@ -648,10 +629,10 @@ IossSTKMeshStruct::setBulkData (
     this->local_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,ordering));
 
     // Shards has both Hexa and Wedge with bot and top in the last two side positions
-    this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-    this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
-    this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-    this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+    this->global_cell_layers_data->top_side_pos = this->meshSpecs->ctd.side_count - 1;
+    this->global_cell_layers_data->bot_side_pos = this->meshSpecs->ctd.side_count - 2;
+    this->local_cell_layers_data->top_side_pos = this->meshSpecs->ctd.side_count - 1;
+    this->local_cell_layers_data->bot_side_pos = this->meshSpecs->ctd.side_count - 2;
   }
 
   if(m_hasRestartSolution){

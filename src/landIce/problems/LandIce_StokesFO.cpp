@@ -83,7 +83,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  Albany::FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*fm, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<StokesFO> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
@@ -187,11 +187,9 @@ void StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>
    // All nbc refer to the same dof (the velocity)
    Teuchos::ArrayRCP<std::string> nbc_dof_names(neq+1,dof_names[0]);
 
-   nfm.resize(1); // LandIce problem only has one element block
-
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                           condNames, offsets, dl,
-                                           this->params, this->paramLib);
+   nfm = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                        condNames, offsets, dl,
+                                        this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

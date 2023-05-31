@@ -60,7 +60,7 @@ public:
   bool useSDBCs() const {return use_sdbcs_; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+  void buildProblem (Teuchos::RCP<Albany::MeshSpecs> meshSpecs,
                      Albany::StateManager& stateMgr);
 
   // Build evaluators

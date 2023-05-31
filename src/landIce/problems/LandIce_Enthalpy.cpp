@@ -49,7 +49,7 @@ Enthalpy (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 void Enthalpy::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
+buildProblem (Teuchos::RCP<Albany::MeshSpecs> meshSpecs,
               Albany::StateManager& stateMgr)
 {
   using Teuchos::RCP;
@@ -62,13 +62,13 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
   using std::map;
   using PHAL::AlbanyTraits;
 
-  const CellTopologyData* const elem_top = &meshSpecs[0]->ctd;
+  const CellTopologyData* const elem_top = &meshSpecs->ctd;
 
   cellBasis = Albany::getIntrepid2Basis(*elem_top);
   cellType = rcp(new shards::CellTopology (elem_top));
 
   const int numNodes = cellBasis->getCardinality();
-  const int worksetSize = meshSpecs[0]->worksetSize;
+  const int worksetSize = meshSpecs->worksetSize;
   const int numCellSides = cellType->getFaceCount();
   const int cubDegree = this->params->get("Cubature Degree", 3);
   Intrepid2::DefaultCubatureFactory cubFactory;
@@ -105,9 +105,9 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
   int numBasalSideQPs        = -1;
 
   if (basalSideName!="INVALID") {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                  "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-    const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs->sideSetMeshSpecs.find(basalSideName)==meshSpecs->sideSetMeshSpecs.end(), std::logic_error,
+        "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+    const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(basalSideName);
 
     // Building also basal side structures
     const CellTopologyData * const side_bottom = &basalMeshSpecs.ctd;
@@ -148,12 +148,11 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
 
 
   /* Construct All Phalanx Evaluators */
-  elementBlockName = meshSpecs[0]->ebName;
-  fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
-  buildFields(*fm[0]);
-  constructDirichletEvaluators(*meshSpecs[0]);
+  elementBlockName = meshSpecs->ebName;
+  fm = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
+  buildFields(*fm);
+  constructDirichletEvaluators(*meshSpecs);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
@@ -164,7 +163,7 @@ buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                  Albany::FieldManagerChoice fmchoice,
                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*fm0, *meshSpecs, stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<Enthalpy> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);

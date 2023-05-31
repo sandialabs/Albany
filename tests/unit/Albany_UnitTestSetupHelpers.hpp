@@ -49,7 +49,7 @@ createTestDisc (const Teuchos::RCP<const Teuchos_Comm>& comm,
   Albany::DiscretizationFactory factory(params,comm);
 
   // Create StateInfoStruct for dist params
-  auto ms = factory.createMeshSpecs()[0];
+  auto ms = factory.createMeshSpecs();
   const int num_nodes = std::pow(2,num_dims);
   auto layout = Teuchos::rcp(new PHX::MDALayout<Cell,Node>(ms->worksetSize,num_nodes));
 

@@ -39,13 +39,11 @@ SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params,
 }
 
 void SideLaplacian::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+buildProblem (Teuchos::RCP<MeshSpecs> meshSpecs,
               StateManager& stateMgr)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
-
   // Building cell basis and cubature
-  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
+  const CellTopologyData * const cell_top = &meshSpecs->ctd;
   cellBasis = getIntrepid2Basis(*cell_top);
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
@@ -53,9 +51,9 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
   int cubDegree = this->params->get("Cubature Degree", 3);
   cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
-  cellEBName = meshSpecs[0]->ebName;
+  cellEBName = meshSpecs->ebName;
 
-  const int worksetSize     = meshSpecs[0]->worksetSize;
+  const int worksetSize     = meshSpecs->worksetSize;
   const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
@@ -68,11 +66,11 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
   int numSideQPs      = -1;
 
   if (numDim==3) {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideSetName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs->sideSetMeshSpecs.find(sideSetName)==meshSpecs->sideSetMeshSpecs.end(), std::logic_error,
       "Error! Either 'Side Set Name' (" << sideSetName << ") is wrong or something went wrong while " <<
       "building the side mesh specs. (Did you forget to specify side set discretizations in the input file?)\n");
 
-    const MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
+    const MeshSpecs& sideMeshSpecs = *meshSpecs->sideSetMeshSpecs.at(sideSetName);
 
     // Building also side structures
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
@@ -104,13 +102,12 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
        << "   - num side qps      : " << numSideQPs      << "\n";
 
   /* Construct All Phalanx Evaluators */
-  fm.resize(1);
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  fm  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 
   // Build evaluators
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, Teuchos::null);
+  buildEvaluators(*fm, *meshSpecs, stateMgr, BUILD_RESID_FM, Teuchos::null);
 
-  constructDirichletEvaluators (*meshSpecs[0]);
+  constructDirichletEvaluators (*meshSpecs);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

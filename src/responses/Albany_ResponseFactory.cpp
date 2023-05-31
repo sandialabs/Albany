@@ -157,11 +157,9 @@ createResponseFunction(
      name == "Homogenized Constants Response" ||
      name == "Modal Objective")
   {
-    for (int i=0; i<meshSpecs.size(); i++) {
-      responses.push_back(
-          rcp(new FieldManagerScalarResponseFunction(
-              app, prob, meshSpecs[i], stateMgr, responseParams)));
-    }
+    responses.push_back(
+        rcp(new FieldManagerScalarResponseFunction(
+            app, prob, meshSpecs, stateMgr, responseParams)));
   } else if (name == "Solution") {
     responses.push_back(
       rcp(new SolutionResponseFunction(app, responseParams)));
