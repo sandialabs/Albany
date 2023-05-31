@@ -141,7 +141,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void set_all_sides_boundary( std::vector<std::string>& ssNames);
 
   // Broadcast a single name-tag pair from proc 0 to all others
-  void broadcast_name_tag_pair( std::vector< std::string>               names,
+  void broadcast_name_tag_pair (const std::vector<std::string>&         names,
                                 int*                                    tags_array,
                                 int                                     pair_number,
                                 const Teuchos::RCP<const Teuchos_Comm>& commT,

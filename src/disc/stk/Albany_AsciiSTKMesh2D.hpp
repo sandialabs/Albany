@@ -4,11 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_ASCII_STKMESH2DSTRUCT_HPP
-#define ALBANY_ASCII_STKMESH2DSTRUCT_HPP
+#ifndef ALBANY_ASCII_STK_MESH2D_STRUCT_HPP
+#define ALBANY_ASCII_STK_MESH2D_STRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
-
 
 // read ascii mesh and create corresponding STK mesh
 // ascii file formats:
@@ -46,55 +45,54 @@
 // "boundary_side_set" containing all the boundary edges,
 // "boundary_edge_set_10" and "boundary_edge_set_20" containing the boundary edges with flag 10 and 20, respectively
 
+namespace Albany
+{
 
-namespace Albany {
+class AsciiSTKMesh2D : public GenericSTKMeshStruct
+{
+public:
 
-  class AsciiSTKMesh2D : public GenericSTKMeshStruct {
+  AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
+                  const int numParams);
 
-    public:
+  ~AsciiSTKMesh2D() = default;
 
-    AsciiSTKMesh2D(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-		  const int numParams);
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                     const unsigned int worksetSize,
+                     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-    ~AsciiSTKMesh2D();
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                    const unsigned int worksetSize,
+                    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                       const unsigned int worksetSize,
-                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+  //! Flag if solution has a restart values -- used in Init Cond
+  bool hasRestartSolution() const {return false; }
 
-    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                      const unsigned int worksetSize,
-                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+  //! If restarting, convenience function to return restart data time
+  double restartDataTime() const {return -1.0; }
 
-    //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const {return false; }
+private:
 
-    //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return -1.0; }
+  Teuchos::RCP<const Teuchos::ParameterList>
+    getValidDiscretizationParameters() const;
 
-    private:
-    //Ioss::Init::Initializer ioInit;
+  bool periodic;
+  int NumElemNodes; //number of nodes per element (e.g. 3 for Triangles)
+  int NumNodes; //number of nodes
+  int NumElems; //number of elements
+  int NumBdEdges; //number of faces on basal boundary
+  std::map<int,std::string> bdTagToNodeSetName;
+  std::map<int,std::string> bdTagToSideSetName;
+  std::vector<int> coord_Ids, ele_Ids, be_Ids;
+  std::vector<int> coord_flags;
+  std::vector<std::vector<double>> coords;
+  std::vector<std::vector<int>> elems;
+  std::vector<std::vector<int>> bdEdges;
+};
 
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
+} // namespace Albany
 
-    bool periodic;
-    int NumElemNodes; //number of nodes per element (e.g. 3 for Triangles)
-    int NumNodes; //number of nodes
-    int NumElems; //number of elements
-    int NumBdEdges; //number of faces on basal boundary
-    std::map<int,std::string> bdTagToNodeSetName;
-    std::map<int,std::string> bdTagToSideSetName;
-    std::vector<int> coord_Ids, ele_Ids, be_Ids;
-    std::vector<int> coord_flags;
-    std::vector<std::vector<double>> coords;
-    std::vector<std::vector<int>> elems;
-    std::vector<std::vector<int>> bdEdges;
-  };
-
-}
-#endif
+#endif // ALBANY_ASCII_STK_MESH2D_STRUCT_HPP

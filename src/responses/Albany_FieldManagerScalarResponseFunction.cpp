@@ -692,4 +692,5 @@ printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
   std::size_t value_width = precision + 4;
   *out << std::setw(value_width) << Thyra::get_ele(*g_,0);
 }
+
 } // namespace Albany

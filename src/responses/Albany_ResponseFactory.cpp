@@ -23,8 +23,11 @@
 
 #include "Teuchos_TestForException.hpp"
 
+namespace Albany
+{
+
 void
-Albany::ResponseFactory::
+ResponseFactory::
 createResponseFunction(
   const std::string& name,
   Teuchos::ParameterList& responseParams,
@@ -39,17 +42,17 @@ createResponseFunction(
   RCP<const Teuchos_Comm> comm = app->getComm();
 
   if (name == "Solution Average") {
-    responses.push_back(rcp(new Albany::SolutionAverageResponseFunction(comm)));
+    responses.push_back(rcp(new SolutionAverageResponseFunction(comm)));
   }
 
   else if (name == "Solution Two Norm") {
-    responses.push_back(rcp(new Albany::SolutionTwoNormResponseFunction(comm)));
+    responses.push_back(rcp(new SolutionTwoNormResponseFunction(comm)));
   }
   else if (name == "Solution Values") {
-    responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(app, responseParams)));
+    responses.push_back(rcp(new SolutionValuesResponseFunction(app, responseParams)));
   }
   else if (name == "Weighted Misfit") {
-    responses.push_back(rcp(new Albany::WeightedMisfitResponse(app, responseParams)));
+    responses.push_back(rcp(new WeightedMisfitResponse(app, responseParams)));
   }
 
   else if (name == "Solution Max Value") {
@@ -57,7 +60,7 @@ createResponseFunction(
     int neq = app->getNumEquations();
 
     responses.push_back(
-      rcp(new Albany::SolutionMaxValueResponseFunction(comm, neq, eq)));
+      rcp(new SolutionMaxValueResponseFunction(comm, neq, eq)));
   }
 
   else if (name == "Solution Min Value") {
@@ -65,12 +68,12 @@ createResponseFunction(
     int neq = app->getNumEquations();
 
     responses.push_back(
-      rcp(new Albany::SolutionMinValueResponseFunction(comm, neq, eq)));
+      rcp(new SolutionMinValueResponseFunction(comm, neq, eq)));
   }
 
   else if (name == "Quadratic Linear Operator Based") {
     responses.push_back(
-      rcp(new Albany::QuadraticLinearOperatorBasedResponseFunction(app, responseParams)));
+      rcp(new QuadraticLinearOperatorBasedResponseFunction(app, responseParams)));
   }
 
   else if (name == "Power Of Response") {
@@ -89,7 +92,7 @@ createResponseFunction(
         "The power response can only uses scalar response " << "functions!");
     RCP<ScalarResponseFunction> scalar_response = Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(aggregated_responses[0]);
 
-    responses.push_back(rcp(new Albany::ScalarResponsePower(comm, scalar_response, target, exponent)));
+    responses.push_back(rcp(new ScalarResponsePower(comm, scalar_response, target, exponent)));
   }
 
   else if (name == "Sum Of Responses") {
@@ -116,7 +119,7 @@ createResponseFunction(
       std::string id = util::strint("Scaling Coefficient",i);
       scalar_weights[i] = responseParams.get<double>(id, 1.0);
     }
-    responses.push_back(rcp(new Albany::CumulativeScalarResponseFunction(comm, scalar_responses, scalar_weights)));
+    responses.push_back(rcp(new CumulativeScalarResponseFunction(comm, scalar_responses, scalar_weights)));
   }
 
   else if (name == "Field Integral" ||
@@ -152,15 +155,16 @@ createResponseFunction(
      name == "Tensor PNorm Objective" ||
      name == "Tensor Average Response" ||
      name == "Homogenized Constants Response" ||
-     name == "Modal Objective") {
+     name == "Modal Objective")
+  {
     for (int i=0; i<meshSpecs.size(); i++) {
       responses.push_back(
-          rcp(new Albany::FieldManagerScalarResponseFunction(
+          rcp(new FieldManagerScalarResponseFunction(
               app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   } else if (name == "Solution") {
     responses.push_back(
-      rcp(new Albany::SolutionResponseFunction(app, responseParams)));
+      rcp(new SolutionResponseFunction(app, responseParams)));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -170,8 +174,8 @@ createResponseFunction(
   }
 }
 
-Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> >
-Albany::ResponseFactory::
+Teuchos::Array< Teuchos::RCP<AbstractResponseFunction> >
+ResponseFactory::
 createResponseFunctions(Teuchos::ParameterList& responseList) const
 {
   using Teuchos::RCP;
@@ -199,3 +203,5 @@ createResponseFunctions(Teuchos::ParameterList& responseList) const
 
   return responses;
 }
+
+} // namespace Albany

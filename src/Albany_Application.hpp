@@ -64,7 +64,7 @@ public:
 
   void initialSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params);
   void createMeshSpecs();
-  void createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh);
+  void createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh);
   void buildProblem();
   void createDiscretization();
   void finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -75,11 +75,11 @@ public:
   setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const;
 
   //! Get underlying abstract discretization
-  Teuchos::RCP<Albany::AbstractDiscretization>
+  Teuchos::RCP<AbstractDiscretization>
   getDiscretization() const;
 
   //! Get problem object
-  Teuchos::RCP<Albany::AbstractProblem>
+  Teuchos::RCP<AbstractProblem>
   getProblem() const;
 
   //! Get communicator
@@ -116,7 +116,7 @@ public:
     return relative_responses;
   }
 
-  Teuchos::RCP<Albany::SolutionManager>
+  Teuchos::RCP<SolutionManager>
   getAdaptSolMgr()
   {
     return solMgr;
@@ -163,7 +163,7 @@ public:
     return tangent_deriv_dim;
   }
 
-  Teuchos::RCP<Albany::AbstractDiscretization>
+  Teuchos::RCP<AbstractDiscretization>
   getDisc() const
   {
     return disc;
@@ -1056,7 +1056,7 @@ void
       const double   beta,
       const double   omega);
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>>
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>>
   getEnrichedMeshSpecs() const
   {
     return meshSpecs;
@@ -1156,16 +1156,16 @@ void
   Teuchos::RCP<Teuchos::FancyOStream> out;
 
   //! Element discretization
-  Teuchos::RCP<Albany::AbstractDiscretization> disc;
+  Teuchos::RCP<AbstractDiscretization> disc;
 
   //! discretization factory
-  Teuchos::RCP<Albany::DiscretizationFactory> discFactory;
+  Teuchos::RCP<DiscretizationFactory> discFactory;
 
   //! mesh specs
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs;
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs;
 
   //! Problem class
-  Teuchos::RCP<Albany::AbstractProblem> problem;
+  Teuchos::RCP<AbstractProblem> problem;
 
   //! Problem Parameters
   Teuchos::RCP<Teuchos::ParameterList> problemParams;
@@ -1180,10 +1180,10 @@ void
   Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
   //! Solution memory manager
-  Teuchos::RCP<Albany::SolutionManager> solMgr;
+  Teuchos::RCP<SolutionManager> solMgr;
 
   //! Response functions
-  Teuchos::Array<Teuchos::RCP<Albany::AbstractResponseFunction>> responses;
+  Teuchos::Array<Teuchos::RCP<AbstractResponseFunction>> responses;
 
   //! Phalanx Field Manager for volumetric fills
   Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> fm;

@@ -300,13 +300,13 @@ void GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teucho
   if(rebalance) {
     TEUCHOS_TEST_FOR_EXCEPTION (this->side_maps_present, std::runtime_error,
                                 "Error! Rebalance is not supported when side maps are present.\n");
-    rebalanceAdaptedMeshT(params, comm);
+    rebalanceAdaptedMesh(params, comm);
   }
 }
 
 void GenericSTKMeshStruct::
-rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                      const Teuchos::RCP<const Teuchos::Comm<int> >& comm)
+rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                     const Teuchos::RCP<const Teuchos::Comm<int> >& comm)
 {
 // Zoltan is required here
 #ifdef ALBANY_ZOLTAN
