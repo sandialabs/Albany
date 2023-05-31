@@ -36,8 +36,10 @@ STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& p
   int worksetSize = 1;
 
   std::cout << "--- creating a new MeshSpecs ---" << std::endl;
-  this->meshSpecs =
-    Teuchos::rcp(new MeshSpecs(ctd,numDim,nsNames,ssNames,worksetSize,"Block0",ebNameToIndex));
+  this->meshSpecs[0] =
+    Teuchos::rcp(new MeshSpecs(ctd, numDim,
+                                             nsNames, ssNames, worksetSize, "Block0",
+                                             ebNameToIndex));
   std::cout << "---3DPoint constructor done---" << std::endl;
 
   // Create a mesh specs object for EACH side set

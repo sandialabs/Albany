@@ -567,22 +567,26 @@ Application::buildProblem()
   const Teuchos::Array<unsigned int> defaultDataUnsignedInt;
 
   // Build state field manager
-  Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
-  std::string              elementBlockName = meshSpecs->ebName;
-  std::vector<std::string> responseIDs_to_require =
-      stateMgr.getResidResponseIDsToRequire(elementBlockName);
-  sfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>> tags =
-      problem->buildEvaluators(
-          *sfm, *meshSpecs, stateMgr, BUILD_STATE_FM, Teuchos::null);
-  std::vector<std::string>::const_iterator it;
-  for (it = responseIDs_to_require.begin();
-       it != responseIDs_to_require.end();
-       it++) {
-    const std::string&                              responseID = *it;
-    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
-        responseID, dummy);
-    sfm->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
+  sfm.resize(meshSpecs.size());
+  Teuchos::RCP<PHX::DataLayout> dummy =
+      Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+  for (int ps = 0; ps < meshSpecs.size(); ps++) {
+    std::string              elementBlockName = meshSpecs[ps]->ebName;
+    std::vector<std::string> responseIDs_to_require =
+        stateMgr.getResidResponseIDsToRequire(elementBlockName);
+    sfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>> tags =
+        problem->buildEvaluators(
+            *sfm[ps], *meshSpecs[ps], stateMgr, BUILD_STATE_FM, Teuchos::null);
+    std::vector<std::string>::const_iterator it;
+    for (it = responseIDs_to_require.begin();
+         it != responseIDs_to_require.end();
+         it++) {
+      const std::string&                              responseID = *it;
+      PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
+          responseID, dummy);
+      sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
+    }
   }
 }
 
@@ -924,6 +928,27 @@ Application::suppliesPreconditioner() const
 }
 
 namespace {
+// amb-nfm I think right now there is some confusion about nfm. Long ago, nfm
+// was
+// like dfm, just a single field manager. Then it became an array like fm. At
+// that time, it may have been true that nfm was indexed just like fm, using
+// wsPhysIndex. However, it is clear at present (7 Nov 2014) that nfm is
+// definitely not indexed like fm. As an example, compare nfm in
+// Albany::MechanicsProblem::constructNeumannEvaluators and fm in
+// Albany::MechanicsProblem::buildProblem. For now, I'm going to keep nfm as an
+// array, but this this new function is a wrapper around the unclear intended
+// behavior.
+inline Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>&
+deref_nfm(
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>>& nfm,
+    const WorksetArray<int>&       wsPhysIndex,
+    int                            ws)
+{
+  return nfm.size() == 1 ?  // Currently, all problems seem to have one nfm ...
+             nfm[0] :       // ... hence this is the intended behavior ...
+             nfm[wsPhysIndex[ws]];  // ... and this is not, but may one day be
+                                    // again.
+}
 
 // Convenience routine for setting dfm workset data. Cut down on redundant code.
 void
@@ -1124,24 +1149,25 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
 {
   using EvalT = PHAL::AlbanyTraits::Residual;
 
-  std::string evalName = PHAL::evalName<EvalT>("FM");
+  std::string evalName = PHAL::evalName<EvalT>("FM",0);
   if (phxSetup->contain_eval(evalName)) return;
 
-  evalName = PHAL::evalName<EvalT>("FM");
-  phxSetup->insert_eval(evalName);
+  for (int ps = 0; ps < fm.size(); ps++) {
+    evalName = PHAL::evalName<EvalT>("FM",ps);
+    phxSetup->insert_eval(evalName);
 
-  setDynamicLayoutSizes<EvalT>(fm);
+    setDynamicLayoutSizes<EvalT>(fm[ps]);
 
-  fm->postRegistrationSetupForType<EvalT>(*phxSetup);
+    fm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
-  // Update phalanx saved/unsaved fields based on field dependencies
-  phxSetup->check_fields(fm->getFieldTagsForSizing<EvalT>());
-  phxSetup->update_fields();
+    // Update phalanx saved/unsaved fields based on field dependencies
+    phxSetup->check_fields(fm[ps]->getFieldTagsForSizing<EvalT>());
+    phxSetup->update_fields();
 
-  writePhalanxGraph<EvalT>(fm,evalName,phxGraphVisDetail);
-
+    writePhalanxGraph<EvalT>(fm[ps],evalName,phxGraphVisDetail);
+  }
   if (dfm != Teuchos::null) {
-    evalName = PHAL::evalName<EvalT>("DFM");
+    evalName = PHAL::evalName<EvalT>("DFM",0);
     phxSetup->insert_eval(evalName);
 
     setDynamicLayoutSizes<EvalT>(dfm);
@@ -1154,20 +1180,21 @@ Application::postRegSetup<PHAL::AlbanyTraits::Residual>()
 
     writePhalanxGraph<EvalT>(dfm,evalName,phxGraphVisDetail);
   }
-  if (nfm != Teuchos::null) {
-    evalName = PHAL::evalName<EvalT>("NFM");
-    phxSetup->insert_eval(evalName);
+  if (nfm != Teuchos::null)
+    for (int ps = 0; ps < nfm.size(); ps++) {
+      evalName = PHAL::evalName<EvalT>("NFM",ps);
+      phxSetup->insert_eval(evalName);
 
-    setDynamicLayoutSizes<EvalT>(nfm);
+      setDynamicLayoutSizes<EvalT>(nfm[ps]);
 
-    nfm->postRegistrationSetupForType<EvalT>(*phxSetup);
+      nfm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
-    // Update phalanx saved/unsaved fields based on field dependencies
-    phxSetup->check_fields(nfm->getFieldTagsForSizing<EvalT>());
-    phxSetup->update_fields();
+      // Update phalanx saved/unsaved fields based on field dependencies
+      phxSetup->check_fields(nfm[ps]->getFieldTagsForSizing<EvalT>());
+      phxSetup->update_fields();
 
-    writePhalanxGraph<EvalT>(nfm,evalName,phxGraphVisDetail);
-  }
+      writePhalanxGraph<EvalT>(nfm[ps],evalName,phxGraphVisDetail);
+    }
 }
 
 template <>
@@ -1202,49 +1229,50 @@ template <typename EvalT>
 void
 Application::postRegSetupDImpl()
 {
-  std::string evalName = PHAL::evalName<EvalT>("FM");
+  std::string evalName = PHAL::evalName<EvalT>("FM",0);
   if (phxSetup->contain_eval(evalName)) return;
 
-  evalName = PHAL::evalName<EvalT>("FM");
-  phxSetup->insert_eval(evalName);
-
-  std::vector<PHX::index_size_type> derivative_dimensions;
-  derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<EvalT>(*this,*meshSpecs));
-  fm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
-  setDynamicLayoutSizes<EvalT>(fm);
-  fm->postRegistrationSetupForType<EvalT>(*phxSetup);
-
-  // Update phalanx saved/unsaved fields based on field dependencies
-  phxSetup->check_fields(fm->getFieldTagsForSizing<EvalT>());
-  phxSetup->update_fields();
-
-  writePhalanxGraph<EvalT>(fm,evalName,phxGraphVisDetail);
-
-  if (nfm != Teuchos::null) {
-    evalName = PHAL::evalName<EvalT>("NFM");
+  for (int ps = 0; ps < fm.size(); ps++) {
+    evalName = PHAL::evalName<EvalT>("FM",ps);
     phxSetup->insert_eval(evalName);
 
-    nfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
-    setDynamicLayoutSizes<EvalT>(nfm);
-    nfm->postRegistrationSetupForType<EvalT>(*phxSetup);
+    std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<EvalT>(this, ps));
+    fm[ps]->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
+    setDynamicLayoutSizes<EvalT>(fm[ps]);
+    fm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
 
     // Update phalanx saved/unsaved fields based on field dependencies
-    phxSetup->check_fields(nfm->getFieldTagsForSizing<EvalT>());
+    phxSetup->check_fields(fm[ps]->getFieldTagsForSizing<EvalT>());
     phxSetup->update_fields();
 
-    writePhalanxGraph<EvalT>(nfm,evalName,phxGraphVisDetail);
-  }
+    writePhalanxGraph<EvalT>(fm[ps],evalName,phxGraphVisDetail);
 
+    if (nfm != Teuchos::null && ps < nfm.size()) {
+      evalName = PHAL::evalName<EvalT>("NFM",ps);
+      phxSetup->insert_eval(evalName);
+
+      nfm[ps]->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
+      setDynamicLayoutSizes<EvalT>(nfm[ps]);
+      nfm[ps]->postRegistrationSetupForType<EvalT>(*phxSetup);
+
+      // Update phalanx saved/unsaved fields based on field dependencies
+      phxSetup->check_fields(nfm[ps]->getFieldTagsForSizing<EvalT>());
+      phxSetup->update_fields();
+
+      writePhalanxGraph<EvalT>(nfm[ps],evalName,phxGraphVisDetail);
+    }
+  }
   if (dfm != Teuchos::null) {
-    evalName = PHAL::evalName<EvalT>("DFM");
+    evalName = PHAL::evalName<EvalT>("DFM",0);
     phxSetup->insert_eval(evalName);
 
     // amb Need to look into this. What happens with DBCs in meshes having
     // different element types?
     std::vector<PHX::index_size_type> derivative_dimensions;
     derivative_dimensions.push_back(
-        PHAL::getDerivativeDimensions<EvalT>(*this,*meshSpecs));
+        PHAL::getDerivativeDimensions<EvalT>(this, 0));
     dfm->setKokkosExtendedDataTypeDimensions<EvalT>(derivative_dimensions);
     setDynamicLayoutSizes<EvalT>(dfm);
     dfm->postRegistrationSetupForType<EvalT>(*phxSetup);
@@ -1302,6 +1330,7 @@ Application::computeGlobalResidualImpl(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
+  const auto& wsPhysIndex  = disc->getWsPhysIndex();
 
   const int numWorksets = disc->getNumWorksets();
 
@@ -1355,11 +1384,11 @@ Application::computeGlobalResidualImpl(
     workset.f = overlapped_f;
 
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
 #ifdef DEBUG_OUTPUT
       *out << "IKT after fm evaluateFields countRes = " << countRes
            << ", computeGlobalResid workset.x = \n ";
@@ -1367,7 +1396,8 @@ Application::computeGlobalResidualImpl(
 #endif
 
       if (nfm != Teuchos::null) {
-        nfm->evaluateFields<EvalT>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<EvalT>(workset);
       }
     }
   }
@@ -1511,6 +1541,7 @@ Application::computeGlobalJacobianImpl(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
+  const auto& wsPhysIndex  = disc->getWsPhysIndex();
 
   const int numWorksets = disc->getNumWorksets();
 
@@ -1565,13 +1596,14 @@ Application::computeGlobalJacobianImpl(
     }
 #endif
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
       if (Teuchos::nonnull(nfm))
-        nfm->evaluateFields<EvalT>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<EvalT>(workset);
     }
   }
 
@@ -1817,6 +1849,8 @@ Application::computeGlobalTangent(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
+  const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
   const int numWorksets = disc->getNumWorksets();
 
   Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
@@ -1978,13 +2012,14 @@ Application::computeGlobalTangent(
     workset.param_offset = param_offset;
 
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
       if (nfm != Teuchos::null)
-        nfm->evaluateFields<EvalT>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<EvalT>(workset);
     }
   }
 
@@ -2053,6 +2088,8 @@ Application::applyGlobalDistParamDerivImpl(
   postRegSetup<EvalT>();
 
   // Load connectivity map and coordinates
+  const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
   const int numWorksets = disc->getNumWorksets();
 
   // The combin-and-scatter manager
@@ -2134,13 +2171,14 @@ Application::applyGlobalDistParamDerivImpl(
     workset.transpose_dist_param_deriv = trans;
 
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
       if (nfm != Teuchos::null)
-        nfm->evaluateFields<EvalT>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)
+            ->evaluateFields<EvalT>(workset);
     }
   }
 
@@ -2585,6 +2623,8 @@ Application::evaluateResidual_HessVecProd_xx(
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xx = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xx->domain()->dim());
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xx->assign(0.0);
 
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
 
@@ -2599,11 +2639,11 @@ Application::evaluateResidual_HessVecProd_xx(
     const int numWorksets = disc->getNumWorksets();
 
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
     }
 
     if (dfm != Teuchos::null) {
@@ -2684,6 +2724,8 @@ Application::evaluateResidual_HessVecProd_xp(
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xp = Thyra::createMembers(workset.x_cas_manager->getOverlappedVectorSpace(),Hv_f_xp->domain()->dim());
     workset.hessianWorkset.overlapped_hess_vec_prod_f_xp->assign(0.0);
 
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
 
@@ -2698,11 +2740,11 @@ Application::evaluateResidual_HessVecProd_xp(
     const int numWorksets = disc->getNumWorksets();
 
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
     }
 
     if (dfm != Teuchos::null) {
@@ -2752,7 +2794,7 @@ Application::evaluateResidual_HessVecProd_px(
     int num_cols_p_l1 = params_l1.size();
 
     // Assumes that there is only one element block
-    int deriv_size = PHAL::getDerivativeDimensions<EvalT>(*this, *meshSpecs);
+    int deriv_size = PHAL::getDerivativeDimensions<EvalT>(this, 0);
     TEUCHOS_TEST_FOR_EXCEPTION(
         num_cols_p_l1 > deriv_size,
         std::runtime_error,
@@ -2804,6 +2846,8 @@ Application::evaluateResidual_HessVecProd_px(
     workset.hessianWorkset.hess_vec_prod_f_px = Hv_f_px;
     workset.hessianWorkset.overlapped_hess_vec_prod_f_px->assign(0.0);
 
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
 
@@ -2818,11 +2862,11 @@ Application::evaluateResidual_HessVecProd_px(
     const int numWorksets = disc->getNumWorksets();
 
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
     }
 
     if (dfm != Teuchos::null) {
@@ -2886,7 +2930,7 @@ Application::evaluateResidual_HessVecProd_pp(
     int num_cols_p_l1 = params_l1.size();
 
     // Assumes that there is only one element block
-    int deriv_size = PHAL::getDerivativeDimensions<EvalT>(*this, *meshSpecs);
+    int deriv_size = PHAL::getDerivativeDimensions<EvalT>(this, 0);
     TEUCHOS_TEST_FOR_EXCEPTION(
         num_cols_p_l1 > deriv_size,
         std::runtime_error,
@@ -2961,6 +3005,8 @@ Application::evaluateResidual_HessVecProd_pp(
     workset.hessianWorkset.hess_vec_prod_f_pp = Hv_f_pp;
     workset.hessianWorkset.overlapped_hess_vec_prod_f_pp->assign(0.0);
 
+    const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
     if (dfm != Teuchos::null) {
       loadWorksetNodesetInfo(workset);
 
@@ -2975,11 +3021,11 @@ Application::evaluateResidual_HessVecProd_pp(
     const int numWorksets = disc->getNumWorksets();
 
     for (int ws = 0; ws < numWorksets; ws++) {
-      const std::string evalName = PHAL::evalName<EvalT>("FM");
+      const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);
 
       // FillType template argument used to specialize Sacado
-      fm->evaluateFields<EvalT>(workset);
+      fm[wsPhysIndex[ws]]->evaluateFields<EvalT>(workset);
     }
 
     if (dfm != Teuchos::null) {
@@ -3029,33 +3075,38 @@ Application::evaluateStateFieldManager(
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: State Residual");
   {
-    std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM");
+    std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM",0);
     if (!phxSetup->contain_eval(evalName)) {
-      evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM");
-      phxSetup->insert_eval(evalName);
+      for (int ps = 0; ps < sfm.size(); ++ps) {
+        evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM",ps);
+        phxSetup->insert_eval(evalName);
 
-      std::vector<PHX::index_size_type> derivative_dimensions;
-      derivative_dimensions.push_back(
-          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-              *this, *meshSpecs));
-      sfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
-              derivative_dimensions);
-      setDynamicLayoutSizes<PHAL::AlbanyTraits::Residual>(sfm);
-      sfm->postRegistrationSetup(*phxSetup);
+        std::vector<PHX::index_size_type> derivative_dimensions;
+        derivative_dimensions.push_back(
+            PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+                this, ps));
+        sfm[ps]
+            ->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
+                derivative_dimensions);
+        setDynamicLayoutSizes<PHAL::AlbanyTraits::Residual>(sfm[ps]);
+        sfm[ps]->postRegistrationSetup(*phxSetup);
 
-      // Update phalanx saved/unsaved fields based on field dependencies
-      phxSetup->check_fields(
-          sfm->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
-      phxSetup->update_fields();
+        // Update phalanx saved/unsaved fields based on field dependencies
+        phxSetup->check_fields(
+            sfm[ps]->getFieldTagsForSizing<PHAL::AlbanyTraits::Residual>());
+        phxSetup->update_fields();
 
-      writePhalanxGraph<PHAL::AlbanyTraits::Residual>(sfm, evalName,
-          stateGraphVisDetail);
+        writePhalanxGraph<PHAL::AlbanyTraits::Residual>(sfm[ps], evalName,
+            stateGraphVisDetail);
+      }
     }
   }
 
   Teuchos::RCP<Thyra_Vector> overlapped_f = solMgr->get_overlapped_f();
 
   // Load connectivity map and coordinates
+  const auto& wsPhysIndex  = disc->getWsPhysIndex();
+
   const int numWorksets = disc->getNumWorksets();
 
   // Scatter to the overlapped distribution
@@ -3071,9 +3122,10 @@ Application::evaluateStateFieldManager(
 
   // Perform fill via field manager
   for (int ws = 0; ws < numWorksets; ws++) {
-    const std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>("SFM");
+    const std::string evalName = PHAL::evalName<PHAL::AlbanyTraits::Residual>(
+        "SFM", wsPhysIndex[ws]);
     loadWorksetBucketInfo(workset, ws, evalName);
-    sfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+    sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 }
 

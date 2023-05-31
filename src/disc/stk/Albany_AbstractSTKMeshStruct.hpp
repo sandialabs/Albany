@@ -42,10 +42,14 @@ struct PeriodicBCStruct
 
 struct AbstractSTKMeshStruct : public AbstractMeshStruct
 {
-public:
   virtual ~AbstractSTKMeshStruct() = default;
 
-  std::string type () const { return "STK"; }
+ public:
+  msType
+  meshSpecsType()
+  {
+    return STK_MS;
+  }
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;

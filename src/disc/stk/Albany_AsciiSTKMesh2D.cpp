@@ -289,7 +289,7 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   cullSubsetParts(ssNames, ssPartVec);
-  this->meshSpecs = Teuchos::rcp (
+  this->meshSpecs[0] = Teuchos::rcp (
       new Albany::MeshSpecs (ctd, numDim, nsNames, ssNames,
                              worksetSize, partVec[0]->name(), ebNameToIndex));
 
@@ -417,7 +417,7 @@ void AsciiSTKMesh2D::setBulkData(
           stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
           for (int k = 0; k < 2; k++)
           {
-            stk::mesh::Entity node = rel_elemNodes[this->meshSpecs->ctd.side[j].node[k]];
+            stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[j].node[k]];
             bulkData->declare_relation(side, node, k);
           }
           edgeMap.erase(it);

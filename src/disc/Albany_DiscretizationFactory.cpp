@@ -39,12 +39,12 @@ DiscretizationFactory(
   }
 }
 
-Teuchos::RCP<MeshSpecs>
+Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >
 DiscretizationFactory::createMeshSpecs()
 {
   // First, create the mesh struct
   meshStruct = createMeshStruct(discParams, comm, num_params);
-  return meshStruct->meshSpecs;
+  return meshStruct->getMeshSpecs();
 }
 
 Teuchos::RCP<AbstractMeshStruct>
@@ -177,11 +177,10 @@ DiscretizationFactory::createDiscretization(
   return result;
 }
 
-Teuchos::RCP<MeshSpecs>
-DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh)
-{
-  meshStruct = mesh;
-  return meshStruct->meshSpecs;
+Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >
+DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
+    meshStruct = mesh;
+    return meshStruct->getMeshSpecs();
 }
 
 void
@@ -196,7 +195,7 @@ DiscretizationFactory::setMeshStructFieldData(
         const Teuchos::RCP<StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  meshStruct->setFieldData(comm, sis, meshStruct->meshSpecs->worksetSize, side_set_sis); 
+  meshStruct->setFieldData(comm, sis, meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis); 
 }
 
 void
@@ -212,7 +211,7 @@ setMeshStructBulkData(
         const Teuchos::RCP<StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  meshStruct->setBulkData(comm, sis, meshStruct->meshSpecs->worksetSize, side_set_sis);
+  meshStruct->setBulkData(comm, sis, meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis);
 }
 
 Teuchos::RCP<AbstractDiscretization>
@@ -234,46 +233,51 @@ createDiscretizationFromInternalMeshStruct(
   if (!piroParams.is_null() && !rigidBodyModes.is_null())
       rigidBodyModes->setPiroPL(piroParams);
 
-  if (meshStruct->type()=="STK") {
-    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+  switch (meshStruct->meshSpecsType()) {
+    case AbstractMeshStruct::STK_MS:
     {
+      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
       auto disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
       return disc;
     }
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-        "Error! Unknown/unhandled mesh type: " + meshStruct->type() + "\n");
   }
-  
   return Teuchos::null;
 }
 
 void
-DiscretizationFactory::
-setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
-             const Teuchos::RCP<Albany::StateInfoStruct>& sis)
-{
-  if (meshStruct->type()=="STK") {
-    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-    auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
-    stk_disc->setFieldData(sis);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-        "Error! Unknown/unhandled mesh type: " + meshStruct->type() + "\n");
+DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
+                                    const Teuchos::RCP<Albany::StateInfoStruct>& sis) {
+
+  switch (meshStruct->meshSpecsType()) {
+    case AbstractMeshStruct::STK_MS:
+    {
+      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+      // if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
+      //   auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
+      //   stk_disc->setFieldData(req, sis);
+      // } else
+      {
+        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+        stk_disc->setFieldData(sis);
+      }
+      break;
+    }
   }
 }
 
 void
-DiscretizationFactory::
-completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc)
-{
-  if (meshStruct->type()=="STK") {
-    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-    auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
-    stk_disc->updateMesh();
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-        "Error! Unknown/unhandled mesh type: " + meshStruct->type() + "\n");
+DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc) {
+
+  switch (meshStruct->meshSpecsType()) {
+    case AbstractMeshStruct::STK_MS:
+    {
+      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+      {
+        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+        stk_disc->updateMesh();
+      }
+      break;
+    }
   }
 }
 

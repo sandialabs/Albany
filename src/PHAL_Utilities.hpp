@@ -28,9 +28,14 @@ namespace PHAL {
 
 //! Get derivative dimensions for Phalanx fields.
 template<typename EvalT>
-int getDerivativeDimensions (const Albany::Application& app,
-                             const Albany::MeshSpecs& ms,
+int getDerivativeDimensions (const Albany::Application* app,
+                             const Albany::MeshSpecs* ms,
                              bool responseEvaluation = false);
+//! Get derivative dimensions for Phalanx fields. Convenience wrapper. Can call
+//! this once app has the discretization.
+template<typename EvalT>
+int getDerivativeDimensions (const Albany::Application* app,
+                             const int element_block_idx);
 
 template<class ViewType>
 int getDerivativeDimensionsFromView (const ViewType &a) {
@@ -258,11 +263,11 @@ private:
 
 //! Return field manager name and evaluation type string
 template <typename EvalT>
-inline std::string evalName(const std::string& fmName) {
+inline std::string evalName(const std::string& fmName, const int& ps) {
   std::string evalName = PHX::print<EvalT>();
   evalName.erase(evalName.begin());
   evalName.pop_back();
-  return fmName + evalName;
+  return fmName + std::to_string(ps) + evalName;
 }
 
 } // namespace PHAL

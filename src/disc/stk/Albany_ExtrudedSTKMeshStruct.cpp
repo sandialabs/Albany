@@ -117,7 +117,7 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   sideSetMeshStructs["basalside"] = basalMeshStruct;
 
-  const auto& basalMeshSpec = basalMeshStruct->meshSpecs;
+  const auto& basalMeshSpec = basalMeshStruct->getMeshSpecs()[0];
   std::string elem2d_name(basalMeshSpec->ctd.base->name);
   std::string tria = shards::getCellTopologyData<shards::Triangle<3> >()->name;
   std::string quad = shards::getCellTopologyData<shards::Quadrilateral<4> >()->name;
@@ -173,7 +173,8 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
-  this->meshSpecs = Teuchos::rcp(new MeshSpecs(ctd, numDim, nsNames, ssNames, worksetSize, ebn, ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecs(ctd, numDim, nsNames, ssNames, worksetSize, 
+     ebn, ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {
@@ -303,10 +304,10 @@ void ExtrudedSTKMeshStruct::setBulkData(
       Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));
 
   // Shards has both Hexa and Wedge with bot and top in the last two side positions
-  this->global_cell_layers_data->top_side_pos = this->meshSpecs->ctd.side_count - 1;
-  this->global_cell_layers_data->bot_side_pos = this->meshSpecs->ctd.side_count - 2;
-  this->local_cell_layers_data->top_side_pos = this->meshSpecs->ctd.side_count - 1;
-  this->local_cell_layers_data->bot_side_pos = this->meshSpecs->ctd.side_count - 2;
+  this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+  this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+  this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+  this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
 
   auto& vec_states = fieldContainer->getMeshVectorStates();
   auto& int_states = fieldContainer->getMeshScalarIntegerStates();
@@ -462,7 +463,7 @@ void ExtrudedSTKMeshStruct::setBulkData(
 
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
     for (int j = 0; j < numBasalSidePoints; j++) {
-      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs->ctd.side[basalSideLID].node[j]];
+      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[basalSideLID].node[j]];
       bulkData->declare_relation(side, node, j);
     }
   }
@@ -485,7 +486,7 @@ void ExtrudedSTKMeshStruct::setBulkData(
 
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
     for (int j = 0; j < numBasalSidePoints; j++) {
-      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs->ctd.side[upperSideLID].node[j]];
+      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[upperSideLID].node[j]];
       bulkData->declare_relation(side, node, j);
     }
   }
@@ -535,7 +536,7 @@ void ExtrudedSTKMeshStruct::setBulkData(
 
     stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
     for (int j = 0; j < 4; j++) {
-      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs->ctd.side[sideLID].node[j]];
+      stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[sideLID].node[j]];
       bulkData->declare_relation(side, node, j);
       bulkData->change_entity_parts(node, singlePartVecLateral);
     }

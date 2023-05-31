@@ -1056,8 +1056,8 @@ void
       const double   beta,
       const double   omega);
 
-  Teuchos::RCP<MeshSpecs>
-  getMeshSpecs() const
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>>
+  getEnrichedMeshSpecs() const
   {
     return meshSpecs;
   }
@@ -1162,7 +1162,7 @@ void
   Teuchos::RCP<DiscretizationFactory> discFactory;
 
   //! mesh specs
-  Teuchos::RCP<MeshSpecs> meshSpecs;
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs;
 
   //! Problem class
   Teuchos::RCP<AbstractProblem> problem;
@@ -1186,16 +1186,16 @@ void
   Teuchos::Array<Teuchos::RCP<AbstractResponseFunction>> responses;
 
   //! Phalanx Field Manager for volumetric fills
-  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm;
+  Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> fm;
 
   //! Phalanx Field Manager for Dirichlet Conditions
   Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> dfm;
 
   //! Phalanx Field Manager for Neumann Conditions
-  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> nfm;
+  Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> nfm;
 
   //! Phalanx Field Manager for states
-  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> sfm;
+  Teuchos::Array<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
 
   //! Data for Physics-Based Preconditioners
   bool                                 physicsBasedPreconditioner;

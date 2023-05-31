@@ -26,7 +26,7 @@ AbstractProblem(
   rigidBodyModes(Teuchos::rcp(new RigidBodyModes()))
 {
 
- /*
+ /* 
   * Set the number of time derivatives. Semantics are to set the number of time derivatives:
   * x = 0, xdot = 1, xdotdot = 2
   * using the Discretization parameter "Number Of Time Derivatives" if this is specified, or if not
@@ -81,13 +81,13 @@ AbstractProblem::setNumEquations(const int neq_)
 }
 
 // Get the solution method type name
-SolutionMethodType
+SolutionMethodType 
 AbstractProblem::getSolutionMethod()
 {
     return SolutionMethodName;
 }
 
-Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
 AbstractProblem::getFieldManager()
 { return fm; }
 
@@ -95,7 +95,7 @@ Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 AbstractProblem::getDirichletFieldManager()
 { return dfm; }
 
-Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
 AbstractProblem::getNeumannFieldManager()
 { return nfm; }
 

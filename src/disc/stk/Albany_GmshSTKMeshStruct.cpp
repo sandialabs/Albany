@@ -121,8 +121,8 @@ GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
   cullSubsetParts(ssNames, ssPartVec);
-  this->meshSpecs = Teuchos::rcp (
-      new MeshSpecs (ctd, numDim, nsNames, ssNames,
+  this->meshSpecs[0] = Teuchos::rcp (
+      new Albany::MeshSpecs (ctd, numDim, nsNames, ssNames,
                                    worksetSize, partVec[0]->name(),
                                    ebNameToIndex));
 

@@ -42,9 +42,9 @@ class DiscretizationFactory {
       return meshStruct;
     }
 
-    Teuchos::RCP<MeshSpecs> createMeshSpecs();
+    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> createMeshSpecs();
 
-    Teuchos::RCP<MeshSpecs> createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh);
+    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh);
 
     Teuchos::RCP<AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
