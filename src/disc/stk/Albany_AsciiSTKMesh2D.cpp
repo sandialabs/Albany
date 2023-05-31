@@ -32,15 +32,11 @@
 
 #include "Albany_Utils.hpp"
 
-namespace Albany
-{
-
-AsciiSTKMesh2D::
-AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                const Teuchos::RCP<const Teuchos_Comm>& comm,
-                const int numParams)
- : GenericSTKMeshStruct (params, 2, numParams)
- , periodic             (false)
+Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                        const Teuchos::RCP<const Teuchos_Comm>& commT,
+					const int numParams) :
+  GenericSTKMeshStruct (params, 2, numParams),
+  periodic             (false)
 {
   NumElemNodes = NumNodes = NumElems = NumBdEdges = 0;
 
@@ -49,7 +45,7 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   std::string shape, word;
   int number;
   stk::topology etopology;
-  if (comm->getRank() == 0)
+  if (commT->getRank() == 0)
   {
     std::ifstream ifile;
 
@@ -170,9 +166,9 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
   std::string ebn = "Element Block 0";
-  if (comm->getSize() > 0){ // running in parallel, need to exchange the topology with PE 0
+  if (commT->getSize() > 0){ // running in parallel, need to exchange the topology with PE 0
      int enum_to_int = static_cast<int>(etopology);
-     Teuchos::broadcast(*comm,0,1,&enum_to_int);
+     Teuchos::broadcast(*commT,0,1,&enum_to_int);
      etopology = static_cast<stk::topology::topology_t>(enum_to_int);
   }
   partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
@@ -211,12 +207,12 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Broadcasting the tags
   int numBdNodeTags = bdNodeTags.size();
-  Teuchos::broadcast<LO,LO>(*comm, 0, &numBdNodeTags);
+  Teuchos::broadcast<LO,LO>(*commT, 0, &numBdNodeTags);
   std::vector<int> bdNodeTagsArray(numBdNodeTags);
   std::set<int>::iterator it=bdNodeTags.begin();
   for (int k=0; it!=bdNodeTags.end(); ++it,++k)
     bdNodeTagsArray[k] = *it;
-  Teuchos::broadcast<LO,LO>(*comm, 0, numBdNodeTags, bdNodeTagsArray.data());
+  Teuchos::broadcast<LO,LO>(*commT, 0, numBdNodeTags, bdNodeTagsArray.data());
 
   // Adding boundary nodesets and sidesets separating different labels
   for (int k=0; k<numBdNodeTags; ++k)
@@ -241,12 +237,12 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Broadcasting the tags
   int numBdEdgeTags = bdEdgeTags.size();
-  Teuchos::broadcast<LO,LO>(*comm, 0, &numBdEdgeTags);
+  Teuchos::broadcast<LO,LO>(*commT, 0, &numBdEdgeTags);
   std::vector<int> bdEdgeTagsArray(numBdEdgeTags);
   it=bdEdgeTags.begin();
   for (int k=0; it!=bdEdgeTags.end(); ++it,++k)
     bdEdgeTagsArray[k] = *it;
-  Teuchos::broadcast<LO,LO>(*comm, 0, numBdEdgeTags, bdEdgeTagsArray.data());
+  Teuchos::broadcast<LO,LO>(*commT, 0, numBdEdgeTags, bdEdgeTagsArray.data());
 
   // Adding boundary nodesets and sidesets separating different labels
   for (int k=0; k<numBdEdgeTags; ++k)
@@ -271,7 +267,7 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   stk::io::put_io_part_attribute(metaData->universal_part());
 #endif
 
-  Teuchos::broadcast<LO,LO>(*comm, 0, &NumElemNodes);
+  Teuchos::broadcast<LO,LO>(*commT, 0, &NumElemNodes);
   if(NumElemNodes == 3) {
     stk::mesh::set_topology(*partVec[0], stk::topology::TRI_3_2D);
   }
@@ -282,7 +278,7 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   stk::mesh::set_topology(*ssPartVec[ssn], stk::topology::LINE_2);
   numDim = 2;
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
-  Teuchos::broadcast<LO,LO>(*comm, 0, &NumElems);
+  Teuchos::broadcast<LO,LO>(*commT, 0, &NumElems);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
   
 
@@ -291,40 +287,42 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
       new Albany::MeshSpecs (ctd, numDim, nsNames, ssNames,
-                             worksetSize, partVec[0]->name(), ebNameToIndex));
+                                   worksetSize, partVec[0]->name(), ebNameToIndex));
 
   // Create a mesh specs object for EACH side set
-  this->initializeSideSetMeshSpecs(comm);
+  this->initializeSideSetMeshSpecs(commT);
 
   // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
+  this->initializeSideSetMeshStructs(commT);
 }
 
-void AsciiSTKMesh2D::setFieldData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& sis,
+Albany::AsciiSTKMesh2D::~AsciiSTKMesh2D() {}
+
+void Albany::AsciiSTKMesh2D::setFieldData(
+    const Teuchos::RCP<const Teuchos_Comm>& commT,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */)
 {
-  this->SetupFieldData(comm, sis, worksetSize);
+  this->SetupFieldData(commT, sis, worksetSize);
 }
 
-void AsciiSTKMesh2D::setBulkData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& /* sis */,
+void Albany::AsciiSTKMesh2D::setBulkData(
+    const Teuchos::RCP<const Teuchos_Comm>& commT,
+    const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
     const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
 {
   metaData->commit();
 
   bulkData->modification_begin(); // Begin modifying the mesh
 
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-  out->setProcRankAndSize(comm->getRank(), comm->getSize());
+  out->setProcRankAndSize(commT->getRank(), commT->getSize());
   out->setOutputToRootOnly(0);
 
   // Only proc 0 has loaded the file
-  if (comm->getRank()==0)
+  if (commT->getRank()==0)
   {
     stk::mesh::PartVector singlePartVec(1);
     unsigned int ebNo = 0; //element block #???
@@ -365,7 +363,7 @@ void AsciiSTKMesh2D::setBulkData(
       if(proc_rank_field){
         int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
         if(p_rank)
-          p_rank[0] = comm->getRank();
+          p_rank[0] = commT->getRank();
       }
     }
     *out << "done!\n";
@@ -436,23 +434,21 @@ void AsciiSTKMesh2D::setBulkData(
   params->set<bool>("Rebalance Mesh", true);
 
   // Rebalance the mesh before starting the simulation if indicated
-  rebalanceInitialMeshT(comm);
+  rebalanceInitialMeshT(commT);
 #endif
 
   // Loading required input fields from file
-  this->loadRequiredInputFields (comm);
+  this->loadRequiredInputFields (commT);
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetFieldAndBulkData(comm, side_set_sis, worksetSize);
+  this->setSideSetFieldAndBulkData(commT, side_set_sis, worksetSize);
 
   fieldAndBulkDataSet = true;
 }
 
-Teuchos::RCP<const Teuchos::ParameterList>
-AsciiSTKMesh2D::getValidDiscretizationParameters() const
-{
-  auto validPL = this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
-
+Teuchos::RCP<const Teuchos::ParameterList> Albany::AsciiSTKMesh2D::getValidDiscretizationParameters() const {
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+      this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
   validPL->set<std::string>("Ascii Input Mesh File Name", "greenland.msh",
       "Name of the file containing the 2D mesh, with list of coordinates, elements' connectivity and boundary edges' connectivity");
   validPL->set<bool>("Enforce Linear Node Ids", false,
@@ -460,5 +456,3 @@ AsciiSTKMesh2D::getValidDiscretizationParameters() const
 
   return validPL;
 }
-
-} // namespace Albany

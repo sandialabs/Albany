@@ -19,54 +19,54 @@
 
 namespace Albany {
 
-class IossSTKMeshStruct : public GenericSTKMeshStruct
-{
-public:
+  class IossSTKMeshStruct : public GenericSTKMeshStruct {
 
-  IossSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                     const Teuchos::RCP<const Teuchos_Comm>& commT, const int numParams);
+    public:
 
-  ~IossSTKMeshStruct();
+    IossSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                       const Teuchos::RCP<const Teuchos_Comm>& commT, const int numParams);
 
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                     const unsigned int worksetSize,
-                     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+    ~IossSTKMeshStruct();
 
-  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                    const unsigned int worksetSize,
-                    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                       const unsigned int worksetSize,
+                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-  int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
-  double getSolutionFieldHistoryStamp(int step) const;
-  void loadSolutionFieldHistory(int step);
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                      const unsigned int worksetSize,
+                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-  //! Flag if solution has a restart values -- used in Init Cond
-  bool hasRestartSolution() const {return m_hasRestartSolution;}
+    int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
+    double getSolutionFieldHistoryStamp(int step) const;
+    void loadSolutionFieldHistory(int step);
 
-  //! If restarting, convenience function to return restart data time
-  double restartDataTime() const {return m_restartDataTime;}
+    //! Flag if solution has a restart values -- used in Init Cond
+    bool hasRestartSolution() const {return m_hasRestartSolution;}
 
-private:
+    //! If restarting, convenience function to return restart data time
+    double restartDataTime() const {return m_restartDataTime;}
 
-  Ioss::Init::Initializer ioInit;
+    private:
 
-  void loadOrSetCoordinates3d (int index);
+    Ioss::Init::Initializer ioInit;
 
-  Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
+    void loadOrSetCoordinates3d (int index);
 
-  Teuchos::RCP<Teuchos::FancyOStream> out;
-  bool usePamgen;
-  bool useSerialMesh;
-  bool periodic;
-  Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
+    Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
-  bool m_hasRestartSolution;
-  double m_restartDataTime;
-  int m_solutionFieldHistoryDepth;
+   Teuchos::RCP<Teuchos::FancyOStream> out;
+    bool usePamgen;
+    bool useSerialMesh;
+    bool periodic;
+    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
-};
+    bool m_hasRestartSolution;
+    double m_restartDataTime;
+    int m_solutionFieldHistoryDepth;
+
+  };
 
 } // Namespace Albany
 

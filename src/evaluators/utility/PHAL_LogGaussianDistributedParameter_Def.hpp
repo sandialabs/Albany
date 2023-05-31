@@ -4,15 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_Layouts.hpp"
-
 namespace PHAL {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 LogGaussianDistributedParameter<EvalT, Traits>::
-LogGaussianDistributedParameter (const Teuchos::ParameterList& p,
-                                 const Teuchos::RCP<Albany::Layouts>& dl)
+LogGaussianDistributedParameter (const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   std::string log_gaussian_field_name   = p.get<std::string>("Log Gaussian Name");
   std::string gaussian_field_name       = p.get<std::string>("Gaussian Name");

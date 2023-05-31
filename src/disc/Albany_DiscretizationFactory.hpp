@@ -35,57 +35,57 @@ class DiscretizationFactory {
     //! Destructor
     ~DiscretizationFactory() {}
 
-    static Teuchos::RCP<AbstractMeshStruct>
+    static Teuchos::RCP<Albany::AbstractMeshStruct>
     createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
                       Teuchos::RCP<const Teuchos_Comm> comm, const int numParams);
 
-    Teuchos::RCP<AbstractMeshStruct> getMeshStruct() {
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() {
       return meshStruct;
     }
 
-    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> createMeshSpecs();
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> > createMeshSpecs();
 
-    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh);
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> > createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh);
 
-    Teuchos::RCP<AbstractDiscretization>
+    Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
-                         const Teuchos::RCP<StateInfoStruct>& sis,
-                         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null);
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                         const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
-    Teuchos::RCP<AbstractDiscretization>
+    Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
                          const std::map<int,std::vector<std::string> >& sideSetEquations,
-                         const Teuchos::RCP<StateInfoStruct>& sis,
-                         const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null);
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                         const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                         const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
     void
     setMeshStructFieldData(
-      const Teuchos::RCP<StateInfoStruct>& sis);
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
    void
     setMeshStructFieldData(
-      const Teuchos::RCP<StateInfoStruct>& sis,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis);
 
     void
     setMeshStructBulkData(
-      const Teuchos::RCP<StateInfoStruct>& sis);
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
    void
     setMeshStructBulkData(
-      const Teuchos::RCP<StateInfoStruct>& sis,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis);
 
-    Teuchos::RCP<AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
+    Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
       const int neq,
-      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes);
+      const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
 
-    Teuchos::RCP<AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
+    Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
       const int neq,
       const std::map<int,std::vector<std::string> >& sideSetEquations,
-      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes);
+      const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
     
     /* This function overwrite previous discretization parameter list */
     void
@@ -100,11 +100,11 @@ class DiscretizationFactory {
     DiscretizationFactory& operator=(const DiscretizationFactory&);
 
     const std::map<int,std::vector<std::string> > empty_side_set_equations;
-    const std::map<std::string,Teuchos::RCP<StateInfoStruct> > empty_side_set_sis;
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > empty_side_set_sis;
 
     void
     setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
-                                        const Teuchos::RCP<StateInfoStruct>& sis);
+                                        const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
     void completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc);
 
@@ -116,7 +116,7 @@ class DiscretizationFactory {
     //! Parameter list specifying solver parameters
     Teuchos::RCP<Teuchos::ParameterList> piroParams;
 
-    Teuchos::RCP<const Teuchos_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
     //The following are for Aeras hydrostatic problems
     int numLevels;
@@ -125,7 +125,7 @@ class DiscretizationFactory {
     //Flag for explicit time-integration scheme, used in Aeras
     bool explicit_scheme;
 
-    Teuchos::RCP<AbstractMeshStruct> meshStruct;
+    Teuchos::RCP<Albany::AbstractMeshStruct> meshStruct;
 
     //Number of parameters
     int num_params = 0;

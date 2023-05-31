@@ -18,57 +18,59 @@
 
 namespace Albany {
 
-/*!
- * \brief Factory for creating response functions from a parameter list
- */
-class ResponseFactory
-{
-public:
+  /*!
+   * \brief Factory for creating response functions from a parameter list
+   */
+  class ResponseFactory {
+  public:
+  
+    //! Default constructor
+    ResponseFactory(
+      const Teuchos::RCP<Albany::Application>& application,
+      const Teuchos::RCP<Albany::AbstractProblem>& problem,
+      const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >&  ms,
+      const Teuchos::RCP<Albany::StateManager>& state_manager) :
+      app(application), prob(problem), meshSpecs(ms), stateMgr(state_manager) 
+      {};
 
-  //! Default constructor
-  ResponseFactory(const Teuchos::RCP<Application>& application,
-                  const Teuchos::RCP<AbstractProblem>& problem,
-                  const Teuchos::RCP<const MeshSpecs>&  ms,
-                  const Teuchos::RCP<StateManager>& state_manager)
-   : app(application)
-   , prob(problem)
-   , meshSpecs(ms)
-   , stateMgr(state_manager) 
-  {
-    // Nothing to do here
-  }
-  //! Destructor
-  virtual ~ResponseFactory() = default;
+    //! Destructor
+    virtual ~ResponseFactory() {};
 
-  // No copies
-  ResponseFactory(const ResponseFactory&) = delete;
-  ResponseFactory& operator=(const ResponseFactory&) = delete;
+    //! Create a set of response functions
+    virtual Teuchos::Array< Teuchos::RCP<AbstractResponseFunction> >
+    createResponseFunctions(Teuchos::ParameterList& responsesList) const;
 
-  //! Create a set of response functions
-  virtual Teuchos::Array< Teuchos::RCP<AbstractResponseFunction> >
-  createResponseFunctions(Teuchos::ParameterList& responsesList) const;
 
-protected:
+  private:
 
-  //! Application for field manager response functions
-  Teuchos::RCP<Application> app;
+    //! Private to prohibit copying
+    ResponseFactory(const ResponseFactory&);
+    
+    //! Private to prohibit copying
+    ResponseFactory& operator=(const ResponseFactory&);
 
-  //! Problem class for field manager response functions
-  Teuchos::RCP<AbstractProblem> prob;
+  protected:
 
-  //! Meshspecs for field manager response functions
-  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>>  meshSpecs;
+    //! Application for field manager response functions
+    Teuchos::RCP<Albany::Application> app;
 
-  //! State manager for field manager response functions
-  Teuchos::RCP<StateManager> stateMgr;
+    //! Problem class for field manager response functions
+    Teuchos::RCP<Albany::AbstractProblem> prob;
 
-  //! Create individual response function
-  void createResponseFunction(
-    const std::string& name,
-    Teuchos::ParameterList& responseParams,
-    Teuchos::Array< Teuchos::RCP<AbstractResponseFunction> >& responses) const;
-};
+    //! Meshspecs for field manager response functions
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs;
 
-} // namespace Albany
+    //! State manager for field manager response functions
+    Teuchos::RCP<Albany::StateManager> stateMgr;
+
+    //! Create individual response function
+    void createResponseFunction(
+      const std::string& name,
+      Teuchos::ParameterList& responseParams,
+      Teuchos::Array< Teuchos::RCP<AbstractResponseFunction> >& responses) const;
+
+  };
+
+}
 
 #endif // ALBANY_SCALAR_RESPONSE_FUNCTION_HPP

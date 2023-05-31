@@ -10,3 +10,4 @@
 #include "PHAL_LogGaussianDistributedParameter_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::LogGaussianDistributedParameter)
+

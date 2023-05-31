@@ -6,8 +6,8 @@
 
 // IK, 9/12/14: no Epetra!
 
-#ifndef ALBANY_ABSTRACT_PROBLEM_HPP
-#define ALBANY_ABSTRACT_PROBLEM_HPP
+#ifndef ALBANY_ABSTRACTPROBLEM_HPP
+#define ALBANY_ABSTRACTPROBLEM_HPP
 
 #include "Albany_NullSpaceUtils.hpp"  // has defn of struct that holds null space info for ML
 #include "Albany_StateInfoStruct.hpp"  // contains MeshSpecsStuct
@@ -79,15 +79,16 @@ class AbstractProblem {
   //! Build the PDE instantiations, boundary conditions, and initial solution
   //! And construct the evaluators and field managers
   virtual void
-  buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs,
-                StateManager& stateMgr) = 0;
+  buildProblem(
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
+      StateManager& stateMgr) = 0;
 
   // Build evaluators
   virtual Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
   buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const MeshSpecs& meshSpecs, StateManager& stateMgr,
-      FieldManagerChoice fmchoice,
+      const Albany::MeshSpecs& meshSpecs, Albany::StateManager& stateMgr,
+      Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList) = 0;
 
   Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>>
@@ -107,38 +108,38 @@ class AbstractProblem {
     return nodeSetIDs_;
   }
 
-  Teuchos::RCP<ScalarParameterAccessorsMap>
+  Teuchos::RCP<Albany::ScalarParameterAccessorsMap>
   getAccessors() {
     if (accessors_all.is_null()) {
       accessors_all =
-        Teuchos::rcp(new ScalarParameterAccessorsMap());
+        Teuchos::rcp(new Albany::ScalarParameterAccessorsMap());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::Residual>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::Residual>() =
-        Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::Residual>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Residual>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::Jacobian>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::Jacobian>() =
-        Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::Jacobian>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Jacobian>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::Tangent>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::Tangent>() =
-        Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::Tangent>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::Tangent>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::DistParamDeriv>() =
-        Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::DistParamDeriv>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::DistParamDeriv>());
     }
     if (accessors_all->at<PHAL::AlbanyTraits::HessianVec>().is_null()) {
       accessors_all->at<PHAL::AlbanyTraits::HessianVec>() =
-        Teuchos::rcp(new ScalarParameterAccessors<PHAL::AlbanyTraits::HessianVec>());
+        Teuchos::rcp(new Albany::ScalarParameterAccessors<PHAL::AlbanyTraits::HessianVec>());
     }
     return accessors_all;
   }
 
 
   //! Return the Null space object used to communicate with MP
-  const Teuchos::RCP<RigidBodyModes>&
+  const Teuchos::RCP<Albany::RigidBodyModes>&
   getNullSpace() {
     return rigidBodyModes;
   }
@@ -195,7 +196,10 @@ class AbstractProblem {
   Teuchos::RCP<ParamLib> paramLib;
 
   //! Parameter accessors
-  Teuchos::RCP<ScalarParameterAccessorsMap> accessors_all;
+  Teuchos::RCP<Albany::ScalarParameterAccessorsMap> accessors_all;
+
+  //! Distributed parameter library
+  // Teuchos::RCP<DistributedParameterLibrary> distParamLib;
 
   //! Field manager for Volumetric Fill
   Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> fm;
@@ -207,7 +211,7 @@ class AbstractProblem {
   Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> nfm;
 
   //! Null space object used to communicate with MP
-  Teuchos::RCP<RigidBodyModes> rigidBodyModes;
+  Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
 
  private:
   //! Private to prohibit default or copy constructor
@@ -225,9 +229,9 @@ public:
   ConstructEvaluatorsOp(
       ProblemT& prob_,
       PHX::FieldManager<PHAL::AlbanyTraits>& fm_,
-      const MeshSpecs& meshSpecs_,
-      StateManager& stateMgr_,
-      FieldManagerChoice fmchoice_ = BUILD_RESID_FM,
+      const Albany::MeshSpecs& meshSpecs_,
+      Albany::StateManager& stateMgr_,
+      Albany::FieldManagerChoice fmchoice_ = BUILD_RESID_FM,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList_ = Teuchos::null)
       : prob(prob_),
         fm(fm_),
@@ -250,9 +254,9 @@ public:
 private:
   ProblemT& prob;
   PHX::FieldManager<PHAL::AlbanyTraits>& fm;
-  const MeshSpecs& meshSpecs;
-  StateManager& stateMgr;
-  FieldManagerChoice fmchoice;
+  const Albany::MeshSpecs& meshSpecs;
+  Albany::StateManager& stateMgr;
+  Albany::FieldManagerChoice fmchoice;
   Teuchos::RCP<Teuchos::ParameterList> responseList;
 
 public:
@@ -284,4 +288,4 @@ private:
 
 } // namespace Albany
 
-#endif  // ALBANY_ABSTRACT_PROBLEM_HPP
+#endif  // ALBANY_ABSTRACTPROBLEM_HPP

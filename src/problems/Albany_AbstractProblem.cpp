@@ -3,16 +3,12 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #include "Albany_AbstractProblem.hpp"
 #include "NOX_StatusTest_Generic.H"
 
-namespace Albany
-{
 // Generic implementations that can be used by derived problems
 
-AbstractProblem::
-AbstractProblem(
+Albany::AbstractProblem::AbstractProblem(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
   const Teuchos::RCP<ParamLib>& paramLib_,
   //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
@@ -23,7 +19,8 @@ AbstractProblem(
   SolutionMethodName(Unknown),
   params(params_),
   paramLib(paramLib_),
-  rigidBodyModes(Teuchos::rcp(new RigidBodyModes()))
+  //distParamLib(distParamLib_),
+  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes()))
 {
 
  /* 
@@ -44,23 +41,29 @@ AbstractProblem(
   {
     number_of_time_deriv = 0;
     SolutionMethodName = Steady;
-  } else if(solutionMethod == "Continuation") {
+  }
+  else if(solutionMethod == "Continuation")
+  {
     number_of_time_deriv = 0;
     SolutionMethodName = Continuation;
-  } else if(solutionMethod == "Transient") {
+  }
+  else if(solutionMethod == "Transient")
+  {
     number_of_time_deriv = 1;
     SolutionMethodName = Transient;
-  } else
+  }
+  else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
             << "Continuation, not : " << solutionMethod);
 
-  // Set the number in the Problem PL
-  params->set<int>("Number Of Time Derivatives", number_of_time_deriv);
+   // Set the number in the Problem PL
+   params->set<int>("Number Of Time Derivatives", number_of_time_deriv);
+
 }
 
 unsigned int
-AbstractProblem::numEquations() const
+Albany::AbstractProblem::numEquations() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION( neq <= 0,
                     Teuchos::Exceptions::InvalidParameter,
@@ -69,40 +72,42 @@ AbstractProblem::numEquations() const
 }
 
 const std::map<int,std::vector<std::string> >&
-AbstractProblem::getSideSetEquations() const
+Albany::AbstractProblem::getSideSetEquations() const
 {
   return sideSetEquations;
 }
 
 void
-AbstractProblem::setNumEquations(const int neq_)
+Albany::AbstractProblem::setNumEquations(const int neq_)
 {
   neq = neq_;
 }
 
+
 // Get the solution method type name
-SolutionMethodType 
-AbstractProblem::getSolutionMethod()
+Albany::SolutionMethodType 
+Albany::AbstractProblem::getSolutionMethod()
 {
     return SolutionMethodName;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
-AbstractProblem::getFieldManager()
+Albany::AbstractProblem::getFieldManager()
 { return fm; }
 
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
-AbstractProblem::getDirichletFieldManager()
+Albany::AbstractProblem::getDirichletFieldManager()
 { return dfm; }
 
 Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
-AbstractProblem::getNeumannFieldManager()
+Albany::AbstractProblem::getNeumannFieldManager()
 { return nfm; }
 
 Teuchos::RCP<Teuchos::ParameterList>
-AbstractProblem::getGenericProblemParams(std::string listname) const
+Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 {
-  auto validPL = Teuchos::rcp(new Teuchos::ParameterList(listname));;
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+     Teuchos::rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Name", "", "String to designate Problem Class");
   validPL->set<int>("Number of Spatial Processors", -1, "Number of spatial processors in multi-level parallelism");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
@@ -156,5 +161,3 @@ AbstractProblem::getGenericProblemParams(std::string listname) const
 
   return validPL;
 }
-
-} // namespace Albany
