@@ -47,7 +47,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   dt = p.get<Teuchos::RCP<double> >("Time Step Ptr");
 
-  Teuchos::RCP<const Albany::MeshSpecs> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecs> >("Mesh Specs Struct");
+  Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
 
   sideSetName  = p.get<std::string> ("Side Set Name");
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,

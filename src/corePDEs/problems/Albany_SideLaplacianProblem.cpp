@@ -43,7 +43,7 @@ SideLaplacian::~SideLaplacian()
   // Nothing to be done here
 }
 
-void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
                                   Albany::StateManager& stateMgr)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -77,7 +77,7 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
                                 "Error! Either 'Side Set Name' (" << sideSetName << ") is wrong or something went wrong while " <<
                                 "building the side mesh specs. (Did you forget to specify side set discretizations in the input file?)\n");
 
-    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
+    const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
 
     // Building also side structures
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
@@ -120,7 +120,7 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 SideLaplacian::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                             const Albany::MeshSpecs& meshSpecs,
+                             const Albany::MeshSpecsStruct& meshSpecs,
                              Albany::StateManager& stateMgr,
                              Albany::FieldManagerChoice fmchoice,
                              const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -133,7 +133,7 @@ SideLaplacian::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   return *op.tags;
 }
 
-void SideLaplacian::constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
+void SideLaplacian::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames = {"DUMMY", "U"};

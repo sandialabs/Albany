@@ -17,7 +17,7 @@ namespace Albany {
 class AbstractProblem;
 class Application;
 class StateManager;
-struct MeshSpecs;
+struct MeshSpecsStruct;
 
 /*!
  * \brief Response function representing the average of the solution values
@@ -29,7 +29,7 @@ public:
   FieldManagerScalarResponseFunction(
     const Teuchos::RCP<Application>& application,
     const Teuchos::RCP<AbstractProblem>& problem,
-    const Teuchos::RCP<MeshSpecs>&  ms,
+    const Teuchos::RCP<MeshSpecsStruct>&  ms,
     const Teuchos::RCP<StateManager>& stateMgr,
     Teuchos::ParameterList& responseParams);
 
@@ -142,7 +142,7 @@ protected:
   FieldManagerScalarResponseFunction(
     const Teuchos::RCP<Application>& application,
     const Teuchos::RCP<AbstractProblem>& problem,
-    const Teuchos::RCP<MeshSpecs>&  ms,
+    const Teuchos::RCP<MeshSpecsStruct>&  ms,
     const Teuchos::RCP<StateManager>& stateMgr);
 
   //! Setup method for derived classes
@@ -160,7 +160,7 @@ protected:
   Teuchos::RCP<AbstractProblem> problem;
 
   //! Mesh specs
-  Teuchos::RCP<MeshSpecs> meshSpecs;
+  Teuchos::RCP<MeshSpecsStruct> meshSpecs;
 
   //! State manager
   Teuchos::RCP<StateManager> stateMgr;

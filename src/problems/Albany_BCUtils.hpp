@@ -220,7 +220,7 @@ class BCUtils
 
   Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
   constructBCEvaluators(
-      const Teuchos::RCP<Albany::MeshSpecs>&  meshSpecs,
+      const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
       const std::vector<std::string>&               bcNames,
       const Teuchos::ArrayRCP<std::string>&         dof_names,
       bool                                          isVectorField,
@@ -234,7 +234,7 @@ class BCUtils
 
   Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
   constructBCEvaluators(
-      const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs,
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
       const std::vector<std::string>&              bcNames,
       const Teuchos::ArrayRCP<std::string>&        dof_names,
       bool                                         isVectorField,
@@ -266,7 +266,7 @@ class BCUtils
   buildEvaluatorsList(
       std::map<std::string, Teuchos::RCP<Teuchos::ParameterList>>&
                                                     evaluators_to_build,
-      const Teuchos::RCP<Albany::MeshSpecs>&  meshSpecs,
+      const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
       const std::vector<std::string>&               bcNames,
       const Teuchos::ArrayRCP<std::string>&         dof_names,
       bool                                          isVectorField,
@@ -309,7 +309,7 @@ BCUtils<DirichletTraits>::constructBCEvaluators(
 template <>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
 BCUtils<NeumannTraits>::constructBCEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecs>&  meshSpecs,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
     const std::vector<std::string>&               bcNames,
     const Teuchos::ArrayRCP<std::string>&         dof_names,
     bool                                          isVectorField,
@@ -324,7 +324,7 @@ BCUtils<NeumannTraits>::constructBCEvaluators(
 template <>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
 BCUtils<NeumannTraits>::constructBCEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
     const std::vector<std::string>&              bcNames,
     const Teuchos::ArrayRCP<std::string>&        dof_names,
     bool                                         isVectorField,
@@ -354,7 +354,7 @@ void
 BCUtils<NeumannTraits>::buildEvaluatorsList(
     std::map<std::string, Teuchos::RCP<Teuchos::ParameterList>>&
                                                   evaluators_to_build,
-    const Teuchos::RCP<Albany::MeshSpecs>&  meshSpecs,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
     const std::vector<std::string>&               bcNames,
     const Teuchos::ArrayRCP<std::string>&         dof_names,
     bool                                          isVectorField,

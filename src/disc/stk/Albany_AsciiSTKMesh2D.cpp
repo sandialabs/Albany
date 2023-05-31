@@ -286,7 +286,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
 
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
-      new Albany::MeshSpecs (ctd, numDim, nsNames, ssNames,
+      new Albany::MeshSpecsStruct (ctd, numDim, nsNames, ssNames,
                                    worksetSize, partVec[0]->name(), ebNameToIndex));
 
   // Create a mesh specs object for EACH side set

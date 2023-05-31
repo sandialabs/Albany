@@ -51,14 +51,14 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
       StateManager& stateMgr);
 
     // Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
+      const Albany::MeshSpecsStruct& meshSpecs,
       Albany::StateManager& stateMgr,
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -81,13 +81,13 @@ namespace Albany {
     Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
+      const Albany::MeshSpecsStruct& meshSpecs,
       Albany::StateManager& stateMgr,
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
     void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
-    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
+    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
 
@@ -127,7 +127,7 @@ template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Albany::ThermalProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
+  const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)

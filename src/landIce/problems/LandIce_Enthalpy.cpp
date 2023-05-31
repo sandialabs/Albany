@@ -51,7 +51,7 @@ LandIce::Enthalpy::
 }
 
 void LandIce::Enthalpy::
-buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs, Albany::StateManager& stateMgr)
+buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs, Albany::StateManager& stateMgr)
 {
 	  using Teuchos::RCP;
 	  using Teuchos::rcp;
@@ -109,7 +109,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs, Alb
 	  {
 		  TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
 	                                  "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-		  const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
+		  const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
 
 		  // Building also basal side structures
 		  const CellTopologyData * const side_bottom = &basalMeshSpecs.ctd;
@@ -160,7 +160,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs, Alb
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 LandIce::Enthalpy::buildEvaluators( PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-								  const Albany::MeshSpecs& meshSpecs,
+								  const Albany::MeshSpecsStruct& meshSpecs,
 								  Albany::StateManager& stateMgr,
 								  Albany::FieldManagerChoice fmchoice,
 								  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -185,7 +185,7 @@ LandIce::Enthalpy::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 }
 
 void LandIce::Enthalpy::
-constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
+constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
@@ -202,7 +202,7 @@ constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
 }
 
 void LandIce::Enthalpy::
-constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 	// Note: we only enter this function if sidesets are defined in the mesh file
 	// i.e. meshSpecs.ssNames.size() > 0

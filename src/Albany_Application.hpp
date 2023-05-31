@@ -1056,7 +1056,7 @@ void
       const double   beta,
       const double   omega);
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>>
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
   getEnrichedMeshSpecs() const
   {
     return meshSpecs;
@@ -1162,7 +1162,7 @@ void
   Teuchos::RCP<Albany::DiscretizationFactory> discFactory;
 
   //! mesh specs
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs;
 
   //! Problem class
   Teuchos::RCP<Albany::AbstractProblem> problem;

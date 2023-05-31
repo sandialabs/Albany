@@ -118,7 +118,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 }
 
-void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
                                  Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
@@ -186,7 +186,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       std::string ssName = pl->get<std::string>("Side Set Name");
       TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(ssName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either the side set name is wrong or something went wrong while building the side mesh specs.\n");
-      const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ssName)[0];
+      const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ssName)[0];
 
       // Building also side structures
       const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
@@ -221,7 +221,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
 
-    const Albany::MeshSpecs& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
+    const Albany::MeshSpecsStruct& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
 
     // Building also surface side structures
     const CellTopologyData * const side_top = &surfaceMeshSpecs.ctd;
@@ -245,7 +245,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
                                   "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
 
-    const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
+    const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
 
     // Building also basal side structures
     const CellTopologyData * const side_top = &basalMeshSpecs.ctd;

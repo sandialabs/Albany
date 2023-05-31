@@ -78,7 +78,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 StokesFO::buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
+  const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -104,7 +104,7 @@ StokesFO::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 }
 
 void StokesFO::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+        const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
@@ -123,7 +123,7 @@ void StokesFO::constructDirichletEvaluators(
 }
 
 // Neumann BCs
-void StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+void StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0

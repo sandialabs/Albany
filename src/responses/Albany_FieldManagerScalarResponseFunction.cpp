@@ -24,7 +24,7 @@ FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
   const Teuchos::RCP<Application>& application_,
   const Teuchos::RCP<AbstractProblem>& problem_,
-  const Teuchos::RCP<MeshSpecs>&  meshSpecs_,
+  const Teuchos::RCP<MeshSpecsStruct>&  meshSpecs_,
   const Teuchos::RCP<StateManager>& stateMgr_,
   Teuchos::ParameterList& responseParams) 
  : ScalarResponseFunction(application_->getComm())
@@ -42,7 +42,7 @@ FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
   const Teuchos::RCP<Application>& application_,
   const Teuchos::RCP<AbstractProblem>& problem_,
-  const Teuchos::RCP<MeshSpecs>&  meshSpecs_,
+  const Teuchos::RCP<MeshSpecsStruct>&  meshSpecs_,
   const Teuchos::RCP<StateManager>& stateMgr_)
  : ScalarResponseFunction(application_->getComm())
  , application(application_)

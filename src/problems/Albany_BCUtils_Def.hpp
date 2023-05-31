@@ -174,7 +174,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 template <>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
 Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecs>&  meshSpecs,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
     const std::vector<std::string>&               bcNames,
     const Teuchos::ArrayRCP<std::string>&         dof_names,
     bool                                          isVectorField,
@@ -236,7 +236,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
 template <>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
 Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
     const std::vector<std::string>&              bcNames,
     const Teuchos::ArrayRCP<std::string>&        dof_names,
     bool                                         isVectorField,
@@ -709,7 +709,7 @@ void
 Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
     std::map<std::string, Teuchos::RCP<Teuchos::ParameterList>>&
                                                   evaluators_to_build,
-    const Teuchos::RCP<Albany::MeshSpecs>&  meshSpecs,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
     const std::vector<std::string>&               bcNames,
     const Teuchos::ArrayRCP<std::string>&         dof_names,
     bool                                          isVectorField,
@@ -783,7 +783,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
           p->set<string>("Side Set ID", meshSpecs->ssNames[i]);
           p->set<Teuchos::Array<int>>("Equation Offset", offsets[j]);
           p->set<RCP<Albany::Layouts>>("Layouts Struct", dl);
-          p->set<RCP<MeshSpecs>>("Mesh Specs Struct", meshSpecs);
+          p->set<RCP<MeshSpecsStruct>>("Mesh Specs Struct", meshSpecs);
 
           p->set<string>("Coordinate Vector Name", "Coord Vec");
 

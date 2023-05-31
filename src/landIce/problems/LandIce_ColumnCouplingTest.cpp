@@ -34,7 +34,7 @@ ColumnCouplingTest (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 void ColumnCouplingTest::
-buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
               Albany::StateManager& stateMgr)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -57,7 +57,7 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
   const auto& ss_discs_params = discParams->sublist("Side Set Discretizations");
   const auto& ss_names = ss_discs_params.get<Teuchos::Array<std::string>>("Side Sets");
   for (const auto& ss_name : ss_names) {
-    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
+    const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
 
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
     auto sideType = Teuchos::rcp(new shards::CellTopology (side_top));
@@ -100,7 +100,7 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 ColumnCouplingTest::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                             const Albany::MeshSpecs& meshSpecs,
+                             const Albany::MeshSpecsStruct& meshSpecs,
                              Albany::StateManager& stateMgr,
                              Albany::FieldManagerChoice fmchoice,
                              const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -113,7 +113,7 @@ ColumnCouplingTest::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   return *op.tags;
 }
 
-void ColumnCouplingTest::constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
+void ColumnCouplingTest::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames = {dof_name};

@@ -46,7 +46,7 @@ void checkDerivativeDimensions(const int dDims)
 namespace PHAL {
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
-  const Albany::Application* app, const Albany::MeshSpecs* ms, bool responseEvaluation)
+  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
 {
   int dDims = app->getNumEquations() * ms->ctd.node_count;
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
@@ -70,7 +70,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
-  const Albany::Application* app, const Albany::MeshSpecs* /* ms */, bool /* responseEvaluation */)
+  const Albany::Application* app, const Albany::MeshSpecsStruct* /* ms */, bool /* responseEvaluation */)
 {
   const int dDims = app->getTangentDerivDimension();
   checkDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(dDims);
@@ -78,7 +78,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
-  const Albany::Application* /* app */, const Albany::MeshSpecs* ms, bool /* responseEvaluation */)
+  const Albany::Application* /* app */, const Albany::MeshSpecsStruct* ms, bool /* responseEvaluation */)
 {
   //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
   const int dDims = ms->ctd.node_count;
@@ -87,7 +87,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec> (
-  const Albany::Application* app, const Albany::MeshSpecs* ms, bool responseEvaluation)
+  const Albany::Application* app, const Albany::MeshSpecsStruct* ms, bool responseEvaluation)
 {
   const int derivativeDimension_x = getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(app, ms, responseEvaluation);
   const int derivativeDimension_p_dist = getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(app, ms, responseEvaluation);

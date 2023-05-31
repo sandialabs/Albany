@@ -145,7 +145,7 @@ Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 LandIce::StokesFOHydrology::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
+  const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -171,7 +171,7 @@ StokesFOHydrology::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 }
 
 void StokesFOHydrology::
-constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
+constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dir_names(stokes_neq+hydro_neq);
@@ -192,7 +192,7 @@ constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
 
 // Neumann BCs
 void StokesFOHydrology::
-constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 

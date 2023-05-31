@@ -20,7 +20,7 @@
 #include <string>
 #include <map>
 
-// The MeshSpecs holds information (loaded mostly from STK::metaData),
+// The MeshSpecsStruct holds information (loaded mostly from STK::metaData),
 // which is needed to create an Albany::Problem.
 // The idea is that in order to build the problem's evaluators, we do not
 // need to have a mesh. All we need are general topological information about the mesh.
@@ -28,7 +28,7 @@
 
 namespace Albany {
 
-struct MeshSpecs
+struct MeshSpecsStruct
 {
   // Empty initialization. This constructor initialize all entries to empty values,
   // or, if possible, invalid values. This will be used to create mesh specs for
@@ -39,10 +39,10 @@ struct MeshSpecs
   // create mesh specs, with bare minimum information.
   // To facilitate this, we offer an empty constructor, and the routines that
   // build mesh specs for side sets will have to manually modify the specs.
-  MeshSpecs();
+  MeshSpecsStruct();
 
   // This constructor initializes all the possible information in a mesh specs object.
-  MeshSpecs(
+  MeshSpecsStruct(
       const CellTopologyData&  ctd_,
       int                      numDim_,
       std::vector<std::string> nsNames_,
@@ -66,7 +66,7 @@ struct MeshSpecs
   std::map<std::string, int> ebNameToIndex;
 
   // We store the side meshes names so we have a way to index them with a number
-  std::map<std::string, Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>>> sideSetMeshSpecs;
+  std::map<std::string, Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>> sideSetMeshSpecs;
   std::vector<std::string> sideSetMeshNames;
 };
 

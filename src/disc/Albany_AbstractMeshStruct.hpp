@@ -61,8 +61,8 @@ struct AbstractMeshStruct {
                     setBulkData(commT, sis, worksetSize, side_set_sis);
                   }
 
-    virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >& getMeshSpecs() = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >& getMeshSpecs() const = 0;
+    virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
+    virtual const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const = 0;
 
     virtual msType meshSpecsType() = 0;
 

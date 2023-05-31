@@ -59,7 +59,7 @@ Albany::AdvectionProblem::
 void
 Albany::AdvectionProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -94,7 +94,7 @@ Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
 Albany::AdvectionProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
+  const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -124,7 +124,7 @@ Albany::AdvectionProblem::constructDirichletEvaluators(const std::vector<std::st
 
 // Neumann BCs
 void
-Albany::AdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+Albany::AdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0

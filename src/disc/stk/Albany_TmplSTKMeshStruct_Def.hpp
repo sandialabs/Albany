@@ -278,11 +278,11 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   }
 
-  // Construct MeshSpecs
+  // Construct MeshSpecsStruct
   {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecs(ctd, numDim,
+    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
                                nsNames, ssNames, worksetSize, EBSpecs[0].name,
                                ebNameToIndex));
   }

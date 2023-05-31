@@ -66,7 +66,7 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 void
 Albany::HeatProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -101,7 +101,7 @@ Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
 Albany::HeatProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
+  const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -131,7 +131,7 @@ Albany::HeatProblem::constructDirichletEvaluators(const std::vector<std::string>
 
 // Neumann BCs
 void
-Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+Albany::HeatProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0

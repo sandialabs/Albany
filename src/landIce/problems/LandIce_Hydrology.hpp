@@ -109,13 +109,13 @@ public:
   virtual bool useSDBCs() const {return use_sdbcs_; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
                              Albany::StateManager& stateMgr);
 
   // Build evaluators
   virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                   const Albany::MeshSpecs& meshSpecs,
+                   const Albany::MeshSpecsStruct& meshSpecs,
                    Albany::StateManager& stateMgr,
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -126,14 +126,14 @@ public:
   //! Main problem setup routine. Not directly called, but indirectly by buildEvaluators
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       const Albany::MeshSpecs& meshSpecs,
+                       const Albany::MeshSpecsStruct& meshSpecs,
                        Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
   //! Boundary conditions evaluators
-  void constructDirichletEvaluators (const Albany::MeshSpecs& meshSpecs);
-  void constructNeumannEvaluators   (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
+  void constructDirichletEvaluators (const Albany::MeshSpecsStruct& meshSpecs);
+  void constructNeumannEvaluators   (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
 protected:
 
@@ -200,7 +200,7 @@ protected:
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                const Albany::MeshSpecs& meshSpecs,
+                                const Albany::MeshSpecsStruct& meshSpecs,
                                 Albany::StateManager& stateMgr,
                                 Albany::FieldManagerChoice fieldManagerChoice,
                                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -940,8 +940,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   {
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
 
-    Teuchos::RCP<const Albany::MeshSpecs> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
-    paramList->set<Teuchos::RCP<const Albany::MeshSpecs> >("Mesh Specs Struct", meshSpecsPtr);
+    Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
+    paramList->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
     ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);

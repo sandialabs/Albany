@@ -32,7 +32,7 @@ Albany::ThermoElectrostaticsProblem::
 void
 Albany::ThermoElectrostaticsProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -48,7 +48,7 @@ Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 Albany::ThermoElectrostaticsProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
+  const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -63,7 +63,7 @@ buildEvaluators(
 
 void
 Albany::ThermoElectrostaticsProblem::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+        const Albany::MeshSpecsStruct& meshSpecs)
 {
 
    // Construct Dirichlet evaluators for all nodesets and names

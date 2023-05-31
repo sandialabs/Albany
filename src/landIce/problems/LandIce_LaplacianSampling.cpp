@@ -37,7 +37,7 @@ LandIce::LaplacianSampling::
   // Nothing to be done here
 }
 
-void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
                                     Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
@@ -64,7 +64,7 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
   if(sideName != "INVALID") {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
                                 "Error! Either 'Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideName)[0];
+    const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideName)[0];
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
     sideBasis = Albany::getIntrepid2Basis(*side_top);
     sideType = rcp(new shards::CellTopology (side_top));
@@ -107,7 +107,7 @@ Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 LandIce::LaplacianSampling::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
+  const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -122,7 +122,7 @@ buildEvaluators(
 
 void
 LandIce::LaplacianSampling::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+        const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(1);
@@ -136,7 +136,7 @@ LandIce::LaplacianSampling::constructDirichletEvaluators(
 }
 
 // Neumann BCs
-void LandIce::LaplacianSampling::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+void LandIce::LaplacianSampling::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file
