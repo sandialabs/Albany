@@ -360,8 +360,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
             << solutionMethod);
   }
 
-  bool        expl = false;
-
   determinePiroSolver(params);
 
   physicsBasedPreconditioner =
@@ -496,7 +494,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Schwarz problems.
   countScale = 0;
   // Create discretization object
-  discFactory = rcp(new Albany::DiscretizationFactory(params, comm, expl));
+  discFactory = rcp(new Albany::DiscretizationFactory(params, comm));
 }
 
 void

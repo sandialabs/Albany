@@ -29,8 +29,7 @@ class DiscretizationFactory {
     //! Default constructor
     DiscretizationFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const bool explicit_scheme_ = false);
+      const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     //! Destructor
     ~DiscretizationFactory() {}
@@ -122,9 +121,6 @@ class DiscretizationFactory {
     int numLevels;
     int numTracers;
     
-    //Flag for explicit time-integration scheme, used in Aeras
-    bool explicit_scheme;
-
     Teuchos::RCP<AbstractMeshStruct> meshStruct;
 
     //Number of parameters

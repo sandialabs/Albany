@@ -27,10 +27,8 @@ namespace Albany {
 DiscretizationFactory::
 DiscretizationFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-      const Teuchos::RCP<const Teuchos_Comm>& comm_,
-      const bool explicit_scheme)
+      const Teuchos::RCP<const Teuchos_Comm>& comm_)
  : comm(comm_)
- , explicit_scheme(explicit_scheme_)
 {
   discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
   if (topLevelParams->isSublist("Piro"))
