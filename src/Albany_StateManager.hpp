@@ -14,7 +14,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
-#include "Adapt_NodalDataBase.hpp"
+#include "Albany_NodalDataBase.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_Macros.hpp"
@@ -111,13 +111,13 @@ public:
   StateArrays&
   getSideSetStateArrays(const std::string& sideSet);
 
-  Teuchos::RCP<Adapt::NodalDataBase>
+  Teuchos::RCP<Albany::NodalDataBase>
   getNodalDataBase()
   {
     return stateInfo->createNodalDataBase();
   }
 
-  Teuchos::RCP<Adapt::NodalDataBase>
+  Teuchos::RCP<Albany::NodalDataBase>
   getSideSetNodalDataBase(const std::string& sideSet)
   {
     return sideSetStateInfo.at(sideSet)->createNodalDataBase();
