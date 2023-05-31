@@ -79,7 +79,7 @@ class AbstractProblem {
   //! Build the PDE instantiations, boundary conditions, and initial solution
   //! And construct the evaluators and field managers
   virtual void
-  buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs,
+  buildProblem (Teuchos::RCP<MeshSpecs> meshSpecs,
                 StateManager& stateMgr) = 0;
 
   // Build evaluators
@@ -90,12 +90,9 @@ class AbstractProblem {
       FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList) = 0;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>>
-  getFieldManager();
-  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>
-  getDirichletFieldManager();
-  Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>>
-  getNeumannFieldManager();
+  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> getFieldManager();
+  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> getDirichletFieldManager();
+  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> getNeumannFieldManager();
 
   Teuchos::Array<Teuchos::Array<int>>
   getOffsets() {
@@ -198,13 +195,13 @@ class AbstractProblem {
   Teuchos::RCP<ScalarParameterAccessorsMap> accessors_all;
 
   //! Field manager for Volumetric Fill
-  Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> fm;
+  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm;
 
   //! Field manager for Dirchlet Conditions Fill
   Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> dfm;
 
   //! Field manager for Neumann Conditions Fill
-  Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> nfm;
+  Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> nfm;
 
   //! Null space object used to communicate with MP
   Teuchos::RCP<RigidBodyModes> rigidBodyModes;

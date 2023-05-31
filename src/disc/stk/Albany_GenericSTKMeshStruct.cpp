@@ -69,9 +69,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   requiresAutomaticAura = params->get<bool>("Use Automatic Aura", false);
 
-  // This is typical, can be resized for multiple material problems
-  meshSpecs.resize(1);
-
   fieldAndBulkDataSet = false;
   side_maps_present = false;
   ignore_side_maps = false;
@@ -238,24 +235,6 @@ This function gets rid of the subset in the list.
   }
 }
 
-Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >&
-GenericSTKMeshStruct::getMeshSpecs()
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
-}
-
-const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >&
-GenericSTKMeshStruct::getMeshSpecs() const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
-}
-
 int GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
@@ -384,7 +363,7 @@ rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 void GenericSTKMeshStruct::addNodeSetsFromSideSets ()
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (this->meshSpecs[0]==Teuchos::null, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (this->meshSpecs==Teuchos::null, std::runtime_error,
                               "Error! Mesh specs have not been initialized yet.\n");
 
   // This function adds a (sideset) part to nsPartVec and to the meshSpecs (nsNames)
@@ -400,7 +379,7 @@ void GenericSTKMeshStruct::addNodeSetsFromSideSets ()
     nsPartVec[ssn_part_pair.first] = part;
 
     // Update the list of nodesets in the mesh specs
-    this->meshSpecs[0]->nsNames.push_back(ssn_part_pair.first);
+    this->meshSpecs->nsNames.push_back(ssn_part_pair.first);
 
     // This list will be used later to check that the new nodesets' integrity
     m_nodesets_from_sidesets.push_back(ssn_part_pair.first);
@@ -438,47 +417,45 @@ void GenericSTKMeshStruct::checkNodeSetsFromSideSetsIntegrity ()
   }
 }
 
-void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& comm) {
-  // Loop on all mesh specs
-  for (auto ms: this->getMeshSpecs() ) {
-    // Loop on all side sets of the mesh
-    for (auto ssName : ms->ssNames) {
-      // Get the part
-      stk::mesh::Part* part = metaData->get_part(ssName);
-      TEUCHOS_TEST_FOR_EXCEPTION (part==nullptr, std::runtime_error, "Error! One of the stored meshSpecs claims to have sideset " + ssName +
-                                                                     " which, however, is not a part of the mesh.\n");
-      stk::topology stk_topo_data = metaData->get_topology( *part );
-      shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
-      const auto* ctd = shards_ctd.getCellTopologyData();
+void GenericSTKMeshStruct::
+initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& comm) {
+  // Loop on all side sets of the mesh
+  for (auto ssName : meshSpecs->ssNames) {
+    // Get the part
+    stk::mesh::Part* part = metaData->get_part(ssName);
+    TEUCHOS_TEST_FOR_EXCEPTION (part==nullptr, std::runtime_error,
+        "Error! One of the stored meshSpecs claims to have sideset " + ssName +
+        " which, however, is not a part of the mesh.\n");
+    stk::topology stk_topo_data = metaData->get_topology( *part );
+    shards::CellTopology shards_ctd = stk::mesh::get_cell_topology(stk_topo_data);
+    const auto* ctd = shards_ctd.getCellTopologyData();
 
-      auto& ss_ms = ms->sideSetMeshSpecs[ssName];
+    auto& ss_ms = meshSpecs->sideSetMeshSpecs[ssName];
 
-      // At this point, we cannot assume there will be a discretization on this side set, so we use cubature degree=-1,
-      // and the workset size of this mesh. If the user *does* add a discretization (in the Side Set Discretizations sublist),
-      // he/she can specify cubature and workset size there. The method initializeSideSetMeshStructs will overwrite
-      // this mesh specs anyways.
-      // Note: it *may* be that the user need no cubature on this side (only node/cell fields).
-      //       But if the user *does* need cubature, we want to set a *very wrong* number, so that
-      //       the code will crash somewhere, and he/sh can realize he/she needs to set cubature info somewhere
+    // At this point, we cannot assume there will be a discretization on this side set, so we use cubature degree=-1,
+    // and the workset size of this mesh. If the user *does* add a discretization (in the Side Set Discretizations sublist),
+    // he/she can specify cubature and workset size there. The method initializeSideSetMeshStructs will overwrite
+    // this mesh specs anyways.
+    // Note: it *may* be that the user need no cubature on this side (only node/cell fields).
+    //       But if the user *does* need cubature, we want to set a *very wrong* number, so that
+    //       the code will crash somewhere, and he/sh can realize he/she needs to set cubature info somewhere
 
-      // We allow a null ctd here, and we simply do not store the side mesh specs.
-      // The reason is that we _may_ be loading a mesh that stores some empty side sets.
-      // If we are using the sideset, we will probably run into some sort of errors later,
-      // unless we are specifying a side discretization (which will be created _after_ this function call).
-      if (ctd==nullptr) {
-        Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-        out->setProcRankAndSize(comm->getRank(), comm->getSize());
-        out->setOutputToRootOnly(0);
-        *out << "Warning! Side set '" << ssName << "' does not store a valid cell topology.\n";
+    // We allow a null ctd here, and we simply do not store the side mesh specs.
+    // The reason is that we _may_ be loading a mesh that stores some empty side sets.
+    // If we are using the sideset, we will probably run into some sort of errors later,
+    // unless we are specifying a side discretization (which will be created _after_ this function call).
+    if (ctd==nullptr) {
+      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+      out->setProcRankAndSize(comm->getRank(), comm->getSize());
+      out->setOutputToRootOnly(0);
+      *out << "Warning! Side set '" << ssName << "' does not store a valid cell topology.\n";
 
-        continue;
-      }
-
-      ss_ms.resize(1);
-      ss_ms[0] = Teuchos::rcp( new MeshSpecs() );
-      ss_ms[0]->ctd = *ctd;
-      ss_ms[0]->numDim = this->numDim-1;
+      continue;
     }
+
+    ss_ms = Teuchos::rcp( new MeshSpecs() );
+    ss_ms->ctd = *ctd;
+    ss_ms->numDim = this->numDim-1;
   }
 }
 
@@ -503,20 +480,16 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
           params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
 
         // Set sideset discretization workset size based on sideset mesh spec if a single workset is used
-        const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
+        const auto &sideSetMeshSpecs = this->meshSpecs->sideSetMeshSpecs;
         auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
         TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
             "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
 
         std::string method = params_ss->get<std::string>("Method");
         if (method=="SideSetSTK") {
-          // The user said this mesh is extracted from a higher dimensional one
-          TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
-                                      "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
-
           this->sideSetMeshStructs[ss_name] =
               Teuchos::rcp(new SideSetSTKMeshStruct(
-                  *this->meshSpecs[0], params_ss, comm, num_params));
+                  *this->meshSpecs, params_ss, comm, num_params));
         } else {
           ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
@@ -531,8 +504,8 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
                                   "Error! Mesh on side " << ss_name << " has the wrong dimension.\n");
 
       // Update the side set mesh specs pointer in the mesh specs of this mesh
-      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
-      this->meshSpecs[0]->sideSetMeshNames.push_back(ss_name);
+      this->meshSpecs->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->meshSpecs;
+      this->meshSpecs->sideSetMeshNames.push_back(ss_name);
 
       // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
       typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
@@ -542,7 +515,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
 #endif
       // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
-      const int num_nodes = sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->ctd.node_count;
+      const int num_nodes = sideSetMeshStructs[ss_name]->meshSpecs->ctd.node_count;
       typedef AbstractSTKFieldContainer::IntVectorFieldType IVFT;
       IVFT* side_nodes_ids = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<IVFT> (stk::topology::ELEM_RANK, "side_nodes_ids");
       stk::mesh::put_field_on_mesh(*side_nodes_ids, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), num_nodes, nullptr);

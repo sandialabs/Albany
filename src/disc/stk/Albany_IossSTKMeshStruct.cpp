@@ -201,7 +201,7 @@ IossSTKMeshStruct::IossSTKMeshStruct(
   // Construct MeshSpecs
   {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecs(
+    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecs(
         ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex));
   }

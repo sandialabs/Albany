@@ -57,7 +57,7 @@ protected:
   Teuchos::RCP<AbstractProblem> prob;
 
   //! Meshspecs for field manager response functions
-  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>>  meshSpecs;
+  Teuchos::RCP<const MeshSpecs>  meshSpecs;
 
   //! State manager for field manager response functions
   Teuchos::RCP<StateManager> stateMgr;
