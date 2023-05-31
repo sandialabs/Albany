@@ -46,7 +46,7 @@ createTestDisc (const Teuchos::RCP<const Teuchos_Comm>& comm,
     discParams->set("3D Elements",num_elems_per_dim);
   }
 
-  Albany::DiscretizationFactory factory(params,comm,false);
+  Albany::DiscretizationFactory factory(params,comm);
 
   // Create StateInfoStruct for dist params
   auto ms = factory.createMeshSpecs()[0];
