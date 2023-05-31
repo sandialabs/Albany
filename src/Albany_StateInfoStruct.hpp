@@ -12,7 +12,7 @@
 // This includes name, number of quantities (scalar,vector,tensor),
 // Element vs Node location, etc.
 
-#include "Adapt_NodalDataBase.hpp"
+#include "Albany_NodalDataBase.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "Albany_DualDynRankView.hpp"
 
@@ -178,21 +178,21 @@ class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
 {
 public:
   // Create storage on access - only if used
-  Teuchos::RCP<Adapt::NodalDataBase>
+  Teuchos::RCP<Albany::NodalDataBase>
   createNodalDataBase()
   {
     if (Teuchos::is_null(nodal_data_base))
-      nodal_data_base = Teuchos::rcp(new Adapt::NodalDataBase);
+      nodal_data_base = Teuchos::rcp(new Albany::NodalDataBase);
     return nodal_data_base;
   }
-  const Teuchos::RCP<Adapt::NodalDataBase>&
+  const Teuchos::RCP<Albany::NodalDataBase>&
   getNodalDataBase()
   {
     return nodal_data_base;
   }
 
  private:
-  Teuchos::RCP<Adapt::NodalDataBase>     nodal_data_base;
+  Teuchos::RCP<Albany::NodalDataBase>     nodal_data_base;
 };
 
 }  // namespace Albany
