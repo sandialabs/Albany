@@ -104,7 +104,7 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
   rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
-void Hydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+void Hydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
                                      Albany::StateManager& stateMgr)
 {
   // Building cell basis and cubature
@@ -151,7 +151,7 @@ void Hydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsSt
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 Hydrology::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                   const Albany::MeshSpecsStruct& meshSpecs,
+                                   const Albany::MeshSpecs& meshSpecs,
                                    Albany::StateManager& stateMgr,
                                    Albany::FieldManagerChoice fmchoice,
                                    const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -164,7 +164,7 @@ Hydrology::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   return *op.tags;
 }
 
-void Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStruct& meshSpecs)
+void Hydrology::constructDirichletEvaluators (const Albany::MeshSpecs& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(neq);
@@ -179,7 +179,7 @@ void Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStruct& mes
   nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
-void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
   // Note: we only enter this function if sidesets are defined in the mesh file
   // i.e. meshSpecs.ssNames.size() > 0

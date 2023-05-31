@@ -31,7 +31,7 @@ PopulateMesh::~PopulateMesh()
   // Nothing to be done here
 }
 
-void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>> meshSpecs,
+void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs,
                                  StateManager& stateMgr)
 {
   Intrepid2::DefaultCubatureFactory   cubFactory;
@@ -61,7 +61,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
     const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
     for (auto ss_name : ss_names)
     {
-      const MeshSpecsStruct& ssMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
+      const MeshSpecs& ssMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
 
       // Building also side structures
       const CellTopologyData * const side_top_data = &ssMeshSpecs.ctd;
@@ -205,7 +205,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 PopulateMesh::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                               const MeshSpecsStruct& meshSpecs,
+                               const MeshSpecs& meshSpecs,
                                StateManager& stateMgr,
                                FieldManagerChoice fmchoice,
                                const Teuchos::RCP<Teuchos::ParameterList>& responseList)

@@ -50,13 +50,13 @@ public:
   virtual int spatialDimension() const { return 0; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
                              Albany::StateManager& stateMgr);
 
   // Build evaluators
   virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                   const Albany::MeshSpecsStruct& meshSpecs,
+                   const Albany::MeshSpecs& meshSpecs,
                    Albany::StateManager& stateMgr,
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -79,13 +79,13 @@ public:
   //! Main problem setup routine. Not directly called, but indirectly by following functions
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       const Albany::MeshSpecsStruct& meshSpecs,
+                       const Albany::MeshSpecs& meshSpecs,
                        Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-  void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
-  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+  void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
+  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
 
 protected:
 
@@ -121,7 +121,7 @@ protected:
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 PopulateMesh::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                   const MeshSpecsStruct& meshSpecs,
+                                   const MeshSpecs& meshSpecs,
                                    StateManager& stateMgr,
                                    FieldManagerChoice fieldManagerChoice,
                                    const Teuchos::RCP<Teuchos::ParameterList>& responseList)

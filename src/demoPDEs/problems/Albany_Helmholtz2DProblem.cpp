@@ -33,7 +33,7 @@ Albany::Helmholtz2DProblem::
 void
 Albany::Helmholtz2DProblem::
 buildProblem(
-   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
    Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -49,7 +49,7 @@ Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 Albany::Helmholtz2DProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
+  const Albany::MeshSpecs& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -64,7 +64,7 @@ buildEvaluators(
 
 void
 Albany::Helmholtz2DProblem::constructDirichletEvaluators(
-        const Albany::MeshSpecsStruct& meshSpecs)
+        const Albany::MeshSpecs& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);

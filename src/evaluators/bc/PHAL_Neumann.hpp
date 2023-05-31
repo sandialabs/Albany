@@ -65,7 +65,7 @@ protected:
   using IFST = Intrepid2::FunctionSpaceTools<PHX::Device>;
 
   const Teuchos::RCP<Albany::Layouts>& dl;
-  const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
+  const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs;
 
   int  cellDims,  numQPs, numNodes, numCells, maxSideDim, maxNumQpSide;
   Teuchos::Array<int> offset;

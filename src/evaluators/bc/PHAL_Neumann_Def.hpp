@@ -28,7 +28,7 @@ NeumannBase<EvalT, Traits>::
 NeumannBase(const Teuchos::ParameterList& p) :
 
   dl             (p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
-  meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
+  meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecs> >("Mesh Specs Struct")),
   offset         (p.get<Teuchos::Array<int> >("Equation Offset")),
   coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
   sideSetID      (p.get<std::string>("Side Set ID"))

@@ -108,7 +108,7 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 StokesFOThermoCoupled::buildEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-    const Albany::MeshSpecsStruct& meshSpecs,
+    const Albany::MeshSpecs& meshSpecs,
     Albany::StateManager& stateMgr,
     Albany::FieldManagerChoice fmchoice,
     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -135,7 +135,7 @@ StokesFOThermoCoupled::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 }
 
-void StokesFOThermoCoupled::constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
+void StokesFOThermoCoupled::constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(vecDimFO+2);
@@ -154,7 +154,7 @@ void StokesFOThermoCoupled::constructDirichletEvaluators(const Albany::MeshSpecs
 }
 
 // Neumann BCs
-void StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
   // Note: we only enter this function if sidesets are defined in the mesh file
   // i.e. meshSpecs.ssNames.size() > 0

@@ -39,14 +39,14 @@ namespace Albany {
 
      //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
       StateManager& stateMgr);
 
     // Build evaluators
     virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
+      const Albany::MeshSpecs& meshSpecs,
       Albany::StateManager& stateMgr,
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -68,12 +68,12 @@ namespace Albany {
     template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
     constructEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
+      const Albany::MeshSpecs& meshSpecs,
       Albany::StateManager& stateMgr,
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+    void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
 
   protected:
 
@@ -100,7 +100,7 @@ template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Albany::Helmholtz2DProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
+  const Albany::MeshSpecs& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)

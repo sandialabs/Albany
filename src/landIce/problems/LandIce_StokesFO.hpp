@@ -57,7 +57,7 @@ public:
   //! Build evaluators
   virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                   const Albany::MeshSpecsStruct& meshSpecs,
+                   const Albany::MeshSpecs& meshSpecs,
                    Albany::StateManager& stateMgr,
                    Albany::FieldManagerChoice fmchoice,
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -71,7 +71,7 @@ public:
   //! Main problem setup routines. 
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                       const Albany::MeshSpecsStruct& meshSpecs,
+                       const Albany::MeshSpecs& meshSpecs,
                        Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -91,8 +91,8 @@ protected:
   void setFieldsProperties();
   void setupEvaluatorRequests ();
 
-  void constructDirichletEvaluators (const Albany::MeshSpecsStruct& meshSpecs);
-  void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+  void constructDirichletEvaluators (const Albany::MeshSpecs& meshSpecs);
+  void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
 
   bool adjustBedTopo;
   bool adjustSurfaceHeight;
@@ -105,7 +105,7 @@ protected:
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                               const Albany::MeshSpecsStruct& meshSpecs,
+                               const Albany::MeshSpecs& meshSpecs,
                                Albany::StateManager& stateMgr,
                                Albany::FieldManagerChoice fieldManagerChoice,
                                const Teuchos::RCP<Teuchos::ParameterList>& responseList)

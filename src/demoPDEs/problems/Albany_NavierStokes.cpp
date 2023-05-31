@@ -122,7 +122,7 @@ Albany::NavierStokes::
 void
 Albany::NavierStokes::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
@@ -157,7 +157,7 @@ Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
 Albany::NavierStokes::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
+  const Albany::MeshSpecs& meshSpecs,
   Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fmchoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -195,7 +195,7 @@ Albany::NavierStokes::constructDirichletEvaluators(
 
 // Neumann BCs
 void
-Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+Albany::NavierStokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file

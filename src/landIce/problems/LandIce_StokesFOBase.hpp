@@ -99,7 +99,7 @@ public:
   bool useSDBCs() const {return use_sdbcs_; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
                      Albany::StateManager& stateMgr);
 
 protected:
@@ -115,19 +115,19 @@ protected:
 
   template <typename EvalT>
   void constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                        const Albany::MeshSpecsStruct& meshSpecs,
+                                        const Albany::MeshSpecs& meshSpecs,
                                         Albany::StateManager& stateMgr,
                                         Albany::FieldManagerChoice fieldManagerChoice);
 
   template <typename EvalT>
   void constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                  const Albany::MeshSpecsStruct& meshSpecs,
+                                  const Albany::MeshSpecs& meshSpecs,
                                   Albany::StateManager& stateMgr,
                                   Albany::FieldManagerChoice fieldManagerChoice);
 
   template <typename EvalT>
   void constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                    const Albany::MeshSpecsStruct& meshSpecs,
+                                    const Albany::MeshSpecs& meshSpecs,
                                     Albany::StateManager& stateMgr,
                                     Albany::FieldManagerChoice fieldManagerChoice);
 
@@ -145,11 +145,11 @@ protected:
 
   template <typename EvalT>
   void constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                               const Albany::MeshSpecsStruct& meshSpecs);
+                               const Albany::MeshSpecs& meshSpecs);
 
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                            const Albany::MeshSpecsStruct& meshSpecs,
+                                            const Albany::MeshSpecs& meshSpecs,
                                             Albany::StateManager& stateMgr,
                                             Albany::FieldManagerChoice fieldManagerChoice,
                                             const Teuchos::RCP<Teuchos::ParameterList>& responseList);
@@ -157,8 +157,8 @@ protected:
   template <typename EvalT>
   void constructStokesFOBaseFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
-  virtual void constructDirichletEvaluators (const Albany::MeshSpecsStruct& /* meshSpecs */) {}
-  virtual void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& /* meshSpecs */) {}
+  virtual void constructDirichletEvaluators (const Albany::MeshSpecs& /* meshSpecs */) {}
+  virtual void constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& /* meshSpecs */) {}
 
 
   template <typename EvalT>
@@ -170,7 +170,7 @@ protected:
   void constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                     Albany::FieldManagerChoice FieldManagerChoice,
                                     int eqId,
-                                    const Albany::MeshSpecsStruct& meshSpecs);
+                                    const Albany::MeshSpecs& meshSpecs);
 
   Teuchos::RCP<Teuchos::ParameterList>
   getStokesFOBaseProblemParameters () const;
@@ -328,7 +328,7 @@ protected:
 template <typename EvalT>
 void StokesFOBase::
 constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                 const Albany::MeshSpecsStruct& meshSpecs,
+                                 const Albany::MeshSpecs& meshSpecs,
                                  Albany::StateManager& stateMgr,
                                  Albany::FieldManagerChoice fieldManagerChoice)
 {
@@ -377,7 +377,7 @@ constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 template <typename EvalT>
 void StokesFOBase::
 constructStatesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                           const Albany::MeshSpecsStruct& meshSpecs,
+                           const Albany::MeshSpecs& meshSpecs,
                            Albany::StateManager& stateMgr,
                            Albany::FieldManagerChoice fieldManagerChoice)
 {
@@ -972,7 +972,7 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 template <typename EvalT>
 void StokesFOBase::
 constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                             const Albany::MeshSpecsStruct& meshSpecs,
+                             const Albany::MeshSpecs& meshSpecs,
                              Albany::StateManager& stateMgr,
                              Albany::FieldManagerChoice fieldManagerChoice)
 {
@@ -1699,7 +1699,7 @@ void StokesFOBase::constructLateralBCEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
 template <typename EvalT>
 void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                           const Albany::MeshSpecsStruct& meshSpecs)
+                                           const Albany::MeshSpecs& meshSpecs)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
@@ -1793,7 +1793,7 @@ template<typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 StokesFOBase::
 constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                          const Albany::MeshSpecsStruct& meshSpecs,
+                                          const Albany::MeshSpecs& meshSpecs,
                                           Albany::StateManager& stateMgr,
                                           Albany::FieldManagerChoice fieldManagerChoice,
                                           const Teuchos::RCP<Teuchos::ParameterList>& responseList)
@@ -1920,7 +1920,7 @@ void StokesFOBase::constructProjLaplEvaluators (PHX::FieldManager<PHAL::AlbanyTr
 template <typename EvalT>
 void StokesFOBase::constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                             Albany::FieldManagerChoice fieldManagerChoice,
-                                            int eqId, const Albany::MeshSpecsStruct& meshSpecs)
+                                            int eqId, const Albany::MeshSpecs& meshSpecs)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
