@@ -40,9 +40,9 @@ namespace LandIce
  * \brief Abstract interface for representing a 1-D finite element
  * problem.
  */
-class StokesFOThickness : public StokesFOBase {
+class StokesFOThickness : public StokesFOBase
+{
 public:
-
   //! Default constructor
   StokesFOThickness(const Teuchos::RCP<Teuchos::ParameterList>& params,
                     const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
@@ -65,7 +65,7 @@ public:
                    const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
   //! Build unmanaged fields
-  virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+  void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
   //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -97,13 +97,16 @@ protected:
   std::string initial_ice_thickness_name;
 };
 
+// -------------------------- IMPLEMENTATION ------------------------ //
+
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                        const Albany::MeshSpecs& meshSpecs,
-                                        Albany::StateManager& stateMgr,
-                                        Albany::FieldManagerChoice fieldManagerChoice,
-                                        const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+StokesFOThickness::
+constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                     const Albany::MeshSpecs& meshSpecs,
+                     Albany::StateManager& stateMgr,
+                     Albany::FieldManagerChoice fieldManagerChoice,
+                     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
@@ -159,16 +162,16 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 }
 
 template<typename EvalT>
-void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0, 
-                                                      const Albany::MeshSpecs& meshSpecs,
-                                                      Albany::FieldManagerChoice fieldManagerChoice)
+void StokesFOThickness::
+constructThicknessEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0, 
+                              const Albany::MeshSpecs& meshSpecs,
+                              Albany::FieldManagerChoice fieldManagerChoice)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  if (surfaceSideName!="__INVALID__")
-  {
+  if (surfaceSideName!="__INVALID__") {
     //--- LandIce Gather Vertically Averaged Velocity ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("Gather Averaged Velocity"));
     //Input
@@ -295,7 +298,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
 
 template <typename EvalT>
 void
-LandIce::StokesFOThickness::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+StokesFOThickness::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
 {
   constructStokesFOBaseFields<EvalT>(fm0);
 }

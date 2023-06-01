@@ -19,54 +19,54 @@
 
 namespace Albany {
 
-  class IossSTKMeshStruct : public GenericSTKMeshStruct {
+class IossSTKMeshStruct : public GenericSTKMeshStruct
+{
+public:
 
-    public:
+  IossSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                     const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams);
 
-    IossSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                       const Teuchos::RCP<const Teuchos_Comm>& commT, const int numParams);
+  ~IossSTKMeshStruct();
 
-    ~IossSTKMeshStruct();
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                     const unsigned int worksetSize,
+                     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                       const unsigned int worksetSize,
-                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                    const unsigned int worksetSize,
+                    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                      const unsigned int worksetSize,
-                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+  int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
+  double getSolutionFieldHistoryStamp(int step) const;
+  void loadSolutionFieldHistory(int step);
 
-    int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
-    double getSolutionFieldHistoryStamp(int step) const;
-    void loadSolutionFieldHistory(int step);
+  //! Flag if solution has a restart values -- used in Init Cond
+  bool hasRestartSolution() const {return m_hasRestartSolution;}
 
-    //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const {return m_hasRestartSolution;}
+  //! If restarting, convenience function to return restart data time
+  double restartDataTime() const {return m_restartDataTime;}
 
-    //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return m_restartDataTime;}
+private:
 
-    private:
+  Ioss::Init::Initializer ioInit;
 
-    Ioss::Init::Initializer ioInit;
+  void loadOrSetCoordinates3d (int index);
 
-    void loadOrSetCoordinates3d (int index);
+  Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
-    Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
+  Teuchos::RCP<Teuchos::FancyOStream> out;
+  bool usePamgen;
+  bool useSerialMesh = false;
+  bool periodic;
+  Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
-   Teuchos::RCP<Teuchos::FancyOStream> out;
-    bool usePamgen;
-    bool useSerialMesh;
-    bool periodic;
-    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
+  bool m_hasRestartSolution = false;
+  double m_restartDataTime;
+  int m_solutionFieldHistoryDepth;
 
-    bool m_hasRestartSolution;
-    double m_restartDataTime;
-    int m_solutionFieldHistoryDepth;
-
-  };
+};
 
 } // Namespace Albany
 

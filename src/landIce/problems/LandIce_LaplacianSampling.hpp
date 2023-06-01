@@ -46,25 +46,25 @@ public:
 
   //! Default constructor
   LaplacianSampling (const Teuchos::RCP<Teuchos::ParameterList>& params,
-            const Teuchos::RCP<Teuchos::ParameterList>& discParams,
-            const Teuchos::RCP<ParamLib>& paramLib,
-            const int numDim_);
+                     const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+                     const Teuchos::RCP<ParamLib>& paramLib,
+                     const int numDim_);
 
   //! Destructor
-  ~LaplacianSampling();
+  ~LaplacianSampling() = default;
 
   //! Return number of spatial dimensions
-  virtual int spatialDimension() const { return numDim; }
+  int spatialDimension() const { return numDim; }
 
   //! Get boolean telling code if SDBCs are utilized
-  virtual bool useSDBCs() const {return use_sdbcs_; }
+  bool useSDBCs() const {return use_sdbcs_; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                             Albany::StateManager& stateMgr);
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+                     Albany::StateManager& stateMgr);
 
   // Build evaluators
-  virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+  Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                    const Albany::MeshSpecs& meshSpecs,
                    Albany::StateManager& stateMgr,
@@ -73,16 +73,6 @@ public:
 
   //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-
-private:
-
-  //! Private to prohibit copying
-  LaplacianSampling(const LaplacianSampling&);
-
-  //! Private to prohibit copying
-  LaplacianSampling& operator=(const LaplacianSampling&);
-
-public:
 
   //! Main problem setup routine. Not directly called, but indirectly by following functions
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
@@ -113,21 +103,21 @@ protected:
 
   std::string elementBlockName;
   std::string sideName;
-  /// Boolean marking whether SDBCs are used
-  bool use_sdbcs_;
-};
 
-} // Namespace LandIce
+  /// Boolean marking whether SDBCs are used
+  bool use_sdbcs_ = false;
+};
 
 // ================================ IMPLEMENTATION ============================ //
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                      const Albany::MeshSpecs& meshSpecs,
-                                      Albany::StateManager& stateMgr,
-                                      Albany::FieldManagerChoice fieldManagerChoice,
-                                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+LaplacianSampling::
+constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                     const Albany::MeshSpecs& meshSpecs,
+                     Albany::StateManager& stateMgr,
+                     Albany::FieldManagerChoice fieldManagerChoice,
+                     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
@@ -239,27 +229,26 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     //Output
     p->set<std::string>("Laplacian Residual Name", "Laplacian Residual");
 
-    ev = Teuchos::rcp(new LandIce::LaplacianRegularizationResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new LaplacianRegularizationResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-  {
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
     // Require scattering of residual
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Laplacian Sampling", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
-  }
-  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
-  {
+  } else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     // ----------------------- Responses --------------------- //
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    LandIce::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 
   return Teuchos::null;
 }
+
+} // Namespace LandIce
 
 #endif // LANDICE_STOKES_FO_PROBLEM_HPP

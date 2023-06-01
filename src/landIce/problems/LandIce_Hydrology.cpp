@@ -16,15 +16,15 @@
 
 namespace LandIce {
 
-Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
-                      const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
-                      const Teuchos::RCP<ParamLib>& paramLib,
-                      const int numDimensions) :
-  Albany::AbstractProblem (problemParams_, paramLib,1),
-  params(problemParams_), 
-  numDim (numDimensions),
-  discParams(discParams_),
-  use_sdbcs_(false)
+Hydrology::
+Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
+           const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+           const Teuchos::RCP<ParamLib>& paramLib,
+           const int numDimensions)
+ : Albany::AbstractProblem (problemParams_, paramLib,1)
+ , params(problemParams_)
+ , numDim (numDimensions)
+ , discParams(discParams_)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (numDim!=1 && numDim!=2,std::logic_error,"Problem supports only 1D and 2D");
 
@@ -104,8 +104,9 @@ Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& problemParams_
   rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
-void Hydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                                     Albany::StateManager& stateMgr)
+void Hydrology::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
+              Albany::StateManager& stateMgr)
 {
   // Building cell basis and cubature
   const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
@@ -150,11 +151,12 @@ void Hydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> 
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Hydrology::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                   const Albany::MeshSpecs& meshSpecs,
-                                   Albany::StateManager& stateMgr,
-                                   Albany::FieldManagerChoice fmchoice,
-                                   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+Hydrology::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -225,7 +227,7 @@ void Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs
 Teuchos::RCP<const Teuchos::ParameterList>
 Hydrology::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidHydrologyProblemParams");
+  auto validPL = this->getGenericProblemParams("ValidHydrologyProblemParams");
 
   validPL->sublist("LandIce Hydrology", false, "");
   validPL->sublist("LandIce Field Norm", false, "");

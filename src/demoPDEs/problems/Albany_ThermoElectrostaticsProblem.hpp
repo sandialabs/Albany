@@ -4,92 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_THERMOELECTROSTATICSPROBLEM_HPP
-#define ALBANY_THERMOELECTROSTATICSPROBLEM_HPP
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#ifndef ALBANY_THERMO_ELECTROSTATICS_PROBLEM_HPP
+#define ALBANY_THERMO_ELECTROSTATICS_PROBLEM_HPP
 
 #include "Albany_AbstractProblem.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
-namespace Albany {
-
-  /*!
-   * \brief Abstract interface for representing a 1-D finite element
-   * problem.
-   */
-  class ThermoElectrostaticsProblem : public AbstractProblem {
-  public:
-  
-    //! Default constructor
-    ThermoElectrostaticsProblem(
-      const Teuchos::RCP<Teuchos::ParameterList>& params,
-      const Teuchos::RCP<ParamLib>& paramLib,
-      const int numDim_);
-
-    //! Return number of spatial dimensions
-    virtual int spatialDimension() const { return numDim; }
-
-    //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return use_sdbcs_; }
-
-    //! Destructor
-    ~ThermoElectrostaticsProblem();
-
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-      StateManager& stateMgr);
-
-    // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-    buildEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-
-    //! Each problem must generate it's list of valid parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-
-  private:
-
-    //! Private to prohibit copying
-    ThermoElectrostaticsProblem(const ThermoElectrostaticsProblem&);
-    
-    //! Private to prohibit copying
-    ThermoElectrostaticsProblem& operator=(const ThermoElectrostaticsProblem&);
-
-  public:
-
-    //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
-    constructEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-
-    void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
-
-  protected:
-
-    //! Boundary conditions on source term
-    int numDim;
-  
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
-  };
-
-}
-
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
@@ -100,101 +22,162 @@ namespace Albany {
 #include "PHAL_PoissonResid.hpp"
 #include "PHAL_HeatEqResid.hpp"
 
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
+namespace Albany {
+
+/*!
+ * \brief Abstract interface for representing a 1-D finite element
+ * problem.
+ */
+class ThermoElectrostaticsProblem : public AbstractProblem
+{
+public:
+
+  //! Default constructor
+  ThermoElectrostaticsProblem (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                               const Teuchos::RCP<ParamLib>& paramLib,
+                               const int numDim_);
+
+  //! Destructor
+  ~ThermoElectrostaticsProblem() = default;
+
+  //! Return number of spatial dimensions
+  int spatialDimension() const { return numDim; }
+
+  //! Get boolean telling code if SDBCs are utilized  
+  bool useSDBCs() const {return use_sdbcs_; }
+
+  //! Build the PDE instantiations, boundary conditions, and initial solution
+  void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+                    StateManager& stateMgr);
+
+  // Build evaluators
+  Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
+  buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                   const MeshSpecs& meshSpecs,
+                   StateManager& stateMgr,
+                   FieldManagerChoice fmchoice,
+                   const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  //! Each problem must generate it's list of valid parameters
+  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+
+  //! Main problem setup routine. Not directly called, but indirectly by following functions
+  template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
+  constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                       const MeshSpecs& meshSpecs,
+                       StateManager& stateMgr,
+                       FieldManagerChoice fmchoice,
+                       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  void constructDirichletEvaluators(const MeshSpecs& meshSpecs);
+
+protected:
+
+  //! Boundary conditions on source term
+  int numDim;
+
+  /// Boolean marking whether SDBCs are used 
+  bool use_sdbcs_ = false; 
+};
+
+// ---------------------- IMPLEMENTATION ---------------------- //
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Albany::ThermoElectrostaticsProblem::constructEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fieldManagerChoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+ThermoElectrostaticsProblem::
+constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                     const MeshSpecs& meshSpecs,
+                      StateManager& stateMgr,
+                      FieldManagerChoice fieldManagerChoice,
+                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-   using Teuchos::RCP;
-   using Teuchos::rcp;
-   using Teuchos::ParameterList;
-   using PHX::DataLayout;
-   using std::vector;
-   using std::string;
-   using PHAL::AlbanyTraits;
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::ParameterList;
+  using PHX::DataLayout;
+  using std::vector;
+  using std::string;
+  using PHAL::AlbanyTraits;
 
-   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
+  auto cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+  auto intrepidBasis = getIntrepid2Basis(meshSpecs.ctd);
 
-   const int numNodes = intrepidBasis->getCardinality();
-   const int worksetSize = meshSpecs.worksetSize;
-   const int cubDegree = this->params->get("Cubature Degree", 3);
-   Intrepid2::DefaultCubatureFactory cubFactory;
-   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
+  const int numNodes = intrepidBasis->getCardinality();
+  const int worksetSize = meshSpecs.worksetSize;
+  const int cubDegree = this->params->get("Cubature Degree", 3);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  auto cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
-   const int numQPts = cubature->getNumPoints();
-   const int numVertices = cellType->getNodeCount();
+  const int numQPts = cubature->getNumPoints();
+  const int numVertices = cellType->getNodeCount();
 
-   *out << "Field Dimensions: Workset=" << worksetSize 
-        << ", Vertices= " << numVertices
-        << ", Nodes= " << numNodes
-        << ", QuadPts= " << numQPts
-        << ", Dim= " << numDim << std::endl;
+  *out << "Field Dimensions: Workset=" << worksetSize 
+       << ", Vertices= " << numVertices
+       << ", Nodes= " << numNodes
+       << ", QuadPts= " << numQPts
+       << ", Dim= " << numDim << std::endl;
 
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=false;
+  RCP<Layouts> dl = rcp(new Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+  EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  bool supportsTransient=false;
 
-   // Problem is not transient
-   TEUCHOS_TEST_FOR_EXCEPTION(
-      number_of_time_deriv != 0,
-      std::logic_error,
-      "Albany_ThermoElectroStaticsProblem cannot be defined as a transient calculation.");
+  // Problem is not transient
+  TEUCHOS_TEST_FOR_EXCEPTION(
+     number_of_time_deriv != 0,
+     std::logic_error,
+     "Albany_ThermoElectroStaticsProblem cannot be defined as a transient calculation.");
 
-   // Temporary variable used numerous times below
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+  // Temporary variable used numerous times below
+  Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
-   // Define Field Names
+  // Define Field Names
 
-   Teuchos::ArrayRCP<string> dof_names(neq);
-     dof_names[0] = "Potential";
-     dof_names[1] = "Temperature";
+  Teuchos::ArrayRCP<string> dof_names(neq);
+    dof_names[0] = "Potential";
+    dof_names[1] = "Temperature";
 
-   Teuchos::ArrayRCP<string> dof_names_dot(neq);
-   if (supportsTransient) {
-     for (unsigned int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
-   }
-
-   Teuchos::ArrayRCP<string> resid_names(neq);
-     for (unsigned int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
-
-   if (supportsTransient) fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
-   else fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names));
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructScatterResidualEvaluator(false, resid_names));
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherCoordinateVectorEvaluator());
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
-
-   for (unsigned int i=0; i<neq; i++) {
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], i));
-
-     if (supportsTransient)
-     fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i], i));
-
-     fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
+  Teuchos::ArrayRCP<string> dof_names_dot(neq);
+  if (supportsTransient) {
+    for (unsigned int i=0; i<neq; i++) dof_names_dot[i] = dof_names[i]+"_dot";
   }
 
+  Teuchos::ArrayRCP<string> resid_names(neq);
+  for (unsigned int i=0; i<neq; i++) resid_names[i] = dof_names[i]+" Residual";
+
+  if (supportsTransient) fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+  else fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(false, resid_names));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+  for (unsigned int i=0; i<neq; i++) {
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], i));
+
+    if (supportsTransient)
+    fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i], i));
+
+    fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
+  }
 
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
@@ -296,17 +279,18 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+  if (fieldManagerChoice == BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
     return res_tag.clone();
-  }
-
-  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+  } else if (fieldManagerChoice == BUILD_RESPONSE_FM) {
+    ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
   return Teuchos::null;
 }
-#endif // ALBANY_HEATNONLINEARSOURCEPROBLEM_HPP
+
+} // namespace Albany
+
+#endif // ALBANY_THERMO_ELECTROSTATICS_PROBLEM_HPP

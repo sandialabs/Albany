@@ -6,56 +6,49 @@
 
 #include "Albany_ReactDiffSystem.hpp"
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
+
+#include <Intrepid2_DefaultCubatureFactory.hpp>
+#include <Shards_CellTopology.hpp>
+
 #include <string>
 
+namespace Albany {
 
-Albany::ReactDiffSystem::
-ReactDiffSystem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_),
-  numDim(numDim_),
-  use_sdbcs_(false)
+ReactDiffSystem::
+ReactDiffSystem (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                 const Teuchos::RCP<ParamLib>& paramLib_,
+                 const int numDim_)
+ : AbstractProblem(params_, paramLib_)
+ , numDim(numDim_)
+ , use_sdbcs_(false)
 {
   neq = 3; 
 }
 
-Albany::ReactDiffSystem::
-~ReactDiffSystem()
-{
-}
-
 void
-Albany::ReactDiffSystem::
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+ReactDiffSystem::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs,
+              StateManager& stateMgr)
 {
-  using Teuchos::rcp;
-
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
-  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
-		  Teuchos::null);
+  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Albany::ReactDiffSystem::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+ReactDiffSystem::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -66,25 +59,25 @@ buildEvaluators(
 }
 
 void
-Albany::ReactDiffSystem::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+ReactDiffSystem::
+constructDirichletEvaluators (const MeshSpecs& meshSpecs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq);
-   for (unsigned int i=0; i<neq; i++) {
-     std::stringstream s; s << "U" << i;
-     dirichletNames[i] = s.str();
-   }
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets(); 
-   nodeSetIDs_ = dirUtils.getNodeSetIDs();
+  // Construct Dirichlet evaluators for all nodesets and names
+  std::vector<std::string> dirichletNames(neq);
+  for (unsigned int i=0; i<neq; i++) {
+    std::stringstream s; s << "U" << i;
+    dirichletNames[i] = s.str();
+  }
+  BCUtils<DirichletTraits> dirUtils;
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+                                       this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
+  offsets_ = dirUtils.getOffsets(); 
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::ReactDiffSystem::getValidProblemParameters() const
+ReactDiffSystem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidReactDiffSystemParams");
@@ -94,3 +87,4 @@ Albany::ReactDiffSystem::getValidProblemParameters() const
   return validPL;
 }
 
+} // namespace Albany

@@ -16,19 +16,14 @@
 namespace Albany
 {
 
-PopulateMesh::PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                            const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
-                            const Teuchos::RCP<ParamLib>& paramLib_) :
-  AbstractProblem(params_, paramLib_),
-  discParams(discParams_),
-  use_sdbcs_(false)
+PopulateMesh::
+PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+              const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+              const Teuchos::RCP<ParamLib>& paramLib_)
+ : AbstractProblem(params_, paramLib_)
+ , discParams(discParams_)
 {
   neq = 1;
-}
-
-PopulateMesh::~PopulateMesh()
-{
-  // Nothing to be done here
 }
 
 void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs,
@@ -55,12 +50,10 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
 
   dl = Teuchos::rcp(new Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numCellDim,numCellVecDim));
 
-  if (discParams->isSublist("Side Set Discretizations"))
-  {
+  if (discParams->isSublist("Side Set Discretizations")) {
     Teuchos::ParameterList& ss_disc_pl = discParams->sublist("Side Set Discretizations");
     const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
-    for (auto ss_name : ss_names)
-    {
+    for (auto ss_name : ss_names) {
       const MeshSpecs& ssMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(ss_name)[0];
 
       // Building also side structures
@@ -91,8 +84,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
   std::string fname, flayout;
   Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
   int num_fields = req_fields_info.get<int>("Number Of Fields",0);
-  for (int ifield=0; ifield<num_fields; ++ifield)
-  {
+  for (int ifield=0; ifield<num_fields; ++ifield) {
     const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(util::strint("Field", ifield));
 
     fname   = thisFieldList.get<std::string>("Field Name");
@@ -114,16 +106,14 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
       layout = dl->cell_scalar2;
 
     // Vector fields
-    if (is_vector)
-    {
+    if (is_vector) {
       int vec_dim = thisFieldList.get<int>("Vector Dim");
       layout = is_nodal ? PHAL::ExtendLayout<Dim,Cell,Node>::apply(layout,vec_dim)
                         : PHAL::ExtendLayout<Dim,Cell>::apply(layout,vec_dim);
     }
 
     // Layered fields
-    if (is_layered)
-    {
+    if (is_layered) {
       int num_layers = thisFieldList.get<int>("Number Of Layers");
       layout = is_vector
                   ? (is_nodal ? PHAL::ExtendLayout<LayerDim,Cell,Node,Dim>::apply(layout,num_layers)
@@ -136,20 +126,17 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
     p = stateMgr.registerStateVariable(fname, layout, cellEBName, true, &entity);
   }
 
-  if (discParams->isSublist("Side Set Discretizations"))
-  {
+  if (discParams->isSublist("Side Set Discretizations")) {
     Teuchos::ParameterList& ss_disc_pl = discParams->sublist("Side Set Discretizations");
     const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
-    for (auto ss_name : ss_names)
-    {
+    for (auto ss_name : ss_names) {
       Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
       Teuchos::ParameterList& ss_req_fields_info = this_ss_pl.sublist("Required Fields Info");
       Teuchos::RCP<Layouts> sdl = dl->side_layouts[ss_name];
 
       int ss_num_fields = ss_req_fields_info.get<int>("Number Of Fields",0);
 
-      for (int ifield=0; ifield<ss_num_fields; ++ifield)
-      {
+      for (int ifield=0; ifield<ss_num_fields; ++ifield) {
         const Teuchos::ParameterList& thisFieldList =  ss_req_fields_info.sublist(util::strint("Field", ifield));
 
         fname   = thisFieldList.get<std::string>("Field Name");
@@ -171,16 +158,14 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
           layout = sdl->cell_scalar2;
 
         // Vector fields
-        if (is_vector)
-        {
+        if (is_vector) {
           int vec_dim = thisFieldList.get<int>("Vector Dim");
           layout = is_nodal ? PHAL::ExtendLayout<Dim,Side,Node>::apply(layout,vec_dim)
                             : PHAL::ExtendLayout<Dim,Side>::apply(layout,vec_dim);
         }
 
         // Layered fields
-        if (is_layered)
-        {
+        if (is_layered) {
           int num_layers = thisFieldList.get<int>("Number Of Layers");
           layout = is_vector
                       ? (is_nodal ? PHAL::ExtendLayout<LayerDim,Side,Node,Dim>::apply(layout,num_layers)
@@ -204,11 +189,12 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> mesh
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-PopulateMesh::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                               const MeshSpecs& meshSpecs,
-                               StateManager& stateMgr,
-                               FieldManagerChoice fmchoice,
-                               const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+PopulateMesh::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -221,7 +207,7 @@ PopulateMesh::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 Teuchos::RCP<const Teuchos::ParameterList>
 PopulateMesh::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidPopulateMeshProblemParams");
+  auto validPL = this->getGenericProblemParams("ValidPopulateMeshProblemParams");
   return validPL;
 }
 

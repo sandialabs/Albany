@@ -1,4 +1,5 @@
 #include "Albany_Hessian.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_StringUtils.hpp"
 

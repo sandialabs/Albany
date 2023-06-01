@@ -5,12 +5,14 @@
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_StringUtils.hpp"
+#include "Albany_ScalarParameterAccessors.hpp"
+#include "Albany_Layouts.hpp"
 
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Sacado_ParameterAccessor.hpp"
-#include "Albany_ScalarParameterAccessors.hpp"
 
+#include <memory>
 
 namespace PHAL
 {

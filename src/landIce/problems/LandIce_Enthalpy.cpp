@@ -15,13 +15,16 @@
 #include "Albany_ProblemUtils.hpp"
 #include <string>
 
-LandIce::Enthalpy::
-Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                 const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
-		 const Teuchos::RCP<ParamLib>& paramLib_,
-		 const int numDim_): Albany::AbstractProblem(params_, paramLib_, numDim_), 
-  numDim(numDim_), discParams(discParams_), 
-  use_sdbcs_(false)
+namespace LandIce {
+
+Enthalpy::
+Enthalpy (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+          const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+          const Teuchos::RCP<ParamLib>& paramLib_,
+          const int numDim_)
+ : Albany::AbstractProblem(params_, paramLib_, numDim_)
+ , numDim(numDim_)
+ , discParams(discParams_)
 {
   this->setNumEquations(1);
 
@@ -45,95 +48,90 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
-LandIce::Enthalpy::
-~Enthalpy()
+void Enthalpy::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
+              Albany::StateManager& stateMgr)
 {
-}
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::ParameterList;
+  using PHX::DataLayout;
+  using PHX::MDALayout;
+  using std::vector;
+  using std::string;
+  using std::map;
+  using PHAL::AlbanyTraits;
 
-void LandIce::Enthalpy::
-buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs, Albany::StateManager& stateMgr)
-{
-	  using Teuchos::RCP;
-	  using Teuchos::rcp;
-	  using Teuchos::ParameterList;
-	  using PHX::DataLayout;
-	  using PHX::MDALayout;
-	  using std::vector;
-	  using std::string;
-	  using std::map;
-	  using PHAL::AlbanyTraits;
+  const CellTopologyData* const elem_top = &meshSpecs[0]->ctd;
 
-	  const CellTopologyData* const elem_top = &meshSpecs[0]->ctd;
+  cellBasis = Albany::getIntrepid2Basis(*elem_top);
+  cellType = rcp(new shards::CellTopology (elem_top));
 
-	  cellBasis = Albany::getIntrepid2Basis(*elem_top);
-	  cellType = rcp(new shards::CellTopology (elem_top));
+  const int numNodes = cellBasis->getCardinality();
+  const int worksetSize = meshSpecs[0]->worksetSize;
+  const int numCellSides = cellType->getFaceCount();
+  const int cubDegree = this->params->get("Cubature Degree", 3);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
 
-	  const int numNodes = cellBasis->getCardinality();
-	  const int worksetSize = meshSpecs[0]->worksetSize;
-	  const int numCellSides = cellType->getFaceCount();
-    const int cubDegree = this->params->get("Cubature Degree", 3);
-	  Intrepid2::DefaultCubatureFactory cubFactory;
-	  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
+  const int numQPtsCell = cellCubature->getNumPoints();
+  const int numVertices = cellType->getNodeCount();
+  const int velDim = 2;
+  const int vecDim = 2;
 
-	  const int numQPtsCell = cellCubature->getNumPoints();
-	  const int numVertices = cellType->getNodeCount();
-	  const int velDim = 2;
-	  const int vecDim = 2;
+   *out << "Field Dimensions: Workset=" << worksetSize
+        << ", Vertices= " << numVertices
+        << ", Nodes= " << numNodes
+        << ", QuadPts= " << numQPtsCell
+        << ", Dim= " << numDim << std::endl;
 
-	   *out << "Field Dimensions: Workset=" << worksetSize
-	        << ", Vertices= " << numVertices
-	        << ", Nodes= " << numNodes
-	        << ", QuadPts= " << numQPtsCell
-	        << ", Dim= " << numDim << std::endl;
+  // Using the utility for the common evaluators
+  dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim,velDim));
 
-	  // Using the utility for the common evaluators
-	  dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim,velDim));
+  // Volume Fields
+  Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
+  unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
-	  // Volume Fields
-	  Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
-	  unsigned int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+  std::string fieldType, fieldUsage, meshPart;
+  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
+    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
 
-	  std::string fieldType, fieldUsage, meshPart;
-	  for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
-	    Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
+    // Get current state specs
+    volumeFields.insert(thisFieldList.get<std::string>("Field Name"));
+  }
 
-	    // Get current state specs
-	    volumeFields.insert(thisFieldList.get<std::string>("Field Name"));
-	  }
+  int numBasalSideVertices   = -1;
+  int numBasalSideNodes      = -1;
+  int numBasalSideQPs        = -1;
 
-	  int numBasalSideVertices   = -1;
-	  int numBasalSideNodes      = -1;
-	  int numBasalSideQPs        = -1;
+  if (basalSideName!="INVALID") {
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                                  "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+    const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
 
-	  if (basalSideName!="INVALID")
-	  {
-		  TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-	                                  "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-		  const Albany::MeshSpecs& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
+    // Building also basal side structures
+    const CellTopologyData * const side_bottom = &basalMeshSpecs.ctd;
+    basalSideBasis = Albany::getIntrepid2Basis(*side_bottom);
+    basalSideType = rcp(new shards::CellTopology (side_bottom));
 
-		  // Building also basal side structures
-		  const CellTopologyData * const side_bottom = &basalMeshSpecs.ctd;
-		  basalSideBasis = Albany::getIntrepid2Basis(*side_bottom);
-		  basalSideType = rcp(new shards::CellTopology (side_bottom));
-      
-      int basalCubDegree = params->get("Basal Cubature Degree", 3);
-		  basalEBName   = basalMeshSpecs.ebName;
-		  basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalCubDegree);
+    int basalCubDegree = params->get("Basal Cubature Degree", 3);
+    basalEBName   = basalMeshSpecs.ebName;
+    basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalCubDegree);
 
-		  numBasalSideVertices = basalSideType->getNodeCount();
-		  numBasalSideNodes    = basalSideBasis->getCardinality();
-		  numBasalSideQPs      = basalCubature->getNumPoints();
+    numBasalSideVertices = basalSideType->getNodeCount();
+    numBasalSideNodes    = basalSideBasis->getCardinality();
+    numBasalSideQPs      = basalCubature->getNumPoints();
 
-		  *out << "Sideset Field Dimensions: Workset=" << basalMeshSpecs.worksetSize
-			   << ", SideVertices= " << numBasalSideVertices
-	           << ", SideNodes= " << numBasalSideNodes
-	           << ", SideQuadPts= " << numBasalSideQPs << std::endl;
+    *out << "Sideset Field Dimensions: Workset=" << basalMeshSpecs.worksetSize
+         << ", SideVertices= " << numBasalSideVertices
+         << ", SideNodes= " << numBasalSideNodes
+         << ", SideQuadPts= " << numBasalSideQPs << std::endl;
 
-	      dl_basal = rcp(new Albany::Layouts(numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,
-		  										numDim-1,numDim,numCellSides,vecDim,basalSideName));
+    dl_basal = rcp(new Albany::Layouts(numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,
+                                       numDim-1,numDim,numCellSides,vecDim,basalSideName));
 
-	      dl->side_layouts[basalSideName] = dl_basal;
-	  }
+    dl->side_layouts[basalSideName] = dl_basal;
+  }
 
 #ifdef OUTPUT_TO_SCREEN
   *out << "Field Dimensions: \n"
@@ -149,21 +147,22 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs, Alb
 #endif
 
 
-      /* Construct All Phalanx Evaluators */
-	  elementBlockName = meshSpecs[0]->ebName;
-	  fm.resize(1);
-	  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-	  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
-	  buildFields(*fm[0]);
-	  constructDirichletEvaluators(*meshSpecs[0]);
+  /* Construct All Phalanx Evaluators */
+  elementBlockName = meshSpecs[0]->ebName;
+  fm.resize(1);
+  fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
+  buildFields(*fm[0]);
+  constructDirichletEvaluators(*meshSpecs[0]);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::Enthalpy::buildEvaluators( PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-								  const Albany::MeshSpecs& meshSpecs,
-								  Albany::StateManager& stateMgr,
-								  Albany::FieldManagerChoice fmchoice,
-								  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+Enthalpy::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -173,7 +172,7 @@ LandIce::Enthalpy::buildEvaluators( PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 }
 
 void
-LandIce::Enthalpy::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
+Enthalpy::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 {
   // Allocate memory for unmanaged fields
   fieldUtils = Teuchos::rcp(new Albany::FieldUtils(fm0, dl));
@@ -184,87 +183,83 @@ LandIce::Enthalpy::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
   Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 }
 
-void LandIce::Enthalpy::
+void Enthalpy::
 constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq);
+  // Construct Dirichlet evaluators for all nodesets and names
+  std::vector<std::string> dirichletNames(neq);
 
-   std::stringstream s;
-   s << "Enth";
-   dirichletNames[0] = s.str();
+  dirichletNames[0] = "Enth";
 
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets();
-   nodeSetIDs_ = dirUtils.getNodeSetIDs();
+  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs();
+  offsets_ = dirUtils.getOffsets();
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
-void LandIce::Enthalpy::
+void Enthalpy::
 constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
-	// Note: we only enter this function if sidesets are defined in the mesh file
-	// i.e. meshSpecs.ssNames.size() > 0
+  // Note: we only enter this function if sidesets are defined in the mesh file
+  // i.e. meshSpecs.ssNames.size() > 0
+  Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
-	Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
+  // Check to make sure that Neumann BCs are given in the input file
+  if (!nbcUtils.haveBCSpecified(this->params))
+    return;
 
-	// Check to make sure that Neumann BCs are given in the input file
+  // Construct BC evaluators for all side sets and names
+  // Note that the string index sets up the equation offset, so ordering is important
 
-	if(!nbcUtils.haveBCSpecified(this->params))
-		return;
+  std::vector<std::string> neumannNames(neq);
+  Teuchos::Array<Teuchos::Array<int> > offsets;
+  offsets.resize(neq);
 
-	// Construct BC evaluators for all side sets and names
-	// Note that the string index sets up the equation offset, so ordering is important
+  neumannNames[0] = "Enth";
+  offsets[0].resize(1);
+  offsets[0][0] = 0;
 
-	std::vector<std::string> neumannNames(neq);
-	Teuchos::Array<Teuchos::Array<int> > offsets;
-	offsets.resize(neq);
+  // Construct BC evaluators for all possible names of conditions
+  // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
+  std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  dof_names[0] = "Enthalpy";
 
-	neumannNames[0] = "Enth";
-	offsets[0].resize(1);
-	offsets[0][0] = 0;
+  // Note that sidesets are only supported for two and 3D currently
+  if(numDim == 2)
+     condNames[0] = "(dFluxdx, dFluxdy)";
+  else if(numDim == 3)
+   condNames[0] = "(dFluxdx, dFluxdy, dFluxdz)";
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-    // Construct BC evaluators for all possible names of conditions
-    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-    std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
-    Teuchos::ArrayRCP<std::string> dof_names(1);
-    dof_names[0] = "Enthalpy";
+  condNames[1] = "dFluxdn";
+  condNames[2] = "basal";
+  condNames[3] = "P";
+  condNames[4] = "lateral";
+  condNames[5] = "basal_scalar_field";
 
-    // Note that sidesets are only supported for two and 3D currently
-    if(numDim == 2)
-  	   condNames[0] = "(dFluxdx, dFluxdy)";
-    else if(numDim == 3)
-	   condNames[0] = "(dFluxdx, dFluxdy, dFluxdz)";
-	else
-	   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
-
-	condNames[1] = "dFluxdn";
-	condNames[2] = "basal";
-	condNames[3] = "P";
-	condNames[4] = "lateral";
-	condNames[5] = "basal_scalar_field";
-
-	nfm.resize(1); // LandIce problem only has one element block
-
-	nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-	                                        condNames, offsets, dl, this->params, this->paramLib);
+  nfm = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                       condNames, offsets, dl, this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::Enthalpy::getValidProblemParameters() const
+Enthalpy::getValidProblemParameters() const
 {
-	Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidEnthalpyParams");
-	validPL->sublist("LandIce Physical Parameters", false, "");
-	validPL->sublist("LandIce Enthalpy", false, "Parameters used for Enthalpy equation.");
-	validPL->sublist("LandIce Viscosity", false, "");
-	validPL->sublist("Stereographic Map", false, "");
-	validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
-	validPL->set<bool> ("Needs Dissipation", true, "Boolean describing whether we take into account the heat generated by dissipation");
-	validPL->set<bool> ("Needs Basal Friction", true, "Boolean describing whether we take into account the heat generated by basal friction");
+  auto validPL = this->getGenericProblemParams("ValidEnthalpyParams");
+  validPL->sublist("LandIce Physical Parameters", false, "");
+  validPL->sublist("LandIce Enthalpy", false, "Parameters used for Enthalpy equation.");
+  validPL->sublist("LandIce Viscosity", false, "");
+  validPL->sublist("Stereographic Map", false, "");
+  validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
+  validPL->set<bool> ("Needs Dissipation", true, "Boolean describing whether we take into account the heat generated by dissipation");
+  validPL->set<bool> ("Needs Basal Friction", true, "Boolean describing whether we take into account the heat generated by basal friction");
   validPL->set<int>("Basal Cubature Degree", 3, "Cubature degree used on the basal side");
   validPL->set<int>("Surface Cubature Degree", 3, "Cubature degree used on the surface side");
   validPL->set<int>("Lateral Cubature Degree", 3, "Cubature degree used on the lateral side");
 
-	return validPL;
+  return validPL;
 }
+
+} // namespace LandIce

@@ -16,29 +16,25 @@
 #include "Albany_ProblemUtils.hpp"
 #include "LandIce_LaplacianSampling.hpp"
 
-LandIce::LaplacianSampling::
-LaplacianSampling( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-          const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_),
-  numDim(numDim_),
-  discParams(discParams_),
-  use_sdbcs_(false)
+namespace LandIce {
+
+LaplacianSampling::
+LaplacianSampling (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                   const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+                   const Teuchos::RCP<ParamLib>& paramLib_,
+                   const int numDim_)
+ : Albany::AbstractProblem(params_, paramLib_, numDim_)
+ , numDim(numDim_)
+ , discParams(discParams_)
 {
   neq =1;
 
   sideName   = params->isParameter("Side Name")   ? params->get<std::string>("Side Name")   : "INVALID";
 }
 
-LandIce::LaplacianSampling::
-~LaplacianSampling()
-{
-  // Nothing to be done here
-}
-
-void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                                    Albany::StateManager& stateMgr)
+void LaplacianSampling::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs>> meshSpecs,
+              Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
 
@@ -104,13 +100,12 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::LaplacianSampling::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+LaplacianSampling::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -121,66 +116,57 @@ buildEvaluators(
 }
 
 void
-LandIce::LaplacianSampling::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+LaplacianSampling::
+constructDirichletEvaluators (const Albany::MeshSpecs& meshSpecs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(1);
-   std::stringstream s; s << "U";
-     dirichletNames[0] = s.str();
+  // Construct Dirichlet evaluators for all nodesets and names
+  std::vector<std::string> dirichletNames = { "U" };
 
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
+  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+                                       this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
 }
 
 // Neumann BCs
-void LandIce::LaplacianSampling::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+void LaplacianSampling::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
+  // Note: we only enter this function if sidesets are defined in the mesh file
+  // i.e. meshSpecs.ssNames.size() > 0
+  Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
-   // Note: we only enter this function if sidesets are defined in the mesh file
-   // i.e. meshSpecs.ssNames.size() > 0
+  // Check to make sure that Neumann BCs are given in the input file
+  if(!nbcUtils.haveBCSpecified(this->params)) {
+     return;
+  }
 
-   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
+  // Construct BC evaluators for all side sets and names
+  // Note that the string index sets up the equation offset, so ordering is important
+  std::vector<std::string> neumannNames(1);
+  Teuchos::Array<Teuchos::Array<int> > offsets;
+  offsets.resize(1);
 
-   // Check to make sure that Neumann BCs are given in the input file
+  neumannNames[0] = "U";
+  offsets[0].resize(1);
+  offsets[0][0] = 0;
 
-   if(!nbcUtils.haveBCSpecified(this->params)) {
-      return;
-   }
+  // Construct BC evaluators for all possible names of conditions
+  // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
+  std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  dof_names[0] = "sample";
 
+  nfm.resize(1); // LandIce problem only has one element block
 
-   // Construct BC evaluators for all side sets and names
-   // Note that the string index sets up the equation offset, so ordering is important
-
-   std::vector<std::string> neumannNames(1);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(1);
-
-   neumannNames[0] = "U";
-   offsets[0].resize(1);
-   offsets[0][0] = 0;
-
-   // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
-   Teuchos::ArrayRCP<std::string> dof_names(1);
-     dof_names[0] = "sample";
-
-
-   nfm.resize(1); // LandIce problem only has one element block
-
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                           condNames, offsets, dl,
-                                           this->params, this->paramLib);
+  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                          condNames, offsets, dl,
+                                          this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-LandIce::LaplacianSampling::getValidProblemParameters () const
+LaplacianSampling::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidLaplacianSamplingProblemParams");
+  auto validPL = this->getGenericProblemParams("ValidLaplacianSamplingProblemParams");
 
   validPL->sublist("LandIce Laplacian Regularization", false, "Parameters needed to compute the Laplacian Regularization");
   validPL->set<std::string> ("Side Name", "", "Name of the lateral side set");
@@ -188,3 +174,5 @@ LandIce::LaplacianSampling::getValidProblemParameters () const
 
   return validPL;
 }
+
+} // namespace LandIce

@@ -4,90 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_REACTDIFFSYSTEM_HPP
-#define ALBANY_REACTDIFFSYSTEM_HPP
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#ifndef ALBANY_REACT_DIFF_SYSTEM_HPP
+#define ALBANY_REACT_DIFF_SYSTEM_HPP
 
 #include "Albany_AbstractProblem.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
-
-namespace Albany {
-
-  /*!
-   * \brief Abstract interface for representing a 1-D finite element
-   * problem.
-   */
-  class ReactDiffSystem : public AbstractProblem {
-  public:
-  
-    //! Default constructor
-    ReactDiffSystem(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		 const Teuchos::RCP<ParamLib>& paramLib,
-		 const int numDim_);
-
-    //! Destructor
-    ~ReactDiffSystem();
-
-    //! Return number of spatial dimensions
-    virtual int spatialDimension() const { return numDim; }
-    
-    //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return use_sdbcs_; }
-
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-      StateManager& stateMgr);
-
-    // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-    buildEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-
-    //! Each problem must generate it's list of valid parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-
-  private:
-
-    //! Private to prohibit copying
-    ReactDiffSystem(const ReactDiffSystem&);
-    
-    //! Private to prohibit copying
-    ReactDiffSystem& operator=(const ReactDiffSystem&);
-
-  public:
-
-    //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
-    constructEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-
-    void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
-
-  protected:
-    int numDim;
-  
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
-
-  };
-
-}
-
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -95,19 +18,79 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 
 #include "PHAL_DOFVecGradInterpolation.hpp"
-
 #include "PHAL_ReactDiffSystemResid.hpp"
-
 #include "PHAL_Source.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+namespace Albany {
+
+/*!
+ * \brief Abstract interface for representing a 1-D finite element
+ * problem.
+ */
+class ReactDiffSystem : public AbstractProblem {
+public:
+
+  //! Default constructor
+  ReactDiffSystem (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                   const Teuchos::RCP<ParamLib>& paramLib,
+                   const int numDim_);
+
+  //! Destructor
+  ~ReactDiffSystem() = default;
+
+  //! Return number of spatial dimensions
+  int spatialDimension() const { return numDim; }
+  
+  //! Get boolean telling code if SDBCs are utilized  
+  bool useSDBCs() const {return use_sdbcs_; }
+
+  //! Build the PDE instantiations, boundary conditions, and initial solution
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+                     StateManager& stateMgr);
+
+  // Build evaluators
+  Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
+  buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                   const MeshSpecs& meshSpecs,
+                   StateManager& stateMgr,
+                   FieldManagerChoice fmchoice,
+                   const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  //! Each problem must generate it's list of valid parameters
+  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+
+  //! Main problem setup routine. Not directly called, but indirectly by following functions
+  template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
+  constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                       const MeshSpecs& meshSpecs,
+                       StateManager& stateMgr,
+                       FieldManagerChoice fmchoice,
+                       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  void constructDirichletEvaluators(const MeshSpecs& meshSpecs);
+
+protected:
+  int numDim;
+
+  /// Boolean marking whether SDBCs are used 
+  bool use_sdbcs_; 
+};
+
+// ------------------------- IMPLEMENTATION ------------------------- //
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Albany::ReactDiffSystem::constructEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fieldManagerChoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+ReactDiffSystem::
+constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                     const MeshSpecs& meshSpecs,
+                     StateManager& stateMgr,
+                     FieldManagerChoice fieldManagerChoice,
+                     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -118,9 +101,8 @@ Albany::ReactDiffSystem::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
   
-  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+  auto intrepidBasis = getIntrepid2Basis(meshSpecs.ctd);
+  auto cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
@@ -139,8 +121,8 @@ Albany::ReactDiffSystem::constructEvaluators(
   
    int vecDim = neq;
 
-   RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   RCP<Layouts> dl = rcp(new Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
+   EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient = false;
    if(number_of_time_deriv > 0) 
       supportsTransient = true;
@@ -232,16 +214,17 @@ Albany::ReactDiffSystem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+  if (fieldManagerChoice == BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter ReactDiff System", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
-  }
-  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+  } else if (fieldManagerChoice == BUILD_RESPONSE_FM) {
+    ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
   return Teuchos::null;
 }
-#endif // ALBANY_REACTDIFFSYSTEM_HPP
+
+} // namespace Albany
+
+#endif // ALBANY_REACT_DIFF_SYSTEM_HPP

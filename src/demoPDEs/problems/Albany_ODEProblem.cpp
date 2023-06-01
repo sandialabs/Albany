@@ -6,32 +6,29 @@
 
 #include "Albany_ODEProblem.hpp"
 
-#include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
+#include "Shards_CellTopology.hpp"
 
-Albany::ODEProblem::
-ODEProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, 2),
-  numDim(numDim_),
-  use_sdbcs_(false)
-{ }
+namespace Albany {
 
-Albany::ODEProblem::
-~ODEProblem()
+ODEProblem::
+ODEProblem (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+            const Teuchos::RCP<ParamLib>& paramLib_,
+            const int numDim_)
+ : AbstractProblem(params_, paramLib_, 2)
+ , numDim(numDim_)
 {
+  // Nothing to do here
 }
 
 void
-Albany::ODEProblem::
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+ODEProblem::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+              StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -43,13 +40,12 @@ buildProblem(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Albany::ODEProblem::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+ODEProblem::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -60,23 +56,23 @@ buildEvaluators(
 }
 
 void
-Albany::ODEProblem::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+ODEProblem::
+constructDirichletEvaluators (const MeshSpecs& meshSpecs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq);
-   dirichletNames[0] = "X";
-   dirichletNames[1] = "Y";
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets(); 
-   nodeSetIDs_ = dirUtils.getNodeSetIDs();
+  // Construct Dirichlet evaluators for all nodesets and names
+  std::vector<std::string> dirichletNames(neq);
+  dirichletNames[0] = "X";
+  dirichletNames[1] = "Y";
+  BCUtils<DirichletTraits> dirUtils;
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+                                         this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
+  offsets_ = dirUtils.getOffsets(); 
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::ODEProblem::getValidProblemParameters() const
+ODEProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidODEProblemParams");
@@ -84,3 +80,4 @@ Albany::ODEProblem::getValidProblemParameters() const
   return validPL;
 }
 
+} // namespace Albany

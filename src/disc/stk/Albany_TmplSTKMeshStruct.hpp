@@ -86,17 +86,17 @@ class TmplSTKMeshStruct : public GenericSTKMeshStruct {
 
   //! Default constructor
   TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                    const Teuchos::RCP<const Teuchos_Comm>& commT, const int numParams);
+                    const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams);
 
   ~TmplSTKMeshStruct() {};
 
   //! Sets mesh generation parameters
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                      const unsigned int worksetSize,
                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                     const unsigned int worksetSize,
                     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
@@ -111,7 +111,7 @@ class TmplSTKMeshStruct : public GenericSTKMeshStruct {
   private:
 
   //! Build the mesh
-  void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm);
 
 
   //! Build a parameter list that contains valid input parameters
@@ -177,19 +177,19 @@ template<> void EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::
 template<> void EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
 template<> void EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
 
-template<> void TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
-template<> void TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
-template<> void TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
-template<> void TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+template<> void TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm);
+template<> void TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm);
+template<> void TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm);
+template<> void TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm);
 
 template<> void TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldData(
-                const Teuchos::RCP<const Teuchos_Comm>& commT,
+                const Teuchos::RCP<const Teuchos_Comm>& comm,
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                 const unsigned int worksetSize,
                 const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis);
 
 template<> void TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setBulkData(
-                const Teuchos::RCP<const Teuchos_Comm>& commT,
+                const Teuchos::RCP<const Teuchos_Comm>& comm,
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                 const unsigned int worksetSize,
                 const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis);

@@ -50,94 +50,95 @@
 namespace LandIce
 {
 
-  class Enthalpy : public Albany::AbstractProblem
-  {
-  public:
-    //! Default constructor
-    Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params,
-             const Teuchos::RCP<Teuchos::ParameterList>& discParams,
-             const Teuchos::RCP<ParamLib>& paramLib,
-             const int numDim_);
+class Enthalpy : public Albany::AbstractProblem
+{
+public:
+  //! Default constructor
+  Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params,
+           const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+           const Teuchos::RCP<ParamLib>& paramLib,
+           const int numDim_);
 
-    //! Destructor
-    ~Enthalpy();
+  //! Destructor
+  ~Enthalpy() = default;
 
-    //! Return number of spatial dimensions
-    virtual int spatialDimension() const { return numDim; }
+  //! Return number of spatial dimensions
+  int spatialDimension() const { return numDim; }
 
-    //! Get boolean telling code if SDBCs are utilized
-    virtual bool useSDBCs() const {return use_sdbcs_; }
+  //! Get boolean telling code if SDBCs are utilized
+  bool useSDBCs() const {return use_sdbcs_; }
 
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                              Albany::StateManager& stateMgr);
+  //! Build the PDE instantiations, boundary conditions, and initial solution
+  void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+                    Albany::StateManager& stateMgr);
 
-    //! Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                                                                const Albany::MeshSpecs& meshSpecs,
-                                                                                Albany::StateManager& stateMgr,
-                                                                                Albany::FieldManagerChoice fmchoice,
-                                                                                const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-    //! Build unmanaged fields
-    void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+  //! Build evaluators
+  Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+  buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                   const Albany::MeshSpecs& meshSpecs,
+                   Albany::StateManager& stateMgr,
+                   Albany::FieldManagerChoice fmchoice,
+                   const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    //! Each problem must generate its list of valid parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+  //! Build unmanaged fields
+  void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
-    //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
-    constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                        const Albany::MeshSpecs& meshSpecs,
-                        Albany::StateManager& stateMgr,
-                        Albany::FieldManagerChoice fmchoice,
-                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+  //! Each problem must generate its list of valid parameters
+  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    template <typename EvalT>
-    void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+  //! Main problem setup routine. Not directly called, but indirectly by following functions
+  template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
+  constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                      const Albany::MeshSpecs& meshSpecs,
+                      Albany::StateManager& stateMgr,
+                      Albany::FieldManagerChoice fmchoice,
+                      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
-    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
+  template <typename EvalT>
+  void constructFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
 
-  protected:
-    Teuchos::RCP<shards::CellTopology> cellType;
-    Teuchos::RCP<shards::CellTopology> basalSideType;
+  void constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs);
+  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs);
 
-    Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature;
-    Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  basalCubature;
+protected:
+  Teuchos::RCP<shards::CellTopology> cellType;
+  Teuchos::RCP<shards::CellTopology> basalSideType;
 
-    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
-    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > basalSideBasis;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  basalCubature;
 
-    unsigned int numDim;
-    Teuchos::RCP<Albany::Layouts> dl, dl_basal;
-    std::string elementBlockName;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > basalSideBasis;
 
-    //! Discretization parameters
-    Teuchos::RCP<Teuchos::ParameterList> discParams;
+  unsigned int numDim;
+  Teuchos::RCP<Albany::Layouts> dl, dl_basal;
+  std::string elementBlockName;
 
-    std::set<std::string> volumeFields;
+  //! Discretization parameters
+  Teuchos::RCP<Teuchos::ParameterList> discParams;
 
-    bool needsDiss, needsBasFric;
+  std::set<std::string> volumeFields;
 
-    std::string basalSideName, basalEBName;
+  bool needsDiss, needsBasFric;
 
-    // Storage for unmanaged fields
-    Teuchos::RCP<Albany::FieldUtils> fieldUtils;
+  std::string basalSideName, basalEBName;
 
-    /// Boolean marking whether SDBCs are used
-    bool use_sdbcs_;
-  };
+  // Storage for unmanaged fields
+  Teuchos::RCP<Albany::FieldUtils> fieldUtils;
 
-} // end of the namespace LandIce
+  /// Boolean marking whether SDBCs are used
+  bool use_sdbcs_ = false;
+};
 
 // ================================ IMPLEMENTATION ============================ //
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                      const Albany::MeshSpecs& /* meshSpecs */,
-                                      Albany::StateManager& stateMgr,
-                                      Albany::FieldManagerChoice fieldManagerChoice,
-                                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+Enthalpy::
+constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                     const Albany::MeshSpecs& /* meshSpecs */,
+                     Albany::StateManager& stateMgr,
+                     Albany::FieldManagerChoice fieldManagerChoice,
+                     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -444,7 +445,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<string>("Residual Variable Name", "Enthalpy Residual");
     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
-    ev = rcp(new LandIce::EnthalpyResid<EvalT,AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+    ev = rcp(new EnthalpyResid<EvalT,AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -463,14 +464,13 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     //Output
     p->set<std::string>("Enthalpy Basal Residual Variable Name", "Enthalpy Basal Residual");
 
-    ev = rcp(new LandIce::EnthalpyBasalResid<EvalT,AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+    ev = rcp(new EnthalpyBasalResid<EvalT,AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
 
   // --- LandIce Dissipation ---
-  if(needsDiss)
-  {
+  if(needsDiss) {
     {
       p = rcp(new ParameterList("LandIce Dissipation"));
 
@@ -482,13 +482,12 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       //Output
       p->set<std::string>("Dissipation QP Variable Name", "LandIce Dissipation");
 
-      ev = Teuchos::rcp(new LandIce::Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      ev = Teuchos::rcp(new Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     std::string stateName = "heat_dissipation";
-    if(volumeFields.find(stateName) != volumeFields.end())
-    { //save
+    if(volumeFields.find(stateName) != volumeFields.end()) { //save
       std::string fieldName = "LandIce Dissipation";
       entity = Albany::StateStruct::QuadPoint;
       p = stateMgr.registerStateVariable(stateName, dl->qp_scalar, elementBlockName, true, &entity, "");
@@ -523,7 +522,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
       p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");
       p->set<std::string>("EpsilonSq QP Variable Name", "LandIce EpsilonSq");
 
-      ev = Teuchos::rcp(new LandIce::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
+      ev = Teuchos::rcp(new ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
@@ -543,7 +542,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     p->set<std::string>("Enthalpy Hs Variable Name", "melting enthalpy");
 
-    ev = Teuchos::rcp(new LandIce::PressureMeltingEnthalpy<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = Teuchos::rcp(new PressureMeltingEnthalpy<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     std::string stateName = "melting_temperature";
@@ -575,7 +574,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     //Output
     p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
 
-    ev = Teuchos::rcp(new LandIce::SurfaceAirEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+    ev = Teuchos::rcp(new SurfaceAirEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -601,7 +600,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<std::string>("Basal dTdz Variable Name", "basal_dTdz");
     p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
 
-    ev = Teuchos::rcp(new LandIce::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+    ev = Teuchos::rcp(new Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Saving the temperature in the output mesh
@@ -637,8 +636,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     // Saving the diff enthalpy field in the output mesh
     stateName = "Diff Enth";
-    if(volumeFields.find(stateName) != volumeFields.end())
-    {
+    if(volumeFields.find(stateName) != volumeFields.end()) {
       std::string fieldName = "Diff Enth";
       entity = Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
@@ -667,12 +665,12 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
     //Output
     p->set<std::string>("Water Content Variable Name", "phi");
-    ev = Teuchos::rcp(new LandIce::LiquidWaterFraction<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+    ev = Teuchos::rcp(new LiquidWaterFraction<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     std::string stateName = "phi";
-    if(volumeFields.find(stateName) != volumeFields.end())
-    { // Saving the water fraction phi in the output mesh
+    if(volumeFields.find(stateName) != volumeFields.end()) {
+      // Saving the water fraction phi in the output mesh
       std::string fieldName = "phi";
       entity = Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
@@ -686,7 +684,6 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
         fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
     }
   }
-
 
   // --- LandIce Basal Melt Rate
   {
@@ -711,10 +708,9 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     //Output
     p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity");
     p->set<std::string>("Basal Melt Rate Variable Name", "basal_neumann_term");
-    ev = Teuchos::rcp(new LandIce::BasalMeltRate<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl_basal));
+    ev = Teuchos::rcp(new BasalMeltRate<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
 
   p = Teuchos::rcp(new Teuchos::ParameterList("Glen's Law Homotopy Parameter"));
 
@@ -729,14 +725,11 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   ptr_homotopy = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-  {
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
     PHX::Tag<typename EvalT::ScalarT> res_tag0("Scatter Enthalpy", dl->dummy);
     fm0.requireField<EvalT>(res_tag0);
-  }
-  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
-  {
-    LandIce::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+  } else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+    ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
@@ -745,9 +738,11 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
 template <typename EvalT>
 void
-LandIce::Enthalpy::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+Enthalpy::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
 {
   fieldUtils->setComputeBasisFunctionsFields<EvalT>();
 }
+
+} // namespace LandIce
 
 #endif /* LandIce_ENTHALPY_PROBLEM_HPP */

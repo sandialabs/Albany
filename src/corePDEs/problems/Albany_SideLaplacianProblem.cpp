@@ -11,15 +11,15 @@
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
+
 #include <string>
 
-namespace Albany
-{
+namespace Albany {
 
-SideLaplacian::SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                        const Teuchos::RCP<ParamLib>& paramLib)
- : Albany::AbstractProblem (params, paramLib, 2)
- , use_sdbcs_(false)
+SideLaplacian::
+SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params,
+               const Teuchos::RCP<ParamLib>& paramLib)
+ : AbstractProblem (params, paramLib, 2)
 {
   bool solve_as_ss_eqn = params->get<bool>("Solve As Side Set Equation");
   numDim = solve_as_ss_eqn ? 3 : 2;
@@ -38,19 +38,15 @@ SideLaplacian::SideLaplacian (const Teuchos::RCP<Teuchos::ParameterList>& params
   }
 }
 
-SideLaplacian::~SideLaplacian()
-{
-  // Nothing to be done here
-}
-
-void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                                  Albany::StateManager& stateMgr)
+void SideLaplacian::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+              StateManager& stateMgr)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
 
   // Building cell basis and cubature
   const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
-  cellBasis = Albany::getIntrepid2Basis(*cell_top);
+  cellBasis = getIntrepid2Basis(*cell_top);
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
   Intrepid2::DefaultCubatureFactory   cubFactory;
@@ -65,23 +61,22 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
 
-  dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim));
+  dl = Teuchos::rcp(new Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim));
 
   int numSideVertices = -1;
   int numSideNodes    = -1;
   int numSideQPs      = -1;
 
-  if (numDim==3)
-  {
+  if (numDim==3) {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideSetName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                "Error! Either 'Side Set Name' (" << sideSetName << ") is wrong or something went wrong while " <<
-                                "building the side mesh specs. (Did you forget to specify side set discretizations in the input file?)\n");
+      "Error! Either 'Side Set Name' (" << sideSetName << ") is wrong or something went wrong while " <<
+      "building the side mesh specs. (Did you forget to specify side set discretizations in the input file?)\n");
 
-    const Albany::MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
+    const MeshSpecs& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
 
     // Building also side structures
     const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
-    sideBasis = Albany::getIntrepid2Basis(*side_top);
+    sideBasis = getIntrepid2Basis(*side_top);
     sideType = Teuchos::rcp(new shards::CellTopology (side_top));
 
     sideEBName   = sideMeshSpecs.ebName;
@@ -92,8 +87,8 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
     numSideNodes    = sideBasis->getCardinality();
     numSideQPs      = sideCubature->getNumPoints();
 
-    dl_side = Teuchos::rcp(new Albany::Layouts(numSideVertices,numSideNodes,
-                                               numSideQPs,numDim-1,numDim,numCellSides,2,sideSetName));
+    dl_side = Teuchos::rcp(new Layouts(numSideVertices,numSideNodes,
+                                       numSideQPs,numDim-1,numDim,numCellSides,2,sideSetName));
     dl->side_layouts[sideSetName] = dl_side;
   }
 
@@ -113,32 +108,33 @@ void SideLaplacian::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpe
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 
   // Build evaluators
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, Teuchos::null);
 
   constructDirichletEvaluators (*meshSpecs[0]);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-SideLaplacian::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                             const Albany::MeshSpecs& meshSpecs,
-                             Albany::StateManager& stateMgr,
-                             Albany::FieldManagerChoice fmchoice,
-                             const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+SideLaplacian::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<SideLaplacian> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  ConstructEvaluatorsOp<SideLaplacian> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 
   return *op.tags;
 }
 
-void SideLaplacian::constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
+void SideLaplacian::constructDirichletEvaluators(const MeshSpecs& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames = {"DUMMY", "U"};
 
-  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
+  BCUtils<DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
   use_sdbcs_ = dirUtils.useSDBCs(); 
 }
@@ -146,7 +142,7 @@ void SideLaplacian::constructDirichletEvaluators(const Albany::MeshSpecs& meshSp
 Teuchos::RCP<const Teuchos::ParameterList>
 SideLaplacian::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidSideLaplacianProblemParams");
+  auto validPL = this->getGenericProblemParams("ValidSideLaplacianProblemParams");
 
   validPL->set<bool>("Solve As Side Set Equation",true,"If false, solves laplacian on a 2D geometry. If 3, solves laplacian as a sideset equation of a 3D geometry");
   validPL->set<std::string>("Side Set Name","","The name of the sideset where the side laplacian has to be solved (only for Dimension=3).");

@@ -252,7 +252,7 @@ protected:
   unsigned int vecDimFO;
 
   /// Boolean marking whether SDBCs are used
-  bool use_sdbcs_;
+  bool use_sdbcs_ = false;
 
   /// Boolean marking whether to use the depth-integrated model
   bool depthIntegratedModel;

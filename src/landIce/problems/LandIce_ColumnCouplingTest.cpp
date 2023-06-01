@@ -22,7 +22,6 @@ ColumnCouplingTest (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                     const Teuchos::RCP<ParamLib>& paramLib)
  : Albany::AbstractProblem (params_, paramLib, 1)
  , discParams(discParams_)
- , use_sdbcs_(false)
 {
   numDim = 3;
 
@@ -99,11 +98,12 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-ColumnCouplingTest::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                             const Albany::MeshSpecs& meshSpecs,
-                             Albany::StateManager& stateMgr,
-                             Albany::FieldManagerChoice fmchoice,
-                             const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+ColumnCouplingTest::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -113,7 +113,8 @@ ColumnCouplingTest::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   return *op.tags;
 }
 
-void ColumnCouplingTest::constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
+void ColumnCouplingTest::
+constructDirichletEvaluators(const Albany::MeshSpecs& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames = {dof_name};
@@ -126,7 +127,7 @@ void ColumnCouplingTest::constructDirichletEvaluators(const Albany::MeshSpecs& m
 Teuchos::RCP<const Teuchos::ParameterList>
 ColumnCouplingTest::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidColumnCouplingTestProblemParams");
+  auto validPL = this->getGenericProblemParams("ValidColumnCouplingTestProblemParams");
 
   validPL->set<std::string>("Side Set Name","","The name of the sideset where the side laplacian has to be solved (only for Dimension=3).");
   validPL->set<bool>("Extruded Column Coupled in 2D Residual",true,"Whether extruded columns dofs are coupled in the 2d residual");

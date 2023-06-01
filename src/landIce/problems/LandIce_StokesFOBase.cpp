@@ -19,7 +19,6 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
  : Albany::AbstractProblem(params_, paramLib_, numDim_) 
  , discParams (discParams_)
  , numDim(numDim_)
- , use_sdbcs_(false)
  , params(params_)
 {
 

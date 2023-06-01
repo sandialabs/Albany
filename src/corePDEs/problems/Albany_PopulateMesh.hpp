@@ -44,17 +44,17 @@ public:
                 const Teuchos::RCP<ParamLib>& paramLib_);
 
   //! Destructor
-  ~PopulateMesh();
+  ~PopulateMesh() = default;
 
   //! Return number of spatial dimensions
-  virtual int spatialDimension() const { return 0; }
+  int spatialDimension() const { return 0; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
                              Albany::StateManager& stateMgr);
 
   // Build evaluators
-  virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+  Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                    const Albany::MeshSpecs& meshSpecs,
                    Albany::StateManager& stateMgr,
@@ -64,17 +64,7 @@ public:
   //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-  bool useSDBCs() const { return use_sdbcs_; }
-
-private:
-
-  //! Private to prohibit copying
-  PopulateMesh(const PopulateMesh&);
-
-  //! Private to prohibit copying
-  PopulateMesh& operator=(const PopulateMesh&);
-
-public:
+  bool useSDBCs() const { return false; }
 
   //! Main problem setup routine. Not directly called, but indirectly by following functions
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
@@ -112,8 +102,6 @@ protected:
 
   std::string                       cellEBName;
   std::map<std::string,std::string> sideEBName;
-  /// Boolean marking whether SDBCs are used
-  bool use_sdbcs_;
 };
 
 // ================================ IMPLEMENTATION ============================ //

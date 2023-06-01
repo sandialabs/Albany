@@ -9,14 +9,14 @@
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
-Albany::Helmholtz2DProblem::
-Helmholtz2DProblem(
-                         const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                         const Teuchos::RCP<ParamLib>& paramLib_) :
-  Albany::AbstractProblem(params_, paramLib_, 2),
-  use_sdbcs_(false)
-{
+namespace Albany {
 
+Helmholtz2DProblem::
+Helmholtz2DProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                   const Teuchos::RCP<ParamLib>& paramLib_)
+ : AbstractProblem(params_, paramLib_, 2)
+ , use_sdbcs_(false)
+{
   std::string& method = params->get("Name", "Helmholtz 2D Problem");
   *out << "Problem Name = " << method << std::endl;
   
@@ -25,16 +25,10 @@ Helmholtz2DProblem(
   haveSource =  params->isSublist("Source Functions");
 }
 
-Albany::Helmholtz2DProblem::
-~Helmholtz2DProblem()
-{
-}
-
 void
-Albany::Helmholtz2DProblem::
-buildProblem(
-   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-   Albany::StateManager& stateMgr)
+Helmholtz2DProblem::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs>> meshSpecs,
+              StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -46,13 +40,12 @@ buildProblem(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Albany::Helmholtz2DProblem::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+Helmholtz2DProblem::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -63,23 +56,23 @@ buildEvaluators(
 }
 
 void
-Albany::Helmholtz2DProblem::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+Helmholtz2DProblem::
+constructDirichletEvaluators(const MeshSpecs& meshSpecs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq);
-   dirichletNames[0] = "U";
-   dirichletNames[1] = "V";
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets(); 
-   nodeSetIDs_ = dirUtils.getNodeSetIDs();
+  // Construct Dirichlet evaluators for all nodesets and names
+  std::vector<std::string> dirichletNames(neq);
+  dirichletNames[0] = "U";
+  dirichletNames[1] = "V";
+  BCUtils<DirichletTraits> dirUtils;
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+                                         this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
+  offsets_ = dirUtils.getOffsets(); 
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::Helmholtz2DProblem::getValidProblemParameters() const
+Helmholtz2DProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidHelmhotz2DProblemParams");
@@ -91,3 +84,5 @@ Albany::Helmholtz2DProblem::getValidProblemParameters() const
 
   return validPL;
 }
+
+} // namespace Albany

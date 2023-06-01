@@ -12,17 +12,19 @@
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 
-Albany::AdvectionProblem::
-AdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
-             const int numDim_,
-             const Teuchos::RCP<const Teuchos_Comm >& commT_) :
-  Albany::AbstractProblem(params_, paramLib_/*, distParamLib_*/),
-  numDim(numDim_),
-  params(params_), 
-  commT(commT_),
-  use_sdbcs_(false)
+namespace Albany
+{
+
+AdvectionProblem::
+AdvectionProblem (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                  const Teuchos::RCP<ParamLib>& paramLib_,
+                  const int numDim_,
+                  const Teuchos::RCP<const Teuchos_Comm >& comm_)
+ : AbstractProblem(params_, paramLib_/*, distParamLib_*/)
+ , numDim(numDim_)
+ , params(params_) 
+ , comm(comm_)
+ , use_sdbcs_(false)
 {
   this->setNumEquations(1);
   //We just have 1 PDE per node
@@ -38,7 +40,7 @@ AdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   advectionIsDistParam = false;
   if(params->isSublist("Parameters")) {
     int total_num_param_vecs, num_param_vecs, numDistParams;
-    Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
+    getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
       Teuchos::ParameterList p = params->sublist("Parameters").sublist(util::strint("Parameter", 
 			                 i+num_param_vecs));
@@ -51,16 +53,10 @@ AdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
-Albany::AdvectionProblem::
-~AdvectionProblem()
-{
-}
-
 void
-Albany::AdvectionProblem::
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+AdvectionProblem::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+              StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
@@ -91,13 +87,12 @@ buildProblem(
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::AdvectionProblem::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+AdvectionProblem::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -109,77 +104,75 @@ buildEvaluators(
 
 // Dirichlet BCs
 void
-Albany::AdvectionProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
+AdvectionProblem::
+constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
-   // Construct BC evaluators for all node sets and names
-   std::vector<std::string> bcNames(neq);
-   bcNames[0] = "u";
-   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
-   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
-                                          this->params, this->paramLib);
-   use_sdbcs_ = bcUtils.useSDBCs(); 
-   offsets_ = bcUtils.getOffsets(); 
-   nodeSetIDs_ = bcUtils.getNodeSetIDs();
+  // Construct BC evaluators for all node sets and names
+  std::vector<std::string> bcNames(neq);
+  bcNames[0] = "u";
+  BCUtils<DirichletTraits> bcUtils;
+  dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
+                                         this->params, this->paramLib);
+  use_sdbcs_ = bcUtils.useSDBCs(); 
+  offsets_ = bcUtils.getOffsets(); 
+  nodeSetIDs_ = bcUtils.getNodeSetIDs();
 }
 
 // Neumann BCs
 void
-Albany::AdvectionProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+AdvectionProblem::
+constructNeumannEvaluators(const Teuchos::RCP<MeshSpecs>& meshSpecs)
 {
-   // Note: we only enter this function if sidesets are defined in the mesh file
-   // i.e. meshSpecs.ssNames.size() > 0
+  // Note: we only enter this function if sidesets are defined in the mesh file
+  // i.e. meshSpecs.ssNames.size() > 0
 
-   Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+  BCUtils<NeumannTraits> bcUtils;
 
-   // Check to make sure that Neumann BCs are given in the input file
+  // Check to make sure that Neumann BCs are given in the input file
 
-   if(!bcUtils.haveBCSpecified(this->params))
+  if(!bcUtils.haveBCSpecified(this->params))
+     return;
 
-      return;
+  // Construct BC evaluators for all side sets and names
+  // Note that the string index sets up the equation offset, so ordering is important
+  std::vector<std::string> bcNames(neq);
+  Teuchos::ArrayRCP<std::string> dof_names(neq);
+  Teuchos::Array<Teuchos::Array<int> > offsets;
+  offsets.resize(neq);
 
-   // Construct BC evaluators for all side sets and names
-   // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<std::string> bcNames(neq);
-   Teuchos::ArrayRCP<std::string> dof_names(neq);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(neq);
+  bcNames[0] = "u";
+  dof_names[0] = "solution";
+  offsets[0].resize(1);
+  offsets[0][0] = 0;
 
-   bcNames[0] = "u";
-   dof_names[0] = "solution";
-   offsets[0].resize(1);
-   offsets[0][0] = 0;
+  // Construct BC evaluators for all possible names of conditions
+  // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+  std::vector<std::string> condNames(5);
+    //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
+  // Note that sidesets are only supported for two and 3D currently
+  if(numDim == 2)
+   condNames[0] = "(dudx, dudy)";
+  else if(numDim == 3)
+   condNames[0] = "(dudx, dudy, dudz)";
+  else
+   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-   // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<std::string> condNames(5);
-     //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
+  condNames[1] = "dudn";
+  condNames[2] = "scaled jump";
+  condNames[3] = "robin";
+  condNames[4] = "radiate";
 
-   // Note that sidesets are only supported for two and 3D currently
-   if(numDim == 2)
-    condNames[0] = "(dudx, dudy)";
-   else if(numDim == 3)
-    condNames[0] = "(dudx, dudy, dudz)";
-   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
-
-   condNames[1] = "dudn";
-   condNames[2] = "scaled jump";
-   condNames[3] = "robin";
-   condNames[4] = "radiate";
-
-   nfm.resize(1); // Advection problem only has one physics set
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-                                  condNames, offsets, dl, this->params, this->paramLib);
-
+  nfm.resize(1); // Advection problem only has one physics set
+  nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
+                                 condNames, offsets, dl, this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::AdvectionProblem::getValidProblemParameters() const
+AdvectionProblem::getValidProblemParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidAdvectionProblemParams");
+  auto validPL = this->getGenericProblemParams("ValidAdvectionProblemParams");
   
   Teuchos::Array<double> defaultData;
   defaultData.resize(numDim, 1.0);
@@ -192,3 +185,5 @@ Albany::AdvectionProblem::getValidProblemParameters() const
 
   return validPL;
 }
+
+} // namespace Albany

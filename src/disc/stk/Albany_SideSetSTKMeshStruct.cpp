@@ -29,7 +29,7 @@ namespace Albany
 
 SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecs& inputMeshSpecs,
                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                            const Teuchos::RCP<const Teuchos_Comm>& commT,
+                                            const Teuchos::RCP<const Teuchos_Comm>& comm,
                                             const int numParams) :
   GenericSTKMeshStruct(params, -1, numParams)
 {
@@ -103,7 +103,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecs& inputMeshSpecs,
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecs(ctd, this->numDim, nsNames, ssNames, worksetSize,
                                                                 ebn, ebNameToIndex));
 
-  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
+  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get());
   stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(*mpiComm->getRawMpiComm());
   meshBuilder.set_aura_option(stk::mesh::BulkData::NO_AUTO_AURA);
   meshBuilder.set_bucket_capacity(worksetSize);
@@ -125,16 +125,16 @@ void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& paren
 }
 
 void SideSetSTKMeshStruct::setFieldData (
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<const Teuchos_Comm>& comm,
       const Teuchos::RCP<StateInfoStruct>& sis,
       const unsigned int worksetSize,
       const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
-  this->SetupFieldData(commT, sis, worksetSize);
+  this->SetupFieldData(comm, sis, worksetSize);
 }
 
 void SideSetSTKMeshStruct::setBulkData (
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<const Teuchos_Comm>& comm,
       const Teuchos::RCP<StateInfoStruct>& /* sis */,
       const unsigned int /* worksetSize */,
       const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
@@ -212,7 +212,7 @@ void SideSetSTKMeshStruct::setBulkData (
   }
 
   // Loading the fields from file
-  this->loadRequiredInputFields (commT);
+  this->loadRequiredInputFields (comm);
 
   // Insertion of entities end
   bulkData->modification_end();

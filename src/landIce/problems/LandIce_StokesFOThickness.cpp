@@ -19,8 +19,8 @@ StokesFOThickness::StokesFOThickness(
             const Teuchos::RCP<Teuchos::ParameterList>& params_,
             const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
             const Teuchos::RCP<ParamLib>& paramLib_,
-            const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_)
+            const int numDim_)
+ : StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   //Set # of PDEs per node.
   std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "LandIce");
@@ -52,12 +52,12 @@ StokesFOThickness::StokesFOThickness(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-StokesFOThickness::buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+StokesFOThickness::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -101,73 +101,68 @@ void StokesFOThickness::constructDirichletEvaluators(const Albany::MeshSpecs& me
 
 // Neumann BCs
 void
-LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
+  // Note: we only enter this function if sidesets are defined in the mesh file
+  // i.e. meshSpecs.ssNames.size() > 0
+  Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
-   // Note: we only enter this function if sidesets are defined in the mesh file
-   // i.e. meshSpecs.ssNames.size() > 0
+  // Check to make sure that Neumann BCs are given in the input file
+  if(!nbcUtils.haveBCSpecified(this->params)) {
+     return;
+  }
 
-   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
+  // Construct BC evaluators for all side sets and names
+  // Note that the string index sets up the equation offset, so ordering is important
+  std::vector<std::string> neumannNames(neq + 1);
+  Teuchos::Array<Teuchos::Array<int> > offsets;
+  offsets.resize(neq + 1);
 
-   // Check to make sure that Neumann BCs are given in the input file
+  neumannNames[0] = "U0";
+  offsets[0].resize(1);
+  offsets[0][0] = 0;
+  offsets[neq].resize(neq-1);
+  offsets[neq][0] = 0;
 
-   if(!nbcUtils.haveBCSpecified(this->params)) {
-      return;
-   }
+  if (neq-1>1){
+     neumannNames[1] = "U1";
+     offsets[1].resize(1);
+     offsets[1][0] = 1;
+     offsets[neq][1] = 1;
+  }
 
+  if (neq-1>2){
+    neumannNames[2] = "U2";
+     offsets[2].resize(1);
+     offsets[2][0] = 2;
+     offsets[neq][2] = 2;
+  }
 
-   // Construct BC evaluators for all side sets and names
-   // Note that the string index sets up the equation offset, so ordering is important
+  neumannNames[neq-1] = "H";
+  offsets[neq-1].resize(1);
+  offsets[neq-1][0] = neq-1;
 
-   std::vector<std::string> neumannNames(neq + 1);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(neq + 1);
+  neumannNames[neq] = "all";
 
-   neumannNames[0] = "U0";
-   offsets[0].resize(1);
-   offsets[0][0] = 0;
-   offsets[neq].resize(neq-1);
-   offsets[neq][0] = 0;
+  // Construct BC evaluators for all possible names of conditions
+  // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
+  std::vector<std::string> condNames(3); //(dCdx, dCdy, dCdz), dCdn, P
 
-   if (neq-1>1){
-      neumannNames[1] = "U1";
-      offsets[1].resize(1);
-      offsets[1][0] = 1;
-      offsets[neq][1] = 1;
-   }
+  // Note that sidesets are only supported for two and 3D currently
+  if(numDim == 2)
+   condNames[0] = "(dFluxdx, dFluxdy)";
+  else if(numDim == 3)
+   condNames[0] = "(dFluxdx, dFluxdy, dFluxdz)";
+  else
+   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-   if (neq-1>2){
-     neumannNames[2] = "U2";
-      offsets[2].resize(1);
-      offsets[2][0] = 2;
-      offsets[neq][2] = 2;
-   }
+  condNames[1] = "dFluxdn";
+  condNames[2] = "P";
 
-   neumannNames[neq-1] = "H";
-   offsets[neq-1].resize(1);
-   offsets[neq-1][0] = neq-1;
+  nfm.resize(1); // LandIce problem only has one element block
 
-   neumannNames[neq] = "all";
-
-   // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<std::string> condNames(3); //(dCdx, dCdy, dCdz), dCdn, P
-
-   // Note that sidesets are only supported for two and 3D currently
-   if(numDim == 2)
-    condNames[0] = "(dFluxdx, dFluxdy)";
-   else if(numDim == 3)
-    condNames[0] = "(dFluxdx, dFluxdy, dFluxdz)";
-   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
-
-   condNames[1] = "dFluxdn";
-   condNames[2] = "P";
-
-   nfm.resize(1); // LandIce problem only has one element block
-
-   nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
                                           condNames, offsets, dl,
                                           this->params, this->paramLib);
 }
@@ -175,7 +170,7 @@ LandIce::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany
 Teuchos::RCP<const Teuchos::ParameterList>
 StokesFOThickness::getValidProblemParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
+  auto validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");

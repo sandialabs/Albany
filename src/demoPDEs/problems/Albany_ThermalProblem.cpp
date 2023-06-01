@@ -6,12 +6,15 @@
 
 #include "Albany_ThermalProblem.hpp"
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 #include "PHAL_SharedParameter.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
+
+namespace Albany {
 
 template<typename ParamNameEnum>
 struct ConstructSharedParameterOp
@@ -19,40 +22,41 @@ struct ConstructSharedParameterOp
 private:
   Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm_;
   Teuchos::RCP<Teuchos::ParameterList> p_;
-  Teuchos::RCP<Albany::Layouts> dl_;
-  Albany::ThermalProblem& problem_;
+  Teuchos::RCP<Layouts> dl_;
+  ThermalProblem& problem_;
 
 public:
-  ConstructSharedParameterOp (Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm, Teuchos::RCP<Teuchos::ParameterList> p, Teuchos::RCP<Albany::Layouts> dl, Albany::ThermalProblem& problem) :
-      fm_(fm), p_(p), dl_(dl), problem_(problem) {}
+  ConstructSharedParameterOp (Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> fm,
+                              Teuchos::RCP<Teuchos::ParameterList> p,
+                              Teuchos::RCP<Layouts> dl,
+                              ThermalProblem& problem)
+   : fm_(fm), p_(p), dl_(dl), problem_(problem) {}
+
   template<typename EvalT>
   void operator() (EvalT /*x*/) const {
     //access the accessors
-    p_->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", problem_.getAccessors()->template at<EvalT>());
+    p_->set<Teuchos::RCP<ScalarParameterAccessors<EvalT>>>("Accessors", problem_.getAccessors()->template at<EvalT>());
     auto ev = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p_,dl_));
     fm_->template registerEvaluator<EvalT>(ev);
   }
 };
 
-Albany::ThermalProblem::
-ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             //const Teuchos::RCP<DistributedParameterLibrary>& distParamLib_,
-             const int numDim_,
-             const Teuchos::RCP<const Teuchos_Comm >& commT_) :
-  Albany::AbstractProblem(params_, paramLib_/*, distParamLib_*/),
-  numDim(numDim_),
-  params(params_), 
-  commT(commT_),
-  use_sdbcs_(false)
+ThermalProblem::
+ThermalProblem (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                const Teuchos::RCP<ParamLib>& paramLib_,
+                const int numDim_,
+                const Teuchos::RCP<const Teuchos_Comm >& comm_)
+ : AbstractProblem(params_, paramLib_/*, distParamLib_*/)
+ , numDim(numDim_)
+ , params(params_) 
+ , comm(comm_)
 {
   this->setNumEquations(1);
   //We just have 1 PDE per node
   neq = 1; 
   Teuchos::Array<double> defaultData;
   defaultData.resize(numDim, 1.0);
-  kappa =
-      params->get<Teuchos::Array<double>>("Thermal Conductivity", defaultData);
+  kappa = params->get<Teuchos::Array<double>>("Thermal Conductivity", defaultData);
   if (kappa.size() != numDim) {
     ALBANY_ABORT("Thermal Conductivity array must have length = numDim!");
   }
@@ -61,9 +65,9 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   thermal_source = params->get<std::string>("Thermal Source", "None"); 
 
   conductivityIsDistParam = false;
-  if(params->isSublist("Parameters")) {
+  if (params->isSublist("Parameters")) {
     int total_num_param_vecs, num_param_vecs, numDistParams;
-    Albany::getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
+    getParameterSizes(params->sublist("Parameters"), total_num_param_vecs, num_param_vecs, numDistParams);
     for (int i=0; i<numDistParams; ++i) {
       Teuchos::ParameterList p = params->sublist("Parameters").sublist(util::strint("Parameter", 
                        i+num_param_vecs));
@@ -76,16 +80,10 @@ ThermalProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   rigidBodyModes->setParameters(neq, computeConstantModes);
 }
 
-Albany::ThermalProblem::
-~ThermalProblem()
-{
-}
-
 void
-Albany::ThermalProblem::
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+ThermalProblem::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+              StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
@@ -112,17 +110,15 @@ buildProblem(
   if (meshSpecs[0]->ssNames.size() > 0) { // Build a sideset evaluator if sidesets are present
     constructNeumannEvaluators(meshSpecs[0]);
   }
-
 }
 
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::ThermalProblem::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+ThermalProblem::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -134,100 +130,98 @@ buildEvaluators(
 
 // Dirichlet BCs
 void
-Albany::ThermalProblem::constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
+ThermalProblem::
+constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs)
 {
-   // Construct BC evaluators for all node sets and names
-   std::vector<std::string> bcNames(neq);
-   bcNames[0] = "T";
-   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
+  // Construct BC evaluators for all node sets and names
+  std::vector<std::string> bcNames(neq);
+  bcNames[0] = "T";
+  BCUtils<DirichletTraits> bcUtils;
 
-   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
-                                          this->params, this->paramLib);
+  dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
+                                      this->params, this->paramLib);
 
-   {
+  {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Theta 0"));
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", this->paramLib);
     const std::string param_name = "Theta 0";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", 0.);
-    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl, *this);
+    ConstructSharedParameterOp<ParamEnum> constructor(dfm, p, dl, *this);
     Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
-   }
-   {
+  }
+  {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Theta 1"));
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", this->paramLib);
     const std::string param_name = "Theta 1";
     p->set<std::string>("Parameter Name", param_name);
     p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
     p->set<double>("Default Nominal Value", 0.);
-    ConstructSharedParameterOp<Albany::ParamEnum> constructor(dfm, p, dl, *this);
+    ConstructSharedParameterOp<ParamEnum> constructor(dfm, p, dl, *this);
     Sacado::mpl::for_each_no_kokkos<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
-   }
+  }
 
-   use_sdbcs_ = bcUtils.useSDBCs(); 
-   offsets_ = bcUtils.getOffsets(); 
-   nodeSetIDs_ = bcUtils.getNodeSetIDs();
+  use_sdbcs_ = bcUtils.useSDBCs(); 
+  offsets_ = bcUtils.getOffsets(); 
+  nodeSetIDs_ = bcUtils.getNodeSetIDs();
 }
 
 // Neumann BCs
 void
-Albany::ThermalProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+ThermalProblem::
+constructNeumannEvaluators(const Teuchos::RCP<MeshSpecs>& meshSpecs)
 {
-   // Note: we only enter this function if sidesets are defined in the mesh file
-   // i.e. meshSpecs.ssNames.size() > 0
+  // Note: we only enter this function if sidesets are defined in the mesh file
+  // i.e. meshSpecs.ssNames.size() > 0
 
-   Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+  BCUtils<NeumannTraits> bcUtils;
 
-   // Check to make sure that Neumann BCs are given in the input file
+  // Check to make sure that Neumann BCs are given in the input file
 
-   if(!bcUtils.haveBCSpecified(this->params))
+  if(!bcUtils.haveBCSpecified(this->params))
+     return;
 
-      return;
+  // Construct BC evaluators for all side sets and names
+  // Note that the string index sets up the equation offset, so ordering is important
+  std::vector<std::string> bcNames(neq);
+  Teuchos::ArrayRCP<std::string> dof_names(neq);
+  Teuchos::Array<Teuchos::Array<int> > offsets;
+  offsets.resize(neq);
 
-   // Construct BC evaluators for all side sets and names
-   // Note that the string index sets up the equation offset, so ordering is important
-   std::vector<std::string> bcNames(neq);
-   Teuchos::ArrayRCP<std::string> dof_names(neq);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(neq);
+  bcNames[0] = "T";
+  dof_names[0] = "Temperature";
+  offsets[0].resize(1);
+  offsets[0][0] = 0;
 
-   bcNames[0] = "T";
-   dof_names[0] = "Temperature";
-   offsets[0].resize(1);
-   offsets[0][0] = 0;
+  // Construct BC evaluators for all possible names of conditions
+  // Should only specify flux vector components (dTdx, dTdy, dTdz), or dTdn, not both
+  std::vector<std::string> condNames(5);
+    //dTdx, dTdy, dTdz, dTdn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
+  // Note that sidesets are only supported for two and 3D currently
+  if(numDim == 2)
+   condNames[0] = "(dTdx, dTdy)";
+  else if(numDim == 3)
+   condNames[0] = "(dTdx, dTdy, dTdz)";
+  else
+   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
-   // Construct BC evaluators for all possible names of conditions
-   // Should only specify flux vector components (dTdx, dTdy, dTdz), or dTdn, not both
-   std::vector<std::string> condNames(5);
-     //dTdx, dTdy, dTdz, dTdn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
+  condNames[1] = "dTdn";
+  condNames[2] = "scaled jump";
+  condNames[3] = "robin";
+  condNames[4] = "radiate";
 
-   // Note that sidesets are only supported for two and 3D currently
-   if(numDim == 2)
-    condNames[0] = "(dTdx, dTdy)";
-   else if(numDim == 3)
-    condNames[0] = "(dTdx, dTdy, dTdz)";
-   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-       std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
-
-   condNames[1] = "dTdn";
-   condNames[2] = "scaled jump";
-   condNames[3] = "robin";
-   condNames[4] = "radiate";
-
-   nfm.resize(1); // Thermal problem only has one physics set
-   nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
-                                  condNames, offsets, dl, this->params, this->paramLib);
-
+  nfm.resize(1); // Thermal problem only has one physics set
+  nfm[0] = bcUtils.constructBCEvaluators(meshSpecs, bcNames, dof_names, false, 0,
+                                         condNames, offsets, dl, this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::ThermalProblem::getValidProblemParameters() const
+ThermalProblem::getValidProblemParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidThermalProblemParams");
+  auto validPL = this->getGenericProblemParams("ValidThermalProblemParams");
   
   Teuchos::Array<double> defaultData;
   defaultData.resize(numDim, 1.0);
@@ -244,3 +238,5 @@ Albany::ThermalProblem::getValidProblemParameters() const
 
   return validPL;
 }
+
+} // namespace Albany

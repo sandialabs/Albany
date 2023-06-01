@@ -7,6 +7,7 @@
 #ifndef ALBANY_UNIT_TEST_SETUP_HELPERS_HPP
 #define ALBANY_UNIT_TEST_SETUP_HELPERS_HPP
 
+#include "Albany_Layouts.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ProblemUtils.hpp"

@@ -18,7 +18,7 @@ public:
 
   SideSetSTKMeshStruct (const MeshSpecs& inputMeshSpecs,
                         const Teuchos::RCP<Teuchos::ParameterList>& params,
-                        const Teuchos::RCP<const Teuchos_Comm>& commT,
+                        const Teuchos::RCP<const Teuchos_Comm>& comm,
                         const int numParams);
 
   virtual ~SideSetSTKMeshStruct();

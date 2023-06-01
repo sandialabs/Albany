@@ -106,14 +106,14 @@ public:
   int spatialDimension () const { return numDim; }
 
   //! Get boolean telling code if SDBCs are utilized
-  virtual bool useSDBCs() const {return use_sdbcs_; }
+  bool useSDBCs() const {return use_sdbcs_; }
 
   //! Build the PDE instantiations, boundary conditions, and initial solution
-  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-                             Albany::StateManager& stateMgr);
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
+                     Albany::StateManager& stateMgr);
 
   // Build evaluators
-  virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+  Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
   buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                    const Albany::MeshSpecs& meshSpecs,
                    Albany::StateManager& stateMgr,
@@ -166,7 +166,7 @@ protected:
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
 
   /// Boolean marking whether SDBCs are used
-  bool use_sdbcs_;
+  bool use_sdbcs_ = false;
 
   static constexpr char water_pressure_name[]                    = "water_pressure";
   static constexpr char water_thickness_name[]                   = "water_thickness";

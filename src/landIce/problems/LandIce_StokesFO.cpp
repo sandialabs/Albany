@@ -25,8 +25,8 @@ StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
           const Teuchos::RCP<ParamLib>& paramLib_,
-          const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_)
+          const int numDim_)
+ : StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
       params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution");
@@ -76,12 +76,12 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-StokesFO::buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+StokesFO::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes

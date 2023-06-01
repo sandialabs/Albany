@@ -7,15 +7,13 @@
 #ifndef PHAL_LOG_GAUSSIAN_COMBINATION_PARAMETER_HPP
 #define PHAL_LOG_GAUSSIAN_COMBINATION_PARAMETER_HPP
 
+#include "Albany_Layouts.hpp"
+
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Phalanx_config.hpp"
 #include "Teuchos_ParameterList.hpp"
-
-#include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_SharedParameter.hpp"
-#include "Albany_UnivariateDistribution.hpp"
 
 namespace PHAL {
 ///

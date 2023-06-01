@@ -4,133 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_NAVIERSTOKES_HPP
-#define ALBANY_NAVIERSTOKES_HPP
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#ifndef ALBANY_NAVIER_STOKES_HPP
+#define ALBANY_NAVIER_STOKES_HPP
 
 #include "Albany_AbstractProblem.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 
-namespace Albany {
-
-  /*!
-   * \brief Abstract interface for representing a 1-D finite element
-   * problem.
-   */
-  class NavierStokes : public AbstractProblem {
-  public:
-  
-    //! Default constructor
-    NavierStokes(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		 const Teuchos::RCP<ParamLib>& paramLib,
-		 const int numDim_);
-
-    //! Destructor
-    ~NavierStokes();
-
-    //! Return number of spatial dimensions
-    virtual int spatialDimension() const { return numDim; }
-
-    //! Get boolean telling code if SDBCs are utilized  
-    virtual bool useSDBCs() const {return use_sdbcs_; }
-
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-      StateManager& stateMgr);
-
-    // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-    buildEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-
-    //! Each problem must generate it's list of valid parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-
-  private:
-
-    //! Private to prohibit copying
-    NavierStokes(const NavierStokes&);
-    
-    //! Private to prohibit copying
-    NavierStokes& operator=(const NavierStokes&);
-
-  public:
-
-    //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
-    constructEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecs& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
-    
-    void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
-    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs); 
-
-  protected:
-
-    //! Enumerated type describing how a variable appears
-    enum NS_VAR_TYPE {
-      NS_VAR_TYPE_NONE,      //! Variable does not appear
-      NS_VAR_TYPE_CONSTANT,  //! Variable is a constant
-      NS_VAR_TYPE_DOF        //! Variable is a degree-of-freedom
-    };
-
-    void getVariableType(Teuchos::ParameterList& paramList,
-			 const std::string& defaultType,
-			 NS_VAR_TYPE& variableType,
-			 bool& haveVariable,
-			 bool& haveEquation);
-    std::string variableTypeToString(const NS_VAR_TYPE variableType);
-
-  protected:
-    
-    bool periodic;     //! periodic BCs
-    int numDim;        //! number of spatial dimensions
-
-    NS_VAR_TYPE flowType; //! type of flow variables
-    NS_VAR_TYPE heatType; //! type of heat variables
-    NS_VAR_TYPE neutType; //! type of neutron variables
-
-    bool haveFlow;     //! have flow variables (momentum+continuity)
-    bool haveHeat;     //! have heat variables (temperature)
-    bool haveNeut;     //! have neutron flux variables
-
-    bool haveFlowEq;     //! have flow equations (momentum+continuity)
-    bool haveHeatEq;     //! have heat equation (temperature)
-    bool haveNeutEq;     //! have neutron flux equation
-
-    bool haveSource;   //! have source term in heat equation
-    bool haveNeutSource;   //! have source term in neutron flux equation
-    bool havePSPG;     //! have pressure stabilization
-    bool haveSUPG;     //! have SUPG stabilization
-    bool porousMedia;  //! flow through porous media problem
- 
-    const Teuchos::RCP<Teuchos::ParameterList> params; 
-  
-    Teuchos::RCP<Albany::Layouts> dl;
-  
-    /// Boolean marking whether SDBCs are used 
-    bool use_sdbcs_; 
-  };
-
-}
-
-#include <boost/type_traits/is_same.hpp>
-
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-
+#include "Albany_Layouts.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
@@ -150,14 +32,118 @@ namespace Albany {
 #include "PHAL_NSThermalEqResid.hpp"
 #include "PHAL_NSNeutronEqResid.hpp"
 
+#include <Intrepid2_DefaultCubatureFactory.hpp>
+#include <Shards_CellTopology.hpp>
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+#include <type_traits>
+
+namespace Albany {
+
+/*!
+ * \brief Abstract interface for representing a 1-D finite element
+ * problem.
+ */
+class NavierStokes : public AbstractProblem
+{
+public:
+
+  //! Default constructor
+  NavierStokes (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                const Teuchos::RCP<ParamLib>& paramLib,
+                const int numDim_);
+
+  //! Destructor
+  ~NavierStokes() = default;
+
+  //! Return number of spatial dimensions
+  int spatialDimension() const { return numDim; }
+
+  //! Get boolean telling code if SDBCs are utilized  
+  bool useSDBCs() const {return use_sdbcs_; }
+
+  //! Build the PDE instantiations, boundary conditions, and initial solution
+  void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+                     StateManager& stateMgr);
+
+  // Build evaluators
+  Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+  buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                   const MeshSpecs& meshSpecs,
+                   StateManager& stateMgr,
+                   FieldManagerChoice fmchoice,
+                   const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+
+  //! Each problem must generate it's list of valid parameters
+  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+
+  //! Main problem setup routine. Not directly called, but indirectly by following functions
+  template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
+  constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                       const MeshSpecs& meshSpecs,
+                       StateManager& stateMgr,
+                       FieldManagerChoice fmchoice,
+                       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+  
+  void constructDirichletEvaluators(const std::vector<std::string>& nodeSetIDs);
+  void constructNeumannEvaluators(const Teuchos::RCP<MeshSpecs>& meshSpecs); 
+
+protected:
+
+  //! Enumerated type describing how a variable appears
+  enum NS_VAR_TYPE {
+    NS_VAR_TYPE_NONE,      //! Variable does not appear
+    NS_VAR_TYPE_CONSTANT,  //! Variable is a constant
+    NS_VAR_TYPE_DOF        //! Variable is a degree-of-freedom
+  };
+
+  void getVariableType(Teuchos::ParameterList& paramList,
+     const std::string& defaultType,
+     NS_VAR_TYPE& variableType,
+     bool& haveVariable,
+     bool& haveEquation);
+  std::string variableTypeToString(const NS_VAR_TYPE variableType);
+  
+  bool periodic;     //! periodic BCs
+  int numDim;        //! number of spatial dimensions
+
+  NS_VAR_TYPE flowType; //! type of flow variables
+  NS_VAR_TYPE heatType; //! type of heat variables
+  NS_VAR_TYPE neutType; //! type of neutron variables
+
+  bool haveFlow = false;     //! have flow variables (momentum+continuity)
+  bool haveHeat = false;     //! have heat variables (temperature)
+  bool haveNeut = false;     //! have neutron flux variables
+
+  bool haveFlowEq = false;     //! have flow equations (momentum+continuity)
+  bool haveHeatEq = false;     //! have heat equation (temperature)
+  bool haveNeutEq = false;     //! have neutron flux equation
+
+  bool haveSource     = false;   //! have source term in heat equation
+  bool haveNeutSource = false;   //! have source term in neutron flux equation
+  bool havePSPG       = false;   //! have pressure stabilization
+  bool haveSUPG       = false;   //! have SUPG stabilization
+  bool porousMedia    = false;   //! flow through porous media problem
+
+  const Teuchos::RCP<Teuchos::ParameterList> params; 
+
+  Teuchos::RCP<Layouts> dl;
+
+  /// Boolean marking whether SDBCs are used 
+  bool use_sdbcs_ = false; 
+};
+
+// --------------------- IMPLEMENTATION ------------------------ //
+
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Albany::NavierStokes::constructEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fieldManagerChoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+NavierStokes::
+constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                     const MeshSpecs& meshSpecs,
+                     StateManager& stateMgr,
+                     FieldManagerChoice fieldManagerChoice,
+                     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -168,22 +154,21 @@ Albany::NavierStokes::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
  
-  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
-    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+  auto intrepidBasis = getIntrepid2Basis(meshSpecs.ctd);
+  auto cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   const int cubDegree = params->get("Cubature Degree", 3);
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
+  auto cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
 
   // Print only for the residual specialization
   
-  if(boost::is_same<EvalT, PHAL::AlbanyTraits::Residual>::value)
+  if (std::is_same<EvalT, PHAL::AlbanyTraits::Residual>::value)
 
     *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -191,55 +176,54 @@ Albany::NavierStokes::constructEvaluators(
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim << std::endl;
   
-   dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
-                              "Data Layout Usage in NavierStokes problem assumes vecDim = numDim");
+  dl = rcp(new Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+  TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
+                             "Data Layout Usage in NavierStokes problem assumes vecDim = numDim");
 
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   int offset=0;
+  EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  int offset=0;
 
-   // Problem is transient
-   TEUCHOS_TEST_FOR_EXCEPTION(
-      number_of_time_deriv < 0 || number_of_time_deriv > 1,
-      std::logic_error,
-      "Albany_NavierStokesProblem must be defined as a steady or transient calculation.");
+  // Problem is transient
+  TEUCHOS_TEST_FOR_EXCEPTION(
+     number_of_time_deriv < 0 || number_of_time_deriv > 1,
+     std::logic_error,
+     "Albany_NavierStokesProblem must be defined as a steady or transient calculation.");
 
-   // Temporary variable used numerous times below
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+  // Temporary variable used numerous times below
+  Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
-   // Define Field Names
+  // Define Field Names
 
-   if (haveFlowEq) {
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Velocity";
-     if(number_of_time_deriv > 0)
-       dof_names_dot[0] = dof_names[0]+"_dot";
-     resid_names[0] = "Momentum Residual";
+  if (haveFlowEq) {
+    Teuchos::ArrayRCP<string> dof_names(1);
+    Teuchos::ArrayRCP<string> dof_names_dot(1);
+    Teuchos::ArrayRCP<string> resid_names(1);
+    dof_names[0] = "Velocity";
+    if(number_of_time_deriv > 0)
+      dof_names_dot[0] = dof_names[0]+"_dot";
+    resid_names[0] = "Momentum Residual";
 
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
-     else
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+    else
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Momentum"));
-     offset += numDim;
-   }
-   else if (haveFlow) { // Constant velocity
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(true, resid_names,offset, "Scatter Momentum"));
+    offset += numDim;
+  } else if (haveFlow) { // Constant velocity
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<string>("Material Property Name", "Velocity");
@@ -255,139 +239,136 @@ Albany::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-   if (haveFlowEq) {
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Pressure";
-     if(number_of_time_deriv > 0)
-       dof_names_dot[0] = dof_names[0]+"_dot";
-     resid_names[0] = "Continuity Residual";
+  if (haveFlowEq) {
+    Teuchos::ArrayRCP<string> dof_names(1);
+    Teuchos::ArrayRCP<string> dof_names_dot(1);
+    Teuchos::ArrayRCP<string> resid_names(1);
+    dof_names[0] = "Pressure";
+    if(number_of_time_deriv > 0)
+      dof_names_dot[0] = dof_names[0]+"_dot";
+    resid_names[0] = "Continuity Residual";
 
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
-     else
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+    else
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(false, resid_names,offset, "Scatter Continuity"));
-     offset ++;
-   }
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(false, resid_names,offset, "Scatter Continuity"));
+    offset ++;
+  }
 
-   if (haveHeatEq) { // Gather Solution Temperature
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Temperature";
-     if(number_of_time_deriv > 0)
-       dof_names_dot[0] = dof_names[0]+"_dot";
-     resid_names[0] = dof_names[0]+" Residual";
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
-     else
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
+  if (haveHeatEq) { // Gather Solution Temperature
+    Teuchos::ArrayRCP<string> dof_names(1);
+    Teuchos::ArrayRCP<string> dof_names_dot(1);
+    Teuchos::ArrayRCP<string> resid_names(1);
+    dof_names[0] = "Temperature";
+    if(number_of_time_deriv > 0)
+      dof_names_dot[0] = dof_names[0]+"_dot";
+    resid_names[0] = dof_names[0]+" Residual";
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+    else
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Temperature"));
-     offset ++;
-   }
-   else if (haveHeat) { // Constant temperature
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Temperature"));
+    offset ++;
+  } else if (haveHeat) { // Constant temperature
+   RCP<ParameterList> p = rcp(new ParameterList);
+
+   p->set<string>("Material Property Name", "Temperature");
+   p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+   p->set<string>("Coordinate Vector Name", "Coord Vec");
+   p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
+
+   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+   Teuchos::ParameterList& paramList = params->sublist("Heat");
+   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+   ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
+   fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (haveNeutEq) { // Gather Solution Neutron
+    Teuchos::ArrayRCP<string> dof_names(1);
+    Teuchos::ArrayRCP<string> dof_names_dot(1);
+    Teuchos::ArrayRCP<string> resid_names(1);
+    dof_names[0] = "Neutron Flux";
+    if(number_of_time_deriv > 0)
+      dof_names_dot[0] = dof_names[0]+"_dot";
+    resid_names[0] = dof_names[0]+" Residual";
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+    else
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+
+    if(number_of_time_deriv > 0)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Neutron"));
+    offset ++;
+  } else if (haveNeut) { // Constant neutron flux
     RCP<ParameterList> p = rcp(new ParameterList);
 
-    p->set<string>("Material Property Name", "Temperature");
+    p->set<string>("Material Property Name", "Neutron Flux");
     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-
+    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Heat");
+    Teuchos::ParameterList& paramList = params->sublist("Neutronics");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
+    
     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-   if (haveNeutEq) { // Gather Solution Neutron
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Neutron Flux";
-     if(number_of_time_deriv > 0)
-       dof_names_dot[0] = dof_names[0]+"_dot";
-     resid_names[0] = dof_names[0]+" Residual";
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
-     else
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-     if(number_of_time_deriv > 0)
-       fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
-
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
-
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Neutron"));
-     offset ++;
-   }
-   else if (haveNeut) { // Constant neutron flux
-     RCP<ParameterList> p = rcp(new ParameterList);
-
-     p->set<string>("Material Property Name", "Neutron Flux");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
-     p->set<string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-     Teuchos::ParameterList& paramList = params->sublist("Neutronics");
-     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-     
-     ev = rcp(new PHAL::NSMaterialProperty<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherCoordinateVectorEvaluator());
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
   if (havePSPG || haveSUPG) { // Compute Contravarient Metric Tensor
-    RCP<ParameterList> p = 
-      rcp(new ParameterList("Contravarient Metric Tensor"));
+    RCP<ParameterList> p = rcp(new ParameterList("Contravarient Metric Tensor"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
@@ -708,7 +689,7 @@ Albany::NavierStokes::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
-    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+    p->set<Teuchos::RCP<ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
     p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
@@ -729,7 +710,7 @@ Albany::NavierStokes::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     Teuchos::ParameterList& scalarParamesList = params->sublist("Parameters");
-    p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+    p->set<Teuchos::RCP<ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
     p->set<Teuchos::ParameterList*>("Scalar Parameters List", &scalarParamesList);
 
     ev = rcp(new PHAL::Source<EvalT,AlbanyTraits>(*p, fm0, dl));
@@ -942,7 +923,7 @@ Albany::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-   if (haveHeatEq) { // Temperature Resid
+  if (haveHeatEq) { // Temperature Resid
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
 
     //Input
@@ -979,7 +960,7 @@ Albany::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-   if (haveNeutEq) { // Neutron Resid
+  if (haveNeutEq) { // Neutron Resid
     RCP<ParameterList> p = rcp(new ParameterList("Neutron Resid"));
 
     //Input
@@ -1008,7 +989,7 @@ Albany::NavierStokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+  if (fieldManagerChoice == BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
     if (haveFlowEq) {
       PHX::Tag<typename EvalT::ScalarT> mom_tag("Scatter Momentum", dl->dummy);
@@ -1028,12 +1009,14 @@ Albany::NavierStokes::constructEvaluators(
       ret_tag = neut_tag.clone();
     }
     return ret_tag;
-  }
-  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+  } else if (fieldManagerChoice == BUILD_RESPONSE_FM) {
+    ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
   }
 
   return Teuchos::null;
 }
-#endif // ALBANY_NAVIERSTOKES_HPP
+
+} // namespace Albany
+
+#endif // ALBANY_NAVIER_STOKES_HPP

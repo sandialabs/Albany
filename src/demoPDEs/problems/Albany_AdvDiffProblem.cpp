@@ -14,14 +14,15 @@
 #include "Albany_ProblemUtils.hpp"
 #include <string>
 
+namespace Albany {
 
-Albany::AdvDiffProblem::
-AdvDiffProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_),
-  numDim(numDim_),
-  use_sdbcs_(false)
+AdvDiffProblem::
+AdvDiffProblem (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                const Teuchos::RCP<ParamLib>& paramLib_,
+                const int numDim_)
+ : AbstractProblem(params_, paramLib_)
+ , numDim(numDim_)
+ , use_sdbcs_(false)
 {
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
@@ -29,23 +30,16 @@ AdvDiffProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (useAugForm) //if we're using the augmented form of the equations, there are 2 extra auxiliary dofs / node (in 2D).
     neq = neq + 2;
   std::cout << "useAugForm, neq: " << useAugForm << ", " << neq << std::endl; 
-
-}
-
-Albany::AdvDiffProblem::
-~AdvDiffProblem()
-{
 }
 
 void
-Albany::AdvDiffProblem::
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecs> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+AdvDiffProblem::
+buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecs> >  meshSpecs,
+              StateManager& stateMgr)
 {
   using Teuchos::rcp;
 
- /* Construct All Phalanx Evaluators */
+  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
@@ -55,13 +49,12 @@ buildProblem(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Albany::AdvDiffProblem::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+AdvDiffProblem::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const MeshSpecs& meshSpecs,
+                 StateManager& stateMgr,
+                 FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -72,25 +65,25 @@ buildEvaluators(
 }
 
 void
-Albany::AdvDiffProblem::constructDirichletEvaluators(
-        const Albany::MeshSpecs& meshSpecs)
+AdvDiffProblem::
+constructDirichletEvaluators(const MeshSpecs& meshSpecs)
 {
-   // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq);
-   for (unsigned int i=0; i<neq; i++) {
-     std::stringstream s; s << "U" << i;
-     dirichletNames[i] = s.str();
-   }
-   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                          this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets(); 
-   nodeSetIDs_ = dirUtils.getNodeSetIDs();
+  // Construct Dirichlet evaluators for all nodesets and names
+  std::vector<std::string> dirichletNames(neq);
+  for (unsigned int i=0; i<neq; i++) {
+    std::stringstream s; s << "U" << i;
+    dirichletNames[i] = s.str();
+  }
+  BCUtils<DirichletTraits> dirUtils;
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+                                       this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
+  offsets_ = dirUtils.getOffsets(); 
+  nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::AdvDiffProblem::getValidProblemParameters() const
+AdvDiffProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidAdvDiffProblemParams");
@@ -101,3 +94,4 @@ Albany::AdvDiffProblem::getValidProblemParameters() const
   return validPL;
 }
 
+} // namespace Albany

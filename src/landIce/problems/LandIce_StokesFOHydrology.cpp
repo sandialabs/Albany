@@ -17,8 +17,8 @@ StokesFOHydrology::
 StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                    const Teuchos::RCP<ParamLib>& paramLib_,
-                   const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_)
+                   const int numDim_)
+ : StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   // Figure out what kind of hydro problem we solve
   eliminate_h = params->sublist("LandIce Hydrology").get<bool>("Eliminate Water Thickness", false);
@@ -142,13 +142,12 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-LandIce::StokesFOHydrology::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecs& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+StokesFOHydrology::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -217,8 +216,7 @@ constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
   stokes_offsets[stokes_neq].resize(stokes_neq);
   stokes_offsets[stokes_neq][0] = 0;
 
-  if (neq>1)
-  {
+  if (neq>1) {
     stokes_neumann_names[1] = "U1";
     stokes_offsets[1].resize(1);
     stokes_offsets[1][0] = 1;
@@ -240,7 +238,7 @@ constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 Teuchos::RCP<const Teuchos::ParameterList>
 StokesFOHydrology::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
+  auto validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
   validPL->sublist("LandIce Hydrology", false, "");
   validPL->sublist("LandIce Field Norm", false, "");

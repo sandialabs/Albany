@@ -20,11 +20,11 @@ namespace LandIce
 {
 
 StokesFOThermoCoupled::
-StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+StokesFOThermoCoupled (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                        const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                        const Teuchos::RCP<ParamLib>& paramLib_,
-                       const int numDim_) :
-  StokesFOBase(params_, discParams_, paramLib_, numDim_)
+                       const int numDim_)
+ : StokesFOBase(params_, discParams_, paramLib_, numDim_)
 {
   fluxDivIsPartOfSolution = params->isSublist("LandIce Flux Divergence") &&
       params->sublist("LandIce Flux Divergence").get<bool>("Flux Divergence Is Part Of Solution");
@@ -106,12 +106,12 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-StokesFOThermoCoupled::buildEvaluators(
-    PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-    const Albany::MeshSpecs& meshSpecs,
-    Albany::StateManager& stateMgr,
-    Albany::FieldManagerChoice fmchoice,
-    const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+StokesFOThermoCoupled::
+buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                 const Albany::MeshSpecs& meshSpecs,
+                 Albany::StateManager& stateMgr,
+                 Albany::FieldManagerChoice fmchoice,
+                 const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
@@ -154,15 +154,14 @@ void StokesFOThermoCoupled::constructDirichletEvaluators(const Albany::MeshSpecs
 }
 
 // Neumann BCs
-void StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
+void StokesFOThermoCoupled::
+constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecs>& meshSpecs)
 {
   // Note: we only enter this function if sidesets are defined in the mesh file
   // i.e. meshSpecs.ssNames.size() > 0
-
   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
   // Check to make sure that Neumann BCs are given in the input file
-
   if(!nbcUtils.haveBCSpecified(this->params)) {
     return;
   }
@@ -229,7 +228,7 @@ void StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Alban
 Teuchos::RCP<const Teuchos::ParameterList>
 StokesFOThermoCoupled::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = StokesFOBase::getStokesFOBaseProblemParameters();
+  auto validPL = StokesFOBase::getStokesFOBaseProblemParameters();
 
   validPL->set<bool>("Adjust Bed Topography to Account for Thickness Changes", false, "");
   validPL->set<bool>("Adjust Surface Height to Account for Thickness Changes", false, "");

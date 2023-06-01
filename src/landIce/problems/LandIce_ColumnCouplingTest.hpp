@@ -113,7 +113,7 @@ protected:
   std::map<std::string,std::string> sideEBName;
   
   /// Boolean marking whether SDBCs are used 
-  bool use_sdbcs_; 
+  bool use_sdbcs_ = false; 
 };
 
 // ===================================== IMPLEMENTATION ======================================= //
@@ -145,7 +145,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
   p->set<bool>("Is Vector", false);
   p->set<std::string>("Contraction Operator", "Vertical Sum");
 
-  ev = Teuchos::rcp(new LandIce::GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- LandIce Column Coupling Test Residual ---//
@@ -157,7 +157,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
   p->set<std::string>("Residual Name", resid_name);
   p->set<std::string>("Surface Height Name", sh_name + "_" + sideSetName);
 
-  ev = Teuchos::rcp(new LandIce::ColumnCouplingTestResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new ColumnCouplingTestResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- LandIce Scatter Residual 2D ---//
