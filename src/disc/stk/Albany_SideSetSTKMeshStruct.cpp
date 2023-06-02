@@ -149,11 +149,11 @@ void SideSetSTKMeshStruct::setBulkData (
   const stk::mesh::MetaData& inputMetaData = *parentMeshStruct->metaData;
   const stk::mesh::BulkData& inputBulkData = *parentMeshStruct->bulkData;
 
-  typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  const VectorFieldType& parent_coordinates_field   = *parentMeshStruct->getCoordinatesField();
-  const VectorFieldType& parent_coordinates_field3d = *parentMeshStruct->getCoordinatesField3d();
-  VectorFieldType&       coordinates_field          = *fieldContainer->getCoordinatesField();
-  VectorFieldType&       coordinates_field3d        = *fieldContainer->getCoordinatesField3d();
+  typedef AbstractSTKFieldContainer::STKFieldType STKFieldType;
+  const STKFieldType& parent_coordinates_field   = *parentMeshStruct->getCoordinatesField();
+  const STKFieldType& parent_coordinates_field3d = *parentMeshStruct->getCoordinatesField3d();
+  STKFieldType&       coordinates_field          = *fieldContainer->getCoordinatesField();
+  STKFieldType&       coordinates_field3d        = *fieldContainer->getCoordinatesField3d();
 
   // Now we can extract the entities
   std::vector<stk::mesh::Entity> sides, nodes;

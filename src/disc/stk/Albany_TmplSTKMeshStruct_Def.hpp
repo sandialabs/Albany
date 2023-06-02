@@ -580,8 +580,8 @@ TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
   std::vector<GO> elemNumber(1);
   unsigned int ebNo;
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  AbstractSTKFieldContainer::STKIntState* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
       this->PBCStruct.periodic[0] = true;
@@ -682,7 +682,7 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT
   const GO mod_x   = periodic_x ? nelem[0] : std::numeric_limits<GO>::max();
   const GO mod_y   = periodic_y ? nelem[1] : std::numeric_limits<GO>::max();
 
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  AbstractSTKFieldContainer::STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
       this->PBCStruct.periodic[0] = true;
@@ -923,8 +923,8 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
   const GO mod_y    = periodic_y ? nelem[1] : std::numeric_limits<GO>::max();
   const GO mod_z    = periodic_z ? nelem[2] : std::numeric_limits<GO>::max();
 
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  AbstractSTKFieldContainer::STKIntState* proc_rank_field = fieldContainer->getProcRankField();
+  AbstractSTKFieldContainer::STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
       this->PBCStruct.periodic[0] = true;

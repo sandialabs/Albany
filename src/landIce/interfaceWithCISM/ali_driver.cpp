@@ -618,7 +618,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
      auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
 
      //Check what kind of ordering you have in the solution & create solutionField object.
-     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
+     Albany::AbstractSTKFieldContainer::STKFieldType* solutionField;
      solutionField = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer>
        (stk_disc->getSolutionFieldContainer())->getSolutionField();
 

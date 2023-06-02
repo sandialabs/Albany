@@ -446,13 +446,13 @@ AsciiSTKMeshStruct::setBulkData(
 #endif
   unsigned int ebNo = 0; //element block #???
 
-  typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
+  typedef AbstractSTKFieldContainer::STKFieldType STKFieldType;
 
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-  ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-  ScalarFieldType* flowFactor_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
-  ScalarFieldType* temperature_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
-  ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
+  AbstractSTKFieldContainer::STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  STKFieldType* surfaceHeight_field = metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
+  STKFieldType* flowFactor_field = metaData->get_field<double>(stk::topology::ELEMENT_RANK, "flow_factor");
+  STKFieldType* temperature_field = metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
+  STKFieldType* basal_friction_field = metaData->get_field<double>(stk::topology::NODE_RANK, "basal_friction");
 
   if(!surfaceHeight_field)
      have_sh = false;

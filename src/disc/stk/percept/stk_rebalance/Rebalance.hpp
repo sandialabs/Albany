@@ -59,6 +59,7 @@ namespace rebalance {
  * pre-defined derived classes in stk::rebalance, like \a ZoltanPartition,
  * or to define your own.
  */
+
 bool rebalance(mesh::BulkData & bulk_data ,
                const mesh::Selector & selector ,
                const VectorField * coord_ref ,

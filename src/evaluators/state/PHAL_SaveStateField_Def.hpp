@@ -207,12 +207,9 @@ saveNodeState(typename Traits::EvalData workset)
   stk::mesh::MetaData& metaData = *mesh->metaData;
   stk::mesh::BulkData& bulkData = *mesh->bulkData;
 
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
-
-  SFT* scalar_field;
-  VFT* vector_field;
-
+  using SFT = Albany::AbstractSTKFieldContainer::STKFieldType;
+  SFT* stk_field = metaData.get_field<double> (stk::topology::NODE_RANK, stateName);
+  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error, "Error! Field not found.\n");
   std::vector<PHX::DataLayout::size_type> dims;
   field.dimensions(dims);
 
@@ -225,29 +222,25 @@ saveNodeState(typename Traits::EvalData workset)
   stk::mesh::Entity e;
   switch (dims.size()) {
     case 2:   // node_scalar
-      scalar_field = metaData.get_field<SFT> (stk::topology::NODE_RANK, stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==0, std::runtime_error, "Error! Field not found.\n");
       for (unsigned int cell=0; cell<workset.numCells; ++cell) {
         const int elem_LID = elem_lids[cell];
         const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
         const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
         const auto* nodes = bulkData.begin_nodes(elem);
         for (unsigned int node=0; node<dims[1]; ++node) {
-          values = stk::mesh::field_data(*scalar_field, nodes[node]);
+          values = stk::mesh::field_data(*stk_field, nodes[node]);
           values[0] = field(cell,node);
         }
       }
       break;
     case 3:   // node_vector
-      vector_field = metaData.get_field<VFT> (stk::topology::NODE_RANK, stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (vector_field==0, std::runtime_error, "Error! Field not found.\n");
       for (unsigned int cell=0; cell<workset.numCells; ++cell) {
         const int elem_LID = elem_lids[cell];
         const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
         const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
         const auto* nodes = bulkData.begin_nodes(elem);
         for (unsigned int node=0; node<dims[1]; ++node) {
-          values = stk::mesh::field_data(*vector_field, nodes[node]);
+          values = stk::mesh::field_data(*stk_field, nodes[node]);
           for (unsigned int i=0; i<dims[2]; ++i)
             values[i] = field(cell,node,i);
         }

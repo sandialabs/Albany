@@ -351,18 +351,17 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
   unsigned int ebNo = 0; //element block #???
   int sideID = 0;
 
-  typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
+  typedef AbstractSTKFieldContainer::STKFieldType STKFieldType;
 
-  VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-  ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-  ScalarFieldType* thickness_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "ice_thickness");
-  ScalarFieldType* dsurfaceHeight_dx_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "xgrad_surface_height");
-  ScalarFieldType* dsurfaceHeight_dy_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "ygrad_surface_height");
-  ScalarFieldType* flowFactor_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
-  ScalarFieldType* temperature_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
-  ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
-  VectorFieldType* dirichlet_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "dirichlet_field");
+  STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+  STKFieldType* surfaceHeight_field = metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
+  STKFieldType* thickness_field = metaData->get_field<double>(stk::topology::NODE_RANK, "ice_thickness");
+  STKFieldType* dsurfaceHeight_dx_field = metaData->get_field<double>(stk::topology::NODE_RANK, "xgrad_surface_height");
+  STKFieldType* dsurfaceHeight_dy_field = metaData->get_field<double>(stk::topology::NODE_RANK, "ygrad_surface_height");
+  STKFieldType* flowFactor_field = metaData->get_field<double>(stk::topology::ELEMENT_RANK, "flow_factor");
+  STKFieldType* temperature_field = metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
+  STKFieldType* basal_friction_field = metaData->get_field<double>(stk::topology::NODE_RANK, "basal_friction");
+  STKFieldType* dirichlet_field = metaData->get_field<double>(stk::topology::NODE_RANK, "dirichlet_field");
 
   if(!surfaceHeight_field)
      have_sh = false;

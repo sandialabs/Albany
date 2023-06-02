@@ -39,26 +39,26 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
     return (residual_field != NULL);
   }
 
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
+  Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*>
   getSolutionFieldArray()
   {
     return solution_field;
   }
 
-  AbstractSTKFieldContainer::VectorFieldType*
+  AbstractSTKFieldContainer::STKFieldType*
   getSolutionField()
   {
     return solution_field[0];
   };
 
 #if defined(ALBANY_DTK)
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
+  Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*>
   getSolutionFieldDTKArray()
   {
     return solution_field_dtk;
   };
 
-  AbstractSTKFieldContainer::VectorFieldType*
+  AbstractSTKFieldContainer::STKFieldType*
   getSolutionFieldDTK()
   {
     return solution_field_dtk[0];
@@ -126,12 +126,12 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
 
   void initializeProcRankField();
 
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field;
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
+  Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*> solution_field;
+  Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*>
                                               solution_field_dtk;
-  Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*>
+  Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*>
                                               solution_field_dxdp;
-  AbstractSTKFieldContainer::VectorFieldType* residual_field;
+  AbstractSTKFieldContainer::STKFieldType* residual_field;
 };
 
 }  // namespace Albany

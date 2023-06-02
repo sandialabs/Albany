@@ -292,8 +292,8 @@ void Albany::GmshSTKMeshStruct::setBulkData(
     stk::mesh::PartVector singlePartVec(1);
     unsigned int ebNo = 0; //element block #???
 
-    AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-    AbstractSTKFieldContainer::VectorFieldType* coordinates_field =  fieldContainer->getCoordinatesField();
+    AbstractSTKFieldContainer::STKIntState* proc_rank_field = fieldContainer->getProcRankField();
+    AbstractSTKFieldContainer::STKFieldType* coordinates_field =  fieldContainer->getCoordinatesField();
 
     singlePartVec[0] = nsPartVec["Node"];
 

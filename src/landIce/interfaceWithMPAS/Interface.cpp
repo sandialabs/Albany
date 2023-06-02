@@ -136,24 +136,22 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
   }
 
-  using VectorFieldType = Albany::AbstractSTKFieldContainer::VectorFieldType;
-  using ScalarFieldType = Albany::AbstractSTKFieldContainer::ScalarFieldType;
-  using QPScalarFieldType = Albany::AbstractSTKFieldContainer::QPScalarFieldType;
+  using STKFieldType = Albany::AbstractSTKFieldContainer::STKFieldType;
   using SolFldContainerType = Albany::OrdinarySTKFieldContainer;
 
   auto fld_container = stk_disc->getSolutionFieldContainer();
   auto sol_fld_container = Teuchos::rcp_dynamic_cast<SolFldContainerType>(fld_container);
   auto solutionField = sol_fld_container->getSolutionField();
 
-  ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
-  ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "ice_thickness");
-  ScalarFieldType* bedTopographyField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "bed_topography");
-  ScalarFieldType* smbField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_mass_balance");
-  VectorFieldType* dirichletField = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
-  ScalarFieldType* muField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "mu");
-  ScalarFieldType* stiffeningFactorField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "stiffening_factor");
-  ScalarFieldType* effectivePressureField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "effective_pressure");
-  ScalarFieldType* betaField;
+  STKFieldType* surfaceHeightField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_height");
+  STKFieldType* thicknessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "ice_thickness");
+  STKFieldType* bedTopographyField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_topography");
+  STKFieldType* smbField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_mass_balance");
+  STKFieldType* dirichletField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "dirichlet_field");
+  STKFieldType* muField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
+  STKFieldType* stiffeningFactorField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "stiffening_factor");
+  STKFieldType* effectivePressureField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
+  STKFieldType* betaField;
 
   auto& probParamList = paramList->sublist("Problem");
   const auto& landiceBcList = probParamList.sublist("LandIce BCs");
@@ -163,7 +161,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   Teuchos::RCP<Albany::AbstractSTKMeshStruct> ss_ms;
   ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
-  betaField = ss_ms->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "beta");
+  betaField = ss_ms->metaData->get_field <double> (stk::topology::NODE_RANK, "beta");
 
   for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
@@ -252,7 +250,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       }    
       
       // Populate the temperature mesh field, defined at quad points 
-      QPScalarFieldType* temperature_field = meshStruct->metaData->get_field <QPScalarFieldType> (stk::topology::ELEMENT_RANK, "temperature");
+      STKFieldType* temperature_field = meshStruct->metaData->get_field <double> (stk::topology::ELEMENT_RANK, "temperature");
 
       for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
@@ -264,7 +262,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       }
     } else {  //P0 temperature
       // In this case we compute a column average of the MPAS temperature and save it as a P0 field in the 1-layer Albany mesh.
-      ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+      STKFieldType* temperature_field = meshStruct->metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
       for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
         double* temperature = stk::mesh::field_data(*temperature_field, elem);
@@ -279,7 +277,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       }
     }
   } else { // Here we copy the temperature on Prisms from MPAS into a P0 field in the Albany mesh.
-    ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+    STKFieldType* temperature_field = meshStruct->metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
     for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
       for(int il=0; il<nLayers; il++) {
         int lId = il * lElemColumnShift + elemLayerShift * ib;
@@ -394,8 +392,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
-  ScalarFieldType* dissipationHeatField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::ELEMENT_RANK, "dissipation_heat");
-  VectorFieldType* bodyForceField  = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::ELEMENT_RANK, "body_force");
+  STKFieldType* dissipationHeatField = meshStruct->metaData->get_field <double> (stk::topology::ELEMENT_RANK, "dissipation_heat");
+  STKFieldType* bodyForceField  = meshStruct->metaData->get_field <double> (stk::topology::ELEMENT_RANK, "body_force");
   if(!dissipationHeatOnPrisms.empty())
     std::fill(dissipationHeatOnPrisms.begin(), dissipationHeatOnPrisms.end(), 0.0);
   for (int j = 0; j < numPrisms; ++j) {

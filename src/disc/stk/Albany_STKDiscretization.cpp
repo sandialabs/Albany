@@ -197,7 +197,7 @@ STKDiscretization::transformMesh()
 {
   using std::cout;
   using std::endl;
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
+  AbstractSTKFieldContainer::STKFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
   std::string transformType = stkMeshStruct->transformType;
 
@@ -533,7 +533,7 @@ STKDiscretization::setupMLCoords()
   if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
 
   const int                                   numDim = stkMeshStruct->numDim;
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field =
+  AbstractSTKFieldContainer::STKFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
   coordMV           = Thyra::createMembers(getNodeVectorSpace(), numDim);
   auto coordMV_data = getNonconstLocalData(coordMV);
@@ -857,9 +857,9 @@ addSolutionField (const std::string & /* fieldName */,
 
    // add & declare field if not already added...currently assuming linears
    if(fieldNameToSolution_.find(key)==fieldNameToSolution_.end()) {
-      SolutionFieldType * field = metaData_->get_field<SolutionFieldType>(stk::topology::NODE_RANK, fieldName);
+      SolutionFieldType * field = metaData_->get_field<double>(stk::topology::NODE_RANK, fieldName);
       if(field==0)
-         field = &metaData_->declare_field<SolutionFieldType>(stk::topology::NODE_RANK, fieldName);
+         field = &metaData_->declare_field<double>(stk::topology::NODE_RANK, fieldName);
       if ( initialized_ )  {
         metaData_->enable_late_fields();
         stk::mesh::FieldTraits<SolutionFieldType>::data_type* init_sol = nullptr;
@@ -881,9 +881,9 @@ addCellField (const std::string & /* fieldName */,
 
    // add & declare field if not already added...currently assuming linears
    if(fieldNameToCellField_.find(key)==fieldNameToCellField_.end()) {
-      SolutionFieldType * field = metaData_->get_field<SolutionFieldType>(stk::topology::ELEMENT_RANK, fieldName);
+      SolutionFieldType * field = metaData_->get_field<double>(stk::topology::ELEMENT_RANK, fieldName);
       if(field==0)
-         field = &metaData_->declare_field<SolutionFieldType>(stk::topology::ELEMENT_RANK, fieldName);
+         field = &metaData_->declare_field<double>(stk::topology::ELEMENT_RANK, fieldName);
 
       if ( initialized_ )  {
         metaData_->enable_late_fields();
@@ -1297,11 +1297,9 @@ STKDiscretization::computeWorksetInfo()
   }
   m_workset_elements.sync_to_dev();
 
-  typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  typedef AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
+  using STKFieldType = AbstractSTKFieldContainer::STKFieldType;
 
-  VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
+  STKFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
   wsEBNames.resize(numBuckets);
   for (int i = 0; i < numBuckets; i++) {
@@ -1354,10 +1352,10 @@ STKDiscretization::computeWorksetInfo()
       auto& state = stateArrays.elemStateArrays[b][name];
       std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
       int dim0 = buck.size();  // may be different from dim[0];
+      const auto& field = *metaData->get_field<double>(NODE_RANK, name);
       switch (dim.size()) {
         case 2:  // scalar
-        {
-          const auto& field = *metaData->get_field<ScalarFieldType>(NODE_RANK, name);
+        {          
           stateVec.resize(dim0 * dim[1]);
           state.reset_from_host_ptr(stateVec.data(),dim0,dim[1]);
           auto state_h = state.host();
@@ -1373,7 +1371,6 @@ STKDiscretization::computeWorksetInfo()
         }
         case 3:  // vector
         {
-          const auto& field = *metaData->get_field<VectorFieldType>(NODE_RANK, name);
           stateVec.resize(dim0 * dim[1] * dim[2]);
           state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2]);
           auto state_h = state.host();
@@ -1392,7 +1389,6 @@ STKDiscretization::computeWorksetInfo()
         }
         case 4:  // tensor
         {
-          const auto& field = *metaData->get_field<TensorFieldType>(NODE_RANK, name);
           stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
           state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2],dim[3]);
           auto state_h = state.host();
@@ -1491,27 +1487,21 @@ STKDiscretization::computeWorksetInfo()
     }
   }
 
-  typedef AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
-  typedef AbstractSTKFieldContainer::QPScalarState    QPScalarState;
-  typedef AbstractSTKFieldContainer::QPVectorState    QPVectorState;
-  typedef AbstractSTKFieldContainer::QPTensorState    QPTensorState;
-
-  typedef AbstractSTKFieldContainer::ScalarState ScalarState;
-  typedef AbstractSTKFieldContainer::VectorState VectorState;
-  typedef AbstractSTKFieldContainer::TensorState TensorState;
+  using ValueState = AbstractSTKFieldContainer::ValueState;
+  using STKState = AbstractSTKFieldContainer::STKState;
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
 
   AbstractSTKFieldContainer& container = *stkMeshStruct->getFieldContainer();
 
-  ScalarValueState& scalarValue_states = container.getScalarValueStates();
-  ScalarState&      cell_scalar_states = container.getCellScalarStates();
-  VectorState&      cell_vector_states = container.getCellVectorStates();
-  TensorState&      cell_tensor_states = container.getCellTensorStates();
-  QPScalarState&    qpscalar_states    = container.getQPScalarStates();
-  QPVectorState&    qpvector_states    = container.getQPVectorStates();
-  QPTensorState&    qptensor_states    = container.getQPTensorStates();
+  ValueState& scalarValue_states = container.getScalarValueStates();
+  STKState&   cell_scalar_states = container.getCellScalarStates();
+  STKState&   cell_vector_states = container.getCellVectorStates();
+  STKState&   cell_tensor_states = container.getCellTensorStates();
+  STKState&   qpscalar_states    = container.getQPScalarStates();
+  STKState&   qpvector_states    = container.getQPVectorStates();
+  STKState&   qptensor_states    = container.getQPTensorStates();
   std::map<std::string, double>& time  = container.getTime();
 
   // Setup state arrays DualDynRankView's, so that host view stores a pointer

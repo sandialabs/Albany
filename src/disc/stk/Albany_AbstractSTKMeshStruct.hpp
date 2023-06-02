@@ -81,23 +81,23 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   {
     return fieldContainer;
   }
-  const AbstractSTKFieldContainer::VectorFieldType*
+  const AbstractSTKFieldContainer::STKFieldType*
   getCoordinatesField() const
   {
     return fieldContainer->getCoordinatesField();
   }
-  AbstractSTKFieldContainer::VectorFieldType*
+  AbstractSTKFieldContainer::STKFieldType*
   getCoordinatesField()
   {
     return fieldContainer->getCoordinatesField();
   }
 
-  const AbstractSTKFieldContainer::VectorFieldType*
+  const AbstractSTKFieldContainer::STKFieldType*
   getCoordinatesField3d() const
   {
     return fieldContainer->getCoordinatesField3d();
   }
-  AbstractSTKFieldContainer::VectorFieldType*
+  AbstractSTKFieldContainer::STKFieldType*
   getCoordinatesField3d()
   {
     return fieldContainer->getCoordinatesField3d();
