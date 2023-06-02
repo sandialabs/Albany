@@ -168,7 +168,6 @@ bool full_rebalance(mesh::BulkData  & bulk_data ,
 }
 } // namespace
 
-
 bool stk::rebalance::rebalance(mesh::BulkData   & bulk_data  ,
                                const mesh::Selector  & selector ,
                                const VectorField     * rebal_coord_ref ,

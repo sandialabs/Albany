@@ -122,30 +122,10 @@ saveElemState(typename Traits::EvalData workset)
   field.dimensions(dims);
 
   // Get the stk field
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
-  typedef Albany::AbstractSTKFieldContainer::TensorFieldType TFT;
-  SFT* scalar_field;
-  VFT* vector_field;
-  TFT* tensor_field;
-  
-  switch (rank) {
-    case FRT::Scalar:
-      scalar_field = metaData.template get_field<SFT>(stk::topology::ELEM_RANK,stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==nullptr, std::runtime_error,
-          "Error! Field dimensions suggest a scalar field, but the stk scalar field ptr is null.\n");
-      break;
-    case FRT::Gradient: // Fallthrough
-    case FRT::Vector:
-      vector_field = metaData.template get_field<VFT>(stk::topology::ELEM_RANK,stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (vector_field==nullptr, std::runtime_error,
-          "Error! Field dimensions suggest a vector field, but the stk vector field ptr is null.\n");
-      break;
-    case FRT::Tensor:
-      tensor_field = metaData.template get_field<TFT>(stk::topology::ELEM_RANK,stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (tensor_field==nullptr, std::runtime_error,
-          "Error! Field dimensions suggest a tensor field, but the stk tensor field ptr is null.\n");
-  }
+  typedef Albany::AbstractSTKFieldContainer::STKFieldType SFT;
+  SFT* stk_field = metaData.template get_field<double>(stk::topology::ELEM_RANK,stateName);
+  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
+    "Error! STK Field ptr is null.\n");
 
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
@@ -157,14 +137,12 @@ saveElemState(typename Traits::EvalData workset)
     // Get the cell in the 2d mesh
     const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
 
-    double* data;
+    double* data = stk::mesh::field_data(*stk_field,cell2d);
     switch (rank) {
       case FRT::Scalar:
-        data = stk::mesh::field_data(*scalar_field,cell2d);
         *data = field(sideSet_idx);
         break;
       case FRT::Vector:
-        data = stk::mesh::field_data(*vector_field,cell2d);
         for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
           data[idim] = field(sideSet_idx,idim);
         }
@@ -174,7 +152,6 @@ saveElemState(typename Traits::EvalData workset)
         for (int qp=0; qp<numQPs; ++qp) {
           meas += w_measure(sideSet_idx,qp);
         }
-        data = stk::mesh::field_data(*vector_field,cell2d);
         for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
           data[idim] = 0.0;
           for (int itan=0; itan<static_cast<int>(dims[1]); ++itan) {
@@ -187,7 +164,6 @@ saveElemState(typename Traits::EvalData workset)
         }
         break;
       case FRT::Tensor:
-        data = stk::mesh::field_data(*tensor_field,cell2d);
         for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
           for (int jdim=0; jdim<static_cast<int>(dims[2]); ++jdim) {
             data[idim*dims[1]+jdim] = field(sideSet_idx,idim,jdim);
@@ -237,30 +213,10 @@ saveNodeState(typename Traits::EvalData workset)
   field.dimensions(dims);
 
   // Get the stk field
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
-  typedef Albany::AbstractSTKFieldContainer::TensorFieldType TFT;
-  SFT* scalar_field;
-  VFT* vector_field;
-  TFT* tensor_field;
-
-  switch (rank) {
-    case FRT::Scalar:
-      scalar_field = metaData.template get_field<SFT>(stk::topology::NODE_RANK,stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==nullptr, std::runtime_error,
-          "Error! Field dimensions suggest a scalar field, but the stk scalar field ptr is null.\n");
-      break;
-    case FRT::Gradient: // Fallthrough
-    case FRT::Vector:
-      vector_field = metaData.template get_field<VFT>(stk::topology::NODE_RANK,stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (vector_field==nullptr, std::runtime_error,
-          "Error! Field dimensions suggest a vector field, but the stk vector field ptr is null.\n");
-      break;
-    case FRT::Tensor:
-      tensor_field = metaData.template get_field<TFT>(stk::topology::NODE_RANK,stateName);
-      TEUCHOS_TEST_FOR_EXCEPTION (tensor_field==nullptr, std::runtime_error,
-          "Error! Field dimensions suggest a tensor field, but the stk tensor field ptr is null.\n");
-  }
+  typedef Albany::AbstractSTKFieldContainer::STKFieldType SFT;
+  SFT* stk_field = metaData.template get_field<double>(stk::topology::NODE_RANK,stateName);
+  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
+      "Error! STK field ptr is null.\n");
 
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
@@ -277,20 +233,17 @@ saveNodeState(typename Traits::EvalData workset)
     const auto nodes2d = bulkData.begin_nodes(cell2d);
 
     for (int inode=0; inode<numNodes; ++inode) {
-      double* data;
+      double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
       switch (rank) {
         case FRT::Scalar:
-          data = stk::mesh::field_data(*scalar_field,nodes2d[node_map[inode]]);
           *data = field(sideSet_idx,inode);
           break;
         case FRT::Vector:
-          data = stk::mesh::field_data(*vector_field,nodes2d[node_map[inode]]);
           for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
             data[idim] = field(sideSet_idx,inode,idim);
           }
           break;
         case FRT::Gradient:
-          data = stk::mesh::field_data(*vector_field,nodes2d[node_map[inode]]);
           for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
             for (int jdim=0; jdim<static_cast<int>(dims[3]); ++jdim) {
               data[idim*dims[2]+jdim] = field(sideSet_idx,inode,idim,jdim);

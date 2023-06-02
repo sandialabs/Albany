@@ -57,8 +57,8 @@
 namespace stk {
 namespace rebalance {
 
-typedef mesh::Field<double, mesh::Cartesian>  VectorField ;
-typedef mesh::Field<double>                   ScalarField ;
+typedef mesh::Field<double>  VectorField ;
+typedef mesh::Field<double>  ScalarField ;
 
 
 /** @class Partition for keeping track of a mesh entity partition.

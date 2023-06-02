@@ -119,21 +119,12 @@ loadNodeState(typename Traits::EvalData workset)
   field.dimensions(dims);
 
   // Get the stk field
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
-  SFT* scalar_field;
-  VFT* vector_field;
+  typedef Albany::AbstractSTKFieldContainer::STKFieldType SFT;
+  SFT* stk_field = metaData.template get_field<double>(stk::topology::NODE_RANK,stateName);
+  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
+      "Error! STK Field ptr is null.\n");
   
   int numNodes = dims[1];
-  if (dims.size()==2) {
-    scalar_field = metaData.template get_field<SFT>(stk::topology::NODE_RANK,stateName);
-    TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==nullptr, std::runtime_error,
-        "Error! Field dimensions suggest a scalar field, but the stk scalar field ptr is null.\n");
-  } else {
-    vector_field = metaData.template get_field<VFT>(stk::topology::NODE_RANK,stateName);
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_field==nullptr, std::runtime_error,
-        "Error! Field dimensions suggest a vector field, but the stk vector field ptr is null.\n");
-  }
 
   // When the 3d mesh is built online, the gid of the 3d-mesh side *should*
   // match that of the 2d-mesh cell. HOWEVER, when the mesh is saved, then
@@ -157,14 +148,12 @@ loadNodeState(typename Traits::EvalData workset)
     const auto nodes2d = bulkData.begin_nodes(cell2d);
 
     for (int inode=0; inode<numNodes; ++inode) {
-      const double* data;
+      const double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
       switch (dims.size()) {
-        case 2:
-          data = stk::mesh::field_data(*scalar_field,nodes2d[node_map[inode]]);
+        case 2:          
           field(sideSet_idx,inode) = *data;
           break;
         case 3:
-          data = stk::mesh::field_data(*vector_field,nodes2d[node_map[inode]]);
           for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
             field(sideSet_idx,inode,idim) = data[idim];
           }
@@ -212,20 +201,10 @@ loadElemState(typename Traits::EvalData workset)
   field.dimensions(dims);
 
   // Get the stk field
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
-  SFT* scalar_field;
-  VFT* vector_field;
-  
-  if (dims.size()==1) {
-    scalar_field = metaData.template get_field<SFT>(stk::topology::ELEM_RANK,stateName);
-    TEUCHOS_TEST_FOR_EXCEPTION (scalar_field==nullptr, std::runtime_error,
-        "Error! Field dimensions suggest a scalar field, but the stk scalar field ptr is null.\n");
-  } else {
-    vector_field = metaData.template get_field<VFT>(stk::topology::ELEM_RANK,stateName);
-    TEUCHOS_TEST_FOR_EXCEPTION (vector_field==nullptr, std::runtime_error,
-        "Error! Field dimensions suggest a vector field, but the stk vector field ptr is null.\n");
-  }
+  typedef Albany::AbstractSTKFieldContainer::STKFieldType SFT;
+  SFT* stk_field = metaData.template get_field<double>(stk::topology::ELEM_RANK,stateName);
+  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
+      "Error! STK field ptr is null.\n");
 
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
@@ -236,14 +215,12 @@ loadElemState(typename Traits::EvalData workset)
     // Get the cell in the 2d mesh
     const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
 
-    const double* data;
+    const double* data = stk::mesh::field_data(*stk_field,cell2d);
     switch (dims.size()) {
       case 1:
-        data = stk::mesh::field_data(*scalar_field,cell2d);
         field(sideSet_idx) = *data;
         break;
       case 2:
-        data = stk::mesh::field_data(*vector_field,cell2d);
         for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
           field(sideSet_idx,idim) = data[idim];
         }

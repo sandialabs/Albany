@@ -49,12 +49,16 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
           numDim_,
           num_params_)
 {
-  typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
-  typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
-
   // Do the coordinates
   this->coordinates_field =
-      &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, "coordinates");
+      metaData_->get_field<double>(stk::topology::NODE_RANK, "coordinates");
+
+  //STK throws when declaring a field that has been already declared
+  if(this->coordinates_field == nullptr) {
+    this->coordinates_field = 
+        &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
+  }
+
   stk::mesh::put_field_on_mesh(
       *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
 #ifdef ALBANY_SEACAS
@@ -64,7 +68,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
   if (numDim_ == 3) {
     this->coordinates_field3d = this->coordinates_field;
   } else {
-    this->coordinates_field3d = &metaData_->declare_field<VFT>(
+    this->coordinates_field3d = &metaData_->declare_field<double>(
         stk::topology::NODE_RANK, "coordinates3d");
     stk::mesh::put_field_on_mesh(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
@@ -98,8 +102,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
           numDim_,
           num_params_)
 {
-  typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
-  typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
+  typedef typename AbstractSTKFieldContainer::STKFieldType       SFT;
 
   sol_vector_name.resize(solution_vector.size());
   sol_index.resize(solution_vector.size());
@@ -121,8 +124,8 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
 
       std::string name = params_->get<std::string>(
           sol_tag_name[vec_num], sol_id_name[vec_num]);
-      VFT* solution =
-          &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, name);
+      SFT* solution =
+          &metaData_->declare_field<double>(stk::topology::NODE_RANK, name);
       stk::mesh::put_field_on_mesh(
           *solution, metaData_->universal_part(), neq_, nullptr);
 #ifdef ALBANY_SEACAS
@@ -135,7 +138,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
                                                         // the entire solution
                                                         // vector
 
-      VFT* solution = &metaData_->declare_field<VFT>(
+      SFT* solution = &metaData_->declare_field<double>(
           stk::topology::NODE_RANK, solution_vector[vec_num][0]);
       stk::mesh::put_field_on_mesh(
           *solution, metaData_->universal_part(), neq_, nullptr);
@@ -163,7 +166,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
         if (solution_vector[vec_num][i + 1] == "V") {
           len = numDim_;  // vector
           accum += len;
-          VFT* solution = &metaData_->declare_field<VFT>(
+          SFT* solution = &metaData_->declare_field<double>(
               stk::topology::NODE_RANK, solution_vector[vec_num][i]);
           stk::mesh::put_field_on_mesh(
               *solution, metaData_->universal_part(), len, nullptr);
@@ -176,7 +179,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
         } else if (solution_vector[vec_num][i + 1] == "S") {
           len = 1;  // scalar
           accum += len;
-          SFT* solution = &metaData_->declare_field<SFT>(
+          SFT* solution = &metaData_->declare_field<double>(
               stk::topology::NODE_RANK, solution_vector[vec_num][i]);
           stk::mesh::put_field_on_mesh(
               *solution, metaData_->universal_part(), nullptr);
@@ -206,7 +209,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
 
   // Do the coordinates
   this->coordinates_field =
-      &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, "coordinates");
+      &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
   stk::mesh::put_field_on_mesh(
       *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
 #ifdef ALBANY_SEACAS
@@ -216,7 +219,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
   if (numDim_ == 3) {
     this->coordinates_field3d = this->coordinates_field;
   } else {
-    this->coordinates_field3d = &metaData_->declare_field<VFT>(
+    this->coordinates_field3d = &metaData_->declare_field<double>(
         stk::topology::NODE_RANK, "coordinates3d");
     stk::mesh::put_field_on_mesh(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
@@ -237,10 +240,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
 void MultiSTKFieldContainer::
 initializeProcRankField()
 {
-  using ISFT = AbstractSTKFieldContainer::IntScalarFieldType;
-  using SFT  = AbstractSTKFieldContainer::ScalarFieldType;
-
-  this->proc_rank_field = &this->metaData->template declare_field<ISFT>(
+  this->proc_rank_field = &this->metaData->template declare_field<int>(
       stk::topology::ELEMENT_RANK, "proc_rank");
 
   // Processor rank field, a scalar
@@ -453,17 +453,16 @@ fillVectorImpl (Thyra_Vector&           field_vector,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
+  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
+  using Helper     = STKFieldContainerHelper<SFT>;
   if (rank == 0) {
-    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
-    const SFT* field = this->metaData->template get_field<SFT>(
-        field_entity_rank, field_name);
-    using Helper     = STKFieldContainerHelper<SFT>;
+
+    const SFT* field = this->metaData->template get_field<double>(
+        field_entity_rank, field_name);    
     Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else if (rank == 1) {
-    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-    const VFT* field = this->metaData->template get_field<VFT>(
+    const SFT* field = this->metaData->template get_field<double>(
         field_entity_rank, field_name);
-    using Helper     = STKFieldContainerHelper<VFT>;
     Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -504,17 +503,15 @@ saveVectorImpl (const Thyra_Vector&     field_vector,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
-  if (rank == 0) {
-    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
-    SFT* field   = this->metaData->template get_field<SFT>(
+  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
+  using Helper = STKFieldContainerHelper<SFT>;
+  if (rank == 0) {    
+    SFT* field   = this->metaData->template get_field<double>(
         stk::topology::NODE_RANK, field_name);
-    using Helper = STKFieldContainerHelper<SFT>;
     Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else if (rank == 1) {
-    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-    VFT* field   = this->metaData->template get_field<VFT>(
+    SFT* field   = this->metaData->template get_field<double>(
         stk::topology::NODE_RANK, field_name);
-    using Helper = STKFieldContainerHelper<VFT>;
     Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,

@@ -31,7 +31,7 @@ namespace {
 void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
                              std::vector<int>& el_blocks)
 {
-  Ioss::Region &io = *mesh_data.get_input_io_region();
+  Ioss::Region &io = *mesh_data.get_input_ioss_region();
   const Ioss::ElementBlockContainer& elem_blocks = io.get_element_blocks();
   for(Ioss::ElementBlockContainer::const_iterator it = elem_blocks.begin(); it != elem_blocks.end(); ++it) {
     Ioss::ElementBlock *entity = *it;
@@ -112,7 +112,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   for (StringArray::const_iterator it = additionalNodeSets.begin(), it_end = additionalNodeSets.end(); it != it_end; ++it) {
     stk::mesh::Part &newNodeSet = metaData->declare_part(*it, stk::topology::NODE_RANK);
     if (!stk::io::is_part_io_part(newNodeSet)) {
-      stk::mesh::Field<double> * const distrFactorfield = metaData->get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, "distribution_factors");
+      stk::mesh::Field<double> * const distrFactorfield = metaData->get_field<double>(stk::topology::NODE_RANK, "distribution_factors");
       if (distrFactorfield != NULL){
         stk::mesh::put_field_on_mesh(*distrFactorfield, newNodeSet, nullptr);
       }
@@ -157,7 +157,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   // the method 'initializesidesetmeshspecs' requires that ss parts store a valid stk topology.
   // therefore, we try to retrieve the topology of this part using stk stuff.
-  auto r = mesh_data->get_input_io_region();
+  auto r = mesh_data->get_input_ioss_region();
   auto& sss = r->get_sidesets();
   for (auto ss : sss) {
     auto& ssb = ss->get_side_blocks();
@@ -216,7 +216,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   }
 
   {
-    const Ioss::Region& inputRegion = *(mesh_data->get_input_io_region());
+    const Ioss::Region& inputRegion = *(mesh_data->get_input_ioss_region());
     m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
   }
 
@@ -312,7 +312,7 @@ Albany::IossSTKMeshStruct::setFieldData (
   // Restart index to read solution from exodus file.
   int index = params->get("Restart Index",-1); // Default to no restart
   double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
-  Ioss::Region& region = *(mesh_data->get_input_io_region());
+  Ioss::Region& region = *(mesh_data->get_input_ioss_region());
   /*
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
@@ -507,7 +507,7 @@ Albany::IossSTKMeshStruct::setBulkData (
   // Restart index to read solution from exodus file.
   int index = params->get("Restart Index",-1); // Default to no restart
   double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
-  Ioss::Region& region = *(mesh_data->get_input_io_region());
+  Ioss::Region& region = *(mesh_data->get_input_ioss_region());
   /*
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
@@ -772,7 +772,7 @@ Albany::IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
   TEUCHOS_ASSERT(step >= 0 && step < m_solutionFieldHistoryDepth);
 
   const int index = step + 1; // 1-based step indexing
-  const Ioss::Region &  inputRegion = *(mesh_data->get_input_io_region());
+  const Ioss::Region &  inputRegion = *(mesh_data->get_input_ioss_region());
   return inputRegion.get_state_time(index);
 }
 
@@ -781,7 +781,7 @@ Albany::IossSTKMeshStruct::loadOrSetCoordinates3d(int index)
 {
   const std::string coords3d_name = "coordinates3d";
 
-  auto region = mesh_data->get_input_io_region();
+  auto region = mesh_data->get_input_ioss_region();
   const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
   Ioss::NodeBlock *nb = node_blocks[0];
 

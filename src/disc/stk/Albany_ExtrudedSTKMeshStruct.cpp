@@ -339,14 +339,14 @@ void ExtrudedSTKMeshStruct::setBulkData(
   singlePartVecTop[0] = nsPartVec["top"];
   singlePartVecLateral[0] = nsPartVec["lateral"];
 
-  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
+  using SFT = AbstractSTKFieldContainer::STKFieldType;
 
   // Fields required for extrusion
   std::string thickness_name = params->get<std::string>("Thickness Field Name","thickness");
   std::string surface_height_name = params->get<std::string>("Surface Height Field Name","surface_height");
 
-  auto surface_height_field = metaData2D.get_field<SFT>(NODE_RANK, surface_height_name);
-  auto thickness_field = metaData2D.get_field<SFT>(NODE_RANK, thickness_name);
+  auto surface_height_field = metaData2D.get_field<double>(NODE_RANK, surface_height_name);
+  auto thickness_field = metaData2D.get_field<double>(NODE_RANK, thickness_name);
   auto proc_rank_field = fieldContainer->getProcRankField();
   auto coordinates_field = fieldContainer->getCoordinatesField();
   auto coordinates_field2d = metaData2D.coordinate_field();
@@ -687,10 +687,9 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
   if (cells2D.size()==0)
     return;
 
-  typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
-  typedef AbstractSTKFieldContainer::IntVectorFieldType IVFT;
-  ISFT* side_to_cell_map   = basalMeshStruct->metaData->get_field<ISFT> (ELEM_RANK, "side_to_cell_map");
-  IVFT* side_nodes_ids_map = basalMeshStruct->metaData->get_field<IVFT> (ELEM_RANK, "side_nodes_ids");
+  typedef AbstractSTKFieldContainer::STKIntState ISFT;
+  ISFT* side_to_cell_map   = basalMeshStruct->metaData->get_field<int> (ELEM_RANK, "side_to_cell_map");
+  ISFT* side_nodes_ids_map = basalMeshStruct->metaData->get_field<int> (ELEM_RANK, "side_nodes_ids");
   int num_nodes = basalMeshStruct->bulkData->num_nodes(cells2D[0]);
   int* cell3D_id;
   int* side_nodes_ids;
@@ -775,9 +774,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
   //       a vector layered field is stored as a tensor field.
 
   // Typedefs
-  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
-  using VFT = AbstractSTKFieldContainer::VectorFieldType;
-  using TFT = AbstractSTKFieldContainer::TensorFieldType;
+  using SFT = AbstractSTKFieldContainer::STKFieldType;
 
   // Utility constants
   const int numNodes2d = nodes2d.size();
@@ -838,24 +835,9 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       const stk::mesh::Entity& node2d = nodes2d[inode];
       stk::mesh::EntityId node2dId = bulkData2d.identifier(node2d) - 1;
 
-      // Extracting 2d data only once
-      switch (frank) {
-        case 1:
-        {
-          VFT* field2d = metaData2d.get_field<VFT>(NODE_RANK, fname);
-          values2d = get_data_2d(fname,field2d,node2d);
-          break;
-        }
-        case 2:
-        {
-          TFT* field2d = metaData2d.get_field<TFT>(NODE_RANK, fname);
-          numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
-          values2d = get_data_2d(fname,field2d,node2d);
-          break;
-        }
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
-      }
+      SFT* field2d = metaData2d.get_field<double>(NODE_RANK, fname);
+      numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
+      values2d = get_data_2d(fname,field2d,node2d);
 
       // Loop on the layers
       for (int il=0; il<=numLayers; ++il) {
@@ -883,18 +865,16 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
         // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
         //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
         //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        SFT* field3d = metaData->get_field<double> (NODE_RANK, fname);
+        values3d = get_data_3d(fname,field3d,node3d);
         switch (frank) {
           case 1:
           {
-            SFT* field3d = metaData->get_field<SFT> (NODE_RANK, fname);
-            values3d = get_data_3d(fname,field3d,node3d);
             values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
             break;
           }
           case 2:
           {
-            VFT* field3d = metaData->get_field<VFT> (NODE_RANK, fname);
-            values3d = get_data_3d(fname,field3d,node3d);
             for (int j=0; j<numScalars/numFieldLayers; ++j)
               values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
             break;
@@ -927,25 +907,9 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       const stk::mesh::Entity& cell2d = cells2d[icell];
       stk::mesh::EntityId cell2dId = bulkData2d.identifier(cell2d) - 1;
 
-      // Extracting the 2d data only once
-      switch (frank) {
-        case 1:
-        {
-          VFT* field2d = metaData2d.get_field<VFT>(ELEM_RANK, fname);
-          values2d = get_data_2d(fname,field2d,cell2d);
-          values2d = stk::mesh::field_data(*field2d,cell2d);
-          break;
-        }
-        case 2:
-        {
-          TFT* field2d = metaData2d.get_field<TFT>(ELEM_RANK, fname);
-          numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
-          values2d = get_data_2d(fname,field2d,cell2d);
-          break;
-        }
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
-      }
+      SFT* field2d = metaData2d.get_field<double>(ELEM_RANK, fname);
+      numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
+      values2d = get_data_2d(fname,field2d,cell2d);
 
       // Loop on the layers
       for (int il=0; il<numLayers; ++il) {
@@ -974,19 +938,16 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
         // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
         //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
         //       the SetupFieldData method, which adds all the fields to the stk mesh.
+        SFT* field3d = metaData->get_field<double> (ELEM_RANK, cell_fields_names[ifield]);
+        values3d = get_data_3d(fname,field3d,cell3d);
         switch (frank) {
           case 1:
           {
-            SFT* field3d = metaData->get_field<SFT> (ELEM_RANK, cell_fields_names[ifield]);
-
-            values3d = get_data_3d(fname,field3d,cell3d);
             values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
             break;
           }
           case 2:
           {
-            VFT* field3d = metaData->get_field<VFT> (ELEM_RANK, cell_fields_names[ifield]);
-            values3d = get_data_3d(fname,field3d,cell3d);
             for (int j=0; j<numScalars; ++j)
               values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
             break;
@@ -1028,9 +989,7 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
   out->getOStream()->flush();
 
   // Typedefs
-  using SFT = AbstractSTKFieldContainer::ScalarFieldType;
-  using VFT = AbstractSTKFieldContainer::VectorFieldType;
-  using TFT = AbstractSTKFieldContainer::TensorFieldType;
+  using SFT = AbstractSTKFieldContainer::STKFieldType;
 
   stk::mesh::BulkData& bulkData2d = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2d = *basalMeshStruct->metaData;
@@ -1071,43 +1030,12 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         }
       }
     };
-    switch (node_fields_ranks[ifield]) {
-      case 1:
-      {
-        *out << "  - Extruding Scalar Node field " << fname << "...";
-        out->getOStream()->flush();
 
-        SFT* field2d = metaData2d.get_field<SFT>(NODE_RANK, fname);
-        SFT* field3d = metaData->get_field<SFT> (NODE_RANK, fname);
-
-        extrude(field2d, field3d);
-        break;
-      }
-      case 2:
-      {
-        *out << "  - Extruding Vector Node field " << fname << "...";
-        out->getOStream()->flush();
-
-        VFT* field2d = metaData2d.get_field<VFT>(NODE_RANK, fname);
-        VFT* field3d = metaData->get_field<VFT> (NODE_RANK, fname);
-
-        extrude(field2d, field3d);
-        break;
-      }
-      case 3:
-      {
-        *out << "  - Extruding Tensor Node field " << fname << "...";
-        out->getOStream()->flush();
-
-        TFT* field2d = metaData2d.get_field<TFT>(NODE_RANK, fname);
-        TFT* field3d = metaData->get_field<TFT> (NODE_RANK, fname);
-
-        extrude(field2d, field3d);
-        break;
-      }
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
-    }
+    *out << "  - Extruding Node field " << fname << "...";
+    out->getOStream()->flush();
+    SFT* field2d = metaData2d.get_field<double>(NODE_RANK, fname);
+    SFT* field3d = metaData->get_field<double> (NODE_RANK, fname);
+    extrude(field2d, field3d);
     *out << "done!\n";
   }
 
@@ -1140,43 +1068,12 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         }
       }
     };
-    switch (cell_fields_ranks[ifield]) {
-      case 1:
-      {
-        *out << "  - Extruding Scalar Elem field " << fname << "...";
-        out->getOStream()->flush();
 
-        SFT* field2d = metaData2d.get_field<SFT>(ELEM_RANK, fname);
-        SFT* field3d = metaData->get_field<SFT> (ELEM_RANK, fname);
-
-        extrude(field2d,field3d);
-        break;
-      }
-      case 2:
-      {
-        *out << "  - Extruding Vector Elem field " << fname << "...";
-        out->getOStream()->flush();
-
-        VFT* field2d = metaData2d.get_field<VFT>(ELEM_RANK, fname);
-        VFT* field3d = metaData->get_field<VFT> (ELEM_RANK, fname);
-
-        extrude(field2d,field3d);
-        break;
-      }
-      case 3:
-      {
-        *out << "  - Extruding Tensor Elem field " << fname << "...";
-        out->getOStream()->flush();
-
-        TFT* field2d = metaData2d.get_field<TFT>(ELEM_RANK, fname);
-        TFT* field3d = metaData->get_field<TFT> (ELEM_RANK, fname);
-
-        extrude(field2d,field3d);
-        break;
-      }
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
-    }
+    *out << "  - Extruding Elem field " << fname << "...";
+    out->getOStream()->flush();
+    SFT* field2d = metaData2d.get_field<double>(ELEM_RANK, fname);
+    SFT* field3d = metaData->get_field<double> (ELEM_RANK, fname);
+    extrude(field2d,field3d);
     *out << "done!\n";
   }
 }
@@ -1201,7 +1098,6 @@ ExtrudedSTKMeshStruct::getValidDiscretizationParameters() const {
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
   validPL->set<bool>("Columnwise Ordering", false, "True for Columnwise ordering, false for Layerwise ordering");
-
   validPL->set<std::string>("Thickness Field Name","thickness","Name of the 'thickness' field to use for extrusion");
   validPL->set<std::string>("Surface Height Field Name","surface_height","Name of the 'surface_height' field to use for extrusion");
 

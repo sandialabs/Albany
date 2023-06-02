@@ -85,9 +85,9 @@ struct NodeData_Traits<T, 1> {
                                  const std::vector<PHX::DataLayout::size_type>& /* dim */,
                                  stk::mesh::MetaData* metaData)
   {
-    field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
+    field_type *fld = & metaData->declare_field<T>(stk::topology::NODE_RANK, name);
     // Multi-dim order is Fortran Ordering, so reversed here
-    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), nullptr);
+    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), 1, nullptr);
 
     return fld; // Address is held by stk
   }
@@ -98,12 +98,12 @@ template <typename T>
 struct NodeData_Traits<T, 2> {
 
   enum { size = 2 }; // Two array dimension tags (Node, Dim), store type T values
-  typedef stk::mesh::Field<T, stk::mesh::Cartesian> field_type ;
+  typedef stk::mesh::Field<T> field_type ;
   static field_type* createField(const std::string& name,
                                  const std::vector<PHX::DataLayout::size_type>& dim,
                                  stk::mesh::MetaData* metaData)
   {
-    field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
+    field_type *fld = & metaData->declare_field<T>(stk::topology::NODE_RANK, name);
     // Multi-dim order is Fortran Ordering, so reversed here
     stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[1], nullptr);
 
@@ -116,12 +116,12 @@ template <typename T>
 struct NodeData_Traits<T, 3> {
 
   enum { size = 3 }; // Three array dimension tags (Node, Dim, Dim), store type T values
-  typedef stk::mesh::Field<T, stk::mesh::Cartesian, stk::mesh::Cartesian> field_type ;
+  typedef stk::mesh::Field<T> field_type ;
   static field_type* createField(const std::string& name,
                                  const std::vector<PHX::DataLayout::size_type>& dim,
                                  stk::mesh::MetaData* metaData)
   {
-    field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
+    field_type *fld = & metaData->declare_field<T>(stk::topology::NODE_RANK, name);
     // Multi-dim order is Fortran Ordering, so reversed here
     stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[2], dim[1], nullptr);
 

@@ -54,17 +54,20 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
           numDim_,
           num_params_)
 {
-  typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
-  typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
-
 #ifdef ALBANY_DTK
   bool output_dtk_field =
       params_->get<bool>("Output DTK Field to Exodus", false);
 #endif
 
   // Start STK stuff
-  this->coordinates_field =
-      &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, "coordinates");
+  this->coordinates_field = 
+      metaData_->get_field<double>(stk::topology::NODE_RANK, "coordinates");
+      
+  //STK throws when declaring a field that has been already declared
+  if(this->coordinates_field == nullptr) {
+    this->coordinates_field = 
+        &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
+  }
   stk::mesh::put_field_on_mesh(
       *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
 #ifdef ALBANY_SEACAS
@@ -73,7 +76,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   if (numDim_ == 3) {
     this->coordinates_field3d = this->coordinates_field;
   } else {
-    this->coordinates_field3d = &metaData_->declare_field<VFT>(
+    this->coordinates_field3d = &metaData_->declare_field<double>(
         stk::topology::NODE_RANK, "coordinates3d");
     stk::mesh::put_field_on_mesh(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
@@ -107,9 +110,6 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
           numDim_,
           num_params_)
 {
-  typedef typename AbstractSTKFieldContainer::VectorFieldType       VFT;
-  typedef typename AbstractSTKFieldContainer::ScalarFieldType       SFT;
-
   int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
 #ifdef ALBANY_DTK
   bool output_dtk_field =
@@ -150,7 +150,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   solution_field_dxdp.resize(this->num_params);
 
   for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
-    solution_field[num_vecs] = &metaData_->declare_field<VFT>(
+    solution_field[num_vecs] = &metaData_->declare_field<double>(
         stk::topology::NODE_RANK,
         params_->get<std::string>(
             sol_tag_name[num_vecs], sol_id_name[num_vecs]));
@@ -159,7 +159,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 
 #if defined(ALBANY_DTK)
     if (output_dtk_field == true) {
-      solution_field_dtk[num_vecs] = &metaData_->declare_field<VFT>(
+      solution_field_dtk[num_vecs] = &metaData_->declare_field<double>(
           stk::topology::NODE_RANK,
           params_->get<std::string>(
               sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
@@ -185,7 +185,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   const int num_sens = (sens_method == "Forward") ? this->num_params : 1;
   for (int np = 0; np < num_sens; np++) {
     if (output_sens_field == true) {
-      solution_field_dxdp[np] = &metaData_->declare_field<VFT>(
+      solution_field_dxdp[np] = &metaData_->declare_field<double>(
           stk::topology::NODE_RANK,
           params_->get<std::string>(
               sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]));
@@ -211,10 +211,8 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 void
 OrdinarySTKFieldContainer::initializeProcRankField()
 {
-  using ISFT = AbstractSTKFieldContainer::IntScalarFieldType;
-  using SFT  = AbstractSTKFieldContainer::ScalarFieldType;
 
-  this->proc_rank_field = &this->metaData->template declare_field<ISFT>(
+  this->proc_rank_field = &this->metaData->template declare_field<int>(
       stk::topology::ELEMENT_RANK, "proc_rank");
 
   // Processor rank field, a scalar
@@ -347,8 +345,8 @@ transferSolutionToCoords()
   TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
     "Error OrdinarySTKFieldContainer::transferSolutionToCoords not called from a solution field container.\n");
 
-  using VFT    = typename AbstractSTKFieldContainer::VectorFieldType;
-  using Helper = STKFieldContainerHelper<VFT>;
+  using SFT    = typename AbstractSTKFieldContainer::STKFieldType;
+  using Helper = STKFieldContainerHelper<SFT>;
   Helper::copySTKField(*solution_field[0], *this->coordinates_field);
 }
 
@@ -382,17 +380,16 @@ fillVectorImpl(Thyra_Vector&                         field_vector,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
+  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
+  using Helper = STKFieldContainerHelper<SFT>;
+
   if (rank == 0) {
-    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
-    const SFT* field = this->metaData->template get_field<SFT>(
-        field_entity_rank, field_name);
-    using Helper = STKFieldContainerHelper<SFT>;
+    const SFT* field = this->metaData->template get_field<double>(
+        field_entity_rank, field_name);    
     Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
   } else if (rank == 1) {
-    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-    const VFT* field = this->metaData->template get_field<VFT>(
+    const SFT* field = this->metaData->template get_field<double>(
         field_entity_rank, field_name);
-    using Helper = STKFieldContainerHelper<VFT>;
     Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -432,17 +429,16 @@ saveVectorImpl (const Thyra_Vector&  field_vector,
       "Error! Something went wrong while retrieving a field.\n");
   const int rank = raw_field->field_array_rank();
 
+  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
+  using Helper = STKFieldContainerHelper<SFT>;
+
   if (rank == 0) {
-    using SFT = typename AbstractSTKFieldContainer::ScalarFieldType;
-    SFT* field = this->metaData->template get_field<SFT>(
-        stk::topology::NODE_RANK, field_name);
-    using Helper = STKFieldContainerHelper<SFT>;
+    SFT* field = this->metaData->template get_field<double>(
+        stk::topology::NODE_RANK, field_name);    
     Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
   } else if (rank == 1) {
-    using VFT = typename AbstractSTKFieldContainer::VectorFieldType;
-    VFT* field = this->metaData->template get_field<VFT>(
+    SFT* field = this->metaData->template get_field<double>(
         stk::topology::NODE_RANK, field_name);
-    using Helper = STKFieldContainerHelper<VFT>;
     Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(

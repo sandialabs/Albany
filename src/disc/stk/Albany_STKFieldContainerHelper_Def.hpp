@@ -32,7 +32,7 @@ fillVector (      Thyra_Vector&    field_thyra,
 {
   constexpr int rank = FieldRank<FieldType>::n;
   static_assert(rank==0 || rank==1,
-                "Error! Can only handle ScalarFieldType and VectorFieldType for now.\n");
+                "Error! Can only handle Scalar and Vector fields for now.\n");
 
   using ScalarT = typename FieldScalar<FieldType>::type;
   using ViewT = Kokkos::View<const ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
@@ -116,7 +116,7 @@ saveVector(const Thyra_Vector& field_thyra,
 {
   constexpr int rank = FieldRank<FieldType>::n;
   static_assert(rank==0 || rank==1,
-                "Error! Can only handle ScalarFieldType and VectorFieldType for now.\n");
+                "Error! Can only handle scalar and vector fields for now.\n");
 
   using ScalarT = typename FieldScalar<FieldType>::type;
   using ViewT = Kokkos::View<ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
@@ -182,7 +182,7 @@ copySTKField(const FieldType& source,
 {
   constexpr int rank = FieldRank<FieldType>::n;
   static_assert(rank==0 || rank==1,
-                "Error! Can only handle ScalarFieldType and VectorFieldType for now.\n");
+                "Error! Can only handle scalar and vector fields for now.\n");
 
   using ScalarT = typename FieldScalar<FieldType>::type;
   using SrcViewT = Kokkos::View<const ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
