@@ -298,7 +298,7 @@ ANONYMOUS:
                     Adding Layers Strategy: CrsGraph
                     Solver:                                                 # Solver on the first level
                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
-                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                      Solver: ${DIRECT_SOLVER}                              # Solver name (depends on the solver package): Klu, RILUK, ...
                   IPOUHarmonicCoarseOperator:
                     'Reuse: Coarse Basis': true                             # Reuse of the coarse basis functions
                     'Reuse: Coarse Matrix': false                           # Reuse of the coarse matrix
@@ -315,13 +315,13 @@ ANONYMOUS:
                     Interface Communication Strategy: CreateOneToOneMap
                     ExtensionSolver:                                        # Solver for the energy-minimizing extensions
                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
-                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                      Solver: ${DIRECT_SOLVER}                              # Solver name (depends on the solver package): Klu, RILUK, ...
                     Distribution:                                           # Parallel distribution of the coarse problem
                       Type: linear                                          # Specifies the parallel distribution strategy. For now, we use "linear"
                       NumProcs: 1                                           # Number of ranks used for the coarse problem
                     CoarseSolver:                                           # Solver for the coarse problem
                       SolverType: Amesos2                                   # Solver package: Amesos2 or Ifpack2
-                      Solver: Klu                                           # Solver name (depends on the solver package): Klu, RILUK, ...
+                      Solver: ${DIRECT_SOLVER}                              # Solver name (depends on the solver package): Klu, RILUK, ...
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:

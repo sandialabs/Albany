@@ -409,6 +409,21 @@ LIST(FIND Trilinos_PACKAGE_LIST Amesos2 Amesos2_List_ID)
 IF (Amesos2_List_ID GREATER -1)
   MESSAGE("-- Looking for Amesos2 ...                       Found.")
   SET(ALBANY_AMESOS2 TRUE)
+  IF (Amesos2_ENABLE_SuperLUDist)
+    MESSAGE("-- Looking for Amesos2 SuperLUDist...            Found.")
+    SET(ALBANY_AMESOS2_SUPERLUDIST TRUE)
+  ELSE()
+    MESSAGE("-- Looking for Amesos2 SuperLUDist...        Not Found.")
+    SET(ALBANY_AMESOS2_SUPERLUDIST FALSE)
+  ENDIF()
+
+  IF (Amesos2_ENABLE_SuperLU)
+    MESSAGE("-- Looking for Amesos2 SuperLU...                Found.")
+    SET(ALBANY_AMESOS2_SUPERLU TRUE)
+  ELSE()
+    MESSAGE("-- Looking for Amesos2 SuperLU...            Not Found.")
+    SET(ALBANY_AMESOS2_SUPERLU FALSE)
+  ENDIF()
   # We can't rely on Amesos2_TPL_LIST any longer; KLU2 and Basker are not
   # TPLs. These will soon be enabled by default in Amesos2. So we'll just
   # assume we have a coarse direct solver.

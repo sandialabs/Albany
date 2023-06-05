@@ -18,6 +18,15 @@ else ()
  set (USE_SERIAL_MESH "false")
 endif()
 
+# This variable will be set in the input files during the 'configure_file' call
+if (ALBANY_AMESOS2_SUPERLUDIST)
+  set (DIRECT_SOLVER "superlu_dist")
+elseif (ALBANY_AMESOS2_SUPERLU)
+  set (DIRECT_SOLVER "superlu")
+else ()
+  set (DIRECT_SOLVER "klu")
+endif()
+
 
 ###########################################
 ###     Import 2d ascii mesh (test)     ###

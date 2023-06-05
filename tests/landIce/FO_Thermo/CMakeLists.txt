@@ -3,6 +3,7 @@ get_filename_component(parentDirName ${parentPath} NAME)
 get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${parentDirName}_${dirName})
 
+# This variable will be set in the input files during the 'configure_file' call
 if (ALBANY_PARALELL_EXODUS)
   set (USE_SERIAL_MESH "true")
 else ()
@@ -12,6 +13,15 @@ else ()
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
+endif()
+
+
+if (ALBANY_AMESOS2_SUPERLUDIST)
+  set (DIRECT_SOLVER "superlu_dist")
+elseif (ALBANY_AMESOS2_SUPERLU)
+  set (DIRECT_SOLVER "superlu")
+else ()
+  set (DIRECT_SOLVER "klu")
 endif()
 
 if (ALBANY_EPETRA)
