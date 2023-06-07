@@ -6,26 +6,21 @@ set (CTEST_TEST_TYPE Nightly)
 # What to build and test
 set (CLEAN_BUILD TRUE)
 set (DOWNLOAD_TRILINOS TRUE)
-set (BUILD_TRILINOS_SERIAL TRUE)
-set (BUILD_TRILINOS_OPENMP FALSE)
-set (DOWNLOAD_ALBANY FALSE) 
-set (BUILD_ALBANY_SERIAL FALSE) 
-set (BUILD_ALBANY_OPENMP FALSE) 
-
+set (BUILD_TRILINOS_RELEASE TRUE)
 
 # Begin User inputs:
 set (CTEST_SITE "blake.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
+set (CMAKE_USE_SYSTEM_CURL ON) 
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
-set (CTEST_SOURCE_NAME repos-intel)
-#set (CTEST_BUILD_NAME "blake-serial-Trilinos")
-set (CTEST_BINARY_NAME build-intel)
+set (CTEST_SOURCE_NAME repos-gcc)
+#set (CTEST_BUILD_NAME "blake-release-Trilinos-gcc")
+set (CTEST_BINARY_NAME build-gcc)
 
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -43,14 +38,14 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set(MPICC $ENV{MPI_ROOT}/bin/mpicc)
-#message("IKT MPICC = " ${MPICC}) 
+set(MPICC $ENV{OPENMPI_ROOT}/bin/mpicc)
+message("IKT MPICC = " ${MPICC}) 
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT
 		OUTPUT_VARIABLE COMPILER_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler version = " ${COMPILER_VERSION})
+message("IKT compiler version = " ${COMPILER_VERSION})
 execute_process(COMMAND ${MPICC} --version 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_RESULT
@@ -60,7 +55,7 @@ execute_process(COMMAND bash process_compiler.sh
 		RESULT_VARIABLE CHANGE_COMPILER_RESULT
 		OUTPUT_VARIABLE COMPILER
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT compiler = " ${COMPILER})
+message("IKT compiler = " ${COMPILER})
 
 
 find_program(UNAME NAMES uname)
@@ -76,7 +71,8 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Trilinos-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial")
+set (CTEST_BUILD_NAME "Trilinos-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-Release")
+
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
@@ -88,13 +84,20 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
-set (MKL_PATH $ENV{MKL_ROOT})  
-set (SUPERLU_PATH $ENV{SUPERLU_ROOT})  
 set (BOOST_PATH $ENV{BOOST_ROOT}) 
 set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
-set (PNETCDF_PATH $ENV{PNETCDF_ROOT}) 
 set (HDF5_PATH $ENV{HDF5_ROOT})
 set (ZLIB_PATH $ENV{ZLIB_ROOT})  
+set (BLAS_PATH $ENV{BLAS_ROOT})
+set (LAPACK_PATH $ENV{LAPACK_ROOT})
+ 
+#MESSAGE("\nMPI_PATH: '${MPI_PATH}'")
+#MESSAGE("\nBOOST_PATH: '${BOOST_PATH}'")
+#MESSAGE("\nNETCDF_PATH: '${NETCDF_PATH}'")
+#MESSAGE("\nHDF5_PATH: '${HDF5_PATH}'")
+#MESSAGE("\nZLIB_PATH: '${ZLIB_PATH}'")
+#MESSAGE("\nBLAS_PATH: '${BLAS_PATH}'")
+#MESSAGE("\nLAPACK_PATH: '${BLAS_PATH}'")
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -151,22 +154,22 @@ ctest_start(${CTEST_TEST_TYPE})
 
 # Set the common Trilinos config options & build Trilinos
 # 
-if (BUILD_TRILINOS_SERIAL) 
-  message ("ctest state: BUILD_TRILINOS_SERIAL")
+if (BUILD_TRILINOS_RELEASE) 
+  message ("ctest state: BUILD_TRILINOS_RELEASE")
   #
   # Configure the Trilinos build
   #
-  set(INSTALL_DIR ${CTEST_BINARY_DIRECTORY}/TrilinosSerialInstall)
+  set(INSTALL_DIR ${CTEST_BINARY_DIRECTORY}/TrilinosReleaseInstallGcc)
   set (CONFIGURE_OPTIONS
-      CDASH-TRILINOS-INTEL-SERIAL-FILE.TXT
+      CDASH-TRILINOS-GCC-RELEASE-FILE.TXT
   )
 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildSerial")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildSerial)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildReleaseGcc")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildReleaseGcc)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildSerial"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildReleaseGcc"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -196,7 +199,7 @@ if (BUILD_TRILINOS_SERIAL)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildSerial"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildReleaseGcc"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -227,7 +230,7 @@ if (BUILD_TRILINOS_SERIAL)
   set (CTEST_TEST_TIMEOUT 600)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildSerial"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildReleaseGcc"
     RETURN_VALUE  HAD_ERROR
     )
 

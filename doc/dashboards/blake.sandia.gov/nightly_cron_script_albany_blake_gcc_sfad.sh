@@ -9,24 +9,23 @@ if [ -z "$BUILD_OPT" ]; then
    echo "Please supply an argument: sfad6, sfad12 or sfad24"
    exit 1;
 fi
-rm -rf intel_modules.out 
+rm -rf gcc_modules.out 
 
 unset http_proxy
 unset https_proxy
 
-export INTEL_LICENSE_FILE=/home/projects/x86-64/intel/licenses/USE_SERVER-ohpc.lic
-source blake_intel_modules.sh >& intel_modules.out  
+source blake_gcc_modules.sh >& gcc_modules.out
 
 export OMP_NUM_THREADS=1
 
 if [ "$BUILD_OPT" = "sfad6" ] ; then
-  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad6.txt
+  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyGccSFad6.txt
 fi
 if [ "$BUILD_OPT" = "sfad12" ] ; then
-  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad12.txt
+  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyGccSFad12.txt
 fi
 if [ "$BUILD_OPT" = "sfad24" ] ; then
-  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanySerialSFad24.txt
+  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyGccSFad24.txt
 fi
 
 bash convert-cmake-to-cdash-albany.sh sfad

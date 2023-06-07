@@ -1,6 +1,6 @@
 rm -rf CMake* 
 
-TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosOpenMPInstall"
+TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc"
 
 cmake \
     -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
@@ -10,4 +10,6 @@ cmake \
     -D ALBANY_CTEST_TIMEOUT=500 \
     -D ENABLE_CHECK_FPE:BOOL=OFF \
     -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4' \
+    -D ENABLE_ALBANY_PYTHON:BOOL=ON \
+    -D PYTHON_EXECUTABLE='/home/projects/x86-64/python/3.7.3/bin/python' \
 ..

@@ -7,14 +7,11 @@ fi
 
 build=$1
 
-if [ $build = "intel-serial" ]; then
-  name="albany-intel-serial"
+if [ $build = "gcc-release" ]; then
+  name="albany-gcc-release"
 fi
-if [ $build = "intel-openmp" ]; then
-  name="albany-intel-openmp"
-fi
-if [ $build = "gcc-serial" ]; then
-  name="albany-gcc-serial"
+if [ $build = "gcc-debug" ]; then
+  name="albany-gcc-debug"
 fi
 if [ $build = "sfad" ]; then
   name="albany-sfad"

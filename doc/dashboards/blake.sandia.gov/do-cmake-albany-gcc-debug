@@ -1,0 +1,17 @@
+rm -rf CMake* 
+
+TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosDebugInstallGccNoWarn"
+
+cmake \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
+    -D CMAKE_BUILD_TYPE:STRING=DEBUG \
+    -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Wno-mismatched-new-delete -Wno-catch-value -Werror' \
+    -D ENABLE_LANDICE:BOOL=ON \
+    -D ENABLE_DEMO_PDES:BOOL=ON \
+    -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
+    -D ALBANY_CTEST_TIMEOUT=2400 \
+    -D ENABLE_CHECK_FPE:BOOL=OFF \
+    -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4' \
+    -D ENABLE_ALBANY_PYTHON:BOOL=ON \
+    -D PYTHON_EXECUTABLE='/home/projects/x86-64/python/3.7.3/bin/python' \
+..
