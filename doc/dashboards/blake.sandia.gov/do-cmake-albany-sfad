@@ -1,6 +1,6 @@
 rm -rf CMake* 
 
-TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosSerialInstall"
+TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc"
 SFAD_SIZE=12
 
 cmake \

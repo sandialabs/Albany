@@ -12,8 +12,13 @@ then
 fi 
 
 cd /home/projects/albany/nightlyCDashTrilinosBlake
-bash nightly_cron_script_trilinos_blake_gcc_serial.sh
+bash nightly_cron_script_trilinos_blake_gcc_release.sh
+bash nightly_cron_script_trilinos_blake_gcc_debug.sh
 cd /home/projects/albany/nightlyCDashAlbanyBlake
 source install_scipy_numpy.sh
-bash nightly_cron_script_albany_blake_gcc_serial.sh
+bash nightly_cron_script_albany_blake_gcc_release.sh
+bash nightly_cron_script_albany_blake_gcc_debug.sh
+bash nightly_cron_script_albany_blake_gcc_sfad.sh sfad6
+bash nightly_cron_script_albany_blake_gcc_sfad.sh sfad12
+bash nightly_cron_script_albany_blake_gcc_sfad.sh sfad24
 

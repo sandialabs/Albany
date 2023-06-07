@@ -4,27 +4,20 @@ set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
 set (CLEAN_BUILD TRUE)
-set (DOWNLOAD_TRILINOS FALSE)
-set (BUILD_TRILINOS_SERIAL FALSE)
-set (BUILD_TRILINOS_OPENMP FALSE)
 set (DOWNLOAD_ALBANY TRUE) 
-set (BUILD_ALBANY_SERIAL TRUE) 
-set (BUILD_ALBANY_SERIAL_SFAD FALSE) 
-set (BUILD_ALBANY_OPENMP FALSE) 
-
+set (BUILD_ALBANY_RELEASE TRUE) 
 
 # Begin User inputs:
 set (CTEST_SITE "blake.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos-gcc)
-#set (CTEST_BUILD_NAME "blake-serial-Albany-gcc-no-warn")
+#set (CTEST_BUILD_NAME "blake-release-Albany-gcc")
 set (CTEST_BINARY_NAME build-gcc)
 
 
@@ -43,7 +36,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINSTALLDIR "/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosSerialInstallGccNoWarn")
+set (TRILINSTALLDIR "/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINSTALLDIR}/lib/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -88,7 +81,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-Serial-No-Warn")
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-Release")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
@@ -165,7 +158,7 @@ endif ()
 ctest_start(${CTEST_TEST_TYPE})
 
 
-if (BUILD_ALBANY_SERIAL)
+if (BUILD_ALBANY_RELEASE)
 
   # Configure the Albany build 
   #
@@ -174,12 +167,12 @@ if (BUILD_ALBANY_SERIAL)
     CDASH-ALBANY-FILE.TXT
     )
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseGcc")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseGcc)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseGcc"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -209,7 +202,7 @@ if (BUILD_ALBANY_SERIAL)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseGcc"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -240,10 +233,10 @@ if (BUILD_ALBANY_SERIAL)
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
-  set (CTEST_TEST_TIMEOUT 2400)
+  set (CTEST_TEST_TIMEOUT 600)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildSerialGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseGcc"
     RETURN_VALUE  HAD_ERROR
     )
 
