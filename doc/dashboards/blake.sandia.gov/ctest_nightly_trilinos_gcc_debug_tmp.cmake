@@ -4,8 +4,8 @@ set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
-set (CLEAN_BUILD TRUE)
-set (DOWNLOAD_TRILINOS TRUE)
+set (CLEAN_BUILD FALSE)
+set (DOWNLOAD_TRILINOS FALSE)
 set (BUILD_TRILINOS_DEBUG TRUE)
 
 # Begin User inputs:

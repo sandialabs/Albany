@@ -6,6 +6,7 @@ cd $BASE_DIR
 rm -rf build-gcc
 rm -rf repos-gcc
 rm -rf nightly*Gcc*.txt
+rm -rf nightly*SFad*.txt
 rm -rf gcc_modules.out 
 
 unset http_proxy

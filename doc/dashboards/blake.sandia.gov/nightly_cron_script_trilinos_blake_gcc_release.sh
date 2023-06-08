@@ -9,6 +9,7 @@ rm -rf nightly*Gcc*.txt
 rm -rf gcc_modules.out 
 rm -rf cdash*gcc*.txt
 rm -rf ctest*gcc*release.cmake
+rm -rf ctest*gcc*debug.cmake
 
 unset http_proxy
 unset https_proxy

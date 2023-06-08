@@ -3,8 +3,8 @@ set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
-set (CLEAN_BUILD TRUE)
-set (DOWNLOAD_ALBANY TRUE) 
+set (CLEAN_BUILD FALSE)
+set (DOWNLOAD_ALBANY FALSE) 
 set (BUILD_ALBANY_DEBUG TRUE) 
 
 
