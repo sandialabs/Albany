@@ -121,8 +121,8 @@ namespace LandIce
   operator() (const wResid_Side_Tag& tag, const int& side_idx) const {
 
     // Get the local data of side and cell
-    const int cell = sideSet.ws_elem_idx(side_idx);
-    const int side = sideSet.side_pos(side_idx);
+    const int cell = sideSet.ws_elem_idx.d_view(side_idx);
+    const int side = sideSet.side_pos.d_view(side_idx);
 
     for (unsigned int snode=0; snode<numSideNodes; ++snode){
       int cnode = sideNodes(side,snode);

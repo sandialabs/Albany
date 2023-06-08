@@ -132,7 +132,7 @@ saveElemState(typename Traits::EvalData workset)
   double tan_cell_val, meas;
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
-    const int side_GID = sideSet.side_GID(sideSet_idx);
+    const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
 
     // Get the cell in the 2d mesh
     const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
@@ -222,7 +222,7 @@ saveNodeState(typename Traits::EvalData workset)
   auto sideSet = workset.sideSetViews->at(sideSetName);
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
-    const int side_GID = sideSet.side_GID(sideSet_idx);
+    const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
 
     // Get the lid ordering map
     // Recall: map[i] = j means that the i-th node in the 3d side is the j-th node in the 2d cell

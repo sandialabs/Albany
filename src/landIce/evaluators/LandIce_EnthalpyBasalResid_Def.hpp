@@ -76,8 +76,8 @@ operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) cons
 
   constexpr int maxNumNodesPerSide = 4;
 
-  const int cell = sideSet.ws_elem_idx(sideSet_idx);
-  const int side = sideSet.side_pos(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+  const int side = sideSet.side_pos.d_view(sideSet_idx);
 
   ScalarT val[maxNumNodesPerSide];
   for (unsigned int node = 0; node < numSideNodes; ++node) {

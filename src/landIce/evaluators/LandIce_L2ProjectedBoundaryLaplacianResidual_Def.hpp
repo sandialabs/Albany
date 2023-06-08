@@ -133,8 +133,8 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = sideSet.ws_elem_idx(sideSet_idx);
-      const int side = sideSet.side_pos(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+      const int side = sideSet.side_pos.h_view(sideSet_idx);
 
       MeshScalarT trapezoid_weights= 0;
       for (unsigned int qp=0; qp<numBasalQPs; ++qp)
@@ -165,11 +165,11 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = sideSet.ws_elem_idx(sideSet_idx);
-      const int side = sideSet.side_pos(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+      const int side = sideSet.side_pos.h_view(sideSet_idx);
       shards::CellTopology cell2dType(cellType->getCellTopologyData(sideDim,side));
       auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
-      auto side_gid = sideSet.side_GID(sideSet_idx);
+      auto side_gid = sideSet.side_GID.h_view(sideSet_idx);
 
       // The following line associates to each 3d-side GID the corresponding 2d-cell.
       // It's needed when the 3d mesh is not built online

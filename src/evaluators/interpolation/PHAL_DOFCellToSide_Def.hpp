@@ -136,8 +136,8 @@ void DOFCellToSideBase<EvalT, Traits, ScalarT>::
 operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx(sideSet_idx);
-  const int side = sideSet.side_pos(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+  const int side = sideSet.side_pos.d_view(sideSet_idx);
 
   switch (layout)
   {

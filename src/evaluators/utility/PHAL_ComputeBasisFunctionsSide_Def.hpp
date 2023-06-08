@@ -209,7 +209,7 @@ operator() (const ScatterCoordVec_Tag& tag, const int& iCell) const {
 
   for (std::size_t node=0; node < numNodes; ++node)
     for (std::size_t dim=0; dim < numCellDims; ++dim)
-      physPointsCell(iCell, node, dim) = coordVec(sideSet.cellsOnSide(currentSide,iCell),node,dim);
+      physPointsCell(iCell, node, dim) = coordVec(sideSet.cellsOnSide.d_view(currentSide,iCell),node,dim);
 
 }
 
@@ -222,7 +222,7 @@ operator() (const GatherNormals_Tag& tag, const int& iCell) const {
   //   therefore should not cause a race condition here on device
   for (unsigned int icoor=0; icoor<numCellDims; ++icoor)
     for (unsigned int qp=0; qp<numSideQPs; ++qp)
-      normals(sideSet.sideSetIdxOnSide(currentSide,iCell),qp, icoor) = normals_view(iCell,qp,icoor);
+      normals(sideSet.sideSetIdxOnSide.d_view(currentSide,iCell),qp, icoor) = normals_view(iCell,qp,icoor);
 
 }
 
@@ -248,7 +248,7 @@ evaluateFields(typename Traits::EvalData workset)
       // Current side needs to be stored as a member of this object so it can be used in device kernel
       currentSide = side;
 
-      unsigned int numCells_ = sideSet.numCellsOnSide(side);
+      unsigned int numCells_ = sideSet.numCellsOnSide.h_view(side);
       if( numCells_ == 0) continue;
 
       Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths = Kokkos::createDynRankView(sideCoordVec.get_view(),"normal_lengths", numCells_, numSideQPs);
