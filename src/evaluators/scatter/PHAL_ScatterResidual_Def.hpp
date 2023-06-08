@@ -105,6 +105,7 @@ postRegistrationSetup(typename Traits::SetupData d,
       // Get MDField views from std::vector
       device_resid.val_kokkos[eq]=this->val[eq].get_static_view();
     }
+    device_resid.val_kokkos.host_to_device();
 #endif
     numNodes = val[0].extent(1);
   } else  if (tensorRank == 1) {
