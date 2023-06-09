@@ -149,22 +149,26 @@ loadNodeState(typename Traits::EvalData workset)
 
     if (dims.size() == 2) {
       auto field_d_view = Kokkos::subview(field.get_view(), sideSet_idx, Kokkos::ALL);
-      auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+      auto field_d_view_tmp = Kokkos::View<ScalarType*, PHX::Device>("field_d_view_tmp",numNodes);
+      auto field_h_mirror = Kokkos::create_mirror_view(field_d_view_tmp);
       for (int inode=0; inode<numNodes; ++inode) {
         const double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
         field_h_mirror(inode) = *data;
       }
-      Kokkos::deep_copy(field_d_view, field_h_mirror);
+      Kokkos::deep_copy(field_d_view_tmp, field_h_mirror);
+      Kokkos::deep_copy(field_d_view, field_d_view_tmp);
     } else if (dims.size() == 3) {
       auto field_d_view = Kokkos::subview(field.get_view(), sideSet_idx, Kokkos::ALL, Kokkos::ALL);
-      auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+      auto field_d_view_tmp = Kokkos::View<ScalarType**, PHX::Device>("field_d_view_tmp",numNodes,dims[2]);;
+      auto field_h_mirror = Kokkos::create_mirror_view(field_d_view_tmp);
       for (int inode=0; inode<numNodes; ++inode) {
         const double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
         for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
           field_h_mirror(inode,idim) = data[idim];
         }
       }
-      Kokkos::deep_copy(field_d_view, field_h_mirror);
+      Kokkos::deep_copy(field_d_view_tmp, field_h_mirror);
+      Kokkos::deep_copy(field_d_view, field_d_view_tmp);
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
           "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
@@ -227,10 +231,13 @@ loadElemState(typename Traits::EvalData workset)
       Kokkos::deep_copy(field_d_view, *data);
     } else if (dims.size() == 2) {
       auto field_d_view = Kokkos::subview(field.get_view(), sideSet_idx, Kokkos::ALL);
+      auto field_d_view_tmp = Kokkos::View<ScalarType*, PHX::Device>("field_d_view_tmp",dims[1]);
       auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
       for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
         field_h_mirror(sideSet_idx,idim) = data[idim];
       }
+      Kokkos::deep_copy(field_d_view_tmp, field_h_mirror);
+      Kokkos::deep_copy(field_d_view, field_d_view_tmp);
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
           "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
