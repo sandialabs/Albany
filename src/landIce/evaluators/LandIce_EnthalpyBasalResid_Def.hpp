@@ -58,13 +58,14 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
-  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  sideNodes = Kokkos::DualView<int**, PHX::Device>("sideNodes", numSides, nodeMax);
   for (unsigned int side=0; side<numSides; ++side) {
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (unsigned int node=0; node<thisSideNodes; ++node) {
-      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
+  sideNodes.sync<PHX::Device>();
 
   this->setName("Enthalpy Basal Residual" + PHX::print<EvalT>());
 }
@@ -90,7 +91,7 @@ operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) cons
   }
   
   for (unsigned int node = 0; node < numSideNodes; ++node) {
-    enthalpyBasalResid(cell, sideNodes(side,node)) += val[node];
+    enthalpyBasalResid(cell, sideNodes.d_view(side,node)) += val[node];
   }
 
 }

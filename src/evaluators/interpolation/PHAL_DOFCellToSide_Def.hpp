@@ -97,14 +97,15 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
       nodeMax = std::max(nodeMax, thisSideNodes);
     }
-    sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+    sideNodes = Kokkos::DualView<int**, PHX::Device>("sideNodes", numSides, nodeMax);
     for (int side=0; side<numSides; ++side) {
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
       for (int node=0; node<thisSideNodes; ++node) {
-        sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+        sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
       }
     }
+    sideNodes.sync<PHX::Device>();
   }
 }
 
@@ -155,13 +156,13 @@ operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
       break;
     case NODE_SCALAR:
       for (int node=0; node<dimsArray[1]; ++node) {
-        val_side(sideSet_idx,node) = val_cell(cell,sideNodes(side,node));
+        val_side(sideSet_idx,node) = val_cell(cell,sideNodes.d_view(side,node));
       }
       break;
     case NODE_VECTOR:
       for (int node=0; node<dimsArray[1]; ++node) {
         for (int i=0; i<dimsArray[2]; ++i) {
-          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
+          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes.d_view(side,node),i);
         }
       }
       break;
@@ -169,12 +170,12 @@ operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
       for (int node=0; node<dimsArray[1]; ++node)
         for (int i=0; i<dimsArray[2]; ++i)
           for (int j=0; j<dimsArray[3]; ++j)
-            val_side(sideSet_idx,node,i,j) = val_cell(cell,sideNodes(side,node),i,j);
+            val_side(sideSet_idx,node,i,j) = val_cell(cell,sideNodes.d_view(side,node),i,j);
       break;
     case VERTEX_VECTOR:
       for (int node=0; node<dimsArray[1]; ++node) {
         for (int i=0; i<dimsArray[2]; ++i) {
-          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes(side,node),i);
+          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes.d_view(side,node),i);
         }
       }
       break;

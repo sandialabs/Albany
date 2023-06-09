@@ -70,13 +70,14 @@ namespace LandIce
       unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
       nodeMax = std::max(nodeMax, thisSideNodes);
     }
-    sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+    sideNodes = Kokkos::DualView<int**, PHX::Device>("sideNodes", numSides, nodeMax);
     for (unsigned int side=0; side<numSides; ++side) {
       unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
       for (unsigned int node=0; node<thisSideNodes; ++node) {
-        sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+        sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
       }
     }
+    sideNodes.sync<PHX::Device>();
 
     this->addDependentField(GradVelocity);
     this->addDependentField(velocity);
@@ -125,12 +126,12 @@ namespace LandIce
     const int side = sideSet.side_pos.d_view(side_idx);
 
     for (unsigned int snode=0; snode<numSideNodes; ++snode){
-      int cnode = sideNodes(side,snode);
+      int cnode = sideNodes.d_view(side,snode);
       Residual(cell,cnode) =0;
       }
 
     for (unsigned int snode=0; snode<numSideNodes; ++snode) {
-      int cnode = sideNodes(side,snode);
+      int cnode = sideNodes.d_view(side,snode);
       for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
       Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
                                   velocity(cell,qp,0)  * normals(side_idx,qp,0) +

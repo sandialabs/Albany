@@ -64,7 +64,7 @@ private:
   
   Albany::LocalSideSetInfo sideSet;
 
-  Kokkos::View<int**, PHX::Device> sideNodes;
+  Kokkos::DualView<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
   unsigned int numCellNodes;

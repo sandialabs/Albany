@@ -83,14 +83,15 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
-  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  sideNodes = Kokkos::DualView<int**, PHX::Device>("sideNodes", numSides, nodeMax);
   for (unsigned int side=0; side<numSides; ++side) {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (int node=0; node<thisSideNodes; ++node) {
-      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
+  sideNodes.sync<PHX::Device>();
 }
 
 // **********************************************************************
@@ -156,9 +157,9 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
         }
 
         //using trapezoidal rule to get diagonal mass matrix
-        t += (solution(cell,sideNodes(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
+        t += (solution(cell,sideNodes.h_view(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
 
-        bdLaplacian_L2Projection_res(cell,sideNodes(side,inode)) = t;
+        bdLaplacian_L2Projection_res(cell,sideNodes.h_view(side,inode)) = t;
       }
     }
 
@@ -194,7 +195,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
                 side_nodes[1] = side_node;
             }
 
-            int cell_nodes[2] = {sideNodes(side,side_nodes[0]),sideNodes(side,side_nodes[1])};
+            int cell_nodes[2] = {sideNodes.h_view(side,side_nodes[0]),sideNodes.h_view(side,side_nodes[1])};
             MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
             MeshScalarT bdEdge_measure = 0.0; 
             if (bdEdge_measure_sqr > 0.0) 

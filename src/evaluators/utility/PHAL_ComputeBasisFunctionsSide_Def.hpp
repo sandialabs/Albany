@@ -114,13 +114,14 @@ postRegistrationSetup(typename Traits::SetupData d,
   intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
 
   // BF does not depend on the current element, so we fill it now
-  for (unsigned int cellside = 0; cellside < BF.extent(0); ++cellside) {
+  Kokkos::parallel_for(Kokkos::RangePolicy(0,BF.extent(0)),
+                       KOKKOS_CLASS_LAMBDA(const int cellside) { 
     for (unsigned int node=0; node<numSideNodes; ++node) {
       for (unsigned int qp=0; qp<numSideQPs; ++qp) {
         BF(cellside,node,qp) = val_at_cub_points(node,qp);
       }
     }
-  }
+  });
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
