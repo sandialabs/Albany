@@ -7,6 +7,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_PressureCorrectedTemperature.hpp"
 
@@ -70,14 +71,15 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  if(useP0Temp) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-      correctedTemp(cell) = std::min(temp(cell) + coeff * (sHeight(cell) - coord(cell,2)), meltingT);
-  } else {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+  Kokkos::parallel_for(RangePolicy(0, workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
+    if(useP0Temp) {
+      correctedTemp(cell) = KU::min(temp(cell) + coeff * (sHeight(cell) - coord(cell,2)), meltingT);
+    } else {
       for (int qp = 0; qp < numQPs; ++qp)
-        correctedTemp(cell,qp) = std::min(temp(cell,qp) + coeff * (sHeight(cell,qp) - coord(cell,qp,2)), meltingT);
-  }
+        correctedTemp(cell,qp) = KU::min(temp(cell,qp) + coeff * (sHeight(cell,qp) - coord(cell,qp,2)), meltingT);
+    }
+  });
 }
 
 } // namespace LandIce

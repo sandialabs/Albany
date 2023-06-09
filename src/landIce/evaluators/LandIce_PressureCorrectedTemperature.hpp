@@ -59,6 +59,9 @@ private:
   int numQPs;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 } // Namespace LandIce
