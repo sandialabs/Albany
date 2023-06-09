@@ -120,29 +120,33 @@ saveElemState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
          std::endl << "Error: cannot locate " << stateName << " in PHAL_SaveStateField_Def" << std::endl);
 
+  const auto field_d_view = field.get_view();
+  const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+  Kokkos::deep_copy(field_h_mirror, field_d_view);
+
   auto state = it->second.host();
   switch (state.rank()) {
   case 1:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
-    state(cell) = field(cell);
+      state(cell) = field_h_mirror(cell);
     break;
   case 2:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
       for (unsigned int qp = 0; qp < state.extent(1); ++qp)
-        state(cell, qp) = field(cell,qp);;
+        state(cell, qp) = field_h_mirror(cell,qp);;
     break;
   case 3:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
       for (unsigned int qp = 0; qp < state.extent(1); ++qp)
         for (unsigned int i = 0; i < state.extent(2); ++i)
-          state(cell, qp, i) = field(cell,qp,i);
+          state(cell, qp, i) = field_h_mirror(cell,qp,i);
     break;
   case 4:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
       for (unsigned int qp = 0; qp < state.extent(1); ++qp)
         for (unsigned int i = 0; i < state.extent(2); ++i)
           for (unsigned int j = 0; j < state.extent(3); ++j)
-            state(cell, qp, i, j) = field(cell,qp,i,j);
+            state(cell, qp, i, j) = field_h_mirror(cell,qp,i,j);
     break;
   case 5:
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
@@ -150,7 +154,7 @@ saveElemState(typename Traits::EvalData workset)
         for (unsigned int i = 0; i < state.extent(2); ++i)
           for (unsigned int j = 0; j < state.extent(3); ++j)
             for (unsigned int k = 0; k < state.extent(4); ++k)
-            state(cell, qp, i, j, k) = field(cell,qp,i,j,k);
+            state(cell, qp, i, j, k) = field_h_mirror(cell,qp,i,j,k);
     break;
   default:
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,
@@ -169,16 +173,20 @@ saveWorksetState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
          std::endl << "Error: cannot locate " << stateName << " in PHAL_SaveStateField_Def" << std::endl);
 
+  const auto field_d_view = field.get_view();
+  const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+  Kokkos::deep_copy(field_h_mirror, field_d_view);
+
   auto state = it->second.host();
   switch (state.rank()) {
   case 1:
     for (unsigned int cell = 0; cell < state.extent(0); ++cell)
-    state(cell) = field(cell);
+    state(cell) = field_h_mirror(cell);
     break;
   case 2:
     for (unsigned int cell = 0; cell < state.extent(0); ++cell)
       for (unsigned int qp = 0; qp < state.extent(1); ++qp)
-        state(cell, qp) = field(cell,qp);;
+        state(cell, qp) = field_h_mirror(cell,qp);;
     break;
   default:
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,
@@ -218,6 +226,10 @@ saveNodeState(typename Traits::EvalData workset)
 
   const auto& cell_indexer = node_dof_mgr->cell_indexer();
 
+  const auto field_d_view = field.get_view();
+  const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+  Kokkos::deep_copy(field_h_mirror, field_d_view);
+
   double* values;
   stk::mesh::Entity e;
   switch (dims.size()) {
@@ -229,7 +241,7 @@ saveNodeState(typename Traits::EvalData workset)
         const auto* nodes = bulkData.begin_nodes(elem);
         for (unsigned int node=0; node<dims[1]; ++node) {
           values = stk::mesh::field_data(*stk_field, nodes[node]);
-          values[0] = field(cell,node);
+          values[0] = field_h_mirror(cell,node);
         }
       }
       break;
@@ -242,7 +254,7 @@ saveNodeState(typename Traits::EvalData workset)
         for (unsigned int node=0; node<dims[1]; ++node) {
           values = stk::mesh::field_data(*stk_field, nodes[node]);
           for (unsigned int i=0; i<dims[2]; ++i)
-            values[i] = field(cell,node,i);
+            values[i] = field_h_mirror(cell,node,i);
         }
       }
       break;

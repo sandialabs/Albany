@@ -147,21 +147,27 @@ loadNodeState(typename Traits::EvalData workset)
     const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, cell2d_GID+1);
     const auto nodes2d = bulkData.begin_nodes(cell2d);
 
-    for (int inode=0; inode<numNodes; ++inode) {
-      const double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
-      switch (dims.size()) {
-        case 2:          
-          field(sideSet_idx,inode) = *data;
-          break;
-        case 3:
-          for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
-            field(sideSet_idx,inode,idim) = data[idim];
-          }
-          break;
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-              "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
+    if (dims.size() == 2) {
+      auto field_d_view = Kokkos::subview(field.get_view(), sideSet_idx, Kokkos::ALL);
+      auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+      for (int inode=0; inode<numNodes; ++inode) {
+        const double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
+        field_h_mirror(inode) = *data;
       }
+      Kokkos::deep_copy(field_d_view, field_h_mirror);
+    } else if (dims.size() == 3) {
+      auto field_d_view = Kokkos::subview(field.get_view(), sideSet_idx, Kokkos::ALL, Kokkos::ALL);
+      auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+      for (int inode=0; inode<numNodes; ++inode) {
+        const double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
+        for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
+          field_h_mirror(inode,idim) = data[idim];
+        }
+      }
+      Kokkos::deep_copy(field_d_view, field_h_mirror);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+          "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
     }
   }
 }
@@ -216,18 +222,18 @@ loadElemState(typename Traits::EvalData workset)
     const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
 
     const double* data = stk::mesh::field_data(*stk_field,cell2d);
-    switch (dims.size()) {
-      case 1:
-        field(sideSet_idx) = *data;
-        break;
-      case 2:
-        for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
-          field(sideSet_idx,idim) = data[idim];
-        }
-        break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-            "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
+    if (dims.size() == 1) {
+      auto field_d_view = Kokkos::subview(field.get_view(), sideSet_idx);
+      Kokkos::deep_copy(field_d_view, *data);
+    } else if (dims.size() == 2) {
+      auto field_d_view = Kokkos::subview(field.get_view(), sideSet_idx, Kokkos::ALL);
+      auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+      for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
+        field_h_mirror(sideSet_idx,idim) = data[idim];
+      }
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+          "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
     }
   }
 }
