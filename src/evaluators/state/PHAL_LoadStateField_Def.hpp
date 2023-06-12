@@ -13,6 +13,8 @@
 #include "PHAL_Utilities.hpp"
 #include "PHAL_LoadStateField.hpp"
 
+#include <cstdio>
+
 namespace PHAL {
 
 template<typename EvalT, typename Traits, typename ScalarType>
@@ -50,8 +52,9 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
   //       If dev data has changed, it should be synced to host by
   //       whomever changed the data.
   const auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
+  Kokkos::deep_copy(stateToLoad.dev(), stateToLoad.host());
   auto stateData   = stateToLoad.dev();
-  const size_t stateToLoad_size = stateToLoad.size();
+  const int stateToLoad_size = stateToLoad.size();
   
   Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
@@ -94,8 +97,9 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   //       If dev data has changed, it should be synced to host by
   //       whomever changed the data.
   auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
+  Kokkos::deep_copy(stateToLoad.dev(), stateToLoad.host());
   auto stateData   = stateToLoad.dev();
-  const size_t stateToLoad_size = stateToLoad.size();
+  const int stateToLoad_size = stateToLoad.size();
   
   Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
