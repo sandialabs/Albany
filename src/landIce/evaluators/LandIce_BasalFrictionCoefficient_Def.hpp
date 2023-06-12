@@ -344,6 +344,30 @@ KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
 
+  ParamScalarT mu, lambda, power;
+
+  if ((beta_type == BETA_TYPE::POWER_LAW)||(beta_type==BETA_TYPE::REGULARIZED_COULOMB) ) {
+    if (logParameters) {
+      power = std::exp(Albany::convertScalar<const ParamScalarT>(powerParam(0)));
+      if (mu_type == FIELD_TYPE::CONSTANT)
+        mu = std::exp(Albany::convertScalar<const ParamScalarT>(muParam(0)));
+    } else {
+      power = Albany::convertScalar<const ParamScalarT>(powerParam(0));
+      if (mu_type == FIELD_TYPE::CONSTANT)
+        mu = Albany::convertScalar<const ParamScalarT>(muParam(0));
+    }
+  }
+
+  if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
+    if (logParameters) {
+      if (lambda_type == FIELD_TYPE::CONSTANT)
+        lambda = std::exp(Albany::convertScalar<const ParamScalarT>(lambdaParam(0)));
+    } else {
+      if (lambda_type == FIELD_TYPE::CONSTANT)
+        lambda = Albany::convertScalar<const ParamScalarT>(lambdaParam(0));
+    }
+  }
+
   ParamScalarT muValue = 1.0;
   typename Albany::StrongestScalarType<EffPressureST,MeshScalarT>::type NVal = N_val;
 
@@ -503,69 +527,6 @@ evaluateFields (typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
-
-  if ((beta_type == BETA_TYPE::POWER_LAW)||(beta_type==BETA_TYPE::REGULARIZED_COULOMB) ) {
-    if (logParameters) {
-      power = std::exp(Albany::convertScalar<const ParamScalarT>(powerParam(0)));
-      if (mu_type == FIELD_TYPE::CONSTANT)
-        mu = std::exp(Albany::convertScalar<const ParamScalarT>(muParam(0)));
-    } else {
-      power = Albany::convertScalar<const ParamScalarT>(powerParam(0));
-      if (mu_type == FIELD_TYPE::CONSTANT)
-        mu = Albany::convertScalar<const ParamScalarT>(muParam(0));
-    }
-#ifdef OUTPUT_TO_SCREEN
-    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    int procRank = Teuchos::GlobalMPISession::getRank();
-    int numProcs = Teuchos::GlobalMPISession::getNProc();
-    output->setProcRankAndSize (procRank, numProcs);
-    output->setOutputToRootOnly (0);
-
-    if (mu_type==FIELD_TYPE::CONSTANT && printedMu!=mu) {
-      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] mu = " << mu << " [kPa yr^q m^{-q}]\n";
-      printedMu = mu;
-    }
-
-    if (printedQ!=power) {
-      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] power = " << power << "\n";
-      printedQ = power;
-    }
-#endif
-
-    TEUCHOS_TEST_FOR_EXCEPTION (
-        power<0, Teuchos::Exceptions::InvalidParameter,
-        "Error in LandIce::BasalFrictionCoefficient: 'Power Exponent' must be >= 0.\n"
-        "   Input value: " + std::to_string(Albany::ADValue(mu)) + "\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (
-        mu_type==FIELD_TYPE::CONSTANT && mu<0, Teuchos::Exceptions::InvalidParameter,
-        "Error in LandIce::BasalFrictionCoefficient: 'Coulomb Friction Coefficient' must be >= 0.\n"
-        "   Input value: " + std::to_string(Albany::ADValue(mu)) + "\n");
-  }
-
-  if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
-    if (logParameters) {
-      if (lambda_type == FIELD_TYPE::CONSTANT)
-        lambda = std::exp(Albany::convertScalar<const ParamScalarT>(lambdaParam(0)));
-    } else {
-      if (lambda_type == FIELD_TYPE::CONSTANT)
-        lambda = Albany::convertScalar<const ParamScalarT>(lambdaParam(0));
-    }
-#ifdef OUTPUT_TO_SCREEN
-    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    int procRank = Teuchos::GlobalMPISession::getRank();
-    int numProcs = Teuchos::GlobalMPISession::getNProc();
-    output->setProcRankAndSize (procRank, numProcs);
-    output->setOutputToRootOnly (0);
-
-    if (lambda_type==FIELD_TYPE::CONSTANT && printedLambda!=lambda) {
-      *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] lambda = " << lambda << "\n";
-      printedLambda = lambda;
-    }
-#endif
-
-    TEUCHOS_TEST_FOR_EXCEPTION ((lambda_type == FIELD_TYPE::CONSTANT) && lambda<0, Teuchos::Exceptions::InvalidParameter,
-                                "\nError in LandIce::BasalFrictionCoefficient: \"Bed Roughness\" must be >= 0.\n");
-  }
 
   dim = nodal ? numNodes : numQPs;
 

@@ -89,10 +89,6 @@ private:
   double overburden_fraction;  // [adim]
   double pressure_smoothing_length_scale; //[km]
 
-  ParamScalarT mu;
-  ParamScalarT lambda;
-  ParamScalarT power;
-
   int numNodes;
   int numQPs;
   int dim;
