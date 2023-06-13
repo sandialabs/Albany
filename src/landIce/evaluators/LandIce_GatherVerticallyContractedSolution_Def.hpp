@@ -155,7 +155,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto sol = device_sol;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
-    const auto pos = sideSet.side_pos.h_view(iside);
+    const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
