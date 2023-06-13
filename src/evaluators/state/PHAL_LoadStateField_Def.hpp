@@ -13,8 +13,6 @@
 #include "PHAL_Utilities.hpp"
 #include "PHAL_LoadStateField.hpp"
 
-#include <cstdio>
-
 namespace PHAL {
 
 template<typename EvalT, typename Traits, typename ScalarType>
