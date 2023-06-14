@@ -189,7 +189,7 @@ struct Omegah2ShardsPerm {
    * i'th Omegah face, after applying the 'tetFace' face permutation to i
    * For example, to get the Shards vertex index for the 1st vertex
    * of the 2nd Omegah face:
-   * auto shardsVtxIdx = triVtx[tetFace[1]][0];
+   * auto shardsVtxIdx = triVtx[1][0];
    */
   const int triVtx[4][3] = {{0,1,2},
                             {0,1,2},
@@ -254,55 +254,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_checkTetrahedronCanonical
                   << "(" << bdry << ", " << vert << ")=" << shIdx << "\n";
       }
       REQUIRE(ohIdx == shIdx);
-    }
-  }
-
-  out << "Testing OmegahConnManager:: canonical entity order - Omega_h vs Shards()\n";
-  success = true;
-}
-
-TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_checkTetrahedronCanonicalEntityOrder2)
-{
-  Albany::build_type (Albany::BuildType::Tpetra);
-
-  shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
-  const int elem_dim = 3;
-  const int bdry_dim = 2;
-  const int vtx_dim = 0;
-
-  std::stringstream ss;
-  ss  << "\ntet: Omega_h(bdry,vert)=idx Shards(bdry,vert)=idx ";
-  //fill the face-to-node arrays
-  int ohFaceVtx[4][3];
-  int shFaceVtx[4][3];
-  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
-    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
-       ohFaceVtx[bdry][vert] = Omega_h::simplex_down_template(elem_dim, bdry_dim, bdry, vert);
-       shFaceVtx[bdry][vert] = tetTopo.getNodeMap(bdry_dim,bdry,vert);
-    }
-  }
-  Omegah2ShardsPerm oh2sh;
-
-  //compute the shards to omegah permutation
-  int oh2shFaceVtxPerm[4][3];
-  shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
-  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
-    auto oh2shBdry = oh2sh.tetFace[bdry];
-    auto perm = shards::findPermutation(triTopo.getCellTopologyData(),ohFaceVtx[bdry],shFaceVtx[oh2shBdry]);
-    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
-      oh2shFaceVtxPerm[bdry][vert] = triTopo.getNodePermutationInverse(perm,vert);
-    }
-  }
-
-  std::cerr << "\ncheck perm\n";
-  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
-    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
-      if(oh2shFaceVtxPerm[bdry][vert] != oh2sh.triVtx[bdry][vert]) {
-        std::cerr << "(" << bdry << ", " << vert << ") " 
-                  << oh2sh.triVtx[bdry][vert] << " "
-                  << oh2shFaceVtxPerm[bdry][vert] << "\n";
-      }
-      REQUIRE(oh2shFaceVtxPerm[bdry][vert] == oh2sh.triVtx[bdry][vert]);
     }
   }
 

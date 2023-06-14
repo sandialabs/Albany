@@ -19,6 +19,143 @@
 
 namespace Albany {
 
+struct OmegahTetFaceVtx {
+  int idx[4][3];
+  OmegahTetFaceVtx() {
+    shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
+    const int elem_dim = 3;
+    const int bdry_dim = 2;
+    const int vtx_dim = 0;
+    for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+      for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+        idx[bdry][vert] = Omega_h::simplex_down_template(elem_dim, bdry_dim, bdry, vert);
+      }
+    }
+  }
+};
+
+struct ShardsTetFaceVtx {
+  int idx[4][3];
+  ShardsTetFaceVtx() {
+    shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
+    const int elem_dim = 3;
+    const int bdry_dim = 2;
+    const int vtx_dim = 0;
+    for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+      for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+        idx[bdry][vert] = tetTopo.getNodeMap(bdry_dim,bdry,vert);
+      }
+    }
+  }
+};
+
+struct TetTriVtx {
+  int perm[4][3];
+};
+
+struct Omegah2ShardsPerm {
+  const std::string name = "Omega_h-to-Shards";
+
+  /////// Triangles ///////// {
+  /* triVtx[j] contains the Shards vertex index for the j'th vertex of an Omegah
+   * triangle
+   */
+  const int triVtx[3] = {}; //FIXME
+  ///// END Triangles }
+
+  /////// Tetrahedrons ///////// {
+  /**
+   * tetFace[i] contains the Shards face index for the i'th Omegah face
+   */
+  const int tetFace[4] = {3,0,1,2};
+  /**
+   * tetTriVtx.perm[i][j] contains the Shards vertex index for the j'th vertex of the
+   * i'th Omegah triangle of a tet, after applying the 'tetFace' face permutation to i
+   * For example, to get the Shards vertex index for the 1st vertex
+   * of the 2nd Omegah face:
+   * auto shardsVtxIdx = tetTriVtx.perm[tetFace[1]][0];
+   */
+  const TetTriVtx tetTriVtx;
+  
+  TetTriVtx getOmegah2ShardsPerm_tet() {
+    shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
+    const int elem_dim = 3;
+    const int bdry_dim = 2;
+    const int vtx_dim = 0;
+  
+    const OmegahTetFaceVtx ohFaceVtx;
+    const ShardsTetFaceVtx shFaceVtx;
+
+    //compute the shards to omegah permutation
+    TetTriVtx oh2shTetTriVtx;
+    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+    for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+      auto oh2shBdry = tetFace[bdry];
+      auto perm = shards::findPermutation(triTopo.getCellTopologyData(),shFaceVtx.idx[oh2shBdry],ohFaceVtx.idx[bdry]);
+      for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+        oh2shTetTriVtx.perm[oh2shBdry][vert] = triTopo.getNodePermutationInverse(perm,vert);
+      }
+    }
+    return oh2shTetTriVtx;
+  }
+  ///// END Tetrahedrons }
+  
+  Omegah2ShardsPerm() : 
+    tetTriVtx(getOmegah2ShardsPerm_tet()) {}
+};
+
+/**
+ * this is the inverse of Omegah2ShardsPerm
+ */
+struct Shards2OmegahPerm {
+  const std::string name = "Shards-to-Omega_h";
+
+  /////// Triangles /////////
+  const int triVtx[3] = {}; //FIXME
+
+  /////// Tetrahedrons /////////
+  const int tetFace[4] = {1,2,3,0};
+  const TetTriVtx tetTriVtx;
+
+  TetTriVtx getShards2OmegahPerm_tet() {
+    shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
+    const int elem_dim = 3;
+    const int bdry_dim = 2;
+    const int vtx_dim = 0;
+  
+    const OmegahTetFaceVtx ohFaceVtx;
+    const ShardsTetFaceVtx shFaceVtx;
+    //compute the omegah to shards permutation
+    TetTriVtx sh2ohTetTriVtx;
+    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+    for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+      auto sh2ohBdry = tetFace[bdry];
+      auto perm = shards::findPermutation(triTopo.getCellTopologyData(),ohFaceVtx.idx[sh2ohBdry],shFaceVtx.idx[bdry]);
+      for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+        sh2ohTetTriVtx.perm[sh2ohBdry][vert] = triTopo.getNodePermutationInverse(perm,vert);
+      }
+    }
+    return sh2ohTetTriVtx;
+  }
+  ///// END Tetrahedrons }
+  
+  Shards2OmegahPerm() :
+    tetTriVtx(getShards2OmegahPerm_tet()) {}
+};
+
+void printPerm(std::string name, TetTriVtx tetTriVtx) {
+  std::stringstream ss;
+  ss << "\ntet: " << name << "(face,vert)=idx \n";
+  for (int i=0; i<4; i++) {
+    ss << "(" << i << ", *)=" << " ";
+    for (int j=0; j<3; j++) {
+      ss << tetTriVtx.perm[i][j] << " ";
+    }
+    ss << "\n";
+  }
+  std::cerr << ss.str();
+}
+
 OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 {
@@ -35,6 +172,10 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
   assert(mesh.has_tag(mesh.dim(), "global"));
 
   owners = std::vector<Ownership>(1); //FIXME
+  Omegah2ShardsPerm oh2sh;
+  printPerm(oh2sh.name,oh2sh.tetTriVtx);
+  Shards2OmegahPerm sh2oh;
+  printPerm(sh2oh.name,sh2oh.tetTriVtx);
 }
 
 OmegahConnManager::
@@ -167,6 +308,7 @@ OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
  */
 void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
+  Omegah2ShardsPerm oh2sh;
   const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
   const auto adjEnts = elmToDim.ab2b;
   const auto dofsPerElm = m_dofsPerElm;
@@ -178,7 +320,7 @@ void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO
       for(int k=0; k<dofsPerEnt; k++) {
         const auto dofIndex = adjEnt*dofsPerEnt+k;
         const auto dofGlobalId = globalDofNumbering[dofIndex];
-        const auto connIdx = (elm*dofsPerElm)+(dofOffset+j+k);
+        const auto connIdx = (elm*dofsPerElm)+(dofOffset+j+k); //use the omega_h to shards permutation to convert the omegah j index to shards
         elm2dof[connIdx] = dofGlobalId;
       }
     }
