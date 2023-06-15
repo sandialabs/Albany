@@ -76,13 +76,13 @@ struct Omegah2ShardsPerm {
    * auto shardsVtxIdx = tetTriVtx.perm[tetFace[1]][0];
    */
   const TetTriVtx tetTriVtx;
-  
+
   TetTriVtx getOmegah2ShardsPerm_tet() {
     shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
     const int elem_dim = 3;
     const int bdry_dim = 2;
     const int vtx_dim = 0;
-  
+
     const OmegahTetFaceVtx ohFaceVtx;
     const ShardsTetFaceVtx shFaceVtx;
 
@@ -99,8 +99,8 @@ struct Omegah2ShardsPerm {
     return oh2shTetTriVtx;
   }
   ///// END Tetrahedrons }
-  
-  Omegah2ShardsPerm() : 
+
+  Omegah2ShardsPerm() :
     tetTriVtx(getOmegah2ShardsPerm_tet()) {}
 };
 
@@ -122,7 +122,7 @@ struct Shards2OmegahPerm {
     const int elem_dim = 3;
     const int bdry_dim = 2;
     const int vtx_dim = 0;
-  
+
     const OmegahTetFaceVtx ohFaceVtx;
     const ShardsTetFaceVtx shFaceVtx;
     //compute the omegah to shards permutation
@@ -138,7 +138,7 @@ struct Shards2OmegahPerm {
     return sh2ohTetTriVtx;
   }
   ///// END Tetrahedrons }
-  
+
   Shards2OmegahPerm() :
     tetTriVtx(getShards2OmegahPerm_tet()) {}
 };
