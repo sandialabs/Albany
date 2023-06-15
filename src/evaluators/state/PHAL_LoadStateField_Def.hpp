@@ -53,10 +53,47 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
   Kokkos::deep_copy(stateToLoad.dev(), stateToLoad.host());
   auto stateData   = stateToLoad.dev();
   const int stateToLoad_size = stateToLoad.size();
-  
+
+  std::vector<size_t> data_dims;
+  data.dimensions(data_dims);
+
+  const int d1 = data_dims[0];
+  const int d2 = (data_dims.size() > 1) ? data_dims[1] : 0;
+  const int d3 = (data_dims.size() > 2) ? data_dims[2] : 0;
+  const int d4 = (data_dims.size() > 3) ? data_dims[3] : 0;
+  const int d5 = (data_dims.size() > 4) ? data_dims[4] : 0;
+
+  const int data_dims_size = data_dims.size();
+
   Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
-    data(i) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    if (data_dims_size == 1) {
+      data(i) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 2) {
+      int i2 = i % d2;
+      int i1 = i / d2;
+      data(i1,i2) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 3) {
+      int i3 = i % d3;
+      int i2 = (i / d3) % d2;
+      int i1 = i / (d3 * d2);
+      data(i1,i2,i3) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 4) {
+      int i4 = i % d4;
+      int i3 = (i / d4) % d3;
+      int i2 = (i / (d4*d3)) % d2;
+      int i1 = i / (d4*d3*d2);
+      data(i1,i2,i3,i4) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 5) {
+      int i5 = i % d5;
+      int i4 = (i / d5) % d4;
+      int i3 = (i / (d5*d4)) % d3;
+      int i2 = (i / (d5*d4*d3)) % d2;
+      int i1 = i / (d5*d4*d3*d2);
+      data(i1,i2,i3,i4,i5) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else {
+      // Exception
+    }
   });
 }
 
@@ -94,14 +131,51 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   // NOTE: we don't sync to host, since we don't know if it's needed.
   //       If dev data has changed, it should be synced to host by
   //       whomever changed the data.
-  auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
+  const auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
   Kokkos::deep_copy(stateToLoad.dev(), stateToLoad.host());
   auto stateData   = stateToLoad.dev();
   const int stateToLoad_size = stateToLoad.size();
-  
+
+  std::vector<size_t> data_dims;
+  data.dimensions(data_dims);
+
+  const int d1 = data_dims[0];
+  const int d2 = (data_dims.size() > 1) ? data_dims[1] : 0;
+  const int d3 = (data_dims.size() > 2) ? data_dims[2] : 0;
+  const int d4 = (data_dims.size() > 3) ? data_dims[3] : 0;
+  const int d5 = (data_dims.size() > 4) ? data_dims[4] : 0;
+
+  const int data_dims_size = data_dims.size();
+
   Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
-    data(i) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    if (data_dims_size == 1) {
+      data(i) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 2) {
+      int i2 = i % d2;
+      int i1 = i / d2;
+      data(i1,i2) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 3) {
+      int i3 = i % d3;
+      int i2 = (i / d3) % d2;
+      int i1 = i / (d3 * d2);
+      data(i1,i2,i3) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 4) {
+      int i4 = i % d4;
+      int i3 = (i / d4) % d3;
+      int i2 = (i / (d4*d3)) % d2;
+      int i1 = i / (d4*d3*d2);
+      data(i1,i2,i3,i4) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else if (data_dims_size == 5) {
+      int i5 = i % d5;
+      int i4 = (i / d5) % d4;
+      int i3 = (i / (d5*d4)) % d3;
+      int i2 = (i / (d5*d4*d3)) % d2;
+      int i1 = i / (d5*d4*d3*d2);
+      data(i1,i2,i3,i4,i5) = (i < stateToLoad_size) ? stateData(i) : 0.0;
+    } else {
+      // Exception
+    }
   });
 }
 
