@@ -70,9 +70,9 @@ struct Omegah2ShardsPerm {
   const int tetFace[4] = {3,0,1,2};
   /**
    * tetTriVtx.perm[i][j] contains the Shards vertex index for the j'th vertex of the
-   * i'th Omegah triangle of a tet, after applying the 'tetFace' face permutation to i
-   * For example, to get the Shards vertex index for the 1st vertex
-   * of the 2nd Omegah face:
+   * i'th Omegah triangle, permuted to the correct Shards face via tetFace[i], of a tet.
+   * For example, given the 1st vertex of the 2nd Omegah face, get the corresponding Shards
+   * vertex index:
    * auto shardsVtxIdx = tetTriVtx.perm[tetFace[1]][0];
    */
   const TetTriVtx tetTriVtx;
