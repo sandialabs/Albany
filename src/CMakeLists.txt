@@ -46,8 +46,7 @@ set (ALBANY_INCLUDE_DIRS
 )
 
 if (ENABLE_OMEGAH)
-  set (ALBANY_INCLUDE_DIRS
-    ${ALBANY_INCLUDE_DIRS}
+  list (APPEND ALBANY_INCLUDE_DIRS
     ${Albany_SOURCE_DIR}/src/disc/omegah
   )
 endif()
@@ -364,6 +363,19 @@ if (ALBANY_STK_REBALANCE)
     disc/stk/percept/stk_rebalance/ZoltanPartition.hpp
   )
 endif()
+
+if (ENABLE_OMEGAH)
+  list (APPEND SOURCES
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.cpp
+  )
+  list (APPEND HEADERS
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahAbstractMesh.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh_Def.hpp
+  )
+endif()
+
 
 #evaluators
 list (APPEND SOURCES

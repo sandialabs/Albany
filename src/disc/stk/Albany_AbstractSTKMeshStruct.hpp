@@ -45,11 +45,7 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   virtual ~AbstractSTKMeshStruct() = default;
 
  public:
-  msType
-  meshSpecsType()
-  {
-    return STK_MS;
-  }
+  std::string meshType () const { return "STK"; }
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;

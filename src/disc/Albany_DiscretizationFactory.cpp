@@ -237,42 +237,28 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
         rigidBodyModes->setPiroPL(piroParams);
 
 
-  switch (meshStruct->meshSpecsType()) {
-    case AbstractMeshStruct::STK_MS:
-    {
-      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      // if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-      //   auto disc = Teuchos::rcp(new BlockedSTKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
-      //   return disc;
-      // } else
-      {
-        auto disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
-        return disc;
-      }
-      break;
-    }
+  Teuchos::RCP<AbstractDiscretization> disc;
+  if (meshStruct->meshType()=="STK") {
+    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+    disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
+  } else if (meshStruct->meshType()=="Omega_h") {
+    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Missing Omega_h discretization!\n");
   }
-  return Teuchos::null;
+  return disc;
 }
 
 void
 DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
                                     const Teuchos::RCP<Albany::StateInfoStruct>& sis) {
 
-  switch (meshStruct->meshSpecsType()) {
-    case AbstractMeshStruct::STK_MS:
-    {
-      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      // if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-      //   auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
-      //   stk_disc->setFieldData(req, sis);
-      // } else
-      {
-        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
-        stk_disc->setFieldData(sis);
-      }
-      break;
-    }
+  if (meshStruct->meshType()=="STK") {
+    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+    auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+    stk_disc->setFieldData(sis);
+  } else if (meshStruct->meshType()=="Omega_h") {
+    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Missing Omega_h discretization!\n");
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
   }
 }
 
@@ -280,20 +266,14 @@ void
 DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc) {
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: completeDiscSetup");
 
-  switch (meshStruct->meshSpecsType()) {
-    case AbstractMeshStruct::STK_MS:
-    {
-      auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-      // if(ms->interleavedOrdering == DiscType::BlockedDisc){ // Use Panzer to do a blocked discretization
-      //   auto stk_disc = Teuchos::rcp_dynamic_cast<BlockedSTKDiscretization>(disc);
-      //   stk_disc->updateMesh();
-      // } else
-      {
-        auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
-        stk_disc->updateMesh();
-      }
-      break;
-    }
+  if (meshStruct->meshType()=="STK") {
+    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+    auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
+    stk_disc->updateMesh();
+  } else if (meshStruct->meshType()=="Omega_h") {
+    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Missing Omega_h discretization!\n");
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
   }
 }
 
