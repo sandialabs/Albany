@@ -16,7 +16,7 @@ ANONYMOUS:
     Equation Set:
       Type: LandIce
     Response Functions:
-      Number Of Responses: 2
+      Number Of Responses: 3
       Response 0:
         Type: Sum Of Responses
         Number Of Responses: 2
@@ -30,6 +30,12 @@ ANONYMOUS:
           Name: Boundary Squared L2 Norm
           Field Name: L2 Projected Boundary Laplacian_basalside
       Response 1:
+          Scaling Coefficient: 5.8824e-05
+          Name: Quadratic Linear Operator Based
+          Linear Operator File Name: ../AsciiMeshes/GisUnstructFiles/D_gis.mm
+          Diagonal Scaling File Name: ../AsciiMeshes/GisUnstructFiles/D_gis.mm
+          Field Name: basal_friction
+      Response 2:
           Scaling Coefficient: 5.8824e-05
           Name: Quadratic Linear Operator Based
           Linear Operator File Name: ../AsciiMeshes/GisUnstructFiles/A_gis.mm
@@ -80,6 +86,9 @@ ANONYMOUS:
       Type: FO INTERP SURF GRAD
     Hessian:
       Response 1:
+        Parameter 0:
+          Reconstruct H_pp using Hessian-vector products: false
+      Response 2:
         Parameter 0:
           Reconstruct H_pp using Hessian-vector products: false
           H_pp Solver:
@@ -200,8 +209,16 @@ ANONYMOUS:
           Matrix Type: Hessian Of Response
           Matrix Types:
             Hessian Of Response:
-              Lump Matrix: false
+              Lump Matrix: true
               Response Index: 1
+             
+            Custom Secant: 
+             Type: Limited-Memory BFGS
+             Maximum Storage: 50
+             Initialization Type: Hessian Of Response
+             Initialization Types:
+               Hessian Of Response:
+                 Response Index: 2
 
         ROL Options:
 
@@ -349,10 +366,16 @@ ANONYMOUS:
     Relative Tolerance: 1.0e-06
     Test Value:  1.145436599178e+02
     Sensitivity For Parameter 0:
-      Test Value: 4.530749883697e+00
+      Test Value: 4.530743752580e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [57.7495]
+    Piro Analysis Test Values: [81.4822942281]
   Regression For Response 1:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    Test Value:  4.384136090620e+02
+    Sensitivity For Parameter 0:
+      Test Value: 9.982202715196e+00
+  Regression For Response 2:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     Test Value:  6.371939657111e+00
