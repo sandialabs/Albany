@@ -52,6 +52,30 @@ struct TetTriVtx {
   int perm[4][3];
 };
 
+template<typename Source, typename Dest>
+TetTriVtx getPerm_tet(Source& source, Dest& dest, const int src2destTetFace[4]) {
+  const int elem_dim = 3;
+  const int bdry_dim = 2;
+  const int vtx_dim = 0;
+
+  //compute the shards to omegah permutation
+  TetTriVtx src2destTetTriVtx;
+  shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+  auto topoData = triTopo.getCellTopologyData();
+  for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
+    auto src2destBdry = src2destTetFace[bdry];
+    auto perm = shards::findPermutation(topoData, dest.idx[src2destBdry],source.idx[bdry]);
+    if(!(perm>=0 && perm<topoData->permutation_count)) {
+      fprintf(stderr, "perm %d\n", perm);
+    }
+    assert(perm>=0 && perm<topoData->permutation_count);
+    for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
+      src2destTetTriVtx.perm[src2destBdry][vert] = triTopo.getNodePermutationInverse(perm,vert);
+    }
+  }
+  return src2destTetTriVtx;
+}
+
 struct OmegahTriVtx {
   int idx[3];
   OmegahTriVtx() {
@@ -137,24 +161,9 @@ struct Omegah2ShardsPerm {
   const TetTriVtx tetTriVtx;
 
   TetTriVtx getOmegah2ShardsPerm_tet() {
-    const int elem_dim = 3;
-    const int bdry_dim = 2;
-    const int vtx_dim = 0;
-
     const OmegahTetFaceVtx ohFaceVtx;
     const ShardsTetFaceVtx shFaceVtx;
-
-    //compute the shards to omegah permutation
-    TetTriVtx oh2shTetTriVtx;
-    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
-    for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
-      auto oh2shBdry = tetFace[bdry];
-      auto perm = shards::findPermutation(triTopo.getCellTopologyData(),shFaceVtx.idx[oh2shBdry],ohFaceVtx.idx[bdry]);
-      for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
-        oh2shTetTriVtx.perm[oh2shBdry][vert] = triTopo.getNodePermutationInverse(perm,vert);
-      }
-    }
-    return oh2shTetTriVtx;
+    return getPerm_tet(ohFaceVtx, shFaceVtx, tetFace);
   }
   ///// END Tetrahedrons }
 
@@ -183,23 +192,9 @@ struct Shards2OmegahPerm {
   const TetTriVtx tetTriVtx;
 
   TetTriVtx getShards2OmegahPerm_tet() {
-    const int elem_dim = 3;
-    const int bdry_dim = 2;
-    const int vtx_dim = 0;
-
-    const OmegahTetFaceVtx ohFaceVtx;
     const ShardsTetFaceVtx shFaceVtx;
-    //compute the omegah to shards permutation
-    TetTriVtx sh2ohTetTriVtx;
-    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
-    for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
-      auto sh2ohBdry = tetFace[bdry];
-      auto perm = shards::findPermutation(triTopo.getCellTopologyData(),ohFaceVtx.idx[sh2ohBdry],shFaceVtx.idx[bdry]);
-      for(int vert=0; vert<Omega_h::simplex_degree(bdry_dim,vtx_dim); vert++) {
-        sh2ohTetTriVtx.perm[sh2ohBdry][vert] = triTopo.getNodePermutationInverse(perm,vert);
-      }
-    }
-    return sh2ohTetTriVtx;
+    const OmegahTetFaceVtx ohFaceVtx;
+    return getPerm_tet(shFaceVtx, ohFaceVtx, tetFace);
   }
   ///// END Tetrahedrons }
 
