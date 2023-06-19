@@ -367,10 +367,13 @@ OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
  */
 void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
-  Omegah2ShardsPerm oh2sh;
   const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
   const auto adjEnts = elmToDim.ab2b;
   const auto dofsPerElm = m_dofsPerElm;
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh.dim() != 2 && adjDim != 0, std::logic_error,
+      "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
+  Omegah2ShardsPerm oh2sh;
+  const auto perm = oh2sh.triVtx.perm;
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     const auto firstDown = elm*numDownAdjEntsPerElm;
     //loop over element-to-ent adjacencies and fill in the dofs
@@ -379,7 +382,8 @@ void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO
       for(int k=0; k<dofsPerEnt; k++) {
         const auto dofIndex = adjEnt*dofsPerEnt+k;
         const auto dofGlobalId = globalDofNumbering[dofIndex];
-        const auto connIdx = (elm*dofsPerElm)+(dofOffset+j+k); //use the omega_h to shards permutation to convert the omegah j index to shards
+        const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
+        const auto connIdx = (elm*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
         elm2dof[connIdx] = dofGlobalId;
       }
     }
