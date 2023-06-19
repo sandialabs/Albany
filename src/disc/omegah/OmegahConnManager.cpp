@@ -22,7 +22,6 @@ namespace Albany {
 struct OmegahTetFaceVtx {
   int idx[4][3];
   OmegahTetFaceVtx() {
-    shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
     const int elem_dim = 3;
     const int bdry_dim = 2;
     const int vtx_dim = 0;
@@ -53,14 +52,69 @@ struct TetTriVtx {
   int perm[4][3];
 };
 
+struct OmegahTriVtx {
+  int idx[3];
+  OmegahTriVtx() {
+    const int elem_dim = 2;
+    const int bdry_dim = 0;
+    const int vtx_dim = 0;
+    const int ignored = -1;
+    for(int vert=0; vert<Omega_h::simplex_degree(elem_dim, vtx_dim); vert++) {
+      idx[vert] = Omega_h::simplex_down_template(elem_dim, bdry_dim, vert, ignored);
+    }
+  }
+};
+
+struct ShardsTriVtx {
+  int idx[3];
+  ShardsTriVtx() {
+    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+    const int elem_dim = 2;
+    const int bdry_dim = 0;
+    const int vtx_dim = 0;
+    for(int vert=0; vert<triTopo.getSubcellCount(vtx_dim); vert++) {
+      idx[vert] = triTopo.getNodeMap(elem_dim, bdry_dim, vert);
+    }
+  }
+};
+
+struct TriVtx {
+  int perm[3];
+  void print(std::string name) const {
+    std::stringstream ss;
+    ss << "\ntet: " << name << "vert(0,1,2)= ";
+    for (int i=0; i<3; i++) {
+      ss << perm[i] << " ";
+    }
+    ss << "\n";
+    std::cerr << ss.str();
+  }
+};
+
 struct Omegah2ShardsPerm {
   const std::string name = "Omega_h-to-Shards";
 
   /////// Triangles ///////// {
-  /* triVtx[j] contains the Shards vertex index for the j'th vertex of an Omegah
+  /* triVtx[i] contains the Shards vertex index for the i'th vertex of an Omegah
    * triangle
    */
-  const int triVtx[3] = {}; //FIXME
+  const TriVtx triVtx;
+  TriVtx getOmegah2ShardsPerm_tri() { //FIXME
+    const int elm_dim = 2;
+    const int vtx_dim = 0;
+
+    const OmegahTriVtx ohTriVtx;
+    const ShardsTriVtx shTriVtx;
+
+    //compute the shards to omegah permutation
+    TriVtx oh2shTriVtx;
+    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+    auto perm = shards::findPermutation(triTopo.getCellTopologyData(),shTriVtx.idx,ohTriVtx.idx);
+    for(int vert=0; vert<Omega_h::simplex_degree(elm_dim,vtx_dim); vert++) {
+      oh2shTriVtx.perm[vert] = triTopo.getNodePermutationInverse(perm,vert);
+    }
+    return oh2shTriVtx;
+  }
   ///// END Triangles }
 
   /////// Tetrahedrons ///////// {
@@ -78,7 +132,6 @@ struct Omegah2ShardsPerm {
   const TetTriVtx tetTriVtx;
 
   TetTriVtx getOmegah2ShardsPerm_tet() {
-    shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
     const int elem_dim = 3;
     const int bdry_dim = 2;
     const int vtx_dim = 0;
@@ -101,7 +154,9 @@ struct Omegah2ShardsPerm {
   ///// END Tetrahedrons }
 
   Omegah2ShardsPerm() :
-    tetTriVtx(getOmegah2ShardsPerm_tet()) {}
+    tetTriVtx(getOmegah2ShardsPerm_tet()),
+    triVtx(getOmegah2ShardsPerm_tri())
+  {}
 };
 
 /**
@@ -111,14 +166,16 @@ struct Shards2OmegahPerm {
   const std::string name = "Shards-to-Omega_h";
 
   /////// Triangles /////////
-  const int triVtx[3] = {}; //FIXME
+  const TriVtx triVtx;
+  TriVtx getShards2OmegahPerm_tri() { //FIXME
+    return TriVtx();
+  }
 
   /////// Tetrahedrons /////////
   const int tetFace[4] = {1,2,3,0};
   const TetTriVtx tetTriVtx;
 
   TetTriVtx getShards2OmegahPerm_tet() {
-    shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
     const int elem_dim = 3;
     const int bdry_dim = 2;
     const int vtx_dim = 0;
@@ -140,8 +197,12 @@ struct Shards2OmegahPerm {
   ///// END Tetrahedrons }
 
   Shards2OmegahPerm() :
-    tetTriVtx(getShards2OmegahPerm_tet()) {}
+    tetTriVtx(getShards2OmegahPerm_tet()),
+    triVtx(getShards2OmegahPerm_tri())
+  {}
 };
+
+
 
 void printPerm(std::string name, TetTriVtx tetTriVtx) {
   std::stringstream ss;
@@ -173,6 +234,7 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 
   owners = std::vector<Ownership>(1); //FIXME
   Omegah2ShardsPerm oh2sh;
+  oh2sh.triVtx.print(oh2sh.name);
   printPerm(oh2sh.name,oh2sh.tetTriVtx);
   Shards2OmegahPerm sh2oh;
   printPerm(sh2oh.name,sh2oh.tetTriVtx);
