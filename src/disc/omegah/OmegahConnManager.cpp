@@ -50,6 +50,18 @@ struct ShardsTetFaceVtx {
 
 struct TetTriVtx {
   int perm[4][3];
+  void print(std::string name) {
+    std::stringstream ss;
+    ss << "\ntet: " << name << "(face,vert)=idx \n";
+    for (int i=0; i<4; i++) {
+      ss << "(" << i << ", *)=" << " ";
+      for (int j=0; j<3; j++) {
+        ss << perm[i][j] << " ";
+      }
+      ss << "\n";
+    }
+    std::cerr << ss.str();
+  }
 };
 
 template<typename Source, typename Dest>
@@ -80,11 +92,10 @@ struct OmegahTriVtx {
   int idx[3];
   OmegahTriVtx() {
     const int elem_dim = 2;
-    const int bdry_dim = 0;
     const int vtx_dim = 0;
     const int ignored = -1;
     for(int vert=0; vert<Omega_h::simplex_degree(elem_dim, vtx_dim); vert++) {
-      idx[vert] = Omega_h::simplex_down_template(elem_dim, bdry_dim, vert, ignored);
+      idx[vert] = Omega_h::simplex_down_template(elem_dim, vtx_dim, vert, ignored);
     }
   }
 };
@@ -206,18 +217,7 @@ struct Shards2OmegahPerm {
 
 
 
-void printPerm(std::string name, TetTriVtx tetTriVtx) {
-  std::stringstream ss;
-  ss << "\ntet: " << name << "(face,vert)=idx \n";
-  for (int i=0; i<4; i++) {
-    ss << "(" << i << ", *)=" << " ";
-    for (int j=0; j<3; j++) {
-      ss << tetTriVtx.perm[i][j] << " ";
-    }
-    ss << "\n";
-  }
-  std::cerr << ss.str();
-}
+
 
 OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
@@ -235,12 +235,6 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
   assert(mesh.has_tag(mesh.dim(), "global"));
 
   owners = std::vector<Ownership>(1); //FIXME
-  Omegah2ShardsPerm oh2sh;
-  oh2sh.triVtx.print(oh2sh.name);
-  printPerm(oh2sh.name,oh2sh.tetTriVtx);
-  Shards2OmegahPerm sh2oh;
-  sh2oh.triVtx.print(sh2oh.name);
-  printPerm(sh2oh.name,sh2oh.tetTriVtx);
 }
 
 OmegahConnManager::
