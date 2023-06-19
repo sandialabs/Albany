@@ -82,7 +82,7 @@ struct TriVtx {
   int perm[3];
   void print(std::string name) const {
     std::stringstream ss;
-    ss << "\ntet: " << name << "vert(0,1,2)= ";
+    ss << "\ntri: " << name << "vert(0,1,2)= ";
     for (int i=0; i<3; i++) {
       ss << perm[i] << " ";
     }
@@ -90,6 +90,22 @@ struct TriVtx {
     std::cerr << ss.str();
   }
 };
+
+template<typename Source, typename Dest>
+TriVtx getPerm_tri(Source& source, Dest& dest) {
+  const int elm_dim = 2;
+  const int vtx_dim = 0;
+
+  //compute the shards to omegah permutation
+  TriVtx src2dest;
+  shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
+  auto perm = shards::findPermutation(triTopo.getCellTopologyData(),dest.idx,source.idx);
+  for(int vert=0; vert<Omega_h::simplex_degree(elm_dim,vtx_dim); vert++) {
+    src2dest.perm[vert] = triTopo.getNodePermutationInverse(perm,vert);
+  }
+  return src2dest;
+}
+
 
 struct Omegah2ShardsPerm {
   const std::string name = "Omega_h-to-Shards";
@@ -100,20 +116,9 @@ struct Omegah2ShardsPerm {
    */
   const TriVtx triVtx;
   TriVtx getOmegah2ShardsPerm_tri() { //FIXME
-    const int elm_dim = 2;
-    const int vtx_dim = 0;
-
     const OmegahTriVtx ohTriVtx;
     const ShardsTriVtx shTriVtx;
-
-    //compute the shards to omegah permutation
-    TriVtx oh2shTriVtx;
-    shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
-    auto perm = shards::findPermutation(triTopo.getCellTopologyData(),shTriVtx.idx,ohTriVtx.idx);
-    for(int vert=0; vert<Omega_h::simplex_degree(elm_dim,vtx_dim); vert++) {
-      oh2shTriVtx.perm[vert] = triTopo.getNodePermutationInverse(perm,vert);
-    }
-    return oh2shTriVtx;
+    return getPerm_tri(ohTriVtx,shTriVtx);
   }
   ///// END Triangles }
 
@@ -168,7 +173,9 @@ struct Shards2OmegahPerm {
   /////// Triangles /////////
   const TriVtx triVtx;
   TriVtx getShards2OmegahPerm_tri() { //FIXME
-    return TriVtx();
+    const ShardsTriVtx shTriVtx;
+    const OmegahTriVtx ohTriVtx;
+    return getPerm_tri(shTriVtx,ohTriVtx);
   }
 
   /////// Tetrahedrons /////////
@@ -237,6 +244,7 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
   oh2sh.triVtx.print(oh2sh.name);
   printPerm(oh2sh.name,oh2sh.tetTriVtx);
   Shards2OmegahPerm sh2oh;
+  sh2oh.triVtx.print(sh2oh.name);
   printPerm(sh2oh.name,sh2oh.tetTriVtx);
 }
 
