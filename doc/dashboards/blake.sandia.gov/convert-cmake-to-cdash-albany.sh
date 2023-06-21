@@ -29,5 +29,5 @@ awk '{print $0 "\""}' ${DIR}/cdash-$name-frag.txt >& tmp.txt
 mv tmp.txt ${DIR}/cdash-$name-frag.txt
 sed -i 's, \",\",g' ${DIR}/cdash-$name-frag.txt
 sed -i 's/-G/\"-G/g' ${DIR}/cdash-$name-frag.txt
-sed -i 's/-W/\"-W/g' ${DIR}/cdash-$name-frag.txt
+#sed -i 's/-W/\"-W/g' ${DIR}/cdash-$name-frag.txt
 cat ${DIR}/cdash-$name-frag.txt
