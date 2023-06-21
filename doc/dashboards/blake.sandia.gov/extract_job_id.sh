@@ -1,2 +1,2 @@
 #!/bin/bash
-awk '{print $4}' log.out >& jobid.out 
+awk '{print $4}' log-gcc.out >& jobid.out 
