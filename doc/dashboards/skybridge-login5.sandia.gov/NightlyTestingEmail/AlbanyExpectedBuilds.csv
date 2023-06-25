@@ -15,6 +15,8 @@ Nightly, camobap.ca.sandia.gov, CismAlbany-Linux-4.18.0-425.10.1.el8_7.x86_64-gc
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-425.10.1.el8_7.x86_64-gcc-11.1.0-Debug-FPE-Serial
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-425.10.1.el8_7.x86_64-gcc-11.1.0-Release-Serial
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-425.10.1.el8_7.x86_64-gcc-11.1.0-Release-OpenMP
+Nightly, cee-compute001, Albany-Linux-4.18.0-372.19.1.el8_6.x86_64-clang-11.0.1-Release-Serial 
+Nightly, cee-compute001, Trilinos-Linux-4.18.0-372.19.1.el8_6.x86_64-clang-11.0.1-Release-Serial 
 Nightly, cee-compute002, Albany-Linux-3.10.0-1062.1.2.el7.x86_64-gcc-10.1.0-Release-Serial
 Nightly, cee-compute002, Trilinos-Linux-3.10.0-1062.1.2.el7.x86_64-gcc-10.1.0-Release-Serial
 Nightly, cee-compute003, Albany-Linux-3.10.0-1062.1.2.el7.x86_64-gcc-10.1.0-Debug-Serial
@@ -23,9 +25,9 @@ Nightly, cee-compute004, Albany-Linux-3.10.0-1062.1.2.el7.x86_64-icc-2021.3.0-Re
 Nightly, cee-compute004, Trilinos-Linux-3.10.0-1062.1.2.el7.x86_64-icc-2021.3.0-Release-Serial
 Nightly, cee-compute005, Albany-Linux-3.10.0-1160.83.1.el7.x86_64-clang-11.0.1-Debug-Serial
 Nightly, cee-compute005, Trilinos-Linux-3.10.0-1160.83.1.el7.x86_64-clang-11.0.1-Debug-Serial
-Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.81.1.el7.x86_64-gcc-10.1.0-Release-Serial-No-Epetra
-Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.81.1.el7.x86_64-gcc-10.1.0-Release-Serial
-Nightly, mockba.ca.sandia.gov, CismAlbany-Linux-3.10.0-1160.81.1.el7.x86_64-gcc-10.1.0-Release-Serial
+Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.83.1.el7.x86_64-gcc-10.1.0-Release-Serial-No-Epetra
+Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.83.1.el7.x86_64-gcc-10.1.0-Release-Serial
+Nightly, mockba.ca.sandia.gov, CismAlbany-Linux-3.10.0-1160.83.1.el7.x86_64-gcc-10.1.0-Release-Serial
 Nightly, weaver.sandia.gov, Trilinos-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.8.r11.8
 Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-240.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2
 Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-240.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2-sfad6
