@@ -11,7 +11,7 @@ disregard_coord_shifts = true;
 
 %% import fields of exo mesh
 
-s_exo_names = struct('x', 'coordx','y', 'coordy', 'z', 'coordz', 'basal_friction','basal_friction', 'flow_factor' ,'flow_factor',  'Velx', 'solution_x', 'Vely', 'solution_y', 'sh', 'surface_height', 'thk', 'thickness', 'ice_thk', 'ice_thickness', 'temperature', 'temperature', 'cell2node_map', 'connect1');
+s_exo_names = struct('x', 'coordx','y', 'coordy', 'z', 'coordz', 'basal_friction','basal_friction', 'flow_factor' ,'flow_factor',  'Velx', 'solution_1', 'Vely', 'solution_2', 'sh', 'surface_height', 'thk', 'thickness', 'ice_thk', 'ice_thickness', 'temperature', 'temperature', 'cell2node_map', 'connect1');
 
 s_geo = exo_read( [fdir_in, exo_fname_in], s_exo_names);
 s_geo2 = exo_read( [fdir_in, exo_fname2_in], s_exo_names);
