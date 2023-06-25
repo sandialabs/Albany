@@ -54,8 +54,8 @@ cmake -G Ninja \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
       -D TPL_ENABLE_SuperLU=ON \
-      -D TPL_SuperLU_LIBRARIES:PATH=/home/ikalash/Downloads/superlu-5.3.0-kozuq3i5a4xmg7b2nhnbiy6j6inol4by/lib/libsuperlu.a \
-      -D SuperLU_INCLUDE_DIRS:PATH=/home/ikalash/Downloads/superlu-5.3.0-kozuq3i5a4xmg7b2nhnbiy6j6inol4by/include \
+      -D TPL_SuperLU_LIBRARIES:PATH=/home/ikalash/Downloads/superlu-5.3.0/build/install/lib64/libsuperlu.so \
+      -D SuperLU_INCLUDE_DIRS:PATH=/home/ikalash/Downloads/superlu-5.3.0/build/install/include \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
