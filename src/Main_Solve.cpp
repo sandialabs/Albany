@@ -47,7 +47,7 @@
 #endif
 
 #if defined(ALBANY_OMEGAH)
-#include <Omega_h_library.hpp>
+#include "Albany_Omegah.hpp"
 #endif
 
 #include "Phalanx_config.hpp"
@@ -61,12 +61,6 @@ int main(int argc, char *argv[])
 
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, nullptr);
   Kokkos::initialize(argc, argv);
-
-#if defined(ALBANY_OMEGAH)
-  auto lib = Omega_h::Library(&argc, &argv);
-  fprintf(stderr, "initialized omegah lib\n");
-#endif
-
 
 #if defined(ALBANY_FLUSH_DENORMALS)
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -110,6 +104,11 @@ int main(int argc, char *argv[])
     stackedTimer->start("Albany: Setup Time");
 
     RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
+
+#if defined(ALBANY_OMEGAH)
+    Albany::init_omegah_lib(argc,argv,comm);
+    fprintf(stderr, "initialized omegah lib\n");
+#endif
 
     // Connect vtune for performance profiling
     if (cmd.vtune) { Albany::connect_vtune(comm->getRank()); }
@@ -419,6 +418,11 @@ int main(int argc, char *argv[])
   }
 
   Kokkos::finalize();
+
+#if defined(ALBANY_OMEGAH)
+    Albany::finalize_omegah_lib();
+    fprintf(stderr, "finalized omegah lib\n");
+#endif
 
   return failures;
 }

@@ -366,6 +366,7 @@ endif()
 
 if (ENABLE_OMEGAH)
   list (APPEND SOURCES
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.cpp
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.cpp
   )
   list (APPEND HEADERS
