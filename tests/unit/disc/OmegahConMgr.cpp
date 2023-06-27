@@ -211,6 +211,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
   }
 
   auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
-  out << "Testing OmegahConnManager::contains()\n";
+  out << "Testing OmegahConnManager::partCtor()\n";
   success = true;
 }
