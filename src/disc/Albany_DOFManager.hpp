@@ -120,7 +120,7 @@ private:
   Teuchos::RCP<const GlobalLocalIndexer>    m_cell_indexer;
   Teuchos::RCP<const GlobalLocalIndexer>    m_indexer;
   Teuchos::RCP<const GlobalLocalIndexer>    m_ov_indexer;
-  DualView<const int**>                     m_elem_dof_lids;
+  DualView<int**>                           m_elem_dof_lids;
 
   using vec4int = std::vector<std::vector<std::vector<std::vector<int>>>>;
   // m_subcell_closures[ifield][dim][ord] is the vector of the offsets of
