@@ -179,8 +179,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   success = true;
 }
 
-
-
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
