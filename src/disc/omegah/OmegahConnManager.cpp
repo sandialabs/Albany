@@ -510,17 +510,27 @@ OmegahConnManager::getAssociatedNeighbors(const LO& /* el */) const
   return ret;
 }
 
-bool OmegahConnManager::contains (const std::string& sub_part_name) const //FIXME
+bool OmegahConnManager::contains (const std::string& sub_part_name) const //WILL BE REMOVED
 {
   return false;
 }
 
 // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
 // local element $ielem belongs to sub part $sub_part_name
-bool OmegahConnManager::belongs (const std::string& sub_part_name, //FIXME
+bool OmegahConnManager::belongs (const std::string& sub_part_name, //REPLACED BY getConnectivityMask
          const LO ielem, const int subcell_dim, const int subcell_pos) const
 {
   return false;
+}
+
+// Where element ielem start in the 1d connectivity array
+int OmegahConnManager::getConnectivityStart (const LO ielem) const {
+  return 0;
+}
+
+// Get a mask vector (1=yes, 0=no) telling if each dof entity is contained in the given mesh part
+std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_part_name) const {
+  return std::vector<int>();
 }
 
 // Queries the dimension of a part

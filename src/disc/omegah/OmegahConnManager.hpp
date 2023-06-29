@@ -203,6 +203,10 @@ public:
   bool belongs (const std::string& sub_part_name,
                 const LO ielem, const int subcell_dim, const int subcell_pos) const override;
 
+
+  int getConnectivityStart (const LO ielem) const;
+  std::vector<int> getConnectivityMask (const std::string& sub_part_name) const;
+
   // Queries the dimension of a part
   int part_dim (const std::string& part_name) const override;
 
