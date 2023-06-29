@@ -214,3 +214,28 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
   out << "Testing OmegahConnManager::partCtor()\n";
   success = true;
 }
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+
+  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
+  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
+  //see above for discussion of tags and classification
+  const int lateralSide_classId = 1;
+  const int lateralSide_classDim = 1;
+  const auto lateralSide_name = "lateralside";
+  for(int dim=0; dim<=lateralSide_classDim; dim++) {
+    auto isInSet = Omega_h::mark_by_class(&mesh, dim,
+        lateralSide_classDim, lateralSide_classId);
+    mesh.add_tag(dim, lateralSide_name, 1, isInSet);
+  }
+
+  auto conn_mgr = createOmegahConnManager(mesh);
+  auto mask = conn_mgr->getConnectivityMask(lateralSide_name);
+  out << "Testing OmegahConnManager::getConnectivityMask()\n";
+  success = true;
+}

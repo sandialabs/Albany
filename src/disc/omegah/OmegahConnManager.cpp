@@ -529,7 +529,17 @@ int OmegahConnManager::getConnectivityStart (const LO ielem) const {
 }
 
 // Get a mask vector (1=yes, 0=no) telling if each dof entity is contained in the given mesh part
+// note, the part can be associated with any dimension of mesh entity
 std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_part_name) const {
+  bool hasPartTag = false;
+  for(int d=0; d<mesh.dim(); d++)
+    hasPartTag |= mesh.has_tag(d, sub_part_name);
+  std::stringstream ss;
+  ss << "Error! Omega_h does not have a tag named \"" << sub_part_name
+     << "\" associated with any mesh entity dimension\n";
+  TEUCHOS_TEST_FOR_EXCEPTION (!hasPartTag, std::runtime_error, ss.str());
+  for(int d=0; d<mesh.dim(); d++) {
+  }
   return std::vector<int>();
 }
 
