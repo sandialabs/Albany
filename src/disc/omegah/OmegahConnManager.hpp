@@ -28,6 +28,7 @@ private:
   std::vector<Ownership> owners; //FIXME
   LO m_dofsPerElm = 0;
   std::array<LO,4> m_dofsPerEnt;
+  std::array<Omega_h::GOs,4> m_globalDofNumbering;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
   void initLocalElmIds() {
     localElmIds.resize(mesh.nelems());
@@ -37,6 +38,8 @@ private:
   std::array<Omega_h::GOs,4> createGlobalDofNumbering() const;
   Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const std::array<Omega_h::GOs,4>& globalDofNumbering) const;
+  Omega_h::GOs createElementToDofConnectivityMask(const std::string& tagName,
+    const Omega_h::Adj elmToDim[3]) const;
 public:
   OmegahConnManager(Omega_h::Mesh& in_mesh);
   OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim);

@@ -359,6 +359,38 @@ std::array<Omega_h::GOs,4> OmegahConnManager::createGlobalDofNumbering() const {
   return gdn;
 }
 
+/**
+ * \brief set the mask for each dof for entities of dimension adjDim that bound
+ * each element
+ *
+ * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
+ */
+void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, Omega_h::Read<Omega_h::I8>& maskArray,
+    const LO dofsPerElm, const LO adjDim, const LO dofOffset,
+    const Omega_h::Adj elmToDim, const LO dofsPerEnt,
+    Omega_h::Write<Omega_h::GO> elm2dof) {
+  const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+  const auto adjEnts = elmToDim.ab2b;
+  TEUCHOS_TEST_FOR_EXCEPTION(mesh.dim() != 2 && adjDim != 0, std::logic_error,
+      "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
+  Omegah2ShardsPerm oh2sh;
+  const auto perm = oh2sh.triVtx.perm;
+  auto setMask = OMEGA_H_LAMBDA(int elm) {
+    const auto firstDown = elm*numDownAdjEntsPerElm;
+    //loop over element-to-ent adjacencies and fill in the dofs
+    for(int j=0; j<numDownAdjEntsPerElm; j++) {
+      const auto adjEnt = adjEnts[firstDown+j];
+      for(int k=0; k<dofsPerEnt; k++) {
+        const auto dofIndex = adjEnt*dofsPerEnt+k;
+        const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
+        const auto connIdx = (elm*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
+        elm2dof[connIdx] = maskArray[adjEnt];
+      }
+    }
+  };
+  const auto kernelName = "setElementToEntDofConnectivityMask_dim" + std::to_string(mesh.dim());
+  Omega_h::parallel_for(mesh.nelems(), setMask, kernelName.c_str());
+}
 
 /**
  * \brief set the global dof ids for entities of dimension adjDim that bound
@@ -422,6 +454,33 @@ LO OmegahConnManager::getConnectivitySize() const
   return dofsPerElm;
 }
 
+Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
+    const std::string& tagName, const Omega_h::Adj elmToDim[3]) const
+{
+  //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
+  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nelems();
+  for(int i=mesh.dim()+1; i<4; i++)
+    assert(!m_dofsPerEnt[i]);//watch out for stragglers
+  Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
+
+  LO dofOffset = 0;
+  for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
+    if(m_dofsPerEnt[adjDim] && mesh.has_tag(adjDim, tagName) ) {
+      auto maskArray = mesh.get_array<Omega_h::I8>(adjDim, tagName);
+      setElementToEntDofConnectivityMask(mesh, maskArray, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
+          m_dofsPerEnt[adjDim], elm2dof);
+      const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+      dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
+    } else {
+    }
+  }
+//  if(m_dofsPerEnt[mesh.dim()]) {
+//    setElementDofConnectivity(mesh, m_dofsPerElm, dofOffset, m_dofsPerEnt[mesh.dim()], elm2dof);
+//  }
+  return elm2dof;
+}
+
+
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const std::array<Omega_h::GOs,4>& globalDofNumbering) const {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
@@ -473,7 +532,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   m_dofsPerEnt = getDofsPerEnt(fp);
   m_dofsPerElm = getConnectivitySize();
 
-  auto globalDofNumbering = createGlobalDofNumbering();
+  m_globalDofNumbering = createGlobalDofNumbering();
 
   // get element-to-[vertex|edge|face] adjacencies
   Omega_h::Adj elmToDim[3];
@@ -483,7 +542,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
     }
   }
 
-  auto elm2dof = createElementToDofConnectivity(elmToDim, globalDofNumbering);
+  auto elm2dof = createElementToDofConnectivity(elmToDim, m_globalDofNumbering);
   // transfer to host
   m_connectivity = Omega_h::HostRead(elm2dof);
 }
@@ -530,13 +589,26 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
   bool hasPartTag = false;
   for(int d=0; d<mesh.dim(); d++)
     hasPartTag |= mesh.has_tag(d, sub_part_name);
-  std::stringstream ss; ss << "Error! Omega_h does not have a tag named \"" <<
-    sub_part_name << "\" associated with any mesh entity dimension\n";
-  TEUCHOS_TEST_FOR_EXCEPTION (!hasPartTag, std::runtime_error, ss.
-      str());
-  for(int d=0; d<mesh.dim(); d++) {
+  std::stringstream ss;
+  ss << "Error! Omega_h does not have a tag named \"" << sub_part_name
+     << "\" associated with any mesh entity dimension\n";
+  TEUCHOS_TEST_FOR_EXCEPTION (!hasPartTag, std::runtime_error, ss.str());
+  ss.str(std::string());
+  ss << "Error! The Omega_h dofs per element is zero.  Was buildConnectivity(...) called?\n";
+  TEUCHOS_TEST_FOR_EXCEPTION (m_dofsPerElm == 0, std::runtime_error, ss.str());
 
+  // get element-to-[vertex|edge|face] adjacencies
+  Omega_h::Adj elmToDim[3];
+  for(int dim = 0; dim < mesh.dim(); dim++) {
+    if(m_dofsPerEnt[dim] > 0) {
+      elmToDim[dim] = mesh.ask_down(mesh.dim(),dim);
+    }
   }
+
+  auto elm2dof = createElementToDofConnectivityMask(sub_part_name, elmToDim);
+  // transfer to host
+  auto foo = Omega_h::HostRead(elm2dof);
+
   return std::vector<int>();
 }
 
