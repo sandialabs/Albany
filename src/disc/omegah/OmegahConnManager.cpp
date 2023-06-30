@@ -443,6 +443,26 @@ void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, const L
   Omega_h::parallel_for(mesh.nelems(), setNumber, kernelName.c_str());
 }
 
+/**
+ * \brief set the mask for each element
+ *
+ * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
+ */
+void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO dofsPerElm, const LO dofOffset,
+    const LO dofsPerEnt, Omega_h::Read<Omega_h::I8> mask, Omega_h::Write<Omega_h::GO> elm2dof) {
+  auto setMask = OMEGA_H_LAMBDA(int elm) {
+    for(int k=0; k<dofsPerEnt; k++) {
+      const auto dofIndex = elm*dofsPerEnt+k;
+      const auto connIdx = (elm*dofsPerElm)+(dofOffset+k);
+      elm2dof[connIdx] = mask[elm];
+    }
+  };
+  const auto kernelName = "setElementDofConnectivityMask_dim" + std::to_string(mesh.dim());
+  Omega_h::parallel_for(mesh.nelems(), setMask, kernelName.c_str());
+}
+
+
+
 LO OmegahConnManager::getConnectivitySize() const
 {
   LO dofsPerElm = 0;
@@ -478,9 +498,15 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
     }
   }
-//  if(m_dofsPerEnt[mesh.dim()]) {
-//    setElementDofConnectivity(mesh, m_dofsPerElm, dofOffset, m_dofsPerEnt[mesh.dim()], elm2dof);
-//  }
+  if(m_dofsPerEnt[mesh.dim()]) {
+    Omega_h::Read<Omega_h::I8> maskArray;
+    if( mesh.has_tag(mesh.dim(), tagName) ) {
+      maskArray = mesh.get_array<Omega_h::I8>(mesh.dim(), tagName);
+    } else {
+      maskArray = Omega_h::Read<Omega_h::I8>(mesh.nents(mesh.dim()), 0);
+    }
+    setElementDofConnectivityMask(mesh, m_dofsPerElm, dofOffset, m_dofsPerEnt[mesh.dim()], maskArray, elm2dof);
+  }
   return elm2dof;
 }
 
