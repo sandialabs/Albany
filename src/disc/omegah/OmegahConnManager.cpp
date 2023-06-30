@@ -465,13 +465,17 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
 
   LO dofOffset = 0;
   for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
-    if(m_dofsPerEnt[adjDim] && mesh.has_tag(adjDim, tagName) ) {
-      auto maskArray = mesh.get_array<Omega_h::I8>(adjDim, tagName);
+    if(m_dofsPerEnt[adjDim]) {
+      Omega_h::Read<Omega_h::I8> maskArray;
+      if( mesh.has_tag(adjDim, tagName) ) {
+        maskArray = mesh.get_array<Omega_h::I8>(adjDim, tagName);
+      } else {
+        maskArray = Omega_h::Read<Omega_h::I8>(mesh.nents(adjDim), 0);
+      }
       setElementToEntDofConnectivityMask(mesh, maskArray, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
           m_dofsPerEnt[adjDim], elm2dof);
       const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
-    } else {
     }
   }
 //  if(m_dofsPerEnt[mesh.dim()]) {
