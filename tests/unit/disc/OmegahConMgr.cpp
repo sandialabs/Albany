@@ -235,6 +235,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   }
 
   auto conn_mgr = createOmegahConnManager(mesh);
+  Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+  conn_mgr->buildConnectivity(*patternC1);
   auto mask = conn_mgr->getConnectivityMask(lateralSide_name);
   out << "Testing OmegahConnManager::getConnectivityMask()\n";
   success = true;
