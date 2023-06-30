@@ -18,17 +18,6 @@
 #include <numeric> //std::iota
 #include <array> //std::iota
 
-namespace {
-  std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp);
-  void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm,
-    const LO dofOffset, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering,
-    Omega_h::Write<Omega_h::GO> elm2dof);
-  void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm,
-    const LO adjDim, const LO dofOffset, const Omega_h::Adj elmToDim,
-    const LO dofsPerEnt, Omega_h::GOs globalDofNumbering,
-    Omega_h::Write<Omega_h::GO> elm2dof);
-}
-
 namespace Albany {
 
 class OmegahConnManager : public ConnManager {
