@@ -470,10 +470,6 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
       "Error! OmegahConnManager Field pattern must have a dimension of at least 1.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n");
 
-  // Build entity adjacency counts and offsets
-  //    ID counts = How many IDs belong on each entity (number of mesh DOF used)
-  //    Offset = What is starting index for each sub-array of adjacency information
-  //             Global numbering goes like [node ids, edge ids, face ids, cell ids]
   m_dofsPerEnt = getDofsPerEnt(fp);
   m_dofsPerElm = getConnectivitySize();
 
@@ -539,6 +535,7 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
   TEUCHOS_TEST_FOR_EXCEPTION (!hasPartTag, std::runtime_error, ss.
       str());
   for(int d=0; d<mesh.dim(); d++) {
+
   }
   return std::vector<int>();
 }
