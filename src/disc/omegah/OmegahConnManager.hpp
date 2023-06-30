@@ -16,6 +16,18 @@
 #include <vector>
 #include <map>
 #include <numeric> //std::iota
+#include <array> //std::iota
+
+namespace {
+  std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp);
+  void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm,
+    const LO dofOffset, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering,
+    Omega_h::Write<Omega_h::GO> elm2dof);
+  void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm,
+    const LO adjDim, const LO dofOffset, const Omega_h::Adj elmToDim,
+    const LO dofsPerEnt, Omega_h::GOs globalDofNumbering,
+    Omega_h::Write<Omega_h::GO> elm2dof);
+}
 
 namespace Albany {
 
@@ -25,21 +37,17 @@ private:
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   std::vector<Ownership> owners; //FIXME
-  LO m_dofsPerElm;
+  LO m_dofsPerElm = 0;
+  std::array<LO,4> m_dofsPerEnt;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
   void initLocalElmIds() {
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
-  void getDofsPerEnt(const panzer::FieldPattern & fp, LO entIdCnt[4]) const;
-  void setConnectivitySize(const LO dofsPerEnt[4]);
-  std::array<Omega_h::GOs,4> createGlobalDofNumbering(const LO dofsPerEnt[4]);
+  LO getConnectivitySize() const;
+  std::array<Omega_h::GOs,4> createGlobalDofNumbering() const;
   Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
-    const LO dofsPerEnt[4], const std::array<Omega_h::GOs,4>& globalDofNumbering);
-  void setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset,
-    const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
-  void setElementDofConnectivity(const LO dofOffset,
-    const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof);
+    const std::array<Omega_h::GOs,4>& globalDofNumbering) const;
 public:
   OmegahConnManager(Omega_h::Mesh& in_mesh);
   OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim);

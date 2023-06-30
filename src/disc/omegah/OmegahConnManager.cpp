@@ -294,8 +294,9 @@ OmegahConnManager::getElementsInBlock (const std::string&) const
       globalElmIds_h.data()+globalElmIds_h.size());
 }
 
-void OmegahConnManager::getDofsPerEnt(const panzer::FieldPattern & fp, LO dofsPerEnt[4]) const
+std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
 {
+  std::array<LO,4> dofsPerEnt = {0,0,0,0};
   // compute ID counts for each sub cell type
   int patternDim = fp.getDimension();
   switch(patternDim) {
@@ -317,6 +318,7 @@ void OmegahConnManager::getDofsPerEnt(const panzer::FieldPattern & fp, LO dofsPe
 
   // sanity check
   TEUCHOS_ASSERT(dofsPerEnt[0] || dofsPerEnt[1] || dofsPerEnt[2] || dofsPerEnt[3]);
+  return dofsPerEnt;
 }
 
 Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt, const GO startingOffset) {
@@ -346,12 +348,11 @@ GO getMaxGlobalEntDofId(Omega_h::Mesh& mesh, Omega_h::GOs& dofGlobalIds) {
   return Omega_h::get_max(worldComm,dofGlobalIds);
 }
 
-std::array<Omega_h::GOs,4>
-OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
+std::array<Omega_h::GOs,4> OmegahConnManager::createGlobalDofNumbering() const {
   std::array<Omega_h::GOs,4> gdn;
   GO startingOffset = 0;
   for(int i=0; i<gdn.size(); i++) {
-    gdn[i] = createGlobalEntDofNumbering(mesh, i, dofsPerEnt[i], startingOffset);
+    gdn[i] = createGlobalEntDofNumbering(mesh, i, m_dofsPerEnt[i], startingOffset);
     const auto offset = getMaxGlobalEntDofId(mesh, gdn[i]);
     startingOffset = offset == 0 ? startingOffset : offset;
   }
@@ -365,11 +366,10 @@ OmegahConnManager::createGlobalDofNumbering(const LO dofsPerEnt[4]) {
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO dofOffset,
+void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
   const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
   const auto adjEnts = elmToDim.ab2b;
-  const auto dofsPerElm = m_dofsPerElm;
   TEUCHOS_TEST_FOR_EXCEPTION(mesh.dim() != 2 && adjDim != 0, std::logic_error,
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
   Omegah2ShardsPerm oh2sh;
@@ -397,9 +397,8 @@ void OmegahConnManager::setElementToEntDofConnectivity(const LO adjDim, const LO
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void OmegahConnManager::setElementDofConnectivity(const LO dofOffset,
+void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, const LO dofOffset,
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
-  const auto dofsPerElm = m_dofsPerElm;
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     for(int k=0; k<dofsPerEnt; k++) {
       const auto dofIndex = elm*dofsPerEnt+k;
@@ -412,34 +411,36 @@ void OmegahConnManager::setElementDofConnectivity(const LO dofOffset,
   Omega_h::parallel_for(mesh.nelems(), setNumber, kernelName.c_str());
 }
 
-void OmegahConnManager::setConnectivitySize(const LO dofsPerEnt[4]) {
-  m_dofsPerElm = 0;
+LO OmegahConnManager::getConnectivitySize() const
+{
+  LO dofsPerElm = 0;
   for(int i=0; i<=mesh.dim(); i++) {
     const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), i);
-    m_dofsPerElm += dofsPerEnt[i]*numDownAdjEntsPerElm;
+    dofsPerElm += m_dofsPerEnt[i]*numDownAdjEntsPerElm;
   }
-  m_dofsPerElm += dofsPerEnt[mesh.dim()];
+  dofsPerElm += m_dofsPerEnt[mesh.dim()];
+  return dofsPerElm;
 }
 
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
-    const LO dofsPerEnt[4], const std::array<Omega_h::GOs,4>& globalDofNumbering) {
+    const std::array<Omega_h::GOs,4>& globalDofNumbering) const {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
   Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nelems();
   for(int i=mesh.dim()+1; i<4; i++)
-    assert(!dofsPerEnt[i]);//watch out for stragglers
+    assert(!m_dofsPerEnt[i]);//watch out for stragglers
   Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
 
   LO dofOffset = 0;
   for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
-    if(dofsPerEnt[adjDim]) {
-      setElementToEntDofConnectivity(adjDim, dofOffset, elmToDim[adjDim],
-          dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
+    if(m_dofsPerEnt[adjDim]) {
+      setElementToEntDofConnectivity(mesh, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
+          m_dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
       const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
-      dofOffset += dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
+      dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
     }
   }
-  if(dofsPerEnt[mesh.dim()]) {
-    setElementDofConnectivity(dofOffset, dofsPerEnt[mesh.dim()],
+  if(m_dofsPerEnt[mesh.dim()]) {
+    setElementDofConnectivity(mesh, m_dofsPerElm, dofOffset, m_dofsPerEnt[mesh.dim()],
         globalDofNumbering[mesh.dim()], elm2dof);
   }
   return elm2dof;
@@ -473,21 +474,20 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   //    ID counts = How many IDs belong on each entity (number of mesh DOF used)
   //    Offset = What is starting index for each sub-array of adjacency information
   //             Global numbering goes like [node ids, edge ids, face ids, cell ids]
-  LO dofsPerEnt[4] = {0,0,0,0};
-  getDofsPerEnt(fp, dofsPerEnt);
-  setConnectivitySize(dofsPerEnt);
+  m_dofsPerEnt = getDofsPerEnt(fp);
+  m_dofsPerElm = getConnectivitySize();
 
-  auto globalDofNumbering = createGlobalDofNumbering(dofsPerEnt);
+  auto globalDofNumbering = createGlobalDofNumbering();
 
   // get element-to-[vertex|edge|face] adjacencies
   Omega_h::Adj elmToDim[3];
   for(int dim = 0; dim < mesh.dim(); dim++) {
-    if(dofsPerEnt[dim] > 0) {
+    if(m_dofsPerEnt[dim] > 0) {
       elmToDim[dim] = mesh.ask_down(mesh.dim(),dim);
     }
   }
 
-  auto elm2dof = createElementToDofConnectivity(elmToDim, dofsPerEnt, globalDofNumbering);
+  auto elm2dof = createElementToDofConnectivity(elmToDim, globalDofNumbering);
   // transfer to host
   m_connectivity = Omega_h::HostRead(elm2dof);
 }
@@ -534,10 +534,10 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
   bool hasPartTag = false;
   for(int d=0; d<mesh.dim(); d++)
     hasPartTag |= mesh.has_tag(d, sub_part_name);
-  std::stringstream ss;
-  ss << "Error! Omega_h does not have a tag named \"" << sub_part_name
-     << "\" associated with any mesh entity dimension\n";
-  TEUCHOS_TEST_FOR_EXCEPTION (!hasPartTag, std::runtime_error, ss.str());
+  std::stringstream ss; ss << "Error! Omega_h does not have a tag named \"" <<
+    sub_part_name << "\" associated with any mesh entity dimension\n";
+  TEUCHOS_TEST_FOR_EXCEPTION (!hasPartTag, std::runtime_error, ss.
+      str());
   for(int d=0; d<mesh.dim(); d++) {
   }
   return std::vector<int>();
