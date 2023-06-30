@@ -544,7 +544,8 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
 }
 
 // Queries the dimension of a part
-int OmegahConnManager::part_dim (const std::string&) const
+// FIXME - what should be returned here? highest dimension
+int OmegahConnManager::part_dim (const std::string&) const //FIXME
 {
   return mesh.dim();
 }
