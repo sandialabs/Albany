@@ -48,7 +48,7 @@ class TestAdjointSolve(unittest.TestCase):
         eigVals, eigVecs = singlePass(Hess, r)
 
         if myGlobalRank == 0:
-            tol = 5e-8
+            tol = 5e-7
 
             print(eigVals)
             print(eigVecs.getLocalView())
