@@ -23,6 +23,7 @@
 #include <Omega_h_file.hpp> // Omega_h::binary::read
 #include <Omega_h_mark.hpp> // Omega_h::mark_by_class
 #include <Omega_h_simplex.hpp> // Omega_h::simplex_down_template
+#include <Omega_h_for.hpp> // Omega_h::parallel_for
 
 #include <array> //std::array
 
@@ -239,5 +240,61 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   conn_mgr->buildConnectivity(*patternC1);
   auto mask = conn_mgr->getConnectivityMask(lateralSide_name);
   out << "Testing OmegahConnManager::getConnectivityMask()\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
+{
+  const std::map<GO,std::array<GO,3>> elementGidToDofs = {
+    {0, {0, 7, 3}},
+    {1, {1, 3, 4}},
+    {2, {3, 1, 0}},
+    {3, {3, 6, 5}},
+    {4, {4, 2, 1}},
+    {5, {5, 4, 3}},
+    {6, {6, 3, 7}},
+    {7, {7, 8, 6}}
+  };
+
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+
+
+  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
+  auto mesh = createOmegahBoxMesh(lib);
+
+  const auto sideSetName = "leftSide";
+  int dim = 0;
+  auto vtxGids = mesh.globals(dim);
+  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(dim));
+  mesh.add_tag(dim, sideSetName, 1, Omega_h::read(isInSet_vtx));
+  Omega_h::parallel_for(isInSet_vtx.size(), OMEGA_H_LAMBDA(LO i) {
+      const auto gid = vtxGids[i];
+      isInSet_vtx[i] = (gid >= 0 && gid <= 2) ? 1 : 0;
+  });
+
+  dim = 1;
+  auto edgeGids = mesh.globals(dim);
+  Omega_h::Write<Omega_h::I8> isInSet_edge(mesh.nents(dim));
+  mesh.add_tag(dim, sideSetName, 1, Omega_h::read(isInSet_edge));
+  Omega_h::parallel_for(isInSet_edge.size(), OMEGA_H_LAMBDA(LO i) {
+      const auto gid = edgeGids[i];
+      isInSet_edge[i] = (gid == 5 || gid == 2) ? 1 : 0;
+  });
+
+  dim = 2;
+  Omega_h::Write<Omega_h::I8> isInSet_tri(mesh.nents(dim),0);
+  mesh.add_tag(dim, sideSetName, 1, Omega_h::read(isInSet_tri));
+
+  auto conn_mgr = createOmegahConnManager(mesh);
+  Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+  conn_mgr->buildConnectivity(*patternC1);
+  auto mask = conn_mgr->getConnectivityMask(sideSetName);
+
+  //TODO: check the mask
+
+  out << "Testing OmegahConnManager::getConnectivityMaskBox() on triangle mesh of square\n";
   success = true;
 }
