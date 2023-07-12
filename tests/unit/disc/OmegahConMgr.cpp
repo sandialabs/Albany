@@ -245,15 +245,15 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
 {
-  const std::map<GO,std::array<GO,3>> elementGidToDofs = {
-    {0, {0, 7, 3}},
-    {1, {1, 3, 4}},
-    {2, {3, 1, 0}},
-    {3, {3, 6, 5}},
-    {4, {4, 2, 1}},
-    {5, {5, 4, 3}},
-    {6, {6, 3, 7}},
-    {7, {7, 8, 6}}
+  const std::map<GO,std::array<GO,3>> elementGidToMask = {
+    {0, {0, 0, 0}},
+    {1, {1, 0, 0}},
+    {2, {0, 1, 1}},
+    {3, {0, 0, 0}},
+    {4, {0, 1, 1}},
+    {5, {0, 0, 0}},
+    {6, {0, 0, 0}},
+    {7, {0, 0, 0}}
   };
 
   Albany::build_type (Albany::BuildType::Tpetra);
@@ -294,6 +294,14 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   auto mask = conn_mgr->getConnectivityMask(sideSetName);
 
   //TODO: check the mask
+  const auto localElmIds = conn_mgr->getElementBlock("ignored");
+  for( auto lid : localElmIds ) {
+    auto ptr = conn_mgr->getConnectivity(lid);
+    auto elmGid = conn_mgr->getElementGlobalId(lid);
+    const std::array<int,3> mask = {ptr[0], ptr[1], ptr[2]};
+    const auto expectedDofs = elementGidToMask.at(elmGid);
+    REQUIRE( expectedDofs == dofs );
+  }
 
   out << "Testing OmegahConnManager::getConnectivityMaskBox() on triangle mesh of square\n";
   success = true;

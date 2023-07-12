@@ -635,11 +635,12 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
     }
   }
 
-  auto elm2dof = createElementToDofConnectivityMask(sub_part_name, elmToDim);
+  auto elm2dofMask = createElementToDofConnectivityMask(sub_part_name, elmToDim);
   // transfer to host
-  auto foo = Omega_h::HostRead(elm2dof);
+  auto elm2dofMask_h = Omega_h::HostRead(elm2dofMask);
+  std::vector<int> elm2dofMask_vec(elm2dofMask_h.first(), elm2dofMask_h.last());
 
-  return std::vector<int>();
+  return elm2dofMask_vec;
 }
 
 // Queries the dimension of a part
