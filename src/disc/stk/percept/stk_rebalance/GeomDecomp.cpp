@@ -46,20 +46,18 @@ std::vector< mesh::Entity > GeomDecomp::entity_coordinates(stk::mesh::BulkData& 
 
     // Loop over node relations in mesh entities
     const percept::MyPairIterRelation nr   (bulk_data, entity , NODE_RANK);
+    const unsigned ndim = stk::mesh::field_scalars_per_entity(nodal_coor,entity);
+    std::vector<double> temp(ndim);
 
     for (unsigned inr=0; inr < nr.size(); ++inr)
     {
       const percept::MyPairIterRelation::MyRelation  &rel = nr[inr];
-      //if (rel.entity_rank() ==  NODE_RANK) { // %fixme: need to check for USES relation
       if (bulk_data.entity_rank(rel.entity()) ==  NODE_RANK) { // %fixme: need to check for USES relation
         const mesh::Entity nent = rel.entity();
-        //const unsigned ndim(nodal_coor.max_size(NODE_RANK)/sizeof(double)); // TODO - is there a better way to get this info?
-        const unsigned ndim(nodal_coor.max_size(NODE_RANK)); // TODO - is there a better way to get this info?
         double * coor = mesh::field_data(nodal_coor, nent);
         if (!coor) {
           throw std::runtime_error("GeomDecomp::entity_coordinates Error: The coordinate field does not exist.");
         }
-        std::vector<double> temp(ndim);
         for ( unsigned i = 0; i < ndim; ++i ) { temp[i] = coor[i]; }
         coordinates.push_back(temp);
         mesh_nodes.push_back(nent);
