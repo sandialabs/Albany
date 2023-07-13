@@ -50,6 +50,8 @@ extern "C" {
 #include "Albany_MultiSTKFieldContainer.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 
+#include <Teuchos_RCPStdSharedPtrConversions.hpp>
+
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
 
