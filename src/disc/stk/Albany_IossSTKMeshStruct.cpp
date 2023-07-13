@@ -26,6 +26,8 @@
 
 #include "Albany_Utils.hpp"
 
+#include <Teuchos_RCPStdSharedPtrConversions.hpp>
+
 namespace {
 
 void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,

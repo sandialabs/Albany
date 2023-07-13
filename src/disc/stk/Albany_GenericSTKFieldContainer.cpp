@@ -154,21 +154,9 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
           std::cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
                       " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" << std::endl;
 #endif
-          if (dim[1] == 4) {
-            stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                           metaData->universal_part(), dim[3], dim[2], dim[1], nullptr);
-          }
-          else {
-            //IKT, 12/20/18: this changes the way the qp_tensor field
-            //for 1D and 3D problems appears in the output exodus field.
-            //Fields appear like: Cauchy_Stress_1_1, ...  Cauchy_Stress_8_9,
-            //instead of Cauchy_Stress_1_01 .. Cauchy_Stress_3_24 to make it
-            //more clear which entry corresponds to which component/quad point.
-            //I believe for 2D problems the original layout is correct, hence
-            //the if statement above here.
-            stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                             metaData->universal_part(), dim[1], dim[2], dim[3], nullptr);
-          }
+          auto num_tens_entries = dim[3]*dim[2];
+          stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
+                         metaData->universal_part(), num_tens_entries, dim[1], nullptr);
 #ifdef ALBANY_SEACAS
           stk::io::set_field_role(*qptensor_states.back(), role_type(st.output));
 #endif
