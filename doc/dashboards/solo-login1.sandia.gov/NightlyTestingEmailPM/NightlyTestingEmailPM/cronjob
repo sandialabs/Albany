@@ -1,0 +1,3 @@
+00 07 * * 1-7 cd /home/ikalash/nightlyCLDERA-E3SMCDash/NightlyTestingEmail; source /home/ikalash/nightlyCLDERA-E3SMCDash/NightlyTestingEmail/process_nightlies.sh >& /home/ikalash/nightlyCLDERA-E3SMCDash/NightlyTestingEmail/process_nightlies.out
+00 23 1-7,14-20 * 6 cd /ascldap/users/ikalash/NightlyTestingEmailPM; bash process_nightlies_pm.sh
+
