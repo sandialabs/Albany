@@ -1,7 +1,5 @@
 group, site, buildname 
-Nightly, pm-cpu, Trilinos-Linux-5.14.21-150400.24.46_12.0.72-cray_shasta_c-gcc-11.2.0-Release-serial  
-Nightly, pm-gpu, Trilinos-Linux-5.14.21-150400.24.46_12.0.72-cray_shasta_c-gcc-11.2.0-Release-cuda  
-Nightly, pm-cpu, Albany-Linux-5.14.21-150400.24.46_12.0.72-cray_shasta_c-gcc-11.2.0-Release-serial 
-Nightly, pm-gpu, Albany-Linux-5.14.21-150400.24.46_12.0.72-cray_shasta_c-gcc-11.2.0-Release-cuda 
-Nightly, pm-cpu, MALI-Linux-5.14.21-150400.24.46_12.0.72-cray_shasta_c-gcc-11.2.0-Release-serial 
-Nightly, pm-cpu, compass-Linux-5.14.21-150400.24.46_12.0.72-cray_shasta_c-gcc-11.2.0-Release-serial 
+Nightly, pm-cpu, Trilinos-Linux-5.14.21-150400.24.46_12.0.73-cray_shasta_c-gcc-11.2.0-Release-serial
+Nightly, pm-cpu, Albany-Linux-5.14.21-150400.24.46_12.0.73-cray_shasta_c-gcc-11.2.0-Release-serial 
+Nightly, pm-gpu, Trilinos-Linux-5.14.21-150400.24.46_12.0.73-cray_shasta_c-gcc-11.2.0-Release-cuda 
+Nightly, pm-gpu, Albany-Linux-5.14.21-150400.24.46_12.0.73-cray_shasta_c-gcc-11.2.0-Release-cuda 
