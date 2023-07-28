@@ -46,6 +46,11 @@ public:
 
   ~OmegahConnManager() = default;
 
+  Omega_h::GOs getGlobalDofNumbering(int dim) const {
+    assert(dim>=0 && dim<=mesh.dim());
+    return m_globalDofNumbering[dim];
+  }
+
   // Do not hide other methods
   using ConnManager::getElementsInBlock;
   std::vector<GO>
