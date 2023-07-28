@@ -298,9 +298,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   for( auto lid : localElmIds ) {
     auto ptr = conn_mgr->getConnectivity(lid);
     auto elmGid = conn_mgr->getElementGlobalId(lid);
-    const std::array<int,3> mask = {ptr[0], ptr[1], ptr[2]};
-    const auto expectedDofs = elementGidToMask.at(elmGid);
-    REQUIRE( expectedDofs == dofs );
+    const std::array<GO,3> mask = {ptr[0], ptr[1], ptr[2]};
+    const auto expectedMask = elementGidToMask.at(elmGid);
+    REQUIRE( expectedMask == mask );
   }
 
   out << "Testing OmegahConnManager::getConnectivityMaskBox() on triangle mesh of square\n";

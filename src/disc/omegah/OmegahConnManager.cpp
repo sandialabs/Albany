@@ -638,7 +638,8 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
   auto elm2dofMask = createElementToDofConnectivityMask(sub_part_name, elmToDim);
   // transfer to host
   auto elm2dofMask_h = Omega_h::HostRead(elm2dofMask);
-  std::vector<int> elm2dofMask_vec(elm2dofMask_h.first(), elm2dofMask_h.last());
+  std::vector<int> elm2dofMask_vec(elm2dofMask_h.data(), elm2dofMask_h.data()+elm2dofMask_h.size());
+  assert(elm2dofMask_vec.size() == elm2dofMask_h.size());
 
   return elm2dofMask_vec;
 }
