@@ -246,14 +246,15 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
 {
   const std::map<GO,std::array<GO,3>> elementGidToMask = {
-    {0, {0, 0, 0}},
-    {1, {1, 0, 0}},
-    {2, {0, 1, 1}},
-    {3, {0, 0, 0}},
-    {4, {0, 1, 1}},
-    {5, {0, 0, 0}},
-    {6, {0, 0, 0}},
-    {7, {0, 0, 0}}
+    //{elmid, {dof mask}}   {vtx/dof gids}
+    {0, {1, 0, 0}},   // {0, 7, 3},
+    {1, {1, 0, 0}},   // {1, 3, 4},
+    {2, {0, 1, 1}},   // {3, 1, 0},
+    {3, {0, 0, 0}},   // {3, 6, 5},
+    {4, {0, 1, 1}},   // {4, 2, 1},
+    {5, {0, 0, 0}},   // {5, 4, 3},
+    {6, {0, 0, 0}},   // {6, 3, 7},
+    {7, {0, 0, 0}}    // {7, 8, 6}
   };
 
   Albany::build_type (Albany::BuildType::Tpetra);
@@ -271,7 +272,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
 
   const auto sideSetName = "leftSide";
   int dim = 0;
-  auto vtxGids = conn_mgr->getGlobalDofNumbering(dim); //FIXME - these gids generated for building connectivity arrays are **likely** different from what paraview reports
+  auto vtxGids = conn_mgr->getGlobalDofNumbering(dim);
   Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(dim));
   Omega_h::parallel_for(isInSet_vtx.size(), OMEGA_H_LAMBDA(LO i) {
       const auto gid = vtxGids[i];
@@ -286,10 +287,11 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   const auto localElmIds = conn_mgr->getElementBlock("ignored");
   for( auto lid : localElmIds ) {
     auto elmGid = conn_mgr->getElementGlobalId(lid);
-    const std::array<GO,3> elmMask = {mask[lid], mask[lid+1], mask[lid+2]};
+    const auto firstMaskIdx = lid*3;
+    const std::array<GO,3> elmMask = {mask[firstMaskIdx+1], mask[firstMaskIdx+1], mask[firstMaskIdx+2]};
     const auto expectedMask = elementGidToMask.at(elmGid);
       std::stringstream ss;
-      ss << "lid: " << lid << " elmGid: " << elmGid << ", ";
+      ss << "lid: " << lid << " elmGid: " << elmGid << ", " << "firstMaskIdx: " << firstMaskIdx << ", ";
       ss << "mask: " << elmMask[0] << " " << elmMask[1] << " " << elmMask[2] << ", ";
       ss << "expectedMask: " << expectedMask[0] << " " << expectedMask[1] << " " << expectedMask[2] << "\n";
       std::cerr << ss.str();
