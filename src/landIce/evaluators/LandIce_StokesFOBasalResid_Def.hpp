@@ -75,7 +75,8 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
       sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
-  sideNodes.sync<PHX::Device>();
+  sideNodes.modify_host();
+  sideNodes.sync_device();
 
   this->setName("StokesFOBasalResid"+PHX::print<EvalT>());
 }

@@ -86,7 +86,8 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
       sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
-  sideNodes.sync<PHX::Device>();
+  sideNodes.modify_host();
+  sideNodes.sync_device();
 }
 
 // **********************************************************************

@@ -9,6 +9,7 @@
 
 #include "Albany_KokkosTypes.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
+#include "Kokkos_DualView.hpp"
 
 #include "Intrepid2_Basis.hpp"
 #include "Teuchos_ArrayRCP.hpp"

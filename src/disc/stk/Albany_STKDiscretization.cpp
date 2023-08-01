@@ -1757,14 +1757,23 @@ STKDiscretization::computeSideSets()
         globalSideSetViews[ss_key].side_pos.h_view(current_index, j) = ss_val[j].side_pos;
       }
 
-      globalSideSetViews[ss_key].side_GID.sync<PHX::Device>();
-      globalSideSetViews[ss_key].elem_GID.sync<PHX::Device>();
-      globalSideSetViews[ss_key].ws_elem_idx.sync<PHX::Device>();
-      globalSideSetViews[ss_key].elem_ebIndex.sync<PHX::Device>();
-      globalSideSetViews[ss_key].side_pos.sync<PHX::Device>();
-      globalSideSetViews[ss_key].numCellsOnSide.sync<PHX::Device>();
-      globalSideSetViews[ss_key].cellsOnSide.sync<PHX::Device>();
-      globalSideSetViews[ss_key].sideSetIdxOnSide.sync<PHX::Device>();
+      globalSideSetViews[ss_key].side_GID.modify_host();
+      globalSideSetViews[ss_key].elem_GID.modify_host();
+      globalSideSetViews[ss_key].ws_elem_idx.modify_host();
+      globalSideSetViews[ss_key].elem_ebIndex.modify_host();
+      globalSideSetViews[ss_key].side_pos.modify_host();
+      globalSideSetViews[ss_key].numCellsOnSide.modify_host();
+      globalSideSetViews[ss_key].cellsOnSide.modify_host();
+      globalSideSetViews[ss_key].sideSetIdxOnSide.modify_host();
+
+      globalSideSetViews[ss_key].side_GID.sync_device();
+      globalSideSetViews[ss_key].elem_GID.sync_device();
+      globalSideSetViews[ss_key].ws_elem_idx.sync_device();
+      globalSideSetViews[ss_key].elem_ebIndex.sync_device();
+      globalSideSetViews[ss_key].side_pos.sync_device();
+      globalSideSetViews[ss_key].numCellsOnSide.sync_device();
+      globalSideSetViews[ss_key].cellsOnSide.sync_device();
+      globalSideSetViews[ss_key].sideSetIdxOnSide.sync_device();
 
       current_local_index[ss_key]++;
     }
@@ -1918,7 +1927,8 @@ STKDiscretization::computeSideSets()
           }
         }
 
-        globalDOFView.sync<PHX::Device>();
+        globalDOFView.modify_host();
+        globalDOFView.sync_device();
 
         // Set workset-local sub-view
         std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());

@@ -65,7 +65,8 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
       sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
-  sideNodes.sync<PHX::Device>();
+  sideNodes.modify_host();
+  sideNodes.sync_device();
 
   this->setName("Enthalpy Basal Residual" + PHX::print<EvalT>());
 }
