@@ -375,8 +375,6 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, Omega_h::Read<Omega
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
   Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
-  auto vtxGids = mesh.globals(0);
-  printf("\n");
   auto setMask = OMEGA_H_LAMBDA(int elm) {
     const auto firstDown = elm*numDownAdjEntsPerElm;
     //loop over element-to-ent adjacencies and fill in the dofs
@@ -386,7 +384,6 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, Omega_h::Read<Omega
         const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
         const auto connIdx = (elm*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
         elm2dof[connIdx] = maskArray[adjEnt];
-        printf("elm vtxGid connIdx mask %d %d %d %d\n", elm, vtxGids[adjEnt], connIdx, elm2dof[connIdx]);
       }
     }
   };

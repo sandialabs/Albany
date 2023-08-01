@@ -282,23 +282,16 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
 
   auto mask = conn_mgr->getConnectivityMask(sideSetName);
   
-  std::cerr << "\n\n";
-  std::cerr << "mask size: " << mask.size() << "\n";
   const auto localElmIds = conn_mgr->getElementBlock("ignored");
   for( auto lid : localElmIds ) {
     auto elmGid = conn_mgr->getElementGlobalId(lid);
     const auto firstMaskIdx = lid*3;
-    const std::array<GO,3> elmMask = {mask[firstMaskIdx+1], mask[firstMaskIdx+1], mask[firstMaskIdx+2]};
+    const std::array<GO,3> elmMask = {mask[firstMaskIdx], mask[firstMaskIdx+1], mask[firstMaskIdx+2]};
     const auto expectedMask = elementGidToMask.at(elmGid);
-      std::stringstream ss;
-      ss << "lid: " << lid << " elmGid: " << elmGid << ", " << "firstMaskIdx: " << firstMaskIdx << ", ";
-      ss << "mask: " << elmMask[0] << " " << elmMask[1] << " " << elmMask[2] << ", ";
-      ss << "expectedMask: " << expectedMask[0] << " " << expectedMask[1] << " " << expectedMask[2] << "\n";
-      std::cerr << ss.str();
-    //if( expectedMask != elmMask ) {
-    //  std::cerr << elmGid << " mask does not match expected mask\n";
-    //}
-    //REQUIRE( expectedMask == elmMask );
+    if( expectedMask != elmMask ) {
+      std::cerr << elmGid << " mask does not match expected mask\n";
+    }
+    REQUIRE( expectedMask == elmMask );
   }
 
   out << "Testing OmegahConnManager::getConnectivityMaskBox() on triangle mesh of square\n";
