@@ -55,6 +55,8 @@ private:
   ScalarT printedLambda;
   ScalarT printedQ;
 
+  ParamScalarT mu, lambda, power;
+
   double beta_val;   // beta value [kPa yr/m] (for CONSTANT only)
   double N_val; // effective pressure value [kPa]
 
