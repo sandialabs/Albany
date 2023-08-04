@@ -150,7 +150,7 @@ struct Omegah2ShardsPerm {
    * triangle
    */
   const TriVtx triVtx;
-  TriVtx getOmegah2ShardsPerm_tri() { //FIXME
+  TriVtx getOmegah2ShardsPerm_tri() {
     const OmegahTriVtx ohTriVtx;
     const ShardsTriVtx shTriVtx;
     return getPerm_tri(ohTriVtx,shTriVtx);
@@ -192,7 +192,7 @@ struct Shards2OmegahPerm {
 
   /////// Triangles /////////
   const TriVtx triVtx;
-  TriVtx getShards2OmegahPerm_tri() { //FIXME
+  TriVtx getShards2OmegahPerm_tri() {
     const ShardsTriVtx shTriVtx;
     const OmegahTriVtx ohTriVtx;
     return getPerm_tri(shTriVtx,ohTriVtx);
