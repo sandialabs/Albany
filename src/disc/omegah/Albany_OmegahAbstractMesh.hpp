@@ -9,8 +9,11 @@ class OmegahAbstractMesh : public AbstractMeshStruct {
 public:
   std::string meshType () const override { return "Omega_h"; }
 
-        Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>& getMeshSpecs()       override { return m_mesh_specs; }
-  const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>& getMeshSpecs() const override { return m_mesh_specs; }
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
+  getMeshSpecs() override { return m_mesh_specs; }
+
+  const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
+  getMeshSpecs() const override { return m_mesh_specs; }
 protected:
 
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > m_mesh_specs;
