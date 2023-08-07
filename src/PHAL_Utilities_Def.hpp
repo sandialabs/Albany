@@ -34,6 +34,50 @@ MDFieldIterator (PHX::MDField<T>& a) : a_(a) {
   i_ = 0;
 }
 
+template<typename T> MDFieldVectorRight<T>::
+MDFieldVectorRight (PHX::MDField<T>& a) : a_(a) {
+  rank_ = a_.rank();
+  TEUCHOS_TEST_FOR_EXCEPTION(rank_ <= 0, std::logic_error, "MDFieldVectorRight is not implemented for fields of rank <= 0.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(rank_ >  5, std::logic_error, "MDFieldVectorRight is not implemented for fields of rank > 5.\n");
+  dim0 = a.extent(0);
+  dim1 = (rank_ > 1) ? a.extent(1) : 0;
+  dim2 = (rank_ > 2) ? a.extent(2) : 0;
+  dim3 = (rank_ > 3) ? a.extent(3) : 0;
+  dim4 = (rank_ > 4) ? a.extent(4) : 0;
+}
+
+template<typename T> KOKKOS_INLINE_FUNCTION typename Ref<T>::type
+MDFieldVectorRight<T>::operator[] (const int i) const {
+  int idx0, idx1, idx2, idx3, idx4;
+  if (rank_ == 1) {
+    idx0 = i;
+    return a_(idx0);
+  } else if (rank_ == 2) {
+    idx1 = i % dim1;
+    idx0 = i / dim1;
+    return a_(idx0, idx1);
+  } else if (rank_ == 3) {
+    idx2 = i % dim2;
+    idx1 = (i / dim2) % dim1;
+    idx0 = i / (dim2 * dim1);
+    return a_(idx0, idx1, idx2);
+  } else if (rank_ == 4) {
+    idx3 = i % dim3;
+    idx2 = (i / dim3) % dim2;
+    idx1 = (i / (dim3*dim2)) % dim1;
+    idx0 = i / (dim3*dim2*dim1);
+    return a_(idx0, idx1, idx2, idx3);
+  } else {
+    idx4 = i % dim4;
+    idx3 = (i / dim4) % dim3;
+    idx2 = (i / (dim4*dim3)) % dim2;
+    idx1 = (i / (dim4*dim3*dim2)) % dim1;
+    idx0 = i / (dim4*dim3*dim2*dim1);
+    return a_(idx0, idx1, idx2, idx3, idx4);
+  }
+}
+
+
 template<typename T> inline MDFieldIterator<T>&
 MDFieldIterator<T>::operator++ () {
   for (int i = rank_ - 1; i >= 0; --i)

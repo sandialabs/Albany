@@ -15,6 +15,8 @@
 #include "Phalanx_MDField.hpp"
 #include "Phalanx_DataLayout_MDALayout.hpp"
 
+#include "PHAL_AlbanyTraits.hpp"
+
 // Forward declarations
 namespace Albany {
   class Application;
@@ -84,6 +86,24 @@ private:
   typename PHX::DataLayout::size_type dimsm1_[5], idxs_[5];
   int i_, rank_;
   bool done_;
+};
+
+//! Mimics MDFieldIterator's access patterns in a Kokkos::parallel_for friendly way
+//! MDFieldIterator treats MDField like it has RightLayout regardless of memory space,
+//! and may not be efficient on GPU
+template<typename T>
+class MDFieldVectorRight {
+public:
+  using array_type = typename PHX::MDField<T>::array_type;
+  using reference_type = typename PHX::MDField<T>::reference_type;
+  using return_type = typename PHX::MDFieldReturnType<array_type>::return_type;
+  explicit MDFieldVectorRight(PHX::MDField<T>& a);
+  KOKKOS_INLINE_FUNCTION typename Ref<T>::type operator[](const int i) const;
+  
+private:
+  PHX::MDField<T>& a_;
+  typename PHX::DataLayout::size_type dim0, dim1, dim2, dim3, dim4;
+  int rank_;
 };
 
 //! Reduce on an MDField.
