@@ -24,6 +24,7 @@
 #include <Omega_h_mark.hpp> // Omega_h::mark_by_class
 #include <Omega_h_simplex.hpp> // Omega_h::simplex_down_template
 #include <Omega_h_for.hpp> // Omega_h::parallel_for
+#include <Omega_h_array_ops.hpp> // Omega_h::get_sum
 
 #include <array> //std::array
 
@@ -200,11 +201,14 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
   //topological definition of the domain is a common part of the mesh
   //generation/adaptation workflow.
   //The 'lateralside' side set in the exodus file is given class_id=1 and
-  //class_dim=1 by exo2osh.
+  //class_dim=1 on mesh edges by exo2osh.
   //A dimension and id uniquely defines a geometric model entity.
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
+  //FIXME - this will only effectively mark the edges, need to use downward
+  //FIXME - adjacencies to set vertex classification as vertices don't all get
+  //FIXME - class_dim=1 and and class_id=1 during the osh-to-exodus conversion
   for(int dim=0; dim<=lateralSide_classDim; dim++) {
     auto isInSet = Omega_h::mark_by_class(&mesh, dim,
         lateralSide_classDim, lateralSide_classId);
@@ -229,16 +233,41 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
+  //FIXME -- see 209-211 above
   for(int dim=0; dim<=lateralSide_classDim; dim++) {
     auto isInSet = Omega_h::mark_by_class(&mesh, dim,
         lateralSide_classDim, lateralSide_classId);
     mesh.add_tag(dim, lateralSide_name, 1, isInSet);
   }
 
-  auto conn_mgr = createOmegahConnManager(mesh);
+  //define tag for uppper half of lateral side
+  const int upperSide_numVertsExpected = 238;
+  const auto minYCoord = -1848.0;
+  const int upperSide_classDim = 0;
+  const auto upperSide_name = "upperside";
+  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(upperSide_classDim));
+  auto vtxCoords = mesh.coords();
+  auto edgeVerts = mesh.ask_down(OMEGA_H_EDGE,OMEGA_H_VERT).ab2b;
+  const auto isLateralSide = mesh.get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
+  Omega_h::parallel_for(mesh.nents(OMEGA_H_EDGE), OMEGA_H_LAMBDA(LO edge) {
+    if(isLateralSide[edge]) {
+      for(int j = 0; j < 2; j++) {
+        const auto vtx = edgeVerts[edge*2+j];
+        auto isIn = 0;
+        if( vtxCoords[vtx*2+1] >= minYCoord )
+          isIn = 1;
+        isInSet_vtx[vtx] = isIn; //each vertex will be set twice, but the answer will be the same so an atomic is not needed
+      }
+    }
+  });
+  const int upperSide_numVerts = Omega_h::get_sum<Omega_h::I8>(isInSet_vtx);
+  REQUIRE(upperSide_numVertsExpected == upperSide_numVerts);
+  mesh.add_tag(upperSide_classDim, upperSide_name, 1, Omega_h::read(isInSet_vtx));
+
+  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
   Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
   conn_mgr->buildConnectivity(*patternC1);
-  auto mask = conn_mgr->getConnectivityMask(lateralSide_name);
+  auto mask = conn_mgr->getConnectivityMask(upperSide_name);
   out << "Testing OmegahConnManager::getConnectivityMask()\n";
   success = true;
 }
@@ -281,7 +310,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   mesh.add_tag(dim, sideSetName, 1, Omega_h::read(isInSet_vtx));
 
   auto mask = conn_mgr->getConnectivityMask(sideSetName);
-  
+
   const auto localElmIds = conn_mgr->getElementBlock("ignored");
   for( auto lid : localElmIds ) {
     auto elmGid = conn_mgr->getElementGlobalId(lid);
