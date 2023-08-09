@@ -80,6 +80,16 @@ Omega_h::Read<Omega_h::I8> markDownward(Omega_h::Mesh& mesh, Omega_h::Read<Omega
   return downMarked;
 }
 
+void createTagFromClassification(Omega_h::Mesh& mesh, const int classId, const int classDim, const std::string tagName) {
+  REQUIRE(classDim==1); //TODO support faces with classification?
+  //add the edges with the given classification to the tag
+  auto isinset = Omega_h::mark_by_class(&mesh, classDim, classDim, classId);
+  mesh.add_tag(classDim, tagName, 1, isinset);
+  //mark the vertices bounding the edges and add them to the tag
+  auto lateralverts = markDownward(mesh, isinset, OMEGA_H_EDGE, OMEGA_H_VERT);
+  mesh.add_tag(OMEGA_H_VERT, tagName, 1, lateralverts);
+}
+
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
@@ -223,14 +233,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
-  //FIXME - this will only effectively mark the edges, need to use downward
-  //FIXME - adjacencies to set vertex classification as vertices don't all get
-  //FIXME - class_dim=1 and and class_id=1 during the osh-to-exodus conversion
-  for(int dim=0; dim<=lateralSide_classDim; dim++) {
-    auto isInSet = Omega_h::mark_by_class(&mesh, dim,
-        lateralSide_classDim, lateralSide_classId);
-    mesh.add_tag(dim, lateralSide_name, 1, isInSet);
-  }
+  createTagFromClassification(mesh, lateralSide_classId, lateralSide_classDim, lateralSide_name);
 
   auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
   out << "Testing OmegahConnManager::partCtor()\n";
@@ -250,12 +253,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
-  //FIXME -- see 209-211 above
-  for(int dim=0; dim<=lateralSide_classDim; dim++) {
-    auto isInSet = Omega_h::mark_by_class(&mesh, dim,
-        lateralSide_classDim, lateralSide_classId);
-    mesh.add_tag(dim, lateralSide_name, 1, isInSet);
-  }
+  createTagFromClassification(mesh, lateralSide_classId, lateralSide_classDim, lateralSide_name);
 
   //define tag for uppper half of lateral side
   const int upperSide_numVertsExpected = 238;
