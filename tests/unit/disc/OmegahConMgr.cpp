@@ -22,7 +22,7 @@
 #include <Omega_h_build.hpp> // Omega_h::build_box
 #include <Omega_h_file.hpp> // Omega_h::binary::read
 #include <Omega_h_mark.hpp> // Omega_h::mark_by_class
-#include <Omega_h_simplex.hpp> // Omega_h::simplex_down_template
+#include <Omega_h_simplex.hpp> // Omega_h::simplex_degree
 #include <Omega_h_for.hpp> // Omega_h::parallel_for
 #include <Omega_h_array_ops.hpp> // Omega_h::get_sum
 
@@ -62,6 +62,23 @@ Teuchos::RCP<const panzer::FieldPattern> buildFieldPattern()
   return pattern;
 }
 
+Omega_h::Read<Omega_h::I8> markDownward(Omega_h::Mesh& mesh, Omega_h::Read<Omega_h::I8> isUpMarked, int upDim, int downDim) {
+  REQUIRE(upDim-downDim==1);
+  auto downEnts = mesh.ask_down(upDim,downDim).ab2b;
+  Omega_h::Write<Omega_h::I8> downMarked(mesh.nents(downDim),0);
+  const auto degree = Omega_h::simplex_degree(upDim, downDim);
+  Omega_h::parallel_for(mesh.nents(upDim), OMEGA_H_LAMBDA(LO upEnt) {
+    if(isUpMarked[upEnt]) {
+      for(int j = 0; j < degree; j++) {
+        const auto down = downEnts[upEnt*degree+j];
+        //each down entity will be set multiple times, but the value being
+        //written is the same so an atomic is not needed
+        downMarked[down] = 1;
+      }
+    }
+  });
+  return downMarked;
+}
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 {
@@ -245,20 +262,12 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   const auto minYCoord = -1848.0;
   const int upperSide_classDim = 0;
   const auto upperSide_name = "upperside";
-  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(upperSide_classDim));
   auto vtxCoords = mesh.coords();
-  auto edgeVerts = mesh.ask_down(OMEGA_H_EDGE,OMEGA_H_VERT).ab2b;
+  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(OMEGA_H_VERT),0);
   const auto isLateralSide = mesh.get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
-  Omega_h::parallel_for(mesh.nents(OMEGA_H_EDGE), OMEGA_H_LAMBDA(LO edge) {
-    if(isLateralSide[edge]) {
-      for(int j = 0; j < 2; j++) {
-        const auto vtx = edgeVerts[edge*2+j];
-        auto isIn = 0;
-        if( vtxCoords[vtx*2+1] >= minYCoord )
-          isIn = 1;
-        isInSet_vtx[vtx] = isIn; //each vertex will be set twice, but the answer will be the same so an atomic is not needed
-      }
-    }
+  auto lateralVerts = markDownward(mesh, isLateralSide, OMEGA_H_EDGE, OMEGA_H_VERT);
+  Omega_h::parallel_for(mesh.nents(OMEGA_H_VERT), OMEGA_H_LAMBDA(LO vtx) {
+      isInSet_vtx[vtx] = ((vtxCoords[vtx*2+1] >= minYCoord) && lateralVerts[vtx]);
   });
   const int upperSide_numVerts = Omega_h::get_sum<Omega_h::I8>(isInSet_vtx);
   REQUIRE(upperSide_numVertsExpected == upperSide_numVerts);
