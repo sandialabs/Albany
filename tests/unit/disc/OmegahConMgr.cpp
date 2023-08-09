@@ -25,6 +25,7 @@
 #include <Omega_h_simplex.hpp> // Omega_h::simplex_degree
 #include <Omega_h_for.hpp> // Omega_h::parallel_for
 #include <Omega_h_array_ops.hpp> // Omega_h::get_sum
+#include <Omega_h_atomics.hpp> // Omega_h::atomic_increment
 
 #include <array> //std::array
 
@@ -275,6 +276,26 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
   conn_mgr->buildConnectivity(*patternC1);
   auto mask = conn_mgr->getConnectivityMask(upperSide_name);
+  const int sum = std::accumulate(mask.begin(), mask.end(), 0);
+
+  { //count the number of times upperSide vertices appear in the vertices bounding faces
+    //this count should match the number of times '1' appears in the
+    //getConnectivityMask(upperSide_name) call
+    //FIXME - this matches... but IIRC, the connManager was created on the edges
+    //only... something is off
+    const auto isUpperSide = mesh.get_array<Omega_h::I8>(OMEGA_H_VERT, upperSide_name);
+    auto faceVerts = mesh.ask_down(OMEGA_H_FACE,OMEGA_H_VERT).ab2b;
+    const auto degree = Omega_h::simplex_degree(OMEGA_H_FACE, OMEGA_H_VERT);
+    Omega_h::Write<Omega_h::LO> elmToUpperVtxCount_d(1,0);
+    Omega_h::parallel_for(mesh.nents(OMEGA_H_FACE), OMEGA_H_LAMBDA(LO face) {
+        for(int i=0; i<degree; i++) {
+          auto vtx = faceVerts[face*degree+i];
+          if(isUpperSide[vtx]) Omega_h::atomic_increment(&elmToUpperVtxCount_d[0]);
+        }
+    });
+    const auto elmToUpperVtxCount = elmToUpperVtxCount_d.get(0);
+    REQUIRE(elmToUpperVtxCount == sum);
+  }
   out << "Testing OmegahConnManager::getConnectivityMask()\n";
   success = true;
 }
