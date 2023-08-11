@@ -23,6 +23,7 @@ namespace Albany {
 class OmegahConnManager : public ConnManager {
 private:
   Omega_h::Mesh& mesh;
+  LO partDim;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   std::vector<Ownership> owners; //FIXME

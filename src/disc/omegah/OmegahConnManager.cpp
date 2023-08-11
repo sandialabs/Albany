@@ -220,7 +220,7 @@ struct Shards2OmegahPerm {
 
 
 OmegahConnManager::
-OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
+OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim())
 {
   //albany does *not* support processes without elements
   TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
@@ -238,8 +238,8 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh)
 }
 
 OmegahConnManager::
-OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim) :
-  mesh(in_mesh)
+OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int inPartDim) :
+  mesh(in_mesh), partDim(inPartDim)
 {
   auto world = mesh.library()->world();
   auto rank = world->rank();
@@ -428,7 +428,7 @@ void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, co
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, const LO dofOffset,
+void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO elmDim, const LO dofsPerElm, const LO dofOffset,
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     for(int k=0; k<dofsPerEnt; k++) {
@@ -439,7 +439,7 @@ void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, const L
     }
   };
   const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(mesh.dim());
-  Omega_h::parallel_for(mesh.nelems(), setNumber, kernelName.c_str());
+  Omega_h::parallel_for(mesh.nents(elmDim), setNumber, kernelName.c_str());
 }
 
 /**
@@ -513,23 +513,23 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const std::array<Omega_h::GOs,4>& globalDofNumbering) const {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
-  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nelems();
-  for(int i=mesh.dim()+1; i<4; i++)
+  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nents(partDim);
+  for(int i=partDim+1; i<4; i++)
     assert(!m_dofsPerEnt[i]);//watch out for stragglers
   Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
 
   LO dofOffset = 0;
-  for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
+  for(int adjDim=0; adjDim<partDim; adjDim++) {
     if(m_dofsPerEnt[adjDim]) {
       setElementToEntDofConnectivity(mesh, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
           m_dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
-      const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+      const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
     }
   }
-  if(m_dofsPerEnt[mesh.dim()]) {
-    setElementDofConnectivity(mesh, m_dofsPerElm, dofOffset, m_dofsPerEnt[mesh.dim()],
-        globalDofNumbering[mesh.dim()], elm2dof);
+  if(m_dofsPerEnt[partDim]) {
+    setElementDofConnectivity(mesh, partDim, m_dofsPerElm, dofOffset, m_dofsPerEnt[partDim],
+        globalDofNumbering[partDim], elm2dof);
   }
   return elm2dof;
 }
@@ -550,7 +550,7 @@ OmegahConnManager::writeConnectivity()
 void
 OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension() > mesh.dim(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension() > partDim, std::logic_error,
       "Error! OmegahConnManager Field pattern incompatible with stored elem_blocks.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
       "  - elem_blocks topo dim: " + Omega_h::topological_singular_name(mesh.family(), mesh.dim()) + "\n");
@@ -565,9 +565,9 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 
   // get element-to-[vertex|edge|face] adjacencies
   Omega_h::Adj elmToDim[3];
-  for(int dim = 0; dim < mesh.dim(); dim++) {
+  for(int dim = 0; dim < partDim; dim++) {
     if(m_dofsPerEnt[dim] > 0) {
-      elmToDim[dim] = mesh.ask_down(mesh.dim(),dim);
+      elmToDim[dim] = mesh.ask_down(partDim,dim);
     }
   }
 
