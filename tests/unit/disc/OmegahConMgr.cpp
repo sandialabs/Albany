@@ -273,8 +273,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   mesh.add_tag(upperSide_classDim, upperSide_name, 1, Omega_h::read(isInSet_vtx));
 
   auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
-  Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
-  conn_mgr->buildConnectivity(*patternC1);
+  Teuchos::RCP<const panzer::FieldPattern> patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM<PHX::exec_space, double, double>>();
+  conn_mgr->buildConnectivity(*patternEdgeC1);
   auto mask = conn_mgr->getConnectivityMask(upperSide_name);
   const int sum = std::accumulate(mask.begin(), mask.end(), 0);
 
