@@ -35,7 +35,7 @@ private:
     localElmIds.resize(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
   }
-  LO getConnectivitySize() const;
+  LO getPartConnectivitySize() const;
   std::array<Omega_h::GOs,4> createGlobalDofNumbering() const;
   Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const std::array<Omega_h::GOs,4>& globalDofNumbering) const;
@@ -109,7 +109,7 @@ public:
     * \returns Number of mesh IDs that are associated with this element.
     */
   LO getConnectivitySize(LO /*localElmtId*/) const override {
-    return m_dofsPerElm; //FIXME - how can this not be constant?
+    return m_dofsPerElm; //how can this not be constant across all elements
   }
 
   /** Get the block ID for a particular element.

@@ -460,13 +460,11 @@ void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO dofsPerElm, con
   Omega_h::parallel_for(mesh.nelems(), setMask, kernelName.c_str());
 }
 
-
-
-LO OmegahConnManager::getConnectivitySize() const
+LO OmegahConnManager::getPartConnectivitySize() const
 {
   LO dofsPerElm = 0;
-  for(int i=0; i<=mesh.dim(); i++) {
-    const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), i);
+  for(int i=0; i<partDim; i++) {
+    const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, i);
     dofsPerElm += m_dofsPerEnt[i]*numDownAdjEntsPerElm;
   }
   dofsPerElm += m_dofsPerEnt[mesh.dim()];
@@ -559,7 +557,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n");
 
   m_dofsPerEnt = getDofsPerEnt(fp);
-  m_dofsPerElm = getConnectivitySize();
+  m_dofsPerElm = getPartConnectivitySize();
 
   m_globalDofNumbering = createGlobalDofNumbering();
 
