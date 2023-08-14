@@ -263,7 +263,7 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int inPartDi
 
   m_elem_blocks_names.push_back(partId);
 
-  assert(mesh.has_tag(mesh.dim(), "global"));
+  assert(mesh.has_tag(partDim, "global"));
 
   //create the host array of entities in the part {
   // no attempt to make this 'fast' was made...
@@ -286,8 +286,8 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int inPartDi
 std::vector<GO>
 OmegahConnManager::getElementsInBlock (const std::string&) const
 {
-  assert(mesh.has_tag(mesh.dim(), "global"));
-  auto globals_d = mesh.globals(mesh.dim());
+  assert(mesh.has_tag(partDim, "global"));
+  auto globals_d = mesh.globals(partDim);
   Omega_h::HostRead<Omega_h::GO> globalElmIds_h(globals_d);
   return std::vector<GO>(
       globalElmIds_h.data(),
@@ -365,13 +365,13 @@ std::array<Omega_h::GOs,4> OmegahConnManager::createGlobalDofNumbering() const {
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, Omega_h::Read<Omega_h::I8>& maskArray,
+void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, Omega_h::Read<Omega_h::I8>& maskArray,
     const LO dofsPerElm, const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt,
     Omega_h::Write<Omega_h::GO> elm2dof) {
-  const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+  const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
   const auto adjEnts = elmToDim.ab2b;
-  TEUCHOS_TEST_FOR_EXCEPTION(mesh.dim() != 2 && adjDim != 0, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(partDim != 2 && adjDim != 0, std::logic_error,
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
   Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
@@ -387,8 +387,8 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, Omega_h::Read<Omega
       }
     }
   };
-  const auto kernelName = "setElementToEntDofConnectivityMask_dim" + std::to_string(mesh.dim());
-  Omega_h::parallel_for(mesh.nelems(), setMask, kernelName.c_str());
+  const auto kernelName = "setElementToEntDofConnectivityMask_dim" + std::to_string(partDim);
+  Omega_h::parallel_for(mesh.nents(partDim), setMask, kernelName.c_str());
 }
 
 /**
@@ -397,11 +397,11 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, Omega_h::Read<Omega
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, const LO adjDim, const LO dofOffset,
+void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, const LO dofsPerElm, const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
-  const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+  const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
   const auto adjEnts = elmToDim.ab2b;
-  TEUCHOS_TEST_FOR_EXCEPTION(mesh.dim() != 2 && adjDim != 0, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(partDim != 2 && adjDim != 0, std::logic_error,
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
   Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
@@ -419,8 +419,8 @@ void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO dofsPerElm, co
       }
     }
   };
-  const auto kernelName = "setElementToEntDofConnectivity_dim" + std::to_string(mesh.dim());
-  Omega_h::parallel_for(mesh.nelems(), setNumber, kernelName.c_str());
+  const auto kernelName = "setElementToEntDofConnectivity_dim" + std::to_string(partDim);
+  Omega_h::parallel_for(mesh.nents(partDim), setNumber, kernelName.c_str());
 }
 
 /**
@@ -438,7 +438,7 @@ void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO elmDim, const LO do
       elm2dof[connIdx] = dofGlobalId;
     }
   };
-  const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(mesh.dim());
+  const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(elmDim);
   Omega_h::parallel_for(mesh.nents(elmDim), setNumber, kernelName.c_str());
 }
 
@@ -447,7 +447,7 @@ void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO elmDim, const LO do
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO dofsPerElm, const LO dofOffset,
+void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, const LO dofsPerElm, const LO dofOffset,
     const LO dofsPerEnt, Omega_h::Read<Omega_h::I8> mask, Omega_h::Write<Omega_h::GO> elm2dof) {
   auto setMask = OMEGA_H_LAMBDA(int elm) {
     for(int k=0; k<dofsPerEnt; k++) {
@@ -456,8 +456,8 @@ void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO dofsPerElm, con
       elm2dof[connIdx] = mask[elm];
     }
   };
-  const auto kernelName = "setElementDofConnectivityMask_dim" + std::to_string(mesh.dim());
-  Omega_h::parallel_for(mesh.nelems(), setMask, kernelName.c_str());
+  const auto kernelName = "setElementDofConnectivityMask_dim" + std::to_string(partDim);
+  Omega_h::parallel_for(mesh.nents(partDim), setMask, kernelName.c_str());
 }
 
 LO OmegahConnManager::getPartConnectivitySize() const
@@ -475,13 +475,13 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
     const std::string& tagName, const Omega_h::Adj elmToDim[3]) const
 {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
-  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nelems();
-  for(int i=mesh.dim()+1; i<4; i++)
+  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nents(partDim);
+  for(int i=partDim+1; i<4; i++)
     assert(!m_dofsPerEnt[i]);//watch out for stragglers
   Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
 
   LO dofOffset = 0;
-  for(int adjDim=0; adjDim<mesh.dim(); adjDim++) {
+  for(int adjDim=0; adjDim<partDim; adjDim++) {
     if(m_dofsPerEnt[adjDim]) {
       Omega_h::Read<Omega_h::I8> maskArray;
       if( mesh.has_tag(adjDim, tagName) ) {
@@ -489,20 +489,20 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
       } else {
         maskArray = Omega_h::Read<Omega_h::I8>(mesh.nents(adjDim), 0);
       }
-      setElementToEntDofConnectivityMask(mesh, maskArray, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
+      setElementToEntDofConnectivityMask(mesh, partDim, maskArray, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
           m_dofsPerEnt[adjDim], elm2dof);
-      const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), mesh.dim(), adjDim);
+      const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
     }
   }
-  if(m_dofsPerEnt[mesh.dim()]) {
+  if(m_dofsPerEnt[partDim]) {
     Omega_h::Read<Omega_h::I8> maskArray;
-    if( mesh.has_tag(mesh.dim(), tagName) ) {
-      maskArray = mesh.get_array<Omega_h::I8>(mesh.dim(), tagName);
+    if( mesh.has_tag(partDim, tagName) ) {
+      maskArray = mesh.get_array<Omega_h::I8>(partDim, tagName);
     } else {
-      maskArray = Omega_h::Read<Omega_h::I8>(mesh.nents(mesh.dim()), 0);
+      maskArray = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 0);
     }
-    setElementDofConnectivityMask(mesh, m_dofsPerElm, dofOffset, m_dofsPerEnt[mesh.dim()], maskArray, elm2dof);
+    setElementDofConnectivityMask(mesh, partDim, m_dofsPerElm, dofOffset, m_dofsPerEnt[partDim], maskArray, elm2dof);
   }
   return elm2dof;
 }
@@ -519,7 +519,7 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
   LO dofOffset = 0;
   for(int adjDim=0; adjDim<partDim; adjDim++) {
     if(m_dofsPerEnt[adjDim]) {
-      setElementToEntDofConnectivity(mesh, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
+      setElementToEntDofConnectivity(mesh, partDim, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
           m_dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
       const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
@@ -551,7 +551,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension() > partDim, std::logic_error,
       "Error! OmegahConnManager Field pattern incompatible with stored elem_blocks.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
-      "  - elem_blocks topo dim: " + Omega_h::topological_singular_name(mesh.family(), mesh.dim()) + "\n");
+      "  - elem_blocks topo dim: " + Omega_h::topological_singular_name(mesh.family(), partDim) + "\n");
   TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension() < 1, std::logic_error,
       "Error! OmegahConnManager Field pattern must have a dimension of at least 1.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n");
@@ -614,7 +614,7 @@ int OmegahConnManager::getConnectivityStart (const LO ielem) const {
 // note, the part can be associated with any dimension of mesh entity
 std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_part_name) const {
   bool hasPartTag = false;
-  for(int d=0; d<mesh.dim(); d++)
+  for(int d=0; d<partDim; d++)
     hasPartTag |= mesh.has_tag(d, sub_part_name);
   std::stringstream ss;
   ss << "Error! Omega_h does not have a tag named \"" << sub_part_name
@@ -626,9 +626,9 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
 
   // get element-to-[vertex|edge|face] adjacencies
   Omega_h::Adj elmToDim[3];
-  for(int dim = 0; dim < mesh.dim(); dim++) {
+  for(int dim = 0; dim < partDim; dim++) {
     if(m_dofsPerEnt[dim] > 0) {
-      elmToDim[dim] = mesh.ask_down(mesh.dim(),dim);
+      elmToDim[dim] = mesh.ask_down(partDim,dim);
     }
   }
 
@@ -645,7 +645,7 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
 // FIXME - what should be returned here? highest dimension
 int OmegahConnManager::part_dim (const std::string&) const //FIXME
 {
-  return mesh.dim();
+  return partDim;
 }
 
 const Ownership* OmegahConnManager::getOwnership(LO) const //FIXME
