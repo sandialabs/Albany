@@ -254,7 +254,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
-  createTagFromClassification(mesh, lateralSide_classId, lateralSide_classDim, lateralSide_name);
+  createTagFromClassification(mesh, lateralSide_classId, lateralSide_classDim, lateralSide_name); //490 verts
 
   //define tag for uppper half of lateral side
   const int upperSide_numVertsExpected = 238;
@@ -282,14 +282,17 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   { //count the number of times upperSide vertices appear in the vertices bounding edges
     //this count should match the number of times '1' appears in the
     //getConnectivityMask(upperSide_name) call
+    const auto lateralSide = mesh.get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
     const auto isUpperSide = mesh.get_array<Omega_h::I8>(OMEGA_H_VERT, upperSide_name);
     auto edgeVerts = mesh.ask_down(OMEGA_H_EDGE,OMEGA_H_VERT).ab2b;
     const auto degree = Omega_h::simplex_degree(OMEGA_H_EDGE, OMEGA_H_VERT);
     Omega_h::Write<Omega_h::LO> elmToUpperVtxCount_d(1,0);
     Omega_h::parallel_for(mesh.nents(OMEGA_H_EDGE), OMEGA_H_LAMBDA(LO edge) {
-        for(int i=0; i<degree; i++) {
-          auto vtx = edgeVerts[edge*degree+i];
-          if(isUpperSide[vtx]) Omega_h::atomic_increment(&elmToUpperVtxCount_d[0]);
+        if(lateralSide[edge]) {
+          for(int i=0; i<degree; i++) {
+            auto vtx = edgeVerts[edge*degree+i];
+            if(isUpperSide[vtx]) Omega_h::atomic_increment(&elmToUpperVtxCount_d[0]);
+          }
         }
     });
     const auto elmToUpperVtxCount = elmToUpperVtxCount_d.get(0);
