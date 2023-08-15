@@ -24,6 +24,7 @@ class OmegahConnManager : public ConnManager {
 private:
   Omega_h::Mesh& mesh;
   LO partDim;
+  std::string partId;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   std::vector<Ownership> owners; //FIXME

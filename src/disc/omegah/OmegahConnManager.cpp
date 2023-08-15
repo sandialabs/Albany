@@ -14,6 +14,7 @@
 #include <Omega_h_file.hpp> //write_array, write_parallel
 #include <Omega_h_array_ops.hpp> //get_max
 #include <Omega_h_atomics.hpp> //atomic_fetch_add
+#include <Omega_h_int_scan.hpp> //offset_scan
 
 #include <fstream>
 
@@ -220,7 +221,7 @@ struct Shards2OmegahPerm {
 
 
 OmegahConnManager::
-OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim())
+OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim()), partId("")
 {
   //albany does *not* support processes without elements
   TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
@@ -238,8 +239,8 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim())
 }
 
 OmegahConnManager::
-OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int inPartDim) :
-  mesh(in_mesh), partDim(inPartDim)
+OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPartDim) :
+  mesh(in_mesh), partDim(inPartDim), partId(inPartId)
 {
   auto world = mesh.library()->world();
   auto rank = world->rank();
@@ -365,7 +366,7 @@ std::array<Omega_h::GOs,4> OmegahConnManager::createGlobalDofNumbering() const {
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, Omega_h::Read<Omega_h::I8>& maskArray,
+void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, const std::string partId, Omega_h::Read<Omega_h::I8>& maskArray,
     const LO dofsPerElm, const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt,
     Omega_h::Write<Omega_h::GO> elm2dof) {
@@ -373,17 +374,37 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, O
   const auto adjEnts = elmToDim.ab2b;
   TEUCHOS_TEST_FOR_EXCEPTION(partDim != 2 && adjDim != 0, std::logic_error,
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
+  Omega_h::Read<Omega_h::I8> isInPart;
+  if(partId == "") {
+    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
+  } else {
+    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+  }
+  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
+  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
+  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
+    if(isInPart[i]) {
+      partEntIdx[i] = partEntOffset[i];
+    } else {
+      partEntIdx[i] = 0;
+    }
+  });
   Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
+  const auto totNumDofs = elm2dof.size();
   auto setMask = OMEGA_H_LAMBDA(int elm) {
-    const auto firstDown = elm*numDownAdjEntsPerElm;
-    //loop over element-to-ent adjacencies and fill in the dofs
-    for(int j=0; j<numDownAdjEntsPerElm; j++) {
-      const auto adjEnt = adjEnts[firstDown+j];
-      for(int k=0; k<dofsPerEnt; k++) {
-        const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
-        const auto connIdx = (elm*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
-        elm2dof[connIdx] = maskArray[adjEnt];
+    if(isInPart[elm]) {
+      const auto firstDown = elm*numDownAdjEntsPerElm;
+      //loop over element-to-ent adjacencies and fill in the dofs
+      for(int j=0; j<numDownAdjEntsPerElm; j++) {
+        const auto adjEnt = adjEnts[firstDown+j];
+        for(int k=0; k<dofsPerEnt; k++) {
+          const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
+          const auto elmPartIdx = partEntIdx[elm];
+          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
+          assert(totNumDofs > connIdx && connIdx >= 0);
+          elm2dof[connIdx] = maskArray[adjEnt];
+        }
       }
     }
   };
@@ -397,25 +418,45 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, O
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, const LO dofsPerElm, const LO adjDim, const LO dofOffset,
+void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, const std::string partId, const LO dofsPerElm, const LO adjDim, const LO dofOffset,
     const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
   const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
   const auto adjEnts = elmToDim.ab2b;
   TEUCHOS_TEST_FOR_EXCEPTION(partDim != 2 && adjDim != 0, std::logic_error,
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
+  Omega_h::Read<Omega_h::I8> isInPart;
+  if(partId == "") {
+    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
+  } else {
+    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+  }
+  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
+  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
+  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
+    if(isInPart[i]) {
+      partEntIdx[i] = partEntOffset[i];
+    } else {
+      partEntIdx[i] = 0;
+    }
+  });
   Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
+  const auto totNumDofs = elm2dof.size();
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
-    const auto firstDown = elm*numDownAdjEntsPerElm;
-    //loop over element-to-ent adjacencies and fill in the dofs
-    for(int j=0; j<numDownAdjEntsPerElm; j++) {
-      const auto adjEnt = adjEnts[firstDown+j];
-      for(int k=0; k<dofsPerEnt; k++) {
-        const auto dofIndex = adjEnt*dofsPerEnt+k;
-        const auto dofGlobalId = globalDofNumbering[dofIndex];
-        const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
-        const auto connIdx = (elm*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
-        elm2dof[connIdx] = dofGlobalId;
+    if(isInPart[elm]) {
+      const auto firstDown = elm*numDownAdjEntsPerElm;
+      //loop over element-to-ent adjacencies and fill in the dofs
+      for(int j=0; j<numDownAdjEntsPerElm; j++) {
+        const auto adjEnt = adjEnts[firstDown+j];
+        for(int k=0; k<dofsPerEnt; k++) {
+          const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
+          const auto elmPartIdx = partEntIdx[elm];
+          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
+          assert(totNumDofs > connIdx && connIdx >= 0);
+          const auto dofIndex = adjEnt*dofsPerEnt+k;
+          const auto dofGlobalId = globalDofNumbering[dofIndex];
+          elm2dof[connIdx] = dofGlobalId;
+        }
       }
     }
   };
@@ -428,18 +469,36 @@ void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, const
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO elmDim, const LO dofsPerElm, const LO dofOffset,
+void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, std::string partId, const LO dofsPerElm, const LO dofOffset,
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
+  Omega_h::Read<Omega_h::I8> isInPart;
+  if(partId == "") {
+    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
+  } else {
+    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+  }
+  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
+  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
+  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
+    if(isInPart[i]) {
+      partEntIdx[i] = partEntOffset[i];
+    } else {
+      partEntIdx[i] = 0;
+    }
+  });
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
-    for(int k=0; k<dofsPerEnt; k++) {
-      const auto dofIndex = elm*dofsPerEnt+k;
-      const auto dofGlobalId = globalDofNumbering[dofIndex];
-      const auto connIdx = (elm*dofsPerElm)+(dofOffset+k);
-      elm2dof[connIdx] = dofGlobalId;
+    if(isInPart[elm]) {
+      for(int k=0; k<dofsPerEnt; k++) {
+        const auto dofIndex = elm*dofsPerEnt+k;
+        const auto dofGlobalId = globalDofNumbering[dofIndex];
+        const auto elmPartIdx = partEntIdx[elm];
+        const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+k);
+        elm2dof[connIdx] = dofGlobalId;
+      }
     }
   };
-  const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(elmDim);
-  Omega_h::parallel_for(mesh.nents(elmDim), setNumber, kernelName.c_str());
+  const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(partDim);
+  Omega_h::parallel_for(mesh.nents(partDim), setNumber, kernelName.c_str());
 }
 
 /**
@@ -447,12 +506,27 @@ void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO elmDim, const LO do
  *
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
-void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, const LO dofsPerElm, const LO dofOffset,
+void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, const std::string partId, const LO dofsPerElm, const LO dofOffset,
     const LO dofsPerEnt, Omega_h::Read<Omega_h::I8> mask, Omega_h::Write<Omega_h::GO> elm2dof) {
+  Omega_h::Read<Omega_h::I8> isInPart;
+  if(partId == "") {
+    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
+  } else {
+    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+  }
+  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
+  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
+  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
+    if(isInPart[i]) {
+      partEntIdx[i] = partEntOffset[i];
+    } else {
+      partEntIdx[i] = 0;
+    }
+  });
   auto setMask = OMEGA_H_LAMBDA(int elm) {
     for(int k=0; k<dofsPerEnt; k++) {
-      const auto dofIndex = elm*dofsPerEnt+k;
-      const auto connIdx = (elm*dofsPerElm)+(dofOffset+k);
+      const auto elmPartIdx = partEntIdx[elm];
+      const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+k);
       elm2dof[connIdx] = mask[elm];
     }
   };
@@ -471,11 +545,17 @@ LO OmegahConnManager::getPartConnectivitySize() const
   return dofsPerElm;
 }
 
+LO getNumEntsInPart(Omega_h::Mesh& mesh, const LO partDim, std::string partId) {
+  const auto isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+  return Omega_h::get_sum<Omega_h::I8>(isInPart);
+}
+
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
     const std::string& tagName, const Omega_h::Adj elmToDim[3]) const
 {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
-  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nents(partDim);
+  const LO numEntsInPart = getNumEntsInPart(mesh, partDim, partId);
+  Omega_h::LO totalNumDofs = m_dofsPerElm*numEntsInPart;
   for(int i=partDim+1; i<4; i++)
     assert(!m_dofsPerEnt[i]);//watch out for stragglers
   Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
@@ -489,7 +569,7 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
       } else {
         maskArray = Omega_h::Read<Omega_h::I8>(mesh.nents(adjDim), 0);
       }
-      setElementToEntDofConnectivityMask(mesh, partDim, maskArray, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
+      setElementToEntDofConnectivityMask(mesh, partDim, partId, maskArray, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
           m_dofsPerEnt[adjDim], elm2dof);
       const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
@@ -502,7 +582,7 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
     } else {
       maskArray = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 0);
     }
-    setElementDofConnectivityMask(mesh, partDim, m_dofsPerElm, dofOffset, m_dofsPerEnt[partDim], maskArray, elm2dof);
+    setElementDofConnectivityMask(mesh, partDim, partId, m_dofsPerElm, dofOffset, m_dofsPerEnt[partDim], maskArray, elm2dof);
   }
   return elm2dof;
 }
@@ -511,7 +591,8 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
     const std::array<Omega_h::GOs,4>& globalDofNumbering) const {
   //create array that is numVtxDofs+numEdgeDofs+numFaceDofs+numElmDofs long
-  Omega_h::LO totalNumDofs = m_dofsPerElm*mesh.nents(partDim);
+  const LO numEntsInPart = getNumEntsInPart(mesh, partDim, partId);
+  Omega_h::LO totalNumDofs = m_dofsPerElm*numEntsInPart;
   for(int i=partDim+1; i<4; i++)
     assert(!m_dofsPerEnt[i]);//watch out for stragglers
   Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
@@ -519,14 +600,14 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
   LO dofOffset = 0;
   for(int adjDim=0; adjDim<partDim; adjDim++) {
     if(m_dofsPerEnt[adjDim]) {
-      setElementToEntDofConnectivity(mesh, partDim, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
+      setElementToEntDofConnectivity(mesh, partDim, partId, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
           m_dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
       const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partDim, adjDim);
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
     }
   }
   if(m_dofsPerEnt[partDim]) {
-    setElementDofConnectivity(mesh, partDim, m_dofsPerElm, dofOffset, m_dofsPerEnt[partDim],
+    setElementDofConnectivity(mesh, partDim, partId, m_dofsPerElm, dofOffset, m_dofsPerEnt[partDim],
         globalDofNumbering[partDim], elm2dof);
   }
   return elm2dof;
