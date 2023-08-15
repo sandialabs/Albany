@@ -546,8 +546,12 @@ LO OmegahConnManager::getPartConnectivitySize() const
 }
 
 LO getNumEntsInPart(Omega_h::Mesh& mesh, const LO partDim, std::string partId) {
-  const auto isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
-  return Omega_h::get_sum<Omega_h::I8>(isInPart);
+  if(partId=="")
+    return mesh.nents(partDim);
+  else {
+    const auto isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
+    return Omega_h::get_sum<Omega_h::I8>(isInPart);
+  }
 }
 
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
