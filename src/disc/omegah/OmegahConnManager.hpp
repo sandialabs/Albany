@@ -20,15 +20,17 @@
 
 namespace Albany {
 
+struct OmegahPartFilter {
+  const LO dim;
+  const std::string name;
+};
+
 class OmegahConnManager : public ConnManager {
 private:
   Omega_h::Mesh& mesh;
-  LO partDim;
-  std::string partId;
+  const OmegahPartFilter partFilter;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
-  Omega_h::LOs entIdsInPart; //contiguous ids of entities of dimension partDim, defined by tag partId in mesh 
-  Omega_h::Read<Omega_h::I8> isEntInPart; //1 if the given entity of dimension partDim is in the part defined by tag partId
   std::vector<Ownership> owners; //FIXME
   LO m_dofsPerElm = 0;
   std::array<LO,4> m_dofsPerEnt;
