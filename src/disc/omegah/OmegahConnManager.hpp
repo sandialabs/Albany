@@ -34,10 +34,6 @@ private:
   std::array<LO,4> m_dofsPerEnt;
   std::array<Omega_h::GOs,4> m_globalDofNumbering;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
-  void initLocalElmIds() {
-    localElmIds.resize(mesh.nelems());
-    std::iota(localElmIds.begin(), localElmIds.end(), 0);
-  }
   LO getPartConnectivitySize() const;
   std::array<Omega_h::GOs,4> createGlobalDofNumbering() const;
   Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],

@@ -216,28 +216,6 @@ struct Shards2OmegahPerm {
   {}
 };
 
-
-
-
-
-OmegahConnManager::
-OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim()), partId("")
-{
-  //albany does *not* support processes without elements
-  TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
-      "Error! Input mesh has no elements!\n");
-
-  m_elem_blocks_names.push_back("omegah_mesh_block");
-
-  //the omegah conn manager will be recreated after each topological adaptation
-  // - a change to mesh vertex coordinates (mesh motion) will not require
-  //   recreating the conn manager
-  initLocalElmIds();
-  assert(mesh.has_tag(mesh.dim(), "global"));
-
-  owners = std::vector<Ownership>(1); //FIXME
-}
-
 Omega_h::Read<Omega_h::I8> getIsEntInPart(Omega_h::Mesh& mesh, const LO partDim, const std::string partId) {
   if(partId == "") {
     return Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
@@ -257,6 +235,38 @@ Omega_h::LOs numberEntsInPart(Omega_h::Mesh& mesh, const LO partDim, const std::
     }
   });
   return Omega_h::LOs(partEntIdx);
+}
+
+[[nodiscard]]
+std::vector<LO> getLocalElmIds(Omega_h::Mesh& mesh, const LO partDim, const std::string partId) {
+  if(partId=="") {
+    std::vector<LO> localElmIds(mesh.nelems());
+    std::iota(localElmIds.begin(), localElmIds.end(), 0);
+    return localElmIds;
+  } else {
+    auto isInPart = getIsEntInPart(mesh, partDim, partId);
+    auto entPartId = numberEntsInPart(mesh,partDim, partId, isInPart);
+    Omega_h::HostRead<Omega_h::LO> entPartId_h(entPartId);
+    return std::vector<LO>(entPartId_h.data(), entPartId_h.data()+entPartId_h.size());
+  }
+}
+
+OmegahConnManager::
+OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim()), partId("")
+{
+  //albany does *not* support processes without elements
+  TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
+      "Error! Input mesh has no elements!\n");
+
+  m_elem_blocks_names.push_back("omegah_mesh_block");
+
+  //the omegah conn manager will be recreated after each topological adaptation
+  // - a change to mesh vertex coordinates (mesh motion) will not require
+  //   recreating the conn manager
+  localElmIds = getLocalElmIds(mesh, partDim, partId);
+  assert(mesh.has_tag(mesh.dim(), "global"));
+
+  owners = std::vector<Ownership>(1); //FIXME
 }
 
 OmegahConnManager::
@@ -283,9 +293,7 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPart
 
   assert(mesh.has_tag(partDim, "global"));
 
-  auto entPartId = numberEntsInPart(mesh,partDim, partId, isInPart);
-  Omega_h::HostRead<Omega_h::LO> entPartId_h(entPartId);
-  localElmIds = std::vector<LO>(entPartId_h.data(), entPartId_h.data()+entPartId_h.size());
+  localElmIds = getLocalElmIds(mesh, partDim, partId);
 
   owners = std::vector<Ownership>(1); //FIXME
 }
