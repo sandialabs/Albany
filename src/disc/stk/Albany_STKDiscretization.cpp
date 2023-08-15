@@ -1369,6 +1369,7 @@ STKDiscretization::computeWorksetInfo()
               state_h(i, j) = *stk::mesh::field_data(field, rowNode);
             }
           }
+          state.sync_to_dev();
           break;
         }
         case 3:  // vector
@@ -1387,6 +1388,7 @@ STKDiscretization::computeWorksetInfo()
               }
             }
           }
+          state.sync_to_dev();
           break;
         }
         case 4:  // tensor
@@ -1409,6 +1411,7 @@ STKDiscretization::computeWorksetInfo()
               }
             }
           }
+          state.sync_to_dev();
           break;
         }
       }

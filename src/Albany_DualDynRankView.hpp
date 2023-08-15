@@ -19,7 +19,7 @@ namespace Albany
 template<typename DT>
 struct DualDynRankView {
   using dev_t  = Kokkos::DynRankView<DT,Kokkos::LayoutRight,DeviceMemSpace>;
-  using host_t = typename dev_t::HostMirror;
+  using host_t = Kokkos::DynRankView<DT,Kokkos::LayoutRight,HostMemSpace>;
 
   using drvtraits   = typename dev_t::drvtraits;
   using const_DT    = typename drvtraits::const_data_type;
@@ -54,7 +54,7 @@ struct DualDynRankView {
    : d_view(d_view_)
   {
     ALBANY_ASSERT (d_view.data()!=nullptr, "Invalid device view.");
-    h_view = Kokkos::create_mirror_view (d_view);
+    create_host_view<DeviceMemSpace>();
   }
   template<typename HostT, typename =
     typename std::enable_if<not std::is_same<dev_t,host_t>::value and
@@ -64,15 +64,7 @@ struct DualDynRankView {
    : h_view(t_view_)
   {
     ALBANY_ASSERT (h_view.data()!=nullptr, "Invalid host view.");
-    d_view = dev_t(h_view.label(),
-        (h_view.rank()>0 ? h_view.extent(0) : KOKKOS_INVALID_INDEX),
-        (h_view.rank()>1 ? h_view.extent(1) : KOKKOS_INVALID_INDEX),
-        (h_view.rank()>2 ? h_view.extent(2) : KOKKOS_INVALID_INDEX),
-        (h_view.rank()>3 ? h_view.extent(3) : KOKKOS_INVALID_INDEX),
-        (h_view.rank()>4 ? h_view.extent(4) : KOKKOS_INVALID_INDEX),
-        (h_view.rank()>5 ? h_view.extent(5) : KOKKOS_INVALID_INDEX),
-        (h_view.rank()>6 ? h_view.extent(6) : KOKKOS_INVALID_INDEX),
-        (h_view.rank()>7 ? h_view.extent(7) : KOKKOS_INVALID_INDEX));
+    create_dev_view<DeviceMemSpace>();
   }
   DualDynRankView (const DualDynRankView&) = default;
 
@@ -129,7 +121,7 @@ struct DualDynRankView {
   void reset (const dev_t& d) {
     ALBANY_ASSERT (d.data()!=nullptr, "Invalid device view.");
     d_view = d;
-    h_view = Kokkos::create_mirror_view(d_view);
+    create_host_view<DeviceMemSpace>();
     sync_to_host();
   }
 
@@ -143,8 +135,10 @@ struct DualDynRankView {
                             const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
                             const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
   {
-    dev_t v_dev(ptr,n0,n1,n2,n3,n4,n5,n6,n7);
-    reset (v_dev);
+    ALBANY_ASSERT (ptr!=nullptr, "Invalid host ptr.");
+    h_view = host_t(ptr,n0,n1,n2,n3,n4,n5,n6,n7);
+    create_dev_view<DeviceMemSpace>();
+    sync_to_dev();
   }
 
   void resize (const std::string& name,
@@ -169,6 +163,48 @@ struct DualDynRankView {
   }
 
 private:
+
+#if defined(KOKKOS_ENABLE_CUDA_UVM)
+  template<typename DevMS>
+  typename std::enable_if<std::is_same<DevMS,Kokkos::CudaUVMSpace>::value>::type
+  create_dev_view () {
+    auto layout = h_view.layout();
+    for (size_t r=h_view.rank(); r<Kokkos::ARRAY_LAYOUT_MAX_RANK; ++r) {
+      layout.dimension[r] = KOKKOS_INVALID_INDEX;
+    }
+    d_view = dev_t(h_view.label(),layout);
+  }
+  template<typename DevMS>
+  typename std::enable_if<!std::is_same<DevMS,Kokkos::CudaUVMSpace>::value>::type
+  create_dev_view () {
+    d_view = Kokkos::create_mirror_view(DeviceMemSpace(),h_view);
+  }
+
+  template<typename DevMS>
+  typename std::enable_if<std::is_same<DevMS,Kokkos::CudaUVMSpace>::value>::type
+  create_host_view () {
+    auto layout = d_view.layout();
+    for (size_t r=d_view.rank(); r<Kokkos::ARRAY_LAYOUT_MAX_RANK; ++r) {
+      layout.dimension[r] = KOKKOS_INVALID_INDEX;
+    }
+    h_view = host_t(d_view.label(),layout);
+  }
+  template<typename DevMS>
+  typename std::enable_if<!std::is_same<DevMS,Kokkos::CudaUVMSpace>::value>::type
+  create_host_view () {
+    h_view = Kokkos::create_mirror_view(d_view);
+  }
+#else
+  template<typename DevMS>
+  void create_dev_view () {
+    d_view = Kokkos::create_mirror_view(DeviceMemSpace(),h_view);
+  }
+
+  template<typename DevMS>
+  void create_host_view () {
+    h_view = Kokkos::create_mirror_view(d_view);
+  }
+#endif
 
   dev_t   d_view;
   host_t  h_view;
