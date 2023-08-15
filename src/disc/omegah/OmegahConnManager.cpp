@@ -238,6 +238,27 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim()), 
   owners = std::vector<Ownership>(1); //FIXME
 }
 
+Omega_h::Read<Omega_h::I8> getIsEntInPart(Omega_h::Mesh& mesh, const LO partDim, const std::string partId) {
+  if(partId == "") {
+    return Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
+  } else {
+    return mesh.get_array<Omega_h::I8>(partDim, partId);
+  }
+}
+
+Omega_h::LOs numberEntsInPart(Omega_h::Mesh& mesh, const LO partDim, const std::string partId, Omega_h::Read<Omega_h::I8> isInPart) {
+  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
+  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
+  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
+    if(isInPart[i]) {
+      partEntIdx[i] = partEntOffset[i];
+    } else {
+      partEntIdx[i] = 0;
+    }
+  });
+  return Omega_h::LOs(partEntIdx);
+}
+
 OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPartDim) :
   mesh(in_mesh), partDim(inPartDim), partId(inPartId)
@@ -248,13 +269,9 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPart
   assert(partDim <= mesh.dim());
 
   //TODO this needs to be tested for a tag that has no entries on some processes
-  Omega_h::Read<Omega_h::I8> isInPart;
-  if(mesh.has_tag(partDim, partId)) {
-    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
-  }
+  auto isInPart = getIsEntInPart(mesh,partDim,partId);
   const auto numInPartGlobal = Omega_h::get_sum(world,isInPart);
   assert(numInPartGlobal > 0);
-  std::cerr << rank << " numInPart " << numInPartGlobal << "\n";
   world->barrier();
   std::stringstream ss;
   ss << "Error! Input mesh has no mesh entities of dimension "
@@ -266,20 +283,9 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPart
 
   assert(mesh.has_tag(partDim, "global"));
 
-  //create the host array of entities in the part {
-  // no attempt to make this 'fast' was made...
-  const auto numInPart = Omega_h::get_sum(isInPart);
-  Omega_h::Write<Omega_h::LO> localPartEntIds(numInPart);
-  Omega_h::Write<Omega_h::LO> index({0},"localEntIndex");
-  auto getLocalPartEntIds = OMEGA_H_LAMBDA(int i) {
-    if(isInPart[i]) {
-      const auto idx = Omega_h::atomic_fetch_add(&index[0],1);
-      localPartEntIds[idx] = i;
-    }
-  };
-  const std::string kernelName = "getLocalPartEntIds" + std::to_string(partDim);
-  Omega_h::parallel_for(mesh.nents(partDim), getLocalPartEntIds, kernelName.c_str());
-  //}
+  auto entPartId = numberEntsInPart(mesh,partDim, partId, isInPart);
+  Omega_h::HostRead<Omega_h::LO> entPartId_h(entPartId);
+  localElmIds = std::vector<LO>(entPartId_h.data(), entPartId_h.data()+entPartId_h.size());
 
   owners = std::vector<Ownership>(1); //FIXME
 }
@@ -374,21 +380,8 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, c
   const auto adjEnts = elmToDim.ab2b;
   TEUCHOS_TEST_FOR_EXCEPTION(partDim != 2 && adjDim != 0, std::logic_error,
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
-  Omega_h::Read<Omega_h::I8> isInPart;
-  if(partId == "") {
-    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
-  } else {
-    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
-  }
-  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
-  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
-  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
-    if(isInPart[i]) {
-      partEntIdx[i] = partEntOffset[i];
-    } else {
-      partEntIdx[i] = 0;
-    }
-  });
+  auto isInPart = getIsEntInPart(mesh, partDim, partId);
+  auto partEntIdx = numberEntsInPart(mesh, partDim, partId, isInPart);
   Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
   const auto totNumDofs = elm2dof.size();
@@ -424,21 +417,8 @@ void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, const
   const auto adjEnts = elmToDim.ab2b;
   TEUCHOS_TEST_FOR_EXCEPTION(partDim != 2 && adjDim != 0, std::logic_error,
       "Error! OmegahConnManager Omega_h-to-Shards permutation only tested for vertices of triangles.\n")
-  Omega_h::Read<Omega_h::I8> isInPart;
-  if(partId == "") {
-    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
-  } else {
-    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
-  }
-  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
-  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
-  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
-    if(isInPart[i]) {
-      partEntIdx[i] = partEntOffset[i];
-    } else {
-      partEntIdx[i] = 0;
-    }
-  });
+  auto isInPart = getIsEntInPart(mesh, partDim, partId);
+  auto partEntIdx = numberEntsInPart(mesh, partDim, partId, isInPart);
   Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
   const auto totNumDofs = elm2dof.size();
@@ -471,21 +451,8 @@ void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, const
  */
 void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, std::string partId, const LO dofsPerElm, const LO dofOffset,
     const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
-  Omega_h::Read<Omega_h::I8> isInPart;
-  if(partId == "") {
-    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
-  } else {
-    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
-  }
-  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
-  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
-  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
-    if(isInPart[i]) {
-      partEntIdx[i] = partEntOffset[i];
-    } else {
-      partEntIdx[i] = 0;
-    }
-  });
+  auto isInPart = getIsEntInPart(mesh, partDim, partId);
+  auto partEntIdx = numberEntsInPart(mesh, partDim, partId, isInPart);
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     if(isInPart[elm]) {
       for(int k=0; k<dofsPerEnt; k++) {
@@ -508,21 +475,8 @@ void setElementDofConnectivity(Omega_h::Mesh& mesh, const LO partDim, std::strin
  */
 void setElementDofConnectivityMask(Omega_h::Mesh& mesh, const LO partDim, const std::string partId, const LO dofsPerElm, const LO dofOffset,
     const LO dofsPerEnt, Omega_h::Read<Omega_h::I8> mask, Omega_h::Write<Omega_h::GO> elm2dof) {
-  Omega_h::Read<Omega_h::I8> isInPart;
-  if(partId == "") {
-    isInPart = Omega_h::Read<Omega_h::I8>(mesh.nents(partDim), 1);
-  } else {
-    isInPart = mesh.get_array<Omega_h::I8>(partDim, partId);
-  }
-  auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
-  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh.nents(partDim));
-  Omega_h::parallel_for(mesh.nents(partDim), OMEGA_H_LAMBDA(int i) {
-    if(isInPart[i]) {
-      partEntIdx[i] = partEntOffset[i];
-    } else {
-      partEntIdx[i] = 0;
-    }
-  });
+  auto isInPart = getIsEntInPart(mesh, partDim, partId);
+  auto partEntIdx = numberEntsInPart(mesh, partDim, partId, isInPart);
   auto setMask = OMEGA_H_LAMBDA(int elm) {
     for(int k=0; k<dofsPerEnt; k++) {
       const auto elmPartIdx = partEntIdx[elm];

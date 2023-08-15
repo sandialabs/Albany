@@ -27,6 +27,8 @@ private:
   std::string partId;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
+  Omega_h::LOs entIdsInPart; //contiguous ids of entities of dimension partDim, defined by tag partId in mesh 
+  Omega_h::LOs isEntInPart; //1 if the given entity of dimension partDim is in the part defined by tag partId
   std::vector<Ownership> owners; //FIXME
   LO m_dofsPerElm = 0;
   std::array<LO,4> m_dofsPerEnt;
