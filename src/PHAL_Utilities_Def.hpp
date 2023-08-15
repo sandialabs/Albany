@@ -35,7 +35,8 @@ MDFieldIterator (PHX::MDField<T>& a) : a_(a) {
 }
 
 template<typename T> MDFieldVectorRight<T>::
-MDFieldVectorRight (PHX::MDField<T>& a) : a_(a) {
+MDFieldVectorRight (PHX::MDField<T>& a) {
+  a_ = a.get_static_view();
   rank_ = a_.rank();
   TEUCHOS_TEST_FOR_EXCEPTION(rank_ <= 0, std::logic_error, "MDFieldVectorRight is not implemented for fields of rank <= 0.\n");
   TEUCHOS_TEST_FOR_EXCEPTION(rank_ >  5, std::logic_error, "MDFieldVectorRight is not implemented for fields of rank > 5.\n");
@@ -46,7 +47,7 @@ MDFieldVectorRight (PHX::MDField<T>& a) : a_(a) {
   dim4 = (rank_ > 4) ? a.extent(4) : 0;
 }
 
-template<typename T> KOKKOS_INLINE_FUNCTION typename Ref<T>::type
+template<typename T> KOKKOS_INLINE_FUNCTION MDFieldVectorRight<T>::ref_t
 MDFieldVectorRight<T>::operator[] (const int i) const {
   int idx0, idx1, idx2, idx3, idx4;
   if (rank_ == 1) {

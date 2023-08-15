@@ -50,11 +50,11 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
   //       If dev data has changed, it should be synced to host by
   //       whomever changed the data.
   const auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
-  Kokkos::deep_copy(stateToLoad.dev(), stateToLoad.host());
-  auto stateData   = stateToLoad.dev();
+  auto stateData = stateToLoad.dev();
   const int stateToLoad_size = stateToLoad.size();
 
-  PHAL::MDFieldVectorRight<ScalarType> dataVec(data);
+  MDFieldVectorRight<ScalarType> g(data);
+  dataVec = g;
 
   Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
@@ -97,12 +97,12 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   //       If dev data has changed, it should be synced to host by
   //       whomever changed the data.
   const auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
-  Kokkos::deep_copy(stateToLoad.dev(), stateToLoad.host());
-  auto stateData   = stateToLoad.dev();
+  auto stateData = stateToLoad.dev();
   const int stateToLoad_size = stateToLoad.size();
 
-  MDFieldVectorRight<ParamScalarT> dataVec(data);
-
+  MDFieldVectorRight<ParamScalarT> g(data);
+  dataVec = g;
+  
   Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
     dataVec[i] = (i < stateToLoad_size) ? stateData(i) : 0.0;

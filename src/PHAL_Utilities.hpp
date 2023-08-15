@@ -90,18 +90,19 @@ private:
 
 //! Mimics MDFieldIterator's access patterns in a Kokkos::parallel_for friendly way
 //! MDFieldIterator treats MDField like it has RightLayout regardless of memory space,
-//! and may not be efficient on GPU
+//! and may not be efficient on GPU in some situations
 template<typename T>
 class MDFieldVectorRight {
 public:
-  using array_type = typename PHX::MDField<T>::array_type;
-  using reference_type = typename PHX::MDField<T>::reference_type;
-  using return_type = typename PHX::MDFieldReturnType<array_type>::return_type;
-  explicit MDFieldVectorRight(PHX::MDField<T>& a);
-  KOKKOS_INLINE_FUNCTION typename Ref<T>::type operator[](const int i) const;
+  using ref_t = typename PHAL::Ref<T>::type;
+  MDFieldVectorRight() = default;
+  MDFieldVectorRight(const MDFieldVectorRight<T>&) = default;
+  MDFieldVectorRight<T>& operator=(const MDFieldVectorRight<T>&) = default;
+  MDFieldVectorRight(PHX::MDField<T>& a);
+  KOKKOS_INLINE_FUNCTION ref_t operator[](const int i) const;  
   
 private:
-  PHX::MDField<T>& a_;
+  Kokkos::DynRankView<T, PHX::Device> a_;
   typename PHX::DataLayout::size_type dim0, dim1, dim2, dim3, dim4;
   int rank_;
 };
