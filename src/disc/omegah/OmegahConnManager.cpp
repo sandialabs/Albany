@@ -260,6 +260,7 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partDim(mesh.dim()), 
 
   m_elem_blocks_names.push_back("omegah_mesh_block");
 
+  isEntInPart = getIsEntInPart(mesh,partDim,partId);
   //the omegah conn manager will be recreated after each topological adaptation
   // - a change to mesh vertex coordinates (mesh motion) will not require
   //   recreating the conn manager
@@ -279,8 +280,8 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPart
   assert(partDim <= mesh.dim());
 
   //TODO this needs to be tested for a tag that has no entries on some processes
-  auto isInPart = getIsEntInPart(mesh,partDim,partId);
-  const auto numInPartGlobal = Omega_h::get_sum(world,isInPart);
+  isEntInPart = getIsEntInPart(mesh,partDim,partId);
+  const auto numInPartGlobal = Omega_h::get_sum(world,isEntInPart);
   assert(numInPartGlobal > 0);
   world->barrier();
   std::stringstream ss;
