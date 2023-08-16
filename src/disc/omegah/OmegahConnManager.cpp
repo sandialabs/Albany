@@ -484,8 +484,8 @@ void setElementDofConnectivity(Omega_h::Mesh& mesh, const OmegahPartFilter filt,
       }
     }
   };
-  const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(partDim);
-  Omega_h::parallel_for(mesh.nents(partDim), setNumber, kernelName.c_str());
+  const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(filt.dim);
+  Omega_h::parallel_for(mesh.nents(filt.dim), setNumber, kernelName.c_str());
 }
 
 /**
@@ -576,7 +576,7 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
     }
   }
   if(m_dofsPerEnt[partFilter.dim]) {
-    setElementDofConnectivity(mesh, partFilter.dim, partFilter.name, m_dofsPerElm, dofOffset, m_dofsPerEnt[partFilter.dim],
+    setElementDofConnectivity(mesh, partFilter, m_dofsPerElm, dofOffset, m_dofsPerEnt[partFilter.dim],
         globalDofNumbering[partFilter.dim], elm2dof);
   }
   return elm2dof;
