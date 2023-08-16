@@ -265,10 +265,12 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(OMEGA_H_VERT),0);
   const auto isLateralSide = mesh.get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
   auto lateralVerts = markDownward(mesh, isLateralSide, OMEGA_H_EDGE, OMEGA_H_VERT);
+  const auto isOwnedVtx = mesh.owned(OMEGA_H_VERT);
   Omega_h::parallel_for(mesh.nents(OMEGA_H_VERT), OMEGA_H_LAMBDA(LO vtx) {
-      isInSet_vtx[vtx] = ((vtxCoords[vtx*2+1] >= minYCoord) && lateralVerts[vtx]);
+      if(isOwnedVtx[vtx])
+        isInSet_vtx[vtx] = ((vtxCoords[vtx*2+1] >= minYCoord) && lateralVerts[vtx]);
   });
-  const int upperSide_numVerts = Omega_h::get_sum<Omega_h::I8>(isInSet_vtx);
+  const int upperSide_numVerts = Omega_h::get_sum<Omega_h::I8>(mesh.library()->world(), isInSet_vtx);
   REQUIRE(upperSide_numVertsExpected == upperSide_numVerts);
   mesh.add_tag(upperSide_classDim, upperSide_name, 1, Omega_h::read(isInSet_vtx));
 
