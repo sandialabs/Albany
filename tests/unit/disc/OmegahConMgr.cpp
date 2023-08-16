@@ -277,7 +277,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   conn_mgr->buildConnectivity(*patternEdgeC1);
   auto mask = conn_mgr->getConnectivityMask(upperSide_name);
   const int sum = std::accumulate(mask.begin(), mask.end(), 0);
-  fprintf(stderr, "\n sum %d\n", sum);
 
   { //count the number of times upperSide vertices appear in the vertices bounding edges
     //this count should match the number of times '1' appears in the
@@ -286,6 +285,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
     const auto isUpperSide = mesh.get_array<Omega_h::I8>(OMEGA_H_VERT, upperSide_name);
     auto edgeVerts = mesh.ask_down(OMEGA_H_EDGE,OMEGA_H_VERT).ab2b;
     const auto degree = Omega_h::simplex_degree(OMEGA_H_EDGE, OMEGA_H_VERT);
+    assert(degree == 2);
     Omega_h::Write<Omega_h::LO> elmToUpperVtxCount_d(1,0);
     Omega_h::parallel_for(mesh.nents(OMEGA_H_EDGE), OMEGA_H_LAMBDA(LO edge) {
         if(lateralSide[edge]) {
@@ -296,7 +296,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
         }
     });
     const auto elmToUpperVtxCount = elmToUpperVtxCount_d.get(0);
-    fprintf(stderr, "\n elmToUpperVtxCount %d\n", elmToUpperVtxCount);
     REQUIRE(elmToUpperVtxCount == sum);
   }
   out << "Testing OmegahConnManager::getConnectivityMask()\n";
