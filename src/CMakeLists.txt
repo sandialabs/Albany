@@ -342,6 +342,7 @@ if (ENABLE_OMEGAH)
   )
   list (APPEND HEADERS
     disc/omegah/OmegahConnManager.hpp
+    disc/omegah/OmegahPermutation.hpp
   )
 endif()
 
