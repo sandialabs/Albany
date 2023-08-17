@@ -130,9 +130,9 @@ public:
   void evaluateFields(typename Traits::EvalData /*d*/)
   {
     if (log_parameter) {
-      param_as_field(0) = std::exp(accessor->getValue());
+      param_as_field.deep_copy(std::exp(accessor->getValue()));
     } else {
-      param_as_field(0) = accessor->getValue();
+      param_as_field.deep_copy(accessor->getValue());
     }
   }
 

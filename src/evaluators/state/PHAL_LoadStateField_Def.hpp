@@ -50,11 +50,16 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
   //       If dev data has changed, it should be synced to host by
   //       whomever changed the data.
   const auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
-  auto stateData   = stateToLoad.host().data();
-  PHAL::MDFieldIterator<ScalarType> d(data);
-  for (int i = 0; ! d.done() && i < stateToLoad.size(); ++d, ++i)
-    *d = stateData[i];
-  for ( ; ! d.done(); ++d) *d = 0.;
+  auto stateData = stateToLoad.dev();
+  const int stateToLoad_size = stateToLoad.size();
+
+  MDFieldVectorRight<ScalarType> g(data);
+  dataVec = g;
+
+  Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
+                       KOKKOS_CLASS_LAMBDA(const int i) {
+    dataVec[i] = (i < stateToLoad_size) ? stateData(i) : 0.0;
+  });
 }
 
 template<typename EvalT, typename Traits>
@@ -91,13 +96,17 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   // NOTE: we don't sync to host, since we don't know if it's needed.
   //       If dev data has changed, it should be synced to host by
   //       whomever changed the data.
-  auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
-  auto stateData   = stateToLoad.host().data();
+  const auto& stateToLoad = (*workset.stateArrayPtr)[stateName];
+  auto stateData = stateToLoad.dev();
+  const int stateToLoad_size = stateToLoad.size();
 
-  PHAL::MDFieldIterator<ParamScalarT> d(data);
-  for (int i = 0; ! d.done() && i < stateToLoad.size(); ++d, ++i)
-    *d = stateData[i];
-  for ( ; ! d.done(); ++d) *d = 0.;
+  MDFieldVectorRight<ParamScalarT> g(data);
+  dataVec = g;
+  
+  Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
+                       KOKKOS_CLASS_LAMBDA(const int i) {
+    dataVec[i] = (i < stateToLoad_size) ? stateData(i) : 0.0;
+  });
 }
 
 } // namespace PHAL

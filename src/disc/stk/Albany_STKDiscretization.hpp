@@ -93,7 +93,7 @@ public:
   }
 
   //! Get local DOF views for GatherVerticallyContractedSolution
-  const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
+  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const
   {
     return wsLocalDOFViews.at(workset);
@@ -481,8 +481,8 @@ public:
   std::map<int, LocalSideSetInfoList> sideSetViews;
 
   //! GatherVerticallyContractedSolution connectivity
-  std::map<std::string, Kokkos::View<LO****, PHX::Device>> allLocalDOFViews;
-  std::map<int, std::map<std::string, Kokkos::View<LO****, PHX::Device>>> wsLocalDOFViews;
+  std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> allLocalDOFViews;
+  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> wsLocalDOFViews;
 
   mutable Teuchos::ArrayRCP<double>                                 coordinates;
   Teuchos::RCP<Thyra_MultiVector>                                   coordMV;

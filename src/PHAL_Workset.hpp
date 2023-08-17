@@ -101,7 +101,7 @@ struct Workset
   Teuchos::RCP<const Albany::SideSetList> sideSets;
   Teuchos::RCP<const Albany::LocalSideSetInfoList> sideSetViews;
 
-  Teuchos::RCP<const std::map<std::string, Kokkos::View<LO****, PHX::Device>>> localDOFViews;
+  Teuchos::RCP<const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> localDOFViews;
 
   // jacobian and mass matrix coefficients for matrix fill
   double j_coeff;

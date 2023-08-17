@@ -79,13 +79,15 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
-  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  sideNodes = Kokkos::DualView<int**, PHX::Device>("sideNodes", numSides, nodeMax);
   for (unsigned int side=0; side<numSides; ++side) {
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (unsigned int node=0; node<thisSideNodes; ++node) {
-      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
+  sideNodes.modify_host();
+  sideNodes.sync_device();
 }
 
 // **********************************************************************
@@ -134,8 +136,8 @@ void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
 operator() (const LaplacianRegularization_Side_Tag& tag, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx(sideSet_idx);
-  const int side = sideSet.side_pos(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+  const int side = sideSet.side_pos.d_view(sideSet_idx);
 
   MeshScalarT side_trapezoid_weights= 0;
   for (unsigned int qp=0; qp<numSideQPs; ++qp)
@@ -143,7 +145,7 @@ operator() (const LaplacianRegularization_Side_Tag& tag, const int& sideSet_idx)
   side_trapezoid_weights /= numSideNodes;
 
   for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-    auto cell_node = sideNodes(side,inode);
+    auto cell_node = sideNodes.d_view(side,inode);
     residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
   }
 

@@ -58,13 +58,15 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
-  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  sideNodes = Kokkos::DualView<int**, PHX::Device>("sideNodes", numSides, nodeMax);
   for (unsigned int side=0; side<numSides; ++side) {
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (unsigned int node=0; node<thisSideNodes; ++node) {
-      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
+  sideNodes.modify_host();
+  sideNodes.sync_device();
 
   this->setName("Enthalpy Basal Residual" + PHX::print<EvalT>());
 }
@@ -76,8 +78,8 @@ operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) cons
 
   constexpr int maxNumNodesPerSide = 4;
 
-  const int cell = sideSet.ws_elem_idx(sideSet_idx);
-  const int side = sideSet.side_pos(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+  const int side = sideSet.side_pos.d_view(sideSet_idx);
 
   ScalarT val[maxNumNodesPerSide];
   for (unsigned int node = 0; node < numSideNodes; ++node) {
@@ -90,7 +92,7 @@ operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) cons
   }
   
   for (unsigned int node = 0; node < numSideNodes; ++node) {
-    enthalpyBasalResid(cell, sideNodes(side,node)) += val[node];
+    enthalpyBasalResid(cell, sideNodes.d_view(side,node)) += val[node];
   }
 
 }

@@ -144,7 +144,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (const FastSolutionVecGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const;
 
-  int num_dof, neq;
+  int neq;
 
 #endif
 };

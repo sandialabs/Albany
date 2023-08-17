@@ -42,7 +42,7 @@ private:
   std::string                     sideSetName;
   std::vector<int>                dims;
 
-  Kokkos::View<int**, PHX::Device> sideNodes;
+  Kokkos::DualView<int**, PHX::Device> sideNodes;
 
   Albany::LocalSideSetInfo sideSet;
 

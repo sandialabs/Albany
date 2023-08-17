@@ -182,6 +182,13 @@ postRegistrationSetup(typename Traits::SetupData d,
         device_sol.val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
       }
     }
+    device_sol.val_kokkos.host_to_device();
+    if (enableTransient){
+      device_sol.val_dot_kokkos.host_to_device();
+    }
+    if (enableAcceleration){
+      device_sol.val_dotdot_kokkos.host_to_device();
+    }
 #endif
   } else if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);

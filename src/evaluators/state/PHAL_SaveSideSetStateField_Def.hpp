@@ -127,12 +127,16 @@ saveElemState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
     "Error! STK Field ptr is null.\n");
 
+  const auto field_d_view = field.get_view();
+  const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+  Kokkos::deep_copy(field_h_mirror, field_d_view);
+
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
   double tan_cell_val, meas;
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
-    const int side_GID = sideSet.side_GID(sideSet_idx);
+    const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
 
     // Get the cell in the 2d mesh
     const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
@@ -140,11 +144,11 @@ saveElemState(typename Traits::EvalData workset)
     double* data = stk::mesh::field_data(*stk_field,cell2d);
     switch (rank) {
       case FRT::Scalar:
-        *data = field(sideSet_idx);
+        *data = field_h_mirror(sideSet_idx);
         break;
       case FRT::Vector:
         for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
-          data[idim] = field(sideSet_idx,idim);
+          data[idim] = field_h_mirror(sideSet_idx,idim);
         }
         break;
       case FRT::Gradient:
@@ -159,14 +163,14 @@ saveElemState(typename Traits::EvalData workset)
             for (int qp=0; qp<numQPs; ++qp) {
               tan_cell_val += tangents(sideSet_idx,qp,idim,itan)*w_measure(sideSet_idx,qp);
             }
-            data[idim] +=  (tan_cell_val/meas) * field(sideSet_idx,itan);
+            data[idim] +=  (tan_cell_val/meas) * field_h_mirror(sideSet_idx,itan);
           }
         }
         break;
       case FRT::Tensor:
         for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
           for (int jdim=0; jdim<static_cast<int>(dims[2]); ++jdim) {
-            data[idim*dims[1]+jdim] = field(sideSet_idx,idim,jdim);
+            data[idim*dims[1]+jdim] = field_h_mirror(sideSet_idx,idim,jdim);
         }}
         break;
     }
@@ -218,11 +222,15 @@ saveNodeState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
       "Error! STK field ptr is null.\n");
 
+  const auto field_d_view = field.get_view();
+  const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
+  Kokkos::deep_copy(field_h_mirror, field_d_view);
+
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
-    const int side_GID = sideSet.side_GID(sideSet_idx);
+    const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
 
     // Get the lid ordering map
     // Recall: map[i] = j means that the i-th node in the 3d side is the j-th node in the 2d cell
@@ -236,17 +244,17 @@ saveNodeState(typename Traits::EvalData workset)
       double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
       switch (rank) {
         case FRT::Scalar:
-          *data = field(sideSet_idx,inode);
+          *data = field_h_mirror(sideSet_idx,inode);
           break;
         case FRT::Vector:
           for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
-            data[idim] = field(sideSet_idx,inode,idim);
+            data[idim] = field_h_mirror(sideSet_idx,inode,idim);
           }
           break;
         case FRT::Gradient:
           for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
             for (int jdim=0; jdim<static_cast<int>(dims[3]); ++jdim) {
-              data[idim*dims[2]+jdim] = field(sideSet_idx,inode,idim,jdim);
+              data[idim*dims[2]+jdim] = field_h_mirror(sideSet_idx,inode,idim,jdim);
           }}
           break;
         default:

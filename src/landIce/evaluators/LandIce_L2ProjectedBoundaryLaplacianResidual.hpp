@@ -34,7 +34,7 @@ public:
 private:
 
   std::string sideName, bdEdgesName;
-  Kokkos::View<int**, PHX::Device> sideNodes;
+  Kokkos::DualView<int**, PHX::Device> sideNodes;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   unsigned int numNodes;

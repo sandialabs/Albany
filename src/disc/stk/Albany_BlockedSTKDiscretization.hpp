@@ -209,12 +209,12 @@ namespace Albany
     }
 
     //! Get local DOF views for GatherVerticallyContractedSolution
-    const std::map<std::string, Kokkos::View<LO ****, PHX::Device>> &
+    const std::map<std::string, Kokkos::DualView<LO ****, PHX::Device>> &
     getLocalDOFViews(const int workset) const
     {
       return this->getLocalDOFViews(0, workset);
     }
-    const std::map<std::string, Kokkos::View<LO ****, PHX::Device>> &
+    const std::map<std::string, Kokkos::DualView<LO ****, PHX::Device>> &
     getLocalDOFViews(const size_t i_block, const int workset) const
     {
       return m_blocks[i_block]->getLocalDOFViews(workset);

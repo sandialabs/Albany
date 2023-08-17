@@ -151,9 +151,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   constexpr auto ALL = Kokkos::ALL();
   for (int iside=0; iside<sideSet.size; ++iside) {
-    const int ws_elem_idx = sideSet.ws_elem_idx(iside);
+    const int ws_elem_idx = sideSet.ws_elem_idx.h_view(iside);
     const int elem_LID = elem_lids(ws_elem_idx);
-    const int side_pos = sideSet.side_pos(iside);
+    const int side_pos = sideSet.side_pos.h_view(iside);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
     for (int eq=0; eq<numFields; ++eq) {
@@ -212,9 +212,9 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   constexpr auto ALL = Kokkos::ALL();
 
   for (int iside=0; iside<sideSet.size; ++iside) {
-    const int icell = sideSet.ws_elem_idx(iside);
+    const int icell = sideSet.ws_elem_idx.h_view(iside);
     const int elem_LID = elem_lids(icell);
-    const int side_pos = sideSet.side_pos(iside);
+    const int side_pos = sideSet.side_pos.h_view(iside);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
     for (int eq=0; eq<numFields; ++eq) {
@@ -298,9 +298,9 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 
   constexpr auto ALL = Kokkos::ALL();
   for (int iside=0; iside<sideSet.size; ++iside) {
-    const int icell = sideSet.ws_elem_idx(iside);
+    const int icell = sideSet.ws_elem_idx.h_view(iside);
     const int elem_LID = elem_lids(icell);
-    const int side_pos = sideSet.side_pos(iside);
+    const int side_pos = sideSet.side_pos.h_view(iside);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
     for (int eq=0; eq<numFields; ++eq) {

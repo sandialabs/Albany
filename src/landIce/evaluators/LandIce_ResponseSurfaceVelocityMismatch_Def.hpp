@@ -175,7 +175,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
 
       ScalarT t = 0;
       ScalarT data = 0;
@@ -227,7 +227,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
         for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
         {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx(sideSet_idx);\
+          const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);\
 
           ScalarT t = 0;
           for (unsigned int qp=0; qp<numBasalQPs; ++qp)
@@ -253,7 +253,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of \cell
-      const int cell = sideSet.ws_elem_idx(sideSet_idx);\
+      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);\
 
       ScalarT t = 0;
       for (unsigned int qp=0; qp<numBasalQPs; ++qp)

@@ -155,13 +155,13 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto sol = device_sol;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
-    const auto pos = sideSet.side_pos(iside);
+    const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
       for(int il=0; il<=nlayers; ++il) {
         for(int comp=0; comp<ncomps; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
+          contrSol[comp] += x_data(localDOF.d_view(iside, node, il, comp+l_offset))*w(il);
       }
       for (int comp=0; comp<ncomps; ++comp) {
         sol.get_ref(iside,node,comp) = contrSol[comp];
@@ -211,13 +211,13 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto j_coeff = workset.j_coeff;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
-    const auto pos = sideSet.side_pos(iside);
+    const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
       for(int il=0; il<=nlayers; ++il) {
         for(int comp=0; comp<ncomps; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
+          contrSol[comp] += x_data(localDOF.d_view(iside, node, il, comp+l_offset))*w(il);
       }
       for (int comp=0; comp<ncomps; ++comp) {
         auto val = sol.get_ref(iside,node,comp);
@@ -268,13 +268,13 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto sol = device_sol;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
-    const auto pos = sideSet.side_pos(iside);
+    const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
       for(int il=0; il<=nlayers; ++il) {
         for(int comp=0; comp<ncomps; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
+          contrSol[comp] += x_data(localDOF.d_view(iside, node, il, comp+l_offset))*w(il);
       }
       for (int comp=0; comp<ncomps; ++comp) {
         sol.get_ref(iside,node,comp) = contrSol[comp];
@@ -316,13 +316,13 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto sol = device_sol;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
-    const auto pos = sideSet.side_pos(iside);
+    const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
       for(int il=0; il<=nlayers; ++il) {
         for(int comp=0; comp<ncomps; ++comp)
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
+          contrSol[comp] += x_data(localDOF.d_view(iside, node, il, comp+l_offset))*w(il);
       }
       for (int comp=0; comp<ncomps; ++comp) {
         sol.get_ref(iside,node,comp) = contrSol[comp];
@@ -404,16 +404,16 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto j_coeff = workset.j_coeff;
   Kokkos::parallel_for(RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
-    const auto pos = sideSet.side_pos(iside);
+    const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
     for (int node=0; node<numSideNodes; ++node) {
       double contrSol[3] = {0.0, 0.0, 0.0};
       double contrDir[3] = {0.0, 0.0, 0.0};
       for(int il=0; il<=nlayers; ++il) {
         for(int comp=0; comp<ncomps; ++comp) {
-          contrSol[comp] += x_data(localDOF(iside, node, il, comp+l_offset))*w(il);
+          contrSol[comp] += x_data(localDOF.d_view(iside, node, il, comp+l_offset))*w(il);
           if (g_xx_is_active||g_px_is_active) {
-            contrDir[comp] += direction_x_data(localDOF(iside,node,il,comp+l_offset))*w(il);
+            contrDir[comp] += direction_x_data(localDOF.d_view(iside,node,il,comp+l_offset))*w(il);
           }
         }
       }

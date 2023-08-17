@@ -98,14 +98,16 @@ StokesFOLateralResid (const Teuchos::ParameterList& p,
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     nodeMax = std::max(nodeMax, thisSideNodes);
   }
-  sideNodes = Kokkos::View<int**, PHX::Device>("sideNodes", numSides, nodeMax);
+  sideNodes = Kokkos::DualView<int**, PHX::Device>("sideNodes", numSides, nodeMax);
   for (unsigned int side=0; side<numSides; ++side) {
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (int node=0; node<thisSideNodes; ++node) {
-      sideNodes(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
+  sideNodes.modify_host();
+  sideNodes.sync_device();
 
   this->setName("StokesFOLateralResid"+PHX::print<EvalT>());
 }
@@ -140,8 +142,8 @@ operator() (const GivenImmersedRatio_Tag&, const int& sideSet_idx) const {
   const double scale = 1e-6; //[k^2]
 
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx(sideSet_idx);
-  const int side = sideSet.side_pos(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+  const int side = sideSet.side_pos.d_view(sideSet_idx);
 
   for (unsigned int qp=0; qp<numSideQPs; ++qp) {
     const ThicknessScalarT H = thickness(sideSet_idx,qp); //[km]
@@ -158,7 +160,7 @@ operator() (const GivenImmersedRatio_Tag&, const int& sideSet_idx) const {
       w_normal_stress *= h;
     }
     for (unsigned int node=0; node<numSideNodes; ++node) {
-      int sideNode = sideNodes(side,node);
+      int sideNode = sideNodes.d_view(side,node);
       // NOTE: we are RELYING on the fact that the lateral side is vertical, so that u*n = ux*nx+uy*ny.
       const OutputScalarT w_normal_stress_bf = w_normal_stress * BF(sideSet_idx,node,qp);
       for (unsigned int dim=0; dim<vecDimFO; ++dim) {
@@ -177,8 +179,8 @@ operator() (const ComputedImmersedRatio_Tag&, const int& sideSet_idx) const {
   const double scale = 1e-6; //[k^2]
 
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx(sideSet_idx);
-  const int side = sideSet.side_pos(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+  const int side = sideSet.side_pos.d_view(sideSet_idx);
 
   const OutputScalarT zero (0.0);
   const ThicknessScalarT threshold (1e-8);
@@ -201,7 +203,7 @@ operator() (const ComputedImmersedRatio_Tag&, const int& sideSet_idx) const {
       w_normal_stress *= h;
     }
     for (unsigned int node=0; node<numSideNodes; ++node) {
-      int sideNode = sideNodes(side,node);
+      int sideNode = sideNodes.d_view(side,node);
       // The immersed ratio should be between 0 and 1. If s>=H, it is 0, since the ice bottom is at s-H, which is >=0.
       // If s<=0, it is 1, since the top is already under water. If 0<s<H it is somewhere in (0,1), since the top is above the sea level,
       // but the bottom is s-H<0, which is below the sea level.

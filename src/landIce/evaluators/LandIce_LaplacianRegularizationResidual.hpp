@@ -37,7 +37,7 @@ namespace LandIce {
     Albany::LocalSideSetInfo sideSet;
 
     std::string sideName;
-    Kokkos::View<int**, PHX::Device> sideNodes;
+    Kokkos::DualView<int**, PHX::Device> sideNodes;
     Teuchos::RCP<shards::CellTopology> cellType;
     Teuchos::RCP<shards::CellTopology> sideType;
     

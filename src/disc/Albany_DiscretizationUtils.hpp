@@ -9,6 +9,7 @@
 
 #include "Albany_KokkosTypes.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
+#include "Kokkos_DualView.hpp"
 
 #include "Intrepid2_Basis.hpp"
 #include "Teuchos_ArrayRCP.hpp"
@@ -79,22 +80,22 @@ public:
   int max_sideset_length;
 
   // (num_local_worksets)
-  Kokkos::View<int*, Kokkos::LayoutRight> sideset_sizes;
+  Kokkos::DualView<int*, Kokkos::LayoutRight, PHX::Device> sideset_sizes;
 
   // (num_local_worksets, max_sideset_length)
-  Kokkos::View<GO**, Kokkos::LayoutRight>   side_GID;
-  Kokkos::View<GO**, Kokkos::LayoutRight>   elem_GID;
-  Kokkos::View<int**, Kokkos::LayoutRight>  ws_elem_idx;
-  Kokkos::View<int**, Kokkos::LayoutRight>  elem_ebIndex;
-  Kokkos::View<int**, Kokkos::LayoutRight>  side_pos;
+  Kokkos::DualView<GO**, Kokkos::LayoutRight, PHX::Device>   side_GID;
+  Kokkos::DualView<GO**, Kokkos::LayoutRight, PHX::Device>   elem_GID;
+  Kokkos::DualView<int**, Kokkos::LayoutRight, PHX::Device>  ws_elem_idx;
+  Kokkos::DualView<int**, Kokkos::LayoutRight, PHX::Device>  elem_ebIndex;
+  Kokkos::DualView<int**, Kokkos::LayoutRight, PHX::Device>  side_pos;
 
   int max_sides;
   // (num_local_worksets, max_sides)
-  Kokkos::View<int**, Kokkos::LayoutRight>  numCellsOnSide;
+  Kokkos::DualView<int**, Kokkos::LayoutRight, PHX::Device>  numCellsOnSide;
 
   // (num_local_worksets, max_sides, max_sideset_length)
-  Kokkos::View<int***, Kokkos::LayoutRight>   cellsOnSide;
-  Kokkos::View<int***, Kokkos::LayoutRight>   sideSetIdxOnSide;
+  Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>   cellsOnSide;
+  Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>   sideSetIdxOnSide;
 };
 
 using GlobalSideSetList = std::map<std::string, GlobalSideSetInfo>;
@@ -103,16 +104,16 @@ class LocalSideSetInfo
 {
 public:
   int size;
-  Kokkos::View<GO*, Kokkos::LayoutRight>    side_GID;      // (size)
-  Kokkos::View<GO*, Kokkos::LayoutRight>    elem_GID;      // (size)
-  Kokkos::View<int*, Kokkos::LayoutRight>   ws_elem_idx;   // (size)
-  Kokkos::View<int*, Kokkos::LayoutRight>   elem_ebIndex;  // (size)
-  Kokkos::View<int*, Kokkos::LayoutRight>   side_pos;      // (size)
+  Kokkos::DualView<GO*, Kokkos::LayoutRight, PHX::Device>    side_GID;      // (size)
+  Kokkos::DualView<GO*, Kokkos::LayoutRight, PHX::Device>    elem_GID;      // (size)
+  Kokkos::DualView<int*, Kokkos::LayoutRight, PHX::Device>   ws_elem_idx;   // (size)
+  Kokkos::DualView<int*, Kokkos::LayoutRight, PHX::Device>   elem_ebIndex;  // (size)
+  Kokkos::DualView<int*, Kokkos::LayoutRight, PHX::Device>   side_pos;      // (size)
 
   int numSides;
-  Kokkos::View<int*, Kokkos::LayoutRight>      numCellsOnSide;   // (sides)
-  Kokkos::View<int**, Kokkos::LayoutRight>     cellsOnSide;      // (numSides, sides)
-  Kokkos::View<int**, Kokkos::LayoutRight>     sideSetIdxOnSide; // (numSides, sides)
+  Kokkos::DualView<int*, Kokkos::LayoutRight, PHX::Device>      numCellsOnSide;   // (sides)
+  Kokkos::DualView<int**, Kokkos::LayoutRight, PHX::Device>     cellsOnSide;      // (numSides, sides)
+  Kokkos::DualView<int**, Kokkos::LayoutRight, PHX::Device>     sideSetIdxOnSide; // (numSides, sides)
 };
 using LocalSideSetInfoList = std::map<std::string, LocalSideSetInfo>;
 

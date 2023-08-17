@@ -40,6 +40,8 @@ private:
   std::string stateName;
 
   MDFieldMemoizer<Traits> memoizer;
+
+  MDFieldVectorRight<ScalarType> dataVec;
 };
 
 template<typename EvalT, typename Traits>
@@ -64,6 +66,8 @@ private:
   std::string stateName;
 
   MDFieldMemoizer<Traits> memoizer;
+
+  MDFieldVectorRight<ParamScalarT> dataVec;
 };
 
 // Shortcut names

@@ -1369,6 +1369,7 @@ STKDiscretization::computeWorksetInfo()
               state_h(i, j) = *stk::mesh::field_data(field, rowNode);
             }
           }
+          state.sync_to_dev();
           break;
         }
         case 3:  // vector
@@ -1387,6 +1388,7 @@ STKDiscretization::computeWorksetInfo()
               }
             }
           }
+          state.sync_to_dev();
           break;
         }
         case 4:  // tensor
@@ -1409,6 +1411,7 @@ STKDiscretization::computeWorksetInfo()
               }
             }
           }
+          state.sync_to_dev();
           break;
         }
       }
@@ -1701,15 +1704,15 @@ STKDiscretization::computeSideSets()
 
     globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
     globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID         = Kokkos::View<GO**,   Kokkos::LayoutRight>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].ws_elem_idx      = Kokkos::View<int**,  Kokkos::LayoutRight>("ws_elem_idx", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::View<int**,  Kokkos::LayoutRight>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_pos         = Kokkos::View<int**,  Kokkos::LayoutRight>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].ws_elem_idx      = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("ws_elem_idx", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].side_pos         = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
     globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::View<int**,  Kokkos::LayoutRight>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::View<int***, Kokkos::LayoutRight>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::View<int***, Kokkos::LayoutRight>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
+    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
   }
 
   // 3) Populate global views
@@ -1738,24 +1741,42 @@ STKDiscretization::computeSideSets()
       }
 
       for (int side = 0; side < numSides; ++side) {
-        globalSideSetViews[ss_key].numCellsOnSide(current_index, side) = numCellsOnSide[side];
+        globalSideSetViews[ss_key].numCellsOnSide.h_view(current_index, side) = numCellsOnSide[side];
         for (int j = 0; j < numCellsOnSide[side]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = cellsOnSide[side][j];
-          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = sideSetIdxOnSide[side][j];
+          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = cellsOnSide[side][j];
+          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = sideSetIdxOnSide[side][j];
         }
         for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide(current_index, side, j) = -1;
-          globalSideSetViews[ss_key].sideSetIdxOnSide(current_index, side, j) = -1;
+          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = -1;
+          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = -1;
         }
       }
 
       for (size_t j = 0; j < ss_val.size(); ++j) {
-        globalSideSetViews[ss_key].side_GID(current_index, j)      = ss_val[j].side_GID;
-        globalSideSetViews[ss_key].elem_GID(current_index, j)      = ss_val[j].elem_GID;
-        globalSideSetViews[ss_key].ws_elem_idx(current_index, j)   = ss_val[j].ws_elem_idx;
-        globalSideSetViews[ss_key].elem_ebIndex(current_index, j)  = ss_val[j].elem_ebIndex;
-        globalSideSetViews[ss_key].side_pos(current_index, j) = ss_val[j].side_pos;
+        globalSideSetViews[ss_key].side_GID.h_view(current_index, j)      = ss_val[j].side_GID;
+        globalSideSetViews[ss_key].elem_GID.h_view(current_index, j)      = ss_val[j].elem_GID;
+        globalSideSetViews[ss_key].ws_elem_idx.h_view(current_index, j)   = ss_val[j].ws_elem_idx;
+        globalSideSetViews[ss_key].elem_ebIndex.h_view(current_index, j)  = ss_val[j].elem_ebIndex;
+        globalSideSetViews[ss_key].side_pos.h_view(current_index, j) = ss_val[j].side_pos;
       }
+
+      globalSideSetViews[ss_key].side_GID.modify_host();
+      globalSideSetViews[ss_key].elem_GID.modify_host();
+      globalSideSetViews[ss_key].ws_elem_idx.modify_host();
+      globalSideSetViews[ss_key].elem_ebIndex.modify_host();
+      globalSideSetViews[ss_key].side_pos.modify_host();
+      globalSideSetViews[ss_key].numCellsOnSide.modify_host();
+      globalSideSetViews[ss_key].cellsOnSide.modify_host();
+      globalSideSetViews[ss_key].sideSetIdxOnSide.modify_host();
+
+      globalSideSetViews[ss_key].side_GID.sync_device();
+      globalSideSetViews[ss_key].elem_GID.sync_device();
+      globalSideSetViews[ss_key].ws_elem_idx.sync_device();
+      globalSideSetViews[ss_key].elem_ebIndex.sync_device();
+      globalSideSetViews[ss_key].side_pos.sync_device();
+      globalSideSetViews[ss_key].numCellsOnSide.sync_device();
+      globalSideSetViews[ss_key].cellsOnSide.sync_device();
+      globalSideSetViews[ss_key].sideSetIdxOnSide.sync_device();
 
       current_local_index[ss_key]++;
     }
@@ -1830,7 +1851,7 @@ STKDiscretization::computeSideSets()
     // Allocate total localDOFView for each sideset name
     for (auto& ss_it : num_local_worksets) {
       std::string ss_key = ss_it.first;
-      allLocalDOFViews[ss_key] = Kokkos::View<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
+      allLocalDOFViews[ss_key] = Kokkos::DualView<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
     }
   }
 
@@ -1861,7 +1882,7 @@ STKDiscretization::computeSideSets()
     for (int ws=0; ws<getNumWorksets(); ++ws) {
 
       // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-      std::map<std::string, Kokkos::View<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
+      std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
 
       const auto& elem_lids = getElementLIDs_host(ws);
 
@@ -1871,7 +1892,7 @@ STKDiscretization::computeSideSets()
         std::string             ss_key = ss_it.first;
         std::vector<SideStruct> ss_val = ss_it.second;
 
-        Kokkos::View<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
+        Kokkos::DualView<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
 
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
           const auto& side = ss_val[sideSet_idx];
@@ -1896,18 +1917,21 @@ STKDiscretization::computeSideSets()
             for (int j=0; j<numSideNodes; ++j) {
               for (int il=0; il<numLayers; ++il) {
                 const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-                globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
+                globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
                   elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
               }
 
               // Add top side in last layer
               const int il = numLayers-1;
               const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-              globalDOFView(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
+              globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
                 elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
             }
           }
         }
+
+        globalDOFView.modify_host();
+        globalDOFView.sync_device();
 
         // Set workset-local sub-view
         std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
@@ -1918,7 +1942,7 @@ STKDiscretization::computeSideSets()
     }
   } else {
     // We still need this view to be present (even if of size 0), so create them
-    std::map<std::string, Kokkos::View<LO****, PHX::Device>> dummy;
+    std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> dummy;
     for (int ws=0; ws<getNumWorksets(); ++ws) {
       wsLocalDOFViews.emplace(std::make_pair(ws,dummy));
     }

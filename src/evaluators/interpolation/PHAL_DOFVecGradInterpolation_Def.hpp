@@ -134,6 +134,7 @@ namespace PHAL {
   KOKKOS_INLINE_FUNCTION
   void FastSolutionVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   operator() (const FastSolutionVecGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
+    const int num_dof = this->val_node(0,0,0).size();
     for (size_t qp=0; qp < this->numQPs; ++qp) {
           for (size_t i=0; i<this->vecDim; i++) {
             for (size_t dim=0; dim<this->numDims; dim++) {
@@ -180,7 +181,6 @@ namespace PHAL {
   auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-   num_dof = this->val_node(0,0,0).size();
    neq = workset.disc->getDOFManager()->getNumFields();
 
    Kokkos::parallel_for(FastSolutionVecGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);

@@ -55,6 +55,8 @@ private:
   ScalarT printedLambda;
   ScalarT printedQ;
 
+  ParamScalarT mu, lambda, power;
+
   double beta_val;   // beta value [kPa yr/m] (for CONSTANT only)
   double N_val; // effective pressure value [kPa]
 
@@ -88,10 +90,6 @@ private:
   bool use_pressurized_bed;
   double overburden_fraction;  // [adim]
   double pressure_smoothing_length_scale; //[km]
-
-  ParamScalarT mu;
-  ParamScalarT lambda;
-  ParamScalarT power;
 
   int numNodes;
   int numQPs;

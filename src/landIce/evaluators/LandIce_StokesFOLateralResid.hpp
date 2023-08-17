@@ -63,7 +63,7 @@ private:
   // Output:
   PHX::MDField<OutputScalarT,Cell,Node,VecDim> residual;
 
-  Kokkos::View<int**, PHX::Device> sideNodes;
+  Kokkos::DualView<int**, PHX::Device> sideNodes;
   std::string                      lateralSideName;
   
   double rho_w;  // [Kg m^{-3}]

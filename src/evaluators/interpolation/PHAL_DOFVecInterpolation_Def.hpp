@@ -11,6 +11,8 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
+#include "KokkosExp_View_Fad.hpp"
+
 #ifdef ALBANY_TIMER
 #include <chrono>
 #endif
@@ -194,10 +196,9 @@ template<typename Traits>
 void FastSolutionVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int num_dof = this->val_node(0,0,0).size();
+  const int num_dof = Kokkos::dimension_scalar(this->val_node.get_view());
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   const int neq = workset.disc->getDOFManager()->getNumFields();
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < this->numQPs; ++qp) {
       for (std::size_t i=0; i<this->vecDim; i++) {
