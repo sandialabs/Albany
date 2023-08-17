@@ -19,6 +19,11 @@
 #include "Albany_GmshSTKMeshStruct.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 
+#ifdef ALBANY_OMEGAH
+#include "Albany_OmegahBoxMesh.hpp"
+#include "Albany_OmegahDiscretization.hpp"
+#endif
+
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
@@ -62,6 +67,8 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         return Teuchos::rcp(new TmplSTKMeshStruct<2>(disc_params, comm, numParams));
     } else if (method == "STK3D") {
         return Teuchos::rcp(new TmplSTKMeshStruct<3>(disc_params, comm, numParams));
+    } else if (method == "STK3D") {
+        return Teuchos::rcp(new TmplSTKMeshStruct<3>(disc_params, comm, numParams));
     } else if (method == "STK3DPoint") {
         return Teuchos::rcp(new STK3DPointStruct(disc_params, comm, numParams));
     } else if (method == "Ioss" || method == "Exodus" || method == "Pamgen") {
@@ -75,6 +82,15 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                 << " requested, but not compiled in" << std::endl);
 #endif // ALBANY_SEACAS
     }
+#ifdef ALBANY_OMEGAH
+    else if (method == "Box1D") {
+        return Teuchos::rcp(new OmegahBoxMesh<1>(disc_params, comm, numParams));
+    } else if (method == "Box2D") {
+        return Teuchos::rcp(new OmegahBoxMesh<2>(disc_params, comm, numParams));
+    } else if (method == "Box3D") {
+        return Teuchos::rcp(new OmegahBoxMesh<3>(disc_params, comm, numParams));
+    }
+#endif
     else if (method == "Ascii") {
         return Teuchos::rcp(new AsciiSTKMeshStruct(disc_params, comm, numParams));
     } else if (method == "Ascii2D") {
@@ -242,7 +258,8 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
   } else if (meshStruct->meshType()=="Omega_h") {
-    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Missing Omega_h discretization!\n");
+    auto ms = Teuchos::rcp_dynamic_cast<OmegahAbstractMesh>(meshStruct);
+    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
   }
   return disc;
 }
@@ -252,11 +269,11 @@ DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
                                     const Teuchos::RCP<Albany::StateInfoStruct>& sis) {
 
   if (meshStruct->meshType()=="STK") {
-    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
     auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
     stk_disc->setFieldData(sis);
   } else if (meshStruct->meshType()=="Omega_h") {
-    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Missing Omega_h discretization!\n");
+    auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
+    omh_disc->setFieldData(sis);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
   }
@@ -267,11 +284,11 @@ DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> di
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: completeDiscSetup");
 
   if (meshStruct->meshType()=="STK") {
-    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
     auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
     stk_disc->updateMesh();
   } else if (meshStruct->meshType()=="Omega_h") {
-    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Missing Omega_h discretization!\n");
+    auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
+    omh_disc->updateMesh();
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
   }

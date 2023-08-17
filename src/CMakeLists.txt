@@ -368,6 +368,7 @@ if (ENABLE_OMEGAH)
   list (APPEND SOURCES
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.cpp
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.cpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahDiscretization.cpp
   )
   list (APPEND HEADERS
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.hpp
