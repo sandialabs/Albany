@@ -84,6 +84,67 @@ STKConnManager::noConnectivityClone() const
   return Teuchos::rcp(new STKConnManager(m_metaData,m_bulkData,elem_blocks_names));
 }
 
+std::vector<int>
+STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
+{
+  std::vector<int> mask (m_connectivity.size(),0);
+  const auto& sub_part = *m_metaData->get_part(sub_part_name);
+
+  stk::mesh::Selector selector (sub_part);
+
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  const auto primary_entity_rank = sub_part.primary_entity_rank();
+
+  const auto& conn_mgr_part = *m_metaData->get_part(m_elem_blocks_names[0]);
+  TEUCHOS_TEST_FOR_EXCEPTION (primary_entity_rank>=m_metaData->side_rank(), std::runtime_error,
+      "Error! Restricting to a sub-part only works if the sub-part has primary entity rank equal to side rank.\n"
+      " - conn mgr part name: " + m_elem_blocks_names[0] + "\n"
+      " - conn mgr part rank: " + std::to_string(conn_mgr_part.primary_entity_rank()) + "\n"
+      " - sub part name: " + sub_part_name + "\n"
+      " - sub part rank: " + std::to_string(primary_entity_rank) + "\n");
+
+  const auto num_entities = stk::mesh::count_entities(*m_bulkData,primary_entity_rank,selector);
+  std::vector<stk::mesh::Entity> entities(num_entities);
+  stk::mesh::get_selected_entities(selector, m_bulkData->buckets(primary_entity_rank), entities);
+
+  std::vector<int> offsets (m_idCnt.size(),0);
+  for (int i=1; i<4; ++i) {
+    offsets[i] = offsets[i-1] + m_idCnt[i-1];
+  }
+  auto topo = get_topology();
+  for (const auto e : entities) {
+    auto elem = primary_entity_rank==conn_mgr_part.primary_entity_rank() ? &e : m_bulkData->begin_elements(e);
+    int num_elems = primary_entity_rank==conn_mgr_part.primary_entity_rank() ? 1 : m_bulkData->num_elements(e);
+    TEUCHOS_TEST_FOR_EXCEPTION (num_elems!=1, std::runtime_error,
+        "Error! An entity of the sub-part is not connected with one (and exaclty one) element of the block.\n"
+        " - conn mgr part name: " + m_elem_blocks_names[0] + "\n"
+        " - conn mgr part rank: " + std::to_string(conn_mgr_part.primary_entity_rank()) + "\n"
+        " - sub part name: " + sub_part_name + "\n"
+        " - sub part rank: " + std::to_string(primary_entity_rank) + "\n"
+        " - sub part entity id (0-based): " + std::to_string(m_bulkData->identifier(e)-1) + "\n"
+        " - sub part entity num elems: " + std::to_string(num_elems) + "\n");
+    LO ielem = m_localIDHash.at(m_bulkData->identifier(*elem));
+    auto elem_mask = &mask[getConnectivityStart(ielem)];
+
+    // Set mask=1 for all ids on all entities of lower rank
+    for (auto rank = NODE_RANK; rank<primary_entity_rank; ++rank) {
+      int count = m_bulkData->num_connectivity(e,rank);
+      for (int irel=0; irel<count; ++irel) {
+        for (int cnt=0; cnt<m_idCnt[rank]; ++cnt) {
+          elem_mask[offsets[rank] + cnt] = 1;
+        }
+      }
+    }
+
+    // Set mask=1 for all ids on the entity itself
+    for (int cnt=0; cnt<m_idCnt[primary_entity_rank]; ++cnt) {
+      elem_mask[offsets[primary_entity_rank] + cnt] = 1;
+    }
+  }
+
+  return mask;
+}
+
 void STKConnManager::clearLocalElementMapping()
 {
   m_elements.clear();
@@ -238,10 +299,14 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
   //    ID counts = How many IDs belong on each subcell (number of mesh DOF used)
   //    Offset = What is starting index for subcell ID type?
   //             Global numbering goes like [node ids, edge ids, face ids, cell ids]
-  LO nodeIdCnt=0, edgeIdCnt=0, faceIdCnt=0, cellIdCnt=0;
   GO nodeOffset=0, edgeOffset=0, faceOffset=0, cellOffset=0;
-  buildOffsetsAndIdCounts(fp, nodeIdCnt,  edgeIdCnt,  faceIdCnt,  cellIdCnt,
-                              nodeOffset, edgeOffset, faceOffset, cellOffset);
+  m_idCnt.resize(4);
+  LO& nodeIdCnt = m_idCnt[0];
+  LO& edgeIdCnt = m_idCnt[1];
+  LO& faceIdCnt = m_idCnt[2];
+  LO& cellIdCnt = m_idCnt[3];
+  buildOffsetsAndIdCounts(fp, nodeIdCnt, edgeIdCnt, faceIdCnt, cellIdCnt,
+                              nodeOffset,edgeOffset,faceOffset,cellOffset);
 
   // loop over elements and build global connectivity
   const int numElems = m_elements.size();
@@ -266,7 +331,7 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
       numIds += addSubcellConnectivities(element,FACE_RANK,faceIdCnt,faceOffset);
 
     // add connectivity for parent cells
-    if(cellIdCnt>0) {
+    if (cellIdCnt>0) {
        // add connectivities: adjust for STK indexing craziness
        const auto cell_id = m_bulkData->identifier(element);
        auto owned = m_bulkData->bucket(element).owned() ? Owned : Ghosted;
@@ -387,44 +452,6 @@ void STKConnManager::buildLocalElementIDs(const std::vector<stk::mesh::Entity>& 
     m_localIDHash[m_bulkData->identifier(element)] = currentLocalId;
     ++currentLocalId;
   }
-}
-
-bool STKConnManager::
-contains (const std::string& sub_part_name) const
-{
-  // We cannot rely on parts being fully contianed in one another,
-  // since the input sub_part may be intersect only partially
-  // with each of the stored parts, hence not being a subset of
-  // any of them. Instead, we verify that all the entities of
-  // primary rank in the subpart are contained in the union
-  // of the stored parts. That's equivalent to ask that the
-  // selector sub_part AND !U(m_parts) is empty
-  const auto& p = m_metaData->get_part(sub_part_name);
-  stk::mesh::Selector s (*m_metaData->get_part(sub_part_name));
-  for (const auto& it : m_elem_blocks) {
-    s &= !stk::mesh::Selector(*it.second);
-  }
-  const auto buckets = m_bulkData->buckets(p->primary_entity_rank());
-  return stk::mesh::count_selected_entities(s,buckets)==0;
-}
-
-// Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
-// local element $ielem belongs to sub part $sub_part_name
-bool STKConnManager::
-belongs (const std::string& sub_part_name,
-         const LO ielem, const int subcell_dim, const int subcell_pos) const
-{
-  using rank_t = stk::topology::rank_t;
-  auto rank = subcell_dim==0 ? rank_t::NODE_RANK :
-             (subcell_dim==1 ? rank_t::EDGE_RANK :
-             (subcell_dim==2 ? rank_t::FACE_RANK : rank_t::ELEM_RANK));
-  const auto& elem = m_elements[ielem];
-  const auto& sub = *(m_bulkData->begin(elem,rank) + subcell_pos);
-  const auto& b = m_bulkData->bucket(sub);
-
-  const auto& p = *m_metaData->get_part(sub_part_name);
-
-  return b.member(p);
 }
 
 // Queries the dimension of a part

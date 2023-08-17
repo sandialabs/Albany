@@ -40,14 +40,11 @@ public:
     return this->getElementBlock(elem_block_name());
   }
 
-  // Returns whether input part name is topologically contained in the
-  // parts where this ConnManager is defined.
-  virtual bool contains (const std::string& sub_part_name) const = 0;
+  // Where element ielem start in the 1d connectivity array
+  virtual int getConnectivityStart (const LO ielem) const = 0;
 
-  // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
-  // local element $ielem belongs to sub part $sub_part_name
-  virtual bool belongs (const std::string& sub_part_name,
-                        const LO ielem, const int subcell_dim, const int subcell_pos) const = 0;
+  // Get a mask vector (1=yes, 0=no) telling if each dof entity is contained in the given mesh part
+  virtual std::vector<int> getConnectivityMask (const std::string& sub_part_name) const = 0;
 
   // Queries the dimension of a part
   virtual int part_dim (const std::string& part_name) const = 0;

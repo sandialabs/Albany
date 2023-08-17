@@ -79,6 +79,13 @@ public:
     return &m_ownership[m_elmtLidToConn[localElmtId]];
   }
 
+  std::vector<int> getConnectivityMask (const std::string& sub_part_name) const override;
+
+  // Where does element ielem connectivity start in the connectivity array?
+  int getConnectivityStart(const LO localElmtId) const override {
+    return m_elmtLidToConn[localElmtId];
+  }
+
   /** How many mesh IDs are associated with this element?
     *
     * \param[in] localElmtId Local element ID
@@ -166,15 +173,6 @@ public:
     return false;
   }
 
-  // Returns whether input part name is topologically contained in the
-  // parts where this ConnManager is defined.
-  bool contains (const std::string& sub_part_name) const override;
-
-  // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
-  // local element $ielem belongs to sub part $sub_part_name
-  bool belongs (const std::string& sub_part_name,
-                const LO ielem, const int subcell_dim, const int subcell_pos) const override;
-
   // Queries the dimension of a part
   int part_dim (const std::string& part_name) const override;
 
@@ -241,6 +239,8 @@ protected:
 
   std::map<std::string,stk::mesh::Part*>    m_elem_blocks;
   stk::topology                             m_elem_blocks_topo;
+
+  std::vector<LO> m_idCnt;
 
   std::unordered_map<stk::mesh::EntityId, int> m_localIDHash;
 };
