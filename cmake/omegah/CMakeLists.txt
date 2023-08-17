@@ -9,4 +9,7 @@ ExternalProject_Add(Omega_h
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${Albany_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX=${Albany_BINARY_DIR}/tpls/omegah/install
+    -DKokkos_PREFIX=${Kokkos_INSTALL_DIR}
+    -DOmega_h_USE_Kokkos=ON
+    -DOmega_h_USE_MPI=ON
 )
