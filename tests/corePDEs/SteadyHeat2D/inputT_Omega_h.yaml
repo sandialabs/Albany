@@ -1,0 +1,106 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Problem:
+    Name: Heat 2D
+    Compute Sensitivities: true
+    Dirichlet BCs:
+      DBC on NS NodeSet0 for DOF T: 1.50000000000000000e+00
+      DBC on NS NodeSet1 for DOF T: 1.00000000000000000e+00
+      DBC on NS NodeSet2 for DOF T: 1.00000000000000000e+00
+      DBC on NS NodeSet3 for DOF T: 1.00000000000000000e+00
+    Source Functions:
+      Quadratic:
+        Nonlinear Factor: 3.39999999999999991e+00
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Vector
+        Dimension: 5
+        Scalar 0:
+          Name: DBC on NS NodeSet0 for DOF T
+        Scalar 1:
+          Name: DBC on NS NodeSet1 for DOF T
+        Scalar 2:
+          Name: DBC on NS NodeSet2 for DOF T
+        Scalar 3:
+          Name: DBC on NS NodeSet3 for DOF T
+        Scalar 4:
+          Name: Quadratic Nonlinear Factor
+    Response Functions:
+      Number Of Responses: 2
+      Response 0:
+        Name: Solution Average
+      Response 1:
+        Name: Solution Two Norm
+    Cubature Degree: 9
+
+  Discretization:
+    1D Elements: 40
+    2D Elements: 40
+    Method: Box2D
+  Regression For Response 0:
+    Test Value: 1.39149999999999996e+00
+    Relative Tolerance: 1.00000000000000002e-03
+    Sensitivity For Parameter 0:
+      Test Values: [4.51417000000000013e-01, 4.26205999999999974e-01, 4.36869000000000007e-01, 4.36869000000000007e-01, 1.72225999999999990e-01]
+  Regression For Response 1:
+    Test Value: 5.79341999999999970e+01
+    Relative Tolerance: 1.00000000000000002e-03
+    Sensitivity For Parameter 0:
+      Test Values: [2.04623999999999988e+01, 1.72040000000000006e+01, 1.81322000000000010e+01, 1.81322000000000010e+01, 7.71400000000000041e+00]
+  Piro:
+    LOCA:
+      Bifurcation: { }
+      Constraints: { }
+      Predictor:
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper:
+        Eigensolver: { }
+    NOX:
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: { }
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000000000008e-05
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.00000000000000008e-05
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+      Line Search:
+        Full Step:
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Information: 103
+        Output Precision: 3
+      Solver Options:
+        Status Test Check Type: Minimal
+...
