@@ -201,16 +201,6 @@ public:
     return false;
   }
 
-  // Returns whether input part name is topologically contained in the
-  // parts where this ConnManager is defined.
-  bool contains (const std::string& sub_part_name) const override;
-
-  // Return true if the $subcell_pos-th subcell of dimension $subcell_dim in
-  // local element $ielem belongs to sub part $sub_part_name
-  bool belongs (const std::string& sub_part_name,
-                const LO ielem, const int subcell_dim, const int subcell_pos) const override;
-
-
   int getConnectivityStart (const LO ielem) const;
   std::vector<int> getConnectivityMask (const std::string& sub_part_name) const;
 
