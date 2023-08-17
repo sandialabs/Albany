@@ -1,3 +1,7 @@
+# When debugging the CMake logic, it can be helpful to
+# print all vars with a certain regex, to see what's going on.
+# This function does precisely that. If REGEX is not provided,
+# it prints ALL cmake vars in scope
 function(dump_cmake_variables)
   set (opts)
   set (args1v REGEX)
@@ -833,6 +837,7 @@ IF (ENABLE_OMEGAH)
               -B ${Albany_BINARY_DIR}/tpls/omegah/tmp -Wno-dev
               -S ${CMAKE_SOURCE_DIR}/cmake/omegah
               -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
+              -D Kokkos_INSTALL_DIR=${ALBANY_TRILINOS_DIR}
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       OUTPUT_VARIABLE CONFIG_OMEGAH_OUT
       ERROR_VARIABLE CONFIG_OMEGAH_OUT
@@ -865,7 +870,8 @@ IF (ENABLE_OMEGAH)
     message ("  |       End local installation of Omega_h dependency     |")
     message ("  +--------------------------------------------------------+")
     set (Omega_h_DIR ${Albany_BINARY_DIR}/tpls/omegah/install)
-    find_package (Omega_h REQUIRED)
+    find_package (Omega_h REQUIRED
+                  HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
   else()
     message (STATUS "Looking for Omega_h installation ... Found.")
     message ("  -- Omega_h prefix: ${Omega_h_DIR}")
