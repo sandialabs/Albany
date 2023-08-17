@@ -171,12 +171,6 @@ public:
     return stkMeshStruct;
   }
 
-  const SideSetDiscretizationsType&
-  getSideSetDiscretizations() const
-  {
-    return sideSetDiscretizations;
-  }
-
   const std::map<std::string, std::map<GO, GO>>&
   getSideToSideSetCellMap() const
   {
@@ -512,14 +506,11 @@ public:
   Teuchos::RCP<Teuchos::ParameterList> discParams;
 
   // Sideset discretizations
-  std::map<std::string, Teuchos::RCP<AbstractDiscretization>>
-      sideSetDiscretizations;
-  std::map<std::string, Teuchos::RCP<STKDiscretization>>
-                                                        sideSetDiscretizationsSTK;
-  std::map<std::string, std::map<GO, GO>>               sideToSideSetCellMap;
-  std::map<std::string, std::map<GO, std::vector<int>>> sideNodeNumerationMap;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>   projectors;
-  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>   ov_projectors;
+  std::map<std::string, Teuchos::RCP<STKDiscretization>> sideSetDiscretizationsSTK;
+  std::map<std::string, std::map<GO, GO>>                sideToSideSetCellMap;
+  std::map<std::string, std::map<GO, std::vector<int>>>  sideNodeNumerationMap;
+  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    projectors;
+  std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
 
 // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
