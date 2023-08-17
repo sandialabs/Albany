@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#ifndef ALBANY_OmegahPermutation_HPP
+#define ALBANY_OmegahPermutation_HPP
+
 #include <Omega_h_element.hpp> //topological_singular_name
 #include <fstream>
 
@@ -206,3 +209,5 @@ struct Shards2OmegahPerm {
 };
 
 } //end namespace
+
+#endif // ALBANY_OmegahPermutation_HPP
