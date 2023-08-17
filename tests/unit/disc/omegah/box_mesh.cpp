@@ -4,7 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_OmegahBoxMesh.hpp"
 #include "Albany_CommUtils.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_UnitTestHelpers.hpp"
@@ -23,9 +25,9 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 2D)
   const int num_params = 2;
 
   auto params = Teuchos::rcp(new Teuchos::ParameterList(""));
-  params.set<int>("1D Elements",nelemx);
-  params.set<int>("2D Elements",nelemy);
-  params.set<int>("3D Elements",nelemz);
+  params->set<int>("1D Elements",nelemx);
+  params->set<int>("2D Elements",nelemy);
+  params->set<int>("3D Elements",nelemz);
 
   auto mesh = Teuchos::rcp(new OmegahBoxMesh<2>(params,comm,num_params));
 

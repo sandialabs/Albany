@@ -19,4 +19,9 @@ file(COPY        ${CMAKE_CURRENT_SOURCE_DIR}/OmegahMeshes/${meshName}
 #################################################
 
 create_unit_test (NAME    OmegahConMgr
+                  PREFIX  ${testNameRoot}
                   SOURCES OmegahConMgr.cpp)
+
+create_unit_test (NAME    box_mesh
+                  PREFIX  ${testNameRoot}
+                  SOURCES box_mesh.cpp)
