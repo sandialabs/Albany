@@ -215,10 +215,10 @@ restrict (const std::string& sub_part_name)
 
   // Loop over elements and their sub cells, and set the correct LID for all
   // dofs on the sub-part
-  auto elem_dof_lids = m_elem_dof_lids.host();
+  std::vector<std::vector<LO>> elem_dof_lids(num_elems,std::vector<LO>(num_elem_dofs,-1));
   const auto& conn_part_mask = m_conn_mgr->getConnectivityMask(sub_part_name);
   for (int ielem=0; ielem<num_elems; ++ielem) {
-    auto dof_lids = Kokkos::subview(elem_dof_lids,ielem,Kokkos::ALL());
+    auto& dof_lids = elem_dof_lids[ielem];
     const int  ndofs = m_conn_mgr->getConnectivitySize(ielem);
     const int elem_start = m_conn_mgr->getConnectivityStart(ielem);
     for (int i=0; i<ndofs; ++i) {
@@ -242,7 +242,7 @@ restrict (const std::string& sub_part_name)
   std::unordered_set<GO> owned_set, ghosted_set;
   for (int ielem=0; ielem<num_elems; ++ielem) {
     const auto& gids = getElementGIDs(ielem);
-    const auto& dof_lids = Kokkos::subview(elem_dof_lids,ielem,Kokkos::ALL);
+    const auto& dof_lids = elem_dof_lids[ielem];
     for (int idof=0; idof<num_elem_dofs; ++idof) {
       if (dof_lids[idof]==-1) {
         continue;
@@ -276,7 +276,7 @@ restrict (const std::string& sub_part_name)
   // Update lids in base class as well, in case we use some base class method
   for (int ielem=0; ielem<num_elems; ++ielem) {
     const auto& gids = getElementGIDs(ielem);
-    auto dof_lids = Kokkos::subview(elem_dof_lids,ielem,Kokkos::ALL);
+    auto& dof_lids = elem_dof_lids[ielem];
     for (int idof=0; idof<num_elem_dofs; ++idof) {
       if (dof_lids[idof]==-1) {
         // Invalidate the GID as well, so that, if we accidentally use it,
@@ -289,7 +289,10 @@ restrict (const std::string& sub_part_name)
     }
   }
 
-  m_elem_dof_lids.sync_to_dev();
+  setLocalIds(elem_dof_lids);
+  using dview = DualView<const int**>;
+  m_elem_dof_lids = dview(this->getLIDs());
+  m_elem_dof_lids.sync_to_host();
 }
 
 void DOFManager::
