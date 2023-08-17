@@ -26,8 +26,6 @@ public:
   template<typename T>
   using strmap_t = std::map<std::string,T>;
 
-  using SideSetDiscretizationsType = strmap_t<Teuchos::RCP<AbstractDiscretization>>;
-
   using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
   using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
@@ -215,8 +213,7 @@ public:
   printCoords() const = 0;
 
   //! Get sideSet discretizations map
-  virtual const SideSetDiscretizationsType&
-  getSideSetDiscretizations() const = 0;
+  const strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() const { return sideSetDiscretizations; }
 
   //! Get the map side_id->side_set_elem_id
   virtual const std::map<std::string, std::map<GO, GO>>&
@@ -387,6 +384,7 @@ public:
       const bool               force_write_solution = false) = 0; 
 
 protected:
+  strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 
   // One dof mgr per dof per part
   // Notice that the dof mgr on a side is not the restriction
