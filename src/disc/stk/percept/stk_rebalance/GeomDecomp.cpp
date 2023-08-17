@@ -46,13 +46,13 @@ std::vector< mesh::Entity > GeomDecomp::entity_coordinates(stk::mesh::BulkData& 
 
     // Loop over node relations in mesh entities
     const percept::MyPairIterRelation nr   (bulk_data, entity , NODE_RANK);
-    const unsigned ndim = stk::mesh::field_scalars_per_entity(nodal_coor,entity);
-    std::vector<double> temp(ndim);
 
     for (unsigned inr=0; inr < nr.size(); ++inr)
     {
       const percept::MyPairIterRelation::MyRelation  &rel = nr[inr];
       if (bulk_data.entity_rank(rel.entity()) ==  NODE_RANK) { // %fixme: need to check for USES relation
+        const unsigned ndim = stk::mesh::field_scalars_per_entity(nodal_coor,rel.entity());
+        std::vector<double> temp(ndim);
         const mesh::Entity nent = rel.entity();
         double * coor = mesh::field_data(nodal_coor, nent);
         if (!coor) {
