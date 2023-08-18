@@ -94,12 +94,11 @@ private:
 template<typename T>
 class MDFieldVectorRight {
 public:
-  using ref_t = typename PHAL::Ref<T>::type;
   MDFieldVectorRight() = default;
   MDFieldVectorRight(const MDFieldVectorRight<T>&) = default;
   MDFieldVectorRight<T>& operator=(const MDFieldVectorRight<T>&) = default;
   MDFieldVectorRight(PHX::MDField<T>& a);
-  KOKKOS_INLINE_FUNCTION ref_t operator[](const int i) const;  
+  KOKKOS_INLINE_FUNCTION typename PHAL::Ref<T>::type operator[](const int i) const;  
   
 private:
   Kokkos::DynRankView<T, PHX::Device> a_;
