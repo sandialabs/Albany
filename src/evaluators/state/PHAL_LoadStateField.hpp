@@ -35,6 +35,8 @@ public:
   
 private:
 
+  using ExecutionSpace = typename PHX::Device::execution_space;
+
   PHX::MDField<ScalarType> data;
   std::string fieldName;
   std::string stateName;
@@ -60,6 +62,8 @@ public:
 private:
 
   typedef typename EvalT::ParamScalarT ParamScalarT;
+
+  using ExecutionSpace = typename PHX::Device::execution_space;
 
   PHX::MDField<ParamScalarT> data;
   std::string fieldName;

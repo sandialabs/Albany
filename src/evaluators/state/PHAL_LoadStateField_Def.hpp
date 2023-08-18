@@ -56,7 +56,7 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
   MDFieldVectorRight<ScalarType> g(data);
   dataVec = g;
 
-  Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
+  Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
     dataVec[i] = (i < stateToLoad_size) ? stateData(i) : 0.0;
   });
@@ -102,8 +102,8 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
 
   MDFieldVectorRight<ParamScalarT> g(data);
   dataVec = g;
-  
-  Kokkos::parallel_for(Kokkos::RangePolicy(0,data.size()),
+
+  Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,data.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
     dataVec[i] = (i < stateToLoad_size) ? stateData(i) : 0.0;
   });
