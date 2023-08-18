@@ -63,7 +63,7 @@ public:
   }
 
   //! Get local DOF views for GatherVerticallyContractedSolution
-  const std::map<std::string, Kokkos::View<LO****, PHX::Device>>&
+  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const {
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
   }
