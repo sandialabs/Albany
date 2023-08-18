@@ -114,7 +114,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
 
   // BF does not depend on the current element, so we fill it now
-  Kokkos::parallel_for(Kokkos::RangePolicy(0,BF.extent(0)),
+  Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,BF.extent(0)),
                        KOKKOS_CLASS_LAMBDA(const int cellside) { 
     for (unsigned int node=0; node<numSideNodes; ++node) {
       for (unsigned int qp=0; qp<numSideQPs; ++qp) {
