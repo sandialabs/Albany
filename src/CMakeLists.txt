@@ -75,7 +75,6 @@ set (SOURCES
 
 if (ALBANY_EPETRA)
   list (APPEND SOURCES
-    Albany_ObserverFactory.cpp
     Petra_Converters_64.cpp
   )
 endif()
@@ -128,7 +127,6 @@ if(ALBANY_EPETRA)
   list (APPEND HEADERS
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
-    Albany_ObserverFactory.hpp
     Petra_Converters.hpp
   )
 endif()
