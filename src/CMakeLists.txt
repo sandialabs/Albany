@@ -182,10 +182,6 @@ if (ALBANY_EPETRA)
   )
 endif()
 
-message("TeuchosParameterList_LIBRARIES = '${TeuchosParameterList_LIBRARIES}'")
-message("TeuchosParameterList_INCLUDE_DIRS = '${TeuchosParameterList_INCLUDE_DIRS}'")
-message("TeuchosParameterList_TPL_INCLUDE_DIRS = '${TeuchosParameterList_TPL_INCLUDE_DIRS}'")
-
 if (NOT ALBANY_LIBRARIES_ONLY)
   add_executable(xml2yaml utility/xml2yaml.cpp)
   add_executable(yaml2xml utility/yaml2xml.cpp)
@@ -603,12 +599,13 @@ if (ENABLE_LANDICE)
   add_subdirectory(landIce)
 endif()
 
-message ("libs: ${ALBANY_LIBRARIES}")
-
 # Now build executables from this library, tailored main()s, and Trilinos
+message (" ***********************\n")
+
+message (STATUS "Albany libs to be built: ${ALBANY_LIBRARIES}")
 if (NOT ALBANY_LIBRARIES_ONLY)
 
-  message("\n-- Albany Executables: Albany; AlbanyAnalysis")
+  message(STATUS "Albany Executables to be built: Albany; AlbanyAnalysis")
 
   add_executable(Albany Main_Solve.cpp)
   set(ALBANY_EXECUTABLES Albany)

@@ -46,25 +46,19 @@ ENDIF ()
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
-MESSAGE("ALBANY_TRILINOS_DIR = " ${ALBANY_TRILINOS_DIR}) 
-
 # Get Trilinos as one entity
 IF (DEFINED ALBANY_TRILINOS_DIR)
   SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
 ENDIF()
+set (Kokkos_FIND_QUIETLY ON)
+message(STATUS "Looking for Trilinos installation ...")
+message("  -- ALBANY_TRILINOS_DIR = " ${ALBANY_TRILINOS_DIR})
+
 FIND_PACKAGE(Trilinos 14.1 REQUIRED)
+message(STATUS "Looking for Trilinos installation ... Found.")
 
 OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
 
-IF (DEFINED CMAKE_BUILD_TYPE)
-   IF ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-      MESSAGE("-- CMAKE_BUILD_TYPE=DEBUG...  Debug build is Enabled")
-      SET(ALBANY_DEBUG_BUILD ON)
-   ELSE()
-      MESSAGE("-- CMAKE_BUILD_TYPE=RELEASE...  Debug build is NOT Enabled")
-      SET(ALBANY_DEBUG_BUILD OFF)
-   ENDIF()
-ENDIF()
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
 # This is needed to find SEACAS tools used during testing (epu, etc).
 SET(Trilinos_BIN_DIRS "${Trilinos_DIR}/../../../bin")
@@ -79,19 +73,20 @@ IF(EXISTS "${Trilinos_DIR}/../../../TrilinosRepoVersion.txt")
   SET(ALBANY_TRILINOS_GIT_COMMIT_ID ${Trilinos_GIT_COMMIT_ID})
 ENDIF()
 
-MESSAGE("\nFound Trilinos!  Here are the details: ")
-MESSAGE("-- Trilinos_DIR = ${Trilinos_DIR}")
-MESSAGE("-- Trilinos_CMAKE_BUILD_TYPE = ${Trilinos_CMAKE_BUILD_TYPE}")
-MESSAGE("-- Trilinos_VERSION = ${Trilinos_VERSION}")
-MESSAGE("-- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
-MESSAGE("-- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
-MESSAGE("-- Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
-MESSAGE("-- Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
-MESSAGE("-- Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
-MESSAGE("-- Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
-MESSAGE("-- Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
-MESSAGE("-- Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
-MESSAGE("End of Trilinos details\n")
+MESSAGE(" +----------------------------------------------+")
+MESSAGE(" |         Trilinos Installation details        |")
+MESSAGE(" +----------------------------------------------+")
+message("  -- Trilinos_DIR = ${Trilinos_DIR}")
+message("  -- Trilinos_CMAKE_BUILD_TYPE = ${Trilinos_CMAKE_BUILD_TYPE}")
+message("  -- Trilinos_VERSION = ${Trilinos_VERSION}")
+message("  -- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
+message("  -- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
+message("  -- Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+message("  -- Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+message("  -- Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
+message("  -- Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
+message("  -- Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
+message("  -- Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 
 # Compress Trilinos lists that are used
 LIST(REMOVE_DUPLICATES Trilinos_INCLUDE_DIRS)
@@ -155,21 +150,22 @@ EXECUTE_PROCESS(
   OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-MESSAGE("Albany version details:")
-MESSAGE("-- ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
-MESSAGE("-- ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
-MESSAGE("End of Albany version details\n")
+message("\n +----------------------------------+")
+message(" |       Albany version details       |")
+message(" +----------------------------------+\n")
+message(" | ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
+message(" | ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
-MESSAGE(" +----------------------------------+")
-MESSAGE(" |       Installation details       |")
-MESSAGE(" +----------------------------------+")
-MESSAGE(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
-MESSAGE(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
-MESSAGE(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
-MESSAGE(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-MESSAGE(" +----------------------------------+")
+message("\n +----------------------------------+")
+message(" |    Albany Installation details   |")
+message(" +----------------------------------+")
+message(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
+message(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+message(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+message(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+message(" +----------------------------------+\n")
 
 option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
 if (ENABLE_CROSS_COMPILE)
@@ -235,6 +231,9 @@ endif()
 #ENDIF()
 
 # Compiler details
+message(" +----------------------------------+")
+message(" |        Compilers details         |")
+message(" +----------------------------------+")
 SET(ALBANY_CXX_COMPILER_ID ${CMAKE_CXX_COMPILER_ID})
 MESSAGE("-- ALBANY_CXX_COMPILER_ID = ${ALBANY_CXX_COMPILER_ID}")
 SET(ALBANY_CXX_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
@@ -255,7 +254,7 @@ IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
 ELSE()
   MESSAGE(FATAL_ERROR "\nError: ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h not found!")
 ENDIF()
-MESSAGE("End of compiler details\n")
+message(" +----------------------------------+\n")
 
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
 MESSAGE("Checking Trilinos build for required and optional packages")
@@ -369,7 +368,7 @@ LIST(FIND Trilinos_PACKAGE_LIST STKExprEval STKExprEval_List_ID)
 IF (STKExprEval_List_ID GREATER -1)
   MESSAGE("-- Looking for STKExprEval ...                   Found.")
   SET(ALBANY_STK_EXPR_EVAL TRUE)
-  add_definitions(-DALBANY_STK_EXPR_EVAL) 
+  add_definitions(-DALBANY_STK_EXPR_EVAL)
 ELSE()
   MESSAGE("-- Looking for STKExprEval ...               NOT Found.")
   SET(ALBANY_STK_EXPR_EVAL FALSE)
@@ -545,7 +544,7 @@ check_c_source_compiles(
   "
   PARALLEL_EXODUS_SUPPORTED
   )
-  
+
 IF (PARALLEL_EXODUS_SUPPORTED)
   SET(ALBANY_PARALELL_EXODUS TRUE)
   MESSAGE("-- ALBANY_PARALELL_EXODUS set to True")
@@ -562,6 +561,15 @@ MESSAGE ("\n  ************************************")
 MESSAGE ("  *** Albany configuration options ***")
 MESSAGE ("  ************************************\n")
 
+IF (DEFINED CMAKE_BUILD_TYPE)
+   IF ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+      MESSAGE("-- CMAKE_BUILD_TYPE=DEBUG...  Debug build is Enabled")
+      SET(ALBANY_DEBUG_BUILD ON)
+   ELSE()
+      MESSAGE("-- CMAKE_BUILD_TYPE=RELEASE...  Debug build is NOT Enabled")
+      SET(ALBANY_DEBUG_BUILD OFF)
+   ENDIF()
+ENDIF()
 # Set optional build of code depending on Epetra.
 # Be default, it will be on, so both Tpetra and Epetra capabilities are built.
 # Ideally, one should not need Epetra though, since the Tpetra stack in
@@ -834,13 +842,6 @@ IF(ALBANY_MPI_EXEC_TRAILING_OPTIONS)
   SET(MPIPOST ${ALBANY_MPI_EXEC_TRAILING_OPTIONS})
   SEPARATE_ARGUMENTS(MPIPOST)
 ENDIF()
-SET(SERIAL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST})
-SET(PARALLEL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST})
-STRING(REPLACE ";" " " SERIAL_CALL_TEXT "${SERIAL_CALL}")
-STRING(REPLACE ";" " " PARALLEL_CALL_TEXT "${PARALLEL_CALL}")
-MESSAGE("-- CTest serial call: ${SERIAL_CALL_TEXT}")
-MESSAGE("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
-
 
 # Mesh database tools.
 OPTION(ENABLE_MESHDB_TOOLS "Flag to turn on mesh database tools" OFF)
@@ -914,16 +915,17 @@ IF (ENABLE_OMEGAH)
 ENDIF()
 
 # add a target to generate API documentation with Doxygen
+option (DISABLE_DOXYGEN "Whether to disable doxygen" ON)
 IF( NOT DISABLE_DOXYGEN )
   find_package(Doxygen)
   if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
-  add_custom_target(doc
-  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  COMMENT "Generating API documentation with Doxygen" VERBATIM
-  )
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
+    add_custom_target(doc
+      ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
   endif(DOXYGEN_FOUND)
 ENDIF()
 
@@ -951,8 +953,15 @@ if (ALBANY_LIBRARIES_ONLY)
 elseif (DISABLE_ALBANY_TESTS)
   message("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
 else()
-  # Add Albany test -- in the "tests" directory
+  set(SERIAL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST})
+  set(PARALLEL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST})
+  string(REPLACE ";" " " SERIAL_CALL_TEXT "${SERIAL_CALL}")
+  string(REPLACE ";" " " PARALLEL_CALL_TEXT "${PARALLEL_CALL}")
+
+  # add albany test -- in the "tests" directory
   add_subdirectory(tests)
+  message("-- CTest serial call: ${SERIAL_CALL_TEXT}")
+  message("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
 endif()
 
 IF (ALBANY_PYTHON)
