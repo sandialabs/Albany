@@ -2089,19 +2089,17 @@ STKDiscretization::computeNodeSets()
     stk::mesh::get_selected_entities(ns_selector, bulkData->buckets(NODE_RANK), nodes);
 
     // Remove nodes that are not owned according to Tpetra/Epetra
-    bool done = false;
-    while (not done) {
-      done = true;
-      auto dof_mgr = getNodeDOFManager();
-      for (auto it=nodes.begin(); it!=nodes.end(); ++it) {
-        auto gid = stk_gid(*it);
-        if (not dof_mgr->indexer()->isLocallyOwnedElement(gid)) {
-          nodes.erase(it);
-          done = false;
-          break;
-        }
+    std::vector<stk::mesh::Entity>::iterator it = nodes.begin();
+    auto dof_mgr = getNodeDOFManager();
+    while(it != nodes.end()){
+      auto gid = stk_gid(*it);
+      if (not dof_mgr->indexer()->isLocallyOwnedElement(gid)){
+        it = nodes.erase(it);
+      }else{
+        it++;
       }
     }
+
     const int num_nodes = nodes.size();
     *out << "[STKDisc] nodeset " << ns.first << " has size " << num_nodes
          << "  on Proc " << comm->getRank() << std::endl;
