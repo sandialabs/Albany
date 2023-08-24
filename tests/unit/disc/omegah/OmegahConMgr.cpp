@@ -91,6 +91,30 @@ void createTagFromClassification(Omega_h::Mesh& mesh, const int classId, const i
   mesh.add_tag(OMEGA_H_VERT, tagName, 1, lateralverts);
 }
 
+template<typename T>
+void checkOwnership(Omega_h::Mesh& mesh, T connMgr) {
+  const auto localElmIds = connMgr->getElementBlock("ignored");
+  auto conMgrVtxGids = Omega_h::HostRead(connMgr->getGlobalDofNumbering(OMEGA_H_VERT));
+  auto isVtxOwned = Omega_h::HostRead(mesh.owned(OMEGA_H_VERT));
+  std::map<Omega_h::GO, Omega_h::I8> vtxGidOwned;
+  for(int i = 0; i < conMgrVtxGids.size(); i++)
+    vtxGidOwned[conMgrVtxGids[i]] = isVtxOwned[i];
+  const auto partDim = connMgr->part_dim("ignored");
+  int dofsPerElm = connMgr->getConnectivitySize(0);
+  //this check only supports dofs at vertices
+  if(partDim == 1) REQUIRE(dofsPerElm == 2);
+  if(partDim == 2) REQUIRE(dofsPerElm == 3);
+  if(partDim == 3) REQUIRE(dofsPerElm == 4);
+  for( auto lid : localElmIds ) {
+    auto dofGids = connMgr->getConnectivity(lid);
+    auto dofOwned = connMgr->getOwnership(lid);
+    for(int i=0; i<dofsPerElm; i++) {
+      if(vtxGidOwned.at(dofGids[i]))
+        REQUIRE(Albany::Owned == dofOwned[i]);
+    }
+  }
+}
+
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
@@ -318,6 +342,18 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
     {7, {0, 0, 0}}    // {7, 8, 6}
   };
 
+  const std::map<GO,std::array<GO,3>> elementGidToDofGids = {
+    //{elmid, {vtx/dof gids}}
+    {0, {0, 7, 3}},
+    {1, {1, 3, 4}},
+    {2, {3, 1, 0}},
+    {3, {3, 6, 5}},
+    {4, {4, 2, 1}},
+    {5, {5, 4, 3}},
+    {6, {6, 3, 7}},
+    {7, {7, 8, 6}}
+  };
+
   Albany::build_type (Albany::BuildType::Tpetra);
 
   auto teuchosComm = Albany::getDefaultComm();
@@ -346,7 +382,14 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   const auto localElmIds = conn_mgr->getElementBlock("ignored");
   for( auto lid : localElmIds ) {
     auto elmGid = conn_mgr->getElementGlobalId(lid);
+    auto dofGids = conn_mgr->getConnectivity(lid);
     const auto firstMaskIdx = lid*3;
+    const std::array<GO,3> elmDofGids = {dofGids[0], dofGids[1], dofGids[2]};
+    const auto expectedDofGids = elementGidToDofGids.at(elmGid);
+    if( expectedDofGids != elmDofGids ) {
+      std::cerr << elmGid << " does not contain the expected DOF global ids\n";
+    }
+    REQUIRE( expectedDofGids == elmDofGids );
     const std::array<GO,3> elmMask = {mask[firstMaskIdx], mask[firstMaskIdx+1], mask[firstMaskIdx+2]};
     const auto expectedMask = elementGidToMask.at(elmGid);
     if( expectedMask != elmMask ) {
@@ -356,5 +399,48 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   }
 
   out << "Testing OmegahConnManager::getConnectivityMaskBox() on triangle mesh of square\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnership)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+
+  Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+
+  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
+  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
+  auto conn_mgr = createOmegahConnManager(mesh);
+  conn_mgr->buildConnectivity(*patternC1);
+  checkOwnership(mesh,conn_mgr);
+  out << "Testing OmegahConnManager::buildConnectivityOwnership()\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwnership)
+{
+  Albany::build_type (Albany::BuildType::Tpetra);
+
+  auto teuchosComm = Albany::getDefaultComm();
+  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
+
+
+  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
+  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
+
+  const int lateralSide_classId = 1;
+  const int lateralSide_classDim = 1;
+  const auto lateralSide_name = "lateralside";
+  createTagFromClassification(mesh, lateralSide_classId, lateralSide_classDim, lateralSide_name);
+
+  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
+
+  Teuchos::RCP<const panzer::FieldPattern> patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM<PHX::exec_space, double, double>>();
+  conn_mgr->buildConnectivity(*patternEdgeC1);
+  checkOwnership(mesh,conn_mgr);
+  out << "Testing OmegahConnManager::buildPartConnectivityOwnership()\n";
   success = true;
 }
