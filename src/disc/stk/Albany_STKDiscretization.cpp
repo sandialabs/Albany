@@ -197,6 +197,7 @@ STKDiscretization::getCoordinates() const
 void
 STKDiscretization::transformMesh()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: transformMesh");
   using std::cout;
   using std::endl;
   AbstractSTKFieldContainer::STKFieldType* coordinates_field =
@@ -531,6 +532,7 @@ STKDiscretization::transformMesh()
 void
 STKDiscretization::setupMLCoords()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setupMLCoords");
   if (rigidBodyModes.is_null()) { return; }
   if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
 
@@ -1027,6 +1029,7 @@ STKDiscretization::setSolutionFieldMV(
 
 void STKDiscretization::computeVectorSpaces()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeVectorSpaces");
   // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
   //       That's not the name that stk uses for the whole mesh. So if the
   //       dof part name is "", we get the part stored in the stk mesh struct
@@ -1078,6 +1081,7 @@ void STKDiscretization::computeVectorSpaces()
 void
 STKDiscretization::computeGraphs()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeGraphs");
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
   m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, vs, ov_vs, ov_vs));
@@ -1262,6 +1266,7 @@ STKDiscretization::computeGraphs()
 void
 STKDiscretization::computeWorksetInfo()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeWorksetInfo");
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
 
   stk::mesh::Selector select_owned_in_part =
@@ -1591,6 +1596,7 @@ STKDiscretization::computeWorksetInfo()
 void
 STKDiscretization::computeSideSets()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeSideSets");
   // Clean up existing sideset structure if remeshing
   for (size_t i = 0; i < sideSets.size(); ++i) {
     sideSets[i].clear();  // empty the ith map
@@ -2061,6 +2067,7 @@ STKDiscretization::determine_entity_pos(
 void
 STKDiscretization::computeNodeSets()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeNodeSets");
   auto coordinates_field = stkMeshStruct->getCoordinatesField();
 
   const auto& sol_dof_mgr = getDOFManager();
@@ -2190,6 +2197,7 @@ STKDiscretization::setupExodusOutput()
 void
 STKDiscretization::buildSideSetProjectors()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: buildSideSetProjectors");
   Teuchos::RCP<ThyraCrsMatrixFactory>   ov_graphP, graphP;
   Teuchos::RCP<Thyra_LinearOp>          P, ov_P;
 
@@ -2289,6 +2297,7 @@ STKDiscretization::buildSideSetProjectors()
 void
 STKDiscretization::updateMesh()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: updateMesh");
   bulkData = stkMeshStruct->bulkData;
 
   computeVectorSpaces();
@@ -2340,6 +2349,7 @@ STKDiscretization::updateMesh()
 void STKDiscretization::
 setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 {
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
   auto mSTKFieldContainer = Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer>(fieldContainer,false);

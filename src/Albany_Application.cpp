@@ -516,6 +516,7 @@ Application::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh)
 void
 Application::buildProblem()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("Albany_App: buildProblem");
   problem->buildProblem(meshSpecs, stateMgr);
 
   if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false) &&
@@ -595,6 +596,7 @@ Application::buildProblem()
 void
 Application::createDiscretization()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("Albany_App: createDiscretization");
   // Create the full mesh
   disc = discFactory->createDiscretization(
       neq,
