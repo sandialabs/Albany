@@ -108,37 +108,46 @@ STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
   stk::mesh::get_selected_entities(selector, m_bulkData->buckets(primary_entity_rank), entities);
 
   std::vector<int> offsets (m_idCnt.size(),0);
-  for (int i=1; i<4; ++i) {
+  for (size_t i=1; i<m_idCnt.size(); ++i) {
     offsets[i] = offsets[i-1] + m_idCnt[i-1];
   }
   auto topo = get_topology();
+  auto same_ent_rank = primary_entity_rank==conn_mgr_part.primary_entity_rank();
   for (const auto e : entities) {
-    auto elem = primary_entity_rank==conn_mgr_part.primary_entity_rank() ? &e : m_bulkData->begin_elements(e);
-    int num_elems = primary_entity_rank==conn_mgr_part.primary_entity_rank() ? 1 : m_bulkData->num_elements(e);
-    TEUCHOS_TEST_FOR_EXCEPTION (num_elems!=1, std::runtime_error,
-        "Error! An entity of the sub-part is not connected with one (and exaclty one) element of the block.\n"
-        " - conn mgr part name: " + m_elem_blocks_names[0] + "\n"
-        " - conn mgr part rank: " + std::to_string(conn_mgr_part.primary_entity_rank()) + "\n"
-        " - sub part name: " + sub_part_name + "\n"
-        " - sub part rank: " + std::to_string(primary_entity_rank) + "\n"
-        " - sub part entity id (0-based): " + std::to_string(m_bulkData->identifier(e)-1) + "\n"
-        " - sub part entity num elems: " + std::to_string(num_elems) + "\n");
-    LO ielem = m_localIDHash.at(m_bulkData->identifier(*elem));
-    auto elem_mask = &mask[getConnectivityStart(ielem)];
+    auto elems    = same_ent_rank ? &e : m_bulkData->begin_elements(e);
+    int num_elems = same_ent_rank ? 1 : m_bulkData->num_elements(e);
+    for (int ielem=0; ielem<num_elems; ++ielem) {
+      auto elem = elems[ielem];
+      LO elem_LID = m_localIDHash.at(m_bulkData->identifier(elem));
+      auto elem_mask = &mask.at(getConnectivityStart(elem_LID));
 
-    // Set mask=1 for all ids on all entities of lower rank
-    for (auto rank = NODE_RANK; rank<primary_entity_rank; ++rank) {
-      int count = m_bulkData->num_connectivity(e,rank);
-      for (int irel=0; irel<count; ++irel) {
-        for (int cnt=0; cnt<m_idCnt[rank]; ++cnt) {
-          elem_mask[offsets[rank] + cnt] = 1;
+      // Set mask=1 for all ids on all entities of lower rank
+      for (auto rank = NODE_RANK; rank<primary_entity_rank; ++rank) {
+        int count = m_bulkData->num_connectivity(e,rank);
+        for (int irel=0; irel<count; ++irel) {
+          for (int cnt=0; cnt<m_idCnt[rank]; ++cnt) {
+            elem_mask[offsets[rank] + cnt] = 1;
+          }
         }
       }
-    }
 
-    // Set mask=1 for all ids on the entity itself
-    for (int cnt=0; cnt<m_idCnt[primary_entity_rank]; ++cnt) {
-      elem_mask[offsets[primary_entity_rank] + cnt] = 1;
+      auto siblings  = m_bulkData->begin (elem,primary_entity_rank);
+      auto positions = m_bulkData->begin_ordinals (elem,primary_entity_rank);
+      int nsiblings  = m_bulkData->num_connectivity(elem,primary_entity_rank);
+      bool found = false;
+      for (int isib=0; isib<nsiblings; ++isib) {
+        if (m_bulkData->identifier(siblings[isib])==m_bulkData->identifier(e)) {
+          elem_mask[offsets[primary_entity_rank]+positions[isib]] = 1;
+          found = true;
+          break;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
+          "Error! Could not find entity within its owning element.\n"
+          "  part name    : " << sub_part_name << "\n"
+          "  elem stk id  : " << m_bulkData->identifier(elem) << "\n"
+          "  entity rank  : " << primary_entity_rank << "\n"
+          "  entity stk id: " << m_bulkData->identifier(e) << "\n");
     }
   }
 
