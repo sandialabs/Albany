@@ -486,7 +486,6 @@ OmegahConnManager::getAssociatedNeighbors(const LO& /* el */) const
 
 // Where element ielem start in the 1d connectivity array
 int OmegahConnManager::getConnectivityStart (const LO localElmtId) const {
-  static_assert(sizeof(Omega_h::GO) == sizeof(GO));
   return localElmtId*m_dofsPerElm;
 }
 

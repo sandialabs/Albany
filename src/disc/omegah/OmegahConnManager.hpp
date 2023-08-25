@@ -45,6 +45,11 @@ private:
     const Omega_h::Adj elmToDim[3]) const;
   std::vector<Ownership> buildConnectivityOwnership() const;
 public:
+  //Passing the connectivity array from Omegah to Albany in
+  // getConnectivity(LO localElmtId) requires matching global
+  // ordinal types.
+  static_assert(sizeof(Omega_h::GO) == sizeof(GO));
+
   OmegahConnManager(Omega_h::Mesh& in_mesh);
   OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim);
 
@@ -91,6 +96,10 @@ public:
   }
 
   /** Get ID connectivity for a particular element
+    * \details the static assertion at the top of the class
+    *          ensures that the global ordinal type in
+    *          Omega_h and Albany are the same. This function
+    *          will fail (silently?) if they don't match.
     *
     * \param[in] localElmtId Local element ID
     *
@@ -102,7 +111,6 @@ public:
   const GO * getConnectivity(LO localElmtId) const override {
     TEUCHOS_TEST_FOR_EXCEPTION (m_connectivity.size()==0, std::logic_error,
         "Error! Cannot call getConnectivity before connectivity is built.\n");
-    static_assert(sizeof(Omega_h::GO) == sizeof(GO));
     auto ptr = m_connectivity.data() + (localElmtId*m_dofsPerElm);
     return reinterpret_cast<const GO*>(ptr);
   }
@@ -225,13 +233,6 @@ public:
   // Queries the dimension of a part
   int part_dim (const std::string& part_name) const override;
 
-  /** Get vector of bools associated to connectivity for a particular element, indicating whether the entity is owned by this rank
-    *
-    * \param[in] localElmtId Local element ID
-    *
-    * \returns vector of bools, with total size
-    *          equal to <code>getConnectivitySize(localElmtId)</code>
-    */
   const Ownership* getOwnership(LO localElmtId) const override;
 };
 
