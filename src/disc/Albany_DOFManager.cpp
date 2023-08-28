@@ -215,15 +215,16 @@ restrict (const std::string& sub_part_name)
 
   // Loop over elements and their sub cells, and set the correct LID for all
   // dofs on the sub-part
-  std::vector<std::vector<LO>> elem_dof_lids(num_elems,std::vector<LO>(num_elem_dofs,-1));
+  std::vector<std::vector<LO>> new_elem_dof_lids(num_elems,std::vector<LO>(num_elem_dofs,-1));
+  auto old_elem_dof_lids = m_elem_dof_lids.host();
   const auto& conn_part_mask = m_conn_mgr->getConnectivityMask(sub_part_name);
   for (int ielem=0; ielem<num_elems; ++ielem) {
-    auto& dof_lids = elem_dof_lids[ielem];
+    auto& new_dof_lids = new_elem_dof_lids[ielem];
     const int  ndofs = m_conn_mgr->getConnectivitySize(ielem);
     const int elem_start = m_conn_mgr->getConnectivityStart(ielem);
     for (int i=0; i<ndofs; ++i) {
-      if (conn_part_mask[elem_start+i]==0) {
-        dof_lids[i] = -1;
+      if (conn_part_mask[elem_start+i]==1) {
+        new_dof_lids[i] = old_elem_dof_lids(ielem,i);
       }
     }
   }
@@ -242,7 +243,7 @@ restrict (const std::string& sub_part_name)
   std::unordered_set<GO> owned_set, ghosted_set;
   for (int ielem=0; ielem<num_elems; ++ielem) {
     const auto& gids = getElementGIDs(ielem);
-    const auto& dof_lids = elem_dof_lids[ielem];
+    const auto& dof_lids = new_elem_dof_lids[ielem];
     for (int idof=0; idof<num_elem_dofs; ++idof) {
       if (dof_lids[idof]==-1) {
         continue;
@@ -262,7 +263,7 @@ restrict (const std::string& sub_part_name)
   int lcount = owned_.size();
   int gcount = 0;
   Teuchos::reduceAll(*m_comm,Teuchos::REDUCE_SUM,1,&lcount,&gcount);
-  TEUCHOS_TEST_FOR_EXCEPTION (gcount>0, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (gcount==0, std::logic_error,
       "Error! Attempt to restrict a DOFManager to an empty sub-part.\n"
       " - dof mgr part name: " + part_name() + "\n"
       " - sub part name    : " + sub_part_name + "\n");
@@ -276,7 +277,7 @@ restrict (const std::string& sub_part_name)
   // Update lids in base class as well, in case we use some base class method
   for (int ielem=0; ielem<num_elems; ++ielem) {
     const auto& gids = getElementGIDs(ielem);
-    auto& dof_lids = elem_dof_lids[ielem];
+    auto& dof_lids = new_elem_dof_lids[ielem];
     for (int idof=0; idof<num_elem_dofs; ++idof) {
       if (dof_lids[idof]==-1) {
         // Invalidate the GID as well, so that, if we accidentally use it,
@@ -289,7 +290,7 @@ restrict (const std::string& sub_part_name)
     }
   }
 
-  setLocalIds(elem_dof_lids);
+  setLocalIds(new_elem_dof_lids);
   using dview = DualView<const int**>;
   m_elem_dof_lids = dview(this->getLIDs());
   m_elem_dof_lids.sync_to_host();
