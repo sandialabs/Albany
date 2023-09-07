@@ -10,6 +10,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 
 #include "Albany_OmegahAbstractMesh.hpp"
+#include "Albany_OmegahFieldContainer.hpp"
 #include "Albany_NullSpaceUtils.hpp"
 
 namespace Albany {
@@ -145,9 +146,7 @@ public:
   }
 
   Teuchos::RCP<Thyra_MultiVector>
-  getSolutionMV(bool overlapped = false) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
-  }
+  getSolutionMV (bool overlapped) const;
 
   void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const {
@@ -275,7 +274,12 @@ protected:
 
   Teuchos::RCP<OmegahAbstractMesh> m_mesh_struct;
 
+  Teuchos::RCP<OmegahFieldContainer> m_field_container;
+  Teuchos::RCP<OmegahFieldContainer> m_ov_field_container;
+
   Teuchos::RCP<const Teuchos_Comm> m_comm;
+
+  std::vector<std::string> m_sol_names;
 
   // Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown

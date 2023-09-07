@@ -363,12 +363,15 @@ if (ENABLE_OMEGAH)
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.cpp
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.cpp
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahDiscretization.cpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahFieldContainer.cpp
   )
   list (APPEND HEADERS
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.hpp
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahAbstractMesh.hpp
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.hpp
     ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh_Def.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahDiscretization.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahFieldContainer.hpp
   )
 endif()
 

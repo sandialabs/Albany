@@ -20,6 +20,15 @@ OmegahDiscretization(
  , m_neq (neq)
 {
   m_num_time_deriv = m_disc_params->get("Number Of Time Derivatives",0);
+
+  // TODO: get solution names from param list
+  m_sol_names.resize(m_num_time_deriv+1,solution_dof_name());
+  if (m_num_time_deriv>0) {
+    m_sol_names[1] += "_dot";
+    if (m_num_time_deriv>1) {
+      m_sol_names[2] += "_dotdot";
+    }
+  }
 }
 
 void OmegahDiscretization::
@@ -33,6 +42,27 @@ updateMesh ()
   m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
   m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
   m_node_dof_managers[""]     = node_dof_mgr;
+
+  // TODO: our Thyra VS is such that owned GIDs come first, so we can store ov fields,
+  //       and subview them for non-ov queries
+  auto create_fc = [&] (const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
+    auto fc = Teuchos::rcp(new OmegahFieldContainer(m_mesh_struct));
+    fc->add_field (m_sol_names[0],vs);
+    if (m_num_time_deriv>0) {
+      fc->add_field (m_sol_names[1],vs);
+      if (m_num_time_deriv>1) {
+        fc->add_field (m_sol_names[2],vs);
+      }
+    }
+    return fc;
+  };
+  m_ov_field_container = create_fc (sol_dof_mgr->ov_vs());
+  if (m_comm->getSize()>1) {
+    m_field_container = create_fc (sol_dof_mgr->ov_vs());
+  } else {
+    m_field_container = m_ov_field_container;
+  }
+
   // Compute workset information
   // NOTE: these arrays are all of size 1, for the foreseable future.
   //       Still, make impl generic (where possible), in case things change.
@@ -75,8 +105,21 @@ updateMesh ()
 }
 
 void OmegahDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) {
+setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
+{
   printf ("TODO: add code to save states in disc field container, if needed.\n");
+}
+
+Teuchos::RCP<Thyra_MultiVector>
+OmegahDiscretization::
+getSolutionMV (bool overlapped) const
+{
+  auto soln = Thyra::createMembers(getVectorSpace(), m_num_time_deriv + 1);
+  auto fc = overlapped ? m_ov_field_container : m_field_container;
+  for (int i=0; i<m_num_time_deriv; ++i) {
+    soln->col(i)->assign(*fc->get_field(m_sol_names[i]));
+  }
+  return soln;
 }
 
 Teuchos::RCP<DOFManager>
