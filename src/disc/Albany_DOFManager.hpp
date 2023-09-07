@@ -129,8 +129,9 @@ private:
   vec4int       m_subcell_closures;
 
   // Shortcut for location of top/bot sides in the cell list of sides.
-  int m_top;
-  int m_bot;
+  bool m_top_bot_well_defined = false;
+  int m_top = -1;
+  int m_bot = -1;
 
   int m_topo_dim;
 

@@ -31,12 +31,18 @@ DOFManager (const Teuchos::RCP<ConnManager>& conn_mgr,
     m_part_name = part_name;
   }
 
-  // Shards has both Hexa and Wedge with top side in last position,
-  // and bot side in the second to last side position
-  m_top = get_topology().getSideCount()-1;
-  m_bot = get_topology().getSideCount()-2;
+  const auto& topo = get_topology();
 
-  m_topo_dim = get_topology().getDimension();
+  m_topo_dim = topo.getDimension();
+  if (topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Line<2>>() or
+      topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Quadrilateral<4>>() or
+      topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Hexahedron<8>>()) {
+    // Shards has both Hexa and Wedge with top side in last position,
+    // and bot side in the second to last side position
+    m_top_bot_well_defined = true;
+    m_top = topo.getSideCount()-1;
+    m_bot = topo.getSideCount()-2;
+  }
 }
 
 void DOFManager::build ()
@@ -170,6 +176,7 @@ getGIDFieldOffsetsSide (int fieldNum, int side, const int orderAsInSide) const
 {
 #ifdef ALBANY_DEBUG
   TEUCHOS_TEST_FOR_EXCEPTION (
+      !m_top_bot_well_defined ||
       (side!=m_top && side!=m_bot) || (orderAsInSide!=m_top && orderAsInSide!=m_bot), std::logic_error,
       "Error! This version of getGIDFieldOffsetsSide only works for top/bot sides.\n"
       "  - side: " << side << "\n"
@@ -502,22 +509,24 @@ albanyBuildGlobalUnknowns ()
       }
 
       // Shards has both Hexa and Wedge with top in the last side position
-      auto tmp_top = f_closures[faceDim][m_top];
-      auto tmp_bot = f_closures[faceDim][m_bot];
-      auto& side_as_side = m_side_closure_orderd_as_side[f];
-      side_as_side.resize(faceCount);
-      for (auto& v : side_as_side) {
-        v.resize(faceCount);
-      }
+      if (m_top_bot_well_defined) {
+        auto tmp_top = f_closures[faceDim][m_top];
+        auto tmp_bot = f_closures[faceDim][m_bot];
+        auto& side_as_side = m_side_closure_orderd_as_side[f];
+        side_as_side.resize(faceCount);
+        for (auto& v : side_as_side) {
+          v.resize(faceCount);
+        }
 
-      // These involve no permutation
-      side_as_side[m_top][m_top] = tmp_top;
-      side_as_side[m_bot][m_bot] = tmp_bot;
-      side_as_side[m_top][m_bot].reserve(tmp_top.size());
-      side_as_side[m_bot][m_top].reserve(tmp_top.size());
-      for (auto p : permutation) {
-        side_as_side[m_bot][m_top].push_back(tmp_bot[p]);
-        side_as_side[m_top][m_bot].push_back(tmp_top[p]);
+        // These involve no permutation
+        side_as_side[m_top][m_top] = tmp_top;
+        side_as_side[m_bot][m_bot] = tmp_bot;
+        side_as_side[m_top][m_bot].reserve(tmp_top.size());
+        side_as_side[m_bot][m_top].reserve(tmp_top.size());
+        for (auto p : permutation) {
+          side_as_side[m_bot][m_top].push_back(tmp_bot[p]);
+          side_as_side[m_top][m_bot].push_back(tmp_top[p]);
+        }
       }
     }
   }
