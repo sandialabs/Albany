@@ -1,7 +1,6 @@
 #ifndef ALBANY_OMEGAH_BOX_MESH_HPP
 #define ALBANY_OMEGAH_BOX_MESH_HPP
 
-#include "Omega_h_mesh.hpp"
 #include "Albany_OmegahAbstractMesh.hpp"
 
 namespace Albany {
@@ -30,8 +29,6 @@ protected:
 
   Teuchos::RCP<const Teuchos::ParameterList>
   getValidDiscretizationParameters() const;
-
-  Omega_h::Mesh  m_mesh;
 
   ViewLR<const double*,DeviceMemSpace>  m_coords_d;
   ViewLR<      double*,HostMemSpace>    m_coords_h;
