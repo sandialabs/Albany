@@ -13,10 +13,22 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
 {
   const CellTopologyData* ctd;
 
+  std::string topo_str = "Simplex";
+  if (params->isParameter("Topology Type")) {
+    topo_str = params->get<std::string>("Topology Type");
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (topo_str!="Simplex" and topo_str!="Hypercube", std::runtime_error,
+      "Error! Invalid topology type '" << topo_str << "'\n"
+      "   Valid choices: Simplex, Hypercube\n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (topo_str=="Hypercube", std::runtime_error,
+      "Error! Hypercube box meshes not yet supported.\n");
+
   switch (Dim) {
     case 1: ctd = shards::getCellTopologyData<shards::Line<2>>();           break;
-    case 2: ctd = shards::getCellTopologyData<shards::Quadrilateral<4>>();  break;
-    case 3: ctd = shards::getCellTopologyData<shards::Hexahedron<8>>();     break;
+    case 2: ctd = shards::getCellTopologyData<shards::Triangle<3>>();  break;
+    case 3: ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();     break;
   }
 
   int nelemx = 1;
@@ -38,8 +50,17 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     }
   }
 
-  int nelems = nelemx*nelemy*nelemz;
+  // Create the omegah mesh obj
+  if (topo_str=="Simplex") {
+    m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_SIMPLEX,
+                                scalex,scaley,scalez,nelemx,nelemy,nelemz);
+  } else {
+    m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_HYPERCUBE,
+                                scalex,scaley,scalez,nelemx,nelemy,nelemz);
+  }
+  m_mesh.set_parting(OMEGA_H_ELEM_BASED);
 
+  // Create the mesh specs
   std::vector<std::string> nsNames, ssNames;
   for (int i=0; i<Dim; ++i) {
     nsNames.push_back("NodeSet" + std::to_string(i*2));
@@ -58,13 +79,8 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->m_mesh_specs.resize(1);
   this->m_mesh_specs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
-                             nsNames, ssNames, nelems, ebName,
+                             nsNames, ssNames, m_mesh.nelems(), ebName,
                              ebNameToIndex));
-
-  // Create the omegah mesh obj
-  m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_HYPERCUBE,
-                              scalex,scaley,scalez,nelemx,nelemy,nelemz);
-  m_mesh.set_parting(OMEGA_H_ELEM_BASED);
 
   m_coords_d = m_mesh.coords().view();
   m_coords_h = Kokkos::create_mirror_view(m_coords_d);
