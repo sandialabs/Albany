@@ -145,15 +145,6 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION ( OMEGA_H_SIMPLEX != mesh.family(), std::logic_error,
         "Error! The OmegahConnManager currently supports 2d and 3d meshes with"
         "       straight sided triangles and tets\n");
-    if(mesh.dim()==3) {
-      shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
-      elementBlockTopologies.push_back(tetTopo);
-    } else if(mesh.dim()==2) {
-      shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
-      elementBlockTopologies.push_back(triTopo);
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-          "Error! The OmegahConnManager currently does not 1d meshes\n");
     }
   }
 

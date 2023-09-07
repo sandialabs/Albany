@@ -75,6 +75,9 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partFilter({mesh.dim(
   //albany does *not* support processes without elements
   TEUCHOS_TEST_FOR_EXCEPTION (!mesh.nelems(), std::runtime_error,
       "Error! Input mesh has no elements!\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (mesh.dim()!=2 && mesh.dim()!=3, std::logic_error,
+      "Error! The OmegahConnManager currently only supports 2d/3d meshes.\n"
+      "  - input mesh dim: " + std::to_string(mesh.dim()) + "\n");
 
   m_elem_blocks_names.push_back("omegah_mesh_block");
 
@@ -91,6 +94,10 @@ OmegahConnManager::
 OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPartDim) :
   mesh(in_mesh), partFilter({inPartDim, inPartId})
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (mesh.dim()!=2 && mesh.dim()!=3, std::logic_error,
+      "Error! The OmegahConnManager currently only supports 2d/3d meshes.\n"
+      "  - input mesh dim: " + std::to_string(mesh.dim()) + "\n");
+
   auto world = mesh.library()->world();
   auto rank = world->rank();
 
