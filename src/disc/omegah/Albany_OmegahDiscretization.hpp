@@ -68,12 +68,6 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
-  //! Retrieve coodinate ptr_field (ws, el, node)
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
-  getCoords() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
-  }
-
   //! Get coordinates (overlap map).
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const {
@@ -104,33 +98,9 @@ public:
     return m_mesh_struct;
   }
 
-  //! Set stateArrays
-  void
-  setStateArrays(StateArrays& sa) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
-  }
-
-  //! Get stateArrays
-  StateArrays&
-  getStateArrays() {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
-  }
-
   //! Get nodal parameters state info struct
   const StateInfoStruct&
   getNodalParameterSIS() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
-  }
-
-  //! Retrieve Vector (length num worksets) of element block names
-  const WorksetArray<std::string>&
-  getWsEBNames() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
-  }
-
-  //! Retrieve Vector (length num worksets) of Physics Index
-  const WorksetArray<int>&
-  getWsPhysIndex() const {
     TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
   }
 

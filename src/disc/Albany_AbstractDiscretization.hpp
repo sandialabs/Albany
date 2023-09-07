@@ -201,8 +201,8 @@ public:
   getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
 
   //! Retrieve coodinate ptr_field (ws, el, node)
-  virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
-  getCoords() const = 0;
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
+  getCoords() const { return m_ws_elem_coords; }
 
   //! Get coordinates (overlap map).
   virtual const Teuchos::ArrayRCP<double>&
@@ -228,12 +228,10 @@ public:
   getMeshStruct() const = 0;
 
   //! Set stateArrays
-  virtual void
-  setStateArrays(StateArrays& sa) = 0;
+  void setStateArrays(StateArrays& sa) { m_stateArrays = sa; }
 
   //! Get stateArrays
-  virtual StateArrays&
-  getStateArrays() = 0;
+  StateArrays& getStateArrays() { return m_stateArrays; }
 
   //! Get stateArray of given type
   StateArrayVec& getStateArrays(const StateStruct::StateType type) {
@@ -249,12 +247,12 @@ public:
   getNodalParameterSIS() const = 0;
 
   //! Retrieve Vector (length num worksets) of element block names
-  virtual const WorksetArray<std::string>&
-  getWsEBNames() const = 0;
+  const WorksetArray<std::string>&
+  getWsEBNames() const { return m_wsEBNames; }
 
   //! Retrieve Vector (length num worksets) of Physics Index
-  virtual const WorksetArray<int>&
-  getWsPhysIndex() const = 0;
+  const WorksetArray<int>&
+  getWsPhysIndex() const { return m_wsPhysIndex; }
 
   //! Retrieve connectivity map from elementGID to workset
   virtual WsLIDList&
@@ -394,8 +392,15 @@ protected:
   // Dof manager for a scalar node field
   strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
 
-  // The size of each workset
-  WorksetArray<int>   m_workset_sizes;
+  // Struct containing node/elem state arrays
+  StateArrays                           m_stateArrays;
+
+  // Workset information
+  WorksetArray<int>           m_workset_sizes; // size of each ws
+  WorksetArray<std::string>   m_wsEBNames;     // name of elem block that ws belongs
+  WorksetArray<int>           m_wsPhysIndex;   // physics index of each ws
+
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>> m_ws_elem_coords;
 
   // For each workset, the element LID of its elements.
   // Note: with 1 workset, m_workset_elements(0,i)=i.

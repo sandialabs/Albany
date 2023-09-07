@@ -115,48 +115,15 @@ public:
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const;
 
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
-  getCoords() const
-  {
-    return coords;
-  }
-
   //! Print the coordinates for debugging
   void
   printCoords() const;
-
-  //! Set stateArrays
-  void
-  setStateArrays(StateArrays& sa)
-  {
-    stateArrays = sa;
-  }
-
-  //! Get stateArrays
-  StateArrays&
-  getStateArrays()
-  {
-    return stateArrays;
-  }
 
   //! Get nodal parameters state info struct
   const StateInfoStruct&
   getNodalParameterSIS() const
   {
     return stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
-  }
-
-  //! Retrieve Vector (length num worksets) of element block names
-  const WorksetArray<std::string>&
-  getWsEBNames() const
-  {
-    return wsEBNames;
-  }
-  //! Retrieve Vector (length num worksets) of physics set index
-  const WorksetArray<int>&
-  getWsPhysIndex() const
-  {
-    return wsPhysIndex;
   }
 
   // Retrieve mesh struct
@@ -480,15 +447,11 @@ public:
 
   mutable Teuchos::ArrayRCP<double>                                 coordinates;
   Teuchos::RCP<Thyra_MultiVector>                                   coordMV;
-  WorksetArray<std::string>                                         wsEBNames;
-  WorksetArray<int>                                                 wsPhysIndex;
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>       coords;
 
   //! Connectivity map from elementGID to workset and LID in workset
   WsLIDList elemGIDws;
 
   // States: vector of length worksets of a map from field name to shards array
-  StateArrays                                   stateArrays;
   std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
 
   //! Number of elements on this processor
