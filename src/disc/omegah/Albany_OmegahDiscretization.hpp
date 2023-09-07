@@ -34,63 +34,63 @@ public:
 
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get Node set lists
   const NodeSetList&
   getNodeSets() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   const NodeSetGIDsList&
   getNodeSetGIDs() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   const NodeSetCoordList&
   getNodeSetCoords() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get Side set lists
   const SideSetList&
   getSideSets(const int ws) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get Side set view lists
   const LocalSideSetInfoList&
   getSideSetViews(const int ws) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get local DOF views for GatherVerticallyContractedSolution
   const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
   getLocalDOFViews(const int workset) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get coordinates (overlap map).
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Print the coords for mesh debugging
   void
   printCoords() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get the map side_id->side_set_elem_id
   const std::map<std::string, std::map<GO, GO>>&
   getSideToSideSetCellMap() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get the map side_node_id->side_set_cell_node_id
   const std::map<std::string, std::map<GO, std::vector<int>>>&
   getSideNodeNumerationMap() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get MeshStruct
@@ -102,17 +102,17 @@ public:
   //! Get nodal parameters state info struct
   const StateInfoStruct&
   getNodalParameterSIS() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Retrieve connectivity map from elementGID to workset
   WsLIDList&
   getElemGIDws() {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   const WsLIDList&
   getElemGIDws() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Flag if solution has a restart values -- used in Init Cond
@@ -124,7 +124,7 @@ public:
   //! File time of restart solution
   double
   restartDataTime() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Get number of spatial dimensions
@@ -142,7 +142,7 @@ public:
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool overlapped = false) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   Teuchos::RCP<Thyra_MultiVector>
@@ -150,14 +150,14 @@ public:
 
   void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   void
   setField(
       const Thyra_Vector& field_vector,
       const std::string&  field_name,
       bool                overlapped) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
@@ -172,7 +172,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   } 
   void
   writeSolution(
@@ -182,7 +182,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   } 
   void
   writeSolution(
@@ -193,7 +193,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   } 
   void
   writeSolutionMV(
@@ -202,7 +202,7 @@ public:
       const double             time,
       const bool               overlapped = false,
       const bool               force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   } 
   //! Write the solution to the mesh database.
   void
@@ -211,7 +211,7 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
       const bool          overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   void
   writeSolutionToMeshDatabase(
@@ -220,7 +220,7 @@ public:
       const Thyra_Vector& solution_dot,
       const double        time,
       const bool          overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   void
   writeSolutionToMeshDatabase(
@@ -230,7 +230,7 @@ public:
       const Thyra_Vector& solution_dotdot,
       const double        time,
       const bool          overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   void
   writeSolutionMVToMeshDatabase(
@@ -238,7 +238,7 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
       const bool               overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
 
   //! Write the solution to file. Must call writeSolution first.
@@ -248,7 +248,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   } 
   void
   writeSolutionMVToFile(
@@ -256,7 +256,7 @@ public:
       const double             time,
       const bool               overlapped = false,
       const bool               force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   } 
 
 protected:
