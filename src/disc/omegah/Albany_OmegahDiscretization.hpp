@@ -117,7 +117,7 @@ public:
   //! Flag if solution has a restart values -- used in Init Cond
   bool
   hasRestartSolution() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    return m_mesh_struct->hasRestartSolution();
   }
 
   //! File time of restart solution
@@ -129,13 +129,13 @@ public:
   //! Get number of spatial dimensions
   int
   getNumDim() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    return m_mesh_struct->getMeshSpecs()[0]->numDim;
   }
 
   //! Get number of total DOFs per node
   int
   getNumEq() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(false,std::runtime_error,"NOT IMPLEMENTED!");
+    return m_neq;
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
@@ -262,7 +262,21 @@ public:
 
 protected:
 
+  Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
+
   Teuchos::RCP<OmegahAbstractMesh> m_mesh_struct;
+
+  Teuchos::RCP<const Teuchos_Comm> m_comm;
+
+  // Number of equations (and unknowns) per node
+  // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
+  const int m_neq;
+
+  // TODO: I don't think this belongs in the disc class. We do store it for STK meshes,
+  //       mainly b/c we need to know how many components the soln vector has.
+  //       But I think we can get rid of it. In principle, we should handle time derivatives
+  //       from the app/problem side.
+  int m_num_time_deriv;
 };
 
 }  // namespace Albany

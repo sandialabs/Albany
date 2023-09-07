@@ -5,14 +5,17 @@ namespace Albany {
 OmegahDiscretization::
 OmegahDiscretization(
   const Teuchos::RCP<Teuchos::ParameterList>& discParams,
-  const int neq,
+  const int                                   neq,
   Teuchos::RCP<OmegahAbstractMesh>&           mesh,
   const Teuchos::RCP<const Teuchos_Comm>&     comm,
-  const Teuchos::RCP<RigidBodyModes>& rigidBodyModes,
-  const std::map<int, std::vector<std::string>>& sideSetEquations)
- : m_mesh_struct(mesh)
+  const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
+  const std::map<int, std::vector<std::string>>& /* sideSetEquations */)
+ : m_disc_params (discParams)
+ , m_mesh_struct(mesh)
+ , m_comm (comm)
+ , m_neq (neq)
 {
-  printf("Hello world!\n");
+  m_num_time_deriv = m_disc_params->get("Number Of Time Derivatives",0);
 }
 
 void OmegahDiscretization::

@@ -17,6 +17,8 @@ public:
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
   getMeshSpecs() override { return m_mesh_specs; }
 
+  bool hasRestartSolution () const { return m_has_restart_solution; }
+
   const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
   getMeshSpecs() const override { return m_mesh_specs; }
 protected:
@@ -24,6 +26,8 @@ protected:
   Omega_h::Mesh  m_mesh;
 
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > m_mesh_specs;
+
+  bool m_has_restart_solution = false;
 };
 
 } // namespace Albany
