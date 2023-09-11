@@ -177,11 +177,23 @@ endif ()
 
 # Build Albany as shared libraries if Trilinos was compiled that way
 IF(Trilinos_BUILD_SHARED_LIBS)
+  if (DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
+    message ("User requested STATIC libs, but Trilinos was built with SHARED libraries.")
+    message ("  -> Do NOT set BUILD_SHARED_LIBS in your configure script.")
+    message (FATAL_ERROR "Aborting.")
+  endif()
   SET(Albany_LIBRARY_TYPE SHARED)
   SET(BUILD_SHARED_LIBS ON)
-  MESSAGE("-- Building Albany with shared libraries")
+  MESSAGE("-- Building Albany with SHARED libraries")
 ELSE(Trilinos_BUILD_SHARED_LIBS)
+  if (DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
+    message ("User requested SHARED libs, but Trilinos was built with STATIC libraries.")
+    message ("  -> Do NOT set BUILD_SHARED_LIBS in your configure script.")
+    message (FATAL_ERROR "Aborting.")
+  endif()
   SET(Albany_LIBRARY_TYPE STATIC)
+  SET(BUILD_SHARED_LIBS OFF)
+  MESSAGE("-- Building Albany with STATIC libraries")
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
 OPTION(Albany_BUILD_STATIC_EXE "Flag to turn on building of static executables in Albany" OFF)
@@ -891,7 +903,7 @@ IF (ENABLE_OMEGAH)
               -D Albany_MPI_EXEC=${MPIEX}
               -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
               -D Kokkos_INSTALL_DIR=${ALBANY_TRILINOS_DIR}
-              -D IS_SHARED=${TRILINOS_BUILD_SHARED_LIBS}
+              -D IS_SHARED=${BUILD_SHARED_LIBS}
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       OUTPUT_VARIABLE CONFIG_OMEGAH_OUT
       ERROR_VARIABLE CONFIG_OMEGAH_OUT
