@@ -858,8 +858,26 @@ IF (ENABLE_OMEGAH)
   message (STATUS "Looking for Omega_h installation ...")
   find_package(Omega_h CONFIG
                HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
-  if (NOT Omega_h_FOUND)
+
+  # If we're building shared libs in Albany, we need Omega_h to be built with shared libs
+  # TODO: if CMake adds a "DYNAMYC=<value>" to find_package (to specify what variant
+  # of libs we want), then we can use it, and remove this snippet
+  if (Omega_h_FOUND)
+    get_target_property(Omega_h_LIBTYPE Omega_h::omega_h TYPE)
+    if (BUILD_SHARED_LIBS AND NOT Omega_h_LIBTYPE STREQUAL SHARED_LIBRARY)
+      set (Omega_h_FOUND FALSE)
+
+      # Need to prune the build dir, otherwise we will keep the .a lib, and may conflict
+      # at link time (cannot link static lib to a shared lib)
+      file (REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/tpls/omegah)
+      message (STATUS "Looking for Omega_h installation ... NOT Found (wrong lib variant found).")
+      message (STATUS "  A lib was found, but with wrong variant: ${Omega_h_LIBTYPE} instead of SHARED_LIBRARY.")
+    endif()
+  else ()
     message (STATUS "Looking for Omega_h installation ... NOT Found.")
+  endif()
+
+  if (NOT Omega_h_FOUND)
     message ("  +--------------------------------------------------------+")
     message ("  |      Begin local installation of Omega_h dependency    |")
     message ("  +--------------------------------------------------------+")
@@ -869,6 +887,7 @@ IF (ENABLE_OMEGAH)
       COMMAND ${CMAKE_COMMAND}
               -B ${Albany_BINARY_DIR}/tpls/omegah/tmp -Wno-dev
               -S ${CMAKE_SOURCE_DIR}/cmake/omegah
+              -D Albany_CXX_COMPILER=${CMAKE_CXX_COMPILER}
               -D Albany_MPI_EXEC=${MPIEX}
               -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
               -D Kokkos_INSTALL_DIR=${ALBANY_TRILINOS_DIR}
@@ -912,6 +931,8 @@ IF (ENABLE_OMEGAH)
     message ("  -- Omega_h prefix: ${Omega_h_DIR}")
     message ("  -- Omega_h version: ${Omega_h_VERSION}")
   endif()
+else()
+  MESSAGE("-- Omega_h lib interface NOT Enabled.")
 ENDIF()
 
 # add a target to generate API documentation with Doxygen
