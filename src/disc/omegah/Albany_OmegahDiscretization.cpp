@@ -93,14 +93,27 @@ updateMesh ()
   }
 
   m_ws_elem_coords.resize(num_ws);
-  auto raw_coords = Omega_h::HostRead<Omega_h::Real>(m_mesh_struct->getOmegahMesh().coords());
-  auto node_gids  = Omega_h::HostRead<Omega_h::GO>(m_mesh_struct->getOmegahMesh().globals(0));
+  auto coords_h  = m_mesh_struct->coords_host();
+  auto node_gids = Omega_h::HostRead<Omega_h::GO>(m_mesh_struct->getOmegahMesh().globals(0));
   std::vector<LO> lid2pos (node_gids.size());
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   for (size_t i=0; i<lid2pos.size(); ++i) {
     auto gid = node_gids[i];
     auto lid = node_indexer->getLocalElement(gid);
     lid2pos[lid] = i;
+  }
+  int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
+  const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
+  for (int ws=0; ws<num_ws; ++ws) {
+    m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
+    for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
+      m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
+      for (int inode=0; inode<num_elem_nodes; ++inode) {
+        LO node_lid = node_elem_dof_lids(ielem,inode);
+        int omh_pos = lid2pos[node_lid];
+        m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*3];
+      }
+    }
   }
 }
 

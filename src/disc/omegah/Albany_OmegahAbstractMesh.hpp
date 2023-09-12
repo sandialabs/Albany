@@ -21,11 +21,17 @@ public:
 
   const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
   getMeshSpecs() const override { return m_mesh_specs; }
+
+  ViewLR<const double*,DeviceMemSpace> coords_dev  () const { return m_coords_d; }
+  ViewLR<const double*,HostMemSpace>   coords_host () const { return m_coords_h; }
 protected:
 
   Omega_h::Mesh  m_mesh;
 
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > m_mesh_specs;
+
+  ViewLR<const double*,DeviceMemSpace>  m_coords_d;
+  ViewLR<      double*,HostMemSpace>    m_coords_h;
 
   bool m_has_restart_solution = false;
 };

@@ -23,15 +23,10 @@ public:
                     const unsigned int worksetSize,
                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override;
 
-  ViewLR<const double*,DeviceMemSpace> coords_dev  () const { return m_coords_d; }
-  ViewLR<const double*,HostMemSpace>   coords_host () const { return m_coords_h; }
 protected:
 
   Teuchos::RCP<const Teuchos::ParameterList>
   getValidDiscretizationParameters() const;
-
-  ViewLR<const double*,DeviceMemSpace>  m_coords_d;
-  ViewLR<      double*,HostMemSpace>    m_coords_h;
 };
 
 } // namespace Albany
