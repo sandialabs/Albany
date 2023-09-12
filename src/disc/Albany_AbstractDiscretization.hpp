@@ -201,7 +201,7 @@ public:
   getOverlapNodeGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(nodes_dof_name()); }
 
   //! Retrieve coodinate ptr_field (ws, el, node)
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>&
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double*>>>&
   getCoords() const { return m_ws_elem_coords; }
 
   //! Get coordinates (overlap map).
@@ -400,7 +400,7 @@ protected:
   WorksetArray<std::string>   m_wsEBNames;     // name of elem block that ws belongs
   WorksetArray<int>           m_wsPhysIndex;   // physics index of each ws
 
-  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>> m_ws_elem_coords;
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double*>>> m_ws_elem_coords;
 
   // For each workset, the element LID of its elements.
   // Note: with 1 workset, m_workset_elements(0,i)=i.

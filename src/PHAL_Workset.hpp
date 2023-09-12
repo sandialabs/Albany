@@ -129,8 +129,8 @@ struct Workset
   bool                                              transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>> local_Vp;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>> wsCoords;
-  std::string                                   EBName;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double*>> wsCoords;
+  std::string                                         EBName;
 
   // Needed for Schwarz coupling and for dirichlet conditions based on dist
   // parameters.

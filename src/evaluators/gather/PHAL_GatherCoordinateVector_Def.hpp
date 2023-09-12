@@ -70,7 +70,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
   unsigned int numCells = workset.numCells;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double*> > wsCoords = workset.wsCoords;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if( dispVecName.is_null() ){
