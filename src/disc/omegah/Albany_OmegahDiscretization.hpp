@@ -33,7 +33,7 @@ public:
   void updateMesh ();
 
   Teuchos::RCP<Thyra_LinearOp>
-  createJacobianOp() const {
+  createJacobianOp() const override {
     return m_jac_factory->createOp();
   }
 
@@ -53,20 +53,20 @@ public:
 
   //! Get Side set lists
   const SideSetList&
-  getSideSets(const int ws) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+  getSideSets(const int ws) const override {
+    return m_side_sets[ws];
   }
 
   //! Get Side set view lists
   const LocalSideSetInfoList&
-  getSideSetViews(const int ws) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+  getSideSetViews(const int ws) const override {
+    return m_side_set_views.at(ws);
   }
 
   //! Get local DOF views for GatherVerticallyContractedSolution
-  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+  const strmap_t<Kokkos::DualView<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const override {
+    return m_ws_local_dof_views.at(workset);
   }
 
   //! Get coordinates (overlap map).
@@ -95,14 +95,14 @@ public:
 
   //! Get MeshStruct
   Teuchos::RCP<AbstractMeshStruct>
-  getMeshStruct() const {
+  getMeshStruct() const override {
     return m_mesh_struct;
   }
 
   //! Get nodal parameters state info struct
   const StateInfoStruct&
-  getNodalParameterSIS() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+  getNodalParameterSIS() const override {
+    return m_ov_field_container->get_nodal_sis();
   }
 
   //! Retrieve connectivity map from elementGID to workset
@@ -117,7 +117,7 @@ public:
 
   //! Flag if solution has a restart values -- used in Init Cond
   bool
-  hasRestartSolution() const {
+  hasRestartSolution() const override {
     return m_mesh_struct->hasRestartSolution();
   }
 
@@ -129,13 +129,13 @@ public:
 
   //! Get number of spatial dimensions
   int
-  getNumDim() const {
+  getNumDim() const override {
     return m_mesh_struct->getMeshSpecs()[0]->numDim;
   }
 
   //! Get number of total DOFs per node
   int
-  getNumEq() const {
+  getNumEq() const override {
     return m_neq;
   }
 
@@ -146,7 +146,7 @@ public:
   }
 
   Teuchos::RCP<Thyra_MultiVector>
-  getSolutionMV (bool overlapped) const;
+  getSolutionMV (bool overlapped) const override;
 
   void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const {
@@ -279,9 +279,14 @@ protected:
   Teuchos::RCP<OmegahFieldContainer> m_field_container;
   Teuchos::RCP<OmegahFieldContainer> m_ov_field_container;
 
+  std::vector<std::string> m_sol_names;
+
+  // TODO: move stuff below in base class?
   Teuchos::RCP<const Teuchos_Comm> m_comm;
 
-  std::vector<std::string> m_sol_names;
+  std::map<int, LocalSideSetInfoList> m_side_set_views;
+  std::vector<SideSetList> m_side_sets;
+  std::map<int, strmap_t<Kokkos::DualView<LO****, PHX::Device>>> m_ws_local_dof_views;
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_side_set_equations;

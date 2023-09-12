@@ -117,6 +117,12 @@ updateMesh ()
     }
   }
 
+  m_side_sets.resize(num_ws);
+  for (int ws=0; ws<num_ws; ++ws) {
+    m_side_set_views[ws] = {};
+    m_ws_local_dof_views[ws] = {};
+  }
+
   computeGraphs ();
 }
 

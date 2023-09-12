@@ -33,7 +33,11 @@ public:
                   const Teuchos::RCP<const Thyra_VectorSpace>& vs);
 
   Teuchos::RCP<Thyra_Vector> get_field (const std::string& name);
+
+  const StateInfoStruct& get_nodal_sis () const { return m_nodal_sis; }
 protected:
+
+  StateInfoStruct m_nodal_sis;
 
   Teuchos::RCP<OmegahAbstractMesh>        m_mesh;
   strmap_t<Teuchos::RCP<Thyra_Vector>>    m_fields;
