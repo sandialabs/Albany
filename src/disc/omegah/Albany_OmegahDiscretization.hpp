@@ -34,7 +34,7 @@ public:
 
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    return m_jac_factory->createOp();
   }
 
   //! Get Node set lists
@@ -268,6 +268,8 @@ protected:
                   const int order,
                   const int dof_dim) const;
 
+  void computeGraphs ();
+
   // ======================= Members ======================= //
 
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
@@ -280,6 +282,12 @@ protected:
   Teuchos::RCP<const Teuchos_Comm> m_comm;
 
   std::vector<std::string> m_sol_names;
+
+  //! Equations that are defined only on some side sets of the mesh
+  std::map<int, std::vector<std::string>> m_side_set_equations;
+
+  //! Jacobian matrix operator factory
+  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
   // Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown

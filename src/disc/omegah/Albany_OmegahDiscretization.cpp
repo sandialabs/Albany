@@ -13,10 +13,11 @@ OmegahDiscretization(
   Teuchos::RCP<OmegahAbstractMesh>&           mesh,
   const Teuchos::RCP<const Teuchos_Comm>&     comm,
   const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
-  const std::map<int, std::vector<std::string>>& /* sideSetEquations */)
+  const std::map<int, std::vector<std::string>>& sideSetEquations)
  : m_disc_params (discParams)
  , m_mesh_struct(mesh)
  , m_comm (comm)
+ , m_side_set_equations(sideSetEquations)
  , m_neq (neq)
 {
   m_num_time_deriv = m_disc_params->get("Number Of Time Derivatives",0);
@@ -115,6 +116,45 @@ updateMesh ()
       }
     }
   }
+
+  computeGraphs ();
+}
+
+void OmegahDiscretization::
+computeGraphs ()
+{
+  const auto vs = getVectorSpace();
+  const auto ov_vs = getOverlapVectorSpace();
+  m_jac_factory = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, vs, ov_vs, ov_vs));
+
+  // Determine which equations are defined on the whole domain,
+  // as well as what eqn are on each sideset
+  std::vector<int> volumeEqns;
+  std::map<std::string,std::vector<int>> ss_to_eqns;
+  for (int k=0; k < m_neq; ++k) {
+    if (m_side_set_equations.find(k) == m_side_set_equations.end()) {
+      volumeEqns.push_back(k);
+    }
+  }
+  const int numVolumeEqns = volumeEqns.size();
+
+  // The global solution dof manager
+  const auto sol_dof_mgr = getDOFManager();
+  const int num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
+
+  // Handle the simple case, and return immediately
+  if (numVolumeEqns==m_neq) {
+    // This is the easy case: couple everything with everything
+    for (int icell=0; icell<num_elems; ++icell) {
+      const auto& elem_gids = sol_dof_mgr->getElementGIDs(icell);
+      m_jac_factory->insertGlobalIndices(elem_gids,elem_gids,true);
+    }
+    m_jac_factory->fillComplete();
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Error! SideSet equation support not yet added for Omega_h discretization.\n");
 }
 
 void OmegahDiscretization::
