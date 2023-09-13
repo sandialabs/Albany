@@ -85,26 +85,27 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     ssNames.push_back("SideSet" + std::to_string(idim*2+1));
   }
 
+  int mdim = m_mesh.dim();
   Kokkos::parallel_for(Kokkos::RangePolicy<>(0,m_mesh.nverts()),
                        KOKKOS_CLASS_LAMBDA (const int inode) {
-    if (m_coords_d(3*inode) == 0) {
+    if (m_coords_d(mdim*inode) == 0) {
       ns_tags[inode] |= 1;
     }
-    if (m_coords_d(3*inode) == scalex) {
+    if (m_coords_d(mdim*inode) == scalex) {
       ns_tags[inode] |= 2;
     }
     if (Dim>1) {
-      if (m_coords_d(3*inode+1) == 0) {
+      if (m_coords_d(mdim*inode+1) == 0) {
         ns_tags[inode] |= 4;
       }
-      if (m_coords_d(3*inode+1) == scaley) {
+      if (m_coords_d(mdim*inode+1) == scaley) {
         ns_tags[inode] |= 8;
       }
       if (Dim>2) {
-        if (m_coords_d(3*inode+2) == 0) {
+        if (m_coords_d(mdim*inode+2) == 0) {
           ns_tags[inode] |= 16;
         }
-        if (m_coords_d(3*inode+2) == scalez) {
+        if (m_coords_d(mdim*inode+2) == scalez) {
           ns_tags[inode] |= 32;
         }
       }

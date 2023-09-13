@@ -106,6 +106,8 @@ updateMesh ()
   }
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
+
+  const int mdim = mesh.dim();
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
@@ -113,7 +115,7 @@ updateMesh ()
       for (int inode=0; inode<num_elem_nodes; ++inode) {
         LO node_lid = node_elem_dof_lids(ielem,inode);
         int omh_pos = m_node_lid_to_omegah_pos[node_lid];
-        m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*3];
+        m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
       }
     }
   }
