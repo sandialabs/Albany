@@ -394,8 +394,15 @@ albanyBuildGlobalUnknowns ()
     for (int idof=0; idof<ndofs; ++idof) {
       if(ownership[idof]==Owned)
         add_if_not_there(owned_,ownedSet,conn[idof]);
-      else
+      else if (ownership[idof]==Ghosted)
         add_if_not_there(ghosted_,ghostedSet,conn[idof]);
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION (false, std::logic_error,
+            "Error! Found a dof with Unset ownership.\n"
+            "  - rank: " << m_comm->getRank() << "\n"
+            "  - elem block: " << elem_block_name() << "\n"
+            "  - ielem: " << ielem << "\n"
+            "  - idof: " << idof << "\n");
       elementGIDs_[ielem][idof] = conn[idof];
     }
     elementBlockGIDCount_[0] += ndofs;

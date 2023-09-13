@@ -98,6 +98,8 @@ public:
     *          [vtx dofs][edge dofs][face dofs][element dofs]
     */
   const GO * getConnectivity(LO localElmtId) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_connectivity.size()==0, std::logic_error,
+        "Error! Cannot call getConnectivity before connectivity is built.\n");
     static_assert(sizeof(Omega_h::GO) == sizeof(GO));
     auto ptr = m_connectivity.data() + (localElmtId*m_dofsPerElm);
     return reinterpret_cast<const GO*>(ptr);
@@ -222,6 +224,8 @@ public:
   int part_dim (const std::string& part_name) const override;
 
   const Ownership* getOwnership(LO localElmtId) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_ownership.size()==0, std::logic_error,
+        "Error! Cannot call getOwnership before connectivity is built.\n");
     return m_ownership.data() + (localElmtId*m_dofsPerElm);
   }
 };
