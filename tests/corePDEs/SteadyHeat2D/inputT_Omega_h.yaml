@@ -31,15 +31,13 @@ ANONYMOUS:
     Response Functions:
       Number Of Responses: 2
       Response 0:
+        Type: Scalar Response
         Name: Solution Average
       Response 1:
+        Type: Scalar Response
         Name: Solution Two Norm
     Cubature Degree: 9
 
-  Discretization:
-    1D Elements: 40
-    2D Elements: 40
-    Method: Box2D
   Regression For Response 0:
     Test Value: 1.39149999999999996e+00
     Relative Tolerance: 1.00000000000000002e-03
@@ -50,6 +48,10 @@ ANONYMOUS:
     Relative Tolerance: 1.00000000000000002e-03
     Sensitivity For Parameter 0:
       Test Values: [2.04623999999999988e+01, 1.72040000000000006e+01, 1.81322000000000010e+01, 1.81322000000000010e+01, 7.71400000000000041e+00]
+  Discretization:
+    1D Elements: 40
+    2D Elements: 40
+    Method: Box2D
   Piro:
     LOCA:
       Bifurcation: { }
@@ -92,7 +94,15 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
-              Preconditioner Type: MueLu
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: level-of-fill': 1
       Line Search:
         Full Step:
           Full Step: 1.00000000000000000e+00
