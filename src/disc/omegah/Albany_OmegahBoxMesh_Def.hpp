@@ -58,17 +58,58 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_HYPERCUBE,
                                 scalex,scaley,scalez,nelemx,nelemy,nelemz);
   }
+
   m_mesh.set_parting(OMEGA_H_ELEM_BASED);
+  m_coords_d = m_mesh.coords().view();
+  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
+  Kokkos::deep_copy(m_coords_h,m_coords_d);
 
   // Create the mesh specs
   std::vector<std::string> nsNames, ssNames;
-  for (int i=0; i<Dim; ++i) {
-    nsNames.push_back("NodeSet" + std::to_string(i*2));
-    nsNames.push_back("NodeSet" + std::to_string(i*2+1));
 
-    ssNames.push_back("SideSet" + std::to_string(i*2));
-    ssNames.push_back("SideSet" + std::to_string(i*2+1));
+  using I32 = Omega_h::I32;
+  Omega_h::Write<I32> ns_tags (m_mesh.nverts(),0);
+  m_mesh.add_tag(Omega_h::VERT,"node_sets",1,Omega_h::read(ns_tags));
+
+  int tag = 1;
+  for (int idim=0; idim<Dim; ++idim) {
+    nsNames.push_back("NodeSet" + std::to_string(idim*2));
+    nsNames.push_back("NodeSet" + std::to_string(idim*2+1));
+
+    m_node_sets_tags["NodeSet" + std::to_string(idim*2)]   = tag;
+    tag <<= 1;
+    m_node_sets_tags["NodeSet" + std::to_string(idim*2+1)] = tag;
+    tag <<= 1;
+
+    ssNames.push_back("SideSet" + std::to_string(idim*2));
+    ssNames.push_back("SideSet" + std::to_string(idim*2+1));
   }
+
+  Kokkos::parallel_for(Kokkos::RangePolicy<>(0,m_mesh.nverts()),
+                       KOKKOS_CLASS_LAMBDA (const int inode) {
+    if (m_coords_d(3*inode) == 0) {
+      ns_tags[inode] |= 1;
+    }
+    if (m_coords_d(3*inode) == scalex) {
+      ns_tags[inode] |= 2;
+    }
+    if (Dim>1) {
+      if (m_coords_d(3*inode+1) == 0) {
+        ns_tags[inode] |= 4;
+      }
+      if (m_coords_d(3*inode+1) == scaley) {
+        ns_tags[inode] |= 8;
+      }
+      if (Dim>2) {
+        if (m_coords_d(3*inode+2) == 0) {
+          ns_tags[inode] |= 16;
+        }
+        if (m_coords_d(3*inode+2) == scalez) {
+          ns_tags[inode] |= 32;
+        }
+      }
+    }
+  });
 
   std::string ebName = "element_block_0";
   std::map<std::string,int> ebNameToIndex = 
@@ -82,9 +123,6 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                              nsNames, ssNames, m_mesh.nelems(), ebName,
                              ebNameToIndex));
 
-  m_coords_d = m_mesh.coords().view();
-  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
-  Kokkos::deep_copy(m_coords_h,m_coords_d);
 }
 
 template<unsigned Dim>

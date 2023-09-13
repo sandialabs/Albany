@@ -36,7 +36,7 @@ void OmegahDiscretization::
 updateMesh ()
 {
   printf ("TODO: change name to the method?\n");
-  
+
   auto sol_dof_mgr  = create_dof_mgr(solution_dof_name(),"",FE_Type::HGRAD,1,m_neq);
   auto node_dof_mgr = create_dof_mgr(nodes_dof_name(),"",FE_Type::HGRAD,1,1);
 
@@ -124,7 +124,57 @@ updateMesh ()
     m_ws_local_dof_views[ws] = {};
   }
 
+  computeNodeSets ();
   computeGraphs ();
+}
+
+void OmegahDiscretization::
+computeNodeSets ()
+{
+  const auto& nsNames = getMeshStruct()->getMeshSpecs()[0]->nsNames;
+  using Omega_h::I32;
+
+  auto mesh = m_mesh_struct->getOmegahMesh();
+
+  auto v2e = mesh.ask_up(0,mesh.dim());
+  auto v2e_a2ab = Omega_h::HostRead<Omega_h::LO>(v2e.a2ab);
+  auto v2e_ab2b = Omega_h::HostRead<Omega_h::LO>(v2e.ab2b);
+
+  auto e2v = Omega_h::HostRead<Omega_h::LO>(mesh.ask_elem_verts());
+  int nodes_per_elem = e2v.size() / mesh.nelems();
+
+  auto tags_dev = mesh.get_tag<I32>(0,"node_sets")->array();
+  Omega_h::HostRead<I32> tags_host (tags_dev);
+  for (const auto& nsn : nsNames) {
+    std::vector<int> which;
+    auto ns_tag = m_mesh_struct->get_ns_tag(nsn);
+    for (int i=0; i<tags_host.size(); ++i) {
+      if (tags_host[i] & ns_tag) {
+        which.push_back(i);
+      }
+    }
+
+    auto& ns_elem_pos = m_node_sets[nsn];
+
+    ns_elem_pos.reserve(which.size());
+    for (auto i : which) {
+      auto node_adj_start = v2e_a2ab[i];
+      auto ielem = v2e_ab2b[node_adj_start];
+
+      bool found = false;
+      for (int j=0; j<nodes_per_elem; ++j) {
+        if (e2v[nodes_per_elem*ielem+j]==i) {
+          ns_elem_pos.push_back(std::make_pair(ielem,j));
+          found = true;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
+          "Something went wront while locating a node in an element.\n"
+          " - node set: " << nsn << "\n"
+          " - node lid (osh): " << i << "\n"
+          " - ielem: " << ielem << "\n");
+    }
+  }
 }
 
 void OmegahDiscretization::

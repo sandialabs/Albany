@@ -24,9 +24,18 @@ public:
 
   ViewLR<const double*,DeviceMemSpace> coords_dev  () const { return m_coords_d; }
   ViewLR<const double*,HostMemSpace>   coords_host () const { return m_coords_h; }
+
+  Omega_h::I32 get_ns_tag (const std::string& ns) const { return m_node_sets_tags.at(ns); }
 protected:
 
   Omega_h::Mesh  m_mesh;
+
+  // We map node/side sets names to an int flag. These tags *MUST* be
+  // bitwise exclusive, so that we can use a single int to store many of them.
+  // Moreover, they must be strictly positive, so that we can do `a &= tag` to
+  // check if the tag is set.
+  std::map<std::string,Omega_h::I32>   m_node_sets_tags;
+  std::map<std::string,Omega_h::I32>   m_side_sets_tags;
 
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > m_mesh_specs;
 

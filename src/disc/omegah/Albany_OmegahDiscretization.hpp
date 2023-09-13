@@ -39,16 +39,16 @@ public:
 
   //! Get Node set lists
   const NodeSetList&
-  getNodeSets() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+  getNodeSets() const override {
+    return m_node_sets;
   }
   const NodeSetGIDsList&
   getNodeSetGIDs() const {
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
   }
   const NodeSetCoordList&
-  getNodeSetCoords() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+  getNodeSetCoords() const override {
+    return m_node_set_coords;
   }
 
   //! Get Side set lists
@@ -268,6 +268,7 @@ protected:
                   const int order,
                   const int dof_dim) const;
 
+  void computeNodeSets ();
   void computeGraphs ();
 
   // ======================= Members ======================= //
@@ -290,6 +291,9 @@ protected:
   std::map<int, LocalSideSetInfoList> m_side_set_views;
   std::vector<SideSetList> m_side_sets;
   std::map<int, strmap_t<Kokkos::DualView<LO****, PHX::Device>>> m_ws_local_dof_views;
+
+  NodeSetList       m_node_sets;
+  NodeSetCoordList  m_node_set_coords;
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_side_set_equations;
