@@ -31,9 +31,9 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     case 3: ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();     break;
   }
 
-  int nelemx = 1;
-  int nelemy = 1;
-  int nelemz = 1;
+  int nelemx = 0;
+  int nelemy = 0;
+  int nelemz = 0;
 
   double scalex = 1.0;
   double scaley = 1.0;
