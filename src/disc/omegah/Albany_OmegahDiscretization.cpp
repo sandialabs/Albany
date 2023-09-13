@@ -68,7 +68,8 @@ updateMesh ()
   // NOTE: these arrays are all of size 1, for the foreseable future.
   //       Still, make impl generic (where possible), in case things change.
   const auto& ms = m_mesh_struct->getMeshSpecs()[0];
-  int nelems = m_mesh_struct->getOmegahMesh().nelems();
+  const auto& mesh = m_mesh_struct->getOmegahMesh();
+  int nelems = mesh.nelems();
   int max_ws_size = ms->worksetSize;
   int num_ws = 1 + (nelems-1) / max_ws_size;
   TEUCHOS_TEST_FOR_EXCEPTION (num_ws!=1, std::runtime_error,
@@ -95,13 +96,13 @@ updateMesh ()
 
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
-  auto node_gids = Omega_h::HostRead<Omega_h::GO>(m_mesh_struct->getOmegahMesh().globals(0));
-  std::vector<LO> lid2pos (node_gids.size());
+  auto node_gids = Omega_h::HostRead<Omega_h::GO>(mesh.globals(0));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
-  for (size_t i=0; i<lid2pos.size(); ++i) {
+  m_node_lid_to_omegah_pos.resize(mesh.nverts());
+  for (int i=0; i<mesh.nverts(); ++i) {
     auto gid = node_gids[i];
     auto lid = node_indexer->getLocalElement(gid);
-    lid2pos[lid] = i;
+    m_node_lid_to_omegah_pos[lid] = i;
   }
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
@@ -111,7 +112,7 @@ updateMesh ()
       m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
       for (int inode=0; inode<num_elem_nodes; ++inode) {
         LO node_lid = node_elem_dof_lids(ielem,inode);
-        int omh_pos = lid2pos[node_lid];
+        int omh_pos = m_node_lid_to_omegah_pos[node_lid];
         m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*3];
       }
     }

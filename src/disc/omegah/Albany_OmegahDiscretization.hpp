@@ -281,6 +281,9 @@ protected:
 
   std::vector<std::string> m_sol_names;
 
+  // Maps a Tpetra LID to the pos of a node in the omegah arrays
+  std::vector<int>  m_node_lid_to_omegah_pos;
+
   // TODO: move stuff below in base class?
   Teuchos::RCP<const Teuchos_Comm> m_comm;
 
