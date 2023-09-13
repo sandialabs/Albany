@@ -86,8 +86,6 @@ OmegahConnManager(Omega_h::Mesh& in_mesh) : mesh(in_mesh), partFilter({mesh.dim(
   //   recreating the conn manager
   localElmIds = getLocalElmIds(mesh, partFilter);
   assert(mesh.has_tag(mesh.dim(), "global"));
-
-  owners = std::vector<Ownership>(1); //FIXME
 }
 
 OmegahConnManager::
@@ -119,8 +117,6 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPart
   assert(mesh.has_tag(partFilter.dim, "global"));
 
   localElmIds = getLocalElmIds(mesh, partFilter);
-
-  owners = std::vector<Ownership>(1); //FIXME
 }
 
 std::vector<GO>
@@ -435,6 +431,20 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   auto elm2dof = createElementToDofConnectivity(elmToDim, m_globalDofNumbering);
   // transfer to host
   m_connectivity = Omega_h::HostRead(elm2dof);
+
+  // WARNING! This is good for nodes only. For generic patterns, we need to go through
+  //          each elem one by one
+  m_ownership.resize(m_connectivity.size());
+  auto e2v = Omega_h::HostRead(mesh.ask_elem_verts());
+  auto nodes_per_elem = e2v.size() / mesh.nelems();
+  auto owned = Omega_h::HostRead(mesh.owned(0));
+  for (int ielem=0; ielem<mesh.nelems(); ++ielem) {
+    for (int inode=0; inode<nodes_per_elem; ++inode) {
+      auto node_lid = e2v[ielem*nodes_per_elem+inode];
+      auto& ownership = m_ownership[ielem*nodes_per_elem+inode];
+      ownership = owned[node_lid] ? Owned : Ghosted;
+    }
+  }
 }
 
 Teuchos::RCP<panzer::ConnManager>
@@ -496,11 +506,6 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
 int OmegahConnManager::part_dim (const std::string&) const //FIXME
 {
   return partFilter.dim;
-}
-
-const Ownership* OmegahConnManager::getOwnership(LO) const //FIXME
-{
-  return &owners[0];
 }
 
 } // namespace Albany

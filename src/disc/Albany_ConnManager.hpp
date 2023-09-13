@@ -17,6 +17,7 @@
 namespace Albany {
 
 enum Ownership {
+  Unset = 0,
   Owned = 1,
   Ghosted = 2
 };

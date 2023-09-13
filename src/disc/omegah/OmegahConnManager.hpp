@@ -31,7 +31,7 @@ private:
   const OmegahPartFilter partFilter;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
-  std::vector<Ownership> owners; //FIXME
+  std::vector<Ownership> m_ownership; //FIXME
   LO m_dofsPerElm = 0;
   std::array<LO,4> m_dofsPerEnt;
   std::array<Omega_h::GOs,4> m_globalDofNumbering;
@@ -221,7 +221,9 @@ public:
   // Queries the dimension of a part
   int part_dim (const std::string& part_name) const override;
 
-  const Ownership* getOwnership(LO localElmtId) const override;
+  const Ownership* getOwnership(LO localElmtId) const override {
+    return m_ownership.data() + (localElmtId*m_dofsPerElm);
+  }
 };
 
 } // namespace Albany
