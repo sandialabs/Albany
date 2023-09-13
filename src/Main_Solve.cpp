@@ -421,7 +421,6 @@ int main(int argc, char *argv[])
 
 #if defined(ALBANY_OMEGAH)
     Albany::finalize_omegah_lib();
-    fprintf(stderr, "finalized omegah lib\n");
 #endif
 
   return failures;
