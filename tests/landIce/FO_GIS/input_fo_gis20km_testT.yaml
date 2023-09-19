@@ -7,6 +7,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Name: LandIce Stokes First Order 3D
     Compute Sensitivities: true
+    Flat Bed Approximation: true
     LandIce BCs:
       Number: 1
       BC 0:

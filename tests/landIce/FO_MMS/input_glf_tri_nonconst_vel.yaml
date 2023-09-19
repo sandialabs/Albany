@@ -21,6 +21,7 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D
     Basal Side Name: basalside
+    Flat Bed Approximation: true
     Cubature Degree: 3
     Basal Cubature Degree: 3
     Extruded Column Coupled in 2D Response: true

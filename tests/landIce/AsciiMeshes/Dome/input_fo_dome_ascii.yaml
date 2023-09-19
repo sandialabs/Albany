@@ -8,6 +8,7 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
     Basal Side Name: Basal
+    Flat Bed Approximation: true
     Basal Cubature Degree: 3
     Parameters: 
       Number Of Parameters: 1

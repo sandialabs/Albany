@@ -23,6 +23,7 @@ ANONYMOUS:
     Basal Side Name: basalside
     Cubature Degree: 3
     Basal Cubature Degree: 3
+    Flat Bed Approximation: true
     Extruded Column Coupled in 2D Response: true
     Response Functions: 
       Number Of Responses: 1

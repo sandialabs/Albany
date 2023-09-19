@@ -16,6 +16,7 @@ ANONYMOUS:
     Cubature Degree: 4
     Basal Cubature Degree: 3
     Surface Cubature Degree: 3
+    Flat Bed Approximation: true
     Dirichlet BCs: {}
     Neumann BCs: {}
     LandIce BCs:

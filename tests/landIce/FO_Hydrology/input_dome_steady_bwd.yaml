@@ -13,6 +13,7 @@ ANONYMOUS:
     Name: LandIce Stokes FO Hydrology
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Flat Bed Approximation: true
     Cubature Degree: 4
     Basal Cubature Degree: 4
     Surface Cubature Degree: 4

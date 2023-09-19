@@ -383,6 +383,8 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
 
     parameterList->sublist("Problem").set<int>("Cubature Degree",3);
 
+    parameterList->sublist("Problem").set<bool>("Flat Bed Approximation", true);
+
     // Basal friction sliding bc
     parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Type","Basal Friction");
     parameterList->sublist("Problem").sublist("LandIce BCs").sublist("BC 0").set<std::string>("Side Set Name","Basal");

@@ -12,6 +12,7 @@ ANONYMOUS:
     Extruded Column Coupled in 2D Response: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Flat Bed Approximation: false
     Cubature Degree: 4
     Basal Cubature Degree: 3
     Surface Cubature Degree: 4
@@ -373,12 +374,12 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 4.227351465925e+01
+    Test Value: 4.228108291457e+01
     Relative Tolerance: 1.0e-06
     Sensitivity For Parameter 0:
-      Test Value: 1.489899943352e+01
+      Test Value: 1.489986844501e+01
   Regression For Response 1:
-    Test Value: 5.967986097162e+00
+    Test Value: 5.967986097162e+00  
     Relative Tolerance: 1.0e-06
     Sensitivity For Parameter 0:
       Test Value: 4.713654424891e-01

@@ -347,6 +347,7 @@ StokesFOBase::getStokesFOBaseProblemParameters () const
   validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("LandIce Field Norm", false, "");
+  validPL->set<bool>("Flat Bed Approximation", true, "Whether or not the velocity tangential to the bed is assumed to be the same as the horizontal velocity at the bed");
   validPL->sublist("LandIce Physical Parameters", false, "");
   validPL->sublist("LandIce Noise", false, "");
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");

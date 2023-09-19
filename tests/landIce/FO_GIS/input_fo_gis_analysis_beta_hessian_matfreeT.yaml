@@ -13,6 +13,7 @@ ANONYMOUS:
     Cubature Degree: 4
     Basal Cubature Degree: 3
     Surface Cubature Degree: 3
+    Flat Bed Approximation: true
     Equation Set:
       Type: LandIce
     Response Functions:
