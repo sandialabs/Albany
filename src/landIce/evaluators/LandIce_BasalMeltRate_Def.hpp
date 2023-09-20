@@ -29,9 +29,6 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
  , enthalpyBasalFlux     (p.get<std::string> ("Basal Melt Rate Variable Name"), dl_basal->node_scalar)
  , basalVertVelocity (p.get<std::string> ("Basal Vertical Velocity Variable Name"),dl_basal->node_scalar)
 {
-
-  normals   = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
-
   nodal = p.isParameter("Nodal") ? p.get<bool>("Nodal") : false;
   Teuchos::RCP<PHX::DataLayout> scalar_layout, vector_layout;
   if (nodal) {
@@ -50,9 +47,12 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   EnthalpyHs = decltype(EnthalpyHs)(p.get<std::string> ("Enthalpy Hs Side Variable Name"),scalar_layout);
   enthalpyBasalFlux = decltype(enthalpyBasalFlux)(p.get<std::string> ("Basal Melt Rate Variable Name"),scalar_layout);
   basalVertVelocity = decltype(basalVertVelocity)(p.get<std::string> ("Basal Vertical Velocity Variable Name"),scalar_layout);
-  normals   = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
+
   //If true, the tangential velocity is the same as the horizontal velocity vector
   flat_approx = p.get<bool>("Flat Bed Approximation"); 
+  if(!flat_approx) {
+    normals = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
+  }
 
   this->addDependentField(phi);
   this->addDependentField(geoFluxHeat);
