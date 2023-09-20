@@ -38,13 +38,19 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
   BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
   w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
-  normals   = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
+
+  //If true, the tangential velocity is the same as the horizontal velocity vector
+  flat_approx = p.get<bool>("Flat Bed Approximation"); 
+  if(!flat_approx) {
+    normals = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
+  }
 
   this->addDependentField(u);
   this->addDependentField(beta);
   this->addDependentField(BF);
   this->addDependentField(w_measure);
-  this->addDependentField(normals);
+  if(!flat_approx)
+    this->addDependentField(normals);
 
   this->addContributedField(residual);
 
@@ -108,15 +114,17 @@ operator() (const StokesFOBasalResid_Tag&, const int& sideSet_idx) const {
 
   ScalarT local_res[2];
 
+  MeshScalarT bx(0.0), by(0.0); 
   for (unsigned int node=0; node<numSideNodes; ++node) {
     local_res[0] = 0.0;
     local_res[1] = 0.0;
 
     for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-      MeshScalarT bx = -normals(sideSet_idx,qp,0)/normals(sideSet_idx,qp,2);
-      MeshScalarT by = -normals(sideSet_idx,qp,1)/normals(sideSet_idx,qp,2);
-      // removed the following line after checking performance
-      bx=0.0; by=0.0;
+      if(!flat_approx) {
+        bx = -normals(sideSet_idx,qp,0)/normals(sideSet_idx,qp,2);
+        by = -normals(sideSet_idx,qp,1)/normals(sideSet_idx,qp,2);
+      }
+
       ScalarT u0 = u(sideSet_idx,qp,0);
       ScalarT u1 = u(sideSet_idx,qp,1);
       local_res[0] += (beta(sideSet_idx,qp)*(u0*(1.0+bx*bx) + u1*bx*by))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);

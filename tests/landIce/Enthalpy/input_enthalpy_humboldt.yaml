@@ -12,6 +12,7 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Enthalpy 3D
     Basal Side Name: basalside
+    Flat Bed Approximation: false
     Basal Cubature Degree: 4
     Cubature Degree: 4
     Needs Dissipation: true
@@ -288,9 +289,9 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value: -1.251507530710e+01
+    Test Value: -1.251465026228e+01
     Sensitivity For Parameter 0:
-      Test Value: 1.414057848721e-05
+      Test Value: 1.414057395466e-05
     
     
 ...

@@ -11,6 +11,7 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Flat Bed Approximation: false
     Cubature Degree: 4
     Basal Cubature Degree: 3
     Surface Cubature Degree: 4
@@ -325,7 +326,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:
@@ -344,6 +345,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value:  4.448378548216e+06
+    Test Value:  4.447475033104e+06
     Relative Tolerance: 1.0e-06
 ...

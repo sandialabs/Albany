@@ -348,7 +348,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
                                                                                                  Albany::coord_vec_name + "_" + basalSideName));
 
   // --- Compute side basis functions
-  fm0.template registerEvaluator<EvalT> (evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName));
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName, true));
 
   // --- Compute Quad Points coordinates on the side set
   fm0.template registerEvaluator<EvalT> (evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName));
@@ -707,6 +707,8 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy",false));
 
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Side Normal Name", "Normal_" + basalSideName);
+    p->set<bool>("Flat Bed Approximation", params->get<bool>("Flat Bed Approximation"));
 
     //Output
     p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity");

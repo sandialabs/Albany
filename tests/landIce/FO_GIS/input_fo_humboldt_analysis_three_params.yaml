@@ -20,6 +20,7 @@ ANONYMOUS:
     Extruded Column Coupled in 2D Response: true
     Basal Side Name: basalside 
     Surface Side Name: upperside
+    Flat Bed Approximation: false
     Cubature Degrees (Horiz Vert): [4,6]
     Basal Cubature Degree: 4
     Surface Cubature Degree: 4
@@ -868,5 +869,5 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [92.5613714418]
+    Piro Analysis Test Values: [92.5613725705]
 ...

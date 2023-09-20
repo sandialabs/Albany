@@ -1462,6 +1462,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Side Normal Name", side_fname(Albany::normal_name, ssName));
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<bool>("Flat Bed Approximation", params->get<bool>("Flat Bed Approximation"));
 
     //Output
     p->set<std::string>("Residual Variable Name", resid_names[0]);

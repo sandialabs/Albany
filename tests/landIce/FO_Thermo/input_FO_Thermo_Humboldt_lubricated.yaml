@@ -15,6 +15,7 @@ ANONYMOUS:
     #Adjust Bed Topography to Account for Thickness Changes: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Flat Bed Approximation: false
     Cubature Degree: 4
     Basal Cubature Degree: 3
     Surface Cubature Degree: 4
@@ -363,8 +364,8 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value:  1.554734575530e+01
+    Test Value:  1.554983546608e+01
     Sensitivity For Parameter 0:
-      Test Value: 7.651880035177e+00
+      Test Value: 7.652733203298e+00
 ...
 ...

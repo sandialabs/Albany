@@ -582,11 +582,14 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     probParamList.set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
   }
 
-  if(probParamList.isSublist("LandIce BCs"))
+  if(probParamList.isSublist("LandIce BCs"))  
     std::cout<<"\nWARNING: Using LandIce BCs provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"LandIce BCs\" sublist from Albany input file.\n"<<std::endl;
   
   // ---- Setting Memoization ---- //
   probParamList.set<bool>("Use MDField Memoization", probParamList.get<bool>("Use MDField Memoization", true));
+
+  // ------ whether to use the flat bed approximation (that is, tangent velocity to the bed is the same as horizontal velocity at bed)
+  probParamList.set<bool>("Flat Bed Approximation", probParamList.get<bool>("Flat Bed Approximation", true));
 
   // ---- Setting parameters for LandIce BCs ---- //
   Teuchos::ParameterList& landiceBcList = probParamList.sublist("LandIce BCs");

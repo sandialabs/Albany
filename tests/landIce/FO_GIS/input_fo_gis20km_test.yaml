@@ -8,6 +8,7 @@ ANONYMOUS:
     Name: LandIce Stokes First Order 3D
     Compute Sensitivities: true
     Basal Side Name: basal
+    Flat Bed Approximation: true
     LandIce BCs:
       Number: 1
       BC 0:

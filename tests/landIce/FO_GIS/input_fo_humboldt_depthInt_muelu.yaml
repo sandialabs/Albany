@@ -15,6 +15,7 @@ ANONYMOUS:
     Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Flat Bed Approximation: false
     Cubature Degrees (Horiz Vert): [4, 6]
     Basal Cubature Degree: 4
     Surface Cubature Degree: 4
@@ -454,6 +455,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 2.660410088747e+01
+    Test Value: 2.659962913974e+01
     Relative Tolerance: 1.0e-06
 ...

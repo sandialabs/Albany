@@ -8,14 +8,15 @@ ANONYMOUS:
     Compute Sensitivities: true
     Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
+    Flat Bed Approximation: true
     Needs Dissipation: true
     Needs Basal Friction: true
     Cubature Degree: 4
     Basal Cubature Degree: 4
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
-      DBC on NS bottom for DOF U1: 0.00000000000000000e+00
-      DBC on NS lateral for DOF U1: 0.00000000000000000e+00
+      DBC on NS bottom for DOF U1: 0.0
+      DBC on NS lateral for DOF U1: 0.0
     LandIce BCs:
       Number: 1
       BC 0:
@@ -34,29 +35,29 @@ ANONYMOUS:
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.4e+00
       Continuous Homotopy With Constant Initial Viscosity: true
-      Coefficient For Continuous Homotopy: 8.00000000000000000e+00
+      Coefficient For Continuous Homotopy: 8.0
       Glen's Law A: 2.400304414e-24     # [ Pa^-3 s^-1 ]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     LandIce Physical Parameters:
-      Conductivity of ice: 2.10000000000000008e+00
-      Diffusivity temperate ice: 1.09999999999999992e-08
-      Heat capacity of ice: 2.00900000000000000e+03
-      Water Density: 1.00000000000000000e+03
-      Ice Density: 9.16000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Reference Temperature: 2.65000000000000000e+02
-      Clausius-Clapeyron Coefficient: 7.90000000000000059e-08
-      Ice Latent Heat Of Fusion: 3.34000000000000000e+05
-      Permeability factor: 9.99999999999999979e-13
-      Viscosity of water: 1.79999999999999995e-03
-      Omega exponent alpha: 2.00000000000000000e+00
-      Diffusivity homotopy exponent: -1.10000000000000008e+00
+      Conductivity of ice: 2.1
+      Diffusivity temperate ice: 1.1e-08
+      Heat capacity of ice: 2.009e+03
+      Water Density: 1.0e+03
+      Ice Density: 9.16e+02
+      Gravity Acceleration: 9.8e+00
+      Reference Temperature: 2.65e+02
+      Clausius-Clapeyron Coefficient: 7.9e-08
+      Ice Latent Heat Of Fusion: 3.34e+05
+      Permeability factor: 1.0e-12
+      Viscosity of water: 1.8e-03
+      Omega exponent alpha: 2.0
+      Diffusivity homotopy exponent: -1.1
     LandIce Enthalpy:
       Regularization:
         Flux Regularization:
-          alpha: 1.00000000000000005e-01
-          beta: 7.50000000000000000e+00
+          alpha: 1.0e-01
+          beta: 7.5
         Basal Melting Regularization:
           alpha: 2.008557
           beta: 4.0e+00
@@ -148,15 +149,15 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 100
-        Max Value: 4.00000000000000022e-01
-        Min Value: 0.00000000000000000e+00
+        Max Value: 4.0e-01
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 1.00000000000000005e-01
-        Max Step Size: 1.00000000000000005e-01
+        Initial Step Size: 1.0e-01
+        Max Step Size: 1.0e-01
     NOX:
       Thyra Group Options:
         Function Scaling: None
@@ -193,7 +194,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000004e-04
+                      Convergence Tolerance: 1.0e-04
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -214,7 +215,7 @@ ANONYMOUS:
                     default values: SA
                     ML output: 0
                     'repartition: enable': 1
-                    'repartition: max min ratio': 1.32699999999999995e+00
+                    'repartition: max min ratio': 1.327
                     'repartition: min per proc': 600
                     'repartition: Zoltan dimensions': 2
                     'repartition: start level': 4
@@ -222,12 +223,12 @@ ANONYMOUS:
                     'semicoarsen: coarsen rate': 12
                     'smoother: sweeps': 4
                     'smoother: type': Chebyshev
-                    'smoother: Chebyshev eig boost': 1.19999999999999995e+00
+                    'smoother: Chebyshev eig boost': 1.2
                     'smoother: sweeps (level 0)': 1
                     'smoother: sweeps (level 1)': 4
                     'smoother: type (level 0)': line Jacobi
                     'smoother: type (level 1)': line Jacobi
-                    'smoother: damping factor': 5.50000000000000044e-01
+                    'smoother: damping factor': 5.5e-01
                     'smoother: pre or post': both
                     'coarse: type': Amesos-KLU
                     'coarse: pre or post': pre
@@ -236,7 +237,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:
