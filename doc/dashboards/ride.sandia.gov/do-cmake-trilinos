@@ -126,4 +126,5 @@ cmake \
     -D Kokkos_ENABLE_LIBDL:BOOL=ON \
     -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
     -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
+    -D Trilinos_USE_GNUINSTALLDIRS=OFF \
 ../

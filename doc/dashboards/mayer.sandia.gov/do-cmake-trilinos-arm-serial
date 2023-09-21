@@ -160,5 +160,6 @@ cmake \
     -DMPI_EXEC_NUMPROCS_FLAG:STRING='-np' \
     -DKOKKOS_ENABLE_LIBDL:BOOL=ON \
     -DTrilinos_ENABLE_PanzerDofMgr:BOOL=ON \
+    -DTrilinos_USE_GNUINSTALLDIRS=OFF \
 ..
 

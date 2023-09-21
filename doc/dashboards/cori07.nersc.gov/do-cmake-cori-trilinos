@@ -142,4 +142,5 @@ cmake \
     -D CMAKE_CXX_STANDARD=17 \
     -D CMAKE_CXX_FLAGS:STRING='-std=c++17' \
     -D Xpetra_ENABLE_EpetraExt=OFF \
+    -D Trilinos_USE_GNUINSTALLDIRS=OFF \
 ../
