@@ -74,6 +74,7 @@ cmake -GNinja \
       -D MueLu_ENABLE_Tutorial=OFF \
       -D MueLu_ENABLE_TESTS=OFF \
       -D ML_ENABLE_SuperLU=OFF \
+      -D Trilinos_USE_GNUINSTALLDIRS=OFF \
       -D Trilinos_ENABLE_Amesos2=ON \
       -D Trilinos_ENABLE_Amesos=ON \
       -D Trilinos_ENABLE_Anasazi=ON \
@@ -123,5 +124,4 @@ cmake -GNinja \
       -D TPL_FIND_SHARED_LIBS=ON \
       -D BUILD_SHARED_LIBS=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC=OFF \
-      -D Trilinos_USE_GNUINSTALLDIRS=OFF \
 ..
