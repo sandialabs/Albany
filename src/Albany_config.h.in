@@ -22,8 +22,8 @@
 // ========================== General Albany build and capabilities options ============================== //
 
 // Albany compiler details
-#cmakedefine ALBANY_CXX_COMPILER_ID "${ALBANY_CXX_COMPILER_ID}"
-#cmakedefine ALBANY_CXX_COMPILER_VERSION "${ALBANY_CXX_COMPILER_VERSION}"
+#cmakedefine CMAKE_CXX_COMPILER_ID "${CMAKE_CXX_COMPILER_ID}"
+#cmakedefine CMAKE_CXX_COMPILER_VERSION "${CMAKE_CXX_COMPILER_VERSION}"
 
 // Whether mesh and parameters depend on each others and/or solution
 #cmakedefine ALBANY_MESH_DEPENDS_ON_PARAMETERS
@@ -44,9 +44,6 @@
 // Whether and how to check floating point exceptions
 #cmakedefine ALBANY_CHECK_FPE
 #cmakedefine ALBANY_STRONG_FPE_CHECK
-
-// Whether to allow deprecated code to compile without warnings
-#cmakedefine ALBANY_ENABLE_DEPRECATED
 
 // Macros for memory analysis
 #cmakedefine ALBANY_HAVE_MALLINFO

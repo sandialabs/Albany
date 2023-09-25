@@ -589,7 +589,7 @@ if (ENABLE_LANDICE)
   add_subdirectory(landIce)
 endif()
 
-message ("libs: ${ALBANY_LIBRARIES}")
+message ("\n-- Albany libraries: ${ALBANY_LIBRARIES}")
 
 # Now build executables from this library, tailored main()s, and Trilinos
 if (NOT ALBANY_LIBRARIES_ONLY)
