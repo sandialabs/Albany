@@ -1,2 +1,0 @@
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/gpfs1/ikalash/nightlyAlbanyCDash/albany-build-serial-intel-release/src:/gpfs1/ikalash/nightlyAlbanyCDash/albany-build-serial-intel-release/src/adapt:/gpfs1/ikalash/nightlyAlbanyCDash/albany-build-serial-intel-release/src/disc/stk:/gpfs1/ikalash/nightlyAlbanyCDash/albany-build-serial-intel-release/src/LandIce:/gpfs1/ikalash/nightlyAlbanyCDash/albany-build-serial-intel-release/src/disc/stk/percept/stk_rebalance:/gpfs1/ikalash/nightlyAlbanyCDash/trilinos-install-serial-intel-release/lib/
-

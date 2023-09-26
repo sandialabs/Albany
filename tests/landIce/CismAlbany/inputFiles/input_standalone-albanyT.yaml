@@ -10,6 +10,7 @@ ANONYMOUS:
     Name: LandIce Stokes First Order 3D
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Flat Bed Approximation: true
     Response Functions:
       Number Of Responses: 0
     Parameters:

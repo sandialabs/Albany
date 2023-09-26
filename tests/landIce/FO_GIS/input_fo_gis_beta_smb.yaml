@@ -13,6 +13,7 @@ ANONYMOUS:
     Adjust Bed Topography to Account for Thickness Changes: true
     Basal Side Name: basalside
     Surface Side Name: upperside
+    Flat Bed Approximation: true
     Cubature Degree: 4
     Basal Cubature Degree: 3
     Surface Cubature Degree: 3

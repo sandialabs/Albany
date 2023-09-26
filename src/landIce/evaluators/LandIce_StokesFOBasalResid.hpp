@@ -49,6 +49,7 @@ private:
   PHX::MDField<const RealType,Side,Node,QuadPoint>   BF;
   PHX::MDField<const MeshScalarT,Side,QuadPoint>     w_measure;
   PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim> normals;
+  bool flat_approx;
   
   PHX::MDField<const ScalarT,Dim> homotopyParam;
   PHX::MDField<const ScalarT,Dim> homotopy;

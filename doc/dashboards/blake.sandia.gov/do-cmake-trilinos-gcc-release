@@ -123,4 +123,5 @@ cmake \
       -D TPL_ENABLE_X11:BOOL=OFF \
       -D Tpetra_ENABLE_DEPRECATED_CODE=OFF \
       -D Xpetra_ENABLE_DEPRECATED_CODE=OFF \
+      -D Trilinos_USE_GNUINSTALLDIRS=OFF \
 ..

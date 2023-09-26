@@ -13,6 +13,7 @@ ANONYMOUS:
     Basal Side Name: basalside
     Cubature Degree: 3
     Basal Cubature Degree: 3
+    Flat Bed Approximation: true
     Compute Sensitivities: true
     Response Functions:
       Number Of Responses: 1

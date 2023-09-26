@@ -64,6 +64,7 @@ cmake -GNinja \
       -D Tpetra_INST_INT_INT=OFF \
       -D MueLu_ENABLE_Tutorial=OFF \
       -D MueLu_ENABLE_TESTS=OFF \
+      -D Trilinos_USE_GNUINSTALLDIRS=OFF \
       -D Trilinos_ENABLE_Amesos2=ON \
       -D Trilinos_ENABLE_Amesos=ON \
       -D Trilinos_ENABLE_Anasazi=ON \

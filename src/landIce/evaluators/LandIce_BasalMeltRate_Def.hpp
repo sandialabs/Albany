@@ -48,12 +48,21 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   enthalpyBasalFlux = decltype(enthalpyBasalFlux)(p.get<std::string> ("Basal Melt Rate Variable Name"),scalar_layout);
   basalVertVelocity = decltype(basalVertVelocity)(p.get<std::string> ("Basal Vertical Velocity Variable Name"),scalar_layout);
 
+  //If true, the tangential velocity is the same as the horizontal velocity vector
+  flat_approx = p.get<bool>("Flat Bed Approximation"); 
+  if(!flat_approx) {
+    normals = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_basal->qp_vector_spacedim);
+  }
+
   this->addDependentField(phi);
   this->addDependentField(geoFluxHeat);
   this->addDependentField(velocity);
   this->addDependentField(beta);
   this->addDependentField(EnthalpyHs);
   this->addDependentField(Enthalpy);
+  if(!flat_approx) {
+    this->addDependentField(normals);
+  }
 
   this->addEvaluatedField(enthalpyBasalFlux);
   this->addEvaluatedField(basalVertVelocity);
@@ -138,8 +147,17 @@ operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
 
     //mstar, [W m^{-2}] = [Pa m s^{-1}]: basal latent heat in temperate ice
     ScalarT mstar = geoFluxHeat(sideSet_idx,node);
+    ScalarT tanVelSquared(0.0);
     for (unsigned int dim = 0; dim < vecDimFO; dim++)
-      mstar += beta_scaling * beta(sideSet_idx,node) * velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
+      tanVelSquared += velocity(sideSet_idx,node,dim) * velocity(sideSet_idx,node,dim);
+    if(!flat_approx) {
+      ScalarT tmp(0.0);
+      for (unsigned int dim = 0; dim < vecDimFO; dim++)
+        tmp += -normals(sideSet_idx,node,dim)/normals(sideSet_idx,node,2)*velocity(sideSet_idx,node,dim);
+      tanVelSquared += tmp*tmp;
+    }
+
+    mstar += beta_scaling * beta(sideSet_idx,node) * tanVelSquared;
 
     double dTdz_melting = beta_p * rho_i * g;
     mstar += k_i * dTdz_melting;

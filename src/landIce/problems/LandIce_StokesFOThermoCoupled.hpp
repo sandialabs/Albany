@@ -326,6 +326,8 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy", false));
 
   p->set<std::string>("Side Set Name", basalSideName);
+  p->set<std::string>("Side Normal Name", side_fname(Albany::normal_name, basalSideName));
+  p->set<bool>("Flat Bed Approximation", params->get<bool>("Flat Bed Approximation"));
 
   //Output
   p->set<std::string>("Basal Vertical Velocity Variable Name", "basal_vert_velocity_" + basalSideName);

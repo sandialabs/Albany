@@ -1,5 +1,0 @@
-group, site, buildname 
-Nightly, cori07.nersc.gov, Trilinos-Linux-5.3.18-150200.24.145-default-gcc-8.3.0-Release-Serial
-Nightly, cori07.nersc.gov, Albany-Linux-5.3.18-150200.24.145-default-gcc-8.3.0-Release-Serial
-Nightly, cori07.nersc.gov, CismAlbany-Linux-5.3.18-150200.24.145-default-gcc-8.3.0-Release-Serial
-Biweekly, pm-cpu,  Trilinos-Linux-5.14.21-150400.24.46_12.0.63-cray_shasta_c-gcc-11.2.0-Release-serial

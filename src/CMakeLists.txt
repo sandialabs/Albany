@@ -180,7 +180,8 @@ if (ALBANY_EPETRA)
   )
 endif()
 
-if (NOT ALBANY_LIBRARIES_ONLY)
+option (ALBANY_BUILD_XML_YAML_CONVERTERS "Whether to build albany xml-yaml converter utils" OFF)
+if (ALBANY_BUILD_XML_YAML_CONVERTERS)
   add_executable(xml2yaml utility/xml2yaml.cpp)
   add_executable(yaml2xml utility/yaml2xml.cpp)
   target_link_libraries(xml2yaml PUBLIC ${TeuchosParameterList_LIBRARIES})
@@ -599,9 +600,6 @@ endif()
 if (ENABLE_LANDICE)
   add_subdirectory(landIce)
 endif()
-
-# Now build executables from this library, tailored main()s, and Trilinos
-message (" ***********************\n")
 
 message (STATUS "Albany libs to be built: ${ALBANY_LIBRARIES}")
 if (NOT ALBANY_LIBRARIES_ONLY)

@@ -114,4 +114,5 @@ cmake -GNinja \
       -D Trilinos_ENABLE_PanzerDofMgr=ON \
       -D Trilinos_ENABLE_ShyLU_DDFROSch=ON \
       -D Trilinos_ENABLE_PanzerExprEval=ON \
+      -D Trilinos_USE_GNUINSTALLDIRS=OFF \
 ..

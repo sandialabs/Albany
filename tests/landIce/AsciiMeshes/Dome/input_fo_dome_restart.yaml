@@ -9,6 +9,7 @@ ANONYMOUS:
     Name: LandIce Stokes First Order 3D
     Basal Side Name: basal
     Basal Cubature Degree: 3
+    Flat Bed Approximation: true
     Parameters: 
       Number Of Parameters: 1
       Parameter 0:
