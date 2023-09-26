@@ -31,7 +31,7 @@ private:
   const OmegahPartFilter partFilter;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
-  std::vector<Ownership> m_ownership; //FIXME
+  std::vector<Ownership> m_ownership;
   LO m_dofsPerElm = 0;
   std::array<LO,4> m_dofsPerEnt;
   std::array<Omega_h::GOs,4> m_globalDofNumbering;

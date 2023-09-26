@@ -19,18 +19,36 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 2D)
   build_type (BuildType::Tpetra);
   auto comm = getDefaultComm();
 
-  const int nelemx = 4;
-  const int nelemy = 3;
-  const int nelemz = 2;
+  Teuchos::Array<int> nelems(2);
+  nelems[0] = 4;
+  nelems[1] = 3;
   const int num_params = 2;
 
   auto params = Teuchos::rcp(new Teuchos::ParameterList(""));
-  params->set<int>("1D Elements",nelemx);
-  params->set<int>("2D Elements",nelemy);
-  params->set<int>("3D Elements",nelemz);
+
+  // ---------------------------------- //
+  //      Test exceptions handling      //
+  // ---------------------------------- //
+
+  // Missing required parameter
+  TEST_THROW (OmegahBoxMesh<2>(params,comm,num_params),std::logic_error);
+
+  // Wrong dimensions
+  params->set<Teuchos::Array<int>>("Number of Elements",Teuchos::Array<int>(3,1));
+  TEST_THROW (OmegahBoxMesh<2>(params,comm,num_params),std::logic_error);
+  params->set<Teuchos::Array<int>>("Number of Elements",nelems);
+  params->set<Teuchos::Array<double>>("Box Scaling",Teuchos::Array<double>(1,1));
+  TEST_THROW (OmegahBoxMesh<2>(params,comm,num_params),std::logic_error);
+
+  // ---------------------------------- //
+  //        Test normal oprations       //
+  // ---------------------------------- //
+
+
+
 
   auto mesh = Teuchos::rcp(new OmegahBoxMesh<2>(params,comm,num_params));
 
   auto coords = mesh->coords_host();
-  TEST_EQUALITY_CONST(coords.size(),(nelemx+1)*(nelemy+1));
+  TEST_EQUALITY_CONST(coords.size(),(nelems[0]+1)*(nelems[1]+1));
 }

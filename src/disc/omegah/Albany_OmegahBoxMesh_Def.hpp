@@ -39,14 +39,24 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   double scaley = 1.0;
   double scalez = 1.0;
 
-  nelemx = params->get<int>("1D Elements");
-  scalex = params->get<int>("1D Scale",1.0);
+  auto nelems = params->get<Teuchos::Array<int>>("Number of Elements");
+  auto scale  = params->get<Teuchos::Array<double>>("Box Scaling",Teuchos::Array<double>(Dim,1.0));
+  TEUCHOS_TEST_FOR_EXCEPTION (nelems.size()!=Dim, std::logic_error,
+      "Input array for 'Number of Elements' has the wrong dimension.\n"
+      "  - Expected length: " << Dim << "\n"
+      "  - Input length   : " << nelems.size() << "\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (scale.size()!=Dim, std::logic_error,
+      "Input array for 'Box Scaling' has the wrong dimension.\n"
+      "  - Expected length: " << Dim << "\n"
+      "  - Input length   : " << nelems.size() << "\n");
+  nelemx = nelems[0];
+  scalex = scale[0];
   if (Dim>1) {
-    nelemy = params->get<int>("2D Elements");
-    scalex = params->get<int>("2D Scale",1.0);
+    nelemy = nelems[1];
+    scalex = scale[1];
     if (Dim>2) {
-      nelemz = params->get<int>("3D Elements");
-      scalez = params->get<int>("3D Scale",1.0);
+      nelemy = nelems[2];
+      scalex = scale[2];
     }
   }
 

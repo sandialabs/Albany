@@ -8,6 +8,12 @@
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
+#include "Albany_config.h"
+#ifdef ALBANY_OMEGAH
+#include "Albany_CommUtils.hpp"
+#include "Albany_Omegah.hpp"
+#endif
+
 int main( int argc, char* argv[] )
 {
   // Note that the dtor for GlobalMPISession will call
@@ -15,6 +21,9 @@ int main( int argc, char* argv[] )
   // any node type!
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
   Kokkos::initialize(argc,argv);
+#ifdef ALBANY_OMEGAH
+  Albany::init_omegah_lib (argc, argv, Albany::getDefaultComm());
+#endif
   {
     Teuchos::FancyOStream out(Teuchos::rcpFromRef(std::cout));
     out.setOutputToRootOnly(0);
@@ -22,5 +31,11 @@ int main( int argc, char* argv[] )
     exec_space.print_configuration(out);
   }
   Teuchos::UnitTestRepository::setGloballyReduceTestResult(true);
-  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
+  auto success = Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
+
+#ifdef ALBANY_OMEGAH
+  Albany::finalize_omegah_lib ();
+#endif
+
+  return success;
 }
