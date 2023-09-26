@@ -5,7 +5,7 @@ include (ExternalProject)
 
 ExternalProject_Add(Omega_h
   GIT_REPOSITORY https://github.com/SCOREC/omega_h
-  GIT_TAG origin/reducedThrust
+  GIT_TAG origin/master
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${Albany_CXX_COMPILER}
     -DMPIEXEC_EXECUTABLE=${Albany_MPI_EXEC}
