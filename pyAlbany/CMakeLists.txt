@@ -121,8 +121,11 @@ MESSAGE("-- PyAlbany uses pybind11 ${PYBIND11_VERSION}, mpi4py ${Mpi4Py_VERSION}
 
 MESSAGE("-- Check optional dependencies:")
 
+# NOTE: SEACAS explicitly installs exomergeN.py in the `lib` subfolder of the install folder
+#       While it's not advisable to *assume* dirtree structure of a tpl, here we take the risk
+#       Keep an eye out for changes and possible improvements to this solution
 EXECUTE_PROCESS(COMMAND
-  PYTHONPATH=${Trilinos_LIB_DIRS} ${PYTHON_EXECUTABLE} -c "import exomerge${PYTHON_MAJOR_VERSION}; print(exomerge${PYTHON_MAJOR_VERSION}.__version__)"
+  PYTHONPATH=${Trilinos_INSTALL_DIR}/lib ${PYTHON_EXECUTABLE} -c "import exomerge${PYTHON_MAJOR_VERSION}; print(exomerge${PYTHON_MAJOR_VERSION}.__version__)"
   OUTPUT_VARIABLE Exomerge_VERSION
   ERROR_VARIABLE  Exomerge_VERSION_ERROR
   OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -160,6 +163,6 @@ MESSAGE("End of the configuration of PyAlbany")
 
 IF (ALBANY_PYTHON_TESTS)
   file(COPY ${PyAlbanyPyFiles} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PyAlbany/.)
-  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_LIB_DIRS}/:${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH}")
+  SET(PYALBANY_PYTHONPATH "PYTHONPATH=${Trilinos_INSTALL_DIR}/lib}/:${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH}")
   add_subdirectory( tests )
 ENDIF()

@@ -22,13 +22,4 @@
 // Get all comm types
 #include "Albany_CommTypes.hpp"
 
-// Code macros to support deprecated warnings
-#ifdef ALBANY_ENABLE_DEPRECATED
-#  if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
-#    define ALBANY_DEPRECATED  __attribute__((__deprecated__))
-#  else
-#    define ALBANY_DEPRECATED
-#  endif
-#endif
-
 #endif // ALBANY_DATA_TYPES_HPP

@@ -24,120 +24,6 @@ endfunction()
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-
-# CMAKE File for Albany building against an installed Trilinos
-
-cmake_minimum_required(VERSION 3.17.0)
-include(CMakeDependentOption)
-
-if (NOT DEFINED SET_COMPILERS_AUTOMATICALLY)
-  set(SET_COMPILERS_AUTOMATICALLY TRUE)
-endif()
-
-# Kokkos recommends to set CMAKE_CXX_EXTENSIONS to OFF
-if (NOT DEFINED CMAKE_CXX_EXTENSIONS)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-ENDIF ()
-
-# Advertise that we support shared libs
-SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
-
-MESSAGE("ALBANY_TRILINOS_DIR = " ${ALBANY_TRILINOS_DIR}) 
-
-# Get Trilinos as one entity
-IF (DEFINED ALBANY_TRILINOS_DIR)
-  SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
-ENDIF()
-FIND_PACKAGE(Trilinos 14.1 REQUIRED)
-
-OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
-
-IF (DEFINED CMAKE_BUILD_TYPE)
-   IF ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-      MESSAGE("-- CMAKE_BUILD_TYPE=DEBUG...  Debug build is Enabled")
-      SET(ALBANY_DEBUG_BUILD ON)
-   ELSE()
-      MESSAGE("-- CMAKE_BUILD_TYPE=RELEASE...  Debug build is NOT Enabled")
-      SET(ALBANY_DEBUG_BUILD OFF)
-   ENDIF()
-ENDIF()
-# Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
-# This is needed to find SEACAS tools used during testing (epu, etc).
-SET(Trilinos_BIN_DIRS "${Trilinos_DIR}/../../../bin")
-SET(Trilinos_LIB_DIRS "${Trilinos_DIR}/../../../lib")
-
-# Set Trilinos commit id
-IF(EXISTS "${Trilinos_DIR}/../../../TrilinosRepoVersion.txt")
-  FILE(STRINGS "${Trilinos_DIR}/../../../TrilinosRepoVersion.txt" TRILINOS_VERSION_FILE)
-  SET(TRILINOS_GIT_COMMIT_ID_LINE_LOC 1)
-  LIST(GET TRILINOS_VERSION_FILE ${TRILINOS_GIT_COMMIT_ID_LINE_LOC} TRILINOS_GIT_COMMIT_ID_LINE)
-  STRING(REGEX MATCH "^[^ ]+" Trilinos_GIT_COMMIT_ID ${TRILINOS_GIT_COMMIT_ID_LINE})
-  SET(ALBANY_TRILINOS_GIT_COMMIT_ID ${Trilinos_GIT_COMMIT_ID})
-ENDIF()
-
-MESSAGE("\nFound Trilinos!  Here are the details: ")
-MESSAGE("-- Trilinos_DIR = ${Trilinos_DIR}")
-MESSAGE("-- Trilinos_CMAKE_BUILD_TYPE = ${Trilinos_CMAKE_BUILD_TYPE}")
-MESSAGE("-- Trilinos_VERSION = ${Trilinos_VERSION}")
-MESSAGE("-- Trilinos_GIT_COMMIT_ID = ${Trilinos_GIT_COMMIT_ID}")
-MESSAGE("-- Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
-MESSAGE("-- Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
-MESSAGE("-- Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
-MESSAGE("-- Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
-MESSAGE("-- Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
-MESSAGE("-- Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
-MESSAGE("-- Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
-MESSAGE("End of Trilinos details\n")
-
-# Compress Trilinos lists that are used
-LIST(REMOVE_DUPLICATES Trilinos_INCLUDE_DIRS)
-LIST(REMOVE_DUPLICATES Trilinos_TPL_INCLUDE_DIRS)
-LIST(REMOVE_DUPLICATES Trilinos_LIBRARIES)
-LIST(REMOVE_DUPLICATES Trilinos_TPL_LIBRARIES)
-
-if (SET_COMPILERS_AUTOMATICALLY)
-  MESSAGE("Setting and checking of compilers:")
-  if (Albany_CROSS_COMPILE)
-    # Force the compilers to be the same as Trilinos (GAH experimental)
-    # This syntax is needed when cross compiling or the compilers get checked
-    # again by the Albany configure, and will probably fail, because the options
-    # won't be right and the exes won't run on the host.
-    INCLUDE (CMakeForceCompiler)
-    SET(CMAKE_SYSTEM_NAME Generic)
-    CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} Generic)
-    CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} Generic)
-    CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} Generic)
-#    SET(CMAKE_SYSTEM_NAME ${Trilinos_SYSTEM_NAME})
-#    CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} ${Trilinos_CXX_COMPILER_ID})
-#    CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} ${Trilinos_C_COMPILER_ID})
-#    CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} ${Trilinos_Fortran_COMPILER_ID})
-#    SET(CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES ${Trilinos_Fortran_IMPLICIT_LINK_LIBRARIES})
-  else ()
-    set (CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
-    set (CMAKE_C_COMPILER ${Trilinos_C_COMPILER})
-    set (CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
-  endif ()
-else()
-  # Make sure the compilers match.
-  MESSAGE("Checking compilers:")
-  IF(NOT ${Trilinos_CXX_COMPILER} STREQUAL ${CMAKE_CXX_COMPILER})
-    MESSAGE(FATAL_ERROR "C++ compilers don't match (Trilinos: ${Trilinos_CXX_COMPILER}, ${PROJECT_NAME}: ${CMAKE_CXX_COMPILER}).")
-  ENDIF()
-  IF(NOT ${Trilinos_C_COMPILER} STREQUAL ${CMAKE_C_COMPILER})
-    MESSAGE(FATAL_ERROR "C compilers don't match (Trilinos: ${Trilinos_C_COMPILER}, ${PROJECT_NAME}: ${CMAKE_C_COMPILER}).")
-  ENDIF()
-  IF(NOT ${Trilinos_Fortran_COMPILER} STREQUAL ${CMAKE_Fortran_COMPILER})
-    MESSAGE(FATAL_ERROR "Fortran compilers don't match (Trilinos: ${Trilinos_Fortran_COMPILER}, ${PROJECT_NAME}: ${CMAKE_Fortran_COMPILER}).")
-  ENDIF()
-  SET(Trilinos_CXX_COMPILER_ID ${CMAKE_CXX_COMPILER_ID})
-  SET(Trilinos_C_COMPILER_ID ${CMAKE_C_COMPILER_ID})
-  SET(Trilinos_Fortran_COMPILER_ID ${CMAKE_Fortran_COMPILER_ID})
-endif()
-
-set (CMAKE_BUILD_TYPE ${Trilinos_CMAKE_BUILD_TYPE} CACHE STRING "Build type for Albany (default to Trilinos)")
-
-project(Albany CXX C)
-
 # Set Albany branch and commit id
 EXECUTE_PROCESS(
   COMMAND git rev-parse --abbrev-ref HEAD
@@ -151,10 +37,24 @@ EXECUTE_PROCESS(
   OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-MESSAGE("Albany version details:")
-MESSAGE("-- ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
-MESSAGE("-- ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
-MESSAGE("End of Albany version details\n")
+message("\n +-----------------------------------------")
+message(" |       Albany version details:")
+message(" +-----------------------------------------")
+message(" |  ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
+message(" |  ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
+message(" +-----------------------------------------\n")
+
+# CMAKE File for Albany building against an installed Trilinos
+
+cmake_minimum_required(VERSION 3.17.0)
+include(CMakeDependentOption)
+
+# If user doesn't specify a build type, we assume production (i.e., RELEASE)
+if (NOT CMAKE_BUILD_TYPE)
+  set (CMAKE_BUILD_TYPE RELEASE CACHE STRING "Build type for Albany (default to Trilinos)")
+endif()
+
+project(Albany CXX C)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -167,13 +67,65 @@ MESSAGE(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
 MESSAGE(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 MESSAGE(" +----------------------------------+")
 
-option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
-if (ENABLE_CROSS_COMPILE)
-  set (Albany_CROSS_COMPILE ON)
-  message ("Building with cross-compiling tools.")
-else ()
-  set (Albany_CROSS_COMPILE OFF)
-endif ()
+
+# Kokkos recommends to set CMAKE_CXX_EXTENSIONS to OFF
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Get Trilinos as one entity
+set (ALBANY_TRILINOS_DIR "" CACHE STRING "Location of the Trilinos installation folder")
+if (ALBANY_TRILINOS_DIR)
+  list(PREPEND CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR})
+endif()
+message ("-- Looking for trilinos installation ...")
+message ("     ALBANY_TRILINOS_DIR: ${ALBANY_TRILINOS_DIR}") 
+find_package(Trilinos 14.1 REQUIRED)
+message("-- Looking for trilinos installation ... Found.\n")
+
+# Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
+# This is needed to find SEACAS tools used during testing (epu, etc).
+SET(Trilinos_BIN_DIR "${Trilinos_INSTALL_DIR}/bin")
+# Set Trilinos commit id
+IF(EXISTS "${Trilinos_INSTALL_DIR}/TrilinosRepoVersion.txt")
+  FILE(STRINGS "${Trilinos_INSTALL_DIR}/TrilinosRepoVersion.txt" TRILINOS_VERSION_FILE)
+  SET(TRILINOS_GIT_COMMIT_ID_LINE_LOC 1)
+  LIST(GET TRILINOS_VERSION_FILE ${TRILINOS_GIT_COMMIT_ID_LINE_LOC} TRILINOS_GIT_COMMIT_ID_LINE)
+  STRING(REGEX MATCH "^[^ ]+" Trilinos_GIT_COMMIT_ID ${TRILINOS_GIT_COMMIT_ID_LINE})
+  SET(ALBANY_TRILINOS_GIT_COMMIT_ID ${Trilinos_GIT_COMMIT_ID})
+ENDIF()
+
+IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
+  FILE(READ "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h" KOKKOS_CORE_CONFIG_FILE)
+  STRING(REGEX MATCH "#define KOKKOS_ENABLE_OPENMP" ALBANY_ENABLE_OPENMP ${KOKKOS_CORE_CONFIG_FILE})
+  IF(ALBANY_ENABLE_OPENMP)
+    MESSAGE("-- Kokkos is configured to use OpenMP, Albany will also.")
+  ENDIF()
+  STRING(REGEX MATCH "#define KOKKOS_ENABLE_CUDA" ALBANY_ENABLE_CUDA ${KOKKOS_CORE_CONFIG_FILE})
+  IF(ALBANY_ENABLE_CUDA)
+    MESSAGE("-- Kokkos is configured to use CUDA, Albany will also.")
+    STRING(REGEX MATCH "#define KOKKOS_COMPILER_CUDA_VERSION ([0-9]*)" _ ${KOKKOS_CORE_CONFIG_FILE})
+  ENDIF()
+ELSE()
+  MESSAGE(FATAL_ERROR "\nError: ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h not found!")
+ENDIF()
+
+
+message("+-----------------------------------------")
+message("|     Trilinos installation details")
+message("+-----------------------------------------")
+message("|  Trilinos_DIR: ${Trilinos_DIR}")
+message("|  Trilinos_CMAKE_BUILD_TYPE: ${Trilinos_CMAKE_BUILD_TYPE}")
+message("|  Trilinos_VERSION: ${Trilinos_VERSION}")
+message("|  Trilinos_GIT_COMMIT_ID: ${Trilinos_GIT_COMMIT_ID}")
+message("|  Trilinos_BIN_DIR: ${Trilinos_BIN_DIR}")
+message("|  Trilinos_BUILD_SHARED_LIBS: ${Trilinos_BUILD_SHARED_LIBS}")
+message("|  Kokkos executions spaces:")
+message("|    Kokkos_ENABLE_SERIAL: ${Kokkos_ENABLE_SERIAL}")
+message("|    Kokkos_ENABLE_OpenMP: ${Kokkos_ENABLE_OPENMP}")
+message("|    Kokkos_ENABLE_CUDA: ${Kokkos_ENABLE_CUDA}")
+message("|    Kokkos_ENABLE_HIP: ${Kokkos_ENABLE_HIP}")
+message("+-----------------------------------------\n")
+
+OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers should be treated as 'system' headers (hence, without issuing warnings)" ON)
 
 # Build Albany as shared libraries if Trilinos was compiled that way
 IF(Trilinos_BUILD_SHARED_LIBS)
@@ -185,9 +137,9 @@ ELSE(Trilinos_BUILD_SHARED_LIBS)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
 OPTION(Albany_BUILD_STATIC_EXE "Flag to turn on building of static executables in Albany" OFF)
-IF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
+IF(NOT BUILD_SHARED_LIBS AND Albany_BUILD_STATIC_EXE)
   MESSAGE("-- Building Albany with static executables")
-ENDIF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
+ENDIF(NOT BUILD_SHARED_LIBS AND Albany_BUILD_STATIC_EXE)
 
 # Option to turn on and off deprecation warnings
 OPTION(Albany_DEPRECATED_DECLARATIONS "Flag to turn on warnings for deprecated code" ON)
@@ -200,58 +152,9 @@ ENDIF()
 
 # AGS: Adding these lines so Ctest can be run to submit to cdash dashboard
 #   Uses CTestConfig.cmake file for Cdash info.
-ENABLE_TESTING()
+enable_testing()
 option(BUILD_TESTING "" OFF) # Avoid creating folder "Testing" at config time
-INCLUDE(CTest)
-
-set(ALBANY_ENABLE_FORTRAN ON CACHE BOOL "enable fortran" )
-
-IF (CMAKE_Fortran_COMPILER AND ALBANY_ENABLE_FORTRAN) # Enable Fortran if it is enabled in Trilinos.
-  ENABLE_LANGUAGE(Fortran)
-ENDIF()
-
-# Make Albany inherit Trilinos compiler flags. The most important are the
-# presence or absence of -NDEBUG (which can affect linking for complicated
-# reasons) and -std=c++11.
-# GAH - temporarily set Albany flags for clang debugging
-#SET(CMAKE_CXX_FLAGS "-ggdb -std=c++11 -O2 -march=native -DNDEBUG")
-
-if (SET_COMPILERS_AUTOMATICALLY)
-  SET(CMAKE_AR ${Trilinos_AR})
-  SET(CMAKE_LINKER ${Trilinos_LINKER})
-endif()
-
-# No longer needed but keep for now as this shows how to silence specific warnings on Intel compiler
-#IF(${Trilinos_CXX_COMPILER_ID} MATCHES "Intel")
-#  SET(USING_INTEL TRUE)
-# On Intel, turn of interprocedural optimization at linking to keep linker from hanging
-# This could possibly be removed with further study (GAH)
-#  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-ip")
-#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,488,161,47")
-#ENDIF()
-
-# Compiler details
-SET(ALBANY_CXX_COMPILER_ID ${CMAKE_CXX_COMPILER_ID})
-MESSAGE("-- ALBANY_CXX_COMPILER_ID = ${ALBANY_CXX_COMPILER_ID}")
-SET(ALBANY_CXX_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
-MESSAGE("-- ALBANY_CXX_COMPILER_VERSION = ${ALBANY_CXX_COMPILER_VERSION}")
-IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
-  FILE(READ "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h" KOKKOS_CORE_CONFIG_FILE)
-  STRING(REGEX MATCH "#define KOKKOS_ENABLE_OPENMP" ALBANY_ENABLE_OPENMP ${KOKKOS_CORE_CONFIG_FILE})
-  IF(ALBANY_ENABLE_OPENMP)
-    MESSAGE("-- Kokkos is configured to use OpenMP, Albany will also.")
-  ENDIF()
-  STRING(REGEX MATCH "#define KOKKOS_ENABLE_CUDA" ALBANY_ENABLE_CUDA ${KOKKOS_CORE_CONFIG_FILE})
-  IF(ALBANY_ENABLE_CUDA)
-    MESSAGE("-- Kokkos is configured to use CUDA, Albany will also.")
-    STRING(REGEX MATCH "#define KOKKOS_COMPILER_CUDA_VERSION ([0-9]*)" _ ${KOKKOS_CORE_CONFIG_FILE})
-    SET(ALBANY_CUDA_COMPILER_VERSION "${CMAKE_MATCH_1}")
-    MESSAGE("-- ALBANY_CUDA_COMPILER_VERSION = ${ALBANY_CUDA_COMPILER_VERSION}")
-  ENDIF()
-ELSE()
-  MESSAGE(FATAL_ERROR "\nError: ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h not found!")
-ENDIF()
-MESSAGE("End of compiler details\n")
+include(CTest)
 
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
 MESSAGE("Checking Trilinos build for required and optional packages")
