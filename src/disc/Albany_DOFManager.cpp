@@ -36,7 +36,8 @@ DOFManager (const Teuchos::RCP<ConnManager>& conn_mgr,
   m_topo_dim = topo.getDimension();
   if (topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Line<2>>() or
       topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Quadrilateral<4>>() or
-      topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Hexahedron<8>>()) {
+      topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Hexahedron<8>>() or
+      topo.getBaseCellTopologyData()==shards::getCellTopologyData<shards::Wedge<6>>()) {
     // Shards has both Hexa and Wedge with top side in last position,
     // and bot side in the second to last side position
     m_top_bot_well_defined = true;
