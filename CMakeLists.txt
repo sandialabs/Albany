@@ -1,32 +1,13 @@
-# When debugging the CMake logic, it can be helpful to
-# print all vars with a certain regex, to see what's going on.
-# This function does precisely that. If REGEX is not provided,
-# it prints ALL cmake vars in scope
-function(dump_cmake_variables)
-  set (opts)
-  set (args1v REGEX)
-  set (argsMv)
-  cmake_parse_arguments (dcv "${opts}" "${args1v}" "${argsMv}" ${ARGN})
-
-  get_cmake_property(dcv_var_names VARIABLES)
-
-  foreach (var_name IN LISTS dcv_var_names)
-    if (dcv_REGEX)
-      string(REGEX MATCH ${dcv_REGEX} MATCHES ${var_name})
-      if (MATCHES)
-        message(STATUS "${var_name}=${${var_name}}")
-      endif()
-    else ()
-      message(STATUS "${var_name}=${${var_name}}")
-    endif ()
-  endforeach()
-endfunction()
-
 ##*****************************************************************//
 ##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
+
+cmake_minimum_required(VERSION 3.17.0)
+
+# Add path where we keep some CMake utils to cmake search path
+list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Set Albany branch and commit id
 EXECUTE_PROCESS(
@@ -48,11 +29,6 @@ message(" +-----------------------------------------")
 message(" |  ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
 message(" |  ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
 message(" +-----------------------------------------\n")
-
-# CMAKE File for Albany building against an installed Trilinos
-
-cmake_minimum_required(VERSION 3.17.0)
-include(CMakeDependentOption)
 
 # If user doesn't specify a build type, we assume production (i.e., RELEASE)
 if (NOT CMAKE_BUILD_TYPE)
@@ -772,82 +748,7 @@ OPTION(ENABLE_OMEGAH "Flag to turn on the Omega_h mesh interface" OFF)
 IF (ENABLE_OMEGAH)
   MESSAGE("-- Omega_h mesh interface    Enabled.")
   SET(ALBANY_OMEGAH TRUE)
-  message (STATUS "Looking for Omega_h installation ...")
-  find_package(Omega_h CONFIG
-               HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
-
-  # If we're building shared libs in Albany, we need Omega_h to be built with shared libs
-  # TODO: if CMake adds a "DYNAMYC=<value>" to find_package (to specify what variant
-  # of libs we want), then we can use it, and remove this snippet
-  if (Omega_h_FOUND)
-    get_target_property(Omega_h_LIBTYPE Omega_h::omega_h TYPE)
-    if (BUILD_SHARED_LIBS AND NOT Omega_h_LIBTYPE STREQUAL SHARED_LIBRARY)
-      set (Omega_h_FOUND FALSE)
-
-      # Need to prune the build dir, otherwise we will keep the .a lib, and may conflict
-      # at link time (cannot link static lib to a shared lib)
-      file (REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/tpls/omegah)
-      message (STATUS "Looking for Omega_h installation ... NOT Found (wrong lib variant found).")
-      message (STATUS "  A lib was found, but with wrong variant: ${Omega_h_LIBTYPE} instead of SHARED_LIBRARY.")
-    endif()
-  else ()
-    message (STATUS "Looking for Omega_h installation ... NOT Found.")
-  endif()
-
-  if (NOT Omega_h_FOUND)
-    message ("  +--------------------------------------------------------+")
-    message ("  |      Begin local installation of Omega_h dependency    |")
-    message ("  +--------------------------------------------------------+")
-    # The first external project will be built at *configure stage*
-    # Configure
-    execute_process(
-      COMMAND ${CMAKE_COMMAND}
-              -B ${Albany_BINARY_DIR}/tpls/omegah/tmp -Wno-dev
-              -S ${CMAKE_SOURCE_DIR}/cmake/omegah
-              -D Albany_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-              -D Albany_MPI_EXEC=${MPIEX}
-              -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
-              -D Kokkos_INSTALL_DIR=${ALBANY_TRILINOS_DIR}
-              -D IS_SHARED=${BUILD_SHARED_LIBS}
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      OUTPUT_VARIABLE CONFIG_OMEGAH_OUT
-      ERROR_VARIABLE CONFIG_OMEGAH_OUT
-      RESULT_VARIABLE CONFIG_OMEGAH_RES
-      ECHO_OUTPUT_VARIABLE
-    )
-    if (NOT CONFIG_OMEGAH_RES EQUAL 0)
-      message ("Could not configure omegah")
-      message (" output:")
-      message ("${CONFIG_OMEGAH_OUT}")
-      message (FATAL_ERROR "Die")
-    endif()
-    # Build/install
-    execute_process(
-      COMMAND ${CMAKE_COMMAND} --build
-              ${Albany_BINARY_DIR}/tpls/omegah/tmp
-              --parallel 8
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      OUTPUT_VARIABLE BUILD_OMEGAH_OUT
-      ERROR_VARIABLE BUILD_OMEGAH_OUT
-      RESULT_VARIABLE BUILD_OMEGAH_RES
-    )
-    if (NOT BUILD_OMEGAH_RES EQUAL 0)
-      message ("Could not build omegah")
-      message (" output:")
-      message ("${BUILD_OMEGAH_OUT}")
-      message (FATAL_ERROR "Die")
-    endif()
-    message ("  +--------------------------------------------------------+")
-    message ("  |       End local installation of Omega_h dependency     |")
-    message ("  +--------------------------------------------------------+")
-    set (Omega_h_DIR ${Albany_BINARY_DIR}/tpls/omegah/install)
-    find_package (Omega_h REQUIRED
-                  HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
-  else()
-    message (STATUS "Looking for Omega_h installation ... Found.")
-    message ("  -- Omega_h prefix: ${Omega_h_DIR}")
-    message ("  -- Omega_h version: ${Omega_h_VERSION}")
-  endif()
+  include (GetOrInstallOmegah)
 else()
   MESSAGE("-- Omega_h lib interface NOT Enabled.")
 ENDIF()
