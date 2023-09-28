@@ -172,7 +172,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    std::cout << "WARNING! This call to OmegahDiscretization::writeSolution does nothing.\n";
   } 
   void
   writeSolution(
