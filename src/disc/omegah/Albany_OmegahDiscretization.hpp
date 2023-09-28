@@ -44,7 +44,7 @@ public:
   }
   const NodeSetGIDsList&
   getNodeSetGIDs() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getNodeSetGIDs");
   }
   const NodeSetCoordList&
   getNodeSetCoords() const override {
@@ -72,25 +72,25 @@ public:
   //! Get coordinates (overlap map).
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getCoordinates");
   }
 
   //! Print the coords for mesh debugging
   void
   printCoords() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::printCoords");
   }
 
   //! Get the map side_id->side_set_elem_id
   const std::map<std::string, std::map<GO, GO>>&
   getSideToSideSetCellMap() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideToSideSetCellMap");
   }
 
   //! Get the map side_node_id->side_set_cell_node_id
   const std::map<std::string, std::map<GO, std::vector<int>>>&
   getSideNodeNumerationMap() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideNodeNumerationMap");
   }
 
   //! Get MeshStruct
@@ -108,11 +108,11 @@ public:
   //! Retrieve connectivity map from elementGID to workset
   WsLIDList&
   getElemGIDws() {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
   }
   const WsLIDList&
   getElemGIDws() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
   }
 
   //! Flag if solution has a restart values -- used in Init Cond
@@ -124,7 +124,7 @@ public:
   //! File time of restart solution
   double
   restartDataTime() const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::restartDataTime");
   }
 
   //! Get number of spatial dimensions
@@ -142,7 +142,7 @@ public:
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool overlapped = false) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionField");
   }
 
   Teuchos::RCP<Thyra_MultiVector>
@@ -150,14 +150,14 @@ public:
 
   void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getField");
   }
   void
   setField(
       const Thyra_Vector& field_vector,
       const std::string&  field_name,
       bool                overlapped) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::setField");
   }
 
   void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
@@ -182,7 +182,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
   } 
   void
   writeSolution(
@@ -193,7 +193,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
   } 
   void
   writeSolutionMV(
@@ -202,7 +202,7 @@ public:
       const double             time,
       const bool               overlapped = false,
       const bool               force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMV");
   } 
   //! Write the solution to the mesh database.
   void
@@ -211,7 +211,7 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
       const bool          overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
   }
   void
   writeSolutionToMeshDatabase(
@@ -220,7 +220,7 @@ public:
       const Thyra_Vector& solution_dot,
       const double        time,
       const bool          overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
   }
   void
   writeSolutionToMeshDatabase(
@@ -230,7 +230,7 @@ public:
       const Thyra_Vector& solution_dotdot,
       const double        time,
       const bool          overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
   }
   void
   writeSolutionMVToMeshDatabase(
@@ -238,7 +238,7 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
       const bool               overlapped = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToMeshDatabase");
   }
 
   //! Write the solution to file. Must call writeSolution first.
@@ -248,7 +248,7 @@ public:
       const double        time,
       const bool          overlapped = false,
       const bool          force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToFile");
   } 
   void
   writeSolutionMVToFile(
@@ -256,7 +256,7 @@ public:
       const double             time,
       const bool               overlapped = false,
       const bool               force_write_solution = false) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"NOT IMPLEMENTED!");
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToFile");
   } 
 
 protected:
