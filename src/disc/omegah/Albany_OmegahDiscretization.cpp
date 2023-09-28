@@ -135,6 +135,7 @@ computeNodeSets ()
 {
   const auto& nsNames = getMeshStruct()->getMeshSpecs()[0]->nsNames;
   using Omega_h::I32;
+  using Omega_h::I8;
 
   auto mesh = m_mesh_struct->getOmegahMesh();
 
@@ -146,12 +147,14 @@ computeNodeSets ()
   int nodes_per_elem = e2v.size() / mesh.nelems();
 
   auto tags_dev = mesh.get_tag<I32>(0,"node_sets")->array();
+  auto owned_dev = mesh.owned(0);
+  Omega_h::HostRead<I8>  owned_host(owned_dev);
   Omega_h::HostRead<I32> tags_host (tags_dev);
   for (const auto& nsn : nsNames) {
     std::vector<int> which;
     auto ns_tag = m_mesh_struct->get_ns_tag(nsn);
     for (int i=0; i<tags_host.size(); ++i) {
-      if (tags_host[i] & ns_tag) {
+      if (owned_host[i] and (tags_host[i] & ns_tag)) {
         which.push_back(i);
       }
     }
@@ -171,7 +174,7 @@ computeNodeSets ()
         }
       }
       TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
-          "Something went wront while locating a node in an element.\n"
+          "Something went wrong while locating a node in an element.\n"
           " - node set: " << nsn << "\n"
           " - node lid (osh): " << i << "\n"
           " - ielem: " << ielem << "\n");
