@@ -12,3 +12,4 @@ module load sems-parallel-netcdf/1.12.1
 module load sems-metis/5.1.0
 module load sems-yaml-cpp/0.6.2
 module load sems-boost/1.74.0
+module load sems-openblas
