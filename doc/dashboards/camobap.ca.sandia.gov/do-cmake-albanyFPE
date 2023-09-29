@@ -9,6 +9,8 @@ cmake \
     -GNinja \
     -D ALBANY_TRILINOS_DIR:PATH=${INSTALL_LOCATION} \
     -D CMAKE_CXX_FLAGS:STRING='-std=gnu++11 -g' \
+    -D CMAKE_C_COMPILER=/tpls/install/bin/mpicc \
+    -D CMAKE_CXX_COMPILER=/tpls/install/bin/mpicxx \
     -D CMAKE_BUILD_TYPE:STRING=DEBUG \
     -D ENABLE_LANDICE:BOOL=ON \
     -D ENABLE_DEMO_PDES:BOOL=ON \
