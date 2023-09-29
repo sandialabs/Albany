@@ -7,6 +7,8 @@ cmake \
     -D CMAKE_CXX_FLAGS:STRING="-mkl" \
     -D CMAKE_Fortran_FLAGS:STRING="-mkl" \
     -D CMAKE_EXE_LINKER_FLAGS:STRING="-mkl" \
+    -D CMAKE_CXX_COMPILER=mpicxx \
+    -D CMAKE_C_COMPILER=mpicc \
     -D CMAKE_VERBOSE_MAKEFILE=ON \
     -D ENABLE_LANDICE:BOOL=ON \
     -D ENABLE_DEMO_PDES:BOOL=ON \
