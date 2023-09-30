@@ -135,6 +135,7 @@ set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (NVCC_WRAPPER ${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_volta)
 set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
 set( CUDA_LAUNCH_BLOCKING 1)
+set( OPENMPI_DIR $ENV{OPENMPI_BIN})
 
 if (CLEAN_BUILD)
   # Initial cache info
