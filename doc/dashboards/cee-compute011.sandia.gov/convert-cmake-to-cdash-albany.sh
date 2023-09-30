@@ -23,4 +23,8 @@ sed -i 's, \",\",g' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 sed -i '$ d' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 sed -i 's/-G/\"-G/g' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 sed -i 's/-W/\"-W/g' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
+sed -i "s,{,ENV{,g" /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
+sed -i "s,ENV{TRILIN,{TRILIN,g" /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
+sed -i "s,ENV{BUILD,{BUILD,g" /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
+sed -i "s,ENV{MESH,{MESH,g" /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 cat /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
