@@ -57,7 +57,7 @@ namespace PyAlbany
     os << R"(** Trilinos git commit id - )" << ALBANY_TRILINOS_GIT_COMMIT_ID << std::endl;
     os << R"(** Albany git branch ------ )" << ALBANY_GIT_BRANCH << std::endl;
     os << R"(** Albany git commit id --- )" << ALBANY_GIT_COMMIT_ID << std::endl;
-    os << R"(** Albany cxx compiler ---- )" << ALBANY_CXX_COMPILER_ID << " " << ALBANY_CXX_COMPILER_VERSION << std::endl;
+    os << R"(** Albany cxx compiler ---- )" << CMAKE_CXX_COMPILER_ID << " " << CMAKE_CXX_COMPILER_VERSION << std::endl;
 
 #ifdef KOKKOS_COMPILER_CUDA_VERSION
     os << R"(** Albany cuda compiler --- Cuda )" << KOKKOS_COMPILER_CUDA_VERSION << std::endl;
