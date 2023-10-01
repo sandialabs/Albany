@@ -1,16 +1,6 @@
 group, site, buildname 
 Nightly, attaway.sandia.gov, Trilinos-Linux-3.10.0-1160.90.1.1chaos.ch6.x86_64-icc-19.0.5.281-Release-Serial 
 Nightly, attaway.sandia.gov, Albany-Linux-3.10.0-1160.90.1.1chaos.ch6.x86_64-icc-19.0.5.281-Release-Serial 
-Nightly, blake.sandia.gov, Trilinos-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-Serial
-Nightly, blake.sandia.gov, Trilinos-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-OpenMP
-Nightly, blake.sandia.gov, Trilinos-Linux-3.10.0-1160.25.1.el7.x86_64-gcc-11.2.0-Release-Serial-No-Warn 
-Nightly, blake.sandia.gov, Albany-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-Serial
-Nightly, blake.sandia.gov, Albany-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-OpenMP
-Nightly, blake.sandia.gov, Albany-Linux-3.10.0-1160.25.1.el7.x86_64-gcc-11.2.0-Release-Serial-No-Warn 
-Nightly, blake.sandia.gov, Albany-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-Serial-sfad6
-Nightly, blake.sandia.gov, Albany-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-Serial-sfad12
-Nightly, blake.sandia.gov, Albany-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-Serial-sfad24
-Nightly, blake.sandia.gov, AlbanyPerfTests-Linux-3.10.0-1160.25.1.el7.x86_64-icc-19.0.3.199-Release-Serial-sfad 
 Nightly, camobap.ca.sandia.gov, CismAlbany-Linux-4.18.0-425.10.1.el8_7.x86_64-gcc-11.1.0-Release-Serial
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-425.10.1.el8_7.x86_64-gcc-11.1.0-Debug-FPE-Serial
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-425.10.1.el8_7.x86_64-gcc-11.1.0-Release-Serial
