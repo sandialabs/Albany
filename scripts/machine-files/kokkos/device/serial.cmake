@@ -1,0 +1,1 @@
+set (Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
