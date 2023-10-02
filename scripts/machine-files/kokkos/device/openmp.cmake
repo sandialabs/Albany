@@ -1,0 +1,2 @@
+set (Kokkos_ENABLE_SERIAL OFF CACHE BOOL "")
+set (Kokkos_ENABLE_OPENMP ON  CACHE BOOL "")

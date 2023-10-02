@@ -1,0 +1,14 @@
+# Set compilers
+set (CMAKE_CXX_COMPILER mpicxx CACHE STRING "")
+set (CMAKE_C_COMPILER mpicc CACHE STRING "")
+set (CMAKE_FORTRAN_COMPILER mpifort CACHE STRING "")
+
+# Set Kokkos flavor
+include(../kokkos/arch/amd_zen2.cmake)
+
+# Set TPLs specs
+set (BLAS_LIBRARY_DIRS $ENV{OPENBLAS_ROOT} CACHE PATH "")
+set (LAPACK_LIBRARY_DIRS $ENV{OPENBLAS_ROOT} CACHE PATH "")
+set (BLAS_LIBRARY_NAMES openblas CACHE STRING "")
+set (LAPACK_LIBRARY_NAMES openblas CACHE STRING "")
+set (TPL_HDF5_LIBRARY_DIRS $ENV{HDF5_ROOT}/lib CACHE PATH "")
