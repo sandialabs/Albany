@@ -1,9 +1,9 @@
 BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
-SCORPIO_DIR=/pscratch/sd/m/mcarlson/builds/scorpio-gnu/install
+SCORPIO_DIR=/global/common/software/fanssie/scorpio-gnu
 
 cd ${BASE_DIR}/repos/E3SM/components/mpas-albany-landice
 
-source ${BASE_DIR}/build/AlbanySerialInstallGcc/export_albany.in
+source /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstall/export_albany.in
 echo ${ALBANY_LINK_LIBS}
 
 echo ${LD_LIBRARY_PATH}
@@ -18,3 +18,6 @@ make -j 12 gnu-cray \
   MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS}" \
   DEBUG=false \
   EXE_NAME=landice_model;
+
+mkdir /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/mali
+cp landice_model /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/mali/landice_model

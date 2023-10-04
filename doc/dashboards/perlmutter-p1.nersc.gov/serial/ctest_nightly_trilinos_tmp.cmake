@@ -39,6 +39,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set(MPICC $ENV{MPICH_DIR}/bin/mpicc)
+set(MPICXX $ENV{MPICH_DIR}/bin/mpicxx)
 message("IKT MPICC = " ${MPICC}) 
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -152,7 +153,7 @@ if (BUILD_TRILINOS)
   #
   # Configure the Trilinos build
   #
-  set(INSTALL_DIR ${CTEST_BINARY_DIRECTORY}/TrilinosSerialInstallGcc)
+  set(INSTALL_DIR /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/TrilinosInstall)
 
   set (CONFIGURE_OPTIONS
     CDASH-TRILINOS-FILE.TXT
@@ -221,7 +222,7 @@ if (BUILD_TRILINOS)
   #
   # Run Trilinos tests
   #
-  set (CTEST_TEST_TIMEOUT 600)
+  set (CTEST_TEST_TIMEOUT 500)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildSerialGcc"

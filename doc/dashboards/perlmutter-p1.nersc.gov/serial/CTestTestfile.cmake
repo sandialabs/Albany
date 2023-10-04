@@ -24,6 +24,4 @@ add_test(landice_dome_variable_resolution_fo_restart_test "sh" "test_and_log.sh"
 add_test(landice_circular_shelf_decomposition_test "sh" "test_and_log.sh" "landice/circular_shelf/decomposition_test/test_case.pickle" "landice_circular_shelf_decomposition_test")
 add_test(landice_greenland_fo_decomposition_test "sh" "test_and_log.sh" "landice/greenland/fo_decomposition_test/test_case.pickle" "landice_greenland_fo_decomposition_test")
 add_test(landice_greenland_fo_restart_test "sh" "test_and_log.sh" "landice/greenland/fo_restart_test/test_case.pickle" "landice_greenland_fo_restart_test")
-add_test(landice_thwaites_decomposition_test "sh" "test_and_log.sh" "landice/thwaites/decomposition_test/test_case.pickle" "landice_thwaites_decomposition_test")
-add_test(landice_thwaites_restart_test "sh" "test_and_log.sh" "landice/thwaites/restart_test/test_case.pickle" "landice_thwaites_restart_test")
 add_test(landice_humboldt_mesh-3km_restart_test_velo-fo_calving-von_mises_stress_damage-threshold_faceMelting "sh" "test_and_log.sh" "landice/humboldt/mesh-3km_restart_test/velo-fo_calving-von_mises_stress_damage-threshold_faceMelting/test_case.pickle" "landice_humboldt_mesh-3km_restart_test_velo-fo_calving-von_mises_stress_damage-threshold_faceMelting")

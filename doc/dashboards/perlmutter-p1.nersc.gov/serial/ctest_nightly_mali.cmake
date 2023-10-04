@@ -35,9 +35,9 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "${CTEST_BINARY_DIRECTORY}/TrilinosSerialInstallGcc")
-set (ALBANY_INSTALL "${CTEST_BINARY_DIRECTORY}/AlbanySerialInstallGcc")
-execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib/cmake/Trilinos/TrilinosConfig.cmake
+set (TRILINOS_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/TrilinosInstall")
+set (ALBANY_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstall")
+execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
 		OUTPUT_FILE "mpicc.txt")

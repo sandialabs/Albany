@@ -157,7 +157,7 @@ if (BUILD_TRILINOS)
   #
   # Configure the Trilinos build
   #
-  set(INSTALL_DIR ${CTEST_BINARY_DIRECTORY}/TrilinosCudaInstallGcc)
+  set(INSTALL_DIR /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/TrilinosInstall)
 
   set (CONFIGURE_OPTIONS
     CDASH-TRILINOS-FILE.TXT
@@ -226,7 +226,7 @@ if (BUILD_TRILINOS)
   #
   # Run Trilinos tests
   #
-  set (CTEST_TEST_TIMEOUT 600)
+  set (CTEST_TEST_TIMEOUT 500)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildCudaGcc"
