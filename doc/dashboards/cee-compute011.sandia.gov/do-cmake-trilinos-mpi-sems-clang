@@ -65,7 +65,6 @@ cmake -GNinja \
       -D Tpetra_ASSUME_CUDA_AWARE_MPI=OFF \
       -D Tpetra_INST_INT_LONG_LONG=ON \
       -D Tpetra_INST_INT_INT=OFF \
-      -D Trilinos_USE_GNUINSTALLDIRS=OFF \
       -D MueLu_ENABLE_Tutorial=OFF \
       -D MueLu_ENABLE_TESTS=OFF \
       -D Trilinos_ENABLE_Amesos2=ON \
