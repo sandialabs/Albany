@@ -156,7 +156,6 @@ cmake -G Ninja \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
       -D CMAKE_CXX_STANDARD=17 \
-      -D Trilinos_USE_GNUINSTALLDIRS=OFF \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
