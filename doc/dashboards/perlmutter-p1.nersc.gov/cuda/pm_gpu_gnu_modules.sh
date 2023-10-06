@@ -17,8 +17,8 @@ module load gcc/11.2.0
 module load cudatoolkit/11.5
 module load craype-accel-nvidia80
 module load cray-libsci/23.02.1.1
-module load craype/2.7.19
-module load cray-mpich/8.1.24
+module load craype/2.7.20
+module load cray-mpich/8.1.25
 module load cray-hdf5-parallel/1.12.2.3
 module load cray-netcdf-hdf5parallel/4.9.0.3
 module load cray-parallel-netcdf/1.12.3.3
