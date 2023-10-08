@@ -11,6 +11,7 @@ cmake \
     -D CISM_TRILINOS_DIR=${TRILINSTALLDIR} \
     -D CMAKE_C_COMPILER=/tpls/install/bin/mpicc \
     -D CMAKE_CXX_COMPILER=/tpls/install/bin/mpicxx \
+    -D CMAKE_Fortran_COMPILER=/tpls/install/bin/mpif90 \
     -D CISM_MPI_MODE:BOOL=ON \
     -D CISM_SERIAL_MODE:BOOL=OFF \
     -D CISM_BUILD_CISM_DRIVER:BOOL=ON \
