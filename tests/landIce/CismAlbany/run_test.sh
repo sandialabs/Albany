@@ -4,7 +4,7 @@
 #IKT, WARNING: the following 3 lines are specific to Irina Tezaur's machine, mockba!
 #They need to be changed for other machines! 
 export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/projects/sems/install/rhel7-x86_64/sems/v2/tpl/netcdf-fortran/4.5.3/gcc/10.1.0/openmpi/1.10.7/i7xst5r/lib:/projects/sems/install/rhel7-x86_64/sems/v2/tpl/netcdf-c/4.7.3/gcc/10.1.0/openmpi/1.10.7/oyw32kr/lib:/projects/sems/install/rhel7-x86_64/sems/v2/tpl/parallel-netcdf/1.12.1/gcc/10.1.0/openmpi/1.10.7/jlvymqv/lib:/projects/sems/install/rhel7-x86_64/sems/v2/tpl/hdf5/1.10.7/gcc/10.1.0/openmpi/1.10.7/uubef2f/lib
-export PATH=$PATH:/usr/local/usr/local/MATLAB/R2022b/bin:/home/ikalash/Trilinos_Albany/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build/install/bin
+export PATH=$PATH:/usr/local/MATLAB/R2022b/bin:/home/ikalash/Trilinos_Albany/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build/install/bin
 
 rm -rf *exo*
 rm -rf albanyMesh/*exo*
