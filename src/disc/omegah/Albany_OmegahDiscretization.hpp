@@ -11,6 +11,8 @@
 
 #include "Albany_OmegahAbstractMesh.hpp"
 #include "Albany_OmegahFieldContainer.hpp"
+
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_NullSpaceUtils.hpp"
 
 namespace Albany {
