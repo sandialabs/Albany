@@ -20,6 +20,14 @@
 
 namespace Albany {
 
+// This is mostly for Omega_h layer, but may be useful in general while doing refactorings
+class NotYetImplemented : public std::runtime_error
+{
+public:
+  NotYetImplemented (const std::string& func_name)
+    : std::runtime_error(func_name + " not yet implemented!\n") {}
+};
+
 enum class FE_Type {
   HVOL,
   HDIV,

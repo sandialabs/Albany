@@ -31,6 +31,15 @@ if (ALBANY_IFPACK2)
   add_test(${testName}_RegressFail ${SerialAlbany.exe} inputT_RegressFail.yaml)
   set_tests_properties(${testName}_RegressFail PROPERTIES WILL_FAIL TRUE)
   set_tests_properties(${testName}_RegressFail PROPERTIES LABELS "Basic;Tpetra;Forward;RegressFail")
+
+  if (ALBANY_OMEGAH)
+    # Copy Input file from source to binary dir
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_Omega_h.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputT_Omega_h.yaml COPYONLY)
+    # Create the tests with this name and standard executable
+    add_test(${testName}_Tpetra_Omega_h ${Albany.exe} inputT_Omega_h.yaml)
+    set_tests_properties(${testName}_Tpetra_Omega_h PROPERTIES LABELS "Basic;Tpetra;Forward;Omega_h")
+  endif()
 endif ()
 
 if (ALBANY_MUELU_EXAMPLES)

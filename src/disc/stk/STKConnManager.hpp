@@ -65,6 +65,8 @@ public:
     *          equal to <code>getConnectivitySize(localElmtId)</code>
     */
   const GO * getConnectivity(LO localElmtId) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_connectivity.size()==0, std::logic_error,
+        "Error! Cannot call getConnectivity before connectivity is built.\n");
     return &m_connectivity[m_elmtLidToConn[localElmtId]];
   }
   
@@ -76,6 +78,8 @@ public:
     *          equal to <code>getConnectivitySize(localElmtId)</code>
     */
   const Ownership* getOwnership(LO localElmtId) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (m_ownership.size()==0, std::logic_error,
+        "Error! Cannot call getOwnership before connectivity is built.\n");
     return &m_ownership[m_elmtLidToConn[localElmtId]];
   }
 

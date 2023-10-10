@@ -46,8 +46,7 @@ set (ALBANY_INCLUDE_DIRS
 )
 
 if (ENABLE_OMEGAH)
-  set (ALBANY_INCLUDE_DIRS
-    ${ALBANY_INCLUDE_DIRS}
+  list (APPEND ALBANY_INCLUDE_DIRS
     ${Albany_SOURCE_DIR}/src/disc/omegah
   )
 endif()
@@ -76,7 +75,6 @@ set (SOURCES
 
 if (ALBANY_EPETRA)
   list (APPEND SOURCES
-    Albany_ObserverFactory.cpp
     Petra_Converters_64.cpp
   )
 endif()
@@ -129,7 +127,6 @@ if(ALBANY_EPETRA)
   list (APPEND HEADERS
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
-    Albany_ObserverFactory.hpp
     Petra_Converters.hpp
   )
 endif()
@@ -182,10 +179,6 @@ if (ALBANY_EPETRA)
     utility/Albany_GlobalLocalIndexerEpetra.hpp
   )
 endif()
-
-message("TeuchosParameterList_LIBRARIES = '${TeuchosParameterList_LIBRARIES}'")
-message("TeuchosParameterList_INCLUDE_DIRS = '${TeuchosParameterList_INCLUDE_DIRS}'")
-message("TeuchosParameterList_TPL_INCLUDE_DIRS = '${TeuchosParameterList_TPL_INCLUDE_DIRS}'")
 
 option (ALBANY_BUILD_XML_YAML_CONVERTERS "Whether to build albany xml-yaml converter utils" OFF)
 if (ALBANY_BUILD_XML_YAML_CONVERTERS)
@@ -365,6 +358,24 @@ if (ALBANY_STK_REBALANCE)
     disc/stk/percept/stk_rebalance/ZoltanPartition.hpp
   )
 endif()
+
+if (ENABLE_OMEGAH)
+  list (APPEND SOURCES
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.cpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.cpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahDiscretization.cpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahFieldContainer.cpp
+  )
+  list (APPEND HEADERS
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahAbstractMesh.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh_Def.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahDiscretization.hpp
+    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahFieldContainer.hpp
+  )
+endif()
+
 
 #evaluators
 list (APPEND SOURCES
@@ -590,12 +601,10 @@ if (ENABLE_LANDICE)
   add_subdirectory(landIce)
 endif()
 
-message ("\n-- Albany libraries: ${ALBANY_LIBRARIES}")
-
-# Now build executables from this library, tailored main()s, and Trilinos
+message (STATUS "Albany libs to be built: ${ALBANY_LIBRARIES}")
 if (NOT ALBANY_LIBRARIES_ONLY)
 
-  message("\n-- Albany Executables: Albany; AlbanyAnalysis")
+  message(STATUS "Albany Executables to be built: Albany; AlbanyAnalysis")
 
   add_executable(Albany Main_Solve.cpp)
   set(ALBANY_EXECUTABLES Albany)

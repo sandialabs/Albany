@@ -29,9 +29,9 @@ ENDIF()
 
 #  Timeout real long running tests
 IF(ALBANY_CTEST_TIMEOUT)
-    MESSAGE("\n-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
+    MESSAGE("-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
 ELSE()
-    MESSAGE("\n-- No limits are set on maximum test run time")
+    MESSAGE("-- No limits are set on maximum test run time")
 ENDIF()
 
 OPTION(ALBANY_PARALLEL_ONLY "Only run the parallel tests" OFF)

@@ -17,6 +17,7 @@ cmake \
     -D ENABLE_CISM_INTERFACE:BOOL=OFF \
     -D ENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF \
     -D ENABLE_CISM_REDUCED_COMM:BOOL=OFF \
+    -D ENABLE_OMEGAH:BOOL=ON \
     -D SEACAS_EPU=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu \
     -D SEACAS_DECOMP=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/decomp \
     -D SEACAS_EXODIFF=/nightlyAlbanyTests/Results/Trilinos/build/install/bin/exodiff \

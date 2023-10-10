@@ -127,11 +127,12 @@ void
 STKDiscretization::printCoords() const
 {
   std::cout << "Processor " << bulkData->parallel_rank() << " has "
-            << coords.size() << " worksets.\n";
+            << m_ws_elem_coords.size() << " worksets.\n";
 
   const int numDim = stkMeshStruct->numDim;
   double xmin = std::numeric_limits<double>::max(), xmax = std::numeric_limits<double>::lowest(),
       ymin = xmin, ymax = xmax, zmin = xmin, zmax = xmax;
+  const auto& coords = m_ws_elem_coords;
   for (int ws = 0; ws < coords.size(); ws++) {
     for (int e = 0; e < coords[ws].size(); e++) {
       for (int j = 0; j < coords[ws][e].size(); j++) {
@@ -1308,7 +1309,7 @@ STKDiscretization::computeWorksetInfo()
 
   STKFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  wsEBNames.resize(numBuckets);
+  m_wsEBNames.resize(numBuckets);
   for (int i = 0; i < numBuckets; i++) {
     stk::mesh::PartVector const& bpv = buckets[i]->supersets();
 
@@ -1318,25 +1319,25 @@ STKDiscretization::computeWorksetInfo()
         // *out << "Bucket " << i << " is in Element Block:  " << bpv[j]->name()
         //      << "  and has " << buckets[i]->size() << " elements." <<
         //      std::endl;
-        wsEBNames[i] = bpv[j]->name();
+        m_wsEBNames[i] = bpv[j]->name();
       }
     }
   }
 
-  wsPhysIndex.resize(numBuckets);
+  m_wsPhysIndex.resize(numBuckets);
   if (stkMeshStruct->allElementBlocksHaveSamePhysics) {
-    for (int i = 0; i < numBuckets; ++i) { wsPhysIndex[i] = 0; }
+    for (int i = 0; i < numBuckets; ++i) { m_wsPhysIndex[i] = 0; }
   } else {
     for (int i = 0; i < numBuckets; ++i) {
-      wsPhysIndex[i] =
-          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[i]];
+      m_wsPhysIndex[i] =
+          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[m_wsEBNames[i]];
     }
   }
 
-  coords.resize(numBuckets);
+  m_ws_elem_coords.resize(numBuckets);
 
   nodesOnElemStateVec.resize(numBuckets);
-  stateArrays.elemStateArrays.resize(numBuckets);
+  m_stateArrays.elemStateArrays.resize(numBuckets);
   const StateInfoStruct& nodal_states =
       stkMeshStruct->getFieldContainer()->getNodalSIS();
 
@@ -1349,14 +1350,14 @@ STKDiscretization::computeWorksetInfo()
 
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
-    coords[b].resize(buck.size());
+    m_ws_elem_coords[b].resize(buck.size());
 
     nodesOnElemStateVec[b].resize(nodal_states.size());
 
     for (size_t is = 0; is < nodal_states.size(); ++is) {
       const std::string&            name = nodal_states[is]->name;
       const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
-      auto& state = stateArrays.elemStateArrays[b][name];
+      auto& state = m_stateArrays.elemStateArrays[b][name];
       std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
       int dim0 = buck.size();  // may be different from dim[0];
       const auto& field = *metaData->get_field<double>(NODE_RANK, name);
@@ -1438,9 +1439,9 @@ STKDiscretization::computeWorksetInfo()
       // Set coords at nodes
       const auto* nodes = bulkData->begin_nodes(element);
       const int num_nodes = bulkData->num_nodes(element);
-      coords[b][i].resize(num_nodes);
+      m_ws_elem_coords[b][i].resize(num_nodes);
       for (int j=0; j<num_nodes; ++j) {
-        coords[b][i][j] = stk::mesh::field_data(*coordinates_field, nodes[j]);
+        m_ws_elem_coords[b][i][j] = stk::mesh::field_data(*coordinates_field, nodes[j]);
       }
     }
   }
@@ -1448,30 +1449,30 @@ STKDiscretization::computeWorksetInfo()
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
       for (int b = 0; b < numBuckets; b++) {
-        auto has_sheight = stateArrays.elemStateArrays[b].count("surface_height")==1;
+        auto has_sheight = m_stateArrays.elemStateArrays[b].count("surface_height")==1;
         DualDynRankView<double> sHeight;
         if (has_sheight) {
-          sHeight = stateArrays.elemStateArrays[b]["surface_height"];
+          sHeight = m_stateArrays.elemStateArrays[b]["surface_height"];
         }
         for (std::size_t i = 0; i < buckets[b]->size(); i++) {
           int  nodes_per_element = buckets[b]->num_nodes(i);
           bool anyXeqZero        = false;
           for (int j = 0; j < nodes_per_element; j++)
-            if (coords[b][i][j][d] == 0.0) anyXeqZero = true;
+            if (m_ws_elem_coords[b][i][j][d] == 0.0) anyXeqZero = true;
           if (anyXeqZero) {
             bool flipZeroToScale = false;
             for (int j = 0; j < nodes_per_element; j++)
-              if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
+              if (m_ws_elem_coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
                 flipZeroToScale = true;
             if (flipZeroToScale) {
               for (int j = 0; j < nodes_per_element; j++) {
-                if (coords[b][i][j][d] == 0.0) {
+                if (m_ws_elem_coords[b][i][j][d] == 0.0) {
                   double* xleak = new double[stkMeshStruct->numDim];
                   for (int k = 0; k < stkMeshStruct->numDim; k++)
                     if (k == d)
                       xleak[d] = stkMeshStruct->PBCStruct.scale[d];
                     else
-                      xleak[k] = coords[b][i][j][k];
+                      xleak[k] = m_ws_elem_coords[b][i][j][k];
                   std::string transformType = stkMeshStruct->transformType;
                   double      alpha         = stkMeshStruct->felixAlpha;
                   alpha *= M_PI / 180.;  // convert alpha, read in from
@@ -1487,7 +1488,7 @@ STKDiscretization::computeWorksetInfo()
                           stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
                     }
                   }
-                  coords[b][i][j] = xleak;  // replace ptr to coords
+                  m_ws_elem_coords[b][i][j] = xleak;  // replace ptr to coords
                   toDelete.push_back(xleak);
         }}}}}
         if (has_sheight) {
@@ -1521,14 +1522,14 @@ STKDiscretization::computeWorksetInfo()
     for (auto& css : cell_scalar_states) {
       auto data = reinterpret_cast<double*>(buck.field_data_location(*css));
 
-      auto& state = stateArrays.elemStateArrays[b][css->name()];
+      auto& state = m_stateArrays.elemStateArrays[b][css->name()];
       state.reset_from_host_ptr(data,buck.size());
     }
     for (auto& cvs : cell_vector_states) {
       auto data = reinterpret_cast<double*>(buck.field_data_location(*cvs));
       auto vec_dim = stk::mesh::field_scalars_per_entity(*cvs,buck);
 
-      auto& state = stateArrays.elemStateArrays[b][cvs->name()];
+      auto& state = m_stateArrays.elemStateArrays[b][cvs->name()];
       state.reset_from_host_ptr(data,buck.size(),vec_dim);
     }
     for (auto& cts : cell_tensor_states) {
@@ -1536,14 +1537,14 @@ STKDiscretization::computeWorksetInfo()
       auto dim0 = stk::mesh::field_extent0_per_entity(*cts,buck);
       auto dim1 = stk::mesh::field_extent1_per_entity(*cts,buck);
 
-      auto& state = stateArrays.elemStateArrays[b][cts->name()];
+      auto& state = m_stateArrays.elemStateArrays[b][cts->name()];
       state.reset_from_host_ptr(data,buck.size(),dim0,dim1);
     }
     for (auto& qpss : qpscalar_states) {
       auto data = reinterpret_cast<double*>(buck.field_data_location(*qpss));
       auto num_qps = stk::mesh::field_scalars_per_entity(*qpss,buck);
 
-      auto& state = stateArrays.elemStateArrays[b][qpss->name()];
+      auto& state = m_stateArrays.elemStateArrays[b][qpss->name()];
       state.reset_from_host_ptr(data,buck.size(),num_qps);
     }
     for (auto& qpvs : qpvector_states) {
@@ -1551,7 +1552,7 @@ STKDiscretization::computeWorksetInfo()
       auto num_qps = stk::mesh::field_extent0_per_entity(*qpvs,buck);
       auto vec_dim = stk::mesh::field_extent1_per_entity(*qpvs,buck);
 
-      auto& state = stateArrays.elemStateArrays[b][qpvs->name()];
+      auto& state = m_stateArrays.elemStateArrays[b][qpvs->name()];
       state.reset_from_host_ptr(data,buck.size(),num_qps,vec_dim);
     }
     for (auto& qpts : qptensor_states) {
@@ -1565,11 +1566,11 @@ STKDiscretization::computeWorksetInfo()
           " - state name: " + qpts->name() + "\n"
           " - num scalars per qp: " + std::to_string(dimSq) + "\n");
 
-      auto& state = stateArrays.elemStateArrays[b][qpts->name()];
+      auto& state = m_stateArrays.elemStateArrays[b][qpts->name()];
       state.reset_from_host_ptr(data,buck.size(),num_qps,dim,dim);
     }
     for (auto& svs : scalarValue_states) {
-      auto& state = stateArrays.elemStateArrays[b][*svs];
+      auto& state = m_stateArrays.elemStateArrays[b][*svs];
       state.reset_from_host_ptr(&time[*svs],1);
     }
   }
@@ -1582,12 +1583,12 @@ STKDiscretization::computeWorksetInfo()
     const auto& node_buckets = bulkData->get_buckets(NODE_RANK, select_owned_in_part);
     const size_t numNodeBuckets = node_buckets.size();
 
-    stateArrays.nodeStateArrays.resize(numNodeBuckets);
+    m_stateArrays.nodeStateArrays.resize(numNodeBuckets);
     for (std::size_t b = 0; b < numNodeBuckets; b++) {
       stk::mesh::Bucket& buck = *node_buckets[b];
       for (auto it : *node_states) {
         auto stk_node_state = Teuchos::rcp_dynamic_cast<AbstractSTKNodeFieldContainer>(it.second);
-        stateArrays.nodeStateArrays[b][it.first] = stk_node_state->getMDA(buck);
+        m_stateArrays.nodeStateArrays[b][it.first] = stk_node_state->getMDA(buck);
       }
     }
   }
@@ -1602,7 +1603,7 @@ STKDiscretization::computeSideSets()
     sideSets[i].clear();  // empty the ith map
   }
 
-  int numBuckets = wsEBNames.size();
+  int numBuckets = m_wsEBNames.size();
 
   sideSets.resize(numBuckets);  // Need a sideset list per workset
 
@@ -1663,7 +1664,7 @@ STKDiscretization::computeSideSets()
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
-          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[wsEBNames[workset]];
+          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[m_wsEBNames[workset]];
 
       // Get or create the vector of side structs for this side set on this workset
       auto& ss_vec = sideSets[workset][ss.first];

@@ -1,28 +1,13 @@
-function(dump_cmake_variables)
-  set (opts)
-  set (args1v REGEX)
-  set (argsMv)
-  cmake_parse_arguments (dcv "${opts}" "${args1v}" "${argsMv}" ${ARGN})
-
-  get_cmake_property(dcv_var_names VARIABLES)
-
-  foreach (var_name IN LISTS dcv_var_names)
-    if (dcv_REGEX)
-      string(REGEX MATCH ${dcv_REGEX} MATCHES ${var_name})
-      if (MATCHES)
-        message(STATUS "${var_name}=${${var_name}}")
-      endif()
-    else ()
-      message(STATUS "${var_name}=${${var_name}}")
-    endif ()
-  endforeach()
-endfunction()
-
 ##*****************************************************************//
 ##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
+
+cmake_minimum_required(VERSION 3.17.0)
+
+# Add path where we keep some CMake utils to cmake search path
+list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Set Albany branch and commit id
 EXECUTE_PROCESS(
@@ -37,17 +22,13 @@ EXECUTE_PROCESS(
   OUTPUT_VARIABLE ALBANY_GIT_COMMIT_ID
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
 message("\n +-----------------------------------------")
 message(" |       Albany version details:")
 message(" +-----------------------------------------")
 message(" |  ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
 message(" |  ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
 message(" +-----------------------------------------\n")
-
-# CMAKE File for Albany building against an installed Trilinos
-
-cmake_minimum_required(VERSION 3.17.0)
-include(CMakeDependentOption)
 
 # If user doesn't specify a build type, we assume production (i.e., RELEASE)
 if (NOT CMAKE_BUILD_TYPE)
@@ -58,14 +39,14 @@ project(Albany CXX C)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
-MESSAGE(" +----------------------------------+")
-MESSAGE(" |       Installation details       |")
-MESSAGE(" +----------------------------------+")
-MESSAGE(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
-MESSAGE(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
-MESSAGE(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
-MESSAGE(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-MESSAGE(" +----------------------------------+")
+message("\n +----------------------------------+")
+message(" |    Albany Installation details   |")
+message(" +----------------------------------+")
+message(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
+message(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+message(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+message(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+message(" +----------------------------------+\n")
 
 
 # Kokkos recommends to set CMAKE_CXX_EXTENSIONS to OFF
@@ -131,11 +112,23 @@ OPTION (ALBANY_SUPPRESS_TRILINOS_WARNINGS "Whether or not Trilinos headers shoul
 
 # Build Albany as shared libraries if Trilinos was compiled that way
 IF(Trilinos_BUILD_SHARED_LIBS)
+  if (DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
+    message ("User requested STATIC libs, but Trilinos was built with SHARED libraries.")
+    message ("  -> Do NOT set BUILD_SHARED_LIBS in your configure script.")
+    message (FATAL_ERROR "Aborting.")
+  endif()
   SET(Albany_LIBRARY_TYPE SHARED)
   SET(BUILD_SHARED_LIBS ON)
-  MESSAGE("-- Building Albany with shared libraries")
+  MESSAGE("-- Building Albany with SHARED libraries")
 ELSE(Trilinos_BUILD_SHARED_LIBS)
+  if (DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
+    message ("User requested SHARED libs, but Trilinos was built with STATIC libraries.")
+    message ("  -> Do NOT set BUILD_SHARED_LIBS in your configure script.")
+    message (FATAL_ERROR "Aborting.")
+  endif()
   SET(Albany_LIBRARY_TYPE STATIC)
+  SET(BUILD_SHARED_LIBS OFF)
+  MESSAGE("-- Building Albany with STATIC libraries")
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
 OPTION(Albany_BUILD_STATIC_EXE "Flag to turn on building of static executables in Albany" OFF)
@@ -270,7 +263,7 @@ LIST(FIND Trilinos_PACKAGE_LIST STKExprEval STKExprEval_List_ID)
 IF (STKExprEval_List_ID GREATER -1)
   MESSAGE("-- Looking for STKExprEval ...                   Found.")
   SET(ALBANY_STK_EXPR_EVAL TRUE)
-  add_definitions(-DALBANY_STK_EXPR_EVAL) 
+  add_definitions(-DALBANY_STK_EXPR_EVAL)
 ELSE()
   MESSAGE("-- Looking for STKExprEval ...               NOT Found.")
   SET(ALBANY_STK_EXPR_EVAL FALSE)
@@ -446,7 +439,7 @@ check_c_source_compiles(
   "
   PARALLEL_EXODUS_SUPPORTED
   )
-  
+
 IF (PARALLEL_EXODUS_SUPPORTED)
   SET(ALBANY_PARALELL_EXODUS TRUE)
   MESSAGE("-- ALBANY_PARALELL_EXODUS set to True")
@@ -463,6 +456,15 @@ MESSAGE ("\n  ************************************")
 MESSAGE ("  *** Albany configuration options ***")
 MESSAGE ("  ************************************\n")
 
+IF (DEFINED CMAKE_BUILD_TYPE)
+   IF ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+      MESSAGE("-- CMAKE_BUILD_TYPE=DEBUG...  Debug build is Enabled")
+      SET(ALBANY_DEBUG_BUILD ON)
+   ELSE()
+      MESSAGE("-- CMAKE_BUILD_TYPE=RELEASE...  Debug build is NOT Enabled")
+      SET(ALBANY_DEBUG_BUILD OFF)
+   ENDIF()
+ENDIF()
 # Set optional build of code depending on Epetra.
 # Be default, it will be on, so both Tpetra and Epetra capabilities are built.
 # Ideally, one should not need Epetra though, since the Tpetra stack in
@@ -711,102 +713,7 @@ if (ENABLE_KERNELGETMEMORYSIZE)
   message("-- Memory: Kernel_GetMemorySize() Enabled.")
 endif()
 
-# Mesh database tools.
-OPTION(ENABLE_MESHDB_TOOLS "Flag to turn on mesh database tools" OFF)
-IF (ENABLE_MESHDB_TOOLS)
-  MESSAGE("-- Mesh database tools       Enabled.")
-  SET(ALBANY_MESHDB_TOOLS TRUE)
-ENDIF()
-
-# Omega_h
-OPTION(ENABLE_OMEGAH "Flag to turn on the Omega_h mesh interface" OFF)
-IF (ENABLE_OMEGAH)
-  MESSAGE("-- Omega_h mesh interface    Enabled.")
-  SET(ALBANY_OMEGAH TRUE)
-  message (STATUS "Looking for Omega_h installation ...")
-  find_package(Omega_h CONFIG
-               HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
-  if (NOT Omega_h_FOUND)
-    message (STATUS "Looking for Omega_h installation ... NOT Found.")
-    message ("  +--------------------------------------------------------+")
-    message ("  |      Begin local installation of Omega_h dependency    |")
-    message ("  +--------------------------------------------------------+")
-    # The first external project will be built at *configure stage*
-    # Configure
-    execute_process(
-      COMMAND ${CMAKE_COMMAND}
-              -B ${Albany_BINARY_DIR}/tpls/omegah/tmp -Wno-dev
-              -S ${CMAKE_SOURCE_DIR}/cmake/omegah
-              -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      OUTPUT_VARIABLE CONFIG_OMEGAH_OUT
-      ERROR_VARIABLE CONFIG_OMEGAH_OUT
-      RESULT_VARIABLE CONFIG_OMEGAH_RES
-      ECHO_OUTPUT_VARIABLE
-    )
-    if (NOT CONFIG_OMEGAH_RES EQUAL 0)
-      message ("Could not configure omegah")
-      message (" output:")
-      message ("${CONFIG_OMEGAH_OUT}")
-      message (FATAL_ERROR "Die")
-    endif()
-    # Build/install
-    execute_process(
-      COMMAND ${CMAKE_COMMAND} --build
-              ${Albany_BINARY_DIR}/tpls/omegah/tmp
-              --parallel 8
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      OUTPUT_VARIABLE BUILD_OMEGAH_OUT
-      ERROR_VARIABLE BUILD_OMEGAH_OUT
-      RESULT_VARIABLE BUILD_OMEGAH_RES
-    )
-    if (NOT BUILD_OMEGAH_RES EQUAL 0)
-      message ("Could not build omegah")
-      message (" output:")
-      message ("${BUILD_OMEGAH_OUT}")
-      message (FATAL_ERROR "Die")
-    endif()
-    message ("  +--------------------------------------------------------+")
-    message ("  |       End local installation of Omega_h dependency     |")
-    message ("  +--------------------------------------------------------+")
-    set (Omega_h_DIR ${Albany_BINARY_DIR}/tpls/omegah/install)
-    find_package (Omega_h REQUIRED)
-  else()
-    message (STATUS "Looking for Omega_h installation ... Found.")
-    message ("  -- Omega_h prefix: ${Omega_h_DIR}")
-    message ("  -- Omega_h version: ${Omega_h_VERSION}")
-  endif()
-ENDIF()
-
-# add a target to generate API documentation with Doxygen
-IF( NOT DISABLE_DOXYGEN )
-  find_package(Doxygen)
-  if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
-  add_custom_target(doc
-  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  COMMENT "Generating API documentation with Doxygen" VERBATIM
-  )
-  endif(DOXYGEN_FOUND)
-ENDIF()
-
-# Enables experimental features/tests. This may cause compilation errors and/or
-# tests failures, as it includes code that is currently developed.
-
-OPTION (ENABLE_EXPERIMENTAL "Enables experimental features/tests." OFF)
-
-# Disable ability to write to output mesh. On slow filesystems, this can give faster
-# execution time, if one is only interested in regression test against baseline
-# response/sensitivity values.
-option (ALBANY_DISABLE_OUTPUT_MESH "Disable writing of output mesh files" OFF)
-
-########################## End of CMake options to Albany #########################################
-
-# Parse source code folder
-add_subdirectory(src)
-
+# Set MPI args
 IF(ALBANY_MPI_EXEC)
   SET(MPIEX  ${ALBANY_MPI_EXEC})
 ELSE()
@@ -830,12 +737,53 @@ IF(ALBANY_MPI_EXEC_TRAILING_OPTIONS)
   SET(MPIPOST ${ALBANY_MPI_EXEC_TRAILING_OPTIONS})
   SEPARATE_ARGUMENTS(MPIPOST)
 ENDIF()
-SET(SERIAL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST})
-SET(PARALLEL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST})
-STRING(REPLACE ";" " " SERIAL_CALL_TEXT "${SERIAL_CALL}")
-STRING(REPLACE ";" " " PARALLEL_CALL_TEXT "${PARALLEL_CALL}")
-MESSAGE("-- CTest serial call: ${SERIAL_CALL_TEXT}")
-MESSAGE("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
+
+# Mesh database tools.
+OPTION(ENABLE_MESHDB_TOOLS "Flag to turn on mesh database tools" OFF)
+IF (ENABLE_MESHDB_TOOLS)
+  MESSAGE("-- Mesh database tools       Enabled.")
+  SET(ALBANY_MESHDB_TOOLS TRUE)
+ENDIF()
+
+# Omega_h
+OPTION(ENABLE_OMEGAH "Flag to turn on the Omega_h mesh interface" OFF)
+IF (ENABLE_OMEGAH)
+  MESSAGE("-- Omega_h mesh interface    Enabled.")
+  SET(ALBANY_OMEGAH TRUE)
+  include (GetOrInstallOmegah)
+else()
+  MESSAGE("-- Omega_h lib interface NOT Enabled.")
+ENDIF()
+
+# add a target to generate API documentation with Doxygen
+option (DISABLE_DOXYGEN "Whether to disable doxygen" ON)
+IF( NOT DISABLE_DOXYGEN )
+  find_package(Doxygen)
+  if(DOXYGEN_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
+    add_custom_target(doc
+      ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+  endif(DOXYGEN_FOUND)
+ENDIF()
+
+# Enables experimental features/tests. This may cause compilation errors and/or
+# tests failures, as it includes code that is currently developed.
+
+OPTION (ENABLE_EXPERIMENTAL "Enables experimental features/tests." OFF)
+
+# Disable ability to write to output mesh. On slow filesystems, this can give faster
+# execution time, if one is only interested in regression test against baseline
+# response/sensitivity values.
+option (ALBANY_DISABLE_OUTPUT_MESH "Disable writing of output mesh files" OFF)
+
+########################## End of CMake options to Albany #########################################
+
+# Parse source code folder
+add_subdirectory(src)
 
 #Add option to build libraries but not executables (for LandIce uner MPAS). Disables all tests
 option(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
@@ -846,8 +794,15 @@ if (ALBANY_LIBRARIES_ONLY)
 elseif (DISABLE_ALBANY_TESTS)
   message("\nDISABLE_ALBANY_TESTS has been set: turning off all tests.")
 else()
-  # Add Albany test -- in the "tests" directory
+  set(SERIAL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST})
+  set(PARALLEL_CALL ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST})
+  string(REPLACE ";" " " SERIAL_CALL_TEXT "${SERIAL_CALL}")
+  string(REPLACE ";" " " PARALLEL_CALL_TEXT "${PARALLEL_CALL}")
+
+  # add albany test -- in the "tests" directory
   add_subdirectory(tests)
+  message("-- CTest serial call: ${SERIAL_CALL_TEXT}")
+  message("-- CTest parallel call: ${PARALLEL_CALL_TEXT}")
 endif()
 
 IF (ALBANY_PYTHON)
