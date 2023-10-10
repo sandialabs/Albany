@@ -1574,24 +1574,6 @@ STKDiscretization::computeWorksetInfo()
       state.reset_from_host_ptr(&time[*svs],1);
     }
   }
-
-  // Process node data sets if present
-
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base) &&
-      stkMeshStruct->nodal_data_base->isNodeDataPresent()) {
-    auto node_states = stkMeshStruct->nodal_data_base->getNodeContainer();
-    const auto& node_buckets = bulkData->get_buckets(NODE_RANK, select_owned_in_part);
-    const size_t numNodeBuckets = node_buckets.size();
-
-    m_stateArrays.nodeStateArrays.resize(numNodeBuckets);
-    for (std::size_t b = 0; b < numNodeBuckets; b++) {
-      stk::mesh::Bucket& buck = *node_buckets[b];
-      for (auto it : *node_states) {
-        auto stk_node_state = Teuchos::rcp_dynamic_cast<AbstractSTKNodeFieldContainer>(it.second);
-        m_stateArrays.nodeStateArrays[b][it.first] = stk_node_state->getMDA(buck);
-      }
-    }
-  }
 }
 
 void
