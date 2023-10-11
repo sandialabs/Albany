@@ -15,5 +15,5 @@ cmake \
     -D ENABLE_CHECK_FPE:BOOL=OFF \
     -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4' \
     -D ENABLE_ALBANY_PYTHON:BOOL=ON \
-    -D PYTHON_EXECUTABLE='/home/projects/x86-64/python/3.7.3/bin/python' \
+    -D PYTHON_EXECUTABLE='/projects/x86-64-icelake-rocky8/utilities/python/3.10.10/gcc/8.5.0/base/7k3fxam/bin/python' \
 ..

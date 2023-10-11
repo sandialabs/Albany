@@ -108,6 +108,7 @@ set(AlbanyAnalysisPath                 ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
 
 set(SerialAlbany.exe                 ${SERIAL_CALL} ${AlbanyPath})
 set(SerialAlbanyAnalysis.exe         ${SERIAL_CALL} ${AlbanyAnalysisPath})
+set(SerialSeacasDecomp.exe           ${SERIAL_CALL} ${SEACAS_DECOMP})
 # Do not test on greater than Trilinos_MPI_EXEC_MAX_NUMPROCS configured in Trilinos build
 # or explicitly given at Albany configure time -D ALBANY_MPI_EXEC_MAX_NUMPROCS
 IF(DEFINED MPIMNP)

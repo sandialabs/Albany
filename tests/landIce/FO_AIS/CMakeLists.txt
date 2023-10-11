@@ -33,7 +33,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_velocity.ascii
                  
 if (NOT ALBANY_PARALELL_EXODUS)
   add_test (NAME ${testNameRoot}_decompMesh
-        COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} antarctica_2d.exo
+        COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} antarctica_2d.exo
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_tests_properties (${testNameRoot}_decompMesh PROPERTIES FIXTURES_SETUP antarcticaMeshSetup)
 endif()

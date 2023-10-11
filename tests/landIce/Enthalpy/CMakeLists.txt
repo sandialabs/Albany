@@ -23,7 +23,7 @@ add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
 # If Iopx is not present, we must decompose the input mesh first
 if (NOT ALBANY_PARALELL_EXODUS)
 	add_test (NAME ${testName}_Humboldt_decompMesh
-            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
+            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
     set_tests_properties (${testName}_Humboldt_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
 

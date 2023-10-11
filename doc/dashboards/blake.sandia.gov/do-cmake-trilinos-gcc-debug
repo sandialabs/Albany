@@ -10,7 +10,7 @@ BOOST_PATH=${BOOST_ROOT}
 NETCDF_PATH=${NETCDF_C_ROOT}
 HDF5_PATH=${HDF5_ROOT}
 SUPERLU_PATH=${SUPERLU_ROOT}
-BLAS_PATH=${BLAS_ROOT} 
+BLAS_PATH=${NETLIB_LAPACK_ROOT}
 
 cmake \
       -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
@@ -70,7 +70,6 @@ cmake \
       -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
       -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
-      -D Trilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF \
       -D Trilinos_ASSERT_DEFINED_DEPENDENCIES:BOOL=OFF \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING='' \
@@ -84,13 +83,11 @@ cmake \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
-      -D Trilinos_ENABLE_FEI:BOOL=OFF \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON \
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
-      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \

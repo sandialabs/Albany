@@ -65,7 +65,7 @@ add_test(${testName} ${Albany.exe} input_fo_gis_populate_meshes.yaml)
 IF (NOT ALBANY_PARALELL_EXODUS)
   set (testNameDecompMesh ${testNameRoot}_decompMesh)
   add_test (NAME ${testNameDecompMesh}
-            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} gis_unstruct_2d.exo
+            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} gis_unstruct_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
   set_tests_properties (${testNameDecompMesh} PROPERTIES FIXTURES_SETUP meshSetup RUN_SERIAL TRUE)
 
@@ -135,7 +135,7 @@ endif()
 if (NOT ALBANY_PARALELL_EXODUS)
 	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_decompMesh)
   add_test (NAME ${testNameHumboldtDecompMesh}
-        COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
+        COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
   set_tests_properties (${testNameHumboldtDecompMesh} PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
 endif()
