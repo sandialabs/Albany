@@ -52,7 +52,7 @@ macro (create_unit_test)
       PROPERTIES LABELS "unit")
   else()
     add_test (NAME ${TEST_PREFIX}_UnitTest
-              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${EXEC_NAME})
+              COMMAND ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/${EXEC_NAME})
     set_tests_properties (
       ${TEST_PREFIX}_UnitTest
       PROPERTIES LABELS "unit")

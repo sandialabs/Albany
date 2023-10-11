@@ -46,7 +46,7 @@ if (ALBANY_EPETRA)
   # If Iopx is not present, we must decompose the input mesh first
   if (NOT ALBANY_PARALELL_EXODUS)
     add_test (NAME ${testNameRoot}_Humboldt_decompMesh
-            COMMAND ${SEACAS_DECOMP} -processors ${MPIMNP} humboldt_2d.exo
+            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
     set_tests_properties (${testNameRoot}_Humboldt_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
 
