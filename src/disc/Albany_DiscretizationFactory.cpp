@@ -257,9 +257,11 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
   if (meshStruct->meshType()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
+#ifdef ALBANY_OMEGAH
   } else if (meshStruct->meshType()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahAbstractMesh>(meshStruct);
     disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
+#endif
   }
   return disc;
 }
@@ -271,9 +273,11 @@ DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
   if (meshStruct->meshType()=="STK") {
     auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
     stk_disc->setFieldData(sis);
+#ifdef ALBANY_OMEGAH
   } else if (meshStruct->meshType()=="Omega_h") {
     auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
     omh_disc->setFieldData(sis);
+#endif
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
   }
@@ -286,9 +290,11 @@ DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> di
   if (meshStruct->meshType()=="STK") {
     auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
     stk_disc->updateMesh();
+#ifdef ALBANY_OMEGAH
   } else if (meshStruct->meshType()=="Omega_h") {
     auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
     omh_disc->updateMesh();
+#endif
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
   }
