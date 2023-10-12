@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1
 ##SBATCH -p c60-m0 
-#SBATCH --time=15:00:00
+#SBATCH --time=12:00:00
 #Note: This script assumes you have pre-loaded the required modules
 #prior to entering the sbatch command. The env will propagate to the
 #batch job.
@@ -12,6 +12,7 @@ then
 fi 
 
 cd /home/projects/albany/nightlyCDashTrilinosBlake
+source blake_gcc_modules.sh >& gcc_modules.out
 bash nightly_cron_script_trilinos_blake_gcc_release.sh
 bash nightly_cron_script_trilinos_blake_gcc_debug.sh
 cd /home/projects/albany/nightlyCDashAlbanyBlake

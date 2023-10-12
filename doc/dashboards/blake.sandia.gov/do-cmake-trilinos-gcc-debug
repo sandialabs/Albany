@@ -18,7 +18,7 @@ cmake \
       -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
       -D CMAKE_C_COMPILER:FILEPATH=mpicc \
       -D CMAKE_Fortran_COMPILER:FILEPATH=mpif77 \
-      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Wno-mismatched-new-delete -Wno-catch-value -Werror' \
+      -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Wno-mismatched-new-delete -Wno-catch-value -Wno-use-after-free -Werror' \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D BLAS_LIBRARY_DIRS=${BLAS_PATH}/lib \
