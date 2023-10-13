@@ -38,7 +38,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set(MPICC $ENV{OPENMPI_ROOT}/bin/mpicc)
+set(MPICC mpicc)
 message("IKT MPICC = " ${MPICC}) 
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
