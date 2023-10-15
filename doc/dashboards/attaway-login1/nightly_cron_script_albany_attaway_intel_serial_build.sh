@@ -6,6 +6,9 @@ cd $BASE_DIR
 unset http_proxy
 unset https_proxy
 
+export http_proxy="http://proxy.sandia.gov:80"
+export https_proxy="https://proxy.sandia.gov:80"
+
 source attaway_modules_intel.sh >& intel_modules.out  
 #cat build_albany.cmake ctest_nightly_albany_intel_serial_tmp.cmake >& ctest_nightly_albany_intel_serial_build.cmake
 
