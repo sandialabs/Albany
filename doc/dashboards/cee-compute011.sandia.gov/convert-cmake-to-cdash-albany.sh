@@ -20,7 +20,7 @@ sed -i 's/-D /"-D/g' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 awk '{print $0 "\""}' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt >& tmp.txt
 mv tmp.txt /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 sed -i 's, \",\",g' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
-sed -i '$ d' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
+#sed -i '$ d' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 sed -i 's/-G/\"-G/g' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 sed -i 's/-W/\"-W/g' /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
 sed -i "s,{,ENV{,g" /projects/albany/nightlyAlbanyCDash/cdash-$name-frag.txt
