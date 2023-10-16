@@ -29,20 +29,52 @@ else ()
 endif()
 
 if (NOT Omega_h_FOUND)
+  # Check if the install prefix is writable. If not, it may be the user is
+  # not interested in installing albany, so they didn't expliclty set
+  # CMAKE_INSTALL_PREFIX, which then defaulted to system folders. If so,
+  # we simply install inside the build tree, to avoid installation errors
+  if (EXISTS ${CMAKE_INSTALL_PREFIX})
+    execute_process (COMMAND test -w ${CMAKE_INSTALL_PREFIX}
+                     RESULT_VARIABLE denied)
+    if (denied)
+      set (LOCAL_INSTALL TRUE)
+      set (Omega_h_DIR ${Albany_BINARY_DIR}/tpls/omegah/install)
+    else()
+      set (Omega_h_DIR ${CMAKE_INSTALL_PREFIX})
+    endif()
+  else ()
+    # Folder does not exists. We can try to create it. If we succeed, we can use it,
+    # otherwise it is probably the default system installation, so we install
+    # omegah locally, just like the 'denied' branch above.
+    execute_process (COMMAND mkdir -p ${CMAKE_INSTALL_PREFIX}
+                     OUTPUT_QUIET ERROR_QUIET
+                     RESULT_VARIABLE denied)
+    if (denied)
+      set (LOCAL_INSTALL TRUE)
+      set (Omega_h_DIR ${Albany_BINARY_DIR}/tpls/omegah/install)
+    else()
+      set (Omega_h_DIR ${CMAKE_INSTALL_PREFIX})
+    endif()
+  endif()
+
   # We may have found the wrong config (e.g., static libs instead of shared).
   # To avoid keeping the wrong lib around (which may get linked), we remove
   # any lib found, as well as all the CMake config files.
-  file (GLOB OMEGAH_LIBS ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libomega_h.*)
+  file (GLOB OMEGAH_LIBS ${Omega_h_DIR}/${CMAKE_INSTALL_LIBDIR}/libomega_h.*)
   if (OMEGAH_LIBS)
     file (REMOVE ${OMEGAH_LIBS})
   endif()
-  file (GLOB OMEGAH_CMAKE_DIR RELATIVE ${CMAKE_INSTALL_PREFIX} LIST_DIRECTORIES TRUE Omega_h)
+  file (GLOB OMEGAH_CMAKE_DIR RELATIVE ${Omega_h_DIR} LIST_DIRECTORIES TRUE Omega_h)
   if (OMEGAH_CMAKE_DIR)
     file (REMOVE_RECURSE ${OMEGAH_CMAKE_DIR})
   endif()
 
-  message (STATUS "Installing Omega_h along side Albany ...")
-  message (STATUS "  prefix: ${CMAKE_INSTALL_PREFIX}")
+  message (STATUS "Installing Omega_h ...")
+  message (STATUS "  prefix: ${Omega_h_DIR}")
+  if (LOCAL_INSTALL)
+    message (STATUS "  Installing locally in build tree since CMAKE_INSTALL_PREFIX is not writable")
+    message (STATUS "     CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
+  endif ()
   # The first external project will be built at *configure stage*
   # Configure
   execute_process(
@@ -54,7 +86,7 @@ if (NOT Omega_h_FOUND)
             -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
             -D Kokkos_INSTALL_DIR=${ALBANY_TRILINOS_DIR}
             -D IS_SHARED=${BUILD_SHARED_LIBS}
-            -D CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+            -D Omega_h_INSTALL_DIR=${Omega_h_DIR}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     OUTPUT_VARIABLE CONFIG_OMEGAH_OUT
     ERROR_VARIABLE CONFIG_OMEGAH_OUT
@@ -82,10 +114,9 @@ if (NOT Omega_h_FOUND)
     message ("${BUILD_OMEGAH_OUT}")
     message (FATAL_ERROR "Die")
   endif()
-  message (STATUS "Installing Omega_h locally ... DONE!")
-  set (Omega_h_DIR ${CMAKE_INSTALL_PREFIX})
-  find_package (Omega_h REQUIRED
-                HINTS ${DCMAKE_INSTALL_PREFIX})
+  message (STATUS "Installing Omega_h ... DONE!")
+  find_package (Omega_h REQUIRED QUIET
+                HINTS ${Omega_h_DIR})
 else()
   message (STATUS "${tmpStr} Found.")
   message ("  -- Omega_h_DIR: ${Omega_h_DIR}")
