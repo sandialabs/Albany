@@ -1,7 +1,8 @@
 set (tmpStr "Looking for valid Omega_h installation ...")
 message (STATUS ${tmpStr})
-find_package(Omega_h 10.8 CONFIG
-             HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
+# NOTE: if Omega_h_ROOT is declared as env/cmake var, it will take precedence
+find_package(Omega_h 10.8 CONFIG QUIET
+             HINTS ${CMAKE_INSTALL_PREFIX})
 
 # If we're building shared libs in Albany, we need Omega_h to be built with shared libs
 # TODO: if CMake adds a "DYNAMYC=<value>" to find_package (to specify what variant
@@ -28,24 +29,32 @@ else ()
 endif()
 
 if (NOT Omega_h_FOUND)
-  # Need to prune the build dir, otherwise we may be keeping an existing
-  # installation which had the wrong configuration (e.g., keep a static
-  # installation when a shared one is needed)
-  file (REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/tpls/omegah)
+  # We may have found the wrong config (e.g., static libs instead of shared).
+  # To avoid keeping the wrong lib around (which may get linked), we remove
+  # any lib found, as well as all the CMake config files.
+  file (GLOB OMEGAH_LIBS ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libomega_h.*)
+  if (OMEGAH_LIBS)
+    file (REMOVE ${OMEGAH_LIBS})
+  endif()
+  file (GLOB OMEGAH_CMAKE_DIR RELATIVE ${CMAKE_INSTALL_PREFIX} LIST_DIRECTORIES TRUE Omega_h)
+  if (OMEGAH_CMAKE_DIR)
+    file (REMOVE_RECURSE ${OMEGAH_CMAKE_DIR})
+  endif()
 
-  message (STATUS "Installing Omega_h locally ...")
-  message (STATUS "  prefix: ${CMAKE_CURRENT_BINARY_DIR}/tpls/omegah/install")
+  message (STATUS "Installing Omega_h along side Albany ...")
+  message (STATUS "  prefix: ${CMAKE_INSTALL_PREFIX}")
   # The first external project will be built at *configure stage*
   # Configure
   execute_process(
     COMMAND ${CMAKE_COMMAND}
-            -B ${Albany_BINARY_DIR}/tpls/omegah/tmp -Wno-dev
+            -B ${Albany_BINARY_DIR}/tpls/omegah -Wno-dev
             -S ${CMAKE_SOURCE_DIR}/cmake/omegah
             -D Albany_CXX_COMPILER=${CMAKE_CXX_COMPILER}
             -D Albany_MPI_EXEC=${MPIEX}
             -D Albany_BINARY_DIR=${Albany_BINARY_DIR}
             -D Kokkos_INSTALL_DIR=${ALBANY_TRILINOS_DIR}
             -D IS_SHARED=${BUILD_SHARED_LIBS}
+            -D CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     OUTPUT_VARIABLE CONFIG_OMEGAH_OUT
     ERROR_VARIABLE CONFIG_OMEGAH_OUT
@@ -60,7 +69,7 @@ if (NOT Omega_h_FOUND)
   # Build/install
   execute_process(
     COMMAND ${CMAKE_COMMAND} --build
-            ${Albany_BINARY_DIR}/tpls/omegah/tmp
+            ${Albany_BINARY_DIR}/tpls/omegah
             --parallel 8
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     OUTPUT_VARIABLE BUILD_OMEGAH_OUT
@@ -74,9 +83,9 @@ if (NOT Omega_h_FOUND)
     message (FATAL_ERROR "Die")
   endif()
   message (STATUS "Installing Omega_h locally ... DONE!")
-  set (Omega_h_DIR ${Albany_BINARY_DIR}/tpls/omegah/install)
+  set (Omega_h_DIR ${CMAKE_INSTALL_PREFIX})
   find_package (Omega_h REQUIRED
-                HINTS ${Albany_BINARY_DIR}/tpls/omegah/install)
+                HINTS ${DCMAKE_INSTALL_PREFIX})
 else()
   message (STATUS "${tmpStr} Found.")
   message ("  -- Omega_h_DIR: ${Omega_h_DIR}")
