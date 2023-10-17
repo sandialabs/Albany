@@ -44,8 +44,18 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 2D)
   //        Test normal oprations       //
   // ---------------------------------- //
 
+  params->remove("Box Scaling");
   auto mesh = Teuchos::rcp(new OmegahBoxMesh<2>(params,comm,num_params));
 
   auto coords = mesh->coords_host();
-  TEST_EQUALITY_CONST(coords.size(),2*(nelems[0]+1)*(nelems[1]+1));
+  auto omegah_mesh = mesh->getOmegahMesh();
+  auto owned = Omega_h::HostRead(omegah_mesh.owned(0));
+  int my_count = 0;
+  int count;
+  for (int i=0; i<owned.size(); ++i) {
+    if (owned[i]) { ++my_count; }
+  }
+  Teuchos::reduceAll<int, int>(*comm, Teuchos::REDUCE_SUM, 1, &my_count, &count);
+
+  TEST_EQUALITY_CONST(count,(nelems[0]+1)*(nelems[1]+1));
 }
