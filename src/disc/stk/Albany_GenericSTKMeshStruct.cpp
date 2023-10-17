@@ -86,7 +86,6 @@ void GenericSTKMeshStruct::SetupFieldData(
        std::logic_error,
        "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
 
-  this->nodal_data_base = sis->getNodalDataBase();
 
   if (bulkData.is_null()) {
      const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get());
@@ -568,7 +567,6 @@ void GenericSTKMeshStruct::setSideSetFieldData (
     // Dummy sis if not present in the maps for a given side set.
     // This could happen if the side discretization has no states
     Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
-    dummy_sis->createNodalDataBase();
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
@@ -602,7 +600,6 @@ void GenericSTKMeshStruct::setSideSetBulkData (
     // Dummy sis if not present in the maps for a given side set.
     // This could happen if the side discretization has no states
     Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
-    dummy_sis->createNodalDataBase();
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");

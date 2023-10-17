@@ -113,33 +113,6 @@ StateManager::registerStateVariable(
 
   dl->dimensions(stateRef.dim);
 
-  if (stateRef.entity == StateStruct::NodalData) {
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
-    if (dl->rank() == 1)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 2)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
-    else if (dl->rank() == 3)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[1] * stateRef.dim[2]);
-  } else if (
-      stateRef.entity == StateStruct::NodalDataToElemNode ||
-      stateRef.entity == StateStruct::NodalDistParameter) {
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
-    // These entities store data as <Cell,Node,...>, so the dl has one more rank
-    if (dl->rank() == 2)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 3)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
-    else if (dl->rank() == 4)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[1] * stateRef.dim[2]);
-  }
-
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
 
@@ -260,44 +233,11 @@ StateManager::registerSideSetStateVariable(
   stateRef.setInitValue(init_val);
   stateRef.setMeshPart(meshPartName);
 
+  dl->dimensions(stateRef.dim);
   if (stateRef.entity == StateStruct::NodalData) {
     TEUCHOS_TEST_FOR_EXCEPTION(
-        dl->name(0) == PHX::print<Node>(),
-        std::logic_error,
+        dl->name(0) == PHX::print<Node>(),std::logic_error,
         "Error! NodalData states should have dl <Node,...>.\n");
-
-    dl->dimensions(stateRef.dim);
-
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
-        getSideSetNodalDataBase(sideSetName);
-
-    if (dl->rank() == 1)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 2)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
-    else if (dl->rank() == 3)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[1] * stateRef.dim[2]);
-  } else if (
-      stateRef.entity == StateStruct::NodalDataToElemNode ||
-      stateRef.entity == StateStruct::NodalDistParameter) {
-
-    dl->dimensions(stateRef.dim);
-
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase =
-        getSideSetNodalDataBase(sideSetName);
-
-    if (dl->rank() == 2)  // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
-    else if (dl->rank() == 3)  // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
-    else if (dl->rank() == 4)  // node tensor
-      nodalDataBase->registerVectorState(
-          stateName, stateRef.dim[1] * stateRef.dim[2]);
-  } else {
-    dl->dimensions(stateRef.dim);
   }
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
@@ -349,9 +289,9 @@ StateManager::initStateArrays(
     if (sis == Teuchos::null) {
       // Initialize to an empty StateInfoStruct
       sis = Teuchos::rcp(new StateInfoStruct());
-      sis->createNodalDataBase();
+      // sis->createNodalFieldContainer();
     }
-    doSetStateArrays(it.second, sis);  // If sis was null, this should basically do nothing
+    doSetStateArrays(it.second, sis);
   }
 }
 
