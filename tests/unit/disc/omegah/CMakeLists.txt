@@ -20,8 +20,10 @@ file(COPY        ${CMAKE_CURRENT_SOURCE_DIR}/OmegahMeshes/${meshName}
 
 create_unit_test (NAME    OmegahConMgr
                   PREFIX  ${testNameRoot}
-                  SOURCES OmegahConMgr.cpp)
+                  SOURCES OmegahConMgr.cpp
+                  LABELS  Omega_h)
 
 create_unit_test (NAME    box_mesh
                   PREFIX  ${testNameRoot}
-                  SOURCES box_mesh.cpp)
+                  SOURCES box_mesh.cpp
+                  LABELS  Omega_h)
