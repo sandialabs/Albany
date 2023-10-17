@@ -44,11 +44,8 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 2D)
   //        Test normal oprations       //
   // ---------------------------------- //
 
-
-
-
   auto mesh = Teuchos::rcp(new OmegahBoxMesh<2>(params,comm,num_params));
 
   auto coords = mesh->coords_host();
-  TEST_EQUALITY_CONST(coords.size(),(nelems[0]+1)*(nelems[1]+1));
+  TEST_EQUALITY_CONST(coords.size(),2*(nelems[0]+1)*(nelems[1]+1));
 }
