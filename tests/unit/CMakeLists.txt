@@ -20,7 +20,7 @@ macro (create_unit_test)
   # Parse args
   set (options SERIAL_ONLY)
   set (oneValueArgs NAME PREFIX)
-  set (multiValueArgs SOURCES LIBS)
+  set (multiValueArgs SOURCES LABELS LIBS)
   cmake_parse_arguments (PARSE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if (PARSE_SERIAL_ONLY)
     set (PARALLEL OFF)
@@ -42,6 +42,7 @@ macro (create_unit_test)
   target_link_libraries (${EXEC_NAME} PUBLIC ${PARSE_LIBS})
 
   # Add tests
+  list (APPEND PARSE_LABELS "unit")
   if (PARALLEL)
     add_test (NAME ${TEST_PREFIX}_UnitTest_Serial
               COMMAND ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/${EXEC_NAME})
@@ -49,13 +50,13 @@ macro (create_unit_test)
               COMMAND ${PARALLEL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/${EXEC_NAME})
     set_tests_properties (
       ${TEST_PREFIX}_UnitTest_Serial ${TEST_PREFIX}_UnitTest_Parallel
-      PROPERTIES LABELS "unit")
+      PROPERTIES LABELS "${PARSE_LABELS}")
   else()
     add_test (NAME ${TEST_PREFIX}_UnitTest
               COMMAND ${SERIAL_CALL} ${CMAKE_CURRENT_BINARY_DIR}/${EXEC_NAME})
     set_tests_properties (
       ${TEST_PREFIX}_UnitTest
-      PROPERTIES LABELS "unit")
+      PROPERTIES LABELS "${PARSE_LABELS}")
   endif()
 endmacro()
 

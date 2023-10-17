@@ -18,7 +18,6 @@
 #include "Albany_Layouts.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
-#include "Adapt_NodalDataBase.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_ArrayRCP.hpp"
@@ -65,8 +64,6 @@ struct AbstractMeshStruct {
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
     Teuchos::ArrayRCP<double> mesh_layers_ratio;
-
-    Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 };
 
 } // Namespace Albany

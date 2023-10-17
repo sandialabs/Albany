@@ -7,22 +7,19 @@
 #ifndef ALBANY_ABSTRACT_NODE_FIELD_CONTAINER_HPP
 #define ALBANY_ABSTRACT_NODE_FIELD_CONTAINER_HPP
 
-#include "Albany_ThyraTypes.hpp"
-
 #include "Teuchos_RCP.hpp"
 #include <map>
 
 namespace Albany {
 
 /*!
- * \brief Abstract interface for an STK NodeField container
+ * \brief Abstract interface for an struct wrapping a field
  *
  */
 
 class AbstractNodeFieldContainer
 {
 public:
-
   AbstractNodeFieldContainer () = default;
   virtual ~AbstractNodeFieldContainer () = default;
 };

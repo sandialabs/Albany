@@ -203,7 +203,6 @@ void ExtrudedSTKMeshStruct::setFieldData(
 
   // Finish to set up the basal mesh
   Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
-  dummy_sis->createNodalDataBase();
   auto it_sis = side_set_sis.find("basalside");
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
@@ -227,7 +226,6 @@ void ExtrudedSTKMeshStruct::setBulkData(
 
   // Finish to set up the basal mesh
   Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
-  dummy_sis->createNodalDataBase();
   auto it_sis = side_set_sis.find("basalside");
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 

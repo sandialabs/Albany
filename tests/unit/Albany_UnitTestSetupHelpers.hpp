@@ -53,7 +53,6 @@ createTestDisc (const Teuchos::RCP<const Teuchos_Comm>& comm,
   auto layout = Teuchos::rcp(new PHX::MDALayout<Cell,Node>(ms->worksetSize,num_nodes));
 
   auto sis = Teuchos::rcp(new Albany::StateInfoStruct());
-  sis->createNodalDataBase();
   for (const auto& param_name : param_names) {
     auto info = Teuchos::rcp(new Albany::StateStruct(param_name,Albany::StateStruct::NodalDistParameter));
     info->setEBName(ms->ebName);

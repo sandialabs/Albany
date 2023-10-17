@@ -82,10 +82,12 @@ getMDA(const stk::mesh::Bucket& buck){
     case 2:
       dim0 = stk::mesh::field_scalars_per_entity(*node_field,buck);
       dv.reset_from_host_ptr(data,buck.size(),dim0);
+      break;
     case 3:
       dim0 = stk::mesh::field_extent0_per_entity(*node_field,buck);
       dim1 = stk::mesh::field_extent1_per_entity(*node_field,buck);
       dv.reset_from_host_ptr(data,buck.size(),dim0,dim1);
+      break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
           "Invalid/unsupported array dimension (" << ArrayDim << ")\n");

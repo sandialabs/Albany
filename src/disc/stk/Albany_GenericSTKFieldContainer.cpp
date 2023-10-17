@@ -171,27 +171,24 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
     } // End scalar at center of element
     else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter))
     { // Data at the node points
-        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
-               = sis->getNodalDataBase()->getNodeContainer();
-      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer
-      //         = sis->getNodalDataBlock()->getNodeContainer();
+        auto& nodeContainer = sis->nodal_field_container;
 
         if(st.entity == StateStruct::NodalDataToElemNode) {
           nodal_sis.push_back((*sis)[i]);
           StateStruct::FieldDims nodalFieldDim;
           //convert ElemNode dims to NodalData dims.
           nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
-          (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, nodalFieldDim, metaData, st.output);
-        }
-        else if(st.entity == StateStruct::NodalDistParameter) {
+          nodeContainer[st.name] = Albany::buildSTKNodeField(st.name, nodalFieldDim, metaData, st.output);
+        } else if(st.entity == StateStruct::NodalDistParameter) {
           nodal_parameter_sis.push_back((*sis)[i]);
           StateStruct::FieldDims nodalFieldDim;
           //convert ElemNode dims to NodalData dims.
           nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
-          (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, nodalFieldDim, metaData, st.output);
+          nodeContainer[st.name] = Albany::buildSTKNodeField(st.name, nodalFieldDim, metaData, st.output);
+        } else {
+          nodal_sis.push_back((*sis)[i]);
+          nodeContainer[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, st.output);
         }
-        else
-          (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, st.output);
 
     } // end Node class - anything else is an error
     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
