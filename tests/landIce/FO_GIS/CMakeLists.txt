@@ -343,6 +343,11 @@ if (ALBANY_IFPACK2)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis.yaml
                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis.yaml)
       add_test(${testNameRoot}_Humboldt_Analysis ${AlbanyAnalysis.exe} input_fo_humboldt_analysis.yaml)
+
+      set (testName ${testNameRoot}_Humboldt_Analysis_Mat_Free_Reg)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis_mat_free_reg.yaml
+                     ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_mat_free_reg.yaml)
+      add_test(${testNameRoot}_Humboldt_Analysis_Analysis_Mat_Free_Reg ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_mat_free_reg.yaml)
     endif()
 
   endif()

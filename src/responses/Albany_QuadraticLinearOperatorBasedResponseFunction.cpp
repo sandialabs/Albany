@@ -452,6 +452,7 @@ solveImpl(
   TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(A_solver_) || Teuchos::is_null(A_transSolver_), std::runtime_error, "Error! AtDinvA_LOWS::solveImpl, Solvers not initialized, call initializeSolver first.\n");
 
   Thyra::SolveStatus<double> solveStatus1, solveStatus2;
+  vec1_->assign(0.0);
   solveStatus1 = A_transSolver_->solve(Thyra::EOpTransp::NOTRANS, B, vec1_.ptr(), solveCriteria);
   vec2_->assign(0.0);
   Thyra::ele_wise_prod( 1.0/coeff_, *vec1_, *D_, vec2_.ptr() );
