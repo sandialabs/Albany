@@ -69,7 +69,7 @@ TetTriVtx getPerm_tet(Source& source, Dest& dest, const int src2destTetFace[4]) 
   auto topoData = triTopo.getCellTopologyData();
   for(int bdry=0; bdry<Omega_h::simplex_degree(elem_dim,bdry_dim); bdry++) {
     auto src2destBdry = src2destTetFace[bdry];
-    auto perm = shards::findPermutation(topoData, dest.idx[src2destBdry],source.idx[bdry]);
+    const unsigned perm = shards::findPermutation(topoData, dest.idx[src2destBdry],source.idx[bdry]);
     if(!(perm>=0 && perm<topoData->permutation_count)) {
       fprintf(stderr, "perm %d\n", perm);
     }
@@ -100,7 +100,7 @@ struct ShardsTriVtx {
     const int elem_dim = 2;
     const int bdry_dim = 0;
     const int vtx_dim = 0;
-    for(int vert=0; vert<triTopo.getSubcellCount(vtx_dim); vert++) {
+    for(size_t vert=0; vert<triTopo.getSubcellCount(vtx_dim); vert++) {
       idx[vert] = triTopo.getNodeMap(elem_dim, bdry_dim, vert);
     }
   }
@@ -172,8 +172,8 @@ struct Omegah2ShardsPerm {
   ///// END Tetrahedrons }
 
   Omegah2ShardsPerm() :
-    tetTriVtx(getOmegah2ShardsPerm_tet()),
-    triVtx(getOmegah2ShardsPerm_tri())
+    triVtx(getOmegah2ShardsPerm_tri()),
+    tetTriVtx(getOmegah2ShardsPerm_tet())
   {}
 };
 
@@ -203,8 +203,8 @@ struct Shards2OmegahPerm {
   ///// END Tetrahedrons }
 
   Shards2OmegahPerm() :
-    tetTriVtx(getShards2OmegahPerm_tet()),
-    triVtx(getShards2OmegahPerm_tri())
+    triVtx(getShards2OmegahPerm_tri()),
+    tetTriVtx(getShards2OmegahPerm_tet())
   {}
 };
 
