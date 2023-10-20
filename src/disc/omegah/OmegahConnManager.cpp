@@ -185,10 +185,11 @@ GO getMaxGlobalEntDofId(Omega_h::Mesh& mesh, Omega_h::GOs& dofGlobalIds) {
 
 std::array<Omega_h::GOs,4> OmegahConnManager::createGlobalDofNumbering() const {
   std::array<Omega_h::GOs,4> gdn;
-  long unsigned int offset = 0;
-  for(long unsigned int i=0; i<gdn.size(); i++) {
-    gdn[i] = createGlobalEntDofNumbering(mesh, i, m_dofsPerEnt[i], offset);
-    offset += getMaxGlobalEntDofId(mesh, gdn[i])*m_dofsPerEnt[i];
+  GO startingOffset = 0;
+  for(int i=0; i<gdn.size(); i++) {
+    gdn[i] = createGlobalEntDofNumbering(mesh, i, m_dofsPerEnt[i], startingOffset);
+    const auto offset = getMaxGlobalEntDofId(mesh, gdn[i]);
+    startingOffset = offset == 0 ? startingOffset : offset;
   }
   return gdn;
 }
@@ -239,8 +240,7 @@ void setElementToEntDofConnectivityMask(Omega_h::Mesh& mesh, const OmegahPartFil
  * Note, the writes into elm2dof have a non-unit stride and performance will suffer.
  */
 void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const OmegahPartFilter filt, const LO dofsPerElm, const LO adjDim, const LO dofOffset,
-    const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering,
-    Omega_h::Write<Omega_h::GO> elm2dof, Omega_h::Write<Omega_h::I8> dof_owned) {
+    const Omega_h::Adj elmToDim, const LO dofsPerEnt, Omega_h::GOs globalDofNumbering, Omega_h::Write<Omega_h::GO> elm2dof) {
   const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), filt.dim, adjDim);
   const auto adjEnts = elmToDim.ab2b;
   TEUCHOS_TEST_FOR_EXCEPTION(filt.dim != 2 && adjDim != 0, std::logic_error,
@@ -250,7 +250,6 @@ void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const OmegahPartFilter 
   OmegahPermutation::Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
   const auto totNumDofs = elm2dof.size();
-  auto owned = mesh.owned(adjDim);
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     if(isInPart[elm]) {
       const auto firstDown = elm*numDownAdjEntsPerElm;
@@ -265,7 +264,6 @@ void setElementToEntDofConnectivity(Omega_h::Mesh& mesh, const OmegahPartFilter 
           const auto dofIndex = adjEnt*dofsPerEnt+k;
           const auto dofGlobalId = globalDofNumbering[dofIndex];
           elm2dof[connIdx] = dofGlobalId;
-          dof_owned[connIdx] = owned[adjEnt];
         }
       }
     }
@@ -396,13 +394,12 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
   for(int i=partFilter.dim+1; i<4; i++)
     assert(!m_dofsPerEnt[i]);//watch out for stragglers
   Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
-  Omega_h::Write<Omega_h::I8> dof_owned(totalNumDofs);
 
   LO dofOffset = 0;
   for(int adjDim=0; adjDim<partFilter.dim; adjDim++) {
     if(m_dofsPerEnt[adjDim]) {
       setElementToEntDofConnectivity(mesh, partFilter, m_dofsPerElm, adjDim, dofOffset, elmToDim[adjDim],
-          m_dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof, dof_owned);
+          m_dofsPerEnt[adjDim], globalDofNumbering[adjDim], elm2dof);
       const auto numDownAdjEntsPerElm = Omega_h::element_degree(mesh.family(), partFilter.dim, adjDim);
       dofOffset += m_dofsPerEnt[adjDim]*numDownAdjEntsPerElm;
     }
@@ -411,13 +408,7 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
     setElementDofConnectivity(mesh, partFilter, m_dofsPerElm, dofOffset, m_dofsPerEnt[partFilter.dim],
         globalDofNumbering[partFilter.dim], elm2dof);
   }
-
-  auto dof_owned_h = Omega_h::HostRead(Omega_h::read(dof_owned));
-  m_ownership.resize(dof_owned_h.size(),Unset);
-  for (int i=0; i<dof_owned_h.size(); ++i) {
-    m_ownership[i] = dof_owned_h[i] ? Owned : Ghosted;
-  }
-  m_connectivity = Omega_h::HostRead(Omega_h::read(elm2dof));
+  return elm2dof;
 }
 
 void
