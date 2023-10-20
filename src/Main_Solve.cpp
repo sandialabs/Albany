@@ -107,7 +107,6 @@ int main(int argc, char *argv[])
 
 #if defined(ALBANY_OMEGAH)
     Albany::init_omegah_lib(argc,argv,comm);
-    fprintf(stderr, "initialized omegah lib\n");
 #endif
 
     // Connect vtune for performance profiling
