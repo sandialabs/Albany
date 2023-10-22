@@ -1,0 +1,15 @@
+[user]
+	name = Irina K. Tezaur
+	email = ikalash@sandia.gov
+[color]
+	ui = true
+#[push]
+#	default = simple
+[http]
+	sslBackend = openssl
+	proxy =http://proxy.sandia.gov:80 
+[remote "origin"]
+	proxy = http://proxy.sandia.gov:80
+[http "https://domain.com"]
+	proxy = https://proxy.sandia.gov:80
+	sslVerify = false
