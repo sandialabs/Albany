@@ -97,7 +97,6 @@ OmegahConnManager(Omega_h::Mesh& in_mesh, std::string inPartId, const int inPart
       "  - input mesh dim: " + std::to_string(mesh.dim()) + "\n");
 
   auto world = mesh.library()->world();
-  auto rank = world->rank();
 
   assert(partFilter.dim <= mesh.dim());
 
@@ -186,8 +185,8 @@ GO getMaxGlobalEntDofId(Omega_h::Mesh& mesh, Omega_h::GOs& dofGlobalIds) {
 
 std::array<Omega_h::GOs,4> OmegahConnManager::createGlobalDofNumbering() const {
   std::array<Omega_h::GOs,4> gdn;
-  GO offset = 0;
-  for(int i=0; i<gdn.size(); i++) {
+  long unsigned int offset = 0;
+  for(long unsigned int i=0; i<gdn.size(); i++) {
     gdn[i] = createGlobalEntDofNumbering(mesh, i, m_dofsPerEnt[i], offset);
     offset += getMaxGlobalEntDofId(mesh, gdn[i])*m_dofsPerEnt[i];
   }
@@ -415,7 +414,8 @@ OmegahConnManager::writeConnectivity()
 void
 OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (fp.getCellTopology().getDimension() > partFilter.dim, std::logic_error,
+  const LO dim = fp.getCellTopology().getDimension(); 
+  TEUCHOS_TEST_FOR_EXCEPTION (dim > partFilter.dim, std::logic_error,
       "Error! OmegahConnManager Field pattern incompatible with stored elem_blocks.\n"
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n"
       "  - elem_blocks topo dim: " + Omega_h::topological_singular_name(mesh.family(), partFilter.dim) + "\n");
@@ -488,7 +488,8 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
   // transfer to host
   auto elm2dofMask_h = Omega_h::HostRead(elm2dofMask);
   std::vector<int> elm2dofMask_vec(elm2dofMask_h.data(), elm2dofMask_h.data()+elm2dofMask_h.size());
-  assert(elm2dofMask_vec.size() == elm2dofMask_h.size());
+  long unsigned int elm2dofMask_h_size = elm2dofMask_h.size();
+  assert(elm2dofMask_vec.size() == elm2dofMask_h_size);
 
   return elm2dofMask_vec;
 }

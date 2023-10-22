@@ -82,7 +82,7 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   m_mesh.add_tag(Omega_h::VERT,"node_sets",1,Omega_h::read(ns_tags));
 
   int tag = 1;
-  for (int idim=0; idim<Dim; ++idim) {
+  for (unsigned int idim=0; idim<Dim; ++idim) {
     nsNames.push_back("NodeSet" + std::to_string(idim*2));
     nsNames.push_back("NodeSet" + std::to_string(idim*2+1));
 
