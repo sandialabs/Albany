@@ -186,6 +186,7 @@ void P0InterpolationBase<EvalT, Traits, ScalarT>::evaluate_on_side (typename Tra
 //**********************************************************************
 
 template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
 void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Average_Scalar_Field_Tag&, const int& cell) const{
   using FL = Albany::FieldLocation;
@@ -220,6 +221,7 @@ operator() (const Cell_Average_Scalar_Field_Tag&, const int& cell) const{
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
 void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Average_Vector_Field_Tag&, const int& cell) const{
   using FL = Albany::FieldLocation;
@@ -260,6 +262,7 @@ operator() (const Cell_Average_Vector_Field_Tag&, const int& cell) const{
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
 void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Average_Tensor_Field_Tag&, const int& cell) const{
   using FL = Albany::FieldLocation;
@@ -303,6 +306,7 @@ operator() (const Cell_Average_Tensor_Field_Tag&, const int& cell) const{
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
 void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Barycenter_Scalar_Field_Tag&, const int& cell) const{
   field_baryc(cell) = 0;
@@ -311,6 +315,7 @@ operator() (const Cell_Barycenter_Scalar_Field_Tag&, const int& cell) const{
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
 void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Barycenter_Vector_Field_Tag&, const int& cell) const{
   for (int dim = 0; dim<dim0; ++dim) {
@@ -324,6 +329,7 @@ operator() (const Cell_Barycenter_Vector_Field_Tag&, const int& cell) const{
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
 void P0InterpolationBase<EvalT, Traits, ScalarT>::
 operator() (const Cell_Barycenter_Tensor_Field_Tag&, const int& cell) const{
   for (int idim = 0; idim<dim0; ++idim) {
