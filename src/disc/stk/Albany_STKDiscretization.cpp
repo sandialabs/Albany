@@ -935,17 +935,6 @@ STKDiscretization::getSolutionField(bool overlapped) const
   return soln;
 }
 
-Teuchos::RCP<Thyra_MultiVector>
-STKDiscretization::getSolutionMV(bool overlapped) const
-{
-  // Copy soln vector into solution field, one node at a time
-  int num_time_deriv = stkMeshStruct->num_time_deriv;
-  Teuchos::RCP<Thyra_MultiVector> soln =
-      Thyra::createMembers(getVectorSpace(), num_time_deriv + 1);
-  this->getSolutionMV(*soln, overlapped);
-  return soln;
-}
-
 void
 STKDiscretization::getField(Thyra_Vector& result, const std::string& name) const
 {

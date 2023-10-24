@@ -142,13 +142,15 @@ public:
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
+
+  void getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const override {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionMV");
+  }
+
   Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool overlapped = false) const {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionField");
   }
-
-  Teuchos::RCP<Thyra_MultiVector>
-  getSolutionMV (bool overlapped) const override;
 
   void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const {

@@ -290,8 +290,8 @@ public:
   virtual Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool overlapped = false) const = 0;
 
-  virtual Teuchos::RCP<Thyra_MultiVector>
-  getSolutionMV(bool overlapped = false) const = 0;
+  virtual void
+  getSolutionMV(Thyra_MultiVector& soln, bool overlapped = false) const = 0;
 
   virtual void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const = 0;

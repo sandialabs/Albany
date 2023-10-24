@@ -225,18 +225,6 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
   printf ("TODO: add code to save states in disc field container, if needed.\n");
 }
 
-Teuchos::RCP<Thyra_MultiVector>
-OmegahDiscretization::
-getSolutionMV (bool overlapped) const
-{
-  auto soln = Thyra::createMembers(getVectorSpace(), m_num_time_deriv + 1);
-  auto fc = overlapped ? m_ov_field_container : m_field_container;
-  for (int i=0; i<m_num_time_deriv; ++i) {
-    soln->col(i)->assign(*fc->get_field(m_sol_names[i]));
-  }
-  return soln;
-}
-
 Teuchos::RCP<DOFManager>
 OmegahDiscretization::
 create_dof_mgr (const std::string& field_name,
