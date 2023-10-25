@@ -7,21 +7,10 @@
 #ifndef ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP
 #define ALBANY_ABSTRACT_STK_FIELD_CONTAINER_HPP
 
-#include "Albany_config.h"
+#include "Albany_AbstractMeshFieldAccessor.hpp"
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-
-// This include is added in Tpetra branch to get all the necessary
-// Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
-#include "Albany_DataTypes.hpp"
-
-#include "Albany_StateInfoStruct.hpp"
-#include "Albany_Utils.hpp"
-
-#include <stk_mesh/base/CoordinateSystems.hpp>
 #include <stk_mesh/base/Field.hpp>
-#include <stk_mesh/base/FieldTraits.hpp>
+#include "Teuchos_RCP.hpp"
 
 namespace Albany {
 
@@ -29,7 +18,7 @@ namespace Albany {
  * \brief Abstract interface for an STK field container
  *
  */
-class AbstractSTKFieldContainer
+class AbstractSTKFieldContainer : public AbstractMeshFieldAccessor
 {
 public:
   // STK field (scalar/vector/tensor , Node/Cell)
@@ -46,17 +35,10 @@ public:
   using MeshScalarInteger64State = std::map<std::string, GO>;
   using MeshVectorIntegerState   = std::map<std::string, std::vector<int>>;
 
-  using dof_mgr_ptr_t = Teuchos::RCP<const DOFManager>;
-  using mv_ptr_t      = Teuchos::RCP<const Thyra_MultiVector>;
-
-  AbstractSTKFieldContainer(bool solutionFieldContainer_) : proc_rank_field(nullptr), solutionFieldContainer(solutionFieldContainer_) {};
-
+  AbstractSTKFieldContainer (bool solutionFieldContainer_) : solutionFieldContainer(solutionFieldContainer_) {}
 
   //! Destructor
-  virtual ~AbstractSTKFieldContainer(){};
-
-  virtual void
-  addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) = 0;
+  virtual ~AbstractSTKFieldContainer() = default;
 
   // Coordinates field ALWAYS in 3D
   const STKFieldType*
@@ -147,66 +129,11 @@ public:
   {
     return qptensor_states;
   }
-  const StateInfoStruct&
-  getNodalSIS() const
-  {
-    return nodal_sis;
-  }
-  const StateInfoStruct&
-  getNodalParameterSIS() const
-  {
-    return nodal_parameter_sis;
-  }
-
   std::map<std::string, double>&
   getTime()
   {
     return time;
   }
-
-  virtual void fillSolnVector (Thyra_Vector&        soln,
-                               const dof_mgr_ptr_t& sol_dof_mgr,
-                               const bool           overlapped) = 0;
-
-  virtual void fillVector (Thyra_Vector&        field_vector,
-                           const std::string&   field_name,
-                           const dof_mgr_ptr_t& field_dof_mgr,
-                           const bool           overlapped) = 0;
-
-  virtual void fillSolnMultiVector (Thyra_MultiVector&   soln,
-                                    const dof_mgr_ptr_t& sol_dof_mgr,
-                                    const bool           overlapped) = 0;
-
-  virtual void saveVector (const Thyra_Vector&  field_vector,
-                           const std::string&   field_name,
-                           const dof_mgr_ptr_t& field_dof_mgr,
-                           const bool           overlapped) = 0;
-
-  virtual void saveSolnVector (const Thyra_Vector& soln,
-                               const mv_ptr_t&     soln_dxdp,
-                               const dof_mgr_ptr_t& sol_dof_mgr,
-                               const bool           overlapped) = 0;
-  virtual void saveSolnVector (const Thyra_Vector&  soln,
-                               const mv_ptr_t&      soln_dxdp,
-                               const Thyra_Vector&  soln_dot,
-                               const dof_mgr_ptr_t& sol_dof_mgr,
-                               const bool           overlapped) = 0;
-
-  virtual void saveSolnVector (const Thyra_Vector&  soln,
-                               const mv_ptr_t&      soln_dxdp,
-                               const Thyra_Vector&  soln_dot,
-                               const Thyra_Vector&  soln_dotdot,
-                               const dof_mgr_ptr_t& sol_dof_mgr,
-                               const bool           overlapped) = 0;
-
-  virtual void saveResVector (const Thyra_Vector&  res,
-                              const dof_mgr_ptr_t& dof_mgr,
-                              const bool          overlapped) = 0;
-
-  virtual void saveSolnMultiVector (const Thyra_MultiVector& soln,
-                                    const mv_ptr_t&          soln_dxdp,
-                                    const dof_mgr_ptr_t&     node_vs,
-                                    const bool          overlapped) = 0;
 
   virtual void transferSolutionToCoords() = 0;
 
@@ -215,9 +142,9 @@ protected:
   // the same field).
   //       Otherwise, coordinates_field3d stores coordinates in 3d (useful for
   //       non-flat 2d meshes)
-  STKFieldType*    coordinates_field3d;
-  STKFieldType*    coordinates_field;
-  STKIntState* proc_rank_field;
+  STKFieldType*    coordinates_field3d = nullptr;
+  STKFieldType*    coordinates_field   = nullptr;
+  STKIntState*     proc_rank_field     = nullptr;
 
   ValueState                scalarValue_states;
   MeshScalarState           mesh_scalar_states;
@@ -231,9 +158,6 @@ protected:
   STKState                  qpscalar_states;
   STKState                  qpvector_states;
   STKState                  qptensor_states;
-
-  StateInfoStruct nodal_sis;
-  StateInfoStruct nodal_parameter_sis;
 
   std::map<std::string, double> time;
 

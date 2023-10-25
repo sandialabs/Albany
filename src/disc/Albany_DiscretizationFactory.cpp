@@ -18,6 +18,7 @@
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
+#include "Albany_Utils.hpp" // For CalculateNumberParams
 
 #ifdef ALBANY_OMEGAH
 #include "Albany_OmegahBoxMesh.hpp"

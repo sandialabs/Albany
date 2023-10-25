@@ -8,6 +8,7 @@
 #define ALBANY_TMPL_STK_MESH_STRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
+#include "Albany_TpetraTypes.hpp"
 
 namespace Albany {
 
