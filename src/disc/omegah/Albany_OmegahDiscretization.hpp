@@ -9,8 +9,8 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 
-#include "Albany_OmegahAbstractMesh.hpp"
 #include "Albany_OmegahFieldContainer.hpp"
+#include "Albany_OmegahGenericMesh.hpp"
 
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_NullSpaceUtils.hpp"
@@ -23,7 +23,7 @@ public:
   OmegahDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
       const int neq,
-      Teuchos::RCP<OmegahAbstractMesh>&           mesh,
+      Teuchos::RCP<OmegahGenericMesh>&           mesh,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
       const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
       const std::map<int, std::vector<std::string>>& sideSetEquations =
@@ -279,10 +279,10 @@ protected:
 
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
-  Teuchos::RCP<OmegahAbstractMesh> m_mesh_struct;
 
   Teuchos::RCP<OmegahFieldContainer> m_field_container;
   Teuchos::RCP<OmegahFieldContainer> m_ov_field_container;
+  Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
 
   std::vector<std::string> m_sol_names;
 

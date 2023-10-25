@@ -259,7 +259,7 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
   } else if (meshStruct->meshType()=="Omega_h") {
-    auto ms = Teuchos::rcp_dynamic_cast<OmegahAbstractMesh>(meshStruct);
+    auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(meshStruct);
     disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
 #endif
   }

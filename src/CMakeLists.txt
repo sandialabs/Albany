@@ -347,7 +347,7 @@ endif()
 if (ENABLE_OMEGAH)
   list (APPEND SOURCES
     disc/omegah/Albany_Omegah.cpp
-    disc/omegah/Albany_OmegahAbstractMesh.cpp
+    disc/omegah/Albany_OmegahGenericMesh.cpp
     disc/omegah/Albany_OmegahBoxMesh.cpp
     disc/omegah/Albany_OmegahFieldContainer.cpp
     disc/omegah/Albany_OmegahDiscretization.cpp
@@ -355,7 +355,7 @@ if (ENABLE_OMEGAH)
   )
   list (APPEND HEADERS
     disc/omegah/Albany_Omegah.hpp
-    disc/omegah/Albany_OmegahAbstractMesh.hpp
+    disc/omegah/Albany_OmegahGenericMesh.hpp
     disc/omegah/Albany_OmegahBoxMesh.hpp
     disc/omegah/Albany_OmegahBoxMesh_Def.hpp
     disc/omegah/Albany_OmegahDiscretization.hpp

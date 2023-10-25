@@ -1,12 +1,12 @@
 #ifndef ALBANY_OMEGAH_BOX_MESH_HPP
 #define ALBANY_OMEGAH_BOX_MESH_HPP
 
-#include "Albany_OmegahAbstractMesh.hpp"
+#include "Albany_OmegahGenericMesh.hpp"
 
 namespace Albany {
 
 template<unsigned Dim>
-class OmegahBoxMesh : public OmegahAbstractMesh {
+class OmegahBoxMesh : public OmegahGenericMesh {
 public:
   OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                  const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams);

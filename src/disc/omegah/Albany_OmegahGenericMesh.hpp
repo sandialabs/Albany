@@ -1,5 +1,5 @@
-#ifndef ALBANY_ABSTRACT_OMEGAH_MESH_HPP
-#define ALBANY_ABSTRACT_OMEGAH_MESH_HPP
+#ifndef ALBANY_OMEGAH_GENERIC_MESH_HPP
+#define ALBANY_OMEGAH_GENERIC_MESH_HPP
 
 #include "Albany_AbstractMeshStruct.hpp"
 
@@ -7,7 +7,7 @@
 
 namespace Albany {
 
-class OmegahAbstractMesh : public AbstractMeshStruct {
+class OmegahGenericMesh : public AbstractMeshStruct {
 public:
   std::string meshType () const override { return "Omega_h"; }
 
@@ -47,4 +47,4 @@ protected:
 
 } // namespace Albany
 
-#endif // ALBANY_ABSTRACT_OMEGAH_MESH_HPP
+#endif // ALBANY_OMEGAH_GENERIC_MESH_HPP
