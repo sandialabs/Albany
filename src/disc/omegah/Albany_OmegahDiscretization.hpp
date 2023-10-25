@@ -9,7 +9,6 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 
-#include "Albany_OmegahFieldContainer.hpp"
 #include "Albany_OmegahGenericMesh.hpp"
 
 #include "Albany_ThyraCrsMatrixFactory.hpp"
@@ -104,7 +103,7 @@ public:
   //! Get nodal parameters state info struct
   const StateInfoStruct&
   getNodalParameterSIS() const override {
-    return m_ov_field_container->get_nodal_sis();
+    return m_mesh_struct->get_field_accessor()->getNodalParameterSIS();
   }
 
   //! Retrieve connectivity map from elementGID to workset
@@ -280,8 +279,6 @@ protected:
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
 
-  Teuchos::RCP<OmegahFieldContainer> m_field_container;
-  Teuchos::RCP<OmegahFieldContainer> m_ov_field_container;
   Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
 
   std::vector<std::string> m_sol_names;

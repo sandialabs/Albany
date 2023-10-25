@@ -1,5 +1,6 @@
 #include "Albany_OmegahDiscretization.hpp"
 #include "Albany_OmegahUtils.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include "OmegahConnManager.hpp"
 
@@ -44,26 +45,6 @@ updateMesh ()
   m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
   m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
   m_node_dof_managers[""]     = node_dof_mgr;
-
-  // TODO: our Thyra VS is such that owned GIDs come first, so we can store ov fields,
-  //       and subview them for non-ov queries
-  auto create_fc = [&] (const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
-    auto fc = Teuchos::rcp(new OmegahFieldContainer(m_mesh_struct));
-    fc->add_field (m_sol_names[0],vs);
-    if (m_num_time_deriv>0) {
-      fc->add_field (m_sol_names[1],vs);
-      if (m_num_time_deriv>1) {
-        fc->add_field (m_sol_names[2],vs);
-      }
-    }
-    return fc;
-  };
-  m_ov_field_container = create_fc (sol_dof_mgr->ov_vs());
-  if (m_comm->getSize()>1) {
-    m_field_container = create_fc (sol_dof_mgr->ov_vs());
-  } else {
-    m_field_container = m_ov_field_container;
-  }
 
   // Compute workset information
   // NOTE: these arrays are all of size 1, for the foreseable future.
@@ -221,7 +202,30 @@ computeGraphs ()
 void OmegahDiscretization::
 setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 {
-  printf ("TODO: add code to save states in disc field container, if needed.\n");
+  auto field_accessor = m_mesh_struct->get_field_accessor();
+  field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
+  auto mesh_fields = m_mesh_struct->get_field_accessor();
+  for (auto st : mesh_fields->getNodalParameterSIS()) {
+    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
+    const auto& mesh_part = st->meshPart;
+    int numComps;
+    switch (st->dim.size()) {
+      case 2: numComps = 1; break;
+      case 3: numComps = st->dim[2]; break;
+      default:
+        throw std::runtime_error(
+            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
+            "  - state name: " + st->name + "\n"
+            "  - input dims: (" + util::join(st->dim,",") + ")\n");
+    }
+    auto dof_mgr = create_dof_mgr (st->name,st->meshPart,FE_Type::HGRAD,1,numComps);
+    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+
+    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
+      auto node_dof_mgr = create_dof_mgr (nodes_dof_name(),st->meshPart,FE_Type::HGRAD,1,1);
+      m_node_dof_managers[st->meshPart] = node_dof_mgr;
+    }
+  }
 }
 
 Teuchos::RCP<DOFManager>

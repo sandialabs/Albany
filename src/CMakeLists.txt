@@ -350,8 +350,8 @@ if (ENABLE_OMEGAH)
     disc/omegah/Albany_Omegah.cpp
     disc/omegah/Albany_OmegahGenericMesh.cpp
     disc/omegah/Albany_OmegahBoxMesh.cpp
-    disc/omegah/Albany_OmegahFieldContainer.cpp
     disc/omegah/Albany_OmegahDiscretization.cpp
+    disc/omegah/Albany_OmegahMeshFieldAccessor.cpp
     disc/omegah/OmegahConnManager.cpp
   )
   list (APPEND HEADERS
@@ -360,7 +360,7 @@ if (ENABLE_OMEGAH)
     disc/omegah/Albany_OmegahBoxMesh.hpp
     disc/omegah/Albany_OmegahBoxMesh_Def.hpp
     disc/omegah/Albany_OmegahDiscretization.hpp
-    disc/omegah/Albany_OmegahFieldContainer.hpp
+    disc/omegah/Albany_OmegahMeshFieldAccessor.hpp
     disc/omegah/Albany_OmegahUtils.hpp
     disc/omegah/OmegahConnManager.hpp
     disc/omegah/OmegahPermutation.hpp

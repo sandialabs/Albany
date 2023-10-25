@@ -2,6 +2,7 @@
 #define ALBANY_OMEGAH_GENERIC_MESH_HPP
 
 #include "Albany_AbstractMeshStruct.hpp"
+#include "Albany_OmegahMeshFieldAccessor.hpp"
 
 #include "Omega_h_mesh.hpp"
 
@@ -9,18 +10,34 @@ namespace Albany {
 
 class OmegahGenericMesh : public AbstractMeshStruct {
 public:
-  std::string meshType () const override { return "Omega_h"; }
+  template<typename T>
+  using strmap_t = std::map<std::string,T>;
 
-  const Omega_h::Mesh& getOmegahMesh () const { return m_mesh; }
-        Omega_h::Mesh& getOmegahMesh ()       { return m_mesh; }
+  virtual ~OmegahGenericMesh () = default;
+
+  // ------------- Override from base class ------------- //
+  std::string meshType () const override { return "Omega_h"; }
 
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
   getMeshSpecs() override { return m_mesh_specs; }
 
-  bool hasRestartSolution () const { return m_has_restart_solution; }
-
   const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
   getMeshSpecs() const override { return m_mesh_specs; }
+
+
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                     const unsigned int worksetSize,
+                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override;
+
+  // ------------- Omegah specific methods -------------- //
+
+  Teuchos::RCP<OmegahMeshFieldAccessor> get_field_accessor () const { return m_field_accessor; }
+
+  const Omega_h::Mesh& getOmegahMesh () const { return m_mesh; }
+        Omega_h::Mesh& getOmegahMesh ()       { return m_mesh; }
+
+  bool hasRestartSolution () const { return m_has_restart_solution; }
 
   ViewLR<const double*,DeviceMemSpace> coords_dev  () const { return m_coords_d; }
   ViewLR<const double*,HostMemSpace>   coords_host () const { return m_coords_h; }
@@ -38,6 +55,8 @@ protected:
   std::map<std::string,Omega_h::I32>   m_side_sets_tags;
 
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > m_mesh_specs;
+
+  Teuchos::RCP<OmegahMeshFieldAccessor>    m_field_accessor;
 
   ViewLR<const double*,DeviceMemSpace>  m_coords_d;
   ViewLR<      double*,HostMemSpace>    m_coords_h;
