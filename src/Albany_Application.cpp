@@ -691,9 +691,9 @@ Application::finalSetUp(
     Teuchos::RCP<Thyra_Vector> dist_param_upperbound =
         parameter->upper_bounds_vector();
 
-    std::stringstream lowerbound_name, upperbound_name;
-    lowerbound_name << param_name << "_lowerbound";
-    upperbound_name << param_name << "_upperbound";
+    std::string lowerbound_name, upperbound_name;
+    lowerbound_name = param_name + "_lowerbound";
+    upperbound_name = param_name + "_upperbound";
 
     // Initialize parameter with data stored in the mesh
     disc->getField(*dist_param, param_name);
@@ -701,18 +701,16 @@ Application::finalSetUp(
     bool        has_lowerbound(false), has_upperbound(false);
     for (int ist = 0; ist < static_cast<int>(nodal_param_states.size());
          ist++) {
-      has_lowerbound = has_lowerbound || (nodal_param_states[ist]->name ==
-                                          lowerbound_name.str());
-      has_upperbound = has_upperbound || (nodal_param_states[ist]->name ==
-                                          upperbound_name.str());
+      has_lowerbound |= nodal_param_states[ist]->name == lowerbound_name;
+      has_upperbound |= nodal_param_states[ist]->name == upperbound_name;
     }
     if (has_lowerbound) {
-      disc->getField(*dist_param_lowerbound, lowerbound_name.str());
+      disc->getField(*dist_param_lowerbound, lowerbound_name);
     } else {
       dist_param_lowerbound->assign(std::numeric_limits<ST>::lowest());
     }
     if (has_upperbound) {
-      disc->getField(*dist_param_upperbound, upperbound_name.str());
+      disc->getField(*dist_param_upperbound, upperbound_name);
     } else {
       dist_param_upperbound->assign(std::numeric_limits<ST>::max());
     }
