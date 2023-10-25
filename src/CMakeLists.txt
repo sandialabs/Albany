@@ -325,16 +325,6 @@ list (APPEND HEADERS
   disc/stk/STKConnManager.hpp
 )
 
-if (ENABLE_OMEGAH)
-  list(APPEND SOURCES
-    disc/omegah/OmegahConnManager.cpp
-  )
-  list (APPEND HEADERS
-    disc/omegah/OmegahConnManager.hpp
-    disc/omegah/OmegahPermutation.hpp
-  )
-endif()
-
 if (ALBANY_STK_REBALANCE)
   list (APPEND SOURCES
     disc/stk/percept/stk_rebalance/GeomDecomp.cpp
@@ -356,18 +346,23 @@ endif()
 
 if (ENABLE_OMEGAH)
   list (APPEND SOURCES
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.cpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.cpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahDiscretization.cpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahFieldContainer.cpp
+    disc/omegah/Albany_Omegah.cpp
+    disc/omegah/Albany_OmegahAbstractMesh.cpp
+    disc/omegah/Albany_OmegahBoxMesh.cpp
+    disc/omegah/Albany_OmegahFieldContainer.cpp
+    disc/omegah/Albany_OmegahDiscretization.cpp
+    disc/omegah/OmegahConnManager.cpp
   )
   list (APPEND HEADERS
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_Omegah.hpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahAbstractMesh.hpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh.hpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahBoxMesh_Def.hpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahDiscretization.hpp
-    ${Albany_SOURCE_DIR}/src/disc/omegah/Albany_OmegahFieldContainer.hpp
+    disc/omegah/Albany_Omegah.hpp
+    disc/omegah/Albany_OmegahAbstractMesh.hpp
+    disc/omegah/Albany_OmegahBoxMesh.hpp
+    disc/omegah/Albany_OmegahBoxMesh_Def.hpp
+    disc/omegah/Albany_OmegahDiscretization.hpp
+    disc/omegah/Albany_OmegahFieldContainer.hpp
+    disc/omegah/Albany_OmegahUtils.hpp
+    disc/omegah/OmegahConnManager.hpp
+    disc/omegah/OmegahPermutation.hpp
   )
 endif()
 

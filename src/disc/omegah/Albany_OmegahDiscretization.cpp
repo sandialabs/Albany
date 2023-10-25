@@ -1,4 +1,5 @@
 #include "Albany_OmegahDiscretization.hpp"
+#include "Albany_OmegahUtils.hpp"
 
 #include "OmegahConnManager.hpp"
 
@@ -96,7 +97,7 @@ updateMesh ()
 
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
-  auto node_gids = Omega_h::HostRead<Omega_h::GO>(mesh.globals(0));
+  auto node_gids = hostRead(mesh.globals(0));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   m_node_lid_to_omegah_pos.resize(mesh.nverts());
   for (int i=0; i<mesh.nverts(); ++i) {
@@ -140,16 +141,14 @@ computeNodeSets ()
   auto mesh = m_mesh_struct->getOmegahMesh();
 
   auto v2e = mesh.ask_up(0,mesh.dim());
-  auto v2e_a2ab = Omega_h::HostRead<Omega_h::LO>(v2e.a2ab);
-  auto v2e_ab2b = Omega_h::HostRead<Omega_h::LO>(v2e.ab2b);
+  auto v2e_a2ab = hostRead(v2e.a2ab);
+  auto v2e_ab2b = hostRead(v2e.ab2b);
 
-  auto e2v = Omega_h::HostRead<Omega_h::LO>(mesh.ask_elem_verts());
+  auto e2v = hostRead(mesh.ask_elem_verts());
   int nodes_per_elem = e2v.size() / mesh.nelems();
 
-  auto tags_dev = mesh.get_tag<I32>(0,"node_sets")->array();
-  auto owned_dev = mesh.owned(0);
-  Omega_h::HostRead<I8>  owned_host(owned_dev);
-  Omega_h::HostRead<I32> tags_host (tags_dev);
+  auto tags_host = hostRead(mesh.get_tag<I32>(0,"node_sets")->array());
+  auto owned_host = hostRead(mesh.owned(0));
   for (const auto& nsn : nsNames) {
     std::vector<int> which;
     auto ns_tag = m_mesh_struct->get_ns_tag(nsn);
