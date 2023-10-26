@@ -141,27 +141,19 @@ public:
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
-
-  void getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionMV");
-  }
-
   Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool overlapped = false) const {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionField");
   }
 
-  void
-  getField(Thyra_Vector& field_vector, const std::string& field_name) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getField");
-  }
-  void
-  setField(
-      const Thyra_Vector& field_vector,
-      const std::string&  field_name,
-      bool                overlapped) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::setField");
-  }
+  void getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const override;
+
+  void getField(      Thyra_Vector& field_vector,
+                const std::string&  field_name) const override;
+
+  void setField(const Thyra_Vector& field_vector,
+                const std::string&  field_name,
+                bool                overlapped) override;
 
   void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
 
@@ -277,7 +269,6 @@ protected:
   // ======================= Members ======================= //
 
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
-
 
   Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
 

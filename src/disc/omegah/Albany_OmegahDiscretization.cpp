@@ -228,6 +228,43 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
   }
 }
 
+void
+OmegahDiscretization::
+getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const
+{
+  std::vector<std::string> names = {
+    solution_dof_name(),
+    solution_dof_name() + std::string("_dot"),
+    solution_dof_name() + std::string("_dotdot")
+  };
+  auto accessor = m_mesh_struct->get_field_accessor();
+  auto dof_mgr = getDOFManager();
+  for (int icol=0; icol<m_num_time_deriv; ++icol) {
+    auto col = solution.col(icol);
+    accessor->fillVector(*col,names[icol],dof_mgr,false);
+  }
+}
+
+void
+OmegahDiscretization::
+getField (Thyra_Vector& field_vector, const std::string& field_name) const
+{
+  auto accessor = m_mesh_struct->get_field_accessor();
+  auto dof_mgr = getDOFManager(field_name);
+  accessor->fillVector(field_vector,field_name,dof_mgr,false);
+}
+
+void
+OmegahDiscretization::
+setField (const Thyra_Vector& field_vector,
+          const std::string&  field_name,
+          bool                overlapped)
+{
+  auto accessor = m_mesh_struct->get_field_accessor();
+  auto dof_mgr = getDOFManager(field_name);
+  accessor->saveVector(field_vector,field_name,dof_mgr,false);
+}
+
 Teuchos::RCP<DOFManager>
 OmegahDiscretization::
 create_dof_mgr (const std::string& field_name,
