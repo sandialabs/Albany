@@ -275,7 +275,7 @@ create_dof_mgr (const std::string& field_name,
   const auto& mesh_specs = m_mesh_struct->getMeshSpecs()[0];
 
   // Create conn and dof managers
-  auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct->getOmegahMesh()));
+  auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct));
   auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   shards::CellTopology topo (&mesh_specs->ctd);

@@ -7,6 +7,9 @@
 #include "Albany_Utils.hpp"
 #include "Albany_UnitTestSetupHelpers.hpp"
 #include "OmegahConnManager.hpp"
+#include "Albany_OmegahBoxMesh.hpp"
+#include "Albany_OmegahOshMesh.hpp"
+#include "Albany_OmegahUtils.hpp"
 #include "Albany_CommUtils.hpp"
 
 #include "Teuchos_CommHelpers.hpp"
@@ -19,8 +22,6 @@
 #include "Panzer_IntrepidFieldPattern.hpp"
 #include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
 
-#include <Omega_h_build.hpp> // Omega_h::build_box
-#include <Omega_h_file.hpp> // Omega_h::binary::read
 #include <Omega_h_mark.hpp> // Omega_h::mark_by_class
 #include <Omega_h_simplex.hpp> // Omega_h::simplex_degree
 #include <Omega_h_for.hpp> // Omega_h::parallel_for
@@ -33,23 +34,44 @@
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
 
-Omega_h::Mesh createOmegahBoxMesh(Omega_h::Library& lib) {
-  return Omega_h::build_box(lib.world(), OMEGA_H_SIMPLEX, 1, 1, 0, 2, 2, 0, false);
+Teuchos::RCP<Albany::OmegahGenericMesh>
+createOmegahBoxMesh(const Teuchos::RCP<const Teuchos_Comm>& comm) {
+  auto pl = Teuchos::rcp(new Teuchos::ParameterList());
+  pl->set("Number of Elements",Teuchos::Array<int>(2,2));
+  return Teuchos::rcp(new Albany::OmegahBoxMesh<2>(pl,comm,0));
 }
 
-Omega_h::Mesh createOmegahMesh(Omega_h::Library& lib, std::string name) {
-  REQUIRE(!name.empty());
-  Omega_h::Mesh mesh(&lib);
-  Omega_h::binary::read(name, lib.world(), &mesh);
-  mesh.balance(); // re-partition to the number of ranks in world communicator
-  return mesh;
+struct PartSpecs {
+  std::string name;
+  Topo_type topo;
+  int id;
+};
+
+Teuchos::RCP<Albany::OmegahGenericMesh>
+createOmegahOshMesh(const std::string& filename,
+                    const Teuchos::RCP<const Teuchos_Comm>& comm,
+                    const std::vector<PartSpecs>& set_parts)
+{
+  REQUIRE(!filename.empty());
+
+  auto pl = Teuchos::rcp(new Teuchos::ParameterList());
+  pl->set("Filename",filename);
+  Teuchos::Array<std::string> pnames;
+  for (const auto& ps : set_parts) {
+    pnames.push_back(ps.name);
+    pl->sublist(ps.name).set("Topo",Albany::e2str(ps.topo));
+    pl->sublist(ps.name).set("Id",ps.id);
+  }
+  pl->set("Mark Parts",pnames);
+  return Teuchos::rcp(new Albany::OmegahOshMesh(pl,comm,0));
 }
 
-auto createOmegahConnManager(Omega_h::Mesh& mesh) {
+auto createOmegahConnManager(const Teuchos::RCP<Albany::OmegahGenericMesh>& mesh) {
   return Teuchos::rcp(new Albany::OmegahConnManager(mesh));
 }
 
-auto createOmegahConnManager(Omega_h::Mesh& mesh, std::string partId, const int partDim) {
+auto createOmegahConnManager(const Teuchos::RCP<Albany::OmegahGenericMesh>& mesh,
+                             const std::string& partId, const int partDim) {
   return Teuchos::rcp(new Albany::OmegahConnManager(mesh, partId, partDim));
 }
 
@@ -81,15 +103,6 @@ Omega_h::Read<Omega_h::I8> markDownward(Omega_h::Mesh& mesh, Omega_h::Read<Omega
   return downMarked;
 }
 
-void createTagFromClassification(Omega_h::Mesh& mesh, const int classId, const int classDim, const std::string tagName) {
-  REQUIRE(classDim==1); //TODO support faces with classification?
-  //add the edges with the given classification to the tag
-  auto isinset = Omega_h::mark_by_class(&mesh, classDim, classDim, classId);
-  mesh.add_tag(classDim, tagName, 1, isinset);
-  //mark the vertices bounding the edges and add them to the tag
-  auto lateralverts = markDownward(mesh, isinset, OMEGA_H_EDGE, OMEGA_H_VERT);
-  mesh.add_tag(OMEGA_H_VERT, tagName, 1, lateralverts);
-}
 
 template<typename T>
 void checkOwnership(Omega_h::Mesh& mesh, T connMgr) {
@@ -121,11 +134,9 @@ void checkOwnership(Omega_h::Mesh& mesh, T connMgr) {
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahBoxMesh(lib);
+
+  auto mesh = createOmegahBoxMesh(teuchosComm);
   auto conn_mgr = createOmegahConnManager(mesh);
   out << "Testing OmegahConnManager constructor\n";
   success = true;
@@ -134,11 +145,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManagerNoConnClone)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahBoxMesh(lib);
+
+  auto mesh = createOmegahBoxMesh(teuchosComm);
   auto conn_mgr = createOmegahConnManager(mesh);
   auto clone = conn_mgr->noConnectivityClone();
   out << "Testing OmegahConnManager::noConnectivityClone()\n";
@@ -148,12 +157,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManagerNoConnClone)
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahBoxMesh(lib);
+  auto mesh = createOmegahBoxMesh(teuchosComm);
   auto conn_mgr = createOmegahConnManager(mesh);
   auto elmGids = conn_mgr->getElementsInBlock();
   int elmGidsSize = elmGids.size(); 
@@ -165,12 +171,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockId)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahBoxMesh(lib);
+  auto mesh = createOmegahBoxMesh(teuchosComm);
   auto conn_mgr = createOmegahConnManager(mesh);
   std::vector<std::string> blockIds;
   conn_mgr->getElementBlockIds(blockIds);
@@ -184,12 +187,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockId)
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockTopologies)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahBoxMesh(lib);
+  auto mesh = createOmegahBoxMesh(teuchosComm);
   auto conn_mgr = createOmegahConnManager(mesh);
   std::vector<shards::CellTopology> topoTypes;
   conn_mgr->getElementBlockTopologies(topoTypes);
@@ -198,7 +198,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockTopologies)
   out << "Testing OmegahConnManager::getElementBlockTopologies()\n";
   success = true;
 }
-
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
 {
@@ -214,14 +213,11 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   };
 
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-  Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+  auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
 
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahBoxMesh(lib);
+  auto mesh = createOmegahBoxMesh(teuchosComm);
   auto conn_mgr = createOmegahConnManager(mesh);
   conn_mgr->buildConnectivity(*patternC1);
   REQUIRE(3 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
@@ -240,29 +236,18 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
-  //The omegah 'exo2osh' converter creates geometric model entities from node
-  //and side sets that exist within the exodus file.
-  //The mesh entities in the sets are then 'classified' (sets the association)
-  //on those model entities.
-  //'Classification' of mesh entities to the geometric model is an alternative
-  //to the generic creation of 'parts' (sets of mesh entities with a label) and
-  //provides a subset of the functionality.
-  //Note, 'classification' is the approach taken when having (at a minimum) a
-  //topological definition of the domain is a common part of the mesh
-  //generation/adaptation workflow.
-  //The 'lateralside' side set in the exodus file is given class_id=1 and
-  //class_dim=1 on mesh edges by exo2osh.
-  //A dimension and id uniquely defines a geometric model entity.
+  // The 'lateralside' side set in the exodus file is given class_id=1 and
+  // class_dim=1 on mesh edges by exo2osh.
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
-  createTagFromClassification(mesh, lateralSide_classId, lateralSide_classDim, lateralSide_name);
+
+  std::vector<PartSpecs> lateralSide = {
+    { lateralSide_name, Topo_type::edge, lateralSide_classId }
+  };
+  auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
 
   auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
   out << "Testing OmegahConnManager::partCtor()\n";
@@ -272,17 +257,19 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
 {
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
-  //see above for discussion of tags and classification
+  // The 'lateralside' side set in the exodus file is given class_id=1 and
+  // class_dim=1 on mesh edges by exo2osh.
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
-  createTagFromClassification(mesh, lateralSide_classId, lateralSide_classDim, lateralSide_name); //490 verts
+
+  std::vector<PartSpecs> lateralSide = {
+    { lateralSide_name, Topo_type::edge, lateralSide_classId }
+  };
+  auto albanyMesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
+  auto& mesh = albanyMesh->getOmegahMesh();
 
   //define tag for uppper half of lateral side
   const int upperSide_numVertsExpected = 238;
@@ -302,8 +289,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   REQUIRE(upperSide_numVertsExpected == upperSide_numVerts);
   mesh.add_tag(upperSide_classDim, upperSide_name, 1, Omega_h::read(isInSet_vtx));
 
-  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
-  Teuchos::RCP<const panzer::FieldPattern> patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM<PHX::exec_space, double, double>>();
+  auto conn_mgr = createOmegahConnManager(albanyMesh, lateralSide_name, lateralSide_classDim);
+  auto patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM<PHX::exec_space, double, double>>();
   conn_mgr->buildConnectivity(*patternEdgeC1);
   auto mask = conn_mgr->getConnectivityMask(upperSide_name);
   const int sum = std::accumulate(mask.begin(), mask.end(), 0);
@@ -359,16 +346,13 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   };
 
   Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
+  auto albanyMesh = createOmegahBoxMesh(teuchosComm);
+  auto& mesh = albanyMesh->getOmegahMesh();
 
-  auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahBoxMesh(lib);
-
-  auto conn_mgr = createOmegahConnManager(mesh);
-  Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+  auto conn_mgr = createOmegahConnManager(albanyMesh);
+  auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
   conn_mgr->buildConnectivity(*patternC1);
 
   const auto sideSetName = "leftSide";
