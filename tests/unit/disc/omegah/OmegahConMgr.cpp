@@ -400,7 +400,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnershi
   Teuchos::RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
+  auto mesh = createOmegahOshMesh(lib, "gis_unstruct_basal_populated.osh");
   auto conn_mgr = createOmegahConnManager(mesh);
   conn_mgr->buildConnectivity(*patternC1);
   checkOwnership(mesh,conn_mgr);
@@ -417,7 +417,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
 
 
   auto lib = Omega_h::Library(nullptr, nullptr, mpiComm);
-  auto mesh = createOmegahMesh(lib, "gis_unstruct_basal_populated.osh");
+  auto mesh = createOmegahOshMesh(lib, "gis_unstruct_basal_populated.osh");
 
   const int lateralSide_classId = 1;
   const int lateralSide_classDim = 1;
