@@ -1,0 +1,186 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Build Type: Tpetra
+  Problem:
+    Name: Heat 2D
+    Compute Sensitivities: true
+    Dirichlet BCs:
+      DBC on NS NodeSet0 for DOF T prescribe Field: dirichlet_field
+      DBC on NS NodeSet1 for DOF T: -1.0
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Distributed
+        Name: dirichlet_field
+        Lower Bound: -1.0
+        Upper Bound: 2.0
+        Initial Uniform Value: -0.5
+        Mesh Part: NodeSet0
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Squared L2 Difference Source ST Target PST
+        Field Rank: Scalar
+        Source Field Name: Temperature
+        Target Value: 0.0
+    Hessian:
+      Use AD for Hessian-vector products (default): true
+    Cubature Degree: 9
+
+  Discretization:
+    Number of Elements: [40,40]
+    Method: Box2D
+  Regression For Response 0:
+    Test Value: 5.8333333333e-01
+    Relative Tolerance: 1.0e-05
+    Absolute Tolerance: 1.0e-05
+    Sensitivity For Parameter 0:
+      Test Value: 1.04748375675e-01
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [3.201562118716]  #exact solution, sqrt(41*0.5^2)
+
+  Piro:
+    Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+
+    Analysis:
+      Output Level: 3
+      Analysis Package: ROL
+      ROL:
+        Check Derivatives: true
+        Derivative Checks:
+          Number Of Derivative Checks: 1
+          Perform Reduced Derivative Checks: true
+          Perfrom Expensive Derivative Checks: false
+
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 0.0
+        Min And Max Of Random Parameter Guess: [-1.0, 2.0]
+        Bound Constrained: true
+
+        Full Space: false
+        Use NOX Solver: true
+
+        Matrix Based Dot Product:
+          Matrix Type: Identity
+
+        Custom Secant:
+          Type: Limited-Memory BFGS
+          Maximum Storage: 50
+          Initialization Type: Identity
+
+        ROL Options:
+        # ===========  SIMOPT SOLVER PARAMETER SUBLIST  ===========
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance:   1.0e-6
+              Relative Residual Tolerance:   1.0e-1
+              Iteration Limit:               20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance:                1.e-8
+              Backtracking Factor:           0.5
+              Output Iteration History:      true
+              Zero Initial Guess:            false
+              Solver Type:                   0
+
+          Status Test:
+            Gradient Tolerance: 1.0e-5
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 10
+            Use Relative Tolerances: false
+
+          General:
+            Output Level: 3
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+
+            Secant:
+              Type: Limited-Memory BFGS
+              Maximum Storage: 50
+              Use as Preconditioner: true
+              Use as Hessian: false
+              Use Default Scaling: false
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein Type: 1
+
+            Krylov:
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
+
+          Step:
+            Type: "Trust Region"
+
+            Trust Region:
+              Subproblem Model: Lin-More
+              Subproblem Solver: Truncated CG
+              Initial Radius: -1.0
+              Maximum Radius: 5.0e+03
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+03
+              Inexact:
+                Value:
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.0e-01
+                Gradient:
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
+
+    NOX:
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: { }
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 1
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: drop tolerance': 0.0
+                    'fact: iluk level-of-fill': 0
+      Line Search:
+        Full Step:
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Information: 103
+        Output Precision: 3
+      Solver Options:
+        Status Test Check Type: Minimal
+...
