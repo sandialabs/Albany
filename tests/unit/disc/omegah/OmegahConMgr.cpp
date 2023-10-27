@@ -109,8 +109,11 @@ void checkOwnership(Omega_h::Mesh& mesh, T connMgr) {
     auto dofGids = connMgr->getConnectivity(lid);
     auto dofOwned = connMgr->getOwnership(lid);
     for(int i=0; i<dofsPerElm; i++) {
-      if(vtxGidOwned.at(dofGids[i]))
+      if(vtxGidOwned.at(dofGids[i])) {
         REQUIRE(Albany::Owned == dofOwned[i]);
+      } else {
+        REQUIRE(Albany::Ghosted == dofOwned[i]);
+      }
     }
   }
 }
