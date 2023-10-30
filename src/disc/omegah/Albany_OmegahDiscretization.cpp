@@ -119,7 +119,7 @@ computeNodeSets ()
   using Omega_h::I32;
   using Omega_h::I8;
 
-  auto mesh = m_mesh_struct->getOmegahMesh();
+  auto& mesh = m_mesh_struct->getOmegahMesh();
 
   auto v2e = mesh.ask_up(0,mesh.dim());
   auto v2e_a2ab = hostRead(v2e.a2ab);
@@ -128,21 +128,20 @@ computeNodeSets ()
   auto e2v = hostRead(mesh.ask_elem_verts());
   int nodes_per_elem = e2v.size() / mesh.nelems();
 
-  auto tags_host = hostRead(mesh.get_tag<I32>(0,"node_sets")->array());
   auto owned_host = hostRead(mesh.owned(0));
   for (const auto& nsn : nsNames) {
-    std::vector<int> which;
-    auto ns_tag = m_mesh_struct->get_ns_tag(nsn);
-    for (int i=0; i<tags_host.size(); ++i) {
-      if (owned_host[i] and (tags_host[i] & ns_tag)) {
-        which.push_back(i);
+    auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn));
+    std::vector<int> owned_on_ns;
+    for (int i=0; i<is_on_ns_host.size(); ++i) {
+      if (owned_host[i] and is_on_ns_host[i]) {
+        owned_on_ns.push_back(i);
       }
     }
 
     auto& ns_elem_pos = m_node_sets[nsn];
 
-    ns_elem_pos.reserve(which.size());
-    for (auto i : which) {
+    ns_elem_pos.reserve(owned_on_ns.size());
+    for (auto i : owned_on_ns) {
       auto node_adj_start = v2e_a2ab[i];
       auto ielem = v2e_ab2b[node_adj_start];
 
