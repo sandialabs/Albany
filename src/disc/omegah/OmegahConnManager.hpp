@@ -31,18 +31,25 @@ private:
   const OmegahPartFilter partFilter;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
-  std::vector<Ownership> m_ownership;
+  std::vector<Ownership> owners;
   LO m_dofsPerElm = 0;
   std::array<LO,4> m_dofsPerEnt;
   std::array<Omega_h::GOs,4> m_globalDofNumbering;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
   LO getPartConnectivitySize() const;
   std::array<Omega_h::GOs,4> createGlobalDofNumbering() const;
-  void createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
-    const std::array<Omega_h::GOs,4>& globalDofNumbering);
-  Omega_h::GOs createElementToDofConnectivityMask(const std::string& tagName,
+  Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
+    const std::array<Omega_h::GOs,4>& globalDofNumbering) const;
+  Omega_h::GOs createElementToDofConnectivityMask(
+    Omega_h::Read<Omega_h::I8> maskArray[4],
     const Omega_h::Adj elmToDim[3]) const;
+  std::vector<Ownership> buildConnectivityOwnership() const;
 public:
+  //Passing the connectivity array from Omegah to Albany in
+  // getConnectivity(LO localElmtId) requires matching global
+  // ordinal types.
+  static_assert(sizeof(Omega_h::GO) == sizeof(GO));
+
   OmegahConnManager(Omega_h::Mesh& in_mesh);
   OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim);
 
@@ -89,6 +96,10 @@ public:
   }
 
   /** Get ID connectivity for a particular element
+    * \details the static assertion at the top of the class
+    *          ensures that the global ordinal type in
+    *          Omega_h and Albany are the same. This function
+    *          will fail (silently?) if they don't match.
     *
     * \param[in] localElmtId Local element ID
     *
@@ -100,7 +111,6 @@ public:
   const GO * getConnectivity(LO localElmtId) const override {
     TEUCHOS_TEST_FOR_EXCEPTION (m_connectivity.size()==0, std::logic_error,
         "Error! Cannot call getConnectivity before connectivity is built.\n");
-    static_assert(sizeof(Omega_h::GO) == sizeof(GO));
     auto ptr = m_connectivity.data() + (localElmtId*m_dofsPerElm);
     return reinterpret_cast<const GO*>(ptr);
   }
@@ -217,17 +227,13 @@ public:
     return false;
   }
 
-  int getConnectivityStart (const LO ielem) const;
-  std::vector<int> getConnectivityMask (const std::string& sub_part_name) const;
+  int getConnectivityStart (const LO localElmtId) const override;
+  std::vector<int> getConnectivityMask (const std::string& sub_part_name) const override;
 
   // Queries the dimension of a part
   int part_dim (const std::string& part_name) const override;
 
-  const Ownership* getOwnership(LO localElmtId) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION (m_ownership.size()==0, std::logic_error,
-        "Error! Cannot call getOwnership before connectivity is built.\n");
-    return m_ownership.data() + (localElmtId*m_dofsPerElm);
-  }
+  const Ownership* getOwnership(LO localElmtId) const override;
 };
 
 } // namespace Albany
