@@ -43,6 +43,21 @@ public:
   ViewLR<const double*,HostMemSpace>   coords_host () const { return m_coords_h; }
 
   Omega_h::I32 get_ns_tag (const std::string& ns) const { return m_node_sets_tags.at(ns); }
+
+  int part_dim (const std::string& part_name) const;
+
+  // Declare a new part of the mesh, and/or set a tag in the mesh, which states
+  // whether each entity belongs to the part or not.
+  // If markDownward=true, then all entities of lower dimension bounding each marked entity
+  // will be marked as belonging to the part.
+  void declare_part (const std::string& name, const Topo_type t);
+  void declare_part (const std::string& name, const Topo_type t,
+                     Omega_h::Read<Omega_h::I8> is_entity_in_part,
+                     const bool markDownward);
+  void mark_part_entities (const std::string& name,
+                           Omega_h::Read<Omega_h::I8> is_entity_in_part,
+                           const bool markDownward);
+
 protected:
 
   Omega_h::Mesh  m_mesh;
@@ -53,6 +68,9 @@ protected:
   // check if the tag is set.
   std::map<std::string,Omega_h::I32>   m_node_sets_tags;
   std::map<std::string,Omega_h::I32>   m_side_sets_tags;
+
+  // Given a part name, returns its topology (in the form of an Omega_h enum
+  std::map<std::string,Topo_type>  m_part_topo;
 
   Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > m_mesh_specs;
 
