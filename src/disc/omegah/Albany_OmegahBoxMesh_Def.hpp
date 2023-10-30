@@ -48,10 +48,10 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   scalex = scale[0];
   if (Dim>1) {
     nelemy = nelems[1];
-    scalex = scale[1];
+    scaley = scale[1];
     if (Dim>2) {
-      nelemy = nelems[2];
-      scalex = scale[2];
+      nelemz = nelems[2];
+      scalez = scale[2];
     }
   }
 
