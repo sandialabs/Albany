@@ -39,6 +39,9 @@ using ViewLR = Kokkos::View<DT,Kokkos::LayoutRight,MemSpace>;
 // NOTE: Tpetra may use a different LO type (Albany uses int32, while tpetra uses int). When extracting local views/matrices,
 //       be careful about this. At worst, you may need to extract pointers and reinterpret_cast them.
 
+template<typename ST, typename MemSpace = DeviceMemSpace>
+using View1d = ViewLR<ST*,MemSpace>;
+
 // kokkos 1d and 2d views to be used for on-device kernels
 template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
 using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device, MemoryTraits>;
