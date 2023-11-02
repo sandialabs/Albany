@@ -186,7 +186,7 @@ GO getMaxGlobalEntDofId(Omega_h::Mesh& mesh, Omega_h::GOs& dofGlobalIds) {
 std::array<Omega_h::GOs,4> OmegahConnManager::createGlobalDofNumbering() const {
   std::array<Omega_h::GOs,4> gdn;
   GO startingOffset = 0;
-  for(int i=0; i<gdn.size(); i++) {
+  for(long unsigned int i=0; i<gdn.size(); i++) {
     gdn[i] = createGlobalEntDofNumbering(mesh, i, m_dofsPerEnt[i], startingOffset);
     const auto offset = getMaxGlobalEntDofId(mesh, gdn[i]);
     startingOffset = offset == 0 ? startingOffset : offset;
@@ -375,9 +375,8 @@ std::vector<Ownership> OmegahConnManager::buildConnectivityOwnership() const {
   auto connOwnership = createElementToDofConnectivityMask(owned, elmToDim);
   // transfer to host
   auto connOwnership_h = Omega_h::HostRead(connOwnership);
-  auto begin = connOwnership_h.data();
   std::vector<Ownership> connOwnership_vec(connOwnership_h.size());
-  for(int i=0; i<connOwnership_vec.size(); i++) {
+  for(long unsigned int i=0; i<connOwnership_vec.size(); i++) {
     if( connOwnership_h[i] )
       connOwnership_vec[i] = Ownership::Owned;
     else

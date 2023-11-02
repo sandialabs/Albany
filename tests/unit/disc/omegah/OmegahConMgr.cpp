@@ -156,7 +156,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
   auto mesh = createOmegahBoxMesh(lib);
   auto conn_mgr = createOmegahConnManager(mesh);
   auto elmGids = conn_mgr->getElementsInBlock();
-  REQUIRE(elmGids.size() == conn_mgr->getOwnedElementCount());
+  int elmGidsSize = elmGids.size(); 
+  REQUIRE(elmGidsSize == conn_mgr->getOwnedElementCount());
   out << "Testing OmegahConnManager::getElementsInBlock()\n";
   success = true;
 }
