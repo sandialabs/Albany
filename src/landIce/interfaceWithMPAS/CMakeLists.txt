@@ -25,7 +25,7 @@ target_include_directories(mpasInterface PUBLIC
                            "$<BUILD_INTERFACE:${MPAS_INTERFACE_INCLUDE_DIRS}>"
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-install(TARGETS mpasInterface
+install(TARGETS mpasInterface EXPORT albany-export
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
