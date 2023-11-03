@@ -1,0 +1,21 @@
+#!/bin/bash
+# MALI build script
+
+# External libs
+SCORPIO_INSTALL=
+TRILINOS_INSTALL=/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc
+ALBANY_INSTALL=
+source ${ALBANY_INSTALL}/export_albany.in
+
+make clean \
+  CORE=landice
+
+make -j 16 gfortran \
+  CORE=landice \
+  ALBANY=true \
+  USE_PIO2=true \
+  NETCDF=${NETCDF_FORTRAN_ROOT} \
+  PNETCDF=${PARALLEL_NETCDF_ROOT} \
+  PIO=${SCORPIO_INSTALL} \
+  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL}/lib64 -Wl,-R${TRILINOS_INSTALL}/lib64"
+
