@@ -14,4 +14,5 @@ module load hdf5/1.14.1-2
 module load superlu-dist/8.1.2
 module load parallel-netcdf/1.12.3
 module load netcdf-c/4.9.2
+module load netcdf-fortran/4.6.0
 module list
