@@ -60,20 +60,28 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
       std::runtime_error,
       "Error! OmegahOshMesh only available for simplex/hypercube meshes.\n");
 
+  Topo_type elem_topo;
   switch (m_mesh.dim()) {
-    case 1: ctd = shards::getCellTopologyData<shards::Line<2>>();           break;
+    case 1:
+      ctd = shards::getCellTopologyData<shards::Line<2>>();
+      elem_topo = Topo_type::edge;
+      break;
     case 2:
       if (m_mesh.family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
         ctd = shards::getCellTopologyData<shards::Triangle<3>>();
+        elem_topo = Topo_type::triangle;
       } else {
         ctd = shards::getCellTopologyData<shards::Quadrilateral<4>>();
+        elem_topo = Topo_type::quadrilateral;
       }
       break;
     case 3:
       if (m_mesh.family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
         ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();
+        elem_topo = Topo_type::tetrahedron;
       } else {
         ctd = shards::getCellTopologyData<shards::Hexahedron<8>>();
+        elem_topo = Topo_type::hexahedron;
       }
       break;
   }
@@ -82,6 +90,7 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   {
     { ebName, 0}
   };
+  this->declare_part(ebName,elem_topo);
 
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->m_mesh_specs.resize(1);
