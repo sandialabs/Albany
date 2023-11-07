@@ -71,8 +71,8 @@ auto createOmegahConnManager(const Teuchos::RCP<Albany::OmegahGenericMesh>& mesh
 }
 
 auto createOmegahConnManager(const Teuchos::RCP<Albany::OmegahGenericMesh>& mesh,
-                             const std::string& partId, const int partDim) {
-  return Teuchos::rcp(new Albany::OmegahConnManager(mesh, partId, partDim));
+                             const std::string& partId) {
+  return Teuchos::rcp(new Albany::OmegahConnManager(mesh, partId));
 }
 
 /* copied from tests/unit/disc/UnitTest_BlockedDOFManager.cpp */
@@ -240,7 +240,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
   // The 'lateralside' side set in the exodus file is given class_id=1 and
   // class_dim=1 on mesh edges by exo2osh.
   const int lateralSide_classId = 1;
-  const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
 
   std::vector<PartSpecs> lateralSide = {
@@ -248,7 +247,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
   };
   auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
 
-  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
+  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name);
   out << "Testing OmegahConnManager::partCtor()\n";
   success = true;
 }
@@ -261,7 +260,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   // The 'lateralside' side set in the exodus file is given class_id=1 and
   // class_dim=1 on mesh edges by exo2osh.
   const int lateralSide_classId = 1;
-  const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
 
   std::vector<PartSpecs> lateralSide = {
@@ -288,7 +286,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   REQUIRE(upperSide_numVertsExpected == upperSide_numVerts);
   mesh.add_tag(upperSide_classDim, upperSide_name, 1, Omega_h::read(isInSet_vtx));
 
-  auto conn_mgr = createOmegahConnManager(albanyMesh, lateralSide_name, lateralSide_classDim);
+  auto conn_mgr = createOmegahConnManager(albanyMesh, lateralSide_name);
   auto patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
   conn_mgr->buildConnectivity(*patternEdgeC1);
   auto mask = conn_mgr->getConnectivityMask(upperSide_name);
@@ -413,7 +411,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
   auto teuchosComm = Albany::getDefaultComm();
   auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-  const int lateralSide_classDim = 1;
   const auto lateralSide_name = "lateralside";
   const int lateralSide_classId = 1;
   std::vector<PartSpecs> lateralSide = {
@@ -422,7 +419,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
 
   auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm,{lateralSide});
 
-  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name, lateralSide_classDim);
+  auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name);
 
   auto patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
   conn_mgr->buildConnectivity(*patternEdgeC1);

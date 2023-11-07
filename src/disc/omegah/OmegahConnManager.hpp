@@ -21,17 +21,11 @@
 
 namespace Albany {
 
-struct OmegahPartFilter {
-  const LO dim;
-  const std::string name;
-};
-
 class OmegahConnManager : public ConnManager {
 private:
   Teuchos::RCP<OmegahGenericMesh> albanyMesh;
   Omega_h::Mesh& mesh;
 
-  const OmegahPartFilter partFilter;
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   std::vector<Ownership> owners;
@@ -56,7 +50,7 @@ public:
 
   OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& albanyMesh);
   OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& albanyMesh,
-                    const std::string& partId, const int partDim);
+                    const std::string& partId);
 
   ~OmegahConnManager() = default;
 
@@ -196,6 +190,7 @@ public:
     *
     * \returns Vector of local element IDs.
     */
+  using ConnManager::getElementBlock;
   const std::vector<LO> & getElementBlock(const std::string &) const override {
     return localElmIds;
   }
@@ -236,6 +231,8 @@ public:
   std::vector<int> getConnectivityMask (const std::string& sub_part_name) const override;
 
   // Queries the dimension of a part
+  // Do not hide other methods
+  using ConnManager::part_dim;
   int part_dim (const std::string& part_name) const override;
 
   const Ownership* getOwnership(LO localElmtId) const override;
