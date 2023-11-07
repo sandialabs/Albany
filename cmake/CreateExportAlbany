@@ -96,7 +96,6 @@ def run (bin_dir,install_lib_dir, cmake_generator):
             # Simply add the item to the "libs" list
             libs.append(item)
         elif item.startswith("-L"):
-            print (f"-L dir: {item}")
             # We want to get an abs path, with symlinks resolved (if any)
             lib_dir_full = pathlib.Path(item[2:]).resolve()
             if not lib_dir_full.exists() or not lib_dir_full.is_dir():
@@ -131,7 +130,6 @@ def run (bin_dir,install_lib_dir, cmake_generator):
     for lib in libs:
         link_line += f"{lib} "
 
-    print (f"writing to {outfile}")
     with outfile.open('w') as fd:
         fd.write(f'ALBANY_LINK_LIBS="{link_line.strip()}"')
 
