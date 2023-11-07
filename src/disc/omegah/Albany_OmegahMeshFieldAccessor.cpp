@@ -119,7 +119,11 @@ fillVector (Thyra_Vector&        field_vector,
         auto ent_lid = elem_ents_h[ielem*nents_per_elem+ient];
         if (overlapped or owned_h[ent_lid]) {
           auto lid = elem_dof_lids(ielem,offsets[ient]);
-          thyra_data_h[lid] = mesh_data_h[ent_lid*ncomps + icmp];
+          // We may have lid<0 if the dof mgr is restricted to a mesh part
+          // This happens for dirichlet BCs fields.
+          if (lid>=0) {
+            thyra_data_h[lid] = mesh_data_h[ent_lid*ncomps + icmp];
+          }
         }
       }
     }
@@ -166,7 +170,11 @@ saveVector (const Thyra_Vector&  field_vector,
         auto ent_lid = elem_ents_h[ielem*nents_per_elem+ient];
         if (overlapped or owned_h[ent_lid]) {
           auto lid = elem_dof_lids(ielem,offsets[ient]);
-          mesh_data_h[ent_lid*ncomps + icmp] = thyra_data_h[lid];
+          // We may have lid<0 if the dof mgr is restricted to a mesh part
+          // This happens for dirichlet BCs fields.
+          if (lid>=0) {
+            mesh_data_h[ent_lid*ncomps + icmp] = thyra_data_h[lid];
+          }
         }
       }
     }
