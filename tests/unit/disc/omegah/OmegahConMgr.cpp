@@ -105,13 +105,13 @@ Omega_h::Read<Omega_h::I8> markDownward(Omega_h::Mesh& mesh, Omega_h::Read<Omega
 
 
 void checkOwnership(Omega_h::Mesh& mesh, const Albany::OmegahConnManager& connMgr) {
-  const auto localElmIds = connMgr.getElementBlock("ignored");
+  const auto localElmIds = connMgr.getElementBlock();
   auto conMgrVtxGids = Omega_h::HostRead(connMgr.getGlobalDofNumbering(OMEGA_H_VERT));
   auto isVtxOwned = Omega_h::HostRead(mesh.owned(OMEGA_H_VERT));
   std::map<Omega_h::GO, Omega_h::I8> vtxGidOwned;
   for(int i = 0; i < conMgrVtxGids.size(); i++)
     vtxGidOwned[conMgrVtxGids[i]] = isVtxOwned[i];
-  const auto partDim = connMgr.part_dim("ignored");
+  const auto partDim = connMgr.part_dim();
   int dofsPerElm = connMgr.getConnectivitySize(0);
   //this check only supports dofs at vertices
   if(partDim == 1) REQUIRE(dofsPerElm == 2);
@@ -220,7 +220,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
   auto conn_mgr = createOmegahConnManager(mesh);
   conn_mgr->buildConnectivity(*patternC1);
   REQUIRE(3 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
-  const auto localElmIds = conn_mgr->getElementBlock("ignored");
+  const auto localElmIds = conn_mgr->getElementBlock();
   for( auto lid : localElmIds ) {
     auto ptr = conn_mgr->getConnectivity(lid);
     auto elmGid = conn_mgr->getElementGlobalId(lid);
