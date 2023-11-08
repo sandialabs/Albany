@@ -304,11 +304,11 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       rigidBodyModes->setPiroPL(piroParams);
 
   Teuchos::RCP<AbstractDiscretization> disc;
-  if (meshStruct->meshType()=="STK") {
+  if (meshStruct->meshLibName()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
-  } else if (meshStruct->meshType()=="Omega_h") {
+  } else if (meshStruct->meshLibName()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(meshStruct);
     disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #endif
@@ -320,11 +320,11 @@ void
 DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
                                     const Teuchos::RCP<StateInfoStruct>& sis) {
 
-  if (meshStruct->meshType()=="STK") {
+  if (meshStruct->meshLibName()=="STK") {
     auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
     stk_disc->setFieldData(sis);
 #ifdef ALBANY_OMEGAH
-  } else if (meshStruct->meshType()=="Omega_h") {
+  } else if (meshStruct->meshLibName()=="Omega_h") {
     auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
     omh_disc->setFieldData(sis);
 #endif
@@ -337,11 +337,11 @@ void
 DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc) {
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: completeDiscSetup");
 
-  if (meshStruct->meshType()=="STK") {
+  if (meshStruct->meshLibName()=="STK") {
     auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
     stk_disc->updateMesh();
 #ifdef ALBANY_OMEGAH
-  } else if (meshStruct->meshType()=="Omega_h") {
+  } else if (meshStruct->meshLibName()=="Omega_h") {
     auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
     omh_disc->updateMesh();
 #endif

@@ -16,7 +16,7 @@ public:
   virtual ~OmegahGenericMesh () = default;
 
   // ------------- Override from base class ------------- //
-  std::string meshType () const override { return "Omega_h"; }
+  std::string meshLibName () const override { return "Omega_h"; }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis) override;

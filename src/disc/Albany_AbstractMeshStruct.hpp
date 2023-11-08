@@ -34,7 +34,7 @@ struct AbstractMeshStruct {
     enum { DEFAULT_WORKSET_SIZE = 1000 };
 
     //! Internal mesh specs type needed
-    virtual std::string meshType() const = 0;
+    virtual std::string meshLibName() const = 0;
 
     virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                                const Teuchos::RCP<StateInfoStruct>& sis) = 0;
