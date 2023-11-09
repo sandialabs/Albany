@@ -39,8 +39,9 @@ public:
 
   int getNumParams() const {return num_params; }
 
-  void SetupFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                       const Teuchos::RCP<StateInfoStruct>& sis);
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const Teuchos::RCP<StateInfoStruct>& sis,
+                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
 
   void printParts(stk::mesh::MetaData *metaData);
 

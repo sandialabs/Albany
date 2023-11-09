@@ -324,10 +324,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
       x[idx][i] = x[idx][i - 1] + h_dim[idx][i - 1]; // place the coordinates of the element nodes
   }
 
-  SetupFieldData(comm, sis);
-  this->setSideSetFieldData(comm, side_set_sis);
-
-  fieldDataSet = true;
+  GenericSTKMeshStruct::setFieldData(comm, sis, side_set_sis);
 }
 
 template<unsigned Dim, class traits>
@@ -539,13 +536,6 @@ TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm 
 template<>
 void
 TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
-{
-  SetupFieldData(comm, sis);
-}
-
 setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();

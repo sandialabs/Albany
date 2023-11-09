@@ -283,7 +283,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  this->SetupFieldData(comm, sis);
+  GenericSTKMeshStruct::setFieldData(comm, sis, side_set_sis);
 
   if(mesh_data->is_bulk_data_null())
     mesh_data->set_bulk_data(*bulkData);
@@ -332,7 +332,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
     }
   }
 
-  this->setSideSetFieldData(comm, side_set_sis);
+  fieldDataSet = true;
 }
 
 void IossSTKMeshStruct::

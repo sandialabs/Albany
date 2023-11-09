@@ -125,15 +125,6 @@ setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
 }
 
 void SideSetSTKMeshStruct::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
-{
-  this->SetupFieldData(comm, sis);
-  fieldDataSet = true;
-}
-
-void SideSetSTKMeshStruct::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (

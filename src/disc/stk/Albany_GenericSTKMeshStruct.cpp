@@ -76,8 +76,9 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 }
 
 void GenericSTKMeshStruct::
-SetupFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                const Teuchos::RCP<StateInfoStruct>& sis)
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(), std::logic_error,
        "[GenericSTKMeshStruct::SetupFieldData] metaData->initialize(numDim) not yet called" << std::endl);
@@ -158,6 +159,10 @@ SetupFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
 
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
+
+  fieldDataSet = true;
+
+  this->setSideSetFieldData(comm, side_set_sis);
 }
 
 void GenericSTKMeshStruct::setAllPartsIO()
