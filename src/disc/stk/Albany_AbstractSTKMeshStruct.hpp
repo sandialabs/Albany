@@ -177,8 +177,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
       std::map<GO, std::vector<int>>& sideNodeMap) = 0;
 
   // Useful for loading side meshes from file
-  bool side_maps_present;
-  bool ignore_side_maps;
+  bool side_maps_present = false;
+  bool ignore_side_maps  = false;
 
  protected:
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer;

@@ -192,11 +192,11 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   this->initializeSideSetMeshStructs(comm);
 }
 
-void ExtrudedSTKMeshStruct::setFieldData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& sis,
-    const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+void ExtrudedSTKMeshStruct::
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              const unsigned int worksetSize,
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   out->setProcRankAndSize(comm->getRank(), comm->getSize());
   out->setOutputToRootOnly(0);
@@ -214,11 +214,11 @@ void ExtrudedSTKMeshStruct::setFieldData(
   this->setSideSetFieldData(comm, side_set_sis, worksetSize);
 }
 
-void ExtrudedSTKMeshStruct::setBulkData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& /* sis */,
-    const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+void ExtrudedSTKMeshStruct::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+             const Teuchos::RCP<StateInfoStruct>& /* sis */,
+             const unsigned int worksetSize,
+             const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;

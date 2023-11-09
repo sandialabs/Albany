@@ -23,20 +23,20 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   public:
 
   GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                     const Teuchos::RCP<const Teuchos_Comm>& commT,
+                     const Teuchos::RCP<const Teuchos_Comm>& comm,
 		     const int numParams);
 
   ~GmshSTKMeshStruct();
 
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const Teuchos::RCP<StateInfoStruct>& sis,
                      const unsigned int worksetSize,
-                     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {});
 
-  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                    const Teuchos::RCP<StateInfoStruct>& sis,
                     const unsigned int worksetSize,
-                    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+                    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {});
 
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const {return false; }
@@ -48,7 +48,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // Set boundary information.
   // Includes sideset and nodeset names and counts.
-  void set_boundaries( const Teuchos::RCP<const Teuchos_Comm>& commT,
+  void set_boundaries( const Teuchos::RCP<const Teuchos_Comm>& comm,
                        std::vector<std::string>&               ssNames,
                        std::vector<std::string>&               nsNames);
 
@@ -73,12 +73,12 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
 
   // Gets the physical name-tag pairs for version 4.1 meshes
   void get_physical_names( std::map<std::string, int>&             physical_names,
-                           const Teuchos::RCP<const Teuchos_Comm>& commT,
+                           const Teuchos::RCP<const Teuchos_Comm>& comm,
                            int dim);
 
   // Share physical_names map with all other processes
   void broadcast_physical_names( std::map<std::string, int>&             physical_names,
-                                 const Teuchos::RCP<const Teuchos_Comm>& commT);
+                                 const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   // Read the physical names for Gmsh V 4.1 
   // to populate the physical_names map
@@ -93,7 +93,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void determine_file_type( bool& legacy, bool& binary, bool& ascii);
 
   // Broadcast topology of the mesh from 0 to all over procs
-  void broadcast_topology( const Teuchos::RCP<const Teuchos_Comm>& commT);
+  void broadcast_topology( const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   // Sets NumNodes for ascii msh files
   void set_NumNodes( std::ifstream& ifile);
@@ -144,7 +144,7 @@ class GmshSTKMeshStruct : public GenericSTKMeshStruct
   void broadcast_name_tag_pair( std::vector< std::string>               names,
                                 int*                                    tags_array,
                                 int                                     pair_number,
-                                const Teuchos::RCP<const Teuchos_Comm>& commT,
+                                const Teuchos::RCP<const Teuchos_Comm>& comm,
                                 std::map< std::string, int>&            physical_names);
 
   // Reads a single physical name from ifile.

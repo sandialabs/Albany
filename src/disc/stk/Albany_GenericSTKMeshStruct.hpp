@@ -19,12 +19,18 @@ class CombineAndScatterManager;
 class GenericSTKMeshStruct : public AbstractSTKMeshStruct
 {
 public:
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
-  const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
+  GenericSTKMeshStruct(
+                const Teuchos::RCP<Teuchos::ParameterList>& params,
+                const int numDim /*old default: -1*/, const int numParams);
+
+  virtual ~GenericSTKMeshStruct() = default;
+
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs();
+  const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs() const;
 
   //! Re-load balance adapted mesh
-  void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                            const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
+  void rebalanceAdaptedMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                             const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   bool useCompositeTet(){ return compositeTet; }
 
@@ -37,17 +43,10 @@ public:
                                        std::map<GO,std::vector<int>>& sideNodeMap);
 
   int getNumParams() const {return num_params; }
-protected:
-  GenericSTKMeshStruct(
-                const Teuchos::RCP<Teuchos::ParameterList>& params,
-                const int numDim /*old default: -1*/, const int numParams);  
 
-  virtual ~GenericSTKMeshStruct() = default;
-
-  void SetupFieldData(
-                const Teuchos::RCP<const Teuchos_Comm>& commT,
-                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                const int worksetSize_);  
+  void SetupFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                       const Teuchos::RCP<StateInfoStruct>& sis,
+                       const int worksetSize_);  
 
   void printParts(stk::mesh::MetaData *metaData);
 
@@ -58,7 +57,7 @@ protected:
   int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
   //! Re-load balance mesh
-  void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
+  void rebalanceInitialMesh (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   //! Sets all mesh parts as IO parts (will be written to file)
   void setAllPartsIO();
@@ -70,40 +69,37 @@ protected:
   void checkNodeSetsFromSideSetsIntegrity ();
 
   //! Creates empty mesh structs if required (and not already present)
-  void initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& commT);
+  void initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   //! Creates empty mesh structs if required (and not already present)
-  void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT);
+  void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
-  void setSideSetFieldData(
-        const Teuchos::RCP<const Teuchos_Comm>& commT,
-        const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-        int worksetSize);
+  void setSideSetFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                            const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+                            int worksetSize);
 
-  void setSideSetBulkData(
-        const Teuchos::RCP<const Teuchos_Comm>& commT,
-        const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-        int worksetSize);
+  void setSideSetBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                           const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+                           int worksetSize);
 
-  void setSideSetFieldAndBulkData(
-        const Teuchos::RCP<const Teuchos_Comm>& commT,
-        const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
-        int worksetSize)
-        {
-          setSideSetFieldData(commT, side_set_sis, worksetSize);
-          setSideSetBulkData(commT, side_set_sis, worksetSize);
-        }
+  void setSideSetFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                                   const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
+                                   int worksetSize)
+  {
+    setSideSetFieldData(comm, side_set_sis, worksetSize);
+    setSideSetBulkData(comm, side_set_sis, worksetSize);
+  }
 
   //! Loads from file input required fields not found in the mesh
-  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& commT);
+  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   // Routines to load, fill, or compute a field
   void loadField (const std::string& field_name,
                   const Teuchos::ParameterList& params,
                   Teuchos::RCP<Thyra_MultiVector>& field_mv,
                   const CombineAndScatterManager& cas_manager,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
                   bool node, bool scalar, bool layered,
                   const Teuchos::RCP<Teuchos::FancyOStream> out);
   void fillField (const std::string& field_name,
@@ -152,7 +148,7 @@ protected:
 
   Teuchos::RCP<Teuchos::ParameterList> params;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs;
 
   bool requiresAutomaticAura;
 

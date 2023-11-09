@@ -33,9 +33,9 @@ namespace Albany {
 
 DiscretizationFactory::DiscretizationFactory(
         const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-        const Teuchos::RCP<const Teuchos_Comm>& commT_,
+        const Teuchos::RCP<const Teuchos_Comm>& comm_,
         const bool explicit_scheme_) :
-          commT(commT_),
+          comm(comm_),
           explicit_scheme(explicit_scheme_) 
 {
   discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
@@ -51,7 +51,7 @@ DiscretizationFactory::DiscretizationFactory(
 Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
 DiscretizationFactory::createMeshSpecs() {
     // First, create the mesh struct
-    meshStruct = createMeshStruct(discParams, commT, num_params);
+    meshStruct = createMeshStruct(discParams, comm, num_params);
     return meshStruct->getMeshSpecs();
 }
 
@@ -215,7 +215,7 @@ DiscretizationFactory::setMeshStructFieldData(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
     TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-    meshStruct->setFieldData(commT, sis,
+    meshStruct->setFieldData(comm, sis,
             meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis); 
 }
 
@@ -231,7 +231,7 @@ DiscretizationFactory::setMeshStructBulkData(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
     TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
-    meshStruct->setBulkData(commT, sis,
+    meshStruct->setBulkData(comm, sis,
             meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis);
 }
 
@@ -257,11 +257,11 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
   Teuchos::RCP<AbstractDiscretization> disc;
   if (meshStruct->meshType()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
-    disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
   } else if (meshStruct->meshType()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(meshStruct);
-    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, commT, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #endif
   }
   return disc;
@@ -269,7 +269,7 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
 void
 DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
-                                    const Teuchos::RCP<Albany::StateInfoStruct>& sis) {
+                                    const Teuchos::RCP<StateInfoStruct>& sis) {
 
   if (meshStruct->meshType()=="STK") {
     auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);

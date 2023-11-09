@@ -22,21 +22,21 @@ namespace Albany {
 
     //! Default constructor
     STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                     const Teuchos::RCP<const Teuchos_Comm>& commT,
-		     const int numParams);
+                     const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const int numParams);
 
-    ~STK3DPointStruct();
+    ~STK3DPointStruct() = default;
 
     //! Sets mesh generation parameters
-    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                       const Teuchos::RCP<StateInfoStruct>& sis,
                        const unsigned int worksetSize,
-                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+                       const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {});
 
-    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                      const Teuchos::RCP<StateInfoStruct>& sis,
                       const unsigned int worksetSize,
-                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+                      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {});
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -47,7 +47,7 @@ namespace Albany {
   private:
 
     //! Build the mesh
-    void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+    void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     //! Build a parameter list that contains valid input parameters
     Teuchos::RCP<const Teuchos::ParameterList>

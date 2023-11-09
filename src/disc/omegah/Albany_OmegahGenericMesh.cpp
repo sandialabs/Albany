@@ -5,7 +5,7 @@ namespace Albany
 {
 
 void OmegahGenericMesh::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
               const unsigned int worksetSize,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)

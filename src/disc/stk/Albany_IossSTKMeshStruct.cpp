@@ -8,8 +8,10 @@
 
 #ifdef ALBANY_SEACAS
 
-#include <iostream>
+#include "Albany_Utils.hpp"
+#include "Albany_CommUtils.hpp"
 
+#include <Teuchos_RCPStdSharedPtrConversions.hpp>
 #include "Teuchos_VerboseObject.hpp"
 
 #include <Shards_BasicTopologies.hpp>
@@ -24,9 +26,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "Albany_Utils.hpp"
+#include <iostream>
 
-#include <Teuchos_RCPStdSharedPtrConversions.hpp>
 
 namespace {
 
@@ -45,33 +46,35 @@ void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
 
 } // Anonymous namespace
 
-Albany::IossSTKMeshStruct::IossSTKMeshStruct(
-                                             const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
-					     const int numParams_) :
-  GenericSTKMeshStruct(params_, -1, numParams_),
-  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  useSerialMesh(false),
-  periodic(params->get("Periodic BC", false)),
-  m_hasRestartSolution(false),
-  m_restartDataTime(-1.0),
-  m_solutionFieldHistoryDepth(0)
+namespace Albany
+{
+
+IossSTKMeshStruct::
+IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
+					        const int numParams_)
+ : GenericSTKMeshStruct(params_, -1, numParams_)
+ , out(Teuchos::VerboseObjectBase::getDefaultOStream())
+ , useSerialMesh(false)
+ , periodic(params->get("Periodic BC", false))
+ , m_hasRestartSolution(false)
+ , m_restartDataTime(-1.0)
+ , m_solutionFieldHistoryDepth(0)
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
-
   std::vector<std::string> entity_rank_names = stk::mesh::entity_rank_names();
 
-  const Teuchos::MpiComm<int>* theComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
+  auto mpiComm = getMpiCommFromTeuchosComm(comm);
 
-  mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(*theComm->getRawMpiComm()));
+  mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(mpiComm));
 
   // Use Greg Sjaardema's capability to repartition on the fly.
   //    Several partitioning choices: rcb, rib, hsfc, kway, kway-gemo, linear, random
   //          linear does not require Zoltan or metis
-  if (params->get<bool>("Use Serial Mesh", false) && commT->getSize() > 1){
+  if (params->get<bool>("Use Serial Mesh", false) && comm->getSize() > 1){
   //    Option  external  reads the nemesis files, and must be the default
 #ifdef ALBANY_ZOLTAN
     mesh_data->property_add(Ioss::Property("DECOMPOSITION_METHOD", "rib"));
@@ -212,7 +215,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // Construct MeshSpecsStruct
   {
     const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(
         ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
         ebNameToIndex));
   }
@@ -233,7 +236,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->setAllPartsIO();
 
   // Create a mesh specs object for EACH side set
-  this->initializeSideSetMeshSpecs(commT);
+  this->initializeSideSetMeshSpecs(comm);
 
   // Get upper bound on sideset workset sizes by using Ioss element counts on side blocks
   if (worksetSize == ebSizeMax) {
@@ -273,10 +276,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   }
 
   // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(commT);
+  this->initializeSideSetMeshStructs(comm);
 }
 
-Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
+IossSTKMeshStruct::~IossSTKMeshStruct()
 {
   // Explicitly delete these in exactly this order. There are three
   // reasons. First, StkMeshIoBroker does not have a MetaData getter that
@@ -295,14 +298,13 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
   mesh_data = Teuchos::null;
 }
 
-void
-Albany::IossSTKMeshStruct::setFieldData (
-          const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-          const unsigned int worksetSize,
-          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
+void IossSTKMeshStruct::
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              const unsigned int worksetSize,
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  this->SetupFieldData(commT, sis, worksetSize);
+  this->SetupFieldData(comm, sis, worksetSize);
 
   if(mesh_data->is_bulk_data_null())
     mesh_data->set_bulk_data(*bulkData);
@@ -328,7 +330,7 @@ Albany::IossSTKMeshStruct::setFieldData (
 
     // trick to avoid hanging
 
-    if(commT->getRank() == 0){ // read in the mesh on PE 0
+    if(comm->getRank() == 0){ // read in the mesh on PE 0
       mesh_data->populate_bulk_data();
 
       if (this->numDim!=3)
@@ -454,10 +456,8 @@ Albany::IossSTKMeshStruct::setFieldData (
     }
   } else {
     // We put all the fields as 'missing'
-    const stk::mesh::FieldVector& fields = metaData->get_fields();
-    for (decltype(fields.size()) i=0; i<fields.size(); ++i) {
-//      TODO, when compiler allows, replace following with this for performance: missing.emplace_back(fields[i],fields[i]->name());
-        missing.push_back(stk::io::MeshField(fields[i],fields[i]->name()));
+    for (const auto& f : metaData->get_fields()) {
+        missing.emplace_back(f,f->name());
     }
   }
 
@@ -478,28 +478,27 @@ Albany::IossSTKMeshStruct::setFieldData (
     // Only proc 0 actually read the mesh, and can confirm whether or not the side maps were present
     // Unfortunately, Teuchos does not have a specialization for type bool when it comes to communicators, so we need ints
     int bool_to_int = side_maps_present ? 1 : 0;
-    Teuchos::broadcast(*commT,0,1,&bool_to_int);
+    Teuchos::broadcast(*comm,0,1,&bool_to_int);
     side_maps_present = bool_to_int == 1 ? true : false;
   }
 
   // Loading required input fields from file
-  //this->loadRequiredInputFields (commT);
+  //this->loadRequiredInputFields (comm);
 
   // Rebalance the mesh before starting the simulation if indicated
-  rebalanceInitialMeshT(commT);
+  rebalanceInitialMesh (comm);
 
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();
 
-  this->setSideSetFieldData(commT, side_set_sis, worksetSize);
+  this->setSideSetFieldData(comm, side_set_sis);
 }
 
-void
-Albany::IossSTKMeshStruct::setBulkData (
-          const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-          const unsigned int worksetSize,
-          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
+void IossSTKMeshStruct::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+             const Teuchos::RCP<StateInfoStruct>& sis,
+             const unsigned int worksetSize,
+             const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   mesh_data->add_all_mesh_fields_as_input_fields(); // KL: this adds "solution field"
   std::vector<stk::io::MeshField> missing;
@@ -524,7 +523,7 @@ Albany::IossSTKMeshStruct::setBulkData (
     // trick to avoid hanging
     bulkData->modification_begin();
 
-    if(commT->getRank() == 0){ // read in the mesh on PE 0
+    if(comm->getRank() == 0){ // read in the mesh on PE 0
 
 
       //stk::io::process_mesh_bulk_data(region, *bulkData);
@@ -749,27 +748,27 @@ Albany::IossSTKMeshStruct::setBulkData (
     // Only proc 0 actually read the mesh, and can confirm whether or not the side maps were present
     // Unfortunately, Teuchos does not have a specialization for type bool when it comes to communicators, so we need ints
     int bool_to_int = side_maps_present ? 1 : 0;
-    Teuchos::broadcast(*commT,0,1,&bool_to_int);
+    Teuchos::broadcast(*comm,0,1,&bool_to_int);
     side_maps_present = bool_to_int == 1 ? true : false;
   }
 
   // Loading required input fields from file
-  this->loadRequiredInputFields (commT);
+  this->loadRequiredInputFields (comm);
 
   // Rebalance the mesh before starting the simulation if indicated
-  rebalanceInitialMeshT(commT);
+  rebalanceInitialMesh(comm);
 
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetBulkData(commT, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm, side_set_sis);
 
   fieldAndBulkDataSet = true;
 }
 
 double
-Albany::IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
+IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
 {
   TEUCHOS_ASSERT(step >= 0 && step < m_solutionFieldHistoryDepth);
 
@@ -779,7 +778,7 @@ Albany::IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
 }
 
 void
-Albany::IossSTKMeshStruct::loadOrSetCoordinates3d(int index)
+IossSTKMeshStruct::loadOrSetCoordinates3d(int index)
 {
   const std::string coords3d_name = "coordinates3d";
 
@@ -834,7 +833,7 @@ Albany::IossSTKMeshStruct::loadOrSetCoordinates3d(int index)
 
 
 void
-Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
+IossSTKMeshStruct::loadSolutionFieldHistory(int step)
 {
   TEUCHOS_ASSERT(step >= 0 && step < m_solutionFieldHistoryDepth);
 
@@ -843,7 +842,7 @@ Albany::IossSTKMeshStruct::loadSolutionFieldHistory(int step)
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
+IossSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("Valid IOSS_DiscParams");
@@ -860,5 +859,7 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
 
   return validPL;
 }
+
+} // namespace Albany
 
 #endif // ALBANY_SEACAS

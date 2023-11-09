@@ -21,7 +21,7 @@ public:
                         const Teuchos::RCP<const Teuchos_Comm>& commT,
                         const int numParams);
 
-  virtual ~SideSetSTKMeshStruct();
+  virtual ~SideSetSTKMeshStruct() = default;
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,

@@ -4,15 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <iostream>
-#include "Teuchos_VerboseObject.hpp"
-#include "Teuchos_RCPStdSharedPtrConversions.hpp"
-
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
+#include <Albany_STKNodeSharing.hpp>
+#include <Albany_ThyraUtils.hpp>
+#include <Albany_CombineAndScatterManager.hpp>
+#include <Albany_GlobalLocalIndexer.hpp>
+
 #include "Albany_KokkosTypes.hpp"
 #include "Albany_Gather.hpp"
+#include "Albany_CommUtils.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
@@ -21,15 +24,9 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-#include "Albany_Utils.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/CreateAdjacentEntities.hpp>
 #include <stk_mesh/base/MeshBuilder.hpp>
-
-#include <Albany_STKNodeSharing.hpp>
-#include <Albany_ThyraUtils.hpp>
-#include <Albany_CombineAndScatterManager.hpp>
-#include <Albany_GlobalLocalIndexer.hpp>
 
 // Expression reading
 #ifdef ALBANY_PANZER_EXPR_EVAL
@@ -43,6 +40,11 @@
 #include <percept/stk_rebalance/ZoltanPartition.hpp>
 #include <percept/stk_rebalance/RebalanceUtils.hpp>
 #endif
+
+#include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_RCPStdSharedPtrConversions.hpp"
+
+#include <iostream>
 
 namespace Albany
 {
@@ -73,8 +75,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
   meshSpecs.resize(1);
 
   fieldAndBulkDataSet = false;
-  side_maps_present = false;
-  ignore_side_maps = false;
 }
 
 void GenericSTKMeshStruct::SetupFieldData(
@@ -88,8 +88,8 @@ void GenericSTKMeshStruct::SetupFieldData(
 
 
   if (bulkData.is_null()) {
-     const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get());
-     stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(*mpiComm->getRawMpiComm());
+     auto mpiComm = getMpiCommFromTeuchosComm(comm);
+     stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(mpiComm);
      if(requiresAutomaticAura)
        meshBuilder.set_aura_option(stk::mesh::BulkData::AUTO_AURA);
      else
@@ -292,20 +292,20 @@ void GenericSTKMeshStruct::setDefaultCoordinates3d ()
   }
 }
 
-void GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm){
+void GenericSTKMeshStruct::rebalanceInitialMesh (const Teuchos::RCP<const Teuchos_Comm>& comm){
 
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
 
   if(rebalance) {
     TEUCHOS_TEST_FOR_EXCEPTION (this->side_maps_present, std::runtime_error,
                                 "Error! Rebalance is not supported when side maps are present.\n");
-    rebalanceAdaptedMeshT(params, comm);
+    rebalanceAdaptedMesh (params, comm);
   }
 }
 
 void GenericSTKMeshStruct::
-rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                      const Teuchos::RCP<const Teuchos::Comm<int> >& comm)
+rebalanceAdaptedMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                      const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
 // Zoltan is required here
 #ifdef ALBANY_ZOLTAN
