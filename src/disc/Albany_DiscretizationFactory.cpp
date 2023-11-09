@@ -157,13 +157,6 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
   return Teuchos::null;
 }
 
-Teuchos::RCP<AbstractDiscretization>
-DiscretizationFactory::createDiscretization(unsigned int neq,
-        const Teuchos::RCP<StateInfoStruct>& sis,
-        const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) 
-{
-    return createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, rigidBodyModes);
-}
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretization(
@@ -224,12 +217,6 @@ setMeshStructBulkData()
     meshStruct->setBulkData(comm);
 }
 
-Teuchos::RCP<AbstractDiscretization>
-DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
-        const int neq,
-        const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) {
-    return createDiscretizationFromInternalMeshStruct(neq, empty_side_set_equations, rigidBodyModes);
-}
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretizationFromInternalMeshStruct(

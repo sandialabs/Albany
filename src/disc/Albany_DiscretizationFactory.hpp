@@ -39,18 +39,10 @@ class DiscretizationFactory {
     createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
                       Teuchos::RCP<const Teuchos_Comm> comm, const int numParams);
 
-    Teuchos::RCP<AbstractMeshStruct> getMeshStruct() {
-      return meshStruct;
-    }
-
     Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > createMeshSpecs();
 
     Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh);
 
-    Teuchos::RCP<AbstractDiscretization>
-    createDiscretization(unsigned int num_equations,
-                         const Teuchos::RCP<StateInfoStruct>& sis,
-                         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     Teuchos::RCP<AbstractDiscretization>
