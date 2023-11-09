@@ -409,6 +409,8 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 
   this->setSideSetFieldData(comm, side_set_sis);
+
+  fieldDataSet = true;
 }
 
 void IossSTKMeshStruct::
@@ -515,7 +517,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
   this->setSideSetBulkData(comm);
 
-  fieldAndBulkDataSet = true;
+  bulkDataSet = true;
 }
 
 double

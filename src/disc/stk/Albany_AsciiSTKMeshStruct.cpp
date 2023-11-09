@@ -423,6 +423,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 {
   this->SetupFieldData(comm, sis);
   this->setSideSetFieldData(comm, side_set_sis);
+  fieldDataSet = true;
 }
 
 void AsciiSTKMeshStruct::
@@ -715,7 +716,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
-  fieldAndBulkDataSet = true;
+  bulkDataSet = true;
+
   this->setSideSetBulkData(comm);
 }
 

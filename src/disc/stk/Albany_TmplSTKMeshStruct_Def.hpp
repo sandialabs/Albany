@@ -326,6 +326,8 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
   SetupFieldData(comm, sis);
   this->setSideSetFieldData(comm, side_set_sis);
+
+  fieldDataSet = true;
 }
 
 template<unsigned Dim, class traits>
@@ -347,7 +349,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMesh(comm);
 
-  fieldAndBulkDataSet = true;
+  bulkDataSet = true;
 
   // Finally, setup the side set meshes (if any)
   this->setSideSetBulkData(comm);

@@ -168,7 +168,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
 
   std::map<std::string, Teuchos::RCP<AbstractSTKMeshStruct>> sideSetMeshStructs;
 
-  bool fieldAndBulkDataSet;
+  bool fieldDataSet = false;
+  bool bulkDataSet  = false;
 
   virtual void
   buildCellSideNodeNumerationMap(
