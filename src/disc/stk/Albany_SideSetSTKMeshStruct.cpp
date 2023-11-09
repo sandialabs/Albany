@@ -131,9 +131,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 void SideSetSTKMeshStruct::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-             const Teuchos::RCP<StateInfoStruct>& /* sis */,
-             const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (
       parentMeshStruct->ssPartVec.count(parentMeshSideSetName)==0, std::logic_error,

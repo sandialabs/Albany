@@ -19,9 +19,7 @@ public:
   {
     printf("TODO: add code to setup data to store states to mesh.\n");
   }
-  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                    const Teuchos::RCP<StateInfoStruct>& sis,
-                    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override;
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   Omega_h::Read<Omega_h::I8>
   create_ns_tag (const std::string& name,

@@ -585,8 +585,6 @@ setSideSetFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 void GenericSTKMeshStruct::
-setSideSetBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   if (this->sideSetMeshStructs.size()>0) {
     // Dummy sis if not present in the maps for a given side set.

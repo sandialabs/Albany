@@ -190,7 +190,7 @@ DiscretizationFactory::createDiscretization(
         setFieldData(it.second,{});
       }
     }
-    setMeshStructBulkData(sis, side_set_sis);
+    setMeshStructBulkData();
     completeDiscSetup(result);
 
     return result;
@@ -217,19 +217,11 @@ DiscretizationFactory::setMeshStructFieldData(
     meshStruct->setFieldData(comm, sis, side_set_sis); 
 }
 
-void
-DiscretizationFactory::setMeshStructBulkData(
-        const Teuchos::RCP<StateInfoStruct>& sis) {
-    setMeshStructBulkData(sis, empty_side_set_sis);
-}
-
-void
-DiscretizationFactory::setMeshStructBulkData(
-        const Teuchos::RCP<StateInfoStruct>& sis,
-        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+void DiscretizationFactory::
+setMeshStructBulkData()
 {
     TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
-    meshStruct->setBulkData(comm, sis, side_set_sis);
+    meshStruct->setBulkData(comm);
 }
 
 Teuchos::RCP<AbstractDiscretization>

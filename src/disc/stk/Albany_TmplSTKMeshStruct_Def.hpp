@@ -330,9 +330,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
 template<unsigned Dim, class traits>
 void TmplSTKMeshStruct<Dim, traits>::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-             const Teuchos::RCP<StateInfoStruct>& /* sis */,
-             const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 
@@ -352,7 +350,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   fieldAndBulkDataSet = true;
 
   // Finally, setup the side set meshes (if any)
-  this->setSideSetBulkData(comm, side_set_sis);
+  this->setSideSetBulkData(comm);
 }
 
 template <unsigned Dim, class traits>
@@ -544,12 +542,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   SetupFieldData(comm, sis);
 }
 
-template<>
-void
-TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& comm,
-                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
+setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 

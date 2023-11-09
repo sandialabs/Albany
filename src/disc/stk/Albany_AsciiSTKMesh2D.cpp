@@ -308,9 +308,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 void AsciiSTKMesh2D::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-             const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
-             const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 
@@ -440,7 +438,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   this->loadRequiredInputFields (comm);
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetFieldAndBulkData(comm, side_set_sis);
+  this->setSideSetBulkData(comm);
 
   fieldAndBulkDataSet = true;
 }

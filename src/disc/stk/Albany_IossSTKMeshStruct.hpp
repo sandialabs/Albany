@@ -32,9 +32,7 @@ namespace Albany {
                        const Teuchos::RCP<StateInfoStruct>& sis,
                        const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {});
 
-    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                      const Teuchos::RCP<StateInfoStruct>& sis,
-                      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {});
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
     double getSolutionFieldHistoryStamp(int step) const;

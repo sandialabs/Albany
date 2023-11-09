@@ -61,9 +61,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 void STK3DPointStruct::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-             const Teuchos::RCP<StateInfoStruct>& /* sis */,
-             const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   std::cout << "---3DPoint::setBulkData---" << std::endl;
   metaData->commit();
@@ -83,7 +81,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   bulkData->modification_end();
 
   fieldAndBulkDataSet = true;
-  this->setSideSetBulkData(comm, side_set_sis);
+  this->setSideSetBulkData(comm);
 }
 
 void
