@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "Albany_SideSetSTKMeshStruct.hpp"
+#include "Albany_CommUtils.hpp"
 
 #include "Teuchos_RCPStdSharedPtrConversions.hpp"
 
@@ -27,10 +28,11 @@
 namespace Albany
 {
 
-SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
-                                            const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                            const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                            const int numParams) :
+SideSetSTKMeshStruct::
+SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
+                      const Teuchos::RCP<Teuchos::ParameterList>& params,
+                      const Teuchos::RCP<const Teuchos_Comm>& comm,
+                      const int numParams) :
   GenericSTKMeshStruct(params, -1, numParams)
 {
 
@@ -103,8 +105,8 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, this->numDim, nsNames, ssNames, worksetSize,
                                                                 ebn, ebNameToIndex));
 
-  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
-  stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(*mpiComm->getRawMpiComm());
+  auto mpiComm = getMpiCommFromTeuchosComm(comm);
+  stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(mpiComm);
   meshBuilder.set_aura_option(stk::mesh::BulkData::NO_AUTO_AURA);
   meshBuilder.set_bucket_capacity(worksetSize);
   meshBuilder.set_add_fmwk_data(false);
@@ -112,35 +114,32 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
   bulkData = Teuchos::rcp(bulkDataPtr.release());
 }
 
-SideSetSTKMeshStruct::~SideSetSTKMeshStruct()
-{
-  // Nothing to be done here
-}
-
-void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
-                                              const std::string& sideSetName)
+void SideSetSTKMeshStruct::
+setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
+                   const std::string& sideSetName)
 {
   parentMeshStruct      = Teuchos::rcpFromRef(parentMeshStruct_);
   parentMeshSideSetName = sideSetName;
 }
 
-void SideSetSTKMeshStruct::setFieldData (
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::RCP<StateInfoStruct>& sis,
-      const unsigned int worksetSize,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
+void SideSetSTKMeshStruct::
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              const unsigned int worksetSize,
+              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
-  this->SetupFieldData(commT, sis, worksetSize);
+  this->SetupFieldData(comm, sis, worksetSize);
 }
 
-void SideSetSTKMeshStruct::setBulkData (
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::RCP<StateInfoStruct>& /* sis */,
-      const unsigned int /* worksetSize */,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
+void SideSetSTKMeshStruct::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+             const Teuchos::RCP<StateInfoStruct>& /* sis */,
+             const unsigned int /* worksetSize */,
+             const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (parentMeshStruct->ssPartVec.find(parentMeshSideSetName)==parentMeshStruct->ssPartVec.end(), std::logic_error,
-                              "Error! The side set " << parentMeshSideSetName << " is not present in the input mesh.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      parentMeshStruct->ssPartVec.count(parentMeshSideSetName)==0, std::logic_error,
+      "Error! The side set " << parentMeshSideSetName << " is not present in the input mesh.\n");
 
   // Extracting the side part and updating the selector
   const stk::mesh::Part& ss_part = *parentMeshStruct->ssPartVec.find(parentMeshSideSetName)->second;
@@ -149,11 +148,10 @@ void SideSetSTKMeshStruct::setBulkData (
   const stk::mesh::MetaData& inputMetaData = *parentMeshStruct->metaData;
   const stk::mesh::BulkData& inputBulkData = *parentMeshStruct->bulkData;
 
-  typedef AbstractSTKFieldContainer::STKFieldType STKFieldType;
-  const STKFieldType& parent_coordinates_field   = *parentMeshStruct->getCoordinatesField();
-  const STKFieldType& parent_coordinates_field3d = *parentMeshStruct->getCoordinatesField3d();
-  STKFieldType&       coordinates_field          = *fieldContainer->getCoordinatesField();
-  STKFieldType&       coordinates_field3d        = *fieldContainer->getCoordinatesField3d();
+  const auto& parent_coordinates_field   = *parentMeshStruct->getCoordinatesField();
+  const auto& parent_coordinates_field3d = *parentMeshStruct->getCoordinatesField3d();
+        auto& coordinates_field          = *fieldContainer->getCoordinatesField();
+        auto& coordinates_field3d        = *fieldContainer->getCoordinatesField3d();
 
   // Now we can extract the entities
   std::vector<stk::mesh::Entity> sides, nodes;
@@ -212,7 +210,7 @@ void SideSetSTKMeshStruct::setBulkData (
   }
 
   // Loading the fields from file
-  this->loadRequiredInputFields (commT);
+  this->loadRequiredInputFields (comm);
 
   // Insertion of entities end
   bulkData->modification_end();

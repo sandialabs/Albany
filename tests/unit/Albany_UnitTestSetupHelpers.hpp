@@ -65,7 +65,7 @@ createTestDisc (const Teuchos::RCP<const Teuchos_Comm>& comm,
     layout->dimensions(info->dim);
     sis->push_back(info);
   }
-  return factory.createDiscretization(neq,sis);
+  return factory.createDiscretization(neq,{},sis,{});
 }
 
 // Helper to get topology/FEBasis/cubature given mesh dim

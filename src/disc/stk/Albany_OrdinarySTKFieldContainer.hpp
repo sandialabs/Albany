@@ -19,7 +19,6 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
       const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
       const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
       const int                                                 numDim_,
-      const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
       const int                                                 num_params);
 
   OrdinarySTKFieldContainer(
@@ -132,6 +131,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
   Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*>
                                               solution_field_dxdp;
   AbstractSTKFieldContainer::STKFieldType* residual_field;
+
+  bool output_sens_field = false;
 };
 
 }  // namespace Albany

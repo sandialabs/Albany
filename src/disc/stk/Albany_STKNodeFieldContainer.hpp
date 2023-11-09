@@ -8,7 +8,6 @@
 #define ALBANY_STK_NODE_FIELD_CONTAINER_HPP
 
 #include "Albany_AbstractNodeFieldContainer.hpp"
-#include "Albany_BucketArray.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_StateInfoStruct.hpp" // For StateView
