@@ -195,7 +195,6 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 void ExtrudedSTKMeshStruct::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
-              const unsigned int worksetSize,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   out->setProcRankAndSize(comm->getRank(), comm->getSize());
@@ -206,18 +205,17 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   auto it_sis = side_set_sis.find("basalside");
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setFieldData (comm, basal_sis);
 
   // Setting up the field container
-  this->SetupFieldData(comm, sis, worksetSize);
+  this->SetupFieldData(comm, sis);
 
-  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
+  this->setSideSetFieldData(comm, side_set_sis);
 }
 
 void ExtrudedSTKMeshStruct::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
              const Teuchos::RCP<StateInfoStruct>& /* sis */,
-             const unsigned int worksetSize,
              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
@@ -229,7 +227,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   auto it_sis = side_set_sis.find("basalside");
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_sis, worksetSize);
+  this->sideSetMeshStructs.at("basalside")->setBulkData (comm, basal_sis);
 
   constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
 
@@ -598,7 +596,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   // We can finally extract the side set meshes and set the fields and bulk data in all of them
-  this->setSideSetBulkData(comm, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm, side_set_sis);
 
   if (params->get("Export 2D Data",false)) {
     // We export the basal mesh in GMSH format

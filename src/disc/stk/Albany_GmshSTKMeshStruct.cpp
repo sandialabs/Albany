@@ -256,14 +256,13 @@ void GmshSTKMeshStruct::setFieldData(
     const Teuchos::RCP<StateInfoStruct>& sis,
     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  this->SetupFieldData (comm, sis, worksetSize);
-  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
+  this->SetupFieldData (comm, sis);
+  this->setSideSetFieldData(comm, side_set_sis);
 }
 
 void GmshSTKMeshStruct::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const Teuchos::RCP<StateInfoStruct>& /* sis */,
-    const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   metaData->commit();
@@ -371,7 +370,7 @@ void GmshSTKMeshStruct::setBulkData(
   this->loadRequiredInputFields (comm);
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetBulkData(comm, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm, side_set_sis);
 
   fieldAndBulkDataSet = true;
 }

@@ -45,8 +45,7 @@ public:
   int getNumParams() const {return num_params; }
 
   void SetupFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                       const Teuchos::RCP<StateInfoStruct>& sis,
-                       const int worksetSize_);  
+                       const Teuchos::RCP<StateInfoStruct>& sis);
 
   void printParts(stk::mesh::MetaData *metaData);
 
@@ -76,19 +75,16 @@ public:
 
   //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
   void setSideSetFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                            const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                            int worksetSize);
+                            const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
 
   void setSideSetBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                           const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                           int worksetSize);
+                           const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
 
-  void setSideSetFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                                   const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-                                   int worksetSize)
+  void setSideSetFieldAndBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm,
+                                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
   {
-    setSideSetFieldData(comm, side_set_sis, worksetSize);
-    setSideSetBulkData(comm, side_set_sis, worksetSize);
+    setSideSetFieldData(comm, side_set_sis);
+    setSideSetBulkData(comm, side_set_sis);
   }
 
   //! Loads from file input required fields not found in the mesh

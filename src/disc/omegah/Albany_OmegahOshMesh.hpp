@@ -13,7 +13,6 @@ public:
 
   void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                     const Teuchos::RCP<StateInfoStruct>& sis,
-                    const unsigned int worksetSize,
                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override
   {
     throw NotYetImplemented("OmegahOshMesh::setBulkData");

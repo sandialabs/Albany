@@ -301,10 +301,9 @@ IossSTKMeshStruct::~IossSTKMeshStruct()
 void IossSTKMeshStruct::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
-              const unsigned int worksetSize,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  this->SetupFieldData(comm, sis, worksetSize);
+  this->SetupFieldData(comm, sis);
 
   if(mesh_data->is_bulk_data_null())
     mesh_data->set_bulk_data(*bulkData);
@@ -497,7 +496,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 void IossSTKMeshStruct::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
              const Teuchos::RCP<StateInfoStruct>& sis,
-             const unsigned int worksetSize,
              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   mesh_data->add_all_mesh_fields_as_input_fields(); // KL: this adds "solution field"

@@ -145,7 +145,6 @@ template<unsigned Dim>
 void OmegahBoxMesh<Dim>::setBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& comm,
     const Teuchos::RCP<StateInfoStruct>& sis,
-    const unsigned int worksetSize,
     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   // We can finally extract the side set meshes and set the fields and bulk data in all of them

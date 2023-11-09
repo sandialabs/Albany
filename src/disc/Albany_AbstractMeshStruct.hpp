@@ -38,20 +38,17 @@ struct AbstractMeshStruct {
 
     virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                                const Teuchos::RCP<StateInfoStruct>& sis,
-                               const unsigned int worksetSize,
                                const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {}) = 0;
     virtual void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                               const Teuchos::RCP<StateInfoStruct>& sis,
-                              const unsigned int worksetSize,
                               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {}) = 0;
 
     void setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                               const Teuchos::RCP<StateInfoStruct>& sis,
-                              const unsigned int worksetSize,
                               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {})
     {
-      setFieldData(comm, sis, worksetSize, side_set_sis);
-      setBulkData(comm, sis, worksetSize, side_set_sis);
+      setFieldData(comm, sis, side_set_sis);
+      setBulkData(comm, sis, side_set_sis);
     }
     virtual Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs() = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs() const = 0;

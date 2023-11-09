@@ -102,8 +102,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         Teuchos::RCP<GenericSTKMeshStruct> meshStruct2D;
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
         Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
-        meshStruct2D->setFieldAndBulkData(comm,
-                sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
+        meshStruct2D->setFieldAndBulkData(comm,sis);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
         mesh_data->set_bulk_data(*meshStruct2D->bulkData);
@@ -215,8 +214,7 @@ DiscretizationFactory::setMeshStructFieldData(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
     TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-    meshStruct->setFieldData(comm, sis,
-            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis); 
+    meshStruct->setFieldData(comm, sis, side_set_sis); 
 }
 
 void
@@ -231,8 +229,7 @@ DiscretizationFactory::setMeshStructBulkData(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
     TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
-    meshStruct->setBulkData(comm, sis,
-            meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis);
+    meshStruct->setBulkData(comm, sis, side_set_sis);
 }
 
 Teuchos::RCP<AbstractDiscretization>
