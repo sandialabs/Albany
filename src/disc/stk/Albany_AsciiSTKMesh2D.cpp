@@ -305,6 +305,8 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */)
 {
   this->SetupFieldData(comm, sis);
+
+  fieldDataSet = true;
 }
 
 void AsciiSTKMesh2D::
@@ -440,7 +442,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
   this->setSideSetBulkData(comm);
 
-  fieldAndBulkDataSet = true;
+  bulkDataSet = true;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

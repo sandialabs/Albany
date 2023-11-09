@@ -73,8 +73,6 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
-
-  fieldAndBulkDataSet = false;
 }
 
 void GenericSTKMeshStruct::
@@ -541,52 +539,26 @@ void GenericSTKMeshStruct::
 setSideSetFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-  if (this->sideSetMeshStructs.size()>0) {
-    // Dummy sis if not present in the maps for a given side set.
-    // This could happen if the side discretization has no states
-    auto dummy_sis = Teuchos::rcp(new StateInfoStruct());
+  for (auto it : sideSetMeshStructs) {
+    auto sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
+    if (sideMesh!=Teuchos::null) {
+      // SideSetSTK mesh need to build the mesh
+      sideMesh->setParentMeshInfo(*this, it.first);
+    }
 
-    for (auto it : sideSetMeshStructs) {
-      auto sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
-      if (sideMesh!=Teuchos::null) {
-        // SideSetSTK mesh need to build the mesh
-        sideMesh->setParentMeshInfo(*this, it.first);
-      }
-
-      // We check since the basal mesh for extruded stk mesh should already have it set
-      if (!it.second->fieldAndBulkDataSet) {
-        auto it_sis = side_set_sis.find(it.first);
-
-        auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
-
-        it.second->setFieldData(comm,sis);  // Cell equations are also defined on the side, but not vice-versa
-      }
+    if (not it.second->fieldDataSet) {
+      auto sis = side_set_sis.count(it.first)>0 ? side_set_sis.at(it.first) : Teuchos::null;
+      it.second->setFieldData(comm,sis);
     }
   }
 }
 
 void GenericSTKMeshStruct::
+setSideSetBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
-  if (this->sideSetMeshStructs.size()>0) {
-    // Dummy sis if not present in the maps for a given side set.
-    // This could happen if the side discretization has no states
-    Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
-
-    for (auto it : sideSetMeshStructs) {
-      auto sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
-      if (sideMesh!=Teuchos::null) {
-        // SideSetSTK mesh need to build the mesh
-        sideMesh->setParentMeshInfo(*this, it.first);
-      }
-
-      // We check since the basal mesh for extruded stk mesh should already have it set
-      if (!it.second->fieldAndBulkDataSet) {
-        auto it_sis = side_set_sis.find(it.first);
-
-        auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
-
-        it.second->setBulkData(comm,sis);
-      }
+  for (auto it : sideSetMeshStructs) {
+    if (not it.second->bulkDataSet) {
+      it.second->setBulkData(comm);
     }
   }
 }

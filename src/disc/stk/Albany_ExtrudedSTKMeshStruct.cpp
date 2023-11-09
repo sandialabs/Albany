@@ -202,6 +202,8 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
   // Set side meshes fields
   this->setSideSetFieldData(comm, side_set_sis);
+
+  fieldDataSet = true;
 }
 
 void ExtrudedSTKMeshStruct::
@@ -575,7 +577,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   //fix_node_sharing(*bulkData);
   bulkData->modification_end();
-  fieldAndBulkDataSet = true;
+  bulkDataSet = true;
 
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();

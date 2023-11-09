@@ -118,6 +118,8 @@ void SideSetSTKMeshStruct::
 setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
                    const std::string& sideSetName)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (not parentMeshStruct.is_null(), std::logic_error,
+      "[SideSetSTKMeshStruct::setParentMeshInfo] Parent mesh was already set.\n");
   parentMeshStruct      = Teuchos::rcpFromRef(parentMeshStruct_);
   parentMeshSideSetName = sideSetName;
 }
@@ -128,6 +130,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
   this->SetupFieldData(comm, sis);
+  fieldDataSet = true;
 }
 
 void SideSetSTKMeshStruct::
@@ -210,6 +213,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Insertion of entities end
   bulkData->modification_end();
+
+  bulkDataSet = true;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const
