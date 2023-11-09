@@ -251,16 +251,6 @@ void GmshSTKMeshStruct::broadcast_topology( const Teuchos::RCP<const Teuchos_Com
   Teuchos::broadcast(*comm, 0, 1, &version_in);
 }
 
-void GmshSTKMeshStruct::setFieldData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& sis,
-    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  this->SetupFieldData (comm, sis);
-  this->setSideSetFieldData(comm, side_set_sis);
-  fieldDataSet = true;
-}
-
 void GmshSTKMeshStruct::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {

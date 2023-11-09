@@ -181,12 +181,6 @@ template<> void TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos
 
 template<>
 void TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
-
-template<>
-void TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
 template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const;

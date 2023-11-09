@@ -300,16 +300,6 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
 }
 
 void AsciiSTKMesh2D::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /* side_set_sis */)
-{
-  this->SetupFieldData(comm, sis);
-
-  fieldDataSet = true;
-}
-
-void AsciiSTKMesh2D::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();

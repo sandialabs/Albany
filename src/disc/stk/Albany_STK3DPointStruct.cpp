@@ -51,18 +51,6 @@ STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 }
 
 void STK3DPointStruct::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  std::cout << "---3DPoint::setFieldData---" << std::endl;
-  SetupFieldData(comm, sis);
-  this->setSideSetFieldData(comm, side_set_sis);
-
-  fieldDataSet = true;
-}
-
-void STK3DPointStruct::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   std::cout << "---3DPoint::setBulkData---" << std::endl;
