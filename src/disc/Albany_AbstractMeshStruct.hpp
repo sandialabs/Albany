@@ -38,21 +38,9 @@ struct AbstractMeshStruct {
 
     virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                                const Teuchos::RCP<StateInfoStruct>& sis,
-                               const unsigned int worksetSize,
                                const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {}) = 0;
-    virtual void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                              const Teuchos::RCP<StateInfoStruct>& sis,
-                              const unsigned int worksetSize,
-                              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {}) = 0;
 
-    void setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                              const Teuchos::RCP<StateInfoStruct>& sis,
-                              const unsigned int worksetSize,
-                              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis = {})
-    {
-      setFieldData(comm, sis, worksetSize, side_set_sis);
-      setBulkData(comm, sis, worksetSize, side_set_sis);
-    }
+    virtual void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;

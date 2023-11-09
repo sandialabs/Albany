@@ -7,7 +7,6 @@ namespace Albany
 void OmegahGenericMesh::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
-              const unsigned int worksetSize,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   m_field_accessor = Teuchos::rcp(new OmegahMeshFieldAccessor(m_mesh));

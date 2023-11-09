@@ -77,15 +77,12 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
   fieldAndBulkDataSet = false;
 }
 
-void GenericSTKMeshStruct::SetupFieldData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& sis,
-    const int worksetSize)
+void GenericSTKMeshStruct::
+SetupFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                const Teuchos::RCP<StateInfoStruct>& sis)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
-       std::logic_error,
-       "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
-
+  TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(), std::logic_error,
+       "[GenericSTKMeshStruct::SetupFieldData] metaData->initialize(numDim) not yet called" << std::endl);
 
   if (bulkData.is_null()) {
      auto mpiComm = getMpiCommFromTeuchosComm(comm);
@@ -95,7 +92,7 @@ void GenericSTKMeshStruct::SetupFieldData(
      else
        meshBuilder.set_aura_option(stk::mesh::BulkData::NO_AUTO_AURA);
 
-     meshBuilder.set_bucket_capacity(worksetSize);
+     meshBuilder.set_bucket_capacity(meshSpecs[0]->worksetSize);
      meshBuilder.set_add_fmwk_data(false);
      std::unique_ptr<stk::mesh::BulkData> bulkDataPtr = meshBuilder.create(Teuchos::get_shared_ptr(metaData));
      bulkData = Teuchos::rcp(bulkDataPtr.release());
@@ -540,21 +537,17 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
   }
 }
 
-void GenericSTKMeshStruct::setSideSetFieldData (
-          const Teuchos::RCP<const Teuchos_Comm>& comm,
-          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-          int worksetSize)
+void GenericSTKMeshStruct::
+setSideSetFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   if (this->sideSetMeshStructs.size()>0) {
     // Dummy sis if not present in the maps for a given side set.
     // This could happen if the side discretization has no states
-    Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
+    auto dummy_sis = Teuchos::rcp(new StateInfoStruct());
 
-    Teuchos::RCP<Teuchos::ParameterList> params_ss;
-    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
     for (auto it : sideSetMeshStructs) {
-      Teuchos::RCP<SideSetSTKMeshStruct> sideMesh;
-      sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
+      auto sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
       if (sideMesh!=Teuchos::null) {
         // SideSetSTK mesh need to build the mesh
         sideMesh->setParentMeshInfo(*this, it.first);
@@ -566,28 +559,21 @@ void GenericSTKMeshStruct::setSideSetFieldData (
 
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-        params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setFieldData(comm,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
+        it.second->setFieldData(comm,sis);  // Cell equations are also defined on the side, but not vice-versa
       }
     }
   }
 }
 
-void GenericSTKMeshStruct::setSideSetBulkData (
-          const Teuchos::RCP<const Teuchos_Comm>& comm,
-          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-          int worksetSize)
+void GenericSTKMeshStruct::
 {
   if (this->sideSetMeshStructs.size()>0) {
     // Dummy sis if not present in the maps for a given side set.
     // This could happen if the side discretization has no states
     Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
 
-    Teuchos::RCP<Teuchos::ParameterList> params_ss;
-    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
     for (auto it : sideSetMeshStructs) {
-      Teuchos::RCP<SideSetSTKMeshStruct> sideMesh;
-      sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
+      auto sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
       if (sideMesh!=Teuchos::null) {
         // SideSetSTK mesh need to build the mesh
         sideMesh->setParentMeshInfo(*this, it.first);
@@ -599,8 +585,7 @@ void GenericSTKMeshStruct::setSideSetBulkData (
 
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-        params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setBulkData(comm,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
+        it.second->setBulkData(comm,sis);
       }
     }
   }

@@ -304,7 +304,6 @@ void
 TmplSTKMeshStruct<Dim, traits>::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
-              const unsigned int worksetSize,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   // Create global mesh: Dim-D structured, rectangular
@@ -325,16 +324,13 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
       x[idx][i] = x[idx][i - 1] + h_dim[idx][i - 1]; // place the coordinates of the element nodes
   }
 
-  SetupFieldData(comm, sis, worksetSize);
-  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
+  SetupFieldData(comm, sis);
+  this->setSideSetFieldData(comm, side_set_sis);
 }
 
 template<unsigned Dim, class traits>
 void TmplSTKMeshStruct<Dim, traits>::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-             const Teuchos::RCP<StateInfoStruct>& /* sis */,
-             const unsigned int worksetSize,
-             const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 
@@ -354,7 +350,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   fieldAndBulkDataSet = true;
 
   // Finally, setup the side set meshes (if any)
-  this->setSideSetBulkData(comm, side_set_sis, worksetSize);
+  this->setSideSetBulkData(comm);
 }
 
 template <unsigned Dim, class traits>
@@ -543,19 +539,12 @@ void
 TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
-              const unsigned int worksetSize,
               const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
 {
-  SetupFieldData(comm, sis, worksetSize);
+  SetupFieldData(comm, sis);
 }
 
-template<>
-void
-TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& comm,
-                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
-                  const unsigned int /* worksetSize */,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
+setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 

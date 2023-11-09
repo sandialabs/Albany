@@ -20,7 +20,6 @@ public:
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                     const unsigned int worksetSize,
                      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override;
 
   // ------------- Omegah specific methods -------------- //
