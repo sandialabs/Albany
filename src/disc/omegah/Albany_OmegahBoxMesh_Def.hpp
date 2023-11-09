@@ -1,5 +1,6 @@
 #include "Albany_OmegahBoxMesh.hpp"
 #include "Albany_Omegah.hpp"
+#include "Albany_OmegahUtils.hpp"
 
 #include "Omega_h_build.hpp"
 #include "Shards_BasicTopologies.hpp"
@@ -11,7 +12,7 @@ OmegahBoxMesh<Dim>::
 OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams)
 {
-  const CellTopologyData* ctd;
+  using I8 = Omega_h::I8;
 
   std::string topo_str = "Simplex";
   if (params->isParameter("Topology Type")) {
@@ -24,12 +25,6 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   TEUCHOS_TEST_FOR_EXCEPTION (topo_str=="Hypercube", std::runtime_error,
       "Error! Hypercube box meshes not yet supported.\n");
-
-  switch (Dim) {
-    case 1: ctd = shards::getCellTopologyData<shards::Line<2>>();           break;
-    case 2: ctd = shards::getCellTopologyData<shards::Triangle<3>>();  break;
-    case 3: ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();     break;
-  }
 
   int nelemx = 0;
   int nelemy = 0;
@@ -53,20 +48,26 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   scalex = scale[0];
   if (Dim>1) {
     nelemy = nelems[1];
-    scalex = scale[1];
+    scaley = scale[1];
     if (Dim>2) {
-      nelemy = nelems[2];
-      scalex = scale[2];
+      nelemz = nelems[2];
+      scalez = scale[2];
     }
   }
 
   // Create the omegah mesh obj
+  Topo_type elem_topo;
   if (topo_str=="Simplex") {
     m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_SIMPLEX,
                                 scalex,scaley,scalez,nelemx,nelemy,nelemz);
+    elem_topo = Dim==3 ? Topo_type::tetrahedron
+                       : Dim==2 ? Topo_type::triangle : Topo_type::edge;
   } else {
     m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_HYPERCUBE,
                                 scalex,scaley,scalez,nelemx,nelemy,nelemz);
+
+    elem_topo = Dim==3 ? Topo_type::hexahedron
+                       : Dim==2 ? Topo_type::quadrilateral : Topo_type::edge;
   }
 
   m_mesh.set_parting(OMEGA_H_ELEM_BASED);
@@ -77,63 +78,64 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   // Create the mesh specs
   std::vector<std::string> nsNames, ssNames;
 
-  using I32 = Omega_h::I32;
-  Omega_h::Write<I32> ns_tags (m_mesh.nverts(),0);
-  m_mesh.add_tag(Omega_h::VERT,"node_sets",1,Omega_h::read(ns_tags));
-
-  int tag = 1;
-  for (unsigned int idim=0; idim<Dim; ++idim) {
-    nsNames.push_back("NodeSet" + std::to_string(idim*2));
-    nsNames.push_back("NodeSet" + std::to_string(idim*2+1));
-
-    m_node_sets_tags["NodeSet" + std::to_string(idim*2)]   = tag;
-    tag <<= 1;
-    m_node_sets_tags["NodeSet" + std::to_string(idim*2+1)] = tag;
-    tag <<= 1;
-
-    ssNames.push_back("SideSet" + std::to_string(idim*2));
-    ssNames.push_back("SideSet" + std::to_string(idim*2+1));
-  }
-
-  int mdim = m_mesh.dim();
-  Kokkos::parallel_for(Kokkos::RangePolicy<>(0,m_mesh.nverts()),
-                       KOKKOS_CLASS_LAMBDA (const int inode) {
-    if (m_coords_d(mdim*inode) == 0) {
-      ns_tags[inode] |= 1;
-    }
-    if (m_coords_d(mdim*inode) == scalex) {
-      ns_tags[inode] |= 2;
-    }
-    if (Dim>1) {
-      if (m_coords_d(mdim*inode+1) == 0) {
-        ns_tags[inode] |= 4;
-      }
-      if (m_coords_d(mdim*inode+1) == scaley) {
-        ns_tags[inode] |= 8;
-      }
-      if (Dim>2) {
-        if (m_coords_d(mdim*inode+2) == 0) {
-          ns_tags[inode] |= 16;
-        }
-        if (m_coords_d(mdim*inode+2) == scalez) {
-          ns_tags[inode] |= 32;
-        }
-      }
-    }
-  });
-
   std::string ebName = "element_block_0";
   std::map<std::string,int> ebNameToIndex = 
   {
     { ebName, 0}
   };
+  this->declare_part(ebName,elem_topo);
+
+  // Add nodesets/sidesets
+  struct NsSpecs {
+    NsSpecs (std::string n, int i, double c) : name(n), icoord(i), coord_val(c) {}
+    std::string name;
+    int icoord;
+    double coord_val;
+  };
+
+  auto create_ns_tag = [&] (const std::string& name,
+                            const int comp,
+                            const double tgt_value)
+  {
+    Omega_h::Write<I8> tag (m_mesh.nverts(),1);
+    auto coords = m_coords_d;
+    auto mdim = Dim;
+    auto f = OMEGA_H_LAMBDA (LO inode) {
+      tag[inode] = coords(mdim*inode+comp)==tgt_value;
+    };
+    Kokkos::parallel_for("create_ns_tag:" + name,tag.size(),f);
+    return Omega_h::read(tag);
+  };
+  std::vector<NsSpecs> nsSpecs;
+  Omega_h::Read<I8> tag;
+  for (int idim=0; idim<m_mesh.dim(); ++idim) {
+    nsNames.push_back("NodeSet" + std::to_string(idim*2));
+    tag = create_ns_tag(nsNames.back(),idim,0);
+    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
+
+    nsNames.push_back("NodeSet" + std::to_string(idim*2+1));
+    tag = create_ns_tag(nsNames.back(),idim,scale[idim]);
+    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
+
+    ssNames.push_back("SideSet" + std::to_string(idim*2));
+    this->declare_part(ssNames.back(),get_side_topo(elem_topo));
+    ssNames.push_back("SideSet" + std::to_string(idim*2+1));
+    this->declare_part(ssNames.back(),get_side_topo(elem_topo));
+  }
 
   // Omega_h does not know what worksets are, so all elements are in one workset
+  const CellTopologyData* ctd;
+
+  switch (Dim) {
+    case 1: ctd = shards::getCellTopologyData<shards::Line<2>>();         break;
+    case 2: ctd = shards::getCellTopologyData<shards::Triangle<3>>();     break;
+    case 3: ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();  break;
+  }
+
   this->m_mesh_specs.resize(1);
   this->m_mesh_specs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
                              nsNames, ssNames, m_mesh.nelems(), ebName,
                              ebNameToIndex));
-
 }
 
 template<unsigned Dim>

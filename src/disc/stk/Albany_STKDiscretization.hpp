@@ -214,8 +214,9 @@ public:
 
   Teuchos::RCP<Thyra_Vector>
   getSolutionField(const bool overlapped = false) const;
-  Teuchos::RCP<Thyra_MultiVector>
-  getSolutionMV(const bool overlapped = false) const;
+
+  void
+  getSolutionMV(Thyra_MultiVector& result, bool overlapped) const;
 
   void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const;
@@ -344,8 +345,6 @@ public:
 
   void
   getSolutionField(Thyra_Vector& result, bool overlapped) const;
-  void
-  getSolutionMV(Thyra_MultiVector& result, bool overlapped) const;
 
   void
   setSolutionField(const Thyra_Vector& soln, const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp, const bool overlapped);

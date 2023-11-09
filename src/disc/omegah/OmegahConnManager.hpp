@@ -7,6 +7,7 @@
 #ifndef ALBANY_Omegah_CONN_MANAGER_HPP
 #define ALBANY_Omegah_CONN_MANAGER_HPP
 
+#include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_ConnManager.hpp"
 
 #include <Omega_h_mesh.hpp>
@@ -20,15 +21,11 @@
 
 namespace Albany {
 
-struct OmegahPartFilter {
-  const LO dim;
-  const std::string name;
-};
-
 class OmegahConnManager : public ConnManager {
 private:
+  Teuchos::RCP<OmegahGenericMesh> albanyMesh;
   Omega_h::Mesh& mesh;
-  const OmegahPartFilter partFilter;
+
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
   std::vector<Ownership> owners;
@@ -36,6 +33,7 @@ private:
   std::array<LO,4> m_dofsPerEnt;
   std::array<Omega_h::GOs,4> m_globalDofNumbering;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
+
   LO getPartConnectivitySize() const;
   std::array<Omega_h::GOs,4> createGlobalDofNumbering() const;
   Omega_h::GOs createElementToDofConnectivity(const Omega_h::Adj elmToDim[3],
@@ -50,8 +48,9 @@ public:
   // ordinal types.
   static_assert(sizeof(Omega_h::GO) == sizeof(GO));
 
-  OmegahConnManager(Omega_h::Mesh& in_mesh);
-  OmegahConnManager(Omega_h::Mesh& in_mesh, std::string partId, const int partDim);
+  OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& albanyMesh);
+  OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& albanyMesh,
+                    const std::string& partId);
 
   ~OmegahConnManager() = default;
 
@@ -191,6 +190,7 @@ public:
     *
     * \returns Vector of local element IDs.
     */
+  using ConnManager::getElementBlock;
   const std::vector<LO> & getElementBlock(const std::string &) const override {
     return localElmIds;
   }
@@ -231,6 +231,8 @@ public:
   std::vector<int> getConnectivityMask (const std::string& sub_part_name) const override;
 
   // Queries the dimension of a part
+  // Do not hide other methods
+  using ConnManager::part_dim;
   int part_dim (const std::string& part_name) const override;
 
   const Ownership* getOwnership(LO localElmtId) const override;

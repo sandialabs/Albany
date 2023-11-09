@@ -9,8 +9,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 
-#include "Albany_OmegahAbstractMesh.hpp"
-#include "Albany_OmegahFieldContainer.hpp"
+#include "Albany_OmegahGenericMesh.hpp"
 
 #include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_NullSpaceUtils.hpp"
@@ -23,7 +22,7 @@ public:
   OmegahDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
       const int neq,
-      Teuchos::RCP<OmegahAbstractMesh>&           mesh,
+      Teuchos::RCP<OmegahGenericMesh>&           mesh,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
       const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
       const std::map<int, std::vector<std::string>>& sideSetEquations =
@@ -104,7 +103,7 @@ public:
   //! Get nodal parameters state info struct
   const StateInfoStruct&
   getNodalParameterSIS() const override {
-    return m_ov_field_container->get_nodal_sis();
+    return m_mesh_struct->get_field_accessor()->getNodalParameterSIS();
   }
 
   //! Retrieve connectivity map from elementGID to workset
@@ -147,20 +146,14 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionField");
   }
 
-  Teuchos::RCP<Thyra_MultiVector>
-  getSolutionMV (bool overlapped) const override;
+  void getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const override;
 
-  void
-  getField(Thyra_Vector& field_vector, const std::string& field_name) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getField");
-  }
-  void
-  setField(
-      const Thyra_Vector& field_vector,
-      const std::string&  field_name,
-      bool                overlapped) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::setField");
-  }
+  void getField(      Thyra_Vector& field_vector,
+                const std::string&  field_name) const override;
+
+  void setField(const Thyra_Vector& field_vector,
+                const std::string&  field_name,
+                bool                overlapped) override;
 
   void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
 
@@ -277,10 +270,7 @@ protected:
 
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
-  Teuchos::RCP<OmegahAbstractMesh> m_mesh_struct;
-
-  Teuchos::RCP<OmegahFieldContainer> m_field_container;
-  Teuchos::RCP<OmegahFieldContainer> m_ov_field_container;
+  Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
 
   std::vector<std::string> m_sol_names;
 

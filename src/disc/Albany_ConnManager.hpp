@@ -49,6 +49,7 @@ public:
 
   // Queries the dimension of a part
   virtual int part_dim (const std::string& part_name) const = 0;
+  int part_dim () const { return part_dim(elem_block_name()); }
   
   /** Get array of Ownership enums associated to connectivity for a particular element, indicating whether the entity is owned by this rank
     *

@@ -1,4 +1,6 @@
 #include "Albany_OmegahDiscretization.hpp"
+#include "Albany_OmegahUtils.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include "OmegahConnManager.hpp"
 
@@ -10,7 +12,7 @@ OmegahDiscretization::
 OmegahDiscretization(
   const Teuchos::RCP<Teuchos::ParameterList>& discParams,
   const int                                   neq,
-  Teuchos::RCP<OmegahAbstractMesh>&           mesh,
+  Teuchos::RCP<OmegahGenericMesh>&           mesh,
   const Teuchos::RCP<const Teuchos_Comm>&     comm,
   const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
   const std::map<int, std::vector<std::string>>& sideSetEquations)
@@ -44,26 +46,6 @@ updateMesh ()
   m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
   m_node_dof_managers[""]     = node_dof_mgr;
 
-  // TODO: our Thyra VS is such that owned GIDs come first, so we can store ov fields,
-  //       and subview them for non-ov queries
-  auto create_fc = [&] (const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
-    auto fc = Teuchos::rcp(new OmegahFieldContainer(m_mesh_struct));
-    fc->add_field (m_sol_names[0],vs);
-    if (m_num_time_deriv>0) {
-      fc->add_field (m_sol_names[1],vs);
-      if (m_num_time_deriv>1) {
-        fc->add_field (m_sol_names[2],vs);
-      }
-    }
-    return fc;
-  };
-  m_ov_field_container = create_fc (sol_dof_mgr->ov_vs());
-  if (m_comm->getSize()>1) {
-    m_field_container = create_fc (sol_dof_mgr->ov_vs());
-  } else {
-    m_field_container = m_ov_field_container;
-  }
-
   // Compute workset information
   // NOTE: these arrays are all of size 1, for the foreseable future.
   //       Still, make impl generic (where possible), in case things change.
@@ -96,7 +78,7 @@ updateMesh ()
 
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
-  auto node_gids = Omega_h::HostRead<Omega_h::GO>(mesh.globals(0));
+  auto node_gids = hostRead(mesh.globals(0));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   m_node_lid_to_omegah_pos.resize(mesh.nverts());
   for (int i=0; i<mesh.nverts(); ++i) {
@@ -137,32 +119,29 @@ computeNodeSets ()
   using Omega_h::I32;
   using Omega_h::I8;
 
-  auto mesh = m_mesh_struct->getOmegahMesh();
+  auto& mesh = m_mesh_struct->getOmegahMesh();
 
   auto v2e = mesh.ask_up(0,mesh.dim());
-  auto v2e_a2ab = Omega_h::HostRead<Omega_h::LO>(v2e.a2ab);
-  auto v2e_ab2b = Omega_h::HostRead<Omega_h::LO>(v2e.ab2b);
+  auto v2e_a2ab = hostRead(v2e.a2ab);
+  auto v2e_ab2b = hostRead(v2e.ab2b);
 
-  auto e2v = Omega_h::HostRead<Omega_h::LO>(mesh.ask_elem_verts());
+  auto e2v = hostRead(mesh.ask_elem_verts());
   int nodes_per_elem = e2v.size() / mesh.nelems();
 
-  auto tags_dev = mesh.get_tag<I32>(0,"node_sets")->array();
-  auto owned_dev = mesh.owned(0);
-  Omega_h::HostRead<I8>  owned_host(owned_dev);
-  Omega_h::HostRead<I32> tags_host (tags_dev);
+  auto owned_host = hostRead(mesh.owned(0));
   for (const auto& nsn : nsNames) {
-    std::vector<int> which;
-    auto ns_tag = m_mesh_struct->get_ns_tag(nsn);
-    for (int i=0; i<tags_host.size(); ++i) {
-      if (owned_host[i] and (tags_host[i] & ns_tag)) {
-        which.push_back(i);
+    auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn));
+    std::vector<int> owned_on_ns;
+    for (int i=0; i<is_on_ns_host.size(); ++i) {
+      if (owned_host[i] and is_on_ns_host[i]) {
+        owned_on_ns.push_back(i);
       }
     }
 
     auto& ns_elem_pos = m_node_sets[nsn];
 
-    ns_elem_pos.reserve(which.size());
-    for (auto i : which) {
+    ns_elem_pos.reserve(owned_on_ns.size());
+    for (auto i : owned_on_ns) {
       auto node_adj_start = v2e_a2ab[i];
       auto ielem = v2e_ab2b[node_adj_start];
 
@@ -222,19 +201,67 @@ computeGraphs ()
 void OmegahDiscretization::
 setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 {
-  printf ("TODO: add code to save states in disc field container, if needed.\n");
+  auto field_accessor = m_mesh_struct->get_field_accessor();
+  field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
+  auto mesh_fields = m_mesh_struct->get_field_accessor();
+  for (auto st : mesh_fields->getNodalParameterSIS()) {
+    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
+    const auto& mesh_part = st->meshPart;
+    int numComps;
+    switch (st->dim.size()) {
+      case 2: numComps = 1; break;
+      case 3: numComps = st->dim[2]; break;
+      default:
+        throw std::runtime_error(
+            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
+            "  - state name: " + st->name + "\n"
+            "  - input dims: (" + util::join(st->dim,",") + ")\n");
+    }
+    auto dof_mgr = create_dof_mgr (st->name,st->meshPart,FE_Type::HGRAD,1,numComps);
+    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+
+    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
+      auto node_dof_mgr = create_dof_mgr (nodes_dof_name(),st->meshPart,FE_Type::HGRAD,1,1);
+      m_node_dof_managers[st->meshPart] = node_dof_mgr;
+    }
+  }
 }
 
-Teuchos::RCP<Thyra_MultiVector>
+void
 OmegahDiscretization::
-getSolutionMV (bool overlapped) const
+getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const
 {
-  auto soln = Thyra::createMembers(getVectorSpace(), m_num_time_deriv + 1);
-  auto fc = overlapped ? m_ov_field_container : m_field_container;
-  for (int i=0; i<m_num_time_deriv; ++i) {
-    soln->col(i)->assign(*fc->get_field(m_sol_names[i]));
+  std::vector<std::string> names = {
+    solution_dof_name(),
+    solution_dof_name() + std::string("_dot"),
+    solution_dof_name() + std::string("_dotdot")
+  };
+  auto accessor = m_mesh_struct->get_field_accessor();
+  auto dof_mgr = getDOFManager();
+  for (int icol=0; icol<m_num_time_deriv; ++icol) {
+    auto col = solution.col(icol);
+    accessor->fillVector(*col,names[icol],dof_mgr,false);
   }
-  return soln;
+}
+
+void
+OmegahDiscretization::
+getField (Thyra_Vector& field_vector, const std::string& field_name) const
+{
+  auto accessor = m_mesh_struct->get_field_accessor();
+  auto dof_mgr = getDOFManager(field_name);
+  accessor->fillVector(field_vector,field_name,dof_mgr,false);
+}
+
+void
+OmegahDiscretization::
+setField (const Thyra_Vector& field_vector,
+          const std::string&  field_name,
+          bool                overlapped)
+{
+  auto accessor = m_mesh_struct->get_field_accessor();
+  auto dof_mgr = getDOFManager(field_name);
+  accessor->saveVector(field_vector,field_name,dof_mgr,false);
 }
 
 Teuchos::RCP<DOFManager>
@@ -248,7 +275,7 @@ create_dof_mgr (const std::string& field_name,
   const auto& mesh_specs = m_mesh_struct->getMeshSpecs()[0];
 
   // Create conn and dof managers
-  auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct->getOmegahMesh()));
+  auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct));
   auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   shards::CellTopology topo (&mesh_specs->ctd);

@@ -83,7 +83,8 @@ SolutionManager::SolutionManager(
     overlapped_f = Thyra::createMember(overlapped_vs);
 
     // This call allocates the non-overlapped MV
-    current_soln = disc_->getSolutionMV();
+    current_soln = Thyra::createMembers(owned_vs,num_time_deriv+1);
+    disc_->getSolutionMV(*current_soln);
 
     // Create the CombineAndScatterManager for handling distributed memory linear
     // algebra communications

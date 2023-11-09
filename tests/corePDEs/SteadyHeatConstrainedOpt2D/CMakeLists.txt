@@ -18,6 +18,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_paramT.yaml
 add_test(${testName}_Tpetra ${Albany.exe} input_dirichlet_dist_paramT.yaml)
 set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 
+if (ALBANY_OMEGAH)
+  # Copy Input files from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_paramT_Omega_h.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_dist_paramT_Omega_h.yaml COPYONLY)
+
+  # Create the test with this name and standard executable
+  add_test(${testName}_Tpetra_Omega_h ${Albany.exe} input_dirichlet_dist_paramT_Omega_h.yaml)
+  set_tests_properties(${testName}_Tpetra_Omega_h PROPERTIES LABELS "Basic;Tpetra;Forward;Omega_h")
+endif()
+
 if (ALBANY_EPETRA) 
   # Copy Input files from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_param.yaml
