@@ -392,7 +392,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnershi
   Albany::build_type (Albany::BuildType::Tpetra);
 
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
   auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM>();
 
@@ -409,7 +408,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
   Albany::build_type (Albany::BuildType::Tpetra);
 
   auto teuchosComm = Albany::getDefaultComm();
-  auto mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
   const auto lateralSide_name = "lateralside";
   const int lateralSide_classId = 1;

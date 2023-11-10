@@ -206,7 +206,6 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
   auto mesh_fields = m_mesh_struct->get_field_accessor();
   for (auto st : mesh_fields->getNodalParameterSIS()) {
     // TODO: get mesh part from st, create dof mgr on that part for st.name dof
-    const auto& mesh_part = st->meshPart;
     int numComps;
     switch (st->dim.size()) {
       case 2: numComps = 1; break;
