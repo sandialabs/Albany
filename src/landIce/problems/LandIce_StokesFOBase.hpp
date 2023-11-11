@@ -309,7 +309,8 @@ protected:
   std::string temperature_name;
   std::string corrected_temperature_name;
   std::string flow_factor_name;
-  std::string stiffening_factor_name;
+  std::string stiffening_factor_log_name;
+  std::string damage_factor_name;
   std::string effective_pressure_name;
   std::string basal_friction_name;
   std::string sliding_velocity_name;
@@ -895,7 +896,8 @@ constructInterpolationEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
                       (fname == ice_thickness_name)  ||
                       (fname == bed_topography_name) ||
                       (fname == bed_topography_param_name) ||
-                      (fname == stiffening_factor_name);
+                      (fname == stiffening_factor_log_name) || 
+                      (fname == damage_factor_name);
 
         if (rank==FRT::Scalar) {
           ev = utils.constructDOFGradInterpolationSideEvaluator (fname_side, ss_name, grad_name_side, planar);
@@ -1275,7 +1277,8 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                              : temperature_name;
   p->set<std::string>("Temperature Variable Name", visc_temp_name);
   p->set<std::string>("Ice Softness Variable Name", flow_factor_name);
-  p->set<std::string>("Stiffening Factor QP Name", stiffening_factor_name);
+  p->set<std::string>("Stiffening Factor Log QP Name", stiffening_factor_log_name);
+  p->set<std::string>("Damage Factor QP Name", damage_factor_name);
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Viscosity"));
@@ -1732,7 +1735,8 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     std::string ice_thickness_side_name                = basal_fname(ice_thickness_name);
     std::string apparent_mass_balance_side_name        = basal_fname("apparent_mass_balance");
     std::string apparent_mass_balance_RMS_side_name    = basal_fname("apparent_mass_balance_RMS");
-    std::string stiffening_factor_side_name            = basal_fname(stiffening_factor_name);
+    std::string stiffening_factor_log_side_name        = basal_fname(stiffening_factor_log_name);
+    std::string damage_factor_side_name                = basal_fname(damage_factor_name);
     std::string effective_pressure_side_name           = basal_fname(effective_pressure_name);
     std::string vertically_averaged_velocity_side_name = basal_fname(vertically_averaged_velocity_name);
     std::string bed_roughness_side_name                = basal_fname("bed_roughness");
@@ -1820,8 +1824,8 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
     paramList->set<Teuchos::RCP<std::map<std::string, int>>> ("Extruded Params Levels", Teuchos::rcpFromRef(extruded_params_levels));
     paramList->set<std::string>("Coordinate Vector Side Variable Name", basal_fname(Albany::coord_vec_name));
     paramList->set<std::string>("Basal Friction Coefficient Name", basal_friction_name);
-    paramList->set<std::string>("Stiffening Factor Gradient Name",basal_fname(stiffening_factor_name + "_gradient"));
-    paramList->set<std::string>("Stiffening Factor Name", basal_fname(stiffening_factor_name));
+    paramList->set<std::string>("Stiffening Factor Log Gradient Name",basal_fname(stiffening_factor_log_name + "_gradient"));
+    paramList->set<std::string>("Stiffening Factor Log Name", basal_fname(stiffening_factor_log_name));
     paramList->set<std::string>("Thickness Side Variable Name",basal_fname(ice_thickness_name));
     paramList->set<std::string>("Bed Topography Side Variable Name",basal_fname(bed_topography_name));
     paramList->set<std::string>("Surface Velocity Side QP Variable Name",surf_fname(velocity_name));

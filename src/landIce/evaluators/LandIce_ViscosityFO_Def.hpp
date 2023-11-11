@@ -48,6 +48,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   extractStrainRateSq = visc_list->get("Extract Strain Rate Sq", false);
   useStiffeningFactor = visc_list->get("Use Stiffening Factor", false);
+  useDamageFactor = visc_list->get("Use Damage Factor", false);
 
   std::string flowRateType;
   if(visc_list->isParameter("Flow Rate Type"))
@@ -63,7 +64,10 @@ ViscosityFO(const Teuchos::ParameterList& p,
     U = decltype(U)(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector);
 
   if(useStiffeningFactor)
-    stiffeningFactor = decltype(stiffeningFactor)(p.get<std::string> ("Stiffening Factor QP Name"), dl->qp_scalar);
+    stiffeningFactorLog = decltype(stiffeningFactorLog)(p.get<std::string> ("Stiffening Factor Log QP Name"), dl->qp_scalar);
+  
+  if(useDamageFactor)
+    damageFactor = decltype(damageFactor)(p.get<std::string> ("Damage Factor QP Name"), dl->qp_scalar);
 
   A = visc_list->get("Glen's Law A", 1.0);
   n = visc_list->get("Glen's Law n", 3.0);
@@ -141,7 +145,9 @@ ViscosityFO(const Teuchos::ParameterList& p,
   this->addDependentField(homotopyParam);
   if (visc_type == EXPTRIG) this->addDependentField(coordVec);
   if(useStiffeningFactor)
-    this->addDependentField(stiffeningFactor);
+    this->addDependentField(stiffeningFactorLog);
+  if(useDamageFactor)
+    this->addDependentField(damageFactor);
   this->addEvaluatedField(mu);
 
   if (extractStrainRateSq) {
@@ -288,7 +294,10 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const int& cell) const
   }
   if(useStiffeningFactor)
     for (unsigned int qp=0; qp < numQPs; ++qp)
-      mu(cell,qp) *= std::exp(stiffeningFactor(cell,qp));
+      mu(cell,qp) *= std::exp(stiffeningFactorLog(cell,qp));
+  if(useDamageFactor)
+    for (unsigned int qp=0; qp < numQPs; ++qp)
+      mu(cell,qp) *= damageFactor(cell,qp);
 }
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>

@@ -149,7 +149,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   STKFieldType* smbField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_mass_balance");
   STKFieldType* dirichletField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "dirichlet_field");
   STKFieldType* muField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
-  STKFieldType* stiffeningFactorField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "stiffening_factor");
+  STKFieldType* stiffeningFactorLogField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "stiffening_factor_log");
   STKFieldType* effectivePressureField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
   STKFieldType* betaField;
 
@@ -191,8 +191,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     sHeight[0] = elevationData[ib];
     double* bedTopography = stk::mesh::field_data(*bedTopographyField, node);
     bedTopography[0] = bedTopographyData[ib];
-    double* stiffeningFactor = stk::mesh::field_data(*stiffeningFactorField, node);
-    stiffeningFactor[0] = std::log(stiffeningFactorData[ib]);
+    double* stiffeningFactorLog = stk::mesh::field_data(*stiffeningFactorLogField, node);
+    stiffeningFactorLog[0] = std::log(stiffeningFactorData[ib]);
 
     if(!effectivePressureData.empty() && (effectivePressureField != nullptr)) {
       double* effectivePressure = stk::mesh::field_data(*effectivePressureField, node);
@@ -740,7 +740,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   field6.set<std::string>("Field Origin", "Mesh");
 
   //set stiffening factor
-  field7.set<std::string>("Field Name", "stiffening_factor");
+  field7.set<std::string>("Field Name", "stiffening_factor_log");
   field7.set<std::string>("Field Type", "Node Scalar");
   field7.set<std::string>("Field Origin", "Mesh");
 

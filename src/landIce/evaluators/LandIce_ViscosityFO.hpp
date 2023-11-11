@@ -54,6 +54,7 @@ private:
   bool extractStrainRateSq;
   bool useStereographicMap;
   bool useStiffeningFactor;
+  bool useDamageFactor;
   bool useP0Temp;
   Teuchos::ParameterList* stereographicMapList;
 
@@ -67,7 +68,8 @@ private:
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
   PHX::MDField<const TemprT> temperature; // [K]
   PHX::MDField<const RealType,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
-  PHX::MDField<const ParamScalarT,Cell,QuadPoint> stiffeningFactor;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint> stiffeningFactorLog; // [nondimensional]
+  PHX::MDField<const RealType,Cell,QuadPoint> damageFactor; // e.g.,  (1-damage), [nondimensional]
   PHX::MDField<const ScalarT> homotopyParam;
   bool performContinuousHomotopy;
   double expCoeff;
