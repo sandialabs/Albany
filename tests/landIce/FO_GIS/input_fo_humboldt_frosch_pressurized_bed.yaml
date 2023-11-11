@@ -35,7 +35,7 @@ ANONYMOUS:
           Effective Pressure Type: Hydrostatic Computed At Nodes
           Use Pressurized Bed Above Sea Level: true
           Minimum Fraction Overburden Pressure: 0.85
-          Length Scale Factor: 2.0
+          Length Scale Factor: 0.1
           #Zero Beta On Floating Ice: true
       BC 1:
         Type: Lateral
@@ -347,6 +347,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value:  1.355427218818e+07
+    Test Value:  3.151186140899e+07
     Relative Tolerance: 1.0e-06
 ...
