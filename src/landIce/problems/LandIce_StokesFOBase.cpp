@@ -100,7 +100,8 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   bed_topography_param_name   = bed_topography_name + "_param";
   bed_topography_observed_name= "observed_" + bed_topography_name;
   flow_factor_name            = params->sublist("Variables Names").get<std::string>("Flow Factor Name"       ,"flow_factor");
-  stiffening_factor_name      = params->sublist("Variables Names").get<std::string>("Stiffening Factor Name" ,"stiffening_factor");
+  stiffening_factor_log_name  = params->sublist("Variables Names").get<std::string>("Stiffening Factor Log Name" ,"stiffening_factor_log");
+  damage_factor_name          = params->sublist("Variables Names").get<std::string>("Damage Factor Name"     ,"damage_factor");
   effective_pressure_name     = params->sublist("Variables Names").get<std::string>("Effective Pressure Name","effective_pressure");
   vertically_averaged_velocity_name = params->sublist("Variables Names").get<std::string>("Vertically Averaged Velocity Name","vertically_averaged_velocity");
   flux_divergence_name        = params->sublist("Variables Names").get<std::string>("Flux Divergence Name" ,"flux_divergence");
@@ -582,8 +583,11 @@ void StokesFOBase::setupEvaluatorRequests ()
   if (is_input_field[temperature_name]) {
     build_interp_ev[temperature_name][IReq::CELL_VAL] = true;
   }
-  if (is_input_field[stiffening_factor_name]) {
-    build_interp_ev[stiffening_factor_name][IReq::QP_VAL] = true;
+  if (is_input_field[stiffening_factor_log_name]) {
+    build_interp_ev[stiffening_factor_log_name][IReq::QP_VAL] = true;
+  }
+  if (is_input_field[damage_factor_name]) {
+    build_interp_ev[damage_factor_name][IReq::QP_VAL] = true;
   }
   if (viscosity_use_corrected_temperature && is_input_field[surface_height_name]) {
     build_interp_ev[surface_height_name][IReq::CELL_VAL] = true;
@@ -762,11 +766,11 @@ void StokesFOBase::setupEvaluatorRequests ()
     // ... and BFs
     ss_utils_needed[surfaceSideName][UtilityRequest::BFS] = true;
 
-    if (!isInvalid(basalSideName) && is_input_field[stiffening_factor_name]) {
+    if (!isInvalid(basalSideName) && is_input_field[stiffening_factor_log_name]) {
       // Surface velocity diagnostics *may* add a basal side regularization
-      ss_build_interp_ev[basalSideName][stiffening_factor_name][IReq::CELL_TO_SIDE] = true;
-      ss_build_interp_ev[basalSideName][stiffening_factor_name][IReq::QP_VAL      ] = true;
-      ss_build_interp_ev[basalSideName][stiffening_factor_name][IReq::GRAD_QP_VAL ] = true;
+      ss_build_interp_ev[basalSideName][stiffening_factor_log_name][IReq::CELL_TO_SIDE] = true;
+      ss_build_interp_ev[basalSideName][stiffening_factor_log_name][IReq::QP_VAL      ] = true;
+      ss_build_interp_ev[basalSideName][stiffening_factor_log_name][IReq::GRAD_QP_VAL ] = true;
 
       ss_utils_needed[basalSideName][UtilityRequest::BFS] = true;
     }

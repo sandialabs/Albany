@@ -68,7 +68,7 @@ ANONYMOUS:
       Number Of Parameters: 2
       Parameter 0:
         Lower Bound: -1.0
-        Name: stiffening_factor
+        Name: stiffening_factor_log
         Extruded: true
         Mesh Part: bottom
         Upper Bound: 1.0
@@ -86,6 +86,7 @@ ANONYMOUS:
       Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Use Stiffening Factor: true
+      Use Damage Factor: true
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.1
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
@@ -153,12 +154,12 @@ ANONYMOUS:
     NumLayers: 2
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
-    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, stiffening_factor]
-    Basal Node Fields Ranks: [1, 1, 1, 1]
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, stiffening_factor_log, damage_factor]
+    Basal Node Fields Ranks: [1, 1, 1, 1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
     Required Fields Info:
-      Number Of Fields: 5
+      Number Of Fields: 6
       Field 0:
         Field Name: temperature
         Field Type: Node Scalar
@@ -176,7 +177,11 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 4:
-        Field Name: stiffening_factor
+        Field Name: stiffening_factor_log
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 5:
+        Field Name: damage_factor
         Field Type: Node Scalar
         Field Origin: Mesh
     Side Set Discretizations:
@@ -188,7 +193,7 @@ ANONYMOUS:
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info:
-          Number Of Fields: 6
+          Number Of Fields: 7
           Field 0:
             Field Name: basal_friction
             Field Type: Node Scalar
@@ -211,11 +216,16 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
           Field 4:
-            Field Name: stiffening_factor
+            Field Name: stiffening_factor_log
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/GisUnstructFiles/stiffening_factor.ascii
+            File Name: ../AsciiMeshes/GisUnstructFiles/stiffening_factor_log.ascii
           Field 5:
+            Field Name: damage_factor
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/damage_factor_dummy.ascii
+          Field 6:
             Field Name: bed_topography
             Field Type: Node Scalar
             Field Origin: File
@@ -401,20 +411,20 @@ ANONYMOUS:
   Regression For Response 0:
     Relative Tolerance: 1.0e-05
     Absolute Tolerance: 1.0e-05
-    Test Value: 6.150615124783e+01
+    Test Value: 6.169115535763e+01
     Sensitivity For Parameter 0:
-      Test Value:  1.181897157033e+00
+      Test Value:  1.190342230086e+00
     Sensitivity For Parameter 1:
-      Test Value:   2.140276446622e+00
+      Test Value:   2.138436447346e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [89.6090755226]
+    Piro Analysis Test Values: [84.1869970371]
 
   Regression For Response 1:
     Relative Tolerance: 1.0e-06
     Absolute Tolerance: 1.0e-06
-    Test Value: 1.029846023641e+02
+    Test Value: 1.031696064739e+02
     Sensitivity For Parameter 0:
-      Test Value:  1.181897157033e+00
+      Test Value:  1.190342230086e+00
     Sensitivity For Parameter 1:
-      Test Value:  2.626904778466e+00
+      Test Value:  2.624538946453e+00
 ...

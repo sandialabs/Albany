@@ -255,7 +255,7 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
   build_interp_ev[temperature_name          ][IReq::CELL_VAL   ] = true;
   build_interp_ev[corrected_temperature_name][IReq::CELL_VAL   ] = true;
   build_interp_ev[corrected_temperature_name][IReq::QP_VAL     ] = true;
-  build_interp_ev[stiffening_factor_name    ][IReq::QP_VAL     ] = true;
+  build_interp_ev[stiffening_factor_log_name][IReq::QP_VAL     ] = true;
   build_interp_ev[surface_height_name       ][IReq::QP_VAL     ] = true;
   build_interp_ev[surface_height_name       ][IReq::GRAD_QP_VAL] = true;
   build_interp_ev[water_content_name        ][IReq::QP_VAL     ] = true;
@@ -343,7 +343,7 @@ void StokesFOThermoCoupled::setFieldsProperties () {
   setSingleFieldProperties(geothermal_flux_name      , FRT::Scalar, FST::ParamScalar);
   setSingleFieldProperties(water_content_name        , FRT::Scalar, FST::Scalar);
   setSingleFieldProperties(temperature_name          , FRT::Scalar, FST::Scalar);
-  setSingleFieldProperties(stiffening_factor_name    , FRT::Scalar);
+  setSingleFieldProperties(stiffening_factor_log_name, FRT::Scalar);
   setSingleFieldProperties(corrected_temperature_name, FRT::Scalar, FST::Scalar); // Already processed in StokesFOBase, but need to adjust scalar type
   setSingleFieldProperties(melting_temperature_name  , FRT::Scalar, FST::MeshScalar); //depends on z coord
   setSingleFieldProperties(melting_enthalpy_name     , FRT::Scalar, FST::MeshScalar); //depends on z coord

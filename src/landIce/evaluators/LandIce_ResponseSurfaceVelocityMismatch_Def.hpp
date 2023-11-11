@@ -100,8 +100,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
                                 "Error! Basal side data layout not found.\n");
     Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-    const std::string& stiffening_name      = paramList->get<std::string>("Stiffening Factor Name");
-    const std::string& grad_stiffening_name = paramList->get<std::string>("Stiffening Factor Gradient Name");
+    const std::string& stiffening_name      = paramList->get<std::string>("Stiffening Factor Log Name");
+    const std::string& grad_stiffening_name = paramList->get<std::string>("Stiffening Factor Log Gradient Name");
     const std::string& w_measure_basal_name = Albany::weighted_measure_name + "_" + basalSideName;
     const std::string& metric_basal_name    = Albany::metric_name + "_" + basalSideName;
 

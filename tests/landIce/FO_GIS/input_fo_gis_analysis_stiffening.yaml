@@ -47,7 +47,7 @@ ANONYMOUS:
       Number Of Parameters: 2
       Parameter 0:
         Lower Bound: -1.0
-        Name: stiffening_factor
+        Name: stiffening_factor_log
         Extruded: true
         Mesh Part: bottom
         Upper Bound: 1.0
@@ -80,7 +80,7 @@ ANONYMOUS:
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
-    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, stiffening_factor]
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction, stiffening_factor_log]
     Basal Node Fields Ranks: [1, 1, 1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
@@ -103,7 +103,7 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 4:
-        Field Name: stiffening_factor
+        Field Name: stiffening_factor_log
         Field Type: Node Scalar
         Field Origin: Mesh
     Side Set Discretizations:
@@ -138,10 +138,10 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
           Field 4:
-            Field Name: stiffening_factor
+            Field Name: stiffening_factor_log
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/GisUnstructFiles/stiffening_factor.ascii
+            File Name: ../AsciiMeshes/GisUnstructFiles/stiffening_factor_log.ascii
           Field 5:
             Field Name: bed_topography
             Field Type: Node Scalar
