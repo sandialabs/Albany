@@ -18,6 +18,10 @@ public:
                     const unsigned int worksetSize,
                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override;
 
+  Omega_h::Read<Omega_h::I8>
+  create_ns_tag (const std::string& name,
+                 const int comp,
+                 const double tgt_value) const;
 protected:
 
   Teuchos::RCP<const Teuchos::ParameterList>

@@ -93,19 +93,6 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     double coord_val;
   };
 
-  auto create_ns_tag = [&] (const std::string& name,
-                            const int comp,
-                            const double tgt_value)
-  {
-    Omega_h::Write<I8> tag (m_mesh.nverts(),1);
-    auto coords = m_coords_d;
-    auto mdim = Dim;
-    auto f = OMEGA_H_LAMBDA (LO inode) {
-      tag[inode] = coords(mdim*inode+comp)==tgt_value;
-    };
-    Kokkos::parallel_for("create_ns_tag:" + name,tag.size(),f);
-    return Omega_h::read(tag);
-  };
   std::vector<NsSpecs> nsSpecs;
   Omega_h::Read<I8> tag;
   for (int idim=0; idim<m_mesh.dim(); ++idim) {
@@ -136,6 +123,22 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   this->m_mesh_specs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
                              nsNames, ssNames, m_mesh.nelems(), ebName,
                              ebNameToIndex));
+}
+
+template<unsigned Dim>
+Omega_h::Read<Omega_h::I8> OmegahBoxMesh<Dim>::
+create_ns_tag (const std::string& name,
+               const int comp,
+               const double tgt_value) const
+{
+  Omega_h::Write<Omega_h::I8> tag (m_mesh.nverts(),1);
+  auto coords = m_coords_d;
+  auto mdim = Dim;
+  auto f = OMEGA_H_LAMBDA (LO inode) {
+    tag[inode] = coords(mdim*inode+comp)==tgt_value;
+  };
+  Kokkos::parallel_for("create_ns_tag:" + name,tag.size(),f);
+  return Omega_h::read(tag);
 }
 
 template<unsigned Dim>
