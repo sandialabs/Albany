@@ -17,9 +17,7 @@ source ${SCRIPT_DIR}/frontier_gpu_modules.sh
 
 # Env variables
 APPDIR=
-export CUDA_MANAGED_FORCE_DEVICE_ALLOC=1
-export CUDA_LAUNCH_BLOCKING=1
-export TPETRA_ASSUME_GPU_AWARE_MPI=0
+export TPETRA_ASSUME_GPU_AWARE_MPI=1
 
 # Log input settings to output
 cat input_albany_MueLuKokkos.yaml

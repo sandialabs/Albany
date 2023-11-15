@@ -3,7 +3,7 @@ module reset
 module switch PrgEnv-cray PrgEnv-gnu/8.3.3
 module switch gcc gcc/11.2.0
 module load craype-accel-amd-gfx90a
-module load rocm/5.4.0
+module load rocm/5.4.3
 module load cray-python/3.9.13.1
 module load subversion/1.14.1
 module load git/2.36.1
