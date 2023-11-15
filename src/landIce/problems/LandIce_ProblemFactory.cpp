@@ -20,9 +20,7 @@ namespace LandIce
 
 bool LandIceProblemFactory::provides (const std::string& key) const
 {
-  return key == "LandIce Stokes 3D" ||
-         key == "LandIce Stokes 2D" ||
-         key == "LandIce Stokes First Order 2D" ||
+  return key == "LandIce Stokes First Order 2D" ||
          key == "LandIce Stokes FO 2D" ||
          key == "LandIce Stokes First Order 2D XZ" ||
          key == "LandIce Stokes FO 2D XZ" ||
