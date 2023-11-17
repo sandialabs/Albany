@@ -58,9 +58,9 @@ namespace Albany {
     bool periodic;
     Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
-    bool m_hasRestartSolution;
+    bool m_hasRestartSolution = false;
     double m_restartDataTime;
-    int m_solutionFieldHistoryDepth;
+    int m_solutionFieldHistoryDepth = 0;
 
   };
 

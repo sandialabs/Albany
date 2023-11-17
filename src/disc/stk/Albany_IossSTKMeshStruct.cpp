@@ -57,9 +57,6 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
  , useSerialMesh(false)
  , periodic(params->get("Periodic BC", false))
- , m_hasRestartSolution(false)
- , m_restartDataTime(-1.0)
- , m_solutionFieldHistoryDepth(0)
 {
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -160,6 +157,9 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     }
   }
 
+  *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << std::endl;
+  *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << std::endl;
+
   // the method 'initializesidesetmeshspecs' requires that ss parts store a valid stk topology.
   // therefore, we try to retrieve the topology of this part using stk stuff.
   auto r = mesh_data->get_input_ioss_region();
@@ -213,17 +213,13 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   // Construct MeshSpecsStruct
-  {
-    const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
-    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(
-        ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
-        ebNameToIndex));
-  }
+  const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(
+      ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
+      ebNameToIndex));
 
-  {
-    const Ioss::Region& inputRegion = *(mesh_data->get_input_ioss_region());
-    m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
-  }
+  const Ioss::Region& inputRegion = *(mesh_data->get_input_ioss_region());
+  m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false))
@@ -310,55 +306,96 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
   mesh_data->add_all_mesh_fields_as_input_fields(); // KL: this adds "solution field"
 
-
-  *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << std::endl;
-  *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << std::endl;
-
-  std::vector<stk::io::MeshField> missing;
   // Restart index to read solution from exodus file.
-  int index = params->get("Restart Index",-1); // Default to no restart
-  double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
-  Ioss::Region& region = *(mesh_data->get_input_ioss_region());
+  if (params->isParameter("Restart Index")) {
+    TEUCHOS_TEST_FOR_EXCEPTION (
+      params->isParameter("Restart Time"), std::logic_error,
+      "Error! Do not provide both 'Restart Index' and 'Restart Time'.\n");
 
-  if (index >= 0) {
     // User has specified a time step to restart at
+    int index = params->get<int>("Restart Index"); // Default to no restart
+
+    const auto& region = *mesh_data->get_input_ioss_region();
     m_restartDataTime = region.get_state_time(index);
     m_hasRestartSolution = true;
+
     *out << "Restart Index set, reading solution index : " << index << std::endl;
-    mesh_data->read_defined_input_fields(index, &missing);
-  } else if (res_time >= 0) {
+  } else if (params->isParameter("Restart Time")) {
+    m_restartDataTime = params->get<double>("Restart Time");
     // User has specified a time to restart at
-    m_restartDataTime = res_time;
     m_hasRestartSolution = true;
-    *out << "Restart solution time set, reading solution time : " << res_time << std::endl;
-    mesh_data->read_defined_input_fields(res_time, &missing);
+    *out << "Restart solution time set, reading solution time : " << m_restartDataTime << std::endl;
   } else {
     *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
   }
 
-  if (m_hasRestartSolution){
-
+  if (m_hasRestartSolution) {
     Teuchos::Array<std::string> default_field = {{"solution", "solution_dot", "solution_dotdot"}};
-    auto& restart_fields = params->get<Teuchos::Array<std::string> >("Restart Fields", default_field);
+    const auto& restart_fields = params->get<Teuchos::Array<std::string> >("Restart Fields", default_field);
 
-    // See what state data was initialized from the stk::io request
-    // This should be propagated into stk::io
-    const Ioss::NodeBlockContainer&    node_blocks = region.get_node_blocks();
+    // Check if states are available in the mesh
+    const auto& region = *mesh_data->get_input_ioss_region();
+    const auto& node_blocks = region.get_node_blocks();
 
     for (const auto& st_ptr : *sis) {
       auto& st = *st_ptr;
+      if (std::find(restart_fields.begin(),restart_fields.end(),st.name)==restart_fields.end()) {
+        continue;
+      }
+      st.restartDataAvailable = node_blocks.size()>0;
       for (const auto& block : node_blocks) {
-        if (block->field_exists(st.name)) {
-          for (const auto& restart_field : restart_fields) {
-            if (st.name==restart_field) {
-              *out << "Restarting from field \"" << st.name << "\" found in exodus file.\n";
-              st.restartDataAvailable = true;
-              break;
-            }
-          }
-        }
+        st.restartDataAvailable &= block->field_exists(st.name);
       }
     }
+  }
+
+  fieldDataSet = true;
+}
+
+void IossSTKMeshStruct::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
+{
+  metaData->commit();
+
+#ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
+  // The following code block reads a single mesh on PE 0, then distributes the mesh across
+  // the other processors. stk_rebalance is used, which requires Zoltan
+  if (useSerialMesh){
+
+    // trick to avoid hanging
+    bulkData->modification_begin();
+
+    if(comm->getRank() == 0){
+      mesh_data->populate_bulk_data();
+    } else {
+      // trick to avoid hanging
+      bulkData->modification_begin(); bulkData->modification_begin();
+    }
+    bulkData->modification_end();
+
+  } else
+#endif
+  {
+    // The following code block reads a single mesh when Albany is compiled serially, or a
+    // Nemspread fileset if ALBANY_MPI is true.
+    bulkData->modification_begin();
+    mesh_data->populate_bulk_data();
+    bulkData->modification_end();
+  }
+
+  // Note: we cannot load fields/coords during setFieldData, since we need a valid bulkData
+  std::vector<stk::io::MeshField> missing;
+  if (m_hasRestartSolution) {
+    mesh_data->read_defined_input_fields(m_restartDataTime, &missing);
+  }
+
+  this->loadRequiredInputFields (comm);
+  if (this->numDim!=3) {
+    loadOrSetCoordinates3d();
+  }
+
+
+  if (m_hasRestartSolution){
 
     // Read global mesh variables. Should we emit warnings at all?
     for (auto& it : fieldContainer->getMeshVectorStates()) {
@@ -406,46 +443,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
     int bool_to_int = side_maps_present ? 1 : 0;
     Teuchos::broadcast(*comm,0,1,&bool_to_int);
     side_maps_present = bool_to_int == 1 ? true : false;
-  }
-
-  fieldDataSet = true;
-}
-
-void IossSTKMeshStruct::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
-{
-  metaData->commit();
-
-#ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
-  // The following code block reads a single mesh on PE 0, then distributes the mesh across
-  // the other processors. stk_rebalance is used, which requires Zoltan
-  if (useSerialMesh){
-
-    // trick to avoid hanging
-    bulkData->modification_begin();
-
-    if(comm->getRank() == 0){
-      mesh_data->populate_bulk_data();
-    } else {
-      // trick to avoid hanging
-      bulkData->modification_begin(); bulkData->modification_begin();
-    }
-    bulkData->modification_end();
-
-  } else
-#endif
-  {
-    // The following code block reads a single mesh when Albany is compiled serially, or a
-    // Nemspread fileset if ALBANY_MPI is true.
-    bulkData->modification_begin();
-    mesh_data->populate_bulk_data();
-    bulkData->modification_end();
-  }
-
-  // Note: we cannot load fields/coords during setFieldData, since we need a valid bulkData
-  this->loadRequiredInputFields (comm);
-  if (this->numDim!=3) {
-    loadOrSetCoordinates3d();
   }
 
   // Check if the input mesh is layered (i.e., if it stores layers info)
