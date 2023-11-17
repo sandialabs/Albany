@@ -1,12 +1,12 @@
 rm -rf CMake* 
 
-TRILINOS_INSTALL="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc"
-ALBANY_INSTALL=
+TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc"
 
 cmake \
-    -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL} \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
     -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
     -D CMAKE_C_COMPILER:FILEPATH=mpicc \
+    -D CMAKE_CXX_FLAGS:STRING='-std=gnu++11 -fext-numeric-literals -Wno-use-after-free' \
     -D ENABLE_LANDICE:BOOL=ON \
     -D ENABLE_DEMO_PDES:BOOL=ON \
     -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
@@ -16,7 +16,4 @@ cmake \
     -D ENABLE_ALBANY_PYTHON:BOOL=ON \
     -D ENABLE_OMEGAH:BOOL=ON \
     -D PYTHON_EXECUTABLE='/projects/x86-64-icelake-rocky8/utilities/python/3.10.10/gcc/8.5.0/base/7k3fxam/bin/python' \
-    -D CMAKE_INSTALL_PREFIX:PATH=${ALBANY_INSTALL} \
-    -D BUILD_SHARED_LIBS:BOOL=ON \
-    -D ENABLE_MPAS_INTERFACE:BOOL=ON \
 ..
