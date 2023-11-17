@@ -25,7 +25,6 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-//#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <iostream>
