@@ -415,16 +415,4 @@ MpasSTKMeshStruct::getValidDiscretizationParameters() const
   return this->getValidGenericSTKParameters("Valid MpasSTKMeshStructParams");
 }
 
-int
-MpasSTKMeshStruct::prismType(int const* prismVertexIds, int& minIndex)
-{
-  int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
-  minIndex = std::min_element (prismVertexIds, prismVertexIds + 3) - prismVertexIds;
-
-  int v1 (prismVertexIds[PrismVerticesMap[minIndex][1]]);
-  int v2 (prismVertexIds[PrismVerticesMap[minIndex][2]]);
-
-  return v1  > v2;
-}
-
 } // namespace Albany

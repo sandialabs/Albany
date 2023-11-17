@@ -91,8 +91,6 @@ private:
   const std::vector<int>& iceMarginEdgesIds;
   int numLayers;
   LayeredMeshOrdering Ordering;
-
-  int prismType(int const* prismVertexIds, int& minIndex);
 };
 
 } // namespace Albany
