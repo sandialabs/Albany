@@ -292,8 +292,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   if(mesh_data->is_bulk_data_null())
     mesh_data->set_bulk_data(*bulkData);
 
-  mesh_data->add_all_mesh_fields_as_input_fields(); // KL: this adds "solution field"
-
   // Restart index to read solution from exodus file.
   if (params->isParameter("Restart Index")) {
     TEUCHOS_TEST_FOR_EXCEPTION (
@@ -318,6 +316,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 
   if (m_hasRestartSolution) {
+    mesh_data->add_all_mesh_fields_as_input_fields(); // KL: this adds "solution field"
     Teuchos::Array<std::string> default_field = {{"solution", "solution_dot", "solution_dotdot"}};
     const auto& restart_fields = params->get<Teuchos::Array<std::string> >("Restart Fields", default_field);
 
