@@ -67,6 +67,7 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   auto mpiComm = getMpiCommFromTeuchosComm(comm);
 
   mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(mpiComm));
+  mesh_data->use_simple_fields();
 
   // Use Greg Sjaardema's capability to repartition on the fly.
   //    Several partitioning choices: rcb, rib, hsfc, kway, kway-gemo, linear, random
@@ -179,19 +180,6 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   cullSubsetParts(ssNames, ssPartVec); // Eliminate sidesets that are subsets of other sidesets
-
-#if 0
-  // for debugging, print out the parts now
-  std::map<std::string, stk::mesh::Part*>::iterator it;
-
-  for(it = ssPartVec.begin(); it != ssPartVec.end(); ++it){ // loop over the parts in the map
-
-    // for each part in turn, get the name of parts that are a subset of it
-
-    print(*out, "Found \n", *it->second);
-  }
-  // end debugging
-#endif
 
   int worksetSizeMax = params->get<int>("Workset Size", -1);
 
