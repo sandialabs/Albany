@@ -22,4 +22,5 @@ bash nightly_cron_script_albany_blake_gcc_debug.sh
 bash nightly_cron_script_albany_blake_gcc_sfad.sh sfad6
 bash nightly_cron_script_albany_blake_gcc_sfad.sh sfad12
 bash nightly_cron_script_albany_blake_gcc_sfad.sh sfad24
+bash nightly_cron_script_mali_blake_gcc_release.sh
 

@@ -1,0 +1,31 @@
+#!/bin/bash
+# MALI build script
+BASE_DIR=/home/projects/albany/nightlyCDashAlbanyBlake
+cd ${BASE_DIR}/repos-gcc/E3SM.MALI.dev/components/mpas-albany-landice
+
+# External libs
+SCORPIO_INSTALL=${BASE_DIR}/build-gcc/ScorpioReleaseInstallGcc
+TRILINOS_INSTALL=/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc
+ALBANY_INSTALL=${BASE_DIR}/build-gcc/AlbanyReleaseInstallGcc
+MALI_INSTALL=${BASE_DIR}/build-gcc/MALIReleaseInstallGcc
+source ${ALBANY_INSTALL}/export_albany.in
+echo ${ALBANY_LINK_LIBS}
+echo ${LD_LIBRARY_PATH}
+
+make clean \
+  CORE=landice
+
+make -j 96 gfortran \
+  CORE=landice \
+  ALBANY=true \
+  USE_PIO2=true \
+  NETCDF=${NETCDF_FORTRAN_ROOT} \
+  PNETCDF=${PARALLEL_NETCDF_ROOT} \
+  PIO=${SCORPIO_INSTALL} \
+  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL}/lib64 -Wl,-R${TRILINOS_INSTALL}/lib64" \
+  EXE_NAME=landice_model;
+
+mkdir -p ${MALI_INSTALL}
+cp landice_model ${MALI_INSTALL}/landice_model
+cd ${BASE_DIR}
+
