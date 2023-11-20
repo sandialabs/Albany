@@ -39,8 +39,8 @@ public:
 
   bool hasRestartSolution () const { return m_has_restart_solution; }
 
-  View1d<const double>             coords_dev  () const { return m_coords_d; }
-  View1d<      double>::HostMirror coords_host () const { return m_coords_h; }
+  DeviceView1d<const double>             coords_dev  () const { return m_coords_d; }
+  DeviceView1d<      double>::HostMirror coords_host () const { return m_coords_h; }
 
   int part_dim (const std::string& part_name) const;
 
@@ -67,8 +67,8 @@ protected:
 
   Teuchos::RCP<OmegahMeshFieldAccessor>    m_field_accessor;
 
-  View1d<const double>                m_coords_d;
-  View1d<      double>::HostMirror    m_coords_h;
+  DeviceView1d<const double>                m_coords_d;
+  DeviceView1d<      double>::HostMirror    m_coords_h;
 
   bool m_has_restart_solution = false;
 };
