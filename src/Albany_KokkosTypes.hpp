@@ -41,12 +41,13 @@ using ViewLR = Kokkos::View<DT,Kokkos::LayoutRight,MemSpace>;
 
 template<typename ST, typename MemSpace = DeviceMemSpace>
 using View1d = ViewLR<ST*,MemSpace>;
+using DevLayout = PHX::Device::array_layout;
 
 // kokkos 1d and 2d views to be used for on-device kernels
 template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
-using DeviceView1d = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device, MemoryTraits>;
+using DeviceView1d = Kokkos::View<Scalar*, DevLayout, PHX::Device, MemoryTraits>;
 template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
-using DeviceView2d = Kokkos::View<Scalar**, Kokkos::LayoutLeft, PHX::Device, MemoryTraits>;
+using DeviceView2d = Kokkos::View<Scalar**, DevLayout, PHX::Device, MemoryTraits>;
 
 // Kokkos types for local graphs/matrices, to be used for on-device kernels
 using DeviceLocalGraph  = Kokkos::StaticCrsGraph<LO, Kokkos::LayoutLeft, KokkosNode::device_type, void, size_t>;
