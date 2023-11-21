@@ -81,9 +81,9 @@ operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) cons
   const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
   const int side = sideSet.side_pos.d_view(sideSet_idx);
 
-  ScalarT val[maxNumNodesPerSide];
+  ScalarT val[maxNumNodesPerSide] = {};
   for (unsigned int node = 0; node < numSideNodes; ++node) {
-      val[node] = 0;
+      val[node] = ScalarT(0);
       for (unsigned int qp = 0; qp < numSideQPs; ++qp) {
       val[node] += basalMeltRateQP(sideSet_idx,qp) 
                  * BF(sideSet_idx,node,qp) 
