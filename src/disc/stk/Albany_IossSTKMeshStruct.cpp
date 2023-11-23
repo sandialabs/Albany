@@ -112,8 +112,8 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   typedef Teuchos::Array<std::string> StringArray;
   const StringArray additionalNodeSets = params->get("Additional Node Sets", StringArray());
-  for (StringArray::const_iterator it = additionalNodeSets.begin(), it_end = additionalNodeSets.end(); it != it_end; ++it) {
-    stk::mesh::Part &newNodeSet = metaData->declare_part(*it, stk::topology::NODE_RANK);
+  for (const auto& nsn : additionalNodeSets) {
+    stk::mesh::Part &newNodeSet = metaData->declare_part(nsn, stk::topology::NODE_RANK);
     if (!stk::io::is_part_io_part(newNodeSet)) {
       stk::mesh::Field<double> * const distrFactorfield = metaData->get_field<double>(stk::topology::NODE_RANK, "distribution_factors");
       if (distrFactorfield != NULL){
@@ -133,11 +133,7 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::vector<std::string> nsNames;
   int numEB = 0;
 
-  for (stk::mesh::PartVector::const_iterator i = all_parts.begin();
-       i != all_parts.end(); ++i) {
-
-    stk::mesh::Part * const part = *i ;
-
+  for (const auto& part : all_parts) {
     if (!stk::mesh::is_auto_declared_part(*part)) {
       if ( part->primary_entity_rank() == stk::topology::ELEMENT_RANK) {
 
