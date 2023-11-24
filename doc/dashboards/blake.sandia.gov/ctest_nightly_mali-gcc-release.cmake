@@ -84,7 +84,7 @@ set (CTEST_BUILD_NAME "MALI-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-R
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 
-set (CTEST_BUILD_COMMAND "bash ${CTEST_DASHBOARD_ROOT}/do-cmake-scorpio-gcc-release; bash ${CTEST_DASHBOARD_ROOT}/do-make-mpas-gcc-release")
+set (CTEST_BUILD_COMMAND "bash ${CTEST_DASHBOARD_ROOT}/do-cmake-scorpio-gcc-release && ${CTEST_DASHBOARD_ROOT}/do-make-mpas-gcc-release")
 
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_BUILD_FLAGS "-j96")
