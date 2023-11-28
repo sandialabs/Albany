@@ -60,6 +60,8 @@ protected:
   int neq;
   int numDim;
   int num_params{0};
+
+  bool save_solution_field = false;
 };
 
 } // namespace Albany

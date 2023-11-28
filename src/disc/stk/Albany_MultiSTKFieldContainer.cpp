@@ -104,106 +104,108 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
 {
   typedef typename AbstractSTKFieldContainer::STKFieldType       SFT;
 
-  sol_vector_name.resize(solution_vector.size());
-  sol_index.resize(solution_vector.size());
+  if (save_solution_field) {
+    sol_vector_name.resize(solution_vector.size());
+    sol_index.resize(solution_vector.size());
 
-  // Check the input
+    // Check the input
 
-  auto const num_derivs = solution_vector[0].size();
-  for (auto i = 1; i < solution_vector.size(); ++i) {
-    ALBANY_ASSERT(
-        solution_vector[i].size() == num_derivs,
-        "\n*** ERROR ***\n"
-        "Number of derivatives for each variable is different.\n"
-        "Check definition of solution vector and its derivatives.\n");
-  }
+    auto const num_derivs = solution_vector[0].size();
+    for (auto i = 1; i < solution_vector.size(); ++i) {
+      ALBANY_ASSERT(
+          solution_vector[i].size() == num_derivs,
+          "\n*** ERROR ***\n"
+          "Number of derivatives for each variable is different.\n"
+          "Check definition of solution vector and its derivatives.\n");
+    }
 
-  for (int vec_num = 0; vec_num < solution_vector.size(); vec_num++) {
-    if (solution_vector[vec_num].size() ==
-        0) {  // Do the default solution vector
+    for (int vec_num = 0; vec_num < solution_vector.size(); vec_num++) {
+      if (solution_vector[vec_num].size() ==
+          0) {  // Do the default solution vector
 
-      std::string name = params_->get<std::string>(
-          sol_tag_name[vec_num], sol_id_name[vec_num]);
-      SFT* solution =
-          &metaData_->declare_field<double>(stk::topology::NODE_RANK, name);
-      stk::mesh::put_field_on_mesh(
-          *solution, metaData_->universal_part(), neq_, nullptr);
+        std::string name = params_->get<std::string>(
+            sol_tag_name[vec_num], sol_id_name[vec_num]);
+        SFT* solution =
+            &metaData_->declare_field<double>(stk::topology::NODE_RANK, name);
+        stk::mesh::put_field_on_mesh(
+            *solution, metaData_->universal_part(), neq_, nullptr);
 #ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+        stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
 
-      sol_vector_name[vec_num].push_back(name);
-      sol_index[vec_num].push_back(this->neq);
-    } else if (solution_vector[vec_num].size() == 1) {  // User is just renaming
-                                                        // the entire solution
-                                                        // vector
+        sol_vector_name[vec_num].push_back(name);
+        sol_index[vec_num].push_back(this->neq);
+      } else if (solution_vector[vec_num].size() == 1) {  // User is just renaming
+                                                          // the entire solution
+                                                          // vector
 
-      SFT* solution = &metaData_->declare_field<double>(
-          stk::topology::NODE_RANK, solution_vector[vec_num][0]);
-      stk::mesh::put_field_on_mesh(
-          *solution, metaData_->universal_part(), neq_, nullptr);
+        SFT* solution = &metaData_->declare_field<double>(
+            stk::topology::NODE_RANK, solution_vector[vec_num][0]);
+        stk::mesh::put_field_on_mesh(
+            *solution, metaData_->universal_part(), neq_, nullptr);
 #ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+        stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
 
-      sol_vector_name[vec_num].push_back(solution_vector[vec_num][0]);
-      sol_index[vec_num].push_back(neq_);
+        sol_vector_name[vec_num].push_back(solution_vector[vec_num][0]);
+        sol_index[vec_num].push_back(neq_);
 
-    } else {  // user is breaking up the solution into multiple fields
+      } else {  // user is breaking up the solution into multiple fields
 
-      // make sure the number of entries is even
+        // make sure the number of entries is even
 
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          (solution_vector[vec_num].size() % 2),
-          std::logic_error,
-          "Error in input file: specification of solution vector layout is "
-          "incorrect."
-              << std::endl);
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            (solution_vector[vec_num].size() % 2),
+            std::logic_error,
+            "Error in input file: specification of solution vector layout is "
+            "incorrect."
+                << std::endl);
 
-      int len, accum = 0;
+        int len, accum = 0;
 
-      for (int i = 0; i < solution_vector[vec_num].size(); i += 2) {
-        if (solution_vector[vec_num][i + 1] == "V") {
-          len = numDim_;  // vector
-          accum += len;
-          SFT* solution = &metaData_->declare_field<double>(
-              stk::topology::NODE_RANK, solution_vector[vec_num][i]);
-          stk::mesh::put_field_on_mesh(
-              *solution, metaData_->universal_part(), len, nullptr);
+        for (int i = 0; i < solution_vector[vec_num].size(); i += 2) {
+          if (solution_vector[vec_num][i + 1] == "V") {
+            len = numDim_;  // vector
+            accum += len;
+            SFT* solution = &metaData_->declare_field<double>(
+                stk::topology::NODE_RANK, solution_vector[vec_num][i]);
+            stk::mesh::put_field_on_mesh(
+                *solution, metaData_->universal_part(), len, nullptr);
 #ifdef ALBANY_SEACAS
-          stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+            stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
-          sol_vector_name[vec_num].push_back(solution_vector[vec_num][i]);
-          sol_index[vec_num].push_back(len);
+            sol_vector_name[vec_num].push_back(solution_vector[vec_num][i]);
+            sol_index[vec_num].push_back(len);
 
-        } else if (solution_vector[vec_num][i + 1] == "S") {
-          len = 1;  // scalar
-          accum += len;
-          SFT* solution = &metaData_->declare_field<double>(
-              stk::topology::NODE_RANK, solution_vector[vec_num][i]);
-          stk::mesh::put_field_on_mesh(
-              *solution, metaData_->universal_part(), nullptr);
+          } else if (solution_vector[vec_num][i + 1] == "S") {
+            len = 1;  // scalar
+            accum += len;
+            SFT* solution = &metaData_->declare_field<double>(
+                stk::topology::NODE_RANK, solution_vector[vec_num][i]);
+            stk::mesh::put_field_on_mesh(
+                *solution, metaData_->universal_part(), nullptr);
 #ifdef ALBANY_SEACAS
-          stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+            stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
-          sol_vector_name[vec_num].push_back(solution_vector[vec_num][i]);
-          sol_index[vec_num].push_back(len);
+            sol_vector_name[vec_num].push_back(solution_vector[vec_num][i]);
+            sol_index[vec_num].push_back(len);
 
-        } else {
-          TEUCHOS_TEST_FOR_EXCEPTION(
-              true,
-              std::logic_error,
-              "Error in input file: specification of solution vector layout is "
-              "incorrect."
-                  << std::endl);
+          } else {
+            TEUCHOS_TEST_FOR_EXCEPTION(
+                true,
+                std::logic_error,
+                "Error in input file: specification of solution vector layout is "
+                "incorrect."
+                    << std::endl);
+          }
         }
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            accum != neq_,
+            std::logic_error,
+            "Error in input file: specification of solution vector layout is "
+            "incorrect."
+                << std::endl);
       }
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          accum != neq_,
-          std::logic_error,
-          "Error in input file: specification of solution vector layout is "
-          "incorrect."
-              << std::endl);
     }
   }
 

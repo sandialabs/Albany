@@ -145,40 +145,41 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     sol_sens_id_name_vec[0] = "sensitivity dg" + std::to_string(resp_fn_index) + "dp" + std::to_string(param_sens_index);
   }
 
-  solution_field.resize(num_time_deriv + 1);
-  solution_field_dtk.resize(num_time_deriv + 1);
-  solution_field_dxdp.resize(this->num_params);
+  if (save_solution_field) {
+    solution_field.resize(num_time_deriv + 1);
+    solution_field_dtk.resize(num_time_deriv + 1);
+    solution_field_dxdp.resize(this->num_params);
 
-  for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
-    solution_field[num_vecs] = &metaData_->declare_field<double>(
-        stk::topology::NODE_RANK,
-        params_->get<std::string>(
-            sol_tag_name[num_vecs], sol_id_name[num_vecs]));
-    stk::mesh::put_field_on_mesh(
-        *solution_field[num_vecs], metaData_->universal_part(), neq_, nullptr); // KL: this
-
-#if defined(ALBANY_DTK)
-    if (output_dtk_field == true) {
-      solution_field_dtk[num_vecs] = &metaData_->declare_field<double>(
+    for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
+      solution_field[num_vecs] = &metaData_->declare_field<double>(
           stk::topology::NODE_RANK,
           params_->get<std::string>(
-              sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
+              sol_tag_name[num_vecs], sol_id_name[num_vecs]));
       stk::mesh::put_field_on_mesh(
-          *solution_field_dtk[num_vecs],
-          metaData_->universal_part(),
-          neq_,
-          nullptr);
-    }
+          *solution_field[num_vecs], metaData_->universal_part(), neq_, nullptr); // KL: this
+#if defined(ALBANY_DTK)
+      if (output_dtk_field == true) {
+        solution_field_dtk[num_vecs] = &metaData_->declare_field<double>(
+            stk::topology::NODE_RANK,
+            params_->get<std::string>(
+                sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
+        stk::mesh::put_field_on_mesh(
+            *solution_field_dtk[num_vecs],
+            metaData_->universal_part(),
+            neq_,
+            nullptr);
+      }
 #endif
 
 #ifdef ALBANY_SEACAS
-    stk::io::set_field_role(*solution_field[num_vecs], Ioss::Field::TRANSIENT);
+      stk::io::set_field_role(*solution_field[num_vecs], Ioss::Field::TRANSIENT);
 #if defined(ALBANY_DTK)
-    if (output_dtk_field == true)
-      stk::io::set_field_role(
-          *solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
+      if (output_dtk_field == true)
+        stk::io::set_field_role(
+            *solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
 #endif
 #endif
+    }
   }
 
   //Transient sensitivities output to Exodus
@@ -203,9 +204,6 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   }
 
   this->addStateStructs(sis);
-
-  //initializeProcRankField();
-
 }
 
 void
@@ -270,7 +268,9 @@ saveSolnVector (const Thyra_Vector& soln,
                 const dof_mgr_ptr_t& sol_dof_mgr,
                 const bool           overlapped)
 {
-  saveVectorImpl (soln, solution_field[0]->name(), sol_dof_mgr, overlapped);
+  if (save_solution_field) { 
+    saveVectorImpl (soln, solution_field[0]->name(), sol_dof_mgr, overlapped);
+  }
 
   if (soln_dxdp != Teuchos::null) {
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -293,7 +293,9 @@ saveSolnVector (const Thyra_Vector&  soln,
                 const bool           overlapped)
 {
   saveSolnVector(soln,soln_dxdp, sol_dof_mgr, overlapped);
-  saveVectorImpl (soln_dot, solution_field[1]->name(), sol_dof_mgr, overlapped);
+  if (save_solution_field) {
+    saveVectorImpl (soln_dot, solution_field[1]->name(), sol_dof_mgr, overlapped);
+  }
 }
 
 void OrdinarySTKFieldContainer::
@@ -305,7 +307,9 @@ saveSolnVector (const Thyra_Vector&  soln,
                 const bool           overlapped)
 {
   saveSolnVector(soln, soln_dxdp, soln_dot, sol_dof_mgr, overlapped);
-  saveVectorImpl (soln_dotdot, solution_field[2]->name(), sol_dof_mgr, overlapped);
+  if (save_solution_field) {
+    saveVectorImpl (soln_dotdot, solution_field[2]->name(), sol_dof_mgr, overlapped);
+  }
 }
 
 void OrdinarySTKFieldContainer::
