@@ -47,7 +47,9 @@ GenericSTKFieldContainer::GenericSTKFieldContainer(
     params(params_),
     neq(neq_),
     numDim(numDim_),
-    num_params(num_params_) {
+    num_params(num_params_)
+{
+  save_solution_field = params_->get("Save Solution Field", true);
 }
 
 #ifdef ALBANY_SEACAS
