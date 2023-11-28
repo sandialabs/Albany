@@ -132,6 +132,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
   Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*>
                                               solution_field_dxdp;
   AbstractSTKFieldContainer::STKFieldType* residual_field;
+
+  bool output_sens_field = false;
 };
 
 }  // namespace Albany

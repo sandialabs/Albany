@@ -114,10 +114,9 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 #endif
   //IKT FIXME? - currently won't write dxdp to output file if problem is steady,
   //as this output doesn't work in same way.  May want to change in the future.
-  bool output_sens_field = false;
   const auto& sens_method = params_->get<std::string>("Sensitivity Method","NONE");
 
-  if (this->num_params > 0 && num_time_deriv > 0 && sens_method != "None") output_sens_field = true;
+  output_sens_field = this->num_params > 0 && num_time_deriv > 0 && sens_method != "None";
 
   //Create tag and id arrays for sensitivity field (dxdp or dgdp)
   std::vector<std::string> sol_sens_tag_name_vec;
@@ -269,7 +268,7 @@ saveSolnVector (const Thyra_Vector& soln,
     saveVectorImpl (soln, solution_field[0]->name(), sol_dof_mgr, overlapped);
   }
 
-  if (soln_dxdp != Teuchos::null) {
+  if (soln_dxdp != Teuchos::null and output_sens_field) {
     TEUCHOS_TEST_FOR_EXCEPTION(
       soln_dxdp->domain()->dim() != this->num_params, std::runtime_error,
       "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
@@ -319,7 +318,7 @@ saveSolnMultiVector (const Thyra_MultiVector& soln,
     saveVectorImpl (*soln.col(icomp), solution_field[icomp]->name(), sol_dof_mgr, overlapped);
   }
 
-  if (soln_dxdp != Teuchos::null) {
+  if (soln_dxdp != Teuchos::null and output_sens_field) {
     TEUCHOS_TEST_FOR_EXCEPTION(
       soln_dxdp->domain()->dim() != this->num_params, std::runtime_error,
       "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
