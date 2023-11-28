@@ -88,10 +88,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 #endif
   }
 
-  this->addStateStructs(sis);
-
   initializeProcRankField();
-
 }
 
 OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(

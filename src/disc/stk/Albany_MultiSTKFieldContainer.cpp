@@ -80,8 +80,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
 #endif
   }
 
-  this->addStateStructs(sis);
-
   initializeProcRankField();
 }
 
@@ -209,34 +207,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
     }
   }
 
-  // Do the coordinates
-  this->coordinates_field =
-      &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
-  stk::mesh::put_field_on_mesh(
-      *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
-#ifdef ALBANY_SEACAS
-  stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
-#endif
-
-  if (numDim_ == 3) {
-    this->coordinates_field3d = this->coordinates_field;
-  } else {
-    this->coordinates_field3d = &metaData_->declare_field<double>(
-        stk::topology::NODE_RANK, "coordinates3d");
-    stk::mesh::put_field_on_mesh(
-        *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
-#ifdef ALBANY_SEACAS
-    if (params_->get<bool>("Export 3d coordinates field", false)) {
-      stk::io::set_field_role(
-          *this->coordinates_field3d, Ioss::Field::TRANSIENT);
-    }
-#endif
-  }
-
   this->addStateStructs(sis);
-
-  //initializeProcRankField();
-
 }
 
 void MultiSTKFieldContainer::
