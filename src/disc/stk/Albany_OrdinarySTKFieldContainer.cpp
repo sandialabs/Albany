@@ -60,13 +60,11 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 #endif
 
   // Start STK stuff
-  this->coordinates_field = 
-      metaData_->get_field<double>(stk::topology::NODE_RANK, "coordinates");
-      
+  this->coordinates_field = metaData_->get_field<double>(stk::topology::NODE_RANK, "coordinates");
+
   //STK throws when declaring a field that has been already declared
   if(this->coordinates_field == nullptr) {
-    this->coordinates_field = 
-        &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
+    this->coordinates_field = &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
   }
   stk::mesh::put_field_on_mesh(
       *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
@@ -263,7 +261,7 @@ saveSolnVector (const Thyra_Vector& soln,
                 const dof_mgr_ptr_t& sol_dof_mgr,
                 const bool           overlapped)
 {
-  if (save_solution_field) { 
+  if (save_solution_field) {
     saveVectorImpl (soln, solution_field[0]->name(), sol_dof_mgr, overlapped);
   }
 
@@ -344,9 +342,7 @@ transferSolutionToCoords()
   TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
     "Error OrdinarySTKFieldContainer::transferSolutionToCoords not called from a solution field container.\n");
 
-  using SFT    = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper = STKFieldContainerHelper<SFT>;
-  Helper::copySTKField(*solution_field[0], *this->coordinates_field);
+  STKFieldContainerHelper::copySTKField(*solution_field[0], *this->coordinates_field);
 }
 
 void OrdinarySTKFieldContainer::
@@ -377,25 +373,9 @@ fillVectorImpl(Thyra_Vector&                         field_vector,
   auto* raw_field = metaData->get_field(field_entity_rank, field_name);
   ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
-  const int rank = raw_field->field_array_rank();
 
-  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper = STKFieldContainerHelper<SFT>;
-
-  if (rank == 0) {
-    const SFT* field = this->metaData->template get_field<double>(
-        field_entity_rank, field_name);    
-    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else if (rank == 1) {
-    const SFT* field = this->metaData->template get_field<double>(
-        field_entity_rank, field_name);
-    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::runtime_error,
-        "Error! Only scalar and vector fields supported so far.\n");
-  }
+  const auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
+  STKFieldContainerHelper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
 }
 
 void OrdinarySTKFieldContainer::
@@ -426,25 +406,9 @@ saveVectorImpl (const Thyra_Vector&  field_vector,
   auto* raw_field = metaData->get_field(field_entity_rank, field_name);
   ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
-  const int rank = raw_field->field_array_rank();
 
-  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper = STKFieldContainerHelper<SFT>;
-
-  if (rank == 0) {
-    SFT* field = this->metaData->template get_field<double>(
-        stk::topology::NODE_RANK, field_name);    
-    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else if (rank == 1) {
-    SFT* field = this->metaData->template get_field<double>(
-        stk::topology::NODE_RANK, field_name);
-    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::runtime_error,
-        "Error! Only scalar and vector fields supported so far.\n");
-  }
+  auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
+  STKFieldContainerHelper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
 }
 
 }  // namespace Albany
