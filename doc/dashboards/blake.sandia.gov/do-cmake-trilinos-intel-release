@@ -24,6 +24,7 @@ cmake \
       -D CMAKE_CXX_COMPILER:FILEPATH=mpiicpx \
       -D CMAKE_C_COMPILER:FILEPATH=mpiicx \
       -D CMAKE_Fortran_COMPILER:FILEPATH=mpiifx \
+      -D CMAKE_CXX_FLAGS:STRING="-fp-model=precise" \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D TPL_ENABLE_BLAS=ON \
