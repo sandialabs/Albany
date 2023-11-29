@@ -1,9 +1,9 @@
 rm -rf CMake* 
 
-TRILINSTALLDIR="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosDebugInstallGccNoWarn"
+TRILINOS_INSTALL="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosDebugInstallGccNoWarn"
 
 cmake \
-    -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL} \
     -D CMAKE_BUILD_TYPE:STRING=DEBUG \
     -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
     -D CMAKE_C_COMPILER:FILEPATH=mpicc \
@@ -13,7 +13,7 @@ cmake \
     -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
     -D ALBANY_CTEST_TIMEOUT=2400 \
     -D ENABLE_CHECK_FPE:BOOL=OFF \
-    -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by ppr:1:core:pe=4' \
+    -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by core' \
     -D ENABLE_ALBANY_PYTHON:BOOL=ON \
     -D ENABLE_OMEGAH:BOOL=ON \
     -D PYTHON_EXECUTABLE='/projects/x86-64-icelake-rocky8/utilities/python/3.10.10/gcc/8.5.0/base/7k3fxam/bin/python' \

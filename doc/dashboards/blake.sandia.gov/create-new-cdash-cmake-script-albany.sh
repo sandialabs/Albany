@@ -13,6 +13,9 @@ fi
 if [ $build = "gcc-debug" ]; then
   name="albany-gcc-debug"
 fi
+if [ $build = "intel-release" ]; then
+  name="albany-intel-release"
+fi
 if [ $build = "sfad" ]; then
   name="albany-sfad"
 fi

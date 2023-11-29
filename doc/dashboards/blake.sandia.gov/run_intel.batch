@@ -1,0 +1,20 @@
+#!/bin/bash
+#SBATCH -N 1
+##SBATCH -p c60-m0 
+#SBATCH --time=12:00:00
+#Note: This script assumes you have pre-loaded the required modules
+#prior to entering the sbatch command. The env will propagate to the
+#batch job.
+#SBATCH --output=log-intel.out  
+if [ X"$SLURM_STEP_ID" = "X" -a X"$SLURM_PROCID" = "X"0 ]
+then
+  echo "print SLURM_JOB_ID = $SLURM_JOB_ID"
+fi 
+
+cd /home/projects/albany/nightlyCDashTrilinosBlake
+source blake_intel_modules.sh >& intel_modules.out
+bash nightly_cron_script_trilinos_blake_intel_release.sh
+cd /home/projects/albany/nightlyCDashAlbanyBlake
+source install_python_packages.sh
+bash nightly_cron_script_albany_blake_intel_release.sh
+
