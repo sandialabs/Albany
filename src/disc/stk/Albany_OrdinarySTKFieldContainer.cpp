@@ -87,6 +87,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     }
 #endif
   }
+  this->addStateStructs(sis);
 
   initializeProcRankField();
 }
@@ -198,8 +199,6 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
           *solution_field_dxdp[np], Ioss::Field::TRANSIENT);
 #endif
   }
-
-  this->addStateStructs(sis);
 }
 
 void

@@ -79,6 +79,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
     }
 #endif
   }
+  this->addStateStructs(sis);
 
   initializeProcRankField();
 }
@@ -206,8 +207,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
       }
     }
   }
-
-  this->addStateStructs(sis);
 }
 
 void MultiSTKFieldContainer::
