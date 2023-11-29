@@ -1,13 +1,12 @@
 rm -rf CMake* 
 
-TRILINOS_INSTALL="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc"
+TRILINOS_INSTALL="/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosReleaseInstallIntel"
 ALBANY_INSTALL=
 
 cmake \
     -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL} \
-    -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
-    -D CMAKE_C_COMPILER:FILEPATH=mpicc \
-    -D CMAKE_CXX_FLAGS:STRING='-std=gnu++11 -fext-numeric-literals -Wno-use-after-free' \
+    -D CMAKE_CXX_COMPILER:FILEPATH=mpiicpx \
+    -D CMAKE_C_COMPILER:FILEPATH=mpiicx \
     -D ENABLE_LANDICE:BOOL=ON \
     -D ENABLE_DEMO_PDES:BOOL=ON \
     -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \

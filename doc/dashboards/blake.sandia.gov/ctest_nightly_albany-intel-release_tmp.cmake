@@ -3,10 +3,9 @@ set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
-set (CLEAN_BUILD FALSE)
-set (DOWNLOAD_ALBANY FALSE) 
-set (BUILD_ALBANY_DEBUG TRUE) 
-
+set (CLEAN_BUILD TRUE)
+set (DOWNLOAD_ALBANY TRUE) 
+set (BUILD_ALBANY_RELEASE TRUE) 
 
 # Begin User inputs:
 set (CTEST_SITE "blake.sandia.gov" ) # generally the output of hostname
@@ -17,9 +16,8 @@ set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
-set (CTEST_SOURCE_NAME repos-gcc)
-#set (CTEST_BUILD_NAME "blake-debug-Albany-gcc-no-warn")
-set (CTEST_BINARY_NAME build-gcc)
+set (CTEST_SOURCE_NAME repos-intel)
+set (CTEST_BINARY_NAME build-intel)
 
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -37,7 +35,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosDebugInstallGccNoWarn")
+set (TRILINOS_INSTALL "/home/projects/albany/nightlyCDashTrilinosBlake/build-intel/TrilinosReleaseInstallIntel")
+set (ALBANY_INSTALL "/home/projects/albany/nightlyCDashAlbanyBlake/build-intel/AlbanyReleaseInstallIntel")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -82,7 +81,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-Debug-No-Warn")
+set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-Release")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
@@ -94,17 +93,19 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (MPI_PATH $ENV{MPI_ROOT})  
-set (MKL_PATH $ENV{MKL_ROOT})  
-set (BOOST_PATH $ENV{BOOST_ROOT}) 
-set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
+set (BOOST_PATH /home/projects/albany/tpls/boost/1.83.0/oneapi/2023.2.0) 
+set (NETCDF_PATH $ENV{NETCDF_C_ROOT})
+set (PNETCDF_PATH $ENV{PARALLEL_NETCDF_ROOT})
 set (HDF5_PATH $ENV{HDF5_ROOT})
-set (ZLIB_PATH $ENV{ZLIB_ROOT})  
+set (SUPERLU_PATH $ENV{SUPERLU_ROOT})
+set (MKL_PATH $ENV{MKLROOT})
+#set (ZLIB_PATH $ENV{ZLIB_ROOT})  
 
 if (CLEAN_BUILD)
   # Initial cache info
   set (CACHE_CONTENTS "
   SITE:STRING=${CTEST_SITE}
-  CMAKE_TYPE:STRING=Debug
+  CMAKE_TYPE:STRING=Release
   CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
   TESTING:BOOL=OFF
   PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
@@ -159,7 +160,7 @@ endif ()
 ctest_start(${CTEST_TEST_TYPE})
 
 
-if (BUILD_ALBANY_DEBUG)
+if (BUILD_ALBANY_RELEASE)
 
   # Configure the Albany build 
   #
@@ -168,12 +169,12 @@ if (BUILD_ALBANY_DEBUG)
     CDASH-ALBANY-FILE.TXT
     )
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildDebugGccNoWarn")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildDebugGccNoWarn)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseIntel")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseIntel)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildDebugGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseIntel"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -197,13 +198,13 @@ if (BUILD_ALBANY_DEBUG)
   # Build the rest of Albany and install everything
   #
 
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
+  #set (CTEST_BUILD_TARGET all)
+  set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildDebugGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseIntel"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -234,10 +235,10 @@ if (BUILD_ALBANY_DEBUG)
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
-  set (CTEST_TEST_TIMEOUT 2400)
+  set (CTEST_TEST_TIMEOUT 600)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildDebugGccNoWarn"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildReleaseIntel"
     RETURN_VALUE  HAD_ERROR
     )
 

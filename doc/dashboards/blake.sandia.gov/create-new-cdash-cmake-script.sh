@@ -20,3 +20,8 @@ if [ $buildtype = "debug" ]; then
   sed -e '/CDASH-TRILINOS-GCC-DEBUG-FILE.TXT/r /home/projects/albany/nightlyCDashTrilinosBlake/cdash-gcc-debug-frag.txt' -e '/CDASH-TRILINOS-GCC-DEBUG-FILE.TXT/d' /home/projects/albany/nightlyCDashTrilinosBlake/ctest_nightly_trilinos_gcc_debug_tmp.cmake >& /home/projects/albany/nightlyCDashTrilinosBlake/ctest_nightly_trilinos_gcc_debug.cmake
 fi
 fi
+if [ $compiler = "intel" ]; then
+if [ $buildtype = "release" ]; then
+  sed -e '/CDASH-TRILINOS-INTEL-RELEASE-FILE.TXT/r /home/projects/albany/nightlyCDashTrilinosBlake/cdash-intel-release-frag.txt' -e '/CDASH-TRILINOS-INTEL-RELEASE-FILE.TXT/d' /home/projects/albany/nightlyCDashTrilinosBlake/ctest_nightly_trilinos_intel_release_tmp.cmake >& /home/projects/albany/nightlyCDashTrilinosBlake/ctest_nightly_trilinos_intel_release.cmake
+fi
+fi
