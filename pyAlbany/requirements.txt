@@ -1,0 +1,5 @@
+# pyAlbany Requirements
+numpy
+scipy
+mpi4py
+pybind11
