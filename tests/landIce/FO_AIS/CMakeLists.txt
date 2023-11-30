@@ -38,6 +38,25 @@ if (NOT ALBANY_PARALELL_EXODUS)
   set_tests_properties (${testNameRoot}_decompMesh PROPERTIES FIXTURES_SETUP antarcticaMeshSetup)
 endif()
 
+if (ALBANY_ENABLE_CUDA AND NOT ALBANY_ENABLE_CUDA_UVM)
+  if(ALBANY_MUELU)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuKokkos.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuKokkos.yaml)
+    add_test(${testNameRoot}_MueLuKokkos ${Albany8.exe} inputMueLuKokkos.yaml)
+      
+    if (NOT ALBANY_PARALELL_EXODUS)
+      set_tests_properties(${testNameRoot}_MueLuKokkos
+                      PROPERTIES
+                      LABELS            "LandIce;Tpetra;Forward"
+                      FIXTURES_REQUIRED antarcticaMeshSetup)
+    else()
+      set_tests_properties(${testNameRoot}_MueLuKokkos PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    endif()
+  endif()
+
+  # none of the following tests will be added if UVM is off so return
+  return()
+endif()
 
 if (ALBANY_EPETRA) 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputML.yaml
@@ -66,6 +85,19 @@ if(ALBANY_MUELU)
                      FIXTURES_REQUIRED antarcticaMeshSetup)
   else()
     set_tests_properties(${testNameRoot}_MueLu PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  endif()
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuKokkos.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuKokkos.yaml)
+  add_test(${testNameRoot}_MueLuKokkos ${Albany8.exe} inputMueLuKokkos.yaml)
+    
+  if (NOT ALBANY_PARALELL_EXODUS)
+    set_tests_properties(${testNameRoot}_MueLuKokkos
+                     PROPERTIES
+                     LABELS            "LandIce;Tpetra;Forward"
+                     FIXTURES_REQUIRED antarcticaMeshSetup)
+  else()
+    set_tests_properties(${testNameRoot}_MueLuKokkos PROPERTIES LABELS "LandIce;Tpetra;Forward")
   endif()
 endif()
 

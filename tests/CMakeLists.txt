@@ -180,6 +180,18 @@ IF(${PYTHON_TEST})
   set(PYTHON_TEST_HELPERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python)
 ENDIF()
 
+IF (ALBANY_ENABLE_CUDA AND NOT ALBANY_ENABLE_CUDA_UVM)
+  IF (ALBANY_UNIT_TESTS)
+    add_subdirectory(unit)
+  ENDIF()
+
+  IF(ENABLE_LANDICE AND ALBANY_SEACAS )
+    add_subdirectory(landIce)
+  ENDIF()
+
+  return()
+ENDIF()
+
 add_subdirectory(corePDEs)
 
 IF (ALBANY_UNIT_TESTS)

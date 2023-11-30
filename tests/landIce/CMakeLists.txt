@@ -1,3 +1,10 @@
+IF (ALBANY_ENABLE_CUDA AND NOT ALBANY_ENABLE_CUDA_UVM)
+  add_subdirectory(ExoMeshes)
+  add_subdirectory(AsciiMeshes)
+  add_subdirectory(FO_AIS)
+  return()
+ENDIF()
+
 add_subdirectory(ExoMeshes)
 
 add_subdirectory(AsciiMeshes)
