@@ -16,7 +16,7 @@ cmake \
     -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by core' \
     -D ENABLE_ALBANY_PYTHON:BOOL=ON \
     -D ENABLE_OMEGAH:BOOL=ON \
-    -D PYTHON_EXECUTABLE='/projects/x86-64-icelake-rocky8/utilities/python/3.10.10/gcc/8.5.0/base/7k3fxam/bin/python' \
+    -D PYTHON_EXECUTABLE='/home/projects/albany/tpls/python/gcc/12.2.0/openmpi/4.1.5/gcc-env/bin/python' \
     -D CMAKE_INSTALL_PREFIX:PATH=${ALBANY_INSTALL} \
     -D BUILD_SHARED_LIBS:BOOL=ON \
     -D ENABLE_MPAS_INTERFACE:BOOL=ON \
