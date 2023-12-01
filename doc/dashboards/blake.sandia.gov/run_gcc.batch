@@ -16,7 +16,6 @@ source blake_gcc_modules.sh >& gcc_modules.out
 bash nightly_cron_script_trilinos_blake_gcc_release.sh
 bash nightly_cron_script_trilinos_blake_gcc_debug.sh
 cd /home/projects/albany/nightlyCDashAlbanyBlake
-source install_python_packages.sh
 bash nightly_cron_script_albany_blake_gcc_release.sh
 bash nightly_cron_script_albany_blake_gcc_debug.sh
 bash nightly_cron_script_albany_blake_gcc_sfad.sh sfad6

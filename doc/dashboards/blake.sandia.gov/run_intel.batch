@@ -15,6 +15,5 @@ cd /home/projects/albany/nightlyCDashTrilinosBlake
 source blake_intel_modules.sh >& intel_modules.out
 bash nightly_cron_script_trilinos_blake_intel_release.sh
 cd /home/projects/albany/nightlyCDashAlbanyBlake
-source install_python_packages.sh
 bash nightly_cron_script_albany_blake_intel_release.sh
 
