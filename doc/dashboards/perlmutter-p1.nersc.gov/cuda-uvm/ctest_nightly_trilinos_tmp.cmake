@@ -1,17 +1,17 @@
+
 #cmake_minimum_required (VERSION 2.8)
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
 set (CLEAN_BUILD FALSE)
-set (DOWNLOAD_TRILINOS FALSE)
-set (BUILD_TRILINOS FALSE)
-set (DOWNLOAD_ALBANY TRUE) 
-set (BUILD_ALBANY TRUE) 
-set (BUILD_ALBANY_SFAD FALSE) 
+set (DOWNLOAD_TRILINOS TRUE)
+set (BUILD_TRILINOS TRUE)
+set (DOWNLOAD_ALBANY FALSE) 
+set (BUILD_ALBANY FALSE)
 
 # Begin User inputs:
-set (CTEST_SITE "pm-gpu" ) # generally the output of hostname
+set (CTEST_SITE "pm-gpu-uvm" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -38,23 +38,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/TrilinosInstall")
-set (ALBANY_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/AlbanyInstall")
-execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE MPICC_RESULT
-		OUTPUT_FILE "mpicc.txt")
-execute_process(COMMAND bash get_mpicc.sh 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE GET_MPICC_RESULT)
-execute_process(COMMAND cat mpicc.txt 
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		RESULT_VARIABLE GET_MPICC_RESULT
-		OUTPUT_VARIABLE MPICC
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message("IKT mpicc = " ${MPICC}) 
-set (MPICC $ENV{MPICH_DIR}/bin/mpicc)
-set (NVCC /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda/nvcc_wrapper_a100)
+set(MPICC $ENV{MPICH_DIR}/bin/mpicc)
+#message("IKT MPICC = " ${MPICC}) 
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT
@@ -86,7 +71,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda")
+set (CTEST_BUILD_NAME "Trilinos-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda-uvm")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
@@ -98,6 +83,20 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
+set (CRAYPE_LINK_TYPE dynamic)
+
+set (NVCC_WRAPPER ${CTEST_DASHBOARD_ROOT}/nvcc_wrapper_a100 )
+set (CUDA_HOME $ENV{CUDA_HOME})
+set (CUDATOOLKIT_HOME $ENV{CUDATOOLKIT_HOME} )
+set (CUDATOOLKIT_VERSION_STRING $ENV{CUDATOOLKIT_VERSION_STRING} )
+
+set (MPICH_DIR $ENV{MPICH_DIR})
+set (CRAY_LIBSCI_PREFIX_DIR $ENV{CRAY_LIBSCI_PREFIX_DIR})
+set (BOOST_DIR $ENV{BOOST_DIR})
+set (NETCDF_DIR $ENV{NETCDF_DIR})
+set (PNETCDF_DIR $ENV{PNETCDF_DIR})
+set (HDF5_DIR $ENV{HDF5_DIR})
+ 
 if (CLEAN_BUILD)
   # Initial cache info
   set (CACHE_CONTENTS "
@@ -112,67 +111,65 @@ if (CLEAN_BUILD)
   file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 endif ()
 
-if (DOWNLOAD_ALBANY)
+if (DOWNLOAD_TRILINOS)
 
   set (CTEST_CHECKOUT_COMMAND)
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+ 
+  #
+  # Get Trilinos
+  #
   
-  #
-  # Get Albany
-  #
-
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Albany_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Albany
+      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
-    
     message(STATUS "out: ${_out}")
     message(STATUS "err: ${_err}")
     message(STATUS "res: ${HAD_ERROR}")
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone Albany repository!")
+      message(FATAL_ERROR "Cannot clone Trilinos repository!")
     endif ()
   endif ()
 
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  
   # Pull the repo
   execute_process (COMMAND "${CTEST_GIT_COMMAND}" pull
-      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Albany
+      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "Output of Albany pull: ${_out}")
+  message(STATUS "Output of Trilinos pull: ${_out}")
   message(STATUS "Text sent to standard error stream: ${_err}")
   message(STATUS "command result status: ${HAD_ERROR}")
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot pull Albany!")
+    message(FATAL_ERROR "Cannot pull Trilinos!")
   endif ()
 
-endif ()
-
+endif()
 
 ctest_start(${CTEST_TEST_TYPE})
 
-
-if (BUILD_ALBANY)
-
-  # Configure the Albany build 
+# Set the common Trilinos config options & build Trilinos
+# 
+if (BUILD_TRILINOS) 
+  message ("ctest state: BUILD_TRILINOS")
   #
+  # Configure the Trilinos build
+  #
+  set(INSTALL_DIR /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda-uvm/builds/TrilinosInstall)
 
   set (CONFIGURE_OPTIONS
-    CDASH-ALBANY-FILE.TXT
-    )
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc)
+    CDASH-TRILINOS-FILE.TXT
+  )
+
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildCudaGcc")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildCudaGcc)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildCudaGcc"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
@@ -183,16 +180,16 @@ if (BUILD_ALBANY)
       )
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
+      message ("Cannot submit Trilinos configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
+    message ("Cannot configure Trilinos build!")
   endif ()
 
   #
-  # Build the rest of Albany and install everything
+  # Build the rest of Trilinos and install everything
   #
 
   #set (CTEST_BUILD_TARGET all)
@@ -201,7 +198,7 @@ if (BUILD_ALBANY)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildCudaGcc"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -213,29 +210,26 @@ if (BUILD_ALBANY)
       )
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
+      message ("Cannot submit Trilinos build results!")
     endif ()
 
   endif ()
 
   if (HAD_ERROR)
-    message ("Cannot build Albany!")
+    message ("Cannot build Trilinos!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
+    message ("Encountered build errors in Trilinos build. Exiting!")
   endif ()
-  #
-  # Run Albany tests
-  #
-  #  Over-write default limit for output posted to CDash site
-  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
-  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
+  #
+  # Run Trilinos tests
+  #
   set (CTEST_TEST_TIMEOUT 500)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildCudaGcc"
     RETURN_VALUE  HAD_ERROR
     )
 
@@ -245,9 +239,7 @@ if (BUILD_ALBANY)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
+      message(FATAL_ERROR "Cannot submit Trilinos test results!")
     endif ()
   endif ()
-endif ()
-
-
+endif()

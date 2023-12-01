@@ -11,8 +11,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/global/cfs/cdirs/fanssie/automated_te
 
 bash ${BASE_DIR}/nightly_cron_script_albany_pm_gpu.sh
 
-cp biweekly_log_pm_cpu_Albany.txt /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/logs/biweekly_log_pm_cpu_Albany.txt
-cp biweekly_log_pm_cpu_Trilinos.txt /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/logs/biweekly_log_pm_cpu_Trilinos.txt
+cp biweekly_log_pm_gpu_Albany.txt /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/logs/biweekly_log_pm_gpu_Albany.txt
+cp biweekly_log_pm_gpu_Trilinos.txt /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/logs/biweekly_log_pm_gpu_Trilinos.txt
 
 chmod -R 2770 /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda
-chown -R fanssie /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda
+chown -R :fanssie /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda

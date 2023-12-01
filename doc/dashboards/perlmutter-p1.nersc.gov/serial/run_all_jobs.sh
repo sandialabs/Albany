@@ -26,4 +26,4 @@ cp biweekly_log_pm_cpu_MALI.txt /global/cfs/cdirs/fanssie/automated_testing/week
 cp biweekly_log_pm_cpu_Trilinos.txt /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/logs/biweekly_log_pm_cpu_Trilinos.txt
 
 chmod -R 2770 /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial
-chown -R fanssie /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial
+chown -R :fanssie /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial
