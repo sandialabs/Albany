@@ -1,19 +1,15 @@
-IF (ALBANY_ENABLE_CUDA AND NOT ALBANY_ENABLE_CUDA_UVM)
-  add_subdirectory(ExoMeshes)
-  add_subdirectory(AsciiMeshes)
-  add_subdirectory(FO_AIS)
-  return()
-ENDIF()
-
 add_subdirectory(ExoMeshes)
-
 add_subdirectory(AsciiMeshes)
+add_subdirectory(FO_AIS)
+
+IF (Kokkos_ENABLE_CUDA AND NOT Kokkos_ENABLE_CUDA_UVM)
+  RETURN() # don't add any tests past this point if this is a CUDA build with uvm disabled
+ENDIF()
 
 add_subdirectory(FO_MMS)
 add_subdirectory(FO_ISMIP)
 add_subdirectory(FO_Test)
 add_subdirectory(FO_GIS)
-add_subdirectory(FO_AIS)
 add_subdirectory(FO_Thermo)
 
 add_subdirectory(SHMIP)

@@ -15,7 +15,7 @@
   # These require exodus, Ioss, stk_io, to read meshes
   if(ALBANY_SEACAS)
     add_subdirectory(NSPoiseuille2D)
-    if(NOT ALBANY_ENABLE_CUDA) # Currently takes too long to run on Ride
+    if(NOT Kokkos_ENABLE_CUDA) # Currently takes too long to run on Ride
       add_subdirectory(NSVortexShedding2D)
     endif()
   endif()
