@@ -267,7 +267,7 @@ if (ALBANY_EPETRA)
   set_tests_properties(${testName}_Epetra  PROPERTIES LABELS "LandIce;Epetra;Forward")
 endif()
 
-IF(NOT ALBANY_ENABLE_CUDA)
+IF(NOT Kokkos_ENABLE_CUDA)
   #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
   #see issue #420. 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupledT.yaml

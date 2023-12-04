@@ -120,7 +120,7 @@ IF(DEFINED MPIMNP)
 ELSE(DEFINED MPIMNP)
     SET(MAX_MPI_RANKS 4)
 ENDIF(DEFINED MPIMNP)
-IF (ALBANY_ENABLE_CUDA) 
+IF (Kokkos_ENABLE_CUDA) 
   set(Albany.exe                     ${PARALLEL_CALL} ${AlbanyPath} ${KOKKOS_NDEVICES})
   set(Albany8.exe                    ${MPIEX} ${MPIPRE} ${MPINPF} ${MAX_MPI_RANKS} ${MPIPOST} ${AlbanyPath} ${KOKKOS_NDEVICES})
   set(AlbanyAnalysis.exe             ${PARALLEL_CALL} ${AlbanyAnalysisPath} ${KOKKOS_NDEVICES})
@@ -180,16 +180,20 @@ IF(${PYTHON_TEST})
   set(PYTHON_TEST_HELPERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python)
 ENDIF()
 
-add_subdirectory(corePDEs)
-
 IF (ALBANY_UNIT_TESTS)
   add_subdirectory(unit)
 ENDIF()
 
-IF(ENABLE_DEMO_PDES)
-  add_subdirectory(demoPDEs)
-ENDIF()
-
 IF(ENABLE_LANDICE AND ALBANY_SEACAS )
   add_subdirectory(landIce)
+ENDIF()
+
+IF (Kokkos_ENABLE_CUDA AND NOT Kokkos_ENABLE_CUDA_UVM)
+  RETURN() # don't add any tests past this point if this is a CUDA build with uvm disabled
+ENDIF()
+
+add_subdirectory(corePDEs)
+
+IF(ENABLE_DEMO_PDES)
+  add_subdirectory(demoPDEs)
 ENDIF()
