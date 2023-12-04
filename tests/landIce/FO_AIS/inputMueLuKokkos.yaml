@@ -40,15 +40,15 @@ ANONYMOUS:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
     LandIce Physical Parameters:
-      Water Density: 1.02800000000000000e+03
-      Ice Density: 9.10000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8
+      Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 3.0e-01
       Glen's Law A: 1.5854896e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
@@ -121,14 +121,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.00000000000000000e+00
+        Initial Value: 0.0
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 15
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 1.00000000000000005e-01
+        Initial Step Size: 1.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -142,11 +142,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000008e-05
+            Tolerance: 1.0e-05
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000002e-02
-            Relative Tolerance: 9.99999999999999954e-08
+            Absolute Tolerance: 1.0e-02
+            Relative Tolerance: 1.0e-07
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 40
