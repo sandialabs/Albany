@@ -57,6 +57,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
       num_params(numParams_)
 {
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
+  metaData->use_simple_fields();
 
   // numDim = -1 is default flag value to postpone initialization
   if (numDim_>0) {
