@@ -370,16 +370,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   std::vector<stk::io::MeshField> missing;
   if (m_hasRestartSolution) {
     mesh_data->read_defined_input_fields(m_restartDataTime, &missing);
-  }
-
-  this->loadRequiredInputFields (comm);
-  if (this->numDim!=3) {
-    loadOrSetCoordinates3d();
-  }
-
-
-  if (m_hasRestartSolution){
-
     // Read global mesh variables. Should we emit warnings at all?
     for (auto& it : fieldContainer->getMeshVectorStates()) {
       bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
@@ -406,6 +396,11 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
         missing.emplace_back(f,f->name());
     }
   }
+
+  if (this->numDim!=3) {
+    loadOrSetCoordinates3d();
+  }
+  this->loadRequiredInputFields (comm);
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
   side_maps_present = true;
