@@ -348,8 +348,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -379,8 +378,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -411,8 +409,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -431,8 +428,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -451,8 +447,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -476,8 +471,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -507,8 +501,7 @@ STKDiscretization::transformMesh()
 #endif
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
