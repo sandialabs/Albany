@@ -368,8 +368,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Note: we cannot load fields/coords during setFieldData, since we need a valid bulkData
   std::vector<stk::io::MeshField> missing;
+  mesh_data->read_defined_input_fields(m_restartDataTime, &missing);
   if (m_hasRestartSolution) {
-    mesh_data->read_defined_input_fields(m_restartDataTime, &missing);
     // Read global mesh variables. Should we emit warnings at all?
     for (auto& it : fieldContainer->getMeshVectorStates()) {
       bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
@@ -390,22 +390,16 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
       if (!found)
         *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
     }
-  } else {
-    // We put all the fields as 'missing'
-    for (const auto& f : metaData->get_fields()) {
-        missing.emplace_back(f,f->name());
-    }
   }
-
-  if (this->numDim!=3) {
-    loadOrSetCoordinates3d();
-  }
-  this->loadRequiredInputFields (comm);
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
   side_maps_present = true;
   bool coherence = true;
   for (const auto& it : missing) {
+    if (this->numDim!=3 and it.db_name()=="coordinates3d") {
+      // The input mesh did not store 3d coords, so we set the default ones (with trailing dims set to 0)
+      this->setDefaultCoordinates3d();
+    }
     if (it.field()->name()=="side_to_cell_map" || it.field()->name()=="side_nodes_ids")
     {
       side_maps_present = false;
@@ -481,6 +475,9 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   }
 
+  // Load any required field from file
+  this->loadRequiredInputFields (comm);
+
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMesh(comm);
 
@@ -502,62 +499,6 @@ IossSTKMeshStruct::getSolutionFieldHistoryStamp(int step) const
   const Ioss::Region &  inputRegion = *(mesh_data->get_input_ioss_region());
   return inputRegion.get_state_time(index);
 }
-
-void
-IossSTKMeshStruct::loadOrSetCoordinates3d()
-{
-  int index = params->get("Restart Index",-1); // Default to no restart
-  const std::string coords3d_name = "coordinates3d";
-
-  auto region = mesh_data->get_input_ioss_region();
-  const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
-  Ioss::NodeBlock *nb = node_blocks[0];
-
-  if (nb->field_exists(coords3d_name) && index>0)
-  {
-    // The field "coordinates3d" exists in the input mesh
-    // (which must then come from a previous Albany run), so load it.
-    std::vector<stk::mesh::Entity> nodes;
-    stk::mesh::get_entities(*bulkData,stk::topology::NODE_RANK,nodes);
-
-    // This is some trickery to get around STK-Ioss implementation.
-    // Basically, you cannot access transient fields if begin_state
-    // has not yet been called (with the proper step number).
-    // Therefore, if the current state has a step number invalid
-    // or different to the one desired, we set it to the restart
-    // index state. If the state was already set, we also take
-    // care of resetting the index back to the original configuration.
-    const int current_step = region->get_current_state();
-    if (current_step != index) {
-      if (current_step != -1) {
-        region->end_state(current_step);
-      }
-      region->begin_state(index);
-    }
-
-    stk::io::field_data_from_ioss(*bulkData, this->getCoordinatesField3d(), nodes, nb, coords3d_name);
-    if (current_step != -1) {
-      region->begin_state(index);
-    }
-  }
-  else
-  {
-    if (nb->field_exists(coords3d_name)) {
-      // The 3d coords field exists in the input mesh, but the restart index was
-      // not set in the input file. We issue a warning, and load default coordinates
-      *out << "WARNING! The field 'coordinates3d' was found in the input mesh, but no restart index was specified.\n"
-           << "         Albany will set the 3d coordinates to the 'default' ones (filling native coordinates with trailing zeros).\n";
-    }
-    // The input mesh does not store the 'coordinates3d' field
-    // (perhaps the mesh does not come from a previous Albany run).
-    // Hence, we initialize coordinates3d with coordinates,
-    // and we fill 'extra' dimensions with 0's. Hopefully, this is ok.
-
-    // Use GenericSTKMeshStruct functionality
-    this->setDefaultCoordinates3d();
-  }
-}
-
 
 void
 IossSTKMeshStruct::loadSolutionFieldHistory(int step)
