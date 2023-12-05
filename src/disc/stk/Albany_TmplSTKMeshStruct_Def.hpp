@@ -411,6 +411,8 @@ EBSpecsStruct<0>::numElems(int /* i */){
 template<>
 void
 EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]){
+     // For Dim=0, the elem sizes vector was not sized yet
+     h[0].resize(1);
      h[0][0] = 1.0;
 }
 
