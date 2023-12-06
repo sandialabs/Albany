@@ -515,9 +515,10 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
           TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
                                       "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
 
-          this->sideSetMeshStructs[ss_name] =
+          auto sideMesh = this->sideSetMeshStructs[ss_name] =
               Teuchos::rcp(new SideSetSTKMeshStruct(
                   *this->meshSpecs[0], params_ss, comm, num_params));
+          sideMesh->setParentMeshInfo(*this, ss_name);
         } else {
           ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
@@ -565,12 +566,6 @@ setSideSetFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   for (auto it : sideSetMeshStructs) {
-    auto sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
-    if (sideMesh!=Teuchos::null) {
-      // SideSetSTK mesh need to build the mesh
-      sideMesh->setParentMeshInfo(*this, it.first);
-    }
-
     if (not it.second->fieldDataSet) {
       auto sis = side_set_sis.count(it.first)>0 ? side_set_sis.at(it.first) : Teuchos::null;
       it.second->setFieldData(comm,sis);
