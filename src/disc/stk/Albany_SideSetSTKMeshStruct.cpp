@@ -199,13 +199,11 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     }
   }
 
-  // Loading the fields from file
-  this->loadRequiredInputFields (comm);
-
   // Insertion of entities end
   bulkData->modification_end();
 
-  bulkDataSet = true;
+  // Loading the fields from file
+  this->loadRequiredInputFields (comm);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const

@@ -279,13 +279,11 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
 
   // Construct MeshSpecsStruct
-  {
-    const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
+  const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
-                               nsNames, ssNames, worksetSize, EBSpecs[0].name,
-                               ebNameToIndex));
-  }
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
+                             nsNames, ssNames, worksetSize, EBSpecs[0].name,
+                             ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {
@@ -294,17 +292,13 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 template<unsigned Dim, class traits>
 void
 TmplSTKMeshStruct<Dim, traits>::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+              const Teuchos::RCP<StateInfoStruct>& sis)
 {
   // Create global mesh: Dim-D structured, rectangular
   std::vector<double> h_dim[traits_type::size];
@@ -324,7 +318,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
       x[idx][i] = x[idx][i - 1] + h_dim[idx][i - 1]; // place the coordinates of the element nodes
   }
 
-  GenericSTKMeshStruct::setFieldData(comm, sis, side_set_sis);
+  GenericSTKMeshStruct::setFieldData(comm, sis);
 }
 
 template<unsigned Dim, class traits>
@@ -345,11 +339,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMesh(comm);
-
-  bulkDataSet = true;
-
-  // Finally, setup the side set meshes (if any)
-  this->setSideSetBulkData(comm);
 }
 
 template <unsigned Dim, class traits>

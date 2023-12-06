@@ -45,9 +45,6 @@ STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 void STK3DPointStruct::
@@ -69,9 +66,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   bulkData->declare_relation(pt, node, 0);
 
   bulkData->modification_end();
-
-  bulkDataSet = true;
-  this->setSideSetBulkData(comm);
 }
 
 void

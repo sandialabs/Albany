@@ -399,12 +399,8 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                              nsNames, ssNames, worksetSize, ebn,
                              ebNameToIndex));
 
-
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
@@ -704,10 +700,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   fix_node_sharing(*bulkData);
   bulkData->modification_end();
-
-  bulkDataSet = true;
-
-  this->setSideSetBulkData(comm);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -294,9 +294,6 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 void AsciiSTKMesh2D::
@@ -428,11 +425,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Loading required input fields from file
   this->loadRequiredInputFields (comm);
-
-  // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetBulkData(comm);
-
-  bulkDataSet = true;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

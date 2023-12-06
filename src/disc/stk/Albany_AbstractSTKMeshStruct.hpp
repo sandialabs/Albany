@@ -163,10 +163,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   // Info for periodic BCs -- only for hand-coded STK meshes
   struct PeriodicBCStruct PBCStruct;
 
-  std::map<std::string, Teuchos::RCP<AbstractSTKMeshStruct>> sideSetMeshStructs;
-
-  bool fieldDataSet = false;
-  bool bulkDataSet  = false;
 
   virtual void
   buildCellSideNodeNumerationMap(

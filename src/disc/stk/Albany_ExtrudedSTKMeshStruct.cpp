@@ -187,9 +187,6 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 void ExtrudedSTKMeshStruct::
@@ -563,13 +560,9 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   //fix_node_sharing(*bulkData);
   bulkData->modification_end();
-  bulkDataSet = true;
 
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();
-
-  // We can finally extract the side set meshes and set the fields and bulk data in all of them
-  this->setSideSetBulkData(comm);
 
   if (params->get("Export 2D Data",false)) {
     // We export the basal mesh in GMSH format

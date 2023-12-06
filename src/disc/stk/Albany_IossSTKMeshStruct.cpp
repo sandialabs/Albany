@@ -254,9 +254,6 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
       }
     }
   }
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 IossSTKMeshStruct::~IossSTKMeshStruct()
@@ -280,10 +277,9 @@ IossSTKMeshStruct::~IossSTKMeshStruct()
 
 void IossSTKMeshStruct::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+              const Teuchos::RCP<StateInfoStruct>& sis)
 {
-  GenericSTKMeshStruct::setFieldData(comm, sis, side_set_sis);
+  GenericSTKMeshStruct::setFieldData(comm, sis);
 
   if(mesh_data->is_bulk_data_null())
     mesh_data->set_bulk_data(*bulkData);
@@ -332,7 +328,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
     }
   }
 
-  fieldDataSet = true;
 }
 
 void IossSTKMeshStruct::
@@ -479,10 +474,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();
 
-  // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->setSideSetBulkData(comm);
-
-  bulkDataSet = true;
 }
 
 void

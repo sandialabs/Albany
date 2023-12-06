@@ -19,8 +19,7 @@ public:
   std::string meshType () const override { return "Omega_h"; }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override;
+                     const Teuchos::RCP<Albany::StateInfoStruct>& sis) override;
 
   // ------------- Omegah specific methods -------------- //
 

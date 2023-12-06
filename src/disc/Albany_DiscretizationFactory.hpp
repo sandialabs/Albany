@@ -35,7 +35,7 @@ class DiscretizationFactory {
     //! Destructor
     ~DiscretizationFactory() {}
 
-    static Teuchos::RCP<AbstractMeshStruct>
+    Teuchos::RCP<AbstractMeshStruct>
     createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
                       Teuchos::RCP<const Teuchos_Comm> comm, const int numParams);
 
