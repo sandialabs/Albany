@@ -331,7 +331,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<Albany::StateInfoStruct>& sis,
               const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, sis, worksetSize);
+  this->setFieldData(comm, sis);
 
   metaData->commit();
 
