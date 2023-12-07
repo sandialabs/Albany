@@ -25,9 +25,6 @@ public:
 
   virtual ~GenericSTKMeshStruct() = default;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs();
-  const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs() const;
-
   //! Re-load balance adapted mesh
   void rebalanceAdaptedMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                              const Teuchos::RCP<const Teuchos_Comm>& comm);
@@ -129,8 +126,6 @@ public:
        std::string listname = "Discretization Param Names") const;
 
   Teuchos::RCP<Teuchos::ParameterList> params;
-
-  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs;
 
   bool requiresAutomaticAura;
 

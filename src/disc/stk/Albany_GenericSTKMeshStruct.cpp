@@ -91,8 +91,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
      else
        meshBuilder.set_aura_option(stk::mesh::BulkData::NO_AUTO_AURA);
 
-     const auto& ms = getMeshSpecs()[0];
-     meshBuilder.set_bucket_capacity(ms->worksetSize);
+     meshBuilder.set_bucket_capacity(meshSpecs[0]->worksetSize);
      meshBuilder.set_add_fmwk_data(false);
      std::unique_ptr<stk::mesh::BulkData> bulkDataPtr = meshBuilder.create(Teuchos::get_shared_ptr(metaData));
      bulkData = Teuchos::rcp(bulkDataPtr.release());
@@ -232,24 +231,6 @@ This function gets rid of the subset in the list.
     ssNames.push_back(ssn);
 
   }
-}
-
-Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
-GenericSTKMeshStruct::getMeshSpecs()
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
-}
-
-const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
-GenericSTKMeshStruct::getMeshSpecs() const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
 }
 
 int GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
@@ -436,7 +417,7 @@ void GenericSTKMeshStruct::checkNodeSetsFromSideSetsIntegrity ()
 
 void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& comm) {
   // Loop on all mesh specs
-  for (auto ms: this->getMeshSpecs() ) {
+  for (auto ms : meshSpecs ) {
     // Loop on all side sets of the mesh
     for (auto ssName : ms->ssNames) {
       // Get the part
@@ -482,7 +463,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
 {
   for (auto& it : sideSetMeshStructs) {
     auto ss_stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
-    auto ss_ms = ss_stk_mesh->getMeshSpecs()[0];
+    auto ss_ms = ss_stk_mesh->meshSpecs[0];
 
     // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
     using ISFT = AbstractSTKFieldContainer::STKIntState;

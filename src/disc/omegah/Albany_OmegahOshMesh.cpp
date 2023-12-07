@@ -93,8 +93,8 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   this->declare_part(ebName,elem_topo);
 
   // Omega_h does not know what worksets are, so all elements are in one workset
-  this->m_mesh_specs.resize(1);
-  this->m_mesh_specs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, m_mesh.dim(),
+  this->meshSpecs.resize(1);
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, m_mesh.dim(),
                              nsNames, ssNames, m_mesh.nelems(), ebName,
                              ebNameToIndex));
 }

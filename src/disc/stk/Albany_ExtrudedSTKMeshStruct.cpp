@@ -117,7 +117,7 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   sideSetMeshStructs["basalside"] = basalMeshStruct;
 
-  const auto& basalMeshSpec = basalMeshStruct->getMeshSpecs()[0];
+  const auto& basalMeshSpec = basalMeshStruct->meshSpecs[0];
   std::string elem2d_name(basalMeshSpec->ctd.base->name);
   std::string tria = shards::getCellTopologyData<shards::Triangle<3> >()->name;
   std::string quad = shards::getCellTopologyData<shards::Quadrilateral<4> >()->name;

@@ -1313,7 +1313,7 @@ STKDiscretization::computeWorksetInfo()
   } else {
     for (int i = 0; i < numBuckets; ++i) {
       m_wsPhysIndex[i] =
-          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[m_wsEBNames[i]];
+          stkMeshStruct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[i]];
     }
   }
 
@@ -1629,7 +1629,7 @@ STKDiscretization::computeSideSets()
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
-          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[m_wsEBNames[workset]];
+          stkMeshStruct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
 
       // Get or create the vector of side structs for this side set on this workset
       auto& ss_vec = sideSets[workset][ss.first];
@@ -1794,7 +1794,7 @@ STKDiscretization::computeSideSets()
   unsigned int maxSideNodes = 0;
   const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
   if (!cell_layers_data.is_null()) {
-    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->meshSpecs[0]->ctd));
     const int numLayers = cell_layers_data->numLayers;
     const int numComps = getDOFManager()->getNumFields();
 
@@ -1831,7 +1831,7 @@ STKDiscretization::computeSideSets()
   // If the mesh isn't extruded, we won't need to do any of the following work.
   if (not cell_layers_data.is_null()) {
     // Get topo data
-    auto ctd = stkMeshStruct->getMeshSpecs()[0]->ctd;
+    auto ctd = stkMeshStruct->meshSpecs[0]->ctd;
 
     // Ensure we have ONE cell per layer.
     const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();

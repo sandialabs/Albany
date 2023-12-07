@@ -520,7 +520,7 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
 
     albanyApp->createMeshSpecs(meshStruct);
     albanyApp->buildProblem();
-    meshStruct->constructMesh(reducedMpiCommT, discParams, albanyApp->getStateMgr().getStateInfoStruct(), meshStruct->getMeshSpecs()[0]->worksetSize);
+    meshStruct->constructMesh(reducedMpiCommT, discParams, albanyApp->getStateMgr().getStateInfoStruct(), meshStruct->meshSpecs[0]->worksetSize);
 
     //Create nodeVS
     //global_node_id_owned_map_Ptr is 1-based, so nodeVS is 1-based

@@ -52,7 +52,7 @@ Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
 DiscretizationFactory::createMeshSpecs() {
     // First, create the mesh struct
     meshStruct = createMeshStruct(discParams, comm, num_params);
-    return meshStruct->getMeshSpecs();
+    return meshStruct->meshSpecs;
 }
 
 Teuchos::RCP<AbstractMeshStruct>
@@ -157,9 +157,9 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
   }
 
   if (disc_params->isSublist ("Side Set Discretizations")) {
-    TEUCHOS_TEST_FOR_EXCEPTION (mesh->getMeshSpecs().size()!=1, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (mesh->meshSpecs.size()!=1, std::logic_error,
         "Error! So far, side set mesh is allowed only for meshes with 1 element block.\n");
-    auto ms = mesh->getMeshSpecs()[0];
+    auto ms = mesh->meshSpecs[0];
 
     const Teuchos::ParameterList& ssd_list = disc_params->sublist("Side Set Discretizations");
     const Teuchos::Array<std::string>& sideSets = ssd_list.get<Teuchos::Array<std::string> >("Side Sets");
@@ -203,7 +203,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         }
       }
 
-      auto ss_ms = ss_mesh->getMeshSpecs();
+      auto ss_ms = ss_mesh->meshSpecs;
 
       // Checking that the side mesh has the correct dimension (in case they were loaded from file,
       // and the user mistakenly gave the wrong file name)
@@ -256,7 +256,7 @@ DiscretizationFactory::createDiscretization(
 Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
 DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
     meshStruct = mesh;
-    return meshStruct->getMeshSpecs();
+    return meshStruct->meshSpecs;
 }
 
 void
