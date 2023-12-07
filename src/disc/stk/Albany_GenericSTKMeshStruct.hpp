@@ -29,8 +29,6 @@ public:
   void rebalanceAdaptedMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                              const Teuchos::RCP<const Teuchos_Comm>& comm);
 
-  bool useCompositeTet(){ return compositeTet; }
-
   // This routine builds two maps: side3D_id->cell2D_id, and side3D_node_lid->cell2D_node_lid.
   // These maps are used because the side id may differ from the cell id and the nodes order
   // in a 2D cell may not be the same as in the corresponding 3D side. The second map works
@@ -128,8 +126,6 @@ public:
   Teuchos::RCP<Teuchos::ParameterList> params;
 
   bool requiresAutomaticAura;
-
-  bool compositeTet;
 
   std::vector<std::string>  m_nodesets_from_sidesets;
 

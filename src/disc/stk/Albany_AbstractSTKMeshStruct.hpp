@@ -133,9 +133,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   virtual double
   restartDataTime() const = 0;
 
-  virtual bool
-  useCompositeTet() = 0;
-
   // Flag for transforming STK mesh; currently only needed for LandIce/Aeras
   // problems
   std::string transformType;
