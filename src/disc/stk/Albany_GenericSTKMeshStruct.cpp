@@ -485,79 +485,24 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
 
 void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
-  if (params->isSublist ("Side Set Discretizations")) {
-    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
-    const Teuchos::Array<std::string>& sideSets = ssd_list.get<Teuchos::Array<std::string> >("Side Sets");
+  for (auto& it : sideSetMeshStructs) {
+    auto ss_stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
+    auto ss_ms = ss_stk_mesh->getMeshSpecs()[0];
 
-    Teuchos::RCP<Teuchos::ParameterList> params_ss;
-    int sideDim = this->numDim - 1;
-    for (int i(0); i<sideSets.size(); ++i) {
-      Teuchos::RCP<AbstractMeshStruct> ss_mesh;
-      const std::string& ss_name = sideSets[i];
-      params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
-
-      // We must check whether a side mesh was already created elsewhere.
-      // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
-      // This happens, for instance, for the basal mesh for extruded meshes.
-      if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end()) {
-        if (!params_ss->isParameter("Number Of Time Derivatives"))
-          params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
-
-        // Set sideset discretization workset size based on sideset mesh spec if a single workset is used
-        const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
-        auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
-        TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-            "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
-
-        std::string method = params_ss->get<std::string>("Method");
-        if (method=="SideSetSTK") {
-          // The user said this mesh is extracted from a higher dimensional one
-          TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
-                                      "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
-
-          auto sideMesh = this->sideSetMeshStructs[ss_name] =
-              Teuchos::rcp(new SideSetSTKMeshStruct(
-                  *this->meshSpecs[0], params_ss, comm, num_params));
-          sideMesh->setParentMeshInfo(*this, ss_name);
-        } else {
-          ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
-          this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
-          TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
-                                      "Error! Could not cast side mesh to AbstractSTKMeshStruct.\n");
-        }
-      }
-
-      // Checking that the side meshes have the correct dimension (in case they were loaded from file,
-      // and the user mistakenly gave the wrong file name)
-      TEUCHOS_TEST_FOR_EXCEPTION (sideDim!=this->sideSetMeshStructs[ss_name]->numDim, std::logic_error,
-                                  "Error! Mesh on side " << ss_name << " has the wrong dimension.\n");
-
-      // Update the side set mesh specs pointer in the mesh specs of this mesh
-      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
-      this->meshSpecs[0]->sideSetMeshNames.push_back(ss_name);
-
-      // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
-      using ISFT = AbstractSTKFieldContainer::STKIntState;
-      ISFT* side_to_cell_map = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
-      stk::mesh::put_field_on_mesh(*side_to_cell_map, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), 1, nullptr);
+    // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
+    using ISFT = AbstractSTKFieldContainer::STKIntState;
+    ISFT* side_to_cell_map = &ss_stk_mesh->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
+    stk::mesh::put_field_on_mesh(*side_to_cell_map, ss_stk_mesh->metaData->universal_part(), 1, nullptr);
 #ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
+    stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
 #endif
-      // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
-      const int num_nodes = sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->ctd.node_count;
-      ISFT* side_nodes_ids = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
-      stk::mesh::put_field_on_mesh(*side_nodes_ids, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), num_nodes, nullptr);
+    // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
+    const int num_nodes = ss_ms->ctd.node_count;
+    ISFT* side_nodes_ids = &ss_stk_mesh->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
+    stk::mesh::put_field_on_mesh(*side_nodes_ids, ss_stk_mesh->metaData->universal_part(), num_nodes, nullptr);
 #ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
+    stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
 #endif
-
-      // If requested, we ignore the side maps already stored in the imported side mesh (if any)
-      // This can be useful for side mesh of an extruded mesh, in the case it was constructed
-      // as side mesh of an extruded mesh with a different ordering and/or different number
-      // of layers. Notice that if that's the case, it probably is impossible to build a new
-      // set of maps, since there is no way to correctly map the side nodes to the cell nodes.
-      this->sideSetMeshStructs[ss_name]->ignore_side_maps = params_ss->get<bool>("Ignore Side Maps", false);
-    }
   }
 }
 
@@ -588,10 +533,10 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
                                 std::map<GO,GO>& sideMap,
                                 std::map<GO,std::vector<int>>& sideNodeMap)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (sideSetMeshStructs.find(sideSetName)==sideSetMeshStructs.end(), Teuchos::Exceptions::InvalidParameter,
-                              "Error in 'buildSideNodeToSideSetCellNodeMap': side set " << sideSetName << " does not have a mesh.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (sideSetMeshStructs.count(sideSetName)==0, Teuchos::Exceptions::InvalidParameter,
+      "Error in 'buildSideNodeToSideSetCellNodeMap': side set " << sideSetName << " does not have a mesh.\n");
 
-  Teuchos::RCP<AbstractSTKMeshStruct> side_mesh = sideSetMeshStructs.at(sideSetName);
+  auto side_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(sideSetMeshStructs.at(sideSetName));
 
   // NOTE 1: the stk fields memorize maps from 2D to 3D values (since fields are defined on 2D mesh), while the input
   //         maps map 3D values to 2D ones. For instance, if node 0 of side3D 41 is mapped to node 2 of cell2D 12, the
@@ -619,8 +564,8 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
   int side_lid;
   int num_sides;
   using ISFT = AbstractSTKFieldContainer::STKIntState;
-  ISFT* side_to_cell_map   = this->sideSetMeshStructs[sideSetName]->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
-  ISFT* side_nodes_ids_map = this->sideSetMeshStructs[sideSetName]->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
+  ISFT* side_to_cell_map   = side_mesh->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
+  ISFT* side_nodes_ids_map = side_mesh->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
   std::vector<stk::mesh::EntityId> cell2D_nodes_ids(num_nodes), side3D_nodes_ids(num_nodes);
   const stk::mesh::Entity* side3D_nodes;
   const stk::mesh::Entity* cell2D_nodes;

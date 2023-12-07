@@ -77,7 +77,8 @@ STKDiscretization::STKDiscretization(
 {
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
-      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, it.second, comm));
+      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
+      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, stk_mesh, comm));
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }

@@ -56,6 +56,7 @@ struct AbstractMeshStruct {
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
     Teuchos::ArrayRCP<double> mesh_layers_ratio;
+    std::map<std::string, Teuchos::RCP<AbstractMeshStruct>> sideSetMeshStructs;
 };
 
 } // Namespace Albany
