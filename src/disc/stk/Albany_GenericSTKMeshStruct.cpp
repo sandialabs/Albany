@@ -78,8 +78,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 
 void GenericSTKMeshStruct::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+              const Teuchos::RCP<StateInfoStruct>& sis)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(), std::logic_error,
        "[GenericSTKMeshStruct::SetupFieldData] metaData->initialize(numDim) not yet called" << std::endl);
@@ -161,10 +160,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
 
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
-
-  fieldDataSet = true;
-
-  this->setSideSetFieldData(comm, side_set_sis);
 }
 
 void GenericSTKMeshStruct::setAllPartsIO()
@@ -503,28 +498,6 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
 #ifdef ALBANY_SEACAS
     stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
 #endif
-  }
-}
-
-void GenericSTKMeshStruct::
-setSideSetFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  for (auto it : sideSetMeshStructs) {
-    if (not it.second->fieldDataSet) {
-      auto sis = side_set_sis.count(it.first)>0 ? side_set_sis.at(it.first) : Teuchos::null;
-      it.second->setFieldData(comm,sis);
-    }
-  }
-}
-
-void GenericSTKMeshStruct::
-setSideSetBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
-{
-  for (auto it : sideSetMeshStructs) {
-    if (not it.second->bulkDataSet) {
-      it.second->setBulkData(comm);
-    }
   }
 }
 

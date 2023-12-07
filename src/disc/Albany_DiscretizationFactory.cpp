@@ -270,29 +270,34 @@ DiscretizationFactory::setMeshStructFieldData(
         const Teuchos::RCP<StateInfoStruct>& sis,
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-    meshStruct->setFieldData(comm, sis, side_set_sis); 
+  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
+  meshStruct->setFieldData(comm, sis);
+  for (auto& it : meshStruct->sideSetMeshStructs) {
+    auto this_ss_sis = side_set_sis.count(it.first)>0 ? side_set_sis.at(it.first) : Teuchos::null;
+    it.second->setFieldData(comm,this_ss_sis);
+  }
 }
 
 void DiscretizationFactory::
 setMeshStructBulkData()
 {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
-    meshStruct->setBulkData(comm);
+  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
+  meshStruct->setBulkData(comm);
+  for (auto& it : meshStruct->sideSetMeshStructs) {
+    it.second->setBulkData(comm);
+  }
 }
-
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
         const int neq,
         const std::map<int, std::vector<std::string> >& sideSetEquations,
-        const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: createDiscretizationFromInternalMeshStruct");
+        const Teuchos::RCP<RigidBodyModes>& rigidBodyModes)
+{
+  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: createDiscretizationFromInternalMeshStruct");
 
-    if (!piroParams.is_null() && !rigidBodyModes.is_null())
-
-        rigidBodyModes->setPiroPL(piroParams);
-
+  if (!piroParams.is_null() && !rigidBodyModes.is_null())
+      rigidBodyModes->setPiroPL(piroParams);
 
   Teuchos::RCP<AbstractDiscretization> disc;
   if (meshStruct->meshType()=="STK") {

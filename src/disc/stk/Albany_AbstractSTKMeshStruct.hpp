@@ -167,9 +167,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   struct PeriodicBCStruct PBCStruct;
 
 
-  bool fieldDataSet = false;
-  bool bulkDataSet  = false;
-
   virtual void
   buildCellSideNodeNumerationMap(
       const std::string&              sideSetName,
