@@ -366,8 +366,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Note: we cannot load fields/coords during setFieldData, since we need a valid bulkData
   std::vector<stk::io::MeshField> missing;
-  mesh_data->read_defined_input_fields(m_restartDataTime, &missing);
   if (m_hasRestartSolution) {
+    mesh_data->read_defined_input_fields(m_restartDataTime, &missing);
     // Read global mesh variables. Should we emit warnings at all?
     for (auto& it : fieldContainer->getMeshVectorStates()) {
       bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
