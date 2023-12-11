@@ -210,11 +210,14 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
       TEUCHOS_TEST_FOR_EXCEPTION (sideDim!=ss_ms[0]->numDim, std::logic_error,
           "Error! Mesh on side " << ss_name << " has the wrong dimension.\n");
     }
+
+    auto stk_mesh = Teuchos::rcp_dynamic_cast<GenericSTKMeshStruct>(mesh);
+    if (stk_mesh)
+      stk_mesh->createSideMeshMaps();
   }
 
   return mesh;
 }
-
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::createDiscretization(

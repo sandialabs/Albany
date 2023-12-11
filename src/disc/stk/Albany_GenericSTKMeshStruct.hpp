@@ -65,8 +65,7 @@ public:
   //! Creates empty mesh structs if required (and not already present)
   void initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
-  //! Creates empty mesh structs if required (and not already present)
-  void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& comm);
+  void createSideMeshMaps ();
 
   //! Loads from file input required fields not found in the mesh
   void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);

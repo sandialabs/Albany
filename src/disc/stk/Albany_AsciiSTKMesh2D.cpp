@@ -294,9 +294,6 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 void AsciiSTKMesh2D::

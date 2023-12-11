@@ -279,13 +279,11 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
 
   // Construct MeshSpecsStruct
-  {
-    const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
+  const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
-                               nsNames, ssNames, worksetSize, EBSpecs[0].name,
-                               ebNameToIndex));
-  }
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
+                             nsNames, ssNames, worksetSize, EBSpecs[0].name,
+                             ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {
@@ -294,9 +292,6 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 template<unsigned Dim, class traits>

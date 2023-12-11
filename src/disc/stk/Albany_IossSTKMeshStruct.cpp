@@ -254,9 +254,6 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
       }
     }
   }
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 IossSTKMeshStruct::~IossSTKMeshStruct()

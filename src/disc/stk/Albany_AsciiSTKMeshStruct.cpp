@@ -399,12 +399,8 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                              nsNames, ssNames, worksetSize, ebn,
                              ebNameToIndex));
 
-
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 AsciiSTKMeshStruct::~AsciiSTKMeshStruct()

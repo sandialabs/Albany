@@ -457,8 +457,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
     }
   }
 }
-
-void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& comm)
+void GenericSTKMeshStruct::createSideMeshMaps ()
 {
   for (auto& it : sideSetMeshStructs) {
     auto ss_stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
