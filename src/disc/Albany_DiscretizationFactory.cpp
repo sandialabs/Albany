@@ -172,7 +172,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
       auto& ss_mesh = mesh->sideSetMeshStructs[ss_name];
 
       // If this is the basalside of an extruded mesh, we already created the mesh object
-      if (mesh.is_null()) {
+      if (ss_mesh.is_null()) {
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
 
         if (!params_ss->isParameter("Number Of Time Derivatives"))
@@ -209,12 +209,6 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
       // and the user mistakenly gave the wrong file name)
       TEUCHOS_TEST_FOR_EXCEPTION (sideDim!=ss_ms[0]->numDim, std::logic_error,
           "Error! Mesh on side " << ss_name << " has the wrong dimension.\n");
-
-      // Update the side set mesh specs pointer in the mesh specs of this mesh
-      ms->sideSetMeshSpecs[ss_name] = ss_ms;
-      ms->sideSetMeshNames.push_back(ss_name);
-
-      mesh->sideSetMeshStructs[ss_name] = ss_mesh;
     }
   }
 
