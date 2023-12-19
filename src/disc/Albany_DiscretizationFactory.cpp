@@ -283,7 +283,12 @@ setMeshStructBulkData()
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
   meshStruct->setBulkData(comm);
   for (auto& it : meshStruct->sideSetMeshStructs) {
-    it.second->setBulkData(comm);
+    // For extruded meshes, the bulk data of the basal mesh
+    // should be set from inside the extruded mesh call,
+    // during the 'setBulkData' call above
+    if (not it.second->isBulkDataSet()) {
+      it.second->setBulkData(comm);
+    }
   }
 }
 

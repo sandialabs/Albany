@@ -66,6 +66,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   bulkData->declare_relation(pt, node, 0);
 
   bulkData->modification_end();
+
+  m_bulk_data_set = true;
 }
 
 void

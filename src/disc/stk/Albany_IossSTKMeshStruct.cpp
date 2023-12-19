@@ -474,6 +474,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Check that the nodeset created from sidesets contain the right number of nodes
   this->checkNodeSetsFromSideSetsIntegrity ();
 
+  m_bulk_data_set = true;
 }
 
 void

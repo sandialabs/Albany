@@ -204,6 +204,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Loading the fields from file
   this->loadRequiredInputFields (comm);
+
+  m_bulk_data_set = true;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const
