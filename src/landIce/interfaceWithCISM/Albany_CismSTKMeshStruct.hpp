@@ -9,8 +9,6 @@
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 
-//#include <Ionit_Initializer.h>
-
 namespace Albany {
 
   class CismSTKMeshStruct : public GenericSTKMeshStruct {
@@ -79,7 +77,6 @@ namespace Albany {
     void setRestartDataTime(double restartT) {restartTime = restartT; }
 
     private:
-    //Ioss::Init::Initializer ioInit;
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

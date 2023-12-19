@@ -159,9 +159,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   const auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
   const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> ss_ms;
-  ss_ms = meshStruct->sideSetMeshStructs.at("basalside");
-  betaField = ss_ms->metaData->get_field <double> (stk::topology::NODE_RANK, "beta");
+  auto ss_mesh = meshStruct->sideSetMeshStructs.at("basalside");
+  auto ss_mesh_stk = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(ss_mesh,true);
+  betaField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "beta");
 
   for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
@@ -384,9 +384,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
-  if (Teuchos::nonnull(ss_ms) && !betaData.empty() && (betaField!=nullptr)) {
+  if (Teuchos::nonnull(ss_mesh_stk) && !betaData.empty() && (betaField!=nullptr)) {
     for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
-      stk::mesh::Entity node = ss_ms->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
+      stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
       const double* betaVal = stk::mesh::field_data(*betaField,node);
       betaData[ib] = betaVal[0];
     }

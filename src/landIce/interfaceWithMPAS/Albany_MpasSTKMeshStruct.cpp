@@ -176,7 +176,6 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
      ebn, ebNameToIndex));
 
   this->initializeSideSetMeshSpecs(comm);
-  this->initializeSideSetMeshStructs(comm);
 }
 
 void MpasSTKMeshStruct::
@@ -393,7 +392,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   this->loadRequiredInputFields (comm);
 
-  this->setSideSetBulkData(comm);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
