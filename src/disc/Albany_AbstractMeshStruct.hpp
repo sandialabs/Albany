@@ -41,12 +41,6 @@ struct AbstractMeshStruct {
 
     virtual void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
-    void setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                              const Teuchos::RCP<StateInfoStruct>& sis)
-    {
-      setFieldData(comm, sis);
-      setBulkData(comm);
-    }
     bool isBulkDataSet () const { return m_bulk_data_set; }
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;

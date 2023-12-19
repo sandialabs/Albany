@@ -103,7 +103,8 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         Teuchos::RCP<GenericSTKMeshStruct> meshStruct2D;
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
         Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
-        meshStruct2D->setFieldAndBulkData(comm,sis);
+        meshStruct2D->setFieldData(comm, sis);
+        meshStruct2D->setBulkData(comm);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
         mesh_data->set_bulk_data(*meshStruct2D->bulkData);
