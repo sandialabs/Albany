@@ -205,6 +205,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Insertion of entities end
   bulkData->modification_end();
 
+  m_bulk_data_set = true;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const

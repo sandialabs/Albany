@@ -339,6 +339,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMesh(comm);
+
+  m_bulk_data_set = true;
 }
 
 template <unsigned Dim, class traits>
@@ -537,6 +539,8 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   // STK
   fix_node_sharing(*bulkData);
   bulkData->modification_end();
+
+  m_bulk_data_set = true;
 }
 
 template<>

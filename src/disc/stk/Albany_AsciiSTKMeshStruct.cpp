@@ -700,6 +700,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   fix_node_sharing(*bulkData);
   bulkData->modification_end();
+
+  m_bulk_data_set = true;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

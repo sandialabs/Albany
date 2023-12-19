@@ -47,6 +47,7 @@ struct AbstractMeshStruct {
       setFieldData(comm, sis);
       setBulkData(comm);
     }
+    bool isBulkDataSet () const { return m_bulk_data_set; }
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
@@ -54,6 +55,9 @@ struct AbstractMeshStruct {
 
     Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs;
     std::map<std::string, Teuchos::RCP<AbstractMeshStruct>> sideSetMeshStructs;
+  protected:
+
+    bool m_bulk_data_set = false;
 };
 
 } // Namespace Albany

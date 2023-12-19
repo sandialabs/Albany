@@ -145,7 +145,7 @@ template<unsigned Dim>
 void OmegahBoxMesh<Dim>::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 {
-  // Nothing to do here
+  m_bulk_data_set = true;
 }
 
 template<unsigned Dim>

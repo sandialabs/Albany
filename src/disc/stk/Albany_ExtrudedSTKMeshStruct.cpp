@@ -196,8 +196,11 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   const     auto SIDE_RANK = metaData->side_rank();
 
-  // Finish to set up the basal mesh (we need this to be completed before building 3d entities)
-  this->sideSetMeshStructs.at("basalside")->setBulkData (comm);
+  // This code should always run, but just in case something changes,
+  // let's first check that bulk data was not set yet
+  if (not basalMeshStruct->isBulkDataSet()) {
+    basalMeshStruct->setBulkData (comm);
+  }
 
   constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
 
@@ -625,6 +628,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
     ofile.close();
   }
+
+  m_bulk_data_set = true;
 }
 
 void ExtrudedSTKMeshStruct::
