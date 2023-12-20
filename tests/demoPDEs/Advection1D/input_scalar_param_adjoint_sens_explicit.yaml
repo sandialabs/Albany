@@ -91,7 +91,7 @@ ALBANY:
                 Block Size: 1
                 Num Blocks: 100
                 Flexible Gmres: false
-        Preconditioner Type: MueLu
+        Preconditioner Type: Ifpack2
         Preconditioner Types:
           MueLu:
             verbosity: none
@@ -102,7 +102,7 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 0.0
+    Test Value: -9.730072575842e-05
     Sensitivity For Parameter 0:
       Test Value: 0.0
     Relative Tolerance: 1.00000000000000002e-03

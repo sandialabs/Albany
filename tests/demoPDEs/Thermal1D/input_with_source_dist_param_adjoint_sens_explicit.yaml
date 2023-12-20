@@ -92,7 +92,7 @@ ALBANY:
                 Block Size: 1
                 Num Blocks: 100
                 Flexible Gmres: false
-        Preconditioner Type: MueLu
+        Preconditioner Type: Ifpack2
         Preconditioner Types:
           MueLu:
             verbosity: none
