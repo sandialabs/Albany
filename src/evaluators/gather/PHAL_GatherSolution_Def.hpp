@@ -485,10 +485,12 @@ evaluateFields(typename Traits::EvalData workset)
   this->gather_fields_offsets(dof_mgr);
 
   const auto ws = workset.wsIndex;
-  const auto elem_lids  = workset.disc->getWsElementLIDs().host();
-  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().host();
+  const auto elem_lids  = workset.disc->getWsElementLIDs();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids();
   constexpr auto ALL = Kokkos::ALL;
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // Do everything on host
   //get const (read-only) view of x
   using const_data_t = Teuchos::ArrayRCP<const ST>;
   using const_mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>>;
@@ -546,6 +548,77 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#else
+  //get const (read-only) view of x
+  // using const_data_t = Teuchos::ArrayRCP<const ST>;
+  // using const_mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>>;
+  // const_data_t x_data, xdot_data, xdotdot_data;
+  // const_mv_data_t Vx_data, Vxdot_data, Vxdotdot_data;
+  
+  Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
+  Albany::DeviceView2d<const ST> Vx_data, Vxdot_data, Vxdotdot_data;
+
+  x_data = Albany::getDeviceData(x);
+
+  if (xdot!=Teuchos::null)
+    xdot_data = Albany::getDeviceData(xdot);
+  if (xdotdot!=Teuchos::null)
+    xdotdot_data = Albany::getDeviceData(xdotdot);
+
+  if (Vx!=Teuchos::null)
+    Vx_data = Albany::getDeviceData(Vx);
+  if (Vxdot!=Teuchos::null)
+    Vxdot_data = Albany::getDeviceData(Vx);
+  if (Vxdotdot!=Teuchos::null)
+    Vxdotdot_data = Albany::getDeviceData(Vx);
+
+  const auto elem_lids_dev   = Kokkos::subview(elem_lids.dev(),ws,ALL);
+  const auto& fields_offsets = m_fields_offsets.dev();
+  const int first_dof = this->offset;
+  auto nnodes = this->numNodes;
+  auto nfields = this->numFields;
+  auto sol = this->device_sol;
+  auto ncolsx = workset.num_cols_x;
+  auto jcoeff = workset.j_coeff;
+  auto mcoeff = workset.m_coeff;
+  auto ncoeff = workset.n_coeff;
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int& cell) {
+    const auto elem_LID = elem_lids_dev(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
+    for (int node = 0; node < nnodes; ++node) {
+      for (int eq = 0; eq < nfields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
+        ref_t valref = sol.get_ref(cell,node,eq);
+        if (gather_Vx) {
+          valref = TanFadType(valref.size(), x_data(lid));
+          for (int k=0; k<ncolsx; ++k)
+            valref.fastAccessDx(k) = jcoeff*Vx_data(k,lid);
+        } else {
+          valref = TanFadType(x_data(lid));
+        }
+
+        if (gather_xdot) {
+          ref_t valref_dot = sol.get_ref_dot(cell,node,eq);
+          valref_dot = TanFadType(valref_dot.size(), xdot_data(lid));
+          if (gather_Vxdot) {
+            for (int k=0; k<ncolsx; ++k)
+              valref_dot.fastAccessDx(k) = mcoeff*Vxdot_data(k,lid);
+          }
+        }
+
+        if (gather_xdotdot) {
+          ref_t valref_dotdot = sol.get_ref_dotdot(cell,node,eq);
+          valref_dotdot = TanFadType(valref_dotdot.size(), xdotdot_data(lid));
+          if (gather_Vxdotdot) {
+            for (int k=0; k<ncolsx; ++k)
+              valref_dotdot.fastAccessDx(k) = ncoeff*Vxdotdot_data(k,lid);
+          }
+        }
+      }
+    }
+  });
+#endif
 }
 
 // **********************************************************************

@@ -271,6 +271,11 @@ private:
   using Base::get_ref_dotdot;
   using Base::numFields;
   using Base::m_fields_offsets;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+private:
+  using RangePolicy = typename Base::RangePolicy;
+#endif
 };
 
 // **************************************************************
