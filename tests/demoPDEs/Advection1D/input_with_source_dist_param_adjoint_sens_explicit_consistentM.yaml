@@ -93,7 +93,7 @@ ALBANY:
                 Block Size: 1
                 Num Blocks: 100
                 Flexible Gmres: false
-        Preconditioner Type: Ifpack2
+        Preconditioner Type: None
         Preconditioner Types:
           MueLu:
             verbosity: none
@@ -106,7 +106,7 @@ ALBANY:
     Absolute Tolerance: 1.00000000000000008e-05
     Test Value: -9.118581511930e-01
     Sensitivity For Parameter 0:
-      Test Value: 3.92759813e-03
+      Test Value: 3.915875752922e-03
     Relative Tolerance: 1.00000000000000002e-03
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000008e-05
