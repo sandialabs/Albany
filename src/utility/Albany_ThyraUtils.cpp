@@ -734,6 +734,23 @@ DeviceView2d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_MultiVector
   return dummy;
 }
 
+DeviceView2d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_MultiVector>& mv)
+{
+  // Allow failure, since we don't know what the underlying linear algebra is
+  auto tv = getTpetraMultiVector(mv,false);
+  if (!tv.is_null()) {
+    DeviceView2d<ST> data(tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadWrite));
+    return data;
+  }
+
+  // If all the tries above are unsuccessful, throw an error.
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNonconstDeviceData! Could not cast Thyra_Vector to any of the supported concrete types.\n");
+
+  // Dummy return value, to silence compiler warnings
+  DeviceView2d<ST> dummy;
+  return dummy;
+}
+
 void scale_and_update (const Teuchos::RCP<Thyra_Vector> y, const ST y_coeff,
                        const Teuchos::RCP<const Thyra_Vector> x, const ST x_coeff)
 {

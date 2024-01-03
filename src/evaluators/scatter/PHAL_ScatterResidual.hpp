@@ -228,6 +228,8 @@ public:
 protected:
   using Base = ScatterResidualBase<AlbanyTraits::Tangent, Traits>;
   using ScalarT = typename Base::ScalarT;
+  using ExecutionSpace = typename Base::ExecutionSpace;
+  using RangePolicy = typename Base::RangePolicy;
 
   using Base::get_resid;
   using Base::numFields;

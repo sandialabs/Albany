@@ -345,7 +345,7 @@ template<typename Traits>
 void ScatterResidual<AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  this->gather_fields_offsets (workset.disc->getDOFManager());
+  
 
   const auto f  = workset.f;
   const auto JV = workset.JV;
@@ -355,22 +355,23 @@ evaluateFields(typename Traits::EvalData workset)
   const bool scatter_JV = Teuchos::nonnull(JV);
   const bool scatter_fp = Teuchos::nonnull(fp);
 
+  constexpr auto ALL = Kokkos::ALL();
+  const int ws = workset.wsIndex;
+  const auto dof_mgr = workset.disc->getDOFManager();
+  this->gather_fields_offsets (dof_mgr);
+
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   const auto f_data  = scatter_f  ? Albany::getNonconstLocalData(f)  : Teuchos::null;
   const auto JV_data = scatter_JV ? Albany::getNonconstLocalData(JV) : Teuchos::null;
   const auto fp_data = scatter_fp ? Albany::getNonconstLocalData(fp) : Teuchos::null;
 
-  constexpr auto ALL = Kokkos::ALL();
-  const int ws = workset.wsIndex;
-  const auto dof_mgr = workset.disc->getDOFManager();
-
-  const auto elem_lids     = workset.disc->getElementLIDs_host(ws);
-  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
-
+  const auto elem_lids     = workset.disc->getElementLIDs(ws);
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids();
   const auto& fields_offsets = m_fields_offsets.host();
   const auto eq_offset = this->offset;
   for (size_t cell=0; cell<workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids(cell);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+    const auto elem_LID = elem_lids.host(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids.host(),elem_LID,ALL);
     for (int node=0; node<numNodes; ++node) {
       for (int eq=0; eq<numFields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+eq_offset));
@@ -392,6 +393,67 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#else
+  Albany::DeviceView1d<ST> f_data;
+  Albany::DeviceView2d<ST> JV_data, fp_data;
+
+  const auto ws_elem_lids = workset.disc->getWsElementLIDs().dev();
+  const auto elem_lids = Kokkos::subview(ws_elem_lids,ws,ALL);
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
+
+  if (scatter_f)
+    f_data = Albany::getNonconstDeviceData(f);
+  if (scatter_JV)
+    JV_data = Albany::getNonconstDeviceData(JV);
+  if (scatter_fp)
+    fp_data = Albany::getNonconstDeviceData(fp);
+
+  const auto& fields_offsets = m_fields_offsets.dev();
+  const auto eq_offset = this->offset;
+  auto nnodes = this->numNodes;
+  auto nfields = this->numFields;
+  auto resid = this->device_resid;
+  auto ncolsx = workset.num_cols_x;
+  auto ncolsp = workset.num_cols_p;
+  auto paramoffset = workset.param_offset;
+
+  if (scatter_f)
+    std::cout << "f_data: (" << f_data.extent(0) << ", " << f_data.extent(1) << ")\n";
+  if (scatter_JV)
+    std::cout << "JV_data: (" << JV_data.extent(0) << ", " << JV_data.extent(1) << ")\n";
+  if (scatter_fp)
+    std::cout << "fp_data: (" << fp_data.extent(0) << ", " << fp_data.extent(1) << ")\n";
+
+  std::cout << "eq_offset = " << eq_offset << ", nnodes = " << nnodes << ", nfields = " << nfields << "\n";
+  std::cout << "ncolsx = " << ncolsx << ", ncolsp = " << ncolsp << ", paramoffset = " << paramoffset << "\n";
+
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int& cell) {
+    const auto elem_LID = elem_lids(cell);
+    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+    for (int node=0; node<nnodes; ++node) {
+      for (int eq=0; eq<nfields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+eq_offset));
+        const auto res = resid.get(cell,node,eq);
+
+        if (scatter_f) {
+          f_data(lid) += res.val();
+        }
+        if (scatter_JV) {
+          for (int col=0; col<ncolsx; ++col) {
+            JV_data(lid,col) += res.dx(col);
+          }
+        }
+        if (scatter_fp) {
+          for (int col=0; col<ncolsp; ++col) {
+            fp_data(lid,col) += res.dx(col + paramoffset);
+          }
+        }
+      }
+    }
+  });
+  cudaCheckError();
+#endif
 }
 
 // **********************************************************************

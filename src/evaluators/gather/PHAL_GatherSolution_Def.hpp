@@ -593,7 +593,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (gather_Vx) {
           valref = TanFadType(valref.size(), x_data(lid));
           for (int k=0; k<ncolsx; ++k)
-            valref.fastAccessDx(k) = jcoeff*Vx_data(k,lid);
+            valref.fastAccessDx(k) = jcoeff*Vx_data(lid,k);
         } else {
           valref = TanFadType(x_data(lid));
         }
@@ -603,7 +603,7 @@ evaluateFields(typename Traits::EvalData workset)
           valref_dot = TanFadType(valref_dot.size(), xdot_data(lid));
           if (gather_Vxdot) {
             for (int k=0; k<ncolsx; ++k)
-              valref_dot.fastAccessDx(k) = mcoeff*Vxdot_data(k,lid);
+              valref_dot.fastAccessDx(k) = mcoeff*Vxdot_data(lid,k);
           }
         }
 
@@ -612,7 +612,7 @@ evaluateFields(typename Traits::EvalData workset)
           valref_dotdot = TanFadType(valref_dotdot.size(), xdotdot_data(lid));
           if (gather_Vxdotdot) {
             for (int k=0; k<ncolsx; ++k)
-              valref_dotdot.fastAccessDx(k) = ncoeff*Vxdotdot_data(k,lid);
+              valref_dotdot.fastAccessDx(k) = ncoeff*Vxdotdot_data(lid,k);
           }
         }
       }

@@ -150,6 +150,7 @@ DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
 DeviceView1d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v);
 
 DeviceView2d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_MultiVector>& mv);
+DeviceView2d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_MultiVector>& mv);
 
 // This is just a utility routine, that mildly extend the update method of Thyra_Vector,
 // but does not have the complex signature of the linear_combination method of Thyra_Vector.
