@@ -66,9 +66,9 @@ PyParallelEnv::PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, 
 {
     if(!Kokkos::is_initialized()) {
         Kokkos::InitializationSettings args;
-        args.set_num_threads(this->num_threads);
-        args.set_num_devices(this->num_devices);
-        args.set_device_id(this->device_id);
+        if (this->num_threads > 0) args.set_num_threads(this->num_threads);
+        if (this->num_devices > 0) args.set_num_devices(this->num_devices);
+        if (this->device_id > 0) args.set_device_id(this->device_id);
         Kokkos::initialize(args);
     }
 
