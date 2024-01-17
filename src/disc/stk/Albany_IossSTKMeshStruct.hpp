@@ -21,7 +21,7 @@ namespace Albany {
 
   class IossSTKMeshStruct : public GenericSTKMeshStruct {
 
-    public:
+  public:
 
     IossSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
                        const Teuchos::RCP<const Teuchos_Comm>& commT, const int numParams);
@@ -43,7 +43,9 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return m_restartDataTime;}
 
-    private:
+  private:
+
+    void loadOrSetCoordinates3d ();
 
     Ioss::Init::Initializer ioInit;
 

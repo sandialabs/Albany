@@ -388,19 +388,11 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   }
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
-  side_maps_present = true;
-  bool coherence = true;
-  for (const auto& it : missing) {
-    if (this->numDim!=3 and it.db_name()=="coordinates3d") {
-      // The input mesh did not store 3d coords, so we set the default ones (with trailing dims set to 0)
-      this->setDefaultCoordinates3d();
-    }
-    if (it.field()->name()=="side_to_cell_map" || it.field()->name()=="side_nodes_ids")
-    {
-      side_maps_present = false;
-      coherence = !coherence; // Both fields should be present or absent so coherence should change exactly twice
-    }
-  }
+  auto region = mesh_data->get_input_ioss_region();
+  const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
+  Ioss::NodeBlock *nb = node_blocks[0];
+  side_maps_present = nb->field_exists("side_to_cell_map") and nb->field_exists("side_nodes_ids");
+  const bool coherence    = nb->field_exists("side_to_cell_map") == nb->field_exists("side_nodes_ids");
   TEUCHOS_TEST_FOR_EXCEPTION (!coherence, std::runtime_error, "Error! The maps 'side_to_cell_map' and 'side_nodes_ids' should either both be present or both missing, but only one of them was found in the mesh file.\n");
 
   if (useSerialMesh)
@@ -470,6 +462,9 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   }
 
+  // Set 3d coords *before* loading fields, or else you won't have x/y/z available
+  loadOrSetCoordinates3d();
+
   // Load any required field from file
   this->loadRequiredInputFields (comm);
 
@@ -480,6 +475,56 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   this->checkNodeSetsFromSideSetsIntegrity ();
 
   m_bulk_data_set = true;
+}
+
+void
+IossSTKMeshStruct::loadOrSetCoordinates3d()
+{
+  const std::string coords3d_name = "coordinates3d";
+
+  auto region = mesh_data->get_input_ioss_region();
+  const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
+  Ioss::NodeBlock *nb = node_blocks[0];
+
+  const int current_step = region->get_current_state();
+  const int index = params->isParameter("Restart Index")
+                  ? params->get<int>("Restart Index")
+                  : current_step;
+
+  if (nb->field_exists(coords3d_name) and index!=-1) {
+    // The field "coordinates3d" exists in the input mesh
+    // (which must then come from a previous Albany run), so load it.
+    std::vector<stk::mesh::Entity> nodes;
+    stk::mesh::get_entities(*bulkData,stk::topology::NODE_RANK,nodes);
+
+    // This is some trickery to get around STK-Ioss implementation.
+    // Basically, you cannot access transient fields if begin_state
+    // has not yet been called (with the proper step number).
+    // Therefore, if the current state has a step number invalid
+    // or different to the one desired, we set it to the restart
+    // index state. If the state was already set, we also take
+    // care of resetting the index back to the original configuration.
+
+    if (current_step != -1) {
+      region->end_state(current_step);
+    }
+
+    region->begin_state(index);
+    stk::io::field_data_from_ioss(*bulkData, this->getCoordinatesField3d(), nodes, nb, coords3d_name);
+    region->end_state(index);
+
+    if (current_step != -1) {
+      region->begin_state(current_step);
+    }
+  } else {
+    if (nb->field_exists(coords3d_name)) {
+      // The 3d coords field exists in the input mesh, but the restart index was
+      // not set in the input file. We issue a warning, and load default coordinates
+      *out << "WARNING! The field 'coordinates3d' was found in the input mesh, but no restart index was specified.\n"
+           << "         Albany will set the 3d coordinates to the 'default' ones (filling native coordinates with trailing zeros).\n";
+    }
+    setDefaultCoordinates3d();
+  }
 }
 
 double
