@@ -486,7 +486,7 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
                                 std::map<GO,std::vector<int>>& sideNodeMap)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (sideSetMeshStructs.count(sideSetName)==0, Teuchos::Exceptions::InvalidParameter,
-      "Error in 'buildSideNodeToSideSetCellNodeMap': side set " << sideSetName << " does not have a mesh.\n");
+      "Error in 'buildCellSideNodeNumerationMap': side set " << sideSetName << " does not have a mesh.\n");
 
   auto side_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(sideSetMeshStructs.at(sideSetName));
 

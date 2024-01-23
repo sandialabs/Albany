@@ -389,10 +389,10 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
   auto region = mesh_data->get_input_ioss_region();
-  const Ioss::NodeBlockContainer& node_blocks = region->get_node_blocks();
-  Ioss::NodeBlock *nb = node_blocks[0];
-  side_maps_present = nb->field_exists("side_to_cell_map") and nb->field_exists("side_nodes_ids");
-  const bool coherence    = nb->field_exists("side_to_cell_map") == nb->field_exists("side_nodes_ids");
+  const auto& elem_blocks = region->get_element_blocks();
+  auto *eb = elem_blocks[0];
+  side_maps_present = eb->field_exists("side_to_cell_map") and eb->field_exists("side_nodes_ids");
+  const bool coherence = eb->field_exists("side_to_cell_map") == eb->field_exists("side_nodes_ids");
   TEUCHOS_TEST_FOR_EXCEPTION (!coherence, std::runtime_error, "Error! The maps 'side_to_cell_map' and 'side_nodes_ids' should either both be present or both missing, but only one of them was found in the mesh file.\n");
 
   if (useSerialMesh)

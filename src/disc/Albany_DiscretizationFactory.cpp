@@ -200,6 +200,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
           // set of maps, since there is no way to correctly map the side nodes to the cell nodes.
           ss_mesh_stk->ignore_side_maps = params_ss->get<bool>("Ignore Side Maps", false);
         } else {
+          // This can be the case if we restart from existing volume and side meshes
           ss_mesh = createMeshStruct (params_ss,comm, numParams);
         }
       }
