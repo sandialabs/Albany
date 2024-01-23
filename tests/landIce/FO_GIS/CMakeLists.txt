@@ -133,11 +133,17 @@ if (ALBANY_IFPACK2)
 endif()
 
 if (NOT ALBANY_PARALELL_EXODUS)
-	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_decompMesh)
+	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_2d_decompMesh)
   add_test (NAME ${testNameHumboldtDecompMesh}
         COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-  set_tests_properties (${testNameHumboldtDecompMesh} PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
+  set_tests_properties (${testNameHumboldtDecompMesh} PROPERTIES FIXTURES_SETUP humboldtMeshSetup2d)
+
+	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_contiguous_2d_decompMesh)
+  add_test (NAME ${testNameHumboldtDecompMesh}
+        COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_contiguous_2d.exo
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+  set_tests_properties (${testNameHumboldtDecompMesh} PROPERTIES FIXTURES_SETUP humboldtMeshSetupContiguous2d)
 endif()
 
 if (ALBANY_FROSCH)
@@ -153,47 +159,44 @@ if (ALBANY_FROSCH)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml)
   add_test(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_fluxdiv.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
+                     PROPERTIES
+                     LABELS         "LandIce;Tpetra;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_power_law.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_power_law.yaml)
   add_test(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_power_law.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch
+                     PROPERTIES
+                     LABELS         "LandIce;Tpetra;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_effect_press.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_effect_press.yaml)
   add_test(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_effect_press.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
+                     PROPERTIES
+                     LABELS         "LandIce;Tpetra;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml)
   add_test(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
-
+  set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch
+                     PROPERTIES
+                     LABELS            "LandIce;Tpetra;Forward")
+                       
   if (NOT ALBANY_PARALELL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
-                       PROPERTIES
-                       LABELS            "LandIce;Tpetra;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+
+    set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
                        
     set_tests_properties(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch
-                       PROPERTIES
-                       LABELS            "LandIce;Tpetra;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
 
     set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
-                       PROPERTIES
-                       LABELS            "LandIce;Tpetra;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
                        
-  else ()
-    set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
-                       PROPERTIES
-                       LABELS         "LandIce;Tpetra;Forward")
-                       
-    set_tests_properties(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch
-                       PROPERTIES
-                       LABELS         "LandIce;Tpetra;Forward")
-                       
-    set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
-                       PROPERTIES
-                       LABELS         "LandIce;Tpetra;Forward")
   endif()
   
 endif()
@@ -342,12 +345,19 @@ if (ALBANY_IFPACK2)
       set (testName ${testNameRoot}_Humboldt_Analysis)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis.yaml
                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis.yaml)
-      add_test(${testNameRoot}_Humboldt_Analysis ${AlbanyAnalysis.exe} input_fo_humboldt_analysis.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_humboldt_analysis.yaml)
 
       set (testName ${testNameRoot}_Humboldt_Analysis_Mat_Free_Reg)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis_mat_free_reg.yaml
                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_mat_free_reg.yaml)
-      add_test(${testNameRoot}_Humboldt_Analysis_Analysis_Mat_Free_Reg ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_mat_free_reg.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_mat_free_reg.yaml)
+                         
+      if (NOT ALBANY_PARALELL_EXODUS)
+        set_tests_properties(${testNameRoot}_Humboldt_Analysis
+          PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+        set_tests_properties(${testNameRoot}_Humboldt_Analysis_Mat_Free_Reg
+          PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+      endif()
     endif()
 
   endif()
