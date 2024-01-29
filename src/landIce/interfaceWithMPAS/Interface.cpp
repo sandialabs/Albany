@@ -21,26 +21,29 @@
 #include "LandIce_ProblemFactory.hpp"
 #include "LandIce_StokesFO.hpp"
 
+#include "Albany_SideSetSTKMeshStruct.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
-#include "Teuchos_XMLParameterListHelpers.hpp"
-#include "Teuchos_StandardCatchMacros.hpp"
-#include <stk_mesh/base/FieldBase.hpp>
-#include <stk_mesh/base/GetEntities.hpp>
-#include "Piro_PerformSolve.hpp"
-#include "Albany_OrdinarySTKFieldContainer.hpp"
-#include "Albany_STKDiscretization.hpp"
-#include "Thyra_DetachedVectorView.hpp"
-#include "Teuchos_YamlParameterListHelpers.hpp"
 
-#include "Teuchos_StackedTimer.hpp"
-#include "Teuchos_TimeMonitor.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
 #include "Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "Albany_STKDiscretization.hpp"
+
+#include <stk_mesh/base/FieldBase.hpp>
+#include <stk_mesh/base/GetEntities.hpp>
+#include <Piro_PerformSolve.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_XMLParameterListHelpers.hpp>
+#include <Teuchos_StandardCatchMacros.hpp>
+#include <Thyra_DetachedVectorView.hpp>
+#include <Teuchos_YamlParameterListHelpers.hpp>
+
+#include <Teuchos_StackedTimer.hpp>
+#include <Teuchos_TimeMonitor.hpp>
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -810,6 +813,18 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
             verticesOnEdge, indexToEdgeID, globalEdgesStride, indexToTriangleGOID, globalTrianglesStride,
             dirichletNodesIds, iceMarginEdgesIds,
             nLayers, num_params, Ordering));
+  }
+
+  // Create side meshes
+  for (const auto& ss : ss_pl.get<Teuchos::Array<std::string>>("Side Sets")) {
+    const auto ms = meshStruct->meshSpecs[0];
+    const auto& params_ss = Teuchos::rcpFromRef(ss_pl.sublist(ss));
+
+    auto ss_mesh = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*ms, params_ss, mpiComm, num_params));
+
+    ss_mesh->setParentMeshInfo(*meshStruct, ss);
+
+    meshStruct->sideSetMeshStructs[ss] = ss_mesh;
   }
 
   albanyApp->createMeshSpecs(meshStruct);
