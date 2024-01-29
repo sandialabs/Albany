@@ -763,6 +763,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   ss_pl.set<Teuchos::Array<std::string>>("Side Sets", bsn);
   auto& basal_pl = ss_pl.sublist("basalside");
   basal_pl.set<std::string>("Method","SideSetSTK");
+  basal_pl.set<int>("Number Of Time Derivatives",discretizationList->get<int>("Number Of Time Derivatives"));
   auto& basal_req = basal_pl.sublist("Required Fields Info");
   basal_req.set<int>("Number Of Fields",1);
 
