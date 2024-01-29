@@ -763,7 +763,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   ss_pl.set<Teuchos::Array<std::string>>("Side Sets", bsn);
   auto& basal_pl = ss_pl.sublist("basalside");
   basal_pl.set<std::string>("Method","SideSetSTK");
-  basal_pl.set<int>("Number Of Time Derivatives",discretizationList->get<int>("Number Of Time Derivatives"));
   auto& basal_req = basal_pl.sublist("Required Fields Info");
   basal_req.set<int>("Number Of Fields",1);
 
@@ -819,7 +818,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   // Create side meshes
   for (const auto& ss : ss_pl.get<Teuchos::Array<std::string>>("Side Sets")) {
     const auto ms = meshStruct->meshSpecs[0];
-    const auto& params_ss = Teuchos::rcpFromRef(ss_pl.sublist(ss));
+    auto params_ss = Teuchos::rcpFromRef(ss_pl.sublist(ss));
+    params_ss->set<int>("Number Of Time Derivatives",discretizationList->get<int>("Number Of Time Derivatives"));
 
     auto ss_mesh = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*ms, params_ss, mpiComm, num_params));
 
