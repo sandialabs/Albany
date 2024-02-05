@@ -115,24 +115,26 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   ov_hess_vec_prod_f_px_out->assign(0.0);
   ov_hess_vec_prod_f_pp_out->assign(0.0);
 
-  auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xx_out);
-  auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xp_out);
-  auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_px_out);
-  auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_pp_out);
+  {
+    auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xx_out);
+    auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xp_out);
+    auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_px_out);
+    auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_pp_out);
 
-  auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-  auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
-  for (int cell=0; cell<num_cells; ++cell) {
-    // NOTE: in this test, we have 1 workset, so cell==elem_LID
-    auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
-    auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
-    for (size_t i=0; i<p_dof_lids.size(); ++i) {
-      ov_hess_vec_prod_f_px_out_data[p_dof_lids[i]] += 4.0;
-      ov_hess_vec_prod_f_pp_out_data[p_dof_lids[i]] += 4.0;
-    }
-    for (size_t i=0; i<x_dof_lids.size(); ++i) {
-      ov_hess_vec_prod_f_xx_out_data[x_dof_lids[i]] += 4.0;
-      ov_hess_vec_prod_f_xp_out_data[x_dof_lids[i]] += 4.0;
+    auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+    auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
+    for (int cell=0; cell<num_cells; ++cell) {
+      // NOTE: in this test, we have 1 workset, so cell==elem_LID
+      auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
+      auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
+      for (size_t i=0; i<p_dof_lids.size(); ++i) {
+        ov_hess_vec_prod_f_px_out_data[p_dof_lids[i]] += 4.0;
+        ov_hess_vec_prod_f_pp_out_data[p_dof_lids[i]] += 4.0;
+      }
+      for (size_t i=0; i<x_dof_lids.size(); ++i) {
+        ov_hess_vec_prod_f_xx_out_data[x_dof_lids[i]] += 4.0;
+        ov_hess_vec_prod_f_xp_out_data[x_dof_lids[i]] += 4.0;
+      }
     }
   }
 
@@ -170,11 +172,14 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   std::vector<PHX::index_size_type> deriv_dims;
   deriv_dims.push_back(nodes_per_element * neq);
   auto residual = PHX::allocateUnmanagedMDField<Scalar, Cell, Node>("res", dl->node_scalar, deriv_dims);
+  auto residual_dev = residual.get_view();
+  auto residual_host = Kokkos::create_mirror_view(residual_dev);
 
   for (int cell=0; cell<num_cells; ++cell)
     for (int node1=0; node1<nodes_per_element; ++node1)
       for (int node2=0; node2<nodes_per_element; ++node2)
-        residual(cell, node1).fastAccessDx(node2).fastAccessDx(0) = 0.5;
+        residual_host(cell, node1).fastAccessDx(node2).fastAccessDx(0) = 0.5;
+  Kokkos::deep_copy(residual_dev, residual_host);
 
   // Create evaluator
   Teuchos::ParameterList p("ScatterResidual Unit Test");
@@ -467,24 +472,26 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   ov_hess_vec_prod_f_px_out->assign(0.0);
   ov_hess_vec_prod_f_pp_out->assign(0.0);
 
-  auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xx_out);
-  auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xp_out);
-  auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_px_out);
-  auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_pp_out);
+  {
+    auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xx_out);
+    auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xp_out);
+    auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_px_out);
+    auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_pp_out);
 
-  auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-  auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
-  for (int cell=0; cell<num_cells; ++cell) {
-    // NOTE: in this test, we have 1 workset, so cell==elem_LID
-    auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
-    auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
-    for (size_t i=0; i<p_dof_lids.size(); ++i) {
-      ov_hess_vec_prod_f_px_out_data[p_dof_lids[i]] += 12.0;
-      ov_hess_vec_prod_f_pp_out_data[p_dof_lids[i]] += 12.0;
-    }
-    for (size_t i=0; i<x_dof_lids.size(); ++i) {
-      ov_hess_vec_prod_f_xx_out_data[x_dof_lids[i]] += 12.0;
-      ov_hess_vec_prod_f_xp_out_data[x_dof_lids[i]] += 12.0;
+    auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+    auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
+    for (int cell=0; cell<num_cells; ++cell) {
+      // NOTE: in this test, we have 1 workset, so cell==elem_LID
+      auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
+      auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
+      for (size_t i=0; i<p_dof_lids.size(); ++i) {
+        ov_hess_vec_prod_f_px_out_data[p_dof_lids[i]] += 12.0;
+        ov_hess_vec_prod_f_pp_out_data[p_dof_lids[i]] += 12.0;
+      }
+      for (size_t i=0; i<x_dof_lids.size(); ++i) {
+        ov_hess_vec_prod_f_xx_out_data[x_dof_lids[i]] += 12.0;
+        ov_hess_vec_prod_f_xp_out_data[x_dof_lids[i]] += 12.0;
+      }
     }
   }
 
@@ -522,14 +529,18 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   std::vector<PHX::index_size_type> deriv_dims;
   deriv_dims.push_back(nodes_per_element * neq);
   auto residual = PHX::allocateUnmanagedMDField<Scalar, Cell, Node, VecDim>("res", dl->node_vector, deriv_dims);
+  auto residual_dev = residual.get_view();
+  auto residual_host = Kokkos::create_mirror_view(residual_dev);
   residual.deep_copy(0.0);
+  Kokkos::deep_copy(residual_host, residual_dev);
 
   for (int cell=0; cell<num_cells; ++cell)
     for (int node1=0; node1<nodes_per_element; ++node1)
       for (int dim=0; dim<neq; ++dim)
         for (int node2=0; node2<nodes_per_element*neq; ++node2)
           // residual(cell, node1, dim).fastAccessDx(node2*neq+oim).fastAccessDx(0) = 0.5;
-          residual(cell, node1, dim).fastAccessDx(node2).fastAccessDx(0) = 0.5;
+          residual_host(cell, node1, dim).fastAccessDx(node2).fastAccessDx(0) = 0.5;
+  Kokkos::deep_copy(residual_dev, residual_host);
 
   // Create evaluator
   Teuchos::ParameterList p("ScatterResidual Unit Test");

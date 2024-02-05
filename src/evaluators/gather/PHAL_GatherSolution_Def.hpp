@@ -738,14 +738,14 @@ evaluateFields(typename Traits::EvalData workset)
   bool f_px_is_active = !hessian_ws.hess_vec_prod_f_px.is_null();
 
   //get const (read-only) view of x and xdot
-  using const_data_t = Teuchos::ArrayRCP<const ST>;
+  using const_data_t = Albany::DeviceView1d<const ST>;
   const_data_t x_data, xdot_data, xdotdot_data, direction_x_data;
 
-  x_data = Albany::getLocalData(x);
+  x_data = Albany::getDeviceData(x);
   if (xdot!=Teuchos::null)
-    xdot_data = Albany::getLocalData(xdot);
+    xdot_data = Albany::getDeviceData(xdot);
   if (xdotdot!=Teuchos::null)
-    xdotdot_data = Albany::getLocalData(xdotdot);
+    xdotdot_data = Albany::getDeviceData(xdotdot);
 
   // is_x_active is true if we compute the Hessian-vector product contributions of either:
   // Hv_g_xx, Hv_g_xp, Hv_f_xx, or Hv_f_xp, i.e. if the first derivative is w.r.t. the solution.
@@ -765,7 +765,7 @@ evaluateFields(typename Traits::EvalData workset)
         Teuchos::Exceptions::InvalidParameter,
         "\nError in GatherSolution<HessianVec, Traits>: "
         "direction_x is not set and the direction is active.\n");
-    direction_x_data = Albany::getLocalData(direction_x->col(0).getConst());
+    direction_x_data = Albany::getDeviceData(direction_x->col(0).getConst());
   }
 
   // Make sure we have the fields offsets
@@ -773,21 +773,27 @@ evaluateFields(typename Traits::EvalData workset)
   this->gather_fields_offsets(dof_mgr);
 
   const auto ws = workset.wsIndex;
-  const auto elem_lids  = workset.disc->getWsElementLIDs().host();
-  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().host();
+  const auto elem_lids  = workset.disc->getWsElementLIDs();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().dev();
   constexpr auto ALL = Kokkos::ALL;
 
-  const auto& fields_offsets = m_fields_offsets.host();
+  const auto& fields_offsets = m_fields_offsets.dev();
   const auto& first_dof = this->offset;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const auto elem_LID = elem_lids(ws,cell);
+
+  const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
+  auto nnodes = this->numNodes;
+  auto nfields = this->numFields;
+  auto sol = this->device_sol;
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int& cell) {
+    const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<this->numNodes; ++node) {
+    for (int node=0; node<nnodes; ++node) {
       int firstunk = fields_offsets(node,first_dof);
-      for (int eq=0; eq<numFields; ++eq) {
+      for (int eq=0; eq<nfields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
-        ref_t valref = get_ref(cell,node,eq);
-        RealType xvec_val = x_data[lid];
+        ref_t valref = sol.get_ref(cell,node,eq);
+        RealType xvec_val = x_data(lid);
 
         valref = HessianVecFad(valref.size(), xvec_val);
         // If we differentiate w.r.t. the solution, we have to set the first
@@ -797,18 +803,18 @@ evaluateFields(typename Traits::EvalData workset)
         // If we differentiate w.r.t. the solution direction, we have to set
         // the second derivative to the related direction value
         if (is_x_direction_active)
-          valref.val().fastAccessDx(0) = direction_x_data[lid];
+          valref.val().fastAccessDx(0) = direction_x_data(lid);
 
         if (gather_xdot) {
-          get_ref_dot(cell,node,eq) = xdot_data[lid];
+          sol.get_ref_dot(cell,node,eq) = xdot_data(lid);
         }
 
         if (gather_xdotdot) {
-          get_ref_dotdot(cell,node,eq) = xdotdot_data[lid];
+          sol.get_ref_dotdot(cell,node,eq) = xdotdot_data(lid);
         }
       }
     }
-  }
+  });
 }
 
 } // namespace PHAL

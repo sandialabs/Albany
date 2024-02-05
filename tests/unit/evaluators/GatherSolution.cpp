@@ -54,12 +54,14 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
   auto x_dof_mgr = disc->getDOFManager();
   auto overlapped_x_space = x_dof_mgr->ov_indexer()->getVectorSpace();
   const auto overlapped_x = Thyra::createMember(overlapped_x_space);
-  auto x_data = Albany::getNonconstLocalData(overlapped_x);
-  for (int i = 0; i < x_data.size(); ++i) {
-    if (i % 2 == 0) {
-      x_data[i] = -6.;
-    } else {
-      x_data[i] = 6.;
+  {
+    auto x_data = Albany::getNonconstLocalData(overlapped_x);
+    for (int i = 0; i < x_data.size(); ++i) {
+      if (i % 2 == 0) {
+        x_data[i] = -6.;
+      } else {
+        x_data[i] = 6.;
+      }
     }
   }
   const int num_cells = x_dof_mgr->cell_indexer()->getNumLocalElements();
@@ -154,12 +156,14 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
   auto overlapped_x_space = x_dof_mgr->ov_indexer()->getVectorSpace();
   const auto overlapped_x = Thyra::createMember(overlapped_x_space);
-  auto x_data = Albany::getNonconstLocalData(overlapped_x);
-  for (int i = 0; i < x_data.size(); ++i) {
-    if (i % 2 == 0) {
-      x_data[i] = -6.;
-    } else {
-      x_data[i] = 6.;
+  {
+    auto x_data = Albany::getNonconstLocalData(overlapped_x);
+    for (int i = 0; i < x_data.size(); ++i) {
+      if (i % 2 == 0) {
+        x_data[i] = -6.;
+      } else {
+        x_data[i] = 6.;
+      }
     }
   }
   const int num_cells = x_dof_mgr->cell_indexer()->getNumLocalElements();
@@ -176,13 +180,17 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
   const auto hess_vec_prod_g_px = Thyra::createMember(overlapped_p_space);
   const auto hess_vec_prod_g_pp = Thyra::createMember(overlapped_p_space);
 
-  auto direction_x_data = Albany::getNonconstLocalData(direction_x);
-  for (int i = 0; i < direction_x_data.size(); ++i)
-    direction_x_data[i] = 0.4;
+  {
+    auto direction_x_data = Albany::getNonconstLocalData(direction_x);
+    for (int i = 0; i < direction_x_data.size(); ++i)
+      direction_x_data[i] = 0.4;
+  }
 
-  auto direction_p_data = Albany::getNonconstLocalData(direction_p);
-  for (int i = 0; i < direction_p_data.size(); ++i)
-    direction_p_data[i] = 0.4;
+  {
+    auto direction_p_data = Albany::getNonconstLocalData(direction_p);
+    for (int i = 0; i < direction_p_data.size(); ++i)
+      direction_p_data[i] = 0.4;
+  }
 
   // Setup workset
   PHAL::Workset phxWorkset;
@@ -247,15 +255,18 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     // Setup expected field
     solution_out.deep_copy(6.0);
-    Kokkos::fence();
-    const auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
-    for (int cell=0; cell<num_cells; ++cell) {
-      // NOTE: in this test, we have 1 workset, so cell==elem_LID
-      const auto dof_lids = Kokkos::subview(x_elem_dof_lids,cell,Kokkos::ALL());
-      for (int node=0; node<nodes_per_element; ++node) {
-        solution_out_host(cell, node).fastAccessDx(u2_offsets[node]).val() = 1;
-        solution_out_host(cell, node).val().fastAccessDx(0) =
-          direction_x_data[dof_lids(u2_offsets[node])];
+    Kokkos::deep_copy(solution_out_host,solution_out_dev);
+    {
+      auto direction_x_data = Albany::getNonconstLocalData(direction_x);
+      const auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
+      for (int cell=0; cell<num_cells; ++cell) {
+        // NOTE: in this test, we have 1 workset, so cell==elem_LID
+        const auto dof_lids = Kokkos::subview(x_elem_dof_lids,cell,Kokkos::ALL());
+        for (int node=0; node<nodes_per_element; ++node) {
+          solution_out_host(cell, node).fastAccessDx(u2_offsets[node]).val() = 1;
+          solution_out_host(cell, node).val().fastAccessDx(0) =
+            direction_x_data[dof_lids(u2_offsets[node])];
+        }
       }
     }
     Kokkos::deep_copy(solution_out_dev,solution_out_host);
@@ -282,7 +293,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     // Setup expected field
     solution_out.deep_copy(6.0);
-    Kokkos::fence();
+    Kokkos::deep_copy(solution_out_host,solution_out_dev);
     for (int cell=0; cell<num_cells; ++cell) {
       for (int node=0; node<nodes_per_element; ++node) {
         solution_out_host(cell, node).fastAccessDx(u2_offsets[node]).val() = 1;
@@ -312,14 +323,17 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     // Setup expected field
     solution_out.deep_copy(6.0);
-    Kokkos::fence();
-    const auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
-    for (int cell=0; cell<num_cells; ++cell) {
-      // NOTE: in this test, we have 1 workset, so cell==elem_LID
-      const auto dof_lids = Kokkos::subview(x_elem_dof_lids,cell,Kokkos::ALL());
-      for (int node=0; node<nodes_per_element; ++node) {
-        solution_out_host(cell, node).val().fastAccessDx(0) =
-          direction_x_data[dof_lids(u2_offsets[node])];
+    Kokkos::deep_copy(solution_out_host,solution_out_dev);
+    {
+      auto direction_x_data = Albany::getNonconstLocalData(direction_x);
+      const auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
+      for (int cell=0; cell<num_cells; ++cell) {
+        // NOTE: in this test, we have 1 workset, so cell==elem_LID
+        const auto dof_lids = Kokkos::subview(x_elem_dof_lids,cell,Kokkos::ALL());
+        for (int node=0; node<nodes_per_element; ++node) {
+          solution_out_host(cell, node).val().fastAccessDx(0) =
+            direction_x_data[dof_lids(u2_offsets[node])];
+        }
       }
     }
     Kokkos::deep_copy(solution_out_dev,solution_out_host);
@@ -346,7 +360,7 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 
     // Setup expected field
     solution_out.deep_copy(6.0);
-    Kokkos::deep_copy(solution_out_dev,solution_out_host);
+    Kokkos::deep_copy(solution_out_host,solution_out_dev);
 
     // Build ev tester, and run evaulator
     PHX::EvaluatorUnitTester<EvalType, PHAL::AlbanyTraits> tester;
