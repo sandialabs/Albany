@@ -75,9 +75,11 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
   const auto hess_vec_prod_g_px = Thyra::createMember(overlapped_p_space);
   const auto hess_vec_prod_g_pp = Thyra::createMember(overlapped_p_space);
 
-  auto direction_p_array = Albany::getNonconstLocalData(direction_p);
-  for (int i = 0; i < direction_p_array.size(); ++i)
-    direction_p_array[i] = 0.4;
+  {
+    auto direction_p_array = Albany::getNonconstLocalData(direction_p);
+    for (int i = 0; i < direction_p_array.size(); ++i)
+      direction_p_array[i] = 0.4;
+  }
 
   // Create distributed parameter and add it to the library
   auto distParamLib = Teuchos::rcp(new Albany::DistributedParameterLibrary());
@@ -104,7 +106,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
   std::vector<PHX::index_size_type> deriv_dims;
   deriv_dims.push_back(neq*std::pow(2,num_dims));
   auto dist_param_out = PHX::allocateUnmanagedMDField<Scalar, Cell, Node>(param_name, dl->node_scalar, deriv_dims);
-  auto dist_param_out_field = Kokkos::create_mirror_view(dist_param_out.get_view());
+  auto dist_param_out_dev  = dist_param_out.get_view();
+  auto dist_param_out_host = Kokkos::create_mirror_view(dist_param_out_dev);
 
   // Create evaluator
   auto p = Teuchos::rcp(new Teuchos::ParameterList("DOF Interpolation Unit Test"));
@@ -143,20 +146,24 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 
     // Setup expected field
     dist_param_out.deep_copy(6.0);
-    Kokkos::fence();
+    Kokkos::deep_copy(dist_param_out_host, dist_param_out_dev);
     const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
     std::cout << "num p dof lids: " << p_elem_dof_lids.size() << "\n";
     std::cout << "p_dof lids sizes: " << p_elem_dof_lids.extent(0) << ", " << p_elem_dof_lids.extent(1) << "\n";
-    for (unsigned int cell = 0; cell < dist_param_out_field.extent(0); ++cell) {
-      // NOTE: in this test, we have 1 workset, so cell==elem_LID
-      std::cout << " p_dof_lids(" << cell << ",:):";
-      const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,Kokkos::ALL());
-      for (unsigned int node = 0; node < dist_param_out_field.extent(1); ++node) {
-        std::cout << " " << p_dof_lids[node];
-        dist_param_out_field(cell, node).val().fastAccessDx(0) = direction_p_array[p_dof_lids(node)];
+    {
+      auto direction_p_array = Albany::getNonconstLocalData(direction_p);
+      for (unsigned int cell = 0; cell < dist_param_out_host.extent(0); ++cell) {
+        // NOTE: in this test, we have 1 workset, so cell==elem_LID
+        std::cout << " p_dof_lids(" << cell << ",:):";
+        const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,Kokkos::ALL());
+        for (unsigned int node = 0; node < dist_param_out_host.extent(1); ++node) {
+          std::cout << " " << p_dof_lids[node];
+          dist_param_out_host(cell, node).val().fastAccessDx(0) = direction_p_array[p_dof_lids(node)];
+        }
+        std::cout << "\n";
       }
-      std::cout << "\n";
     }
+    Kokkos::deep_copy(dist_param_out_dev, dist_param_out_host);
 
     // Build ev tester, and run evaulator
     PHX::EvaluatorUnitTester<EvalType, PHAL::AlbanyTraits> tester;
@@ -179,12 +186,13 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 
     // Setup expected field
     dist_param_out.deep_copy(6.0);
-    Kokkos::fence();
-    for (unsigned int cell = 0; cell < dist_param_out_field.extent(0); ++cell) {
-      for (unsigned int node = 0; node < dist_param_out_field.extent(1); ++node) {
-        dist_param_out_field(cell, node).fastAccessDx(node).val() = 1;
+    Kokkos::deep_copy(dist_param_out_host, dist_param_out_dev);
+    for (unsigned int cell = 0; cell < dist_param_out_host.extent(0); ++cell) {
+      for (unsigned int node = 0; node < dist_param_out_host.extent(1); ++node) {
+        dist_param_out_host(cell, node).fastAccessDx(node).val() = 1;
       }
     }
+    Kokkos::deep_copy(dist_param_out_dev, dist_param_out_host);
 
     PHX::EvaluatorUnitTester<EvalType, PHAL::AlbanyTraits> tester;
     tester.setEvaluatorToTest(ev);
@@ -206,16 +214,20 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherDistributedParametersHessianVec)
 
     // Setup expected field
     dist_param_out.deep_copy(6.0);
-    Kokkos::fence();
+    Kokkos::deep_copy(dist_param_out_host, dist_param_out_dev);
     const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-    for (unsigned int cell = 0; cell < dist_param_out_field.extent(0); ++cell) {
-      // NOTE: in this test, we have 1 workset, so cell==elem_LID
-      const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,Kokkos::ALL());
-      for (unsigned int node = 0; node < dist_param_out_field.extent(1); ++node) {
-        dist_param_out_field(cell, node).fastAccessDx(node).val() = 1;
-        dist_param_out_field(cell, node).val().fastAccessDx(0) = direction_p_array[p_dof_lids(node)];
+    {
+      auto direction_p_array = Albany::getNonconstLocalData(direction_p);
+      for (unsigned int cell = 0; cell < dist_param_out_host.extent(0); ++cell) {
+        // NOTE: in this test, we have 1 workset, so cell==elem_LID
+        const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,Kokkos::ALL());
+        for (unsigned int node = 0; node < dist_param_out_host.extent(1); ++node) {
+          dist_param_out_host(cell, node).fastAccessDx(node).val() = 1;
+          dist_param_out_host(cell, node).val().fastAccessDx(0) = direction_p_array[p_dof_lids(node)];
+        }
       }
     }
+    Kokkos::deep_copy(dist_param_out_dev, dist_param_out_host);
 
     // Build ev tester, and run evaulator
     PHX::EvaluatorUnitTester<EvalType, PHAL::AlbanyTraits> tester;
