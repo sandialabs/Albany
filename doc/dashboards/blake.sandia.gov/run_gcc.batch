@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1
 ##SBATCH -p c60-m0 
-#SBATCH --time=12:00:00
+#SBATCH --time=8:00:00
 #Note: This script assumes you have pre-loaded the required modules
 #prior to entering the sbatch command. The env will propagate to the
 #batch job.
