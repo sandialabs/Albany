@@ -190,7 +190,7 @@ ANONYMOUS:
                       factory: SemiCoarsenPFactory_kokkos
                       'semicoarsen: coarsen rate': 14
                     UncoupledAggregationFact2: 
-                      factory: UncoupledAggregationFactory_kokkos
+                      factory: UncoupledAggregationFactory
                       'aggregation: ordering': graph
                       'aggregation: max selected neighbors': 0
                       'aggregation: min agg size': 3
