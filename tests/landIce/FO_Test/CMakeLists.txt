@@ -126,3 +126,36 @@ IF(NOT Kokkos_ENABLE_CUDA)
   add_test(${testName} ${Albany.exe} input_mismip_transient_expl.yaml)
   set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Explicit" FIXTURES_REQUIRED MismipMeshSetup2d)
 ENDIF()
+
+
+
+######################
+###   HDSA tests   ###
+######################
+
+if (ALBANY_HDSA AND ALBANY_IFPACK2)
+  set (testName ${testNameRoot}_HDSA_Piro)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_piro.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_piro.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_piro.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
+  set (testName ${testNameRoot}_HDSA_AdvDiff)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_advDiff.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_advDiff.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_advDiff.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
+  set (testName ${testNameRoot}_HDSA_AdvDiff_vec)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_advDiff_vec.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_advDiff_vec.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_advDiff_vec.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
+  set (testName ${testNameRoot}_HDSA_AdvDiff3D_vec)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_advDiff3D_vec.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_advDiff3D_vec.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_advDiff3D_vec.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
+endif()

@@ -43,6 +43,7 @@ namespace LandIce {
     
     unsigned int numCells;
     unsigned int numNodes;
+    unsigned int numEqs;
     unsigned int numQPs;
     unsigned int cellDim;
 
@@ -64,6 +65,7 @@ namespace LandIce {
 
     ScalarT p_reg, reg;
     double laplacian_coeff, mass_coeff, robin_coeff;
+    Teuchos::Array<double> advection_vect;
 
     bool lumpedMassMatrix;
 

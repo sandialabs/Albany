@@ -380,6 +380,66 @@ ELSE()
   SET(ALBANY_ROL FALSE)
 ENDIF()
 
+# HDSA (Hyper-Differential Sensitivity Analysis), provided by Piro through HdsaLib.
+#   ENABLE_HDSA=AUTO (default): enable HDSA iff Trilinos/Piro was built with HdsaLib
+#   ENABLE_HDSA=ON            : require HDSA; configuration fails if Trilinos/Piro lacks it
+#   ENABLE_HDSA=OFF           : disable the HDSA capability and the HDSA tests
+SET(ENABLE_HDSA "AUTO" CACHE STRING
+    "Enable the HDSA analysis capability and tests (requires Trilinos/Piro built with HdsaLib): AUTO, ON or OFF")
+SET_PROPERTY(CACHE ENABLE_HDSA PROPERTY STRINGS AUTO ON OFF)
+
+STRING(TOUPPER "${ENABLE_HDSA}" ALBANY_HDSA_MODE)
+IF (ALBANY_HDSA_MODE MATCHES "^(ON|TRUE|YES|Y|1)$")
+  SET(ALBANY_HDSA_MODE "ON")
+ELSEIF (ALBANY_HDSA_MODE MATCHES "^(OFF|FALSE|NO|N|0)$")
+  SET(ALBANY_HDSA_MODE "OFF")
+ELSEIF (NOT ALBANY_HDSA_MODE STREQUAL "AUTO")
+  MESSAGE(FATAL_ERROR "ENABLE_HDSA='${ENABLE_HDSA}' is not valid. Use AUTO, ON or OFF.")
+ENDIF()
+
+# Piro's HDSA driver (Piro::PerformHDSAAnalysis) is compiled only when Piro has both
+# HdsaLib and ROL enabled (HAVE_PIRO_HDSALIB && HAVE_PIRO_ROL in Piro_config.hpp).
+# TriBITS records these in PiroConfig.cmake as Piro_ENABLE_<dep>; Piro_ENABLE_HdsaLib
+# is undefined for Trilinos versions whose Piro has no HDSA support at all.
+IF (Piro_ENABLE_HdsaLib AND Piro_ENABLE_ROL)
+  SET(ALBANY_TRILINOS_HAS_HDSA TRUE)
+ELSE()
+  SET(ALBANY_TRILINOS_HAS_HDSA FALSE)
+ENDIF()
+
+IF (ALBANY_HDSA_MODE STREQUAL "OFF")
+  MESSAGE("-- HDSA capability ...             Disabled (ENABLE_HDSA=OFF).")
+  SET(ALBANY_HDSA FALSE)
+ELSEIF (ALBANY_TRILINOS_HAS_HDSA)
+  MESSAGE("-- Looking for HDSA in Piro ...                Found.")
+  SET(ALBANY_HDSA TRUE)
+ELSEIF (ALBANY_HDSA_MODE STREQUAL "AUTO")
+  MESSAGE("-- Looking for HDSA in Piro ...            NOT Found. HDSA capability and tests disabled.")
+  SET(ALBANY_HDSA FALSE)
+ELSE()
+  # ENABLE_HDSA=ON but Trilinos cannot provide it: explain what is missing.
+  IF ("HdsaLib" IN_LIST Trilinos_PACKAGE_LIST)
+    SET(HDSA_HDSALIB_STATUS "enabled")
+  ELSE()
+    SET(HDSA_HDSALIB_STATUS "NOT enabled")
+  ENDIF()
+  IF (DEFINED Piro_ENABLE_HdsaLib)
+    SET(HDSA_PIRO_HDSALIB_STATUS "${Piro_ENABLE_HdsaLib}")
+  ELSE()
+    SET(HDSA_PIRO_HDSALIB_STATUS "undefined (this Piro has no HDSA support)")
+  ENDIF()
+  MESSAGE(FATAL_ERROR
+    "ENABLE_HDSA=${ENABLE_HDSA}, but the Trilinos installation in\n"
+    "  ${Trilinos_DIR}\n"
+    "was not built with HDSA support:\n"
+    "  Trilinos package HdsaLib : ${HDSA_HDSALIB_STATUS}\n"
+    "  Piro_ENABLE_HdsaLib      : ${HDSA_PIRO_HDSALIB_STATUS}\n"
+    "  Piro_ENABLE_ROL          : ${Piro_ENABLE_ROL}\n"
+    "Rebuild Trilinos with -DTrilinos_ENABLE_HdsaLib=ON and -DTrilinos_ENABLE_ROL=ON "
+    "(Piro_ENABLE_HdsaLib and Piro_ENABLE_ROL must end up ON), "
+    "or reconfigure Albany with -DENABLE_HDSA=OFF (or AUTO).")
+ENDIF()
+
 # Check if Trilinos has DTK
 LIST(FIND Trilinos_PACKAGE_LIST DataTransferKit DataTransferKit_List_ID)
 IF (DataTransferKit_List_ID GREATER -1)
