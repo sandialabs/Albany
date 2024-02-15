@@ -145,29 +145,63 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   int total_num_param_vecs, num_param_vecs, num_dist_param_vecs;
   Albany::getParameterSizes(parameterParams, total_num_param_vecs, num_param_vecs, num_dist_param_vecs);
 
-  stateName = "weighted_normal_sample";
-  bool isParameter = false;
-  for (unsigned int p_index=0; p_index< (unsigned int) num_dist_param_vecs; ++p_index) {
-    std::string parameter_sublist_name = util::strint("Parameter", p_index+num_param_vecs);
-    Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
-    param_name = param_list.get<std::string>("Name");
-    if(param_name == stateName) {
-      isParameter = true;
-      break;
+  {
+    stateName = "weighted_normal_sample";
+    bool isParameter = false;
+    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index) {
+      std::string parameter_sublist_name = util::strint("Parameter", p_index+num_param_vecs);
+      Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
+      param_name = param_list.get<std::string>("Name");
+      if(param_name == stateName) {
+        isParameter = true;
+        break;
+      }
+    }
+
+    if(isParameter) {
+      entity = Albany::StateStruct::NodalDistParameter;
+      stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+      ev = evalUtils.constructGatherScalarNodalParameter(stateName,stateName);
+    } else {
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+      p->set<std::string>("Field Name", stateName);
+      ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    }
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+  
+  if(numDim == 3) {
+    Teuchos::Array<std::string> ss_names;
+    if (discParams->sublist("Side Set Discretizations").isParameter("Side Sets")) {
+      ss_names = discParams->sublist("Side Set Discretizations").get<Teuchos::Array<std::string>>("Side Sets");
+    }
+    for (unsigned int i=0; i<ss_names.size(); ++i) {
+      const std::string& ss_name = ss_names[i];
+      Teuchos::ParameterList& info = discParams->sublist("Side Set Discretizations").sublist(ss_name).sublist("Required Fields Info");
+      int num_fields = info.get<int>("Number Of Fields",0);
+
+      const std::string& sideEBName = meshSpecs.sideSetMeshSpecs.at(ss_name)[0]->ebName;
+      Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
+      for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
+        Teuchos::ParameterList& thisFieldList =  info.sublist(util::strint("Field", ifield));
+
+        // Get current state specs
+        stateName = thisFieldList.get<std::string>("Field Name");
+        std::string fieldName(stateName + "_" + ss_name);
+
+        entity = Albany::StateStruct::NodalDataToElemNode;
+
+        // Register the state
+        p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar, sideEBName, true, &entity);
+        ev = Teuchos::rcp(new PHAL::LoadSideSetStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
   }
-
-  if(isParameter) {
-    entity = Albany::StateStruct::NodalDistParameter;
-    stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-    ev = evalUtils.constructGatherScalarNodalParameter(stateName,stateName);
-  } else {
-    entity = Albany::StateStruct::NodalDataToElemNode;
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-    p->set<std::string>("Field Name", stateName);
-    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  }
-  fm0.template registerEvaluator<EvalT>(ev);
 
 
   // ----------  Define Field Names ----------- //
@@ -213,6 +247,12 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,sideName,"Vertex Vector",cellType,Albany::coord_vec_name + "_" + sideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
+    ev = evalUtils.constructDOFCellToSideEvaluator(dof_names[0], sideName, "Node Scalar", cellType, dof_names[0] + "_" + sideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.constructDOFInterpolationSideEvaluator (dof_names[0] + "_" + sideName, sideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, sideCubature, sideName);
     fm0.template registerEvaluator<EvalT> (ev);
   }
@@ -225,13 +265,17 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
     //Input
     p->set<std::string>("Gradient BF Name", Albany::grad_bf_name);
+    p->set<std::string>("BF Name", Albany::bf_name);
+    p->set<std::string>("Side BF Name", Albany::bf_name + "_" + sideName);
     p->set<std::string>("Field Variable Name", "prior_sample");
+    p->set<std::string>("Side Field Variable Name", "prior_sample_" + sideName);
     p->set<std::string>("Field Gradient Variable Name", "prior_sample Gradient");
     p->set<std::string>("Forcing Field Name", "weighted_normal_sample");
     p->set<std::string>("Weighted Measure Name", Albany::weights_name);
-    p->set<double>("Mass Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Mass Coefficient",1.0));
-    p->set<double>("Laplacian Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Laplacian Coefficient",1.0));
-    p->set<double>("Robin Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Robin Coefficient",0.0));
+    p->set<double>("Mass Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Mass Coefficient"));
+    p->set<double>("Laplacian Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Laplacian Coefficient"));
+    p->set<double>("Robin Coefficient", params->sublist("LandIce Laplacian Regularization").get<double>("Robin Coefficient"));
+    p->set<bool>("Lump Mass Matrix", params->sublist("LandIce Laplacian Regularization").get<bool>("Lump Mass Matrix"));
     p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + sideName);
     p->set<std::string>("Side Set Name", sideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);

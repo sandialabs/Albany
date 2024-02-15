@@ -33,8 +33,9 @@ ANONYMOUS:
       Response 1:
           Scaling Coefficient: 5.8824e-05
           Name: Quadratic Linear Operator Based
-          Linear Operator File Name: ../AsciiMeshes/GisUnstructFiles/A_gis.mm
-          Diagonal Scaling File Name: ../AsciiMeshes/GisUnstructFiles/D_gis.mm
+          Matrix A File Name: ../AsciiMeshes/GisUnstructFiles/A_gis.mm
+          Matrix D File Name: ../AsciiMeshes/GisUnstructFiles/D_gis.mm
+          Matrix D Is Diagonal: true
           Field Name: basal_friction
     Dirichlet BCs: {}
     LandIce BCs:

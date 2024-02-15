@@ -1,13 +1,13 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Debug Output:
     Write Jacobian to MatrixMarket: -1
   Problem:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
-    Name: LandIce Laplacian Sampling
+    Name: LandIce Laplacian Sampling 2D
     Compute Sensitivities: true
     Side Name: boundary_side_set
     Response Functions:
@@ -23,12 +23,13 @@ ANONYMOUS:
       Mass Coefficient: 1.0e-01
       Laplacian Coefficient: 1.0e+01
       Robin Coefficient: 1.0
+      Lump Mass Matrix: false
     Cubature Degree: 3
   Discretization:
     Method: Ioss
     Number Of Time Derivatives: 0
-    Exodus Output File Name: gis_laplacian_sample.exo
     Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
+    Exodus Output File Name: humboldt_laplacian_2d_sampling.exo
     Use Serial Mesh: false
     Required Fields Info:
       Number Of Fields: 1
@@ -65,7 +66,7 @@ ANONYMOUS:
             Relative Tolerance: 1.0e-03
         Test 1:
           Test Type: MaxIters
-          Maximum Iterations: 50
+          Maximum Iterations: 10
       Direction:
         Method: Newton
         Newton:
@@ -75,31 +76,27 @@ ANONYMOUS:
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Maximum Iterations: 100
+                      Convergence Tolerance: 1e-6
+                      Num Blocks: 100
                       Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.0e-06
-              Preconditioner Type: Ifpack
+                      Output Style: 1
+                      Verbosity: 33
+                  VerboseObject:
+                    Verbosity Level: medium
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings:
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
                     'fact: level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
@@ -123,6 +120,6 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Absolute Tolerance: 1.0e-06
-    Test Value: 1.100491108613e+01
+    Test Value: 1.099246508182e+01
     Relative Tolerance: 1.0e-06
 ...

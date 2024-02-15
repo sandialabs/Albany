@@ -485,13 +485,24 @@ endif()
 ###   Laplacian sampling tests   ###
 ####################################
 
-if (ALBANY_EPETRA)
+if (ALBANY_IFPACK2)
   set (testName ${testNameRoot}_LaplacianPriorSampling)
-
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gis_sampling.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_gis_sampling.yaml)
   add_test(${testName} ${Albany.exe} input_gis_sampling.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
+  set (testName ${testNameRoot}_Humboldt_LaplacianPriorSampling)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_humboldt_sampling.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_humboldt_sampling.yaml)
+  add_test(${testName} ${Albany.exe} input_humboldt_sampling.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
+  set (testName ${testNameRoot}_Humboldt_LaplacianPriorSampling_3D)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_humboldt_sampling_3D.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_humboldt_sampling_3D.yaml)
+  add_test(${testName} ${Albany.exe} input_humboldt_sampling_3D.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
 endif()
 
 

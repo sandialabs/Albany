@@ -20,6 +20,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   laplacian_coeff = p.get<double>("Laplacian Coefficient");
   mass_coeff = p.get<double>("Mass Coefficient");
   robin_coeff = p.get<double>("Robin Coefficient");
+  lumpedMassMatrix = p.get<bool>("Lump Mass Matrix");
 
   // Setting up the fields required by the regularizations
   sideName = p.get<std::string> ("Side Set Name");
@@ -36,8 +37,16 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   const std::string& residual_name = p.get<std::string>("Laplacian Residual Name");
   const std::string& w_side_measure_name = p.get<std::string>("Weighted Measure Side Name");
 
-  forcing        = decltype(forcing)(forcing_name, dl->node_scalar);
-  field          = decltype(field)(field_name, dl->node_scalar);
+  if(lumpedMassMatrix) {
+    forcing        = decltype(forcing)(forcing_name, dl->node_scalar);
+    field          = decltype(field)(field_name, dl->node_scalar);
+  } else {
+    forcing        = decltype(forcing)(forcing_name, dl->qp_scalar);
+    field          = decltype(field)(field_name, dl->qp_scalar);  
+    side_field     = decltype(side_field)(p.get<std::string>("Side Field Variable Name"), dl_side->qp_scalar); 
+    BF             = decltype(BF)(p.get<std::string>("BF Name"), dl->node_qp_scalar); 
+    side_BF        = decltype(side_BF)(p.get<std::string>("Side BF Name"), dl_side->node_qp_scalar);     
+  }
   gradField      = decltype(gradField)(gradField_name, dl->qp_gradient);
   gradBF         = decltype(gradBF)(gradBFname,dl->node_qp_gradient),
   w_measure      = decltype(w_measure)(w_measure_name, dl->qp_scalar);
@@ -65,8 +74,15 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   this->addDependentField(field);
   this->addDependentField(gradField);
   this->addDependentField(gradBF);
+  this->addDependentField(gradBF);
   this->addDependentField(w_measure);
   this->addDependentField(w_side_measure);
+  if(!lumpedMassMatrix) {
+    this->addDependentField(side_field);
+    this->addDependentField(BF);
+    this->addDependentField(side_BF);
+  }
+
 
   this->addEvaluatedField(residual);
 
@@ -94,16 +110,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 template<typename EvalT, typename Traits>
 void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
-{
-
-  this->utils.setFieldData(field, fm);
-  this->utils.setFieldData(gradField, fm);
-  this->utils.setFieldData(gradBF, fm);
-  this->utils.setFieldData(forcing, fm);
-  this->utils.setFieldData(w_measure, fm);
-
-  this->utils.setFieldData(residual, fm);
-}
+{}
 
 //**********************************************************************
 //Kokkos functor
@@ -113,18 +120,24 @@ void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
 operator() (const LaplacianRegularization_Cell_Tag& tag, const int& cell) const {
   
   MeshScalarT trapezoid_weights = 0;
-  for (unsigned int qp=0; qp<numQPs; ++qp)
-    trapezoid_weights += w_measure(cell, qp);
-  trapezoid_weights /= numNodes;
+  if(lumpedMassMatrix) {
+    for (unsigned int qp=0; qp<numQPs; ++qp)
+      trapezoid_weights += w_measure(cell, qp);
+    trapezoid_weights /= numNodes;
+  }
   for (unsigned int inode=0; inode<numNodes; ++inode) {
       ScalarT t = 0;
       for (unsigned int qp=0; qp<numQPs; ++qp)
         for (unsigned int idim=0; idim<cellDim; ++idim)
           t += laplacian_coeff*gradField(cell,qp,idim)*gradBF(cell,inode, qp,idim)*w_measure(cell, qp);
 
-      //using trapezoidal rule to get diagonal mass matrix
-      t += (mass_coeff*field(cell,inode)-forcing(cell,inode))* trapezoid_weights;
-
+      if(lumpedMassMatrix) {
+        //using trapezoidal rule to get diagonal mass matrix
+        t += (mass_coeff*field(cell,inode)-forcing(cell,inode))* trapezoid_weights;
+      } else {
+        for (unsigned int qp=0; qp<numQPs; ++qp)
+          t += (mass_coeff*field(cell,qp)-forcing(cell,qp))*BF(cell,inode, qp)*w_measure(cell, qp);
+      }
       residual(cell,inode) = t;
   }
 
@@ -138,17 +151,24 @@ operator() (const LaplacianRegularization_Side_Tag& tag, const int& sideSet_idx)
   // Get the local data of side and cell
   const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
   const int side = sideSet.side_pos.d_view(sideSet_idx);
+  if(lumpedMassMatrix) {
+    MeshScalarT side_trapezoid_weights= 0;
+    for (unsigned int qp=0; qp<numSideQPs; ++qp)
+      side_trapezoid_weights += w_side_measure(sideSet_idx, qp);
+    side_trapezoid_weights /= numSideNodes;
 
-  MeshScalarT side_trapezoid_weights= 0;
-  for (unsigned int qp=0; qp<numSideQPs; ++qp)
-    side_trapezoid_weights += w_side_measure(sideSet_idx, qp);
-  side_trapezoid_weights /= numSideNodes;
-
-  for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-    auto cell_node = sideNodes.d_view(side,inode);
-    residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
+    for (unsigned int inode=0; inode<numSideNodes; ++inode) {
+      auto cell_node = sideNodes.d_view(side,inode);
+      residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
+    }
+  } else {
+    for (unsigned int inode=0; inode<numSideNodes; ++inode) {
+      auto cell_node = sideNodes.d_view(side,inode);
+      for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+        residual(cell,cell_node) += robin_coeff*side_field(sideSet_idx,qp)*side_BF(sideSet_idx, inode, qp)*w_side_measure(sideSet_idx, qp);
+      }
+    }
   }
-
 }
 
 // **********************************************************************

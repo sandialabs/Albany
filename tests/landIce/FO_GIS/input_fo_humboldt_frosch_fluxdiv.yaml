@@ -105,9 +105,30 @@ ANONYMOUS:
       Response 2:
         Scaling Coefficient: 5.8824e-05
         Name: Quadratic Linear Operator Based
-        Linear Operator File Name: ../AsciiMeshes/Humboldt/A_humboldt.mm
-        Diagonal Scaling File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
+        Matrix A File Name: ../AsciiMeshes/Humboldt/A_humboldt.mm
+        Matrix D File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
+        Matrix D Is Diagonal: false   #D is diagonal, false for testing purposes
         Field Name: basal_friction_log
+        D Solver Settings:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 100
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
   Discretization:
     Workset Size: -1
     Method: Extruded
