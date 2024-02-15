@@ -19,8 +19,11 @@ namespace Albany {
   /*!
    * \brief Response function computing the scalar:
    * coeff p' A' inv(D) A p,
-   * for a field parameter p, a matrix A and a diagonal matrix D.
+   * for a field parameter p, a matrix A and a invertible symmetric matrix D.
    * The matrices A and D are loaded from "*.mm" ASCII files.
+   * Performance optimizations implemented when A is symmetric, D diagonal or
+   * when A is equal to D. 
+   * When A is equal to D, the response reduces to coeff p'A p
    */
   class QuadraticLinearOperatorBasedResponseFunction :
     public SamplingBasedScalarResponseFunction {
@@ -29,7 +32,7 @@ namespace Albany {
     //! Default constructor
     QuadraticLinearOperatorBasedResponseFunction(
         const Teuchos::RCP<const Application> &app,
-        Teuchos::ParameterList &responseParams);
+        const Teuchos::ParameterList &responseParams);
 
     //! Destructor
     virtual ~QuadraticLinearOperatorBasedResponseFunction();
@@ -162,8 +165,11 @@ namespace Albany {
 
     //! Concrete implementation of Thyra::LinearOpWithSolveBase, for the operator coeff A' D^{-1} A
       /*!
-      * A is a sparse matrix, and D is a non singular diagonal matrix stored as a vector, and coeff a scalar coefficient
+      * A is a sparse matrix, and D is an invertible symmetric sparse matrix, and coeff a scalar coefficient
       * A and D are imported from files, they have same range and domain space, which is passed using the method setupFwdOp
+      * Performance optimizations implemented when A is symmetric, D diagonal or
+      * when A is equal to D. 
+      * When A is equal to D, the operator reduces to coeff A
       */
     class AtDinvA_LOWS : public Init_LOWS {
     public:
@@ -172,7 +178,10 @@ namespace Albany {
       AtDinvA_LOWS(
         const std::string& file_name_A,
         const std::string& file_name_D,
-        const double& coeff);
+        const double& coeff,
+        Teuchos::RCP<Teuchos::ParameterList> solverParamList,
+        const bool symmetricA = false,
+        const bool diagonalD = false);
 
       //! Destructor
       virtual ~AtDinvA_LOWS();
@@ -194,6 +203,9 @@ namespace Albany {
 
       //! Initilializes the solver from a parameter list with Stratimikos parameters  
       void initializeSolver(Teuchos::RCP<Teuchos::ParameterList> solverParamList);
+      
+      //! Initilializes the solver for matrix D from a parameter list with Stratimikos parameters  
+      void initializeFwdSolver();
 
 
     protected:
@@ -225,17 +237,23 @@ namespace Albany {
       //! scaling coefficient
       double coeff_; 
 
-      //! matrix A
-      Teuchos::RCP<Thyra_LinearOp> A_;
+      //! matrices A and D
+      Teuchos::RCP<Thyra_LinearOp> A_, D_;
 
-      //! solvers for A and A'
-      Teuchos::RCP<Thyra_LOWS> A_solver_, A_transSolver_;
+      //! solvers for A and A' and D
+      Teuchos::RCP<Thyra_LOWS> A_solver_, A_transSolver_, D_solver_;
 
       //! vector space which is also the range and domain of A
       Teuchos::RCP<const Thyra_VectorSpace> vec_space_;
 
       //! internal auxiliary vectors for computations
-      Teuchos::RCP<Thyra_Vector> D_,vec1_,vec2_;
+      Teuchos::RCP<Thyra_Vector> vecD_,vec1_,vec2_;
+
+      //! Builder for linear solvers using Stratimikos parameter lists
+      Stratimikos::DefaultLinearSolverBuilder fwdLinearSolverBuilder_;
+
+      //! booleans denoting whether matrix A is symmetric, D is diagonal or A equals D
+      bool symmetricA_, diagonalD_, AequalsD_;
 
 
     }; // class DistributedParameterDerivativeOp

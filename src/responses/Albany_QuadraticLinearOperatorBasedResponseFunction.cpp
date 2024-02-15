@@ -17,15 +17,19 @@
 
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 QuadraticLinearOperatorBasedResponseFunction(const Teuchos::RCP<const Albany::Application> &app,
-    Teuchos::ParameterList &responseParams) :
+    const Teuchos::ParameterList &responseParams) :
   SamplingBasedScalarResponseFunction(app->getComm()),
   app_(app)
 {
   auto coeff = responseParams.get<double>("Scaling Coefficient");
   field_name_ = responseParams.get<std::string>("Field Name");
-  auto file_name_A = responseParams.get<std::string>("Linear Operator File Name");
-  auto file_name_D = responseParams.get<std::string>("Diagonal Scaling File Name");
-  twoAtDinvA_ = Teuchos::rcp(new AtDinvA_LOWS(file_name_A,file_name_D,2.0*coeff));
+  auto file_name_A = responseParams.get<std::string>("Matrix A File Name");
+  auto file_name_D = responseParams.get<std::string>("Matrix D File Name");
+  bool symmetricA = responseParams.isParameter("Matrix A Is Symmetric") ?  responseParams.get<bool>("Matrix A Is Symmetric") : false;
+  bool diagonalD = responseParams.isParameter("Matrix D Is Diagonal") ? responseParams.get<bool>("Matrix D Is Diagonal") : false;
+  Teuchos::RCP<Teuchos::ParameterList> solverParamList = responseParams.isSublist("D Solver Settings") ? 
+      Teuchos::rcp(new Teuchos::ParameterList(responseParams.sublist("D Solver Settings"))) : Teuchos::null;
+  twoAtDinvA_ = Teuchos::rcp(new AtDinvA_LOWS(file_name_A,file_name_D,2.0*coeff,solverParamList,symmetricA,diagonalD));
 }
 
 Albany::QuadraticLinearOperatorBasedResponseFunction::
@@ -52,7 +56,7 @@ evaluateResponse(const double /*current_time*/,
   Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
   twoAtDinvA_->setupFwdOp(field->space());
 
-  //  coeff p' A' inv(D) A p
+  // 0.5 coeff p' A' inv(D) A p
   g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
 
   if (g_.is_null())
@@ -85,7 +89,7 @@ evaluateTangent(const double /* alpha */,
       Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
       twoAtDinvA_->setupFwdOp(field->space());
       
-      //  coeff p' A' inv(D) A p
+      //  0.5 coeff p' A' inv(D) A p
       g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
 
       g_ = Thyra::createMember(g->space());
@@ -122,7 +126,7 @@ evaluateGradient(const double /*current_time*/,
       Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
       twoAtDinvA_->setupFwdOp(field->space());
       
-      //  coeff p' A' inv(D) A p
+      //  0.5 coeff p' A' inv(D) A p
       g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
 
       g_ = Thyra::createMember(g->space());
@@ -170,7 +174,7 @@ evaluateDistParamDeriv(
       Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
       twoAtDinvA_->setupFwdOp(field->space());
 
-      //  2 coeff A' inv(D) A p
+      //  coeff A' inv(D) A p
       twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *field, dg_dp.ptr(), 1.0, 0.0);
     } else
       dg_dp->assign(0.0);
@@ -244,7 +248,7 @@ evaluate_HessVecProd_pp(
     if((dist_param_name == field_name_) && (dist_param_direction_name == field_name_)) {
       twoAtDinvA_->setupFwdOp(app_->getDistributedParameterLibrary()->get(field_name_)->vector_space());
 
-      // 2 coeff A' inv(D) A v
+      // coeff A' inv(D) A v
       twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *v, Hv_dp.ptr(), 1.0, 0.0);
     }
     else
@@ -256,7 +260,7 @@ Teuchos::RCP<Thyra_LinearOp>
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 get_Hess_pp_operator(const std::string& param_name)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (field_name_ != param_name, std::runtime_error, "Error! The parameter name should be the same as the field name.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (field_name_ != param_name, std::runtime_error, "Error! The parameter name \"" << param_name << "\" should be the same as the field name \"" << field_name_ << "\".\n");
   twoAtDinvA_->setupFwdOp(app_->getDistributedParameterLibrary()->get(field_name_)->vector_space());
   return twoAtDinvA_;
 }
@@ -289,10 +293,28 @@ Albany::AtDinvA_LOWS::
 AtDinvA_LOWS(
   const std::string& file_name_A,
   const std::string& file_name_D,
-  const double& coeff) :
+  const double& coeff,
+  const Teuchos::RCP<Teuchos::ParameterList> solverParameterList,
+  const bool symmetricA,
+  const bool diagonalD) :
   file_name_A_(file_name_A),
   file_name_D_(file_name_D),
-  coeff_(coeff) {};
+  coeff_(coeff),
+  symmetricA_(symmetricA),
+  diagonalD_(diagonalD) {
+    AequalsD_ = (file_name_A == file_name_D);
+    TEUCHOS_TEST_FOR_EXCEPTION (AequalsD_ && !(symmetricA || diagonalD), std::runtime_error, 
+       "Error! AtDinvA_LOWS::AtDinvA_LOWS, when A equals D, A must be symmetric, as D is\n");   
+
+    if(!(diagonalD || AequalsD_)) {
+      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(solverParameterList), std::runtime_error, 
+       "Error! AtDinvA_LOWS::AtDinvA_LOWS, Solver settings for inverting D must be available when D is not diagonal.\n");
+      fwdLinearSolverBuilder_.setParameterList(solverParameterList);
+    #ifdef ALBANY_MUELU
+      Stratimikos::enableMueLu<double, LO, Tpetra_GO, KokkosNode>(fwdLinearSolverBuilder_);
+    #endif
+    }
+  };
 
 
 //! Destructor
@@ -322,62 +344,102 @@ setupFwdOp(const Teuchos::RCP<const Thyra_VectorSpace>& vec_space)
     vec_space_ = vec_space;
     AtDinvA_LOWS::loadLinearOperators();
   }
+  if(!(diagonalD_ || AequalsD_))
+    initializeFwdSolver();
 }
 
 
-//  coeff X' A' inv(D) A  X
+//  coeff X' A' inv(D) A  X, or coeff X' A  X in the simplified case A==D
 ST 
 Albany::AtDinvA_LOWS::
 quadraticForm(const Thyra_MultiVector& X) {
     // A X
     A_->apply(Thyra::EOpTransp::NOTRANS, X, vec1_.ptr(), 1.0, 0.0);
 
-    // coeff inv(D) A p
-    vec2_->assign(0.0);
-    Thyra::ele_wise_divide( coeff_, *vec1_, *D_, vec2_.ptr() );
+    if(AequalsD_) {
+      return coeff_*Thyra::dot(*vec1_,*vec1_);
+    }
 
-    //  coeff p' A' inv(D) A p
-    return Thyra::dot(*vec1_,*vec2_);
+    // inv(D) A X
+    vec2_->assign(0.0);
+    if(diagonalD_)
+      Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::solveImpl, Solver not initialized, call initializeSolver first.\n");
+      D_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
+    }
+
+    //  coeff X' A' inv(D) A X
+    return coeff_*Thyra::dot(*vec1_,*vec2_);
 }
 
+void
+Albany::AtDinvA_LOWS::
+initializeFwdSolver() {
+  if(Teuchos::nonnull(D_solver_)) //solver already initialized
+   return;
+
+  std::string solverType = fwdLinearSolverBuilder_.getParameterList()->get<std::string>("Linear Solver Type");
+
+  auto lows_factory = fwdLinearSolverBuilder_.createLinearSolveStrategy(solverType);
+  D_solver_ = lows_factory->createOp();
+
+  auto prec_factory =  lows_factory->getPreconditionerFactory();  
+  if(Teuchos::nonnull(prec_factory)) {
+    auto precD = prec_factory->createPrec();
+    prec_factory->initializePrec(Teuchos::rcp(new ::Thyra::DefaultLinearOpSource<double>(D_)), precD.get());
+    Thyra::initializePreconditionedOp<double>(*lows_factory,
+        D_,
+        precD,
+        D_solver_.ptr(),
+        Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+  } else {
+    Thyra::initializeOp<double>(*lows_factory, D_, D_solver_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+  }
+}
 
 void
 Albany::AtDinvA_LOWS::
 initializeSolver(Teuchos::RCP<Teuchos::ParameterList> solverParamList) {
+  if(Teuchos::nonnull(A_solver_)) //solver already initialized
+    return;
+
   if(A_.is_null())
     AtDinvA_LOWS::loadLinearOperators();
 
   std::string solverType = solverParamList->get<std::string>("Linear Solver Type");
 
-  Stratimikos::DefaultLinearSolverBuilder strat;
+  Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
 
   #ifdef ALBANY_MUELU
-    Stratimikos::enableMueLu<double, LO, Tpetra_GO, KokkosNode>(strat);
+    Stratimikos::enableMueLu<double, LO, Tpetra_GO, KokkosNode>(linearSolverBuilder);
   #endif
 
-  strat.setParameterList(solverParamList);
-  auto lows_factory = strat.createLinearSolveStrategy(solverType);
+  linearSolverBuilder.setParameterList(solverParamList);
+  auto lows_factory = linearSolverBuilder.createLinearSolveStrategy(solverType);
   A_solver_ = lows_factory->createOp();
   A_transSolver_ = lows_factory->createOp();
 
   auto prec_factory =  lows_factory->getPreconditionerFactory();  
   if(Teuchos::nonnull(prec_factory)) {
-    auto prec = prec_factory->createPrec();
-    prec_factory->initializePrec(Teuchos::rcp(new ::Thyra::DefaultLinearOpSource<double>(A_)), prec.get());
+    auto precA = prec_factory->createPrec();
+    prec_factory->initializePrec(Teuchos::rcp(new ::Thyra::DefaultLinearOpSource<double>(A_)), precA.get());
     Thyra::initializePreconditionedOp<double>(*lows_factory,
           A_,
-          prec,
+          precA,
           A_solver_.ptr(),
           Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-    
-    Thyra::initializePreconditionedOp<double>(*lows_factory,
-          Thyra::transpose<double>(A_),
-          Thyra::unspecifiedPrec<double>(::Thyra::transpose<double>(prec->getUnspecifiedPrecOp())),
-          A_transSolver_.ptr(),
-          Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+    if(!symmetricA_) {
+      Thyra::initializePreconditionedOp<double>(*lows_factory,
+            Thyra::transpose<double>(A_),
+            Thyra::unspecifiedPrec<double>(::Thyra::transpose<double>(precA->getUnspecifiedPrecOp())),
+            A_transSolver_.ptr(),
+            Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+    }
   } else {
     Thyra::initializeOp<double>(*lows_factory, A_, A_solver_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-    Thyra::initializeOp<double>(*lows_factory, Thyra::transpose<double>(A_), A_transSolver_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+    if(!symmetricA_)
+      Thyra::initializeOp<double>(*lows_factory, Thyra::transpose<double>(A_), A_transSolver_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
   }
 }
 
@@ -398,18 +460,24 @@ loadLinearOperators() {
   TEUCHOS_TEST_FOR_EXCEPTION (!mapIsContiguous, std::runtime_error,
                               "Error! Row Map needs to be contiguous for the Matrix reader to work.\n");
 
-  auto tpetra_mat =
+  auto tpetra_A_mat =
       reader_type::readSparseFile (file_name_A_, rowMap, colMap, domainMap, rangeMap);
 
-  auto tpetra_diag_mat =
+  auto tpetra_D_mat =
       reader_type::readSparseFile (file_name_D_, rowMap, colMap, domainMap, rangeMap);
-  Teuchos::RCP<Tpetra_Vector> tpetra_diag_vec = Teuchos::rcp(new Tpetra_Vector(rowMap));
-  tpetra_diag_mat->getLocalDiagCopy (*tpetra_diag_vec);
+  
+  if(diagonalD_) {
+    Teuchos::RCP<Tpetra_Vector> tpetra_diag_vec = Teuchos::rcp(new Tpetra_Vector(rowMap));
+    tpetra_D_mat->getLocalDiagCopy (*tpetra_diag_vec);
+    vecD_ = Albany::createThyraVector(tpetra_diag_vec);
+  } else {
+    D_ = Albany::createThyraLinearOp(tpetra_D_mat);
+  }
 
-  A_ = Albany::createThyraLinearOp(tpetra_mat);
-  D_ = Albany::createThyraVector(tpetra_diag_vec);
+  A_ = Albany::createThyraLinearOp(tpetra_A_mat);  
   vec1_ = Thyra::createMember(A_->range());
-  vec2_ = Thyra::createMember(A_->range());
+  if(!AequalsD_)
+    vec2_ = Thyra::createMember(A_->range());
 }
 
 
@@ -427,18 +495,31 @@ applyImpl (const Thyra::EOpTransp /*M_trans*/, //operator is symmetric by constr
                 const Teuchos::Ptr<Thyra_MultiVector>& Y,
                 const ST alpha,
                 const ST beta) const {
-  //A X
-  A_->apply(Thyra::EOpTransp::NOTRANS, X, vec1_.ptr(), 1.0, 0.0);
+  if(AequalsD_) { 
+    // Y = alpha coeff A X  + beta Y in the simplified case (A==D)
+    A_->apply(Thyra::EOpTransp::NOTRANS, X, Y, alpha*coeff_, beta);
+  } else { // Y = alpha coeff A' inv(D) A X + beta Y
 
-  // coeff inv(D) A X
-  vec2_->assign(0.0);
-  Thyra::ele_wise_divide( coeff_, *vec1_, *D_, vec2_.ptr() );
+    //A X
+    Thyra::SolveStatus<double> solveStatus;
+    A_->apply(Thyra::EOpTransp::NOTRANS, X, vec1_.ptr(), coeff_, 0.0);
 
-  // Y = alpha coeff A' inv(D) A X + beta Y
-  A_->apply(Thyra::EOpTransp::TRANS, *vec2_, Y, alpha, beta);
+    // coeff inv(D) A X
+    vec2_->assign(0.0);
+    if(diagonalD_)
+      Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::applyImpl, D Solver not initialized, call initializeFwdSolver first.\n");
+      D_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
+    }
+
+    // Y = alpha coeff A' inv(D) A X + beta Y
+    auto trans = symmetricA_ ? Thyra::EOpTransp::NOTRANS : Thyra::EOpTransp::TRANS;
+    A_->apply(trans, *vec2_, Y, alpha, beta);
+  }
 }
 
-// returns X = coeff^{-1} A^{-1} D A^{-T} B 
+// returns X = coeff^{-1} A^{-1} D A^{-T} B, or X = coeff^{-1} A^{-1} B, when A==D
 Thyra::SolveStatus<double>
 Albany::AtDinvA_LOWS::
 solveImpl(
@@ -448,14 +529,34 @@ solveImpl(
   const Teuchos::Ptr<const Thyra::SolveCriteria<ST> > solveCriteria
   ) const {
   Thyra::SolveStatus<double> solveStatus;
-  
+
+
   TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(A_solver_) || Teuchos::is_null(A_transSolver_), std::runtime_error, "Error! AtDinvA_LOWS::solveImpl, Solvers not initialized, call initializeSolver first.\n");
 
   Thyra::SolveStatus<double> solveStatus1, solveStatus2;
+
+  if(AequalsD_) { //X = coeff^{-1} A^{-1} 
+    solveStatus1 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
+    X->scale(1.0/coeff_);
+    return solveStatus1;
+  }  
+
   vec1_->assign(0.0);
-  solveStatus1 = A_transSolver_->solve(Thyra::EOpTransp::NOTRANS, B, vec1_.ptr(), solveCriteria);
+  // v1 = A^{-T} B
+  if(symmetricA_)
+    solveStatus1 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, B, vec1_.ptr(), solveCriteria);
+  else
+    solveStatus1 = A_transSolver_->solve(Thyra::EOpTransp::NOTRANS, B, vec1_.ptr(), solveCriteria);
+  
+  // v2 = coeff^{-1} D A^{-T} B
   vec2_->assign(0.0);
-  Thyra::ele_wise_prod( 1.0/coeff_, *vec1_, *D_, vec2_.ptr() );
+  if(diagonalD_) {
+    Thyra::ele_wise_prod( 1.0/coeff_, *vec1_, *vecD_, vec2_.ptr() );
+  } else {
+    D_->apply(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr(), 1.0/coeff_, 0.0);
+  }
+
+  // X = coeff^{-1} A^{-1} D A^{-T} B
   solveStatus2 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec2_, X, solveCriteria);
 
   if((solveStatus1.solveStatus == Thyra::SOLVE_STATUS_CONVERGED) && (solveStatus2.solveStatus == Thyra::SOLVE_STATUS_CONVERGED))

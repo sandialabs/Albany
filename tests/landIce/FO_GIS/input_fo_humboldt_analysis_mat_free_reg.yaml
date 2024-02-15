@@ -106,21 +106,64 @@ ANONYMOUS:
         Response 1:  #regularization term
           Scaling Coefficient: 5.8824e-05
           Name: Quadratic Linear Operator Based
-          Linear Operator File Name: ../AsciiMeshes/Humboldt/A_humboldt.mm
-          Diagonal Scaling File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
+          Matrix A File Name: ../AsciiMeshes/Humboldt/A_notLumped_humboldt.mm
+          Matrix D File Name: ../AsciiMeshes/Humboldt/D_notLumped_humboldt.mm
+          D Solver Settings:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 100
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+
           Field Name: basal_friction_log
       Response 1:  #regularization term, |log(beta)|^2
           Scaling Coefficient: 5.8824e-05
           Name: Quadratic Linear Operator Based
-          Linear Operator File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
-          Diagonal Scaling File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
+          Matrix A File Name: ../AsciiMeshes/Humboldt/D_notLumped_humboldt.mm
+          Matrix D File Name: ../AsciiMeshes/Humboldt/D_notLumped_humboldt.mm
+          Matrix A Is Symmetric: true
           Field Name: basal_friction_log
       Response 2:
           Scaling Coefficient: 5.8824e-05
           Name: Quadratic Linear Operator Based
-          Linear Operator File Name: ../AsciiMeshes/Humboldt/A_humboldt.mm
-          Diagonal Scaling File Name: ../AsciiMeshes/Humboldt/D_humboldt.mm
+          Matrix A File Name: ../AsciiMeshes/Humboldt/A_notLumped_humboldt.mm
+          Matrix D File Name: ../AsciiMeshes/Humboldt/D_notLumped_humboldt.mm
+          Matrix D Is Diagonal: false
           Field Name: basal_friction_log
+          D Solver Settings:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 100
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
 
     #Used in optimization probs for dot-product or secant initialization      
     Hessian:
@@ -401,7 +444,7 @@ ANONYMOUS:
             Trust Region: 
               Subproblem Model: Lin-More
               Subproblem Solver: Truncated CG
-              Initial Radius: 0.2
+              Initial Radius: 0.05
               Maximum Radius: 1.0e+08
               Step Acceptance Threshold: 5.0e-02
               Radius Shrinking Threshold: 5.0e-02
@@ -658,5 +701,5 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [37.7491721764]
+    Piro Analysis Test Values: [38.1700720566]
 ...
