@@ -64,6 +64,7 @@ namespace LandIce {
 
     ScalarT p_reg, reg;
     double laplacian_coeff, mass_coeff, robin_coeff;
+    Teuchos::Array<double> advection_vect;
 
     bool lumpedMassMatrix;
 

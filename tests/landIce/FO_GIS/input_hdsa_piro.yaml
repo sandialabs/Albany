@@ -1,0 +1,484 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+    Write Solution to MatrixMarket: -1
+    Write Jacobian to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Steady
+    Name: LandIce Laplacian Sampling 2D
+    Compute Sensitivities: true
+    Side Name: SideSet0
+    Response Functions:
+      Number Of Responses: 5
+      Response 0: # misfit
+        Scaling: 1.0
+        Name: Squared L2 Difference Source ST Target PST
+        Source Field Name: prior_sample
+        Field Rank: Scalar
+        Target Field Name: solution_opt
+      Response 1:  #regularization term
+        Scaling Coefficient: 1.0
+        Name: Quadratic Linear Operator Based
+        Matrix A File Name: ../AsciiMeshes/HDSA/A_prior.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA/A_prior.mm
+        Matrix A Is Symmetric: true
+        Field Name: weighted_normal_sample
+        D Solver Settings:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-14
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+      Response 2:
+        Scaling Coefficient: 1.0e3
+        Name: Quadratic Linear Operator Based
+        Matrix A File Name: ../AsciiMeshes/HDSA/D.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA/D.mm
+        Matrix A Is Symmetric: true
+        #Matrix D Is Diagonal: true
+        Field Name: weighted_normal_sample
+      Response 3:
+        Scaling Coefficient: 1.0
+        Name: Quadratic Linear Operator Based
+        Matrix A File Name: ../AsciiMeshes/HDSA/A_ell.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA/A_ell.mm
+        Matrix A Is Symmetric: true
+        Field Name: solution_opt
+      Response 4:
+        Scaling Coefficient: 1.0e3
+        Name: Quadratic Linear Operator Based
+        Matrix A File Name: ../AsciiMeshes/HDSA/D.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA/D.mm
+        Matrix A Is Symmetric: true
+        #Matrix D Is Diagonal: true
+        Field Name: solution_opt
+    Dirichlet BCs: {}
+    Neumann BCs: {}
+    Parameters:
+      Number Of Parameters: 7
+      Parameter 0:
+        Name: weighted_normal_sample
+        Type: Distributed
+      Parameter 1:
+        Type: Distributed
+        Name: solution_opt
+      Parameter 2:
+        Type: Distributed
+        Name: param_opt
+      Parameter 3:
+        Type: Distributed
+        Name: param_sample_0
+      Parameter 4:
+        Type: Distributed
+        Name: solution_diff_sample_0
+      Parameter 5:
+        Type: Distributed
+        Name: param_sample_1
+      Parameter 6:
+        Type: Distributed
+        Name: solution_diff_sample_1
+    LandIce Laplacian Regularization:
+      Mass Coefficient: 1.0
+      Laplacian Coefficient: 0.0
+      Robin Coefficient: 0.0
+      #Advection Vector: [2.5, 0.0]
+      Lump Mass Matrix: true
+    Cubature Degree: 4
+    Hessian:
+      Response 0:
+        Parameter 0:
+          Reconstruct H_pp using Hessian-vector products: true
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 600
+                    Convergence Tolerance: 1e-12
+                    Num Blocks: 51
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: None #Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+      Response 1:
+        Parameter 0:
+          Reconstruct H_pp using Hessian-vector products: false
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 600
+                    Convergence Tolerance: 1e-12
+                    Num Blocks: 51
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: None #Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+      Response 2:
+        Parameter 0:
+          Reconstruct H_pp using Hessian-vector products: false
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 600
+                    Convergence Tolerance: 1e-12
+                    Num Blocks: 51
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: None #Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+      Response 3:
+        Parameter 1:
+          Reconstruct H_pp using Hessian-vector products: false
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 600
+                    Convergence Tolerance: 1e-12
+                    Num Blocks: 51
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: None #Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+      Response 4:
+        Parameter 1:
+          Reconstruct H_pp using Hessian-vector products: false
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 600
+                    Convergence Tolerance: 1e-12
+                    Num Blocks: 51
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: None #Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+  Discretization:
+    1D Elements: 50
+    2D Elements: 1
+    Method: STK2D
+    Exodus Output File Name: hdsa_analysis_piro.exo
+    Number Of Time Derivatives: 0
+    Required Fields Info:
+      Number Of Fields: 7
+      Field 0:
+        Field Name: weighted_normal_sample
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/HDSA/p_opt.ascii
+        Field Usage: Input-Output
+      Field 1:
+        Field Name: solution_opt
+        Field Origin: File
+        Field Type: Node Scalar
+        File Name: ../AsciiMeshes/HDSA/x_opt.ascii
+      Field 2:
+        Field Name: solution_diff_sample_0
+        Field Origin: File
+        Field Type: Node Scalar
+        File Name: ../AsciiMeshes/HDSA/x_diff_p_opt.ascii
+      Field 3:
+        Field Name: solution_diff_sample_1
+        Field Origin: File
+        Field Type: Node Scalar
+        File Name: ../AsciiMeshes/HDSA/x_diff_p_1.ascii
+      Field 4:
+        Field Name: param_opt
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/HDSA/p_opt.ascii
+      Field 5:
+        Field Name: param_sample_0
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/HDSA/p_opt.ascii
+      Field 6:
+        Field Name: param_sample_1
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/HDSA/p_1.ascii
+      Side Set Discretizations:
+        Side Sets: [SideSet0]
+        SideSet0:
+          Method: SideSetSTK
+          Number Of Time Derivatives: 0
+          Use Serial Mesh: false
+  Piro:
+    Sensitivity Method: Adjoint
+    Analysis:
+      Output Final Parameters: true
+      Output Level: 3
+      Analysis Package: HDSA
+      HDSA:
+        Number Of Parameters: 1
+        Check Derivatives: false
+        Derivative Checks:
+          Perform Reduced Derivative Checks: false       
+          Perform Expensive Derivative Checks: false
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 2.0
+        Min And Max Of Random Parameter Guess: [1.0, 2.0]
+        Bound Constrained: true
+
+        Full Space: false
+        Use NOX Solver: true
+        
+        Prior Elliptic Operator: 
+          Operator Type: Hessian Of Response
+          Response Index: 1
+        
+        Prior Mass Operator: 
+          Operator Type: Hessian Of Response
+          Response Index: 2
+        
+        State Elliptic Operator: 
+          Operator Type: Hessian Of Response
+          Response Index: 3
+        
+        State Mass Operator: 
+          Operator Type: Hessian Of Response
+          Response Index: 4
+
+        MD Prior:
+          alpha_u: 0.25
+          alpha_z: 1.e-4
+          alpha_d: 1.e-5
+          Number Of Singular Values: 50
+          Oversampling Factor: 1
+          Number Of Subspace Iterations: 2
+          Number Of Prior Samples: 100
+
+        MD Hessian Analysis:
+          Rank: 20
+          Oversampling Factor: 10
+
+      ROL:
+        Number Of Parameters: 1
+        Check Derivatives: false
+        Derivative Checks:
+          Perform Reduced Derivative Checks: true       
+          Perform Expensive Derivative Checks: false
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 2.0
+        Min And Max Of Random Parameter Guess: [1.0, 2.0]
+        Bound Constrained: true
+
+        Full Space: false
+        Use NOX Solver: true
+        
+        Matrix Based Dot Product: 
+          Matrix Type: Hessian Of Response
+          Matrix Types:
+            Hessian Of Response:
+              Lump Matrix: true
+              Response Index: 1
+        
+              #Custom Secant: 
+              #Type: Limited-Memory BFGS
+              #Maximum Storage: 50
+              #Initialization Type: Hessian Of Response
+              #Initialization Types:
+              #Hessian Of Response:
+              #Response Index: 0
+
+        ROL Options:
+   
+          Status Test: 
+            Gradient Tolerance: 1.0e-4
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 100
+
+          General:
+            Output Level: 3
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+
+            Secant:
+              Type: Limited-Memory BFGS
+              Use as Preconditioner: true
+              Use as Hessian: false
+              Maximum Storage: 50
+              Use Default Scaling: false
+              Initial Hessian Scale: 1.0
+            
+            Krylov:
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e+06 #Only use Relative tolerance
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 50
+
+          Step:
+            Type: "Trust Region"
+
+            Trust Region: 
+              Subproblem Model: Lin-More
+              Subproblem Solver: Truncated CG
+              Initial Radius: 0.2
+              Maximum Radius: 1.0e+08
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 10.0
+    NOX:
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-05
+          Test 1:
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.0e-05
+            Relative Tolerance: 1.0e-03
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 50
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Linear Solver:
+            Write Linear System: false
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Maximum Iterations: 100
+                      Convergence Tolerance: 1e-10
+                      Num Blocks: 100
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                  VerboseObject:
+                    Verbosity Level: medium
+              Preconditioner Type: Ifpack2
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: level-of-fill': 0
+          Rescue Bad Newton Solve: true
+      Line Search:
+        Full Step:
+          Full Step: 1.0
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Test Value: 0.0
+    Relative Tolerance: 1.0e-06
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [38.3712008017]
+...
