@@ -91,6 +91,18 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
+    if(analysisPackage == "HDSA") {
+      const auto distParamLib = albanyApp->getDistributedParameterLibrary();
+      auto p_opt = distParamLib->get("param_opt")->vector();
+      Teuchos::RCP< Thyra::VectorBase<double> > u_opt = distParamLib->get("solution_opt")->vector()->clone_v();
+
+      std::vector<Teuchos::RCP< Thyra::VectorBase<double> > > p_samples, u_diff_at_samples; 
+      p_samples.push_back(distParamLib->get("param_sample_0")->vector());
+      p_samples.push_back(distParamLib->get("param_sample_1")->vector());
+      u_diff_at_samples.push_back(distParamLib->get("solution_diff_sample_0")->vector());
+      u_diff_at_samples.push_back(distParamLib->get("solution_diff_sample_1")->vector());
+      Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer, u_opt, p_opt, u_diff_at_samples, p_samples);
+    } else
     Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
 
     Albany::RegressionTests regression(slvrfctry.getParameters());
