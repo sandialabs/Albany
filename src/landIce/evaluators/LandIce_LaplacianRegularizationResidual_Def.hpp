@@ -19,6 +19,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   laplacian_coeff = p.get<double>("Laplacian Coefficient");
   mass_coeff = p.get<double>("Mass Coefficient");
+  advection_vect = p.get<Teuchos::Array<double>>("Advection Vector");
   robin_coeff = p.get<double>("Robin Coefficient");
   lumpedMassMatrix = p.get<bool>("Lump Mass Matrix");
 
@@ -44,9 +45,9 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     forcing        = decltype(forcing)(forcing_name, dl->qp_scalar);
     field          = decltype(field)(field_name, dl->qp_scalar);  
     side_field     = decltype(side_field)(p.get<std::string>("Side Field Variable Name"), dl_side->qp_scalar); 
-    BF             = decltype(BF)(p.get<std::string>("BF Name"), dl->node_qp_scalar); 
     side_BF        = decltype(side_BF)(p.get<std::string>("Side BF Name"), dl_side->node_qp_scalar);     
   }
+  BF             = decltype(BF)(p.get<std::string>("BF Name"), dl->node_qp_scalar); 
   gradField      = decltype(gradField)(gradField_name, dl->qp_gradient);
   gradBF         = decltype(gradBF)(gradBFname,dl->node_qp_gradient),
   w_measure      = decltype(w_measure)(w_measure_name, dl->qp_scalar);
@@ -74,12 +75,11 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   this->addDependentField(field);
   this->addDependentField(gradField);
   this->addDependentField(gradBF);
-  this->addDependentField(gradBF);
   this->addDependentField(w_measure);
   this->addDependentField(w_side_measure);
+  this->addDependentField(BF);
   if(!lumpedMassMatrix) {
     this->addDependentField(side_field);
-    this->addDependentField(BF);
     this->addDependentField(side_BF);
   }
 
@@ -139,6 +139,11 @@ operator() (const LaplacianRegularization_Cell_Tag&, const int& cell) const {
         for (unsigned int qp=0; qp<numQPs; ++qp)
           t += (mass_coeff*field(cell,qp)-forcing(cell,qp))*BF(cell,inode, qp)*w_measure(cell, qp);
       }
+
+      for (unsigned int qp=0; qp<numQPs; ++qp)
+        for (unsigned int idim=0; idim<cellDim; ++idim)
+          t += advection_vect[idim]*gradField(cell,qp,idim)*BF(cell,inode, qp)*w_measure(cell, qp);
+
       residual(cell,inode) = t;
   }
 

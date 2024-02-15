@@ -171,12 +171,14 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
         p_indices[i] = i;
       } 
     } else {
-      auto rolParams = piroParams->sublist("Analysis").sublist("ROL");
-      int num_parameters = rolParams.isParameter("Number Of Parameters") ? rolParams.get<int>("Number Of Parameters") : model_tmp->Np();
+      auto analysisParams = piroParams->sublist("Analysis").isSublist("HDSA") ? 
+        piroParams->sublist("Analysis").sublist("HDSA") : 
+        piroParams->sublist("Analysis").sublist("ROL");
+      int num_parameters = analysisParams.isParameter("Number Of Parameters") ? analysisParams.get<int>("Number Of Parameters") : model_tmp->Np();
       p_indices.resize(num_parameters);
       for(int i=0; i<num_parameters; ++i) {
         std::ostringstream ss; ss << "Parameter Vector Index " << i;
-        p_indices[i] = rolParams.get<int>(ss.str(), i);
+        p_indices[i] = analysisParams.get<int>(ss.str(), i);
       } 
     }
     model = Teuchos::rcp(new Piro::ProductModelEvaluator<double>(model_tmp,p_indices));
