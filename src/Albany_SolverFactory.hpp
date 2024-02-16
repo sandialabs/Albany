@@ -52,7 +52,8 @@ public:
   Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
   createSolver (const Teuchos::RCP<const Teuchos_Comm>&    solverComm, 
                 const Teuchos::RCP<ModelEvaluator>&  model,
-		const Teuchos::RCP<ModelEvaluator>&  adjointModel = Teuchos::null); 
+		const Teuchos::RCP<ModelEvaluator>&  adjointModel,
+                const bool forwardMode); 
 
   Teuchos::ParameterList&
   getAnalysisParameters() const

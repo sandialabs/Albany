@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
                                            false;
 
     const auto albanyAdjointModel = explicitMatrixTranspose ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
-    const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
+    const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel, false);
 
     stackedTimer->stop("Albany: Setup Time");
 
