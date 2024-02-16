@@ -167,36 +167,29 @@ Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
 SolverFactory::
 createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
 	      const Teuchos::RCP<ModelEvaluator>&     model_tmp,
-	      const Teuchos::RCP<ModelEvaluator>&     adjointModel_tmp)
+	      const Teuchos::RCP<ModelEvaluator>&     adjointModel_tmp,
+              const bool                              forwardMode)
 {
   const auto piroParams = Teuchos::sublist(m_appParams, "Piro");
   const auto stratList =  Piro::extractStratimikosParams(piroParams);
 
-
-  int num_parameters = model_tmp->Np();
-  if (piroParams->isSublist("Analysis") && piroParams->sublist("Analysis").isSublist("ROL")) {
-    auto rolParams = piroParams->sublist("Analysis").sublist("ROL");
-    if (rolParams.isParameter("Number Of Parameters"))
-      num_parameters = rolParams.get<int>("Number Of Parameters");
-  }
-
-  std::vector<int> p_indices(num_parameters);
-
   Teuchos::RCP<Thyra::ModelEvaluator<ST>> model, adjointModel;
-
-  if (piroParams->isSublist("Analysis") && piroParams->sublist("Analysis").isSublist("ROL")) {
-    auto rolParams = piroParams->sublist("Analysis").sublist("ROL");
-    for(int i=0; i<num_parameters; ++i) {
-      std::ostringstream ss; ss << "Parameter Vector Index " << i;
-      p_indices[i] = rolParams.get<int>(ss.str(), i);
-    }
-  } else {
-    for(int i=0; i<num_parameters; ++i) {
-      p_indices[i] = i;
-    }    
-  }
-
   if ( model_tmp->Np() > 1) {
+    std::vector<int> p_indices;
+    if (forwardMode) {
+      p_indices.resize(model_tmp->Np());
+      for(int i=0; i<model_tmp->Np(); ++i) {
+        p_indices[i] = i;
+      } 
+    } else {
+      auto rolParams = piroParams->sublist("Analysis").sublist("ROL");
+      int num_parameters = rolParams.isParameter("Number Of Parameters") ? rolParams.get<int>("Number Of Parameters") : model_tmp->Np();
+      p_indices.resize(num_parameters);
+      for(int i=0; i<num_parameters; ++i) {
+        std::ostringstream ss; ss << "Parameter Vector Index " << i;
+        p_indices[i] = rolParams.get<int>(ss.str(), i);
+      } 
+    }
     model = Teuchos::rcp(new Piro::ProductModelEvaluator<double>(model_tmp,p_indices));
     adjointModel = adjointModel_tmp.is_null() ? Teuchos::null : Teuchos::rcp(new Piro::ProductModelEvaluator<double>(adjointModel_tmp,p_indices));
   }

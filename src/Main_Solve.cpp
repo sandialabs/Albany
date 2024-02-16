@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     // Explicit adjoint model is not needed if we are not computing adjoint sensitivities
     const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
     const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
-    const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel);
+    const auto solver = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel, true);
 
     stackedTimer->stop("Albany: Setup Time");
 
@@ -273,45 +273,20 @@ int main(int argc, char *argv[])
     const Thyra_InArgs nominal = solver->getNominalValues();
 
     // Check if parameters are product vectors or regular vectors
-    Teuchos::RCP<const Thyra_ProductVector> p_prod;
-    if (num_p > 0) {
-      p_prod =
-          Teuchos::nonnull(nominal.get_p(0))
-              ? Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(
-                    nominal.get_p(0), false)
-              : Teuchos::null;
-      if (p_prod == Teuchos::null) {
-        // Thyra vector case (default -- for
-        // everything except CoupledSchwarz right now
-        for (int i = 0; i < num_p; i++) {
-          if(i < num_param_vecs)
-            Albany::printThyraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],nominal.get_p(i));
-          else { //distributed parameter
-            ST norm2 = nominal.get_p(i)->norm_2();
-            *out << "\nDistributed Parameter " << i << ", (two-norm): "  << norm2 << std::endl;
-          }
-        }
-      } else if (num_param_vecs == 0) {
-        for (int i = 0; i < num_p; i++) {
-          ST norm2 = p_prod->getVectorBlock(i)->norm_2();
-          *out << "\nDistributed Parameter " << i << ", (two-norm): "  << norm2 << std::endl;
-        }
-      } else {
-        // Thyra product vector case
-        for (int i = 0; i < num_p; i++) {
-          Teuchos::RCP<const Thyra_ProductVector> pT =
-              Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(
-                  nominal.get_p(i), true);
-          // IKT: note that we are assuming the parameters are all the same for
-          // all the models
-          // that are being coupled (in CoupledSchwarz) so we print the
-          // parameters from the 0th
-          // model only.  LOCA does not populate p for more than 1 model at the
-          // moment so we cannot
-          // allow for different parameters in different models.
-          Albany::printThyraVector(
-              *out << "\nParameter vector " << i << ":\n", *param_names[i], pT->getVectorBlock(0));
-        }
+    Teuchos::RCP<const Thyra_ProductVector> p_prod = 
+      ((num_p > 0) && Teuchos::nonnull(nominal.get_p(0))) ?
+      Teuchos::rcp_dynamic_cast<const Thyra_ProductVector>(nominal.get_p(0), false) :
+      Teuchos::null;
+
+    int num_parmeters = Teuchos::is_null(p_prod) ? num_p : p_prod->productSpace()->numBlocks();
+
+    for (int i = 0; i < num_parmeters; i++) {
+      Teuchos::RCP<const Thyra_Vector> vec = Teuchos::is_null(p_prod) ? nominal.get_p(i) : p_prod->getVectorBlock(i);
+      if(i < num_param_vecs)
+        Albany::printThyraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],vec);
+      else { //distributed parameter
+        ST norm2 = vec->norm_2();
+        *out << "\nDistributed Parameter " << i << ", (two-norm): "  << norm2 << std::endl;
       }
     }
 
@@ -334,18 +309,16 @@ int main(int argc, char *argv[])
       comparisons += respStatus.second;
 
       //check sensitivities
-      for (int j = 0; j < num_p; j++) {
-        std::pair<int,int> sensStatus(0,0);
-        if (thyraSensitivities[i][0].is_null())
-          continue;
-        Teuchos::RCP<const Thyra_ProductMultiVector> prodvec_thyraSensitivity
-          = Teuchos::rcp_dynamic_cast<const Thyra_ProductMultiVector>(thyraSensitivities[i][0]);
 
-        TEUCHOS_TEST_FOR_EXCEPTION (prodvec_thyraSensitivity.is_null() && num_p != 1, 
-                                    Teuchos::Exceptions::InvalidParameter,
-                                    "Error! thyraSensitivities["<< i <<"][0] is not null and not a Thyra_ProductMultiVector.\n");
-
-        Teuchos::RCP<const Thyra_MultiVector> dgdp = (Teuchos::nonnull(prodvec_thyraSensitivity)) ? prodvec_thyraSensitivity->getMultiVectorBlock(j) : thyraSensitivities[i][0];
+      Teuchos::RCP<const Thyra_ProductMultiVector> prodvec_thyraSensitivity = 
+        (num_p >0 && Teuchos::nonnull(thyraSensitivities[i][0])) ?
+        Teuchos::rcp_dynamic_cast<const Thyra_ProductMultiVector>(thyraSensitivities[i][0]) :
+        Teuchos::null;
+      
+      int num_sens_parmeters = Teuchos::is_null(prodvec_thyraSensitivity) ? num_p : prodvec_thyraSensitivity->productSpace()->numBlocks();
+      std::pair<int,int> sensStatus(0,0);
+      for(int j=0; j<num_sens_parmeters; ++j) {
+        Teuchos::RCP<const Thyra_MultiVector> dgdp = (Teuchos::nonnull(prodvec_thyraSensitivity)) ? prodvec_thyraSensitivity->getMultiVectorBlock(j) : thyraSensitivities[i][j];
         if (Teuchos::nonnull(dgdp)) {
           if (writeToMatrixMarketDgDp) {
             std::string name = "dgdp_" + std::to_string(i) + "_" + std::to_string(j);
