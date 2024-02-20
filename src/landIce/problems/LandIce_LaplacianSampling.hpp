@@ -186,7 +186,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
       const std::string& sideEBName = meshSpecs.sideSetMeshSpecs.at(ss_name)[0]->ebName;
       Teuchos::RCP<Albany::Layouts> ss_dl = dl->side_layouts.at(ss_name);
-      for (unsigned int ifield=0; ifield<num_fields; ++ifield) {
+      for (int ifield=0; ifield<num_fields; ++ifield) {
         Teuchos::ParameterList& thisFieldList =  info.sublist(util::strint("Field", ifield));
 
         // Get current state specs

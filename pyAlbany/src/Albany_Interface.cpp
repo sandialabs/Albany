@@ -121,7 +121,7 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
                                            false;
 
     albanyAdjointModel = explicitMatrixTranspose ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
-    solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel);
+    solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel, false);
 
     n_params = albanyModel->Np();
 
@@ -181,7 +181,7 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
                                            false;
 
     albanyAdjointModel = explicitMatrixTranspose ? slvrfctry->createModel(albanyApp, true) : Teuchos::null;
-    solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel);
+    solver = slvrfctry->createSolver(comm, albanyModel, albanyAdjointModel, false);
 
     n_params = albanyModel->Np();
 
