@@ -47,9 +47,6 @@ public:
   void cullSubsetParts(std::vector<std::string>& ssNames,
       std::map<std::string, stk::mesh::Part*>& partVec);
 
-  //! Utility function that uses some integer arithmetic to choose a good worksetSize
-  int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
-
   //! Re-load balance mesh
   void rebalanceInitialMesh (const Teuchos::RCP<const Teuchos_Comm>& comm);
 

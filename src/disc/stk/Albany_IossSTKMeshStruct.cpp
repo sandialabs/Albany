@@ -186,7 +186,7 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   TEUCHOS_TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
+  int worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Build a map to get the EB name given the index
   for (int eb=0; eb<numEB; eb++) {

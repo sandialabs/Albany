@@ -232,17 +232,6 @@ This function gets rid of the subset in the list.
   }
 }
 
-int GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
-                                                     const int ebSizeMax) const
-{
-  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
-  else {
-    // compute numWorksets, and shrink workset size to minimize padding
-    const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
-    return (1 + (ebSizeMax-1) / numWorksets);
-  }
-}
-
 void GenericSTKMeshStruct::setDefaultCoordinates3d ()
 {
   // If the mesh is already a 3d mesh, coordinates_field==coordinates_field3d

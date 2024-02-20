@@ -20,6 +20,10 @@
 
 namespace Albany {
 
+// Utility function that uses some integer arithmetic to choose a good worksetSize
+int computeWorksetSize(const int worksetSizeMax,
+                       const int ebSizeMax);
+
 // This is mostly for Omega_h layer, but may be useful in general while doing refactorings
 class NotYetImplemented : public std::runtime_error
 {
