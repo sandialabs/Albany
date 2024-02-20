@@ -169,7 +169,7 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int basalWorksetSize = basalMeshSpec->worksetSize;
   int worksetSizeMax = params->get<int>("Workset Size");
   int ebSizeMaxEstimate = basalWorksetSize * numLayers; // This is ebSizeMax when basalWorksetSize is max
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
+  int worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 

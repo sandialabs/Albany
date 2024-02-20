@@ -19,6 +19,17 @@
 
 namespace Albany {
 
+int computeWorksetSize(const int worksetSizeMax,
+                       const int ebSizeMax)
+{
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
+  else {
+    // compute numWorksets, and shrink workset size to minimize padding
+    const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
+    return (1 + (ebSizeMax-1) / numWorksets);
+  }
+}
+
 Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
 getIntrepid2Basis (const CellTopologyData& cell_topo,
                    const FE_Type fe_type, const int order)
