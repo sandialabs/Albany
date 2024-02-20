@@ -206,7 +206,7 @@ ANONYMOUS:
                     mySaPFact2: 
                       'sa: eigenvalue estimate num iterations': 10
                       'sa: damping factor': 1.3333333e+00
-                      factory: SaPFactory_kokkos
+                      factory: SaPFactory
                       P: myTentativePFact2
                     myTransferCoordinatesFact: 
                       factory: CoordinatesTransferFactory
