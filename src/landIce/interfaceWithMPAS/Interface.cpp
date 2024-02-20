@@ -827,6 +827,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
     meshStruct->sideSetMeshStructs[ss] = ss_mesh;
   }
+  meshStruct->createSideMeshMaps();
 
   albanyApp->createMeshSpecs(meshStruct);
 
