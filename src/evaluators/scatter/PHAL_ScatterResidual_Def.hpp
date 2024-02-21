@@ -417,16 +417,6 @@ evaluateFields(typename Traits::EvalData workset)
   auto ncolsp = workset.num_cols_p;
   auto paramoffset = workset.param_offset;
 
-  if (scatter_f)
-    std::cout << "f_data: (" << f_data.extent(0) << ", " << f_data.extent(1) << ")\n";
-  if (scatter_JV)
-    std::cout << "JV_data: (" << JV_data.extent(0) << ", " << JV_data.extent(1) << ")\n";
-  if (scatter_fp)
-    std::cout << "fp_data: (" << fp_data.extent(0) << ", " << fp_data.extent(1) << ")\n";
-
-  std::cout << "eq_offset = " << eq_offset << ", nnodes = " << nnodes << ", nfields = " << nfields << "\n";
-  std::cout << "ncolsx = " << ncolsx << ", ncolsp = " << ncolsp << ", paramoffset = " << paramoffset << "\n";
-
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
                        KOKKOS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
@@ -437,16 +427,16 @@ evaluateFields(typename Traits::EvalData workset)
         const auto res = resid.get(cell,node,eq);
 
         if (scatter_f) {
-          f_data(lid) += res.val();
+          Kokkos::atomic_add(f_data(lid), res.val());
         }
         if (scatter_JV) {
           for (int col=0; col<ncolsx; ++col) {
-            JV_data(lid,col) += res.dx(col);
+            Kokkos::atomic_add(JV_data(lid,col), res.dx(col));
           }
         }
         if (scatter_fp) {
           for (int col=0; col<ncolsp; ++col) {
-            fp_data(lid,col) += res.dx(col + paramoffset);
+            Kokkos::atomic_add(fp_data(lid,col), res.dx(col + paramoffset));
           }
         }
       }
