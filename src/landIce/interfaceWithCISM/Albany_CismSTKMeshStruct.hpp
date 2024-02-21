@@ -4,13 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #ifndef ALBANY_CISM_STKMESHSTRUCT_HPP
 #define ALBANY_CISM_STKMESHSTRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
-
-//#include <Ionit_Initializer.h>
 
 namespace Albany {
 
@@ -57,20 +54,7 @@ namespace Albany {
 
     ~CismSTKMeshStruct() = default;
 
-    void setFieldData(
-                  const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
-                  const unsigned int /* worksetSize */,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {})
-    {
-      // Nothing to do here
-    }
-
-    void setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
-                  const unsigned int /* worksetSize */,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {})
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
     {
       // Nothing to do here
     }
@@ -93,7 +77,6 @@ namespace Albany {
     void setRestartDataTime(double restartT) {restartTime = restartT; }
 
     private:
-    //Ioss::Init::Initializer ioInit;
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
@@ -146,9 +129,8 @@ namespace Albany {
     int debug_output_verbosity;
     void resizeVec(std::vector<std::vector<double> > &vec , const unsigned int rows , const unsigned int columns);
     void resizeVec(std::vector<std::vector<int> > &vec , const unsigned int rows , const unsigned int columns);
-
-    protected:
   };
 
-}
-#endif
+} // namespace Albany
+
+#endif // ALBANY_CISM_STKMESHSTRUCT_HPP
