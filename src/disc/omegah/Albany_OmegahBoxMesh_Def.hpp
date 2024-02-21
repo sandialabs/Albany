@@ -119,8 +119,8 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     case 3: ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();  break;
   }
 
-  this->m_mesh_specs.resize(1);
-  this->m_mesh_specs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
+  this->meshSpecs.resize(1);
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
                              nsNames, ssNames, m_mesh.nelems(), ebName,
                              ebNameToIndex));
 }

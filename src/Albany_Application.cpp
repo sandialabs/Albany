@@ -3376,7 +3376,7 @@ Application::setScaleBCDofs(
     // nodeset specified via the sideset discretization.
     //
     /*const auto &sdn =
-        disc->getMeshStruct()->getMeshSpecs()[0]->sideSetMeshNames;
+        disc->getMeshStruct()->meshSpecs[0]->sideSetMeshNames;
     for (int isd = 0; isd < sdn.size(); ++isd) {
       const auto &sd = disc->getSideSetDiscretizations().at(sdn[isd]);
       for (auto iterator = sd->getNodeSets().begin();

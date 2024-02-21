@@ -53,12 +53,13 @@ struct AbstractMeshStruct {
       setFieldData(comm, sis, worksetSize, side_set_sis);
       setBulkData(comm, sis, worksetSize, side_set_sis);
     }
-    virtual Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs() = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >& getMeshSpecs() const = 0;
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
     Teuchos::ArrayRCP<double> mesh_layers_ratio;
+
+    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs;
+    std::map<std::string, Teuchos::RCP<AbstractMeshStruct>> sideSetMeshStructs;
 };
 
 } // Namespace Albany

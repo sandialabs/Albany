@@ -131,7 +131,7 @@ public:
   //! Get number of spatial dimensions
   int
   getNumDim() const override {
-    return m_mesh_struct->getMeshSpecs()[0]->numDim;
+    return m_mesh_struct->meshSpecs[0]->numDim;
   }
 
   //! Get number of total DOFs per node

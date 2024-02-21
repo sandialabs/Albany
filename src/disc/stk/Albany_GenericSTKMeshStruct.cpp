@@ -236,24 +236,6 @@ This function gets rid of the subset in the list.
   }
 }
 
-Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
-GenericSTKMeshStruct::getMeshSpecs()
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
-}
-
-const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
-GenericSTKMeshStruct::getMeshSpecs() const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
-}
-
 int GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
@@ -438,7 +420,7 @@ void GenericSTKMeshStruct::checkNodeSetsFromSideSetsIntegrity ()
 
 void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& comm) {
   // Loop on all mesh specs
-  for (auto ms: this->getMeshSpecs() ) {
+  for (auto ms : meshSpecs ) {
     // Loop on all side sets of the mesh
     for (auto ssName : ms->ssNames) {
       // Get the part
@@ -529,7 +511,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
                                   "Error! Mesh on side " << ss_name << " has the wrong dimension.\n");
 
       // Update the side set mesh specs pointer in the mesh specs of this mesh
-      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
+      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->meshSpecs;
       this->meshSpecs[0]->sideSetMeshNames.push_back(ss_name);
 
       // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
@@ -540,7 +522,7 @@ void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<cons
       stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
 #endif
       // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
-      const int num_nodes = sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->ctd.node_count;
+      const int num_nodes = sideSetMeshStructs[ss_name]->meshSpecs[0]->ctd.node_count;
       ISFT* side_nodes_ids = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
       stk::mesh::put_field_on_mesh(*side_nodes_ids, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), num_nodes, nullptr);
 #ifdef ALBANY_SEACAS
