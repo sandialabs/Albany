@@ -8,7 +8,6 @@
 
 #include <Albany_CommUtils.hpp>
 #include <Albany_ThyraUtils.hpp>
-#include "Albany_BucketArray.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKDiscretization.hpp"
@@ -1326,10 +1325,6 @@ STKDiscretization::computeWorksetInfo()
 
   // Clear map if remeshing
   if (!elemGIDws.empty()) { elemGIDws.clear(); }
-
-  typedef stk::mesh::Cartesian NodeTag;
-  typedef stk::mesh::Cartesian ElemTag;
-  typedef stk::mesh::Cartesian CompTag;
 
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
