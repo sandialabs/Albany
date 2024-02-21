@@ -421,25 +421,9 @@ fillVectorImpl (Thyra_Vector&           field_vector,
   auto* raw_field = metaData->get_field(field_entity_rank, field_name);
   ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
-  const int rank = raw_field->field_array_rank();
 
-  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper     = STKFieldContainerHelper<SFT>;
-  if (rank == 0) {
-
-    const SFT* field = this->metaData->template get_field<double>(
-        field_entity_rank, field_name);    
-    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
-  } else if (rank == 1) {
-    const SFT* field = this->metaData->template get_field<double>(
-        field_entity_rank, field_name);
-    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::runtime_error,
-        "Error! Only scalar and vector fields supported so far.\n");
-  }
+  const auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
+  STKFieldContainerHelper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
 }
 
 void MultiSTKFieldContainer::
@@ -471,22 +455,9 @@ saveVectorImpl (const Thyra_Vector&     field_vector,
   auto* raw_field = metaData->get_field(field_entity_rank, field_name);
   ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
-  const int rank = raw_field->field_array_rank();
 
-  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper = STKFieldContainerHelper<SFT>;
-  if (rank == 0) {    
-    SFT* field   = this->metaData->template get_field<double>(
-        stk::topology::NODE_RANK, field_name);
-    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
-  } else if (rank == 1) {
-    SFT* field   = this->metaData->template get_field<double>(
-        stk::topology::NODE_RANK, field_name);
-    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-        "Error! Only scalar and vector fields supported so far.\n");
-  }
+  auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
+  STKFieldContainerHelper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped, components);
 }
 
 }  // namespace Albany

@@ -70,6 +70,7 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   auto mpiComm = getMpiCommFromTeuchosComm(comm);
 
   mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(mpiComm));
+  mesh_data->use_simple_fields();
 
   // Use Greg Sjaardema's capability to repartition on the fly.
   //    Several partitioning choices: rcb, rib, hsfc, kway, kway-gemo, linear, random

@@ -57,6 +57,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
       num_params(numParams_)
 {
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
+  metaData->use_simple_fields();
 
   // numDim = -1 is default flag value to postpone initialization
   if (numDim_>0) {
@@ -1422,32 +1423,13 @@ void GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const s
     entity_rank = stk::topology::NODE_RANK;
   }
 
-  int dim = 1;
-  if (ftype.find("Vector")!=std::string::npos) {
-    ++dim;
-  }
-  if (ftype.find("Layered")!=std::string::npos) {
-    ++dim;
-  }
-
   bool missing = (metaData->get_field<double> (entity_rank, fname)==nullptr);
 
   if (missing) {
-    bool isFieldInMesh = false;
-    auto fl = metaData->get_fields();
-    auto f = fl.begin();
-    for (; f != fl.end(); ++f) {
-      isFieldInMesh = (fname == (*f)->name());
-      if(isFieldInMesh) break;
-    }
-    if(isFieldInMesh) {
-       TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' in the mesh has different rank or dimensions than the ones specified\n"
-                                                        << " Rank required: " << entity_rank << ", rank of field in mesh: " << (*f)->entity_rank() << "\n"
-                                                        << " Dimension required: " << dim << ", dimension of field in mesh: " << (*f)->field_array_rank()+1 << "\n");
-    }
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh.\n"
-                                                       << "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        missing, std::runtime_error,
+        "Error! The field '" << fname << "' was not found in the mesh.\n"
+        "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
   }
 }
 

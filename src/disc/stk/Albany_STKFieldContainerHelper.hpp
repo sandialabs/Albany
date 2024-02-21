@@ -17,9 +17,10 @@ namespace Albany {
 class GlobalLocalIndexer;
 
 // FieldType can be either scalar or vector, the code is the same.
-template<class FieldType>
 struct STKFieldContainerHelper
 {
+  using FieldType = stk::mesh::Field<double>;
+
   // Fill (aka get) and save (aka set) methods
   // If passing no components, we do all fields in the dof mgr
 
