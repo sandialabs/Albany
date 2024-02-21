@@ -549,12 +549,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
+
   //get const (read-only) view of x
-  // using const_data_t = Teuchos::ArrayRCP<const ST>;
-  // using const_mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>>;
-  // const_data_t x_data, xdot_data, xdotdot_data;
-  // const_mv_data_t Vx_data, Vxdot_data, Vxdotdot_data;
-  
+
   Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
   Albany::DeviceView2d<const ST> Vx_data, Vxdot_data, Vxdotdot_data;
 
