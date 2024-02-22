@@ -261,7 +261,7 @@ saveSolnVector (const Thyra_Vector& soln,
                 const dof_mgr_ptr_t& sol_dof_mgr,
                 const bool           overlapped)
 {
-  if (save_solution_field) { 
+  if (save_solution_field) {
     saveVectorImpl (soln, solution_field[0]->name(), sol_dof_mgr, overlapped);
   }
 
