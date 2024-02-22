@@ -8,7 +8,6 @@
 
 #include <Albany_CommUtils.hpp>
 #include <Albany_ThyraUtils.hpp>
-#include "Albany_BucketArray.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKDiscretization.hpp"
@@ -77,7 +76,8 @@ STKDiscretization::STKDiscretization(
 {
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
-      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, it.second, comm));
+      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
+      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, stk_mesh, comm));
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }
@@ -348,8 +348,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -379,8 +378,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -411,8 +409,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -431,8 +428,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -451,8 +447,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -476,8 +471,7 @@ STKDiscretization::transformMesh()
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -507,8 +501,7 @@ STKDiscretization::transformMesh()
 #endif
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stk::mesh::Field<double>* surfaceHeight_field =
-        metaData->get_field<stk::mesh::Field<double>>(
-            stk::topology::NODE_RANK, "surface_height");
+        metaData->get_field<double>(stk::topology::NODE_RANK, "surface_height");
     const auto numOverlapNodes = getLocalSubdim(getOverlapNodeVectorSpace());
     for (int i = 0; i < numOverlapNodes; i++) {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
@@ -1319,7 +1312,7 @@ STKDiscretization::computeWorksetInfo()
   } else {
     for (int i = 0; i < numBuckets; ++i) {
       m_wsPhysIndex[i] =
-          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[m_wsEBNames[i]];
+          stkMeshStruct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[i]];
     }
   }
 
@@ -1332,10 +1325,6 @@ STKDiscretization::computeWorksetInfo()
 
   // Clear map if remeshing
   if (!elemGIDws.empty()) { elemGIDws.clear(); }
-
-  typedef stk::mesh::Cartesian NodeTag;
-  typedef stk::mesh::Cartesian ElemTag;
-  typedef stk::mesh::Cartesian CompTag;
 
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
@@ -1635,7 +1624,7 @@ STKDiscretization::computeSideSets()
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
-          stkMeshStruct->getMeshSpecs()[0]->ebNameToIndex[m_wsEBNames[workset]];
+          stkMeshStruct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
 
       // Get or create the vector of side structs for this side set on this workset
       auto& ss_vec = sideSets[workset][ss.first];
@@ -1800,7 +1789,7 @@ STKDiscretization::computeSideSets()
   unsigned int maxSideNodes = 0;
   const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
   if (!cell_layers_data.is_null()) {
-    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->getMeshSpecs()[0]->ctd));
+    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->meshSpecs[0]->ctd));
     const int numLayers = cell_layers_data->numLayers;
     const int numComps = getDOFManager()->getNumFields();
 
@@ -1837,7 +1826,7 @@ STKDiscretization::computeSideSets()
   // If the mesh isn't extruded, we won't need to do any of the following work.
   if (not cell_layers_data.is_null()) {
     // Get topo data
-    auto ctd = stkMeshStruct->getMeshSpecs()[0]->ctd;
+    auto ctd = stkMeshStruct->meshSpecs[0]->ctd;
 
     // Ensure we have ONE cell per layer.
     const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();

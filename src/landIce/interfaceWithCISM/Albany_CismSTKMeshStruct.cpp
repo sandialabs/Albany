@@ -25,7 +25,6 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-//#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <iostream>
@@ -332,7 +331,7 @@ constructMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<Albany::StateInfoStruct>& sis,
               const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, sis, worksetSize);
+  this->setFieldData(comm, sis);
 
   metaData->commit();
 

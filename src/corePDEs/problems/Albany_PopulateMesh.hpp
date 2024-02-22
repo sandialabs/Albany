@@ -44,7 +44,7 @@ public:
                 const Teuchos::RCP<ParamLib>& paramLib_);
 
   //! Destructor
-  ~PopulateMesh();
+  ~PopulateMesh() = default;
 
   //! Return number of spatial dimensions
   virtual int spatialDimension() const { return 0; }
@@ -65,16 +65,6 @@ public:
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
   bool useSDBCs() const { return use_sdbcs_; }
-
-private:
-
-  //! Private to prohibit copying
-  PopulateMesh(const PopulateMesh&);
-
-  //! Private to prohibit copying
-  PopulateMesh& operator=(const PopulateMesh&);
-
-public:
 
   //! Main problem setup routine. Not directly called, but indirectly by following functions
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>

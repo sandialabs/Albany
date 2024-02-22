@@ -20,6 +20,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Use Serial Mesh: false
+        Save Solution Field: false
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_unstruct_basal_populated.exo
         Required Fields Info: 
@@ -48,6 +49,7 @@ ANONYMOUS:
       upperside: 
         Method: SideSetSTK
         Number Of Time Derivatives: 0
+        Save Solution Field: false
         Exodus Output File Name: gis_unstruct_surface_populated.exo
         Required Fields Info: 
           Number Of Fields: 2

@@ -26,11 +26,6 @@ PopulateMesh::PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   neq = 1;
 }
 
-PopulateMesh::~PopulateMesh()
-{
-  // Nothing to be done here
-}
-
 void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>> meshSpecs,
                                  StateManager& stateMgr)
 {

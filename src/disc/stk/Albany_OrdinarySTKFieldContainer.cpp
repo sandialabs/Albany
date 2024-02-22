@@ -45,7 +45,6 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
     const int                                                 numDim_,
-    const Teuchos::RCP<StateInfoStruct>&                      sis,
     const int                                                 num_params_)
     : GenericSTKFieldContainer(
           params_,
@@ -60,13 +59,11 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 #endif
 
   // Start STK stuff
-  this->coordinates_field = 
-      metaData_->get_field<double>(stk::topology::NODE_RANK, "coordinates");
-      
+  this->coordinates_field = metaData_->get_field<double>(stk::topology::NODE_RANK, "coordinates");
+
   //STK throws when declaring a field that has been already declared
   if(this->coordinates_field == nullptr) {
-    this->coordinates_field = 
-        &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
+    this->coordinates_field = &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
   }
   stk::mesh::put_field_on_mesh(
       *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
@@ -88,10 +85,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 #endif
   }
 
-  this->addStateStructs(sis);
-
   initializeProcRankField();
-
 }
 
 OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
@@ -117,10 +111,9 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 #endif
   //IKT FIXME? - currently won't write dxdp to output file if problem is steady,
   //as this output doesn't work in same way.  May want to change in the future.
-  bool output_sens_field = false;
   const auto& sens_method = params_->get<std::string>("Sensitivity Method","NONE");
 
-  if (this->num_params > 0 && num_time_deriv > 0 && sens_method != "None") output_sens_field = true;
+  output_sens_field = this->num_params > 0 && num_time_deriv > 0 && sens_method != "None";
 
   //Create tag and id arrays for sensitivity field (dxdp or dgdp)
   std::vector<std::string> sol_sens_tag_name_vec;
@@ -145,40 +138,41 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     sol_sens_id_name_vec[0] = "sensitivity dg" + std::to_string(resp_fn_index) + "dp" + std::to_string(param_sens_index);
   }
 
-  solution_field.resize(num_time_deriv + 1);
-  solution_field_dtk.resize(num_time_deriv + 1);
-  solution_field_dxdp.resize(this->num_params);
+  if (save_solution_field) {
+    solution_field.resize(num_time_deriv + 1);
+    solution_field_dtk.resize(num_time_deriv + 1);
+    solution_field_dxdp.resize(this->num_params);
 
-  for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
-    solution_field[num_vecs] = &metaData_->declare_field<double>(
-        stk::topology::NODE_RANK,
-        params_->get<std::string>(
-            sol_tag_name[num_vecs], sol_id_name[num_vecs]));
-    stk::mesh::put_field_on_mesh(
-        *solution_field[num_vecs], metaData_->universal_part(), neq_, nullptr); // KL: this
-
-#if defined(ALBANY_DTK)
-    if (output_dtk_field == true) {
-      solution_field_dtk[num_vecs] = &metaData_->declare_field<double>(
+    for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
+      solution_field[num_vecs] = &metaData_->declare_field<double>(
           stk::topology::NODE_RANK,
           params_->get<std::string>(
-              sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
+              sol_tag_name[num_vecs], sol_id_name[num_vecs]));
       stk::mesh::put_field_on_mesh(
-          *solution_field_dtk[num_vecs],
-          metaData_->universal_part(),
-          neq_,
-          nullptr);
-    }
+          *solution_field[num_vecs], metaData_->universal_part(), neq_, nullptr); // KL: this
+#if defined(ALBANY_DTK)
+      if (output_dtk_field == true) {
+        solution_field_dtk[num_vecs] = &metaData_->declare_field<double>(
+            stk::topology::NODE_RANK,
+            params_->get<std::string>(
+                sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
+        stk::mesh::put_field_on_mesh(
+            *solution_field_dtk[num_vecs],
+            metaData_->universal_part(),
+            neq_,
+            nullptr);
+      }
 #endif
 
 #ifdef ALBANY_SEACAS
-    stk::io::set_field_role(*solution_field[num_vecs], Ioss::Field::TRANSIENT);
+      stk::io::set_field_role(*solution_field[num_vecs], Ioss::Field::TRANSIENT);
 #if defined(ALBANY_DTK)
-    if (output_dtk_field == true)
-      stk::io::set_field_role(
-          *solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
+      if (output_dtk_field == true)
+        stk::io::set_field_role(
+            *solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
 #endif
 #endif
+    }
   }
 
   //Transient sensitivities output to Exodus
@@ -203,9 +197,6 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   }
 
   this->addStateStructs(sis);
-
-  //initializeProcRankField();
-
 }
 
 void
@@ -270,9 +261,11 @@ saveSolnVector (const Thyra_Vector& soln,
                 const dof_mgr_ptr_t& sol_dof_mgr,
                 const bool           overlapped)
 {
-  saveVectorImpl (soln, solution_field[0]->name(), sol_dof_mgr, overlapped);
+  if (save_solution_field) {
+    saveVectorImpl (soln, solution_field[0]->name(), sol_dof_mgr, overlapped);
+  }
 
-  if (soln_dxdp != Teuchos::null) {
+  if (soln_dxdp != Teuchos::null and output_sens_field) {
     TEUCHOS_TEST_FOR_EXCEPTION(
       soln_dxdp->domain()->dim() != this->num_params, std::runtime_error,
       "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
@@ -293,7 +286,9 @@ saveSolnVector (const Thyra_Vector&  soln,
                 const bool           overlapped)
 {
   saveSolnVector(soln,soln_dxdp, sol_dof_mgr, overlapped);
-  saveVectorImpl (soln_dot, solution_field[1]->name(), sol_dof_mgr, overlapped);
+  if (save_solution_field) {
+    saveVectorImpl (soln_dot, solution_field[1]->name(), sol_dof_mgr, overlapped);
+  }
 }
 
 void OrdinarySTKFieldContainer::
@@ -305,7 +300,9 @@ saveSolnVector (const Thyra_Vector&  soln,
                 const bool           overlapped)
 {
   saveSolnVector(soln, soln_dxdp, soln_dot, sol_dof_mgr, overlapped);
-  saveVectorImpl (soln_dotdot, solution_field[2]->name(), sol_dof_mgr, overlapped);
+  if (save_solution_field) {
+    saveVectorImpl (soln_dotdot, solution_field[2]->name(), sol_dof_mgr, overlapped);
+  }
 }
 
 void OrdinarySTKFieldContainer::
@@ -318,7 +315,7 @@ saveSolnMultiVector (const Thyra_MultiVector& soln,
     saveVectorImpl (*soln.col(icomp), solution_field[icomp]->name(), sol_dof_mgr, overlapped);
   }
 
-  if (soln_dxdp != Teuchos::null) {
+  if (soln_dxdp != Teuchos::null and output_sens_field) {
     TEUCHOS_TEST_FOR_EXCEPTION(
       soln_dxdp->domain()->dim() != this->num_params, std::runtime_error,
       "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
@@ -345,9 +342,7 @@ transferSolutionToCoords()
   TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
     "Error OrdinarySTKFieldContainer::transferSolutionToCoords not called from a solution field container.\n");
 
-  using SFT    = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper = STKFieldContainerHelper<SFT>;
-  Helper::copySTKField(*solution_field[0], *this->coordinates_field);
+  STKFieldContainerHelper::copySTKField(*solution_field[0], *this->coordinates_field);
 }
 
 void OrdinarySTKFieldContainer::
@@ -378,25 +373,9 @@ fillVectorImpl(Thyra_Vector&                         field_vector,
   auto* raw_field = metaData->get_field(field_entity_rank, field_name);
   ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
-  const int rank = raw_field->field_array_rank();
 
-  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper = STKFieldContainerHelper<SFT>;
-
-  if (rank == 0) {
-    const SFT* field = this->metaData->template get_field<double>(
-        field_entity_rank, field_name);    
-    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else if (rank == 1) {
-    const SFT* field = this->metaData->template get_field<double>(
-        field_entity_rank, field_name);
-    Helper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::runtime_error,
-        "Error! Only scalar and vector fields supported so far.\n");
-  }
+  const auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
+  STKFieldContainerHelper::fillVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
 }
 
 void OrdinarySTKFieldContainer::
@@ -427,25 +406,9 @@ saveVectorImpl (const Thyra_Vector&  field_vector,
   auto* raw_field = metaData->get_field(field_entity_rank, field_name);
   ALBANY_EXPECT (raw_field != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
-  const int rank = raw_field->field_array_rank();
 
-  using SFT = typename AbstractSTKFieldContainer::STKFieldType;
-  using Helper = STKFieldContainerHelper<SFT>;
-
-  if (rank == 0) {
-    SFT* field = this->metaData->template get_field<double>(
-        stk::topology::NODE_RANK, field_name);    
-    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else if (rank == 1) {
-    SFT* field = this->metaData->template get_field<double>(
-        stk::topology::NODE_RANK, field_name);
-    Helper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::runtime_error,
-        "Error! Only scalar and vector fields supported so far.\n");
-  }
+  auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
+  STKFieldContainerHelper::saveVector(field_vector, *field, *this->bulkData, field_dof_mgr, overlapped);
 }
 
 }  // namespace Albany

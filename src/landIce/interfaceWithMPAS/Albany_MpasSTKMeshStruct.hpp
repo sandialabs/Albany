@@ -18,7 +18,7 @@ class MpasSTKMeshStruct : public GenericSTKMeshStruct
 public:
 
   MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<const Teuchos_Comm>& comm,
           const std::vector<int>& indexToVertexID,
           const std::vector<int>& vertexProcIDs,
           const std::vector<double>& verticesCoords,
@@ -39,17 +39,7 @@ public:
 
   ~MpasSTKMeshStruct( ) = default;
 
-  void setFieldData(
-      const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-      const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
-      const unsigned int /* worksetSize */,
-      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {});
-
-  void setBulkData(
-      const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-      const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
-      const unsigned int /* worksetSize */,
-      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /* side_set_sis */ = {});
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const {return hasRestartSol; }
@@ -91,8 +81,6 @@ private:
   const std::vector<int>& iceMarginEdgesIds;
   int numLayers;
   LayeredMeshOrdering Ordering;
-
-  int prismType(int const* prismVertexIds, int& minIndex);
 };
 
 } // namespace Albany

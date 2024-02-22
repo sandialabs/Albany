@@ -21,17 +21,14 @@ public:
                         const Teuchos::RCP<const Teuchos_Comm>& commT,
                         const int numParams);
 
-  virtual ~SideSetSTKMeshStruct();
+  virtual ~SideSetSTKMeshStruct() = default;
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                      const unsigned int worksetSize,
                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
 
-  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                    const unsigned int worksetSize,
-                    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   void setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
                           const std::string& sideSetName);

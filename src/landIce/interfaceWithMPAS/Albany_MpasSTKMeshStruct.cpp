@@ -176,24 +176,10 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
      ebn, ebNameToIndex));
 
   this->initializeSideSetMeshSpecs(comm);
-  this->initializeSideSetMeshStructs(comm);
 }
 
-void MpasSTKMeshStruct::setFieldData(
-              const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  this->SetupFieldData(comm, sis, worksetSize);
-  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
-}
-
-void MpasSTKMeshStruct::setBulkData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<Albany::StateInfoStruct>& /* sis */,
-    const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis)
+void MpasSTKMeshStruct::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
   constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
@@ -406,25 +392,12 @@ void MpasSTKMeshStruct::setBulkData(
 
   this->loadRequiredInputFields (comm);
 
-  this->setSideSetBulkData(comm, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
 MpasSTKMeshStruct::getValidDiscretizationParameters() const
 {
   return this->getValidGenericSTKParameters("Valid MpasSTKMeshStructParams");
-}
-
-int
-MpasSTKMeshStruct::prismType(int const* prismVertexIds, int& minIndex)
-{
-  int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
-  minIndex = std::min_element (prismVertexIds, prismVertexIds + 3) - prismVertexIds;
-
-  int v1 (prismVertexIds[PrismVerticesMap[minIndex][1]]);
-  int v2 (prismVertexIds[PrismVerticesMap[minIndex][2]]);
-
-  return v1  > v2;
 }
 
 } // namespace Albany

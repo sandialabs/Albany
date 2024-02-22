@@ -13,10 +13,11 @@
 namespace Albany {
 
 //Constructor for meshes read from ASCII file
-STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                           const Teuchos::RCP<const Teuchos_Comm>& commT,
-					   const int numParams) :
-  GenericSTKMeshStruct(params, 3, numParams)
+STK3DPointStruct::
+STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                 const Teuchos::RCP<const Teuchos_Comm>& comm,
+					       const int numParams)
+ : GenericSTKMeshStruct(params, 3, numParams)
 {
   std::cout << "---3DPoint constructor---" << std::endl;
   partVec.push_back(&metaData->declare_part_with_topology("Block0", stk::topology::PARTICLE));
@@ -43,37 +44,16 @@ STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& p
   std::cout << "---3DPoint constructor done---" << std::endl;
 
   // Create a mesh specs object for EACH side set
-  this->initializeSideSetMeshSpecs(commT);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(commT);
+  this->initializeSideSetMeshSpecs(comm);
 }
 
-STK3DPointStruct::~STK3DPointStruct() {};
-
-void
-STK3DPointStruct::setFieldData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  std::cout << "---3DPoint::setFieldData---" << std::endl;
-  SetupFieldData(commT, sis, worksetSize);
-  this->setSideSetFieldData(commT, side_set_sis, worksetSize);
-}
-
-void
-STK3DPointStruct::setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+void STK3DPointStruct::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   std::cout << "---3DPoint::setBulkData---" << std::endl;
   metaData->commit();
   bulkData->modification_begin(); // Begin modifying the mesh
-  //TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(commT);
+  //TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(comm);
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   singlePartVec[0] = partVec[0]; // Get the element block part to put the element in.
@@ -87,12 +67,11 @@ STK3DPointStruct::setBulkData(
 
   bulkData->modification_end();
 
-  fieldAndBulkDataSet = true;
-  this->setSideSetBulkData(commT, side_set_sis, worksetSize);
+  m_bulk_data_set = true;
 }
 
 void
-STK3DPointStruct::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
+STK3DPointStruct::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 {
   std::cout << "---3DPoint::buildMesh---" << std::endl;
 }

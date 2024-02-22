@@ -53,22 +53,13 @@ namespace Albany {
 
     public:
 
-    AsciiSTKMesh2D(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-		  const int numParams);
+    AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                    const Teuchos::RCP<const Teuchos_Comm>& comm,
+                    const int numParams);
 
-    ~AsciiSTKMesh2D();
+    ~AsciiSTKMesh2D() = default;
 
-    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                       const unsigned int worksetSize,
-                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
-
-    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                      const unsigned int worksetSize,
-                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }

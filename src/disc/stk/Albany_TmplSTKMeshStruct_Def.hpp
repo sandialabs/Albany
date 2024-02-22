@@ -33,7 +33,7 @@ namespace Albany {
 template<unsigned Dim, class traits>
 TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
       const int numParams) :
   GenericSTKMeshStruct(params, traits_type::size, numParams),
   periodic_x(params->get("Periodic_x BC", false)),
@@ -129,7 +129,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     // Format and print out information about the mesh that is being generated
 
     if constexpr (Dim>0) // Avoid warning for pointless comparison in for loop
-      if (commT->getRank()==0){ // Not reached for 0D problems
+      if (comm->getRank()==0){ // Not reached for 0D problems
 
         std::cout <<"TmplSTKMeshStruct:: Creating " << Dim << "D mesh of size ";
 
@@ -265,7 +265,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // so that the problem setup can know the worksetSize
 
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_map = Teuchos::rcp(new Tpetra_Map(total_elems, StartIndex, commT, Tpetra::GloballyDistributed));
+  elem_map = Teuchos::rcp(new Tpetra_Map(total_elems, StartIndex, comm, Tpetra::GloballyDistributed));
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getLocalNumElements() * (triangles ? 2 : 1));
 
@@ -279,13 +279,11 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
 
   // Construct MeshSpecsStruct
-  {
-    const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
+  const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-    this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
-                               nsNames, ssNames, worksetSize, EBSpecs[0].name,
-                               ebNameToIndex));
-  }
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
+                             nsNames, ssNames, worksetSize, EBSpecs[0].name,
+                             ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {
@@ -293,19 +291,14 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
 
   // Create a mesh specs object for EACH side set
-  this->initializeSideSetMeshSpecs(commT);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(commT);
+  this->initializeSideSetMeshSpecs(comm);
 }
 
 template<unsigned Dim, class traits>
 void
-TmplSTKMeshStruct<Dim, traits>::setFieldData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+TmplSTKMeshStruct<Dim, traits>::
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis)
 {
   // Create global mesh: Dim-D structured, rectangular
   std::vector<double> h_dim[traits_type::size];
@@ -325,39 +318,29 @@ TmplSTKMeshStruct<Dim, traits>::setFieldData(
       x[idx][i] = x[idx][i - 1] + h_dim[idx][i - 1]; // place the coordinates of the element nodes
   }
 
-  SetupFieldData(commT, sis, worksetSize);
-  this->setSideSetFieldData(commT, side_set_sis, worksetSize);
+  GenericSTKMeshStruct::setFieldData(comm, sis);
 }
 
 template<unsigned Dim, class traits>
-void
-TmplSTKMeshStruct<Dim, traits>::setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+void TmplSTKMeshStruct<Dim, traits>::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 
-  // STK
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  buildMesh(commT);
+  buildMesh(comm);
 
-  // STK
   fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
   this->setDefaultCoordinates3d();
-  this->loadRequiredInputFields (commT);
+  this->loadRequiredInputFields (comm);
 
   // Rebalance the mesh before starting the simulation if indicated
-  rebalanceInitialMeshT(commT);
+  rebalanceInitialMesh(comm);
 
-  fieldAndBulkDataSet = true;
-
-  // Finally, setup the side set meshes (if any)
-  this->setSideSetBulkData(commT, side_set_sis, worksetSize);
+  m_bulk_data_set = true;
 }
 
 template <unsigned Dim, class traits>
@@ -419,6 +402,8 @@ EBSpecsStruct<0>::numElems(int /* i */){
 template<>
 void
 EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]){
+     // For Dim=0, the elem sizes vector was not sized yet
+     h[0].resize(1);
      h[0][0] = 1.0;
 }
 
@@ -518,7 +503,7 @@ EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
 // Specializations to build the mesh for each dimension
 template<>
 void
-TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
+TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 {
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
@@ -541,38 +526,26 @@ TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT
 
 template<>
 void
-TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
-{
-  SetupFieldData(commT, sis, worksetSize);
-}
-
-template<>
-void
-TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<StateInfoStruct>& /* sis */,
-                  const unsigned int /* worksetSize */,
-                  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/)
+TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::
+setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 
   // STK
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(commT);
+  TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(comm);
 
   // STK
   fix_node_sharing(*bulkData);
   bulkData->modification_end();
+
+  m_bulk_data_set = true;
 }
 
 template<>
 void
-TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
+TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
@@ -641,7 +614,7 @@ TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
     if(proc_rank_field){
       int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
       if(p_rank)
-        p_rank[0] = commT->getRank();
+        p_rank[0] = comm->getRank();
     }
 
     // Set node sets. There are no side sets currently with 1D problems (only 2D and 3D)
@@ -669,7 +642,7 @@ TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 
 template<>
 void
-TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT */)
+TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 {
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
@@ -910,7 +883,7 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* commT
 
 template<>
 void
-TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
+TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
@@ -1012,7 +985,7 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
     if(proc_rank_field){
       int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
       if(p_rank)
-        p_rank[0] = commT->getRank();
+        p_rank[0] = comm->getRank();
     }
 
     double* coord;

@@ -399,12 +399,8 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                              nsNames, ssNames, worksetSize, ebn,
                              ebNameToIndex));
 
-
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);
-
-  // Initialize the requested sideset mesh struct in the mesh
-  this->initializeSideSetMeshStructs(comm);
 }
 
 AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
@@ -415,23 +411,8 @@ AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
   delete [] eles;
 }
 
-void
-AsciiSTKMeshStruct::setFieldData(
-              const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis,
-              const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  this->SetupFieldData(comm, sis, worksetSize);
-  this->setSideSetFieldData(comm, side_set_sis, worksetSize);
-}
-
-void
-AsciiSTKMeshStruct::setBulkData(
-              const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& /* sis */,
-              const unsigned int worksetSize,
-              const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+void AsciiSTKMeshStruct::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   metaData->commit();
 
@@ -720,8 +701,7 @@ AsciiSTKMeshStruct::setBulkData(
   fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
-  fieldAndBulkDataSet = true;
-  this->setSideSetFieldAndBulkData(comm, side_set_sis, worksetSize);
+  m_bulk_data_set = true;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

@@ -49,7 +49,7 @@ updateMesh ()
   // Compute workset information
   // NOTE: these arrays are all of size 1, for the foreseable future.
   //       Still, make impl generic (where possible), in case things change.
-  const auto& ms = m_mesh_struct->getMeshSpecs()[0];
+  const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
   int max_ws_size = ms->worksetSize;
@@ -115,7 +115,7 @@ updateMesh ()
 void OmegahDiscretization::
 computeNodeSets ()
 {
-  const auto& nsNames = getMeshStruct()->getMeshSpecs()[0]->nsNames;
+  const auto& nsNames = getMeshStruct()->meshSpecs[0]->nsNames;
   using Omega_h::I32;
   using Omega_h::I8;
 
@@ -271,7 +271,7 @@ create_dof_mgr (const std::string& field_name,
                 const int order,
                 const int dof_dim) const
 {
-  const auto& mesh_specs = m_mesh_struct->getMeshSpecs()[0];
+  const auto& mesh_specs = m_mesh_struct->meshSpecs[0];
 
   // Create conn and dof managers
   auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct));

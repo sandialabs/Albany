@@ -45,7 +45,7 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   virtual ~AbstractSTKMeshStruct() = default;
 
  public:
-  std::string meshType () const { return "STK"; }
+  std::string meshType () const override { return "STK"; }
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
@@ -133,9 +133,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   virtual double
   restartDataTime() const = 0;
 
-  virtual bool
-  useCompositeTet() = 0;
-
   // Flag for transforming STK mesh; currently only needed for LandIce/Aeras
   // problems
   std::string transformType;
@@ -166,9 +163,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   // Info for periodic BCs -- only for hand-coded STK meshes
   struct PeriodicBCStruct PBCStruct;
 
-  std::map<std::string, Teuchos::RCP<AbstractSTKMeshStruct>> sideSetMeshStructs;
-
-  bool fieldAndBulkDataSet;
 
   virtual void
   buildCellSideNodeNumerationMap(
@@ -177,8 +171,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
       std::map<GO, std::vector<int>>& sideNodeMap) = 0;
 
   // Useful for loading side meshes from file
-  bool side_maps_present;
-  bool ignore_side_maps;
+  bool side_maps_present = false;
+  bool ignore_side_maps  = false;
 
  protected:
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer;

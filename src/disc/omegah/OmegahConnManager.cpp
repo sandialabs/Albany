@@ -26,7 +26,7 @@ namespace Albany {
 Omega_h::Read<Omega_h::I8> getIsEntInPart(const OmegahGenericMesh& albanyMesh, const std::string& part_name) {
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
-  if(part_name == albanyMesh.getMeshSpecs()[0]->ebName) {
+  if(part_name == albanyMesh.meshSpecs[0]->ebName) {
     return Omega_h::Read<Omega_h::I8>(mesh.nents(part_dim), 1);
   } else {
     return mesh.get_array<Omega_h::I8>(part_dim, part_name);
@@ -54,7 +54,7 @@ Omega_h::LOs numberEntsInPart(const OmegahGenericMesh& albanyMesh, const std::st
 LO getNumEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part_name) {
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
-  if(part_name == albanyMesh.getMeshSpecs()[0]->ebName) {
+  if(part_name == albanyMesh.meshSpecs[0]->ebName) {
     return mesh.nents(part_dim);
   } else {
     const auto isInPart = getIsEntInPart(albanyMesh,part_name);
@@ -65,7 +65,7 @@ LO getNumEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part
 [[nodiscard]]
 std::vector<LO> getLocalElmIds(const OmegahGenericMesh& albanyMesh,  const std::string& part_name) {
   const auto& mesh = albanyMesh.getOmegahMesh();
-  if(part_name==albanyMesh.getMeshSpecs()[0]->ebName) {
+  if(part_name==albanyMesh.meshSpecs[0]->ebName) {
     std::vector<LO> localElmIds(mesh.nelems());
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
     return localElmIds;
@@ -79,7 +79,7 @@ std::vector<LO> getLocalElmIds(const OmegahGenericMesh& albanyMesh,  const std::
 OmegahConnManager::
 OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh)
  : OmegahConnManager(in_mesh,
-                     in_mesh->getMeshSpecs()[0]->ebName)
+                     in_mesh->meshSpecs[0]->ebName)
 {
   // Nothing to do here
 }

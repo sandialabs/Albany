@@ -36,34 +36,22 @@ struct AbstractMeshStruct {
     //! Internal mesh specs type needed
     virtual std::string meshType() const = 0;
 
-    virtual void setFieldData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}) = 0;
+    virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                               const Teuchos::RCP<StateInfoStruct>& sis) = 0;
 
-    virtual void setBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}) = 0;
+    virtual void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {})
-                  {
-                    setFieldData(commT, sis, worksetSize, side_set_sis);
-                    setBulkData(commT, sis, worksetSize, side_set_sis);
-                  }
-
-    virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
-    virtual const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const = 0;
+    bool isBulkDataSet () const { return m_bulk_data_set; }
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
     Teuchos::ArrayRCP<double> mesh_layers_ratio;
+
+    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs;
+    std::map<std::string, Teuchos::RCP<AbstractMeshStruct>> sideSetMeshStructs;
+  protected:
+
+    bool m_bulk_data_set = false;
 };
 
 } // Namespace Albany

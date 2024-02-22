@@ -119,8 +119,8 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     case 3: ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();  break;
   }
 
-  this->m_mesh_specs.resize(1);
-  this->m_mesh_specs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
+  this->meshSpecs.resize(1);
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
                              nsNames, ssNames, m_mesh.nelems(), ebName,
                              ebNameToIndex));
 }
@@ -142,14 +142,10 @@ create_ns_tag (const std::string& name,
 }
 
 template<unsigned Dim>
-void OmegahBoxMesh<Dim>::setBulkData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& sis,
-    const unsigned int worksetSize,
-    const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis)
+void OmegahBoxMesh<Dim>::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 {
-  // We can finally extract the side set meshes and set the fields and bulk data in all of them
-  // this->setSideSetBulkData(comm, side_set_sis, worksetSize);
+  m_bulk_data_set = true;
 }
 
 template<unsigned Dim>

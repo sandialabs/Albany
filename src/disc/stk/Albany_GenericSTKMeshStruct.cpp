@@ -4,15 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <iostream>
-#include "Teuchos_VerboseObject.hpp"
-#include "Teuchos_RCPStdSharedPtrConversions.hpp"
-
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
+#include <Albany_STKNodeSharing.hpp>
+#include <Albany_ThyraUtils.hpp>
+#include <Albany_CombineAndScatterManager.hpp>
+#include <Albany_GlobalLocalIndexer.hpp>
+
 #include "Albany_KokkosTypes.hpp"
 #include "Albany_Gather.hpp"
+#include "Albany_CommUtils.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
@@ -21,15 +24,9 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-#include "Albany_Utils.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/CreateAdjacentEntities.hpp>
 #include <stk_mesh/base/MeshBuilder.hpp>
-
-#include <Albany_STKNodeSharing.hpp>
-#include <Albany_ThyraUtils.hpp>
-#include <Albany_CombineAndScatterManager.hpp>
-#include <Albany_GlobalLocalIndexer.hpp>
 
 // Expression reading
 #ifdef ALBANY_PANZER_EXPR_EVAL
@@ -44,6 +41,11 @@
 #include <percept/stk_rebalance/RebalanceUtils.hpp>
 #endif
 
+#include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_RCPStdSharedPtrConversions.hpp"
+
+#include <iostream>
+
 namespace Albany
 {
 
@@ -55,6 +57,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
       num_params(numParams_)
 {
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
+  metaData->use_simple_fields();
 
   // numDim = -1 is default flag value to postpone initialization
   if (numDim_>0) {
@@ -64,38 +67,30 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
   }
 
   allElementBlocksHaveSamePhysics = true;
-  compositeTet = params->get<bool>("Use Composite Tet 10", false);
   num_time_deriv = params->get<int>("Number Of Time Derivatives");
 
   requiresAutomaticAura = params->get<bool>("Use Automatic Aura", false);
 
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
-
-  fieldAndBulkDataSet = false;
-  side_maps_present = false;
-  ignore_side_maps = false;
 }
 
-void GenericSTKMeshStruct::SetupFieldData(
-    const Teuchos::RCP<const Teuchos_Comm>& comm,
-    const Teuchos::RCP<StateInfoStruct>& sis,
-    const int worksetSize)
+void GenericSTKMeshStruct::
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
-       std::logic_error,
-       "LogicError: metaData->FEM_initialize(numDim) not yet called" << std::endl);
-
+  TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(), std::logic_error,
+       "[GenericSTKMeshStruct::SetupFieldData] metaData->initialize(numDim) not yet called" << std::endl);
 
   if (bulkData.is_null()) {
-     const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (comm.get());
-     stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(*mpiComm->getRawMpiComm());
+     auto mpiComm = getMpiCommFromTeuchosComm(comm);
+     stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(mpiComm);
      if(requiresAutomaticAura)
        meshBuilder.set_aura_option(stk::mesh::BulkData::AUTO_AURA);
      else
        meshBuilder.set_aura_option(stk::mesh::BulkData::NO_AUTO_AURA);
 
-     meshBuilder.set_bucket_capacity(worksetSize);
+     meshBuilder.set_bucket_capacity(meshSpecs[0]->worksetSize);
      meshBuilder.set_add_fmwk_data(false);
      std::unique_ptr<stk::mesh::BulkData> bulkDataPtr = meshBuilder.create(Teuchos::get_shared_ptr(metaData));
      bulkData = Teuchos::rcp(bulkDataPtr.release());
@@ -133,10 +128,10 @@ void GenericSTKMeshStruct::SetupFieldData(
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
   if(user_specified_solution_components && (residual_vector.length() > 0)){
     this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(params,
-        metaData, bulkData, numDim, sis, num_params));
+        metaData, bulkData, numDim, num_params));
   } else {
     this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
-        metaData, bulkData, numDim, sis, num_params));
+        metaData, bulkData, numDim, num_params));
   }
 
 // Exodus is only for 2D and 3D. Have 1D version as well
@@ -237,24 +232,6 @@ This function gets rid of the subset in the list.
   }
 }
 
-Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
-GenericSTKMeshStruct::getMeshSpecs()
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
-}
-
-const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >&
-GenericSTKMeshStruct::getMeshSpecs() const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
-       std::logic_error,
-       "meshSpecs accessed, but it has not been constructed" << std::endl);
-  return meshSpecs;
-}
-
 int GenericSTKMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
@@ -292,20 +269,20 @@ void GenericSTKMeshStruct::setDefaultCoordinates3d ()
   }
 }
 
-void GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm){
+void GenericSTKMeshStruct::rebalanceInitialMesh (const Teuchos::RCP<const Teuchos_Comm>& comm){
 
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
 
   if(rebalance) {
     TEUCHOS_TEST_FOR_EXCEPTION (this->side_maps_present, std::runtime_error,
                                 "Error! Rebalance is not supported when side maps are present.\n");
-    rebalanceAdaptedMeshT(params, comm);
+    rebalanceAdaptedMesh (params, comm);
   }
 }
 
 void GenericSTKMeshStruct::
-rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                      const Teuchos::RCP<const Teuchos::Comm<int> >& comm)
+rebalanceAdaptedMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                      const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
 // Zoltan is required here
 #ifdef ALBANY_ZOLTAN
@@ -439,7 +416,7 @@ void GenericSTKMeshStruct::checkNodeSetsFromSideSetsIntegrity ()
 
 void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const Teuchos_Comm>& comm) {
   // Loop on all mesh specs
-  for (auto ms: this->getMeshSpecs() ) {
+  for (auto ms : meshSpecs ) {
     // Loop on all side sets of the mesh
     for (auto ssName : ms->ssNames) {
       // Get the part
@@ -480,147 +457,26 @@ void GenericSTKMeshStruct::initializeSideSetMeshSpecs (const Teuchos::RCP<const 
     }
   }
 }
-
-void GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& comm)
+void GenericSTKMeshStruct::createSideMeshMaps ()
 {
-  if (params->isSublist ("Side Set Discretizations")) {
-    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
-    const Teuchos::Array<std::string>& sideSets = ssd_list.get<Teuchos::Array<std::string> >("Side Sets");
+  for (auto& it : sideSetMeshStructs) {
+    auto ss_stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
+    auto ss_ms = ss_stk_mesh->meshSpecs[0];
 
-    Teuchos::RCP<Teuchos::ParameterList> params_ss;
-    int sideDim = this->numDim - 1;
-    for (int i(0); i<sideSets.size(); ++i) {
-      Teuchos::RCP<AbstractMeshStruct> ss_mesh;
-      const std::string& ss_name = sideSets[i];
-      params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
-
-      // We must check whether a side mesh was already created elsewhere.
-      // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
-      // This happens, for instance, for the basal mesh for extruded meshes.
-      if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end()) {
-        if (!params_ss->isParameter("Number Of Time Derivatives"))
-          params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
-
-        // Set sideset discretization workset size based on sideset mesh spec if a single workset is used
-        const auto &sideSetMeshSpecs = this->meshSpecs[0]->sideSetMeshSpecs;
-        auto sideSetMeshSpecIter = sideSetMeshSpecs.find(ss_name);
-        TEUCHOS_TEST_FOR_EXCEPTION(sideSetMeshSpecIter == sideSetMeshSpecs.end(), std::runtime_error,
-            "Cannot find " << ss_name << " in sideSetMeshSpecs!\n");
-
-        std::string method = params_ss->get<std::string>("Method");
-        if (method=="SideSetSTK") {
-          // The user said this mesh is extracted from a higher dimensional one
-          TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
-                                      "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
-
-          this->sideSetMeshStructs[ss_name] =
-              Teuchos::rcp(new SideSetSTKMeshStruct(
-                  *this->meshSpecs[0], params_ss, comm, num_params));
-        } else {
-          ss_mesh = DiscretizationFactory::createMeshStruct (params_ss,comm, num_params);
-          this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,false);
-          TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
-                                      "Error! Could not cast side mesh to AbstractSTKMeshStruct.\n");
-        }
-      }
-
-      // Checking that the side meshes have the correct dimension (in case they were loaded from file,
-      // and the user mistakenly gave the wrong file name)
-      TEUCHOS_TEST_FOR_EXCEPTION (sideDim!=this->sideSetMeshStructs[ss_name]->numDim, std::logic_error,
-                                  "Error! Mesh on side " << ss_name << " has the wrong dimension.\n");
-
-      // Update the side set mesh specs pointer in the mesh specs of this mesh
-      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
-      this->meshSpecs[0]->sideSetMeshNames.push_back(ss_name);
-
-      // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
-      using ISFT = AbstractSTKFieldContainer::STKIntState;
-      ISFT* side_to_cell_map = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
-      stk::mesh::put_field_on_mesh(*side_to_cell_map, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), 1, nullptr);
+    // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
+    using ISFT = AbstractSTKFieldContainer::STKIntState;
+    ISFT* side_to_cell_map = &ss_stk_mesh->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
+    stk::mesh::put_field_on_mesh(*side_to_cell_map, ss_stk_mesh->metaData->universal_part(), 1, nullptr);
 #ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
+    stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
 #endif
-      // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
-      const int num_nodes = sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->ctd.node_count;
-      ISFT* side_nodes_ids = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
-      stk::mesh::put_field_on_mesh(*side_nodes_ids, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), num_nodes, nullptr);
+    // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
+    const int num_nodes = ss_ms->ctd.node_count;
+    ISFT* side_nodes_ids = &ss_stk_mesh->metaData->declare_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
+    stk::mesh::put_field_on_mesh(*side_nodes_ids, ss_stk_mesh->metaData->universal_part(), num_nodes, nullptr);
 #ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
+    stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
 #endif
-
-      // If requested, we ignore the side maps already stored in the imported side mesh (if any)
-      // This can be useful for side mesh of an extruded mesh, in the case it was constructed
-      // as side mesh of an extruded mesh with a different ordering and/or different number
-      // of layers. Notice that if that's the case, it probably is impossible to build a new
-      // set of maps, since there is no way to correctly map the side nodes to the cell nodes.
-      this->sideSetMeshStructs[ss_name]->ignore_side_maps = params_ss->get<bool>("Ignore Side Maps", false);
-    }
-  }
-}
-
-void GenericSTKMeshStruct::setSideSetFieldData (
-          const Teuchos::RCP<const Teuchos_Comm>& comm,
-          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-          int worksetSize)
-{
-  if (this->sideSetMeshStructs.size()>0) {
-    // Dummy sis if not present in the maps for a given side set.
-    // This could happen if the side discretization has no states
-    Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
-
-    Teuchos::RCP<Teuchos::ParameterList> params_ss;
-    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
-    for (auto it : sideSetMeshStructs) {
-      Teuchos::RCP<SideSetSTKMeshStruct> sideMesh;
-      sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
-      if (sideMesh!=Teuchos::null) {
-        // SideSetSTK mesh need to build the mesh
-        sideMesh->setParentMeshInfo(*this, it.first);
-      }
-
-      // We check since the basal mesh for extruded stk mesh should already have it set
-      if (!it.second->fieldAndBulkDataSet) {
-        auto it_sis = side_set_sis.find(it.first);
-
-        auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
-
-        params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setFieldData(comm,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
-      }
-    }
-  }
-}
-
-void GenericSTKMeshStruct::setSideSetBulkData (
-          const Teuchos::RCP<const Teuchos_Comm>& comm,
-          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
-          int worksetSize)
-{
-  if (this->sideSetMeshStructs.size()>0) {
-    // Dummy sis if not present in the maps for a given side set.
-    // This could happen if the side discretization has no states
-    Teuchos::RCP<StateInfoStruct> dummy_sis = Teuchos::rcp(new StateInfoStruct());
-
-    Teuchos::RCP<Teuchos::ParameterList> params_ss;
-    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
-    for (auto it : sideSetMeshStructs) {
-      Teuchos::RCP<SideSetSTKMeshStruct> sideMesh;
-      sideMesh = Teuchos::rcp_dynamic_cast<SideSetSTKMeshStruct>(it.second,false);
-      if (sideMesh!=Teuchos::null) {
-        // SideSetSTK mesh need to build the mesh
-        sideMesh->setParentMeshInfo(*this, it.first);
-      }
-
-      // We check since the basal mesh for extruded stk mesh should already have it set
-      if (!it.second->fieldAndBulkDataSet) {
-        auto it_sis = side_set_sis.find(it.first);
-
-        auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
-
-        params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setBulkData(comm,sis,worksetSize);  // Cell equations are also defined on the side, but not vice-versa
-      }
-    }
   }
 }
 
@@ -629,10 +485,10 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
                                 std::map<GO,GO>& sideMap,
                                 std::map<GO,std::vector<int>>& sideNodeMap)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (sideSetMeshStructs.find(sideSetName)==sideSetMeshStructs.end(), Teuchos::Exceptions::InvalidParameter,
-                              "Error in 'buildSideNodeToSideSetCellNodeMap': side set " << sideSetName << " does not have a mesh.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (sideSetMeshStructs.count(sideSetName)==0, Teuchos::Exceptions::InvalidParameter,
+      "Error in 'buildCellSideNodeNumerationMap': side set " << sideSetName << " does not have a mesh.\n");
 
-  Teuchos::RCP<AbstractSTKMeshStruct> side_mesh = sideSetMeshStructs.at(sideSetName);
+  auto side_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(sideSetMeshStructs.at(sideSetName));
 
   // NOTE 1: the stk fields memorize maps from 2D to 3D values (since fields are defined on 2D mesh), while the input
   //         maps map 3D values to 2D ones. For instance, if node 0 of side3D 41 is mapped to node 2 of cell2D 12, the
@@ -660,8 +516,8 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
   int side_lid;
   int num_sides;
   using ISFT = AbstractSTKFieldContainer::STKIntState;
-  ISFT* side_to_cell_map   = this->sideSetMeshStructs[sideSetName]->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
-  ISFT* side_nodes_ids_map = this->sideSetMeshStructs[sideSetName]->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
+  ISFT* side_to_cell_map   = side_mesh->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_to_cell_map");
+  ISFT* side_nodes_ids_map = side_mesh->metaData->get_field<int> (stk::topology::ELEM_RANK, "side_nodes_ids");
   std::vector<stk::mesh::EntityId> cell2D_nodes_ids(num_nodes), side3D_nodes_ids(num_nodes);
   const stk::mesh::Entity* side3D_nodes;
   const stk::mesh::Entity* cell2D_nodes;
@@ -1441,32 +1297,13 @@ void GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const s
     entity_rank = stk::topology::NODE_RANK;
   }
 
-  int dim = 1;
-  if (ftype.find("Vector")!=std::string::npos) {
-    ++dim;
-  }
-  if (ftype.find("Layered")!=std::string::npos) {
-    ++dim;
-  }
-
   bool missing = (metaData->get_field<double> (entity_rank, fname)==nullptr);
 
   if (missing) {
-    bool isFieldInMesh = false;
-    auto fl = metaData->get_fields();
-    auto f = fl.begin();
-    for (; f != fl.end(); ++f) {
-      isFieldInMesh = (fname == (*f)->name());
-      if(isFieldInMesh) break;
-    }
-    if(isFieldInMesh) {
-       TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' in the mesh has different rank or dimensions than the ones specified\n"
-                                                        << " Rank required: " << entity_rank << ", rank of field in mesh: " << (*f)->entity_rank() << "\n"
-                                                        << " Dimension required: " << dim << ", dimension of field in mesh: " << (*f)->field_array_rank()+1 << "\n");
-    }
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION (missing, std::runtime_error, "Error! The field '" << fname << "' was not found in the mesh.\n"
-                                                       << "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (
+        missing, std::runtime_error,
+        "Error! The field '" << fname << "' was not found in the mesh.\n"
+        "  Probably it was not registered it in the state manager (which forwards it to the mesh)\n");
   }
 }
 
@@ -1516,6 +1353,7 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<Teuchos::Array<double>>("Betas BL Transform", Teuchos::tuple<double>(0.0, 0.0, 0.0), "Beta parameters for Tanh Boundary Layer transform type");
 
   validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for LandIce problem that require transformation of STK mesh
+  validPL->set<bool>("Save Solution Field", "true", "Whether the solution field should be saved in the output mesh");
 
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
@@ -1532,7 +1370,6 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
   validPL->set<bool>("Set All Parts IO", false, "If true, all parts are marked as io parts");
-  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
   validPL->set<bool>("Build Node Sets From Side Sets",false,"Flag to build node sets from side sets");
   validPL->set<bool>("Export 3d coordinates field",false,"If true AND the mesh dimension is not already 3, export a 3d version of the coordinate field.");
 

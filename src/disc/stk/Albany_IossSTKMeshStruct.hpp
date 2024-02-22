@@ -21,22 +21,17 @@ namespace Albany {
 
   class IossSTKMeshStruct : public GenericSTKMeshStruct {
 
-    public:
+  public:
 
     IossSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
                        const Teuchos::RCP<const Teuchos_Comm>& commT, const int numParams);
 
     ~IossSTKMeshStruct();
 
-    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                       const unsigned int worksetSize,
-                       const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+    void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                       const Teuchos::RCP<StateInfoStruct>& sis);
 
-    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                      const unsigned int worksetSize,
-                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {});
+    void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
     double getSolutionFieldHistoryStamp(int step) const;
@@ -48,11 +43,11 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return m_restartDataTime;}
 
-    private:
+  private:
+
+    void loadOrSetCoordinates3d ();
 
     Ioss::Init::Initializer ioInit;
-
-    void loadOrSetCoordinates3d (int index);
 
     Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
@@ -62,9 +57,9 @@ namespace Albany {
     bool periodic;
     Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
-    bool m_hasRestartSolution;
+    bool m_hasRestartSolution = false;
     double m_restartDataTime;
-    int m_solutionFieldHistoryDepth;
+    int m_solutionFieldHistoryDepth = 0;
 
   };
 

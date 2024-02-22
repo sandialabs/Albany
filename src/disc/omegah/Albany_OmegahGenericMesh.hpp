@@ -18,17 +18,8 @@ public:
   // ------------- Override from base class ------------- //
   std::string meshType () const override { return "Omega_h"; }
 
-  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
-  getMeshSpecs() override { return m_mesh_specs; }
-
-  const Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>>&
-  getMeshSpecs() const override { return m_mesh_specs; }
-
-
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                     const unsigned int worksetSize,
-                     const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis) override;
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const Teuchos::RCP<Albany::StateInfoStruct>& sis) override;
 
   // ------------- Omegah specific methods -------------- //
 
@@ -62,8 +53,6 @@ protected:
 
   // Given a part name, returns its topology (in the form of an Omega_h enum
   std::map<std::string,Topo_type>  m_part_topo;
-
-  Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > m_mesh_specs;
 
   Teuchos::RCP<OmegahMeshFieldAccessor>    m_field_accessor;
 
