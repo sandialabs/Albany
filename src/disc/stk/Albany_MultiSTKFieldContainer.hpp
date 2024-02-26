@@ -20,6 +20,7 @@ public:
       const Teuchos::RCP<stk::mesh::MetaData>&        metaData_,
       const Teuchos::RCP<stk::mesh::BulkData>&        bulkData_,
       const int                                       numDim_,
+      const Teuchos::RCP<Albany::StateInfoStruct>&    sis,
       const int                                       num_params);
  
   MultiSTKFieldContainer(

@@ -45,6 +45,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
     const int                                                 numDim_,
+    const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
     const int                                                 num_params_)
     : GenericSTKFieldContainer(
           params_,
@@ -86,6 +87,8 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   }
 
   initializeProcRankField();
+
+  this->addStateStructs(sis);
 }
 
 OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
@@ -195,8 +198,6 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
           *solution_field_dxdp[np], Ioss::Field::TRANSIENT);
 #endif
   }
-
-  this->addStateStructs(sis);
 }
 
 void
