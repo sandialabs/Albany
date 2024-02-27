@@ -171,10 +171,12 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int ebSizeMaxEstimate = basalWorksetSize * numLayers; // This is ebSizeMax when basalWorksetSize is max
   int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
 
-  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, nsNames, ssNames, worksetSize, 
-     ebn, ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Extruded, ctd, numDim,
+                          nsNames, ssNames, worksetSize,
+                          ebn, ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {
@@ -267,7 +269,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   const LO numLocalSides2D = sides2D.size();
 
   this->mesh_layers_ratio = layerThicknessRatio;
-  this->global_cell_layers_data = 
+  this->global_cell_layers_data =
       Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalCells2dId+1,numLayers,Ordering));
   this->local_cell_layers_data =
       Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));

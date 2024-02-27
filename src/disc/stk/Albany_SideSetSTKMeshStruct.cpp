@@ -101,9 +101,13 @@ SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
-
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, this->numDim, nsNames, ssNames, worksetSize,
-                                                                ebn, ebNameToIndex));
+  // Note: if the parent mesh is structured, we could mark this mesh as structured.
+  //       Since I don't think we'll ever use the MeshType info except for the
+  //       extruded case, I'm just going to leave unstructured for now.
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Unstructured, ctd, this->numDim,
+                          nsNames, ssNames, worksetSize,
+                          ebn, ebNameToIndex));
 
   auto mpiComm = getMpiCommFromTeuchosComm(comm);
   stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(mpiComm);

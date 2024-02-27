@@ -395,9 +395,10 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
-                             nsNames, ssNames, worksetSize, ebn,
-                             ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Unstructured, ctd, numDim,
+                          nsNames, ssNames, worksetSize, ebn,
+                          ebNameToIndex));
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);

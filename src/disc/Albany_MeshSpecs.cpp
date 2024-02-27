@@ -14,21 +14,25 @@ MeshSpecsStruct::MeshSpecsStruct()
   ebName         = "";
 }
 
-MeshSpecsStruct::MeshSpecsStruct(
-    const CellTopologyData&  ctd_,
-    int                      numDim_,
-    std::vector<std::string> nsNames_,
-    std::vector<std::string> ssNames_,
-    int                      worksetSize_,
-    const std::string        ebName_,
-    std::map<std::string, int> ebNameToIndex_)
-    : ctd(ctd_),
-      numDim(numDim_),
-      nsNames(nsNames_),
-      ssNames(ssNames_),
-      worksetSize(worksetSize_),
-      ebName(ebName_),
-      ebNameToIndex(ebNameToIndex_)
-{}
+MeshSpecsStruct::
+MeshSpecsStruct(const MeshType           type,
+                const CellTopologyData&  ctd_,
+                int                      numDim_,
+                std::vector<std::string> nsNames_,
+                std::vector<std::string> ssNames_,
+                int                      worksetSize_,
+                const std::string        ebName_,
+                std::map<std::string, int> ebNameToIndex_)
+ : mesh_type(type)
+ , ctd(ctd_)
+ , numDim(numDim_)
+ , nsNames(nsNames_)
+ , ssNames(ssNames_)
+ , worksetSize(worksetSize_)
+ , ebName(ebName_)
+ , ebNameToIndex(ebNameToIndex_)
+{
+  // Nothing to do here
+}
 
 } // namespace Albany

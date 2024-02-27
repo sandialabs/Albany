@@ -198,9 +198,9 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Construct MeshSpecsStruct
   const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(
-      ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
-      ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+      MeshType::Unstructured, ctd, numDim, nsNames, ssNames,
+      worksetSize, partVec[0]->name(), ebNameToIndex));
 
   const Ioss::Region& inputRegion = *(mesh_data->get_input_ioss_region());
   m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();

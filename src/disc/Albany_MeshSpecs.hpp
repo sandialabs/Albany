@@ -43,6 +43,7 @@ struct MeshSpecsStruct
 
   // This constructor initializes all the possible information in a mesh specs object.
   MeshSpecsStruct(
+      const MeshType           mt,
       const CellTopologyData&  ctd_,
       int                      numDim_,
       std::vector<std::string> nsNames_,
@@ -50,6 +51,9 @@ struct MeshSpecsStruct
       int                      worksetSize_,
       const std::string        ebName_,
       std::map<std::string, int> ebNameToIndex_);
+
+  // Type of mesh (structured, extruded, unstructured)
+  MeshType mesh_type;
 
   // nonconst to allow replacement when the mesh adapts
   CellTopologyData ctd;
