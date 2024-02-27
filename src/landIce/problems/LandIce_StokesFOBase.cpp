@@ -6,6 +6,7 @@
 #include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_LINE_I4_FEM.hpp"
 #include "Intrepid2_DerivedBasis_HGRAD_WEDGE.hpp"
+#include "Intrepid2_NodalBasisFamily.hpp"
 
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 
@@ -124,25 +125,55 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 {
   using Teuchos::rcp;
 
-  // Building cell basis and cubature
   const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
-  cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
-  Intrepid2::DefaultCubatureFactory cubFactory;
+  // Get geometry specs
+  bool is_wedge     = cellType->getKey() == shards::Wedge<6>::key;
+  bool is_hexa      = cellType->getKey() == shards::Hexahedron<8>::key;
+  bool is_extruded  = discParams->get<std::string>("Method") == "Extruded";
+  bool tensorProductCell = is_extruded and (is_wedge or is_hexa);
 
+  // Build cell basis
+  if (tensorProductCell) {
+    // We want to take advantage of vertical structure, so use a tensor-product basis
+    using basis_family_type = Intrepid2::DerivedNodalBasisFamily<PHX::Device>;
+    if (is_wedge) {
+      cellBasis = Teuchos::rcp(new basis_family_type::HGRAD_WEDGE(1,1));
+    } else {
+      cellBasis = Teuchos::rcp(new basis_family_type::HGRAD_HEX(1,1,1));
+    }
+    if (depthIntegratedModel) {
+      TEUCHOS_TEST_FOR_EXCEPTION (not (is_extruded and is_wedge and discParams->get<int>("NumLayers") == 1),
+          std::logic_error,
+          "Error! Depth Integrated Model can be used only for 1-layer extruded meshes with Wedge cells\n");
+
+      // The depth-integrated model needs to distinguish between the FE basis (for the solution) and the geometric map basis
+      // The regular cellBasis is used as the geo map basis, while cellDepthIntegratedBasis is the FE basis
+      // TODO: we will have to generalize this, if we want to use higher order approx for regular StokesFO
+      using tri_basis = Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, RealType, RealType>;
+      using line_basis = Intrepid2::Basis_HGRAD_LINE_I4_FEM<PHX::Device, RealType, RealType>;
+
+      int degree = 1; //used only for the triangular basis
+      cellDepthIntegratedBasis = Teuchos::rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<tri_basis, line_basis>(degree));
+    }
+  } else {
+    // Not an extruded mesh, so regular intrepid2 basis works
+    cellBasis = Albany::getIntrepid2Basis(*cell_top);
+  }
+
+  // Build cell cubature
+  Intrepid2::DefaultCubatureFactory cubFactory;
   int defaultCubDegree = 3;
-  bool tensorProductCell = (discParams->get<std::string>("Method") == "Extruded") && ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
   std::string tensorCubDegName = "Cubature Degrees (Horiz Vert)";
   if(tensorProductCell && params->isParameter(tensorCubDegName)) {
     TEUCHOS_TEST_FOR_EXCEPTION (params->isParameter("Cubature Degree") && params->isParameter(tensorCubDegName), std::logic_error,
                                   "Error! Either provide parameter 'Cubatur Degree' or 'Cubature Degrees (Horiz Vert)', not both\n");
-    Teuchos::Array<int> tensorCubDegrees;
-    tensorCubDegrees = params->get<Teuchos::Array<int>>(tensorCubDegName);
-    if(cellType->getKey() == shards::Wedge<6>::key)
+    auto tensorCubDegrees = params->get<Teuchos::Array<int>>(tensorCubDegName);
+    if (is_wedge) {
       cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, tensorCubDegrees.toVector());
-    else {  // (cellType->getKey() == shards::Hexahedron<8>::key)
-      std::vector<int> degree(3); 
+    } else {
+      std::vector<int> degree(3);
       degree[0] = degree[1] = tensorCubDegrees[0]; 
       degree[2] = tensorCubDegrees[1]; 
       cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, degree);
@@ -154,17 +185,6 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int cubDegree = params->get("Cubature Degree", defaultCubDegree);
     cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   }  
-
-  if(depthIntegratedModel) {
-
-    TEUCHOS_TEST_FOR_EXCEPTION ((discParams->get<std::string>("Method") != "Extruded") || (discParams->isParameter("NumLayers") && (discParams->get<int>("NumLayers") != 1)) || (cellType->getKey() != shards::Wedge<6>::key), std::logic_error,
-                                  "Error! Depth Integrated Model can be used only for 1-layer extruded meshes with Wedge cells\n");
-
-    using tri_basis = Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, RealType, RealType>;
-    using line_basis = Intrepid2::Basis_HGRAD_LINE_I4_FEM<PHX::Device, RealType, RealType>;
-    int degree = 1; //used only for the triangular basis
-    cellDepthIntegratedBasis = Teuchos::rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<tri_basis, line_basis>(degree));
-  }
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
   const int numCellSides    = cellType->getSideCount();
