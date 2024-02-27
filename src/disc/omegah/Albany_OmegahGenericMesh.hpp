@@ -21,6 +21,8 @@ public:
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis) override;
 
+  LO get_num_local_elements  () const override;
+
   // ------------- Omegah specific methods -------------- //
 
   Teuchos::RCP<OmegahMeshFieldAccessor> get_field_accessor () const { return m_field_accessor; }

@@ -43,6 +43,8 @@ struct AbstractMeshStruct {
 
     bool isBulkDataSet () const { return m_bulk_data_set; }
 
+    virtual LO get_num_local_elements () const = 0;
+
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
     Teuchos::ArrayRCP<double> mesh_layers_ratio;
