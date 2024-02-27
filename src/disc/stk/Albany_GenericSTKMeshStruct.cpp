@@ -160,6 +160,17 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
 }
 
+LO GenericSTKMeshStruct::
+get_num_local_elements () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
+      "Error! Cannot query number of global elements until bulk data is set.\n");
+
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  return std::distance(bulkData->begin_entities(ELEM_RANK),
+                       bulkData->begin_entities(ELEM_RANK));
+}
+
 void GenericSTKMeshStruct::setAllPartsIO()
 {
 #ifdef ALBANY_SEACAS

@@ -14,6 +14,14 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 }
 
+LO OmegahGenericMesh::get_num_local_elements () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
+      "Error! Cannot query number of global elements until bulk data is set.\n");
+
+  return m_mesh->nelems();
+}
+
 int OmegahGenericMesh::
 part_dim (const std::string& part_name) const
 {
