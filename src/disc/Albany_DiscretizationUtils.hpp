@@ -35,6 +35,12 @@ enum class FE_Type {
   HGRAD
 };
 
+enum class MeshType {
+  Structured,   // structured in all directions
+  Extruded,     // structured vertically
+  Unstructured  // No structure known (e.g., read from file)
+};
+
 inline std::string e2str (const FE_Type fe_type)
 {
   std::string s;

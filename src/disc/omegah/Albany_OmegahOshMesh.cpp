@@ -94,9 +94,10 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, m_mesh->dim(),
-                             nsNames, ssNames, m_mesh->nelems(), ebName,
-                             ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh.dim(),
+                          nsNames, ssNames, m_mesh->nelems(), ebName,
+                          ebNameToIndex));
 }
 
 } // namespace Albany

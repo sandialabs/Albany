@@ -120,9 +120,10 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   }
 
   this->meshSpecs.resize(1);
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
-                             nsNames, ssNames, m_mesh->nelems(), ebName,
-                             ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Structured, *ctd, Dim,
+                          nsNames, ssNames, m_mesh->nelems(), ebName,
+                          ebNameToIndex));
 }
 
 template<unsigned Dim>
