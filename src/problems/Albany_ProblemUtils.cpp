@@ -7,12 +7,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_config.h"
 
-#include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_QUAD_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_TET_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_HEX_C1_FEM.hpp"
-#include "Intrepid2_HGRAD_WEDGE_C1_FEM.hpp"
+#include <Intrepid2_NodalBasisFamily.hpp>
 
 #include "Kokkos_DynRankView.hpp"
 
@@ -24,11 +19,14 @@ namespace Albany
 Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
 getIntrepid2Basis(const CellTopologyData& ctd)
 {
-   typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
+   using basis_family_type = Intrepid2::DerivedNodalBasisFamily<PHX::Device,RealType,RealType>;
+
    using Teuchos::rcp;
    using std::cout;
    using std::endl;
+
    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+
    const int & numNodes = ctd.node_count;
    std::string name     = ctd.name;
    size_t      len      = name.find("_");
@@ -47,7 +45,7 @@ getIntrepid2Basis(const CellTopologyData& ctd)
      cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
 #endif
      if (numNodes == 2)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_LINE_C1_FEM<PHX::Device>() );
+       intrepidBasis = rcp(new basis_family_type::HGRAD_LINE(1) );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -62,7 +60,7 @@ getIntrepid2Basis(const CellTopologyData& ctd)
      cout << "  For " << name << " element, numNodes = " << numNodes << endl;
 #endif
      if (numNodes == 3)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::Device>() );
+       intrepidBasis = rcp(new basis_family_type::HGRAD_TRI(1) );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -77,7 +75,7 @@ getIntrepid2Basis(const CellTopologyData& ctd)
      cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
 #endif
      if (numNodes == 4)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>() );
+       intrepidBasis = rcp(new basis_family_type::HGRAD_QUAD(1) );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -89,7 +87,7 @@ getIntrepid2Basis(const CellTopologyData& ctd)
    else if (name == "Tetrahedron")
    {
      if (numNodes == 4)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>() );
+       intrepidBasis = rcp(new basis_family_type::HGRAD_TET(1) );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -104,7 +102,7 @@ getIntrepid2Basis(const CellTopologyData& ctd)
      cout << "  For " << name << " element, numNodes = " << numNodes << endl;
 #endif
      if (numNodes == 8)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>() );
+       intrepidBasis = rcp(new basis_family_type::HGRAD_HEX(1) );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -116,7 +114,7 @@ getIntrepid2Basis(const CellTopologyData& ctd)
    else if (name == "Wedge")
    {
      if (numNodes == 6)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_WEDGE_C1_FEM<PHX::Device>() );
+       intrepidBasis = rcp(new basis_family_type::HGRAD_WEDGE(1,1) );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
