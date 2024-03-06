@@ -80,7 +80,6 @@ ANONYMOUS:
     Method: Extruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: enth_coupled.exo
-    Use Serial Mesh: true
     Columnwise Ordering: true
     NumLayers: 10
     Thickness Field Name: ice_thickness
@@ -116,7 +115,7 @@ ANONYMOUS:
         Method: Exodus
         Number Of Time Derivatives: 0
         Exodus Input File Name: ../ExoMeshes/slab_2d.exo
-        Use Serial Mesh: false
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Required Fields Info:
           Number Of Fields: 5
           Field 0:

@@ -25,8 +25,8 @@ ALBANY:
   Discretization:
     1D Elements: 10
     2D Elements: 10
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
+    2D Scale: 1.0
     Workset Size: -1
     Method: STK2D
     Exodus Output File Name: thermal2D_explicit_out.exo
@@ -44,25 +44,25 @@ ALBANY:
           Storage Type: Unlimited
           Storage Limit: 20
         Time Step Control:
-          Initial Time: 0.00000000000000000e+18
+          Initial Time: 0.0
           Initial Time Index: 0
           Initial Time Step: 1.0e+03
           Initial Order: 0
           Final Time: 1.0e+5
           Final Time Index: 10000
-          Maximum Absolute Error: 1.00000000000000002e-08
-          Maximum Relative Error: 1.00000000000000002e-08
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
           Time Step Control Strategy:
             Time Step Control Strategy List: basic_vs
             basic_vs:
               Name: Basic VS
-              Reduction Factor: 5.00000000000000000e-01
-              Amplification Factor: 2.00000000000000000e+00
-              Minimum Value Monitoring Function: 4.00000000000000008e-02
-              Maximum Value Monitoring Function: 5.00000000000000027e-02
+              Reduction Factor: 5.0e-01
+              Amplification Factor: 2.0
+              Minimum Value Monitoring Function: 4.0e-02
+              Maximum Value Monitoring Function: 5.0e-02
           Output Time List: ''
           Output Index List: ''
-          #Output Time Interval: 1.00000000000000000e+01
+          #Output Time Interval: 1.0e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
@@ -78,7 +78,7 @@ ALBANY:
           c: 0.000000000000000  0.500000000000000  0.500000000000000 1.000000000000000
           order: 4
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.0e-06
     Test Value: 2.122588137382e+02
-    Relative Tolerance: 1.00000000000000002e-03
+    Relative Tolerance: 1.0e-06
 ...

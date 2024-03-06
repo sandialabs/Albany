@@ -94,6 +94,8 @@ ALBANY:
                 Block Size: 1
                 Num Blocks: 100
                 Flexible Gmres: false
+            VerboseObject:
+              Verbosity Level: low
         Preconditioner Type: Ifpack2
         Preconditioner Types:
           Ifpack2:
@@ -102,9 +104,9 @@ ALBANY:
             Ifpack2 Settings:
               'fact: ilut level-of-fill': 1.0
   Regression For Response 0:
-    Absolute Tolerance: 1.0e-05
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
     Test Value: 3.609439062881e-01
     Sensitivity For Parameter 0:
       Test Value: 1.115080352904e-02
-    Relative Tolerance: 1.0e-03
 ...

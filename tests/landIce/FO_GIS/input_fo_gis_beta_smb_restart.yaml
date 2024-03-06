@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Debug Output:
     Write Solution to MatrixMarket: 0
   Problem:
@@ -69,8 +69,8 @@ ANONYMOUS:
   Discretization:
     Method: Exodus
     Number Of Time Derivatives: 0
-    Exodus Output File Name: gis_beta_smb_restart.exo
-    Exodus Input File Name: gis_beta_smb.exo
+    Exodus Output File Name: gis_beta_smbT_restart.exo
+    Exodus Input File Name: gis_beta_smbT.exo
     Restart Index: 1
     Required Fields Info:
       Number Of Fields: 3
@@ -182,34 +182,32 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-04
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.0e-06
-              Preconditioner Type: Ifpack
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings:
-                    'fact: level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: iluk level-of-fill': 0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
@@ -234,7 +232,7 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.0e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.089553912788e+01
+      Test Value: 1.089552502846e+01
     Test Value: 6.543665368393e+01
     Relative Tolerance: 1.0e-04
   Regression For Response 1:

@@ -23,13 +23,12 @@ IF(ALBANY_SEACAS)
   add_test(${testName}_Analysis ${Albany.exe} input_fo_dome.yaml)
   set_tests_properties(${testName}_Analysis PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
-  if (ALBANY_EPETRA) 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_interpSurf.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_interpSurf.yaml COPYONLY)
 
-    add_test(${testName}_interpSurf ${Albany.exe} input_fo_dome_interpSurf.yaml)
-    set_tests_properties(${testName}_interpSurf PROPERTIES LABELS "LandIce;Epetra;Forward")
-  endif()
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_interpSurf.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_interpSurf.yaml COPYONLY)
+
+  add_test(${testName}_interpSurf ${Albany.exe} input_fo_dome_interpSurf.yaml)
+  set_tests_properties(${testName}_interpSurf PROPERTIES LABELS "LandIce;Tpetra;Forward")
 ENDIF()
 
 ####################################

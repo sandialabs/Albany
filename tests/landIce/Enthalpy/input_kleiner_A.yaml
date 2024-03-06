@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Problem:
     Phalanx Graph Visualization Detail: 2
     Solution Method: Steady
@@ -129,21 +129,6 @@ ANONYMOUS:
             Field Origin: File
             Field Value: 0.042
   Piro:
-    LOCA:
-      Bifurcation: {}
-      Constraints: {}
-      Predictor:
-        Method: Constant
-      Stepper:
-        Initial Value: 0.0
-        Continuation Parameter: Glen's Law Homotopy Parameter
-        Continuation Method: Natural
-        Max Steps: 100
-        Max Value: 4.0e-01
-        Min Value: 0.0
-      Step Size:
-        Initial Step Size: 1.0e-01
-        Max Step Size: 1.0e-01
     NOX:
       Thyra Group Options:
         Function Scaling: Row Sum
@@ -174,21 +159,13 @@ ANONYMOUS:
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 500
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.0e-04
+                      Convergence Tolerance: 1.0e-07
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -196,38 +173,13 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+                  VerboseObject:
+                    Verbosity Level: low
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 0
-                  Prec Type: Amesos
-                  Ifpack Settings:
-                    'fact: level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    ML output: 0
-                    'repartition: enable': 1
-                    'repartition: max min ratio': 1.327
-                    'repartition: min per proc': 600
-                    'repartition: Zoltan dimensions': 2
-                    'repartition: start level': 4
-                    'semicoarsen: number of levels': 2
-                    'semicoarsen: coarsen rate': 12
-                    'smoother: sweeps': 4
-                    'smoother: type': Chebyshev
-                    'smoother: Chebyshev eig boost': 1.2
-                    'smoother: sweeps (level 0)': 1
-                    'smoother: sweeps (level 1)': 4
-                    'smoother: type (level 0)': line Jacobi
-                    'smoother: type (level 1)': line Jacobi
-                    'smoother: damping factor': 5.5e-01
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
-                    'coarse: pre or post': pre
-                    'coarse: sweeps': 4
-                    max levels: 7
+                  Prec Type: Amesos2
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
@@ -251,5 +203,5 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Test Value: 6.078669879412e+01
-    Relative Tolerance: 1.0e-04
+    Relative Tolerance: 1.0e-06
 ...

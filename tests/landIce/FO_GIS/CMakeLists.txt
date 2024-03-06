@@ -8,7 +8,6 @@ set (testNameRoot ${parentDirName}_${dirName})
 # This variable will be set in the input files during the 'configure_file' call
 if (ALBANY_PARALELL_EXODUS)
   set (USE_SERIAL_MESH "true")
-#IKT 5/22/19 - commenting out for now as this is leading to compilation error
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
@@ -71,13 +70,13 @@ IF (NOT ALBANY_PARALELL_EXODUS)
 
   set_tests_properties(${testName}
                        PROPERTIES
-                       LABELS            "LandIce;Epetra;Forward"
+                       LABELS            "LandIce;Tpetra;Forward"
                        FIXTURES_SETUP    PopulateMeshes
                        FIXTURES_REQUIRED meshSetup)
 ELSE ()
   set_tests_properties(${testName}
                        PROPERTIES
-                       LABELS         "LandIce;Epetra;Forward"
+                       LABELS         "LandIce;Tpetra;Forward"
                        FIXTURES_SETUP PopulateMeshes)
 ENDIF()
 
@@ -88,28 +87,27 @@ ENDIF()
 
 set (testName ${testNameRoot}_Unstructured)
 
-if (ALBANY_EPETRA)
-  # First run
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.yaml)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_unstruct.yaml)
-  set_tests_properties(${testName}_Epetra
-                       PROPERTIES
-                       LABELS            "LandIce;Epetra;Forward"
-                       FIXTURES_REQUIRED PopulateMeshes
-                       FIXTURES_SETUP    UnstructRestart)
 
-  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
-    # Restart
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.yaml)
-    add_test(${testName}_Restart ${Albany.exe} input_fo_gis_unstruct_restart.yaml)
-    set_tests_properties(${testName}_Restart
-                         PROPERTIES
-                         LABELS "LandIce;Epetra;Forward"
-                         RUN_SERIAL TRUE
-                         FIXTURES_REQUIRED UnstructRestart)
-  endif()
+# First run
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.yaml)
+add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_unstruct.yaml)
+set_tests_properties(${testName}_Tpetra
+                      PROPERTIES
+                      LABELS            "LandIce;Tpetra;Forward"
+                      FIXTURES_REQUIRED PopulateMeshes
+                      FIXTURES_SETUP    UnstructRestart)
+
+if (NOT ALBANY_DISABLE_OUTPUT_MESH)
+  # Restart
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.yaml)
+  add_test(${testName}_Restart ${Albany.exe} input_fo_gis_unstruct_restart.yaml)
+  set_tests_properties(${testName}_Restart
+                        PROPERTIES
+                        LABELS "LandIce;Tpetra;Forward"
+                        RUN_SERIAL TRUE
+                        DEPENDS ${testName}_Tpetra)
 endif()
 
 if (ALBANY_IFPACK2)
@@ -443,6 +441,10 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_three_params.yaml)
     add_test(${testName}_Tpetra ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_three_params.yaml)
     set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Large;Analysis")
+    if (NOT ALBANY_PARALELL_EXODUS)
+      set_tests_properties(${testNameRoot}_Humboldt_Analysis_ThreeParameters
+        PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+    endif()
   endif()
 endif()
 
@@ -458,16 +460,6 @@ if (ALBANY_EPETRA)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.yaml)
   add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_beta_smb.yaml)
   set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Epetra;Forward")
-
-  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
-    # Restart
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb_restart.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.yaml)
-
-    add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
-    set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName}_Epetra)
-    set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Epetra;Forward")
-  endif()
 endif()
 
 if (ALBANY_IFPACK2)
@@ -475,21 +467,29 @@ if (ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smbT.yaml)
   add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_beta_smbT.yaml)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+
+  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
+    # Restart
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb_restart.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.yaml)
+
+    add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
+    set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName}_Tpetra)
+    set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Tpetra;Forward")
+  endif()
 endif()
 
 ####################################
 ###        Manifold tests        ###
 ####################################
 
-if (ALBANY_EPETRA)
-  set (testName ${testNameRoot}_Manifold)
+set (testName ${testNameRoot}_Manifold)
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_manifold.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_manifold.yaml)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_manifold.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_manifold.yaml)
 
-  add_test(${testName} ${Albany.exe} input_fo_gis_manifold.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
+add_test(${testName} ${Albany.exe} input_fo_gis_manifold.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
 
 ####################################
 ###   Laplacian sampling tests   ###
@@ -513,14 +513,14 @@ if (ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_humboldt_sampling_3D.yaml)
   add_test(${testName} ${Albany.exe} input_humboldt_sampling_3D.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
-endif()
 
 
-if (ALBANY_LARGE_TESTS)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_refine.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_refine.yaml COPYONLY)
+  if (NOT ALBANY_PARALELL_EXODUS)
+    set_tests_properties(${testNameRoot}_Humboldt_LaplacianPriorSampling
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 
-  if(ALBANY_STK_PERCEPT AND ALBANY_EPETRA)
-    add_test(${testName}_Gis20km_refine ${Albany8.exe} input_fo_gis20km_refine.yaml)
+    set_tests_properties(${testNameRoot}_Humboldt_LaplacianPriorSampling_3D
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
   endif()
+
 endif()

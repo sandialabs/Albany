@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Debug Output: 
     Write Solution to MatrixMarket: 0
   Problem: 
@@ -19,10 +19,10 @@ ANONYMOUS:
         Source Field Name: u
         Target Value: 0.0
     Dirichlet BCs: 
-      DBC on NS NodeSet0 for DOF U: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF U: 0.00000000000000000e+00
-      DBC on NS NodeSet4 for DOF U: 0.00000000000000000e+00
-      DBC on NS NodeSet5 for DOF U: 0.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF U: 0.0
+      DBC on NS NodeSet1 for DOF U: 0.0
+      DBC on NS NodeSet4 for DOF U: 0.0
+      DBC on NS NodeSet5 for DOF U: 0.0
     Cubature Degree: 2
 
   Discretization: 
@@ -38,9 +38,9 @@ ANONYMOUS:
         Method: SideSetSTK
         Exodus Output File Name: side_laplacian_3d.exo
   Regression For Response 0: 
-    Test Value: 9.76562500000000000e-04
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
+    Test Value: 9.765625e-04
+    Relative Tolerance: 1.0e-04
+    Absolute Tolerance: 1.0e-04
   Piro: 
     NOX: 
       Nonlinear Solver: Line Search Based
@@ -54,7 +54,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
-          Tolerance: 1.00000000000000008e-05
+          Tolerance: 1.0e-05
         Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -65,37 +65,38 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
           Linear Solver: 
             Write Linear System: false
+            Tolerance: 1.0e-04
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: AztecOO
-              Preconditioner Type: Ifpack
+              Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999955e-07
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
-                  Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings: 
-                    'fact: level-of-fill': 0
-                ML: 
-                  Base Method Defaults: none
-                  ML Settings: 
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
+                    'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Printing: 
         Output Precision: 3

@@ -6,12 +6,12 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     Name: NavierStokes 2D
     Dirichlet BCs:
-      DBC on NS nodelist_1 for DOF ux: 1.00000000000000000e+00
-      DBC on NS nodelist_2 for DOF ux: 0.00000000000000000e+00
-      DBC on NS nodelist_4 for DOF ux: 0.00000000000000000e+00
-      DBC on NS nodelist_1 for DOF uy: 0.00000000000000000e+00
-      DBC on NS nodelist_2 for DOF uy: 0.00000000000000000e+00
-      DBC on NS nodelist_4 for DOF uy: 0.00000000000000000e+00
+      DBC on NS nodelist_1 for DOF ux: 1.0
+      DBC on NS nodelist_2 for DOF ux: 0.0
+      DBC on NS nodelist_4 for DOF ux: 0.0
+      DBC on NS nodelist_1 for DOF uy: 0.0
+      DBC on NS nodelist_2 for DOF uy: 0.0
+      DBC on NS nodelist_4 for DOF uy: 0.0
     Parameters:
       Number Of Parameters: 0
     Response Functions:
@@ -39,11 +39,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999954e-08
+            Tolerance: 1.0e-07
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000002e-03
-            Relative Tolerance: 1.00000000000000002e-03
+            Absolute Tolerance: 1.0e-03
+            Relative Tolerance: 1.0e-03
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 10
@@ -71,6 +71,8 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 Ifpack2: 

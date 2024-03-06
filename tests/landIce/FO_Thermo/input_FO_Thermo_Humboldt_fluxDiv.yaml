@@ -137,8 +137,7 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: surface_height
     Number Of Time Derivatives: 0
-    Exodus Output File Name: ./humboldt_full.exo
-    Use Serial Mesh: false
+    Exodus Output File Name: ./humboldt_full.
     Columnwise Ordering: true
     NumLayers: 2
     Thickness Field Name: ice_thickness
@@ -210,7 +209,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Use Serial Mesh: false
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
         Exodus Output File Name: ./humboldt_basal.exo
         Required Fields Info:

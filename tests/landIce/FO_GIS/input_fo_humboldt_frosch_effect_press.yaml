@@ -153,7 +153,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Use Serial Mesh: false
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
         Exodus Output File Name: output/humboldt_eff_press_basal.exo
         Required Fields Info:

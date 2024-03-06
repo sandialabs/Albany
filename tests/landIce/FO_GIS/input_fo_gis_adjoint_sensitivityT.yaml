@@ -31,7 +31,7 @@ ANONYMOUS:
       Number Of Responses: 1
       Response 0:
         Name: Surface Velocity Mismatch
-        Regularization Coefficient: 1.00000000000000000e+00
+        Regularization Coefficient: 1.0
     Dirichlet BCs: { }
     Neumann BCs: { }
     Parameters: 
@@ -43,15 +43,15 @@ ANONYMOUS:
         Type: Distributed
         Name: basal_friction
     LandIce Physical Parameters: 
-      Water Density: 1.02800000000000000e+03
-      Ice Density: 9.10000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.8e+00
+      Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity: 
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 1.00000000000000006e-01
+      Glen's Law Homotopy Parameter: 1.0e-01
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     Body Force: 
       Type: FO INTERP SURF GRAD
@@ -90,7 +90,7 @@ ANONYMOUS:
       basalside: 
         Method: Ioss
         Number Of Time Derivatives: 0
-        Use Serial Mesh: false
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Exodus Output File Name: gis_unstruct_adjoint_sensitivity_basalT.exo
         Required Fields Info: 
@@ -132,30 +132,8 @@ ANONYMOUS:
             Field Type: Node Vector
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
-  Regression For Response 0:
-    Test Value: 1.096759619809e+08
-    Sensitivity For Parameter 0:
-      Test Value: 1.826167261974e+07
-    Sensitivity For Parameter 1:
-      Test Value: 1.994449777896e+06
-    Relative Tolerance: 1.00000000000000005e-04
-    Absolute Tolerance: 1.00000000000000005e-04
   Piro: 
     Sensitivity Method: Adjoint
-    LOCA: 
-      Bifurcation: { }
-      Constraints: { }
-      Predictor: 
-        Method: Constant
-      Stepper: 
-        Initial Value: 1.00000000000000006e-01
-        Continuation Parameter: Glen's Law Homotopy Parameter
-        Continuation Method: Natural
-        Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
-      Step Size: 
-        Initial Step Size: 2.00000000000000011e-01
     NOX: 
       Status Tests: 
         Test Type: Combo
@@ -169,11 +147,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000008e-05
+            Tolerance: 1.0e-05
           Test 1: 
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000008e-05
-            Relative Tolerance: 1.00000000000000002e-03
+            Absolute Tolerance: 1.00e-05
+            Relative Tolerance: 1.0e-03
         Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -183,6 +161,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
+            Tolerance: 1.0e-04
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
@@ -211,7 +190,7 @@ ANONYMOUS:
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing: 
@@ -229,4 +208,12 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options: 
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Test Value: 1.096759619809e+08
+    Sensitivity For Parameter 0:
+      Test Value: 1.826167261974e+07
+    Sensitivity For Parameter 1:
+      Test Value: 1.994449777896e+06
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
 ...

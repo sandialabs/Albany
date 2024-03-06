@@ -37,7 +37,7 @@ ANONYMOUS:
     Method: STK2D
     Exodus Output File Name: felix_stokes_fo_sinexp2D_out.exo
   Regression For Response 0: 
-    Test Value: 3.71828184922999982e+00
+    Test Value: 3.71828184923e+00
     Relative Tolerance: 1.0e-04
   Regression For Response 1: 
     Test Value: 1.00364399367e+00
@@ -73,20 +73,12 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver: 
             Write Linear System: false
+            Tolerance: 1.0e-04
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
               Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.0e-08
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
@@ -99,6 +91,8 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 Ifpack2: 

@@ -7,15 +7,15 @@ ANONYMOUS:
     Compute Sensitivities: true
     Phalanx Graph Visualization Detail: 2
     Dirichlet BCs: 
-      DBC on NS nodelist_1 for DOF T: 2.00000000000000000e+00
-      DBC on NS nodelist_2 for DOF T: 2.00000000000000000e+00
-      DBC on NS nodelist_3 for DOF T: 1.00000000000000000e+00
-      DBC on NS nodelist_4 for DOF T: 1.00000000000000000e+00
-      DBC on NS nodelist_5 for DOF T: 1.50000000000000000e+00
-      DBC on NS nodelist_6 for DOF T: 1.50000000000000000e+00
+      DBC on NS nodelist_1 for DOF T: 2.0
+      DBC on NS nodelist_2 for DOF T: 2.0
+      DBC on NS nodelist_3 for DOF T: 1.0
+      DBC on NS nodelist_4 for DOF T: 1.0
+      DBC on NS nodelist_5 for DOF T: 1.5
+      DBC on NS nodelist_6 for DOF T: 1.5
     Source Functions: 
       Quadratic: 
-        Nonlinear Factor: 3.00000000000000000e+00
+        Nonlinear Factor: 3.0
     Parameters: 
       Number Of Parameters: 1
       Parameter 0:
@@ -46,10 +46,10 @@ ANONYMOUS:
     Exodus Input File Name: cube.exo
     Exodus Output File Name: cubeOut_tpetra.exo
   Regression For Response 0:
-    Test Value: 1.63043300000000002e+00
-    Relative Tolerance: 1.00000000000000002e-03
+    Test Value: 1.630433
+    Relative Tolerance: 1.0e-03
     Sensitivity For Parameter 0:
-      Test Values: [1.90641599999999994e-01, 1.90639499999999990e-01, 2.05730799999999991e-01, 2.05724700000000010e-01, 2.30336999999999986e-01, 2.30336999999999986e-01, 7.82008000000000009e-02]
+      Test Values: [1.906416e-01, 1.906395e-01, 2.057308e-01, 2.057247e-01, 2.30337e-01, 2.30337e-01, 7.82e-02]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -79,12 +79,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
-                    Tolerance: 1.00000000000000008e-05
+                    Tolerance: 1.0e-05
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000000000008e-05
+                      Convergence Tolerance: 1.0e-05
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -92,18 +92,20 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 Ifpack2: 
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings: 
-                    'fact: drop tolerance': 0.00000000000000000e+00
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 
