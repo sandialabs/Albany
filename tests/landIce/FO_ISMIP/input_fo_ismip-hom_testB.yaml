@@ -1,14 +1,15 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Problem:
     Phalanx Graph Visualization Detail: 2
-    Solution Method: Continuation
+    Solution Method: Steady
     Name: LandIce Stokes First Order 3D
+    Compute Sensitivities: true
     Dirichlet BCs:
-      DBC on NS NodeSet4 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet4 for DOF U1: 0.00000000000000000e+00
+      DBC on NS NodeSet4 for DOF U0: 0.0
+      DBC on NS NodeSet4 for DOF U1: 0.0
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
@@ -16,39 +17,31 @@ ANONYMOUS:
         Name: Glen's Law Homotopy Parameter
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 2.99999999999999988e-01
+      Glen's Law Homotopy Parameter: 0.5
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
     Body Force:
       Type: FO INTERP SURF GRAD
-      LandIce alpha: 5.00000000000000000e-01
+      LandIce alpha: 0.5
     Response Functions:
-      Response 4:
-        Type: Scalar Response
-        Name: Solution Average
-      Response 3:
-        Equation: 3
-        Type: Scalar Response
-        Name: Solution Max Value
-      Response 2:
-        Equation: 2
+      Number Of Responses: 3
+      Response 0:
+        Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
       Response 1:
         Equation: 1
         Type: Scalar Response
         Name: Solution Max Value
-      Response 0:
-        Equation: 0
+      Response 2:
         Type: Scalar Response
-        Name: Solution Max Value
-      Number Of Responses: 5
-  Debug Output:
-    Write Jacobian to MatrixMarket: -1
-    Write Residual to MatrixMarket: -1
-    Write Solution to MatrixMarket: -1
-    Write Distributed Solution and Map to MatrixMarket: true
-    Write Solution to Standard Output: -1
+        Name: Solution Average
+  #Debug Output:
+  #  Write Jacobian to MatrixMarket: -1
+  #  Write Residual to MatrixMarket: -1
+  #  Write Solution to MatrixMarket: -1
+  #  Write Distributed Solution and Map to MatrixMarket: true
+  #  Write Solution to Standard Output: -1
   Discretization:
     Periodic_x BC: true
     Periodic_y BC: true
@@ -56,30 +49,22 @@ ANONYMOUS:
     1D Elements: 20
     2D Elements: 20
     3D Elements: 5
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
-    3D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
+    2D Scale: 1.0
+    3D Scale: 1.0
     Transform Type: ISMIP-HOM Test B
-    LandIce alpha: 5.00000000000000000e-01
-    LandIce L: 5.00000000000000000e+00
+    LandIce alpha: 0.5
+    LandIce L: 5.0
     Method: STK3D
     Exodus Output File Name: felix_stokes_fo_ismip-hom_testB_out.exo
     Write Coordinates to MatrixMarket: true
+    Required Fields Info:
+      Number Of Fields: 1
+      Field 0:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
   Piro:
-    LOCA:
-      Bifurcation: {}
-      Constraints: {}
-      Predictor:
-        Method: Constant
-      Stepper:
-        Initial Value: 0.00000000000000000e+00
-        Continuation Parameter: Glen's Law Homotopy Parameter
-        Continuation Method: Natural
-        Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
-      Step Size:
-        Initial Step Size: 1.00000000000000005e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -93,11 +78,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999979e-13
+            Tolerance: 1.0e-12
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000004e-04
-            Relative Tolerance: 1.00000000000000002e-08
+            Absolute Tolerance: 1.0e-04
+            Relative Tolerance: 1.0e-08
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 10
@@ -107,51 +92,37 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-4
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-07
+                      Convergence Tolerance: 1.0e-6
                       Output Frequency: 20
                       Output Style: 1
-                      Verbosity: 0
+                      Verbosity: 33
                       Maximum Iterations: 200
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: ML
+                  VerboseObject:
+                    Verbosity Level: low
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 1
-                  Prec Type: ILU
-                  Ifpack Settings:
-                    'fact: level-of-fill': 2
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
-                    PDE equations: 4
+                  Prec Type: ILUT
+                  Ifpack2 Settings:
+                    'fact: ilut level-of-fill': 2.0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -170,20 +141,17 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Sensitivity For Parameter 0:
-      Test Value: 2.08812026833999991e-01
-    Test Value: 1.02769317403000002e+01
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
+    Test Value: 1.067962127873e+01
   Regression For Response 1:
-    Test Value: 5.93163476096999976e-13
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-10
+    Test Value: 0.0
   Regression For Response 2:
-    Test Value: 1.02782506230999999e+01
-    Relative Tolerance: 1.00000000000000004e-04
-  Regression For Response 3:
-    Test Value: 6.86107032183999997e-13
-    Relative Tolerance: 1.00000000000000004e-04
-  Regression For Response 4:
-    Test Value: 3.51666984258999981e+00
-    Relative Tolerance: 1.00000000000000004e-04
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-010
+    Test Value: 3.649614402659e+00
+    Sensitivity For Parameter 0:
+      Test Value: -6.431392908894e-05
 ...

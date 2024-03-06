@@ -7,12 +7,12 @@ ANONYMOUS:
     Solution Method: Transient
     Dirichlet BCs:
       Time Dependent DBC on NS inlet for DOF ux:
-        Time Values: [0.00000000000000000e+00, 1.00000000000000000e+00, 1.20000000000000000e+01]
-        BC Values: [0.00000000000000000e+00, 5.20000000000000000e+01, 5.20000000000000000e+01]
-      DBC on NS inlet for DOF uy: 0.00000000000000000e+00
-      DBC on NS cylinder for DOF ux: 0.00000000000000000e+00
-      DBC on NS cylinder for DOF uy: 0.00000000000000000e+00
-      DBC on NS sides for DOF uy: 0.00000000000000000e+00
+        Time Values: [0.0, 1.0, 1.2e+01]
+        BC Values: [0.0, 5.2e+01, 5.2e+01]
+      DBC on NS inlet for DOF uy: 0.0
+      DBC on NS cylinder for DOF ux: 0.0
+      DBC on NS cylinder for DOF uy: 0.0
+      DBC on NS sides for DOF uy: 0.0
     Parameters:
       Number Of Parameters: 0
     Response Functions:
@@ -38,16 +38,16 @@ ANONYMOUS:
           Storage Type: Unlimited
           Storage Limit: 20
         Time Step Control:
-          Initial Time: 0.00000000000000000e+00
+          Initial Time: 0.0
           Initial Time Index: 0
           Initial Time Step: 0.01666666667
-          Final Time: 5.00000000000000000e+00
+          Final Time: 5.0
           Final Time Index: 10000
-          Maximum Absolute Error: 1.00000000000000002e-08
-          Maximum Relative Error: 1.00000000000000002e-08
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
           Output Time List: ''
           Output Index List: ''
-          #Output Time Interval: 1.00000000000000000e+01
+          #Output Time Interval: 1.0e+01
           Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
@@ -62,10 +62,10 @@ ANONYMOUS:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
                 Linear Solver:
-                  Tolerance: 9.99999999999999954e-07
+                  Tolerance: 1.0e-06
             Line Search:
               Full Step:
-                Full Step: 1.00000000000000000e+00
+                Full Step: 1.0
               Method: Full Step
             Nonlinear Solver: Line Search Based
             Printing:
@@ -89,7 +89,7 @@ ANONYMOUS:
               Number of Tests: 2
               Test 0:
                 Test Type: NormF
-                Tolerance: 1.00000000000000002e-08
+                Tolerance: 1.0e-08
               Test 1:
                 Test Type: MaxIters
                 Maximum Iterations: 10
@@ -103,7 +103,7 @@ ANONYMOUS:
             Solver Type: Block GMRES
             Solver Types:
               Block GMRES:
-                Convergence Tolerance: 9.99999999999999954e-07
+                Convergence Tolerance: 1.0e-06
                 Output Frequency: 1
                 Output Style: 1
                 Verbosity: 33
@@ -117,9 +117,9 @@ ANONYMOUS:
             Overlap: 0
             Prec Type: ILUT
             Ifpack2 Settings:
-              'fact: drop tolerance': 0.00000000000000000e+00
+              'fact: drop tolerance': 0.0
               'fact: ilut level-of-fill': 1.0
   Regression For Response 0:
-    Test Value: 7.26888316626999966e+01
-    Relative Tolerance: 1.00000000000000002e-03
+    Test Value: 7.268852698083e+01
+    Relative Tolerance: 1.0e-06
 ...

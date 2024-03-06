@@ -7,21 +7,21 @@ ANONYMOUS:
     Compute Sensitivities: true
     Phalanx Graph Visualization Detail: 1
     Dirichlet BCs: 
-      DBC on NS NodeSet0 for DOF T: 2.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF T: 2.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF T: 1.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF T: 1.00000000000000000e+00
-      DBC on NS NodeSet4 for DOF T: 1.50000000000000000e+00
-      DBC on NS NodeSet5 for DOF T: 1.50000000000000000e+00
+      DBC on NS NodeSet0 for DOF T: 2.0
+      DBC on NS NodeSet1 for DOF T: 2.0
+      DBC on NS NodeSet2 for DOF T: 1.0
+      DBC on NS NodeSet3 for DOF T: 1.0
+      DBC on NS NodeSet4 for DOF T: 1.5
+      DBC on NS NodeSet5 for DOF T: 1.5
     Initial Condition: 
       Function: Constant
-      Function Data: [1.50000000000000000e+00]
+      Function Data: [1.5]
     ThermalConductivity: 
       ThermalConductivity Type: Constant
-      Value: 3.00000000000000000e+00
+      Value: 3.0
     Source Functions: 
       Quadratic: 
-        Nonlinear Factor: 3.00000000000000000e+00
+        Nonlinear Factor: 3.0
     Parameters: 
       Number Of Parameters: 1
       Parameter 0:
@@ -53,10 +53,10 @@ ANONYMOUS:
     Workset Size: 100
     Method: Ascii
   Regression For Response 0:
-    Test Value: 5.64511798500000026e+01
-    Relative Tolerance: 1.00000000000000002e-03
+    Test Value: 5.645117985e+01
+    Relative Tolerance: 1.0e-03
     Sensitivity For Parameter 0:
-      Test Values: [6.58433553203999988e+00, 6.58432125014000036e+00, 5.21736314617000030e+00, 5.21731994254999965e+00, 7.07370218711000032e+00, 7.07371668683000010e+00, 5.14000048705000046e-01, -5.14000048705000046e-01]
+      Test Values: [6.58433553204e+00, 6.58432125014e+00, 5.21736314617e+00, 5.21731994255e+00, 7.07370218711e+00, 7.0737166868e+00, 5.14000048705e-01, -5.14000048705e-01]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -73,25 +73,19 @@ ANONYMOUS:
         Newton: 
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
+          Linear Solver: 
+            Write Linear System: false
+            Tolerance: 1.0e-04
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
               Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 10
-                    Max Iterations: 200
-                    Tolerance: 1.00000000000000008e-05
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000000000008e-05
+                      Convergence Tolerance: 1.0e-05
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -99,18 +93,20 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 Ifpack2: 
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings: 
-                    'fact: drop tolerance': 0.00000000000000000e+00
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 

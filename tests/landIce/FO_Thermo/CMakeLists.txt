@@ -24,41 +24,34 @@ else ()
   set (DIRECT_SOLVER "klu")
 endif()
 
-if (ALBANY_EPETRA)
+# Copy input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_dry_bed_test.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_dry_bed_test.yaml)
+                
+# Copy input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test.yaml)
+                
+# Create the tests
+set (testName ${testNameRoot}_Dry_Bed)
+add_test(${testName} ${Albany.exe} input_FO_Thermo_dry_bed_test.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
-  # Copy input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_dry_bed_test.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_dry_bed_test.yaml)
-                 
-  # Copy input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test.yaml)
-                 
-  # Create the tests
-  set (testName ${testNameRoot}_Dry_Bed)
-  add_test(${testName} ${Albany.exe} input_FO_Thermo_dry_bed_test.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
-  
-  set (testName ${testNameRoot}_Wet_Bed)
-  add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
-  
-  # If Iopx is not present, we must decompose the input mesh first
-  if (NOT ALBANY_PARALELL_EXODUS)
-    add_test (NAME ${testNameRoot}_Humboldt_decompMesh
-            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-    set_tests_properties (${testNameRoot}_Humboldt_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
+set (testName ${testNameRoot}_Wet_Bed)
+add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
-    set_tests_properties(${testName}
-                       PROPERTIES
-                       LABELS            "LandIce;Epetra;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
-    else ()
-    set_tests_properties(${testName}
-                       PROPERTIES
-                       LABELS         "LandIce;Epetra;Forward")
-  endif()
+# If Iopx is not present, we must decompose the input mesh first
+if (NOT ALBANY_PARALELL_EXODUS)
+  add_test (NAME ${testNameRoot}_Humboldt_decompMesh
+          COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+  set_tests_properties (${testNameRoot}_Humboldt_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup2d)
+
+  add_test (NAME ${testNameRoot}_Humboldt_contiguous_2d_decompMesh
+        COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_contiguous_2d.exo
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+  set_tests_properties (${testNameRoot}_Humboldt_contiguous_2d_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetupContiguous2d)
 endif()
 
 # Copy input file from source to binary dir
@@ -100,6 +93,19 @@ if (ALBANY_FROSCH)
   set (testName ${testNameRoot}_Humboldt_lubricated)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_lubricated.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+
+  if (NOT ALBANY_PARALELL_EXODUS)
+    set_tests_properties(${testNameRoot}_Humboldt_fluxDiv
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
+
+    set_tests_properties(${testNameRoot}_Humboldt_depthIntegrated_fluxDiv
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
+
+    set_tests_properties(${testNameRoot}_Humboldt_lubricated
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
+  endif()
+
+
 endif()
 
 if(${PYTHON_TEST})
@@ -125,5 +131,13 @@ if (ALBANY_FROSCH AND ALBNAY_TEKO)
   set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
   # Prevent the two tests to be run at the same time as they rely on written files:
   set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Contiguous}_Parallel)
+
+  if (NOT ALBANY_PARALELL_EXODUS)
+    set_tests_properties(${testNameRoot}_Contiguous_Mesh_Hessian_Parallel
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
+
+    set_tests_properties(${testNameRoot}_Non_Contiguous_Mesh_Hessian_Parallel
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+  endif()
 endif()
 endif()

@@ -5,15 +5,15 @@ ANONYMOUS:
   Problem: 
     Name: Heat 2D
     Dirichlet BCs: 
-      DBC on NS nodelist_15 for DOF T: 1.50000000000000000e+00
-      DBC on NS nodelist_16 for DOF T: 1.00000000000000000e+00
-      DBC on NS nodelist_17 for DOF T: 1.00000000000000000e+00
-      DBC on NS nodelist_18 for DOF T: 1.00000000000000000e+00
+      DBC on NS nodelist_15 for DOF T: 1.5
+      DBC on NS nodelist_16 for DOF T: 1.0
+      DBC on NS nodelist_17 for DOF T: 1.0
+      DBC on NS nodelist_18 for DOF T: 1.0
     Initial Condition: 
       Function: Restart
     Source Functions: 
       Quadratic: 
-        Nonlinear Factor: 3.39999999999999991e+00
+        Nonlinear Factor: 3.4
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -24,9 +24,9 @@ ANONYMOUS:
     Exodus Output File Name: quadOutOut_tpetra.exo
     Restart Index: 1
     Restart Fields: [T]
-  Regression For Response 0: 
-    Test Value: 1.42910000000000004e+00
-    Relative Tolerance: 1.00000000000000002e-03
+  Regression For Response 0:
+    Relative Tolerance: 1.0e-6
+    Test Value: 1.429137791175e+00
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -56,12 +56,12 @@ ANONYMOUS:
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
-                    Tolerance: 1.00000000000000008e-05
+                    Tolerance: 1.0e-05
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000000000008e-05
+                      Convergence Tolerance: 1.0e-05
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -69,18 +69,20 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 Ifpack2: 
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings: 
-                    'fact: drop tolerance': 0.00000000000000000e+00
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 
@@ -94,7 +96,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
-          Tolerance: 1.00000000000000002e-08
+          Tolerance: 1.0e-08
         Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 1

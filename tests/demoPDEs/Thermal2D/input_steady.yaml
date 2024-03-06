@@ -30,8 +30,8 @@ ALBANY:
   Discretization:
     1D Elements: 3
     2D Elements: 3
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
+    2D Scale: 1.0
     Workset Size: -1
     Method: STK2D
     Exodus Output File Name: thermal2D_steady_out.exo
@@ -52,6 +52,8 @@ ALBANY:
         Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
+          Linear Solver:
+            Tolerance: 1.0e-04
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
@@ -65,12 +67,12 @@ ALBANY:
                       Size of Krylov Subspace: 200
                       Output Frequency: 10
                     Max Iterations: 200
-                    Tolerance: 1.00000000000000008e-05
+                    Tolerance: 1.0e-05
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000008e-05
+                      Convergence Tolerance: 1.0e-05
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -78,18 +80,20 @@ ALBANY:
                       Block Size: 1
                       Num Blocks: 50
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: Ifpack2
               Preconditioner Types:
                 Ifpack2:
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings:
-                    'fact: drop tolerance': 0.00000000000000000e+18
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -98,7 +102,7 @@ ALBANY:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.00000000000000008e-05
+    Absolute Tolerance: 1.0e-06
     Test Value: 8.42895275298
-    Relative Tolerance: 1.00000000000000002e-03
+    Relative Tolerance: 1.0e-06
 ...

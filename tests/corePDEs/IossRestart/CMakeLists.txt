@@ -34,24 +34,3 @@ if (ALBANY_IFPACK2)
   add_test(${testName}_Tpetra ${Albany.exe} inputT.yaml)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 endif ()
-
-####################################
-###        Refine tests          ###
-####################################
-
-IF(ALBANY_STK_PERCEPT)
-  set (testName ${testNameRoot}_Refine)
-  if (ALBANY_EPETRA) 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRefine1.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/inputRefine1.yaml COPYONLY)
-
-    add_test(${testName}_1_Epetra ${Albany.exe} inputRefine1.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRefine2.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/inputRefine2.yaml COPYONLY)
-
-    add_test(${testName}_2_Epetra ${Albany.exe} inputRefine2.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-  endif()
-ENDIF()

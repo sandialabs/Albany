@@ -1,18 +1,18 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Problem:
     Phalanx Graph Visualization Detail: 0
     Name: NavierStokes 2D
     Compute Sensitivities: false
     Solution Method: Continuation
     Dirichlet BCs:
-      DBC on NS inlet for DOF ux: 1.00000000000000000e+00
-      DBC on NS inlet for DOF uy: 0.00000000000000000e+00
-      DBC on NS cylinder for DOF ux: 0.00000000000000000e+00
-      DBC on NS cylinder for DOF uy: 0.00000000000000000e+00
-      DBC on NS sides for DOF uy: 0.00000000000000000e+00
+      DBC on NS inlet for DOF ux: 1.0
+      DBC on NS inlet for DOF uy: 0.0
+      DBC on NS cylinder for DOF ux: 0.0
+      DBC on NS cylinder for DOF uy: 0.0
+      DBC on NS sides for DOF uy: 0.0
     Parameters:
       Number Of Parameters: 2
       Parameter 0:
@@ -38,12 +38,12 @@ ANONYMOUS:
       Predictor:
         Method: Tangent
       Stepper:
-        Initial Value: 4.30000000000000000e+01
+        Initial Value: 4.3e+01
         Continuation Method: Natural
         Continuation Parameter: DBC on NS inlet for DOF ux
         Max Steps: 1
-        Max Value: 5.00000000000000000e+01
-        Min Value: 5.00000000000000000e-01
+        Max Value: 5.0e+01
+        Min Value: 5.0e-01
         Compute Eigenvalues: true
         Eigensolver:
           Method: Anasazi
@@ -53,11 +53,11 @@ ANONYMOUS:
           Save Eigenvectors: 1
           Block Size: 1
           Maximum Restarts: 0
-          Cayley Pole: 1.00000000000000000e+01
-          Cayley Zero: -1.00000000000000000e+01
+          Cayley Pole: 1.00e+01
+          Cayley Zero: -1.0e+01
           Normalize Eigenvectors with Mass Matrix: false
       Step Size:
-        Initial Step Size: 2.00000000000000000e+00
+        Initial Step Size: 2.0
     NOX:
       Status Tests:
         Test Type: Combo
@@ -71,11 +71,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 9.99999999999999979e-13
+            Tolerance: 1.0e-12
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000004e-04
-            Relative Tolerance: 1.00000000000000002e-08
+            Absolute Tolerance: 1.0e-04
+            Relative Tolerance: 1.0e-08
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 10
@@ -85,51 +85,39 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-4
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
                 Belos:
+                  VerboseObject:
+                    Verbosity Level: high
+                    Output File: BelosSolverT.out
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-08
-                      Output Frequency: 20
+                      Convergence Tolerance: 1.0e-06
+                      Output Frequency: 1
                       Output Style: 1
                       Verbosity: 33
                       Maximum Iterations: 200
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
-                  Overlap: 1
-                  Prec Type: ILU
-                  Ifpack Settings:
-                    'fact: level-of-fill': 2
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
-                    PDE equations: 4
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: ILUT
+                  Ifpack2 Settings:
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -149,5 +137,5 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Test Value: 6.025494621e+01
-    Relative Tolerance: 1.0e-03
+    Relative Tolerance: 1.0e-06
 ...

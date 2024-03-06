@@ -30,16 +30,14 @@ endif()
 ###         TestB  tests         ###
 ####################################
 
-# Currently broken
-# set(testName ${testNameRoot}_TestB)
 
-# if (ALBANY_EPETRA) 
-#   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testB.yaml
-#                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testB.yaml COPYONLY)
+set(testName ${testNameRoot}_TestB)
 
-#   add_test(${testName}_Epetra ${Albany.exe} input_fo_ismip-hom_testB.yaml)
-#   set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-# endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testB.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testB.yaml COPYONLY)
+
+add_test(${testName}_Tpetra ${Albany.exe} input_fo_ismip-hom_testB.yaml)
+set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
 
 ####################################
@@ -69,13 +67,11 @@ endif()
 ###         TestD  tests         ###
 ####################################
 
-# Currently broken
-# set(testName ${testNameRoot}_TestD)
 
-# if (ALBANY_EPETRA) 
-# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testD.yaml
-#                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testD.yaml COPYONLY)
+set(testName ${testNameRoot}_TestD)
 
-#   add_test(${testName}_Epetra ${Albany.exe} input_fo_ismip-hom_testD.yaml)
-#   set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-# endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testD.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testD.yaml COPYONLY)
+
+add_test(${testName}_Tpetra ${Albany.exe} input_fo_ismip-hom_testD.yaml)
+set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")

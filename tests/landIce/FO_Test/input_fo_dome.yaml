@@ -90,20 +90,12 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-06
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 1.0e-6
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
@@ -116,6 +108,8 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: Ifpack2
               Preconditioner Types:
                 Ifpack2:
@@ -145,19 +139,17 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.0e-04
-    Relative Tolerance: 1.0e-04
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
     Test Value: 8.570866677e+01    
   Regression For Response 1:
-    Absolute Tolerance: 1.0e-04
+    Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-04
     Test Value: 8.570866677e+01
   Regression For Response 2:
     Absolute Tolerance: 1.0e-08
-    Relative Tolerance: 1.0e-04
+    Relative Tolerance: 1.0e-06
     Test Value: 0.0
     Sensitivity For Parameter 0:
       Test Value: 0.0
-    
-    
 ...

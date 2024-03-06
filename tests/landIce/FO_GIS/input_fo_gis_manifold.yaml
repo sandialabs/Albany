@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Epetra
+  Build Type: Tpetra
   Debug Output:
     Write Solution to MatrixMarket: 0
   Problem:
@@ -40,23 +40,23 @@ ANONYMOUS:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
     LandIce Physical Parameters:
-      Water Density: 1.02800000000000000e+03
-      Ice Density: 9.10000000000000000e+02
-      Gravity Acceleration: 9.80000000000000071e+00
-      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
+      Water Density: 1.028e+03
+      Ice Density: 9.1e+02
+      Gravity Acceleration: 9.8e+00
+      Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 1.00000000000000005e-01
+      Glen's Law Homotopy Parameter: 1.0e-01
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.00000000000000000e+00
+      Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
     Body Force:
       Type: FO INTERP SURF GRAD
     Stereographic Map:
       Use Stereographic Map: true
-      Earth Radius: 6.37100000000000000e+03
-      X_0: 0.00000000000000000e+00
-      Y_0: 0.00000000000000000e+00
+      Earth Radius: 6.371e+03
+      X_0: 0.0
+      Y_0: 0.0
   Discretization:
     Columnwise Ordering: true
     Method: Extruded
@@ -137,14 +137,14 @@ ANONYMOUS:
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 1.00000000000000005e-01
+        Initial Value: 1.0e-01
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.00000000000000000e+00
-        Min Value: 0.00000000000000000e+00
+        Max Value: 1.0
+        Min Value: 0.0
       Step Size:
-        Initial Step Size: 2.00000000000000011e-01
+        Initial Step Size: 2.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -158,11 +158,11 @@ ANONYMOUS:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.00000000000000008e-05
+            Tolerance: 1.0e-05
           Test 1:
             Test Type: NormWRMS
-            Absolute Tolerance: 1.00000000000000008e-05
-            Relative Tolerance: 1.00000000000000002e-03
+            Absolute Tolerance: 1.0e-05
+            Relative Tolerance: 1.0e-03
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -172,38 +172,36 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-6  #used for forward solve
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
-              Linear Solver Type: AztecOO
+              Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 20
-                    Max Iterations: 200
-                    Tolerance: 9.99999999999999954e-07
-              Preconditioner Type: Ifpack
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
               Preconditioner Types:
-                Ifpack:
+                Ifpack2:
                   Overlap: 0
-                  Prec Type: ILU
-                  Ifpack Settings:
-                    'fact: level-of-fill': 0
-                ML:
-                  Base Method Defaults: none
-                  ML Settings:
-                    default values: SA
-                    'smoother: type': ML symmetric Gauss-Seidel
-                    'smoother: pre or post': both
-                    'coarse: type': Amesos-KLU
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: iluk level-of-fill': 0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:

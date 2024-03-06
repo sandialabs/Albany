@@ -14,8 +14,8 @@ ANONYMOUS:
     Exodus Output File Name: ./populated_mesh.exo
     1D Elements: 2
     2D Elements: 2
-    1D Scale: 1.00000000000000000e+00
-    2D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
+    2D Scale: 1.0
     Cell Topology: Quad
     Required Fields Info: 
       Number Of Fields: 3
@@ -29,7 +29,7 @@ ANONYMOUS:
         Field Type: Elem Vector
         Field Origin: File
         Vector Dim: 3
-        Field Value: [1.23399999999999996e-01, 5.67889999999999961e+00, -1.00000000000000000e+00]
+        Field Value: [1.234e-01, 5.6789e+00, -1.0e+00]
       Field 2: 
         Field Name: field_2
         Field Type: Node Scalar

@@ -51,7 +51,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Use Serial Mesh: true
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
         Required Fields Info:
           Number Of Fields: 3
@@ -100,6 +100,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1e-4
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:

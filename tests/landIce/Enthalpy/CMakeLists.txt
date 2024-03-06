@@ -37,22 +37,21 @@ else ()
                        LABELS "LandIce;Tpetra;Forward")
 endif()  
   
-if (ALBANY_EPETRA)
-  # Copy input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_kleiner_B.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_kleiner_B.yaml COPYONLY)
 
-  # Create the test
-  add_test(${testName}_Kleiner_B ${SerialAlbany.exe} input_kleiner_B.yaml)
-  set_tests_properties(${testName}_Kleiner_B PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
-  
-  
-  # Copy input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_kleiner_A.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_kleiner_A.yaml COPYONLY)
+# Copy input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_kleiner_B.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_kleiner_B.yaml COPYONLY)
 
-  # Create the test
-  add_test(${testName}_Kleiner_A ${SerialAlbany.exe} input_kleiner_A.yaml)
-  set_tests_properties(${testName}_Kleiner_A PROPERTIES LABELS "LandIce;Epetra;Forward;Serial")
-endif()
+# Create the test
+add_test(${testName}_Kleiner_B ${SerialAlbany.exe} input_kleiner_B.yaml)
+set_tests_properties(${testName}_Kleiner_B PROPERTIES LABELS "LandIce;Tpetra;Forward;Serial")
+
+
+# Copy input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_kleiner_A.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_kleiner_A.yaml COPYONLY)
+
+# Create the test
+add_test(${testName}_Kleiner_A ${SerialAlbany.exe} input_kleiner_A.yaml)
+set_tests_properties(${testName}_Kleiner_A PROPERTIES LABELS "LandIce;Tpetra;Forward;Serial")
 

@@ -104,6 +104,7 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
+            Tolerance: 1.0e-04
           Stratimikos Linear Solver:
             NOX Stratimikos Options: {}
             Stratimikos:
@@ -113,7 +114,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 9.99999999999999954e-07
+                      Convergence Tolerance: 1.0e-06
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 0
@@ -121,13 +122,15 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
               Preconditioner Type: MueLu
               Preconditioner Types:
                 Ifpack2:
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings:
-                    'fact: ilut level-of-fill': 2.00000000000000000e+00
+                    'fact: ilut level-of-fill': 2.0
                 MueLu:
                   multigrid algorithm: sa
                   'use kokkos refactor': false
