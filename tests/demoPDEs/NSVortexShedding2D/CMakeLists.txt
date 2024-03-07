@@ -34,14 +34,6 @@ set_tests_properties(${testName} PROPERTIES LABELS "Demo;Tpetra;Forward")
 
 set (testName ${testNameRoot}_TransientIRK)
 
-if (ALBANY_EPETRA)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} inputTransientRK.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Demo;Epetra;Forward")
-endif(ALBANY_EPETRA)
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRKT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRKT.yaml COPYONLY)

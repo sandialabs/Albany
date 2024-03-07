@@ -22,14 +22,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.3
 
 set(testName ${testNameRoot})
 
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-endif()
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
@@ -43,14 +35,6 @@ endif ()
 ####################################
 
 set(testName ${testNameRoot}_dydx)
-
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dudx.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_dudx.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_dudx.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-endif()
 
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_dudx.yaml

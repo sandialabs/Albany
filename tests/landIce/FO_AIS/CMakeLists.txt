@@ -57,21 +57,6 @@ if (Kokkos_ENABLE_CUDA AND NOT Kokkos_ENABLE_CUDA_UVM)
   return() # don't add any tests past this point if this is a CUDA build with uvm disabled
 endif()
 
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputML.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputML.yaml)
-  add_test(${testNameRoot}_ML ${Albany8.exe} inputML.yaml)
-    
-  if (NOT ALBANY_PARALELL_EXODUS)
-    set_tests_properties(${testNameRoot}_ML
-                     PROPERTIES
-                     LABELS            "LandIce;Epetra;Forward"
-                     FIXTURES_REQUIRED antarcticaMeshSetup)
-  else()
-    set_tests_properties(${testNameRoot}_ML PROPERTIES LABELS "LandIce;Epetra;Forward")
-  endif()
-endif()
-
 if(ALBANY_MUELU)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLu.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.yaml)

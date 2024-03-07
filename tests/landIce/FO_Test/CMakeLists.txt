@@ -36,14 +36,6 @@ ENDIF()
 ####################################
 
 set(testName ${testNameRoot}_ConfinedShelf)
-if (ALBANY_EPETRA)
-
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_confinedShelf.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
 
 if (ALBANY_IFPACK2) 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelfT.yaml
@@ -54,14 +46,6 @@ if (ALBANY_IFPACK2)
 endif()
 
 set(testName ${testNameRoot}_ConfinedShelf_DepthIntBC)
-if (ALBANY_EPETRA)
-
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf_depthIntBC.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf_depthIntBC.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_confinedShelf_depthIntBC.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
 
 if (ALBANY_IFPACK2) 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf_depthIntBCT.yaml
@@ -77,13 +61,6 @@ endif()
 
 IF(ALBANY_SEACAS)
   set (testName ${testNameRoot}_CircularShelf)
-  if (ALBANY_EPETRA) 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_circularShelf.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_circularShelf.yaml COPYONLY)
-
-    add_test(${testName}_Epetra ${Albany.exe} input_fo_circularShelf.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-  endif()
 
   if (ALBANY_IFPACK2) 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_circularShelfT.yaml
