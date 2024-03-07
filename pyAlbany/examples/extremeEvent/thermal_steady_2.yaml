@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Tpetra
   Problem:
     Name: Thermal 2D
     Solution Method: Steady
