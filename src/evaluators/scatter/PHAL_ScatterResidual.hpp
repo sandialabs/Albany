@@ -33,7 +33,7 @@ class DOFManager;
 
 namespace PHAL {
 /** \brief Scatters result from the residual fields into the
-    global (epetra) data structures.  This includes the
+    global (tpetra) data structures.  This includes the
     post-processing of the AD data type for all evaluation
     types besides Residual.
 

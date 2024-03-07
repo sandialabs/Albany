@@ -4,20 +4,16 @@
 // ===================== Macros to identify packages found in Trilinos ======================= //
 
 #cmakedefine ALBANY_AMESOS2
-#cmakedefine ALBANY_DTK
-#cmakedefine ALBANY_EPETRA
 #cmakedefine ALBANY_FROSCH
 #cmakedefine ALBANY_IFPACK2
 #cmakedefine ALBANY_MUELU
 #cmakedefine ALBANY_PAMGEN
 #cmakedefine ALBANY_PANZER_EXPR_EVAL
-#cmakedefine ALBANY_RBGEN
 #cmakedefine ALBANY_ROL
 #cmakedefine ALBANY_SEACAS
 #cmakedefine ALBANY_STK_REBALANCE
 #cmakedefine ALBANY_TEKO
 #cmakedefine ALBANY_ZOLTAN
-#cmakedefine ALBANY_STOKHOS
 
 // ========================== General Albany build and capabilities options ============================== //
 

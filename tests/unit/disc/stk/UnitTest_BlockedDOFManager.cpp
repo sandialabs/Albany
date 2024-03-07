@@ -66,9 +66,6 @@ tests are a beginning, "work in progress."
 
 */
 
-      // Set the static variable that denotes this as a Tpetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-
       RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
       int numProcs = comm->getSize();
       int myRank = comm->getRank();
@@ -266,9 +263,6 @@ tests are a beginning, "work in progress."
 
    TEUCHOS_UNIT_TEST(AlbanyBlockedDOFManager_BlockedSTKDiscretizationTests, assortedTests)
    {
-
-      // Set the static variable that denotes this as a Tpetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
 
       RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 

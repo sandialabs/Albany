@@ -27,7 +27,7 @@
 
 namespace PHAL {
 /** \brief Scatters result from the residual fields of equations
-    defined on one or more side sets into the global (epetra/tpetra)
+    defined on one or more side sets into the global (Tpetra)
     data structures.
     This includes the post-processing of the AD data type for all evaluation
     types besides Residual.

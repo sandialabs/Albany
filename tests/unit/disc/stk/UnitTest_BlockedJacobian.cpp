@@ -56,9 +56,6 @@ namespace Albany
    TEUCHOS_UNIT_TEST(AlbanyBlockedDOFManager_BlockedJacobian, assortedTests)
    {
 
-      // Set the static variable that denotes this as a Tpetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-
       RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
       // panzer::pauseToAttach();

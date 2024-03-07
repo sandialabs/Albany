@@ -195,32 +195,6 @@ safe_system(char const* str);
 
 void
 assert_fail(std::string const& msg) __attribute__((noreturn));
-
-/// \brief Get/Set the Albany build type
-///
-/// \params value [in] The Albany build type to set
-///
-/// \notes This function acts as both a getter and setter for the Albany
-/// build type.  The *first* time the optional param \c value is passed to
-/// this function, it set as the build type.  The build type is always returned.
-///
-/// For executables/problems that need to know the build type, this function
-/// must be called early in the main function to set the appropriate build type,
-/// preferably as one of the first actions of the program (before initializing
-/// MPI)..
-///
-/// This function and capability may not be necessary after the transition away
-/// from Epetra is complete.  In the meantime, it is used in a handful of places
-/// to execute code that is specific to either Tpetra or Epetra.
-enum class BuildType
-{
-  None,
-  Tpetra,
-  Epetra
-};
-BuildType
-build_type(const BuildType value = BuildType::None);
-
 //
 //
 //

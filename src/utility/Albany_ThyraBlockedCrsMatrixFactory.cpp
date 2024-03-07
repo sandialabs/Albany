@@ -1,10 +1,5 @@
 #include "Albany_ThyraBlockedCrsMatrixFactory.hpp"
 
-#ifdef ALBANY_EPETRA
-#include "Epetra_CrsGraph.h"
-#include "Epetra_CrsMatrix.h"
-#include "Epetra_Export.h"
-#endif
 #include "Albany_TpetraTypes.hpp"
 
 #include "Albany_Utils.hpp"

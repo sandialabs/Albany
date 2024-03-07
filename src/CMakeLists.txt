@@ -73,20 +73,6 @@ set (SOURCES
   SolutionManager.cpp
   )
 
-if (ALBANY_EPETRA)
-  list (APPEND SOURCES
-    Petra_Converters_64.cpp
-  )
-endif()
-
-
-if(ALBANY_EPETRA)
-  list (APPEND SOURCES
-    Albany_NOXObserver.cpp
-    Albany_NOXStatelessObserver.cpp
-  )
-endif()
-
 set(HEADERS
   AnalyticFunction.hpp
   Albany_Application.hpp
@@ -123,14 +109,6 @@ set(HEADERS
   SolutionManager.hpp
   )
 
-if(ALBANY_EPETRA)
-  list (APPEND HEADERS
-    Albany_NOXObserver.hpp
-    Albany_NOXStatelessObserver.hpp
-    Petra_Converters.hpp
-  )
-endif()
-
 #utility
 list (APPEND SOURCES
   utility/DisplayTable.cpp
@@ -166,19 +144,6 @@ list (APPEND HEADERS
   utility/Albany_ThyraUtils.hpp
   utility/Albany_TpetraThyraUtils.hpp
   )
-
-if (ALBANY_EPETRA)
-  list (APPEND SOURCES
-    utility/Albany_EpetraThyraUtils.cpp
-    utility/Albany_CombineAndScatterManagerEpetra.cpp
-  )
-  list (APPEND HEADERS
-    utility/Albany_Epetra_FECrsMatrix.hpp
-    utility/Albany_EpetraThyraUtils.hpp
-    utility/Albany_CombineAndScatterManagerEpetra.hpp
-    utility/Albany_GlobalLocalIndexerEpetra.hpp
-  )
-endif()
 
 option (ALBANY_BUILD_XML_YAML_CONVERTERS "Whether to build albany xml-yaml converter utils" OFF)
 if (ALBANY_BUILD_XML_YAML_CONVERTERS)
@@ -495,6 +460,8 @@ list (APPEND HEADERS
   evaluators/scatter/PHAL_ScatterScalarNodalParameter_Def.hpp
   evaluators/scatter/PHAL_ScatterScalarResponse.hpp
   evaluators/scatter/PHAL_ScatterScalarResponse_Def.hpp
+  evaluators/scatter/PHAL_SeparableScatterScalarResponse.hpp
+  evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
   evaluators/state/PHAL_LoadSideSetStateField.hpp
   evaluators/state/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/state/PHAL_LoadStateField.hpp
@@ -534,13 +501,6 @@ if(ALBANY_STK_EXPR_EVAL)
   list (APPEND HEADERS
     evaluators/bc/PHAL_ExprEvalSDBC.hpp
     evaluators/bc/PHAL_ExprEvalSDBC_Def.hpp)
-endif()
-
-if (ALBANY_EPETRA)
-  list (APPEND HEADERS
-    evaluators/scatter/PHAL_SeparableScatterScalarResponse.hpp
-    evaluators/scatter/PHAL_SeparableScatterScalarResponse_Def.hpp
-  )
 endif()
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES})

@@ -129,9 +129,6 @@ Teuchos::RCP<Thyra_LinearOp> getTransposedOp (const Teuchos::RCP<const Thyra_Lin
 
 void transpose (const Teuchos::RCP<Thyra_LinearOp> lop);
 
-// Math properties helpers
-double computeConditionNumber (const Teuchos::RCP<const Thyra_LinearOp>& lop);
-
 // Get a kokkos compatible object to view the content of the linear op on device
 DeviceLocalMatrix<const ST> getDeviceData (Teuchos::RCP<const Thyra_LinearOp>& lop);
 DeviceLocalMatrix<ST>       getNonconstDeviceData (Teuchos::RCP<Thyra_LinearOp>& lop);

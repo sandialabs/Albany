@@ -2,10 +2,6 @@
 
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexerTpetra.hpp"
-#ifdef ALBANY_EPETRA
-#include "Albany_EpetraThyraUtils.hpp"
-#include "Albany_GlobalLocalIndexerEpetra.hpp"
-#endif
 
 namespace Albany
 {
@@ -19,13 +15,6 @@ createGlobalLocalIndexer (const Teuchos::RCP<const Thyra_VectorSpace>& vs)
   auto tmap = getTpetraMap (vs, false);
   if (!tmap.is_null()) {
     indexer = Teuchos::rcp(new GlobalLocalIndexerTpetra(vs,tmap));
-  } else {
-#ifdef ALBANY_EPETRA
-    auto emap = getEpetraBlockMap(vs,false);
-    if (!emap.is_null()) {
-      indexer = Teuchos::rcp(new GlobalLocalIndexerEpetra(vs,emap));
-    }
-#endif
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (indexer.is_null(), std::runtime_error,

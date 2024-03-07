@@ -148,8 +148,6 @@ include(CTest)
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
 MESSAGE("Checking Trilinos build for required and optional packages")
 
-OPTION(ENABLE_ALBANY_EPETRA "Flag to turn on building of code depending on Epetra" ON)
-
 OPTION(ENABLE_ALBANY_PYTHON "Flag to turn on building of code depending on Python" OFF)
 
 ###############################
@@ -285,15 +283,6 @@ IF (Stokhos_List_ID GREATER -1)
 ELSE()
   MESSAGE("-- Looking for Stokhos ...                   NOT Found.")
   SET(ALBANY_STOKHOS FALSE)
-ENDIF()
-
-# set optional dependency on Belos's Epetra subpackage
-IF (EXISTS "${Trilinos_INCLUDE_DIRS}/BelosEpetraAdapter.hpp")
-  MESSAGE("-- Looking for BelosEpetra ...                   Found.")
-  SET(ALBANY_BELOS_EPETRA TRUE)
-ELSE ()
-  MESSAGE("-- Looking for BelosEpetra ...               NOT Found.")
-  SET(ALBANY_BELOS_EPETRA FALSE)
 ENDIF()
 
 # set optional dependency on Amesos2, for solving and preconditioning
@@ -459,28 +448,6 @@ IF (DEFINED CMAKE_BUILD_TYPE)
       SET(ALBANY_DEBUG_BUILD OFF)
    ENDIF()
 ENDIF()
-# Set optional build of code depending on Epetra.
-# Be default, it will be on, so both Tpetra and Epetra capabilities are built.
-# Ideally, one should not need Epetra though, since the Tpetra stack in
-# Trilinos *should* be a superset of the Epetra one (in terms of capabilities,
-# not structures, obviously).
-
-IF (ENABLE_ALBANY_EPETRA)
-  MESSAGE("-- ALBANY_EPETRA                           Enabled.")
-  SET(ALBANY_EPETRA TRUE)
-
-  # If Epetra build is requested, the ThyraEpetraAdapter package  in Trilinos is required
-  LIST(FIND Trilinos_PACKAGE_LIST ThyraEpetraAdapters ThyraEpetraAdapters_ID)
-  IF (ThyraEpetraAdapters_ID GREATER -1)
-    MESSAGE("  -- Looking for ThyraEpetraAdapters       Found.")
-  ELSE()
-    MESSAGE("  -- Looking for ThyraEpetraAdapters   NOT Found.")
-    MESSAGE (FATAL_ERROR "ENABLE_ALBANY_EPETRA=ON requires ThyraEpetraAdapters in Trilinos.\n")
-  ENDIF()
-ELSE()
-  MESSAGE("-- ALBANY_EPETRA                     NOT Enabled.")
-  SET(ALBANY_EPETRA FALSE)
-ENDIF()
 
 IF (ENABLE_ALBANY_PYTHON)
   MESSAGE("-- ALBANY_PYTHON                           Enabled.")
@@ -610,9 +577,6 @@ MESSAGE("\nMiscellaneous Albany Options:\n")
 
 # Optional CUDA settings
 IF(Kokkos_ENABLE_CUDA)
-  IF (ENABLE_ALBANY_EPETRA)
-    MESSAGE(FATAL_ERROR "\nError: Albany with Epetra is not supported with CUDA KokkosNode!  Please re-configure w/o Epetra (ENABLE_ALBANY_EPETRA=OFF).")
-  ENDIF()
   SET(KOKKOS_NDEVICES "--kokkos-map-device-id-by=mpi_rank")
   IF (ENABLE_CUDA_ERROR_CHECK)
     SET(ALBANY_CUDA_ERROR_CHECK ON)

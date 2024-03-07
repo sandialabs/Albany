@@ -132,7 +132,6 @@ void checkOwnership(Omega_h::Mesh& mesh, const Albany::OmegahConnManager& connMg
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
@@ -143,7 +142,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManagerNoConnClone)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
@@ -155,7 +153,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManagerNoConnClone)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
@@ -169,7 +166,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockId)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
@@ -185,7 +181,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockId)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getBlockTopologies)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
@@ -211,7 +206,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
     {7, {7, 8, 6}}
   };
 
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM>();
@@ -234,7 +228,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   // The 'lateralside' side set in the exodus file is given class_id=1 and
@@ -254,7 +247,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   // The 'lateralside' side set in the exodus file is given class_id=1 and
@@ -342,7 +334,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
     {7, {7, 8, 6}}
   };
 
-  Albany::build_type (Albany::BuildType::Tpetra);
   auto teuchosComm = Albany::getDefaultComm();
 
   auto albanyMesh = createOmegahBoxMesh(teuchosComm);
@@ -389,8 +380,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnership)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
 
   auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM>();
@@ -405,8 +394,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnershi
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwnership)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   auto teuchosComm = Albany::getDefaultComm();
 
   const auto lateralSide_name = "lateralside";

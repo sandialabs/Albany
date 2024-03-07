@@ -19,7 +19,7 @@
 
 namespace PHAL {
 
-/** \brief Handles scattering of scalar response functions into epetra
+/** \brief Handles scattering of scalar response functions into Tpetra
  * data structures.
  *
  * Base implementation useable by specializations below

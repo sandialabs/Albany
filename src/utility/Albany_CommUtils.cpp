@@ -8,49 +8,8 @@
 
 #include "Albany_ThyraUtils.hpp"
 
-// Include the concrete Epetra Comm's, if needed
-#if defined(ALBANY_EPETRA)
-  #include "Epetra_MpiComm.h"
-#endif
-
 namespace Albany
 {
-
-#if defined(ALBANY_EPETRA)  
-MPI_Comm
-getMpiCommFromEpetraComm(const Epetra_Comm& ec)
-{
-  const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
-  return emc.Comm();
-}
-
-Teuchos::RCP<const Epetra_Comm>
-createEpetraCommFromMpiComm(const MPI_Comm& mc)
-{
-  return Teuchos::rcp(new Epetra_MpiComm(mc));
-}
-
-Teuchos::RCP<const Epetra_Comm>
-createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc)
-{
-  auto mpiComm = Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int>>(tc);
-  return  createEpetraCommFromMpiComm(*mpiComm->getRawMpiComm()());
-}
-
-Teuchos::RCP<const Teuchos_Comm>
-createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec)
-{
-  auto mpiComm = Teuchos::rcp_dynamic_cast<const Epetra_MpiComm>(ec);
-  return  createTeuchosCommFromMpiComm(mpiComm->Comm());
-}
-
-Teuchos::RCP<const Teuchos_Comm>
-createTeuchosCommFromEpetraComm(const Epetra_Comm& ec)
-{
-  const Epetra_MpiComm *mpiComm = dynamic_cast<const Epetra_MpiComm *>(&ec);
-  return  createTeuchosCommFromMpiComm(mpiComm->Comm());
-}
-#endif // defined(ALBANY_EPETRA)
 
 MPI_Comm
 getMpiCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc)

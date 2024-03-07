@@ -35,8 +35,6 @@
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   using EvalType = PHAL::AlbanyTraits::Residual;
   using Scalar = EvalType::ScalarT;
 
@@ -133,8 +131,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionResidual)
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, gatherSolutionHessianVec)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   using EvalType = PHAL::AlbanyTraits::HessianVec;
   using Scalar = EvalType::ScalarT;
 

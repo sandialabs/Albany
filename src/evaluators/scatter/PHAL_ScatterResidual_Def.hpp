@@ -280,7 +280,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const bool use_device = Albany::build_type()==Albany::BuildType::Tpetra;
+  const bool use_device = true;
 #else
   const bool use_device = false;
 #endif

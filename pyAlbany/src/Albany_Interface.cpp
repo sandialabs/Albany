@@ -93,20 +93,6 @@ PyProblem::PyProblem(std::string filename, Teuchos::RCP<PyParallelEnv> _pyParall
 
     slvrfctry = rcp(new Albany::SolverFactory(filename, comm));
 
-    auto const &bt = slvrfctry->getParameters()->get<std::string>("Build Type", "NONE");
-
-    if (bt == "Tpetra")
-    {
-        // Set the static variable that denotes this as a Tpetra run
-        static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-    }
-    else
-    {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
-                                   "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                                                                    "       The only valid choice for PyAlbany is 'Tpetra'.\n");
-    }
-
     // Make sure all the pb factories are registered *before* the Application
     // is created (since in the App ctor the pb factories are queried)
     Albany::register_pb_factories();
@@ -152,20 +138,6 @@ PyProblem::PyProblem(Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<P
     comm = this->pyParallelEnv->getComm();
 
     slvrfctry = rcp(new Albany::SolverFactory(params, comm));
-
-    auto const &bt = slvrfctry->getParameters()->get<std::string>("Build Type", "NONE");
-
-    if (bt == "Tpetra")
-    {
-        // Set the static variable that denotes this as a Tpetra run
-        static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-    }
-    else
-    {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
-                                   "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                                                                    "       The only valid choice for PyAlbany is 'Tpetra'.\n");
-    }
 
     // Make sure all the pb factories are registered *before* the Application
     // is created (since in the App ctor the pb factories are queried)

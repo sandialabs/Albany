@@ -121,20 +121,6 @@ int main(int argc, char *argv[])
     const bool reportMPIInfo = debugParams.get<bool>("Report MPI Info", false);
     if (reportMPIInfo) Albany::PrintMPIInfo(std::cout);
 
-    auto const& bt = slvrfctry.getParameters()->get<std::string>("Build Type","NONE");
-
-    if (bt=="Tpetra") {
-      // Set the static variable that denotes this as a Tpetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-    } else if (bt=="Epetra") {
-      // Set the static variable that denotes this as a Epetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
-                                 "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                                 "       Valid choices are 'Epetra', 'Tpetra'.\n");
-    }
-
     // Make sure all the pb factories are registered *before* the Application
     // is created (since in the App ctor the pb factories are queried)
     Albany::register_pb_factories();
