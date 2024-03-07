@@ -8,14 +8,6 @@ set (testNameRoot ${parentDirName}_${dirName})
 ###          Main tests          ###
 ####################################
 
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-
-  add_test(${testNameRoot}_Epetra ${Albany.exe} input.yaml)
-  set_tests_properties(${testNameRoot}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-endif()
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
@@ -36,14 +28,6 @@ IF (NOT ALBANY_PARALLEL_ONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eles
                  ${CMAKE_CURRENT_BINARY_DIR}/eles COPYONLY)
 
-  IF(ALBANY_EPETRA)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_10x10x10_ascii.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_10x10x10_ascii.yaml COPYONLY)
-
-    add_test(${testName}_Epetra ${SerialAlbany.exe} input_10x10x10_ascii.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-  ENDIF()
-
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_10x10x10_ascii.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputT_10x10x10_ascii.yaml COPYONLY)
@@ -58,14 +42,6 @@ ENDIF ()
 ####################################
 
 set(testName ${testNameRoot}_nodeGIDArrayResponse)
-
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_nodeGIDArrayResponse.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_nodeGIDArrayResponse.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_nodeGIDArrayResponse.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_nodeGIDArrayResponse.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT_nodeGIDArrayResponse.yaml COPYONLY)

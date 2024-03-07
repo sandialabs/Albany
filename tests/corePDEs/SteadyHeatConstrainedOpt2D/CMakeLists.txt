@@ -28,16 +28,6 @@ if (ALBANY_OMEGAH)
   set_tests_properties(${testName}_Tpetra_Omega_h PROPERTIES LABELS "Basic;Tpetra;Forward;Omega_h")
 endif()
 
-if (ALBANY_EPETRA) 
-  # Copy Input files from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_param.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_dist_param.yaml COPYONLY)
-
-  # Create the test with this name and standard executable
-  add_test(${testName}_Epetra ${Albany.exe} input_dirichlet_dist_param.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-endif()
-
 if (ALBANY_ROL)
   add_test(${testName}_Analysis ${AlbanyAnalysis.exe} input_dirichlet_dist_paramT.yaml)
   set_tests_properties(${testName}_Analysis PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
@@ -57,25 +47,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_mixed_paramsT.yaml
 add_test(${testName}_Tpetra ${Albany.exe} input_dirichlet_mixed_paramsT.yaml)
 set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
 
-if (ALBANY_EPETRA) 
-  # Copy Input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_mixed_params.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_mixed_params.yaml COPYONLY)
-
-  # Create the test with this name and standard executable
-  add_test(${testName}_Epetra ${Albany.exe} input_dirichlet_mixed_params.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-endif()
-
 set(testName ${testNameRoot}_Dirichlet_Mixed_Params_Analysis)
 
 if (ALBANY_ROL)
   add_test(${testName}_Tpetra ${AlbanyAnalysis.exe} input_dirichlet_mixed_paramsT.yaml)
   set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "Basic;Tpetra;Analysis;ROL")
-if (ALBANY_EPETRA)
-  add_test(${testName}_Epetra ${AlbanyAnalysis.exe} input_dirichlet_mixed_params.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Analysis;ROL")
-endif() 
 endif()
 
 ####################################
@@ -103,29 +79,6 @@ if (ALBANY_PARALELL_EXODUS AND NOT ALBANY_DISABLE_OUTPUT_MESH)
   set_tests_properties(${testName}_Restart_Tpetra PROPERTIES LABELS "Basic;Tpetra;Forward")
   set_tests_properties(${testName}_Restart_Tpetra PROPERTIES DEPENDS  ${testName}_Tpetra)
 endif()
-
-if (ALBANY_EPETRA) 
-  # Copy Input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param.yaml COPYONLY)
-  # Create the test with this name and standard executable
-  add_test(${testName}_Epetra ${Albany.exe} input_conductivity_dist_param.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-
-  if (ALBANY_PARALELL_EXODUS AND NOT ALBANY_DISABLE_OUTPUT_MESH)
-    # Copy Input file from source to binary dir
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param_restart.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param_restart.yaml COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/steady2d_conduct_opt.exo
-                   ${CMAKE_CURRENT_BINARY_DIR}/steady2d_conduct_opt.exo COPYONLY)
-
-    # Create the test with this name and standard executable
-    add_test(${testName}_Restart_Epetra ${Albany.exe} input_conductivity_dist_param_restart.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-    set_tests_properties(${testName}_Restart_Epetra PROPERTIES DEPENDS  ${testName}_Epetra)
-  endif()
-endif()
-
 
 ####################################
 ### Mixed Scalar Distributed Params tests ###

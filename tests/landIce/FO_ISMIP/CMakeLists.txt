@@ -10,14 +10,6 @@ set (testNameRoot ${parentDirName}_${dirName})
 
 set(testName ${testNameRoot}_TestA)
 
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testA.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testA.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_ismip-hom_testA.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testAT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testAT.yaml COPYONLY)
@@ -45,14 +37,6 @@ set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forwar
 ####################################
 
 set(testName ${testNameRoot}_TestC)
-
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testC.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testC.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_ismip-hom_testC.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
 
 
 if (ALBANY_IFPACK2)

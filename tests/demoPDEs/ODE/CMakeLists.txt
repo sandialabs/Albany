@@ -10,13 +10,6 @@ IF (NOT ALBANY_PARALLEL_ONLY)
   ####################################
 
   set(testName ${testNameRoot}_no_prec)
-  IF(ALBANY_EPETRA)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-
-    add_test(${testName}_Epetra ${SerialAlbany.exe} input.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Demo;Epetra;Forward;Serial")
-  ENDIF()
 
   # if (NOT (ALBANY_CHECK_FPE OR ALBANY_STRONG_FPE_CHECK))
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml

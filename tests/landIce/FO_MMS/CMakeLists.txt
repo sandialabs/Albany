@@ -11,14 +11,6 @@ set (testNameRoot ${parentDirName}_${dirName})
 
 set(testName ${testNameRoot}_SincCosGlen)
 
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincos2D.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincos2D.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_sincos2D.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincos2DT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincos2DT.yaml COPYONLY)
@@ -32,16 +24,6 @@ endif()
 ####################################
 
 set(testName ${testNameRoot}_SincCos3DPeriodicXY)
-
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincosz.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincosz.yaml COPYONLY)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_sincosz.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-  if(ALBANY_CTEST_TIMEOUT)
-    set_tests_properties (${testName}_Epetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
-  endif()
-endif()
 
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincoszT.yaml
@@ -59,16 +41,6 @@ endif()
 
 set(testName ${testNameRoot}_SinExp_Neumann)
 
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumann.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sinexp_neumann.yaml COPYONLY)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_sinexp_neumann.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-  if(ALBANY_CTEST_TIMEOUT)
-    set_tests_properties (${testName}_Epetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
-  endif()
-endif()
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumannT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sinexp_neumannT.yaml COPYONLY)
@@ -84,17 +56,6 @@ endif()
 ####################################
 
 set(testName ${testNameRoot}_CosExp_Basal)
-
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal.yaml COPYONLY)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_cosexp_basal.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-  if(ALBANY_CTEST_TIMEOUT)
-    set_tests_properties (${testName}_Epetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
-  endif()
-endif()
 
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basalT.yaml
@@ -114,14 +75,6 @@ endif()
 IF(ALBANY_SEACAS)
 
   set(testName ${testNameRoot}_CosExp_BasalAll)
-
-  if (ALBANY_EPETRA) 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLaw.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all_glensLaw.yaml COPYONLY)
-
-    add_test(${testName}_Epetra ${SerialAlbany.exe} input_fo_cosexp_basal_all_glensLaw.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-  endif()
 
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLawT.yaml

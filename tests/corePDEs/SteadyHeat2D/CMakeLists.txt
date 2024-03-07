@@ -6,14 +6,6 @@ set (testNameRoot ${parentDirName}_${dirName})
 
 # Create the test with this name and standard executable
 set(testName ${testNameRoot})
-if (ALBANY_EPETRA) 
-
-  # Copy Input file from source to binary dir
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  add_test(${testName}_Epetra ${Albany.exe} input.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "Basic;Epetra;Forward")
-endif()
 
 if (ALBANY_IFPACK2)
   # Copy Input file from source to binary dir

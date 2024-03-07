@@ -238,13 +238,6 @@ endif()
 ####################################
 
 set (testName ${testNameRoot}_Gis20km)
-if (ALBANY_EPETRA) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_test.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_test.yaml)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis20km_test.yaml)
-  set_tests_properties(${testName}_Epetra  PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
 
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.yaml
@@ -259,14 +252,6 @@ endif()
 ####################################
 
 set (testName ${testNameRoot}_CoupledThickness)
-
-if (ALBANY_EPETRA)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.yaml)
-
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_coupled.yaml)
-  set_tests_properties(${testName}_Epetra  PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
 
 IF(NOT Kokkos_ENABLE_CUDA)
   #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
@@ -283,13 +268,6 @@ endif()
 ####################################
 
 set (testName ${testNameRoot}_AdjointSensitivity)
-
-if (ALBANY_EPETRA)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity.yaml)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_adjoint_sensitivity.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
 
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivityT.yaml
@@ -364,13 +342,6 @@ endif()
 # Basal friction and stiffening factor sensitivity
 set (testName ${testNameRoot}_AdjointSensitivity_StiffeningBasalFriction)
 
-if (ALBANY_EPETRA)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening.yaml)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_analysis_stiffening.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-endif()
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffeningT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffeningT.yaml)
@@ -395,12 +366,6 @@ endif()
 if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
   # Thickness sensitivity
   set (testName ${testNameRoot}_AdjointSensitivity_Thickness)
-  if (ALBANY_EPETRA)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness.yaml)
-    add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_adjoint_sensitivity_thickness.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-  endif()
 
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.yaml
@@ -421,12 +386,6 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
 
   # Two parameters sensitivity
   set (testName ${testNameRoot}_AdjointSensitivity_TwoParameters)
-  if (ALBANY_EPETRA)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_params.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_params.yaml)
-    add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_analysis_two_params.yaml)
-    set_tests_properties(${testName}_Epetra PROPERTIES LABELS "LandIce;Epetra;Forward")
-  endif()
 
   if (ALBANY_IFPACK2)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_paramsT.yaml
@@ -454,14 +413,6 @@ endif()
 
 set (testName ${testNameRoot}_SensSMBwrtBeta)
 
-if (ALBANY_EPETRA)
-  # First run
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.yaml)
-  add_test(${testName}_Epetra ${Albany.exe} input_fo_gis_beta_smb.yaml)
-  set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Epetra;Forward")
-endif()
-
 if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smbT.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smbT.yaml)
@@ -475,7 +426,7 @@ if (ALBANY_IFPACK2)
 
     add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
     set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName}_Tpetra)
-    set_tests_properties(${testName}_Epetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Tpetra;Forward")
+    set_tests_properties(${testName}_Tpetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Tpetra;Forward")
   endif()
 endif()
 
@@ -489,7 +440,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_manifold.yaml
                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_manifold.yaml)
 
 add_test(${testName} ${Albany.exe} input_fo_gis_manifold.yaml)
-set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Epetra;Forward")
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
 
 ####################################
 ###   Laplacian sampling tests   ###
