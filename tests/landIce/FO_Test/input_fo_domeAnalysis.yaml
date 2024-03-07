@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Tpetra
   Problem:
     Phalanx Graph Visualization Detail: 2
     Name: LandIce Stokes First Order 3D

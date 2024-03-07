@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Tpetra
   Problem: 
     Name: Heat 3D
     Compute Sensitivities: true

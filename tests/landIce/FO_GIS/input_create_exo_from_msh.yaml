@@ -1,7 +1,6 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Build Type: Tpetra
   Problem: 
     Solution Method: Steady
     Name: Populate Mesh
