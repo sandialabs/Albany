@@ -528,7 +528,7 @@ STKDiscretization::setupMLCoords()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setupMLCoords");
   if (rigidBodyModes.is_null()) { return; }
-  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
+  if (!rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
 
   const int                                   numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::STKFieldType* coordinates_field =
@@ -576,7 +576,7 @@ STKDiscretization::writeCoordsToMatrixMarket() const
 #else
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
-  if ((rigidBodyModes->isMLUsed() || rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
+  if ((rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
       stkMeshStruct->writeCoordsToMMFile) {
     if (comm->getRank() == 0) {
       std::cout << "Writing mesh coordinates to Matrix Market file."
@@ -2047,16 +2047,16 @@ STKDiscretization::computeNodeSets()
     auto& ns_coords   = nodeSetCoords[ns.first];
 
     // Grab all nodes on this nodeset.
-    // NOTE: we take the globally shared part, since the way Tpetra/Epetra resolved
+    // NOTE: we take the globally shared part, since the way Tpetra resolved
     //       sharing might be different from the way STK did. So we loop on ALL
-    //       owned+shared nodes, and pick the ones that Tpetra/Epetra marked as owned
+    //       owned+shared nodes, and pick the ones that Tpetra marked as owned
     stk::mesh::Selector ns_selector = metaData->globally_shared_part();
     ns_selector |= metaData->locally_owned_part();
     ns_selector &= *ns.second;
     std::vector<stk::mesh::Entity> nodes;
     stk::mesh::get_selected_entities(ns_selector, bulkData->buckets(NODE_RANK), nodes);
 
-    // Remove nodes that are not owned according to Tpetra/Epetra
+    // Remove nodes that are not owned according to Tpetra
     std::vector<stk::mesh::Entity>::iterator it = nodes.begin();
     auto dof_mgr = getNodeDOFManager();
     while(it != nodes.end()){

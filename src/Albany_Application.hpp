@@ -1031,9 +1031,6 @@ void
   void
   defineTimers();
 
-  void
-  removeEpetraRelatedPLs(const Teuchos::RCP<Teuchos::ParameterList>& params);
-
  public:
   //! Routine to get workset (bucket) size info needed by all Evaluation types
   void
@@ -1216,7 +1213,6 @@ void
   int writeToMatrixMarketJac;
   int writeToMatrixMarketRes;
   int writeToMatrixMarketSoln;
-  int computeJacCondNum;
   //! Integer specifying whether user wants to write Jacobian, residual and solution to
   //! Standard output (cout)
   int writeToCoutJac;

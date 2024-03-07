@@ -11,11 +11,6 @@
 #include "Albany_GitVersion.h"
 #include "Albany_StringUtils.hpp"
 
-// Include the concrete Epetra Comm's, if needed
-#if defined(ALBANY_EPETRA)
-#include "Epetra_MpiComm.h"
-#endif
-
 #include <cstdlib>
 #include <stdexcept>
 #include <time.h>
@@ -588,23 +583,6 @@ assert_fail(std::string const& msg)
   abort();
 }
 
-BuildType
-build_type(const BuildType value)
-{
-  // Recall how static local variable work: the following are created (and
-  // initialized) only once
-  static bool      initialized_ = false;
-  static BuildType value_       = BuildType::None;
-  if (!initialized_ && (value != BuildType::None)) {
-    value_       = value;
-    initialized_ = true;
-  }
-  return value_;
-}
-
-//
-//
-//
 int
 getProcRank()
 {

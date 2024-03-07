@@ -134,10 +134,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   comm->Barrier();
 #endif
 
-#if !defined(ALBANY_EPETRA)
-  removeEpetraRelatedPLs(params);
-#endif
-
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
@@ -418,7 +414,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
       Teuchos::sublist(params, "Debug Output", true);
   writeToMatrixMarketJac =
       debugParams->get("Write Jacobian to MatrixMarket", 0);
-  computeJacCondNum = debugParams->get("Compute Jacobian Condition Number", 0);
   writeToMatrixMarketRes =
       debugParams->get("Write Residual to MatrixMarket", 0);
   writeToMatrixMarketSoln =
@@ -476,14 +471,7 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
             << "Invalid Parameter Write Solution to Standard Output.  "
                "Acceptable values are -1, 0, 1, 2, ... \n");
   }
-  if (computeJacCondNum < -1) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        Teuchos::Exceptions::InvalidParameter,
-             "\nError in Albany::Application constructor:  "
-            << "Invalid Parameter Compute Jacobian Condition Number.  "
-               "Acceptable values are -1, 0, 1, 2, ...\n");
-  }
+
   countJac = 0;  // initiate counter that counts instances of Jacobian matrix to
                  // 0
   countRes = 0;  // initiate counter that counts instances of residual vector to
@@ -1593,9 +1581,8 @@ Application::computeGlobalJacobianImpl(
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
     }
-    if (build_type()!=BuildType::Epetra) {
-      workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
-    }
+    
+    workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
 #endif
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
@@ -1760,38 +1747,8 @@ Application::computeGlobalJacobian(
       describe(jac.getConst(), *out, Teuchos::VERB_EXTREME);
     }
   }
-  if (computeJacCondNum !=
-      0) {  // If requesting computation of condition number
-#if defined(ALBANY_EPETRA)
-    if (computeJacCondNum == -1) {
-      // cout jacobian condition # every time it arises
-      double condNum = computeConditionNumber(jac);
-      *out << "Jacobian #" << countJac << " condition number = " << condNum
-           << "\n";
-    } else if (countJac == computeJacCondNum) {
-      // cout jacobian condition # only at requested count#
-      double condNum = computeConditionNumber(jac);
-      *out << "Jacobian #" << countJac << " condition number = " << condNum
-           << "\n";
-    }
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Error in Albany::Application: Compute Jacobian Condition Number debug "
-        "option "
-        "currently relies on an Epetra-based routine in AztecOO.\n To use this "
-        "option, please "
-        "rebuild Albany with ENABLE_ALBANY_EPETRA=ON.\nYou will then be able "
-        "to have Albany "
-        "output the Jacobian condition number when running either the Tpetra "
-        "or Epetra stack.\n"
-        "Notice that ENABLE_ALBANY_EPETRA is ON by default, so you must have "
-        "disabled it explicitly.\n");
-#endif
-  }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 ||
-      computeJacCondNum != 0) {
+
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) {
     countJac++;  // increment Jacobian counter
   }
   // Debut output - residual
@@ -3581,40 +3538,6 @@ Application::setupTangentWorksetInfo(
   workset.num_cols_x   = num_cols_x;
   workset.num_cols_p   = num_cols_p;
   workset.param_offset = param_offset;
-}
-
-void
-Application::removeEpetraRelatedPLs(
-    const Teuchos::RCP<Teuchos::ParameterList>& params)
-{
-  if (params->isSublist("Piro")) {
-    Teuchos::ParameterList& piroPL = params->sublist("Piro", true);
-    if (piroPL.isSublist("NOX")) {
-      Teuchos::ParameterList& noxPL = piroPL.sublist("NOX", true);
-      if (noxPL.isSublist("Direction")) {
-        Teuchos::ParameterList& dirPL = noxPL.sublist("Direction", true);
-        if (dirPL.isSublist("Newton")) {
-          Teuchos::ParameterList& newPL = dirPL.sublist("Newton", true);
-          if (newPL.isSublist("Stratimikos Linear Solver")) {
-            Teuchos::ParameterList& stratPL =
-                newPL.sublist("Stratimikos Linear Solver", true);
-            if (stratPL.isSublist("Stratimikos")) {
-              Teuchos::ParameterList& strataPL =
-                  stratPL.sublist("Stratimikos", true);
-              if (strataPL.isSublist("AztecOO")) {
-                strataPL.remove("AztecOO", true);
-              }
-              if (strataPL.isSublist("Linear Solver Types")) {
-                Teuchos::ParameterList& lsPL =
-                    strataPL.sublist("Linear Solver Types", true);
-                if (lsPL.isSublist("AztecOO")) { lsPL.remove("AztecOO", true); }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
 }
 
 }  // namespace Albany

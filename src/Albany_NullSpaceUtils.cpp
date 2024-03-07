@@ -122,31 +122,12 @@ struct TpetraNullSpaceTraits {
   }
 };
 
-struct EpetraNullSpaceTraits {
-
-  typedef std::vector<ST> array_type;
-  array_type& array;
-  const array_type::size_type stride_;
-
-  EpetraNullSpaceTraits(array_type& array_, const array_type::size_type stride)
-   : array(array_), stride_(stride) {}
-
-
-  void zero(){
-    std::fill(array.begin(), array.end(), 0);
-  }
-
-  double& operator()(const array_type::size_type DOF, const int i, const int j){
-     return array[DOF + i + j * stride_];
-  }
-};
-
 } // namespace
 
 // The base structure is empty. The derived one, stores an array,
 // of the type specified by the Traits
-// This struct allows us to hide tpetra/epetra info from the header file.
-// When we decide what to use (ML or MueLu/FROSch) we create a TraitsImpl
+// This struct allows us to hide tpetra info from the header file.
+// When we decide what to use (MueLu/FROSch) we create a TraitsImpl
 // templated on the 'actual' traits, and we grab the array.
 // This way the null space stores a persistent array (being stored inside
 // the class makes sure the array does not disappear like it would
@@ -166,7 +147,7 @@ RigidBodyModes::RigidBodyModes()
     computeConstantModes(false),
     physVectorDim(0), computeRotationModes(false),
     nullSpaceDim(0),
-    mlUsed(false), mueLuUsed(false), froschUsed(false), setNonElastRBM(false),
+    mueLuUsed(false), froschUsed(false), setNonElastRBM(false),
     areProbParametersSet(false), arePiroParametersSet(false)
 {}
 
@@ -176,17 +157,12 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
   const Teuchos::RCP<Teuchos::ParameterList>
     stratList = Piro::extractStratimikosParams(piroParams);
 
-  mlUsed = mueLuUsed = froschUsed = false;
+  mueLuUsed = froschUsed = false;
   if (Teuchos::nonnull(stratList) &&
       stratList->isParameter("Preconditioner Type")) {
     const std::string&
       ptype = stratList->get<std::string>("Preconditioner Type");
-    if (ptype == "ML") {
-      plist = sublist(sublist(sublist(stratList, "Preconditioner Types"),
-                              ptype), "ML Settings");
-      mlUsed = true;
-    }
-    else if (ptype == "MueLu") {
+    if (ptype == "MueLu") {
       plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
       mueLuUsed = true;
     }
@@ -196,11 +172,7 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
     }
   } 
 
-  if (mlUsed) {
-   nullSpaceTraits = Teuchos::rcp( new TraitsImpl<EpetraNullSpaceTraits>());
-  } else {
-   nullSpaceTraits = Teuchos::rcp( new TraitsImpl<TpetraNullSpaceTraits>());
-  }
+  nullSpaceTraits = Teuchos::rcp( new TraitsImpl<TpetraNullSpaceTraits>());
 
   arePiroParametersSet = true;
 }
@@ -246,47 +218,15 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
       "RigidBodyModes::setCoordinates was called before calling RigidBodyModes::setPiroPL.");
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-    !isMLUsed() && !isMueLuUsed() && !isFROSchUsed(),
+    !isMueLuUsed() && !isFROSchUsed(),
     std::logic_error,
-    "setCoordinates was called without setting an ML, MueLu or FROSch parameter list.");
+    "setCoordinates was called without setting a MueLu or FROSch parameter list.");
   
   coordMV = coordMV_;
 
   int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
 
-  if (isMLUsed()) { // ML here
-
-    //MP: Even when a processor has no nodes, ML requires a nonnull pointer of coordinates.
-    double emptyCoords[3] ={0.0, 0.0, 0.0};
-
-    double* x = getNonconstLocalData(coordMV->col(0)).getRawPtr();
-
-    if (x==nullptr) {
-      x = &emptyCoords[0];
-    }
-    plist->set<double*>("x-coordinates", x);
-    if(numSpaceDim > 1){
-      double* y = getNonconstLocalData(coordMV->col(1)).getRawPtr();
-      if (y==nullptr) {
-        y = &emptyCoords[1];
-      }
-      plist->set<double*>("y-coordinates", y);
-    } else {
-      plist->set<double*>("y-coordinates", nullptr);
-    }
-    if(numSpaceDim > 2){
-      double* z = getNonconstLocalData(coordMV->col(2)).getRawPtr();
-      if (z==nullptr) {
-        z = &emptyCoords[2];
-      }
-      plist->set<double*>("z-coordinates", z);
-    } else {
-      plist->set<double*>("z-coordinates", nullptr);
-    }
-
-    plist->set("PDE equations", numPDEs);
-
-  } else if (isMueLuUsed()) {  // MueLu here
+  if (isMueLuUsed()) {  // MueLu here
     // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
     auto t_coordMV = getTpetraMultiVector(coordMV);
     if (plist->isSublist("Factories") == true) {
@@ -318,22 +258,7 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
 
     subtractCentroid(coordMV);
 
-    if (isMLUsed()) {
-
-      auto& epetraTraitsArray =
-          Teuchos::rcp_dynamic_cast<TraitsImpl<EpetraNullSpaceTraits>>(nullSpaceTraits)->array;
-      epetraTraitsArray.resize(nullSpaceDim * numPDEs * numNodes);
-      EpetraNullSpaceTraits nullSpace(epetraTraitsArray, numNodes * numPDEs);
-
-
-      ComputeNullSpace(nullSpace, coordMV, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
-
-      plist->set("null space: type", "pre-computed");
-      plist->set("null space: dimension", nullSpaceDim);
-      plist->set<double*>("null space: vectors", epetraTraitsArray.data());
-      plist->set("null space: add default vectors", false);
-
-    } else {  // MueLu and FROSch
+    {  // MueLu and FROSch
       TEUCHOS_TEST_FOR_EXCEPTION(soln_vs.is_null(), std::logic_error,
           "nullSpaceDim > 0 and (isMueLuUsed() or isFROSchUsed()): solution vector space must be provided.");
 

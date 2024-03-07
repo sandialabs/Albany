@@ -527,34 +527,6 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   paramList = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
 
-  // Set build Type
-  auto bt = paramList->get<std::string>("Build Type", "NONE");
-#ifdef ALBANY_EPETRA
-  if(bt == "NONE") {
-    bt = "Epetra";
-    paramList->set("Build Type", bt);
-  }
-#else
-  if(bt == "NONE") {
-    bt = "Tpetra";
-    paramList->set("Build Type",bt);
-  }
-  TEUCHOS_TEST_FOR_EXCEPTION(bt == "Epetra", Teuchos::Exceptions::InvalidArgument,
-      "Error! ALBANY_EPETRA must be defined in order to perform an Epetra run.\n");
-#endif
-
-  if (bt=="Tpetra") {
-    // Set the static variable that denotes this as a Tpetra run
-    static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-  } else if (bt=="Epetra") {
-    // Set the static variable that denotes this as a Epetra run
-    static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
-        "Error! Invalid choice (" + bt + ") for 'Build Type'.\n"
-        "       Valid choices are 'Epetra', 'Tpetra'.\n");
-  }
-
   slvrfctry = Teuchos::rcp(new Albany::SolverFactory(paramList, mpiComm));
   //paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 

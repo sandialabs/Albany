@@ -22,9 +22,7 @@
 #include <limits>
 
 TEUCHOS_UNIT_TEST(DOFInterpolation, Scalar)
-{
-  Albany::build_type (Albany::BuildType::Tpetra);
-
+{ 
   using EvalType = PHAL::AlbanyTraits::Residual;
   using Scalar = EvalType::ScalarT;
 

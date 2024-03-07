@@ -43,9 +43,7 @@
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVec)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
-  auto run = [&] (const int neq) {
+    auto run = [&] (const int neq) {
     constexpr auto ADD = Albany::CombineMode::ADD;
     constexpr auto ALL = Kokkos::ALL();
 

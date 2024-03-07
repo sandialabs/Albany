@@ -16,12 +16,11 @@ namespace Albany {
  * The concept of graph has to do with the particular implementation of an operator,
  * namely its storage. From the computational point of view it is an important object,
  * hence we need to have access to its functionalities. Since we can't get it
- * in Thyra, and we don't want to expose particular implementations (e.g., Epetra
- * vs Tpetra), we implementa a very light-weight structure, that can create and setup
+ * in Thyra, and we don't want to expose particular implementations (e.g., Tpetra), 
+ * we implement a very light-weight structure, that can create and setup
  * a graph, and, upon request, create a linear operator associated with that graph.
  * The implementation details of the graph are hidden, as is the concrete linear
- * algebra package underneath. The global function 'Albany::build_type' is used
- * to determine in which format the graph has to be stored.
+ * algebra package underneath.
  */
 
 struct ThyraCrsMatrixFactory {

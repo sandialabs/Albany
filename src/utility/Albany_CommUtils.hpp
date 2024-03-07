@@ -15,23 +15,9 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ConfigDefs.hpp" // For Ordinal
 
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Comm.h"
-#endif
-
 namespace Albany {
 
 Teuchos::RCP<const Teuchos_Comm> getDefaultComm();
-
-#if defined(ALBANY_EPETRA)
-MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
-
-Teuchos::RCP<const Epetra_Comm> createEpetraCommFromMpiComm(const MPI_Comm& mc);
-Teuchos::RCP<const Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
-
-Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
-Teuchos::RCP<const Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
-#endif
 
 MPI_Comm getMpiCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
 

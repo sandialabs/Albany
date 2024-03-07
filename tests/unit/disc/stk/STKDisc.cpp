@@ -40,8 +40,6 @@ bool sameAs(const Vec1& lhs,
 
 TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   auto comm = Albany::getDefaultComm();
 
   // Simple square 2d geometry with E elements and N=E+1 nodes per side.
@@ -142,8 +140,6 @@ TEUCHOS_UNIT_TEST(STKDiscTests, NodeSets)
 
 TEUCHOS_UNIT_TEST(STKDiscTests, JacGraph)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   auto comm = Albany::getDefaultComm();
 
   // Simple cube-like geometry with E elements and N=E+1 nodes per dimension.

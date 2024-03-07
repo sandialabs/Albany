@@ -162,73 +162,42 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   this->set_row_and_col_is_dbc(dirichlet_workset);
 
-  const bool is_tpetra = Albany::build_type() == Albany::BuildType::Tpetra;
   Teuchos::RCP<Thyra_Vector> f = dirichlet_workset.f;
   bool const fill_residual = f != Teuchos::null;
-  if (is_tpetra)
+
+  Tpetra_Vector::dual_view_type::t_dev fView;
+  if (fill_residual)
   {
-    Tpetra_Vector::dual_view_type::t_dev fView;
-    if (fill_residual)
-    {
-      auto tf = Albany::getTpetraVector(f);
-      fView = tf->getLocalViewDevice(Tpetra::Access::ReadWrite);
-    }
-
-    auto tCol2DBC = Albany::getTpetraVector(col_is_dbc_);
-    auto col2DBCView = tCol2DBC->getLocalViewDevice(Tpetra::Access::ReadOnly);
-
-    auto tJac = Albany::getTpetraMatrix(dirichlet_workset.Jac);
-    auto lJac = tJac->getLocalMatrixDevice();
-    auto numLRows = lJac.numRows();
-
-    using range_policy = Kokkos::RangePolicy<PHX::Device::execution_space>;
-    Kokkos::parallel_for("SDirichletField<Jacobian>::evaluateFields",
-                         range_policy(0, numLRows), KOKKOS_LAMBDA(const int lrow) {
-        const bool isRowDBC = col2DBCView(lrow, 0) > 0;
-        if (fill_residual == true && isRowDBC)
-          fView(lrow, 0) = 0.0;
-
-        auto lJacRow = lJac.row(lrow);
-        auto numCols = lJacRow.length;
-        for (LO i = 0; i < numCols; ++i) {
-          auto lcol = lJacRow.colidx(i);
-          const bool isDiagEntry = lcol == lrow;
-          if (isDiagEntry) continue;
-
-          const bool isColDBC = col2DBCView(lcol, 0) > 0;
-          if (isRowDBC || isColDBC)
-            lJacRow.value(i) = 0.0;
-        }
-      });
-  } else {
-    Teuchos::RCP<Thyra_LinearOp>     J = dirichlet_workset.Jac;
-    auto f_view = fill_residual ? Albany::getNonconstLocalData(f) : Teuchos::null;
-    Teuchos::Array<ST> entries;
-    Teuchos::Array<LO> indices;
-
-    auto     col_is_dbc_data = Albany::getLocalData(col_is_dbc_.getConst());
-    auto     range_spmd_vs   = Albany::getSpmdVectorSpace(J->range());
-    const LO num_local_rows  = range_spmd_vs->localSubDim();
-
-    for (LO local_row = 0; local_row < num_local_rows; ++local_row) {
-      Albany::getLocalRowValues(J, local_row, indices, entries);
-      auto row_is_dbc = col_is_dbc_data[local_row] > 0;
-      if (row_is_dbc && fill_residual == true)
-        f_view[local_row] = 0.0;
-
-      const LO num_row_entries = entries.size();
-
-      for (LO row_entry = 0; row_entry < num_row_entries; ++row_entry) {
-        auto local_col         = indices[row_entry];
-        auto is_diagonal_entry = local_col == local_row;
-        if ( is_diagonal_entry) { continue; }
-
-        auto col_is_dbc = col_is_dbc_data[local_col] > 0;
-        if (row_is_dbc || col_is_dbc) { entries[row_entry] = 0.0; }
-      }
-      Albany::setLocalRowValues(J, local_row, indices(), entries());
-    }
+    auto tf = Albany::getTpetraVector(f);
+    fView = tf->getLocalViewDevice(Tpetra::Access::ReadWrite);
   }
+
+  auto tCol2DBC = Albany::getTpetraVector(col_is_dbc_);
+  auto col2DBCView = tCol2DBC->getLocalViewDevice(Tpetra::Access::ReadOnly);
+
+  auto tJac = Albany::getTpetraMatrix(dirichlet_workset.Jac);
+  auto lJac = tJac->getLocalMatrixDevice();
+  auto numLRows = lJac.numRows();
+
+  using range_policy = Kokkos::RangePolicy<PHX::Device::execution_space>;
+  Kokkos::parallel_for("SDirichletField<Jacobian>::evaluateFields",
+                        range_policy(0, numLRows), KOKKOS_LAMBDA(const int lrow) {
+      const bool isRowDBC = col2DBCView(lrow, 0) > 0;
+      if (fill_residual == true && isRowDBC)
+        fView(lrow, 0) = 0.0;
+
+      auto lJacRow = lJac.row(lrow);
+      auto numCols = lJacRow.length;
+      for (LO i = 0; i < numCols; ++i) {
+        auto lcol = lJacRow.colidx(i);
+        const bool isDiagEntry = lcol == lrow;
+        if (isDiagEntry) continue;
+
+        const bool isColDBC = col2DBCView(lcol, 0) > 0;
+        if (isRowDBC || isColDBC)
+          lJacRow.value(i) = 0.0;
+      }
+    });
 }
 
 // **********************************************************************

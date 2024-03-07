@@ -16,7 +16,6 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 2D)
 {
   using namespace Albany;
 
-  build_type (BuildType::Tpetra);
   auto comm = getDefaultComm();
 
   Teuchos::Array<int> nelems(2);

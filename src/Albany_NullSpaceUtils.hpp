@@ -12,7 +12,7 @@
 
 namespace Albany {
 
-// Forward declaration of a helper class, used to hide Tpetra/Epetra details
+// Forward declaration of a helper class, used to hide Tpetra details
 struct TraitsImplBase;
 
 class RigidBodyModes {
@@ -30,16 +30,13 @@ public:
   //! Update the parameter list.
   void updatePL(const Teuchos::RCP<Teuchos::ParameterList>& precParams);
 
-  //! Is ML used on this problem?
-  bool isMLUsed() const { return mlUsed; }
-
   //! Is MueLu used on this problem?
   bool isMueLuUsed() const { return mueLuUsed; }
 
   //! Is FROSch used on this problem?
   bool isFROSchUsed() const { return froschUsed; }
 
-  //! Pass coordinates and the null space to ML, MueLu or FROSch.
+  //! Pass coordinates and the null space to MueLu or FROSch.
   //! The null space is computed only if
   //! computeConstantModes or computeRotationModes are true
   //! The data accessed through getCoordArrays must have been set
@@ -59,7 +56,7 @@ private:
   int physVectorDim;
   bool computeRotationModes;
   int nullSpaceDim;
-  bool mlUsed, mueLuUsed, froschUsed, setNonElastRBM;
+  bool mueLuUsed, froschUsed, setNonElastRBM;
   bool areProbParametersSet, arePiroParametersSet;
 
   Teuchos::RCP<Teuchos::ParameterList> plist;

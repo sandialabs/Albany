@@ -13,7 +13,7 @@
 
 namespace PHAL {
 
-/** \brief Handles scattering of separable scalar response functions into epetra
+/** \brief Handles scattering of separable scalar response functions into (Tpetra)
  * data structures.
  *
  * Base implementation useable by specializations below
@@ -55,7 +55,7 @@ protected:
   PHX::MDField<ScalarT> local_response_eval;
 };
 
-/** \brief Handles scattering of separable scalar response functions into epetra
+/** \brief Handles scattering of separable scalar response functions into Tpetra
  * data structures.
  *
  * A separable response function is one that is a sum of responses across cells.

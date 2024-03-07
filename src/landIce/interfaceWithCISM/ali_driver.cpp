@@ -13,9 +13,6 @@
 //uncomment the following if you want to exclude procs with 0 elements from solve.
 //#define REDUCED_COMM
 
-//computation of sensitivities and responses will be off in the case
-//we have an epetra build + reduced comm, as this was causing a hang.
-
 //uncomment to check comparison in CISM tests
 #define CISM_CHECK_COMPARISONS
 
@@ -299,33 +296,8 @@ void ali_driver_init(int /* argc */, int /* exec_mode */, AliToGlimmer * ftg_ptr
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0)
       std::cout << "In ali_driver: creating Albany mesh struct..." << std::endl;
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
-    const auto& bt = slvrfctry->getParameters()->get("Build Type","Tpetra");
-    if (bt=="Tpetra") {
-      // Set the static variable that denotes this as a Tpetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Tpetra));
-//if we have tpetra build, compute sensitivities and responses.
-#define COMPUTE_SENS_AND_RESP
-    }
-    else if (bt=="Epetra") {
-#ifndef ALBANY_EPETRA
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
-                                 "Error! You are attempting to run CALI with 'Build Type = Epetra', \n"
-                                 "but Albany was configured with -DALBANY_EPETRA=OFF.  To run with this \n"
-                                 "build time, rebuild Albany with -DALBANY_EPETRA=ON.\n");
-#endif
-      // Set the static variable that denotes this as a Epetra run
-      static_cast<void>(Albany::build_type(Albany::BuildType::Epetra));
-      //if we have an epetra build but no reduced comm, compute sensitivities
-      //and responses
-#ifndef REDUCED_COMM
-#define COMPUTE_SENS_AND_RESP
-#endif
-    }
-    else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidArgument,
-                                 "Error! Invalid choice (" + bt + ") for 'BuildType'.\n"
-                                 "       Valid choices are 'Epetra', 'Tpetra'.\n");
-    }
+
+    #define COMPUTE_SENS_AND_RESP
 
     parameterList = slvrfctry->getParameters();
     discParams = Teuchos::sublist(parameterList, "Discretization", true);

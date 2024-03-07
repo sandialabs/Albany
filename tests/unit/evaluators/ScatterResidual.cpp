@@ -43,8 +43,6 @@
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   using EvalType = PHAL::AlbanyTraits::HessianVec;
   using Scalar = EvalType::ScalarT;
 
@@ -396,8 +394,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 */
 TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 {
-  Albany::build_type (Albany::BuildType::Tpetra);
-
   using EvalType = PHAL::AlbanyTraits::HessianVec;
   using Scalar = EvalType::ScalarT;
   using vec_str_pairs = std::vector<std::pair<std::string,std::string>>;
