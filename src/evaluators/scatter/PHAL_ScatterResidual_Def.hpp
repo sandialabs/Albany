@@ -427,16 +427,16 @@ evaluateFields(typename Traits::EvalData workset)
         const auto res = resid.get(cell,node,eq);
 
         if (scatter_f) {
-          Kokkos::atomic_add(f_data(lid), res.val());
+          KU::atomic_add<ExecutionSpace>(&f_data(lid), res.val());
         }
         if (scatter_JV) {
           for (int col=0; col<ncolsx; ++col) {
-            Kokkos::atomic_add(JV_data(lid,col), res.dx(col));
+            KU::atomic_add<ExecutionSpace>(&JV_data(lid,col), res.dx(col));
           }
         }
         if (scatter_fp) {
           for (int col=0; col<ncolsp; ++col) {
-            Kokkos::atomic_add(fp_data(lid,col), res.dx(col + paramoffset));
+            KU::atomic_add<ExecutionSpace>(&fp_data(lid,col), res.dx(col + paramoffset));
           }
         }
       }
