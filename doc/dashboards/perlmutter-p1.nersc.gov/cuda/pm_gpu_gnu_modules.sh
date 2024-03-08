@@ -24,7 +24,7 @@ module load cray-netcdf-hdf5parallel/4.9.0.3
 module load cray-parallel-netcdf/1.12.3.3
 module load cmake/3.24.3
 
-module load e4s
+module load e4s/23.05
 spack env activate -V gcc
 spack load superlu
 

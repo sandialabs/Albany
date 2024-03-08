@@ -25,7 +25,7 @@ module load cmake/3.24.3
 
 module load cray-python/3.9.13.1
 
-module load e4s
+module load e4s/23.05
 spack env activate -V gcc
 spack load superlu
 
