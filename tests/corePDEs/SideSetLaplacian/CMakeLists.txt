@@ -10,7 +10,7 @@ get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testName ${parentDirName}_${dirName})
 
 ADD_TEST(${testName}_2D ${Albany.exe} input_2D.yaml)
-SET_TESTS_PROPERTIES(${testName}_2D PROPERTIES LABELS "Basic;Tpetra;Forward")
+SET_TESTS_PROPERTIES(${testName}_2D PROPERTIES LABELS "Basic;Forward")
 
 ADD_TEST(${testName}_3D ${Albany.exe} input_3D.yaml)
-SET_TESTS_PROPERTIES(${testName}_3D PROPERTIES LABELS "Basic;Tpetra;Forward")
+SET_TESTS_PROPERTIES(${testName}_3D PROPERTIES LABELS "Basic;Forward")

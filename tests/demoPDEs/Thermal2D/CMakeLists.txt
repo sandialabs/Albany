@@ -30,24 +30,24 @@ if(NOT ALBANY_PARALLEL_ONLY)
 
   # Create the test with this name and standard executable
   add_test(${testName}_BackwardEuler ${Albany.exe} input_backward_euler.yaml)
-  set_tests_properties(${testName}_BackwardEuler PROPERTIES LABELS "Demo;Tpetra;Forward")
+  set_tests_properties(${testName}_BackwardEuler PROPERTIES LABELS "Demo;Forward")
 
   add_test(${testName}_ForwardEuler ${Albany.exe} input_forward_euler.yaml)
-  set_tests_properties(${testName}_ForwardEuler PROPERTIES LABELS "Demo;Tpetra;Forward")
+  set_tests_properties(${testName}_ForwardEuler PROPERTIES LABELS "Demo;Forward")
 endif()
   
   add_test(${testName}_ForwardEuler_with_Source ${Albany.exe} input_fe_with_source.yaml)
-  set_tests_properties(${testName}_ForwardEuler_with_Source PROPERTIES LABELS "Demo;Tpetra;Forward")
+  set_tests_properties(${testName}_ForwardEuler_with_Source PROPERTIES LABELS "Demo;Forward")
 
   add_test(${testName}_BackwardEuler_with_Source_Scalar_Param_Fwd_Sens ${Albany.exe} input_be_with_source_scalar_param_fwd_sens.yaml)
-  set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Fwd_Sens PROPERTIES LABELS "Demo;Tpetra;Forward")
+  set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Fwd_Sens PROPERTIES LABELS "Demo;Forward")
   
   add_test(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens ${Albany.exe} input_be_with_source_scalar_param_fwd_sens.yaml)
-  set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Forward")
+  set_tests_properties(${testName}_BackwardEuler_with_Source_Scalar_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Forward")
   
   add_test(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_be_with_source_dist_param_adjoint_sens.yaml)
-  set_tests_properties(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
+  set_tests_properties(${testName}_BackwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Adjoint")
 
   add_test(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens ${SerialAlbany.exe} input_fe_with_source_dist_param_adjoint_sens.yaml)
-  set_tests_properties(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Tpetra;Adjoint")
+  set_tests_properties(${testName}_ForwardEuler_with_Source_Dist_Param_Adjoint_Sens PROPERTIES LABELS "Demo;Adjoint")
 

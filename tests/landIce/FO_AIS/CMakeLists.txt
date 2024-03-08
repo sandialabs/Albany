@@ -46,10 +46,10 @@ if(ALBANY_MUELU)
   if (NOT ALBANY_PARALELL_EXODUS)
     set_tests_properties(${testNameRoot}_MueLuKokkos
                     PROPERTIES
-                    LABELS            "LandIce;Tpetra;Forward"
+                    LABELS            "LandIce;Forward"
                     FIXTURES_REQUIRED antarcticaMeshSetup)
   else()
-    set_tests_properties(${testNameRoot}_MueLuKokkos PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    set_tests_properties(${testNameRoot}_MueLuKokkos PROPERTIES LABELS "LandIce;Forward")
   endif()
 endif()
 
@@ -65,10 +65,10 @@ if(ALBANY_MUELU)
   if (NOT ALBANY_PARALELL_EXODUS)
     set_tests_properties(${testNameRoot}_MueLu
                      PROPERTIES
-                     LABELS            "LandIce;Tpetra;Forward"
+                     LABELS            "LandIce;Forward"
                      FIXTURES_REQUIRED antarcticaMeshSetup)
   else()
-    set_tests_properties(${testNameRoot}_MueLu PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    set_tests_properties(${testNameRoot}_MueLu PROPERTIES LABELS "LandIce;Forward")
   endif()
 endif()
 
@@ -80,11 +80,11 @@ endif()
 #   if (NOT ALBANY_PARALELL_EXODUS)
 #     set_tests_properties(${testNameRoot}_FROSch
 #                      PROPERTIES
-#                      LABELS            "LandIce;Tpetra;Forward"
+#                      LABELS            "LandIce;Forward"
 #                      FIXTURES_REQUIRED antarcticaMeshSetup)
 #   else()
 #     set_tests_properties(${testNameRoot}_FROSch
 #                        PROPERTIES
-#                        LABELS "LandIce;Tpetra;Forward")
+#                        LABELS "LandIce;Forward")
 #   endif()
 # endif()=

@@ -148,7 +148,7 @@ ANONYMOUS:
   Discretization:
     Method: Extruded
     Number Of Time Derivatives: 0
-    Exodus Output File Name: gis_analysis_stiffeningT.exo
+    Exodus Output File Name: gis_analysis_stiffening.exo
     Columnwise Ordering: true
     NumLayers: 2
     Use Glimmer Spacing: true
@@ -188,7 +188,7 @@ ANONYMOUS:
       basalside:
         Method: Ioss
         Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_analysis_stiffening_basalT.exo
+        Exodus Output File Name: gis_analysis_stiffening_basal.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info:
@@ -232,7 +232,7 @@ ANONYMOUS:
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_analysis_stiffening_surfaceT.exo
+        Exodus Output File Name: gis_analysis_stiffening_surface.exo
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

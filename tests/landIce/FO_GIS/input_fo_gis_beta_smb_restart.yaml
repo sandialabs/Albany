@@ -68,8 +68,8 @@ ANONYMOUS:
   Discretization:
     Method: Exodus
     Number Of Time Derivatives: 0
-    Exodus Output File Name: gis_beta_smbT_restart.exo
-    Exodus Input File Name: gis_beta_smbT.exo
+    Exodus Output File Name: gis_beta_smb_restart.exo
+    Exodus Input File Name: gis_beta_smb.exo
     Restart Index: 1
     Required Fields Info:
       Number Of Fields: 3

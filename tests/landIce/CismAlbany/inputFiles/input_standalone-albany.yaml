@@ -3,79 +3,70 @@
 ANONYMOUS:
   Debug Output:
     Write Solution to MatrixMarket: 0
-    Report MPI Info: true
   Problem:
     Phalanx Graph Visualization Detail: 0
-    Solution Method: Continuation
+    Solution Method: Steady
     Name: LandIce Stokes First Order 3D
-    Compute Sensitivities: true
     Basal Side Name: basalside
     Surface Side Name: upperside
     Flat Bed Approximation: true
-    Cubature Degrees (Horiz Vert): [4, 2]
-    Basal Cubature Degree: 3
-    Surface Cubature Degree: 3
     Response Functions:
-      Number Of Responses: 1
-      Response 0:
-        Type: Scalar Response
-        Name: Surface Velocity Mismatch
-    Dirichlet BCs: { }
-    Neumann BCs: { }
-    LandIce BCs:
-      Number : 2
-      BC 0:
-        Type: Basal Friction
-        Side Set Name: basalside
-        Basal Friction Coefficient:
-          Type: Field
-          Beta Field Name: basal_friction
-      BC 1:
-        Type: Lateral
-        Cubature Degree: 3
-        Side Set Name: lateralside
+      Number Of Responses: 0
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
     LandIce Physical Parameters:
-      Water Density: 1.028e+03
-      Ice Density: 9.10e+02
-      Gravity Acceleration: 9.8
-      Clausius-Clapeyron Coefficient: 0.0
+      Water Density: 1.02800000000000000e+03
+      Ice Density: 9.10000000000000000e+02
+      Gravity Acceleration: 9.81000000000000049e+00
+      Clausius-Clapeyron Coefficient: 0.00000000000000000e+00
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 1.0e-01
+      Glen's Law Homotopy Parameter: 2.00000000000000011e-01
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
-      Glen's Law n: 3.0
+      Glen's Law n: 3.00000000000000000e+00
       Flow Rate Type: Temperature Based
+    LandIce BCs:
+      Number: 1
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Field
+          Beta Field Name: basal_friction
     Body Force:
       Type: FO INTERP SURF GRAD
+    Cubature Degree: 3
+    Basal Cubature Degree: 3
+    Surface Cubature Degree: 3      
   Discretization:
+    Columnwise Ordering: true
     Number Of Time Derivatives: 0
     Method: Extruded
-    Exodus Output File Name: gis_unstructT.exo
-    Columnwise Ordering: true
-    NumLayers: 5
-    Thickness Field Name: ice_thickness
+    Exodus Output File Name: greenland_standalone-albanyT.exo
+    NumLayers: 10
+    Extrude Basal Node Fields: [basal_friction, thickness, surface_height]
+    Basal Node Fields Ranks: [1, 1, 1]
+    Interpolate Basal Elem Layered Fields: [temperature]
+    Basal Elem Layered Fields Ranks: [1]
     Use Glimmer Spacing: true
-    Extrude Basal Node Fields: [ice_thickness, surface_height]
-    Basal Node Fields Ranks: [1, 1]
-    Interpolate Basal Node Layered Fields: [temperature]
-    Basal Node Layered Fields Ranks: [1]
-    Workset Size: -1
     Required Fields Info:
-      Number Of Fields: 3
+      Number Of Fields: 4
       Field 0:
         Field Name: temperature
-        Field Type: Node Scalar
+        Field Type: Elem Scalar
         Field Origin: Mesh
       Field 1:
-        Field Name: ice_thickness
+        Field Name: basal_friction
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 2:
+        Field Name: thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3:
         Field Name: surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
@@ -84,65 +75,61 @@ ANONYMOUS:
       basalside:
         Method: Ioss
         Number Of Time Derivatives: 0
-        Restart Index: 1
-        Exodus Input File Name: gis_unstruct_basal_populated.exo
-        Exodus Output File Name: gis_unstruct_basalT.exo
+        Use Serial Mesh: false
+        Exodus Input File Name: albanyMesh/greenland_2d.exo
+        Exodus Output File Name: greenland_standalone-albany_basal.exo
         Required Fields Info:
           Number Of Fields: 4
           Field 0:
-            Field Name: ice_thickness
-            Field Origin: Mesh
+            Field Name: thickness
             Field Type: Node Scalar
+            File Name: albanyMesh/thickness.ascii
+            Field Origin: File
           Field 1:
             Field Name: surface_height
-            Field Origin: Mesh
             Field Type: Node Scalar
+            File Name: albanyMesh/surface_height.ascii
+            Field Origin: File
           Field 2:
-            Field Name: temperature
-            Field Origin: Mesh
-            Field Type: Node Layered Scalar
-            Number Of Layers: 11
-          Field 3:
             Field Name: basal_friction
-            Field Origin: Mesh
             Field Type: Node Scalar
+            File Name: albanyMesh/basal_friction.ascii
+            Field Origin: File
+          Field 3:
+            Field Name: temperature
+            Field Type: Elem Layered Scalar
+            Number Of Layers: 12
+            File Name: albanyMesh/temperature.ascii
+            Field Origin: File
       upperside:
-        Method: Ioss
+        Method: SideSetSTK
         Number Of Time Derivatives: 0
-        Restart Index: 1
-        Exodus Input File Name: gis_unstruct_surface_populated.exo
-        Exodus Output File Name: gis_unstruct_surfaceT.exo
+        Exodus Output File Name: greenland_standalone-albany_surface.exo
         Required Fields Info:
-          Number Of Fields: 2
+          Number Of Fields: 0
           Field 0:
-            Field Name: observed_surface_velocity
-            Field Origin: Mesh
+            Field Name: surface_velocity
             Field Type: Node Vector
+            File Name: albanyMesh/surface_velocity.ascii
           Field 1:
-            Field Name: observed_surface_velocity_RMS
-            Field Origin: Mesh
+            Field Name: surface_velocity_rms
             Field Type: Node Vector
-  Regression For Response 0:
-    Test Value: 1.109508809230e+08
-    Sensitivity For Parameter 0:
-      Test Value: 1.852225594771e+07
-    Relative Tolerance: 1.0e-06
-    Absolute Tolerance: 1.0e-06
+            File Name: albanyMesh/velocity_RMS.ascii
   Piro:
     LOCA:
-      Bifurcation: { }
-      Constraints: { }
+      Bifurcation: {}
+      Constraints: {}
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 1.0e-01
+        Initial Value: 1.00000000000000005e-01
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
-        Max Value: 1.0
-        Min Value: 0.0
+        Max Value: 1.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
       Step Size:
-        Initial Step Size: 2.0e-01
+        Initial Step Size: 2.00000000000000011e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -151,16 +138,12 @@ ANONYMOUS:
         Test 0:
           Test Type: Combo
           Combo Type: OR
-          Number of Tests: 2
+          Number of Tests: 1
           Test 0:
             Test Type: NormF
             Norm Type: Two Norm
             Scale Type: Scaled
-            Tolerance: 1.0e-05
-          Test 1:
-            Test Type: NormWRMS
-            Absolute Tolerance: 1.0e-05
-            Relative Tolerance: 1.0e-03
+            Tolerance: 9.99999999999999954e-08
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -171,35 +154,30 @@ ANONYMOUS:
           Linear Solver:
             Write Linear System: false
           Stratimikos Linear Solver:
-            NOX Stratimikos Options: { }
+            NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
-                Belos:
-                  VerboseObject:
-                    Verbosity Level: medium
-                  Solver Type: Block GMRES
-                  Solver Types:
-                    Block GMRES:
-                      Convergence Tolerance: 1.0e-06
+                AztecOO:
+                  Forward Solve:
+                    AztecOO Settings:
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
                       Output Frequency: 20
-                      Output Style: 1
-                      Verbosity: 33
-                      Maximum Iterations: 200
-                      Block Size: 1
-                      Num Blocks: 200
-                      Flexible Gmres: false
+                    Max Iterations: 200
+                    Tolerance: 9.99999999999999954e-07
               Preconditioner Type: Ifpack2
               Preconditioner Types:
                 Ifpack2:
                   Overlap: 0
-                  Prec Type: RILUK
+                  Prec Type: ILUT
                   Ifpack2 Settings:
-                    'fact: iluk level-of-fill': 0
+                    'fact: ilut level-of-fill': 1.0
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:
-          Full Step: 1.0
+          Full Step: 1.00000000000000000e+00
         Method: Backtrack
       Nonlinear Solver: Line Search Based
       Printing:

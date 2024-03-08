@@ -29,12 +29,12 @@ if (NOT ALBANY_PARALELL_EXODUS)
 
     set_tests_properties(${testName}_Humboldt
                        PROPERTIES
-                       LABELS "LandIce;Tpetra;Forward"
+                       LABELS "LandIce;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
 else ()
     set_tests_properties(${testName}_Humboldt
                        PROPERTIES
-                       LABELS "LandIce;Tpetra;Forward")
+                       LABELS "LandIce;Forward")
 endif()  
   
 
@@ -44,7 +44,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_kleiner_B.yaml
 
 # Create the test
 add_test(${testName}_Kleiner_B ${SerialAlbany.exe} input_kleiner_B.yaml)
-set_tests_properties(${testName}_Kleiner_B PROPERTIES LABELS "LandIce;Tpetra;Forward;Serial")
+set_tests_properties(${testName}_Kleiner_B PROPERTIES LABELS "LandIce;Forward;Serial")
 
 
 # Copy input file from source to binary dir
@@ -53,5 +53,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_kleiner_A.yaml
 
 # Create the test
 add_test(${testName}_Kleiner_A ${SerialAlbany.exe} input_kleiner_A.yaml)
-set_tests_properties(${testName}_Kleiner_A PROPERTIES LABELS "LandIce;Tpetra;Forward;Serial")
+set_tests_properties(${testName}_Kleiner_A PROPERTIES LABELS "LandIce;Forward;Serial")
 

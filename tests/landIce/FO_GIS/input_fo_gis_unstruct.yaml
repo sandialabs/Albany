@@ -3,6 +3,7 @@
 ANONYMOUS:
   Debug Output:
     Write Solution to MatrixMarket: 0
+    Report MPI Info: true
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
@@ -11,7 +12,7 @@ ANONYMOUS:
     Basal Side Name: basalside
     Surface Side Name: upperside
     Flat Bed Approximation: true
-    Cubature Degree: 4
+    Cubature Degrees (Horiz Vert): [4, 2]
     Basal Cubature Degree: 3
     Surface Cubature Degree: 3
     Response Functions:
@@ -19,10 +20,10 @@ ANONYMOUS:
       Response 0:
         Type: Scalar Response
         Name: Surface Velocity Mismatch
-    Dirichlet BCs: {}
-    Neumann BCs: {}
+    Dirichlet BCs: { }
+    Neumann BCs: { }
     LandIce BCs:
-      Number: 2
+      Number : 2
       BC 0:
         Type: Basal Friction
         Side Set Name: basalside
@@ -45,7 +46,7 @@ ANONYMOUS:
       Clausius-Clapeyron Coefficient: 0.0
     LandIce Viscosity:
       Type: Glen's Law
-      Glen's Law Homotopy Parameter: 0.1
+      Glen's Law Homotopy Parameter: 1.0e-01
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
       Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
@@ -121,21 +122,27 @@ ANONYMOUS:
             Field Name: observed_surface_velocity_RMS
             Field Origin: Mesh
             Field Type: Node Vector
+  Regression For Response 0:
+    Test Value: 1.109508809230e+08
+    Sensitivity For Parameter 0:
+      Test Value: 1.852225594771e+07
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-06
   Piro:
     LOCA:
-      Bifurcation: {}
-      Constraints: {}
+      Bifurcation: { }
+      Constraints: { }
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 0.1
+        Initial Value: 1.0e-01
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.0
         Min Value: 0.0
       Step Size:
-        Initial Step Size: 0.2
+        Initial Step Size: 2.0e-01
     NOX:
       Status Tests:
         Test Type: Combo
@@ -163,9 +170,9 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
-            Tolerance: 1.0e-6 # used for forward solves 
+            Tolerance: 1.0e-4 # used for forward solves 
           Stratimikos Linear Solver:
-            NOX Stratimikos Options: {}
+            NOX Stratimikos Options: { }
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
@@ -175,7 +182,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.0e-6  #used for adjoint solves
+                      Convergence Tolerance: 1.0e-06
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -211,10 +218,4 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
-  Regression For Response 0:
-    Absolute Tolerance: 1.0e-06
-    Relative Tolerance: 1.0e-06  
-    Test Value: 1.109508809174e+08
-    Sensitivity For Parameter 0:
-      Test Value: 1.852226833925e+07
 ...
