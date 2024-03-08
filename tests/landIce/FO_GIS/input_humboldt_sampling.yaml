@@ -29,7 +29,7 @@ ANONYMOUS:
     Number Of Time Derivatives: 0
     Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
     Exodus Output File Name: humboldt_laplacian_2d_sampling.exo
-    Use Serial Mesh: false
+    Use Serial Mesh: ${USE_SERIAL_MESH}
     Required Fields Info:
       Number Of Fields: 1
       Field 0:

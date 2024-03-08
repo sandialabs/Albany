@@ -31,7 +31,7 @@ $ cd ..
 $ path-to-albany-excecutables/AlbanyT inputFiles/create2dExo.yaml
 
 #run standalone Albany simultion
-$ path-to-albany-excecutables/AlbanyT inputFiles/input_standalone-albanyT.yaml 
+$ path-to-albany-excecutables/AlbanyT inputFiles/input_standalone-albany.yaml 
 
 # [optional] if you run the above on multiple processors, you need to merge the exodus files into one:
 $ path-to-trilinos-install/bin/epu --auto greenland_cism-albanyT.exo.4.

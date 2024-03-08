@@ -43,7 +43,7 @@ cd ..
 
 
 #run standalone Albany simulation
-/projects/sems/install/rhel7-x86_64/sems/v2/tpl/openmpi/1.10.7/gcc/10.1.0/base/7jgrwmo/bin/mpiexec -np 8 Albany inputFiles/input_standalone-albanyT.yaml 
+/projects/sems/install/rhel7-x86_64/sems/v2/tpl/openmpi/1.10.7/gcc/10.1.0/base/7jgrwmo/bin/mpiexec -np 8 Albany inputFiles/input_standalone-albany.yaml 
 cd albanyMesh
 /home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Trilinos/build/install/bin/epu --auto greenland_2d.exo.8.0
 cd ..

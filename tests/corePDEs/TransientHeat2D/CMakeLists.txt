@@ -15,7 +15,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be_nox_solver.yaml
 
 add_test(${testName} ${Albany.exe} tempus_be_nox_solver.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS
-                                            "Basic;Tempus;Tpetra;Forward")
+                                            "Basic;Tempus;Forward")
 
 # RK 4 test
 #set(testName ${testNameRoot}_Tempus_GERK)
@@ -24,4 +24,4 @@ set_tests_properties(${testName} PROPERTIES LABELS
 
 #add_test(${testName} ${Albany.exe} tempus_gerk.yaml)
 #set_tests_properties(${testName} PROPERTIES LABELS
-#                                            "Basic;Tempus;Tpetra;Forward")
+#                                            "Basic;Tempus;Forward")

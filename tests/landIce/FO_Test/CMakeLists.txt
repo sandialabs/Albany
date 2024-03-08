@@ -15,20 +15,20 @@ IF(ALBANY_SEACAS)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome.yaml COPYONLY)
 
   add_test(${testName}_SDBC ${Albany.exe} input_fo_dome.yaml)
-  set_tests_properties(${testName}_SDBC PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName}_SDBC PROPERTIES LABELS "LandIce;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_domeAnalysis.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_domeAnalysis.yaml COPYONLY)
 
   add_test(${testName}_Analysis ${Albany.exe} input_fo_dome.yaml)
-  set_tests_properties(${testName}_Analysis PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName}_Analysis PROPERTIES LABELS "LandIce;Forward")
 
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_interpSurf.yaml
                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_interpSurf.yaml COPYONLY)
 
   add_test(${testName}_interpSurf ${Albany.exe} input_fo_dome_interpSurf.yaml)
-  set_tests_properties(${testName}_interpSurf PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName}_interpSurf PROPERTIES LABELS "LandIce;Forward")
 ENDIF()
 
 ####################################
@@ -38,21 +38,21 @@ ENDIF()
 set(testName ${testNameRoot}_ConfinedShelf)
 
 if (ALBANY_IFPACK2) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelfT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelfT.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf.yaml COPYONLY)
 
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_confinedShelfT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  add_test(${testName} ${Albany.exe} input_fo_confinedShelf.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 set(testName ${testNameRoot}_ConfinedShelf_DepthIntBC)
 
 if (ALBANY_IFPACK2) 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf_depthIntBCT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf_depthIntBCT.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_confinedShelf_depthIntBC.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_confinedShelf_depthIntBC.yaml COPYONLY)
 
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_confinedShelf_depthIntBCT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  add_test(${testName} ${Albany.exe} input_fo_confinedShelf_depthIntBC.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 ####################################
@@ -63,10 +63,10 @@ IF(ALBANY_SEACAS)
   set (testName ${testNameRoot}_CircularShelf)
 
   if (ALBANY_IFPACK2) 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_circularShelfT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_circularShelfT.yaml COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_circularShelf.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_circularShelf.yaml COPYONLY)
 
-    add_test(${testName}_Tpetra ${Albany.exe} input_fo_circularShelfT.yaml)
-    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    add_test(${testName} ${Albany.exe} input_fo_circularShelf.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
   endif()
 ENDIF()

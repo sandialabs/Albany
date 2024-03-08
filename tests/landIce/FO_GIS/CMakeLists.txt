@@ -70,13 +70,13 @@ IF (NOT ALBANY_PARALELL_EXODUS)
 
   set_tests_properties(${testName}
                        PROPERTIES
-                       LABELS            "LandIce;Tpetra;Forward"
+                       LABELS            "LandIce;Forward"
                        FIXTURES_SETUP    PopulateMeshes
                        FIXTURES_REQUIRED meshSetup)
 ELSE ()
   set_tests_properties(${testName}
                        PROPERTIES
-                       LABELS         "LandIce;Tpetra;Forward"
+                       LABELS         "LandIce;Forward"
                        FIXTURES_SETUP PopulateMeshes)
 ENDIF()
 
@@ -87,47 +87,36 @@ ENDIF()
 
 set (testName ${testNameRoot}_Unstructured)
 
-
-# First run
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.yaml
-                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.yaml)
-add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_unstruct.yaml)
-set_tests_properties(${testName}_Tpetra
-                      PROPERTIES
-                      LABELS            "LandIce;Tpetra;Forward"
-                      FIXTURES_REQUIRED PopulateMeshes
-                      FIXTURES_SETUP    UnstructRestart)
-
-if (NOT ALBANY_DISABLE_OUTPUT_MESH)
-  # Restart
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.yaml)
-  add_test(${testName}_Restart ${Albany.exe} input_fo_gis_unstruct_restart.yaml)
-  set_tests_properties(${testName}_Restart
-                        PROPERTIES
-                        LABELS "LandIce;Tpetra;Forward"
-                        RUN_SERIAL TRUE
-                        DEPENDS ${testName}_Tpetra)
-endif()
-
 if (ALBANY_IFPACK2)
   # Normal run
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstructT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstructT.yaml)
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_unstructT.yaml)
-  set_tests_properties(${testName}_Tpetra
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_gis_unstruct.yaml)
+  set_tests_properties(${testName}
                        PROPERTIES
-                       LABELS "LandIce;Tpetra;Forward"
+                       LABELS "LandIce;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
 
   # Memoization run
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_memT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_memT.yaml)
-  add_test(${testName}_Memoization ${Albany.exe} input_fo_gis_unstruct_memT.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_mem.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_mem.yaml)
+  add_test(${testName}_Memoization ${Albany.exe} input_fo_gis_unstruct_mem.yaml)
   set_tests_properties(${testName}_Memoization
                        PROPERTIES
-                       LABELS "LandIce;Tpetra;Forward"
+                       LABELS "LandIce;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
+
+  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
+    # Restart
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.yaml
+                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.yaml)
+    add_test(${testName}_Restart ${Albany.exe} input_fo_gis_unstruct_restart.yaml)
+    set_tests_properties(${testName}_Restart
+                          PROPERTIES
+                          LABELS "LandIce;Forward"
+                          RUN_SERIAL TRUE
+                          DEPENDS ${testName})
+  endif()
 endif()
 
 if (NOT ALBANY_PARALELL_EXODUS)
@@ -146,53 +135,53 @@ endif()
 
 if (ALBANY_FROSCH)
   # Normal run
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstructT_FROSch.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstructT_FROSch.yaml)
-  add_test(${testName}_Tpetra_FROSch ${Albany.exe} input_fo_gis_unstructT_FROSch.yaml)
-  set_tests_properties(${testName}_Tpetra_FROSch
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_FROSch.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_FROSch.yaml)
+  add_test(${testName}_FROSch ${Albany.exe} input_fo_gis_unstruct_FROSch.yaml)
+  set_tests_properties(${testName}_FROSch
                        PROPERTIES
-                       LABELS "LandIce;Tpetra;Forward"
+                       LABELS "LandIce;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml)
-  add_test(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_fluxdiv.yaml)
-  set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
+  add_test(${testNameRoot}_Humboldt_FluxDiv_FROSch ${Albany.exe} input_fo_humboldt_frosch_fluxdiv.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_FROSch
                      PROPERTIES
-                     LABELS         "LandIce;Tpetra;Forward")
+                     LABELS         "LandIce;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_power_law.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_power_law.yaml)
-  add_test(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_power_law.yaml)
-  set_tests_properties(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch
+  add_test(${testNameRoot}_Humboldt_powerLaw_FROSch ${Albany.exe} input_fo_humboldt_frosch_power_law.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_powerLaw_FROSch
                      PROPERTIES
-                     LABELS         "LandIce;Tpetra;Forward")
+                     LABELS         "LandIce;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_effect_press.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_effect_press.yaml)
-  add_test(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_effect_press.yaml)
-  set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
+  add_test(${testNameRoot}_Humboldt_effectPress_FROSch ${Albany.exe} input_fo_humboldt_frosch_effect_press.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_effectPress_FROSch
                      PROPERTIES
-                     LABELS         "LandIce;Tpetra;Forward")
+                     LABELS         "LandIce;Forward")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml)
-  add_test(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
-  set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch
+  add_test(${testNameRoot}_Humboldt_pressurizedBed_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_FROSch
                      PROPERTIES
-                     LABELS            "LandIce;Tpetra;Forward")
+                     LABELS            "LandIce;Forward")
                        
   if (NOT ALBANY_PARALELL_EXODUS)
-    set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_Tpetra_FROSch
+    set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 
-    set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_Tpetra_FROSch
+    set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
                        
-    set_tests_properties(${testNameRoot}_Humboldt_powerLaw_Tpetra_FROSch
+    set_tests_properties(${testNameRoot}_Humboldt_powerLaw_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
 
-    set_tests_properties(${testNameRoot}_Humboldt_effectPress_Tpetra_FROSch
+    set_tests_properties(${testNameRoot}_Humboldt_effectPress_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
                        
   endif()
@@ -204,30 +193,30 @@ if (ALBANY_MUELU)
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_muelu.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_muelu.yaml)
-  add_test(${testNameRoot}_Humboldt_Tpetra_MueLu ${Albany.exe} input_fo_humboldt_muelu.yaml)
+  add_test(${testNameRoot}_Humboldt_MueLu ${Albany.exe} input_fo_humboldt_muelu.yaml)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_depthInt_muelu.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_depthInt_muelu.yaml)
-  add_test(${testNameRoot}_Humboldt_DepthIntegrated_Tpetra_MueLu ${Albany.exe} input_fo_humboldt_depthInt_muelu.yaml)
+  add_test(${testNameRoot}_Humboldt_DepthIntegrated_MueLu ${Albany.exe} input_fo_humboldt_depthInt_muelu.yaml)
 
   if (NOT ALBANY_PARALELL_EXODUS)
-    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_MueLu
+    set_tests_properties(${testNameRoot}_Humboldt_MueLu
                        PROPERTIES
-                       LABELS            "LandIce;Tpetra;Forward"
+                       LABELS            "LandIce;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
 
-    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_Tpetra_MueLu
+    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_MueLu
                        PROPERTIES
-                       LABELS            "LandIce;Tpetra;Forward"
+                       LABELS            "LandIce;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
   else ()
-    set_tests_properties(${testNameRoot}_Humboldt_Tpetra_MueLu
+    set_tests_properties(${testNameRoot}_Humboldt_MueLu
                        PROPERTIES
-                       LABELS         "LandIce;Tpetra;Forward")
+                       LABELS         "LandIce;Forward")
 
-    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_Tpetra_MueLu
+    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_MueLu
                        PROPERTIES
-                       LABELS         "LandIce;Tpetra;Forward")
+                       LABELS         "LandIce;Forward")
   endif()
   
 endif()
@@ -240,11 +229,11 @@ endif()
 set (testName ${testNameRoot}_Gis20km)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_testT.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_test.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_test.yaml)
 
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis20km_testT.yaml)
-  set_tests_properties(${testName}_Tpetra  PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  add_test(${testName} ${Albany.exe} input_fo_gis20km_test.yaml)
+  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 ####################################
@@ -256,11 +245,11 @@ set (testName ${testNameRoot}_CoupledThickness)
 IF(NOT Kokkos_ENABLE_CUDA)
   #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
   #see issue #420. 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupledT.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupledT.yaml)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.yaml)
 
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_coupledT.yaml)
-  set_tests_properties(${testName}_Tpetra  PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  add_test(${testName} ${Albany.exe} input_fo_gis_coupled.yaml)
+  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 ####################################
@@ -270,51 +259,51 @@ endif()
 set (testName ${testNameRoot}_AdjointSensitivity)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivityT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivityT.yaml)
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_adjoint_sensitivityT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_gis_adjoint_sensitivity.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
   set (testName ${testNameRoot}_ForwardSensitivity)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_forward_sensitivityT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_forward_sensitivityT.yaml)
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_forward_sensitivityT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_forward_sensitivity.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_forward_sensitivity.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_gis_forward_sensitivity.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 # Basal friction sensitivity
 set (testName ${testNameRoot}_AdjointSensitivity_BasalFriction_FluxDivergence)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_betaT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.yaml)
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_betaT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_gis_analysis_beta.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
   if (ALBANY_ROL)
     set (testName ${testNameRoot}_Analysis_BasalFriction)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_betaT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_betaT.yaml)
-    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_betaT.yaml)
-    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Analysis;ROL")
 
     set (testName ${testNameRoot}_Analysis_BasalFriction_Memoization)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_memT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_memT.yaml)
-    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_memT.yaml)
-    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_mem.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_mem.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_mem.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Analysis;ROL")
    
     if(ALBANY_TEKO)
       set (testName ${testNameRoot}_Analysis_BasalFriction_Hessian)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_hessianT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_hessianT.yaml)
-      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_hessianT.yaml)
-      set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_hessian.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_hessian.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_hessian.yaml)
+      set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Analysis;ROL")
       
       set (testName ${testNameRoot}_Analysis_BasalFriction_Hessian_matrix_free)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_hessian_matfreeT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_hessian_matfreeT.yaml)
-      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_hessian_matfreeT.yaml)
-      set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_hessian_matfree.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_hessian_matfree.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_beta_hessian_matfree.yaml)
+      set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Analysis;ROL")
     endif()
 
     if(ALBANY_TEKO AND ALBANY_MUELU)
@@ -343,23 +332,23 @@ endif()
 set (testName ${testNameRoot}_AdjointSensitivity_StiffeningBasalFriction)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffeningT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffeningT.yaml)
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_stiffeningT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_gis_analysis_stiffening.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
   if (ALBANY_ROL AND ALBANY_TEKO)
     set (testName ${testNameRoot}_Analysis_StiffeningBasalFriction)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffeningT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffeningT.yaml)
-    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_stiffeningT.yaml)
-    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_stiffening.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Analysis;ROL")
 
     set (testName ${testNameRoot}_Analysis_StiffeningBasalFriction_Memoization)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening_memT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening_memT.yaml)
-    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_stiffening_memT.yaml)
-    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Analysis;ROL")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_stiffening_mem.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_stiffening_mem.yaml)
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_gis_analysis_stiffening_mem.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Analysis;ROL")
   endif()
 endif()
 
@@ -368,38 +357,38 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
   set (testName ${testNameRoot}_AdjointSensitivity_Thickness)
 
   if (ALBANY_IFPACK2)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thicknessT.yaml)
-    add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_adjoint_sensitivity_thicknessT.yaml)
-    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_gis_adjoint_sensitivity_thickness.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
     
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml)
-    add_test(${testName}_MoveSurfHeightAndBed ${Albany.exe} input_fo_gis_adjoint_sensitivity_bed_and_topT.yaml)
-    set_tests_properties(${testName}_MoveSurfHeightAndBed PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_top.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_bed_and_top.yaml)
+    add_test(${testName}_MoveSurfHeightAndBed ${Albany.exe} input_fo_gis_adjoint_sensitivity_bed_and_top.yaml)
+    set_tests_properties(${testName}_MoveSurfHeightAndBed PROPERTIES LABELS "LandIce;Forward")
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml)
-    add_test(${testName}_MoveSurfHeight ${Albany.exe} input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeightT.yaml)
-    set_tests_properties(${testName}_MoveSurfHeight PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeight.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeight.yaml)
+    add_test(${testName}_MoveSurfHeight ${Albany.exe} input_fo_gis_adjoint_sensitivity_thickness_adjustSurfHeight.yaml)
+    set_tests_properties(${testName}_MoveSurfHeight PROPERTIES LABELS "LandIce;Forward")
   endif()
 
   # Two parameters sensitivity
   set (testName ${testNameRoot}_AdjointSensitivity_TwoParameters)
 
   if (ALBANY_IFPACK2)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_paramsT.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_paramsT.yaml)
-    add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_analysis_two_paramsT.yaml)
-    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_two_params.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_two_params.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_gis_analysis_two_params.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
   endif()
 
   set (testName ${testNameRoot}_Humboldt_Analysis_ThreeParameters)
   if (ALBANY_IFPACK2 AND ALBANY_TEKO AND ALBANY_LARGE_TESTS)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis_three_params.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_three_params.yaml)
-    add_test(${testName}_Tpetra ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_three_params.yaml)
-    set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Large;Analysis")
+    add_test(${testName} ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_three_params.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Large;Analysis")
     if (NOT ALBANY_PARALELL_EXODUS)
       set_tests_properties(${testNameRoot}_Humboldt_Analysis_ThreeParameters
         PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
@@ -414,10 +403,10 @@ endif()
 set (testName ${testNameRoot}_SensSMBwrtBeta)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smbT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smbT.yaml)
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_gis_beta_smbT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_gis_beta_smb.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
   if (NOT ALBANY_DISABLE_OUTPUT_MESH)
     # Restart
@@ -425,8 +414,8 @@ if (ALBANY_IFPACK2)
                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.yaml)
 
     add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
-    set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName}_Tpetra)
-    set_tests_properties(${testName}_Tpetra PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Tpetra;Forward")
+    set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName})
+    set_tests_properties(${testName} PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Forward")
   endif()
 endif()
 
@@ -437,10 +426,10 @@ endif()
 set (testName ${testNameRoot}_Manifold)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_manifold.yaml
-                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_manifold.yaml)
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_manifold.yaml)
 
 add_test(${testName} ${Albany.exe} input_fo_gis_manifold.yaml)
-set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 ####################################
 ###   Laplacian sampling tests   ###
@@ -451,19 +440,19 @@ if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gis_sampling.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_gis_sampling.yaml)
   add_test(${testName} ${Albany.exe} input_gis_sampling.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
   set (testName ${testNameRoot}_Humboldt_LaplacianPriorSampling)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_humboldt_sampling.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_humboldt_sampling.yaml)
   add_test(${testName} ${Albany.exe} input_humboldt_sampling.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
   set (testName ${testNameRoot}_Humboldt_LaplacianPriorSampling_3D)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_humboldt_sampling_3D.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_humboldt_sampling_3D.yaml)
   add_test(${testName} ${Albany.exe} input_humboldt_sampling_3D.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 
   if (NOT ALBANY_PARALELL_EXODUS)

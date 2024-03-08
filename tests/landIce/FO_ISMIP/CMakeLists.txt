@@ -11,11 +11,11 @@ set (testNameRoot ${parentDirName}_${dirName})
 set(testName ${testNameRoot}_TestA)
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testAT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testAT.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testA.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testA.yaml COPYONLY)
 
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_ismip-hom_testAT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  add_test(${testName} ${Albany.exe} input_fo_ismip-hom_testA.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 ####################################
@@ -28,8 +28,8 @@ set(testName ${testNameRoot}_TestB)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testB.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testB.yaml COPYONLY)
 
-add_test(${testName}_Tpetra ${Albany.exe} input_fo_ismip-hom_testB.yaml)
-set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+add_test(${testName} ${Albany.exe} input_fo_ismip-hom_testB.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 
 ####################################
@@ -40,11 +40,11 @@ set(testName ${testNameRoot}_TestC)
 
 
 if (ALBANY_IFPACK2)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testCT.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testCT.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testC.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testC.yaml COPYONLY)
 
-  add_test(${testName}_Tpetra ${Albany.exe} input_fo_ismip-hom_testCT.yaml)
-  set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+  add_test(${testName} ${Albany.exe} input_fo_ismip-hom_testC.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 ####################################
@@ -57,5 +57,5 @@ set(testName ${testNameRoot}_TestD)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testD.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testD.yaml COPYONLY)
 
-add_test(${testName}_Tpetra ${Albany.exe} input_fo_ismip-hom_testD.yaml)
-set_tests_properties(${testName}_Tpetra PROPERTIES LABELS "LandIce;Tpetra;Forward")
+add_test(${testName} ${Albany.exe} input_fo_ismip-hom_testD.yaml)
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")

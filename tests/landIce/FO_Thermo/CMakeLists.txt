@@ -35,11 +35,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test.yaml
 # Create the tests
 set (testName ${testNameRoot}_Dry_Bed)
 add_test(${testName} ${Albany.exe} input_FO_Thermo_dry_bed_test.yaml)
-set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 set (testName ${testNameRoot}_Wet_Bed)
 add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test.yaml)
-set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 # If Iopx is not present, we must decompose the input mesh first
 if (NOT ALBANY_PARALELL_EXODUS)
@@ -61,7 +61,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test_fea.yaml
 # Create the tests
 set (testName ${testNameRoot}_Wet_Bed_FEA)
 add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_fea.yaml)
-set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward")
+set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 if (ALBANY_FROSCH)
   # Copy input file from source to binary dir
@@ -80,19 +80,19 @@ if (ALBANY_FROSCH)
   # Create the tests
   set (testName ${testNameRoot}_Wet_Bed_FROSch)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_FROSch.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
   
   set (testName ${testNameRoot}_Humboldt_fluxDiv)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_fluxDiv.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
 
   set (testName ${testNameRoot}_Humboldt_depthIntegrated_fluxDiv)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_depthInt_fluxDiv.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
   
   set (testName ${testNameRoot}_Humboldt_lubricated)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_lubricated.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Tpetra;Forward;FROSch")
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
 
   if (NOT ALBANY_PARALELL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_fluxDiv
@@ -115,20 +115,20 @@ if (ALBANY_FROSCH AND ALBNAY_TEKO)
 
   set (testName_Contiguous ${testNameRoot}_Contiguous_Mesh_Hessian)
   add_test(${testName_Contiguous}_Serial "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${SerialAlbanyAnalysis.exe}" "humboldt_analysis_contiguous.yaml" "H-ref-000_contiguous.mm")
-  set_tests_properties(${testName_Contiguous}_Serial PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  set_tests_properties(${testName_Contiguous}_Serial PROPERTIES LABELS "LandIce;Hessian")
 
   set (testName_Non_Contiguous ${testNameRoot}_Non_Contiguous_Mesh_Hessian)
   add_test(${testName_Non_Contiguous}_Serial "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${SerialAlbanyAnalysis.exe}" "humboldt_analysis.yaml" "H-ref-000.mm")
-  set_tests_properties(${testName_Non_Contiguous}_Serial PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  set_tests_properties(${testName_Non_Contiguous}_Serial PROPERTIES LABELS "LandIce;Hessian")
   set_tests_properties(${testName_Non_Contiguous}_Serial PROPERTIES DEPENDS  ${testName_Contiguous}_Serial)
 
   add_test(${testName_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis_contiguous.yaml" "H-ref-000_contiguous.mm")
-  set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Hessian")
   # Prevent the two tests to be run at the same time as they rely on written files:
   set_tests_properties(${testName_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Non_Contiguous}_Serial)
   
   add_test(${testName_Non_Contiguous}_Parallel "${PYTHON_EXECUTABLE}" "hessian_comparison.py" "${AlbanyAnalysis.exe}"  "humboldt_analysis.yaml" "H-ref-000.mm")
-  set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Tpetra;Hessian")
+  set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES LABELS "LandIce;Hessian")
   # Prevent the two tests to be run at the same time as they rely on written files:
   set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Contiguous}_Parallel)
 

@@ -5,18 +5,17 @@ ANONYMOUS:
     Name: Heat 2D
     Compute Sensitivities: true
     Dirichlet BCs: 
-      SDBC on NS NodeSet0 for DOF T: 1.0
-      SDBC on NS NodeSet1 for DOF T: 0.0
-      SDBC on NS NodeSet2 for DOF T: -1.0
-      SDBC on NS NodeSet3 for DOF T: 0.0
+      DBC on NS nodeset0 for DOF T: 1.0
+      DBC on NS nodeset1 for DOF T: 0.0
+      DBC on NS nodeset2 for DOF T: -1.0
+      DBC on NS nodeset3 for DOF T: 0.00
     Parameters:
       Number Of Parameters: 1
       Parameter 0:
         Type: Distributed
         Name: thermal_conductivity
         Lower Bound: 4.0e-01
-        Upper Bound: 5.0
-        Initial Uniform Value: 1.0
+        Upper Bound: 5.0e+00
         Mesh Part: ''
     Response Functions:
       Number Of Responses: 1
@@ -34,24 +33,22 @@ ANONYMOUS:
           Scaling: 1.5e-01
           Source Field Name: ThermalConductivity
           Target Value: 0.0
-    Hessian:
-      Response 0:
-        Reconstruct H_pp: true
-    Cubature Degree: 9
-    
+    Cubature Degree: 3
   Discretization: 
-    1D Elements: 40
-    2D Elements: 40
-    Method: STK2D
-    Exodus Output File Name: steady2d_dist_paramT.exo
+    Method: Exodus
+    Number Of Time Derivatives: 0
+    Use Serial Mesh: true
+    Exodus Output File Name: steady2d_conduct_restart.exo
+    Exodus Input File Name: steady2d_conduct_opt.exo
+    Restart Index: 1
   Regression For Response 0:
-    Test Value: 3.23754626956e-01
+    Test Value: 1.78631029271e-01
     Relative Tolerance: 1.0e-03
     Sensitivity For Parameter 0:
-      Test Value: 8.94463776844e-03
+      Test Value: 1.07283086607e-02
   Piro: 
     Sensitivity Method: Adjoint
-    
+
     NOX: 
       Direction: 
         Method: Newton

@@ -16,7 +16,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_column_coupling.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_column_coupling_bed.yaml)
 add_test(${testName} ${Albany.exe} input_column_coupling_bed.yaml)
 set_tests_properties(${testName} PROPERTIES
-                     LABELS "LandIce;Tpetra;Forward")
+                     LABELS "LandIce;Forward")
 
 set (RESIDUAL_SIDE "upperside")
 set (DIRICHLET_SIDE "bottom")
@@ -25,4 +25,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_column_coupling.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_column_coupling_surface.yaml)
 add_test(${testName} ${Albany.exe} input_column_coupling_surface.yaml)
 set_tests_properties(${testName} PROPERTIES
-                     LABELS "LandIce;Tpetra;Forward")
+                     LABELS "LandIce;Forward")

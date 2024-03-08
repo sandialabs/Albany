@@ -6,21 +6,16 @@ ANONYMOUS:
     Compute Sensitivities: true
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T prescribe Field: dirichlet_field
-      DBC on NS NodeSet2 for DOF T: 0.0
       DBC on NS NodeSet1 for DOF T: -1.0
     Parameters:
-      Number Of Parameters: 2
+      Number Of Parameters: 1
       Parameter 0:
-        Type: Scalar
-        Name: DBC on NS NodeSet2 for DOF T
-        Lower Bound: -2.0
-        Upper Bound: 2.0
-      Parameter 1:
         Type: Distributed
         Name: dirichlet_field
         Lower Bound: -1.0
         Upper Bound: 2.0
         Initial Uniform Value: -0.5
+        Mesh Part: NodeSet0
     Response Functions: 
       Number Of Responses: 1
       Response 0:
@@ -30,50 +25,53 @@ ANONYMOUS:
         Source Field Name: Temperature
         Target Value: 0.0
     Hessian:
-      Use AD for Hessian-vector products (default): false
-      Residual:
-        Use AD for Hessian-vector products (default): false
-        Enable AD for Hessian-vector product contributions of: (x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)
-        Disable AD for Hessian-vector product contributions of: (x,p0) (x,p1) (p0,x) (p1,x)
-      Response 0:
-        Use AD for Hessian-vector products (default): false
-        Enable AD for Hessian-vector product contributions of: (x,x) (p0,p0) (p0,p1) (p1,p0) (p1,p1)
-        Disable AD for Hessian-vector product contributions of: (x,p0) (x,p1) (p0,x) (p1,x)
-        Reconstruct H_pp: false
+      Use AD for Hessian-vector products (default): true
     Cubature Degree: 9
-
+    
   Discretization: 
     1D Elements: 40
     2D Elements: 40
     Method: STK2D
-    Exodus Output File Name: steady2d_dirichlet_mixed_paramsT.exo
+    Exodus Output File Name: steady2d_dirichlet_dist_param.exo
   Regression For Response 0:
-    Relative Tolerance: 1.0e-07
-    Absolute Tolerance: 1.0e-07
-    Test Value: 3.53554196849e-01
+    Test Value: 5.8333333333e-01
+    Relative Tolerance: 1.0e-05
+    Absolute Tolerance: 1.0e-05
     Sensitivity For Parameter 0:
-      Test Value: -1.981199464494e-01
-    Sensitivity For Parameter 1:
-      Test Value: 6.397466684824e-02
+      Test Value: 1.04748375675e-01
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [20.3595359175]
+    Piro Analysis Test Values: [3.201562118716]  #exact solution, sqrt(41*0.5^2)
+      
   Piro: 
     Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    
     Analysis: 
       Output Level: 3
       Analysis Package: ROL
       ROL: 
-        Number Of Parameters: 2
         Check Derivatives: true
+        Derivative Checks:
+          Number Of Derivative Checks: 1
+          Perform Reduced Derivative Checks: true
+          Perfrom Expensive Derivative Checks: false
+
         Parameter Initial Guess Type: From Model Evaluator
         Uniform Parameter Guess: 0.0
         Min And Max Of Random Parameter Guess: [-1.0, 2.0]
         Bound Constrained: true
-        Objective Recovery Value: 1.0e10
 
         Full Space: false
-        Use NOX Solver: true
- 
+        Use NOX Solver: true        
+        
+        Matrix Based Dot Product: 
+          Matrix Type: Identity
+
+        Custom Secant: 
+          Type: Limited-Memory BFGS
+          Maximum Storage: 50
+          Initialization Type: Identity
+
         ROL Options: 
         # ===========  SIMOPT SOLVER PARAMETER SUBLIST  =========== 
           SimOpt:
@@ -89,9 +87,10 @@ ANONYMOUS:
               Solver Type:                   0    
           
           Status Test: 
-            Gradient Tolerance: 1.0e-4
+            Gradient Tolerance: 1.0e-5
             Step Tolerance: 1.0e-10
-            Iteration Limit: 5
+            Iteration Limit: 10
+            Use Relative Tolerances: false
 
           General: 
             Output Level: 3
@@ -101,7 +100,9 @@ ANONYMOUS:
             Secant: 
               Type: Limited-Memory BFGS
               Maximum Storage: 50
-              Use Default Scaling: true
+              Use as Preconditioner: true
+              Use as Hessian: false
+              Use Default Scaling: false
               Initial Hessian Scale: 1.0
               Barzilai-Borwein Type: 1
 
@@ -112,32 +113,30 @@ ANONYMOUS:
               Iteration Limit: 20
 
           Step:
-            Type: "Line Search"
+            Type: "Trust Region"
 
-            Line Search: 
-              Function Evaluation Limit: 20
-              Sufficient Decrease Tolerance: 1.0e-6
-              Initial Step Size: 1.0
-              User Defined Initial Step Size: false
-              Use Previous Step Length as Initial Guess: false
-              Use Adaptive Step Size Selection: true
-
-              Descent Method: 
-                Type: Quasi-Newton Method
-
-              Line-Search Method: 
-                Type: Cubic Interpolation
-                Backtracking Rate: 0.5
-                Bracketing Tolerance: 1.0e-08
-                Path-Based Target Level: 
-                  Target Relaxation Parameter: 1.0
-                  Upper Bound on Path Length: 1.0
-
-              Quasi-Newton:
-                Method: L-Secant-B
-                L-Secant-B:
-                  Sufficient Decrease Parameter: 1.0e-02
-                  Relative Tolerance Exponent: 1.0
+            Trust Region: 
+              Subproblem Model: Lin-More
+              Subproblem Solver: Truncated CG
+              Initial Radius: -1.0
+              Maximum Radius: 5.0e+03
+              Step Acceptance Threshold: 5.0e-02
+              Radius Shrinking Threshold: 5.0e-02
+              Radius Growing Threshold: 9.0e-01
+              Radius Shrinking Rate (Negative rho): 6.25e-02
+              Radius Shrinking Rate (Positive rho): 2.5e-01
+              Radius Growing Rate: 2.5
+              Safeguard Size: 1.0e+03
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 1.0e-01
+                  Exponent: 9.0e-01
+                  Forcing Sequence Initial Value: 1.0
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 1.0e-01
+                Gradient: 
+                  Tolerance Scaling: 1.0e-01
+                  Relative Tolerance: 2.0e+00
 
     NOX: 
       Direction: 
@@ -152,7 +151,7 @@ ANONYMOUS:
             NOX Stratimikos Options: { }
             Stratimikos: 
               Linear Solver Type: Belos
-              Linear Solver Types: 
+              Linear Solver Types:
                 Belos: 
                   VerboseObject: 
                     Verbosity Level: medium
