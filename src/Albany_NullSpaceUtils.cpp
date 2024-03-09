@@ -224,8 +224,6 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
   
   coordMV = coordMV_;
 
-  int numSpaceDim = coordMV->domain()->dim(); // Number of multivectors are the dimension of the problem
-
   if (isMueLuUsed()) {  // MueLu here
     // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
     auto t_coordMV = getTpetraMultiVector(coordMV);
@@ -251,8 +249,6 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
                            const Teuchos::RCP<const Thyra_VectorSpace>& soln_overlap_vs)
 {
   setCoordinates(coordMV_in);
-
-  const int numNodes = getSpmdVectorSpace(coordMV->range())->localSubDim();
 
   if (nullSpaceDim > 0) {
 

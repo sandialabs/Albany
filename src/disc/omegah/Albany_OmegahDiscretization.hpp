@@ -44,7 +44,7 @@ public:
     return m_node_sets;
   }
   const NodeSetGIDsList&
-  getNodeSetGIDs() const {
+  getNodeSetGIDs() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getNodeSetGIDs");
   }
   const NodeSetCoordList&
@@ -72,25 +72,25 @@ public:
 
   //! Get coordinates (overlap map).
   const Teuchos::ArrayRCP<double>&
-  getCoordinates() const {
+  getCoordinates() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getCoordinates");
   }
 
   //! Print the coords for mesh debugging
   void
-  printCoords() const {
+  printCoords() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::printCoords");
   }
 
   //! Get the map side_id->side_set_elem_id
   const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const {
+  getSideToSideSetCellMap() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideToSideSetCellMap");
   }
 
   //! Get the map side_node_id->side_set_cell_node_id
   const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const {
+  getSideNodeNumerationMap() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideNodeNumerationMap");
   }
 
@@ -108,11 +108,11 @@ public:
 
   //! Retrieve connectivity map from elementGID to workset
   WsLIDList&
-  getElemGIDws() {
+  getElemGIDws() override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
   }
   const WsLIDList&
-  getElemGIDws() const {
+  getElemGIDws() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
   }
 
@@ -124,7 +124,7 @@ public:
 
   //! File time of restart solution
   double
-  restartDataTime() const {
+  restartDataTime() const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::restartDataTime");
   }
 
@@ -142,7 +142,7 @@ public:
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   Teuchos::RCP<Thyra_Vector>
-  getSolutionField(bool overlapped = false) const {
+  getSolutionField(bool overlapped = false) const override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionField");
   }
 
@@ -166,7 +166,7 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
       const bool          overlapped = false,
-      const bool          force_write_solution = false) {
+      const bool          force_write_solution = false) override {
     std::cout << "WARNING! This call to OmegahDiscretization::writeSolution does nothing.\n";
   } 
   void
@@ -176,7 +176,7 @@ public:
       const Thyra_Vector& solution_dot,
       const double        time,
       const bool          overlapped = false,
-      const bool          force_write_solution = false) {
+      const bool          force_write_solution = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
   } 
   void
@@ -187,7 +187,7 @@ public:
       const Thyra_Vector& solution_dotdot,
       const double        time,
       const bool          overlapped = false,
-      const bool          force_write_solution = false) {
+      const bool          force_write_solution = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
   } 
   void
@@ -196,7 +196,7 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
       const bool               overlapped = false,
-      const bool               force_write_solution = false) {
+      const bool               force_write_solution = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMV");
   } 
   //! Write the solution to the mesh database.
@@ -205,7 +205,7 @@ public:
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double        time,
-      const bool          overlapped = false) {
+      const bool          overlapped = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
   }
   void
@@ -214,7 +214,7 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const double        time,
-      const bool          overlapped = false) {
+      const bool          overlapped = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
   }
   void
@@ -224,7 +224,7 @@ public:
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
       const double        time,
-      const bool          overlapped = false) {
+      const bool          overlapped = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
   }
   void
@@ -232,7 +232,7 @@ public:
       const Thyra_MultiVector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const double             time,
-      const bool               overlapped = false) {
+      const bool               overlapped = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToMeshDatabase");
   }
 
@@ -242,7 +242,7 @@ public:
       const Thyra_Vector& solution,
       const double        time,
       const bool          overlapped = false,
-      const bool          force_write_solution = false) {
+      const bool          force_write_solution = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToFile");
   } 
   void
@@ -250,7 +250,7 @@ public:
       const Thyra_MultiVector& solution,
       const double             time,
       const bool               overlapped = false,
-      const bool               force_write_solution = false) {
+      const bool               force_write_solution = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToFile");
   } 
 

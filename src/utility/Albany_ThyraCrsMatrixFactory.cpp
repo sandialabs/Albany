@@ -110,7 +110,6 @@ void ThyraCrsMatrixFactory::insertGlobalIndices (const GO row, const Teuchos::Ar
   //       Keeping indices in a temp auxiliary structure, allowing a single loop,
   //       seems the easiest solution, and not too bad, considering graphs are
   //       usually created once during simulation setup.
-  const GO max_safe_gid = Teuchos::OrdinalTraits<GO>::max();
   ALBANY_EXPECT (m_ov_range_indexer->isLocallyOwnedElement(row),
                  "Error! Row " + std::to_string(row) + " is not in the overlap range map.\n");
   auto& row_indices = m_graph->temp_graph[row];
