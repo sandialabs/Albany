@@ -432,31 +432,6 @@ ANONYMOUS:
                       A: myRebalanceAFact
                       Coordinates: myRebalanceProlongatorFact
                       Importer: myRepartitionFact
-#                 ML:
-#                   Base Method Defaults: none
-#                   ML Settings:
-#                     default values: SA
-#                     ML output: 0
-#                     'repartition: enable': 1
-#                     'repartition: max min ratio': 1.327e+00
-#                     'repartition: min per proc': 600
-#                     'repartition: Zoltan dimensions': 2
-#                     'repartition: start level': 4
-#                     'semicoarsen: number of levels': 2
-#                     'semicoarsen: coarsen rate': 12
-#                     'smoother: sweeps': 4
-#                     'smoother: type': Chebyshev
-#                     'smoother: Chebyshev eig boost': 1.2e+00
-#                     'smoother: sweeps (level 0)': 1
-#                     'smoother: sweeps (level 1)': 4
-#                     'smoother: type (level 0)': line Jacobi
-#                     'smoother: type (level 1)': line Jacobi
-#                     'smoother: damping factor': 5.5e-01
-#                     'smoother: pre or post': both
-#                     'coarse: type': Amesos-KLU
-#                     'coarse: pre or post': pre
-#                     'coarse: sweeps': 4
-#                     max levels: 7
           Rescue Bad Newton Solve: true
       Line Search:
         Full Step:

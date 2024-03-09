@@ -5,13 +5,13 @@ ANONYMOUS:
     Name: Heat 2D
     Compute Sensitivities: true
     Dirichlet BCs: 
-      DBC on NS NodeSet0 for DOF T: 1.50000000000000000e+00
-      DBC on NS NodeSet1 for DOF T: 1.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF T: 1.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF T: 1.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF T: 1.5
+      DBC on NS NodeSet1 for DOF T: 1.0
+      DBC on NS NodeSet2 for DOF T: 1.0
+      DBC on NS NodeSet3 for DOF T: 1.0
     Source Functions: 
       Quadratic: 
-        Nonlinear Factor: 3.39999999999999991e+00
+        Nonlinear Factor: 3.4e+00
     Parameters: 
       Number Of Parameters: 1
       Parameter 0:
@@ -43,15 +43,15 @@ ANONYMOUS:
     Method: STK2D
     Exodus Output File Name: steady2d_tpetra.exo
   Regression For Response 0:
-    Test Value: -4.20000000000000000e+01
-    Relative Tolerance: 1.00000000000000002e-03
+    Test Value: -4.2e+01
+    Relative Tolerance: 1.0e-03
     Sensitivity For Parameter 0:
-      Test Values: [4.51417000000000013e-01, 4.26205999999999974e-01, 4.36869000000000007e-01, 4.36869000000000007e-01, 1.72225999999999990e-01]
+      Test Values: [4.51417e-01, 4.26206e-01, 4.36869e-01, 4.36869e-01, 1.72226e-01]
   Regression For Response 1:
-    Test Value: -4.20000000000000000e+01
-    Relative Tolerance: 1.00000000000000002e-03
+    Test Value: -4.2e+01
+    Relative Tolerance: 1.0e-03
     Sensitivity For Parameter 0:
-      Test Values: [2.04623999999999988e+01, 1.72040000000000006e+01, 1.81322000000000010e+01, 1.81322000000000010e+01, 7.71400000000000041e+00]
+      Test Values: [2.04624e+01, 1.7204e+01, 1.81322e+01, 1.81322e+01, 7.714e+00]
   Piro: 
     LOCA: 
       Bifurcation: { }
@@ -73,20 +73,11 @@ ANONYMOUS:
             Stratimikos: 
               Linear Solver Type: Belos
               Linear Solver Types: 
-                AztecOO: 
-                  Forward Solve: 
-                    AztecOO Settings: 
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 10
-                    Max Iterations: 200
-                    Tolerance: 1.00000000000000008e-05
                 Belos: 
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000000000008e-05
+                      Convergence Tolerance: 1.0e-05
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -100,12 +91,12 @@ ANONYMOUS:
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings: 
-                    'fact: drop tolerance': 0.00000000000000000e+00
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing: 

@@ -6,26 +6,26 @@ ANONYMOUS:
     Name: Reaction-Diffusion System
     Solution Method: Steady
     Dirichlet BCs:
-      DBC on NS NodeSet0 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF U0: 0.00000000000000000e+00
-      DBC on NS NodeSet0 for DOF U1: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF U1: 0.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF U1: 0.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF U1: 0.00000000000000000e+00
-      DBC on NS NodeSet0 for DOF U2: 0.00000000000000000e+00
-      DBC on NS NodeSet1 for DOF U2: 0.00000000000000000e+00
-      DBC on NS NodeSet2 for DOF U2: 0.00000000000000000e+00
-      DBC on NS NodeSet3 for DOF U2: 0.00000000000000000e+00
+      DBC on NS NodeSet0 for DOF U0: 0.0
+      DBC on NS NodeSet1 for DOF U0: 0.0
+      DBC on NS NodeSet2 for DOF U0: 0.0
+      DBC on NS NodeSet3 for DOF U0: 0.0
+      DBC on NS NodeSet0 for DOF U1: 0.0
+      DBC on NS NodeSet1 for DOF U1: 0.0
+      DBC on NS NodeSet2 for DOF U1: 0.0
+      DBC on NS NodeSet3 for DOF U1: 0.0
+      DBC on NS NodeSet0 for DOF U2: 0.0
+      DBC on NS NodeSet1 for DOF U2: 0.0
+      DBC on NS NodeSet2 for DOF U2: 0.0
+      DBC on NS NodeSet3 for DOF U2: 0.0
     Options:
-      Viscosity mu0: 1.00000000000000005e-01
-      Viscosity mu1: 1.00000000000000002e-02
-      Viscosity mu2: 1.00000000000000000e+00
-      Forces: [1.00000000000000000e+00, 2.00000000000000000e+00, 3.00000000000000000e+00]
-      Reaction Coefficients0: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      Reaction Coefficients1: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
-      Reaction Coefficients2: [0.00000000000000000e+00, 0.00000000000000000e+00, 0.00000000000000000e+00]
+      Viscosity mu0: 1.0e-01
+      Viscosity mu1: 1.0e-02
+      Viscosity mu2: 1.0e+00
+      Forces: [1.0, 2.0, 3.0]
+      Reaction Coefficients0: [0.0, 0.0, 0.0]
+      Reaction Coefficients1: [0.0, 0.0, 0.0]
+      Reaction Coefficients2: [0.0, 0.0, 0.0]
     Parameters:
       Number Of Parameters: 0
     Response Functions:
@@ -45,11 +45,11 @@ ANONYMOUS:
     Write Solution to MatrixMarket: -1
   Discretization:
     1D Elements: 20
-    1D Scale: 1.00000000000000000e+00
+    1D Scale: 1.0
     2D Elements: 20
-    2D Scale: 1.00000000000000000e+00
+    2D Scale: 1.0
     3D Elements: 20
-    3D Scale: 1.00000000000000000e+00
+    3D Scale: 1.0
     Method: STK3D
     Exodus Output File Name: react-diff_out.exo
     Number Of Time Derivatives: 0
@@ -74,20 +74,11 @@ ANONYMOUS:
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
-                AztecOO:
-                  Forward Solve:
-                    AztecOO Settings:
-                      Aztec Solver: GMRES
-                      Convergence Test: r0
-                      Size of Krylov Subspace: 200
-                      Output Frequency: 10
-                    Max Iterations: 200
-                    Tolerance: 1.00000000000000008e-05
                 Belos:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.00000000000000008e-05
+                      Convergence Tolerance: 1.0e-05
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -101,12 +92,12 @@ ANONYMOUS:
                   Overlap: 1
                   Prec Type: ILUT
                   Ifpack2 Settings:
-                    'fact: drop tolerance': 0.00000000000000000e+00
-                    'fact: ilut level-of-fill': 1.00000000000000000e+00
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
       Line Search:
         Full Step:
-          Full Step: 1.00000000000000000e+00
+          Full Step: 1.0
         Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
@@ -115,12 +106,12 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 7.38169658988599985e-01
-    Relative Tolerance: 1.00000000000000004e-04
+    Test Value: 7.381696589886e-01
+    Relative Tolerance: 1.0e-04
   Regression For Response 1:
-    Test Value: 1.47633931797700004e+01
-    Relative Tolerance: 1.00000000000000004e-04
+    Test Value: 1.476339317977e+01
+    Relative Tolerance: 1.0e-04
   Regression For Response 2:
-    Test Value: 2.25483866520200004e+00
-    Relative Tolerance: 1.00000000000000004e-04
+    Test Value: 2.254838665202e+00
+    Relative Tolerance: 1.0e-04
 ...
