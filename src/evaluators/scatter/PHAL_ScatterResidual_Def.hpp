@@ -73,11 +73,9 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     numFields = (dl->node_tensor->extent(2))*(dl->node_tensor->extent(3));
   }
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (tensorRank == 0) {
     device_resid.val_kokkos.resize(numFields);
   }
-#endif
 
   if (p.isType<int>("Offset of First DOF")) {
     offset = p.get<int>("Offset of First DOF");
@@ -100,13 +98,13 @@ postRegistrationSetup(typename Traits::SetupData d,
     for (int eq=0; eq<numFields; ++eq) {
       this->utils.setFieldData(val[eq],fm);
     }
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
     for (int eq =0; eq<numFields;eq++){
       // Get MDField views from std::vector
       device_resid.val_kokkos[eq]=this->val[eq].get_static_view();
     }
     device_resid.val_kokkos.host_to_device();
-#endif
+
     numNodes = val[0].extent(1);
   } else  if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
@@ -173,26 +171,6 @@ evaluateFields(typename Traits::EvalData workset)
   const auto dof_mgr = workset.disc->getDOFManager();
   this->gather_fields_offsets (dof_mgr);
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const auto elem_lids     = workset.disc->getElementLIDs_host(ws);
-  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
-
-  //get nonconst (read and write) view of f
-  auto f_data = Albany::getNonconstLocalData(f);
-
-  const auto& fields_offsets = m_fields_offsets.host();
-  for (size_t cell=0; cell<workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids(cell);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
-        const auto lid = dof_lids(fields_offsets(node,eq+this->offset));
-        f_data[lid] += get_resid(cell,node,eq);
-      }
-    }
-  }
-#else
-
   const auto ws_elem_lids = workset.disc->getWsElementLIDs().dev();
   const auto elem_lids = Kokkos::subview(ws_elem_lids,ws,ALL);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
@@ -217,7 +195,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   });
   cudaCheckError();
-#endif
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
@@ -279,29 +256,6 @@ evaluateFields(typename Traits::EvalData workset)
   auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const bool use_device = true;
-#else
-  const bool use_device = false;
-#endif
-  if (use_device) {
-    evaluateFieldsDevice(workset);
-  } else {
-    evaluateFieldsHost(workset);
-  }
-#ifdef ALBANY_TIMER
-  PHX::Device::fence();
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-}
-
-template<typename Traits>
-void ScatterResidual<AlbanyTraits::Jacobian, Traits>::
-evaluateFieldsDevice(typename Traits::EvalData workset)
-{
   constexpr auto ALL = Kokkos::ALL();
 
   const int ws  = workset.wsIndex;
@@ -363,72 +317,14 @@ evaluateFieldsDevice(typename Traits::EvalData workset)
     }
   });
   cudaCheckError();
-}
 
-template<typename Traits>
-void ScatterResidual<AlbanyTraits::Jacobian, Traits>::
-evaluateFieldsHost(typename Traits::EvalData workset)
-{
-  constexpr auto ALL = Kokkos::ALL();
-
-  const int ws  = workset.wsIndex;
-
-  const auto dof_mgr       = workset.disc->getDOFManager();
-  const auto ws_elem_lids  = workset.disc->getWsElementLIDs().dev();
-  const auto elem_lids     = Kokkos::subview(ws_elem_lids,ws,ALL);
-  const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
-
-  const int neq  = dof_mgr->getNumFields();
-
-  // Get local data
-  auto f   = workset.f;
-  auto Jac = workset.Jac;
-
-  const bool scatter_f = Teuchos::nonnull(f);
-
-  auto f_data   = scatter_f ? Albany::getNonconstLocalData(f) : Teuchos::null;
-
-  const auto& fields_offsets = m_fields_offsets.host();
-  const auto eq_offset = this->offset;
-
-  const auto vol_eqn_off = m_volume_eqns_offsets.host();
-  const bool all_vol_eqn = vol_eqn_off.size()==0;
-  int nunk = all_vol_eqn ? neq*numNodes : vol_eqn_off.size();
-  if (not all_vol_eqn and m_lids.size()==0) {
-    m_lids.resize("",nunk);
-  }
-  Teuchos::Array<ST> vals (all_vol_eqn ? 0 : nunk);
-  auto lids = m_lids.host();
-
-  for (size_t cell=0; cell<workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids(cell);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
-        auto res = get_resid(cell,node,eq);
-
-        const auto row = dof_lids(fields_offsets(node,eq+eq_offset));
-        if (scatter_f) {
-          f_data[row] += res.val();
-        }
-#ifdef ALBANY_DEBUG
-        TEUCHOS_TEST_FOR_EXCEPTION (not res.hasFastAccess(), std::runtime_error,
-            "[ScatterResidual] Error! Residual FAD has length zero.\n");
+#ifdef ALBANY_TIMER
+  PHX::Device::fence();
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+  std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
-        if (all_vol_eqn) {
-          // Sum Jacobian entries all at once
-          Albany::addToLocalRowValues(Jac,row,nunk,dof_lids.data(),&res.fastAccessDx(0));
-        } else {
-          // We need to  pick only the volume equation derivs
-          for (unsigned ioff=0; ioff<vol_eqn_off.size(); ++ioff) {
-            lids[ioff] = dof_lids(vol_eqn_off(ioff));
-            vals[ioff] = res.fastAccessDx(vol_eqn_off(ioff));
-          }
-          Albany::addToLocalRowValues(Jac,row,nunk,lids.data(),vals.data());
-        }
-      }
-    }
-  }
 }
 
 // **********************************************************************

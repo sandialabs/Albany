@@ -58,7 +58,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 // *********************************************************************
 // Kokkos functor Residual
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 #ifdef KOKKOS_OPTIMIZED
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
@@ -110,7 +109,6 @@ operator()( const team_member & thread) const{
       }
 }
 #endif
-#endif
 // ***************************************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFGradInterpolationBase<EvalT, Traits, ScalarT>::
@@ -121,18 +119,6 @@ evaluateFields(typename Traits::EvalData workset)
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          for (std::size_t dim=0; dim<numDims; dim++) {
-            grad_val_qp(cell,qp,dim) = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
-            for (std::size_t node= 1 ; node < numNodes; ++node) {
-              grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
-          }
-        }
-      }
-    }
-#else
 
 #ifdef ALBANY_TIMER
  PHX::Device::fence();
@@ -162,32 +148,27 @@ evaluateFields(typename Traits::EvalData workset)
  std::cout<< "DOFGradInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 
-#endif
-
 }
 //Specialization for Jacobian evaluation taking advantage of the sparsity of the derivatives
 //Note, this assumes that the mesh is not FAD type
 // *********************************************************************
 
 // Kokkos kernel for Jacobian
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  template< typename Traits>
-  KOKKOS_INLINE_FUNCTION
-  void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-  operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
-
-    for (size_t qp=0; qp < this->numQPs; ++qp) {
-          for (size_t dim=0; dim<this->numDims; dim++) {
-            this->grad_val_qp(cell,qp,dim) = ScalarT(num_dof, this->val_node(cell, 0).val() * this->GradBF(cell, 0, qp, dim));
-            (this->grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = this->val_node(cell, 0).fastAccessDx(offset) * this->GradBF(cell, 0, qp, dim);
-            for (size_t node= 1 ; node < this->numNodes; ++node) {
-              (this->grad_val_qp(cell,qp,dim)).val() += this->val_node(cell, node).val() * this->GradBF(cell, node, qp, dim);
-              (this->grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += this->val_node(cell, node).fastAccessDx(neq*node+offset) * this->GradBF(cell, node, qp, dim);
-          }
-        }
+template< typename Traits>
+KOKKOS_INLINE_FUNCTION
+void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
+operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
+  for (size_t qp=0; qp < this->numQPs; ++qp) {
+    for (size_t dim=0; dim<this->numDims; dim++) {
+      this->grad_val_qp(cell,qp,dim) = ScalarT(num_dof, this->val_node(cell, 0).val() * this->GradBF(cell, 0, qp, dim));
+      (this->grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = this->val_node(cell, 0).fastAccessDx(offset) * this->GradBF(cell, 0, qp, dim);
+      for (size_t node= 1 ; node < this->numNodes; ++node) {
+        (this->grad_val_qp(cell,qp,dim)).val() += this->val_node(cell, node).val() * this->GradBF(cell, node, qp, dim);
+        (this->grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += this->val_node(cell, node).fastAccessDx(neq*node+offset) * this->GradBF(cell, node, qp, dim);
       }
+    }
+  }
 }
-#endif
 //**********************************************************************
 
 template<typename Traits>
@@ -198,25 +179,6 @@ evaluateFields(typename Traits::EvalData workset)
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
-
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
-  const int num_dof = this->val_node(0,0).size();
-  const int neq = workset.disc->getDOFManager()->getNumFields();
-
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < this->numQPs; ++qp) {
-          for (std::size_t dim=0; dim<this->numDims; dim++) {
-            this->grad_val_qp(cell,qp,dim) = ScalarT(num_dof, this->val_node(cell, 0).val() * this->GradBF(cell, 0, qp, dim));
-            (this->grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = this->val_node(cell, 0).fastAccessDx(offset) * this->GradBF(cell, 0, qp, dim);
-            for (std::size_t node= 1 ; node < this->numNodes; ++node) {
-              (this->grad_val_qp(cell,qp,dim)).val() += this->val_node(cell, node).val() * this->GradBF(cell, node, qp, dim);
-              (this->grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += this->val_node(cell, node).fastAccessDx(neq*node+offset) * this->GradBF(cell, node, qp, dim);
-          }
-        }
-      }
-    }
-#else
 
 #ifdef ALBANY_TIMER
  PHX::Device::fence();
@@ -234,8 +196,6 @@ evaluateFields(typename Traits::EvalData workset)
  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
  std::cout<< "DOFGradInterpolationBase Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-
 #endif
 
 

@@ -7,7 +7,6 @@ set(OPTS
 "-DENABLE_UNIT_TESTS:BOOL=ON"
 "-DENABLE_CHECK_FPE:BOOL=@lcm_fpe_switch@"
 "-DENABLE_FLUSH_DENORMALS:BOOL=@lcm_denormal_switch@"
-"-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=@lcm_enable_kokkos_devel@"
 "-DALBANY_ENABLE_FORTRAN:BOOL=OFF"
 "-DENABLE_SLFAD:BOOL=@lcm_enable_slfad@"
 "@lcm_slfad_size@"

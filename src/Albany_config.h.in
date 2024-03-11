@@ -49,9 +49,6 @@
 // Enable enhanced debugging features
 #cmakedefine ALBANY_DEBUG
 
-// Macro to isolate experimental kokkos development code
-#cmakedefine ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
 // FTZ/DAZ macro
 #cmakedefine ALBANY_FLUSH_DENORMALS
 
