@@ -148,8 +148,6 @@ evaluateFields(typename Traits::EvalData workset)
  std::cout<< "DOFGradInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 
-#endif
-
 }
 //Specialization for Jacobian evaluation taking advantage of the sparsity of the derivatives
 //Note, this assumes that the mesh is not FAD type
@@ -198,8 +196,6 @@ evaluateFields(typename Traits::EvalData workset)
  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
  std::cout<< "DOFGradInterpolationBase Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-
 #endif
 
 
