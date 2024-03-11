@@ -211,27 +211,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-
-// #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-// public:
-
-//  Teuchos::RCP<Tpetra_Vector> fT;
-//  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-
-//  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
-//  LocalMatrixType jacobian;
-//  Kokkos::View<int***, PHX::Device> Index;
-
-//  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-//  struct Neumann_Tag{};
-//  typedef Kokkos::RangePolicy<ExecutionSpace, Neumann_Tag> Neumann_Policy;
-
-//  KOKKOS_INLINE_FUNCTION
-//   void operator() (const Neumann_Tag& tag, const int& i) const;
-
-// #endif
-
 };
 
 // **************************************************************

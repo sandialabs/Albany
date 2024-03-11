@@ -1577,13 +1577,12 @@ Application::computeGlobalJacobianImpl(
     workset.Jac = jac;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     if (!workset.f.is_null()) {
       workset.f_kokkos = getNonconstDeviceData(workset.f);
     }
     
     workset.Jac_kokkos = getNonconstDeviceData(workset.Jac);
-#endif
+
     for (int ws = 0; ws < numWorksets; ws++) {
       const std::string evalName = PHAL::evalName<EvalT>("FM", wsPhysIndex[ws]);
       loadWorksetBucketInfo(workset, ws, evalName);

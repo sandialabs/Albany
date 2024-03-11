@@ -72,57 +72,11 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double*> > wsCoords = workset.wsCoords;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if( dispVecName.is_null() ){
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t node = 0; node < numVertices; ++node) {
-        for (std::size_t eq=0; eq < numDim; ++eq) { 
-          coordVec(cell,node,eq) = wsCoords[cell][node][eq]; 
-        }
-      }
-    }
-
-    // Since Intrepid2 will later perform calculations on the entire workset size
-    // and not just the used portion, we must fill the excess with reasonable 
-    // values. Leaving this out leads to calculations on singular elements.
-    for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
-      for (std::size_t node = 0; node < numVertices; ++node) {
-        for (std::size_t eq=0; eq < numDim; ++eq) { 
-          coordVec(cell,node,eq) = coordVec(0,node,eq); 
-        }
-      }
-    }
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION((workset.stateArrayPtr->count(*dispVecName)==1), std::logic_error,
-           "Error: cannot locate " << *dispVecName << " in PHAL::GatherCoordinateVector\n");
-
-    auto dVec = workset.stateArrayPtr->at(*dispVecName).host();
-
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t node = 0; node < numVertices; ++node) {
-        for (std::size_t eq=0; eq < numDim; ++eq) { 
-          coordVec(cell,node,eq) = wsCoords[cell][node][eq] + dVec(cell,node,eq);
-        }
-      }
-    }
-
-    // Since Intrepid2 will later perform calculations on the entire workset size
-    // and not just the used portion, we must fill the excess with reasonable 
-    // values. Leaving this out leads to calculations on singular elements.
-    for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
-      for (std::size_t node = 0; node < numVertices; ++node) {
-        for (std::size_t eq=0; eq < numDim; ++eq) { 
-          coordVec(cell,node,eq) = coordVec(0,node,eq) + dVec(cell,node,eq);
-        }
-      }
-    }
-  }
-#else
- typedef Kokkos::View<MeshScalarT***,PHX::Device> view_type;
- typedef typename view_type::HostMirror host_view_type;
+  typedef Kokkos::View<MeshScalarT***,PHX::Device> view_type;
+  typedef typename view_type::HostMirror host_view_type;
   
-// host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_view());
- host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_static_view());
+  // host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_view());
+  host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_static_view());
 
   if( dispVecName.is_null() ){
     for (std::size_t cell=0; cell < numCells; ++cell) {
@@ -152,7 +106,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
         }
       }
     }
-   for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
+    for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
       for (std::size_t node = 0; node < numVertices; ++node) {
         for (std::size_t eq=0; eq < numDim; ++eq) {
           coordVecHost(cell,node,eq) = coordVecHost(0,node,eq) + dVec(cell,node,eq);
@@ -162,7 +116,6 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   } 
   // Kokkos::deep_copy (coordVec.get_view(), coordVecHost);
   Kokkos::deep_copy (coordVec.get_static_view(), coordVecHost);
-#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 }
 
 } // namespace PHAL

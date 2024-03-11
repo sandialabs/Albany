@@ -10,7 +10,6 @@ cmake \
     -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Wno-mismatched-new-delete -Wno-catch-value -Wno-use-after-free -Werror' \
     -D ENABLE_LANDICE:BOOL=ON \
     -D ENABLE_DEMO_PDES:BOOL=ON \
-    -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
     -D ALBANY_CTEST_TIMEOUT=2400 \
     -D ENABLE_CHECK_FPE:BOOL=OFF \
     -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by core' \

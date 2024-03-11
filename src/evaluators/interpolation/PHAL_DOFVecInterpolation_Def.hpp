@@ -101,41 +101,26 @@ void DOFVecInterpolationBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i<vecDim; i++) {
-        // Zero out for node==0; then += for node = 1 to numNodes
-        val_qp(cell,qp,i) = val_node(cell, 0, i) * BF(cell, 0, qp);
-        for (std::size_t node=1; node < numNodes; ++node) {
-          val_qp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
-        }
-      }
-    }
-  }
-//  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
-#else
 
 #ifdef ALBANY_TIMER
-auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-   Kokkos::parallel_for ( workset.numCells,
-       VecInterpolation<PHX::Device,
-                        decltype(BF),
-                        decltype(val_node),
-                        decltype(val_qp) >(
-                          BF, val_node, val_qp, numQPs, numNodes, vecDim));
+  Kokkos::parallel_for ( workset.numCells,
+      VecInterpolation<PHX::Device,
+                      decltype(BF),
+                      decltype(val_node),
+                      decltype(val_qp) >(
+                        BF, val_node, val_qp, numQPs, numNodes, vecDim));
 
 #ifdef ALBANY_TIMER
-PHX::Device::fence();
-auto elapsed = std::chrono::high_resolution_clock::now() - start;
-long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-std::cout<< "DOFVecInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
+  PHX::Device::fence();
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+  std::cout<< "DOFVecInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 
-#endif
 }
 
 // Specialization for Jacobian evaluation taking advantage of known sparsity
@@ -197,23 +182,6 @@ void FastSolutionVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, type
 evaluateFields(typename Traits::EvalData workset)
 {
   const int num_dof = Kokkos::dimension_scalar(this->val_node.get_view());
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const int neq = workset.disc->getDOFManager()->getNumFields();
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < this->numQPs; ++qp) {
-      for (std::size_t i=0; i<this->vecDim; i++) {
-        // Zero out for node==0; then += for node = 1 to numNodes
-        this->val_qp(cell,qp,i) = ScalarT(num_dof, this->val_node(cell, 0, i).val() * this->BF(cell, 0, qp));
-        (this->val_qp(cell,qp,i)).fastAccessDx(offset+i) = this->val_node(cell, 0, i).fastAccessDx(offset+i) * this->BF(cell, 0, qp);
-        for (std::size_t node=1; node < this->numNodes; ++node) {
-          (this->val_qp(cell,qp,i)).val() += this->val_node(cell, node, i).val() * this->BF(cell, node, qp);
-          (this->val_qp(cell,qp,i)).fastAccessDx(neq*node+offset+i) += this->val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * this->BF(cell, node, qp);
-        }
-      }
-    }
-  }
-//Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
-#else
   Kokkos::parallel_for(workset.numCells,
       VecInterpolationJacob<
         ScalarT,
@@ -222,8 +190,6 @@ evaluateFields(typename Traits::EvalData workset)
         decltype(this->val_node),
         decltype(this->val_qp)>(
             this->BF, this->val_node, this->val_qp, this->numNodes, this->numQPs, this->vecDim, num_dof, offset));
-#endif
-
 }
 
 }

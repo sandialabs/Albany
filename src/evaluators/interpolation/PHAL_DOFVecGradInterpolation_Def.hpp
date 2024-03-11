@@ -58,7 +58,6 @@ namespace PHAL {
   //*********************************************************************
   //KOKKOS functor Residual
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   template<typename EvalT, typename Traits, typename ScalarT>
   KOKKOS_INLINE_FUNCTION
   void DOFVecGradInterpolationBase<EvalT, Traits, ScalarT>::
@@ -81,7 +80,6 @@ namespace PHAL {
       }
     }
   }
-#endif
 
 // *********************************************************************************
   template<typename EvalT, typename Traits, typename ScalarT>
@@ -89,39 +87,20 @@ namespace PHAL {
   evaluateFields(typename Traits::EvalData workset)
   {
     if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          for (std::size_t i=0; i<vecDim; i++) {
-            for (std::size_t dim=0; dim<numDims; dim++) {
-              // For node==0, overwrite. Then += for 1 to numNodes.
-              grad_val_qp(cell,qp,i,dim) = val_node(cell, 0, i) * GradBF(cell, 0, qp, dim);
-              for (std::size_t node= 1 ; node < numNodes; ++node) {
-                grad_val_qp(cell,qp,i,dim) += val_node(cell, node, i) * GradBF(cell, node, qp, dim);
-            }
-          }
-        }
-      }
-    }
-
-    //  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
-#else
 
 #ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto start = std::chrono::high_resolution_clock::now();
+    PHX::Device::fence();
+    auto start = std::chrono::high_resolution_clock::now();
 #endif
-  //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
-  Kokkos::parallel_for(DOFVecGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
+    //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
+    Kokkos::parallel_for(DOFVecGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
 
 #ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto elapsed = std::chrono::high_resolution_clock::now() - start;
- long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
- long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
- std::cout<< "DOFVecGradInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-
+    PHX::Device::fence();
+    auto elapsed = std::chrono::high_resolution_clock::now() - start;
+    long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+    std::cout<< "DOFVecGradInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
   }
 
@@ -129,70 +108,43 @@ namespace PHAL {
   // This assumes that mesh coordinates are not FAD types
   //**********************************************************************
   //Kokkos functor Jacobian
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   template<typename Traits>
   KOKKOS_INLINE_FUNCTION
   void FastSolutionVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   operator() (const FastSolutionVecGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
     const int num_dof = this->val_node(0,0,0).size();
     for (size_t qp=0; qp < this->numQPs; ++qp) {
-          for (size_t i=0; i<this->vecDim; i++) {
-            for (size_t dim=0; dim<this->numDims; dim++) {
-              // For node==0, overwrite. Then += for 1 to numNodes.
-              this->grad_val_qp(cell,qp,i,dim) = ScalarT(num_dof, this->val_node(cell, 0, i).val() * this->GradBF(cell, 0, qp, dim));
-              (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(offset+i) = this->val_node(cell, 0, i).fastAccessDx(offset+i) * this->GradBF(cell, 0, qp, dim);
-              for (size_t node= 1 ; node < this->numNodes; ++node) {
-                (this->grad_val_qp(cell,qp,i,dim)).val() += this->val_node(cell, node, i).val() * this->GradBF(cell, node, qp, dim);
-                (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(neq*node+offset+i) += this->val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * this->GradBF(cell, node, qp, dim);
-           }
-         }
+      for (size_t i=0; i<this->vecDim; i++) {
+        for (size_t dim=0; dim<this->numDims; dim++) {
+          // For node==0, overwrite. Then += for 1 to numNodes.
+          this->grad_val_qp(cell,qp,i,dim) = ScalarT(num_dof, this->val_node(cell, 0, i).val() * this->GradBF(cell, 0, qp, dim));
+          (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(offset+i) = this->val_node(cell, 0, i).fastAccessDx(offset+i) * this->GradBF(cell, 0, qp, dim);
+          for (size_t node= 1 ; node < this->numNodes; ++node) {
+            (this->grad_val_qp(cell,qp,i,dim)).val() += this->val_node(cell, node, i).val() * this->GradBF(cell, node, qp, dim);
+            (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(neq*node+offset+i) += this->val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * this->GradBF(cell, node, qp, dim);
+          }
         }
       }
-
+    }
   }
-#endif
   //**********************************************************************
   template<typename Traits>
   void FastSolutionVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    const int num_dof = this->val_node(0,0,0).size();
-    const int neq = workset.disc->getDOFManager()->getNumFields();
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < this->numQPs; ++qp) {
-          for (std::size_t i=0; i<this->vecDim; i++) {
-            for (std::size_t dim=0; dim<this->numDims; dim++) {
-              // For node==0, overwrite. Then += for 1 to numNodes.
-              this->grad_val_qp(cell,qp,i,dim) = ScalarT(num_dof, this->val_node(cell, 0, i).val() * this->GradBF(cell, 0, qp, dim));
-              (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(offset+i) = this->val_node(cell, 0, i).fastAccessDx(offset+i) * this->GradBF(cell, 0, qp, dim);
-              for (std::size_t node= 1 ; node < this->numNodes; ++node) {
-                (this->grad_val_qp(cell,qp,i,dim)).val() += this->val_node(cell, node, i).val() * this->GradBF(cell, node, qp, dim);
-                (this->grad_val_qp(cell,qp,i,dim)).fastAccessDx(neq*node+offset+i) += this->val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * this->GradBF(cell, node, qp, dim);
-           }
-         }
-        }
-      }
-    }
- //  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
-
-#else
 #ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-   neq = workset.disc->getDOFManager()->getNumFields();
-
-   Kokkos::parallel_for(FastSolutionVecGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
+    neq = workset.disc->getDOFManager()->getNumFields();
+    Kokkos::parallel_for(FastSolutionVecGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
 
 #ifdef ALBANY_TIMER
-  PHX::Device::fence();
- auto elapsed = std::chrono::high_resolution_clock::now() - start;
- long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
- long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
- std::cout<< "FastSolutionVecGradInterpolationBase Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-
+    PHX::Device::fence();
+    auto elapsed = std::chrono::high_resolution_clock::now() - start;
+    long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+    std::cout<< "FastSolutionVecGradInterpolationBase Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
   }
 

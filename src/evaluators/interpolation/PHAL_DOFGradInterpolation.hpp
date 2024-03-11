@@ -59,7 +59,6 @@ protected:
 
   MDFieldMemoizer<Traits> memoizer;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -81,7 +80,6 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const DOFGradInterpolationBase_Residual_Tag& tag, const int& cell) const;
-#endif
 #endif
 
 };
@@ -140,7 +138,6 @@ private:
   typedef PHAL::AlbanyTraits::Jacobian::MeshScalarT MeshScalarT;
   std::size_t offset;
 
- #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -153,7 +150,6 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const;
 
-#endif
 
 };
 

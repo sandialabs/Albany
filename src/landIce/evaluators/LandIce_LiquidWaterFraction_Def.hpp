@@ -69,21 +69,8 @@ template<typename EvalT, typename Traits, typename Type>
 void LiquidWaterFraction<EvalT,Traits,Type>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Kokkos::parallel_for(Phi_Policy(0, workset.numCells), *this);
-#else
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-  {
-    for (std::size_t node = 0; node < numNodes; ++node)
-    {
-      phi(cell,node) =  ( enthalpy(cell,node) < enthalpyHs(cell,node) ) ? ScalarT(0) : phi_scaling * (enthalpy(cell,node) - enthalpyHs(cell,node));
-    }
-  }
-#endif
-
 }
 
 

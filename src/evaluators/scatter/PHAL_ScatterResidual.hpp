@@ -23,9 +23,7 @@
 
 #include "Teuchos_ParameterList.hpp"
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 #include "Kokkos_Vector.hpp"
-#endif
 
 namespace Albany {
 class DOFManager;
@@ -198,15 +196,7 @@ public:
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
 
-// The following should be protected, but a KOKKOS_CLASS_LAMBDA
-// must be in a public method for CUDA
-#ifndef KOKKOS_ENABLE_CUDA
 protected:
-#endif
-  void evaluateFieldsDevice(typename Traits::EvalData d);
-
-protected:
-  void evaluateFieldsHost(typename Traits::EvalData d);
 
   using Base = ScatterResidualBase<AlbanyTraits::Jacobian, Traits>;
   using ScalarT = typename Base::ScalarT;

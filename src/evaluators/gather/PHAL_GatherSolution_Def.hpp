@@ -136,7 +136,6 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
     numFields = (dl->node_tensor->extent(2))*(dl->node_tensor->extent(3));
   }
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if ( tensorRank == 0 ) {
     device_sol.val_kokkos.resize(numFields);
     if (enableTransient)
@@ -144,7 +143,6 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
     if (enableAcceleration)
       device_sol.val_dotdot_kokkos.resize(numFields);
   }
-#endif
 
   if (p.isType<int>("Offset of First DOF"))
     offset = p.get<int>("Offset of First DOF");
@@ -171,7 +169,7 @@ postRegistrationSetup(typename Traits::SetupData d,
         this->utils.setFieldData(val_dotdot[eq],fm);
     }
     numNodes = val[0].extent(1);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
     // Get MDField views from std::vector
     for (int i =0; i<numFields;i++){
       device_sol.val_kokkos[i]=this->val[i].get_static_view();
@@ -189,7 +187,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     if (enableAcceleration){
       device_sol.val_dotdot_kokkos.host_to_device();
     }
-#endif
+
   } else if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
     if (enableTransient) this->utils.setFieldData(valVec_dot,fm);
@@ -287,36 +285,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto gather_xdot    = workset.transientTerms && this->enableTransient;
   const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // Do everything on host
-  Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
-  x_data = Albany::getLocalData(x);
-  if(!xdot.is_null()) {
-    xdot_data = Albany::getLocalData(xdot);
-  }
-  if(!xdotdot.is_null()) {
-    xdotdot_data = Albany::getLocalData(xdotdot);
-  }
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const auto elem_LID = elem_lids.host()(ws,cell);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids.host(),elem_LID,ALL);
-    for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; ++eq)
-        const auto lid = dof_lids(m_fields_offsets.host()(node,eq));
-        get_ref(cell,node,eq) = x_data[lid];
-        if (gather_xdot) {
-          get_ref_dot(cell,node,eq) = xdot_data[lid];
-        }
-        if (gather_xdotdot) {
-          get_ref_dotdot(cell,node,eq) = xdotdot_data[lid];
-        }
-      }
-    }
-  }
-#else
   // Do everything on device
-
   // Get kokkos views from thyra vectors
   Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
   x_data = Albany::getDeviceData(x);
@@ -352,7 +321,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   });
   cudaCheckError();
-#endif
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
@@ -409,44 +377,6 @@ evaluateFields(typename Traits::EvalData workset)
   const auto gather_xdot    = workset.transientTerms && this->enableTransient;
   const auto gather_xdotdot = workset.accelerationTerms && this->enableAcceleration;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
-  x_data = Albany::getLocalData(x);
-  if(!xdot.is_null()) {
-    xdot_data = Albany::getLocalData(xdot);
-  }
-  if(!xdotdot.is_null()) {
-    xdot_data = Albany::getLocalData(xdot);
-  }
-
-  const auto& fields_offsets = m_fields_offsets.host();
-  const int first_dof = this->offset;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const auto elem_LID = elem_lids.host()(ws,cell);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids.host(),elem_LID,ALL);
-    for (int node = 0; node < this->numNodes; ++node) {
-      int firstunk = fields_offsets(node,first_dof);
-      for (int eq = 0; eq < numFields; ++eq) {
-        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
-        ref_t valref = get_ref(cell,node,eq);
-        valref = FadType(valref.size(), x_data[lid]);
-        valref.fastAccessDx(firstunk + eq) = workset.j_coeff;
-
-        if (gather_xdot) {
-          ref_t valref_dot = get_ref_dot (cell,node,eq);
-          valref_dot = FadType(valref_dot.size(), xdot_data[lid];
-          valref_dot.fastAccessDx(firstunk + eq) = workset.m_coeff;
-        }
-        if (gather_xdotdot) {
-          ref_t valref_dotdot = get_ref_dotdot(cell,node,eq);
-          valref_dotdot = FadType(valref_dotdot.size(), xdotdot_data[lid];
-          valref_dotdot.fastAccessDx(firstunk + eq) = workset.n_coeff;
-        }
-      }
-    }
-  }
-#else
-
   // Get dimensions and coefficients
   const auto j_coeff = workset.j_coeff;
   const auto m_coeff = workset.m_coeff;
@@ -497,7 +427,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   });
   cudaCheckError();
-#endif
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();

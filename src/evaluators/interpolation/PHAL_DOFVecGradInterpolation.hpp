@@ -60,7 +60,6 @@ protected:
 
   MDFieldMemoizer<Traits> memoizer;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -69,8 +68,6 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const DOFVecGradInterpolationBase_Residual_Tag& tag, const int& cell) const;
-
-#endif
 
 };
 
@@ -134,7 +131,6 @@ private:
   std::size_t offset;
 
 //KOKKOS:
- #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -146,7 +142,6 @@ public:
 
   int neq;
 
-#endif
 };
 
 // Some shortcut names

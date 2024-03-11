@@ -805,63 +805,10 @@ Neumann(Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
-// #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-// template<typename Traits>
-// KOKKOS_INLINE_FUNCTION
-// void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
-// operator()(const Neumann_Tag& , const int& cell) const
-// {
-//   LO colT[1];
-//   LO rowT;
-//   ST value[1];
-//   int lcol;
-//   const int neq = Index.extent(2);
-//   const int nunk = neq*this->numNodes;
-
-//   for (std::size_t node = 0; node < this->numNodes; ++node) {
-//     for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-
-//       int dim2=this->offset[dim];
-//       rowT = Index(cell,node,dim2);
-
-//       if (this->fT != Teuchos::null) {
-//          this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
-//       }
-
-//       // Check derivative array is nonzero
-//       if (this->neumann(cell, node, dim).hasFastAccess()) {
-//         // Loop over nodes in element
-//         for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-//           // Loop over equations per node
-//           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-//             lcol = neq * node_col + eq_col;
-
-//             // Global column
-//             colT[0] =  Index(cell, node_col, eq_col);
-//             value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
-               // Sum Jacobian
-//               jacobian.sumIntoValues(rowT, colT, nunk,value, false, true);
-//           } // column equations
-//         } // column nodes
-//       } // has fast access
-//     }
-//   }
-// }
-// #endif
-
-// **********************************************************************
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-//IKT, 5/31/16: I commented out the KOKKOS_UNDER_DEVELOPMENT
-//code b/c it does not execute correctly on an OpenMP KokkosNode.
-//This problem shows up for some LandIce cases.
-//It is somewhat of a mystery why this is the case b/c the Jacobian
-//matrices dumped to matrix market _are_ correct.  This problem needs
-//to be looked into.
-//
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   const auto ALL = Kokkos::ALL();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto dof_mgr = workset.disc->getDOFManager();
