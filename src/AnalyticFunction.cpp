@@ -578,10 +578,12 @@ void Circle::compute(double* x, const double* X) {
 
   //This would be the initial condition for the auxiliary variables, but it should not
   //be needed.
-  /*if (neq == 3) {
+  // LB: turns out it *is* needed, or else we have uninited memory in the initial value
+  //     of X, which causes valgrind errors (and possibly other bugs)
+  if (neq == 3) {
     x[1] = 0.0;
     x[2] = 0.0;
-  }*/
+  }
 }
 //*****************************************************************************
 GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
