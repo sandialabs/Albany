@@ -423,7 +423,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
-  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
+  Albany::DeviceView1d<const ST> p_data = Albany::getDeviceData(p->overlapped_vector().getConst());
 
   // Direction vector for the Hessian-vector product
   const auto vvec = workset.hessianWorkset.direction_p;
@@ -457,38 +457,43 @@ evaluateFields(typename Traits::EvalData workset)
       "\nError in GatherScalarNodalParameter<HessianVec, Traits>: "
       "direction_p is not set and the direction is active.\n");
   
-  const auto vvec_data = is_p_direction_active ? Albany::getLocalData(vvec->col(0).getConst()) : Teuchos::null;
+  Albany::DeviceView1d<const ST> vvec_data;
+  if (is_p_direction_active) vvec_data = Albany::getDeviceData(vvec->col(0).getConst());
 
   const int num_nodes = this->numNodes;
-  const int num_deriv = this->val(0,0).size();
   const int ws = workset.wsIndex;
 
   // Parameter/nodes dof numbering info
-  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
-  const auto elem_lids    = workset.disc->getElementLIDs_host(ws);
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().dev();
+  const auto elem_lids  = workset.disc->getWsElementLIDs();
+  const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
+
+  auto& val = this->val;
 
   using ref_t = typename PHAL::Ref<ParamScalarT>::type;
-  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids(cell);
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int& cell) {
+    const int num_deriv = val(0,0).size();
+    const auto elem_LID = elem_lids_dev(cell);
     const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
     for (int node=0; node<num_nodes; ++node) {
       const LO lid = p_dof_lids(node);
 
       // Initialize Fad type for parameter value
-      const auto p_val = lid>=0 ? p_data[lid] : 0;
+      const auto p_val = lid>=0 ? p_data(lid) : 0;
 
-      ref_t val = this->val(cell,node);
-      val = HessianVecFad(num_deriv, p_val);
+      ref_t val_ref = val(cell,node);
+      val_ref = HessianVecFad(num_deriv, p_val);
       // If we differentiate w.r.t. this parameter, we have to set the first
       // derivative to 1
       if (is_p_active)
-        val.fastAccessDx(node).val() = 1;
+        val_ref.fastAccessDx(node).val() = 1;
       // If we differentiate w.r.t. this parameter direction, we have to set
       // the second derivative to the related direction value
       if (is_p_direction_active)
-        val.val().fastAccessDx(0) = lid>=0 ? vvec_data[lid] : 0;
+        val_ref.val().fastAccessDx(0) = lid>=0 ? vvec_data(lid) : 0;
     }
-  }
+  });
 }
 
 // **********************************************************************
