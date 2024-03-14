@@ -360,40 +360,6 @@ evaluateFields(typename Traits::EvalData workset)
   const auto dof_mgr = workset.disc->getDOFManager();
   this->gather_fields_offsets (dof_mgr);
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  const auto f_data  = scatter_f  ? Albany::getNonconstLocalData(f)  : Teuchos::null;
-  const auto JV_data = scatter_JV ? Albany::getNonconstLocalData(JV) : Teuchos::null;
-  const auto fp_data = scatter_fp ? Albany::getNonconstLocalData(fp) : Teuchos::null;
-
-  const auto elem_lids     = workset.disc->getElementLIDs(ws);
-  const auto elem_dof_lids = dof_mgr->elem_dof_lids();
-  const auto& fields_offsets = m_fields_offsets.host();
-  const auto eq_offset = this->offset;
-  for (size_t cell=0; cell<workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids.host(cell);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids.host(),elem_LID,ALL);
-    for (int node=0; node<numNodes; ++node) {
-      for (int eq=0; eq<numFields; ++eq) {
-        const auto lid = dof_lids(fields_offsets(node,eq+eq_offset));
-        const auto res = get_resid(cell,node,eq);
-
-        if (scatter_f) {
-          f_data[lid] += res.val();
-        }
-        if (scatter_JV) {
-          for (int col=0; col<workset.num_cols_x; ++col) {
-            JV_data[col][lid] += res.dx(col);
-          }
-        }
-        if (scatter_fp) {
-          for (int col=0; col<workset.num_cols_p; ++col) {
-            fp_data[col][lid] += res.dx(col + workset.param_offset);
-          }
-        }
-      }
-    }
-  }
-#else
   Albany::DeviceView1d<ST> f_data;
   Albany::DeviceView2d<ST> JV_data, fp_data;
 
@@ -443,7 +409,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   });
   cudaCheckError();
-#endif
 }
 
 // **********************************************************************

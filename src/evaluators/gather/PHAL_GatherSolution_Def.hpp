@@ -489,72 +489,10 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_dof_lids  = dof_mgr->elem_dof_lids();
   constexpr auto ALL = Kokkos::ALL;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // Do everything on host
-  //get const (read-only) view of x
-  using const_data_t = Teuchos::ArrayRCP<const ST>;
-  using const_mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>>;
-  const_data_t x_data, xdot_data, xdotdot_data;
-  const_mv_data_t Vx_data, Vxdot_data, Vxdotdot_data;
-
-  x_data = Albany::getLocalData(x);
-
-  if (xdot!=Teuchos::null)
-    xdot_data = Albany::getLocalData(xdot);
-  if (xdotdot!=Teuchos::null)
-    xdotdot_data = Albany::getLocalData(xdotdot);
-
-  if (Vx!=Teuchos::null)
-    Vx_data = Albany::getLocalData(Vx);
-  if (Vxdot!=Teuchos::null)
-    Vxdot_data = Albany::getLocalData(Vx);
-  if (Vxdotdot!=Teuchos::null)
-    Vxdotdot_data = Albany::getLocalData(Vx);
-
-  const auto& fields_offsets = m_fields_offsets.host();
-  const int first_dof = this->offset;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const auto elem_LID = elem_lids(ws,cell);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; ++eq) {
-        const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
-        ref_t valref = get_ref(cell,node,eq);
-        if (gather_Vx) {
-          valref = TanFadType(valref.size(), x_data[lid]);
-          for (int k=0; k<workset.num_cols_x; ++k)
-            valref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][lid];
-        } else {
-          valref = TanFadType(x_data[lid]);
-        }
-
-        if (gather_xdot) {
-          ref_t valref_dot = get_ref_dot(cell,node,eq);
-          valref_dot = TanFadType(valref_dot.size(), xdot_data[lid]);
-          if (gather_Vxdot) {
-            for (int k=0; k<workset.num_cols_x; ++k)
-              valref_dot.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][lid];
-          }
-        }
-
-        if (gather_xdotdot) {
-          ref_t valref_dotdot = get_ref_dotdot(cell,node,eq);
-          valref_dotdot = TanFadType(valref_dotdot.size(), xdotdot_data[lid]);
-          if (gather_Vxdotdot) {
-            for (int k=0; k<workset.num_cols_x; ++k)
-              valref_dotdot.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][lid];
-          }
-        }
-      }
-    }
-  }
-#else
-
-  //get const (read-only) view of x
-
   Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
   Albany::DeviceView2d<const ST> Vx_data, Vxdot_data, Vxdotdot_data;
 
+  //get const (read-only) view of x
   x_data = Albany::getDeviceData(x);
 
   if (xdot!=Teuchos::null)
@@ -615,7 +553,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   });
-#endif
+
 }
 
 // **********************************************************************
