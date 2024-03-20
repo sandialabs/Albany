@@ -70,23 +70,29 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
-  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
+  const auto p_data = Albany::getDeviceData(p->overlapped_vector().getConst());
 
   // Parameter dof numbering info
-  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+  const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().dev();
 
   // Mesh elements
   const auto ws = workset.wsIndex;
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+  const auto elem_lids  = workset.disc->getWsElementLIDs();
+  const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
 
-  for (std::size_t cell = 0; cell<workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids(cell);
+  const int nnodes = this->numNodes;
+
+  auto& val = this->val;
+
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int& cell) {
+    const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<this->numNodes; ++node) {
+    for (int node=0; node<nnodes; ++node) {
       const LO lid = dof_lids(node);
-      this->val(cell,node) = lid>=0 ? p_data[lid] : 0;
+      val(cell,node) = lid>=0 ? p_data(lid) : 0;
     }
-  }
+  });
 }
 
 // **********************************************************************
