@@ -50,6 +50,8 @@ public:
     return emptyVec;
   }
 
+  bool isConnectivityBuilt () const { return m_is_connectivity_built; }
+
   // Albany should not use neighbors, so always false.
   bool hasAssociatedNeighbors() const override { return false; }
 
@@ -104,6 +106,8 @@ public:
 
 protected:
   std::vector<std::string> m_elem_blocks_names;
+
+  bool m_is_connectivity_built = false;
 };
 
 } // namespace Albany

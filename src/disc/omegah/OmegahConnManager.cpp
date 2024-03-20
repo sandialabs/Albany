@@ -467,6 +467,8 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 
   // build the ownership now that the field pattern is known
   owners = buildConnectivityOwnership();
+
+  m_is_connectivity_built = true;
 }
 
 Teuchos::RCP<panzer::ConnManager>

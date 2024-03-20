@@ -353,6 +353,8 @@ void STKConnManager::buildConnectivity(const panzer::FieldPattern & fp)
 
     m_connSize[ielem] = numIds;
   }
+
+  m_is_connectivity_built = true;
 }
 
 std::string STKConnManager::getBlockId (LO localElmtId) const
