@@ -112,16 +112,6 @@ public:
     return m_elem_blocks.size();
   }
 
-  /** Get block IDs from STK mesh object
-    */
-  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
-    elementBlockIds.resize(0);
-    elementBlockIds.reserve(m_elem_blocks_names.size());
-    for (const auto& it : m_elem_blocks) {
-      elementBlockIds.push_back(it.first);
-    }
-  }
-
   /** What are the cellTopologies linked to element blocks in this connection manager?
    */
   void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override {

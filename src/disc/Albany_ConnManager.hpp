@@ -89,6 +89,10 @@ public:
     return m_elem_blocks_names[0];
   }
 
+  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
+    elementBlockIds = m_elem_blocks_names;
+  }
+
   shards::CellTopology get_topology () const {
     std::vector<shards::CellTopology> topologies;
     this->getElementBlockTopologies(topologies);

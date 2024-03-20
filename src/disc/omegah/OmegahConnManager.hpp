@@ -142,12 +142,6 @@ public:
     return 1;
   }
 
-  /** Get block IDs from Omegah mesh object
-    */
-  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
-    elementBlockIds = m_elem_blocks_names;
-  }
-
   /** What are the cellTopologies linked to element blocks in this connection manager?
    */
   void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override {
