@@ -146,8 +146,11 @@ Teuchos::ArrayRCP<const ST> getLocalData (const Thyra_Vector& v);
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> getNonconstLocalData (Thyra_MultiVector& mv);
 Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> getLocalData (const Thyra_MultiVector& mv);
 
-DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v);
-DeviceView1d<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v);
+ThyraVDeviceView<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v);
+ThyraVDeviceView<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v);
+
+ThyraMVDeviceView<const ST> getDeviceData (const Teuchos::RCP<const Thyra_MultiVector>& mv);
+ThyraMVDeviceView<ST>       getNonconstDeviceData (const Teuchos::RCP<Thyra_MultiVector>& mv);
 
 // This is just a utility routine, that mildly extend the update method of Thyra_Vector,
 // but does not have the complex signature of the linear_combination method of Thyra_Vector.

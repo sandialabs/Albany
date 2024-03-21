@@ -113,24 +113,26 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
     overlapped_hess_vec_prod_g_px_out->assign(0.0);
     overlapped_hess_vec_prod_g_pp_out->assign(0.0);
 
-    auto ov_hess_vec_prod_g_xx_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_xx_out);
-    auto ov_hess_vec_prod_g_xp_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_xp_out);
-    auto ov_hess_vec_prod_g_px_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_px_out);
-    auto ov_hess_vec_prod_g_pp_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_pp_out);
+    {
+      auto ov_hess_vec_prod_g_xx_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_xx_out);
+      auto ov_hess_vec_prod_g_xp_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_xp_out);
+      auto ov_hess_vec_prod_g_px_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_px_out);
+      auto ov_hess_vec_prod_g_pp_out_data = Albany::getNonconstLocalData(overlapped_hess_vec_prod_g_pp_out);
 
-    auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
-    auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
-    for (int cell=0; cell<num_cells; ++cell) {
-      // NOTE: in this test, we have 1 workset, so cell==elem_LID
-      auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
-      auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
-      for (size_t i=0; i<p_dof_lids.size(); ++i) {
-        ov_hess_vec_prod_g_px_out_data[p_dof_lids[i]] += 0.5;
-        ov_hess_vec_prod_g_pp_out_data[p_dof_lids[i]] += 0.5;
-      }
-      for (size_t i=0; i<x_dof_lids.size(); ++i) {
-        ov_hess_vec_prod_g_xx_out_data[x_dof_lids[i]] += 0.5;
-        ov_hess_vec_prod_g_xp_out_data[x_dof_lids[i]] += 0.5;
+      auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+      auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
+      for (int cell=0; cell<num_cells; ++cell) {
+        // NOTE: in this test, we have 1 workset, so cell==elem_LID
+        auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
+        auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
+        for (size_t i=0; i<p_dof_lids.size(); ++i) {
+          ov_hess_vec_prod_g_px_out_data[p_dof_lids[i]] += 0.5;
+          ov_hess_vec_prod_g_pp_out_data[p_dof_lids[i]] += 0.5;
+        }
+        for (size_t i=0; i<x_dof_lids.size(); ++i) {
+          ov_hess_vec_prod_g_xx_out_data[x_dof_lids[i]] += 0.5;
+          ov_hess_vec_prod_g_xp_out_data[x_dof_lids[i]] += 0.5;
+        }
       }
     }
 
@@ -174,15 +176,19 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, separableScatterScalarResponseHessianVe
 
     auto global_response = PHX::allocateUnmanagedMDField<Scalar, Dim>(global_response_name, global_response_layout, deriv_dims);
     auto local_response  = PHX::allocateUnmanagedMDField<Scalar, Cell, Dim>(local_response_name, local_response_layout, deriv_dims);
+    auto local_response_dev = local_response.get_view();
+    auto local_response_host = Kokkos::create_mirror_view(local_response_dev);
 
     local_response.deep_copy(0.0);
+    Kokkos::deep_copy(local_response_host, local_response_dev);
     for (int cell=0; cell<local_response.extent_int(0); ++cell) {
       for (int dim=0; dim<local_response.extent_int(1); ++dim) {
         for (int node=0; node<nodes_per_element*neq; ++node) {
-          local_response(cell, dim).fastAccessDx(node).fastAccessDx(0) = 0.5;
+          local_response_host(cell, dim).fastAccessDx(node).fastAccessDx(0) = 0.5;
         }
       }
     }
+    Kokkos::deep_copy(local_response_dev, local_response_host);
 
     // Create evaluator
     Teuchos::ParameterList p("ScatterResidual Unit Test");

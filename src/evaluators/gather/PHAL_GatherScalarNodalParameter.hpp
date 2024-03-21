@@ -71,6 +71,9 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 // General version for most evaluation types
@@ -341,6 +344,9 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::HessianVec::ParamScalarT ParamScalarT;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 

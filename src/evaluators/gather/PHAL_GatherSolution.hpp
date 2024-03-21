@@ -271,6 +271,10 @@ private:
   using Base::get_ref_dotdot;
   using Base::numFields;
   using Base::m_fields_offsets;
+
+protected:
+  using RangePolicy = typename Base::RangePolicy;
+
 };
 
 // **************************************************************
@@ -513,6 +517,9 @@ private:
   using Base::get_ref_dotdot;
   using Base::numFields;
   using Base::m_fields_offsets;
+
+protected:
+  using RangePolicy = typename Base::RangePolicy;
 };
 
 } // namespace PHAL

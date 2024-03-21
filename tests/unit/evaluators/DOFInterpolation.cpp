@@ -87,15 +87,17 @@ TEUCHOS_UNIT_TEST(DOFInterpolation, Scalar)
   nodal_f.deep_copy(6);
 
   auto coord_vec = PHX::allocateUnmanagedMDField<Scalar,Cell,Vertex,Dim>(Albany::coord_vec_name, dl->vertices_vector);
+  auto coord_vec_dev  = coord_vec.get_view();
+  auto coord_vec_host = Kokkos::create_mirror_view(coord_vec_dev);
   auto coord_mesh = disc->getCoords();
   for (int cell=0; cell<num_cells; ++cell) {
     for (int node=0; node<nodes_per_element; ++node) {
       for (int dim=0; dim<num_dims; ++dim) {
-        coord_vec(cell,node,dim) = coord_mesh[0][cell][node][dim];
+        coord_vec_host(cell,node,dim) = coord_mesh[0][cell][node][dim];
       }
     }
   }
-  Kokkos::fence();
+  Kokkos::deep_copy(coord_vec_dev, coord_vec_host);
 
   // Create expected field
   auto qp_f = PHX::allocateUnmanagedMDField<Scalar,Cell,QuadPoint>("x", dl->qp_scalar);

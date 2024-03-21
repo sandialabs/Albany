@@ -47,6 +47,12 @@ using DeviceView1d = Kokkos::View<Scalar*, DevLayout, PHX::Device, MemoryTraits>
 template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>
 using DeviceView2d = Kokkos::View<Scalar**, DevLayout, PHX::Device, MemoryTraits>;
 
+// Thyra view types for underlying Tpetra kokkos views
+template<typename Scalar>
+using ThyraVDeviceView = Kokkos::View<Scalar*, Kokkos::LayoutLeft, PHX::Device>;
+template<typename Scalar>
+using ThyraMVDeviceView = Kokkos::View<Scalar**, Kokkos::LayoutLeft, PHX::Device>;
+
 // Kokkos types for local graphs/matrices, to be used for on-device kernels
 using DeviceLocalGraph  = Kokkos::StaticCrsGraph<LO, Kokkos::LayoutLeft, KokkosNode::device_type, void, size_t>;
 
