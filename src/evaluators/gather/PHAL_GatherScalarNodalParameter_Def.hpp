@@ -80,17 +80,13 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids  = workset.disc->getWsElementLIDs();
   const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
 
-  const int nnodes = this->numNodes;
-
-  auto& val = this->val;
-
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_LAMBDA(const int& cell) {
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<nnodes; ++node) {
+    for (int node=0; node<this->numNodes; ++node) {
       const LO lid = dof_lids(node);
-      val(cell,node) = lid>=0 ? p_data(lid) : 0;
+      this->val(cell,node) = lid>=0 ? p_data(lid) : 0;
     }
   });
 }
@@ -466,7 +462,6 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::DeviceView1d<const ST> vvec_data;
   if (is_p_direction_active) vvec_data = Albany::getDeviceData(vvec->col(0).getConst());
 
-  const int num_nodes = this->numNodes;
   const int ws = workset.wsIndex;
 
   // Parameter/nodes dof numbering info
@@ -474,21 +469,19 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids  = workset.disc->getWsElementLIDs();
   const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
 
-  auto& val = this->val;
-
   using ref_t = typename PHAL::Ref<ParamScalarT>::type;
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_LAMBDA(const int& cell) {
-    const int num_deriv = val(0,0).size();
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
+    const int num_deriv = this->val(0,0).size();
     const auto elem_LID = elem_lids_dev(cell);
     const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<num_nodes; ++node) {
+    for (int node=0; node<this->numNodes; ++node) {
       const LO lid = p_dof_lids(node);
 
       // Initialize Fad type for parameter value
       const auto p_val = lid>=0 ? p_data(lid) : 0;
 
-      ref_t val_ref = val(cell,node);
+      ref_t val_ref = this->val(cell,node);
       val_ref = HessianVecFad(num_deriv, p_val);
       // If we differentiate w.r.t. this parameter, we have to set the first
       // derivative to 1

@@ -179,22 +179,17 @@ evaluateFields(typename Traits::EvalData workset)
   auto f_data = Albany::getNonconstDeviceData(f);
 
   const auto& fields_offsets = m_fields_offsets.dev();
-  const auto eq_offset = this->offset;
-  int nnodes = numNodes;
-  int nfields = numFields;
-  auto resid = this->device_resid;
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_LAMBDA(const int& cell) {
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<nnodes; ++node) {
-      for (int eq=0; eq<nfields; ++eq) {
-        const auto lid = dof_lids(fields_offsets(node,eq+eq_offset));
-        KU::atomic_add<ExecutionSpace>(&f_data(lid), resid.get(cell,node,eq));
+    for (int node=0; node<numNodes; ++node) {
+      for (int eq=0; eq<numFields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+this->offset));
+        KU::atomic_add<ExecutionSpace>(&f_data(lid), this->device_resid.get(cell,node,eq));
       }
     }
   });
-  cudaCheckError();
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
@@ -276,27 +271,23 @@ evaluateFields(typename Traits::EvalData workset)
   auto Jac_kokkos = workset.Jac_kokkos;
 
   const auto& fields_offsets = m_fields_offsets.dev();
-  const auto eq_offset = this->offset;
   const auto vol_eqn_off = m_volume_eqns_offsets.dev();
   const bool all_vol_eqn = vol_eqn_off.size()==0;
   int nunk = all_vol_eqn ? neq*numNodes : vol_eqn_off.size();
   if (not all_vol_eqn and m_lids.size()==0) {
     m_lids.resize("",nunk);
   }
-  auto lids = m_lids.dev();
-  auto resid = this->device_resid;
-  int nnodes = numNodes;
-  int nfields = numFields;
+  const auto lids = m_lids.dev();
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_LAMBDA(const int cell) {
+                       KOKKOS_CLASS_LAMBDA(const int cell) {
     ST vals[500];
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<nnodes; ++node) {
-      for (int eq=0; eq<nfields; ++eq) {
-        auto res = resid.get(cell,node,eq);
+    for (int node=0; node<numNodes; ++node) {
+      for (int eq=0; eq<numFields; ++eq) {
+        auto res = this->device_resid.get(cell,node,eq);
 
-        const auto row = dof_lids(fields_offsets(node,eq+eq_offset));
+        const auto row = dof_lids(fields_offsets(node,eq+this->offset));
         if (all_vol_eqn) {
           for (int i=0; i<nunk; ++i) {
             vals[i] = res.fastAccessDx(i);
@@ -316,7 +307,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   });
-  cudaCheckError();
 
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
@@ -375,22 +365,18 @@ evaluateFields(typename Traits::EvalData workset)
     fp_data = Albany::getNonconstDeviceData(fp);
 
   const auto& fields_offsets = m_fields_offsets.dev();
-  const auto eq_offset = this->offset;
-  auto nnodes = this->numNodes;
-  auto nfields = this->numFields;
-  auto resid = this->device_resid;
-  auto ncolsx = workset.num_cols_x;
-  auto ncolsp = workset.num_cols_p;
-  auto paramoffset = workset.param_offset;
+  const auto ncolsx = workset.num_cols_x;
+  const auto ncolsp = workset.num_cols_p;
+  const auto paramoffset = workset.param_offset;
 
   Kokkos::parallel_for(RangePolicy(0,workset.numCells),
-                       KOKKOS_LAMBDA(const int& cell) {
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    for (int node=0; node<nnodes; ++node) {
-      for (int eq=0; eq<nfields; ++eq) {
-        const auto lid = dof_lids(fields_offsets(node,eq+eq_offset));
-        const auto res = resid.get(cell,node,eq);
+    for (int node=0; node<numNodes; ++node) {
+      for (int eq=0; eq<numFields; ++eq) {
+        const auto lid = dof_lids(fields_offsets(node,eq+this->offset));
+        const auto res = this->device_resid.get(cell,node,eq);
 
         if (scatter_f) {
           KU::atomic_add<ExecutionSpace>(&f_data(lid), res.val());
