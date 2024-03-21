@@ -1,0 +1,18 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Heat 2D
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Distributed
+        Name: thermal_conductivity
+        Lower Bound: 4.0e-01
+        Upper Bound: 5.0
+        Initial Uniform Value: 1.0
+        Mesh Part: ''
+  Discretization: 
+    1D Elements: 40
+    2D Elements: 40
+    Method: STK2D

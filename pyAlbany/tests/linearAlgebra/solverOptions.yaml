@@ -1,0 +1,28 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Linear Solver Type: Belos
+  Linear Solver Types:
+    Belos: 
+      Solver Type: Block GMRES
+      Solver Types: 
+        Block GMRES: 
+          Convergence Tolerance: 1.0e-10
+          Output Frequency: 10
+          Output Style: 1
+          Verbosity: 33
+          Maximum Iterations: 300
+          Block Size: 1
+          Num Blocks: 100
+          Flexible Gmres: false
+      VerboseObject:
+        Verbosity Level: medium
+  Preconditioner Type: Ifpack2
+  Preconditioner Types: 
+    Ifpack2: 
+      Overlap: 1
+      Prec Type: RILUK
+      Ifpack2 Settings: 
+        'fact: drop tolerance': 0.0
+        'fact: iluk level-of-fill': 1
+...
