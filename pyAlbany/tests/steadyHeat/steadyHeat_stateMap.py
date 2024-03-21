@@ -16,7 +16,7 @@ class TestSteadyHeat(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         # Create an Albany problem:
-        filename = 'input_conductivity_dist_paramT.yaml'
+        filename = 'input_conductivity_dist_param.yaml'
         problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
 
         parameter_map    = problem.getParameterMap(0)
