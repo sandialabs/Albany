@@ -10,11 +10,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GitVersion.h"
 
-// Include the concrete Epetra Comm's, if needed
-#if defined(ALBANY_EPETRA)
-#include "Epetra_MpiComm.h"
-#endif
-
 #include <mpi.h>
 #include <Teuchos_DefaultMpiComm.hpp>
 

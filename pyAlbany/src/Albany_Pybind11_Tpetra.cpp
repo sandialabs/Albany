@@ -5,6 +5,9 @@
 //*****************************************************************//
 
 #include "Albany_Pybind11_Tpetra.hpp"
+#include "MatrixMarket_Tpetra.hpp"
+#include "Albany_LinearOpWithSolveDecorators.hpp"
+#include "Albany_TpetraThyraUtils.hpp"
 
 // The implementation of the conversion from numpy array to Kokkos view 
 // in both directions is based on:
@@ -190,6 +193,22 @@ void setLocalView(RCP_PyMultiVector &mvector, pybind11::array_t<double> input) {
     convert_np_to_kokkos_2d(input, view);
 }
 
+RCP_PyCrsMatrix createRCPPyCrsMatrixFromFile(RCP_PyMap &map, const std::string& filename) {
+  bool mapIsContiguous =
+      (static_cast<Tpetra_GO>(map->getMaxAllGlobalIndex()+1-map->getMinAllGlobalIndex()) ==
+       static_cast<Tpetra_GO>(map->getGlobalNumElements()));
+
+  TEUCHOS_TEST_FOR_EXCEPTION (!mapIsContiguous, std::runtime_error,
+                              "Error! Map needs to be contiguous for the Matrix reader to work.\n");
+
+  Teuchos::RCP<const Tpetra_Map> colMap;
+  Teuchos::RCP<const Tpetra_Map> domainMap = map;
+  Teuchos::RCP<const Tpetra_Map> rangeMap = map;
+  using reader_type = Tpetra::MatrixMarket::Reader<Tpetra_CrsMatrix>;
+
+  return reader_type::readSparseFile (filename, map, colMap, domainMap, rangeMap);
+}
+
 pybind11::tuple getRemoteIndexList(RCP_ConstPyMap map, pybind11::array_t<Tpetra_GO> globalIndexes)
 {
     auto globalIndexes_av = convert_np_to_ArrayView(globalIndexes);
@@ -257,6 +276,14 @@ void pyalbany_vector(pybind11::module &m){
         .def("putScalar",[](Teuchos::RCP<Tpetra_Vector> &m, ST val) {
             m->putScalar(val);
         })
+        // this = alpha vec + beta this
+        .def("update",[](Teuchos::RCP<Tpetra_Vector> &m, ST alpha, Teuchos::RCP<Tpetra_Vector> & vec, ST beta) {
+            m->update(alpha, *vec, beta);
+        })
+        // this = alpha this
+        .def("scale",[](Teuchos::RCP<Tpetra_Vector> &m, ST alpha) {
+            m->scale(alpha);
+        })
         .def("dot",[](Teuchos::RCP<Tpetra_Vector> &m, Teuchos::RCP<Tpetra_Vector> &m2){
             return m->dot(*m2);
         });
@@ -275,5 +302,40 @@ void pyalbany_mvector(pybind11::module &m){
         })
         .def("setLocalView",[](Teuchos::RCP<Tpetra_MultiVector> &m, py::array_t<ST> input){
             return setLocalView(m, input);
+        })
+        .def("putScalar",[](Teuchos::RCP<Tpetra_MultiVector> &m, ST val) {
+            m->putScalar(val);
+        })        
+        // this = alpha this
+        .def("scale",[](Teuchos::RCP<Tpetra_MultiVector> &m, ST alpha) {
+            m->scale(alpha);
+        })
+        // this = alpha vec + beta this
+        .def("update",[](Teuchos::RCP<Tpetra_MultiVector> &m, ST alpha, Teuchos::RCP<Tpetra_MultiVector> & vec, ST beta) {
+            m->update(alpha, *vec, beta);
+        });
+}
+
+void pyalbany_crsmatrix(pybind11::module &m){
+    py::class_<Tpetra_CrsMatrix, Teuchos::RCP<Tpetra_CrsMatrix>>(m, "PyCrsMatrix")
+        .def(py::init(&createRCPPyCrsMatrixFromFile))
+        .def("getMap",&Tpetra_CrsMatrix::getMap)
+        .def("getDomainMap",&Tpetra_CrsMatrix::getDomainMap)
+        .def("getRangeMap",&Tpetra_CrsMatrix::getRangeMap)
+        .def("apply",[](Teuchos::RCP<Tpetra_CrsMatrix> &m, Teuchos::RCP<Tpetra_MultiVector> &x, Teuchos::RCP<Tpetra_MultiVector> &y, bool trans, double alpha, double beta){
+            m->apply(*x, *y, trans ? Teuchos::TRANS : Teuchos::NO_TRANS, alpha, beta);
+        })
+        .def("solve",[](Teuchos::RCP<Tpetra_CrsMatrix> &m, Teuchos::RCP<Tpetra_MultiVector> &x, Teuchos::RCP<Tpetra_MultiVector> &b, bool trans, Teuchos::RCP<Teuchos::ParameterList> solverOptions){
+            Albany::MatrixBased_LOWS solver(Albany::createThyraLinearOp(m));
+            solver.initializeSolver(solverOptions);
+            Thyra::solve(solver,trans ? Thyra::TRANS : Thyra::NOTRANS, *Albany::createConstThyraMultiVector(b), Albany::createThyraMultiVector(x).ptr());
+        })
+        .def("apply",[](Teuchos::RCP<Tpetra_CrsMatrix> &m, Teuchos::RCP<Tpetra_Vector> &x, Teuchos::RCP<Tpetra_Vector> &y, bool trans, double alpha, double beta){
+            m->apply(*x, *y, trans ? Teuchos::TRANS : Teuchos::NO_TRANS, alpha, beta);
+        })
+        .def("solve",[](Teuchos::RCP<Tpetra_CrsMatrix> &m, Teuchos::RCP<Tpetra_Vector> &x, Teuchos::RCP<Tpetra_Vector> &b, bool trans, Teuchos::RCP<Teuchos::ParameterList> solverOptions){
+            Albany::MatrixBased_LOWS solver(Albany::createThyraLinearOp(m));
+            solver.initializeSolver(solverOptions);
+            Thyra::solve(solver,trans ? Thyra::TRANS : Thyra::NOTRANS, *Albany::createConstThyraMultiVector(b), Albany::createThyraMultiVector(x).ptr());
         });
 }

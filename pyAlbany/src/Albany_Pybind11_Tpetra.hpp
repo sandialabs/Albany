@@ -17,9 +17,11 @@ using RCP_PyMap = Teuchos::RCP<PyMap>;
 using RCP_ConstPyMap = Teuchos::RCP<const Tpetra_Map>;
 using RCP_PyVector = Teuchos::RCP<Tpetra_Vector>;
 using RCP_PyMultiVector = Teuchos::RCP<Tpetra_MultiVector>;
+using RCP_PyCrsMatrix = Teuchos::RCP<Tpetra_CrsMatrix>;
 
 void pyalbany_map(pybind11::module &m);
 void pyalbany_vector(pybind11::module &m);
 void pyalbany_mvector(pybind11::module &m);
+void pyalbany_crsmatrix(pybind11::module &m);
 
 #endif

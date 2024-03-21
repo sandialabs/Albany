@@ -33,7 +33,7 @@ class TestSteadyHeat(unittest.TestCase):
         problem.performSolve()
         state_map    = problem.getStateMap()
         state        = problem.getState()
-        state_ref    = Utils.loadMVector('state_ref', 1, state_map, distributedFile=False, useBinary=False, readOnRankZero=True).getVector(0)
+        state_ref    = Utils.loadMVector('state_ref', 1, state_map, distributedFile=False, useBinary=False).getVector(0)
         
 
         stackedTimer = problem.getStackedTimer()

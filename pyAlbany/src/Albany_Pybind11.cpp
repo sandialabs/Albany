@@ -36,6 +36,7 @@ PYBIND11_MODULE(AlbanyInterface, m) {
     pyalbany_map(m);
     pyalbany_vector(m);
     pyalbany_mvector(m);
+    pyalbany_crsmatrix(m);
     pyalbany_time(m);
 
     py::class_<PyAlbany::PyProblem>(m, "PyProblem")
@@ -63,6 +64,7 @@ PYBIND11_MODULE(AlbanyInterface, m) {
 
     m.def("getRankZeroMap", &PyAlbany::getRankZeroMap, "A function which return a map where all the entries are owned by the rank 0");
     m.def("scatterMVector", &PyAlbany::scatterMVector, "A function which scatters a multivector");
+    m.def("gatherVector", &PyAlbany::gatherVector, "A function which gathers a vector");
     m.def("gatherMVector", &PyAlbany::gatherMVector, "A function which gathers a multivector");
     m.def("orthogTpMVecs", &PyAlbany::orthogTpMVecs, "A function which orthogonalizes multivectors");
     m.def("finalizeKokkos", &PyAlbany::finalizeKokkos, "A function which finalizes Kokkos if it has been previously initialized");
