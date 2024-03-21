@@ -47,7 +47,25 @@ namespace Albany
     strat.setParameterList(solverParamList);
     auto lows_factory = strat.createLinearSolveStrategy(solverType);
     solver_ = lows_factory->createOp();
-    Thyra::initializeOp<double>(*lows_factory, mat_, solver_.ptr(), Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+    solver_transp_ = lows_factory->createOp();
+    auto prec_factory =  lows_factory->getPreconditionerFactory();  
+    if(Teuchos::nonnull(prec_factory)) {
+      auto prec = prec_factory->createPrec();
+      prec_factory->initializePrec(Teuchos::rcp(new ::Thyra::DefaultLinearOpSource<double>(mat_)), prec.get());
+      Thyra::initializePreconditionedOp<double>(*lows_factory,
+          mat_,
+          prec,
+          solver_.ptr(),
+          Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+      Thyra::initializePreconditionedOp<double>(*lows_factory,
+          Thyra::transpose<double>(mat_),
+          Thyra::unspecifiedPrec<double>(::Thyra::transpose<double>(prec->getUnspecifiedPrecOp())),
+          solver_transp_.ptr(),
+          Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+    } else {
+      Thyra::initializeOp<double>(*lows_factory, mat_, solver_.ptr(), Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+      Thyra::initializeOp<double>(*lows_factory, Thyra::transpose<double>(mat_), solver_transp_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+    }
   }
 
   bool
@@ -77,7 +95,10 @@ namespace Albany
           const Teuchos::Ptr<const Thyra::SolveCriteria<ST>> solveCriteria) const
   {
     TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(solver_), std::runtime_error, "Error! MatrixBased_LOWS::solveImpl, Solver not initialized, call initializeSolver first.\n");
-    return solver_->solve(transp, B, X, solveCriteria);
+    if (transp == Thyra::EOpTransp::NOTRANS)
+      return solver_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
+    else
+      return solver_transp_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
   }
 
 } // namespace Albany
