@@ -394,7 +394,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   });
-  cudaCheckError();
 }
 
 // **********************************************************************
