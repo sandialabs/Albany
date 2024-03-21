@@ -55,6 +55,19 @@ namespace PyAlbany
     Teuchos::RCP<Tpetra_MultiVector> scatterMVector(Teuchos::RCP<Tpetra_MultiVector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap);
 
     /**
+   * \brief gatherVector function
+   * 
+   * This function is used to gather a Tpetra::Multivector on rank 0.
+   * 
+   * \param inVector [in] Vector which has to be gathered.
+   * 
+   * \param distributedMap [in] Map used to define how the entries have to be gathered.
+   * 
+   * The function returns an RCP to the gathered Vector.
+   */
+    Teuchos::RCP<Tpetra_Vector> gatherVector(Teuchos::RCP<Tpetra_Vector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap);
+
+     /**
    * \brief gatherMVector function
    * 
    * This function is used to gather a Tpetra::Multivector on rank 0.

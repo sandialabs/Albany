@@ -87,8 +87,13 @@ def readExodus(filename, solnames=[], nProcs=1, timesteps='last'):
                     elements = np.append(elements, current_elements, axis=0)
             current_index = next_index
 
+    if elements.shape[1] == 3:
+        triangulation = tri.Triangulation(x, y, elements)
+    if elements.shape[1] == 4:    
+        triangulation = tri.Triangulation(x, y, quads_to_tris(elements))
+
     if n_sol == 0:
-        return x, y, elements
+        return x, y, elements, triangulation
 
     if n_sol != 0:
         sol = np.zeros((n_sol, len(x)))
@@ -111,27 +116,43 @@ def readExodus(filename, solnames=[], nProcs=1, timesteps='last'):
                 for i in range(0, n_sol):
                     sol[i,current_index:(current_index+current_length)] = np.ascontiguousarray(model.node_fields[solnames[i]])[0,:]
                 current_index += current_length
-
-        if elements.shape[1] == 3:
-            triangulation = tri.Triangulation(x, y, elements)
-        if elements.shape[1] == 4:    
-            triangulation = tri.Triangulation(x, y, quads_to_tris(elements))
-
+                
         return x, y, sol, elements, triangulation
 
-def tricontourf(x, y, z, elements, triangulation, output_file_name, figsize=(6, 4), zlabel='', dpi=800, show_mesh=True, cmap='coolwarm', nlevels=9):
+def tricontourf(x, y, z, elements, triangulation, output_file_name, figsize=(6, 4), zlabel='', dpi=800, show_mesh=True, cmap='coolwarm', nlevels=9, xrange=[], yrange=[], zrange=[]):
     plt.figure(figsize=figsize)
     if show_mesh:
         plot_fem_mesh(x, y, elements)
-    zmax = np.amax(z)
-    zmin = np.amin(z)
+    if(zrange != []):
+      zmin = zrange[0]
+      zmax = zrange[1]
+    else:
+      zmax = np.amax(z)
+      zmin = np.amin(z)
+    
     if zmax != zmin:
         levels = np.linspace(zmin, zmax, nlevels)
     else:
         levels = np.linspace(zmin-0.001*zmin, zmin+0.001*zmin, 3)
+    
     plt.tricontourf(triangulation, z, cmap=cmap, levels=levels)
     cbar = plt.colorbar()
-    plt.axis([np.amin(x), np.amax(x), np.amin(y), np.amax(y)])
+
+    if(xrange != []):
+      xmin = xrange[0]
+      xmax = xrange[1]
+    else:
+      xmax = np.amax(x)
+      xmin = np.amin(x)
+
+    if(yrange != []):
+      ymin = yrange[0]
+      ymax = yrange[1]
+    else:
+      ymax = np.amax(y)
+      ymin = np.amin(y)
+
+    plt.axis([xmin, xmax, ymin, ymax])
     plt.gca().set_aspect('equal', adjustable='box')
     if zlabel != '':
         cbar.ax.set_ylabel(zlabel)

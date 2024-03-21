@@ -506,6 +506,15 @@ Teuchos::RCP<Tpetra_MultiVector> PyAlbany::scatterMVector(Teuchos::RCP<Tpetra_Mu
     return outVector;
 }
 
+Teuchos::RCP<Tpetra_Vector> PyAlbany::gatherVector(Teuchos::RCP<Tpetra_Vector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap)
+{
+    auto rankZeroMap = getRankZeroMap(distributedMap);
+    Teuchos::RCP<Tpetra_Export> exportZero = rcp(new Tpetra_Export(distributedMap, rankZeroMap));
+    Teuchos::RCP<Tpetra_Vector> outVector = rcp(new Tpetra_Vector(rankZeroMap));
+    outVector->doExport(*inVector, *exportZero, Tpetra::ADD);
+    return outVector;
+}
+
 Teuchos::RCP<Tpetra_MultiVector> PyAlbany::gatherMVector(Teuchos::RCP<Tpetra_MultiVector> inVector, Teuchos::RCP<const Tpetra_Map> distributedMap)
 {
     auto rankZeroMap = getRankZeroMap(distributedMap);

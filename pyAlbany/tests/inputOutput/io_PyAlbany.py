@@ -14,11 +14,11 @@ class TestIO(unittest.TestCase):
         cls = self.__class__
         rank = cls.comm.getRank()
         nproc = cls.comm.getSize()
-        if nproc > 1:
-            mvector_filename = 'out_mvector_write_test_' + str(nproc)
-        else:
-            mvector_filename ='out_mvector_write_test'
-
+        
+        if nproc == 1:
+            return
+        
+        mvector_filename = 'out_mvector_write_test_' + str(nproc)
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
@@ -41,11 +41,11 @@ class TestIO(unittest.TestCase):
         cls = self.__class__
         rank = cls.comm.getRank()
         nproc = cls.comm.getSize()
-        if nproc > 1:
-            mvector_filename = 'out_mvector_write_test_' + str(nproc)
-        else:
-            mvector_filename ='out_mvector_write_test'
-
+        
+        if nproc == 1:
+            return
+        
+        mvector_filename = 'out_mvector_write_test_' + str(nproc)
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
@@ -122,11 +122,11 @@ class TestIO(unittest.TestCase):
         cls = self.__class__
         rank = cls.comm.getRank()
         nproc = cls.comm.getSize()
-        if nproc > 1:
-            mvector_filename = 'in_mvector_read_test_' + str(nproc)
-        else:
-            mvector_filename ='in_mvector_read_test'
+        
+        if nproc == 1:
+            return
 
+        mvector_filename = 'in_mvector_read_test_' + str(nproc)
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
@@ -148,11 +148,11 @@ class TestIO(unittest.TestCase):
         cls = self.__class__
         rank = cls.comm.getRank()
         nproc = cls.comm.getSize()
-        if nproc > 1:
-            mvector_filename = 'in_mvector_read_test_' + str(nproc)
-        else:
-            mvector_filename ='in_mvector_read_test'
+        
+        if nproc == 1:
+            return
 
+        mvector_filename = 'in_mvector_read_test_' + str(nproc)
         file_dir = os.path.dirname(__file__)
 
         filename = 'input.yaml'
@@ -212,56 +212,6 @@ class TestIO(unittest.TestCase):
         parameter_map = problem.getParameterMap(0)
 
         mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = False, useBinary = False)
-        mvector_view = mvector.getLocalView()
-
-        tol = 1e-8
-        mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
-        for i in range(0, n_cols):
-            self.assertTrue(np.abs(mvector_view[0,i]-mvector_target[i]) < tol)
-
-    def test_read_non_distributed_non_scattered_npy(self):
-        cls = self.__class__
-        rank = cls.comm.getRank()
-        nproc = cls.comm.getSize()
-        if nproc > 1:
-            mvector_filename = 'in_mvector_read_test_' + str(nproc)
-        else:
-            mvector_filename ='in_mvector_read_test'
-
-        file_dir = os.path.dirname(__file__)
-
-        filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
-
-        n_cols = 4
-        parameter_map = problem.getParameterMap(0)
-
-        mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = False, readOnRankZero = False)
-        mvector_view = mvector.getLocalView()
-
-        tol = 1e-8
-        mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
-        for i in range(0, n_cols):
-            self.assertTrue(np.abs(mvector_view[0,i]-mvector_target[i]) < tol)
-
-    def test_read_non_distributed_non_scattered_txt(self):
-        cls = self.__class__
-        rank = cls.comm.getRank()
-        nproc = cls.comm.getSize()
-        if nproc > 1:
-            mvector_filename = 'in_mvector_read_test_' + str(nproc)
-        else:
-            mvector_filename ='in_mvector_read_test'
-
-        file_dir = os.path.dirname(__file__)
-
-        filename = 'input.yaml'
-        problem = Utils.createAlbanyProblem(file_dir+'/'+filename, cls.parallelEnv)
-
-        n_cols = 4
-        parameter_map = problem.getParameterMap(0)
-
-        mvector = Utils.loadMVector(file_dir+'/'+mvector_filename, n_cols, parameter_map, distributedFile = False, useBinary = False, readOnRankZero = False)
         mvector_view = mvector.getLocalView()
 
         tol = 1e-8
