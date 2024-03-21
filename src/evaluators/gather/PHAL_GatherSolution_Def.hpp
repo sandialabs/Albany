@@ -287,7 +287,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Do everything on device
   // Get kokkos views from thyra vectors
-  Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
+  Albany::ThyraVDeviceView<const ST> x_data, xdot_data, xdotdot_data;
   x_data = Albany::getDeviceData(x);
   if(!xdot.is_null()) {
     xdot_data = Albany::getDeviceData(xdot);
@@ -378,7 +378,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto n_coeff = workset.n_coeff;
 
   // Get kokkos views from thyra vectors
-  Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
+  Albany::ThyraVDeviceView<const ST> x_data, xdot_data, xdotdot_data;
   x_data = Albany::getDeviceData(x);
   if(!xdot.is_null()) {
     xdot_data = Albany::getDeviceData(xdot);
@@ -480,8 +480,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_dof_lids  = dof_mgr->elem_dof_lids();
   constexpr auto ALL = Kokkos::ALL;
 
-  Albany::DeviceView1d<const ST> x_data, xdot_data, xdotdot_data;
-  Albany::DeviceView2d<const ST> Vx_data, Vxdot_data, Vxdotdot_data;
+  Albany::ThyraVDeviceView<const ST> x_data, xdot_data, xdotdot_data;
+  Albany::ThyraMVDeviceView<const ST> Vx_data, Vxdot_data, Vxdotdot_data;
 
   //get const (read-only) view of x
   x_data = Albany::getDeviceData(x);
@@ -661,7 +661,7 @@ evaluateFields(typename Traits::EvalData workset)
   bool f_px_is_active = !hessian_ws.hess_vec_prod_f_px.is_null();
 
   //get const (read-only) view of x and xdot
-  using const_data_t = Albany::DeviceView1d<const ST>;
+  using const_data_t = Albany::ThyraVDeviceView<const ST>;
   const_data_t x_data, xdot_data, xdotdot_data, direction_x_data;
 
   x_data = Albany::getDeviceData(x);

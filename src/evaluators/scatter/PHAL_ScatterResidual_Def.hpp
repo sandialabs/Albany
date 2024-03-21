@@ -263,7 +263,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int neq  = dof_mgr->getNumFields();
 
   // Get Kokkos vector view and local matrix
-  Albany::DeviceView1d<ST> f_data;
+  Albany::ThyraVDeviceView<ST> f_data;
   const bool scatter_f = Teuchos::nonnull(workset.f);
   if (scatter_f) {
     f_data = workset.f_kokkos;
@@ -350,8 +350,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto dof_mgr = workset.disc->getDOFManager();
   this->gather_fields_offsets (dof_mgr);
 
-  Albany::DeviceView1d<ST> f_data;
-  Albany::DeviceView2d<ST> JV_data, fp_data;
+  Albany::ThyraVDeviceView<ST> f_data;
+  Albany::ThyraMVDeviceView<ST> JV_data, fp_data;
 
   const auto ws_elem_lids = workset.disc->getWsElementLIDs().dev();
   const auto elem_lids = Kokkos::subview(ws_elem_lids,ws,ALL);

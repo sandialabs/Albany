@@ -425,7 +425,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
-  Albany::DeviceView1d<const ST> p_data = Albany::getDeviceData(p->overlapped_vector().getConst());
+  Albany::ThyraVDeviceView<const ST> p_data = Albany::getDeviceData(p->overlapped_vector().getConst());
 
   // Direction vector for the Hessian-vector product
   const auto vvec = workset.hessianWorkset.direction_p;
@@ -459,7 +459,7 @@ evaluateFields(typename Traits::EvalData workset)
       "\nError in GatherScalarNodalParameter<HessianVec, Traits>: "
       "direction_p is not set and the direction is active.\n");
   
-  Albany::DeviceView1d<const ST> vvec_data;
+  Albany::ThyraVDeviceView<const ST> vvec_data;
   if (is_p_direction_active) vvec_data = Albany::getDeviceData(vvec->col(0).getConst());
 
   const int ws = workset.wsIndex;

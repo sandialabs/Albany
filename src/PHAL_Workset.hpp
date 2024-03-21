@@ -92,7 +92,7 @@ struct Workset
   Teuchos::RCP<Thyra_MultiVector> fpV;
   Teuchos::RCP<Thyra_MultiVector> Vp_bc;
 
-  Albany::DeviceView1d<ST>        f_kokkos;
+  Albany::ThyraVDeviceView<ST>        f_kokkos;
   Albany::DeviceLocalMatrix<ST>   Jac_kokkos;
 
   Teuchos::RCP<const Albany::NodeSetList>      nodeSets;

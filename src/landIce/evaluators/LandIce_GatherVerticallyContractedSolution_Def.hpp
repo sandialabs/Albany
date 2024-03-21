@@ -366,7 +366,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   // .val().fastAccessDx().
   const bool is_x_direction_active = g_xx_is_active || g_px_is_active || f_xx_is_active || f_px_is_active;
 
-  Albany::DeviceView1d<const ST> direction_x_data;
+  Albany::ThyraVDeviceView<const ST> direction_x_data;
   if (is_x_direction_active) {
     const auto direction_x = hws.direction_x;
     TEUCHOS_TEST_FOR_EXCEPTION(

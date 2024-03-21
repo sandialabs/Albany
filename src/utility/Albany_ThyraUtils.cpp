@@ -681,13 +681,13 @@ Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> getLocalData (const Thyra_MultiVe
   return data;
 }
 
-DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
+ThyraVDeviceView<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getConstTpetraVector(v,false);
   if (!tv.is_null()) {
     auto data2d = tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadOnly);
-    DeviceView1d<const ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
+    ThyraVDeviceView<const ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
     return data;
   }
 
@@ -695,17 +695,17 @@ DeviceView1d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_Vector>& v)
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getDeviceData! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 
   // Dummy return value, to silence compiler warnings
-  DeviceView1d<const ST> dummy;
+  ThyraVDeviceView<const ST> dummy;
   return dummy;
 }
 
-DeviceView1d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v)
+ThyraVDeviceView<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getTpetraVector(v,false);
   if (!tv.is_null()) {
     auto data2d = tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadWrite);
-    DeviceView1d<ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
+    ThyraVDeviceView<ST> data = Kokkos::subview(data2d, Kokkos::ALL(), 0);
     return data;
   }
 
@@ -713,16 +713,16 @@ DeviceView1d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_Vector>& v)
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNonconstDeviceData! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 
   // Dummy return value, to silence compiler warnings
-  DeviceView1d<ST> dummy;
+  ThyraVDeviceView<ST> dummy;
   return dummy;
 }
 
-DeviceView2d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_MultiVector>& mv)
+ThyraMVDeviceView<const ST> getDeviceData (const Teuchos::RCP<const Thyra_MultiVector>& mv)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getConstTpetraMultiVector(mv,false);
   if (!tv.is_null()) {
-    DeviceView2d<const ST> data(tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadOnly));
+    ThyraMVDeviceView<const ST> data(tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadOnly));
     return data;
   }
 
@@ -730,16 +730,16 @@ DeviceView2d<const ST> getDeviceData (const Teuchos::RCP<const Thyra_MultiVector
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getDeviceData! Could not cast Thyra_MultiVector to any of the supported concrete types.\n");
 
   // Dummy return value, to silence compiler warnings
-  DeviceView2d<const ST> dummy;
+  ThyraMVDeviceView<const ST> dummy;
   return dummy;
 }
 
-DeviceView2d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_MultiVector>& mv)
+ThyraMVDeviceView<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_MultiVector>& mv)
 {
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tv = getTpetraMultiVector(mv,false);
   if (!tv.is_null()) {
-    DeviceView2d<ST> data(tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadWrite));
+    ThyraMVDeviceView<ST> data(tv->getLocalView<KokkosNode::execution_space>(Tpetra::Access::ReadWrite));
     return data;
   }
 
@@ -747,7 +747,7 @@ DeviceView2d<ST> getNonconstDeviceData (const Teuchos::RCP<Thyra_MultiVector>& m
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getNonconstDeviceData! Could not cast Thyra_Vector to any of the supported concrete types.\n");
 
   // Dummy return value, to silence compiler warnings
-  DeviceView2d<ST> dummy;
+  ThyraMVDeviceView<ST> dummy;
   return dummy;
 }
 
