@@ -71,6 +71,7 @@ namespace Albany
 
     //! The Thyra LinearOpWithSolve object
     Teuchos::RCP<Thyra_LOWS> solver_;
+    Teuchos::RCP<Thyra_LOWS> solver_transp_;
     //@}
 
   }; // class MatrixBased_LOWS
