@@ -32,7 +32,7 @@ class TestHODLR(unittest.TestCase):
         fileDir = os.path.dirname(__file__)
 
         # Create an Albany problem:
-        fileName = 'input_conductivity_dist_paramT.yaml'
+        fileName = 'input_conductivity_dist_param.yaml'
         pList    = Utils.createParameterList(fileDir+'/'+fileName, cls.parallelEnv)
         pList.sublist("Problem").sublist("Response Functions").sublist("Response 0").sublist("Response 1").set("Scaling", 0.e0)
         pList.sublist("Discretization").set("1D Elements", 15)

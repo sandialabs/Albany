@@ -18,7 +18,7 @@ class TestSteadyHeat(unittest.TestCase):
         file_dir = os.path.dirname(__file__)
 
         # Create an Albany problem:
-        filename = "input_dirichlet_mixed_paramsT.yaml"
+        filename = "input_dirichlet_mixed_params.yaml"
         parameter = Utils.createParameterList(
             file_dir + "/" + filename, cls.parallelEnv
         )

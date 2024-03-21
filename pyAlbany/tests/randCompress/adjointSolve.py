@@ -33,7 +33,7 @@ class TestAdjointSolve(unittest.TestCase):
         np.random.seed(42)
 
         # Create an Albany problem:
-        fileName = 'inputT_MueLu.yaml'
+        fileName = 'input_MueLu.yaml'
         pList    = Utils.createParameterList(fileName, cls.parallelEnv)
         problem = Utils.createAlbanyProblem(pList, cls.parallelEnv)
         problem.performSolve()
