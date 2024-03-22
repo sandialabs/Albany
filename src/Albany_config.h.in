@@ -28,7 +28,6 @@
 #cmakedefine ALBANY_OMEGAH
 
 // Cuda options
-#cmakedefine ALBANY_CUDA_ERROR_CHECK
 #cmakedefine ALBANY_CUDA_NVTX
 
 // Whether this is a nightly test build
