@@ -4,10 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifdef ALBANY_TIMER
-#include <chrono>
-#endif
-
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -160,10 +156,6 @@ template<typename Traits>
 void ScatterResidual<AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
-#endif
-
   const auto f = workset.f;
 
   constexpr auto ALL = Kokkos::ALL();
@@ -179,7 +171,8 @@ evaluateFields(typename Traits::EvalData workset)
   auto f_data = Albany::getNonconstDeviceData(f);
 
   const auto& fields_offsets = m_fields_offsets.dev();
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),
+                       RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -190,14 +183,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   });
-
-#ifdef ALBANY_TIMER
-  PHX::Device::fence();
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  std::cout<< "Scatter Residual time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
 }
 
 // **********************************************************************
@@ -247,10 +232,6 @@ evaluateFields(typename Traits::EvalData workset)
     m_volume_eqns_offsets.sync_to_dev();
   }
 
-#ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
-#endif
-
   constexpr auto ALL = Kokkos::ALL();
 
   const int ws  = workset.wsIndex;
@@ -278,7 +259,8 @@ evaluateFields(typename Traits::EvalData workset)
     m_lids.resize("",nunk);
   }
   const auto lids = m_lids.dev();
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),
+                       RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int cell) {
     ST vals[500];
     const auto elem_LID = elem_lids(cell);
@@ -307,14 +289,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   });
-
-#ifdef ALBANY_TIMER
-  PHX::Device::fence();
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
 }
 
 // **********************************************************************
@@ -369,7 +343,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto ncolsp = workset.num_cols_p;
   const auto paramoffset = workset.param_offset;
 
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),
+                       RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);

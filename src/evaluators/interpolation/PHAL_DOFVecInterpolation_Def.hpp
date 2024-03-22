@@ -13,10 +13,6 @@
 
 #include "KokkosExp_View_Fad.hpp"
 
-#ifdef ALBANY_TIMER
-#include <chrono>
-#endif
-
 namespace PHAL {
 
 //**********************************************************************
@@ -102,25 +98,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-#ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
-#endif
-
-  Kokkos::parallel_for ( workset.numCells,
+  Kokkos::parallel_for (this->getName(), workset.numCells,
       VecInterpolation<PHX::Device,
                       decltype(BF),
                       decltype(val_node),
                       decltype(val_qp) >(
                         BF, val_node, val_qp, numQPs, numNodes, vecDim));
-
-#ifdef ALBANY_TIMER
-  PHX::Device::fence();
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  std::cout<< "DOFVecInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-
 }
 
 // Specialization for Jacobian evaluation taking advantage of known sparsity
@@ -182,7 +165,7 @@ void FastSolutionVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, type
 evaluateFields(typename Traits::EvalData workset)
 {
   const int num_dof = Kokkos::dimension_scalar(this->val_node.get_view());
-  Kokkos::parallel_for(workset.numCells,
+  Kokkos::parallel_for(this->getName(), workset.numCells,
       VecInterpolationJacob<
         ScalarT,
         PHX::Device,
