@@ -170,7 +170,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     }
     numNodes = val[0].extent(1);
 
-    // Get MDField views from std::vector
+    // Copy kokkos views from std::vector of MDFields to DualView of DynRankView
     for (int i =0; i<numFields;i++){
       device_sol.val_kokkos.h_view(i)=this->val[i].get_static_view();
       if (enableTransient){
