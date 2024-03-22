@@ -578,13 +578,6 @@ MESSAGE("\nMiscellaneous Albany Options:\n")
 # Optional CUDA settings
 IF(Kokkos_ENABLE_CUDA)
   SET(KOKKOS_NDEVICES "--kokkos-map-device-id-by=mpi_rank")
-  IF (ENABLE_CUDA_NVTX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lnvToolsExt")
-    SET(ALBANY_CUDA_NVTX ON)
-    MESSAGE("-- CUDA NVTX               Enabled")
-  ELSE()
-    MESSAGE("-- CUDA NVTX           NOT Enabled.")
-  ENDIF()
 ENDIF()
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled

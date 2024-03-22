@@ -27,9 +27,6 @@
 // Whether the Omega_h interface is enabled
 #cmakedefine ALBANY_OMEGAH
 
-// Cuda options
-#cmakedefine ALBANY_CUDA_NVTX
-
 // Whether this is a nightly test build
 #cmakedefine ALBANY_NIGHTLY_TEST
 
