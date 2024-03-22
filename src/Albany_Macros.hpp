@@ -10,9 +10,6 @@
 // Get Albany configuration macros
 #include "Albany_config.h"
 
-// Checks if the previous Kokkos::Cuda kernel has failed
-#define cudaCheckError()
-
 // NVTX Range creates a colored range which can be viewed on the nvvp timeline
 // (from Parallel Forall blog)
 #define PUSH_RANGE(name, cid)
