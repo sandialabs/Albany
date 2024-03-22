@@ -96,10 +96,11 @@ postRegistrationSetup(typename Traits::SetupData d,
     }
 
     for (int eq =0; eq<numFields;eq++){
-      // Get MDField views from std::vector
-      device_resid.val_kokkos[eq]=this->val[eq].get_static_view();
+      // Copy kokkos views from std::vector of MDFields to DualView of DynRankView
+      device_resid.val_kokkos.h_view(eq)=this->val[eq].get_static_view();
     }
-    device_resid.val_kokkos.host_to_device();
+    device_resid.val_kokkos.modify_host();
+    device_resid.val_kokkos.sync_device();
 
     numNodes = val[0].extent(1);
   } else  if (tensorRank == 1) {

@@ -170,22 +170,25 @@ postRegistrationSetup(typename Traits::SetupData d,
     }
     numNodes = val[0].extent(1);
 
-    // Get MDField views from std::vector
+    // Copy kokkos views from std::vector of MDFields to DualView of DynRankView
     for (int i =0; i<numFields;i++){
-      device_sol.val_kokkos[i]=this->val[i].get_static_view();
+      device_sol.val_kokkos.h_view(i)=this->val[i].get_static_view();
       if (enableTransient){
-        device_sol.val_dot_kokkos[i]=this->val_dot[i].get_static_view();
+        device_sol.val_dot_kokkos.h_view(i)=this->val_dot[i].get_static_view();
       }
       if (enableAcceleration){
-        device_sol.val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
+        device_sol.val_dotdot_kokkos.h_view(i)=this->val_dotdot[i].get_static_view();
       }
     }
-    device_sol.val_kokkos.host_to_device();
+    device_sol.val_kokkos.modify_host();
+    device_sol.val_kokkos.sync_device();
     if (enableTransient){
-      device_sol.val_dot_kokkos.host_to_device();
+      device_sol.val_dot_kokkos.modify_host();
+      device_sol.val_dot_kokkos.sync_device();
     }
     if (enableAcceleration){
-      device_sol.val_dotdot_kokkos.host_to_device();
+      device_sol.val_dotdot_kokkos.modify_host();
+      device_sol.val_dotdot_kokkos.sync_device();
     }
 
   } else if (tensorRank == 1) {
