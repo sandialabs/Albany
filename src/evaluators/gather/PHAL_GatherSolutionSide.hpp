@@ -19,8 +19,6 @@
 
 #include "Teuchos_ParameterList.hpp"
 
-#include "Kokkos_Vector.hpp"
-
 namespace Albany {
   class DOFManager;
 }

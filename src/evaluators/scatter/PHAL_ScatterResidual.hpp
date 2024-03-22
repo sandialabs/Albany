@@ -23,8 +23,6 @@
 
 #include "Teuchos_ParameterList.hpp"
 
-#include "Kokkos_Vector.hpp"
-
 namespace Albany {
 class DOFManager;
 }
@@ -98,7 +96,7 @@ protected:
 public:
   struct ResidAccessor {
     using DynRankView = Kokkos::DynRankView<const ScalarT, PHX::Device>;
-    using KV = Kokkos::vector<DynRankView, PHX::Device>;
+    using KV = Kokkos::DualView<DynRankView*, PHX::Device>;
     using t_dev = typename KV::t_dev;
 
     KOKKOS_INLINE_FUNCTION
