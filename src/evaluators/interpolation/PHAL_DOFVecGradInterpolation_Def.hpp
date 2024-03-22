@@ -11,10 +11,6 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
-#ifdef ALBANY_TIMER
-#include <chrono>
-#endif
-
 namespace PHAL {
 
   //**********************************************************************
@@ -88,20 +84,8 @@ namespace PHAL {
   {
     if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-#ifdef ALBANY_TIMER
-    PHX::Device::fence();
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
     //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
-    Kokkos::parallel_for(DOFVecGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
-
-#ifdef ALBANY_TIMER
-    PHX::Device::fence();
-    auto elapsed = std::chrono::high_resolution_clock::now() - start;
-    long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-    long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-    std::cout<< "DOFVecGradInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
+    Kokkos::parallel_for(this->getName(),DOFVecGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
   }
 
   // Specialization for Jacobian evaluation taking advantage of known sparsity
@@ -132,20 +116,8 @@ namespace PHAL {
   void FastSolutionVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifdef ALBANY_TIMER
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
-
     neq = workset.disc->getDOFManager()->getNumFields();
-    Kokkos::parallel_for(FastSolutionVecGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
-
-#ifdef ALBANY_TIMER
-    PHX::Device::fence();
-    auto elapsed = std::chrono::high_resolution_clock::now() - start;
-    long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-    long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-    std::cout<< "FastSolutionVecGradInterpolationBase Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
+    Kokkos::parallel_for(this->getName(),FastSolutionVecGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
   }
 
 } // Namespace PHAL

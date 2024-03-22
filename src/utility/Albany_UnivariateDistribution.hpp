@@ -23,6 +23,7 @@ namespace Albany
       {
         // Nothing to be done here
       }
+      virtual ~UnivariatDistribution() = default;
       virtual double cdf(const double x) = 0;
       virtual double cdf_dx(const double x) = 0;
       virtual double cdf_dx_dx(const double x) = 0;

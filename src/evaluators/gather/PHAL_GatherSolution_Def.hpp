@@ -265,10 +265,6 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
-#endif
-
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
@@ -299,7 +295,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids_dev     = Kokkos::subview(elem_lids.dev(),ws,ALL);
   const auto elem_dof_lids_dev = elem_dof_lids.dev();
   const auto fields_offsets = m_fields_offsets.dev();
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),
+                       RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
@@ -316,14 +313,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   });
-
-#ifdef ALBANY_TIMER
-  PHX::Device::fence();
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  std::cout<< "GaTher Solution Residual time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
 }
 
 // **********************************************************************
@@ -352,10 +341,6 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef ALBANY_TIMER
-  auto start = std::chrono::high_resolution_clock::now();
-#endif
-
   const auto& x       = workset.x;
   const auto& xdot    = workset.xdot;
   const auto& xdotdot = workset.xdotdot;
@@ -391,7 +376,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids_dev     = Kokkos::subview(elem_lids.dev(),ws,ALL);
   const auto elem_dof_lids_dev = elem_dof_lids.dev();
   const auto fields_offsets = m_fields_offsets.dev();
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),
+                       RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA (const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
@@ -418,14 +404,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   });
-
-#ifdef ALBANY_TIMER
-  PHX::Device::fence();
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  std::cout<< "GaTher Solution Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
 }
 
 // **********************************************************************
@@ -505,7 +483,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto jcoeff = workset.j_coeff;
   const auto mcoeff = workset.m_coeff;
   const auto ncoeff = workset.n_coeff;
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),
+                       RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
@@ -704,7 +683,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& first_dof = this->offset;
 
   const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),
+                       RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);

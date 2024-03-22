@@ -13,10 +13,6 @@
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#ifdef ALBANY_TIMER
-#include <chrono>
-#endif
-
 namespace PHAL {
 
 //**********************************************************************
@@ -120,10 +116,6 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-#ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto start = std::chrono::high_resolution_clock::now();
-#endif
 //  Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
 
 #ifdef KOKKOS_OPTIMIZED
@@ -137,17 +129,8 @@ evaluateFields(typename Traits::EvalData workset)
    Kokkos::parallel_for(policy, *this);
 
 #else
- Kokkos::parallel_for(DOFGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
+ Kokkos::parallel_for(this->getName(),DOFGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
 #endif
-
-#ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto elapsed = std::chrono::high_resolution_clock::now() - start;
- long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
- long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
- std::cout<< "DOFGradInterpolationBase Residual time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-
 }
 //Specialization for Jacobian evaluation taking advantage of the sparsity of the derivatives
 //Note, this assumes that the mesh is not FAD type
@@ -180,25 +163,10 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-#ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto start = std::chrono::high_resolution_clock::now();
-#endif
-
  num_dof = this->val_node(0,0).size();
  neq = workset.disc->getDOFManager()->getNumFields();
 
- Kokkos::parallel_for(FastSolutionGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
-
-#ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto elapsed = std::chrono::high_resolution_clock::now() - start;
- long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
- long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
- std::cout<< "DOFGradInterpolationBase Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif
-
-
+ Kokkos::parallel_for(this->getName(),FastSolutionGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);
 }
 
 //**********************************************************************
