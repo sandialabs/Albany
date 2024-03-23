@@ -7,7 +7,11 @@ TTTT=`grep "(Not Run)" /projects/albany/nightlySpackBuild/spack_ctest.out -c`
 TTTTT=`grep "(Timeout)" /projects/albany/nightlySpackBuild/spack_ctest.out -c`
 TT=`grep "...   Passed" /projects/albany/nightlySpackBuild/spack_ctest.out -c`
 
-#/bin/mail -s "Albany ($ALBANY_BRANCH): $TTT" "albany-regression@software.sandia.gov" < $ALBOUTDIR/albany_runtests.out
-#/bin/mail -s "Albany Spack Build, camobap.ca.sandia.gov: $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "albany@sandia.gov, daibane@sandia.gov, tjfulle@sandia.gov, mperego@sandia.gov, lbertag@sandia.gov" < /projects/albany/nightlySpackBuild/results_spack
-/bin/mail -s "Albany Spack Build (linux-rhel7-haswell, gcc-9.2.0): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "ikalash@sandia.gov, mperego@sandia.gov, lbertag@sandia.gov" < /projects/albany/nightlySpackBuild/results_spack
-#/bin/mail -s "Albany Spack Build (linux-rhel7-haswell, gcc-10.1.1): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "ikalash@sandia.gov" < /projects/albany/nightlySpackBuild/results_spack
+
+echo "Subject: Albany Spack Build, cee-compute006 (linux-rhel7, gcc-10.1.0): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
+echo "" >& b
+cat a b >& c
+cat c results_spack >& d
+rm a b c
+mv d results_spack
+cat results_spack | /usr/sbin/sendmail -F ikalash@camobap.ca.sandia.gov -t "ikalash@sandia.gov, mperego@sandia.gov, lbertag@sandia.gov"

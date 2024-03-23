@@ -1,5 +1,5 @@
 echo $PWD >& a 
-sed -i "s,/scratch/albany/nightlySpackBuild/spack-stage/ikalash/spack-stage-albany-develop-,,g" a 
+sed -i "s,/tmp/ikalash/spack-stage/spack-stage-albany-develop-,,g" a 
 cut -c-7 a >& b 
 echo "cd spack-build-" >& c 
 cat c b >& cb
