@@ -1,0 +1,2 @@
+00 00 * * * cd /nightlySpackBuild; bash -l -c "source /projects/albany/nightlySpackBuild/preproc_spack.sh >& preproc_spack.out; git clone git@github.com:E3SM-Project/spack.git >& clone.out; cd spack; git checkout develop; source /projects/albany/nightlySpackBuild/install_albany.sh >& install_albany.out"; cd /projects/albany/nightlySpackBuild; bash -l -c "source /projects/albany/nightlySpackBuild/run_ctest.sh >& run_ctest.out"
+
