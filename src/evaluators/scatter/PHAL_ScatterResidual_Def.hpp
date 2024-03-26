@@ -71,6 +71,8 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
   if (tensorRank == 0) {
     device_resid.val_kokkos.resize(numFields);
+    device_resid.val_kokkos.sync_host();
+    device_resid.val_kokkos.sync_device();
   }
 
   if (p.isType<int>("Offset of First DOF")) {
