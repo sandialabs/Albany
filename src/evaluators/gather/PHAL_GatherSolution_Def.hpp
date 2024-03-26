@@ -138,10 +138,16 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
 
   if ( tensorRank == 0 ) {
     device_sol.val_kokkos.resize(numFields);
+    device_sol.val_kokkos.sync_host();
+    device_sol.val_kokkos.sync_device();
     if (enableTransient)
       device_sol.val_dot_kokkos.resize(numFields);
+      device_sol.val_dot_kokkos.sync_host();
+      device_sol.val_dot_kokkos.sync_device();
     if (enableAcceleration)
       device_sol.val_dotdot_kokkos.resize(numFields);
+      device_sol.val_dotdot_kokkos.sync_host();
+      device_sol.val_dotdot_kokkos.sync_device();
   }
 
   if (p.isType<int>("Offset of First DOF"))

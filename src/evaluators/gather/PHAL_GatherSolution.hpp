@@ -130,8 +130,8 @@ protected:
 public:
   struct SolAccessor {
     using DynRankView = Kokkos::DynRankView<ScalarT, PHX::Device>;
-    using KV = Kokkos::DualView<DynRankView*, PHX::Device>;
-    using t_dev = typename KV::t_dev;
+    using DRVDualView = Kokkos::DualView<DynRankView*, PHX::Device>;
+    using t_dev = typename DRVDualView::t_dev;
     
     KOKKOS_INLINE_FUNCTION
     ref_t get_ref (const int cell, const int node, const int eq) const {
@@ -174,7 +174,7 @@ public:
 
     int tensorRank;
     int numDim;
-    KV val_kokkos, val_dot_kokkos, val_dotdot_kokkos;
+    DRVDualView val_kokkos, val_dot_kokkos, val_dotdot_kokkos;
     t_dev d_val, d_val_dot, d_val_dotdot;
     DynRankView d_valVec, d_valVec_dot, d_valVec_dotdot;
     DynRankView d_valTensor, d_valTensor_dot, d_valTensor_dotdot;
