@@ -23,6 +23,14 @@ PopulateMesh::PopulateMesh (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   discParams(discParams_),
   use_sdbcs_(false)
 {
+  // Prevent the solution from being saved in the mesh as well as the side set meshes (if any)
+  discParams_->set("Save Solution Field", false);
+  auto& ss_pl = discParams_->sublist("Side Set Discretizations");
+  const auto& ss_names = ss_pl.get<Teuchos::Array<std::string>>("Side Sets",{});
+  for (const auto& ssn : ss_names) {
+    ss_pl.sublist(ssn).set("Save Solution Field", false);
+  }
+
   neq = 1;
 }
 
