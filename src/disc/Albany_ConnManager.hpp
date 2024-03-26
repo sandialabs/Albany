@@ -7,7 +7,6 @@
 #ifndef ALBANY_CONN_MANAGER_HPP
 #define ALBANY_CONN_MANAGER_HPP
 
-// #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 #include "Panzer_ConnManager.hpp"
@@ -75,7 +74,6 @@ public:
 
     return topologies[0];
   }
-
 protected:
   std::vector<std::string> m_elem_blocks_names;
 };
