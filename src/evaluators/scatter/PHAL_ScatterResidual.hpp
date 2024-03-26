@@ -96,8 +96,8 @@ protected:
 public:
   struct ResidAccessor {
     using DynRankView = Kokkos::DynRankView<const ScalarT, PHX::Device>;
-    using KV = Kokkos::DualView<DynRankView*, PHX::Device>;
-    using t_dev = typename KV::t_dev;
+    using DRVDualView = Kokkos::DualView<DynRankView*, PHX::Device>;
+    using t_dev = typename DRVDualView::t_dev;
 
     KOKKOS_INLINE_FUNCTION
     ScalarT get (const int cell, const int node, const int eq) const {
@@ -114,7 +114,7 @@ public:
 
     int tensorRank;
     int numDim;
-    KV val_kokkos;
+    DRVDualView val_kokkos;
     t_dev d_val;
     DynRankView d_valVec, d_valTensor;
   };
