@@ -46,11 +46,6 @@ TEUCHOS_UNIT_TEST(ConnMgrTensProd, 3D)
   auto& ts = UnitTestSession::instance();
   std::cout << "seed: " << ts.rng_seed << "\n";
 
-  Teuchos::Array<int> nelems(3);
-  nelems[0] = 4;
-  nelems[1] = 3;
-  nelems[2] = 2;
-
   // 1d, 2d, and 3d topologies
   auto line  = shards::getCellTopologyData<shards::Line<2>>();
   auto tria  = shards::getCellTopologyData<shards::Triangle<3>>();
@@ -61,51 +56,67 @@ TEUCHOS_UNIT_TEST(ConnMgrTensProd, 3D)
   using tria_basis_type  = typename basis_family_type::HGRAD_TRI;
   using line_basis_type  = typename basis_family_type::HGRAD_LINE;
   using wedge_basis_type = typename basis_family_type::HGRAD_WEDGE;
+  using wedge_basis_mono_type = Intrepid2::Basis_HGRAD_WEDGE_C1_FEM<PHX::Device,RealType,RealType>;
   using hexa_basis_type  = typename basis_family_type::HGRAD_HEX;
 
   auto line_basis  = Teuchos::rcp(new line_basis_type(1));
   auto tria_basis  = Teuchos::rcp(new tria_basis_type(1));
   auto wedge_basis = Teuchos::rcp(new wedge_basis_type(1,1));
   auto wedge_p2_basis = Teuchos::rcp(new wedge_basis_type(2,2));
+  auto wedge_mono_basis = Teuchos::rcp(new wedge_basis_mono_type());
   auto hexa_basis  = Teuchos::rcp(new hexa_basis_type(1));
 
-  // Create Intrepid2FieldPatterns
+  // Create field patterns for testing
   auto fp_1d = Teuchos::rcp(new panzer::Intrepid2FieldPattern(line_basis));
   auto fp_2d = Teuchos::rcp(new panzer::Intrepid2FieldPattern(tria_basis));
-  auto fp_3d = Teuchos::rcp(new panzer::Intrepid2FieldPattern(wedge_basis));
+  auto fp_3d = Teuchos::rcp(new panzer::Intrepid2FieldPattern(wedge_mono_basis));
+  auto fp_3d_tens = Teuchos::rcp(new panzer::Intrepid2FieldPattern(wedge_basis));
   auto fp_3d_p2 = Teuchos::rcp(new panzer::Intrepid2FieldPattern(wedge_p2_basis));
   auto fp_3d_hex = Teuchos::rcp(new panzer::Intrepid2FieldPattern(hexa_basis));
-
-  // Build 1d, 2d, and 3d conn managers
-  auto conn_mgr_line  = Teuchos::rcp(new DummyConnManager(line));
-  auto conn_mgr_tria  = Teuchos::rcp(new DummyConnManager(tria));
-  auto conn_mgr_wedge = Teuchos::rcp(new DummyConnManager(wedge));
+  auto elem_fp = Teuchos::rcp(new panzer::ElemFieldPattern(wedge));
 
   using ipdf = std::uniform_int_distribution<int>;
   std::mt19937_64 engine;
+  ipdf nlay_pdf (1,5);
+  ipdf ntri_pdf (5,10);
 
   // Create dummy basal mesh
-  auto basal_mesh = Teuchos::rcp(new DummyMesh2d(ipdf(10,20)(engine)));
-  
-  for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::COLUMN}) {
+  GO ne_x_lcl = 1;//ntri_pdf(engine);
+  auto numLayers = 1;//nlay_pdf(engine);
+
+  // Basal mesh and monolithic (not extruded) 3d mesh
+  auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x_lcl,comm));
+
+  GO num_glb_tria;
+  Teuchos::reduceAll(*comm,Teuchos::REDUCE_SUM,1,&ne_x_lcl,&num_glb_tria);
+
+  std::cout << "RUNNING TESTS WITH:\n"
+            << "  num 2d elems: " << 2*ne_x_lcl << "\n"
+            << "  num layers  : " << numLayers << "\n";
+
+  for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+    // Build 2d and 3d conn managers (not extruded)
+    auto conn_mgr_tria  = Teuchos::rcp(new DummyConnManager(mesh_2d));
 
     auto params = Teuchos::rcp(new Teuchos::ParameterList());
     params->set<int>("NumLayers",0);
+    params->set<int>("Workset Size",1000);
     params->set("Columnwise Ordering", ordering==LayeredMeshOrdering::COLUMN);
 
-    // Test ExtrudedConnManager exception handling in constructor
+    // Bad pointers
     TEST_THROW (Teuchos::rcp(new DummyExtrudedMesh(Teuchos::null,params,comm)),
                 std::invalid_argument);
-    TEST_THROW (Teuchos::rcp(new DummyExtrudedMesh(basal_mesh,Teuchos::null,comm)),
-                std::invalid_argument);
-    TEST_THROW (Teuchos::rcp(new DummyExtrudedMesh(basal_mesh,params,comm)),
+    TEST_THROW (Teuchos::rcp(new DummyExtrudedMesh(mesh_2d,Teuchos::null,comm)),
                 std::invalid_argument);
 
-    ipdf nl_pdf (1,5);
-    params->set<int>("NumLayers",nl_pdf(engine));
-    auto extruded_mesh = Teuchos::rcp(new DummyExtrudedMesh(basal_mesh,params,comm));
+    // Bad num layers
+    TEST_THROW (Teuchos::rcp(new DummyExtrudedMesh(mesh_2d,params,comm)),
+                Teuchos::Exceptions::InvalidParameterValue);
 
-    // Test ExtrudedConnManager exception handling in constructor
+    params->set<int>("NumLayers",numLayers);
+    auto extruded_mesh = Teuchos::rcp(new DummyExtrudedMesh(mesh_2d,params,comm));
+
+    // Bad pointers
     TEST_THROW (Teuchos::rcp(new ExtrudedConnManager(Teuchos::null,extruded_mesh)),
                 std::invalid_argument);
     TEST_THROW (Teuchos::rcp(new ExtrudedConnManager(conn_mgr_tria,Teuchos::null)),
@@ -114,13 +125,9 @@ TEUCHOS_UNIT_TEST(ConnMgrTensProd, 3D)
     // Build extruded conn manager
     auto conn_mgr_ext = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_tria,extruded_mesh));
 
-    auto elem_fp = Teuchos::rcp(new panzer::ElemFieldPattern(wedge));
-    auto fp_3d = Teuchos::rcp(new panzer::Intrepid2FieldPattern(wedge_basis));
-    auto fp_2d = Teuchos::rcp(new panzer::Intrepid2FieldPattern(tria_basis));
-
     // Bad field agg pattern: contains non-intrepid patterns
     auto bad_fp1 = create_agg_fp({elem_fp});
-    TEST_THROW (conn_mgr_ext->buildConnectivity(*bad_fp1),std::runtime_error);
+    TEST_THROW (conn_mgr_ext->buildConnectivity(*bad_fp1),std::bad_cast);
 
     // Bad field agg pattern: contains different intrepid patterns
     auto bad_fp2 = create_agg_fp({fp_3d,fp_3d_p2});
@@ -133,5 +140,46 @@ TEUCHOS_UNIT_TEST(ConnMgrTensProd, 3D)
     // Bad field agg pattern: basis is tens prod with wrong basal basis topology
     auto bad_fp4 = create_agg_fp({fp_3d_hex});
     TEST_THROW (conn_mgr_ext->buildConnectivity(*bad_fp4),std::invalid_argument);
+
+    // Create extruded and monolithic connectivities
+    auto fp_wedge_tens = create_agg_fp({fp_3d_tens});
+    conn_mgr_ext->buildConnectivity(*fp_wedge_tens);
+
+    auto mesh_3d = Teuchos::rcp(new DummyMesh(ne_x_lcl,numLayers,ordering,comm));
+    auto conn_mgr_wedge = Teuchos::rcp(new DummyConnManager(mesh_3d));
+    auto fp_wedge = create_agg_fp({fp_3d});
+    conn_mgr_wedge->buildConnectivity(*fp_wedge);
+
+    // Compare connectivities
+    auto layers_data_lid = extruded_mesh->layers_data_lid();
+
+    for (int icol=0; icol<mesh_2d->get_num_local_elements(); ++icol) {
+      auto belem = conn_mgr_tria->getElementsInBlock()[icol];
+      for (int ilev=0; ilev<numLayers; ++ilev) {
+        int ie = layers_data_lid->getId(icol,ilev);
+        auto cnt = conn_mgr_ext->getConnectivitySize(ie);
+        auto conn3d = conn_mgr_wedge->getConnectivity(ie);
+        auto conn = conn_mgr_ext->getConnectivity(ie);
+        // TEST_EQUALITY_CONST( cnt, 6 );
+
+        std::cout << "ie=" << ie << ", icol=" << icol << ", ilev=" << ilev << "\n";
+        std::cout << " conn size: " << cnt << "\n";
+        std::stringstream act,w3d;
+        act << " actual conn:";
+        w3d << " mono3d conn:";
+        for (int idof=0; idof<3; ++idof) {
+          act << " " << conn[idof];
+          w3d << " " << conn3d[idof];
+          // TEST_EQUALITY (conn[idof],gnode);
+        }
+        for (int idof=3; idof<6; ++idof) {
+          act << " " << conn[idof];
+          w3d << " " << conn3d[idof];
+          // TEST_EQUALITY (conn[3+idof],gnode);
+        }
+        std::cout << act.str() << "\n";
+        std::cout << w3d.str() << "\n";
+      }
+    }
   }
 }

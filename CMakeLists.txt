@@ -6,6 +6,10 @@
 
 cmake_minimum_required(VERSION 3.17.0)
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.27)
+  cmake_policy (SET CMP0144 NEW)
+endif()
+
 # Add path where we keep some CMake utils to cmake search path
 list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 

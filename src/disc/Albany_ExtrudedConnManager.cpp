@@ -2,36 +2,38 @@
 #include "Albany_SerialConnManager1d.hpp"
 
 #include <Panzer_FieldAggPattern.hpp>
+#include <Panzer_GeometricAggFieldPattern.hpp>
 #include <Panzer_IntrepidFieldPattern.hpp>
 #include <Intrepid2_TensorBasis.hpp>
 
 namespace Albany {
 
 ExtrudedConnManager::
-ExtrudedConnManager(const Teuchos::RCP<ConnManager>&         basal_conn_mgr,
+ExtrudedConnManager(const Teuchos::RCP<ConnManager>&         conn_mgr_h,
                     const Teuchos::RCP<const ExtrudedMesh>&  mesh)
- : m_basal_conn_mgr (basal_conn_mgr)
+ : m_conn_mgr_h (conn_mgr_h)
  , m_mesh(mesh)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (basal_conn_mgr.is_null(), std::invalid_argument,
+  TEUCHOS_TEST_FOR_EXCEPTION (m_conn_mgr_h.is_null(), std::invalid_argument,
       "[ExtrudedConnManager] Error! Invalid basal conn manager pointer.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (m_mesh.is_null(), std::invalid_argument,
+      "[ExtrudedConnManager] Error! Invalid extruded mesh pointer.\n");
 
   const auto tri_topo = shards::CellTopology(shards::getCellTopologyData<shards::Triangle<3>>());
   TEUCHOS_TEST_FOR_EXCEPTION (
-      basal_conn_mgr->get_topology().getName()==std::string(tri_topo.getName()), std::runtime_error,
+      m_conn_mgr_h->get_topology().getName()!=std::string(tri_topo.getName()), std::runtime_error,
       "[ExtrudedConnManager::getElementBlockTopologies] Unsupported basal topology.\n"
-      "  Basal topology: " << basal_conn_mgr->get_topology().getName() << "\n"
+      "  Basal topology: " << m_conn_mgr_h->get_topology().getName() << "\n"
       "  Supported basal topologies: " << tri_topo.getName() << "\n");
 
   auto layers_data = mesh->layers_data_lid();
   m_num_elems = layers_data->numHorizEntities*layers_data->numLayers;
 }
 
-
 Teuchos::RCP<panzer::ConnManager>
 ExtrudedConnManager::noConnectivityClone() const
 {
-  return Teuchos::rcp(new ExtrudedConnManager(m_basal_conn_mgr,m_mesh));
+  return Teuchos::rcp(new ExtrudedConnManager(m_conn_mgr_h,m_mesh));
 }
 
 std::vector<GO>
@@ -41,7 +43,7 @@ getElementsInBlock (const std::string& blockId) const
   TEUCHOS_TEST_FOR_EXCEPTION (blockId!=m_elem_blocks_names[0],std::logic_error,
       "[ExtrudedConnManager::getElementBlock] Error! Invalid elem block name: " + blockId + ".\n");
 
-  const auto& elems_basal = m_basal_conn_mgr->getElementBlock();
+  const auto& elems_basal = m_conn_mgr_h->getElementBlock();
 
   std::vector<GO> elems;
   auto layers_data = m_mesh->layers_data_lid();
@@ -108,7 +110,7 @@ part_dim (const std::string& part_name) const
     return ms->numDim - 1;
   } else {
     try {
-      return m_basal_conn_mgr->part_dim(m_mesh->get_basal_part_name(part_name));
+      return m_conn_mgr_h->part_dim(m_mesh->get_basal_part_name(part_name));
     } catch (...) {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
           "[ExtrudedConnManager::part_dim] Invalid part name: " + part_name + "\n");
@@ -125,6 +127,9 @@ ExtrudedConnManager::getOwnership(LO localElmtId) const
 void ExtrudedConnManager::
 buildConnectivity(const panzer::FieldPattern & fp)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (m_is_connectivity_built, std::logic_error,
+      "[ExtrudedConnManager::buildConnectivity] Connectivity was already built.\n");
+
   using basis_type = Intrepid2::Basis<PHX::Device,RealType,RealType>;
   using tensor_basis_type = Intrepid2::Basis_TensorBasis<basis_type>;
 
@@ -146,7 +151,9 @@ buildConnectivity(const panzer::FieldPattern & fp)
   Teuchos::RCP<const panzer::Intrepid2FieldPattern> intrepid_fp;
   const auto line = shards::CellTopology(shards::getCellTopologyData<shards::Line<2>>());
   using fa_tuple_t = std::vector<std::tuple<int,panzer::FieldType,Teuchos::RCP<const panzer::FieldPattern> > >;
-  fa_tuple_t horiz_patterns, vert_patterns;
+  using gfa_vec_t = std::vector<std::pair<panzer::FieldType,Teuchos::RCP<const panzer::FieldPattern>>>;
+  fa_tuple_t patterns_h;
+  gfa_vec_t patterns_v;
   constexpr auto CG = panzer::FieldType::CG;
   auto basis2fp = [](const Teuchos::RCP<basis_type>& basis) {
     return Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
@@ -164,45 +171,49 @@ buildConnectivity(const panzer::FieldPattern & fp)
     // Now build the horiz/vert patterns
     auto basis = intrepid_fpi->getIntrepidBasis();
     auto tbasis = Teuchos::rcp_dynamic_cast<tensor_basis_type>(basis,true);
-
-    TEUCHOS_TEST_FOR_EXCEPTION (tbasis->getNumTensorialExtrusions()!=1, std::runtime_error,
-        "ExtrudedConnManager can only handle a single tensor extrusion");
-
     auto comps = tbasis->getTensorBasisComponents();
-    auto horiz_basis = comps[0];
-    auto vert_basis  = comps[1];
-    TEUCHOS_TEST_FOR_EXCEPTION (vert_basis->getBaseCellTopology()==line, std::runtime_error,
-        "ExtrudedConnManager expects a tensor product of the form BasisBasal X Line");
 
-    const auto& basalShape = horiz_basis->getBaseCellTopology();
-    TEUCHOS_TEST_FOR_EXCEPTION (basalShape==m_basal_conn_mgr->get_topology(), std::invalid_argument,
+    TEUCHOS_TEST_FOR_EXCEPTION (comps.size()!=2, std::runtime_error,
+        "ExtrudedConnManager can only handle a tensor basis with 2 tensor components.\n"
+        "  - tensor basis name  : " << tbasis->getName() << "\n"
+        "  - num tensorial comps: " << comps.size() << "\n");
+
+    auto basis_h = comps[0];
+    auto basis_v  = comps[1];
+    TEUCHOS_TEST_FOR_EXCEPTION (basis_v->getBaseCellTopology()!=line, std::runtime_error,
+        "ExtrudedConnManager expects a tensor product of the form BasisBasal X Line.\n"
+        "  - vert basis name: " << basis_v->getName() << "\n"
+        "  - vert basis base cell topo: " << basis_v->getBaseCellTopology().getName() << "\n");
+
+    const auto& basalShape = basis_h->getBaseCellTopology();
+    TEUCHOS_TEST_FOR_EXCEPTION (basalShape.getKey()!=m_conn_mgr_h->get_topology().getKey(), std::invalid_argument,
         "[ExtrudedConnManager] Intrepid field pattern for field " << ifield << " is invalid\n"
-        "  - basal conn manager cell topo : " << m_basal_conn_mgr->get_topology().getName() << "\n"
+        "  - basal conn manager cell topo : " << m_conn_mgr_h->get_topology().getName() << "\n"
         "  - field pattern basal cell topo: " << basalShape.getName() << "\n");
 
-    horiz_patterns.emplace_back(ifield,CG,basis2fp(horiz_basis));
-    vert_patterns.emplace_back(ifield,CG,basis2fp(vert_basis));
+    patterns_h.emplace_back(ifield,CG,basis2fp(basis_h));
+    patterns_v.emplace_back(CG,basis2fp(basis_v));
   }
 
   auto layers_data_gid = m_mesh->layers_data_gid();
   auto layers_data_lid = m_mesh->layers_data_lid();
 
   // Create a serial 1d conn mgr for vertical
-  auto vert_conn_mgr = Teuchos::rcp(new SerialConnManager1d(layers_data_gid->numLayers));
+  m_conn_mgr_v = Teuchos::rcp(new SerialConnManager1d(layers_data_gid->numLayers));
 
   // Build horiz and vertical connectivities
-  panzer::FieldAggPattern vert_fp(vert_patterns); 
-  panzer::FieldAggPattern horiz_fp(horiz_patterns); 
-  vert_conn_mgr->buildConnectivity(vert_fp);
-  m_basal_conn_mgr->buildConnectivity(horiz_fp);
+  panzer::FieldAggPattern fp_h(patterns_h); 
+  panzer::GeometricAggFieldPattern fp_v(patterns_v); 
+  m_conn_mgr_h->buildConnectivity(fp_h);
+  m_conn_mgr_v->buildConnectivity(fp_v);
 
   // Compute basal max gid
-  const auto& basal_elems = m_basal_conn_mgr->getElementsInBlock();
-  const int num_basal_elems = basal_elems.size();
+  const auto& elems_h = m_conn_mgr_h->getElementsInBlock();
+  const int nelems_h = elems_h.size();
   GO my_max_gid = 0;
-  for (int ie=0; ie<num_basal_elems; ++ie) {
-    const int ndofs = m_basal_conn_mgr->getConnectivitySize(ie);
-    const GO* dofs  = m_basal_conn_mgr->getConnectivity(ie);
+  for (int ie=0; ie<nelems_h; ++ie) {
+    const int ndofs = m_conn_mgr_h->getConnectivitySize(ie);
+    const GO* dofs  = m_conn_mgr_h->getConnectivity(ie);
     for (int idof=0; idof<ndofs; ++idof) {
       my_max_gid = std::max(my_max_gid,dofs[idof]);
     }
@@ -211,13 +222,13 @@ buildConnectivity(const panzer::FieldPattern & fp)
   auto comm = m_mesh->comm();
   Teuchos::reduceAll(*comm,Teuchos::REDUCE_MAX,1,&my_max_gid,&max_gid_h);
 
-  GO num_gids_v = (layers_data_gid->numLayers+1) * vert_fp.getSubcellIndices(0,0).size()
-                + layers_data_gid->numLayers * vert_fp.getSubcellIndices(1,0).size();
+  GO num_gids_v = (layers_data_gid->numLayers+1) * fp_v.getSubcellIndices(0,0).size()
+                +  layers_data_gid->numLayers    * fp_v.getSubcellIndices(1,0).size();
 
   // We assume same number of dofs in all cells!
-  const LO ndofs_horiz = m_basal_conn_mgr->getConnectivitySize(0);
-  const LO ndofs_vert  = vert_conn_mgr->getConnectivitySize(0);
-  m_num_dofs_per_elem = ndofs_horiz*ndofs_vert;
+  const LO ndofs_h = m_conn_mgr_h->getConnectivitySize(0);
+  const LO ndofs_v = m_conn_mgr_v->getConnectivitySize(0);
+  m_num_dofs_per_elem = ndofs_h*ndofs_v;
 
   // The strategy to number dofs is the following:
   //  1. use cell layers data (LO) to get icol/ilev of element
@@ -228,65 +239,98 @@ buildConnectivity(const panzer::FieldPattern & fp)
   //    c. get dof id using basal/layer id from b.
   // The following two layers numbering objects are for part b and c of step 3
 
-  LayeredMeshNumbering<LO> shards_layers_data(ndofs_horiz,ndofs_vert,layers_data_gid->ordering);
+  LayeredMeshNumbering<LO> shards_layers_data(ndofs_h,ndofs_v,layers_data_gid->ordering);
   LayeredMeshNumbering<GO> dofs_layers_data(max_gid_h,num_gids_v,layers_data_gid->ordering);
 
+  const auto& topo_h = m_conn_mgr_h->get_topology();
   const auto& topo = get_topology();
   const int dim = topo.getDimension();
   int ih, iv;
+  const int nodeIdCnt = dim>0 ? fp.getSubcellIndices(0,0).size() : 0;
+  const int edgeIdCnt = dim>1 ? fp.getSubcellIndices(1,0).size() : 0;
+  const int faceIdCnt = dim>2 ? fp.getSubcellIndices(2,0).size() : 0;
+  const int cellIdCnt = fp.getSubcellIndices(dim,0).size();
+
+  const int nodeIdCnt_v = fp_v.getSubcellIndices(0,0).size();
+  const int cellIdCnt_v = fp_v.getSubcellIndices(1,0).size();
+  const int nodeIdCnt_h = fp_h.getSubcellIndices(0,0).size();
+  const int edgeIdCnt_h = dim>2 ? fp_h.getSubcellIndices(1,0).size() : 0;
+  const int cellIdCnt_h = fp_h.getSubcellIndices(dim,0).size();
   for (int ielem=0; ielem<m_num_elems; ++ielem) {
     int icol,ilev;
     layers_data_lid->getIndices(ielem,icol,ilev);
-    m_connectivity.reserve(m_connectivity.size()+ndofs_horiz*ndofs_vert);
+    m_connectivity.reserve(m_connectivity.size()+ndofs_h*ndofs_v);
 
-    auto horiz_conn = m_basal_conn_mgr->getConnectivity(icol);
-    auto vert_conn  = vert_conn_mgr->getConnectivity(icol);
+    // std::cout << "ExtrudedConnManager, ie=" << ielem << ", icol=" << icol << ", ilev=" << ilev << "\n";
+    auto conn_h = m_conn_mgr_h->getConnectivity(icol);
+    auto conn_v = m_conn_mgr_v->getConnectivity(ilev);
 
-    // Things may seem "weird", but work out. Say you have P1Tria X P2Line.
-    // The numbering is [0,1,2] at bot, [3,4,5] at top, and [6,7,8] at middle.
-    // Say ordering by layer. When you ask shards_layers_data the col/lev ids for, say,
-    // 7, you get col=1,lev=2. But that's consistent with vert_conn, since the middle
-    // layer correspond to the middle node of P2Line, which has ordinal=2.
-    if (dim>0) {
-      // Add node indices
-      for (int inode=0; inode<topo.getNodeCount(); ++inode) {
-        auto ids = fp.getSubcellIndices(0,inode);
-        for (auto id : ids) {
-          shards_layers_data.getIndices(id,ih,iv);
-          m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
-        }
+    // We add extruded dofs in the following order:
+    //  1. bot face dofs (if any)
+    //  2. top face dofs (if any)
+    //  3. internal layers dofs (if any)
+    // The latter correspond to bot face dofs extruded to "cell" dofs of the vertical Line
+    // Since conn_v already stores node dofs first and then internal (to the line) ones,
+    // we can simply iterate for idof_v=0,...,ndofs_v
+
+    for (int idof_v=0; idof_v<ndofs_v; ++idof_v) {
+      for (int idof_h=0; idof_h<ndofs_h; ++idof_h) {
+        m_connectivity.push_back(dofs_layers_data.getId(conn_h[idof_h],conn_v[idof_v]));
       }
     }
 
-    if (dim>1) {
-      // Add edge indices
-      for (int iedge=0; iedge<topo.getEdgeCount(); ++iedge) {
-        auto ids = fp.getSubcellIndices(1,iedge);
-        for (auto id : ids) {
-          shards_layers_data.getIndices(id,ih,iv);
-          m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
-        }
-      }
-    }
+    // // Things may seem "weird", but work out. Say you have P1Tria X P2Line.
+    // // The numbering is [0,1,2] at bot, [3,4,5] at top, and [6,7,8] at middle.
+    // // Say ordering by layer. When you ask shards_layers_data the col/lev ids for, say,
+    // // 7, you get col=1,lev=2. But that's consistent with vert_conn, since the middle
+    // // layer correspond to the middle node of P2Line, which has ordinal=2.
+    // if (dim>0) {
+    //   // Add node indices
+    //   std::cout << "  node dofs:";
+    //   for (int inode=0; inode<topo.getNodeCount(); ++inode) {
+    //     shards_layers_data.getIndices(inode,ih,iv);
+    //     auto ids_h = fp_h.getSubcellIndices(0,ih);
+    //     auto ids_v = fp_v.getSubcellIndices(0,iv);
+    //     for (int id=0; id<nodeIdCnt; ++id) {
+    //       m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
+    //       printf(" gid(%lld,%lld)=%lld",horiz_conn[ih],vert_conn[iv],m_connectivity.back());
+          
+    //     }
+    //   }
+    //   std::cout << "\n";
+    // }
 
-    if (dim>2) {
-      // Add face indices
-      for (int iface=0; iface<topo.getFaceCount(); ++iface) {
-        auto ids = fp.getSubcellIndices(2,iface);
-        for (auto id : ids) {
-          shards_layers_data.getIndices(id,ih,iv);
-          m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
-        }
-      }
-    }
+    // if (dim>1) {
+    //   // Add edge indices
+    //   for (int iedge=0; iedge<topo.getEdgeCount(); ++iedge) {
+    //     auto ids = fp.getSubcellIndices(1,iedge);
+    //     for (auto id : ids) {
+    //       shards_layers_data.getIndices(id,ih,iv);
+    //       m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
+    //     }
+    //   }
+    // }
 
-    // Add cell indices
-    auto ids = fp.getSubcellIndices(dim,0);
-    for (auto id : ids) {
-      shards_layers_data.getIndices(id,ih,iv);
-      m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
-    }
+    // if (dim>2) {
+    //   // Add face indices
+    //   for (int iface=0; iface<topo.getFaceCount(); ++iface) {
+    //     auto ids = fp.getSubcellIndices(2,iface);
+    //     for (auto id : ids) {
+    //       shards_layers_data.getIndices(id,ih,iv);
+    //       m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
+    //     }
+    //   }
+    // }
+
+    // // Add cell indices
+    // auto ids = fp.getSubcellIndices(dim,0);
+    // for (auto id : ids) {
+    //   shards_layers_data.getIndices(id,ih,iv);
+    //   m_connectivity.push_back(dofs_layers_data.getId(horiz_conn[ih],vert_conn[iv]));
+    // }
   }
+
+  m_is_connectivity_built = true;
 }
 
 } // namespace Albany

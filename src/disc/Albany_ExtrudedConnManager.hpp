@@ -20,7 +20,7 @@ namespace Albany {
 
 class ExtrudedConnManager : public ConnManager {
 public:
-  ExtrudedConnManager (const Teuchos::RCP<ConnManager>&         basal_conn_mgr,
+  ExtrudedConnManager (const Teuchos::RCP<ConnManager>&         conn_mgr_h,
                        const Teuchos::RCP<const ExtrudedMesh>&  mesh);
   ~ExtrudedConnManager() = default;
 
@@ -45,7 +45,8 @@ public:
   int part_dim (const std::string& part_name) const override;
 
 protected:
-  Teuchos::RCP<ConnManager>           m_basal_conn_mgr;
+  Teuchos::RCP<ConnManager>           m_conn_mgr_h;
+  Teuchos::RCP<ConnManager>           m_conn_mgr_v;
   Teuchos::RCP<const ExtrudedMesh>    m_mesh;
 
   int m_num_dofs_per_elem;

@@ -11,12 +11,13 @@ ExtrudedMesh (const Teuchos::RCP<const AbstractMeshStruct>& basal_mesh,
  : m_comm (comm)
  , m_basal_mesh (basal_mesh)
 {
+  // Sanity checks
+  TEUCHOS_TEST_FOR_EXCEPTION (basal_mesh.is_null(), std::invalid_argument,
+      "[ExtrudedMesh] Error! Invalid basal mesh pointer.\n");
+
   const auto basal_mesh_specs = m_basal_mesh->meshSpecs[0];
   const int basalNumDim = basal_mesh_specs->numDim;
 
-  // Sanity checks
-  TEUCHOS_TEST_FOR_EXCEPTION (basal_mesh.is_null(), std::runtime_error,
-      "[ExtrudedMesh] Error! Invalid basal mesh pointer.\n");
   TEUCHOS_TEST_FOR_EXCEPTION (basalNumDim<1 or basalNumDim>2, std::logic_error,
       "[ExtrudedMesh] Error! ExtrudedMesh only available in 2D and 3D.\n"
       "  - basal mesh dim: " << basalNumDim << "\n");
