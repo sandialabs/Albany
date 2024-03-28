@@ -150,10 +150,9 @@ buildConnectivity(const panzer::FieldPattern & fp)
 
   Teuchos::RCP<const panzer::Intrepid2FieldPattern> intrepid_fp;
   const auto line = shards::CellTopology(shards::getCellTopologyData<shards::Line<2>>());
-  using fa_tuple_t = std::vector<std::tuple<int,panzer::FieldType,Teuchos::RCP<const panzer::FieldPattern> > >;
+  // using fa_tuple_t = std::vector<std::tuple<int,panzer::FieldType,Teuchos::RCP<const panzer::FieldPattern> > >;
   using gfa_vec_t = std::vector<std::pair<panzer::FieldType,Teuchos::RCP<const panzer::FieldPattern>>>;
-  fa_tuple_t patterns_h;
-  gfa_vec_t patterns_v;
+  gfa_vec_t patterns_h,patterns_v;
   constexpr auto CG = panzer::FieldType::CG;
   auto basis2fp = [](const Teuchos::RCP<basis_type>& basis) {
     return Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
@@ -191,7 +190,7 @@ buildConnectivity(const panzer::FieldPattern & fp)
         "  - basal conn manager cell topo : " << m_conn_mgr_h->get_topology().getName() << "\n"
         "  - field pattern basal cell topo: " << basalShape.getName() << "\n");
 
-    patterns_h.emplace_back(ifield,CG,basis2fp(basis_h));
+    patterns_h.emplace_back(CG,basis2fp(basis_h));
     patterns_v.emplace_back(CG,basis2fp(basis_v));
   }
 
@@ -202,7 +201,7 @@ buildConnectivity(const panzer::FieldPattern & fp)
   m_conn_mgr_v = Teuchos::rcp(new SerialConnManager1d(layers_data_gid->numLayers));
 
   // Build horiz and vertical connectivities
-  panzer::FieldAggPattern fp_h(patterns_h); 
+  panzer::GeometricAggFieldPattern fp_h(patterns_h); 
   panzer::GeometricAggFieldPattern fp_v(patterns_v); 
   m_conn_mgr_h->buildConnectivity(fp_h);
   m_conn_mgr_v->buildConnectivity(fp_v);
@@ -222,8 +221,8 @@ buildConnectivity(const panzer::FieldPattern & fp)
   auto comm = m_mesh->comm();
   Teuchos::reduceAll(*comm,Teuchos::REDUCE_MAX,1,&my_max_gid,&max_gid_h);
 
-  GO num_gids_v = (layers_data_gid->numLayers+1) * fp_v.getSubcellIndices(0,0).size()
-                +  layers_data_gid->numLayers    * fp_v.getSubcellIndices(1,0).size();
+  GO num_gids_v = (layers_data_gid->numLayers+1) * nfields
+                +  layers_data_gid->numLayers    * nfields;
 
   // We assume same number of dofs in all cells!
   const LO ndofs_h = m_conn_mgr_h->getConnectivitySize(0);
@@ -240,42 +239,37 @@ buildConnectivity(const panzer::FieldPattern & fp)
   // The following two layers numbering objects are for part b and c of step 3
 
   LayeredMeshNumbering<LO> shards_layers_data(ndofs_h,ndofs_v,layers_data_gid->ordering);
-  LayeredMeshNumbering<GO> dofs_layers_data(max_gid_h,num_gids_v,layers_data_gid->ordering);
+  LayeredMeshNumbering<GO> dofs_layers_data(max_gid_h+1,num_gids_v,layers_data_gid->ordering);
 
   const auto& topo_h = m_conn_mgr_h->get_topology();
-  const auto& topo = get_topology();
-  const int dim = topo.getDimension();
   int ih, iv;
-  const int nodeIdCnt = dim>0 ? fp.getSubcellIndices(0,0).size() : 0;
-  const int edgeIdCnt = dim>1 ? fp.getSubcellIndices(1,0).size() : 0;
-  const int faceIdCnt = dim>2 ? fp.getSubcellIndices(2,0).size() : 0;
-  const int cellIdCnt = fp.getSubcellIndices(dim,0).size();
-
-  const int nodeIdCnt_v = fp_v.getSubcellIndices(0,0).size();
-  const int cellIdCnt_v = fp_v.getSubcellIndices(1,0).size();
-  const int nodeIdCnt_h = fp_h.getSubcellIndices(0,0).size();
-  const int edgeIdCnt_h = dim>2 ? fp_h.getSubcellIndices(1,0).size() : 0;
-  const int cellIdCnt_h = fp_h.getSubcellIndices(dim,0).size();
   for (int ielem=0; ielem<m_num_elems; ++ielem) {
     int icol,ilev;
     layers_data_lid->getIndices(ielem,icol,ilev);
-    m_connectivity.reserve(m_connectivity.size()+ndofs_h*ndofs_v);
 
-    // std::cout << "ExtrudedConnManager, ie=" << ielem << ", icol=" << icol << ", ilev=" << ilev << "\n";
+    // Resize connectivity, and get pointer to current elem connectivity
+    const GO ielem_offset = m_connectivity.size();
+    m_connectivity.resize(ielem_offset + m_num_dofs_per_elem);
+    auto ielem_conn = m_connectivity.data()+ielem_offset;
+
+    std::cout << "ExtrudedConnManager, ie=" << ielem << ", icol=" << icol << ", ilev=" << ilev << "\n";
     auto conn_h = m_conn_mgr_h->getConnectivity(icol);
     auto conn_v = m_conn_mgr_v->getConnectivity(ilev);
 
-    // We add extruded dofs in the following order:
-    //  1. bot face dofs (if any)
-    //  2. top face dofs (if any)
-    //  3. internal layers dofs (if any)
-    // The latter correspond to bot face dofs extruded to "cell" dofs of the vertical Line
-    // Since conn_v already stores node dofs first and then internal (to the line) ones,
-    // we can simply iterate for idof_v=0,...,ndofs_v
+    // We want extruded dofs to be added layer by layer, with layers
+    // ordered exactly as 1d dofs are ordered in fp_v
 
     for (int idof_v=0; idof_v<ndofs_v; ++idof_v) {
+      int v_idx = fp_v.getSubcellIndices(0,idof_v)[0];
+      std::cout << "  idof_v=" << idof_v << ", conn_v=" << conn_v[idof_v] << ":\n";
+      int v_offset = ndofs_h*v_idx;
       for (int idof_h=0; idof_h<ndofs_h; ++idof_h) {
-        m_connectivity.push_back(dofs_layers_data.getId(conn_h[idof_h],conn_v[idof_v]));
+        for (int ifield=0; ifield<nfields; ++ifield) {
+          GO& idx = ielem_conn[v_offset + nfields*idof_h + ifield];
+          idx = dofs_layers_data.getId(conn_h[idof_h],conn_v[v_idx]);
+          std::cout << "    idof_h=" << idof_h << ", conn_h=" << conn_h[v_idx] << ", dof=" << m_connectivity.back() << "\n";
+        }
+        // m_connectivity.push_back(dofs_layers_data.getId(conn_h[idof_h],conn_v[v_pos]));
       }
     }
 

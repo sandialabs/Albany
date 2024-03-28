@@ -61,7 +61,7 @@ TEUCHOS_UNIT_TEST(ConnMgrTensProd, 3D)
 
   auto line_basis  = Teuchos::rcp(new line_basis_type(1));
   auto tria_basis  = Teuchos::rcp(new tria_basis_type(1));
-  auto wedge_basis = Teuchos::rcp(new wedge_basis_type(1,1));
+  auto wedge_basis = Teuchos::rcp(new wedge_basis_type(1,2));
   auto wedge_p2_basis = Teuchos::rcp(new wedge_basis_type(2,2));
   auto wedge_mono_basis = Teuchos::rcp(new wedge_basis_mono_type());
   auto hexa_basis  = Teuchos::rcp(new hexa_basis_type(1));

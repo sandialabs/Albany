@@ -100,15 +100,28 @@ buildConnectivity(const panzer::FieldPattern & fp)
   auto num_elem_ids = fp.getSubcellIndices(1,0).size();
 
   m_ndofs_per_elem = 2*num_node_ids + num_elem_ids;
+  auto elemIdOffset = num_node_ids*(m_num_elems+1);
   for (int ie=0; ie<m_num_elems; ++ie) {
-    for (int i=0; i<num_node_ids; ++i) {
-      m_connectivity.push_back(m_connectivity.size());
+    const GO ie_offset = m_connectivity.size();
+    m_connectivity.resize(ie_offset + m_ndofs_per_elem);
+    auto ie_conn = m_connectivity.data() + ie_offset;
+
+    // We number GIDs as: all ids at node0, all ids at node1, all ids on edge
+    // However, we don't know where node0/node1/edge indices are in the pattern
+    // local order. So use the subcell indices to get the location inside the conn
+    const auto& nodeIds0 = fp.getSubcellIndices(0,0);
+    for (int id=0; id<num_node_ids; ++id) {
+      ie_conn[nodeIds0[id]] = ie + id;
     }
-    for (int i=0; i<num_node_ids; ++i) {
-      m_connectivity.push_back(m_connectivity.size());
+
+    const auto& nodeIds1 = fp.getSubcellIndices(0,1);
+    for (int id=0; id<num_node_ids; ++id) {
+      ie_conn[nodeIds1[id]] = (ie+1)*num_node_ids + id;
     }
-    for (int i=0; i<num_elem_ids; ++i) {
-      m_connectivity.push_back(m_connectivity.size());
+
+    const auto& elemIds = fp.getSubcellIndices(1,0);
+    for (int id=0; id<num_elem_ids; ++id) {
+      ie_conn[elemIds[id]] = elemIdOffset + ie*num_elem_ids + id;
     }
   }
 

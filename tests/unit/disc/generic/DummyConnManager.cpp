@@ -78,17 +78,12 @@ DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
     std::cout << "ie=" << ie << "\n";
     if (topo.getDimension()>0) {
       // Add node indices
-      std::cout << "  node gids:";
       const auto& nodes = m_mesh->elem2node().at(ie);
-      for (auto n : nodes) { std::cout << " " << n; } std::cout << "\n";
-      std::cout << "  node dofs:";
       for (int inode=0; inode<topo.getNodeCount(); ++inode) {
         for (int id=0; id<nodeIdCnt; ++id) {
           m_connectivity.push_back(nodeOffset + nodes[inode]*nodeIdCnt + id);
-          std::cout << " " << m_connectivity.back();
         }
       }
-      std::cout << "\n";
     }
 
     if (topo.getDimension()>1) {
