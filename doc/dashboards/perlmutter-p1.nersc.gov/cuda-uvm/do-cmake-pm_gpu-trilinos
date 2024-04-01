@@ -60,8 +60,7 @@ cmake \
 \
   -D Kokkos_ENABLE_CUDA:BOOL=ON \
   -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=ON \
-  -D KokkosKernels_INST_MEMSPACE_CUDAUVMSPACE=ON \
-  -D Tpetra_ALLOCATE_IN_SHARED_SPACE=ON \
+  -D Kokkos_ENABLE_CUDA_UVM:BOOL=ON \
   -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
   -D Trilinos_ENABLE_Epetra:BOOL=OFF \
   -D Trilinos_ENABLE_EpetraExt:BOOL=OFF \
