@@ -15,5 +15,5 @@ set_tests_properties(PyAlbany_MatrixOperations
 
 add_test(PyAlbany_MatrixOperations_MPI "${MPIEX}" "${MPINPF}" "${ALBANY_PYTHON_N_MPI}" "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/matrixOperations.py")
 
-set_tests_properties(PyAlbany_MatrixOperations
+set_tests_properties(PyAlbany_MatrixOperations_MPI
     PROPERTIES ENVIRONMENT "${PYALBANY_PYTHONPATH}")
