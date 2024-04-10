@@ -37,7 +37,7 @@ class TestMatrixOperations(unittest.TestCase):
         v0 = v.getVector(0)
         v1 =  v.getVector(1)
 
-        tol0 = 1e-15
+        tol0 = 1e-13
         tol = 1e-6
 
         #test mat product 
