@@ -118,7 +118,7 @@ template<typename EvalT, typename Traits, typename ThicknessScalarType>
 void ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response_eval, 0.0);
+  Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
 
   p_resp = p_reg = p_misH =0;
 

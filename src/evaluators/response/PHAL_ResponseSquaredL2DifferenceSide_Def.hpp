@@ -149,7 +149,7 @@ template<typename EvalT, typename Traits, typename SourceScalarT, typename Targe
 void PHAL::ResponseSquaredL2DifferenceSideBase<EvalT, Traits, SourceScalarT, TargetScalarT>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response_eval, 0.0);
+  Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
 
   // Do global initialization
   if(extrudedParams)
