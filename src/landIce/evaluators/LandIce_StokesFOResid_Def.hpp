@@ -140,178 +140,36 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_3D_Tag& tag, const int& cell) const{
-
-  if(useStereographicMap) {
-    for (unsigned int node=0; node<numNodes; ++node){
-      Residual(cell,node,0)=0.;
-      Residual(cell,node,1)=0.;
-    }
-
-    for (unsigned int qp=0; qp < numQPs; ++qp) {
-      //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-      ScalarT mu = muLandIce(cell,qp);
-      MeshScalarT x = coordVec(cell,qp,0)-x_0;
-      MeshScalarT y = coordVec(cell,qp,1)-y_0;
-      MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-      MeshScalarT h2 = h*h;
-      MeshScalarT invh_x = x/2.0/R2;
-      MeshScalarT invh_y = y/2.0/R2;
-
-      ScalarT strs00 = 2*mu*(Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1)); //epsilon_xx
-      ScalarT strs01 = mu*(Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1)); //epsilon_xy
-      ScalarT strs02 = mu*Ugrad(cell,qp,0,2); //epsilon_xz
-      ScalarT strs11 = 2*mu*(Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0)); //epsilon_yy
-      ScalarT strs12 = mu*Ugrad(cell,qp,1,2); //epsilon_yz
-
-      for (unsigned int node=0; node < numNodes; ++node) {
-        ScalarT epsb00 = wGradBF(cell,node,qp,0)/h; //epsilon_xx
-        ScalarT epsb01 = (wGradBF(cell,node,qp,1)/h+invh_x*wBF(cell,node,qp))/2.0; //epsilon_xy
-        ScalarT epsb02 = wGradBF(cell,node,qp,2)/2.0; //epsilon_xz
-        ScalarT epsb11 = -invh_x*wBF(cell,node,qp); //epsilon_yy
-        ScalarT epsb12 = 0;
-        Residual(cell,node,0) +=  strs00*epsb00*h2 +
-                                  strs11 * epsb11*h2 +
-                                  2*strs01*epsb01*h2 +
-                                  2*strs02*epsb02*h2 +
-                                  2*strs12 * epsb12*h2 +
-                                  (strs00+strs11)*(epsb00+epsb11)*h2;
-
-        epsb00 = -invh_y*wBF(cell,node,qp); //epsilon_xx
-        epsb01 = (wGradBF(cell,node,qp,0)/h+invh_y*wBF(cell,node,qp))/2.0; //epsilon_xy
-        epsb02 = 0;
-        epsb11 = wGradBF(cell,node,qp,1)/h; //epsilon_yy
-        epsb12 = wGradBF(cell,node,qp,2)/2.0; //epsilon_yz
-
-        Residual(cell,node,1) +=  strs00*epsb00*h2 +
-                                  strs11 * epsb11*h2 +
-                                  2*strs01*epsb01*h2 +
-                                  2*strs02*epsb02*h2 +
-                                  2*strs12 * epsb12*h2 +
-                                  (strs00+strs11)*(epsb00+epsb11)*h2;
-      }
-    }
-    for (unsigned int qp=0; qp < numQPs; ++qp) {
-      ScalarT frc0 = force(cell,qp,0);
-      ScalarT frc1 = force(cell,qp,1);
-      for (unsigned int node=0; node < numNodes; ++node) {
-          Residual(cell,node,0) += frc0*wBF(cell,node,qp);
-          Residual(cell,node,1) += frc1*wBF(cell,node,qp);
-      }
-    }
-
-  } else {
-    //Kokkos::View<ScalarT*, PHX::Device> aux("accum",numNodes*2);
-    ScalarT res0_0=0.;
-    ScalarT res0_1=0.;
-    ScalarT res0_2=0.;
-    ScalarT res0_3=0.;
-    ScalarT res0_4=0.;
-    ScalarT res0_5=0.;
-    ScalarT res0_6=0.;
-    ScalarT res0_7=0.;
-
-    ScalarT res1_0=0.;
-    ScalarT res1_1=0.;
-    ScalarT res1_2=0.;
-    ScalarT res1_3=0.;
-    ScalarT res1_4=0.;
-    ScalarT res1_5=0.;
-    ScalarT res1_6=0.;
-    ScalarT res1_7=0.;
-    for (unsigned int qp=0; qp < numQPs; ++qp) {
-      ScalarT mu = muLandIce(cell,qp);
-      ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
-      ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
-      ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
-      ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
-      ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
-      ScalarT frc0 = force(cell,qp,0);
-      ScalarT frc1 = force(cell,qp,1);
-
-      res0_0 += strs00*wGradBF(cell,0,qp,0) +
-              strs01*wGradBF(cell,0,qp,1) +
-              strs02*wGradBF(cell,0,qp,2) +
-              frc0*wBF(cell,0,qp);
-      res0_1 += strs00*wGradBF(cell,1,qp,0) +
-              strs01*wGradBF(cell,1,qp,1) +
-              strs02*wGradBF(cell,1,qp,2) +
-              frc0*wBF(cell,1,qp);
-      res0_2 += strs00*wGradBF(cell,2,qp,0) +
-              strs01*wGradBF(cell,2,qp,1) +
-              strs02*wGradBF(cell,2,qp,2) +
-              frc0*wBF(cell,2,qp);
-      res0_3 += strs00*wGradBF(cell,3,qp,0) +
-              strs01*wGradBF(cell,3,qp,1) +
-              strs02*wGradBF(cell,3,qp,2) +
-              frc0*wBF(cell,3,qp);
-      res0_4 += strs00*wGradBF(cell,4,qp,0) +
-              strs01*wGradBF(cell,4,qp,1) +
-              strs02*wGradBF(cell,4,qp,2) +
-              frc0*wBF(cell,4,qp);
-      res0_5 += strs00*wGradBF(cell,5,qp,0) +
-              strs01*wGradBF(cell,5,qp,1) +
-              strs02*wGradBF(cell,5,qp,2) +
-              frc0*wBF(cell,5,qp);
-      res0_6 += strs00*wGradBF(cell,6,qp,0) +
-              strs01*wGradBF(cell,6,qp,1) +
-              strs02*wGradBF(cell,6,qp,2) +
-              frc0*wBF(cell,6,qp);
-      res0_7 += strs00*wGradBF(cell,7,qp,0) +
-              strs01*wGradBF(cell,7,qp,1) +
-              strs02*wGradBF(cell,7,qp,2) +
-              frc0*wBF(cell,7,qp);
-
-      res1_0 += strs01*wGradBF(cell,0,qp,0) +
-              strs11*wGradBF(cell,0,qp,1) +
-              strs12*wGradBF(cell,0,qp,2) +
-              frc1*wBF(cell,0,qp);
-      res1_1 += strs01*wGradBF(cell,1,qp,0) +
-              strs11*wGradBF(cell,1,qp,1) +
-              strs12*wGradBF(cell,1,qp,2) +
-              frc1*wBF(cell,1,qp);
-      res1_2 += strs01*wGradBF(cell,2,qp,0) +
-              strs11*wGradBF(cell,2,qp,1) +
-              strs12*wGradBF(cell,2,qp,2) +
-              frc1*wBF(cell,2,qp);
-      res1_3 += strs01*wGradBF(cell,3,qp,0) +
-              strs11*wGradBF(cell,3,qp,1) +
-              strs12*wGradBF(cell,3,qp,2) +
-              frc1*wBF(cell,3,qp);
-      res1_4 += strs01*wGradBF(cell,4,qp,0) +
-              strs11*wGradBF(cell,4,qp,1) +
-              strs12*wGradBF(cell,4,qp,2) +
-              frc1*wBF(cell,4,qp);
-      res1_5 += strs01*wGradBF(cell,5,qp,0) +
-              strs11*wGradBF(cell,5,qp,1) +
-              strs12*wGradBF(cell,5,qp,2) +
-              frc1*wBF(cell,5,qp);
-      res1_6 += strs01*wGradBF(cell,6,qp,0) +
-              strs11*wGradBF(cell,6,qp,1) +
-              strs12*wGradBF(cell,6,qp,2) +
-              frc1*wBF(cell,6,qp);
-      res1_7 += strs01*wGradBF(cell,7,qp,0) +
-              strs11*wGradBF(cell,7,qp,1) +
-              strs12*wGradBF(cell,7,qp,2) +
-              frc1*wBF(cell,7,qp);
-    }
-    Residual(cell,0,0)=res0_0;
-    Residual(cell,1,0)=res0_1;
-    Residual(cell,2,0)=res0_2;
-    Residual(cell,3,0)=res0_3;
-    Residual(cell,4,0)=res0_4;
-    Residual(cell,5,0)=res0_5;
-    Residual(cell,6,0)=res0_6;
-    Residual(cell,7,0)=res0_7;
-    Residual(cell,0,1)=res1_0;
-    Residual(cell,1,1)=res1_1;
-    Residual(cell,2,1)=res1_2;
-    Residual(cell,3,1)=res1_3;
-    Residual(cell,4,1)=res1_4;
-    Residual(cell,5,1)=res1_5;
-    Residual(cell,6,1)=res1_6;
-    Residual(cell,7,1)=res1_7;
+  ScalarT res0[LANDICE3D_NUMNODES];
+  ScalarT res1[LANDICE3D_NUMNODES];
+  for (size_t node=0; node < LANDICE3D_NUMNODES; ++node) {
+    res0[node]=0.0;
+    res1[node]=0.0;
   }
-
+  for (size_t qp=0; qp < numQPs; ++qp) {
+    ScalarT mu = muLandIce(cell,qp);
+    ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
+    ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
+    ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
+    ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
+    ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
+    ScalarT frc0 = force(cell,qp,0);
+    ScalarT frc1 = force(cell,qp,1);
+    for (size_t node=0; node < LANDICE3D_NUMNODES; ++node) {
+      res0[node]+= strs00*wGradBF(cell,node,qp,0) +
+            strs01*wGradBF(cell,node,qp,1) +
+            strs02*wGradBF(cell,node,qp,2) +
+            frc0*wBF(cell,node,qp);
+      res1[node]+=strs01*wGradBF(cell,node,qp,0) +
+            strs11*wGradBF(cell,node,qp,1) +
+            strs12*wGradBF(cell,node,qp,2) +
+            frc1*wBF(cell,node,qp);
+    }
+  }
+  for (size_t node=0; node < LANDICE3D_NUMNODES; ++node) {
+    Residual(cell,node,0)=res0[node];
+    Residual(cell,node,1)=res1[node];
+  }
 }
 #else
 //**********************************************************************

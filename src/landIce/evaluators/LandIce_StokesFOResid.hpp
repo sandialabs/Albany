@@ -15,6 +15,8 @@
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
 
+#define LANDICE3D_NUMNODES 8
+
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
 
