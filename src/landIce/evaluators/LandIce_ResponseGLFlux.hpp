@@ -11,6 +11,7 @@
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 namespace LandIce {
 /**
@@ -55,14 +56,14 @@ private:
   PHX::MDField<const ThicknessST,Side,Node>         bed;         //[km]
   PHX::MDField<const MeshScalarT,Side,Node,Dim>     coords;      //[km]
 
-  Kokkos::DynRankView<ThicknessST, PHX::Device>     gl_func,H;
-  Kokkos::DynRankView<xyST, PHX::Device>            x,y;
-  Kokkos::DynRankView<ScalarT, PHX::Device>         velx,vely;
-
   double rho_i, rho_w;  //[kg m^{-3}]
   double scaling;       //[adim]
 
   Albany::LocalSideSetInfo sideSet;
+
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 } // namespace LandIce

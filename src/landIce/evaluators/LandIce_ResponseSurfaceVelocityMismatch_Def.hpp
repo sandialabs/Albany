@@ -150,7 +150,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits>
 void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response_eval, 0.0);
+  Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
 
   p_resp = p_reg = p_reg_stiffening =0;
 
