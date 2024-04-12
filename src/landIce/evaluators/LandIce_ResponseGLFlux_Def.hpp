@@ -195,14 +195,7 @@ template<typename EvalT, typename Traits, typename ThicknessST>
 void ResponseGLFlux<EvalT, Traits, ThicknessST>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  Kokkos::DynRankView<ScalarT,Albany::DevLayout,PHX::Device> my_global_response_eval(this->global_response_eval.get_view());
-  Kokkos::DynRankView<ScalarT,Albany::DevLayout,PHX::Device> my_global_response_eval_result(this->global_response_eval.get_view());
-
-  Kokkos::deep_copy(my_global_response_eval, this->global_response_eval.get_view());
-
-  Teuchos::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, 1, my_global_response_eval.data(), my_global_response_eval_result.data());
-
-  Kokkos::deep_copy(this->global_response_eval.get_view(), my_global_response_eval_result);
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postEvaluate(workset);
