@@ -11,5 +11,5 @@ module load aue/boost/1.83.0-oneapi-2023.2.0-openmpi-4.1.6
 module load aue/zlib/1.3
 module load aue/netcdf-c/4.9.2-oneapi-2023.2.0-openmpi-4.1.6
 module load aue/parallel-netcdf/1.12.3-oneapi-2023.2.0-openmpi-4.1.6
-module load aue/intel-oneapi-mkl/2023.2.0-oneapi-2021.5.0
+module load aue/intel-oneapi-mkl/2023.2.0-oneapi-2023.2.0
 module load aue/hdf5/1.14.2-oneapi-2023.2.0-openmpi-4.1.6
