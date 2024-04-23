@@ -1,4 +1,0 @@
-00 02 * * 1-7  cd /home/projects/albany/miniEM/nightlyCDash; rm -rf *out* slurm*;  bash -l -c "source blake_intel_modules.sh >& modules.out; bash nightly_cron_script_miniem_blake.sh"
-05 07 * * 1-7 chgrp wg-albany -R /home/projects/albany/*
-07 07 * * 1-7 chmod ug+rwX -R /home/projects/albany/*
-
