@@ -5,7 +5,7 @@
 namespace Albany {
 
 OmegahMeshFieldAccessor::
-OmegahMeshFieldAccessor (const Omega_h::Mesh& mesh)
+OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh)
  : m_mesh (mesh)
 {
   // Nothing to do here
@@ -20,8 +20,8 @@ addFieldOnMesh (const std::string& name,
   switch (fe_type) {
     case FE_Type::HGRAD:
     {
-      Omega_h::Write<ST> f(m_mesh.nverts(),name);
-      m_mesh.add_tag<ST>(OMEGA_H_VERT,name,numComps,f,false);
+      Omega_h::Write<ST> f(m_mesh->nverts(),name);
+      m_mesh->add_tag<ST>(OMEGA_H_VERT,name,numComps,f,false);
       break;
     }
     default:
@@ -107,10 +107,10 @@ fillVector (Thyra_Vector&        field_vector,
   const int nelems = elems.size();
   const int ncomps = field_dof_mgr->getNumFields();
 
-  auto owned_h = hostRead(m_mesh.owned(dim));
-  auto mesh_data_h  = hostRead(m_mesh.get_array<ST>(dim,field_name));
+  auto owned_h = hostRead(m_mesh->owned(dim));
+  auto mesh_data_h  = hostRead(m_mesh->get_array<ST>(dim,field_name));
   auto thyra_data_h = getNonconstLocalData(field_vector);
-  auto elem_ents_h = hostRead(m_mesh.ask_down(m_mesh.dim(),dim).ab2b);
+  auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
   auto nents_per_elem = elem_ents_h.size() / nelems;
   for (int ielem=0; ielem<nelems; ++ielem) {
     for (int icmp=0; icmp<field_dof_mgr->getNumFields(); ++icmp) {
@@ -158,10 +158,10 @@ saveVector (const Thyra_Vector&  field_vector,
   const int nelems = elems.size();
   const int ncomps = field_dof_mgr->getNumFields();
 
-  auto mesh_data_h = hostWrite<ST>(m_mesh.nents(dim)*ncomps,field_name);
-  auto owned_h = hostRead(m_mesh.owned(dim));
+  auto mesh_data_h = hostWrite<ST>(m_mesh->nents(dim)*ncomps,field_name);
+  auto owned_h = hostRead(m_mesh->owned(dim));
   auto thyra_data_h = getLocalData(field_vector);
-  auto elem_ents_h = hostRead(m_mesh.ask_down(m_mesh.dim(),dim).ab2b);
+  auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
   auto nents_per_elem = elem_ents_h.size() / nelems;
   for (int ielem=0; ielem<nelems; ++ielem) {
     for (int icmp=0; icmp<field_dof_mgr->getNumFields(); ++icmp) {
@@ -179,6 +179,8 @@ saveVector (const Thyra_Vector&  field_vector,
       }
     }
   }
+
+  m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
 }
 
 } // namespace Albany

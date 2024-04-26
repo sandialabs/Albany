@@ -11,7 +11,7 @@ namespace Albany {
 class OmegahMeshFieldAccessor : public AbstractMeshFieldAccessor
 {
 public:
-  OmegahMeshFieldAccessor (const Omega_h::Mesh& mesh);
+  OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh);
   ~OmegahMeshFieldAccessor () = default;
 
   void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) override;
@@ -90,7 +90,7 @@ public:
   }
 
 protected:
-  Omega_h::Mesh   m_mesh;
+  Teuchos::RCP<Omega_h::Mesh>   m_mesh;
 };
 
 } // namespace Albany
