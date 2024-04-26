@@ -58,20 +58,20 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   // Create the omegah mesh obj
   Topo_type elem_topo;
   if (topo_str=="Simplex") {
-    m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_SIMPLEX,
-                                scalex,scaley,scalez,nelemx,nelemy,nelemz);
+    m_mesh = Teuchos::rcp(new Omega_h::Mesh(Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_SIMPLEX,
+                                            scalex,scaley,scalez,nelemx,nelemy,nelemz)));
     elem_topo = Dim==3 ? Topo_type::tetrahedron
                        : Dim==2 ? Topo_type::triangle : Topo_type::edge;
   } else {
-    m_mesh = Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_HYPERCUBE,
-                                scalex,scaley,scalez,nelemx,nelemy,nelemz);
+    m_mesh = Teuchos::rcp(new Omega_h::Mesh(Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_HYPERCUBE,
+                                            scalex,scaley,scalez,nelemx,nelemy,nelemz)));
 
     elem_topo = Dim==3 ? Topo_type::hexahedron
                        : Dim==2 ? Topo_type::quadrilateral : Topo_type::edge;
   }
 
-  m_mesh.set_parting(OMEGA_H_ELEM_BASED);
-  m_coords_d = m_mesh.coords().view();
+  m_mesh->set_parting(OMEGA_H_ELEM_BASED);
+  m_coords_d = m_mesh->coords().view();
   m_coords_h = Kokkos::create_mirror_view(m_coords_d);
   Kokkos::deep_copy(m_coords_h,m_coords_d);
 
@@ -95,7 +95,7 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   std::vector<NsSpecs> nsSpecs;
   Omega_h::Read<I8> tag;
-  for (int idim=0; idim<m_mesh.dim(); ++idim) {
+  for (int idim=0; idim<m_mesh->dim(); ++idim) {
     nsNames.push_back("NodeSet" + std::to_string(idim*2));
     tag = create_ns_tag(nsNames.back(),idim,0);
     this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
@@ -121,7 +121,7 @@ OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   this->meshSpecs.resize(1);
   this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, Dim,
-                             nsNames, ssNames, m_mesh.nelems(), ebName,
+                             nsNames, ssNames, m_mesh->nelems(), ebName,
                              ebNameToIndex));
 }
 
@@ -131,7 +131,7 @@ create_ns_tag (const std::string& name,
                const int comp,
                const double tgt_value) const
 {
-  Omega_h::Write<Omega_h::I8> tag (m_mesh.nverts(),1);
+  Omega_h::Write<Omega_h::I8> tag (m_mesh->nverts(),1);
   auto coords = m_coords_d;
   auto mdim = Dim;
   auto f = OMEGA_H_LAMBDA (LO inode) {

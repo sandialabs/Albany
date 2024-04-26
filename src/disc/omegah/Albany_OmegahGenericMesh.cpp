@@ -33,13 +33,13 @@ declare_part (const std::string& name, const Topo_type topo)
       "  - new  topo: " << e2str(topo) << "\n");
 
   // Check that this topo matches the topo of one of the element sub-entities topos
-  TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh.has_ents(topo_dim(topo)), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_ents(topo_dim(topo)), std::logic_error,
       "[OmegahGenericMesh::declare_part] Mesh does not store any entity of the input topology.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << topo_dim(topo) << "\n"
       "  - part topo: " << e2str(topo) << "\n"
-      "  - mesh dim : " << m_mesh.dim() << "\n"
-      "  - mesh type: " << e2str(m_mesh.family()) << "\n");
+      "  - mesh dim : " << m_mesh->dim() << "\n"
+      "  - mesh type: " << e2str(m_mesh->family()) << "\n");
 
   // All good, store it
   m_part_topo[name] = topo;
@@ -65,18 +65,18 @@ mark_part_entities (const std::string& name,
 
   auto dim = topo_dim(m_part_topo[name]);
 
-  TEUCHOS_TEST_FOR_EXCEPTION (is_entity_in_part.size()!=m_mesh.nents(dim), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (is_entity_in_part.size()!=m_mesh->nents(dim), std::logic_error,
       "[OmegahGenericMesh::set_part_entities] Error! Input array has the wrong dimensions.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << dim << "\n"
-      "  - num ents : " << m_mesh.nents(dim) << "\n"
+      "  - num ents : " << m_mesh->nents(dim) << "\n"
       "  - array dim: " << is_entity_in_part.size() << "\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (m_mesh.has_tag(dim,name), std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (m_mesh->has_tag(dim,name), std::runtime_error,
       "[OmegahGenericMesh::set_part_entities] Error! A tag with this name was already set.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << dim << "\n");
 
-  m_mesh.add_tag(dim,name,1,is_entity_in_part);
+  m_mesh->add_tag(dim,name,1,is_entity_in_part);
 
   if (markDownward) {
     TEUCHOS_TEST_FOR_EXCEPTION (dim==0, std::logic_error,
@@ -96,11 +96,11 @@ mark_part_entities (const std::string& name,
     while (topo!=Topo_type::vertex) {
       const auto down_topo = get_side_topo(topo);
 
-      Omega_h::Write<Omega_h::I8> downMarked (m_mesh.nents(topo_dim(down_topo)),0);
+      Omega_h::Write<Omega_h::I8> downMarked (m_mesh->nents(topo_dim(down_topo)),0);
 
       const int deg = Omega_h::element_degree(topo,down_topo);
 
-      auto adj = m_mesh.ask_down(topo_dim(topo),topo_dim(down_topo));
+      auto adj = m_mesh->ask_down(topo_dim(topo),topo_dim(down_topo));
       auto f = OMEGA_H_LAMBDA (LO i) {
         if (upMarked[i]) {
           for (int j=0; j<deg; ++j) {
@@ -110,8 +110,8 @@ mark_part_entities (const std::string& name,
           }
         }
       };
-      Kokkos::parallel_for ("OmegahGenericMesh::set_part_entities::markDownward",m_mesh.nents(topo_dim(topo)),f);
-      m_mesh.add_tag(topo_dim(down_topo),name,1,read(downMarked));
+      Kokkos::parallel_for ("OmegahGenericMesh::set_part_entities::markDownward",m_mesh->nents(topo_dim(topo)),f);
+      m_mesh->add_tag(topo_dim(down_topo),name,1,read(downMarked));
       upMarked = downMarked;
 
       topo = down_topo;
