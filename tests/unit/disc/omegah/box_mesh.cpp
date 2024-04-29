@@ -48,7 +48,7 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 2D)
 
   auto coords = mesh->coords_host();
   auto omegah_mesh = mesh->getOmegahMesh();
-  auto owned = Omega_h::HostRead(omegah_mesh.owned(0));
+  auto owned = Omega_h::HostRead(omegah_mesh->owned(0));
   int my_count = 0;
   int count;
   for (int i=0; i<owned.size(); ++i) {
