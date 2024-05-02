@@ -19,6 +19,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "Albany_KokkosUtils.hpp"
+
 // **********************************************************************
 // Base Class Generic Implementation
 // **********************************************************************
@@ -108,29 +110,25 @@ evaluateFields(typename Traits::EvalData workset)
     dg = dgdxdot;
   }
 
-  auto dg_data = Albany::getNonconstLocalData(dg);
+  auto dg_data = Albany::getNonconstDeviceData(dg);
 
   const auto& dof_mgr = workset.disc->getDOFManager();
   const int neq = dof_mgr->getNumFields();
   const int  ws = workset.wsIndex;
-  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto elem_lids     = workset.disc->getElementLIDs_host(ws);
 
-  // Loop over cells in workset
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids(cell);
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().dev();
+  const auto elem_lids     = workset.disc->getWsElementLIDs();
+  const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,Kokkos::ALL);
 
-    // Loop over equations per node
-    for (int eq_dof=0; eq_dof<neq; eq_dof++) {
-
-      // Get offsets of this dof in the lids array
-      auto offsets = dof_mgr->getGIDFieldOffsets(eq_dof);
-
-      const int num_nodes = offsets.size();
+  for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+    auto offsets = dof_mgr->getGIDFieldOffsetsKokkos(eq_dof);
+    const int num_nodes = offsets.size();
+    Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                         KOKKOS_CLASS_LAMBDA(const int& cell) {
+      const auto elem_LID = elem_lids_dev(cell);
 
       for (int i=0; i<num_nodes; ++i) {
-
-        const int deriv   = offsets[i];
+        const int deriv   = offsets(i);
         const int dof_lid = elem_dof_lids(elem_LID,deriv);
 
         // Loop over responses
@@ -138,12 +136,11 @@ evaluateFields(typename Traits::EvalData workset)
           auto val = this->local_response(cell, res);
 
           // Set dg/dx
-          // NOTE: mv local data is in column major
-          dg_data[res][dof_lid] += val.dx(deriv);
-        } // column equations
+          KU::atomic_add<ExecutionSpace>(&dg_data(dof_lid,res), val.dx(deriv));
+        } // response
       } // column nodes
-    } // response
-  } // cell
+    }); // cell
+  } // column equations
 }
 
 template<typename Traits>
@@ -233,13 +230,26 @@ void SeparableScatterScalarResponse<AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
+  // Teuchos::RCP<Thyra_Vector> g = workset.g;
+  // if (g != Teuchos::null) {
+  //   Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
+  //   for (MDFieldIterator<const ScalarT> gr(this->global_response);
+  //        ! gr.done(); ++gr)
+  //     g_nonconstView[gr.idx()] = gr.ref().val();
+  // }
+
+  // Here we scatter the *global* response
   Teuchos::RCP<Thyra_Vector> g = workset.g;
   if (g != Teuchos::null) {
-    Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
-    for (MDFieldIterator<const ScalarT> gr(this->global_response);
-         ! gr.done(); ++gr)
-      g_nonconstView[gr.idx()] = gr.ref().val();
+    Albany::ThyraVDeviceView<ST> g_nonconstView = Albany::getNonconstDeviceData(g);
+    MDFieldVectorRight<const ScalarT> gr(this->global_response);
+    global_response_reader = gr;
+    Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
+                       KOKKOS_CLASS_LAMBDA(const int i) {
+      g_nonconstView(i) = global_response_reader[i].val();
+    });
   }
+  
 
   // Here we scatter the *global* response derivatives
   Teuchos::RCP<Thyra_MultiVector> dgdx = workset.dgdx;

@@ -9,6 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 #include "LandIce_ResponseSurfaceVelocityMismatch.hpp"
@@ -143,6 +144,12 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
+  p_resp = Kokkos::View<ScalarT*, PHX::Device>("p_resp", 1);
+  p_reg = Kokkos::View<ScalarT*, PHX::Device>("p_reg", 1);
+  p_reg_stiffening = Kokkos::View<ScalarT*, PHX::Device>("p_reg_stiffening", 1);
+  resp = Kokkos::create_mirror_view(p_resp);
+  reg = Kokkos::create_mirror_view(p_reg);
+  reg_stiffening = Kokkos::create_mirror_view(p_reg_stiffening);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
@@ -151,8 +158,9 @@ template<typename EvalT, typename Traits>
 void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
   Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
-
-  p_resp = p_reg = p_reg_stiffening =0;
+  Kokkos::deep_copy(p_resp, 0.0);
+  Kokkos::deep_copy(p_reg, 0.0);
+  Kokkos::deep_copy(p_reg_stiffening, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
@@ -166,16 +174,16 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
+  Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
 
   // ----------------- Surface side ---------------- //
   if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
   {
     sideSet = workset.sideSetViews->at(surfaceSideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
+    Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+                         KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
 
       ScalarT t = 0;
       ScalarT data = 0;
@@ -207,10 +215,12 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
           t += data * w_measure_surface(sideSet_idx,qp);
         }
 
-      this->local_response_eval(cell, 0) += t*scaling;
-      this->global_response_eval(0) += t*scaling;
-      p_resp += t*scaling;
-    }
+      ScalarT result = t*scaling;
+      KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);
+      KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);
+      //KU::atomic_add<ExecutionSpace>(&(this->p_resp(0)), result);
+      p_resp(0) += result;
+    });
   }
 
   // --------------- Regularization term on the basal side ----------------- //
@@ -224,10 +234,10 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       w_measure = w_measure_beta_vec[i];
       if (workset.sideSetViews->find(ssName) != workset.sideSetViews->end()) {
         sideSet = workset.sideSetViews->at(ssName);
-        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-        {
+        Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+                             KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);\
+          const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);\
 
           ScalarT t = 0;
           for (unsigned int qp=0; qp<numBasalQPs; ++qp)
@@ -239,10 +249,13 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 
             t += sum * w_measure(sideSet_idx,qp);
           }
-          this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
-          this->global_response_eval(0) += t*scaling*alpha;//*50.0;
-          p_reg += t*scaling*alpha;
-        }
+
+          ScalarT result = t*scaling*alpha;
+          KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);//*50.0
+          KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);//*50.0
+          //KU::atomic_add<ExecutionSpace>(&(this->p_reg(0)), result);
+          p_reg(0) += result;
+        });
       }
     }
   }
@@ -250,10 +263,10 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
   if (workset.sideSetViews->find(basalSideName) != workset.sideSetViews->end() && alpha_stiffening!=0)
   {
     sideSet = workset.sideSetViews->at(basalSideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
+    Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+                         KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of \cell
-      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);\
+      const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
 
       ScalarT t = 0;
       for (unsigned int qp=0; qp<numBasalQPs; ++qp)
@@ -265,10 +278,13 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 
           t += sum * w_measure_basal(sideSet_idx,qp);
       }
-      this->local_response_eval(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
-      this->global_response_eval(0) += t*scaling*alpha_stiffening;//*50.0;
-      p_reg_stiffening += t*scaling*alpha_stiffening;
-    }
+
+      ScalarT result = t*scaling*alpha_stiffening;
+      KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);//*50.0
+      KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);//*50.0
+      //KU::atomic_add<ExecutionSpace>(&(this->p_reg_stiffening(0)), result);
+      p_reg_stiffening(0) += result;
+    });
   }
 
   // Do any local-scattering necessary
@@ -279,31 +295,30 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 template<typename EvalT, typename Traits>
 void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typename Traits::PostEvalData workset) {
 
-  //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response_eval);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_resp);
-  resp = p_resp;
+  Kokkos::deep_copy(resp, p_resp);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
-  reg = p_reg;
+  Kokkos::deep_copy(reg, p_reg);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg_stiffening);
-  reg_stiffening = p_reg_stiffening;
+  Kokkos::deep_copy(reg_stiffening, p_reg_stiffening);
 
 #ifdef OUTPUT_TO_SCREEN
   if(workset.comm->getRank()   ==0)
-    std::cout << "SV, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<  ", reg_stiffening: " << Sacado::ScalarValue<ScalarT>::eval(reg_stiffening) <<std::endl;
+    std::cout << "SV, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp(0)) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg(0)) <<  ", reg_stiffening: " << Sacado::ScalarValue<ScalarT>::eval(reg_stiffening(0)) <<std::endl;
 #endif
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;
     ofile.open("velocity_mismatch");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
-      ofile <<  std::scientific << std::setprecision(15) << Sacado::ScalarValue<ScalarT>::eval(resp);
+      ofile <<  std::scientific << std::setprecision(15) << Sacado::ScalarValue<ScalarT>::eval(resp(0));
       ofile.close();
     }
     ofile.open("beta_regularization");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
-      ofile <<  std::scientific << std::setprecision(15) << Sacado::ScalarValue<ScalarT>::eval(reg);
+      ofile <<  std::scientific << std::setprecision(15) << Sacado::ScalarValue<ScalarT>::eval(reg(0));
       ofile.close();
     }
   }

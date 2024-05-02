@@ -70,9 +70,14 @@ namespace LandIce {
     PHX::MDField<const MeshScalarT>  metric;
     PHX::MDField<const MeshScalarT>  w_measure;
 
-    ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
+    Kokkos::View<ScalarT*, PHX::Device> p_resp, p_reg, p_reg_stiffening;
+    typename Kokkos::View<ScalarT*, PHX::Device>::HostMirror resp, reg, reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;
     bool scalarRMS;
+
+  protected:
+    using ExecutionSpace = typename PHX::Device::execution_space;
+    using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 
   };
 

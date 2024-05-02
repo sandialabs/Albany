@@ -153,6 +153,17 @@ void reduceAll (
 template<typename ScalarT>
 void reduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
+  Kokkos::View<ScalarT*,PHX::Device>& a)
+{
+  Albany::DeviceView1d<ScalarT> v(a);
+  Kokkos::deep_copy(v, a);
+  Teuchos::reduceAll(comm, Teuchos::REDUCE_SUM, static_cast<int>(a.size()), a.data(), v.data());
+  Kokkos::deep_copy(a, v);
+}
+
+template<typename ScalarT>
+void reduceAll (
+  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   ScalarT& a)
 {
   ScalarT b = a;
@@ -191,12 +202,14 @@ template int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
   macro(HessianVecFad)
 #  endif
 
-#define eti(T)                                                              \
-  template void reduceAll<T> (                                              \
-    const Teuchos_Comm&, const Teuchos::EReductionType, PHX::MDField<T>&);  \
-  template void reduceAll<T> (                                              \
-    const Teuchos_Comm&, const Teuchos::EReductionType, T&);                \
-  template void broadcast<T> (                                              \
+#define eti(T)                                                                           \
+  template void reduceAll<T> (                                                           \
+    const Teuchos_Comm&, const Teuchos::EReductionType, PHX::MDField<T>&);               \
+  template void reduceAll<T> (                                                           \
+    const Teuchos_Comm&, const Teuchos::EReductionType, Kokkos::View<T*,PHX::Device>&);  \
+  template void reduceAll<T> (                                                           \
+    const Teuchos_Comm&, const Teuchos::EReductionType, T&);                             \
+  template void broadcast<T> (                                                           \
     const Teuchos_Comm&, const int, PHX::MDField<T>&);
 apply_to_all_ad_types(eti)
 #undef eti

@@ -123,42 +123,47 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Thyra_MultiVector> gx = workset.dgdx;
   Teuchos::RCP<Thyra_MultiVector> gp = workset.dgdp;
 
-  Teuchos::ArrayRCP<ST> g_nonconstView;
+  Albany::ThyraVDeviceView<ST> g_nonconstView;
   if (g != Teuchos::null){
-    g_nonconstView = Albany::getNonconstLocalData(g);
+    g_nonconstView = Albany::getNonconstDeviceData(g);
   }
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> gx_nonconst2dView;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>> gp_nonconst2dView;
+  Albany::ThyraMVDeviceView<ST> gx_nonconst2dView;
+  Albany::ThyraMVDeviceView<ST> gp_nonconst2dView;
 
   if (gx != Teuchos::null) {
-    gx_nonconst2dView = Albany::getNonconstLocalData(gx);
+    gx_nonconst2dView = Albany::getNonconstDeviceData(gx);
   }
   if (gp != Teuchos::null) {
-    gp_nonconst2dView = Albany::getNonconstLocalData(gp);
+    gp_nonconst2dView = Albany::getNonconstDeviceData(gp);
   }
 
-  for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
-       ! gr.done(); ++gr) {
-    auto val = *gr;
-    const int res = gr.idx();
+  MDFieldVectorRight<const ScalarT> gr(this->global_response);
 
+  const auto num_cols_x = workset.num_cols_x;
+  const auto num_cols_p = workset.num_cols_p;
+  const auto param_offset = workset.param_offset;
+
+  // for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
+  //      ! gr.done(); ++gr) {
+  Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
+                       KOKKOS_CLASS_LAMBDA(const int i) {
     if (g != Teuchos::null){
-      g_nonconstView[res] = val.val();
+      g_nonconstView(i) = gr[i].val();
     }
 
     if (gx != Teuchos::null) {
-      for (int col=0; col<workset.num_cols_x; col++) {
-        gx_nonconst2dView[col][res] = val.dx(col);
+      for (int col=0; col<num_cols_x; col++) {
+        gx_nonconst2dView(i,col) = gr[i].dx(col);
       }
     }
 
     if (gp != Teuchos::null) {
-      for (int col=0; col<workset.num_cols_p; col++) {
-        gp_nonconst2dView[col][res] = val.dx(col+workset.param_offset);
+      for (int col=0; col<num_cols_p; col++) {
+        gp_nonconst2dView(i,col) = gr[i].dx(col+param_offset);
       }
     }
-  }
+  });
 }
 
 } // namespace PHAL
