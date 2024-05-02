@@ -10,6 +10,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_ResponseGLFlux.hpp"
 

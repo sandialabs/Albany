@@ -14,6 +14,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -130,6 +131,9 @@ protected:
   }
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 // **************************************************************

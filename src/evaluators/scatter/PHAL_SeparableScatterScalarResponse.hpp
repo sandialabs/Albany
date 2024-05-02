@@ -163,8 +163,12 @@ protected:
   }
 protected:
   int numNodes;
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 private:
   typedef typename AlbanyTraits::Jacobian::ScalarT ScalarT;
+protected:
+  MDFieldVectorRight<const ScalarT> global_response_reader;
 };
 
 // **************************************************************

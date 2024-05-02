@@ -94,11 +94,13 @@ private:
 template<typename T>
 class MDFieldVectorRight {
 public:
+  using array_type = typename PHX::MDField<T>::array_type;
+  using return_type = typename PHX::MDFieldReturnType<array_type>::return_type;
   MDFieldVectorRight() = default;
   MDFieldVectorRight(const MDFieldVectorRight<T>&) = default;
   MDFieldVectorRight<T>& operator=(const MDFieldVectorRight<T>&) = default;
   MDFieldVectorRight(PHX::MDField<T>& a);
-  KOKKOS_INLINE_FUNCTION typename PHAL::Ref<T>::type operator[](const int i) const;  
+  KOKKOS_INLINE_FUNCTION return_type operator[](const int i) const;  
   
 private:
   Kokkos::DynRankView<T, PHX::Device> a_;
@@ -111,6 +113,11 @@ template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<T>& a);
+//! Reduce on a kokkos View.
+template<typename T>
+void reduceAll(
+  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
+  Kokkos::View<T*,PHX::Device>& a);
 //! Reduce on a ScalarT.
 template<typename T>
 void reduceAll(

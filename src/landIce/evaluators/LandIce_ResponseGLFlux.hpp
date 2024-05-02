@@ -11,7 +11,6 @@
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Intrepid2_CellTools.hpp"
 #include "Intrepid2_Cubature.hpp"
-#include "Albany_KokkosUtils.hpp"
 
 namespace LandIce {
 /**
