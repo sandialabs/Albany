@@ -230,15 +230,6 @@ void SeparableScatterScalarResponse<AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  // Teuchos::RCP<Thyra_Vector> g = workset.g;
-  // if (g != Teuchos::null) {
-  //   Teuchos::ArrayRCP<ST> g_nonconstView = Albany::getNonconstLocalData(g);
-  //   for (MDFieldIterator<const ScalarT> gr(this->global_response);
-  //        ! gr.done(); ++gr)
-  //     g_nonconstView[gr.idx()] = gr.ref().val();
-  // }
-
-  // Here we scatter the *global* response
   Teuchos::RCP<Thyra_Vector> g = workset.g;
   if (g != Teuchos::null) {
     Albany::ThyraVDeviceView<ST> g_nonconstView = Albany::getNonconstDeviceData(g);
