@@ -70,8 +70,12 @@ namespace LandIce {
     PHX::MDField<const MeshScalarT>  metric;
     PHX::MDField<const MeshScalarT>  w_measure;
 
-    Kokkos::View<ScalarT*, PHX::Device> p_resp, p_reg, p_reg_stiffening;
-    typename Kokkos::View<ScalarT*, PHX::Device>::HostMirror resp, reg, reg_stiffening;
+    using scalar_view = typename PHX::MDField<ScalarT>::array_type;
+    using scalar_view_host_mirror = typename PHX::MDField<ScalarT>::array_type::HostMirror;
+
+    scalar_view p_resp, p_reg, p_reg_stiffening;
+    scalar_view_host_mirror resp, reg, reg_stiffening;
+    
     double scaling, alpha, asinh_scaling, alpha_stiffening;
     bool scalarRMS;
 

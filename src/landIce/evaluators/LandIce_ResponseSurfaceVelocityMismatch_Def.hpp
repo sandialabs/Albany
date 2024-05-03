@@ -144,9 +144,9 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
-  p_resp = Kokkos::View<ScalarT*, PHX::Device>("p_resp", 1);
-  p_reg = Kokkos::View<ScalarT*, PHX::Device>("p_reg", 1);
-  p_reg_stiffening = Kokkos::View<ScalarT*, PHX::Device>("p_reg_stiffening", 1);
+  p_resp = scalar_view(this->global_response_eval.get_view());
+  p_reg = scalar_view(this->global_response_eval.get_view());
+  p_reg_stiffening = scalar_view(this->global_response_eval.get_view());
   resp = Kokkos::create_mirror_view(p_resp);
   reg = Kokkos::create_mirror_view(p_reg);
   reg_stiffening = Kokkos::create_mirror_view(p_reg_stiffening);
@@ -158,10 +158,10 @@ template<typename EvalT, typename Traits>
 void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
   Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
-  Kokkos::deep_copy(p_resp, 0.0);
-  Kokkos::deep_copy(p_reg, 0.0);
-  Kokkos::deep_copy(p_reg_stiffening, 0.0);
-
+  Kokkos::deep_copy(p_resp, this->global_response_eval.get_view());
+  Kokkos::deep_copy(p_reg, this->global_response_eval.get_view());
+  Kokkos::deep_copy(p_reg_stiffening, this->global_response_eval.get_view());
+  
   // Do global initialization
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
 }
@@ -175,6 +175,8 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
 
   // Zero out local response
   Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
+
+  const auto eps = Teuchos::ScalarTraits<ScalarT>::eps();
 
   // ----------------- Surface side ---------------- //
   if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
@@ -194,7 +196,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
                               + std::pow(velocity(sideSet_idx, qp, 1)  - observedVelocity (sideSet_idx, qp, 1),2);
 
           // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
-          diff2 += Teuchos::ScalarTraits<ScalarT>::eps();
+          diff2 += eps;
 
           ScalarT weightedDiff = std::sqrt(diff2)/observedVelocityMagnitudeRMS(sideSet_idx, qp);
           ScalarT weightedDiff2 = std::pow(asinh(weightedDiff/ asinh_scaling)*asinh_scaling,2);
@@ -218,8 +220,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       ScalarT result = t*scaling;
       KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);
       KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);
-      //KU::atomic_add<ExecutionSpace>(&(this->p_resp(0)), result);
-      p_resp(0) += result;
+      KU::atomic_add<ExecutionSpace>(&(this->p_resp(0)), result);
     });
   }
 
@@ -253,8 +254,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
           ScalarT result = t*scaling*alpha;
           KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);//*50.0
           KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);//*50.0
-          //KU::atomic_add<ExecutionSpace>(&(this->p_reg(0)), result);
-          p_reg(0) += result;
+          KU::atomic_add<ExecutionSpace>(&(this->p_reg(0)), result);
         });
       }
     }
@@ -282,8 +282,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       ScalarT result = t*scaling*alpha_stiffening;
       KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);//*50.0
       KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);//*50.0
-      //KU::atomic_add<ExecutionSpace>(&(this->p_reg_stiffening(0)), result);
-      p_reg_stiffening(0) += result;
+      KU::atomic_add<ExecutionSpace>(&(this->p_reg_stiffening(0)), result);
     });
   }
 

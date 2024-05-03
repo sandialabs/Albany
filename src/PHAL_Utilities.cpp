@@ -153,9 +153,9 @@ void reduceAll (
 template<typename ScalarT>
 void reduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
-  Kokkos::View<ScalarT*,PHX::Device>& a)
+  typename PHX::MDField<ScalarT>::array_type& a)
 {
-  Albany::DeviceView1d<ScalarT> v(a);
+  typename PHX::MDField<ScalarT>::array_type v(a);
   Kokkos::deep_copy(v, a);
   Teuchos::reduceAll(comm, Teuchos::REDUCE_SUM, static_cast<int>(a.size()), a.data(), v.data());
   Kokkos::deep_copy(a, v);
@@ -206,7 +206,7 @@ template int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
   template void reduceAll<T> (                                                           \
     const Teuchos_Comm&, const Teuchos::EReductionType, PHX::MDField<T>&);               \
   template void reduceAll<T> (                                                           \
-    const Teuchos_Comm&, const Teuchos::EReductionType, Kokkos::View<T*,PHX::Device>&);  \
+    const Teuchos_Comm&, const Teuchos::EReductionType, typename PHX::MDField<T>::array_type&);  \
   template void reduceAll<T> (                                                           \
     const Teuchos_Comm&, const Teuchos::EReductionType, T&);                             \
   template void broadcast<T> (                                                           \
