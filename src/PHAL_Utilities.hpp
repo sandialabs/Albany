@@ -117,7 +117,7 @@ void reduceAll(
 template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
-  Kokkos::View<T*,PHX::Device>& a);
+  typename PHX::MDField<T>::array_type& a);
 //! Reduce on a ScalarT.
 template<typename T>
 void reduceAll(
