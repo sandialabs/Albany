@@ -5,29 +5,31 @@ rm -rf CMake*
 PWD=`pwd`
 INSTALL_LOCATION=$PWD/install
 BTYPE=RELEASE
+#IKT 5/6/2024: this is hacky - hardcoding MKL path from module. Module should set this 
+#correctly on its own...
+INTEL_MKL_ROOT=/projects/aue/cee/builds/x86_64/rhel8/2408tpls/tpls-intel-2023.2.0/install/linux-rhel8-x86_64/oneapi-2023.2.0/intel-oneapi-mkl-2023.2.0-wn376g5/mkl/2023.2.0
 
 cmake -GNinja \
       -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION} \
       -D CMAKE_BUILD_TYPE:STRING=${BTYPE} \
-      -D CMAKE_CXX_COMPILER=mpicxx \
-      -D CMAKE_C_COMPILER=mpicc \
-      -D CMAKE_Fortran_COMPILER=mpif90 \
+      -D CMAKE_CXX_COMPILER=${MPICXX} \
+      -D CMAKE_C_COMPILER=${MPICC} \
+      -D CMAKE_Fortran_COMPILER=${MPIF90} \
       -D TPL_ENABLE_MPI=ON \
-      -D MPI_BASE_DIR:PATH=${OPENMPI_ROOT} \
       -D TPL_ENABLE_BLAS=ON \
-      -D BLAS_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D BLAS_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/lib/intel64" \
       -D BLAS_LIBRARY_NAMES:STRING="mkl_rt" \
       -D TPL_ENABLE_LAPACK=ON \
-      -D LAPACK_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D LAPACK_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/lib/intel64" \
       -D LAPACK_LIBRARY_NAMES:STRING="mkl_rt" \
       -D TPL_ENABLE_MKL=ON \
-      -D MKL_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D MKL_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/lib/intel64" \
       -D MKL_LIBRARY_NAMES:STRING="mkl_rt" \
-      -D MKL_INCLUDE_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/include" \
+      -D MKL_INCLUDE_DIRS:FILEPATH="${INTEL_MKL_ROOT}/include" \
       -D TPL_ENABLE_PARDISO_MKL:BOOL=ON \
-      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/lib/intel64" \
       -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
-      -D PARDISO_MKL_INCLUDE_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/include" \
+      -D PARDISO_MKL_INCLUDE_DIRS:FILEPATH="${INTEL_MKL_ROOT}/include" \
       -D TPL_ENABLE_SuperLU=OFF \
       -D Trilinos_ENABLE_SuperLU5_API=ON \
       -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu.a \
