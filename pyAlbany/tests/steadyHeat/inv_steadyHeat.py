@@ -55,8 +55,8 @@ class TestSteadyHeat(unittest.TestCase):
         print(para_1_norm)
 
         if rank == 0:
-            self.assertTrue(np.abs(para_0_view[0] - p_0_target) < tol)
-            self.assertTrue(np.abs(para_1_norm - p_1_norm_target) < tol)
+            self.assertLess(np.abs(para_0_view[0] - p_0_target), tol)
+            self.assertLess(np.abs(para_1_norm - p_1_norm_target), tol)
 
         problem.performSolve()
 
@@ -66,8 +66,8 @@ class TestSteadyHeat(unittest.TestCase):
         print("Response before analysis " + str(response_before_analysis_view))
         print("Response after analysis " + str(response_after_analysis_view))
         if rank == 0:
-            self.assertTrue(np.abs(response_before_analysis_view[0] - g_target_before) < tol)
-            self.assertTrue(np.abs(response_after_analysis_view[0] - g_target_after) < tol)
+            self.assertLess(np.abs(response_before_analysis_view[0] - g_target_before), tol)
+            self.assertLess(np.abs(response_after_analysis_view[0] - g_target_after), tol)
 
         parameter_map_0 = problem.getParameterMap(0)
         para_0_new = Utils.createVector(parameter_map_0)
@@ -79,7 +79,7 @@ class TestSteadyHeat(unittest.TestCase):
         response_view = response.getLocalView()
         print("Response after setParameter " + str(response_view))
         if rank == 0:
-            self.assertTrue(np.abs(response_view[0] - g_target_2) < tol)
+            self.assertLess(np.abs(response_view[0] - g_target_2), tol)
 
     @classmethod
     def tearDownClass(cls):
