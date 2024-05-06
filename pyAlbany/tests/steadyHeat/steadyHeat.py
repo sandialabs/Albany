@@ -66,12 +66,12 @@ class TestSteadyHeat(unittest.TestCase):
 
         tol = 1e-8
         if rank == 0:
-            self.assertTrue(np.abs(g_data[0]-g_target) < tol)
-            self.assertTrue(np.abs(norm-norm_target) < tol)
-            self.assertTrue(setup_time > 0.)
-            self.assertTrue(setup_time == setup_time_2)
+            self.assertLess(np.abs(g_data[0]-g_target), tol)
+            self.assertLess(np.abs(norm-norm_target), tol)
+            self.assertGreater(setup_time, 0.)
+            self.assertEqual(setup_time, setup_time_2)
             for i in range(0,n_directions):
-                self.assertTrue(np.abs(hessian_norms[i]-h_target[i]) < tol)
+                self.assertLess(np.abs(hessian_norms[i]-h_target[i]), tol)
 
     @classmethod
     def tearDownClass(cls):

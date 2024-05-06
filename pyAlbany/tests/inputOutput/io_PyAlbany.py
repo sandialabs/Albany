@@ -142,7 +142,7 @@ class TestIO(unittest.TestCase):
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
 
         for i in range(0, n_cols):
-            self.assertTrue(np.abs(mvector_view[0,i]-mvector_target[i]) < tol)
+            self.assertLess(np.abs(mvector_view[0,i]-mvector_target[i]), tol)
 
     def test_read_distributed_txt(self):
         cls = self.__class__
@@ -167,7 +167,7 @@ class TestIO(unittest.TestCase):
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
         for i in range(0, n_cols):
-            self.assertTrue(np.abs(mvector_view[0,i]-mvector_target[i]) < tol)
+            self.assertLess(np.abs(mvector_view[0,i]-mvector_target[i]), tol)
 
     def test_read_non_distributed_npy(self):
         cls = self.__class__
@@ -192,7 +192,7 @@ class TestIO(unittest.TestCase):
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
         for i in range(0, n_cols):
-            self.assertTrue(np.abs(mvector_view[0,i]-mvector_target[i]) < tol)
+            self.assertLess(np.abs(mvector_view[0,i]-mvector_target[i]), tol)
 
     def test_read_non_distributed_txt(self):
         cls = self.__class__
@@ -217,7 +217,7 @@ class TestIO(unittest.TestCase):
         tol = 1e-8
         mvector_target = np.array([1., -1, 3.26, -3.1])*(rank+1)
         for i in range(0, n_cols):
-            self.assertTrue(np.abs(mvector_view[0,i]-mvector_target[i]) < tol)
+            self.assertLess(np.abs(mvector_view[0,i]-mvector_target[i]), tol)
 
     @classmethod
     def tearDownClass(cls):

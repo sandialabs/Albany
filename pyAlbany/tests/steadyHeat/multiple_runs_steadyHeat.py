@@ -63,7 +63,7 @@ class TestSteadyHeat(unittest.TestCase):
         print("QoI = " + str(responses))
 
         if rank == 0:
-            self.assertTrue(np.abs(np.amax(responses - responses_target)) < tol)
+            self.assertLess(np.abs(np.amax(responses - responses_target)), tol)
 
     @classmethod
     def tearDownClass(cls):

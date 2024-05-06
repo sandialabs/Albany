@@ -24,7 +24,7 @@ class TestHessian(unittest.TestCase):
         largest_diff = np.amax(np.abs(diff))
 
         tol = 1e-8
-        self.assertTrue(largest_diff < tol)
+        self.assertLess(largest_diff, tol)
 
 
 if __name__ == '__main__':

@@ -62,7 +62,7 @@ class TestDoublePass(unittest.TestCase):
             # see equation (5) of "Compressing rank-structured matrices via randomized sampling" Martinsson (2016)
             # for the error bound 
             errorBound = (1. + 11.*np.sqrt(k+p)*np.sqrt(N))*sigValsTrue[k+1]
-            self.assertTrue(error <= errorBound)
+            self.assertLessEqual(error, errorBound)
 
 
         stackedTimer = problem.getStackedTimer()

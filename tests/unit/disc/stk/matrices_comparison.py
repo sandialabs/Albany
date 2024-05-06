@@ -37,7 +37,7 @@ class TestBlockJacobian(unittest.TestCase):
         tol = 1e-8
 
         self.assertEqual(nnz_jac, nnz_total)
-        self.assertTrue(np.amax(np.abs(A-jac)) < tol)
+        self.assertLess(np.amax(np.abs(A-jac)), tol)
 
 
 if __name__ == '__main__':

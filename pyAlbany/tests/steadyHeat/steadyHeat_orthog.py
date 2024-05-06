@@ -42,9 +42,9 @@ class TestSteadyHeat(unittest.TestCase):
                 omegaiTomegaj = Utils.inner(omega.getVector(i), omega.getVector(j))
                 if rank == 0:
                     if i == j:
-                        self.assertTrue(abs(omegaiTomegaj - 1.0) < tol)
+                        self.assertLess(abs(omegaiTomegaj - 1.0), tol)
                     else:
-                        self.assertTrue(abs(omegaiTomegaj-0.0) < tol)
+                        self.assertLess(abs(omegaiTomegaj-0.0), tol)
 
     @classmethod
     def tearDownClass(cls):

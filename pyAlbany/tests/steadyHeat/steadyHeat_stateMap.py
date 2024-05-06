@@ -42,7 +42,7 @@ class TestSteadyHeat(unittest.TestCase):
         tol = 1.e-8
         state_view = state.getLocalView()
         state_ref_view = state_ref.getLocalView()
-        self.assertTrue(np.linalg.norm(state_ref_view - state_view) < tol)
+        self.assertLess(np.linalg.norm(state_ref_view - state_view), tol)
 
 
     @classmethod
