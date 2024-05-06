@@ -135,6 +135,12 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
+  p_resp = decltype(p_resp)("p_resp", global_response_layout);
+  p_reg = decltype(p_reg)("p_reg", global_response_layout);
+  p_reg_stiffening = decltype(p_reg_stiffening)("p_reg_stiffening", global_response_layout);
+  this->addEvaluatedField(p_resp);
+  this->addEvaluatedField(p_reg);
+  this->addEvaluatedField(p_reg_stiffening);
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::setup(p, dl);
 }
 
@@ -144,12 +150,11 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postRegistrationSetup(d, fm);
-  p_resp = scalar_view(this->global_response_eval.get_view());
-  p_reg = scalar_view(this->global_response_eval.get_view());
-  p_reg_stiffening = scalar_view(this->global_response_eval.get_view());
-  resp = Kokkos::create_mirror_view(p_resp);
-  reg = Kokkos::create_mirror_view(p_reg);
-  reg_stiffening = Kokkos::create_mirror_view(p_reg_stiffening);
+  
+  resp = Kokkos::create_mirror_view(p_resp.get_view());
+  reg = Kokkos::create_mirror_view(p_reg.get_view());
+  reg_stiffening = Kokkos::create_mirror_view(p_reg_stiffening.get_view());
+
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
@@ -158,10 +163,10 @@ template<typename EvalT, typename Traits>
 void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
   Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
-  Kokkos::deep_copy(p_resp, this->global_response_eval.get_view());
-  Kokkos::deep_copy(p_reg, this->global_response_eval.get_view());
-  Kokkos::deep_copy(p_reg_stiffening, this->global_response_eval.get_view());
-  
+  Kokkos::deep_copy(this->p_resp.get_view(), 0.0);
+  Kokkos::deep_copy(this->p_reg.get_view(), 0.0);
+  Kokkos::deep_copy(this->p_reg_stiffening.get_view(), 0.0);
+
   // Do global initialization
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
 }
@@ -296,12 +301,12 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typen
 
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response_eval);
-  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_resp);
-  Kokkos::deep_copy(resp, p_resp);
-  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
-  Kokkos::deep_copy(reg, p_reg);
-  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg_stiffening);
-  Kokkos::deep_copy(reg_stiffening, p_reg_stiffening);
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->p_resp);
+  Kokkos::deep_copy(resp, p_resp.get_static_view());
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->p_reg);
+  Kokkos::deep_copy(reg, p_reg.get_static_view());
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->p_reg_stiffening);
+  Kokkos::deep_copy(reg_stiffening, p_reg_stiffening.get_static_view());
 
 #ifdef OUTPUT_TO_SCREEN
   if(workset.comm->getRank()   ==0)
