@@ -113,11 +113,6 @@ template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<T>& a);
-//! Reduce on a kokkos View.
-template<typename T>
-void reduceAll(
-  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
-  typename PHX::MDField<T>::array_type& a);
 //! Reduce on a ScalarT.
 template<typename T>
 void reduceAll(
