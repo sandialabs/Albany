@@ -144,21 +144,23 @@ postEvaluate(typename Traits::PostEvalData workset)
   const auto num_cols_p = workset.num_cols_p;
   const auto param_offset = workset.param_offset;
 
-  // for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
-  //      ! gr.done(); ++gr) {
+  const auto do_g  = (g != Teuchos::null);
+  const auto do_gx = (gx != Teuchos::null);
+  const auto do_gp = (gp != Teuchos::null);
+
   Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
-    if (g != Teuchos::null){
+    if (do_g){
       g_nonconstView(i) = gr[i].val();
     }
 
-    if (gx != Teuchos::null) {
+    if (do_gx) {
       for (int col=0; col<num_cols_x; col++) {
         gx_nonconst2dView(i,col) = gr[i].dx(col);
       }
     }
 
-    if (gp != Teuchos::null) {
+    if (do_gp) {
       for (int col=0; col<num_cols_p; col++) {
         gp_nonconst2dView(i,col) = gr[i].dx(col+param_offset);
       }
