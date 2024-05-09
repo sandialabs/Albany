@@ -65,7 +65,6 @@ fi
 cd $SCRATCH_DIR
 
 LOG_FILE=$SCRATCH_DIR/nightly_log_$BUILD_OPT.txt
-export LD_LIBRARY_PATH==$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib 
 
 
 # I want to run incremental builds to reduce the length of the nightly; with the

@@ -13,5 +13,6 @@ module load aue/zlib/1.3
 module load aue/hdf5/1.14.2-gcc-10.3.0-openmpi-4.1.6
 module load aue/netcdf-c/4.9.2-gcc-10.3.0-openmpi-4.1.6
 module load aue/parallel-netcdf/1.12.3-gcc-10.3.0-openmpi-4.1.6 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
 module list
 
