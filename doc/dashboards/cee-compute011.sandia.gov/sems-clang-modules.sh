@@ -1,18 +1,17 @@
 #!/bin/bash
 module purge
 source /projects/sems/modulefiles/utils/sems-modules-init.sh
-module load sems-cmake/3.24.3
+module load sems-cmake/3.24.2
 module load sems-git/2.37.0
 module load sems-ninja/1.10.1
 module load sems-python/3.8.6
-module load sems-clang/11.0.1
-module load sems-openmpi/4.0.5
-module load sems-boost/1.74.0
-module load sems-netlib-lapack/3.8.0
-module load sems-superlu/4.3
-module load sems-zlib/1.2.11
-module load sems-hdf5/1.10.7
-module load sems-netcdf-c/4.7.3
-module load sems-parallel-netcdf/1.12.1
+module load aue/clang/16.0.6
+module load aue/openmpi/4.1.6-clang-16.0.6
+module load aue/boost/1.83.0-oneapi-2023.2.0-openmpi-4.1.6
+module load aue/netlib-lapack/3.11.0-oneapi-2023.2.0
+module load aue/zlib/1.3
+module load aue/hdf5/1.14.2-oneapi-2023.2.0-openmpi-4.1.6
+module load aue/netcdf-c/4.9.2-oneapi-2023.2.0-openmpi-4.1.6
+module load aue/parallel-netcdf/1.12.3-oneapi-2023.2.0-openmpi-4.1.6 
 module list
 
