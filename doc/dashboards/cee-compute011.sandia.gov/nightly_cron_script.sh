@@ -45,7 +45,7 @@ elif [ "$BUILD_OPT" = "clang-trilinos" ] || [ "$BUILD_OPT" = "clang-albany" ]; t
 
   echo "Clang release build" 
   # clang release builds
-  source $SCRIPT_DIR/sems-clang-modules-rhel8.sh >& $SCRATCH_DIR/sems-clang-modules-rhel8.out
+  source $SCRIPT_DIR/sems-clang-modules.sh >& $SCRATCH_DIR/sems-clang-modules.out
 
 else  
   echo "Clang debug build" 
@@ -65,6 +65,8 @@ fi
 cd $SCRATCH_DIR
 
 LOG_FILE=$SCRATCH_DIR/nightly_log_$BUILD_OPT.txt
+export LD_LIBRARY_PATH==$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib 
+
 
 # I want to run incremental builds to reduce the length of the nightly; with the
 # new Intel builds, we're up to ~12 hours. Make sure the CMake files are
