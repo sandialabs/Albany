@@ -10,25 +10,28 @@ cmake -GNinja \
       -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION} \
       -D CMAKE_BUILD_TYPE:STRING=${BTYPE} \
       -D CMAKE_VERBOSE_MAKEFILE=ON \
-      -D CMAKE_CXX_COMPILER=mpicxx \
-      -D CMAKE_C_COMPILER=mpicc \
-      -D CMAKE_Fortran_COMPILER=mpif90 \
+      -D CMAKE_CXX_COMPILER=${MPICXX} \
+      -D CMAKE_C_COMPILER=${MPICC} \
+      -D CMAKE_Fortran_COMPILER=${MPIF90} \
       -D CMAKE_C_FLAGS:STRING="-qmkl -diag-disable=10441" \
       -D CMAKE_CXX_FLAGS:STRING="-qmkl -diag-disable=10441" \
       -D CMAKE_Fortran_FLAGS:STRING="-qmkl -diag-disable=10441" \
       -D CMAKE_EXE_LINKER_FLAGS:STRING="-qmkl -diag-disable=10441" \
       -D TPL_ENABLE_MPI=ON \
-      -D MPI_BASE_DIR:PATH=${OPENMPI_ROOT} \
-      -D TPL_ENABLE_BLAS=ON \
-      -D TPL_BLAS_LIBRARIES:PATH=${MKLROOT}/lib/intel64/libmkl_core.a \
+      -D BLAS_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+      -D BLAS_LIBRARY_NAMES:STRING="mkl_rt" \
       -D TPL_ENABLE_LAPACK=ON \
-      -D TPL_LAPACK_LIBRARIES:PATH=${MKLROOT}/lib/intel64/libmkl_core.a \
+      -D LAPACK_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+      -D LAPACK_LIBRARY_NAMES:STRING="mkl_rt" \
+      -D TPL_ENABLE_MKL=ON \
+      -D MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+      -D MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+      -D MKL_INCLUDE_DIRS:FILEPATH="${MKLROOT}/include" \
       -D TPL_ENABLE_PARDISO_MKL:BOOL=ON \
-      -D TPL_PARDISO_MKL_LIBRARIES:PATH=${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
-      -D PARDISO_MKL_INCLUDE_DIRS:PATH=${MKLROOT}/include \
+      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+      -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+      -D PARDISO_MKL_INCLUDE_DIRS:FILEPATH="${MKLROOT}/include" \
       -D TPL_ENABLE_SuperLU=OFF \
-      -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu_4.3.a \
-      -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_ROOT}/include \
       -D TPL_ENABLE_Boost=ON \
       -D Boost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
       -D TPL_ENABLE_Netcdf=ON \
