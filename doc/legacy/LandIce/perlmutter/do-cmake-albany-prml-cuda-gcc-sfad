@@ -10,11 +10,16 @@ TRILINOS_INSTALL_DIR=
 #FIXME: the following needs to be changed to point to Albany's source directory
 ALBANY_SOURCE_DIR=
 
+#FIXME: point to nvcc wrapper
+NVCC_WRAPPER=
+
 ALBANY_INSTALL_DIR="./install"
 
 cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL_DIR} \
       -D CMAKE_INSTALL_PREFIX:PATH=${ALBANY_INSTALL_DIR} \
+      -D CMAKE_CXX_COMPILER=${NVCC_WRAPPER} \
+      -D CMAKE_C_COMPILER=${MPICH_DIR}/bin/mpicc \
       -D CMAKE_CXX_FLAGS:STRING="" \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D ENABLE_DEMO_PDES:BOOL=OFF \
@@ -27,7 +32,6 @@ cmake \
       -D ALBANY_SFAD_SIZE=12 \
 \
       -D ENABLE_MPAS_INTERFACE:BOOL=ON \
-      -D ENABLE_ALBANY_EPETRA=OFF \
 ${ALBANY_SOURCE_DIR}
 
 # Include these flags if you want to enable PyAlbany
