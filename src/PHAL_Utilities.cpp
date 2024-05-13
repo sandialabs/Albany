@@ -186,10 +186,17 @@ void reduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<ScalarT>& a)
 {
+  MDFieldHostMirror<ScalarT> a_host = Kokkos::create_mirror_view(a.get_view());
+  Kokkos::deep_copy(a_host, a.get_view());
   std::vector<ScalarT> v;
-  copy<ScalarT>(a, v);
+  for (size_t i = 0; i < a.size(); ++i) {
+    v.push_back(a_host(i));
+  }
   myReduceAll<ScalarT>(comm, reduct_type, v);
-  copy<ScalarT>(v, a);
+  for (size_t i = 0; i < a.size(); ++i) {
+    a_host(i) = v[i];
+  }
+  Kokkos::deep_copy(a.get_view(), a_host);
 }
 
 template<typename ScalarT>

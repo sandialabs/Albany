@@ -108,6 +108,9 @@ private:
   int rank_;
 };
 
+template<typename T>
+using MDFieldHostMirror = typename PHX::MDField<T>::array_type::HostMirror;
+
 //! Reduce on an MDField.
 template<typename T>
 void reduceAll(
