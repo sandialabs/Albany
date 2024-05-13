@@ -140,4 +140,6 @@ cmake \
   -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
 \
+  -D Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC:BOOL=OFF \
+\
 
