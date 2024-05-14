@@ -1,0 +1,131 @@
+#!/bin/bash
+# Trilinos configure script for cee
+rm -rf CMake*
+
+REPO_DIR=
+INSTALL_DIR=
+
+cmake -GNinja \
+      -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
+      -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+\
+      -D CMAKE_CXX_COMPILER=mpicxx \
+      -D CMAKE_C_COMPILER=mpicc \
+      -D CMAKE_Fortran_COMPILER=mpif90 \
+\
+      -D TPL_ENABLE_MPI=ON \
+      -D MPI_BASE_DIR:PATH=${OPENMPI_ROOT} \
+\
+      -D TPL_ENABLE_BLAS=ON \
+      -D TPL_BLAS_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/libblas.so \
+\
+      -D TPL_ENABLE_LAPACK=ON \
+      -D TPL_LAPACK_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/liblapack.so \
+\
+      -D TPL_ENABLE_SuperLU=ON \
+      -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu_4.3.a \
+      -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_ROOT}/include \
+\
+      -D TPL_ENABLE_Boost=ON \
+      -D Boost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
+      -D Boost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+\
+      -D TPL_ENABLE_BoostLib=ON \
+      -D BoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
+      -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+\
+      -D TPL_ENABLE_Netcdf=ON \
+      -D TPL_Netcdf_PARALLEL=ON \
+      -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_ROOT}/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_C_ROOT}/lib \
+\
+      -D TPL_ENABLE_Pnetcdf=ON \
+      -D Pnetcdf_INCLUDE_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/include \
+      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/lib \
+\
+      -D TPL_ENABLE_HDF5=ON \
+      -D HDF5_INCLUDE_DIRS:PATH=${HDF5_ROOT}/include \
+      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \
+\
+      -D TPL_ENABLE_Zlib=ON \
+      -D Zlib_INCLUDE_DIRS:PATH=${ZLIB_ROOT}/include \
+      -D Zlib_LIBRARY_DIRS:PATH=${ZLIB_ROOT}/lib \
+\
+      -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF \
+      -D Trilinos_ENABLE_ALL_PACKAGES=OFF \
+      -D Trilinos_ENABLE_EXAMPLES=OFF \
+      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION=ON \
+      -D Trilinos_VERBOSE_CONFIGURE=OFF \
+      -D TPL_ENABLE_Matio=OFF \
+      -D TPL_ENABLE_X11=OFF \
+\
+      -D Kokkos_ARCH_SKX=ON \
+      -D Kokkos_ENABLE_EXAMPLES=OFF \
+      -D Kokkos_ENABLE_SERIAL=ON \
+      -D Kokkos_ENABLE_PTHREAD=OFF \
+      -D Kokkos_ENABLE_TESTS=OFF \
+\
+      -D Amesos2_ENABLE_KLU2=ON \
+      -D EpetraExt_USING_HDF5=OFF \
+      -D Intrepid_ENABLE_TESTS=OFF \
+      -D Intrepid2_ENABLE_TESTS=OFF \
+      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+      -D Phalanx_SHOW_DEPRECATED_WARNINGS=OFF \
+      -D Sacado_ENABLE_COMPLEX=OFF \
+      -D Teuchos_ENABLE_COMPLEX=OFF \
+      -D Tpetra_ASSUME_CUDA_AWARE_MPI=OFF \
+      -D Tpetra_INST_INT_LONG_LONG=ON \
+      -D Tpetra_INST_INT_INT=OFF \
+      -D MueLu_ENABLE_Tutorial=OFF \
+      -D MueLu_ENABLE_TESTS=OFF \
+\
+      -D Trilinos_ENABLE_Amesos2=ON \
+      -D Trilinos_ENABLE_Amesos=ON \
+      -D Trilinos_ENABLE_Anasazi=ON \
+      -D Trilinos_ENABLE_AztecOO=ON \
+      -D Trilinos_ENABLE_Belos=ON \
+      -D Trilinos_ENABLE_EXAMPLES=OFF \
+      -D Trilinos_ENABLE_Epetra=ON \
+      -D Trilinos_ENABLE_EpetraExt=ON \
+      -D Trilinos_ENABLE_Ifpack2=ON \
+      -D Trilinos_ENABLE_Ifpack=ON \
+      -D Trilinos_ENABLE_Intrepid2=ON \
+      -D Trilinos_ENABLE_Kokkos=ON \
+      -D Trilinos_ENABLE_KokkosAlgorithms=ON \
+      -D Trilinos_ENABLE_KokkosContainers=ON \
+      -D Trilinos_ENABLE_KokkosCore=ON \
+      -D Trilinos_ENABLE_ML=ON \
+      -D Trilinos_ENABLE_MueLu=ON \
+      -D Trilinos_ENABLE_NOX=ON \
+      -D Trilinos_ENABLE_Pamgen=ON \
+      -D Trilinos_ENABLE_Phalanx=ON \
+      -D Trilinos_ENABLE_Piro=ON \
+      -D Trilinos_ENABLE_ROL=ON \
+      -D Trilinos_ENABLE_SEACAS=ON \
+      -D Trilinos_ENABLE_SEACASAprepro_lib=ON \
+      -D Trilinos_ENABLE_STK=ON \
+      -D Trilinos_ENABLE_STKSearchUtil=OFF \
+      -D Trilinos_ENABLE_STKUnit_tests=OFF \
+      -D Trilinos_ENABLE_STKDoc_tests=OFF \
+      -D Trilinos_ENABLE_Sacado=ON \
+      -D Trilinos_ENABLE_Shards=ON \
+      -D Trilinos_ENABLE_Stokhos=OFF \
+      -D Trilinos_ENABLE_Stratimikos=ON \
+      -D Trilinos_ENABLE_TESTS=OFF \
+      -D Trilinos_ENABLE_Teko=ON \
+      -D Trilinos_ENABLE_Tempus=ON \
+      -D Trilinos_ENABLE_Teuchos=ON \
+      -D Trilinos_ENABLE_Thyra=ON \
+      -D Trilinos_ENABLE_Tpetra=ON \
+      -D Trilinos_ENABLE_Zoltan2=ON \
+      -D Trilinos_ENABLE_Zoltan=ON \
+      \
+      -D Trilinos_ENABLE_PanzerDofMgr=ON \
+      -D Trilinos_ENABLE_ShyLU_DDFROSch=ON \
+      -D Trilinos_ENABLE_PanzerExprEval=ON \
+      -D CMAKE_CXX_STANDARD=17 \
+      \
+      ${REPO_DIR}
+

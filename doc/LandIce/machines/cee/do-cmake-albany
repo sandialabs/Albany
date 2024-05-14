@@ -1,0 +1,20 @@
+#!/bin/bash
+# Albany configure script for cee
+rm -rf CMake*
+
+#FIXME: the following needs to point to your Trilinos install!
+TRILINOS_INSTALL_DIR=
+REPO_DIR=
+INSTALL_DIR=
+
+cmake -GNinja \
+      -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL_DIR} \
+      -D ENABLE_DEMO_PDES:BOOL=ON \
+      -D ENABLE_LANDICE:BOOL=ON \
+      -D ENABLE_LARGE_TESTS:BOOL=ON \
+      -D ENABLE_CHECK_FPE:BOOL=OFF \
+      -D ENABLE_MPAS_INTERFACE:BOOL=OFF \
+      -D CMAKE_INSTALL_PREFIX:FILEPATH=${INSTALL_DIR} \
+      -D ENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON \
+      ${REPO_DIR}
+
