@@ -15,8 +15,6 @@
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
 
-#define LANDICE3D_NUMNODES 8
-
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
 
@@ -69,12 +67,18 @@ public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   struct LandIce_3D_Tag{};
+  template<int NumNodes>
+  struct LandIce_3D_Opt_Tag{
+    static constexpr int num_nodes = NumNodes;
+  };
   struct POISSON_3D_Tag{};
   struct LandIce_2D_Tag{};
   struct LandIce_XZ_2D_Tag{};
   struct POISSON_2D_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_3D_Tag> LandIce_3D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_3D_Opt_Tag<8>> LandIce_3D_Opt_Hex_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_3D_Opt_Tag<6>> LandIce_3D_Opt_Wedge_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_3D_Tag> POISSON_3D_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_2D_Tag> LandIce_2D_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_XZ_2D_Tag> LandIce_XZ_2D_Policy;
@@ -82,6 +86,9 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const LandIce_3D_Tag& tag, const int& cell) const;
+  template<int NumNodes>
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const LandIce_3D_Opt_Tag<NumNodes>& tag, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const POISSON_3D_Tag& tag, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
