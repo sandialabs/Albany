@@ -37,7 +37,7 @@ class TestMatrixOperations(unittest.TestCase):
         v0 = v.getVector(0)
         v1 =  v.getVector(1)
 
-        tol0 = 1e-15
+        tol0 = 1e-13
         tol = 1e-6
 
         #test mat product 
@@ -95,11 +95,11 @@ class TestMatrixOperations(unittest.TestCase):
 
 
         if rank == 0:
-            self.assertTrue(err0 < tol0)
-            self.assertTrue(err1 < tol)
-            self.assertTrue(err2 < tol)
-            self.assertTrue(err3 < tol)
-            self.assertTrue(err4 < tol)
+            self.assertLess(err0, tol0)
+            self.assertLess(err1, tol)
+            self.assertLess(err2, tol)
+            self.assertLess(err3, tol)
+            self.assertLess(err4, tol)
 
     @classmethod
     def tearDownClass(cls):

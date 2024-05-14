@@ -62,7 +62,7 @@ class TestSinglePass(unittest.TestCase):
             # for the error bound, which does not specifically hold for the additional errors incurred via the
             # singlePass algorithm 
             errorBound = (1. + 11.*np.sqrt(k+p)*np.sqrt(N))*sigValsTrue[k+1]
-            self.assertTrue(error <= errorBound)
+            self.assertLessEqual(error, errorBound)
 
 
         stackedTimer = problem.getStackedTimer()

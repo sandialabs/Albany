@@ -83,12 +83,12 @@ class TestExtremeEvent(unittest.TestCase):
                     print('i = ' + str(i) + ': P IS: expected value = ' + str(expected_P_IS[i]) + ', computed value = ' + str(P_IS[i]) + ', and diff = ' + str(expected_P_IS[i]-P_IS[i]))
                     print('i = ' + str(i) + ': P mixed: expected value = ' + str(expected_P_mixed[i]) + ', computed value = ' + str(P_mixed[i]) + ', and diff = ' + str(expected_P_mixed[i]-P_mixed[i]))
 
-            self.assertTrue(np.amax(np.abs(expected_theta_star - theta_star)) < tol)
-            self.assertTrue(np.amax(np.abs(expected_I_star - I_star)) < tol)
-            self.assertTrue(np.amax(np.abs(expected_P_star - P_star)) < tol)
-            self.assertTrue(np.amax(np.abs(expected_F_star - F_star)) < tol_F)
-            self.assertTrue(np.amax(np.abs(expected_P_IS - P_IS)) < tol)
-            self.assertTrue(np.amax(np.abs(expected_P_mixed - P_mixed)) < tol)
+            self.assertLess(np.amax(np.abs(expected_theta_star - theta_star)), tol)
+            self.assertLess(np.amax(np.abs(expected_I_star - I_star)), tol)
+            self.assertLess(np.amax(np.abs(expected_P_star - P_star)), tol)
+            self.assertLess(np.amax(np.abs(expected_F_star - F_star)), tol_F)
+            self.assertLess(np.amax(np.abs(expected_P_IS - P_IS)), tol)
+            self.assertLess(np.amax(np.abs(expected_P_mixed - P_mixed)), tol)
 
     @classmethod
     def tearDownClass(cls):

@@ -25,8 +25,8 @@ public:
 
   Teuchos::RCP<OmegahMeshFieldAccessor> get_field_accessor () const { return m_field_accessor; }
 
-  const Omega_h::Mesh& getOmegahMesh () const { return m_mesh; }
-        Omega_h::Mesh& getOmegahMesh ()       { return m_mesh; }
+        Teuchos::RCP<const Omega_h::Mesh>  getOmegahMesh () const { return m_mesh.getConst(); }
+  const Teuchos::RCP<      Omega_h::Mesh>& getOmegahMesh ()       { return m_mesh; }
 
   bool hasRestartSolution () const { return m_has_restart_solution; }
 
@@ -49,7 +49,7 @@ public:
 
 protected:
 
-  Omega_h::Mesh  m_mesh;
+  Teuchos::RCP<Omega_h::Mesh>  m_mesh;
 
   // Given a part name, returns its topology (in the form of an Omega_h enum
   std::map<std::string,Topo_type>  m_part_topo;

@@ -1,18 +1,17 @@
-#!/bin/bash
 module purge
 source /projects/sems/modulefiles/utils/sems-modules-init.sh
 module load cmake/3.25.2
 module load sems-git/2.29.0
 module load sems-ninja/1.10.1
 module load sems-python/3.9.0
-module load sems-intel/19.0.5
-module load gnu/8.2.1 # Headers needed to build with C++17
-module load sems-openmpi/4.0.4
-module load sems-boost/1.70.0
-module load sems-superlu/4.3
-module load sems-zlib/1.2.11
-module load sems-hdf5/1.10.7
-module load sems-netcdf-c/4.7.3
-module load sems-parallel-netcdf/1.12.1
+module load aue/intel-oneapi-compilers/2024.1.0
+module load gnu/12.1.1
+module load aue/openmpi/4.1.6-oneapi-2024.1.0
+module load aue/boost/1.83.0-oneapi-2024.1.0-openmpi-4.1.6
+module load aue/zlib/1.3
+module load aue/netcdf-c/4.9.2-oneapi-2024.1.0-openmpi-4.1.6
+module load aue/parallel-netcdf/1.12.3-oneapi-2024.1.0-openmpi-4.1.6
+module load aue/intel-oneapi-mkl/2024.1.0
+module load aue/hdf5/1.14.2-oneapi-2024.1.0-openmpi-4.1.6
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
 module list
-

@@ -75,7 +75,7 @@ class TestHODLR(unittest.TestCase):
                 M12 = idx1-idx0 # rows of OD-block
                 N12 = idx2-idx1 # columns of OD-block
                 errorBound12 = (1. + 11.*np.sqrt(k+p)*np.sqrt(min(M12, N12)))*sigValsTrue[k+1]
-                self.assertTrue(error12 <= errorBound12)
+                self.assertLessEqual(error12, errorBound12)
 
 
         stackedTimer = problem.getStackedTimer()

@@ -19,7 +19,7 @@ TRILINOS_INSTALL_DIR="./install"
 export CRAYPE_LINK_TYPE=dynamic
 
 cmake \
-  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINOS_INSTALL_DIR} \
+  -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_CXX_STANDARD=17 \
 \
@@ -77,7 +77,6 @@ cmake \
 \
   -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
   -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
-  -D Kokkos_ENABLE_PTHREAD:BOOL=OFF \
   -D Kokkos_ENABLE_SERIAL:BOOL=ON \
   -D Kokkos_ENABLE_TESTS:BOOL=OFF \
   -D Kokkos_ARCH_ZEN3:BOOL=ON \
@@ -104,9 +103,6 @@ cmake \
   -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
   -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
-  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
-  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
-  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
   -D Trilinos_ENABLE_NOX:BOOL=ON \
   -D Trilinos_ENABLE_OpenMP:BOOL=OFF \

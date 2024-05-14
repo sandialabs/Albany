@@ -24,7 +24,7 @@ namespace Albany {
 class OmegahConnManager : public ConnManager {
 private:
   Teuchos::RCP<OmegahGenericMesh> albanyMesh;
-  Omega_h::Mesh& mesh;
+  Teuchos::RCP<Omega_h::Mesh> mesh;
 
   std::vector<LO> localElmIds;
   std::vector<LO> emptyHaloVec;
@@ -55,7 +55,7 @@ public:
   ~OmegahConnManager() = default;
 
   Omega_h::GOs getGlobalDofNumbering(int dim) const {
-    assert(dim>=0 && dim<=mesh.dim());
+    assert(dim>=0 && dim<=mesh->dim());
     return m_globalDofNumbering[dim];
   }
 
@@ -90,7 +90,7 @@ public:
     * \returns global id of mesh element
     */
   GO getElementGlobalId(LO localElmtId) const {
-    auto gids = mesh.globals(mesh.dim());
+    auto gids = mesh->globals(mesh->dim());
     return gids.get(localElmtId);
   }
 
@@ -131,8 +131,8 @@ public:
     */
   std::string getBlockId(LO localElmtId) const override {
     std::stringstream ss;
-    ss << "Error! requested local elemnt id (" << localElmtId << ") is larger than the number of elements on this process (" << mesh.nelems() << ")\n";
-    TEUCHOS_TEST_FOR_EXCEPTION (localElmtId >= mesh.nelems(), std::runtime_error, ss.str());
+    ss << "Error! requested local elemnt id (" << localElmtId << ") is larger than the number of elements on this process (" << mesh->nelems() << ")\n";
+    TEUCHOS_TEST_FOR_EXCEPTION (localElmtId >= mesh->nelems(), std::runtime_error, ss.str());
     return m_elem_blocks_names[0];
   };
 
@@ -154,24 +154,24 @@ public:
 
     TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_names.size() != 1, std::logic_error,
         "Error! The OmegahConnManager currently only supports a single block on each process\n");
-    TEUCHOS_TEST_FOR_EXCEPTION ( OMEGA_H_SIMPLEX != mesh.family(), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION ( OMEGA_H_SIMPLEX != mesh->family(), std::logic_error,
         "Error! The OmegahConnManager currently supports 2d and 3d meshes with"
         "       straight sided triangles and tets\n");
-    switch (mesh.family()) {
+    switch (mesh->family()) {
       case OMEGA_H_SIMPLEX:
-        if(mesh.dim()==3) {
+        if(mesh->dim()==3) {
           shards::CellTopology tetTopo(shards::getCellTopologyData< shards::Tetrahedron<4> >());
           elementBlockTopologies.push_back(tetTopo);
-        } else if(mesh.dim()==2) {
+        } else if(mesh->dim()==2) {
           shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
           elementBlockTopologies.push_back(triTopo);
         }
         break;
       case OMEGA_H_HYPERCUBE:
-        if(mesh.dim()==3) {
+        if(mesh->dim()==3) {
           shards::CellTopology hexa(shards::getCellTopologyData< shards::Hexahedron<8> >());
           elementBlockTopologies.push_back(hexa);
-        } else if(mesh.dim()==2) {
+        } else if(mesh->dim()==2) {
           shards::CellTopology quad(shards::getCellTopologyData< shards::Quadrilateral<4> >());
           elementBlockTopologies.push_back(quad);
         }
@@ -211,7 +211,7 @@ public:
   }
 
   int getOwnedElementCount() const {
-    return mesh.nelems();
+    return mesh->nelems();
   }
 
   /** Get elements, if any, associated with <code>el</code>, excluding

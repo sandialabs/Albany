@@ -56,8 +56,8 @@ class TestAdjointSolve(unittest.TestCase):
             expected_eigVals = 0.85552097
             expected_eigVecs = np.array([[0.43910025], [0.36382469], [0.38869418], [0.44107581], [0.57375215]])
 
-            self.assertTrue(np.abs(eigVals - expected_eigVals) < tol)
-            self.assertTrue(np.amax(np.abs(eigVecs.getLocalView() - expected_eigVecs)) < tol)
+            self.assertLess(np.abs(eigVals - expected_eigVals), tol)
+            self.assertLess(np.amax(np.abs(eigVecs.getLocalView() - expected_eigVecs)), tol)
 
     @classmethod
     def tearDownClass(cls):

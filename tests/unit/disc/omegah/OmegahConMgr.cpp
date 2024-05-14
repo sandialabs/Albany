@@ -258,25 +258,25 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
     { lateralSide_name, Topo_type::edge, lateralSide_classId }
   };
   auto albanyMesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
-  auto& mesh = albanyMesh->getOmegahMesh();
+  auto mesh = albanyMesh->getOmegahMesh();
 
   //define tag for uppper half of lateral side
   const int upperSide_numVertsExpected = 238;
   const auto minYCoord = -1848.0;
   const int upperSide_classDim = 0;
   const auto upperSide_name = "upperside";
-  auto vtxCoords = mesh.coords();
-  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(OMEGA_H_VERT),0);
-  const auto isLateralSide = mesh.get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
-  auto lateralVerts = markDownward(mesh, isLateralSide, OMEGA_H_EDGE, OMEGA_H_VERT);
-  const auto isOwnedVtx = mesh.owned(OMEGA_H_VERT);
-  Omega_h::parallel_for(mesh.nents(OMEGA_H_VERT), OMEGA_H_LAMBDA(LO vtx) {
+  auto vtxCoords = mesh->coords();
+  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh->nents(OMEGA_H_VERT),0);
+  const auto isLateralSide = mesh->get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
+  auto lateralVerts = markDownward(*mesh, isLateralSide, OMEGA_H_EDGE, OMEGA_H_VERT);
+  const auto isOwnedVtx = mesh->owned(OMEGA_H_VERT);
+  Omega_h::parallel_for(mesh->nents(OMEGA_H_VERT), OMEGA_H_LAMBDA(LO vtx) {
       if(isOwnedVtx[vtx])
         isInSet_vtx[vtx] = ((vtxCoords[vtx*2+1] >= minYCoord) && lateralVerts[vtx]);
   });
-  const int upperSide_numVerts = Omega_h::get_sum<Omega_h::I8>(mesh.library()->world(), isInSet_vtx);
+  const int upperSide_numVerts = Omega_h::get_sum<Omega_h::I8>(mesh->library()->world(), isInSet_vtx);
   REQUIRE(upperSide_numVertsExpected == upperSide_numVerts);
-  mesh.add_tag(upperSide_classDim, upperSide_name, 1, Omega_h::read(isInSet_vtx));
+  mesh->add_tag(upperSide_classDim, upperSide_name, 1, Omega_h::read(isInSet_vtx));
 
   auto conn_mgr = createOmegahConnManager(albanyMesh, lateralSide_name);
   auto patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
@@ -287,13 +287,13 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   { //count the number of times upperSide vertices appear in the vertices bounding edges
     //this count should match the number of times '1' appears in the
     //getConnectivityMask(upperSide_name) call
-    const auto lateralSide = mesh.get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
-    const auto isUpperSide = mesh.get_array<Omega_h::I8>(OMEGA_H_VERT, upperSide_name);
-    auto edgeVerts = mesh.ask_down(OMEGA_H_EDGE,OMEGA_H_VERT).ab2b;
+    const auto lateralSide = mesh->get_array<Omega_h::I8>(OMEGA_H_EDGE, lateralSide_name);
+    const auto isUpperSide = mesh->get_array<Omega_h::I8>(OMEGA_H_VERT, upperSide_name);
+    auto edgeVerts = mesh->ask_down(OMEGA_H_EDGE,OMEGA_H_VERT).ab2b;
     const auto degree = Omega_h::simplex_degree(OMEGA_H_EDGE, OMEGA_H_VERT);
     assert(degree == 2);
     Omega_h::Write<Omega_h::LO> elmToUpperVtxCount_d(1,0);
-    Omega_h::parallel_for(mesh.nents(OMEGA_H_EDGE), OMEGA_H_LAMBDA(LO edge) {
+    Omega_h::parallel_for(mesh->nents(OMEGA_H_EDGE), OMEGA_H_LAMBDA(LO edge) {
         if(lateralSide[edge]) {
           for(int i=0; i<degree; i++) {
             auto vtx = edgeVerts[edge*degree+i];
@@ -346,12 +346,12 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
   const auto sideSetName = "leftSide";
   int dim = 0;
   auto vtxGids = conn_mgr->getGlobalDofNumbering(dim);
-  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh.nents(dim));
+  Omega_h::Write<Omega_h::I8> isInSet_vtx(mesh->nents(dim));
   Omega_h::parallel_for(isInSet_vtx.size(), OMEGA_H_LAMBDA(LO i) {
       const auto gid = vtxGids[i];
       isInSet_vtx[i] = (gid >= 0 && gid <= 2) ? 1 : 0;
   });
-  mesh.add_tag(dim, sideSetName, 1, Omega_h::read(isInSet_vtx));
+  mesh->add_tag(dim, sideSetName, 1, Omega_h::read(isInSet_vtx));
 
   auto mask = conn_mgr->getConnectivityMask(sideSetName);
 
@@ -387,7 +387,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnershi
   auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm,{});
   auto conn_mgr = createOmegahConnManager(mesh);
   conn_mgr->buildConnectivity(*patternC1);
-  checkOwnership(mesh->getOmegahMesh(),*conn_mgr);
+  checkOwnership(*mesh->getOmegahMesh(),*conn_mgr);
   out << "Testing OmegahConnManager::buildConnectivityOwnership()\n";
   success = true;
 }
@@ -408,7 +408,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
 
   auto patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
   conn_mgr->buildConnectivity(*patternEdgeC1);
-  checkOwnership(mesh->getOmegahMesh(),*conn_mgr);
+  checkOwnership(*mesh->getOmegahMesh(),*conn_mgr);
   out << "Testing OmegahConnManager::buildPartConnectivityOwnership()\n";
   success = true;
 }

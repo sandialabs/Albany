@@ -15,10 +15,10 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   const auto& filename = params->get<std::string>("Filename");
 
-  m_mesh = Omega_h::Mesh (&lib);
-  Omega_h::binary::read(filename, lib.world(), &m_mesh);
+  m_mesh = Teuchos::RCP(new Omega_h::Mesh (&lib));
+  Omega_h::binary::read(filename, lib.world(), m_mesh.get());
   if (params->get("Rebalance",true)) {
-    m_mesh.balance(); // re-partition to the number of ranks in world communicator
+    m_mesh->balance(); // re-partition to the number of ranks in world communicator
   }
 
   // Node/Side sets names
@@ -43,12 +43,12 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
     const int dim = topo_dim(topo);
     const int id  = pl.get<int>("Id");
     const bool markDownward = pl.get<int>("Mark Downward",true); // Is default=true ok?
-    auto is_in_part = Omega_h::mark_by_class(&m_mesh, dim, dim, id);
+    auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
     this->declare_part(pn,topo,is_in_part,markDownward);
 
     if (dim==0) {
       nsNames.push_back(pn);
-    } else if (dim==m_mesh.dim()-1) {
+    } else if (dim==m_mesh->dim()-1) {
       ssNames.push_back(pn);
     }
   }
@@ -56,18 +56,18 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   const CellTopologyData* ctd;
 
   TEUCHOS_TEST_FOR_EXCEPTION (
-      m_mesh.family()!=Omega_h_Family::OMEGA_H_SIMPLEX and m_mesh.family()!=Omega_h_Family::OMEGA_H_HYPERCUBE,
+      m_mesh->family()!=Omega_h_Family::OMEGA_H_SIMPLEX and m_mesh->family()!=Omega_h_Family::OMEGA_H_HYPERCUBE,
       std::runtime_error,
       "Error! OmegahOshMesh only available for simplex/hypercube meshes.\n");
 
   Topo_type elem_topo;
-  switch (m_mesh.dim()) {
+  switch (m_mesh->dim()) {
     case 1:
       ctd = shards::getCellTopologyData<shards::Line<2>>();
       elem_topo = Topo_type::edge;
       break;
     case 2:
-      if (m_mesh.family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
+      if (m_mesh->family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
         ctd = shards::getCellTopologyData<shards::Triangle<3>>();
         elem_topo = Topo_type::triangle;
       } else {
@@ -76,7 +76,7 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
       }
       break;
     case 3:
-      if (m_mesh.family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
+      if (m_mesh->family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
         ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();
         elem_topo = Topo_type::tetrahedron;
       } else {
@@ -94,8 +94,8 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, m_mesh.dim(),
-                             nsNames, ssNames, m_mesh.nelems(), ebName,
+  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(*ctd, m_mesh->dim(),
+                             nsNames, ssNames, m_mesh->nelems(), ebName,
                              ebNameToIndex));
 }
 

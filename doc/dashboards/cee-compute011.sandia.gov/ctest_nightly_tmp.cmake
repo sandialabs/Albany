@@ -6,14 +6,14 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 
 execute_process(COMMAND bash $ENV{SCRIPT_DIRECTORY}/delete_txt_files.sh
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-message("IKT mpicc = " $ENV{OPENMPI_ROOT}/bin/mpicc) 
-execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc -dumpversion
+message("IKT mpicc = " $ENV{MPICC}) 
+execute_process(COMMAND $ENV{MPICC} -dumpversion
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                 RESULT_VARIABLE COMPILER_VERSION_RESULT
                 OUTPUT_VARIABLE COMPILER_VERSION
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 #message("IKT compiler version = " ${COMPILER_VERSION})
-execute_process(COMMAND $ENV{OPENMPI_ROOT}/bin/mpicc --version
+execute_process(COMMAND $ENV{MPICC} --version
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                 RESULT_VARIABLE COMPILER_RESULT
                 OUTPUT_FILE "compiler.txt")
@@ -436,8 +436,17 @@ if (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
     CDASH-TRILINOS-GCC-FILE.TXT
   )
 
-  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
+  if (BUILD_TRILINOS) 
+    # First argument is the string of the configure options, second is the dashboard 
+    # target (a name in a string)
+    do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
+  endif(BUILD_TRILINOS)
+  if (BUILD_TRILINOSDBG)
+    # First argument is the string of the configure options, second is the dashboard 
+    # target (a name in a string)
+    do_trilinos("${CONF_OPTS}" "TrilinosDbg" "${INSTALL_LOCATION}")
+  endif(BUILD_TRILINOSDBG)
+
 
 endif (BUILD_TRILINOS OR BUILD_TRILINOSDBG)
 

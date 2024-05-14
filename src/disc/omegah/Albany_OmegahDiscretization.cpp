@@ -50,7 +50,7 @@ updateMesh ()
   // NOTE: these arrays are all of size 1, for the foreseable future.
   //       Still, make impl generic (where possible), in case things change.
   const auto& ms = m_mesh_struct->meshSpecs[0];
-  const auto& mesh = m_mesh_struct->getOmegahMesh();
+  const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
   int max_ws_size = ms->worksetSize;
   int num_ws = 1 + (nelems-1) / max_ws_size;
@@ -119,7 +119,7 @@ computeNodeSets ()
   using Omega_h::I32;
   using Omega_h::I8;
 
-  auto& mesh = m_mesh_struct->getOmegahMesh();
+  auto& mesh = *m_mesh_struct->getOmegahMesh();
 
   auto v2e = mesh.ask_up(0,mesh.dim());
   auto v2e_a2ab = hostRead(v2e.a2ab);
