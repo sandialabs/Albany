@@ -133,16 +133,17 @@ postRegistrationSetup(typename Traits::SetupData d,
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
-#if 1
 //**********************************************************************
 //Kokkos functors
 template<typename EvalT, typename Traits>
+template<int NumNodes>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
-operator() (const LandIce_3D_Tag& tag, const int& cell) const{
-  ScalarT res0[LANDICE3D_NUMNODES];
-  ScalarT res1[LANDICE3D_NUMNODES];
-  for (size_t node=0; node < LANDICE3D_NUMNODES; ++node) {
+operator() (const LandIce_3D_Opt_Tag<NumNodes>& tag, const int& cell) const{
+  static constexpr int num_nodes = tag.num_nodes;
+  ScalarT res0[num_nodes];
+  ScalarT res1[num_nodes];
+  for (size_t node=0; node < num_nodes; ++node) {
     res0[node]=0.0;
     res1[node]=0.0;
   }
@@ -155,7 +156,7 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
     ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
     ScalarT frc0 = force(cell,qp,0);
     ScalarT frc1 = force(cell,qp,1);
-    for (size_t node=0; node < LANDICE3D_NUMNODES; ++node) {
+    for (size_t node=0; node < num_nodes; ++node) {
       res0[node]+= strs00*wGradBF(cell,node,qp,0) +
             strs01*wGradBF(cell,node,qp,1) +
             strs02*wGradBF(cell,node,qp,2) +
@@ -166,12 +167,12 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
             frc1*wBF(cell,node,qp);
     }
   }
-  for (size_t node=0; node < LANDICE3D_NUMNODES; ++node) {
+  for (size_t node=0; node < num_nodes; ++node) {
     Residual(cell,node,0)=res0[node];
     Residual(cell,node,1)=res1[node];
   }
 }
-#else
+
 //**********************************************************************
 //Kokkos functors
 template<typename EvalT, typename Traits>
@@ -256,7 +257,7 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
     }
   }
 }
-#endif
+
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
@@ -353,7 +354,15 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
   if (numDims == 3) { //3D case
     if (eqn_type == LandIce) {
-     Kokkos::parallel_for(LandIce_3D_Policy(0,workset.numCells), *this);
+      if (!useStereographicMap && numNodes == 8){
+        Kokkos::parallel_for(LandIce_3D_Opt_Hex_Policy(0,workset.numCells), *this);
+      }
+      else if (!useStereographicMap && numNodes == 6) {
+        Kokkos::parallel_for(LandIce_3D_Opt_Wedge_Policy(0,workset.numCells), *this);
+      }
+      else{
+        Kokkos::parallel_for(LandIce_3D_Policy(0,workset.numCells), *this);
+      }
     }
     else if (eqn_type == POISSON) {
       Kokkos::parallel_for(POISSON_3D_Policy(0,workset.numCells), *this);
