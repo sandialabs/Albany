@@ -141,12 +141,8 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_3D_Opt_Tag<NumNodes>& tag, const int& cell) const{
   static constexpr int num_nodes = tag.num_nodes;
-  ScalarT res0[num_nodes];
-  ScalarT res1[num_nodes];
-  for (size_t node=0; node < num_nodes; ++node) {
-    res0[node]=0.0;
-    res1[node]=0.0;
-  }
+  ScalarT res0[num_nodes] = {};
+  ScalarT res1[num_nodes] = {};
   for (size_t qp=0; qp < numQPs; ++qp) {
     ScalarT mu = muLandIce(cell,qp);
     ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
