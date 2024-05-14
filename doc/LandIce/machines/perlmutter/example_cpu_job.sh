@@ -1,6 +1,6 @@
 #!/bin/bash -login
 
-#SBATCH -A m4274
+#SBATCH -A <account>
 #SBATCH --job-name=Albany
 #SBATCH --output=Albany.cpu.%j.out
 #SBATCH --error=Albany.cpu.%j.err

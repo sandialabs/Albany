@@ -1,6 +1,6 @@
 #!/bin/bash -login
 
-#SBATCH -A m4274_g
+#SBATCH -A <account>
 #SBATCH --job-name=Albany
 #SBATCH --output=Albany.%j.out
 #SBATCH --error=Alabny.%j.err
@@ -15,16 +15,17 @@
 #SBATCH --gpu-bind=none
 
 # Env variables
+SCRIPT_DIR=
 ALBANY_INSTALL=
 TRILINOS_INSTALL=
 APPDIR=${ALBANY_INSTALL}/bin
 
 # Load modules
-source /pscratch/sd/m/mcarlson/uvm-free-workspace/scripts/pm_gpu_gnu_modules.sh
+source ${SCRIPT_DIR}/pm_gpu_gnu_modules.sh
 
 # Add libraries to path
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ALBANY_INSTALL}/lib64
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${TRILINOS_INSTALL}/lib64
 
 # Run case
-srun bash -c "export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID)); ${APPDIR}/Albany --kokkos-map-device-id-by=mpi_rank inputMueLuKokkos.yaml"
+srun bash -c "export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID)); ${APPDIR}/Albany --kokkos-map-device-id-by=mpi_rank input.yaml"
