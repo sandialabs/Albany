@@ -355,13 +355,13 @@ evaluateFields(typename Traits::EvalData workset)
   if (numDims == 3) { //3D case
     if (eqn_type == LandIce) {
       if (!useStereographicMap && numNodes == 8){
-        Kokkos::parallel_for(LandIce_3D_Opt_Hex_Policy(0,workset.numCells), *this);
+        Kokkos::parallel_for("StokesFOResid_LandIce_3D_Opt_Hex",LandIce_3D_Opt_Hex_Policy(0,workset.numCells), *this);
       }
       else if (!useStereographicMap && numNodes == 6) {
-        Kokkos::parallel_for(LandIce_3D_Opt_Wedge_Policy(0,workset.numCells), *this);
+        Kokkos::parallel_for("StokesFOResid_LandIce_3D_Opt_Wedge",LandIce_3D_Opt_Wedge_Policy(0,workset.numCells), *this);
       }
       else{
-        Kokkos::parallel_for(LandIce_3D_Policy(0,workset.numCells), *this);
+        Kokkos::parallel_for("StokesFOResid_LandIce_3D",LandIce_3D_Policy(0,workset.numCells), *this);
       }
     }
     else if (eqn_type == POISSON) {
