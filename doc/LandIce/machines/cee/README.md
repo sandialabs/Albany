@@ -13,7 +13,7 @@ source cee_modules_clang.sh
 ```
 
 ## Building Trilinos/develop
-Switch to the develop branch of Trilions, make a build directory for Trilinos and copy over the configuration file provided:
+Switch to the develop branch of Trilinos, make a build directory for Trilinos and copy over the configuration file provided:
 ```sh
 cd ${HOME}/Trilinos
 git checkout develop
