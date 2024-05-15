@@ -26,10 +26,30 @@ Edit the configuration script to point to the repo location and install director
 REPO_DIR=${HOME}/Trilinos
 INSTALL_DIR=${HOME}/Trilinos/build-clang-serial/install
 ```
-
-Build and install Trilinos by using the configuration file provided:
+Configure, build and install Trilinos:
 ```sh
 source do-cmake-trilinos-cee-clang-serial
+make -j
+make install
+```
+
+## Building Albany/master
+Make a build directory for Albany and copy over the configuration file provided:
+```sh
+cd ${HOME}/Albany
+mkdir build-clang-serial
+cd build-clang-serial
+cp ${HOME}/Albany/doc/LandIce/machines/cee/do-cmake-albany .
+```
+Edit the configuration script to point to the trilinos install directory, Albany repo location and install directory:
+```sh
+TRILINOS_INSTALL_DIR=${HOME}/Trilinos/build-clang-serial/install
+REPO_DIR=${HOME}/Albany
+INSTALL_DIR=${HOME}/Albany/build-clang-serial/install
+```
+Configure, build and install Albany:
+```sh
+source do-cmake-albany
 make -j
 make install
 ```
