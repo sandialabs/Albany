@@ -21,15 +21,33 @@ mkdir trilinos-serial-gcc
 cd trilinos-serial-gcc
 cp ${HOME}/Albany/doc/dashboards/blake.sandia.gov/do-cmake-trilinos-gcc-release .
 ```
-Edit the configuration script to point to the repo location and install directory:
-```sh
-REPO_DIR=${HOME}/Trilinos
-INSTALL_DIR=${HOME}/Trilinos/trilinos-serial-gcc/install
-```
-
-Build and install Trilinos by using the configuration file provided:
+Build and install Trilinos on a compute node:
 ```sh
 source do-cmake-trilinos-gcc-serial-release
+salloc -N1
+make -j 96
+make install
+exit
+```
+
+## Building Albany/master
+Make a build directory for Albany and copy over the configuration file provided:
+```sh
+cd ${HOME}/Albany
+mkdir albany-serial-gcc
+cd albany-serial-gcc
+cp ${HOME}/Albany/doc/dashboards/blake.sandia.gov/do-cmake-albany-gcc-release .
+```
+Edit the configuration script to point to the trilinos install directory and albany install directory:
+```sh
+TRILINOS_INSTALL=${HOME}/Trilinos/albany-serial-gcc/install
+ALBANY_INSTALL=${HOME}/Albany/albany-serial-gcc/install
+```
+Configure, build and install Albany on a compute node:
+```sh
+source do-cmake-albany-gcc-release
+salloc -N1
 make -j
 make install
+exit
 ```
