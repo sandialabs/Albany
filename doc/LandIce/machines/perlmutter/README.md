@@ -13,7 +13,7 @@ source pm_cpu_gnu_modules.sh
 ```
 for cuda builds, load gpu modules:
 ```sh
-source pm_gpu_gnumodules.
+source pm_gpu_gnumodules.sh
 ```
 
 ## Building Trilinos/develop
