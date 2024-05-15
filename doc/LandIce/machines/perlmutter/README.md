@@ -30,10 +30,11 @@ mkdir trilinos-serial-gcc
 cd trilinos-serial-gcc
 cp ${HOME}/Albany/doc/LandIce/machines/perlmutter/do-cmake-trilinos-serial-gcc .
 ```
-Edit the configuration script to point to the repo location and install directory:
+Edit the configuration script to point to headers for Boost (if on fanssie project, you can use the commented path), then edit the configuration file to point to the repository location and install directory:
 ```sh
-REPO_DIR=${HOME}/Trilinos
-INSTALL_DIR=${HOME}/Trilinos/trilinos-serial-gcc/install
+BOOST_DIR=<boost directory>
+TRILINOS_SOURCE_DIR=${HOME}/Trilinos
+TRILINOS_INSTALL_DIR=${HOME}/Trilinos/trilinos-serial-gcc/install
 ```
 Build and install Trilinos by using the configuration file provided:
 ```sh
@@ -49,13 +50,20 @@ Make a build directory for Trilinos and copy over the configuration file provide
 ```sh
 mkdir trilinos-cuda-gcc
 cd trilinos-cuda-gcc
-cp ${HOME}/Albany/doc/LandIce/machines/cee/do-cmake-trilinos-cuda-gcc .
+cp ${HOME}/Albany/doc/LandIce/machines/perlmutter/do-cmake-trilinos-cuda-gcc .
 ```
-Edit the configuration script to point to the repo location and install directory:
+Edit the configuration script to point to headers for Boost (if on fanssie project, you can use the commented path), then edit the configuration file to point to the repository location and install directory:
 ```sh
-REPO_DIR=${HOME}/Trilinos
-INSTALL_DIR=${HOME}/Trilinos/trilinos-cuda-gcc/install
+BOOST_DIR=<boost directory>
+TRILINOS_SOURCE_DIR=${HOME}/Trilinos
+TRILINOS_INSTALL_DIR=${HOME}/Trilinos/trilinos-serial-gcc/install
 ```
+
+Compiling GPU builds also require editing the configuration script to point to the kokkos nvcc wrapper which is provided in this directory:
+```sh
+NVCC_WRAPPER=${HOME}/Albany/doc/LandIce/machines/perlmutter/nvcc_wrapper_a100
+```
+
 Build and install Trilinos by using the configuration file provided:
 ```sh
 source do-cmake-trilinos-cuda-gcc

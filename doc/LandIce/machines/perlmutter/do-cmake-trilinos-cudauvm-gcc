@@ -15,7 +15,7 @@ TRILINOS_SOURCE_DIR=
 
 # FIXME: point to boost install or use boost from project directory
 BOOST_DIR=
-#BOOST_DIR=/global/cfs/cdirs/m1041/mcarlson/boost-1.72.0/gcc-11.2.0
+#BOOST_DIR=/global/common/software/fanssie/boost-1.72.0
 
 TRILINOS_INSTALL_DIR="./install"
 
