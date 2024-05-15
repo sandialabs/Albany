@@ -1,5 +1,6 @@
 # Quick Start: Build Albany with nightly Trilinos
 These build instructions are for compiling Albany Land Ice (ALI) on weaver at Sandia National Laboratories.
+
 Download Albany to the home directory by using `git`:
 ```sh
 cd ${HOME}
@@ -19,7 +20,7 @@ cp ${HOME}/Albany/doc/dashboards/weaver.sandia.gov/do-cmake-albany .
 Configure and build Albany on a compute node:
 ```sh
 bsub -Is -gpu num=4 -n 40 bash
-source do-cmake-albany-gcc-release
+source do-cmake-albany
 make -j 40
 exit
 ```
@@ -67,12 +68,12 @@ cp ${HOME}/Albany/doc/dashboards/weaver.sandia.gov/do-cmake-albany .
 Edit the configuration script to point to the trilinos install directory and nvcc_wrapper location:
 ```sh
 TRILINSTALLDIR=${HOME}/Trilinos/albany-cuda-gcc/install
-NVCC_WRAPPER=${HOME}/Trilinos/albany-cuda-gcc//nvcc_wrapper_volta
+NVCC_WRAPPER=${HOME}/Trilinos/albany-cuda-gcc/nvcc_wrapper_volta
 ```
 Configure and build Albany on a compute node:
 ```sh
 bsub -Is -gpu num=4 -n 40 bash
-source do-cmake-albany-gcc-release
+source do-cmake-albany
 make -j 40
 exit
 ```
