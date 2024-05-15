@@ -27,8 +27,6 @@ exit
 
 # Build Trilinos/Albany
 ## Clone repos and load modules
-These build instructions are for compiling Albany Land Ice (ALI) on blake at Sandia National Laboratories.
-
 Download Trilinos and Albany to the home directory by using `git`:
 ```sh
 cd ${HOME}
