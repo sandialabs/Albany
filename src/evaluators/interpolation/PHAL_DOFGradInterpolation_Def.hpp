@@ -141,6 +141,7 @@ template< typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
+  const int num_dof = this->val_node(0,0).size();
   for (size_t qp=0; qp < this->numQPs; ++qp) {
     for (size_t dim=0; dim<this->numDims; dim++) {
       this->grad_val_qp(cell,qp,dim) = ScalarT(num_dof, this->val_node(cell, 0).val() * this->GradBF(cell, 0, qp, dim));
@@ -163,7 +164,6 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
- num_dof = this->val_node(0,0).size();
  neq = workset.disc->getDOFManager()->getNumFields();
 
  Kokkos::parallel_for(this->getName(),FastSolutionGradInterpolationBase_Jacobian_Policy(0,workset.numCells),*this);

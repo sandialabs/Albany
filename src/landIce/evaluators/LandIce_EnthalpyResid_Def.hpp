@@ -310,9 +310,10 @@ template<typename EvalT, typename Traits, typename VelocityST>
 void EnthalpyResid<EvalT,Traits,VelocityST>::
 evaluateFields(typename Traits::EvalData d)
 {
-  ScalarT hom = homotopy(0);
+  typename PHX::MDField<ScalarT>::array_type::HostMirror hom = Kokkos::create_mirror_view(homotopy.get_view());
+  Kokkos::deep_copy(hom, homotopy.get_view());
 
-  flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom); // [adim]
+  flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom(0)); // [adim]
 
 #ifdef OUTPUT_TO_SCREEN
   if (std::fabs(printedRegCoeff - flux_reg_coeff) > 0.0001*flux_reg_coeff)

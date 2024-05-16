@@ -57,6 +57,10 @@ private:
   double Tm; //[K], 273.15
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 } // Namespace LandIce
