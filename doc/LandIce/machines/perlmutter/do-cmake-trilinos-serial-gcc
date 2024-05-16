@@ -12,14 +12,14 @@ TRILINOS_SOURCE_DIR=
 
 # FIXME: point to boost install or use boost from project directory
 BOOST_DIR=
-#BOOST_DIR=/global/common/software/fanssie/boost-1.72.0/gcc-11.2.0/
+#BOOST_DIR=/global/common/software/fanssie/boost-1.72.0/gcc-11.2.0
 
 TRILINOS_INSTALL_DIR=
 
 export CRAYPE_LINK_TYPE=dynamic
 
 cmake \
-  -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
+  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINOS_INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_CXX_STANDARD=17 \
 \
