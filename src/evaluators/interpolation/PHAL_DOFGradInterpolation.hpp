@@ -144,7 +144,6 @@ public:
   struct FastSolutionGradInterpolationBase_Jacobian_Tag{};
   typedef Kokkos::RangePolicy<ExecutionSpace, FastSolutionGradInterpolationBase_Jacobian_Tag> FastSolutionGradInterpolationBase_Jacobian_Policy;
 
-  int num_dof;
   int neq;
 
   KOKKOS_INLINE_FUNCTION

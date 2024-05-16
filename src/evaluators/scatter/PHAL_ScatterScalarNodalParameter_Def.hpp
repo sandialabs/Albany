@@ -86,22 +86,27 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
 
+  constexpr auto ALL = Kokkos::ALL();
+  const int ws = workset.wsIndex;
+
   const auto param = workset.distParamLib->get(this->param_name);
-  const auto p_data = Albany::getNonconstLocalData(param->vector());
+  const auto p_data = Albany::getNonconstDeviceData(param->vector());
 
-  const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
-  const int  p_local_subdim = p_data.size();
+  const auto ws_elem_lids = workset.disc->getWsElementLIDs().dev();
+  const auto elem_lids = Kokkos::subview(ws_elem_lids,ws,ALL);
+  const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().dev();
+  const int p_local_subdim = p_data.size();
 
-  for (size_t cell=0; cell<workset.numCells; ++cell) {
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     for (int node=0; node<this->numNodes; ++node) {
       const LO lid = p_elem_dof_lids(elem_LID,node);
       if (lid>=0 && lid<p_local_subdim) { // Exploit the fact that owned lids come before ghosted lids
-        p_data[lid] = this->val(cell,node);
+        p_data(lid) = this->val(cell,node);
       }
     }
-  }
+  });
 }
 
 template<typename Traits>

@@ -8,6 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_SurfaceAirEnthalpy.hpp"
 
@@ -56,9 +57,11 @@ evaluateFields(typename Traits::EvalData workset)
 
   const double powm6 = 1e-6; // [k^2], k=1000
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     for (std::size_t node = 0; node < numNodes; ++node)
-      surfaceEnthalpy(cell,node) = rho_i * c_i * ( std::min(surfaceTemp(cell,node),Tm) - T0 ) * powm6;
+      surfaceEnthalpy(cell,node) = rho_i * c_i * ( KU::min(surfaceTemp(cell,node),Tm) - T0 ) * powm6;
+  });
 }
 
 } // namespace LandIce
