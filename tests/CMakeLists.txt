@@ -188,10 +188,6 @@ IF(ENABLE_LANDICE AND ALBANY_SEACAS )
   add_subdirectory(landIce)
 ENDIF()
 
-IF (Kokkos_ENABLE_CUDA AND NOT Kokkos_ENABLE_CUDA_UVM)
-  RETURN() # don't add any tests past this point if this is a CUDA build with uvm disabled
-ENDIF()
-
 add_subdirectory(corePDEs)
 
 IF(ENABLE_DEMO_PDES)
