@@ -71,7 +71,7 @@ make -j 10 install
 ## Building Albany
 
 *A note on Fad sizes*: Albany uses Sacado Fad objects for doing automatic differentiation. When configuring a build of Albany, the size and type for these objects should be supplied. Configuration scripts have been included here for two cases: 
-1) `*-sfad` corresponds to SFad types with a fixed size that can be supplied (provided scripts set this to 12 but will need to be changed depending on the problem you intend to run), 
+1) `*-sfad` corresponds to SFad types with a fixed size that can be supplied (the provided scripts set this to 12 but will be problem dependent. Sfad size depends on number of equations and type of elements, for wedge elements the size should be `6*number_of_equations` and for hex elements it should be `8*number_of_equations`), 
 2) `*-slfad` corresponds to SLFad types which will have some maximum number of components at compile-time but the actual number used will be chosen at run-time. This option will work for any case but will suffer a performance penalty.
 3) `*-dfad` corresponds to DFad types which are completely set at run-time and will also have a performance penalty. This option will only work for serial builds of Albany.
 This readme will assume that we are using the default sfad scripts.
