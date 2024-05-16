@@ -10,15 +10,12 @@ TRILINOS_INSTALL_DIR=
 #FIXME: the following needs to be changed to point to Albany's source directory
 ALBANY_SOURCE_DIR=
 
-#FIXME: point to nvcc wrapper
-NVCC_WRAPPER=
-
-ALBANY_INSTALL_DIR="./install"
+ALBANY_INSTALL_DIR=
 
 cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL_DIR} \
       -D CMAKE_INSTALL_PREFIX:PATH=${ALBANY_INSTALL_DIR} \
-      -D CMAKE_CXX_COMPILER=${NVCC_WRAPPER} \
+      -D CMAKE_CXX_COMPILER=${MPICH_DIR}/bin/mpicxx \
       -D CMAKE_C_COMPILER=${MPICH_DIR}/bin/mpicc \
       -D CMAKE_CXX_FLAGS:STRING="" \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
@@ -28,8 +25,10 @@ cmake \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Albany_BUILD_STATIC_EXE:BOOL=OFF \
 \
-      -D ENABLE_FAD_TYPE:STRING="SFad" \
-      -D ALBANY_SFAD_SIZE=12 \
+      -D ALBANY_TAN_SLFAD_SIZE=100 \
+      -D ALBANY_SLFAD_SIZE=90 \
+      -D ENABLE_FAD_TYPE:STRING="SLFad" \
+      -D ENABLE_TAN_FAD_TYPE:STRING="SLFad" \
 \
       -D ENABLE_MPAS_INTERFACE:BOOL=ON \
 ${ALBANY_SOURCE_DIR}
@@ -37,4 +36,3 @@ ${ALBANY_SOURCE_DIR}
 # Include these flags if you want to enable PyAlbany
 #  -D ENABLE_ALBANY_PYTHON=ON \
 #  -D PYTHON_EXECUTABLE=/global/common/software/nersc/pm-2022q3/sw/python/3.9-anaconda-2021.11/bin/python \
-
