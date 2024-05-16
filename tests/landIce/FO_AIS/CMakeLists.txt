@@ -53,10 +53,6 @@ if(ALBANY_MUELU)
   endif()
 endif()
 
-if (Kokkos_ENABLE_CUDA AND NOT Kokkos_ENABLE_CUDA_UVM)
-  return() # don't add any tests past this point if this is a CUDA build with uvm disabled
-endif()
-
 if(ALBANY_MUELU)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLu.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.yaml)

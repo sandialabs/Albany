@@ -1,11 +1,6 @@
 add_subdirectory(ExoMeshes)
 add_subdirectory(AsciiMeshes)
 add_subdirectory(FO_AIS)
-
-IF (Kokkos_ENABLE_CUDA AND NOT Kokkos_ENABLE_CUDA_UVM)
-  RETURN() # don't add any tests past this point if this is a CUDA build with uvm disabled
-ENDIF()
-
 add_subdirectory(FO_MMS)
 add_subdirectory(FO_ISMIP)
 add_subdirectory(FO_Test)
