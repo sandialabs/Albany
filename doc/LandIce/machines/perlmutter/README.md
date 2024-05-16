@@ -13,7 +13,7 @@ source pm_cpu_gnu_modules.sh
 ```
 for cuda builds, load gpu modules:
 ```sh
-source pm_gpu_gnumodules.sh
+source pm_gpu_gnu_modules.sh
 ```
 
 ## Building Trilinos/develop
@@ -43,19 +43,19 @@ make -j 10 install
 ```
 
 ### For gpu builds:
-GPU builds have the option of enabling or disabling unified virtual memory and configuration files have been included for both cases. If you want to enable CUDA UVM, please replace `cuda` with `cudauvm` in the following instructions.
+GPU builds have the option of enabling or disabling unified virtual memory and configuration files have been included for both cases. If you want to disable CUDA UVM, please replace `cudauvm` with `cuda` in the following instructions.
 
 Make a build directory for Trilinos and copy over the configuration file provided:
 ```sh
-mkdir trilinos-cuda-gcc
-cd trilinos-cuda-gcc
-cp ${HOME}/Albany/doc/LandIce/machines/perlmutter/do-cmake-trilinos-cuda-gcc .
+mkdir trilinos-cudauvm-gcc
+cd trilinos-cudauvm-gcc
+cp ${HOME}/Albany/doc/LandIce/machines/perlmutter/do-cmake-trilinos-cudauvm-gcc .
 ```
 Edit the configuration script to point to headers for Boost (an installation is available for members of fanssie in the commented path), then edit the configuration file to point to the repository location and install directory:
 ```sh
 BOOST_DIR=<boost directory>
 TRILINOS_SOURCE_DIR=${HOME}/Trilinos
-TRILINOS_INSTALL_DIR=${HOME}/trilinos-cuda-gcc/install
+TRILINOS_INSTALL_DIR=${HOME}/trilinos-cudauvm-gcc/install
 ```
 
 Compiling GPU builds also require editing the configuration script to point to the kokkos nvcc wrapper which is provided in this directory:
@@ -65,7 +65,7 @@ NVCC_WRAPPER=${HOME}/Albany/doc/LandIce/machines/perlmutter/nvcc_wrapper_a100
 
 Build and install Trilinos by using the configuration file provided:
 ```sh
-source do-cmake-trilinos-cuda-gcc
+source do-cmake-trilinos-cudauvm-gcc
 make -j 10 install
 ```
 ## Building Albany
@@ -86,7 +86,7 @@ cp ${HOME}/Albany/doc/LandIce/machines/perlmutter/do-cmake-albany-cuda-gcc-sfad 
 
 Edit the configuration script to:
 ```sh
-TRILINOS_INSTALL_DIR=${HOME}/Trilinos/trilinos-cuda-gcc/install
+TRILINOS_INSTALL_DIR=${HOME}/Trilinos/trilinos-cudauvm-gcc/install
 ALBANY_SOURCE_DIR=${HOME}/Albany
 NVCC_WRAPPER=${HOME}/Albany/doc/LandIce/machines/perlmutter/nvcc_wrapper_a100
 ALBANY_INSTALL_DIR=${HOME}/albany-cuda-gcc-sfad12/install
