@@ -140,7 +140,7 @@ template<int NumNodes>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const LandIce_3D_Opt_Tag<NumNodes>& tag, const int& cell) const{
-  static constexpr int num_nodes = tag.num_nodes;
+  static constexpr int num_nodes = LandIce_3D_Opt_Tag<NumNodes>::num_nodes;
   ScalarT res0[num_nodes] = {};
   ScalarT res1[num_nodes] = {};
   for (size_t qp=0; qp < numQPs; ++qp) {
