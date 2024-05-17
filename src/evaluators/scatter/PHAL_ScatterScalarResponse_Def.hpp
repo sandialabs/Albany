@@ -148,7 +148,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   const auto do_gx = (gx != Teuchos::null);
   const auto do_gp = (gp != Teuchos::null);
 
-  Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
+  Kokkos::parallel_for(this->getName(), 
+                       Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
                        KOKKOS_CLASS_LAMBDA(const int i) {
     if (do_g){
       g_nonconstView(i) = gr[i].val();

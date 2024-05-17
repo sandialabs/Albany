@@ -186,6 +186,11 @@ void reduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<ScalarT>& a)
 {
+  // Old reduceAll implementation is not uvm-friendly and untested
+  //  for rank > 1
+  TEUCHOS_TEST_FOR_EXCEPTION(a.rank() > 1, std::logic_error,
+        "PHAL::reduceAll not implemented for MDFields with rank > 1.\n");
+        
   MDFieldHostMirror<ScalarT> a_host = Kokkos::create_mirror_view(a.get_view());
   Kokkos::deep_copy(a_host, a.get_view());
   std::vector<ScalarT> v;
