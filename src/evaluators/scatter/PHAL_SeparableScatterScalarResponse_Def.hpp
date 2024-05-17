@@ -235,8 +235,9 @@ postEvaluate(typename Traits::PostEvalData workset)
     Albany::ThyraVDeviceView<ST> g_nonconstView = Albany::getNonconstDeviceData(g);
     MDFieldVectorRight<const ScalarT> gr(this->global_response);
     global_response_reader = gr;
-    Kokkos::parallel_for(Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
-                       KOKKOS_CLASS_LAMBDA(const int i) {
+    Kokkos::parallel_for(this->getName(),
+                        Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
+                        KOKKOS_CLASS_LAMBDA(const int i) {
       g_nonconstView(i) = global_response_reader[i].val();
     });
   }
