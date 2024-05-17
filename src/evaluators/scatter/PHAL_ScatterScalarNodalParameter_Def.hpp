@@ -97,7 +97,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().dev();
   const int p_local_subdim = p_data.size();
 
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     for (int node=0; node<this->numNodes; ++node) {

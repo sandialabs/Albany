@@ -123,7 +123,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (int eq_dof=0; eq_dof<neq; eq_dof++) {
     auto offsets = dof_mgr->getGIDFieldOffsetsKokkos(eq_dof);
     const int num_nodes = offsets.size();
-    Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                          KOKKOS_CLASS_LAMBDA(const int& cell) {
       const auto elem_LID = elem_lids_dev(cell);
 

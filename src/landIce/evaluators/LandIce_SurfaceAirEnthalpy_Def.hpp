@@ -57,7 +57,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   const double powm6 = 1e-6; // [k^2], k=1000
 
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     for (std::size_t node = 0; node < numNodes; ++node)
       surfaceEnthalpy(cell,node) = rho_i * c_i * ( KU::min(surfaceTemp(cell,node),Tm) - T0 ) * powm6;

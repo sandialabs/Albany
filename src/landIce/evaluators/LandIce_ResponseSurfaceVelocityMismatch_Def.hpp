@@ -187,7 +187,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
   if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
   {
     sideSet = workset.sideSetViews->at(surfaceSideName);
-    Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                          KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of cell
       const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
@@ -240,7 +240,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       w_measure = w_measure_beta_vec[i];
       if (workset.sideSetViews->find(ssName) != workset.sideSetViews->end()) {
         sideSet = workset.sideSetViews->at(ssName);
-        Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+        Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                              KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
           const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);\
@@ -268,7 +268,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
   if (workset.sideSetViews->find(basalSideName) != workset.sideSetViews->end() && alpha_stiffening!=0)
   {
     sideSet = workset.sideSetViews->at(basalSideName);
-    Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                          KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of \cell
       const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);

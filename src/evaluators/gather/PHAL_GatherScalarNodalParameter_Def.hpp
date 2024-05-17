@@ -80,7 +80,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids  = workset.disc->getWsElementLIDs();
   const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
 
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
@@ -470,7 +470,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,ALL);
 
   using ref_t = typename PHAL::Ref<ParamScalarT>::type;
-  Kokkos::parallel_for(RangePolicy(0,workset.numCells),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const int num_deriv = this->val(0,0).size();
     const auto elem_LID = elem_lids_dev(cell);

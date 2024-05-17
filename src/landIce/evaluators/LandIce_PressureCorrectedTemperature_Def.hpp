@@ -71,7 +71,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  Kokkos::parallel_for(RangePolicy(0, workset.numCells),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0, workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     if(useP0Temp) {
       correctedTemp(cell) = KU::min(temp(cell) + coeff * (sHeight(cell) - coord(cell,2)), meltingT);

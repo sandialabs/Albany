@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
     double coeff = rho_i*1e6*scaling; //to convert volume flux [km^2 m yr^{-1}] in a mass flux [kg yr^{-1}]
     sideSet = workset.sideSetViews->at(basalSideName);
 
-    Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of cell
       const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
