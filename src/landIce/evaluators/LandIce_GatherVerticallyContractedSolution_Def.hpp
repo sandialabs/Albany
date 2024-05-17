@@ -153,7 +153,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto l_offset = offset;
   auto ncomps = vecDim;
   auto sol = device_sol;
-  Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
@@ -209,7 +209,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto l_offset = offset;
   auto sol = device_sol;
   auto j_coeff = workset.j_coeff;
-  Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
@@ -266,7 +266,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto nlayers = numLayers;
   auto l_offset = offset;
   auto sol = device_sol;
-  Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
@@ -314,7 +314,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto nlayers = numLayers;
   auto l_offset = offset;
   auto sol = device_sol;
-  Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
@@ -402,7 +402,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   auto l_offset = offset;
   auto sol = device_sol;
   auto j_coeff = workset.j_coeff;
-  Kokkos::parallel_for(RangePolicy(0,sideSet.size),
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_LAMBDA(const int iside) {
     const auto pos = sideSet.side_pos.d_view(iside);
     const int numSideNodes = snc(pos);
