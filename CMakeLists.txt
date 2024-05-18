@@ -149,6 +149,7 @@ include(CTest)
 MESSAGE("Checking Trilinos build for required and optional packages")
 
 OPTION(ENABLE_ALBANY_PYTHON "Flag to turn on building of code depending on Python" OFF)
+OPTION(ENABLE_PARALLEL_EXODUS "Flag to turn on/off parallel Exodus" ON)
 
 ###############################
 ### Check REQUIRED packages ###
@@ -423,6 +424,12 @@ check_c_source_compiles(
   PARALLEL_EXODUS_SUPPORTED
   )
 
+IF(NOT ENABLE_PARALLEL_EXODUS) 
+  SET(PARALLEL_EXODUS_SUPPORTED FALSE)
+  MESSAGE("-- User requested to turn off ALBANY_PARALELL_EXODUS")
+ENDIF()
+
+
 IF (PARALLEL_EXODUS_SUPPORTED)
   SET(ALBANY_PARALELL_EXODUS TRUE)
   MESSAGE("-- ALBANY_PARALELL_EXODUS set to True")
@@ -430,6 +437,8 @@ ELSE()
   SET(ALBANY_PARALELL_EXODUS FALSE)
   MESSAGE("-- ALBANY_PARALELL_EXODUS set to False")
 ENDIF()
+
+SET(ALBANY_PARALELL_EXODUS FALSE)
 
 ##########################################
 ### Check Albany configuration options ###
