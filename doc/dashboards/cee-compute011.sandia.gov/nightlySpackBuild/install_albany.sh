@@ -1,7 +1,7 @@
 
 
 cd spack
-source sems-gcc-modules.sh 
+source ../sems-gcc-modules.sh 
 export http_proxy=http://proxy.sandia.gov:80
 export https_proxy=http://proxy.sandia.gov:80
 . share/spack/setup-env.sh
