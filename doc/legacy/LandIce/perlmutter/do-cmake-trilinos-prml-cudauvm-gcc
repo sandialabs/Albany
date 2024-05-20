@@ -17,7 +17,7 @@ TRILINOS_SOURCE_DIR=
 BOOST_DIR=
 #BOOST_DIR=/global/cfs/cdirs/m1041/mcarlson/boost-1.72.0/gcc-11.2.0
 
-TRILINOS_INSTALL_DIR="./install"
+TRILINOS_INSTALL_DIR=${PWD}/install
 
 export CRAYPE_LINK_TYPE=dynamic
 
