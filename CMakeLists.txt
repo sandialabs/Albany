@@ -438,7 +438,6 @@ ELSE()
   MESSAGE("-- ALBANY_PARALELL_EXODUS set to False")
 ENDIF()
 
-SET(ALBANY_PARALELL_EXODUS FALSE)
 
 ##########################################
 ### Check Albany configuration options ###
