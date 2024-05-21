@@ -107,37 +107,6 @@ int getDerivativeDimensions(const Albany::Application* app, const int ebi)
 
 namespace {
 template<typename ScalarT>
-struct A2V {
-  std::vector<ScalarT>& v;
-  A2V (std::vector<ScalarT>& v) : v(v) {}
-  void operator() (typename Ref<const ScalarT>::type a, const int i) {
-    v[i] = a;
-  }
-};
-
-template<typename ScalarT>
-struct V2A {
-  const std::vector<ScalarT>& v;
-  V2A (const std::vector<ScalarT>& v) : v(v) {}
-  void operator() (typename Ref<ScalarT>::type a, const int i) {
-    a = v[i];
-  }
-};
-
-template<typename ScalarT>
-void copy (const PHX::MDField<ScalarT>& a, std::vector<ScalarT>& v) {
-  v.resize(a.size());
-  A2V<ScalarT> a2v(v);
-  loop(a2v, a);
-}
-
-template<typename ScalarT>
-void copy (const std::vector<ScalarT>& v, PHX::MDField<ScalarT>& a) {
-  V2A<ScalarT> v2a(v);
-  loop(v2a, a);
-}
-
-template<typename ScalarT>
 void myReduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   std::vector<ScalarT>& v)
@@ -212,15 +181,6 @@ void reduceAll (
   ScalarT b = a;
   Teuchos::reduceAll(comm, reduct_type, 1, &a, &b);
   a = b;
-}
-
-template<typename ScalarT>
-void broadcast (const Teuchos_Comm& comm, const int root_rank,
-                PHX::MDField<ScalarT>& a) {
-  std::vector<ScalarT> v;
-  copy<ScalarT>(a, v);
-  Teuchos::broadcast<int, ScalarT>(comm, root_rank, v.size(), &v[0]);
-  copy<ScalarT>(v, a);
 }
 
 template int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
