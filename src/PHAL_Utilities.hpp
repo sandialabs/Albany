@@ -120,10 +120,6 @@ void reduceAll(
 template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type, T& a);
-//! Broadcast an MDField.
-template<typename T>
-void broadcast(
-  const Teuchos_Comm& comm, const int root_rank, PHX::MDField<T>& a);
 
 /*! \brief Loop over an array and apply a functor.
  *
