@@ -36,8 +36,8 @@ cmake -GNinja \
       -D Boost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
       -D TPL_ENABLE_Netcdf=ON \
       -D TPL_Netcdf_PARALLEL=ON \
-      -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_ROOT}/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_C_ROOT}/lib \
+      -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_ROOT}/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
       -D TPL_ENABLE_Pnetcdf=ON \
       -D Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_ROOT}/include \
       -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_ROOT}/lib \
