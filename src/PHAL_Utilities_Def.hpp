@@ -47,7 +47,7 @@ MDFieldVectorRight (PHX::MDField<T>& a) {
   dim4 = (rank_ > 4) ? a.extent(4) : 0;
 }
 
-template<typename T> KOKKOS_INLINE_FUNCTION MDFieldVectorRight<T>::return_type
+template<typename T> KOKKOS_INLINE_FUNCTION typename MDFieldVectorRight<T>::return_type
 MDFieldVectorRight<T>::operator[] (const int i) const {
   int idx0, idx1, idx2, idx3, idx4;
   if (rank_ == 1) {
