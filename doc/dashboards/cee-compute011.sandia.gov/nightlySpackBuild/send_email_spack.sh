@@ -14,4 +14,4 @@ cat a b >& c
 cat c results_spack >& d
 rm a b c
 mv d results_spack
-cat results_spack | /usr/sbin/sendmail -F ikalash@cee-compute006.sandia.gov -t "ikalash@sandia.gov, mperego@sandia.gov, lbertag@sandia.gov"
+cat results_spack | /usr/sbin/sendmail -F ikalash@cee-compute035.sandia.gov -t "ikalash@sandia.gov, mperego@sandia.gov, lbertag@sandia.gov"
