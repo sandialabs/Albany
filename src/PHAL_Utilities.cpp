@@ -209,9 +209,7 @@ template int getDerivativeDimensions<PHAL::AlbanyTraits::HessianVec>(
   template void reduceAll<T> (                                              \
     const Teuchos_Comm&, const Teuchos::EReductionType, PHX::MDField<T>&);  \
   template void reduceAll<T> (                                              \
-    const Teuchos_Comm&, const Teuchos::EReductionType, T&);                \
-  template void broadcast<T> (                                              \
-    const Teuchos_Comm&, const int, PHX::MDField<T>&);
+    const Teuchos_Comm&, const Teuchos::EReductionType, T&);                
 apply_to_all_ad_types(eti)
 #undef eti
 #undef apply_to_all_ad_types
