@@ -1,13 +1,15 @@
 
 rm -rf CMake*
 
+INSTALL_DIR=
+
 cmake \
   -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_CXX_STANDARD=17 \
 \
   -D CMAKE_C_COMPILER=cc \
-  -D CMAKE_CXX_COMPILER=${NVCC_WRAPPER} \
+  -D CMAKE_CXX_COMPILER=CC \
   -D CMAKE_Fortran_COMPILER=ftn \
   -D CMAKE_C_FLAGS:STRING="" \
   -D CMAKE_CXX_FLAGS:STRING="" \
@@ -58,32 +60,17 @@ cmake \
   -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
   -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
 \
-  -D Kokkos_ENABLE_CUDA:BOOL=ON \
-  -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=ON \
-  -D Kokkos_ENABLE_CUDA_UVM:BOOL=ON \
   -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Trilinos_ENABLE_Epetra:BOOL=OFF \
-  -D Trilinos_ENABLE_EpetraExt:BOOL=OFF \
   -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
   -D Kokkos_ENABLE_SERIAL:BOOL=ON \
   -D Kokkos_ENABLE_TESTS:BOOL=OFF \
   -D Kokkos_ARCH_ZEN3:BOOL=ON \
-  -D Kokkos_ARCH_AMPERE80:BOOL=ON \
-  -D TPL_ENABLE_Thrust:BOOL=ON \
-  -D Thrust_INCLUDE_DIRS=${CUDA_HOME}/targets/x86_64-linux/include \
-  -D TPL_ENABLE_CUDA:BOOL=ON \
-  -D TPL_ENABLE_CUSPARSE:BOOL=OFF \
-  -D CUDA_cublas_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcublas.so \
-  -D CUDA_cusolver_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcusolver.so \
-  -D CUDA_cufft_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcufft.so \
 \
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
-  -D Intrepid_ENABLE_TESTS:BOOL=OFF \
   -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
   -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
-  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="CUDA" \
+  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
   -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
-  -D Tpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON \
   -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
   -D Tpetra_INST_INT_INT:BOOL=OFF \
   -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
@@ -95,15 +82,12 @@ cmake \
   -D Trilinos_ENABLE_Anasazi:BOOL=ON \
   -D Trilinos_ENABLE_Belos:BOOL=ON \
   -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Trilinos_ENABLE_Epetra:BOOL=OFF \
-  -D Trilinos_ENABLE_EpetraExt:BOOL=OFF \
   -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
   -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
   -D Trilinos_ENABLE_NOX:BOOL=ON \
   -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
-  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
   -D Trilinos_ENABLE_Phalanx:BOOL=ON \
   -D Trilinos_ENABLE_Piro:BOOL=ON \
   -D Trilinos_ENABLE_ROL:BOOL=ON \
@@ -139,6 +123,4 @@ cmake \
   -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
 \
-  -D Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC:BOOL=OFF \
-\
-
+../

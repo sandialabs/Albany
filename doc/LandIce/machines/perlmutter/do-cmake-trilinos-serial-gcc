@@ -12,14 +12,14 @@ TRILINOS_SOURCE_DIR=
 
 # FIXME: point to boost install or use boost from project directory
 BOOST_DIR=
-#BOOST_DIR=/global/cfs/cdirs/m1041/mcarlson/boost-1.72.0/gcc-11.2.0
+#BOOST_DIR=/global/common/software/fanssie/boost-1.72.0/gcc-11.2.0
 
-TRILINOS_INSTALL_DIR=${PWD}/install
+TRILINOS_INSTALL_DIR=
 
 export CRAYPE_LINK_TYPE=dynamic
 
 cmake \
-  -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
+  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINOS_INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
   -D CMAKE_CXX_STANDARD=17 \
 \
@@ -82,7 +82,6 @@ cmake \
   -D Kokkos_ARCH_ZEN3:BOOL=ON \
 \
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
-  -D Intrepid_ENABLE_TESTS:BOOL=OFF \
   -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
   -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
   -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
@@ -98,15 +97,12 @@ cmake \
   -D Trilinos_ENABLE_Anasazi:BOOL=ON \
   -D Trilinos_ENABLE_Belos:BOOL=ON \
   -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Trilinos_ENABLE_Epetra:BOOL=OFF \
-  -D Trilinos_ENABLE_EpetraExt:BOOL=OFF \
   -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
   -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
   -D Trilinos_ENABLE_NOX:BOOL=ON \
   -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
-  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
   -D Trilinos_ENABLE_Phalanx:BOOL=ON \
   -D Trilinos_ENABLE_Piro:BOOL=ON \
   -D Trilinos_ENABLE_ROL:BOOL=ON \

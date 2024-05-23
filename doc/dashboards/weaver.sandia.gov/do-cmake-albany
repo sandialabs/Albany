@@ -7,6 +7,7 @@
 rm -rf CMake*
 TRILINSTALLDIR=/projects/albany/nightlyCDashWeaver/build/TrilinosInstall
 NVCC_WRAPPER=/projects/albany/nightlyCDashWeaver/nvcc_wrapper_volta
+OPENMPI_DIR=${OPENMPI_BIN}
 cmake \
     -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR} \
     -D CMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER} \

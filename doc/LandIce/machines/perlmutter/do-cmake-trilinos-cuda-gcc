@@ -15,9 +15,9 @@ TRILINOS_SOURCE_DIR=
 
 # FIXME: point to boost install or use boost from project directory
 BOOST_DIR=
-#BOOST_DIR=/global/cfs/cdirs/m1041/mcarlson/boost-1.72.0/gcc-11.2.0
+#BOOST_DIR=/global/common/software/fanssie/boost-1.72.0/gcc-11.2.0
 
-TRILINOS_INSTALL_DIR=${PWD}/install
+TRILINOS_INSTALL_DIR=
 
 export CRAYPE_LINK_TYPE=dynamic
 
@@ -82,8 +82,6 @@ cmake \
   -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=ON \
   -D Kokkos_ENABLE_CUDA_UVM:BOOL=OFF \
   -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Trilinos_ENABLE_Epetra:BOOL=OFF \
-  -D Trilinos_ENABLE_EpetraExt:BOOL=OFF \
   -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
   -D Kokkos_ENABLE_SERIAL:BOOL=ON \
   -D Kokkos_ENABLE_TESTS:BOOL=OFF \
@@ -98,7 +96,6 @@ cmake \
   -D CUDA_cufft_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcufft.so \
 \
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
-  -D Intrepid_ENABLE_TESTS:BOOL=OFF \
   -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
   -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
   -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="CUDA" \
@@ -115,15 +112,12 @@ cmake \
   -D Trilinos_ENABLE_Anasazi:BOOL=ON \
   -D Trilinos_ENABLE_Belos:BOOL=ON \
   -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Trilinos_ENABLE_Epetra:BOOL=OFF \
-  -D Trilinos_ENABLE_EpetraExt:BOOL=OFF \
   -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
   -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
   -D Trilinos_ENABLE_NOX:BOOL=ON \
   -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
-  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
   -D Trilinos_ENABLE_Phalanx:BOOL=ON \
   -D Trilinos_ENABLE_Piro:BOOL=ON \
   -D Trilinos_ENABLE_ROL:BOOL=ON \
