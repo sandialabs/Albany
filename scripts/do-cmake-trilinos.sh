@@ -6,26 +6,28 @@
 # are explicitly set in this script. In other words, the cache file takes
 # precedence over any setting passed via -DVAR=value
 #
-# This script MUST be invoked with the following env vars defined:
+# This script uses the following env vars:
 #
-# SOURCE_DIR: the path to trilinos source dir
-# INSTALL_DIR: the path where to install trilinos
-# CACHE_FILE: the path to this machine/build cmake var settings
+# SOURCE_DIR: the path to trilinos source dir (REQUIRED)
+# INSTALL_DIR: the path where to install trilinos (OPTIONAL: defaults to $(pwd)/install)
+# CACHE_FILE  : the path to this machine/build cmake var settings (OPTIONAL: defaults to an empty file)
 #
 # The cache file can include multiple files inside, but all that these
 # file can contain is a series of
 #   set (VARNAME VARVALUE CACHE VARTYPE "docstring")
 # calls. No other cmake command should appear in those files.
 #
-# These cache entries MUST be set in that file:
+# These cache entries SHOULD be set in that file:
 #  - CMAKE_<LANG>_COMPILER (STRING): path to <LANG> compiler (LANG=C,CXX,Fortran)
+# If not set, cmake will attempt to use some default system compiler,
+# but may fail to detect them
 #
 # These cache entries are optional
-#  - Kokkos_ARCH_<ARCH> (BOOL): which kokkos arch to enable
-#  - Kokkos_ENABLE_<DEVICE> (BOOL): kokkos backend to enable
-#  - Other Kokkos_<OPTION> settings, depending on needs
-#  - CMAKE_<LANG>_FLAGS (STRING): flags for compiler/linker
-#  - Tpetra_ASSUME_CUDA_AWARE_MPI (BOOL)
+#  - Kokkos_ARCH_<ARCH> (BOOL): which kokkos arch to enable (default: none)
+#  - Kokkos_ENABLE_<DEVICE> (BOOL): kokkos backend to enable (default: SERIAL)
+#  - Other Kokkos_<OPTION> settings, depending on needs (default: none)
+#  - CMAKE_<LANG>_FLAGS (STRING): flags for compiler/linker (default: none)
+#  - Tpetra_ASSUME_CUDA_AWARE_MPI (BOOL) (default: FALSE)
 #
 # TPLs are the most annoying part of configuyring trilinos. Some advice:
 #  - If your environment setup provides <PKG>_ROOT, then PKG should
@@ -48,6 +50,32 @@
 #   when/why TPL_ is needed with TriBITs; sometimes it is, sometimes
 #   it's not. I will find out one day.
 #
+# Finally, be aware that this script is a TEMPLATE. You may find that
+# something does not work quite right, perhaps because of your cmake
+# version, or maybe some newly added cmake logic in Trilinos (we try
+# to keep up to date, but something can slip through the cracks)
+
+echo "Configuring trilinos ...\n"
+if [[ "${SOURCE_DIR}" == "" ]]; then
+  echo "Error! SOURCE_DIR env var is not set."
+  exit 1
+else
+  echo "SOURCE_DIR: ${SOURCE_DIR}"
+fi
+
+if [[ "${CACHE_FILE}" == "" ]]; then
+  echo "Warning! CACHE_FILE env var is not set. Using an empty cache file"
+  touch $(pwd)/empty.cmake
+  export CACHE_FILE=$(pwd)/empty.cmake
+fi
+if [[ "${INSTALL_DIR}" == "" ]]; then
+  echo "Warning! INSTALL_DIR env var is not set. Installing in $(pwd)/install"
+  export CACHE_FILE=$(pwd)/install
+fi
+
+rm -rf CMakeFiles.txt
+rm -f  CMakeCache.txt
+
 # NOTE: the following lines are organized in blocks:
 # - General CMake options
 # - General Trilinos options
@@ -55,18 +83,6 @@
 # - Packages-specific options
 # - TPL enable's
 # - TPL include/library dirs
-
-for var in "CACHE_FILE" "SOURCE_DIR" "INSTALL_DIR"; do
-  if [[ "${!var}" == "" ]]; then
-    echo "Error! ${var} env var is not set."
-    exit 1
-  else
-    echo "${var}: ${!var}"
-  fi
-done
-
-rm -rf CMakeFiles.txt
-rm -f  CMakeCache.txt
 
 cmake \
   -C ${CACHE_FILE}                                  \
@@ -85,17 +101,11 @@ cmake \
   -D Trilinos_ENABLE_TESTS:BOOL=OFF                 \
   \
   -D Trilinos_ENABLE_Amesos2:BOOL=ON                \
-  -D Trilinos_ENABLE_Amesos:BOOL=ON                 \
   -D Trilinos_ENABLE_Anasazi:BOOL=ON                \
-  -D Trilinos_ENABLE_AztecOO:BOOL=ON                \
   -D Trilinos_ENABLE_Belos:BOOL=ON                  \
-  -D Trilinos_ENABLE_Epetra:BOOL=ON                 \
-  -D Trilinos_ENABLE_EpetraExt:BOOL=ON              \
   -D Trilinos_ENABLE_Ifpack2:BOOL=ON                \
-  -D Trilinos_ENABLE_Ifpack:BOOL=ON                 \
   -D Trilinos_ENABLE_Intrepid2:BOOL=ON              \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON                 \
-  -D Trilinos_ENABLE_ML:BOOL=ON                     \
   -D Trilinos_ENABLE_MueLu:BOOL=ON                  \
   -D Trilinos_ENABLE_NOX:BOOL=ON                    \
   -D Trilinos_ENABLE_Pamgen:BOOL=ON                 \
@@ -103,7 +113,6 @@ cmake \
   -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON         \
   -D Trilinos_ENABLE_Phalanx:BOOL=ON                \
   -D Trilinos_ENABLE_Piro:BOOL=ON                   \
-  -D Trilinos_ENABLE_ROL:BOOL=OFF                   \
   -D Trilinos_ENABLE_SEACAS:BOOL=ON                 \
   -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=OFF     \
   -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF          \
@@ -119,17 +128,14 @@ cmake \
   -D Trilinos_ENABLE_Tempus:BOOL=ON                 \
   -D Trilinos_ENABLE_Teuchos:BOOL=ON                \
   -D Trilinos_ENABLE_Thyra:BOOL=ON                  \
-  -D Trilinos_ENABLE_ThyraEpetraAdapters:BOOL=ON    \
   -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON    \
   -D Trilinos_ENABLE_Tpetra:BOOL=ON                 \
   -D Trilinos_ENABLE_Zoltan2:BOOL=ON                \
   -D Trilinos_ENABLE_Zoltan:BOOL=ON                 \
   \
   -D Amesos2_ENABLE_KLU2:BOOL=ON                    \
-  -D Belos_ENABLE_Epetra=OFF                        \
   -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF                \
   -D Kokkos_ENABLE_TESTS:BOOL=OFF                   \
-  -D MueLu_ENABLE_Epetra=OFF                        \
   -D MueLu_ENABLE_Tutorial:BOOL=OFF                 \
   -D Phalanx_INDEX_SIZE_TYPE:STRING=UINT            \
   -D Sacado_ENABLE_COMPLEX:BOOL=OFF                 \
@@ -139,8 +145,6 @@ cmake \
   -D Tpetra_INST_INT_INT:BOOL=OFF                   \
   -D Tpetra_INST_INT_LONG_LONG:BOOL=ON              \
   -D Xpetra_ENABLE_DEPRECATED_CODE:BOOL=OFF         \
-  -D Xpetra_ENABLE_Epetra=OFF                       \
-  -D Xpetra_ENABLE_EpetraExt=OFF                    \
   \
   -D TPL_ENABLE_BLAS:BOOL=ON                        \
   -D TPL_ENABLE_Boost:BOOL=ON                       \
