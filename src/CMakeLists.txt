@@ -282,7 +282,6 @@ list (APPEND HEADERS
   disc/stk/Albany_GenericSTKFieldContainer.hpp
   disc/stk/Albany_IossSTKMeshStruct.hpp
   disc/stk/Albany_MultiSTKFieldContainer.hpp
-  disc/stk/Albany_NodalGraphUtils.hpp
   disc/stk/Albany_OrdinarySTKFieldContainer.hpp
   disc/stk/Albany_SideSetSTKMeshStruct.hpp
   disc/stk/Albany_STKDiscretization.hpp
