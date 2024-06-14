@@ -3,6 +3,7 @@
 
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_LayeredMeshNumbering.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 #include <Teuchos_RCP.hpp>
 
@@ -15,6 +16,10 @@ public:
                 const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   virtual ~ExtrudedMesh () = default;
+
+  std::string meshLibName () const override {
+    return "Albany";
+  }
 
   // Checks that the extruded part name is "extruded_XYZ", and return XYZ
   std::string get_basal_part_name (const std::string& extruded_part_name) const;
@@ -30,6 +35,17 @@ public:
 
   LO get_num_local_elements () const override {
     return m_basal_mesh->get_num_local_elements()*m_elem_layers_data_gid->numLayers;
+  }
+
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const Teuchos::RCP<StateInfoStruct>& sis) override
+  {
+    throw NotYetImplemented("ExtrudedMesh::setFieldData");
+  }
+
+  void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) override
+  {
+    throw NotYetImplemented("ExtrudedMesh::setBulkData");
   }
 protected:
 
