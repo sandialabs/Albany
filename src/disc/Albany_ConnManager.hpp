@@ -102,6 +102,8 @@ public:
   }
 protected:
   std::vector<std::string> m_elem_blocks_names;
+
+  bool m_is_connectivity_built = false;
 };
 
 } // namespace Albany
