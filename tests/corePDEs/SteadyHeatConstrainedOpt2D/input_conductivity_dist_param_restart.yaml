@@ -37,7 +37,7 @@ ANONYMOUS:
   Discretization: 
     Method: Exodus
     Number Of Time Derivatives: 0
-    Use Serial Mesh: false
+    Use Serial Mesh: true
     Exodus Output File Name: steady2d_conduct_restart.exo
     Exodus Input File Name: steady2d_conduct_opt.exo
     Restart Index: 1
