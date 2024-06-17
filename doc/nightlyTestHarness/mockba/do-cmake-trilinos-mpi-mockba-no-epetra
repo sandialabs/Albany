@@ -34,7 +34,8 @@ rm -rf CMakeFiles
 
 BUILD_DIR=`pwd`
 
-cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+cmake -GNinja \
+      -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \

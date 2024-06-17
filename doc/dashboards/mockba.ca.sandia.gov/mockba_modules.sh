@@ -10,4 +10,5 @@ module load sems-netcdf-fortran/4.5.3
 module load sems-netcdf-c/4.7.3 
 module load sems-netcdf-cxx/4.2
 module load sems-hdf5/1.10.7
+module load sems-ninja/1.10.1
 module list
