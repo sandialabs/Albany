@@ -55,6 +55,10 @@ private:
   PHX::MDField<const ThicknessST,Side,Node>         bed;         //[km]
   PHX::MDField<const MeshScalarT,Side,Node,Dim>     coords;      //[km]
 
+  Kokkos::DynRankView<ThicknessST, PHX::Device>     gl_func,H;
+  Kokkos::DynRankView<xyST, PHX::Device>            x,y;
+  Kokkos::DynRankView<ScalarT, PHX::Device>         velx,vely;
+
   double rho_i, rho_w;  //[kg m^{-3}]
   double scaling;       //[adim]
 
