@@ -32,7 +32,7 @@ if (ALBANY_ROL)
                 ${CMAKE_CURRENT_BINARY_DIR}/tempus_be_nox_analysis_integrated_response_distributed_param.yaml COPYONLY)
 
     add_test(${testName} ${AlbanyAnalysis.exe} tempus_be_nox_analysis_integrated_response_distributed_param.yaml)
-    set_tests_properties(${testName} PROPERTIES LABELS "Transient;Analysis;Integrated;Scalar")
+    set_tests_properties(${testName} PROPERTIES LABELS "Transient;Analysis;Integrated;Distributed")
 
 
     set(testName ${testNameRoot}_Transient_Analysis_ROL_Scalar_Params)
