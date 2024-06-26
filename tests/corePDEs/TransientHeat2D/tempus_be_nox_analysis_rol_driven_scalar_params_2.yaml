@@ -14,7 +14,7 @@ ALBANY:
     Response Functions: 
       Number Of Responses: 1
       Response 0:
-        Name: Solution Average
+        Name: Solution Two Norm
     Parameters: 
       Number Of Parameters: 1
       Parameter 0:
@@ -22,12 +22,12 @@ ALBANY:
         Dimension: 2
         Scalar 0:
           Name: DBC on NS NodeSet0 for DOF T
-          Lower Bound: 0.0
-          Upper Bound: 5.0
+          Lower Bound: -50.0
+          Upper Bound: 50.0
         Scalar 1:
           Name: DBC on NS NodeSet1 for DOF T
-          Lower Bound: 0.0
-          Upper Bound: 5.0
+          Lower Bound: -50.0
+          Upper Bound: 50.0
   Discretization: 
     1D Elements: 5
     2D Elements: 5
@@ -57,7 +57,7 @@ ALBANY:
         Min And Max Of Random Parameter Guess: [1.0, 5.0]
         Bound Constrained: true
 
-        Tempus Driver: true
+        Tempus Driver: false
         Response Depends Only On Final Time: true
 
         ROL Options:
@@ -127,7 +127,7 @@ ALBANY:
           Rescue Bad Newton Solve: true
           Linear Solver:
             Write Linear System: false
-            Tolerance: 1.0e-5
+            Tolerance: 1.0e-7
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 

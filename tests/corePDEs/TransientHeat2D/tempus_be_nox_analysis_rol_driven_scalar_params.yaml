@@ -51,6 +51,7 @@ ALBANY:
       ROL:
         Number Of Parameters: 1
         Check Derivatives: false
+        Perform Optimization: true
         Parameter Initial Guess Type: Uniform Vector
         Uniform Parameter Guess: 2.0
         Min And Max Of Random Parameter Guess: [1.0, 5.0]
