@@ -725,8 +725,8 @@ STKDiscretization::writeSolutionToMeshDatabase(
     const double /* time */,
     const bool overlapped)
 {
-  // Put solution into STK Mesh
-  setSolutionField(soln, soln_dxdp, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void
@@ -738,7 +738,8 @@ STKDiscretization::writeSolutionToMeshDatabase(
     const bool overlapped)
 {
   // Put solution into STK Mesh
-  setSolutionField(soln, soln_dxdp, soln_dot, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
 }
 
 void
@@ -751,7 +752,8 @@ STKDiscretization::writeSolutionToMeshDatabase(
     const bool overlapped)
 {
   // Put solution into STK Mesh
-  setSolutionField(soln, soln_dxdp, soln_dot, soln_dotdot, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
 }
 
 void
@@ -762,7 +764,8 @@ STKDiscretization::writeSolutionMVToMeshDatabase(
     const bool overlapped)
 {
   // Put solution into STK Mesh
-  setSolutionFieldMV(soln, soln_dxdp, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void
@@ -1021,49 +1024,6 @@ STKDiscretization::setField(
 {
   const auto dof_mgr = getDOFManager(name);
   solutionFieldContainer->saveVector(result,name,dof_mgr,overlapped);
-}
-
-void
-STKDiscretization::setSolutionField(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const bool          overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::setSolutionField(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& soln_dot,
-    const bool          overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::setSolutionField(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& soln_dot,
-    const Thyra_Vector& soln_dotdot,
-    const bool          overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::setSolutionFieldMV(
-    const Thyra_MultiVector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const bool               overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void STKDiscretization::computeVectorSpaces()
