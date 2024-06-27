@@ -267,7 +267,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
   elem_map = Teuchos::rcp(new Tpetra_Map(total_elems, StartIndex, comm, Tpetra::GloballyDistributed));
 
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getLocalNumElements() * (triangles ? 2 : 1));
+  int worksetSize = computeWorksetSize(worksetSizeMax, elem_map->getLocalNumElements() * (triangles ? 2 : 1));
 
   for (unsigned int eb=0; eb<numEB; eb++){
 
