@@ -171,10 +171,16 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int ebSizeMaxEstimate = basalWorksetSize * numLayers; // This is ebSizeMax when basalWorksetSize is max
   int worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
 
-  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, nsNames, ssNames, worksetSize, 
-     ebn, ebNameToIndex));
+  // NOTE: I am marking the mesh as Unstructured rather than Extruded, since
+  //       I am planning to develop a generic interface for Extruded meshes,
+  //       which does not store 3d data (only basal). In order to not confuse
+  //       the two, I keep this mesh as Unstructured.
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Unstructured, ctd, numDim,
+                          nsNames, ssNames, worksetSize,
+                          ebn, ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {
