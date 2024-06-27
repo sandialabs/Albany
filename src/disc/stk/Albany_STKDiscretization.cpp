@@ -604,6 +604,22 @@ STKDiscretization::writeSolution(
   writeSolutionToMeshDatabase(soln, soln_dxdp, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
   writeSolutionToFile(soln, time, overlapped, force_write_solution);
+
+  // If any, process side discs as well
+  for (auto it : sideSetDiscretizations) {
+    auto disc = it.second;
+    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+    auto ss_soln = Thyra::createMember(vs);
+    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
+    Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
+    if (not soln_dxdp.is_null()) {
+      auto dim = soln_dxdp->domain()->dim();
+      ss_soln_dxdp = Thyra::createMembers(vs,dim);
+      P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
+    }
+    disc->writeSolution(*ss_soln,ss_soln_dxdp,time,overlapped,force_write_solution);
+  }
 }
 
 void
@@ -618,6 +634,24 @@ STKDiscretization::writeSolution(
   writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and/or soln_dxdp?
   writeSolutionToFile(soln, time, overlapped, force_write_solution);
+
+  // If any, process side discs as well
+  for (auto it : sideSetDiscretizations) {
+    auto disc = it.second;
+    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+    auto ss_soln = Thyra::createMember(vs);
+    auto ss_soln_dot = Thyra::createMember(vs);
+    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
+    P->apply(Thyra::NOTRANS, soln_dot, ss_soln_dot.ptr(), 1.0, 0.0);
+    Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
+    if (not soln_dxdp.is_null()) {
+      auto dim = soln_dxdp->domain()->dim();
+      ss_soln_dxdp = Thyra::createMembers(vs,dim);
+      P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
+    }
+    disc->writeSolution(*ss_soln,ss_soln_dxdp,*ss_soln_dot,time,overlapped,force_write_solution);
+  }
 }
 
 void
@@ -633,6 +667,26 @@ STKDiscretization::writeSolution(
   writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and soln_dotdot?
   writeSolutionToFile(soln, time, overlapped, force_write_solution);
+
+  // If any, process side discs as well
+  for (auto it : sideSetDiscretizations) {
+    auto disc = it.second;
+    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+    auto ss_soln = Thyra::createMember(vs);
+    auto ss_soln_dot = Thyra::createMember(vs);
+    auto ss_soln_dotdot = Thyra::createMember(vs);
+    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
+    P->apply(Thyra::NOTRANS, soln_dot, ss_soln_dot.ptr(), 1.0, 0.0);
+    P->apply(Thyra::NOTRANS, soln_dotdot, ss_soln_dot.ptr(), 1.0, 0.0);
+    Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
+    if (not soln_dxdp.is_null()) {
+      auto dim = soln_dxdp->domain()->dim();
+      ss_soln_dxdp = Thyra::createMembers(vs,dim);
+      P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
+    }
+    disc->writeSolution(*ss_soln,ss_soln_dxdp,*ss_soln_dot,*ss_soln_dotdot,time,overlapped,force_write_solution);
+  }
 }
 
 void
@@ -646,6 +700,22 @@ STKDiscretization::writeSolutionMV(
   writeSolutionMVToMeshDatabase(soln, soln_dxdp, time, overlapped);
   // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
   writeSolutionMVToFile(soln, time, overlapped, force_write_solution);
+
+  // If any, process side discs as well
+  for (auto it : sideSetDiscretizations) {
+    auto disc = it.second;
+    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+    auto ss_soln = Thyra::createMembers(vs,soln.domain()->dim());
+    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
+    Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
+    if (not soln_dxdp.is_null()) {
+      auto dim = soln_dxdp->domain()->dim();
+      ss_soln_dxdp = Thyra::createMembers(vs,dim);
+      P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
+    }
+    disc->writeSolutionMV(*ss_soln,ss_soln_dxdp,time,overlapped,force_write_solution);
+  }
 }
 
 void
@@ -655,8 +725,8 @@ STKDiscretization::writeSolutionToMeshDatabase(
     const double /* time */,
     const bool overlapped)
 {
-  // Put solution into STK Mesh
-  setSolutionField(soln, soln_dxdp, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void
@@ -668,7 +738,8 @@ STKDiscretization::writeSolutionToMeshDatabase(
     const bool overlapped)
 {
   // Put solution into STK Mesh
-  setSolutionField(soln, soln_dxdp, soln_dot, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
 }
 
 void
@@ -681,7 +752,8 @@ STKDiscretization::writeSolutionToMeshDatabase(
     const bool overlapped)
 {
   // Put solution into STK Mesh
-  setSolutionField(soln, soln_dxdp, soln_dot, soln_dotdot, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
 }
 
 void
@@ -692,7 +764,8 @@ STKDiscretization::writeSolutionMVToMeshDatabase(
     const bool overlapped)
 {
   // Put solution into STK Mesh
-  setSolutionFieldMV(soln, soln_dxdp, overlapped);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void
@@ -743,27 +816,13 @@ STKDiscretization::writeSolutionToFile(
     mesh_data->end_output_step(outputFileIdx);
 
     if (comm->getRank() == 0) {
-      *out << "STKDiscretization::writeSolution: writing time " << time;
+      *out << "STKDiscretization::writeSolutionToFile: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " << out_step << " in file "
            << stkMeshStruct->exoOutFile << std::endl;
     }
   }
   outputInterval++;
-
-  for (auto it : sideSetDiscretizations) {
-    if (overlapped) {
-      auto ss_soln = Thyra::createMember(it.second->getOverlapVectorSpace());
-      const Thyra_LinearOp& P = *ov_projectors.at(it.first);
-      P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionToFile(*ss_soln, time, overlapped, force_write_solution);
-    } else {
-      auto ss_soln = Thyra::createMember(it.second->getVectorSpace());
-      const Thyra_LinearOp& P = *projectors.at(it.first);
-      P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionToFile(*ss_soln, time, overlapped, force_write_solution);
-    }
-  }
 #endif
 #endif
 }
@@ -817,7 +876,7 @@ STKDiscretization::writeSolutionMVToFile(
     mesh_data->end_output_step(outputFileIdx);
 
     if (comm->getRank() == 0) {
-      *out << "STKDiscretization::writeSolution: writing time " << time;
+      *out << "STKDiscretization::writeSolutionMVToFile: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " << out_step << " in file "
            << stkMeshStruct->exoOutFile << std::endl;
@@ -965,49 +1024,6 @@ STKDiscretization::setField(
 {
   const auto dof_mgr = getDOFManager(name);
   solutionFieldContainer->saveVector(result,name,dof_mgr,overlapped);
-}
-
-void
-STKDiscretization::setSolutionField(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const bool          overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::setSolutionField(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& soln_dot,
-    const bool          overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::setSolutionField(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& soln_dot,
-    const Thyra_Vector& soln_dotdot,
-    const bool          overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::setSolutionFieldMV(
-    const Thyra_MultiVector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const bool               overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void STKDiscretization::computeVectorSpaces()
