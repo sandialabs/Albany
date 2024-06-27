@@ -72,8 +72,13 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
    ebNames_.push_back(ebName);
   }
 
+  Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor() const override
+  {
+    return getFieldContainer();
+  }
+
   Teuchos::RCP<AbstractSTKFieldContainer>
-  getFieldContainer()
+  getFieldContainer() const
   {
     return fieldContainer;
   }
