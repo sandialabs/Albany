@@ -44,6 +44,11 @@ struct AbstractMeshStruct {
 
     bool isBulkDataSet () const { return m_bulk_data_set; }
 
+    virtual LO get_num_local_elements () const = 0;
+    virtual LO get_num_local_nodes () const = 0;
+    virtual GO get_max_node_gid () const = 0;
+    virtual GO get_max_elem_gid () const = 0;
+
     virtual Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor() const = 0;
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
