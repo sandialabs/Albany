@@ -8,11 +8,15 @@
 #include "Teuchos_GlobalMPISession.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
+#include "Albany_UnitTestSession.hpp"
+
 #include "Albany_config.h"
 #ifdef ALBANY_OMEGAH
 #include "Albany_CommUtils.hpp"
 #include "Albany_Omegah.hpp"
 #endif
+
+#include <random>
 
 int main( int argc, char* argv[] )
 {
@@ -30,6 +34,17 @@ int main( int argc, char* argv[] )
     PHX::exec_space exec_space; 
     exec_space.print_configuration(out);
   }
+
+  auto& clp = Teuchos::UnitTestRepository::getCLP();
+  auto& ts = Albany::UnitTestSession::instance();
+
+  std::random_device rdev;
+  ts.rng_seed = rdev();
+  clp.setOption("rng-seed",
+                &ts.rng_seed,
+                "Allow to set a seed that can be used by unit tests in random numbers generators.\n"
+                "Using this value in tests allows to reproduce the exact same results of a previous run.");
+
   Teuchos::UnitTestRepository::setGloballyReduceTestResult(true);
   auto success = Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 
