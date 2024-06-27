@@ -9,13 +9,12 @@
 namespace Albany {
 
 OmegahDiscretization::
-OmegahDiscretization(
-  const Teuchos::RCP<Teuchos::ParameterList>& discParams,
-  const int                                   neq,
-  Teuchos::RCP<OmegahGenericMesh>&           mesh,
-  const Teuchos::RCP<const Teuchos_Comm>&     comm,
-  const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
-  const std::map<int, std::vector<std::string>>& sideSetEquations)
+OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+                      const int                                   neq,
+                      const Teuchos::RCP<OmegahGenericMesh>&      mesh,
+                      const Teuchos::RCP<const Teuchos_Comm>&     comm,
+                      const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
+                      const std::map<int, std::vector<std::string>>& sideSetEquations)
  : m_disc_params (discParams)
  , m_mesh_struct(mesh)
  , m_comm (comm)

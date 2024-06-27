@@ -63,28 +63,19 @@ class DiscretizationFactory {
 
     void setMeshStructBulkData();
 
-    Teuchos::RCP<AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
-      const int neq,
-      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes);
-
-    Teuchos::RCP<AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
-      const int neq,
-      const std::map<int,std::vector<std::string> >& sideSetEquations,
-      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes);
-    
     /* This function overwrite previous discretization parameter list */
     void
     setDiscretizationParameters(Teuchos::RCP<Teuchos::ParameterList> disc_params);
     
   protected:
+    Teuchos::RCP<AbstractDiscretization> createDiscretizationFromMeshStruct(
+      const Teuchos::RCP<AbstractMeshStruct>& mesh,
+      const int neq,
+      const std::map<int,std::vector<std::string> >& sideSetEquations,
+      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes);
 
     const std::map<int,std::vector<std::string> > empty_side_set_equations;
     const std::map<std::string,Teuchos::RCP<StateInfoStruct> > empty_side_set_sis;
-
-    void setFieldData (Teuchos::RCP<AbstractDiscretization> disc,
-                       const Teuchos::RCP<StateInfoStruct>& sis);
-
-    void completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc);
 
     //! Parameter list specifying what element to create
     Teuchos::RCP<Teuchos::ParameterList> discParams;

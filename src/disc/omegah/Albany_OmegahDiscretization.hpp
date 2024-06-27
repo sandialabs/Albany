@@ -22,16 +22,16 @@ public:
   OmegahDiscretization(
       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
       const int neq,
-      Teuchos::RCP<OmegahGenericMesh>&           mesh,
+      const Teuchos::RCP<OmegahGenericMesh>&      mesh,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
       const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
       const std::map<int, std::vector<std::string>>& sideSetEquations =
           std::map<int, std::vector<std::string>>());
 
   //! Destructor
-  ~OmegahDiscretization() = default;
+  virtual ~OmegahDiscretization() = default;
 
-  void updateMesh ();
+  void updateMesh () override;
 
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const override {
