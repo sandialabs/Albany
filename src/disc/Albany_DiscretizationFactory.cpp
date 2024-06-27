@@ -18,6 +18,7 @@
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
+#include "Albany_ExtrudedMesh.hpp"
 #include "Albany_Utils.hpp" // For CalculateNumberParams
 
 #ifdef ALBANY_OMEGAH
@@ -114,6 +115,30 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 #endif // ALBANY_SEACAS
     } else if (method == "Gmsh") {
         mesh = Teuchos::rcp(new GmshSTKMeshStruct(disc_params, comm, numParams));
+    }
+    else if (method == "NewExtruded") {
+        Teuchos::RCP<AbstractMeshStruct> basalMesh;
+
+        // Get basal_params
+        auto ss_disc_params = Teuchos::sublist(disc_params,"Side Set Discretizations");
+        auto basal_params = Teuchos::sublist(ss_disc_params,"basalside");
+        if (!basal_params->isParameter("Number Of Time Derivatives")) {
+          basal_params->set("Number Of Time Derivatives",disc_params->get<int>("Number Of Time Derivatives"));
+        }
+
+        // Set basal workset size
+        int extruded_ws_size = disc_params->get("Workset Size", -1);
+        if (extruded_ws_size == -1) {
+          basal_params->set("Workset Size", -1);
+        } else if (!basal_params->isParameter("Workset Size")) {
+          // Compute basal workset size based on extruded workset size
+          int basal_ws_size = extruded_ws_size / disc_params->get<int>("NumLayers");
+          basal_ws_size = std::max(basal_ws_size,1); //makes sure is at least 1.
+          basal_params->set("Workset Size", basal_ws_size);
+        }
+
+        basalMesh = createMeshStruct(basal_params, comm, numParams);
+        mesh = Teuchos::rcp(new ExtrudedMesh(basalMesh, disc_params, comm));
     }
     else if (method == "Extruded") {
         Teuchos::RCP<AbstractMeshStruct> basalMesh;
@@ -304,7 +329,10 @@ createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh
       rigidBodyModes->setPiroPL(piroParams);
 
   Teuchos::RCP<AbstractDiscretization> disc;
-  if (mesh->meshLibName()=="STK") {
+  if (mesh->meshSpecs[0]->mesh_type==MeshType::Extruded)
+  {
+    throw NotYetImplemented("ExtrudedDiscretization");
+  } else if (mesh->meshLibName()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(mesh);
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
