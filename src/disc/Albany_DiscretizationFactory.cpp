@@ -304,11 +304,11 @@ DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       rigidBodyModes->setPiroPL(piroParams);
 
   Teuchos::RCP<AbstractDiscretization> disc;
-  if (meshStruct->meshType()=="STK") {
+  if (mesh->meshLibName()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
-  } else if (meshStruct->meshType()=="Omega_h") {
+  } else if (mesh->meshLibName()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(meshStruct);
     disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #endif
