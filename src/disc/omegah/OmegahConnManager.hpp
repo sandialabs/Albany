@@ -142,12 +142,6 @@ public:
     return 1;
   }
 
-  /** Get block IDs from Omegah mesh object
-    */
-  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
-    elementBlockIds = m_elem_blocks_names;
-  }
-
   /** What are the cellTopologies linked to element blocks in this connection manager?
    */
   void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override {
@@ -195,36 +189,8 @@ public:
     return localElmIds;
   }
 
-  /** Get the local element IDs for a paricular element
-    * block. These element ids are not owned, and the element
-    * will live on another processor.
-    *
-    * \param[in] blockIndex Block Index
-    *
-    * \returns Vector of local element IDs.
-    */
-  const std::vector<LO> & getNeighborElementBlock(const std::string & blockId) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-        "Error! Albany does not use elements halos, so the method\n"
-        "       'OmegahConnManager::getNeighborElementBlock' should not have been called.\n");
-    return emptyHaloVec;
-  }
-
   int getOwnedElementCount() const {
     return mesh->nelems();
-  }
-
-  /** Get elements, if any, associated with <code>el</code>, excluding
-    * <code>el</code> itself.
-    */
-  const std::vector<LO>& getAssociatedNeighbors(const LO& el) const override;
-
-  /** Return whether getAssociatedNeighbors will return true for at least one
-    * input. Default implementation returns false.
-    */
-  // NOTE: Albany should not use neighbors, so always false.
-  bool hasAssociatedNeighbors() const override {
-    return false;
   }
 
   int getConnectivityStart (const LO localElmtId) const override;

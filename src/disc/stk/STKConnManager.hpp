@@ -112,16 +112,6 @@ public:
     return m_elem_blocks.size();
   }
 
-  /** Get block IDs from STK mesh object
-    */
-  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
-    elementBlockIds.resize(0);
-    elementBlockIds.reserve(m_elem_blocks_names.size());
-    for (const auto& it : m_elem_blocks) {
-      elementBlockIds.push_back(it.first);
-    }
-  }
-
   /** What are the cellTopologies linked to element blocks in this connection manager?
    */
   void getElementBlockTopologies(std::vector<shards::CellTopology> & elementBlockTopologies) const override {
@@ -145,36 +135,8 @@ public:
     return m_elementBlocks.at(elem_block_name);
   }
 
-  /** Get the local element IDs for a paricular element
-    * block. These element ids are not owned, and the element
-    * will live on another processor.
-    *
-    * \param[in] blockIndex Block Index
-    *
-    * \returns Vector of local element IDs.
-    */
-  const std::vector<LO> & getNeighborElementBlock(const std::string & elem_block_name) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-        "Error! Albany does not use elements halos, so the method\n"
-        "       'STKConnManager::getNeighborElementBlock' should not have been called.\n");
-    return m_neighborElementBlocks.at(elem_block_name);
-  }
-
   int getOwnedElementCount() const {
     return m_elements.size();
-  }
-
-  /** Get elements, if any, associated with <code>el</code>, excluding
-    * <code>el</code> itself.
-    */
-  const std::vector<LO>& getAssociatedNeighbors(const LO& el) const override;
-
-  /** Return whether getAssociatedNeighbors will return true for at least one
-    * input. Default implementation returns false.
-    */
-  // NOTE: Albany should not use neighbors, so always false.
-  bool hasAssociatedNeighbors() const override {
-    return false;
   }
 
   // Queries the dimension of a part
@@ -216,11 +178,7 @@ protected:
   std::vector<stk::mesh::Entity>  m_elements;
 
   // element block information
-  // NOTE: Albany should *never* use neighbors, since we do not require
-  //       an element halo anywhere. Keep the neighbor fcn anyways,
-  //       for simplicity in the getter functions
   std::map<std::string,std::vector<LO> > m_elementBlocks;
-  std::map<std::string,std::vector<LO> > m_neighborElementBlocks;
 
   // Map elemLID to offset in m_connectivity
   std::vector<LO> m_elmtLidToConn;

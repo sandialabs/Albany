@@ -477,17 +477,6 @@ OmegahConnManager::noConnectivityClone() const
   return Teuchos::RCP(new OmegahConnManager(albanyMesh)); //FIXME
 }
 
-const std::vector<LO>&
-OmegahConnManager::getAssociatedNeighbors(const LO& /* el */) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-      "Error! Albany does not use elements halos in the mesh, so the method\n"
-      "       'OmegahConnManager::getAssociatedNeighbors' should not have been called.\n");
-
-  static std::vector<LO> ret;
-  return ret;
-}
-
 // Where element ielem start in the 1d connectivity array
 int OmegahConnManager::getConnectivityStart (const LO localElmtId) const {
   return localElmtId*m_dofsPerElm;

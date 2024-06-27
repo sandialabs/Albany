@@ -370,17 +370,6 @@ std::string STKConnManager::getBlockId (LO localElmtId) const
    return "";
 }
 
-const std::vector<LO>&
-STKConnManager::getAssociatedNeighbors(const LO& /* el */) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-      "Error! Albany does not use elements halos in the mesh, so the method\n"
-      "       'STKConnManager::getAssociatedNeighbors' should not have been called.\n");
-
-  static std::vector<LO> ret;
-  return ret;
-}
-
 void STKConnManager::buildMaxEntityIds() {
   // developed to mirror "comm_mesh_counts" in stk_mesh/base/Comm.cpp
   const auto entityRankCount = m_metaData->entity_rank_count();
