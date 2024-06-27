@@ -7,7 +7,6 @@
 #ifndef ALBANY_CONN_MANAGER_HPP
 #define ALBANY_CONN_MANAGER_HPP
 
-// #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 #include "Panzer_ConnManager.hpp"

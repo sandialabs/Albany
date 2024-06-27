@@ -3,9 +3,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_CommUtils.hpp"
 
-#include "Panzer_NodalFieldPattern.hpp"
-#include "Panzer_ElemFieldPattern.hpp"
-
 #include <unordered_set>
 
 namespace Albany {

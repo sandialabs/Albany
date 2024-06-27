@@ -209,7 +209,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
-  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
+  std::vector<double> levelsNormalizedThickness(numLayers + 1);
 
   if(useGlimmerSpacing)
     for (int i = 0; i < numLayers+1; i++)
@@ -267,7 +267,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   const LO numLocalSides2D = sides2D.size();
 
   this->mesh_layers_ratio = layerThicknessRatio;
-  this->global_cell_layers_data = 
+  this->global_cell_layers_data =
       Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalCells2dId+1,numLayers,Ordering));
   this->local_cell_layers_data =
       Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));

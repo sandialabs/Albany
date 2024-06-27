@@ -9,7 +9,6 @@
 #include <Albany_CommUtils.hpp>
 #include <Albany_ThyraUtils.hpp>
 #include "Albany_Macros.hpp"
-#include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_Utils.hpp"
@@ -1055,7 +1054,7 @@ void STKDiscretization::computeVectorSpaces()
   // For each part, also make a Node dof manager
   for (auto& it : m_node_dof_managers) {
     const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, "node", FE_Type::HGRAD,1,1);
+    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
   }
 
   coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));

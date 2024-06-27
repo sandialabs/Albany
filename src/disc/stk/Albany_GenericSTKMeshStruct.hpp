@@ -35,12 +35,12 @@ public:
   // as follows: map[3DsideGID][3Dside_local_node] = 2Dcell_local_node
   void buildCellSideNodeNumerationMap (const std::string& sideSetName,
                                        std::map<GO,GO>& sideMap,
-                                       std::map<GO,std::vector<int>>& sideNodeMap);
+                                       std::map<GO,std::vector<int>>& sideNodeMap) override;
 
   int getNumParams() const {return num_params; }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const Teuchos::RCP<StateInfoStruct>& sis);
+                     const Teuchos::RCP<StateInfoStruct>& sis) override;
 
   void printParts(stk::mesh::MetaData *metaData);
 
