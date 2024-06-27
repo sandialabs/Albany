@@ -187,12 +187,6 @@ public:
     return neq;
   }
 
-  int
-  getFADLength() const
-  {
-    return getDOFManager()->elem_dof_lids().host().extent_int(1);
-  }
-
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {
@@ -310,23 +304,6 @@ public:
    /** Add a solution field
      */
    void addCellField(const std::string & fieldName,const std::string & blockId);
-
-   //! get the dimension
-   unsigned getDimension() const
-   { return getNumDim(); }
-
-   //! get the number of equations
-   unsigned getNumberEquations() const
-   { return neq; }
-
-  //! used when NetCDF output on a latitude-longitude grid is requested.
-  // Each struct contains a latitude/longitude index and it's parametric
-  // coordinates in an element.
-  struct interp
-  {
-    std::pair<double, double>     parametric_coords;
-    std::pair<unsigned, unsigned> latitude_longitude;
-  };
 
   void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis);
 

@@ -282,14 +282,14 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
   numDim = 2;
   int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   Teuchos::broadcast<LO,LO>(*comm, 0, &NumElems);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, NumElems);
+  int worksetSize = computeWorksetSize(worksetSizeMax, NumElems);
   
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
   cullSubsetParts(ssNames, ssPartVec);
   this->meshSpecs[0] = Teuchos::rcp (
-      new MeshSpecsStruct (ctd, numDim, nsNames, ssNames,
+      new Albany::MeshSpecsStruct (MeshType::Unstructured, ctd, numDim, nsNames, ssNames,
                                    worksetSize, partVec[0]->name(), ebNameToIndex));
 
   // Create a mesh specs object for EACH side set

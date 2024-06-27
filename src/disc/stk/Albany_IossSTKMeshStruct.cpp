@@ -186,7 +186,7 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   TEUCHOS_TEST_FOR_EXCEPT(el_blocks.size() != partVec.size());
 
   int ebSizeMax =  *std::max_element(el_blocks.begin(), el_blocks.end());
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMax);
+  int worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Build a map to get the EB name given the index
   for (int eb=0; eb<numEB; eb++) {
@@ -198,9 +198,9 @@ IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Construct MeshSpecsStruct
   const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(
-      ctd, numDim, nsNames, ssNames, worksetSize, partVec[0]->name(),
-      ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+      MeshType::Unstructured, ctd, numDim, nsNames, ssNames,
+      worksetSize, partVec[0]->name(), ebNameToIndex));
 
   const Ioss::Region& inputRegion = *(mesh_data->get_input_ioss_region());
   m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();

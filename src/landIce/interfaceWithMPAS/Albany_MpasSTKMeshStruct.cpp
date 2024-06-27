@@ -168,12 +168,14 @@ MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   numDim = 3;
   int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_vs->localSubDim());
+  int worksetSize = computeWorksetSize(worksetSizeMax, elem_vs->localSubDim());
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, nsNames, ssNames, worksetSize,
-     ebn, ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(
+      new Albany::MeshSpecsStruct(Albany::MeshType::Unstructured, ctd, numDim,
+                                  nsNames, ssNames, worksetSize,
+                                  ebn, ebNameToIndex));
 
   this->initializeSideSetMeshSpecs(comm);
 }

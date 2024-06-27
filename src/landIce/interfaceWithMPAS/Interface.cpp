@@ -126,7 +126,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   auto abs_disc = albanyApp->getDiscretization();
   auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
-  int neq = stk_disc->getNumberEquations();
+  int neq = stk_disc->getNumEq();
 
   *MPAS_dt =  deltat;
 

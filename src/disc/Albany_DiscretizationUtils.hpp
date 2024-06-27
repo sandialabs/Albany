@@ -20,6 +20,10 @@
 
 namespace Albany {
 
+// Utility function that uses some integer arithmetic to choose a good worksetSize
+int computeWorksetSize(const int worksetSizeMax,
+                       const int ebSizeMax);
+
 // This is mostly for Omega_h layer, but may be useful in general while doing refactorings
 class NotYetImplemented : public std::runtime_error
 {
@@ -33,6 +37,12 @@ enum class FE_Type {
   HDIV,
   HCURL,
   HGRAD
+};
+
+enum class MeshType {
+  Structured,   // structured in all directions
+  Extruded,     // structured vertically
+  Unstructured  // No structure known (e.g., read from file)
 };
 
 inline std::string e2str (const FE_Type fe_type)

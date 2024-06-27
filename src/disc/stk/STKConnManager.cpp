@@ -93,16 +93,10 @@ STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
   stk::mesh::Selector selector (sub_part);
 
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
-  const auto primary_entity_rank = sub_part.primary_entity_rank();
 
   const auto& conn_mgr_part = *m_metaData->get_part(m_elem_blocks_names[0]);
-  TEUCHOS_TEST_FOR_EXCEPTION (primary_entity_rank>=m_metaData->side_rank(), std::runtime_error,
-      "Error! Restricting to a sub-part only works if the sub-part has primary entity rank equal to side rank.\n"
-      " - conn mgr part name: " + m_elem_blocks_names[0] + "\n"
-      " - conn mgr part rank: " + std::to_string(conn_mgr_part.primary_entity_rank()) + "\n"
-      " - sub part name: " + sub_part_name + "\n"
-      " - sub part rank: " + std::to_string(primary_entity_rank) + "\n");
 
+  const auto primary_entity_rank = sub_part.primary_entity_rank();
   const auto num_entities = stk::mesh::count_entities(*m_bulkData,primary_entity_rank,selector);
   std::vector<stk::mesh::Entity> entities(num_entities);
   stk::mesh::get_selected_entities(selector, m_bulkData->buckets(primary_entity_rank), entities);
@@ -126,7 +120,7 @@ STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
         int count = m_bulkData->num_connectivity(e,rank);
         for (int irel=0; irel<count; ++irel) {
           for (int cnt=0; cnt<m_idCnt[rank]; ++cnt) {
-            elem_mask[offsets[rank] + cnt] = 1;
+            elem_mask[offsets[rank] + irel*m_idCnt[rank] + cnt] = 1;
           }
         }
       }
@@ -137,7 +131,9 @@ STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
       bool found = false;
       for (int isib=0; isib<nsiblings; ++isib) {
         if (m_bulkData->identifier(siblings[isib])==m_bulkData->identifier(e)) {
-          elem_mask[offsets[primary_entity_rank]+positions[isib]] = 1;
+          for (int cnt=0; cnt<m_idCnt[primary_entity_rank]; ++cnt) {
+            elem_mask[offsets[primary_entity_rank]+positions[isib]*m_idCnt[primary_entity_rank] + cnt] = 1;
+          }
           found = true;
           break;
         }
@@ -368,17 +364,6 @@ std::string STKConnManager::getBlockId (LO localElmtId) const
    }
 
    return "";
-}
-
-const std::vector<LO>&
-STKConnManager::getAssociatedNeighbors(const LO& /* el */) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-      "Error! Albany does not use elements halos in the mesh, so the method\n"
-      "       'STKConnManager::getAssociatedNeighbors' should not have been called.\n");
-
-  static std::vector<LO> ret;
-  return ret;
 }
 
 void STKConnManager::buildMaxEntityIds() {

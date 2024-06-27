@@ -13,6 +13,7 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_MeshSpecs.hpp"
 #include "Albany_LayeredMeshNumbering.hpp"
+#include "Albany_AbstractMeshFieldAccessor.hpp"
 
 #include "Shards_CellTopology.hpp"
 #include "Albany_Layouts.hpp"
@@ -34,7 +35,7 @@ struct AbstractMeshStruct {
     enum { DEFAULT_WORKSET_SIZE = 1000 };
 
     //! Internal mesh specs type needed
-    virtual std::string meshType() const = 0;
+    virtual std::string meshLibName() const = 0;
 
     virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                                const Teuchos::RCP<StateInfoStruct>& sis) = 0;
@@ -42,6 +43,8 @@ struct AbstractMeshStruct {
     virtual void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
     bool isBulkDataSet () const { return m_bulk_data_set; }
+
+    virtual Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor() const = 0;
 
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;

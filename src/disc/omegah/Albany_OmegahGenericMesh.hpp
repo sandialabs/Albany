@@ -16,14 +16,14 @@ public:
   virtual ~OmegahGenericMesh () = default;
 
   // ------------- Override from base class ------------- //
-  std::string meshType () const override { return "Omega_h"; }
+  std::string meshLibName () const override { return "Omega_h"; }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis) override;
 
-  // ------------- Omegah specific methods -------------- //
+  Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override { return m_field_accessor; }
 
-  Teuchos::RCP<OmegahMeshFieldAccessor> get_field_accessor () const { return m_field_accessor; }
+  // ------------- Omegah specific methods -------------- //
 
         Teuchos::RCP<const Omega_h::Mesh>  getOmegahMesh () const { return m_mesh.getConst(); }
   const Teuchos::RCP<      Omega_h::Mesh>& getOmegahMesh ()       { return m_mesh; }

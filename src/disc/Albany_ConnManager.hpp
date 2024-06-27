@@ -7,7 +7,6 @@
 #ifndef ALBANY_CONN_MANAGER_HPP
 #define ALBANY_CONN_MANAGER_HPP
 
-// #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 #include "Panzer_ConnManager.hpp"
@@ -41,6 +40,28 @@ public:
     return this->getElementBlock(elem_block_name());
   }
 
+  const std::vector<LO> & getNeighborElementBlock(const std::string & blockId) const override
+  {
+    static std::vector<LO> emptyVec;
+    throw std::runtime_error(
+        "Error! Albany does not use elements halos, so the method\n"
+        "       'OmegahConnManager::getNeighborElementBlock' should not have been called.\n");
+    return emptyVec;
+  }
+
+  // Albany should not use neighbors, so always false.
+  bool hasAssociatedNeighbors() const override { return false; }
+
+  const std::vector<LO>& getAssociatedNeighbors(const LO& /* el */) const override
+  {
+    static std::vector<LO> ret;
+    std::runtime_error(
+        "Error! Albany does not use elements halos in the mesh, so the method\n"
+        "       'STKConnManager::getAssociatedNeighbors' should not have been called.\n");
+
+    return ret;
+  }
+
   // Where element ielem start in the 1d connectivity array
   virtual int getConnectivityStart (const LO ielem) const = 0;
 
@@ -67,6 +88,10 @@ public:
     return m_elem_blocks_names[0];
   }
 
+  void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
+    elementBlockIds = m_elem_blocks_names;
+  }
+
   shards::CellTopology get_topology () const {
     std::vector<shards::CellTopology> topologies;
     this->getElementBlockTopologies(topologies);
@@ -75,9 +100,10 @@ public:
 
     return topologies[0];
   }
-
 protected:
   std::vector<std::string> m_elem_blocks_names;
+
+  bool m_is_connectivity_built = false;
 };
 
 } // namespace Albany

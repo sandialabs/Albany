@@ -233,23 +233,22 @@ DiscretizationFactory::createDiscretization(
             std::logic_error,
             "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    Teuchos::RCP<AbstractDiscretization> result =
-            createDiscretizationFromInternalMeshStruct(neq, sideSetEquations, rigidBodyModes);
+    auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
 
     setMeshStructFieldData(sis, side_set_sis);
-    setFieldData(result, sis);
+    disc->setFieldData(sis);
     Teuchos::RCP<StateInfoStruct> dummy_sis;
-    for (auto it : result->getSideSetDiscretizations()) {
+    for (auto it : disc->getSideSetDiscretizations()) {
       if (side_set_sis.count(it.first)==1) {
-        setFieldData(it.second,side_set_sis.at(it.first));
+        it.second->setFieldData(side_set_sis.at(it.first));
       } else {
-        setFieldData(it.second,{});
+        it.second->setFieldData({});
       }
     }
     setMeshStructBulkData();
-    completeDiscSetup(result);
+    disc->updateMesh();
 
-    return result;
+    return disc;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
@@ -293,61 +292,28 @@ setMeshStructBulkData()
 }
 
 Teuchos::RCP<AbstractDiscretization>
-DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
-        const int neq,
-        const std::map<int, std::vector<std::string> >& sideSetEquations,
-        const Teuchos::RCP<RigidBodyModes>& rigidBodyModes)
+DiscretizationFactory::
+createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh,
+                                    const int neq,
+                                    const std::map<int, std::vector<std::string> >& sideSetEquations,
+                                    const Teuchos::RCP<RigidBodyModes>& rigidBodyModes)
 {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: createDiscretizationFromInternalMeshStruct");
+  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: createDiscretizationFromMeshStruct");
 
   if (!piroParams.is_null() && !rigidBodyModes.is_null())
       rigidBodyModes->setPiroPL(piroParams);
 
   Teuchos::RCP<AbstractDiscretization> disc;
-  if (meshStruct->meshType()=="STK") {
-    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(meshStruct);
+  if (mesh->meshLibName()=="STK") {
+    auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(mesh);
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
-  } else if (meshStruct->meshType()=="Omega_h") {
-    auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(meshStruct);
+  } else if (mesh->meshLibName()=="Omega_h") {
+    auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(mesh);
     disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #endif
   }
   return disc;
-}
-
-void
-DiscretizationFactory::setFieldData(Teuchos::RCP<AbstractDiscretization> disc,
-                                    const Teuchos::RCP<StateInfoStruct>& sis) {
-
-  if (meshStruct->meshType()=="STK") {
-    auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
-    stk_disc->setFieldData(sis);
-#ifdef ALBANY_OMEGAH
-  } else if (meshStruct->meshType()=="Omega_h") {
-    auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
-    omh_disc->setFieldData(sis);
-#endif
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
-  }
-}
-
-void
-DiscretizationFactory::completeDiscSetup(Teuchos::RCP<AbstractDiscretization> disc) {
-  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: completeDiscSetup");
-
-  if (meshStruct->meshType()=="STK") {
-    auto stk_disc = Teuchos::rcp_dynamic_cast<STKDiscretization>(disc);
-    stk_disc->updateMesh();
-#ifdef ALBANY_OMEGAH
-  } else if (meshStruct->meshType()=="Omega_h") {
-    auto omh_disc = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(disc);
-    omh_disc->updateMesh();
-#endif
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true,std::runtime_error, "Unrecognized mesh type!\n");
-  }
 }
 
 /* This function overwrite previous discretization parameter list */

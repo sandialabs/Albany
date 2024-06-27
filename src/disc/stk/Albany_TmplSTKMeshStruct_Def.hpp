@@ -267,7 +267,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
   elem_map = Teuchos::rcp(new Tpetra_Map(total_elems, StartIndex, comm, Tpetra::GloballyDistributed));
 
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getLocalNumElements() * (triangles ? 2 : 1));
+  int worksetSize = computeWorksetSize(worksetSizeMax, elem_map->getLocalNumElements() * (triangles ? 2 : 1));
 
   for (unsigned int eb=0; eb<numEB; eb++){
 
@@ -281,9 +281,10 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // Construct MeshSpecsStruct
   const CellTopologyData& ctd = *elementBlockTopologies_[0].getCellTopologyData();
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
-                             nsNames, ssNames, worksetSize, EBSpecs[0].name,
-                             ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Structured, ctd, numDim,
+                          nsNames, ssNames, worksetSize, EBSpecs[0].name,
+                          ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {

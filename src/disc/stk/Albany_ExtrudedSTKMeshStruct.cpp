@@ -169,12 +169,18 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int basalWorksetSize = basalMeshSpec->worksetSize;
   int worksetSizeMax = params->get<int>("Workset Size");
   int ebSizeMaxEstimate = basalWorksetSize * numLayers; // This is ebSizeMax when basalWorksetSize is max
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
+  int worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMaxEstimate);
 
-  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
+  const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim, nsNames, ssNames, worksetSize, 
-     ebn, ebNameToIndex));
+  // NOTE: I am marking the mesh as Unstructured rather than Extruded, since
+  //       I am planning to develop a generic interface for Extruded meshes,
+  //       which does not store 3d data (only basal). In order to not confuse
+  //       the two, I keep this mesh as Unstructured.
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Unstructured, ctd, numDim,
+                          nsNames, ssNames, worksetSize,
+                          ebn, ebNameToIndex));
 
   // Upon request, add a nodeset for each sideset
   if (params->get<bool>("Build Node Sets From Side Sets",false)) {
@@ -209,7 +215,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
-  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
+  std::vector<double> levelsNormalizedThickness(numLayers + 1);
 
   if(useGlimmerSpacing)
     for (int i = 0; i < numLayers+1; i++)
@@ -267,7 +273,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   const LO numLocalSides2D = sides2D.size();
 
   this->mesh_layers_ratio = layerThicknessRatio;
-  this->global_cell_layers_data = 
+  this->global_cell_layers_data =
       Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalCells2dId+1,numLayers,Ordering));
   this->local_cell_layers_data =
       Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));

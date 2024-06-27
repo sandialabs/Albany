@@ -35,20 +35,17 @@ public:
   // as follows: map[3DsideGID][3Dside_local_node] = 2Dcell_local_node
   void buildCellSideNodeNumerationMap (const std::string& sideSetName,
                                        std::map<GO,GO>& sideMap,
-                                       std::map<GO,std::vector<int>>& sideNodeMap);
+                                       std::map<GO,std::vector<int>>& sideNodeMap) override;
 
   int getNumParams() const {return num_params; }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const Teuchos::RCP<StateInfoStruct>& sis);
+                     const Teuchos::RCP<StateInfoStruct>& sis) override;
 
   void printParts(stk::mesh::MetaData *metaData);
 
   void cullSubsetParts(std::vector<std::string>& ssNames,
       std::map<std::string, stk::mesh::Part*>& partVec);
-
-  //! Utility function that uses some integer arithmetic to choose a good worksetSize
-  int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
   //! Re-load balance mesh
   void rebalanceInitialMesh (const Teuchos::RCP<const Teuchos_Comm>& comm);

@@ -304,6 +304,10 @@ public:
   virtual void
   setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
 
+  // Update mesh internals, such as coordinates, DOF numbers, etc.
+  // To be run either after creation or after modification/adaptation.
+  virtual void updateMesh () {};
+
   // --- Methods to write solution in the output file --- //
 
   //! Write the solution to the output file. Calls next two together.

@@ -391,13 +391,14 @@ AsciiSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   numDim = 3;
   int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getLocalNumElements());
+  int worksetSize = computeWorksetSize(worksetSizeMax, elem_mapT->getLocalNumElements());
 
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData(); 
 
-  this->meshSpecs[0] = Teuchos::rcp(new MeshSpecsStruct(ctd, numDim,
-                             nsNames, ssNames, worksetSize, ebn,
-                             ebNameToIndex));
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Unstructured, ctd, numDim,
+                          nsNames, ssNames, worksetSize, ebn,
+                          ebNameToIndex));
 
   // Create a mesh specs object for EACH side set
   this->initializeSideSetMeshSpecs(comm);

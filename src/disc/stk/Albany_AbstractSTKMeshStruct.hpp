@@ -45,7 +45,7 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   virtual ~AbstractSTKMeshStruct() = default;
 
  public:
-  std::string meshType () const override { return "STK"; }
+  std::string meshLibName () const override { return "STK"; }
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
@@ -72,8 +72,13 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
    ebNames_.push_back(ebName);
   }
 
+  Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor() const override
+  {
+    return getFieldContainer();
+  }
+
   Teuchos::RCP<AbstractSTKFieldContainer>
-  getFieldContainer()
+  getFieldContainer() const
   {
     return fieldContainer;
   }
