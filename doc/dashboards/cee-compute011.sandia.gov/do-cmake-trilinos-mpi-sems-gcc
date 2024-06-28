@@ -30,8 +30,8 @@ cmake -GNinja \
       -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_ROOT}/include \
       -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
       -D TPL_ENABLE_Pnetcdf=ON \
-      -D Pnetcdf_INCLUDE_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/include \
-      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/lib \
+      -D Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_ROOT}/include \
+      -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_ROOT}/lib \
       -D TPL_ENABLE_HDF5=ON \
       -D HDF5_INCLUDE_DIRS:PATH=${HDF5_ROOT}/include \
       -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \

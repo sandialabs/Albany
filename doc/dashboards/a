@@ -1,0 +1,179 @@
+attaway-login10/attaway_modules_intel.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
+attaway-login10/ctest_nightly_albany_intel_serial_build_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+attaway-login10/ctest_nightly_albany_intel_serial_run.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+attaway-login10/ctest_nightly_trilinos_intel_serial_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D BLAS_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D BLAS_LIBRARY_NAMES:STRING="mkl_rt" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D LAPACK_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D LAPACK_LIBRARY_NAMES:STRING="mkl_rt" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_ROOT}/lib \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \
+attaway-login10/do-cmake-trilinos-attaway-intel-serial:      -D Zlib_LIBRARY_DIRS:PATH=${ZLIB_ROOT}/lib \
+blake.sandia.gov/ctest_nightly_albany-gcc-debug_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/ctest_nightly_albany-gcc-release_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/ctest_nightly_albany-intel-release_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/ctest_nightly_albany-sfad_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/ctest_nightly_mali-gcc-release.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/ctest_nightly_trilinos_gcc_debug_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/ctest_nightly_trilinos_gcc_release_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/ctest_nightly_trilinos_intel_release_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+blake.sandia.gov/do-cmake-trilinos-gcc-debug:      -D BLAS_LIBRARY_DIRS=${BLAS_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-debug:      -D LAPACK_LIBRARY_DIRS=${BLAS_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-debug:      -D Boost_LIBRARY_DIRS:PATH=${BOOST_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-debug:      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-debug:      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-release:      -D BLAS_LIBRARY_DIRS=${BLAS_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-release:      -D LAPACK_LIBRARY_DIRS=${BLAS_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-release:      -D Boost_LIBRARY_DIRS:PATH=${BOOST_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-release:      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-gcc-release:      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-intel-release:#      -D Zlib_LIBRARY_DIRS:PATH=${ZLIB_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D BLAS_LIBRARY_DIRS:FILEPATH="${MKL_PATH}/lib/intel64" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D BLAS_LIBRARY_NAMES:STRING="mkl_rt" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D LAPACK_LIBRARY_DIRS:FILEPATH="${MKL_PATH}/lib/intel64" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D LAPACK_LIBRARY_NAMES:STRING="mkl_rt" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D MKL_LIBRARY_DIRS:FILEPATH="${MKL_PATH}/lib/intel64" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${MKL_PATH}/lib/intel64" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_PATH}/lib/libsuperlu.a \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_PATH}/lib \
+blake.sandia.gov/do-cmake-trilinos-intel-release:      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_PATH}/lib \
+blake.sandia.gov/do-make-mpas-gcc-release:echo ${LD_LIBRARY_PATH}
+camobap.ca.sandia.gov/ctest_nightly_albanyFPE_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_albanyOpenmp_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_albany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_alegra-xfem.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_alegra-xfem_eti.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_cismAlbany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_kokkosnode_openmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_trilinos.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_trilinos.cmake:     "-DTPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3"
+camobap.ca.sandia.gov/ctest_nightly_trilinos.cmake:     "-DTPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3"
+camobap.ca.sandia.gov/ctest_nightly_trilinos.cmake:     "-DBoost_LIBRARY_DIRS:FILEPATH=/tpls/install/lib"
+camobap.ca.sandia.gov/ctest_nightly_trilinos.cmake:     "-DBoostLib_LIBRARY_DIRS:FILEPATH=/tpls/install/lib"
+camobap.ca.sandia.gov/ctest_nightly_trilinos.cmake:     "-DTPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0"
+camobap.ca.sandia.gov/ctest_nightly_trilinos_eti_ld.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_trilinos_eti_ld.cmake:     "-DTPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3"
+camobap.ca.sandia.gov/ctest_nightly_trilinos_eti_ld.cmake:     "-DTPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3"
+camobap.ca.sandia.gov/ctest_nightly_trilinos_eti_ld.cmake:     "-DBoost_LIBRARY_DIRS:FILEPATH=/tpls/install/lib"
+camobap.ca.sandia.gov/ctest_nightly_trilinos_eti_ld.cmake:     "-DBoostLib_LIBRARY_DIRS:FILEPATH=/tpls/install/lib"
+camobap.ca.sandia.gov/ctest_nightly_trilinos_eti_ld.cmake:     "-DTPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0"
+camobap.ca.sandia.gov/ctest_nightly_trilinos_eti_ld_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/ctest_nightly_trilinos_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-extended-sts:      -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-extended-sts:      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-extended-sts:      -D Boost_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-extended-sts:      -D BoostLib_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-extended-sts:      -D TPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0 \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-longdouble-eti:      -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-longdouble-eti:      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-longdouble-eti:      -D Boost_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-longdouble-eti:      -D BoostLib_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
+camobap.ca.sandia.gov/do-cmake-trilinos-mpi-camobap-longdouble-eti:      -D TPL_quadmath_LIBRARIES=/usr/lib64/libquadmath.so.0 \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D TPL_BLAS_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/libblas.so \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D TPL_LAPACK_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/liblapack.so \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu_4.3.a \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D Boost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-clang:      -D Zlib_LIBRARY_DIRS:PATH=${ZLIB_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D TPL_BLAS_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/libblas.so \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D TPL_LAPACK_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/liblapack.so \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D Boost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-gcc:      -D Zlib_LIBRARY_DIRS:PATH=${ZLIB_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D BLAS_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D BLAS_LIBRARY_NAMES:STRING="mkl_rt" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D LAPACK_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D LAPACK_LIBRARY_NAMES:STRING="mkl_rt" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${MKLROOT}/lib/intel64" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \
+cee-compute011.sandia.gov/do-cmake-trilinos-mpi-sems-intel:      -D Zlib_LIBRARY_DIRS:PATH=${ZLIB_ROOT}/lib \
+cee-compute011.sandia.gov/nightlySpackBuild/sems-gcc-modules.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
+cee-compute011.sandia.gov/nightly_cron_script.sh:echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH" > ld_lib.path
+cee-compute011.sandia.gov/sems-clang-modules.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
+cee-compute011.sandia.gov/sems-gcc-modules.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
+cee-compute011.sandia.gov/sems-intel-modules.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
+mockba.ca.sandia.gov/ctest_nightly_albanyT_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+mockba.ca.sandia.gov/ctest_nightly_albany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+mockba.ca.sandia.gov/ctest_nightly_cismAlbany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/cuda-uvm/ctest_nightly_albany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/cuda-uvm/ctest_nightly_trilinos_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D TPL_BLAS_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D TPL_LAPACK_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D Boost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_DIR}/lib \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib\
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D CUDA_cublas_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcublas.so \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D CUDA_cusolver_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcusolver.so \
+perlmutter.nersc.gov/cuda-uvm/do-cmake-pm_gpu-trilinos:  -D CUDA_cufft_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcufft.so \
+perlmutter.nersc.gov/cuda-uvm/run_all_jobs.sh:export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64
+perlmutter.nersc.gov/cuda-uvm/run_all_jobs.sh:export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda-uvm/builds/TrilinosInstall/lib64
+perlmutter.nersc.gov/cuda/ctest_nightly_albany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/cuda/ctest_nightly_trilinos_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D TPL_BLAS_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D TPL_LAPACK_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D Boost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_DIR}/lib \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib\
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D CUDA_cublas_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcublas.so \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D CUDA_cusolver_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcusolver.so \
+perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos:  -D CUDA_cufft_LIBRARY=${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64/libcufft.so \
+perlmutter.nersc.gov/cuda/run_all_jobs.sh:export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CUDATOOLKIT_HOME}/../../math_libs/${CUDATOOLKIT_VERSION_STRING}/lib64
+perlmutter.nersc.gov/cuda/run_all_jobs.sh:export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/TrilinosInstall/lib
+perlmutter.nersc.gov/cuda/run_all_jobs.sh:export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/TrilinosInstall/lib64
+perlmutter.nersc.gov/example_jobs/example_cpu_job.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ALBANY_INSTALL}/lib64
+perlmutter.nersc.gov/example_jobs/example_cpu_job.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${TRILINOS_INSTALL}/lib64
+perlmutter.nersc.gov/example_jobs/example_gpu_job.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ALBANY_INSTALL}/lib64
+perlmutter.nersc.gov/example_jobs/example_gpu_job.sh:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${TRILINOS_INSTALL}/lib64
+perlmutter.nersc.gov/serial/ctest_nightly_albany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/serial/ctest_nightly_compass.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/serial/ctest_nightly_mali.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/serial/ctest_nightly_trilinos_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+perlmutter.nersc.gov/serial/do-cmake-pm_cpu-trilinos:  -D TPL_BLAS_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+perlmutter.nersc.gov/serial/do-cmake-pm_cpu-trilinos:  -D TPL_LAPACK_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+perlmutter.nersc.gov/serial/do-cmake-pm_cpu-trilinos:  -D Boost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
+perlmutter.nersc.gov/serial/do-cmake-pm_cpu-trilinos:  -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
+perlmutter.nersc.gov/serial/do-cmake-pm_cpu-trilinos:  -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib \
+perlmutter.nersc.gov/serial/do-cmake-pm_cpu-trilinos:  -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_DIR}/lib \
+perlmutter.nersc.gov/serial/do-cmake-pm_cpu-trilinos:  -D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib\
+perlmutter.nersc.gov/serial/mali_build.sh:echo ${LD_LIBRARY_PATH}
+perlmutter.nersc.gov/serial/run_all_jobs.sh:export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/TrilinosInstall/lib"
+perlmutter.nersc.gov/serial/run_all_jobs.sh:export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/TrilinosInstall/lib64"
+perlmutter.nersc.gov/serial/run_all_jobs.sh:export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstall/lib64"
+weaver.sandia.gov/ctest_nightly_albanySFAD_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+weaver.sandia.gov/ctest_nightly_albany_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+weaver.sandia.gov/ctest_nightly_trilinos_tmp.cmake:set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+weaver.sandia.gov/do-cmake-albany:    -D ALBANY_LIBRARIES_ONLY=OFF \
+weaver.sandia.gov/do-cmake-albanySFAD:  -D ALBANY_LIBRARIES_ONLY=OFF \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D BLAS_LIBRARY_DIRS:PATH=${OPENBLAS_LIB} \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D BLAS_LIBRARY_NAMES:STRING=openblas \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D LAPACK_LIBRARY_DIRS:PATH=${OPENBLAS_LIB} \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D LAPACK_LIBRARY_NAMES:STRING=openblas \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D TPL_Netcdf_LIBRARIES=${NETCDF_DIR}/lib/libnetcdf.a \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D TPL_Pnetcdf_LIBRARIES=${PNETCDF_DIR}/lib/libpnetcdf.a \
+weaver.sandia.gov/do-cmake-weaver-trilinos:    -D TPL_HDF5_LIBRARIES=${HDF5_DIR}/lib/libhdf5_hl.a \
+weaver.sandia.gov/nightly_cron_script.sh:echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH" > ld_lib.path
+grep: input file ‘a’ is also the output

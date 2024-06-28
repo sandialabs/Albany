@@ -2,37 +2,45 @@
 # Trilinos configure script for cee
 rm -rf CMake*
 
-BUILD_DIR=`pwd`
-INSTALL_LOCATION=$BUILD_DIR/install 
-BTYPE=RELEASE 
+PWD=`pwd`
+INSTALL_LOCATION=$PWD/install
+BTYPE=RELEASE
 
 cmake -GNinja \
       -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION} \
       -D CMAKE_BUILD_TYPE:STRING=${BTYPE} \
       -D CMAKE_CXX_COMPILER=mpicxx \
       -D CMAKE_C_COMPILER=mpicc \
+      -D CMAKE_Fortran_COMPILER=mpif90 \
       -D TPL_ENABLE_MPI=ON \
       -D MPI_BASE_DIR:PATH=${OPENMPI_ROOT} \
       -D TPL_ENABLE_BLAS=ON \
-      -D TPL_BLAS_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/libblas.so \
+      -D BLAS_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D BLAS_LIBRARY_NAMES:STRING="mkl_rt" \
       -D TPL_ENABLE_LAPACK=ON \
-      -D TPL_LAPACK_LIBRARIES:PATH=${NETLIB_LAPACK_ROOT}/lib64/liblapack.so \
+      -D LAPACK_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D LAPACK_LIBRARY_NAMES:STRING="mkl_rt" \
+      -D TPL_ENABLE_MKL=ON \
+      -D MKL_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+      -D MKL_INCLUDE_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/include" \
+      -D TPL_ENABLE_PARDISO_MKL:BOOL=ON \
+      -D PARDISO_MKL_LIBRARY_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/lib/intel64" \
+      -D PARDISO_MKL_LIBRARY_NAMES:STRING="mkl_rt" \
+      -D PARDISO_MKL_INCLUDE_DIRS:FILEPATH="${INTEL_MKL_ROOT}/mkl/include" \
       -D TPL_ENABLE_SuperLU=OFF \
-      -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu_4.3.a \
+      -D Trilinos_ENABLE_SuperLU5_API=ON \
+      -D TPL_SuperLU_LIBRARIES:PATH=${SUPERLU_ROOT}/lib/libsuperlu.a \
       -D SuperLU_INCLUDE_DIRS:PATH=${SUPERLU_ROOT}/include \
       -D TPL_ENABLE_Boost=ON \
       -D Boost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
-      -D Boost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
-      -D TPL_ENABLE_BoostLib=ON \
-      -D BoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
-      -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
       -D TPL_ENABLE_Netcdf=ON \
       -D TPL_Netcdf_PARALLEL=ON \
-      -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_ROOT}/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
+      -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_ROOT}/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_C_ROOT}/lib \
       -D TPL_ENABLE_Pnetcdf=ON \
-      -D Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_ROOT}/include \
-      -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_ROOT}/lib \
+      -D Pnetcdf_INCLUDE_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/include \
+      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_ROOT}/lib \
       -D TPL_ENABLE_HDF5=ON \
       -D HDF5_INCLUDE_DIRS:PATH=${HDF5_ROOT}/include \
       -D HDF5_LIBRARY_DIRS:PATH=${HDF5_ROOT}/lib \
@@ -44,16 +52,15 @@ cmake -GNinja \
       -D Trilinos_ENABLE_ALL_PACKAGES=OFF \
       -D Trilinos_ENABLE_EXAMPLES=OFF \
       -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION=ON \
-      -D Trilinos_ENABLE_Fortran=OFF \
       -D Trilinos_VERBOSE_CONFIGURE=OFF \
       -D TPL_ENABLE_Matio=OFF \
       -D TPL_ENABLE_X11=OFF \
+      -D Kokkos_ARCH_SKX=OFF \
       -D Kokkos_ENABLE_EXAMPLES=OFF \
       -D Kokkos_ENABLE_SERIAL=ON \
       -D Kokkos_ENABLE_PTHREAD=OFF \
       -D Kokkos_ENABLE_TESTS=OFF \
       -D Amesos2_ENABLE_KLU2=ON \
-      -D EpetraExt_USING_HDF5=OFF \
       -D Intrepid_ENABLE_TESTS=OFF \
       -D Intrepid2_ENABLE_TESTS=OFF \
       -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
@@ -66,6 +73,7 @@ cmake -GNinja \
       -D Tpetra_INST_INT_INT=OFF \
       -D MueLu_ENABLE_Tutorial=OFF \
       -D MueLu_ENABLE_TESTS=OFF \
+      -D ML_ENABLE_SuperLU=OFF \
       -D Trilinos_ENABLE_Amesos2=ON \
       -D Trilinos_ENABLE_Amesos=OFF \
       -D Trilinos_ENABLE_Anasazi=ON \
