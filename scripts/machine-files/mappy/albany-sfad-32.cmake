@@ -8,9 +8,9 @@ set (CMAKE_FORTRAN_COMPILER mpifort CACHE STRING "")
 
 # Physics packages
 option (ENABLE_LANDICE "Flag to turn on LandIce Source code" ON)
-option (ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" OFF)
-option (ENABLE_MPAS_INTERFACE "Flag to turn on LandIce Source code" OFF)
-option (ENABLE_CISM_INTERFACE "Flag to turn on LandIce Interface to the CISM code" OFF)
+option (ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" ON)
+option (ENABLE_MPAS_INTERFACE "Flag to turn on LandIce Source code" ON)
+option (ENABLE_CISM_INTERFACE "Flag to turn on LandIce Interface to the CISM code" ON)
 
 # Fad options
 set (ENABLE_FAD_TYPE "SFad" CACHE STRING "Sacado forward mode automatic differentiation data type")
