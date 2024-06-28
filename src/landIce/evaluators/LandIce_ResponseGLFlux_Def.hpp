@@ -120,17 +120,16 @@ evaluateFields(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
   {
     double coeff = rho_i*1e6*scaling; //to convert volume flux [km^2 m yr^{-1}] in a mass flux [kg yr^{-1}]
     sideSet = workset.sideSetViews->at(basalSideName);
-
-    Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
+    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
+    {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
 
       for (unsigned int inode=0; inode<numSideNodes; ++inode) {
         gl_func(inode) = rho_i*thickness(sideSet_idx,inode)+rho_w*bed(sideSet_idx,inode);
@@ -142,7 +141,7 @@ evaluateFields(typename Traits::EvalData workset)
         isGLCell = isGLCell || (gl_func(0)*gl_func(inode) <=0);
 
       if(!isGLCell)
-        return;
+        continue;
 
       int node_plus, node_minus;
       bool skip_edge = false, edge_on_GL=false;
@@ -178,18 +177,18 @@ evaluateFields(typename Traits::EvalData workset)
 
       //skip when a grounding line intersect the element in one vertex only (counter<1)
       //also, when an edge is on grounding line, consider only the grounded element to avoid double-counting.
-      if(counter<2 || (edge_on_GL && gl_sum<0)) return;
+      if(counter<2 || (edge_on_GL && gl_sum<0)) continue;
 
       //we consider the direction [(y[1]-y[0]), -(x[1]-x[0])] orthogonal to the GL segment and compute the flux along that direction.
       //we then compute the sign of the of the flux by looking at the sign of the dot-product between the GL segment and an edge crossed by the grounding line
       ScalarT t = 0.5*((H(0)*velx(0)+H(1)*velx(1))*(y(1)-y(0))-(H(0)*vely(0)+H(1)*vely(1))*(x(1)-x(0)));
       bool positive_sign;
-      positive_sign = (y(1)-y(0))*(coords(sideSet_idx,node_minus,0)-coords(sideSet_idx,node_plus,0))-(x(1)-x(0))*(coords(sideSet_idx,node_minus,1)-coords(sideSet_idx,node_plus,1)) > 0;
+      positive_sign = (y[1]-y[0])*(coords(sideSet_idx,node_minus,0)-coords(sideSet_idx,node_plus,0))-(x[1]-x[0])*(coords(sideSet_idx,node_minus,1)-coords(sideSet_idx,node_plus,1)) > 0;
       if(!positive_sign) t = -t;
 
-      KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), t*coeff);
-      KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), t*coeff);
-    });
+      this->local_response_eval(cell, 0) += t*coeff;
+      this->global_response_eval(0) += t*coeff;
+    }
   }
 
   // Do any local-scattering necessary
