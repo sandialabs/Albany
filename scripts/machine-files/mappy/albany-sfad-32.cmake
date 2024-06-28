@@ -1,3 +1,11 @@
+# Notice that this script does not assume anything on the
+# trilinos installation, so can be used for CPU and GPU builds.
+
+# Set compilers
+set (CMAKE_CXX_COMPILER mpicxx CACHE STRING "")
+set (CMAKE_C_COMPILER mpicc CACHE STRING "")
+set (CMAKE_FORTRAN_COMPILER mpifort CACHE STRING "")
+
 # Physics packages
 option (ENABLE_LANDICE "Flag to turn on LandIce Source code" ON)
 option (ENABLE_DEMO_PDES "Flag to turn on demonstration PDEs problems" OFF)
