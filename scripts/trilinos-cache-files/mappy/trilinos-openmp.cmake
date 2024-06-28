@@ -8,4 +8,7 @@ get_filename_component(THIS_PATH ${THIS_FILE} DIRECTORY)
 include(${THIS_PATH}/trilinos_common.cmake)
 
 # Set Kokkos device
-include(${THIS_PATH}/../kokkos/device/serial.cmake)
+include(${THIS_PATH}/../../kokkos/device/openmp.cmake)
+
+# Enable OpenMP in trilinos
+set (Trilinos_ENABLE_OpenMP ON CACHE BOOL "")

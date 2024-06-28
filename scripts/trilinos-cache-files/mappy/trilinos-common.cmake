@@ -4,7 +4,7 @@ set (CMAKE_C_COMPILER mpicc CACHE STRING "")
 set (CMAKE_FORTRAN_COMPILER mpifort CACHE STRING "")
 
 # Set Kokkos flavor
-include(${CMAKE_CURRENT_LIST_DIR}/../kokkos/arch/amd_zen2.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../kokkos/arch/amd_zen2.cmake)
 
 # Set TPLs specs
 set (BLAS_LIBRARY_DIRS $ENV{OPENBLAS_ROOT} CACHE PATH "")
