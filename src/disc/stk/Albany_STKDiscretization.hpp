@@ -13,7 +13,6 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
@@ -53,13 +52,6 @@ public:
 
   void
   printConnectivity() const;
-
-  //! Create a Jacobian operator (owned and overlapped)
-  Teuchos::RCP<Thyra_LinearOp>
-  createJacobianOp() const
-  {
-    return m_jac_factory->createOp();
-  }
 
   //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
   const NodeSetList&
@@ -118,13 +110,6 @@ public:
   //! Print the coordinates for debugging
   void
   printCoords() const;
-
-  //! Get nodal parameters state info struct
-  const StateInfoStruct&
-  getNodalParameterSIS() const
-  {
-    return stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
-  }
 
   // Retrieve mesh struct
   Teuchos::RCP<AbstractSTKMeshStruct>
@@ -373,9 +358,6 @@ public:
 
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
-
-  //! Jacobian matrix operator factory
-  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
   //! Number of equations (and unknowns) per node
   const int neq;

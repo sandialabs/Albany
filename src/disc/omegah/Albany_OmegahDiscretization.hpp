@@ -11,7 +11,6 @@
 
 #include "Albany_OmegahGenericMesh.hpp"
 
-#include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_NullSpaceUtils.hpp"
 
 namespace Albany {
@@ -32,11 +31,6 @@ public:
   virtual ~OmegahDiscretization() = default;
 
   void updateMesh () override;
-
-  Teuchos::RCP<Thyra_LinearOp>
-  createJacobianOp() const override {
-    return m_jac_factory->createOp();
-  }
 
   //! Get Node set lists
   const NodeSetList&
@@ -98,12 +92,6 @@ public:
   Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const override {
     return m_mesh_struct;
-  }
-
-  //! Get nodal parameters state info struct
-  const StateInfoStruct&
-  getNodalParameterSIS() const override {
-    return m_mesh_struct->get_field_accessor()->getNodalParameterSIS();
   }
 
   //! Retrieve connectivity map from elementGID to workset
@@ -289,9 +277,6 @@ protected:
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_side_set_equations;
-
-  //! Jacobian matrix operator factory
-  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
   // Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown

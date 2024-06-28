@@ -13,6 +13,7 @@
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_DOFManager.hpp"
+#include "Albany_ThyraCrsMatrixFactory.hpp"
 
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
@@ -134,8 +135,10 @@ public:
   }
 
   //! Create a Jacobian operator
-  virtual Teuchos::RCP<Thyra_LinearOp>
-  createJacobianOp() const = 0;
+  Teuchos::RCP<Thyra_LinearOp> createJacobianOp() const
+  {
+    return m_jac_factory->createOp();
+  }
 
   //! Get Node set lists
   virtual const NodeSetList&
@@ -243,8 +246,9 @@ public:
   }
 
   //! Get nodal parameters state info struct
-  virtual const StateInfoStruct&
-  getNodalParameterSIS() const = 0;
+  const StateInfoStruct& getNodalParameterSIS() const {
+    return getMeshStruct()->get_field_accessor()->getNodalParameterSIS();
+  }
 
   //! Retrieve Vector (length num worksets) of element block names
   const WorksetArray<std::string>&
@@ -387,6 +391,9 @@ public:
 
 protected:
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
+
+  //! Jacobian matrix operator factory
+  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
   // One dof mgr per dof per part
   // Notice that the dof mgr on a side is not the restriction
