@@ -91,7 +91,7 @@ public:
     return m_conn_mgr->get_topology();
   }
 
-  Teuchos::RCP<const ConnManager> getAlbanyConnManager() const {
+  Teuchos::RCP<ConnManager> getAlbanyConnManager() const {
     return m_conn_mgr;
   }
 
@@ -146,7 +146,7 @@ private:
   // NOTE: this 
   vec4int       m_side_closure_orderd_as_side;
 
-  Teuchos::RCP<const ConnManager>           m_conn_mgr;
+  Teuchos::RCP<ConnManager>           m_conn_mgr;
 
   std::string m_part_name;
 

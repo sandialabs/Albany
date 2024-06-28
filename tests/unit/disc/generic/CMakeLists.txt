@@ -16,3 +16,8 @@ set (testNameRoot ${parentDirName}_${dirName})
 create_unit_test (NAME    ExtrudedMesh
                   PREFIX  ${testNameRoot}
                   SOURCES ExtrudedMesh.cpp)
+
+create_unit_test (NAME    ExtrudedConnManager
+                  PREFIX  ${testNameRoot}
+                  SOURCES ExtrudedConnManager.cpp
+                          DummyConnManager.cpp)
