@@ -310,7 +310,7 @@ CismSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   numDim = 3;
   int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, Albany::getLocalSubdim(elem_vs)); 
+  int worksetSize = computeWorksetSize(worksetSizeMax, Albany::getLocalSubdim(elem_vs)); 
 
   const CellTopologyData& ctd = *stk::mesh::get_cell_topology(metaData->get_topology(*partVec[0])).getCellTopologyData();
   stk::topology etopology = stk::topology::HEX_8;
