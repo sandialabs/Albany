@@ -27,10 +27,10 @@ cmake -GNinja \
       -D BoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include \
       -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib \
       -D TPL_ENABLE_Netcdf=ON \
-      -D TPL_Netcdf_PARALLEL=ON \
+      -D TPL_Netcdf_PARALLEL=OFF \
       -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_ROOT}/include \
       -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}/lib \
-      -D TPL_ENABLE_Pnetcdf=ON \
+      -D TPL_ENABLE_Pnetcdf=OFF \
       -D Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_ROOT}/include \
       -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_ROOT}/lib \
       -D TPL_ENABLE_HDF5=ON \
