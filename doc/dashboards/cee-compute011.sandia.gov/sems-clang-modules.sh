@@ -9,10 +9,10 @@ module load aue/clang/16.0.6
 module load aue/openmpi/4.1.6-clang-16.0.6
 module load aue/boost/1.83.0-oneapi-2023.2.0-openmpi-4.1.6
 module load aue/netlib-lapack/3.11.0-oneapi-2023.2.0
-module load aue/zlib/1.3
+#module load aue/zlib/1.3
 module load aue/hdf5/1.14.2-oneapi-2023.2.0-openmpi-4.1.6
 module load aue/netcdf-c/4.9.2-oneapi-2023.2.0-openmpi-4.1.6
-module load aue/parallel-netcdf/1.12.3-oneapi-2023.2.0-openmpi-4.1.6 
+#module load aue/parallel-netcdf/1.12.3-oneapi-2023.2.0-openmpi-4.1.6 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF_ROOT/lib:$PNETCDF_ROOT/lib:$HDF5_ROOT/lib
 module list
 
