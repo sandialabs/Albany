@@ -65,10 +65,7 @@ public:
   }
 
   //! Get coordinates (overlap map).
-  const Teuchos::ArrayRCP<double>&
-  getCoordinates() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getCoordinates");
-  }
+  const Teuchos::ArrayRCP<double>& getCoordinates() const override { return m_nodes_coordinates; }
 
   //! Print the coords for mesh debugging
   void
@@ -274,6 +271,9 @@ protected:
 
   NodeSetList       m_node_sets;
   NodeSetCoordList  m_node_set_coords;
+
+  // Coordinates spliced together, as [x0,y0,z0,x1,y1,z1,...]
+  Teuchos::ArrayRCP<double>   m_nodes_coordinates;
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_side_set_equations;
