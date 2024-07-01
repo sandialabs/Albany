@@ -352,9 +352,6 @@ fillVectorImpl(Thyra_Vector&                         field_vector,
                const Teuchos::RCP<const DOFManager>& field_dof_mgr,
                const bool                            overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
-    "Error OrdinarySTKFieldContainer::fillVectorImpl not called from a solution field container.\n");
-
   // Figure out if it's a nodal or elem field
   const auto& fp = field_dof_mgr->getGeometricFieldPattern();
   const auto& ftopo = field_dof_mgr->get_topology();
