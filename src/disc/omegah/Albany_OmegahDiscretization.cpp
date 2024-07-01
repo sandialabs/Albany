@@ -1,6 +1,7 @@
 #include "Albany_OmegahDiscretization.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_StringUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 #include "OmegahConnManager.hpp"
 
@@ -38,6 +39,7 @@ updateMesh ()
 {
   printf ("TODO: change name to the method?\n");
 
+  // Create DOF managers
   auto sol_dof_mgr  = create_dof_mgr(solution_dof_name(),"",FE_Type::HGRAD,1,m_neq);
   auto node_dof_mgr = create_dof_mgr(nodes_dof_name(),"",FE_Type::HGRAD,1,1);
 
@@ -89,6 +91,7 @@ updateMesh ()
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
   const int mdim = mesh.dim();
+  m_nodes_coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
@@ -97,6 +100,10 @@ updateMesh ()
         LO node_lid = node_elem_dof_lids(ielem,inode);
         int omh_pos = m_node_lid_to_omegah_pos[node_lid];
         m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
+        auto coords = &m_nodes_coordinates[node_lid*mdim];
+        for (int idim=0; idim<mdim; ++idim) {
+          coords[idim] = m_ws_elem_coords[ws][ielem][inode][idim];
+        }
       }
     }
   }
