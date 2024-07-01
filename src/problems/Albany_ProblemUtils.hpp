@@ -20,6 +20,9 @@ namespace Albany {
 Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
 getIntrepid2Basis(const CellTopologyData& ctd);
 
+Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+getIntrepid2TensorBasis(const CellTopologyData& basal_ctd, const int vert_degree);
+
 bool mesh_depends_on_parameters ();
 
 } // namespace Albany
