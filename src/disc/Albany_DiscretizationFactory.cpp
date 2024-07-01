@@ -8,6 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
+#include "Albany_ExtrudedDiscretization.hpp"
 #include "Albany_STKDiscretization.hpp"
 // #include "Albany_BlockedSTKDiscretization.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
@@ -331,7 +332,10 @@ createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh
   Teuchos::RCP<AbstractDiscretization> disc;
   if (mesh->meshSpecs[0]->mesh_type==MeshType::Extruded)
   {
-    throw NotYetImplemented("ExtrudedDiscretization");
+    auto ext_mesh = Teuchos::rcp_dynamic_cast<ExtrudedMesh>(mesh);
+    auto basal_mesh = ext_mesh->basal_mesh();
+    auto basal_disc = createDiscretizationFromMeshStruct(basal_mesh,neq,{},rigidBodyModes);
+    disc = Teuchos::rcp(new ExtrudedDiscretization (discParams,neq,ext_mesh,basal_disc,comm,rigidBodyModes, sideSetEquations));
   } else if (mesh->meshLibName()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(mesh);
     disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));

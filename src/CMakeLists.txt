@@ -234,6 +234,7 @@ list (APPEND SOURCES
   disc/Albany_DiscretizationUtils.cpp
   disc/Albany_ExtrudedMesh.cpp
   disc/Albany_ExtrudedConnManager.cpp
+  disc/Albany_ExtrudedDiscretization.cpp
   )
 list (APPEND HEADERS
   disc/Albany_DiscretizationUtils.hpp
@@ -247,6 +248,7 @@ list (APPEND HEADERS
   disc/Albany_DOFManager.hpp
   disc/Albany_ExtrudedMesh.hpp
   disc/Albany_ExtrudedConnManager.hpp
+  disc/Albany_ExtrudedDiscretization.hpp
   )
 
 #stk
