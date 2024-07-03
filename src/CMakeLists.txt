@@ -524,6 +524,7 @@ if (ALBANY_OMEGAH)
   target_link_libraries(albanyLib Omega_h::omega_h)
 endif()
 
+include(GNUInstallDirs)
 install(TARGETS albanyLib EXPORT albany-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -594,19 +595,10 @@ endforeach()
 #              Installation stuff                #
 ##################################################
 
-configure_package_config_file(AlbanyConfig.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake
-  PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR)
-
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_config.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Albany_GitVersion.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AlbanyConfig.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake )
-
-install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/Albany/cmake  FILE "albany-targets.cmake")
 
 if (ENABLE_MPAS_INTERFACE)
   # Create dummy executable that links against all albany libs and its tpls
