@@ -273,17 +273,6 @@ ELSE()
   SET(ALBANY_STK_REBALANCE FALSE)
 ENDIF()
 
-# set optional dependency on Stokhos, for KL expansions
-# MESSAGE("-- Looking for Stokhos:")
-LIST(FIND Trilinos_PACKAGE_LIST Stokhos Stokhos_List_ID)
-IF (Stokhos_List_ID GREATER -1)
-  SET(ALBANY_STOKHOS TRUE)
-  MESSAGE("-- Looking for Stokhos ...                       Found.")
-ELSE()
-  MESSAGE("-- Looking for Stokhos ...                   NOT Found.")
-  SET(ALBANY_STOKHOS FALSE)
-ENDIF()
-
 # set optional dependency on Amesos2, for solving and preconditioning
 LIST(FIND Trilinos_PACKAGE_LIST Amesos2 Amesos2_List_ID)
 IF (Amesos2_List_ID GREATER -1)

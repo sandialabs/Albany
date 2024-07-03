@@ -78,7 +78,6 @@ cmake \
     -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
     -D Trilinos_ENABLE_Thyra:BOOL=ON \
     -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
-    -D Trilinos_ENABLE_Stokhos:BOOL=ON \
     -D Trilinos_ENABLE_Piro:BOOL=ON \
     -D Piro_ENABLE_TESTS:BOOL=ON \
     -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
@@ -109,7 +108,6 @@ cmake \
     -D Trilinos_ENABLE_TrilinosCouplings:BOOL=${TRILINOS_COUPLINGS:-OFF} \
     -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=${TRILINOS_PHALANX_TEUCHOS_TIME_MONITOR:-OFF} \
     -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=${TRILINOS_STRATIMIKOS_TEUCHOS_TIME_MONITOR:-OFF} \
-    -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=${TRILINOS_STOKHOS_TEUCHOS_TIME_MONITOR:-OFF} \
     -D Zoltan2_ENABLE_Experimental:BOOL=${TRILINOS_ZOLTAN2_EXPERIMENTAL:-OFF} \
     -D Trilinos_ENABLE_MueLu:BOOL=ON \
 \
