@@ -1,0 +1,71 @@
+@PACKAGE_INIT@
+
+include (CMakeFindDependencyMacro)
+
+###############################
+#      TPLs dependencies      #
+###############################
+
+set (Trilinos_COMPONENTS_NEEDED
+  Piro
+  PanzerDofMgr
+  Phalanx
+  NOX
+  ThyraTpetraAdapters
+  Intrepid2
+  Tempus
+  STK
+)
+if (@ALBANY_PANZER_EXPR_EVAL@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED PanzerExprEval)
+endif()
+if (@ALBANY_STK_EXPR_EVAL@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED STKExprEval)
+endif()
+if (@ALBANY_ZOLTAN@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED Zoltan)
+endif()
+if (@ALBANY_AMESOS2@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED Amesos2)
+endif()
+if (@ALBANY_IFPACK2@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED Ifpack2)
+endif()
+if (@ALBANY_TEKO@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED Teko)
+endif()
+if (@ALBANY_MUELU@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED MueLu)
+endif()
+if (@ALBANY_FROSCH@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED ShyLU_DDFROSch)
+endif()
+if (@ALBANY_ROL@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED ROL)
+endif()
+if (@ALBANY_DTK@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED DataTransferKit)
+endif()
+if (@ALBANY_SEACAS@)
+  list (APPEND Trilinos_COMPONENTS_NEEDED SEACASIoss)
+  if (@ALBANY_IOPX@)
+    list (APPEND Trilinos_COMPONENTS_NEEDED Iopx)
+  endif()
+endif()
+
+find_dependency (Trilinos REQUIRED
+  HINTS @ALBANY_TRILINOS_DIR@
+  COMPONENTS ${Trilinos_COMPONENTS_NEEDED}
+)
+
+if (@ALBANY_OMEGAH@)
+  find_dependency (Omega_h REQUIRED
+    HINTS
+    @Omega_h_DIR@           # If we found an existing installation at config time
+    @CMAKE_INSTALL_PREFIX@) # If we built it and installed it along with albany
+endif()
+
+include (${CMAKE_CURRENT_LIST_DIR}/AlbanyTargets.cmake)
+
+# Ensure required components were found
+check_required_components(Albany)

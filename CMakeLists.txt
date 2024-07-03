@@ -27,11 +27,17 @@ EXECUTE_PROCESS(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+
+set (Albany_VERSION_MAJOR 1)
+set (Albany_VERSION_MINOR 0)
+set (Albany_VERSION_PATCH 0)
+
 message("\n +-----------------------------------------")
 message(" |       Albany version details:")
 message(" +-----------------------------------------")
 message(" |  ALBANY_GIT_BRANCH = ${ALBANY_GIT_BRANCH}")
 message(" |  ALBANY_GIT_COMMIT_ID = ${ALBANY_GIT_COMMIT_ID}")
+message(" |  ALBANY VERSION = ${Albany_VERSION_MAJOR}.${Albany_VERSION_MINOR}.${Albany_VERSION_PATCH}")
 message(" +-----------------------------------------\n")
 
 # If user doesn't specify a build type, we assume production (i.e., RELEASE)
@@ -40,18 +46,6 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 project(Albany CXX C)
-
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
-message("\n +----------------------------------+")
-message(" |    Albany Installation details   |")
-message(" +----------------------------------+")
-message(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
-message(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
-message(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
-message(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-message(" +----------------------------------+\n")
-
 
 # Kokkos recommends to set CMAKE_CXX_EXTENSIONS to OFF
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -800,4 +794,39 @@ ADD_CUSTOM_TARGET( cmake_clean
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
 )
 
+##################################################
+#              Installation stuff                #
+##################################################
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+message("\n +----------------------------------+")
+message(" |    Albany Installation details   |")
+message(" +----------------------------------+")
+message(" | - Prefix: ${CMAKE_INSTALL_PREFIX}")
+message(" | - Binaries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+message(" | - Headers dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+message(" | - Libraries dir: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+message(" +----------------------------------+\n")
+
+configure_package_config_file(
+  cmake/AlbanyConfig.cmake.in
+  ${Albany_BINARY_DIR}/AlbanyConfig.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
+)
+
+write_basic_package_version_file(
+  "${Albany_BINARY_DIR}/AlbanyConfigVersion.cmake"
+  VERSION ${Albany_VERSION_MAJOR}.${Albany_VERSION_MINOR}.${Albany_VERSION_PATCH}
+  COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+  ${Albany_BINARY_DIR}/AlbanyConfig.cmake
+  ${Albany_BINARY_DIR}/AlbanyConfigVersion.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Albany )
+
+install(EXPORT albany-export DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Albany  FILE "AlbanyTargets.cmake")
+
+# Done!
 MESSAGE("\nAnd CMake says...:")

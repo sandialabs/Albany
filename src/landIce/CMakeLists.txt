@@ -250,6 +250,7 @@ target_include_directories(landIce PUBLIC
 
 set (ALBANY_LIBRARIES ${ALBANY_LIBRARIES} landIce)
 
+include(GNUInstallDirs)
 install(TARGETS landIce EXPORT albany-export
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
