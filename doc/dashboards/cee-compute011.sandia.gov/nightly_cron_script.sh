@@ -18,8 +18,11 @@ SCRIPT_DIR=/projects/albany/nightlyAlbanyCDash
 # Install directory holds final installed versions of the build. This is cross-mounted usually.
 INSTALL_DIR=/projects/albany/nightlyAlbanyCDash
 # The build area where the nightly products are built
-SCRATCH_DIR=/scratch/albany
-
+if [ "$BUILD_OPT" = "debug-trilinos" ] || [ "$BUILD_OPT" = "debug-albany" ]; then
+  SCRATCH_DIR=/home/ikalash/albany
+else
+  SCRATCH_DIR=/scratch/albany
+fi 
 unset HTTPS_PROXY
 unset HTTP_PROXY
 
