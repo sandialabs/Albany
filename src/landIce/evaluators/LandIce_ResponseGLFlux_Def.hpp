@@ -107,7 +107,7 @@ evaluateFields(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
+  Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
 
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
   {
