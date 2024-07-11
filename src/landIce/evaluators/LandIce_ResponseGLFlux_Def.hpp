@@ -84,19 +84,6 @@ void ResponseGLFlux<EvalT, Traits,ThicknessST>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   Base::postRegistrationSetup(d, fm);
-
-  gl_func = Kokkos::createDynRankView(bed.get_view(), "gl_func", numSideNodes);
-  H = Kokkos::createDynRankView(bed.get_view(), "H", 2);
-
-  // This is just used to fwd the needed template args to createDynRankView,
-  // so don't be puzzled by the fact that is missing all the data.
-  PHX::MDField<xyST> tmp("",Teuchos::null);
-  x = Kokkos::createDynRankView(tmp.get_view(), "x", 2);
-  y = Kokkos::createDynRankView(tmp.get_view(), "y", 2);
-
-  velx = Kokkos::createDynRankView(avg_vel.get_view(), "velx", 2);
-  vely = Kokkos::createDynRankView(avg_vel.get_view(), "vely", 2);
-
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
@@ -124,24 +111,31 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
   {
-    double coeff = rho_i*1e6*scaling; //to convert volume flux [km^2 m yr^{-1}] in a mass flux [kg yr^{-1}]
+    ScalarT coeff = rho_i*1e6*scaling; //to convert volume flux [km^2 m yr^{-1}] in a mass flux [kg yr^{-1}]
     sideSet = workset.sideSetViews->at(basalSideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+
+      ThicknessST gl_func[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
+      ThicknessST H[2] = {0., 0.};
+      xyST x[2] = {0., 0.};
+      xyST y[2] = {0., 0.};
+      ScalarT velx[2] = {0., 0.};
+      ScalarT vely[2] = {0., 0.};
 
       for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-        gl_func(inode) = rho_i*thickness(sideSet_idx,inode)+rho_w*bed(sideSet_idx,inode);
+        gl_func[inode] = rho_i*thickness(sideSet_idx,inode)+rho_w*bed(sideSet_idx,inode);
       }
 
       bool isGLCell = false;
 
       for (unsigned int inode=1; inode<numSideNodes; ++inode)
-        isGLCell = isGLCell || (gl_func(0)*gl_func(inode) <=0);
+        isGLCell = isGLCell || (gl_func[0]*gl_func[inode] <=0);
 
       if(!isGLCell)
-        continue;
+        return;
 
       int node_plus, node_minus;
       bool skip_edge = false, edge_on_GL=false;
@@ -150,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
       int counter=0;
       for (unsigned int inode=0; (inode<numSideNodes); ++inode) {
         int inode1 = (inode+1)%numSideNodes;
-        ThicknessST gl0 = gl_func(inode), gl1 = gl_func(inode1);
+        ThicknessST gl0 = gl_func[inode], gl1 = gl_func[inode1];
         if(gl0 >= gl_max) {
           node_plus = inode;
           gl_max = gl0;
@@ -166,29 +160,29 @@ evaluateFields(typename Traits::EvalData workset)
           if(skip_edge) {skip_edge = false; continue;}
           skip_edge = (gl1 == 0);
           ThicknessST theta = gl0/(gl0-gl1);
-          H(counter) = thickness(sideSet_idx,inode1)*theta + thickness(sideSet_idx,inode)*(1-theta);
-          x(counter) = coords(sideSet_idx,inode1,0)*theta + coords(sideSet_idx,inode,0)*(1-theta);
-          y(counter) = coords(sideSet_idx,inode1,1)*theta + coords(sideSet_idx,inode,1)*(1-theta);
-          velx(counter) = avg_vel(sideSet_idx,inode1,0)*theta + avg_vel(sideSet_idx,inode,0)*(1-theta);
-          vely(counter) = avg_vel(sideSet_idx,inode1,1)*theta + avg_vel(sideSet_idx,inode,1)*(1-theta);
+          H[counter] = thickness(sideSet_idx,inode1)*theta + thickness(sideSet_idx,inode)*(1-theta);
+          x[counter] = coords(sideSet_idx,inode1,0)*theta + coords(sideSet_idx,inode,0)*(1-theta);
+          y[counter] = coords(sideSet_idx,inode1,1)*theta + coords(sideSet_idx,inode,1)*(1-theta);
+          velx[counter] = avg_vel(sideSet_idx,inode1,0)*theta + avg_vel(sideSet_idx,inode,0)*(1-theta);
+          vely[counter] = avg_vel(sideSet_idx,inode1,1)*theta + avg_vel(sideSet_idx,inode,1)*(1-theta);
           ++counter;
         }
       }
 
       //skip when a grounding line intersect the element in one vertex only (counter<1)
       //also, when an edge is on grounding line, consider only the grounded element to avoid double-counting.
-      if(counter<2 || (edge_on_GL && gl_sum<0)) continue;
+      if(counter<2 || (edge_on_GL && gl_sum<0)) return;
 
       //we consider the direction [(y[1]-y[0]), -(x[1]-x[0])] orthogonal to the GL segment and compute the flux along that direction.
       //we then compute the sign of the of the flux by looking at the sign of the dot-product between the GL segment and an edge crossed by the grounding line
-      ScalarT t = 0.5*((H(0)*velx(0)+H(1)*velx(1))*(y(1)-y(0))-(H(0)*vely(0)+H(1)*vely(1))*(x(1)-x(0)));
+      ScalarT t = 0.5*((H[0]*velx[0]+H[1]*velx[1])*(y[1]-y[0])-(H[0]*vely[0]+H[1]*vely[1])*(x[1]-x[0]));
       bool positive_sign;
       positive_sign = (y[1]-y[0])*(coords(sideSet_idx,node_minus,0)-coords(sideSet_idx,node_plus,0))-(x[1]-x[0])*(coords(sideSet_idx,node_minus,1)-coords(sideSet_idx,node_plus,1)) > 0;
       if(!positive_sign) t = -t;
 
-      this->local_response_eval(cell, 0) += t*coeff;
-      this->global_response_eval(0) += t*coeff;
-    }
+      KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), t*coeff);
+      KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), t*coeff);
+    });
   }
 
   // Do any local-scattering necessary
