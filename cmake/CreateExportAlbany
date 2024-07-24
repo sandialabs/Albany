@@ -100,7 +100,7 @@ def run (bin_dir,install_lib_dir, cmake_generator):
             lib_dir_full = pathlib.Path(item[2:]).resolve()
             # If path doesn't exist or it isn't a directory, don't add it to the "libs_dirs" list
             if not lib_dir_full.exists() or not lib_dir_full.is_dir():
-                print (f"could not parse token {item}")
+                print (f"WARNING could not parse token {item}")
                 print (f" -> It appears to be a lib dir entry, but the path does not exist, or is not a directory")
                 continue
             libs_dirs.append(lib_dir_full)
@@ -112,7 +112,7 @@ def run (bin_dir,install_lib_dir, cmake_generator):
             lib_file_full = pathlib.Path(item).parent.resolve() / pathlib.Path(item).name
             # If the abs path doesn't point to an existing file, don't add the library name and path
             if not lib_file_full.exists():
-                print (f"could not locate lib: {lib_file_full}")
+                print (f"WARNING could not locate lib: {lib_file_full}")
                 print (f"cwd: {os.getcwd()}")
                 continue
             lib_file      = lib_file_full.name
