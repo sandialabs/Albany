@@ -361,6 +361,8 @@ writeMatrixMarket<const Tpetra_Map>(
 
   const std::string& filename = oss.str();
 
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "Writing Matrix Market file " << filename << " ..." << std::endl;
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeMapFile(filename, *map);
 }
 
@@ -386,6 +388,8 @@ writeMatrixMarket<const Tpetra_Vector>(
 
   const std::string& filename = oss.str();
 
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "Writing Matrix Market file " << filename << " ..." << std::endl;
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(filename, v);
 }
 
@@ -411,6 +415,8 @@ writeMatrixMarket<const Tpetra_MultiVector>(
 
   const std::string& filename = oss.str();
 
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "Writing Matrix Market file " << filename << " ..." << std::endl;
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeDenseFile(filename, mv);
 }
 
@@ -436,6 +442,8 @@ writeMatrixMarket<const Tpetra_CrsMatrix>(
 
   const std::string& filename = oss.str();
 
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "Writing Matrix Market file " << filename << " ..." << std::endl;
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseFile(filename, A);
 }
 
@@ -461,6 +469,8 @@ writeMatrixMarket<const Tpetra_CrsGraph>(
 
   const std::string& filename = oss.str();
 
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "Writing Matrix Market file " << filename << " ..." << std::endl;
   Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>::writeSparseGraphFile(filename, A);
 }
 
