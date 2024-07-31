@@ -136,19 +136,21 @@ set_row_and_col_is_dbc(typename Traits::EvalData dirichlet_workset)
   row_is_dbc_->assign(0.0);
   col_is_dbc_->assign(0.0);
 
-  auto row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
+  {
+    auto row_is_dbc_data = Albany::getNonconstLocalData(row_is_dbc_);
 
-  const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
+    const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(this->nodeSetID);
 
-  const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
-  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
-  const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
-  for (const auto& ep : ns_node_elem_pos) {
-    const int ielem = ep.first;
-    const int pos   = ep.second;
-    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+    const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
+    const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+    const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+    for (const auto& ep : ns_node_elem_pos) {
+      const int ielem = ep.first;
+      const int pos   = ep.second;
+      const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
 
-    row_is_dbc_data[x_lid] = 1.0;
+      row_is_dbc_data[x_lid] = 1.0;
+    }
   }
 
   auto cas_manager = Albany::createCombineAndScatterManager(domain_vs, col_vs);
