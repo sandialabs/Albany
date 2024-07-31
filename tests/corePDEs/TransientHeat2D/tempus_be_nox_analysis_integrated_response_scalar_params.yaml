@@ -1,0 +1,255 @@
+ALBANY:
+  Problem: 
+    Name: Heat 2D
+    Compute Sensitivities: true
+    Solution Method: Transient
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF T: 1.0e+00
+      DBC on NS NodeSet1 for DOF T: 1.0e+00
+      #DBC on NS NodeSet2 for DOF T: 1.0e+00
+      #DBC on NS NodeSet3 for DOF T: 1.0e+00
+    Initial Condition: 
+      Function: Constant
+      Function Data: [5.0e+00]
+    Response Functions: 
+      Number Of Responses: 1
+      Response 0:
+        Name: Solution Average
+    Parameters: 
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Vector
+        Dimension: 2
+        Scalar 0:
+          Name: DBC on NS NodeSet0 for DOF T
+          Lower Bound: 0.0
+          Upper Bound: 5.0
+        Scalar 1:
+          Name: DBC on NS NodeSet1 for DOF T
+          Lower Bound: 0.0
+          Upper Bound: 5.0
+  Discretization: 
+    1D Elements: 5
+    2D Elements: 5
+    1D Scale: 1.0e+00
+    2D Scale: 1.0e+00
+    Workset Size: 50
+    Method: STK2D
+    Exodus Output File Name: tran2d_tpetra_tempus_be.exo
+  Regression For Response 0:
+    Relative Tolerance: 1.0e-03
+    Absolute Tolerance: 1.0e-05
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [0.]
+  Piro:
+    Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    Analysis:
+      Transient: true
+      Output Level: 1
+      Analysis Package: ROL
+      ROL:
+        Number Of Parameters: 1
+        Check Derivatives: false
+        Parameter Initial Guess Type: Uniform Vector
+        Uniform Parameter Guess: 2.0
+        Min And Max Of Random Parameter Guess: [1.0, 5.0]
+        Bound Constrained: true
+
+        Tempus Driver: false
+        Response Depends Only On Final Time: false
+
+        ROL Options:
+          General:
+            Output Level: 1
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+            Inexact Objective Function: false
+            Inexact Gradient: false
+            Inexact Hessian-Times-A-Vector: false
+            Projected Gradient Criticality Measure: false
+            Secant:
+              Type: Limited-Memory BFGS
+              Maximum Storage: 20
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein: 1
+            Krylov:
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.e-4
+              Relative Tolerance: 1.e-2
+              Iteration Limit: 20
+          Step:
+            Type: Trust Region
+            Trust Region:
+              Subproblem Model: Kelley-Sachs
+              Subproblem Solver: Truncated CG
+              Initial Radius: -1.0
+              Step Acceptance Threshold: 0.05
+              Radius Shrinking Threshold: 0.05
+              Radius Growing Threshold: 0.9
+              Radius Shrinking Rate (Negative rho): 0.0625
+              Radius Shrinking Rate (Positive rho): 0.25
+              Radius Growing Rate: 2.5
+              Safeguard Size: 100.0
+              Inexact:
+                Value:
+                  Tolerance Scaling: 1.e-1
+                  Exponent: 0.9
+                  Forcing Sequence Initial Value: 1.0
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 0.1
+                Gradient:
+                  Tolerance Scaling: 1.e-1
+                  Relative Tolerance: 2.0
+          Status Test:
+            Gradient Tolerance: 1.e-6
+            Step Tolerance: 1.e-14
+            Iteration Limit: 50
+            Use Relative Tolerances: false
+          SimOpt:
+            Solve:
+              Absolute Residual Tolerance: 1.0e-5
+              Relative Residual Tolerance: 1.0e+0
+              Iteration Limit: 20
+              Sufficient Decrease Tolerance: 1.e-4
+              Step Tolerance: 1.e-8
+              Backtracking Factor: 0.5
+              Output Iteration History: true
+              Zero Initial Guess: false
+              Solver Type: 0
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-7
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.0e-07
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.0
+                    'fact: iluk level-of-fill': 0
+      Line Search: 
+        Full Step: 
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+      Solver Options: 
+        Status Test Check Type: Minimal
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.0
+          Initial Time Index: 0
+          Initial Time Step: 5.0e-02
+          Final Time: 8.0e-1
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
+          Output Time List: ''
+          Output Index List: ''
+          #Output Time Interval: 1.0e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Demo Solver: 
+          NOX: 
+            Direction: 
+              Method: Newton
+              Newton: 
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver: 
+                  Tolerance: 1.0e-02
+            Line Search: 
+              Full Step: 
+                Full Step: 1.0e+00
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing: 
+              Output Precision: 3
+              Output Processor: 0
+              Output Information: 
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: true
+                Details: false
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options: 
+              Status Test Check Type: Minimal
+            Status Tests: 
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0: 
+                Test Type: NormF
+                Tolerance: 1.0e-08
+              Test 1: 
+                Test Type: MaxIters
+                Maximum Iterations: 10
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.0e-02
+                Output Frequency: 1
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 3
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          Ifpack2: 
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.0e+00
+...
