@@ -9,6 +9,8 @@
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
+#include "Albany_KokkosUtils.hpp"
+
 namespace PHAL {
 /**
  * \brief Response Description
@@ -44,6 +46,8 @@ private:
   int sideDim;
   int numQPs;
   int fieldDim;
+  int dims_2;
+  int dims_3;
   std::vector<PHX::Device::size_type> dims;
 
   bool target_value, rmsScaling, extrudedParams, isFieldGradient;
@@ -57,10 +61,10 @@ private:
   PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>   metric;
   PHX::MDField<const MeshScalarT,Side,QuadPoint>   w_measure;
 
-  std::vector<ScalarT> diff_1;
-  std::vector<std::vector<ScalarT>> diff_2;
-
   bool resp_depends_on_sol_column;
+
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 //-- SourceScalarT = ScalarT
