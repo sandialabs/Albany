@@ -574,37 +574,38 @@ evaluateFields(typename Traits::EvalData workset)
   this->gather_fields_offsets(dof_mgr);
 
   const auto ws = workset.wsIndex;
-  const auto elem_lids  = workset.disc->getWsElementLIDs().host();
-  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().host();
+  const auto elem_lids  = workset.disc->getWsElementLIDs().dev();
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().dev();
   constexpr auto ALL = Kokkos::ALL;
 
   //get const (read-only) view of x and xdot
-  using const_data_t = Teuchos::ArrayRCP<const ST>;
+  using const_data_t = Albany::ThyraVDeviceView<const ST>;
   const_data_t x_data, xdot_data, xdotdot_data;
 
-  x_data = Albany::getLocalData(x);
+  x_data = Albany::getDeviceData(x);
   if (xdot!=Teuchos::null)
-    xdot_data = Albany::getLocalData(xdot);
+    xdot_data = Albany::getDeviceData(xdot);
   if (xdotdot!=Teuchos::null)
-    xdotdot_data = Albany::getLocalData(xdotdot);
+    xdotdot_data = Albany::getDeviceData(xdotdot);
 
-  const auto& fields_offsets = m_fields_offsets.host();
+  const auto& fields_offsets = m_fields_offsets.dev();
   const int first_dof = this->offset;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                      KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(ws,cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     for (int node = 0; node < this->numNodes; ++node) {
       for (int eq = 0; eq < numFields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
 
-        get_ref(cell,node,eq) = x_data[lid];
+        this->device_sol.get_ref(cell,node,eq) = x_data(lid);
         if (gather_xdot)
-          get_ref_dot(cell,node,eq) = xdot_data[lid];
+          this->device_sol.get_ref_dot(cell,node,eq) = xdot_data(lid);
         if (gather_xdotdot)
-          get_ref_dotdot(cell,node,eq) = xdotdot_data[lid];
+          this->device_sol.get_ref_dotdot(cell,node,eq) = xdotdot_data(lid);
       }
     }
-  }
+  });
 }
 
 // **********************************************************************

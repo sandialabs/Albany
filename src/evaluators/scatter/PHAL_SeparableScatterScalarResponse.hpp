@@ -205,6 +205,12 @@ protected:
 
 private:
   typedef typename AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
+  MDFieldVectorRight<const ScalarT> global_response_reader;
+  
 };
 
 
@@ -311,6 +317,11 @@ protected:
 
 private:
   typedef typename AlbanyTraits::HessianVec::ScalarT ScalarT;
+
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
+  MDFieldVectorRight<const ScalarT> global_response_reader;
 };
 
 
