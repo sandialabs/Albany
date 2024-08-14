@@ -25,6 +25,7 @@
 #include <percept/stk_rebalance/Rebalance.hpp>
 #include <percept/stk_rebalance/RebalanceUtils.hpp>
 #include <percept/stk_rebalance/Partition.hpp>
+#include <stk_mesh/base/Relation.hpp>
 
 using namespace stk;
 using namespace stk::rebalance;
