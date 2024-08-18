@@ -1,6 +1,6 @@
 group, site, buildname 
-Nightly, attaway.sandia.gov, Albany-Linux-4.18.0-477.27.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
-Nightly, attaway.sandia.gov, Trilinos-Linux-4.18.0-477.27.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
+Nightly, attaway.sandia.gov, Albany-Linux-4.18.0-553.5.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
+Nightly, attaway.sandia.gov, Trilinos-Linux-4.18.0-553.5.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
 Nightly, blake.sandia.gov, Trilinos-Linux-4.18.0-477.21.1.el8_8.x86_64-gcc-12.2.0-Release
 Nightly, blake.sandia.gov, Trilinos-Linux-4.18.0-477.21.1.el8_8.x86_64-gcc-12.2.0-Debug-No-Warn
 Nightly, blake.sandia.gov, Albany-Linux-4.18.0-477.21.1.el8_8.x86_64-gcc-12.2.0-Debug-No-Warn
