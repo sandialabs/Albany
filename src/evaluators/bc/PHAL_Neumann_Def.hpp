@@ -971,6 +971,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   this->evaluateNeumannContribution(workset);
 
+  const auto& local_Vp = workset.local_Vp;
+
   constexpr auto ALL = Kokkos::ALL();
   if (trans) {
     const int neq = workset.numEqs;
@@ -979,7 +981,6 @@ evaluateFields(typename Traits::EvalData workset)
     const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
     for (size_t cell=0; cell<workset.numCells; ++cell) {
-      const auto& local_Vp = workset.local_Vp[cell];
       const int num_deriv = local_Vp.size()/neq;
       const auto elem_LID = elem_lids(cell);
       const auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
@@ -992,7 +993,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int node = 0; node < this->numNodes; ++node) {
             for (int dim = 0; dim < this->numDOFsSet; ++dim){
               int eq = this->offset[dim];
-              val += this->neumann(cell, node, dim).dx(i)*local_Vp[node*neq+eq][col];
+              val += this->neumann(cell, node, dim).dx(i)*local_Vp(cell,node*neq+eq,col);
             }
           }
           fpV_nonconst2dView[col][row] += val;
@@ -1007,7 +1008,6 @@ evaluateFields(typename Traits::EvalData workset)
     const auto& offsets = this->fields_offsets;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const auto elem_LID = elem_lids(cell);
-      const auto& local_Vp = workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
 
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -1018,7 +1018,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
-              val += this->neumann(cell, node, dim).dx(i)*local_Vp[i][col];
+              val += this->neumann(cell, node, dim).dx(i)*local_Vp(cell,i,col);
             }
             fpV_nonconst2dView[col][row] += val;
           }

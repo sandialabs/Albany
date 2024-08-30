@@ -111,6 +111,9 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 
