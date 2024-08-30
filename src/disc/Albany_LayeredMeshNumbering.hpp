@@ -38,6 +38,7 @@ struct LayeredMeshNumbering {
     numLayers = _numLayers;
   }
 
+  KOKKOS_INLINE_FUNCTION
   T getId(const T column_id, const T level_index) const {
       return layerOrd ? column_id + level_index*numHorizEntities :
                         column_id * numLayers + level_index;
@@ -62,11 +63,12 @@ struct LayeredMeshNumbering {
     return layerOrd ? 1 : numLayers;
   }
 
-
+  KOKKOS_INLINE_FUNCTION
   T getColumnId (const T id) const {
     return layerOrd ? id % numHorizEntities : id / numLayers;
   }
 
+  KOKKOS_INLINE_FUNCTION
   T getLayerId (const T id) const {
     return layerOrd ? id / numHorizEntities : id % numLayers;
   }
