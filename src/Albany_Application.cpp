@@ -3141,7 +3141,6 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   workset.EBName               = wsEBNames[ws];
   workset.wsIndex              = ws;
 
-  workset.local_Vp.resize(workset.numCells);
 
   workset.savedMDFields = phxSetup->get_saved_fields(evalName);
 

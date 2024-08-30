@@ -267,7 +267,9 @@ public:
 protected:
   using Base = ScatterResidual<AlbanyTraits::DistParamDeriv, Traits>;
   using ScalarT = typename Base::ScalarT;
-
+  using ExecutionSpace = typename Base::ExecutionSpace;
+  using RangePolicy = typename Base::RangePolicy;
+  
   using Base::get_resid;
   using Base::m_fields_offsets;
   using Base::numNodes;
@@ -328,6 +330,8 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 protected:
   using Base = ScatterResidualBase<AlbanyTraits::HessianVec, Traits>;
+  using ExecutionSpace = typename Base::ExecutionSpace;
+  using RangePolicy = typename Base::RangePolicy;
   using ScalarT = typename Base::ScalarT;
 
   using Base::get_resid;
@@ -376,6 +380,9 @@ public:
 protected:
   using Base = ScatterResidual<AlbanyTraits::HessianVec, Traits>;
   using ScalarT = typename Base::ScalarT;
+
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 
   using Base::get_resid;
   using Base::m_fields_offsets;

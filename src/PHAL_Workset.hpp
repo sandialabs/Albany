@@ -127,7 +127,7 @@ struct Workset
   Teuchos::RCP<Albany::DistributedParameterLibrary> distParamLib;
   std::string                                       dist_param_deriv_name;
   bool                                              transpose_dist_param_deriv;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>> local_Vp;
+  Kokkos::View<double***, PHX::Device> local_Vp;
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double*>> wsCoords;
   std::string                                         EBName;
