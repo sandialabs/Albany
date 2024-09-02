@@ -147,12 +147,13 @@ namespace Intrepid2 {
   Basis_HGRAD_LINE_I4_FEM<DT,OT,PT>::
   Basis_HGRAD_LINE_I4_FEM(const ordinal_type /*order*/,
                             const EPointType   pointType) {
-    this->basisCardinality_  = 2;
-    this->basisDegree_       = 4;
-    this->basisCellTopology_ = shards::CellTopology(shards::getCellTopologyData<shards::Line<2> >() );
-    this->basisType_         = BASIS_FEM_LAGRANGIAN;
-    this->basisCoordinates_  = COORDINATES_CARTESIAN;
-    this->functionSpace_     = FUNCTION_SPACE_HGRAD;
+    const ordinal_type spaceDim = 1;
+    this->basisCardinality_     = 2;
+    this->basisDegree_          = 4;
+    this->basisCellTopologyKey_ = shards::Line<2>::key;
+    this->basisType_            = BASIS_FEM_LAGRANGIAN;
+    this->basisCoordinates_     = COORDINATES_CARTESIAN;
+    this->functionSpace_        = FUNCTION_SPACE_HGRAD;
 
     c0_ = c1_ = c2_ = 1.0;
 
@@ -189,7 +190,7 @@ namespace Intrepid2 {
 
     // dofCoords on host and create its mirror view to device
     Kokkos::DynRankView<typename ScalarViewType::value_type,typename DT::execution_space::array_layout,Kokkos::HostSpace>
-      dofCoords("dofCoordsHost", this->basisCardinality_,this->basisCellTopology_.getDimension());
+      dofCoords("dofCoordsHost", this->basisCardinality_, spaceDim);
 
     dofCoords(0,0) = -1.0;
     dofCoords(1,0) =  1.0;
