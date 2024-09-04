@@ -543,17 +543,17 @@ evaluateFields(typename Traits::EvalData workset)
             const int dof_lid = elem_dof_lids(elem_LID,deriv);
 
             if (do_xx)
-              hess_vec_prod_g_xx_data(dof_lid, res) += lresp.dx(deriv).dx(0);
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xx_data(dof_lid, res)), lresp.dx(deriv).dx(0));
 
             if (do_xp)
-              hess_vec_prod_g_xp_data(dof_lid, res) += lresp.dx(deriv).dx(0);
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xp_data(dof_lid, res)), lresp.dx(deriv).dx(0));
           } // column nodes
         }
         if (do_dist_px) {
           for (int deriv=0; deriv<numNodes; ++deriv) {
             const int row = p_elem_dof_lids(elem_LID,deriv);
             if (row>=0) {
-              hess_vec_prod_g_px_data(row,res) += lresp.dx(deriv).dx(0);
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_px_data(row,res)), lresp.dx(deriv).dx(0));
             }
           }
         }
@@ -561,19 +561,19 @@ evaluateFields(typename Traits::EvalData workset)
           for (int deriv=0; deriv<numNodes; ++deriv) {
             const int row = p_elem_dof_lids(elem_LID,deriv);
             if (row>=0) {
-              hess_vec_prod_g_pp_data(row,res) += lresp.dx(deriv).dx(0);
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_pp_data(row,res)), lresp.dx(deriv).dx(0));
             }
           }
         }
 
         if (do_scalar_px) {
           for (int deriv=0; deriv<g_px_size; ++deriv) {
-            hess_vec_prod_g_px_data(deriv,res) += lresp.dx(deriv).dx(0);
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_px_data(deriv,res)), lresp.dx(deriv).dx(0));
           }
         }
         if (do_scalar_pp) {
           for (int deriv=0; deriv<g_pp_size; ++deriv) {
-            hess_vec_prod_g_pp_data(deriv,res) += lresp.dx(deriv).dx(0);
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_pp_data(deriv,res)), lresp.dx(deriv).dx(0));
           }
         }
       } // response
