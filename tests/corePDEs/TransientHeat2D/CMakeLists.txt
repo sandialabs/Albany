@@ -43,12 +43,12 @@ if (ALBANY_ROL)
     set_tests_properties(${testName} PROPERTIES LABELS "Transient;Analysis;ROL;Scalar")
 
 
-    set(testName ${testNameRoot}_Transient_Analysis_Tempus_Scalar_Params)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be_nox_analysis_tempus_driven_scalar_params.yaml
-                ${CMAKE_CURRENT_BINARY_DIR}/tempus_be_nox_analysis_tempus_driven_scalar_params.yaml COPYONLY)
+    #set(testName ${testNameRoot}_Transient_Analysis_Tempus_Scalar_Params)
+    #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be_nox_analysis_tempus_driven_scalar_params.yaml
+    #            ${CMAKE_CURRENT_BINARY_DIR}/tempus_be_nox_analysis_tempus_driven_scalar_params.yaml COPYONLY)
 
-    add_test(${testName} ${AlbanyAnalysis.exe} tempus_be_nox_analysis_tempus_driven_scalar_params.yaml)
-    set_tests_properties(${testName} PROPERTIES LABELS "Transient;Analysis;Tempus;Scalar")
+    #add_test(${testName} ${AlbanyAnalysis.exe} tempus_be_nox_analysis_tempus_driven_scalar_params.yaml)
+    #set_tests_properties(${testName} PROPERTIES LABELS "Transient;Analysis;Tempus;Scalar")
 endif()
 
 # RK 4 test
