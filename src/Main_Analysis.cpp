@@ -73,11 +73,14 @@ int main(int argc, char *argv[]) {
 
     //Adjoint model model evaluator 
     
-    const bool explicitMatrixTranspose = slvrfctry.getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
-                                           slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
-                                           false;
+    const bool explicitMatrixTranspose = slvrfctry.getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") 
+                                         && slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose");
 
-    const auto albanyAdjointModel = explicitMatrixTranspose ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
+    const bool transientAnalysis = slvrfctry.getParameters()->sublist("Piro").isSublist("Analysis")
+                                   && slvrfctry.getParameters()->sublist("Piro").sublist("Analysis").isParameter("Transient")
+                                   && slvrfctry.getParameters()->sublist("Piro").sublist("Analysis").get<bool>("Transient");
+
+    const auto albanyAdjointModel = explicitMatrixTranspose || transientAnalysis ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
     const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel, false);
 
     stackedTimer->stop("Albany: Setup Time");
