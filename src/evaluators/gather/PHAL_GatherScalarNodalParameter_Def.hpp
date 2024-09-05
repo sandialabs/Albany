@@ -215,20 +215,6 @@ evaluateFields(typename Traits::EvalData workset)
     bool trans = workset.transpose_dist_param_deriv;
     const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
 
-    // allocate View for local_Vp
-    int num_cols = 0;
-    if (Vp != Teuchos::null) {
-      num_cols = Vp->domain()->dim();
-      if (trans) {
-        const int num_dofs = elem_dof_lids.extent(1);
-        workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_dofs,num_cols);
-      } else {
-        workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_deriv,num_cols);
-      }
-    }
-
-    const auto& local_Vp = workset.local_Vp;
-
     Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                         KOKKOS_CLASS_LAMBDA(const int& cell) {
       const auto elem_LID = elem_lids(cell);
@@ -244,6 +230,18 @@ evaluateFields(typename Traits::EvalData workset)
     });
 
     if (Vp != Teuchos::null) {
+            const int num_cols = Vp->domain()->dim();
+
+      const int num_dofs = elem_dof_lids.extent(1);
+      if (trans) {
+        const int num_dofs = elem_dof_lids.extent(1);
+        workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_dofs,num_cols);
+      } else {
+        workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_deriv,num_cols);
+      }
+
+      const auto& local_Vp = workset.local_Vp;
+
       if (trans) {
         for (int eq=0; eq<neq; ++eq) {
           const auto& offsets = dof_mgr->getGIDFieldOffsetsKokkos(eq);
@@ -252,8 +250,9 @@ evaluateFields(typename Traits::EvalData workset)
           Kokkos::parallel_for(this->getName()+"_transvp",RangePolicy(0,workset.numCells),
                         KOKKOS_CLASS_LAMBDA(const int& cell) {
             const auto elem_LID = elem_lids(cell);
-            auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-            for (int o=0; o<num_offsets; ++o) {
+            const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+            for (int i=0; i < num_offsets; ++i) {
+              const auto o = offsets(i);
               const LO lid = dof_lids(o);
               for (int col=0; col<num_cols; ++col)
                 local_Vp(cell,o,col) = Vp_data(lid,col);
@@ -348,13 +347,23 @@ evaluateFields(typename Traits::EvalData workset)
   // Are we differentiating w.r.t. this parameter?
   const bool is_active = (workset.dist_param_deriv_name == this->param_name);
 
-  const auto& local_Vp = workset.local_Vp;
-
   // If active, initialize data needed for differentiation
   if (is_active) {
     const int neq = sol_dof_mgr->getNumFields();
     const int num_deriv = this->numNodes;
     const bool trans = workset.transpose_dist_param_deriv;
+
+        if (Vp != Teuchos::null) {
+      const int num_cols = workset.Vp->domain()->dim();
+      if (trans) {
+        const int num_dofs = elem_dof_lids.extent(1);
+        workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_dofs,num_cols);
+      } else {
+        workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_deriv,num_cols);
+      }
+    }
+    const auto& local_Vp = workset.local_Vp;
+    
     for (std::size_t cell=0; cell<workset.numCells; ++cell) {
       const auto elem_LID = elem_lids(cell);
       const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
