@@ -442,7 +442,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else {
     for (size_t cell=0; cell<workset.numCells; ++cell) {
-      const int   num_deriv = local_Vp.size();
+      const int   num_deriv = local_Vp.extent(1);
       const auto  elem_LID  = elem_lids(cell);
       const auto  dof_lids  = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
