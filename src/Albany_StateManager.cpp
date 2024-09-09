@@ -62,9 +62,9 @@ StateManager::registerStateVariable(
   Teuchos::RCP<Teuchos::ParameterList> p =
       Teuchos::rcp(new Teuchos::ParameterList(
           "Save or Load State " + stateName + " to/from field " + stateName));
-  p->set<const std::string>("State Name", stateName);
-  p->set<const std::string>("Field Name", stateName);
-  p->set<const Teuchos::RCP<PHX::DataLayout>>("State Field Layout", dl);
+  p->set("State Name", stateName);
+  p->set("Field Name", stateName);
+  p->set("State Field Layout", dl);
 
   // Store layout (check for consistency if already present)
   auto& stored_dl = statesToStore[ebName][stateName];
@@ -174,10 +174,10 @@ StateManager::registerSideSetStateVariable(
       Teuchos::rcp(new Teuchos::ParameterList(
           "Save Side Set State " + stateName + " to/from Side Set Field " +
           fieldName));
-  p->set<const std::string>("State Name", stateName);
-  p->set<const std::string>("Field Name", fieldName);
-  p->set<const std::string>("Side Set Name", sideSetName);
-  p->set<const Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl);
+  p->set("State Name", stateName);
+  p->set("Field Name", fieldName);
+  p->set("Side Set Name", sideSetName);
+  p->set("Field Layout", dl);
 
   // Store layout (check for consistency if already present)
   auto& stored_dl = sideSetStatesToStore[sideSetName][ebName][stateName];
