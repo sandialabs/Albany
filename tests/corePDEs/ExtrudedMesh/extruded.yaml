@@ -1,18 +1,26 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Debug Output:
+    Report Timers: false
   Problem:
     Name: Heat 3D
-    Compute Sensitivities: true
+    Compute Sensitivities: false
+    Phalanx Graph Visualization Detail: 1
     Dirichlet BCs:
-      DBC on NS bottom for DOF T: 2.0
+      DBC on NS bottom for DOF T: 1.0
       DBC on NS top for DOF T: 2.0
-      DBC on NS lateral for DOF T: 1.0
+    Initial Condition:
+      Function: Constant
+      Function Data: [1.5]
+    ThermalConductivity:
+      ThermalConductivity Type: Constant
+      Value: 3.0
     Source Functions:
       Quadratic:
         Nonlinear Factor: 3.0
     Parameters:
-      Number Of Parameters: 1
+      Number Of Parameters: 0
       Parameter 0:
         Type: Vector
         Dimension: 4
@@ -21,15 +29,19 @@ ANONYMOUS:
         Scalar 1:
           Name: DBC on NS top for DOF T
         Scalar 2:
-          Name: DBC on NS lateral for DOF T
-        Scalar 3:
           Name: Quadratic Nonlinear Factor
+        Scalar 3:
+          Name: ThermalConductivity
     Response Functions:
-      Number Of Responses: 2
+      Number Of Responses: 4
       Response 0:
-        Name: Solution Average
-      Response 1:
         Name: Solution Two Norm
+      Response 1:
+        Name: Solution Average
+      Response 2:
+        Name: Solution Max Value
+      Response 3:
+        Name: Solution Min Value
   Discretization:
     Method: NewExtruded
     NumLayers: 5
@@ -38,8 +50,8 @@ ANONYMOUS:
       Side Sets: [basalside]
       basalside:
         Method: STK2D
-        1D Elements: 1
-        2D Elements: 1
+        1D Elements: 5
+        2D Elements: 5
         Cell Topology: Triangle
         Required Fields Info:
           Number Of Fields: 2
@@ -47,12 +59,12 @@ ANONYMOUS:
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
-            Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
+            Field Value: 1.0
           Field 1:
             Field Name: thickness
             Field Type: Node Scalar
             Field Origin: File
-            Field Expression: ['1.001-x/1000']  # 1km+1m at x=0km, 1m at x=1000km
+            Field Value: 1.0
   # Regression For Response 0:
   #   Test Value: 1.630433
   #   Relative Tolerance: 1.0e-03
