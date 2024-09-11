@@ -87,7 +87,7 @@ ExtrudedConnManager::getElementBlock(const std::string& blockId) const
 const GO* ExtrudedConnManager::
 getConnectivity (const LO ielem) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (m_fp.is_null(), std::logic_error,
       "Error! Cannot call getConnectivity before connectivity is build.\n");
   return m_connectivity.data() + getConnectivityStart(ielem);
 }
@@ -96,7 +96,7 @@ std::vector<int>
 ExtrudedConnManager::
 getConnectivityMask (const std::string& sub_part_name) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (m_fp.is_null(), std::logic_error,
       "Error! Cannot call getConnectivityMask before connectivity is build.\n");
   std::vector<int> mask(m_connectivity.size(),0);
   const auto& cell_layers_lid = m_mesh->cell_layers_lid();
@@ -189,9 +189,6 @@ buildConnectivity(const panzer::FieldPattern & fp)
   // We may remove the second assumption at some point, which means some parts
   // of the impl below will have to change.
 
-  TEUCHOS_TEST_FOR_EXCEPTION (m_is_connectivity_built, std::logic_error,
-      "[ExtrudedConnManager::buildConnectivity] Connectivity was already built.\n");
-
   using basis_type = Intrepid2::Basis<PHX::Device,RealType,RealType>;
   using tensor_basis_type = Intrepid2::Basis_TensorBasis<basis_type>;
 
@@ -265,7 +262,7 @@ buildConnectivity(const panzer::FieldPattern & fp)
 
   // Build SCALAR horiz connectivity
   // NOTE: if you generalize to fields of different patterns, fp_h will be a vector
-  m_conn_mgr_h->buildConnectivity(*fp_h);
+  m_conn_mgr_h->buildConnectivity(fp_h);
 
   // Compute basal max gid
   const auto& elems_h = m_conn_mgr_h->getElementsInBlock();
@@ -338,8 +335,6 @@ buildConnectivity(const panzer::FieldPattern & fp)
 
   m_num_vdofs_per_elem = ndofs_v;
   m_num_hdofs_per_elem = ndofs_h;
-
-  m_is_connectivity_built = true;
 }
 
 } // namespace Albany

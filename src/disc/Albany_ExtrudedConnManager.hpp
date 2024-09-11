@@ -70,7 +70,7 @@ protected:
 inline int ExtrudedConnManager::
 getConnectivityStart (const LO ielem) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (m_fp.is_null(), std::logic_error,
       "Error! Cannot call getConnectivityStart before connectivity is build.\n");
 
   return ielem * m_num_dofs_per_elem;
@@ -79,7 +79,7 @@ getConnectivityStart (const LO ielem) const
 inline int ExtrudedConnManager::
 getConnectivitySize (const LO ielem) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (m_fp.is_null(), std::logic_error,
       "Error! Cannot call getConnectivitySize before connectivity is build.\n");
   return m_num_dofs_per_elem;
 }
