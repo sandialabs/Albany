@@ -94,7 +94,8 @@ ExtrudedDiscretization::writeSolution(
     const bool          overlapped,
     const bool          force_write_solution)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
+  printf("WARNING ExtrudedDiscretization::writeSolution not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
 }
 
 void
@@ -106,7 +107,8 @@ ExtrudedDiscretization::writeSolution(
     const bool          overlapped,
     const bool          force_write_solution)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
+  printf("WARNING ExtrudedDiscretization::writeSolution not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
 }
 
 void
@@ -119,7 +121,8 @@ ExtrudedDiscretization::writeSolution(
     const bool          overlapped,
     const bool          force_write_solution)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
+  printf("WARNING ExtrudedDiscretization::writeSolution not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
 }
 
 void
