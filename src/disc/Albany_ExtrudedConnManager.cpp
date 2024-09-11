@@ -125,11 +125,10 @@ getConnectivityMask (const std::string& sub_part_name) const
     }
     LayeredMeshNumbering<LO> dofs_layers(m_num_hdofs_per_elem*m_num_fields,m_num_vdofs_per_elem,LayeredMeshOrdering::LAYER);
     for (const auto& basal_ssn : basal_ss_names) {
-      const auto& basal_mask = m_conn_mgr_h->getConnectivityMask(basal_ssn);
+      const auto basal_mask = m_conn_mgr_h->getConnectivityMask(basal_ssn);
       for (int ie=0; ie<num_basal_elems; ++ie) {
         const int start_h = m_conn_mgr_h->getConnectivityStart(ie);
         const int size_h  = m_conn_mgr_h->getConnectivitySize(ie);
-        const auto basal_conn = m_conn_mgr_h->getConnectivity(ie);
         for (int idof=0; idof<size_h; ++idof) {
           if (basal_mask[start_h+idof]==1) {
             for (int ilay=0; ilay<num_layers; ++ilay) {
