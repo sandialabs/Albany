@@ -78,7 +78,7 @@ ANONYMOUS:
         Name: Solution Average
   Discretization:
     Workset Size: -1
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: enth_coupled.exo
     Columnwise Ordering: true

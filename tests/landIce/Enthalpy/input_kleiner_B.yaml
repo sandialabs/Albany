@@ -61,7 +61,7 @@ ANONYMOUS:
         Type: Scalar Response
         Name: Solution Average
   Discretization:
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: kleiner_B.exo
     Use Serial Mesh: true

@@ -25,7 +25,7 @@ ANONYMOUS:
     Cubature Degree: 4
     
   Discretization:
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: column_coupling_test.exo
     Columnwise Ordering: true

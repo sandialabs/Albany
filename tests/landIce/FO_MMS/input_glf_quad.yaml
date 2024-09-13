@@ -58,7 +58,7 @@ ANONYMOUS:
       Function Expression for DOF Y: 'value = 0'
   Discretization: 
     Number Of Time Derivatives: 0
-    Method: Extruded
+    Method: STKExtruded
     Exodus Output File Name: slab_hex_glf.exo
     Columnwise Ordering: true
     NumLayers: 5

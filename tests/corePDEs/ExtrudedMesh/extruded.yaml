@@ -43,7 +43,7 @@ ANONYMOUS:
       Response 3:
         Name: Solution Min Value
   Discretization:
-    Method: NewExtruded
+    Method: Extruded
     NumLayers: 5
     Columnwise Ordering: true
     Side Set Discretizations:

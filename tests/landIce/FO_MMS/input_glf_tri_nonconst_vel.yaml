@@ -60,7 +60,7 @@ ANONYMOUS:
       Function Expression for DOF Y: 'value = 1'
   Discretization: 
     Number Of Time Derivatives: 0
-    Method: Extruded
+    Method: STKExtruded
     Exodus Output File Name: slab_glf_nonconst_vel.exo
     Columnwise Ordering: true
     NumLayers: 5

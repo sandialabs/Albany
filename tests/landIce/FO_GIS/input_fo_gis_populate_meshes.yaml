@@ -8,7 +8,7 @@ ANONYMOUS:
     Name: Populate Mesh
   Discretization: 
     Number Of Time Derivatives: 0
-    Method: Extruded
+    Method: STKExtruded
     Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness

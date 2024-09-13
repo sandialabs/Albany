@@ -117,7 +117,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
     } else if (method == "Gmsh") {
         mesh = Teuchos::rcp(new GmshSTKMeshStruct(disc_params, comm, numParams));
     }
-    else if (method == "NewExtruded") {
+    else if (method == "Extruded") {
         Teuchos::RCP<AbstractMeshStruct> basalMesh;
 
         // Get basal_params
@@ -141,7 +141,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         basalMesh = createMeshStruct(basal_params, comm, numParams);
         mesh = Teuchos::rcp(new ExtrudedMesh(basalMesh, disc_params, comm));
     }
-    else if (method == "Extruded") {
+    else if (method == "STKExtruded") {
         Teuchos::RCP<AbstractMeshStruct> basalMesh;
 
         // Get basal_params
@@ -180,7 +180,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                   "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                   "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
                   " Exodus, Ascii," <<
-                  " Ascii2D, Extruded" << std::endl);
+                  " Ascii2D, STKExtruded, Extruded" << std::endl);
   }
 
   if (disc_params->isSublist ("Side Set Discretizations")) {

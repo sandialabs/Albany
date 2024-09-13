@@ -146,7 +146,7 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
   Discretization:
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: gis_analysis_stiffening.exo
     Columnwise Ordering: true

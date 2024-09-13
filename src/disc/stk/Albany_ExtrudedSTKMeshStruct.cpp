@@ -174,9 +174,8 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
   // NOTE: I am marking the mesh as Unstructured rather than Extruded, since
-  //       I am planning to develop a generic interface for Extruded meshes,
-  //       which does not store 3d data (only basal). In order to not confuse
-  //       the two, I keep this mesh as Unstructured.
+  //       I am reserving Extruded for disc/Albany_ExtrudedMesh.*pp, which does
+  //       not store the full 3d mesh.
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Unstructured, ctd, numDim,
                           nsNames, ssNames, worksetSize,

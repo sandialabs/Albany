@@ -114,7 +114,7 @@ ANONYMOUS:
       Type: FO INTERP SURF GRAD
   Discretization:
     Workset Size: -1
-    Method: Extruded
+    Method: STKExtruded
     Surface Height Field Name: observed_surface_height
     Number Of Time Derivatives: 0
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity_bed_and_top.exo
