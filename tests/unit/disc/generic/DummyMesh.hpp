@@ -175,8 +175,8 @@ public:
 
   LO get_num_local_nodes () const override { return m_num_local_nodes; }
   LO get_num_local_elements () const override { return m_num_local_elems; }
-  GO get_max_node_gid () const override { return num_global_nodes(); }
-  GO get_max_elem_gid () const override { return num_global_elems(); }
+  GO get_max_node_gid () const override { return num_global_nodes()-1; }
+  GO get_max_elem_gid () const override { return num_global_elems()-1; }
   Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override { return Teuchos::null; }
 
   //! Internal mesh specs type needed

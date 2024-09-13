@@ -25,7 +25,7 @@ TEUCHOS_UNIT_TEST (ExtrudedMesh, DiscFactoryCreateMesh)
 
   auto top_level_params = Teuchos::rcp(new Teuchos::ParameterList(""));
   auto disc_params = Teuchos::sublist(top_level_params,"Discretization");
-  disc_params->set<std::string>("Method", "NewExtruded");
+  disc_params->set<std::string>("Method", "Extruded");
   disc_params->set<int>("NumLayers", 5);
   disc_params->set<int>("Number Of Time Derivatives", 0);
   disc_params->set<bool>("Columnwise Ordering", true);
@@ -114,8 +114,8 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, Counters)
 
     TEST_EQUALITY (mesh_3d->get_num_local_elements(),mesh_2d->get_num_local_elements()*numLayers);
     TEST_EQUALITY (mesh_3d->get_num_local_nodes(),mesh_2d->get_num_local_nodes()*(numLayers+1));
-    TEST_EQUALITY (mesh_3d->get_max_elem_gid(),mesh_2d->get_max_elem_gid()*numLayers);
-    TEST_EQUALITY (mesh_3d->get_max_node_gid(),mesh_2d->get_max_node_gid()*(numLayers+1));
+    TEST_EQUALITY (mesh_3d->get_max_elem_gid(),(mesh_2d->get_max_elem_gid()+1)*numLayers);
+    TEST_EQUALITY (mesh_3d->get_max_node_gid(),(mesh_2d->get_max_node_gid()+1)*(numLayers+1));
   }
 }
 
