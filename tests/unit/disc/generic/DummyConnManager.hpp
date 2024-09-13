@@ -33,14 +33,14 @@ public:
 
   const GO * getConnectivity(LO ielem) const override
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
         "Error! Cannot call getConnectivity before connectivity is build.\n");
     return m_connectivity.data() + ielem*m_num_dofs_per_elem;
   }
 
   const Ownership* getOwnership(LO ielem) const override
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
         "Error! Cannot call getOwnership before connectivity is build.\n");
     return m_ownership.data() + ielem*m_num_dofs_per_elem;
   }
@@ -53,14 +53,14 @@ public:
 
   int getConnectivityStart(const LO ielem) const override
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
         "Error! Cannot call getConnectivityStart before connectivity is build.\n");
     return ielem*m_num_dofs_per_elem;
   }
 
   LO getConnectivitySize(LO /* localElmtId */) const override
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (not m_is_connectivity_built, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
         "Error! Cannot call getConnectivitySize before connectivity is build.\n");
     return m_num_dofs_per_elem;
   }

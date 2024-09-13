@@ -87,7 +87,7 @@ ExtrudedConnManager::getElementBlock(const std::string& blockId) const
 const GO* ExtrudedConnManager::
 getConnectivity (const LO ielem) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (m_fp.is_null(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
       "Error! Cannot call getConnectivity before connectivity is build.\n");
   return m_connectivity.data() + getConnectivityStart(ielem);
 }
@@ -96,7 +96,7 @@ std::vector<int>
 ExtrudedConnManager::
 getConnectivityMask (const std::string& sub_part_name) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (m_fp.is_null(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
       "Error! Cannot call getConnectivityMask before connectivity is build.\n");
   std::vector<int> mask(m_connectivity.size(),0);
   const auto& cell_layers_lid = m_mesh->cell_layers_lid();

@@ -531,7 +531,7 @@ int OmegahConnManager::part_dim (const std::string& name) const
 
 const Ownership* OmegahConnManager::getOwnership(LO localElmtId) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (owners.size()==0, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
       "Error! Cannot call getOwnership before connectivity is built.\n");
   return &owners.at(localElmtId*m_dofsPerElm);
 }
