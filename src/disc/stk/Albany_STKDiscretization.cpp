@@ -1849,7 +1849,7 @@ STKDiscretization::computeSideSets()
     TEUCHOS_TEST_FOR_EXCEPTION (
         ctd.name!=topo_hexa->name &&
         ctd.name!=topo_wedge->name, std::runtime_error,
-        "Extruded meshses only allowed if there is one element per layer (hexa or wedges).\n"
+        "Extruded meshes only allowed if there is one element per layer (hexa or wedges).\n"
         "  - current topology name: " << ctd.name << "\n");
 
     const auto& sol_dof_mgr = getDOFManager();

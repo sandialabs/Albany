@@ -53,7 +53,7 @@ ANONYMOUS:
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: gis_unstruct_adjoint_sensitivity.exo
     Columnwise Ordering: true

@@ -1,0 +1,113 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+    Report Timers: false
+  Problem:
+    Name: Heat 3D
+    Compute Sensitivities: false
+    Dirichlet BCs:
+      DBC on NS NodeSet4 for DOF T: 1.0
+      DBC on NS NodeSet5 for DOF T: 2.0
+    Initial Condition:
+      Function: Constant
+      Function Data: [1.5]
+    ThermalConductivity:
+      ThermalConductivity Type: Constant
+      Value: 3.0
+    Source Functions:
+      Quadratic:
+        Nonlinear Factor: 3.0
+    Parameters:
+      Number Of Parameters: 0
+      Parameter 0:
+        Type: Vector
+        Dimension: 4
+        Scalar 0:
+            Name: DBC on NS NodeSet4 for DOF T
+        Scalar 1:
+            Name: DBC on NS NodeSet5 for DOF T
+        Scalar 2:
+            Name: Quadratic Nonlinear Factor
+        Scalar 3:
+            Name: ThermalConductivity
+    Response Functions:
+      Number Of Responses: 4
+      Response 0:
+        Name: Solution Two Norm
+      Response 1:
+        Name: Solution Average
+      Response 2:
+        Name: Solution Max Value
+      Response 3:
+        Name: Solution Min Value
+    Cubature Degree: 3
+  Discretization:
+    1D Elements: 5
+    2D Elements: 5
+    3D Elements: 5
+    Workset Size: 100
+    Method: STK3D
+  # Regression For Response 0:
+  #   Test Value: 6.68057e+01
+  #   Relative Tolerance: 1.0e-03
+  #   Sensitivity For Parameter 0:
+  #     Test Values: [8.14701e+00, 8.14701e+00, 6.2797, 6.27977, 7.8437, 7.84374, 6.2431e-01, -6.2431e-01]
+  Piro:
+    LOCA:
+      Bifurcation: { }
+      Constraints: { }
+      Predictor:
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper:
+        Eigensolver: { }
+    NOX:
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1.0e-04
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: { }
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-05
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+                  VerboseObject:
+                    Verbosity Level: low
+              Preconditioner Type: Ifpack2
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings:
+                    'fact: drop tolerance': 0.0
+                    'fact: ilut level-of-fill': 1.0
+                    'fact: level-of-fill': 1
+      Line Search:
+        Full Step:
+          Full Step: 1.0
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Information: 103
+        Output Precision: 3
+      Solver Options:
+        Status Test Check Type: Minimal
+...

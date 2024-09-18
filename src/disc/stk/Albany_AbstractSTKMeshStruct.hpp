@@ -47,6 +47,62 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
  public:
   std::string meshLibName () const override { return "STK"; }
 
+  LO get_num_local_nodes () const override {
+    TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::logic_error,
+        "Error! Bulk data must be set before you can call get_num_local_nodes.\n");
+    auto beg = bulkData->begin_entities(stk::topology::NODE_RANK);
+    auto end = bulkData->end_entities(stk::topology::NODE_RANK);
+    return std::distance(beg,end);
+  }
+  GO get_max_node_gid () const override
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::logic_error,
+        "Error! Bulk data must be set before you can call get_max_node_gid.\n");
+    if (max_node_gid==-1) {
+      auto beg = bulkData->begin_entities(stk::topology::NODE_RANK);
+      auto end = bulkData->end_entities(stk::topology::NODE_RANK);
+      GO my_max = -1;
+      for (auto it=beg; it!=end; ++it) {
+        my_max = std::max(my_max,GO(bulkData->identifier(it->second)));
+      }
+      // Keep gids 0-based
+      --my_max;
+
+      auto comm = bulkData->parallel();
+      MPI_Allreduce(&my_max,&max_node_gid,1,MPI_INT64_T,MPI_MAX,comm);
+    }
+    return max_node_gid;
+  }
+
+  LO  get_num_local_elements () const override
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
+        "Error! Bulk data must be set before you can call get_num_local_elements.\n");
+
+    auto beg = bulkData->begin_entities(stk::topology::ELEM_RANK);
+    auto end = bulkData->end_entities(stk::topology::ELEM_RANK);
+    return std::distance(beg,end);
+  }
+  GO get_max_elem_gid () const override
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::logic_error,
+        "Error! Bulk data must be set before you can call get_max_elem_gid.\n");
+    if (max_elem_gid==-1) {
+      auto beg = bulkData->begin_entities(stk::topology::ELEM_RANK);
+      auto end = bulkData->end_entities(stk::topology::ELEM_RANK);
+      GO my_max = -1;
+      for (auto it=beg; it!=end; ++it) {
+        my_max = std::max(my_max,GO(bulkData->identifier(it->second)));
+      }
+      // Keep gids 0-based
+      --my_max;
+
+      auto comm = bulkData->parallel();
+      MPI_Allreduce(&my_max,&max_elem_gid,1,MPI_INT64_T,MPI_MAX,comm);
+    }
+    return max_elem_gid;
+  }
+
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
 
@@ -109,6 +165,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   bool        exoOutput;
   std::string exoOutFile;
   int         exoOutputInterval;
+  mutable GO  max_node_gid = -1;
+  mutable GO  max_elem_gid = -1;
 
   bool transferSolutionToCoords;
 

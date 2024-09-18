@@ -368,7 +368,7 @@ albanyBuildGlobalUnknowns ()
   // IMPORTANT! Do not use the GeometricAggFieldPattern, since you
   // *need* to count the same geo node multiple times if there are
   // multiple fields that need it.
-  connMngr_->buildConnectivity(*fa_fps_.back());
+  m_conn_mgr->buildConnectivity(fa_fps_.back());
 
   // We take a set as well, since std::find is on avg O(1) for unordered_set, vs O(N) in an array
   auto add_if_not_there = [](std::vector<GO>& v, std::unordered_set<GO>& s, const GO gid) {

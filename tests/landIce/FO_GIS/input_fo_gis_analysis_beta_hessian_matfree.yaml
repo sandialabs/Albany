@@ -114,7 +114,7 @@ ANONYMOUS:
                 Overlap: 0
                 Prec Type: RILUK
   Discretization:
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: gis_analysis_beta.exo
     Columnwise Ordering: false

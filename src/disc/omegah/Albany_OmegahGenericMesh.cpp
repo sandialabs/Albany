@@ -14,6 +14,52 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 }
 
+LO OmegahGenericMesh::get_num_local_nodes () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
+      "Error! Cannot query number of local nodes until bulk data is set.\n");
+
+  return m_mesh->nverts();
+}
+
+LO OmegahGenericMesh::get_num_local_elements () const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
+      "Error! Cannot query number of local elements until bulk data is set.\n");
+
+  return m_mesh->nelems();
+}
+
+GO OmegahGenericMesh::get_max_node_gid () const
+{
+  if (m_max_node_gid==-1) {
+    auto globals_d = m_mesh->globals(0);
+    Omega_h::HostRead<Omega_h::GO> global_h(globals_d);
+    for (int i=0; i<global_h.size(); ++i) {
+      m_max_node_gid = std::max(m_max_node_gid,GO(global_h[i]));
+    }
+
+    auto comm = m_mesh->comm();
+    m_max_node_gid = comm->allreduce(static_cast<std::int64_t>(m_max_node_gid),OMEGA_H_MAX);
+  }
+  return m_max_node_gid;
+}
+
+GO OmegahGenericMesh::get_max_elem_gid () const
+{
+  if (m_max_elem_gid==-1) {
+    auto globals_d = m_mesh->globals(m_mesh->dim());
+    Omega_h::HostRead<Omega_h::GO> global_h(globals_d);
+    for (int i=0; i<global_h.size(); ++i) {
+      m_max_elem_gid = std::max(m_max_elem_gid,GO(global_h[i]));
+    }
+
+    auto comm = m_mesh->comm();
+    m_max_elem_gid = comm->allreduce(static_cast<std::int64_t>(m_max_elem_gid),OMEGA_H_MAX);
+  }
+  return m_max_elem_gid;
+}
+
 int OmegahGenericMesh::
 part_dim (const std::string& part_name) const
 {

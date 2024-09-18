@@ -5,6 +5,7 @@
 ##*****************************************************************//
 
 # Heat Transfer Problems ###############
+add_subdirectory(ExtrudedMesh)
 add_subdirectory(SteadyHeat2D)
 add_subdirectory(SteadyHeatConstrainedOpt2D)
 add_subdirectory(SteadyHeat3D)

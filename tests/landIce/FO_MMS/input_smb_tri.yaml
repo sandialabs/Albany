@@ -69,7 +69,7 @@ ANONYMOUS:
       Function Expression for DOF Y: 'value = x'
   Discretization:
     Number Of Time Derivatives: 0
-    Method: Extruded
+    Method: STKExtruded
     Exodus Output File Name: slab_smb.exo
     Columnwise Ordering: true
     NumLayers: 5

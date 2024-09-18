@@ -11,7 +11,6 @@
 
 #include "Albany_OmegahGenericMesh.hpp"
 
-#include "Albany_ThyraCrsMatrixFactory.hpp"
 #include "Albany_NullSpaceUtils.hpp"
 
 namespace Albany {
@@ -32,11 +31,6 @@ public:
   virtual ~OmegahDiscretization() = default;
 
   void updateMesh () override;
-
-  Teuchos::RCP<Thyra_LinearOp>
-  createJacobianOp() const override {
-    return m_jac_factory->createOp();
-  }
 
   //! Get Node set lists
   const NodeSetList&
@@ -71,10 +65,7 @@ public:
   }
 
   //! Get coordinates (overlap map).
-  const Teuchos::ArrayRCP<double>&
-  getCoordinates() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getCoordinates");
-  }
+  const Teuchos::ArrayRCP<double>& getCoordinates() const override { return m_nodes_coordinates; }
 
   //! Print the coords for mesh debugging
   void
@@ -98,12 +89,6 @@ public:
   Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const override {
     return m_mesh_struct;
-  }
-
-  //! Get nodal parameters state info struct
-  const StateInfoStruct&
-  getNodalParameterSIS() const override {
-    return m_mesh_struct->get_field_accessor()->getNodalParameterSIS();
   }
 
   //! Retrieve connectivity map from elementGID to workset
@@ -287,11 +272,11 @@ protected:
   NodeSetList       m_node_sets;
   NodeSetCoordList  m_node_set_coords;
 
+  // Coordinates spliced together, as [x0,y0,z0,x1,y1,z1,...]
+  Teuchos::ArrayRCP<double>   m_nodes_coordinates;
+
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_side_set_equations;
-
-  //! Jacobian matrix operator factory
-  Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
   // Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown

@@ -68,7 +68,7 @@ ANONYMOUS:
       Function Data: [1.0, 2.0]
   Discretization: 
     Number Of Time Derivatives: 0
-    Method: Extruded
+    Method: STKExtruded
     Exodus Output File Name: slab_hex_smb.exo
     Columnwise Ordering: true
     NumLayers: 5

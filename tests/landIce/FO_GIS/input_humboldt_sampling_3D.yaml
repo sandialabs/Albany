@@ -26,7 +26,7 @@ ANONYMOUS:
     Cubature Degree: 3
   Discretization:
     Workset Size: -1
-    Method: Extruded
+    Method: STKExtruded
     Surface Height Field Name: surface_height
     Number Of Time Derivatives: 0
     Exodus Output File Name: humboldt_laplacian_3d_sampling.exo
