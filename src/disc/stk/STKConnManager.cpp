@@ -121,7 +121,7 @@ STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
       int idof = 0;
       for (auto rank = NODE_RANK; rank<=primary_entity_rank; ++rank) {
         if (m_idCnt[rank]==0) continue;
-        auto count = rank==elem_rank ? 1 : m_bulkData->num_connectivity(elem,rank);
+        int count = rank==elem_rank ? 1 : m_bulkData->num_connectivity(elem,rank);
         for (int irel=0; irel<count; ++irel) {
           for (int cnt=0; cnt<m_idCnt[rank]; ++cnt, ++idof) {
             elem_mask[idof] = 1;
