@@ -51,13 +51,16 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, Exceptions)
   auto& ts = UnitTestSession::instance();
 
   using ipdf = std::uniform_int_distribution<int>;
-  std::mt19937_64 engine;
+  std::mt19937_64 engine(ts.rng_seed);
   ipdf nlay_pdf (1,5);
-  ipdf ne_x_pdf (2*comm->getSize(),10*comm->getSize());
+  ipdf ne_x_pdf (1,5);
 
   // Create dummy basal mesh
-  GO ne_x = ne_x_pdf(engine);
+  GO ne_x = ne_x_pdf(engine)*comm->getSize();
   auto numLayers = nlay_pdf(engine);
+  Teuchos::broadcast(*comm,0,1,&ne_x);
+  Teuchos::broadcast(*comm,0,1,&numLayers);
+
   auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x,comm));
 
   for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
@@ -94,7 +97,7 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, Counters)
   auto& ts = UnitTestSession::instance();
 
   using ipdf = std::uniform_int_distribution<int>;
-  std::mt19937_64 engine;
+  std::mt19937_64 engine(ts.rng_seed);
   ipdf nlay_pdf (1,5);
   ipdf ne_x_pdf (2*comm->getSize(),10*comm->getSize());
 
@@ -128,13 +131,16 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, MeshParts)
   auto& ts = UnitTestSession::instance();
 
   using ipdf = std::uniform_int_distribution<int>;
-  std::mt19937_64 engine;
+  std::mt19937_64 engine(ts.rng_seed);
   ipdf nlay_pdf (1,5);
   ipdf ne_x_pdf (2*comm->getSize(),10*comm->getSize());
 
   // Create dummy basal mesh
   GO ne_x = ne_x_pdf(engine);
   auto numLayers = nlay_pdf(engine);
+  Teuchos::broadcast(*comm,0,1,&ne_x);
+  Teuchos::broadcast(*comm,0,1,&numLayers);
+
   auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x,comm));
   auto nsNames2d = mesh_2d->meshSpecs()[0]->nsNames;
   auto ssNames2d = mesh_2d->meshSpecs()[0]->ssNames;
@@ -154,8 +160,6 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, MeshParts)
     auto nsNames3d = mesh_3d->meshSpecs()[0]->nsNames;
     auto ssNames3d = mesh_3d->meshSpecs()[0]->ssNames;
 
-    std::cout << "ns: " << util::join(nsNames3d,",") << "\n";
-    std::cout << "ss: " << util::join(ssNames3d,",") << "\n";
     for (const auto& nsn : nsNames2d) {
       TEST_ASSERT (contains(nsNames3d,"basal_" + nsn));
       TEST_ASSERT (contains(nsNames3d,"extruded_" + nsn));
