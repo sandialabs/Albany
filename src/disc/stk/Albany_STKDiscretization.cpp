@@ -2011,7 +2011,7 @@ STKDiscretization::determine_entity_pos(
     const auto num_children = bulkData->num_connectivity(parent,rank);
     const auto children = bulkData->begin(parent,rank);
     for (unsigned isub=0; isub<num_children; ++isub) {
-      if (bulkData->relation_exist(parent,rank,isub) && children[isub]==child)
+      if (children[isub]==child)
         return isub;
     }
   }
