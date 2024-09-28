@@ -42,7 +42,7 @@ DummyConnManager::getElementsInBlock (const std::string& blockId) const
 void
 DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (is_connectivity_built(), std::logic_error,
       "[DummyConnManager::buildConnectivity] Connectivity was already built.\n");
 
   const auto& topo = get_topology();

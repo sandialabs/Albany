@@ -120,7 +120,7 @@ public:
       int pid_ne = m_num_local_elems;
       Teuchos::broadcast(*comm,pid,1,&pid_ne);
       if (pid<comm->getRank()) {
-        beg += pid_ne;
+        beg += pid_ne/2;
       }
     }
     std::iota(m_my_elems.begin(),m_my_elems.end(),beg);
@@ -134,7 +134,7 @@ public:
     const GO offset_edge_vrt = 2*ne_x;
     const GO offset_edge_obl = 3*ne_x + 1;
     m_my_elems.resize(m_num_local_elems);
-    for (LO isquare=0; isquare<ne_x; ++isquare) {
+    for (LO isquare=0; isquare<lcl_ne_x; ++isquare) {
       GO gsquare = isquare + beg;
       for (LO isplit : {0,1}) {
         int ie = 2*isquare + isplit;

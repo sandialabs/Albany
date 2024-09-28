@@ -302,17 +302,19 @@ buildConnectivity(const panzer::FieldPattern & fp)
   const int ndofs_h = fp_h->numberIds();
   m_ownership.resize(m_num_elems*m_num_dofs_per_elem);
   m_connectivity.resize(m_num_elems*m_num_dofs_per_elem);
+  auto own3d = m_ownership.data();
+  auto conn3d = m_connectivity.data();
   for (int ibelem=0; ibelem<m_mesh->basal_mesh()->get_num_local_elements(); ++ibelem) {
     auto conn_h = m_conn_mgr_h->getConnectivity(ibelem);
     auto ownership_h = m_conn_mgr_h->getOwnership(ibelem);
 
-    auto add_layer_conn = [&](const int dof_layer, int elem_offset,
+    auto add_layer_conn = [&](const int dof_layer,
                               Ownership* ownership, GO* connectivity) {
       for (int idof_h=0; idof_h<ndofs_h; ++idof_h) {
         for (int ifield=0; ifield<m_num_fields; ++ifield) {
           auto dof2d = conn_h[idof_h]*m_num_fields+ifield;
-          connectivity[elem_offset+idof_h*m_num_fields+ifield] = dofs_layers_data.getId(dof2d,dof_layer);
-          ownership[elem_offset+idof_h*m_num_fields+ifield] = ownership_h[idof_h*m_num_fields+ifield];
+          connectivity[idof_h*m_num_fields+ifield] = dofs_layers_data.getId(dof2d,dof_layer);
+          ownership[idof_h*m_num_fields+ifield] = ownership_h[idof_h*m_num_fields+ifield];
         }
       }
     };
@@ -321,13 +323,13 @@ buildConnectivity(const panzer::FieldPattern & fp)
       int ielem = cell_layers_lid->getId(ibelem,ilay);
 
       const GO ielem_offset = ielem*m_num_dofs_per_elem;
-      auto conn3d = &m_connectivity[ielem_offset];
       for (int ilev_dof=0; ilev_dof<ndofs_v; ++ilev_dof) {
         int dof_lev = ilay*cellIdCnt_v+ilay*nodeIdCnt_v + ilev_dof;
-        int elem_offset = ilev_dof*ndofs_h*m_num_fields;
-        add_layer_conn(dof_lev, elem_offset,
-                       &m_ownership[ielem_offset],
-                       &m_connectivity[ielem_offset]);
+        // DOFs are ordered layer-by-layer inside each elem
+        GO ielem_layer_offset = ielem_offset + ilev_dof*ndofs_h*m_num_fields;
+        add_layer_conn(dof_lev,
+                       own3d + ielem_layer_offset,
+                       conn3d + ielem_layer_offset);
       }
     }
   }

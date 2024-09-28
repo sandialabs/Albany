@@ -212,7 +212,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivity)
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
   auto conn_mgr = createOmegahConnManager(mesh);
-  conn_mgr->buildConnectivity(*patternC1);
+  conn_mgr->buildConnectivity(patternC1);
   REQUIRE(3 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
   const auto localElmIds = conn_mgr->getElementBlock();
   for( auto lid : localElmIds ) {
@@ -280,7 +280,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
 
   auto conn_mgr = createOmegahConnManager(albanyMesh, lateralSide_name);
   auto patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
-  conn_mgr->buildConnectivity(*patternEdgeC1);
+  conn_mgr->buildConnectivity(patternEdgeC1);
   auto mask = conn_mgr->getConnectivityMask(upperSide_name);
   const int sum = std::accumulate(mask.begin(), mask.end(), 0);
 
@@ -341,7 +341,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask_box)
 
   auto conn_mgr = createOmegahConnManager(albanyMesh);
   auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM>();
-  conn_mgr->buildConnectivity(*patternC1);
+  conn_mgr->buildConnectivity(patternC1);
 
   const auto sideSetName = "leftSide";
   int dim = 0;
@@ -386,7 +386,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnershi
 
   auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm,{});
   auto conn_mgr = createOmegahConnManager(mesh);
-  conn_mgr->buildConnectivity(*patternC1);
+  conn_mgr->buildConnectivity(patternC1);
   checkOwnership(*mesh->getOmegahMesh(),*conn_mgr);
   out << "Testing OmegahConnManager::buildConnectivityOwnership()\n";
   success = true;
@@ -407,7 +407,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
   auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name);
 
   auto patternEdgeC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
-  conn_mgr->buildConnectivity(*patternEdgeC1);
+  conn_mgr->buildConnectivity(patternEdgeC1);
   checkOwnership(*mesh->getOmegahMesh(),*conn_mgr);
   out << "Testing OmegahConnManager::buildPartConnectivityOwnership()\n";
   success = true;

@@ -69,22 +69,21 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Exceptions)
   auto elem_fp = Teuchos::rcp(new panzer::ElemFieldPattern(wedge));
 
   using ipdf = std::uniform_int_distribution<int>;
-  std::mt19937_64 engine;
+  std::mt19937_64 engine(ts.rng_seed);
   ipdf nlay_pdf (1,5);
-  ipdf ntri_pdf (5,10);
+  ipdf ne_x_pdf (5,10);
 
   // Create dummy basal mesh
-  GO ne_x_lcl = ntri_pdf(engine);
-  auto numLayers = nlay_pdf(engine);
+  GO ne_x_glb = ne_x_pdf(engine) * comm->getSize();
+  int numLayers = nlay_pdf(engine);
+  Teuchos::broadcast(*comm,0,1,&ne_x_glb);
+  Teuchos::broadcast(*comm,0,1,&numLayers);
 
   // Basal mesh and monolithic (not extruded) 3d mesh
-  auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x_lcl,comm));
-
-  GO num_glb_tria;
-  Teuchos::reduceAll(*comm,Teuchos::REDUCE_SUM,1,&ne_x_lcl,&num_glb_tria);
+  auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x_glb,comm));
 
   for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
-    // Build 2d and 3d conn managers (not extruded)
+    // Build 2d and 3d conn managers
     auto conn_mgr_tria  = Teuchos::rcp(new DummyConnManager(mesh_2d));
 
     auto params = Teuchos::rcp(new Teuchos::ParameterList());
@@ -104,6 +103,7 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Exceptions)
 
     params->set<int>("NumLayers",numLayers);
     auto extruded_mesh = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+    extruded_mesh->setBulkData(comm);
 
     // Bad pointers
     TEST_THROW (Teuchos::rcp(new ExtrudedConnManager(Teuchos::null,extruded_mesh)),
@@ -112,23 +112,23 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Exceptions)
                 std::invalid_argument);
 
     // Build extruded conn manager
-    auto conn_mgr_ext = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_tria,extruded_mesh));
+    Teuchos::RCP<ConnManager> conn_mgr_ext = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_tria,extruded_mesh));
 
     // Bad field agg pattern: contains non-intrepid patterns
     auto bad_fp1 = create_agg_fp({elem_fp});
-    TEST_THROW (conn_mgr_ext->buildConnectivity(*bad_fp1),std::bad_cast);
+    TEST_THROW (conn_mgr_ext->buildConnectivity(bad_fp1),std::bad_cast);
 
     // Bad field agg pattern: contains different intrepid patterns
     auto bad_fp2 = create_agg_fp({fp_3d,fp_3d_p2});
-    TEST_THROW (conn_mgr_ext->buildConnectivity(*bad_fp2),std::runtime_error);
+    TEST_THROW (conn_mgr_ext->buildConnectivity(bad_fp2),std::runtime_error);
 
     // Bad field agg pattern: contains patterns with wrong cell topo
     auto bad_fp3 = create_agg_fp({fp_2d});
-    TEST_THROW (conn_mgr_ext->buildConnectivity(*bad_fp3),std::runtime_error);
+    TEST_THROW (conn_mgr_ext->buildConnectivity(bad_fp3),std::runtime_error);
 
     // Bad field agg pattern: basis is tens prod with wrong basal basis topology
     auto bad_fp4 = create_agg_fp({fp_3d_hex});
-    TEST_THROW (conn_mgr_ext->buildConnectivity(*bad_fp4),std::invalid_argument);
+    TEST_THROW (conn_mgr_ext->buildConnectivity(bad_fp4),std::invalid_argument);
   }
 }
 
@@ -151,44 +151,55 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
   using tria_basis_type  = typename basis_family_type::HGRAD_TRI;
   using wedge_basis_type = typename basis_family_type::HGRAD_WEDGE;
   using pattern_ptr      = Teuchos::RCP<panzer::FieldPattern>;
-  const int nfields = 2;
 
   // Comparisong works for order_z=1, order_xy=1, but fails with either one >1.
   using ipdf = std::uniform_int_distribution<int>;
-  std::mt19937_64 engine;
+  std::mt19937_64 engine(ts.rng_seed);
   ipdf nlay_pdf (1,5);
-  ipdf ntri_pdf (5,10);
+  ipdf ne_x_pdf (1,5);
+  ipdf nfields_pdf (1,3);
 
-  GO ne_x_lcl = ntri_pdf(engine);
-  auto numElemLayers = nlay_pdf(engine);
+  int nfields = nfields_pdf(engine);
+  GO ne_x_glb = ne_x_pdf(engine)*comm->getSize();
+  int numElemLayers = nlay_pdf(engine);
+
+  Teuchos::broadcast(*comm,0,1,&nfields);
+  Teuchos::broadcast(*comm,0,1,&ne_x_glb);
+  Teuchos::broadcast(*comm,0,1,&numElemLayers);
+
+  // Basal mesh
+  auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x_glb,comm));
+  const auto num_nodes2d = mesh_2d->num_global_nodes();
+  const auto num_edges2d = mesh_2d->num_global_edges();
+
+  if (comm->getRank()==0) {
+    std::cout << "\nRUNNING TESTS WITH:\n"
+              << "  rng seed        : " << ts.rng_seed << "\n"
+              << "  num glb_2d nodes: " << mesh_2d->num_global_nodes() << "\n"
+              << "  num lcl_2d nodes: " << mesh_2d->get_num_local_nodes() << "\n"
+              << "  num glb_2d elems: " << mesh_2d->num_global_elems() << "\n"
+              << "  num lcl_2d elems: " << mesh_2d->get_num_local_elements() << "\n"
+              << "  num layers      : " << numElemLayers << "\n"
+              << "  nfields         : " << nfields << "\n";
+  }
+
   for (int order_z : {1,2}) {
+    if (comm->getRank()==0) {
+      std::cout << " -> FE vertical order: " << order_z << "\n";
+    }
     auto wedge_basis = Teuchos::rcp(new wedge_basis_type(1,order_z));
 
     // Create field patterns for testing
     auto fp_3d = Teuchos::rcp(new panzer::Intrepid2FieldPattern(wedge_basis));
 
     // Create dummy basal mesh
-    GO ne_x_lcl = ntri_pdf(engine);
-    auto numElemLayers = nlay_pdf(engine);
-
     auto numDofLayers = order_z*numElemLayers + 1;
 
-    // Basal mesh and monolithic (not extruded) 3d mesh
-    auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x_lcl,comm));
+    for (auto ordering : {LayeredMeshOrdering::LAYER,LayeredMeshOrdering::COLUMN} ) {
 
-    GO num_glb_tria;
-    Teuchos::reduceAll(*comm,Teuchos::REDUCE_SUM,1,&ne_x_lcl,&num_glb_tria);
-
-    const auto num_nodes2d = mesh_2d->num_global_nodes();
-    const auto num_edges2d = mesh_2d->num_global_edges();
-
-    for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER} ) {
-
-      std::cout << "RUNNING TESTS WITH:\n"
-                << "  order_z     : " << order_z << "\n"
-                << "  num 2d elems: " << 2*ne_x_lcl << "\n"
-                << "  num layers  : " << numElemLayers << "\n"
-                << "  ordering    : " << (ordering==LayeredMeshOrdering::COLUMN ? "COLUMN" : "LAYER") << "\n";
+      if (comm->getRank()==0) {
+        std::cout << "   -> ordering: " << (ordering==LayeredMeshOrdering::COLUMN ? "COLUMN" : "LAYER") << "\n";
+      }
 
       // Build extruded mesh
       auto params = Teuchos::rcp(new Teuchos::ParameterList());
@@ -196,13 +207,14 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
       params->set<int>("Workset Size",1000);
       params->set("Columnwise Ordering", ordering==LayeredMeshOrdering::COLUMN);
       auto extruded_mesh = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+      extruded_mesh->setBulkData(comm);
 
       // Build 2d conn manager
       auto conn_mgr_tria  = Teuchos::rcp(new DummyConnManager(mesh_2d));
 
       // Build extruded conn manager
-      auto conn_mgr_ext = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_tria,extruded_mesh));
-      conn_mgr_ext->buildConnectivity(*create_agg_fp(std::vector<pattern_ptr>(nfields,fp_3d)));
+      Teuchos::RCP<ConnManager> conn_mgr_ext = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_tria,extruded_mesh));
+      conn_mgr_ext->buildConnectivity(create_agg_fp(std::vector<pattern_ptr>(nfields,fp_3d)));
 
       // Helper structures
       const int ndofs_2d = nfields*num_nodes2d;
