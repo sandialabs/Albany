@@ -1341,8 +1341,8 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<double>("z-shift", 0.0, "Value by which to shift domain in positive z-direction");
   validPL->set<Teuchos::Array<double>>("Betas BL Transform", Teuchos::tuple<double>(0.0, 0.0, 0.0), "Beta parameters for Tanh Boundary Layer transform type");
 
-  validPL->set<bool>("Contiguous IDs", "true", "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for LandIce problem that require transformation of STK mesh
-  validPL->set<bool>("Save Solution Field", "true", "Whether the solution field should be saved in the output mesh");
+  validPL->set<bool>("Contiguous IDs", true, "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for LandIce problem that require transformation of STK mesh
+  validPL->set<bool>("Save Solution Field", true, "Whether the solution field should be saved in the output mesh");
 
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,

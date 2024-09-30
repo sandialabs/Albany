@@ -1056,7 +1056,7 @@ ExtrudedSTKMeshStruct::getValidDiscretizationParameters() const {
 
   using TAS = Teuchos::Array<std::string>;
   using TAI = Teuchos::Array<int>;
-  validPL->set<bool>("Export 2D Data", "", "If true, exports the 2D mesh in GMSH format");
+  validPL->set<bool>("Export 2D Data", false, "If true, exports the 2D mesh in GMSH format");
   validPL->set<TAS>("Extrude Basal Node Fields", TAS(), "List of basal node fields to be extruded");
   validPL->set<TAS>("Extrude Basal Elem Fields", TAS(), "List of basal elem fields to be extruded");
   validPL->set<TAI>("Basal Node Fields Ranks",TAI(), "Ranks of basal node fields to be extruded");
