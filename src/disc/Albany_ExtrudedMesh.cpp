@@ -102,7 +102,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   auto mesh_sis = Teuchos::rcp(new StateInfoStruct());
   auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
 
-  std::vector<size_t> dims = {
+  StateStruct::FieldDims dims = {
     static_cast<size_t>(m_basal_mesh->meshSpecs[0]->worksetSize),
     m_basal_mesh->meshSpecs[0]->ctd.node_count
   };
