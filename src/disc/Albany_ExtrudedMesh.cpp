@@ -103,7 +103,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
 
   StateStruct::FieldDims dims = {
-    static_cast<size_t>(m_basal_mesh->meshSpecs[0]->worksetSize),
+    static_cast<PHX::DataLayout::size_type>(m_basal_mesh->meshSpecs[0]->worksetSize),
     m_basal_mesh->meshSpecs[0]->ctd.node_count
   };
   mesh_sis->emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN,dims,"")));
