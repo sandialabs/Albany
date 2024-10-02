@@ -55,17 +55,17 @@ DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
   GO cellDofCount = 0;
   switch(patternDim) {
     case 3:
-      for (int iface=0; iface<topo.getFaceCount(); ++iface) {
+      for (unsigned int iface=0; iface<topo.getFaceCount(); ++iface) {
         m_num_dofs_per_elem += fp.getSubcellIndices(2,iface).size();
         faceDofCount += fp.getSubcellIndices(2,iface).size();
       }
     case 2:
-      for (int iedge=0; iedge<topo.getEdgeCount(); ++iedge) {
+      for (unsigned int iedge=0; iedge<topo.getEdgeCount(); ++iedge) {
         m_num_dofs_per_elem += fp.getSubcellIndices(1,iedge).size();
         edgeDofCount += fp.getSubcellIndices(1,iedge).size();
       }
     case 1:
-      for (int inode=0; inode<topo.getNodeCount(); ++inode) {
+      for (unsigned int inode=0; inode<topo.getNodeCount(); ++inode) {
         m_num_dofs_per_elem += fp.getSubcellIndices(0,inode).size();
         nodeDofCount += fp.getSubcellIndices(0,inode).size();
       }
@@ -84,11 +84,10 @@ DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
   for (int ie=0; ie<ne; ++ie) {
     const GO gelem = m_mesh->my_elems()[ie];
     // std::cout << "dummy" << topo.getDimension() << "d, ie=" << ie << "\n";
-    int start = m_connectivity.size();
     if (topo.getDimension()>0) {
       // Add node indices
       const auto& nodes = m_mesh->elem2node().at(ie);
-      for (int inode=0; inode<topo.getNodeCount(); ++inode) {
+      for (unsigned int inode=0; inode<topo.getNodeCount(); ++inode) {
         int nodeIdCnt = fp.getSubcellIndices(0,inode).size();
         for (int id=0; id<nodeIdCnt; ++id) {
           m_connectivity.push_back(nodeOffset + nodes[inode]*nodeIdCnt + id);
@@ -99,7 +98,7 @@ DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
     if (topo.getDimension()>1) {
       // Add edge indices
       const auto& edges = m_mesh->elem2edge().at(ie);
-      for (int iedge=0; iedge<topo.getEdgeCount(); ++iedge) {
+      for (unsigned int iedge=0; iedge<topo.getEdgeCount(); ++iedge) {
         int edgeIdCnt = fp.getSubcellIndices(1,iedge).size();
         for (int id=0; id<edgeIdCnt; ++id) {
           m_connectivity.push_back(edgeOffset + edges[iedge]*edgeIdCnt + id);
@@ -110,7 +109,7 @@ DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
     if (topo.getDimension()>2) {
       // Add face indices
       const auto& faces = m_mesh->elem2face().at(ie);
-      for (int iface=0; iface<topo.getFaceCount(); ++iface) {
+      for (unsigned int iface=0; iface<topo.getFaceCount(); ++iface) {
         int faceIdCnt = fp.getSubcellIndices(2,iface).size();
         for (int id=0; id<faceIdCnt; ++id) {
           m_connectivity.push_back(faceOffset + faces[iface]*faceIdCnt + id);
@@ -124,7 +123,6 @@ DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
       m_connectivity.push_back(cellOffset + gelem*cellIdCnt + id);
     }
 
-    int cnt = m_connectivity.size()-start;
     // for (int ii=0; ii<cnt; ++ii) {
     //   std::cout << " " << m_connectivity[start+ii];
     // }

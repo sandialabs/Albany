@@ -208,9 +208,9 @@ buildConnectivity(const panzer::FieldPattern & fp)
 
   using IFP = panzer::Intrepid2FieldPattern;
   const auto line = shards::CellTopology(shards::getCellTopologyData<shards::Line<2>>());
-  auto basis2fp = [](const Teuchos::RCP<basis_type>& basis) {
-    return Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
-  };
+  //auto basis2fp = [](const Teuchos::RCP<basis_type>& basis) {
+  //  return Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
+  //};
 
   // Check that all fields have the same pattern
   Teuchos::RCP<const IFP> intrepid_fp;

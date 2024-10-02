@@ -60,7 +60,6 @@ public:
       GO gelem2d = m_mesh2d->my_elems()[icol];
       for (int ilev=0; ilev<ne_z; ++ilev) {
         LO ie = cell_layers_lid.getId(icol,ilev);
-        GO gelem = m_my_elems[ie] = cell_layers_gid.getId(gelem2d,ilev);
         
         // Nodes: bot face, then top face
         auto& nodes = m_elem2node[ie];
@@ -138,7 +137,6 @@ public:
       GO gsquare = isquare + beg;
       for (LO isplit : {0,1}) {
         int ie = 2*isquare + isplit;
-        const GO gelem = m_my_elems[ie] = 2*gsquare + isplit;
 
         auto& nodes = m_elem2node[ie];
         auto& edges = m_elem2edge[ie];
@@ -201,8 +199,8 @@ protected:
   GO  m_num_global_edges = 0;
   GO  m_num_global_faces = 0;
   GO  m_num_global_elems = 0;
-  LO  m_num_local_elems  = 0;
   LO  m_num_local_nodes  = 0;
+  LO  m_num_local_elems  = 0;
 };
 
 } // Namespace Albany

@@ -46,7 +46,6 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Exceptions)
   auto& ts = UnitTestSession::instance();
 
   // 2d, and 3d topologies
-  auto tria  = shards::getCellTopologyData<shards::Triangle<3>>();
   auto wedge = shards::getCellTopologyData<shards::Wedge<6>>();
 
   // Create an intrepid2 tensor basis
@@ -143,8 +142,6 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
   auto& ts = UnitTestSession::instance();
 
   // 2d, and 3d topologies
-  auto tria  = shards::getCellTopologyData<shards::Triangle<3>>();
-  auto wedge = shards::getCellTopologyData<shards::Wedge<6>>();
 
   // Create an intrepid2 tensor basis
   using basis_family_type = Intrepid2::HierarchicalBasisFamily<PHX::Device>;
@@ -170,7 +167,6 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
   // Basal mesh
   auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x_glb,comm));
   const auto num_nodes2d = mesh_2d->num_global_nodes();
-  const auto num_edges2d = mesh_2d->num_global_edges();
 
   if (comm->getRank()==0) {
     std::cout << "\nRUNNING TESTS WITH:\n"

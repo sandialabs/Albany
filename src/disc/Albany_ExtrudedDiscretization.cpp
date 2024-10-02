@@ -303,7 +303,6 @@ void ExtrudedDiscretization::computeCoordinates ()
 {
   m_nodes_coordinates.resize(getNumDim() * getLocalSubdim(getOverlapNodeVectorSpace()));
 
-  const auto& node_layers_lid = m_extruded_mesh->node_layers_lid();
   const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
 
   const int num_layers = m_extruded_mesh->cell_layers_gid()->numLayers;
@@ -1250,10 +1249,7 @@ buildCellSideNodeNumerationMaps()
   const auto& node_dof_mgr = getNodeDOFManager();
 
   const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
-  const auto& basal_cell_indexer = basal_node_dof_mgr->cell_indexer();
   const auto& basal_elem_gids = m_basal_disc->getNodeDOFManager()->getAlbanyConnManager()->getElementsInBlock();
-  const int num_basal_elems = m_extruded_mesh->basal_mesh()->get_num_local_elements();
-  const int num_glb_basal_elems = basal_cell_indexer->getNumGlobalElements();
 
   const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
   const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
@@ -1262,7 +1258,6 @@ buildCellSideNodeNumerationMaps()
 
   // ONLY for basalside and upperside, since that's where we are likely to load data from mesh
   for (int ws=0; ws<getNumWorksets(); ++ws) {
-    const auto& sideSets = m_sideSets[ws];
     for (std::string ssn : {"basalside","upperside"}) {
       auto& s2ssc = sideToSideSetCellMap[ssn];
       auto& s2nn = sideNodeNumerationMap[ssn];

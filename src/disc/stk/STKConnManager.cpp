@@ -112,7 +112,6 @@ STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
       auto elem = elems[ielem];
       LO elem_LID = m_localIDHash.at(m_bulkData->identifier(elem));
       auto elem_mask = &mask.at(getConnectivityStart(elem_LID));
-      auto elem_conn = getConnectivity(elem_LID);
 
       // Set mask=1 for all ids on all sub-entities of e
       // NOTE: we loop in the same order as we do when adding connectivities,
