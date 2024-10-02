@@ -50,9 +50,10 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   //Validate Parameters
   Teuchos::ParameterList validPL;
-  validPL.set<std::string>("Type", "", "Type Of Beta: Constant, Power Law, Regularized Coulomb");
+  validPL.set<std::string>("Type", "Power Law", "Type Of Beta: Constant, Power Law, Regularized Coulomb");
   validPL.set<std::string>("Mu Type", "Field", "Mu Type: Field, Exponent Of Field, Exponent Of Field At Nodes");
   validPL.set<std::string>("Bed Roughness Type", "Field", "Lambda Type: Field, Exponent Of Field, Exponent Of Field At Nodes");
+  validPL.set<std::string>("Flow Rate Type", "Viscosity Flow Rate", "Type of Flow Rate: Constant, Flow Rate Type");
   validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
   validPL.set<std::string>("Mu Field Name", "", "Name of the Field Mu");
   validPL.set<std::string>("Effective Pressure Type", "Field", "Type of N: One, Field, Hydrostatic, Hydrostatic Computed At Nodes");
@@ -62,8 +63,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<double>("Power Exponent", 1.0, "Name of the Field Mu");
   validPL.set<double>("Beta", 1.0, "Constant value for beta");
   validPL.set<double>("Mu Coefficient", 1.0, "Constant value for Mu");
-  validPL.set<double>("Bed Roughness", 1.0, "Constant value for LAmbda");
-
+  validPL.set<double>("Bed Roughness", 1.0, "Constant value for Lambda");
+  validPL.set<double>("Flow Rate", 3.17e-24, "Constant Value for Flow Rate");
   validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");
   validPL.set<bool>("Zero Beta On Floating Ice", false, "Whether to zero beta on floating ice");
   validPL.set<bool>("Exponentiate Scalar Parameters", false, "Whether the scalar parameters needs to be exponentiate");
@@ -111,11 +112,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     beta_type = BETA_TYPE::CONSTANT;
     beta_val = beta_list.get<double>("Beta");
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Constant beta value = " << beta_val << " (loaded from xml input file).\n";
+    *output << "LandIce::BasalFrictionCoefficient: Constant beta value = " << beta_val << " (loaded from yaml input file).\n";
 #endif
   } else if (betaType == "FIELD") {
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Prescribed beta field.\n";
+    *output << "LandIce::BasalFrictionCoefficient: Prescribed beta field.\n";
 #endif
 
       //turning this into a Power Law BC
@@ -145,9 +146,22 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
-    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
-    this->addDependentField (ice_softness);
+    std::string flowRateType = util::upper_case(beta_list.get<std::string>("Flow Rate Type", "Viscosity Flow Rate"));
+    n = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
+    if(flowRateType == "VISCOSITY FLOW RATE") {
+      flowRate_type = FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE;
+      flowRate = PHX::MDField<const TemperatureST>(p.get<std::string>("Flow Rate Variable Name"), dl->cell_scalar2);
+      this->addDependentField (flowRate);
+    } else if (flowRateType == "CONSTANT") {  //"Constant"
+      flowRate_type = FLOW_RATE_TYPE::CONSTANT;
+      flowRate_val = beta_list.get<double>("Flow Rate");
+#ifdef OUTPUT_TO_SCREEN
+      *output << "LandIce::BasalFrictionCoefficient: Constant Flow Rate value = " << flowRate_val << " (loaded from yaml input file).\n";
+#endif
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << flowRateType << "\" is not a valid parameter for Is not a valid parameter for Flow Rate Type\n");
+    }
 
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -488,7 +502,19 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
           lambdaValue = lambda;
           break;
         }
-        beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + lambdaValue*ice_softness(cell)*std::pow(NVal,n),  power);
+
+        const double secsInYr = 365*24*3600;
+        const double scaling = secsInYr*pow(1000,n+1); //turns flow rate from [Pa^{-n} s^{-1}] to [k^{-1} kPa^{-n} yr^{-1}]
+        switch (flowRate_type) {
+        case FLOW_RATE_TYPE::CONSTANT: {
+          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + lambdaValue*scaling*flowRate_val*std::pow(NVal,n),  power); //lambda in km
+          }
+          break;
+        case FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE:
+          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + lambdaValue*scaling*flowRate(cell)*std::pow(NVal,n),  power); //lambda in km
+          break;
+        }
+
       }
     }
   }

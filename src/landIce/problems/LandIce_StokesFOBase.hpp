@@ -1276,7 +1276,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                              ? corrected_temperature_name
                              : temperature_name;
   p->set<std::string>("Temperature Variable Name", visc_temp_name);
-  p->set<std::string>("Ice Softness Variable Name", flow_factor_name);
+  p->set<std::string>("Flow Rate Variable Name", flow_factor_name);
   p->set<std::string>("Stiffening Factor Log QP Name", stiffening_factor_log_name);
   p->set<std::string>("Damage Factor QP Name", damage_factor_name);
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
@@ -1625,7 +1625,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_side_name);
     p->set<std::string>("BF Variable Name", side_fname(Albany::bf_name, ssName));
     p->set<std::string>("Effective Pressure QP Variable Name", effective_pressure_side_name);
-    p->set<std::string>("Ice Softness Variable Name", flow_factor_side_name);
+    p->set<std::string>("Flow Rate Variable Name",  side_fname(flow_factor_name, ssName),flow_factor_side_name);
     p->set<std::string>("Bed Roughness Variable Name", bed_roughness_side_name);
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Coordinate Vector Variable Name", side_fname(Albany::coord_vec_name, ssName));

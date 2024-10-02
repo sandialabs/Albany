@@ -42,13 +42,13 @@ public:
 private:
 
   // Input:
-  PHX::MDField<const RealType,Cell> given_flow_rate;
-  PHX::MDField<const TempST,Cell> temperature;
+  PHX::MDField<const RealType,Cell> given_flow_rate; // [Pa^{-n} s^{-1}]
+  PHX::MDField<const TempST,Cell> temperature; // [K]
 
   // Output:
-  PHX::MDField<TempST,Cell> flowRate;
+  PHX::MDField<TempST,Cell> flowRate; // [Pa^{-n} s^{-1}]
 
-  double A;
+  double A; //[Pa^{-n} s^{-1}]
   enum FlowRateType {UNIFORM, GIVEN_FIELD, TEMPERATURE_BASED};
   FlowRateType flowRate_type;
 };

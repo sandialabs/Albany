@@ -736,9 +736,11 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   auto& basal_pl = ss_pl.sublist("basalside");
   basal_pl.set<std::string>("Method","SideSetSTK");
   auto& basal_req = basal_pl.sublist("Required Fields Info");
-  basal_req.set<int>("Number Of Fields",1);
 
-  auto& ss_field0 = basal_req.sublist("Field 0");
+  int bfp = basal_req.get<int>("Number Of Fields",0);
+  basal_req.set<int>("Number Of Fields",bfp+1);
+
+  auto& ss_field0 = basal_req.sublist(util::strint("Field",0+bfp));
   ss_field0.set<std::string>("Field Name", "beta");
   ss_field0.set<std::string>("Field Type", "Node Scalar");
   ss_field0.set<std::string>("Field Usage", "Output");

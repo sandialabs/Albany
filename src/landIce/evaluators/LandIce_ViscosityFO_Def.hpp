@@ -30,12 +30,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   switchingT (263.15),    // [K]
   arrmlh (1.733e3),       // [Pa-3 s-1]
   arrmll (3.613e-13),     // [Pa-3 s-1]
-  scyr   (3.1536e7),      // [s y-1]
-  k4scyr (3.1536e19),     // [s y-1]
-  arrmh (k4scyr*arrmlh),  // [Pa-3 yr-1]
-  arrml (k4scyr*arrmll),  // [Pa-3 yr-1]
-  A(1.0),
-  n(3.0),
+  scyr   (3.1536e7),      // [s yr-1]
   Ugrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   homotopyParam(p.get<std::string>("Continuation Parameter Name"), dl->shared_param),
   mu    (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
@@ -71,6 +66,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   A = visc_list->get("Glen's Law A", 1.0);
   n = visc_list->get("Glen's Law n", 3.0);
+  flowRateScaling = scyr*pow(1000,n+1); // Turn A's units from [Pa^-n s^-1] to [k^-1 kPa^-n yr^-1]
 
   coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Variable Name"),dl->qp_gradient);
@@ -87,10 +83,6 @@ ViscosityFO(const Teuchos::ParameterList& p,
 #endif
     visc_type = EXPTRIG;
   } else if (viscType == "Glen's Law"){
-    const auto knp1 = pow(1000,n+1);
-    // Turn A's units from [Pa^-n s^-1] to [k^-1 kPa^-n yr^-1]
-    // This makes the final units of viscosity kPa k yr, which makes [mu*Ugrad] = kPa
-    A *= knp1*scyr;
     visc_type = GLENSLAW;
 #ifdef OUTPUT_TO_SCREEN
     *out << "Glen's law viscosity!" << std::endl;
@@ -103,23 +95,23 @@ ViscosityFO(const Teuchos::ParameterList& p,
     if (flowRateType == "Uniform") {
       flowRate_type = UNIFORM;
 #ifdef OUTPUT_TO_SCREEN
-      *out << "Uniform Flow Rate A: " << A << " [k^-1 kPa^-" << n << " yr^-1]\n";
+      *out << "Uniform Flow Rate A: " << A << " [Pa^{-" << n << "} s^{-1}]\n";
 #endif
     } else if (flowRateType == "From File") {
       flowRate_type = FROMFILE;
-      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
+      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Flow Rate Variable Name"), dl->cell_scalar2);
       this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate read in from file (exodus or ascii).\n"
-           << "  NOTE: A units must be [k^-1 kPa^-n yr^-1]!\n";
+           << "  NOTE: A units must be [Pa^{-n} s^{-1}]!\n";
 #endif
     } else if (flowRateType == "From CISM") {
       flowRate_type = FROMCISM;
-      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Ice Softness Variable Name"), dl->cell_scalar2);
+      flowFactorA=decltype(flowFactorA)(p.get<std::string> ("Flow Rate Variable Name"), dl->cell_scalar2);
       this->addDependentField(flowFactorA);
 #ifdef OUTPUT_TO_SCREEN
       *out << "Flow Rate passed in from CISM.\n"
-           << "  NOTE: A units must be [k^-1 kPa^-n yr^-1]!\n";
+           << "  NOTE: A units must be [Pa^{-n} s^{-1}]!\n";
 #endif
     } else if (flowRateType == "Temperature Based") {
       flowRate_type = TEMPERATUREBASED;
@@ -184,8 +176,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT,typename Traits,typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 TemprT ViscosityFO<EvalT,Traits,VelT,TemprT>::flowRate (const TemprT& T) const {
-  return (T < switchingT) ? arrml / exp (actenl / gascon / ((T > TemprT(150)) ? T : TemprT(150))) :
-    arrmh / exp (actenh / gascon / T);
+  return (T < switchingT) ? arrmll / exp (actenl / gascon / ((T > TemprT(150)) ? T : TemprT(150))) :
+    arrmlh / exp (actenh / gascon / T);
 }
 
 //**********************************************************************
@@ -208,7 +200,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_EX
     MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
     MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
     muargt = sqrt(muargt)*exp(a*x);
-    mu(cell,qp) = 1.0/2.0*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+    mu(cell,qp) = 1.0/2.0*pow(flowRateScaling*A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
   }
 }
 
@@ -303,7 +295,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const int& cell) const
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_UNIFORM_Tag&, const int& cell) const{
-  RealType flowFactor= 1.0/2.0*pow(A, -1.0/n); 
+  RealType flowFactor= 1.0/2.0*pow(flowRateScaling*A, -1.0/n); 
   //We start setting mu=flowFactor, then we multiply it by other terms in glenslaw function
   for (unsigned int qp=0; qp < numQPs; ++qp)
     mu(cell,qp) = flowFactor;
@@ -314,7 +306,7 @@ template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag&, const int& cell) const
 {
-  TemprT flowFactor = 1.0/2.0*pow(flowRate(temperature(cell)), -1.0/n);
+  TemprT flowFactor = 1.0/2.0*pow(flowRateScaling*flowRate(temperature(cell)), -1.0/n);
   //We start setting mu=flowFactor, then we multiply it by other terms in glenslaw function
   for (unsigned int qp=0; qp < numQPs; ++qp)
     mu(cell,qp) = flowFactor;
@@ -327,7 +319,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GL
 {
   //We start setting mu=flowFactor, then we multiply it by other terms in glenslaw function
   for(int qp=0; qp< (int) numQPs; ++qp)
-    mu(cell,qp) = 1.0/2.0*pow(flowRate(temperature(cell,qp)), -1.0/n);
+    mu(cell,qp) = 1.0/2.0*pow(flowRateScaling*flowRate(temperature(cell,qp)), -1.0/n);
   glenslaw(cell);
 }
 
@@ -335,7 +327,7 @@ template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_GLENSLAW_FROMFILE_Tag&, const int& cell) const
 {
-  RealType flowFactor = 1.0/2.0*pow(flowFactorA(cell), -1.0/n);
+  RealType flowFactor = 1.0/2.0*pow(flowRateScaling*flowFactorA(cell), -1.0/n);
   //We start setting mu=flowFactor, then we multiply it by other terms in glenslaw function
   for (unsigned int qp=0; qp < numQPs; ++qp)
     mu(cell,qp) = flowFactor;

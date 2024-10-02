@@ -729,7 +729,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_name);
     p->set<std::string>("BF Variable Name", Albany::bf_name);
     p->set<std::string>("Effective Pressure Variable Name", effective_pressure_name);
-    p->set<std::string>("Ice Softness Variable Name", ice_softness_name);
+    p->set<std::string>("Flow Rate Variable Name", ice_softness_name);
     p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &visc_pl);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Basal Friction Coefficient"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
