@@ -44,17 +44,19 @@ ExtrudedConnManager::
 getElementsInBlock (const std::string& blockId) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION (blockId!=m_elem_blocks_names[0],std::logic_error,
-      "[ExtrudedConnManager::getElementBlock] Error! Invalid elem block name: " + blockId + ".\n");
+      "[ExtrudedConnManager::getElementsInBlock] Error! Invalid elem block name: " + blockId + ".\n");
 
-  const auto& elems_basal = m_conn_mgr_h->getElementsInBlock();
+  const auto& belems = m_conn_mgr_h->getElementsInBlock();
 
   std::vector<GO> elems;
-  auto layers_data = m_mesh->cell_layers_gid();
-  elems.reserve(m_num_elems);
-  for (auto bgid : elems_basal) {
-    for (int ilayer=0; ilayer<layers_data->numLayers; ++ilayer) {
-      elems.push_back (layers_data->getId(bgid,ilayer));
-    }
+  const auto& cell_layers_lid = m_mesh->cell_layers_lid();
+  const auto& cell_layers_gid = m_mesh->cell_layers_gid();
+  elems.resize(m_num_elems);
+  for (int ie=0; ie<m_num_elems; ++ie) {
+    int ib, ilay;
+    cell_layers_lid->getIndices(ie,ib,ilay);
+    GO gid_b = belems[ib];
+    elems[ie] = cell_layers_gid->getId(gid_b,ilay);
   }
   return elems;
 }
@@ -333,6 +335,9 @@ buildConnectivity(const panzer::FieldPattern & fp)
       }
     }
   }
+
+  m_elem_lids.resize(m_num_elems);
+  std::iota(m_elem_lids.begin(),m_elem_lids.end(),0);
 
   m_num_vdofs_per_elem = ndofs_v;
   m_num_hdofs_per_elem = ndofs_h;

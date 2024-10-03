@@ -804,12 +804,11 @@ ExtrudedDiscretization::computeSideSets()
       }
 
       LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,cell_layers_gid->numLayers,cell_layers_gid->ordering);
-      auto get_basal_side_nodes = [&](const SideStruct& side) {
+      auto get_basal_side_nodes = [&](const SideStruct& basal_side) {
         std::vector<GO> nodes;
-        const auto belem_GID = m_extruded_mesh->cell_layers_gid()->getColumnId(side.elem_GID);
-        const int belem_LID = basal_cell_indexer->getLocalElement(belem_GID);
+        const int belem_LID = basal_cell_indexer->getLocalElement(basal_side.elem_GID);
         const auto& belem_nodes = basal_node_dof_mgr->getElementGIDs(belem_LID);
-        const auto& offsets = basal_node_dof_mgr->getGIDFieldOffsetsSide(0,side.side_pos);
+        const auto& offsets = basal_node_dof_mgr->getGIDFieldOffsetsSide(0,basal_side.side_pos);
         for (auto o : offsets) {
           nodes.push_back(belem_nodes[o]);
         }
