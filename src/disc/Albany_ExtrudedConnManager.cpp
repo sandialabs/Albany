@@ -46,7 +46,7 @@ getElementsInBlock (const std::string& blockId) const
   TEUCHOS_TEST_FOR_EXCEPTION (blockId!=m_elem_blocks_names[0],std::logic_error,
       "[ExtrudedConnManager::getElementBlock] Error! Invalid elem block name: " + blockId + ".\n");
 
-  const auto& elems_basal = m_conn_mgr_h->getElementBlock();
+  const auto& elems_basal = m_conn_mgr_h->getElementsInBlock();
 
   std::vector<GO> elems;
   auto layers_data = m_mesh->cell_layers_gid();

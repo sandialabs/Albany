@@ -806,11 +806,12 @@ ExtrudedDiscretization::computeSideSets()
       LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,cell_layers_gid->numLayers,cell_layers_gid->ordering);
       auto get_basal_side_nodes = [&](const SideStruct& side) {
         std::vector<GO> nodes;
-        const int elem_LID = basal_cell_indexer->getLocalElement(side.elem_GID);
-        const auto& elem_nodes = basal_node_dof_mgr->getElementGIDs(elem_LID);
+        const auto belem_GID = m_extruded_mesh->cell_layers_gid()->getColumnId(side.elem_GID);
+        const int belem_LID = basal_cell_indexer->getLocalElement(belem_GID);
+        const auto& belem_nodes = basal_node_dof_mgr->getElementGIDs(belem_LID);
         const auto& offsets = basal_node_dof_mgr->getGIDFieldOffsetsSide(0,side.side_pos);
         for (auto o : offsets) {
-          nodes.push_back(elem_nodes[o]);
+          nodes.push_back(belem_nodes[o]);
         }
         return nodes;
       };
@@ -1174,8 +1175,9 @@ ExtrudedDiscretization::computeNodeSets()
       const auto& node_gids = node_dof_mgr->getElementGIDs(ie);
       const int conn_start = node_conn_mgr->getConnectivityStart(ie);
       const int conn_size  = node_conn_mgr->getConnectivitySize(ie);
+      const auto ownership = node_conn_mgr->getOwnership(ie);
       for (int in=0; in<conn_size; ++in) {
-        if (mask[conn_start+in]==1) {
+        if (mask[conn_start+in]==1 and ownership[in]==Owned) {
           auto it_bool = gids_found.insert(node_gids[in]);
           if (it_bool.second) {
             // Newly processed node
@@ -1264,9 +1266,10 @@ buildCellSideNodeNumerationMaps()
 
       for (const auto& s : m_sideSets[ws][ssn]) {
         const GO basal_elem_GID = s2ssc[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
+        const LO basal_elem_LID = basal_node_dof_mgr->cell_indexer()->getLocalElement(basal_elem_GID);
         const auto elem_LID = node_dof_mgr->cell_indexer()->getLocalElement(s.elem_GID);
         const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
-        const auto& basal_nodes = basal_node_dof_mgr->getElementGIDs(basal_elem_GID);
+        const auto& basal_nodes = basal_node_dof_mgr->getElementGIDs(basal_elem_LID);
         const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,s.side_pos);
 
         // Retrieve the gids of the basal mesh nodes that generated the gids of this side
