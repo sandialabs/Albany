@@ -118,16 +118,51 @@ STKConnManager::getConnectivityMask (const std::string& sub_part_name) const
       //       so that we *know* we process subentities dofs correctly within
       //       each element
       int idof = 0;
-      for (auto rank = NODE_RANK; rank<=primary_entity_rank; ++rank) {
+      int offset = 0;
+      for (auto rank = NODE_RANK; rank<primary_entity_rank; ++rank) {
         if (m_idCnt[rank]==0) continue;
-        int count = rank==elem_rank ? 1 : m_bulkData->num_connectivity(elem,rank);
+        int count = m_bulkData->num_connectivity(e,rank);
+        auto rels = m_bulkData->begin(e,rank);
+        auto elem_count = m_bulkData->num_connectivity(elem,rank);
+        auto elem_rels = m_bulkData->begin(elem,rank);
         for (int irel=0; irel<count; ++irel) {
+          auto rel = rels[irel];
+          auto it = std::find(elem_rels,elem_rels+elem_count,rel);
+          TEUCHOS_TEST_FOR_EXCEPTION (it==(elem_rels+elem_count),std::runtime_error,
+              "Found an entity-subentity that does not belong to its parent element.\n"
+              "  - element rank: " << elem_rank << "\n"
+              "  - entity rank: " << primary_entity_rank << "\n"
+              "  - sub-entity rank: " << rank << "\n"
+              "  - entity ID: " << m_bulkData->identifier(e) << "\n"
+              "  - sub-entity ID: " << m_bulkData->identifier(rel) << "\n"
+              "  - parent element ID: " << m_bulkData->identifier(elem) << "\n");
+          int rel_elem_pos = std::distance(elem_rels,it);
           for (int cnt=0; cnt<m_idCnt[rank]; ++cnt, ++idof) {
-            elem_mask[idof] = 1;
+            elem_mask[offset + rel_elem_pos*m_idCnt[rank] + cnt] = 1;
           }
         }
+        offset += m_idCnt[rank]*m_bulkData->num_connectivity(elem,rank);
       }
 
+      // Handle primary_entity_rank separately since the mesh won't likely store
+      // connections from to entities of the same rank (basically the entity 'e' itself)
+      int e_pos_in_elem = 0;
+      if (not is_elem_part) {
+        auto count = m_bulkData->num_connectivity(elem,primary_entity_rank);
+        auto beg = m_bulkData->begin(elem,primary_entity_rank);
+        auto end = beg+count;
+        auto it = std::find(beg,end,e);
+        TEUCHOS_TEST_FOR_EXCEPTION (it==end,std::runtime_error,
+            "Found an entity that does not belong to its parent element.\n"
+            "  - element rank: " << elem_rank << "\n"
+            "  - entity rank: " << primary_entity_rank << "\n"
+            "  - entity ID: " << m_bulkData->identifier(e) << "\n"
+            "  - parent element ID: " << m_bulkData->identifier(elem) << "\n");
+        e_pos_in_elem = std::distance(beg,it);
+      }
+      for (int cnt=0; cnt<m_idCnt[primary_entity_rank]; ++cnt, ++idof) {
+        elem_mask[offset + e_pos_in_elem*m_idCnt[primary_entity_rank] + cnt] = 1;
+      }
     }
   }
 
