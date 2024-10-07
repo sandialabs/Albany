@@ -111,7 +111,7 @@ struct Sum
 {
   void setup (const Teuchos::ParameterList& /*p*/) {}
   ScalarT operator() (const ScalarT& x, const ScalarT& y) const {
-    return y;
+    return x+y;
   }
 };
 
