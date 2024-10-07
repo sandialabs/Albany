@@ -169,9 +169,6 @@ void P0InterpolationBase<EvalT, Traits, ScalarT>::evaluate_on_cell (const int nu
 template<typename EvalT, typename Traits, typename ScalarT>
 void P0InterpolationBase<EvalT, Traits, ScalarT>::evaluate_on_side (typename Traits::EvalData workset)
 {
-  using FL  = Albany::FieldLocation;
-  using FRT = Albany::FieldRankType;
-
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end()) {
     return;
   }

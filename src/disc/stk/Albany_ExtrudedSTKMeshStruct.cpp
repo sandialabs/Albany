@@ -313,8 +313,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   singlePartVecTop[0] = nsPartVec["top"];
   singlePartVecLateral[0] = nsPartVec["lateral"];
 
-  using SFT = AbstractSTKFieldContainer::STKFieldType;
-
   // Fields required for extrusion
   std::string thickness_name = params->get<std::string>("Thickness Field Name","thickness");
   std::string surface_height_name = params->get<std::string>("Surface Height Field Name","surface_height");

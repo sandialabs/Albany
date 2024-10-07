@@ -25,7 +25,6 @@ namespace Albany
 Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
 getIntrepid2Basis(const CellTopologyData& ctd)
 {
-   typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
    using Teuchos::rcp;
    using std::cout;
    using std::endl;
