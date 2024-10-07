@@ -829,8 +829,8 @@ int  Zoltan::evaluate( int    print_stats,
 {
   int ierr        = 0;
 
-  ZOLTAN_BALANCE_EVAL eval  = {0};
-  ZOLTAN_GRAPH_EVAL   graph = {{0}};
+  ZOLTAN_BALANCE_EVAL eval  = {};
+  ZOLTAN_GRAPH_EVAL   graph = {};
   if (Zoltan_LB_Eval_Balance( m_zoltan_id_, print_stats, &eval)) ierr = 1;
   if (Zoltan_LB_Eval_Graph( m_zoltan_id_, print_stats, &graph) ) ierr = 1;
   *nentity      = (int)eval.nobj[0];
