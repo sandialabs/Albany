@@ -558,8 +558,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   out->getOStream()->flush();
 
   // Extrude fields
-  extrudeBasalFields (nodes2D,cells2D,maxGlobalCells2dId,maxGlobalNodes2dId);
-  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalCells2dId,maxGlobalNodes2dId);
+  extrudeBasalFields (nodes2D,cells2D,maxGlobalNodes2dId);
+  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalNodes2dId);
 
   // Loading required input fields from file
   this->loadRequiredInputFields (comm);
@@ -716,7 +716,7 @@ void ExtrudedSTKMeshStruct::
 interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
                                const std::vector<stk::mesh::Entity>& cells2d,
                                const std::vector<double>& levelsNormalizedThickness,
-                               GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
+                               GO maxGlobalNodes2dId)
 {
   Teuchos::Array<std::string> node_fields_names, cell_fields_names;
   Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
@@ -934,7 +934,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
 void ExtrudedSTKMeshStruct::
 extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
                     const std::vector<stk::mesh::Entity>& cells2d,
-                    GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
+                    GO maxGlobalNodes2dId)
 {
   Teuchos::Array<std::string> node_fields_names, cell_fields_names;
   Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
