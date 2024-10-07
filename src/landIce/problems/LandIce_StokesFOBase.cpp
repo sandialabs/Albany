@@ -325,7 +325,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 }
 
 void
-StokesFOBase::buildStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
+StokesFOBase::buildStokesFOBaseFields()
 {
   // Allocate memory for unmanaged fields
   fieldUtils->allocateComputeBasisFunctionsFields();

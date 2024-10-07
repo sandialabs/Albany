@@ -300,7 +300,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
     LandIce::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, paramList);
   }
 
   return Teuchos::null;

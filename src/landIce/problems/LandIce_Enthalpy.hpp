@@ -739,7 +739,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {
     LandIce::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, Teuchos::null);
   }
 
   return Teuchos::null;

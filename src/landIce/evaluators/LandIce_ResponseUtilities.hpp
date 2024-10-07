@@ -38,8 +38,7 @@ public:
   constructResponses(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::ParameterList& responseList,
-    Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem,
-    Albany::StateManager& stateMgr);
+    Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem);
 };
 
 } // namespace LandIce

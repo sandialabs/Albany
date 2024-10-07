@@ -79,14 +79,12 @@ public:
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                        const Albany::MeshSpecsStruct& meshSpecs,
-                       Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                        const Albany::MeshSpecsStruct& meshSpecs,
-                       Albany::StateManager& stateMgr,
                        Albany::FieldManagerChoice fmchoice,
                        const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
@@ -123,14 +121,14 @@ template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 SideLaplacian::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                     const Albany::MeshSpecsStruct& meshSpecs,
-                                    Albany::StateManager& stateMgr,
+                                    Albany::StateManager& /* stateMgr */,
                                     Albany::FieldManagerChoice fieldManagerChoice,
                                     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   if (numDim==2) {
-    return constructEvaluators2D<EvalT> (fm0,meshSpecs,stateMgr,fieldManagerChoice,responseList);
+    return constructEvaluators2D<EvalT> (fm0,meshSpecs,fieldManagerChoice,responseList);
   } else {
-    return constructEvaluators3D<EvalT> (fm0,meshSpecs,stateMgr,fieldManagerChoice,responseList);
+    return constructEvaluators3D<EvalT> (fm0,meshSpecs,fieldManagerChoice,responseList);
   }
 }
 
@@ -138,7 +136,6 @@ template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 SideLaplacian::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                       const Albany::MeshSpecsStruct& meshSpecs,
-                                      Albany::StateManager& stateMgr,
                                       Albany::FieldManagerChoice fieldManagerChoice,
                                       const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
@@ -223,7 +220,7 @@ SideLaplacian::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
 
-    return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, paramList);
   }
 
   return Teuchos::null;
@@ -233,7 +230,6 @@ template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                       const Albany::MeshSpecsStruct& meshSpecs,
-                                      Albany::StateManager& stateMgr,
                                       Albany::FieldManagerChoice fieldManagerChoice,
                                       const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
@@ -353,7 +349,7 @@ SideLaplacian::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
 
-    return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, paramList);
   }
 
   return Teuchos::null;

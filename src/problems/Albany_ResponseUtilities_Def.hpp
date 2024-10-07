@@ -24,8 +24,7 @@ Teuchos::RCP<const PHX::FieldTag>
 ResponseUtilities<EvalT,Traits>::constructResponses(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm,
   Teuchos::ParameterList& responseParams,
-  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem,
-  StateManager& stateMgr)
+  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;

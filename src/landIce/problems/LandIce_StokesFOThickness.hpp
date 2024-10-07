@@ -155,7 +155,7 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
   // Finally, construct responses, and return the tags
-  return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, responseList);
+  return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, fieldManagerChoice, responseList);
 }
 
 template<typename EvalT>
