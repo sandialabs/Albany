@@ -59,7 +59,8 @@ FlowRate (const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits, typename TempST>
 void FlowRate<EvalT,Traits,TempST>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }

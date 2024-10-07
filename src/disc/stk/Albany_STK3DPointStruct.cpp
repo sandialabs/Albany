@@ -48,7 +48,7 @@ STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 }
 
 void STK3DPointStruct::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 {
   std::cout << "---3DPoint::setBulkData---" << std::endl;
   metaData->commit();

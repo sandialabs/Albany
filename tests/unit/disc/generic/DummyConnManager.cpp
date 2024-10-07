@@ -58,17 +58,17 @@ DummyConnManager::buildConnectivity(const panzer::FieldPattern& fp)
       for (unsigned int iface=0; iface<topo.getFaceCount(); ++iface) {
         m_num_dofs_per_elem += fp.getSubcellIndices(2,iface).size();
         faceDofCount += fp.getSubcellIndices(2,iface).size();
-      }
+      } [[ fallthrough ]];
     case 2:
       for (unsigned int iedge=0; iedge<topo.getEdgeCount(); ++iedge) {
         m_num_dofs_per_elem += fp.getSubcellIndices(1,iedge).size();
         edgeDofCount += fp.getSubcellIndices(1,iedge).size();
-      }
+      } [[ fallthrough ]];
     case 1:
       for (unsigned int inode=0; inode<topo.getNodeCount(); ++inode) {
         m_num_dofs_per_elem += fp.getSubcellIndices(0,inode).size();
         nodeDofCount += fp.getSubcellIndices(0,inode).size();
-      }
+      } [[ fallthrough ]];
     case 0:
       m_num_dofs_per_elem += fp.getSubcellIndices(patternDim,0).size();
       cellDofCount += fp.getSubcellIndices(patternDim,0).size();

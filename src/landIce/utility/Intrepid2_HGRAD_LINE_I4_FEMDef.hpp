@@ -146,7 +146,7 @@ namespace Intrepid2 {
   template<typename DT, typename OT, typename PT>
   Basis_HGRAD_LINE_I4_FEM<DT,OT,PT>::
   Basis_HGRAD_LINE_I4_FEM(const ordinal_type /*order*/,
-                            const EPointType   pointType) {
+                          const EPointType   /* pointType */) {
     const ordinal_type spaceDim = 1;
     this->basisCardinality_     = 2;
     this->basisDegree_          = 4;

@@ -19,8 +19,6 @@
 //! Code Base for Quantum Device Simulation Tools LDRD
 namespace Albany {
 
-class StateManager;
-
 /*!
  * \brief Abstract interface for representing a 1-D finite element
  * problem.
@@ -38,18 +36,16 @@ public:
   constructResponses(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::ParameterList& responseList,
-    Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem,
-    Albany::StateManager& stateMgr);
+    Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem);
 
   //! Utility for parsing response requests and creating response field manager
   //! (Convenience overload in the absence of parameters list from problem)
   Teuchos::RCP<const PHX::FieldTag>
   constructResponses(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-    Teuchos::ParameterList& responseList,
-    Albany::StateManager& stateMgr)
+    Teuchos::ParameterList& responseList)
   {
-    return constructResponses(fm0, responseList, Teuchos::null, stateMgr);
+    return constructResponses(fm0, responseList, Teuchos::null);
   }
 
   //! Accessor

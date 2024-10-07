@@ -26,10 +26,9 @@ Teuchos::RCP<const PHX::FieldTag>
 ResponseUtilities<EvalT,Traits>::constructResponses(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm,
   Teuchos::ParameterList& responseParams,
-  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem,
-  Albany::StateManager& stateMgr)
+  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem)
 {
-  auto ev_tag = base_type::constructResponses(fm,responseParams,paramsFromProblem,stateMgr);
+  auto ev_tag = base_type::constructResponses(fm,responseParams,paramsFromProblem);
   if (!ev_tag.is_null()) {
     return ev_tag;
   }

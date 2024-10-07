@@ -93,7 +93,7 @@ operator()( const team_member & thread) const{
   template<typename EvalT, typename Traits, typename ScalarT>
   KOKKOS_INLINE_FUNCTION
   void DOFGradInterpolationBase<EvalT, Traits, ScalarT>::
-  operator() (const DOFGradInterpolationBase_Residual_Tag& tag, const int& cell) const {
+  operator() (const DOFGradInterpolationBase_Residual_Tag&, const int& cell) const {
 
    for (size_t qp=0; qp < numQPs; ++qp) {
           for (size_t dim=0; dim<numDims; dim++) {
@@ -140,7 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
 template< typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FastSolutionGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
+operator() (const FastSolutionGradInterpolationBase_Jacobian_Tag&, const int& cell) const {
   const int num_dof = this->val_node(0,0).size();
   for (size_t qp=0; qp < this->numQPs; ++qp) {
     for (size_t dim=0; dim<this->numDims; dim++) {

@@ -57,7 +57,7 @@ namespace PHAL {
   template<typename EvalT, typename Traits, typename ScalarT>
   KOKKOS_INLINE_FUNCTION
   void DOFVecGradInterpolationBase<EvalT, Traits, ScalarT>::
-  operator() (const DOFVecGradInterpolationBase_Residual_Tag& tag, const int& cell) const
+  operator() (const DOFVecGradInterpolationBase_Residual_Tag&, const int& cell) const
   {
     for (size_t qp=0; qp < numQPs; ++qp)
       for (size_t i=0; i<vecDim; i++)
@@ -95,7 +95,7 @@ namespace PHAL {
   template<typename Traits>
   KOKKOS_INLINE_FUNCTION
   void FastSolutionVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
-  operator() (const FastSolutionVecGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const {
+  operator() (const FastSolutionVecGradInterpolationBase_Jacobian_Tag&, const int& cell) const {
     const int num_dof = this->val_node(0,0,0).size();
     for (size_t qp=0; qp < this->numQPs; ++qp) {
       for (size_t i=0; i<this->vecDim; i++) {

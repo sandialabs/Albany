@@ -49,7 +49,6 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
   cellCubature  = cubFactory.create<PHX::Device, RealType, RealType>(*cellTopology, cubDegree);
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int numCellSides    = cellTopology->getFaceCount();
   const int numCellVertices = cellTopology->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
@@ -82,7 +81,7 @@ void PopulateMesh::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct>
       const int numSideVecDim   = -1;
 
       dl->side_layouts[ss_name] = Teuchos::rcp(new Layouts(numSideVertices,numSideNodes,numSideQPs,
-                                                           numSideDim,numCellDim,numCellSides,numSideVecDim,ss_name));
+                                                           numSideDim,numCellDim,numSideVecDim,ss_name));
     }
   }
 

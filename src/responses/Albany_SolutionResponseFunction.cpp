@@ -185,12 +185,12 @@ evaluateDistParamDeriv(
 
 void SolutionResponseFunction::
 evaluate_HessVecProd_xx(
-    const double current_time,
-    const Teuchos::RCP<const Thyra_MultiVector>& v,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec>& param_array,
+    const double /* current_time */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* v */,
+    const Teuchos::RCP<const Thyra_Vector>& /* x */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdot */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdotdot */,
+    const Teuchos::Array<ParamVec>& /* param_array */,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
   if (!Hv_dp.is_null()) {
@@ -200,13 +200,13 @@ evaluate_HessVecProd_xx(
 
 void SolutionResponseFunction::
 evaluate_HessVecProd_xp(
-    const double current_time,
-    const Teuchos::RCP<const Thyra_MultiVector>& v,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_direction_name,
+    const double /* current_time */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* v */,
+    const Teuchos::RCP<const Thyra_Vector>& /* x */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdot */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdotdot */,
+    const Teuchos::Array<ParamVec>& /* param_array */,
+    const std::string& /* dist_param_direction_name */,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
   if (!Hv_dp.is_null()) {
@@ -216,13 +216,13 @@ evaluate_HessVecProd_xp(
 
 void SolutionResponseFunction::
 evaluate_HessVecProd_px(
-    const double current_time,
-    const Teuchos::RCP<const Thyra_MultiVector>& v,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_name,
+    const double /* current_time */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* v */,
+    const Teuchos::RCP<const Thyra_Vector>& /* x */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdot */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdotdot */,
+    const Teuchos::Array<ParamVec>& /* param_array */,
+    const std::string& /* dist_param_name */,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
   if (!Hv_dp.is_null()) {
@@ -232,14 +232,14 @@ evaluate_HessVecProd_px(
 
 void SolutionResponseFunction::
 evaluate_HessVecProd_pp(
-    const double current_time,
-    const Teuchos::RCP<const Thyra_MultiVector>& v,
-    const Teuchos::RCP<const Thyra_Vector>& x,
-    const Teuchos::RCP<const Thyra_Vector>& xdot,
-    const Teuchos::RCP<const Thyra_Vector>& xdotdot,
-    const Teuchos::Array<ParamVec>& param_array,
-    const std::string& dist_param_name,
-    const std::string& dist_param_direction_name,
+    const double /* current_time */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* v */,
+    const Teuchos::RCP<const Thyra_Vector>& /* x */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdot */,
+    const Teuchos::RCP<const Thyra_Vector>& /* xdotdot */,
+    const Teuchos::Array<ParamVec>& /* param_array */,
+    const std::string& /* dist_param_name */,
+    const std::string& /* dist_param_direction_name */,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
 {
   if (!Hv_dp.is_null()) {

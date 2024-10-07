@@ -52,7 +52,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFInterpolationBase<EvalT, Traits, ScalarT>::
-operator() (const DOFInterpolationBase_Tag& tag, const int& cell) const {
+operator() (const DOFInterpolationBase_Tag&, const int& cell) const {
   for (size_t qp=0; qp < numQPs; ++qp) {
     val_qp(cell,qp) = val_node(cell, 0) * BF(cell, 0, qp);
     for (size_t node=1; node < numNodes; ++node) {

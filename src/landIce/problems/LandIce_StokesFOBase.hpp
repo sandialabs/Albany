@@ -111,7 +111,7 @@ protected:
   //! Build unmanaged fields
   virtual void buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0) = 0;
 
-  void buildStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0);
+  void buildStokesFOBaseFields();
 
   template <typename EvalT>
   void constructStokesFOBaseEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -150,7 +150,6 @@ protected:
   template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
   constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                             const Albany::MeshSpecsStruct& meshSpecs,
-                                            Albany::StateManager& stateMgr,
                                             Albany::FieldManagerChoice fieldManagerChoice,
                                             const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
@@ -1799,7 +1798,6 @@ Teuchos::RCP<const PHX::FieldTag>
 StokesFOBase::
 constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                                           const Albany::MeshSpecsStruct& meshSpecs,
-                                          Albany::StateManager& stateMgr,
                                           Albany::FieldManagerChoice fieldManagerChoice,
                                           const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
@@ -1854,7 +1852,7 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
     paramList->set<FST>("Ice Thickness Scalar Type",get_scalar_type(ice_thickness_name));
 
     ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, paramList);
   }
 
   return Teuchos::null;
@@ -1986,7 +1984,7 @@ void StokesFOBase::constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTra
 
 template <typename EvalT>
 void
-LandIce::StokesFOBase::constructStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+LandIce::StokesFOBase::constructStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits> &/* fm0 */)
 {
   fieldUtils->setComputeBasisFunctionsFields<EvalT>();
 }

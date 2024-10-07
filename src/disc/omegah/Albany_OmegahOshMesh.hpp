@@ -11,7 +11,7 @@ public:
   OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                  const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams);
 
-  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
   {
     throw NotYetImplemented("OmegahOshMesh::setBulkData");
     m_bulk_data_set = true;

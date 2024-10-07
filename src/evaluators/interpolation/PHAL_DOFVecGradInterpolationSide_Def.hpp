@@ -38,7 +38,7 @@ DOFVecGradInterpolationSideBase(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 void DOFVecGradInterpolationSideBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(val_node,fm);
@@ -51,7 +51,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFVecGradInterpolationSideBase<EvalT, Traits, ScalarT>::
-operator() (const VecGradInterpolationSide_Tag& tag, const int& sideSet_idx) const {
+operator() (const VecGradInterpolationSide_Tag&, const int& sideSet_idx) const {
 
   for (int qp=0; qp<numSideQPs; ++qp) {
     for (int comp=0; comp<vecDim; ++comp) {

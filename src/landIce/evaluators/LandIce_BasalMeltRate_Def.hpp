@@ -115,7 +115,8 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 template<typename EvalT, typename Traits, typename VelocityST>
 void BasalMeltRate<EvalT,Traits,VelocityST>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
@@ -124,7 +125,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
 void BasalMeltRate<EvalT,Traits,VelocityST>::
-operator() (const Basal_Melt_Rate_Tag& tag, const int& sideSet_idx) const {
+operator() (const Basal_Melt_Rate_Tag&, const int& sideSet_idx) const {
 
   const unsigned int numPts = nodal ? numSideNodes : numSideQPs;
 

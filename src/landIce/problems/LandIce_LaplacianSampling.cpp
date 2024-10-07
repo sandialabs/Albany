@@ -54,7 +54,6 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
   elementBlockName = meshSpecs[0]->ebName;
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
@@ -77,7 +76,7 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
     auto numSideQPs      = sideCubature->getNumPoints();
 
 
-    dl_side = rcp(new Albany::Layouts(numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,numCellSides,1,sideName));
+    dl_side = rcp(new Albany::Layouts(numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,1,sideName));
     dl->side_layouts[sideName] = dl_side;
   }
 

@@ -94,7 +94,7 @@ get_basal_part_name (const std::string& extruded_part_name) const
 
 void ExtrudedMesh::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis)
+              const Teuchos::RCP<StateInfoStruct>& /* sis */)
 {
   // Register surface height and mesh thickness in the 2d mesh
   std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");

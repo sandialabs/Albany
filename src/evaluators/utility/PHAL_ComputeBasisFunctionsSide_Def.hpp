@@ -133,7 +133,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctionsSide<EvalT, Traits>::
-operator() (const ComputeBasisFunctionsSide_Tag& tag, const int& sideSet_idx) const {
+operator() (const ComputeBasisFunctionsSide_Tag&, const int& sideSet_idx) const {
 
   // Computing tangents (the basis for the manifold)
   for (unsigned int itan=0; itan<numSideDims; ++itan) {
@@ -207,7 +207,7 @@ operator() (const ComputeBasisFunctionsSide_Tag& tag, const int& sideSet_idx) co
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctionsSide<EvalT, Traits>::
-operator() (const ScatterCoordVec_Tag& tag, const int& iCell) const {
+operator() (const ScatterCoordVec_Tag&, const int& iCell) const {
 
   for (std::size_t node=0; node < numNodes; ++node)
     for (std::size_t dim=0; dim < numCellDims; ++dim)
@@ -218,7 +218,7 @@ operator() (const ScatterCoordVec_Tag& tag, const int& iCell) const {
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctionsSide<EvalT, Traits>::
-operator() (const GatherNormals_Tag& tag, const int& iCell) const {
+operator() (const GatherNormals_Tag&, const int& iCell) const {
 
   // The sideset indices corresponding to each side are disjoint sets and are 
   //   therefore should not cause a race condition here on device

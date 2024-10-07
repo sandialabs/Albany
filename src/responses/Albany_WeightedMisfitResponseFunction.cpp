@@ -183,7 +183,7 @@ evaluateResponse(const double /*current_time*/,
 
 void WeightedMisfitResponse::
 evaluateTangent(const double /*alpha*/,
-		const double beta,
+		const double /* beta */,
 		const double /* omega */,
 		const double /*current_time*/,
 		bool /*sum_derivs*/,
@@ -195,7 +195,7 @@ evaluateTangent(const double /*alpha*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vx*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdot*/,
     const Teuchos::RCP<const Thyra_MultiVector>& /*Vxdotdot*/,
-    const Teuchos::RCP<const Thyra_MultiVector>& Vp,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* Vp */,
     const Teuchos::RCP<Thyra_Vector>& g,
     const Teuchos::RCP<Thyra_MultiVector>& gx,
     const Teuchos::RCP<Thyra_MultiVector>& gp)
@@ -247,7 +247,7 @@ evaluateDistParamDeriv(
 
 void WeightedMisfitResponse::
 evaluate_HessVecProd_xx(
-    const double current_time,
+    const double /* current_time */,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -262,7 +262,7 @@ evaluate_HessVecProd_xx(
 
 void WeightedMisfitResponse::
 evaluate_HessVecProd_xp(
-    const double current_time,
+    const double /* current_time */,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -278,7 +278,7 @@ evaluate_HessVecProd_xp(
 
 void WeightedMisfitResponse::
 evaluate_HessVecProd_px(
-    const double current_time,
+    const double /* current_time */,
     const Teuchos::RCP<const Thyra_MultiVector>& /*v*/,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
@@ -294,12 +294,12 @@ evaluate_HessVecProd_px(
 
 void WeightedMisfitResponse::
 evaluate_HessVecProd_pp(
-    const double current_time,
+    const double /* current_time */,
     const Teuchos::RCP<const Thyra_MultiVector>& v,
     const Teuchos::RCP<const Thyra_Vector>& /*x*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
-    const Teuchos::Array<ParamVec>& param_array,
+    const Teuchos::Array<ParamVec>& /* param_array */,
     const std::string& param_name,
     const std::string& /*dist_param_direction_name*/,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dp)
@@ -334,7 +334,7 @@ evaluate_HessVecProd_pp(
 
 void WeightedMisfitResponse::
 evaluateGradient(const double /*current_time*/,
-    const Teuchos::RCP<const Thyra_Vector>& x,
+    const Teuchos::RCP<const Thyra_Vector>& /* x */,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& p,

@@ -40,7 +40,7 @@ Time(Teuchos::ParameterList& p) :
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void Time<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(time,fm);
@@ -61,7 +61,7 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 template<typename EvalT,typename Traits>
 typename Time<EvalT,Traits>::ScalarT& 
-Time<EvalT,Traits>::getValue(const std::string &n)
+Time<EvalT,Traits>::getValue(const std::string &/* n */)
 {
   return timeValue;
 }

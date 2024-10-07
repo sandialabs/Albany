@@ -192,7 +192,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::
-operator() (const Dim2_Tag& tag, const int& sideSet_idx) const {
+operator() (const Dim2_Tag&, const int& sideSet_idx) const {
 
   ScalarT norm = 0;
   for (unsigned int dim(0); dim<dimsArray[1]; ++dim)
@@ -206,7 +206,7 @@ operator() (const Dim2_Tag& tag, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::
-operator() (const Dim3_Tag& tag, const int& sideSet_idx) const {
+operator() (const Dim3_Tag&, const int& sideSet_idx) const {
 
   ScalarT norm;
   for (unsigned int i(0); i<dimsArray[1]; ++i)

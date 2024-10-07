@@ -97,7 +97,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
     const int                                                 neq_,
     const int                                                 numDim_,
-    const Teuchos::RCP<StateInfoStruct>&                      sis,
+    const Teuchos::RCP<StateInfoStruct>&                      /* sis */,
     const int                                                 num_params_)
     : GenericSTKFieldContainer(
           params_,

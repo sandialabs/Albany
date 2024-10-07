@@ -128,7 +128,7 @@ StokesFOThermoCoupled::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 {
   // Allocate memory for unmanaged fields
   fieldUtils = Teuchos::rcp(new Albany::FieldUtils(fm0, dl));
-  buildStokesFOBaseFields(fm0);
+  buildStokesFOBaseFields();
 
   // Call constructFields<EvalT>() for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructFieldsOp<StokesFOThermoCoupled> op(*this, fm0);

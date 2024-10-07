@@ -182,7 +182,7 @@ StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Finally, construct responses, and return the tags
-  auto tag = constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice, responseList);
+  auto tag = constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, fieldManagerChoice, responseList);
 
   // --- StokesFOBase evaluators --- //
   // Note: we do these last, so that if an evaluator for some field was already created by

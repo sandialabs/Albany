@@ -49,7 +49,7 @@ Absorption(Teuchos::ParameterList& p) :
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void Absorption<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(absorption,fm);

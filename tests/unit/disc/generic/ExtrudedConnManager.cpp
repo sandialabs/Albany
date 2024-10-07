@@ -145,7 +145,6 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
 
   // Create an intrepid2 tensor basis
   using basis_family_type = Intrepid2::HierarchicalBasisFamily<PHX::Device>;
-  using tria_basis_type  = typename basis_family_type::HGRAD_TRI;
   using wedge_basis_type = typename basis_family_type::HGRAD_WEDGE;
   using pattern_ptr      = Teuchos::RCP<panzer::FieldPattern>;
 

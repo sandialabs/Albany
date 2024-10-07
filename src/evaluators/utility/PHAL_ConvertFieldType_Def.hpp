@@ -34,16 +34,17 @@ ConvertFieldType<EvalT, Traits, InputType, OutputType>::ConvertFieldType(const T
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename InputType, typename OutputType>
-void ConvertFieldType<EvalT, Traits, InputType, OutputType>::postRegistrationSetup(
-    typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
+void ConvertFieldType<EvalT, Traits, InputType, OutputType>::
+postRegistrationSetup(typename Traits::SetupData /* d */,
+                      PHX::FieldManager<Traits>& fm) {
   this->utils.setFieldData(in_field, fm);
   this->utils.setFieldData(out_field, fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits, typename InputType, typename OutputType>
-void ConvertFieldType<EvalT, Traits, InputType, OutputType>::evaluateFields(
-    typename Traits::EvalData workset) {
+void ConvertFieldType<EvalT, Traits, InputType, OutputType>::
+evaluateFields(typename Traits::EvalData /* workset */) {
   std::vector<int> dims;
   in_field.dimensions(dims);
   int size = dims.size();

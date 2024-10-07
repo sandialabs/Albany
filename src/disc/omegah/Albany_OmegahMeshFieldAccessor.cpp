@@ -49,8 +49,10 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
         break;
       case 3:
         ncomps = dims[2];
+        break;
       case 4:
         ncomps = dims[2]*dims[3];
+        break;
       default:
         throw std::runtime_error(
             "Error! Unsupported rank for state field.\n"
