@@ -53,7 +53,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename Type>
 KOKKOS_INLINE_FUNCTION
 void DOFVecInterpolationSideBase<EvalT, Traits, Type>::
-operator() (const VecInterpolationSide_Tag& tag, const int& sideSet_idx) const {
+operator() (const VecInterpolationSide_Tag&, const int& sideSet_idx) const {
   
   for (int dim=0; dim<vecDim; ++dim) {
     for (int qp=0; qp<numSideQPs; ++qp) {

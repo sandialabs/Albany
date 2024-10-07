@@ -109,7 +109,8 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData /* d */,
+                      PHX::FieldManager<Traits>& /* fm */)
 {}
 
 //**********************************************************************
@@ -117,7 +118,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
-operator() (const LaplacianRegularization_Cell_Tag& tag, const int& cell) const {
+operator() (const LaplacianRegularization_Cell_Tag&, const int& cell) const {
   
   MeshScalarT trapezoid_weights = 0;
   if(lumpedMassMatrix) {
@@ -146,7 +147,7 @@ operator() (const LaplacianRegularization_Cell_Tag& tag, const int& cell) const 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
-operator() (const LaplacianRegularization_Side_Tag& tag, const int& sideSet_idx) const {
+operator() (const LaplacianRegularization_Side_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
   const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);

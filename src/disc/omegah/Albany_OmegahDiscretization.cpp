@@ -205,7 +205,7 @@ computeGraphs ()
 }
 
 void OmegahDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
+setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
 {
   auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
   field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
@@ -234,7 +234,7 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 
 void
 OmegahDiscretization::
-getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const
+getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
 {
   std::vector<std::string> names = {
     solution_dof_name(),
@@ -262,7 +262,7 @@ void
 OmegahDiscretization::
 setField (const Thyra_Vector& field_vector,
           const std::string&  field_name,
-          bool                overlapped)
+          bool                /* overlapped */)
 {
   auto accessor = m_mesh_struct->get_field_accessor();
   auto dof_mgr = getDOFManager(field_name);

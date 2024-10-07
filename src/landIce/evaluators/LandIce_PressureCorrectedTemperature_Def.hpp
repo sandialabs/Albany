@@ -58,7 +58,7 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
 template<typename EvalT, typename Traits, typename TempST, typename SurfHeightST>
 void PressureCorrectedTemperature<EvalT, Traits, TempST, SurfHeightST>::
 postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();

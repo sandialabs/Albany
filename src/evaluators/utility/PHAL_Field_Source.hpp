@@ -52,7 +52,7 @@ namespace PHAL
             virtual ~Gaussian() {}
             virtual ScalarT evaluateFields(const std::vector<MeshScalarT> &coords);
 
-            void evaluateFields(typename Traits::EvalData d){};
+            void evaluateFields(typename Traits::EvalData /* d */){};
 
         private:
             ScalarT m_amplitude;

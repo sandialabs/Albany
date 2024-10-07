@@ -35,7 +35,8 @@ namespace LandIce
 
   template<typename EvalT, typename Traits, typename VelocityType>
   void VerticalVelocity<EvalT,Traits,VelocityType>::
-  postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  postRegistrationSetup(typename Traits::SetupData /* d */,
+                        PHX::FieldManager<Traits>& fm)
   {
     this->utils.setFieldData(thickness,fm);
     this->utils.setFieldData(int1Dw_z,fm);

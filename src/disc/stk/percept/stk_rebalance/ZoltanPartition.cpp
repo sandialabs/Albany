@@ -260,8 +260,8 @@ int stkCallback_Num_Elements( void *data, int *ierr )
 }
 
 void stkCallback_Element_List( void *data,
-                            int Num_gid_entries,
-                            int Num_lid_entries,
+                            int /* Num_gid_entries */,
+                            int /* Num_lid_entries */,
                             ZOLTAN_ID_PTR global_ids,
                             ZOLTAN_ID_PTR local_ids,     //{Iterator or index}
                             int weightdim,
@@ -323,12 +323,12 @@ int stkCallback_Num_Dimensions( void *data, int *ierr )
 }
 
 void stkCallback_Centroid_Coord( void *data,
-                                     int Num_gid_entries,
-                                     int Num_lid_entries,
-                                     ZOLTAN_ID_PTR global_id,
-                                     ZOLTAN_ID_PTR local_id,  //{Iterator or index}
-                                     double *geom,
-                                     int *ierr )
+                                 int /* Num_gid_entries */,
+                                 int /* Num_lid_entries */,
+                                 ZOLTAN_ID_PTR /* global_id */,
+                                 ZOLTAN_ID_PTR local_id,  //{Iterator or index}
+                                 double *geom,
+                                 int *ierr )
 {
   std::vector<double> temp(3,0.0);
 
@@ -396,9 +396,9 @@ int numEdges(stk::mesh::BulkData& bulk, const mesh::Entity & entity ) {
 }
 
 int stkCallback_Num_Edges( void *data,
-                        int Num_gid_entries,
-                        int Num_lid_entries,
-                        ZOLTAN_ID_PTR global_id,
+                        int /* Num_gid_entries */,
+                        int /* Num_lid_entries */,
+                        ZOLTAN_ID_PTR /* global_id */,
                         ZOLTAN_ID_PTR local_id,  //{Iterator or index}
                         int *ierr )
 {
@@ -429,9 +429,9 @@ int stkCallback_Num_Edges( void *data,
 }
 
 void stkCallback_Edge_List( void *data,
-                         int Num_gid_entries,
-                         int Num_lid_entries,
-                         ZOLTAN_ID_PTR global_id,
+                         int /* Num_gid_entries */,
+                         int /* Num_lid_entries */,
+                         ZOLTAN_ID_PTR /* global_id */,
                          ZOLTAN_ID_PTR local_id,  //{Iterator or index}
 
                          // Returned

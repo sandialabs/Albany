@@ -54,7 +54,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename ScalarT>
 KOKKOS_INLINE_FUNCTION
 void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
-operator() (const DivInterpolation_Tag& tag, const int& sideSet_idx) const {
+operator() (const DivInterpolation_Tag&, const int& sideSet_idx) const {
   
   for (unsigned int qp=0; qp<numSideQPs; ++qp)
   {

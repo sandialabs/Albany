@@ -1984,7 +1984,7 @@ void StokesFOBase::constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTra
 
 template <typename EvalT>
 void
-LandIce::StokesFOBase::constructStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+LandIce::StokesFOBase::constructStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits> &/* fm0 */)
 {
   fieldUtils->setComputeBasisFunctionsFields<EvalT>();
 }

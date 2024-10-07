@@ -23,7 +23,7 @@ IdentityCoordFunctionTraits(Teuchos::ParameterList& p) {
 template<typename EvalT>
 void
 IdentityCoordFunctionTraits<EvalT>::
-computeBCs(double* coord, std::vector<ScalarT>& BCVals, const RealType time) {
+computeBCs(double* coord, std::vector<ScalarT>& BCVals, const RealType /* time */) {
 
   // Apply the desired function to the coordinate values here
   for(int i = 0; i < numEqn; i++)

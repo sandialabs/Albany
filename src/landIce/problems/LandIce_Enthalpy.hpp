@@ -747,7 +747,7 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
 template <typename EvalT>
 void
-LandIce::Enthalpy::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &fm0)
+LandIce::Enthalpy::constructFields(PHX::FieldManager<PHAL::AlbanyTraits> &/* fm0 */)
 {
   fieldUtils->setComputeBasisFunctionsFields<EvalT>();
 }

@@ -74,7 +74,7 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 template<typename EvalT, typename Traits, typename Type>
 KOKKOS_INLINE_FUNCTION
 void EnthalpyBasalResid<EvalT,Traits,Type>::
-operator() (const Enthalpy_Basal_Residual_Tag& tag, const int& sideSet_idx) const{
+operator() (const Enthalpy_Basal_Residual_Tag&, const int& sideSet_idx) const{
 
   constexpr int maxNumNodesPerSide = 4;
 

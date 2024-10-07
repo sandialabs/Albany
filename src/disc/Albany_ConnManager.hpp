@@ -41,12 +41,12 @@ public:
     return this->getElementBlock(elem_block_name());
   }
 
-  const std::vector<LO> & getNeighborElementBlock(const std::string & blockId) const override
+  const std::vector<LO> & getNeighborElementBlock(const std::string & /* blockId */) const override
   {
     static std::vector<LO> emptyVec;
     throw std::runtime_error(
         "Error! Albany does not use elements halos, so the method\n"
-        "       'OmegahConnManager::getNeighborElementBlock' should not have been called.\n");
+        "       'ConnManager::getNeighborElementBlock' should not have been called.\n");
     return emptyVec;
   }
 

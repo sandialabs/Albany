@@ -43,7 +43,8 @@ SurfaceAirEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 
 template<typename EvalT, typename Traits, typename SurfTempST>
 void SurfaceAirEnthalpy<EvalT,Traits,SurfTempST>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();

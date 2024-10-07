@@ -49,7 +49,7 @@ void ScalarResponseFunction::evaluateDerivative(
 
 void
 ScalarResponseFunction::
-printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
+printResponse(Teuchos::RCP<Teuchos::FancyOStream> /* out */)
 {
 }
 

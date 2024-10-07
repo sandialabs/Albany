@@ -77,7 +77,7 @@ getConnectivityStart (const LO ielem) const
 }
 
 inline int ExtrudedConnManager::
-getConnectivitySize (const LO ielem) const
+getConnectivitySize (const LO /* ielem */) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
       "Error! Cannot call getConnectivitySize before connectivity is build.\n");

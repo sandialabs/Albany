@@ -1309,7 +1309,7 @@ Application::computeGlobalResidualImpl(
     const Teuchos::RCP<const Thyra_Vector> x,
     const Teuchos::RCP<const Thyra_Vector> x_dot,
     const Teuchos::RCP<const Thyra_Vector> x_dotdot,
-    Teuchos::Array<ParamVec> const&        p,
+    Teuchos::Array<ParamVec> const&        /* p */,
     const Teuchos::RCP<Thyra_Vector>&      f,
     double                                 dt)
 {
@@ -2035,7 +2035,7 @@ Application::applyGlobalDistParamDerivImpl(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              p,
+    const Teuchos::Array<ParamVec>&              /* p */,
     const std::string&                           dist_param_name,
     const bool                                   trans,
     const Teuchos::RCP<const Thyra_MultiVector>& V,

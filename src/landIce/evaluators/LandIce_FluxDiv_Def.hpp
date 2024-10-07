@@ -73,7 +73,7 @@ void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::postRegistrationSetup(ty
 template<typename EvalT, typename Traits, typename ThicknessScalarT>
 KOKKOS_INLINE_FUNCTION
 void LandIce::FluxDiv<EvalT, Traits, ThicknessScalarT>::
-operator() (const FluxDiv_Tag& tag, const int& sideSet_idx) const {
+operator() (const FluxDiv_Tag&, const int& sideSet_idx) const {
 
   for (unsigned int qp=0; qp<numSideQPs; ++qp)
   {

@@ -10,7 +10,8 @@ namespace Albany {
 template<unsigned Dim>
 OmegahBoxMesh<Dim>::
 OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-               const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams)
+               const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+               const int /* numParams */)
 {
   using I8 = Omega_h::I8;
 

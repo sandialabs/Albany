@@ -413,7 +413,7 @@ AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 }
 
 void AsciiSTKMeshStruct::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 {
   metaData->commit();
 

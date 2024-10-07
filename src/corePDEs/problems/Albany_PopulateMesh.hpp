@@ -111,10 +111,10 @@ protected:
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 PopulateMesh::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                   const MeshSpecsStruct& meshSpecs,
-                                   StateManager& stateMgr,
+                                   const MeshSpecsStruct& /* meshSpecs */,
+                                   StateManager& /* stateMgr */,
                                    FieldManagerChoice fieldManagerChoice,
-                                   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+                                   const Teuchos::RCP<Teuchos::ParameterList>& /* responseList */)
 {
   EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 

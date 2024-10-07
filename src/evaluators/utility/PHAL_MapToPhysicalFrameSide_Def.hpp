@@ -84,7 +84,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void MapToPhysicalFrameSide<EvalT, Traits>::
-operator() (const MapToPhysicalFrameSide_Tag& tag, const int& sideSet_idx) const {
+operator() (const MapToPhysicalFrameSide_Tag&, const int& sideSet_idx) const {
   
   // Get the local data of side
   const int side = sideSet.side_pos.d_view(sideSet_idx);

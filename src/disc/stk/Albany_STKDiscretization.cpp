@@ -776,9 +776,7 @@ STKDiscretization::writeSolutionToFile(
 {
 #ifdef ALBANY_DISABLE_OUTPUT_MESH
   *out << "[STKDiscretization::writeSolutionToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
-  (void) soln;
   (void) time;
-  (void) overlapped;
   (void) force_write_solution;
 #else
 #ifdef ALBANY_SEACAS
@@ -824,6 +822,8 @@ STKDiscretization::writeSolutionToFile(
   outputInterval++;
 #endif
 #endif
+  (void) soln;
+  (void) overlapped;
 }
 
 void
@@ -835,8 +835,8 @@ STKDiscretization::writeSolutionMVToFile(
 {
 #ifdef ALBANY_DISABLE_OUTPUT_MESH
   *out << "[STKDiscretization::writeSolutionMVToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
-  (void) soln;
   (void) time;
+  (void) soln;
   (void) overlapped;
   (void) force_write_solution;
 #else

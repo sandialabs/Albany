@@ -65,7 +65,7 @@ public:
     return m_num_dofs_per_elem;
   }
 
-  std::string getBlockId(LO localElmtId) const override
+  std::string getBlockId(LO /* localElmtId */) const override
   {
     return m_elem_blocks_names[0];
   }
