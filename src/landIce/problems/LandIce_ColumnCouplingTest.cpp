@@ -48,7 +48,6 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpe
   cellEBName = meshSpecs[0]->ebName;
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
 
   dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellVertices,-1,numDim));
@@ -72,7 +71,7 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpe
     int numSideQPs      = sideCubature[ss_name]->getNumPoints();
 
     dl->side_layouts[ss_name] = Teuchos::rcp(new Albany::Layouts(numSideVertices,numSideVertices,
-                                             numSideQPs,numDim-1,numDim,numCellSides,2,sideSetName));
+                                             numSideQPs,numDim-1,numDim,2,sideSetName));
   }
   dl_side = dl->side_layouts.at(sideSetName);
 
@@ -80,7 +79,6 @@ buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpe
        << "   - dimension         : " << numDim          << "\n"
        << "   - workset size      : " << worksetSize     << "\n"
        << "   - num cell vertices : " << numCellVertices << "\n"
-       << "   - num cell sides    : " << numCellSides    << "\n"
        << "   - num cell dofs     : " << numCellVertices << "\n"
        << "   - num cell qps      : N/A\n"
        << "   - residual side set : " << sideSetName << "\n"
