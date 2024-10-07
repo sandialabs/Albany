@@ -133,7 +133,7 @@ template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
 void EnthalpyResid<EvalT,Traits,VelocityST>::
 stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
-  MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU) const {
+  MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z) const {
   for (std::size_t qp = 0; qp < numQPs; ++qp) {
       ScalarT w = verticalVel(cell,qp);
       ScalarT arg = Velocity(cell,qp,0)*Velocity(cell,qp,0) + Velocity(cell,qp,1)*Velocity(cell,qp,1) + w*w;
@@ -200,18 +200,17 @@ evaluateResidNode(int cell, int node, ScalarT *residual) const {
 template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
 void EnthalpyResid<EvalT,Traits,VelocityST>::
-operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const{
+operator() (const Upwind_Stabilization_Tag&, const int& cell) const{
 
   constexpr double pow3 = 1e3;  //[k^{-1}], k=1000
 
   VelocityST  vmax_xy = 1e-3; //set to a minimum threshold
   ScalarT vmax = 1e-3, vmax_z=1e-5; //set to a minimum threshold
   MeshScalarT diam = 0.0, diam_xy = 0.0, diam_z = 0.0;
-  ScalarT wSU = 0.0;
 
   ScalarT val[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
 
-  stabilizationInitialization(cell, vmax_xy, vmax, vmax_z, diam, diam_xy, diam_z, wSU);
+  stabilizationInitialization(cell, vmax_xy, vmax, vmax_z, diam, diam_xy, diam_z);
 
   for (std::size_t node = 0; node < numNodes; ++node) {
     evaluateResidNode(cell, node, &val[node]);
@@ -232,7 +231,7 @@ operator() (const Upwind_Stabilization_Tag& tag, const int& cell) const{
 template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
 void EnthalpyResid<EvalT,Traits,VelocityST>::
-operator() (const SU_Stabilization_Tag& tag, const int& cell) const{
+operator() (const SU_Stabilization_Tag&, const int& cell) const{
   
   constexpr double pow3 = 1e3;  //[k^{-1}], k=1000
 
@@ -243,7 +242,7 @@ operator() (const SU_Stabilization_Tag& tag, const int& cell) const{
 
   ScalarT val[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
 
-  stabilizationInitialization(cell, vmax_xy, vmax, vmax_z, diam, diam_xy, diam_z, wSU);
+  stabilizationInitialization(cell, vmax_xy, vmax, vmax_z, diam, diam_xy, diam_z);
 
   for (std::size_t node = 0; node < numNodes; ++node) {
     evaluateResidNode(cell, node, &val[node]);
@@ -265,7 +264,7 @@ operator() (const SU_Stabilization_Tag& tag, const int& cell) const{
 template<typename EvalT, typename Traits, typename VelocityST>
 KOKKOS_INLINE_FUNCTION
 void EnthalpyResid<EvalT,Traits,VelocityST>::
-operator() (const Other_Stabilization_Tag& tag, const int& cell) const{
+operator() (const Other_Stabilization_Tag&, const int& cell) const{
 
   ScalarT val[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
 

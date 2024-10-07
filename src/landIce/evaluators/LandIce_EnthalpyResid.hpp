@@ -108,7 +108,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void stabilizationInitialization(int cell, VelocityST& vmax_xy, ScalarT& vmax, ScalarT& vmax_z, 
-    MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z, ScalarT& wSU) const;
+    MeshScalarT& diam, MeshScalarT& diam_xy, MeshScalarT& diam_z) const;
   KOKKOS_INLINE_FUNCTION
   void evaluateResidNode(int cell, int node, ScalarT *retval) const;
 
