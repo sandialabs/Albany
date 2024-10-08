@@ -304,7 +304,7 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
 
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, Teuchos::null);
   }
 
   return Teuchos::null;
