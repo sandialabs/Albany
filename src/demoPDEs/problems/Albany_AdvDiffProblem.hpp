@@ -105,7 +105,7 @@ Teuchos::RCP<const PHX::FieldTag>
 Albany::AdvDiffProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
-  Albany::StateManager& stateMgr,
+  Albany::StateManager& /* stateMgr */,
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {

@@ -78,7 +78,7 @@ NSBodyForce(const Teuchos::ParameterList& p) :
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void NSBodyForce<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   if (bf_type == CONSTANT) {

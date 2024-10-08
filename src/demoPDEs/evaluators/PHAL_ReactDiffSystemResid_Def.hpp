@@ -107,7 +107,7 @@ ReactDiffSystemResid(const Teuchos::ParameterList& p) :
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void ReactDiffSystemResid<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(U,fm);
@@ -123,8 +123,6 @@ template<typename EvalT, typename Traits>
 void ReactDiffSystemResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
       for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i) = 0.0;

@@ -38,7 +38,7 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  virtual ScalarT& getValue(const std::string &n) {return ksqr;};
+  virtual ScalarT& getValue(const std::string &/* n */) {return ksqr;};
 
 private:
 

@@ -41,7 +41,7 @@ PoissonResid(const Teuchos::ParameterList& p,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void PHAL::PoissonResid<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
@@ -58,7 +58,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void PHAL::PoissonResid<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 

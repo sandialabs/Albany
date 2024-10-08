@@ -38,7 +38,7 @@ JouleHeating(Teuchos::ParameterList& p) :
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void JouleHeating<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(jouleHeating,fm);
@@ -49,7 +49,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void JouleHeating<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {
   Intrepid2::FunctionSpaceTools<PHX::Device>::dotMultiplyDataData
     (jouleHeating.get_view(), potentialFlux.get_view(), potentialGrad.get_view());
