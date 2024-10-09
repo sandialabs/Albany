@@ -518,8 +518,10 @@ evaluateFields(typename Traits::EvalData workset)
   const int  ws = workset.wsIndex;
   const int neq = dof_mgr->getNumFields();
 
-  const int g_px_size = hess_vec_prod_g_px_data.extent(1);
-  const int g_pp_size = hess_vec_prod_g_pp_data.extent(1);
+  const int num_responses = this->global_response.size();
+
+  const int g_px_size = hess_vec_prod_g_px_data.extent(0);
+  const int g_pp_size = hess_vec_prod_g_pp_data.extent(0);
 
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().dev();
   const auto elem_lids_all  = workset.disc->getWsElementLIDs();
@@ -533,7 +535,7 @@ evaluateFields(typename Traits::EvalData workset)
                          KOKKOS_CLASS_LAMBDA(const int& cell) {
       const auto elem_LID = elem_lids(cell);
       // Loop over responses
-      for (size_t res=0; res<this->global_response.size(); ++res) {
+      for (size_t res=0; res<num_responses; ++res) {
         auto lresp = this->local_response(cell, res);
 
         if (do_xx || do_xp) {
