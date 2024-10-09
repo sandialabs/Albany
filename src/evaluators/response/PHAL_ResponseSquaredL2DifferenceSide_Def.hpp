@@ -56,8 +56,8 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   layout->dimensions(dims);
 
   // std::vector isn't accessible on device
-  if(fieldDim >= 1) dims_2 = sourceField.extent(2);
-  if(fieldDim >= 2) dims_3 = sourceField.extent(3);
+  dims_2 = (fieldDim >= 1) ? dims[2] : 0;
+  dims_3 = (fieldDim >= 2) ? dims[3] : 0;
 
   std::string sideSetNameForMetric =
       (plist->isParameter("Is Side Set Planar") && plist->get<bool>("Is Side Set Planar")) ?
