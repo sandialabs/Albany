@@ -527,30 +527,37 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids_all  = workset.disc->getWsElementLIDs();
   const auto elem_lids = Kokkos::subview(elem_lids_all.dev(),ws,Kokkos::ALL);
 
-  for (int eq_dof=0; eq_dof<neq; eq_dof++) {
-    // Get offsets of this dof in the lids array
-    auto offsets = dof_mgr->getGIDFieldOffsetsKokkos(eq_dof);
-    const int num_nodes = offsets.size();
-    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+  if (do_xx || do_xp) {
+    for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+      // Get offsets of this dof in the lids array
+      auto offsets = dof_mgr->getGIDFieldOffsetsKokkos(eq_dof);
+      const int num_nodes = offsets.size();
+      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                          KOKKOS_CLASS_LAMBDA(const int& cell) {
-      const auto elem_LID = elem_lids(cell);
-      // Loop over responses
-      for (size_t res=0; res<num_responses; ++res) {
-        auto lresp = this->local_response(cell, res);
-
-        if (do_xx || do_xp) {
+        const auto elem_LID = elem_lids(cell);
+        // Loop over responses
+        for (size_t res=0; res<num_responses; ++res) {
+          auto lresp = this->local_response(cell, res);
           for (int i=0; i<num_nodes; ++i) {
 
             const int deriv   = offsets(i);
             const int dof_lid = elem_dof_lids(elem_LID,deriv);
-
+            
             if (do_xx)
-              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xx_data(dof_lid, res)), lresp.dx(deriv).dx(0));
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xx_data(dof_lid,res)), lresp.dx(deriv).dx(0));
 
             if (do_xp)
-              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xp_data(dof_lid, res)), lresp.dx(deriv).dx(0));
-          } // column nodes
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xp_data(dof_lid,res)), lresp.dx(deriv).dx(0));
+          }
         }
+      });
+    }
+  } else {
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                         KOKKOS_CLASS_LAMBDA(const int& cell) {
+      const auto elem_LID = elem_lids(cell);
+      for (size_t res=0; res<num_responses; ++res) {
+        auto lresp = this->local_response(cell, res);
         if (do_dist_px) {
           for (int deriv=0; deriv<numNodes; ++deriv) {
             const int row = p_elem_dof_lids(elem_LID,deriv);
@@ -567,7 +574,6 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
         }
-
         if (do_scalar_px) {
           for (int deriv=0; deriv<g_px_size; ++deriv) {
             KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_px_data(deriv,res)), lresp.dx(deriv).dx(0));
@@ -578,9 +584,9 @@ evaluateFields(typename Traits::EvalData workset)
             KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_pp_data(deriv,res)), lresp.dx(deriv).dx(0));
           }
         }
-      } // response
-    }); // cell
-  } // column equations
+      }
+    });
+  }
 }
 
 template<typename Traits>

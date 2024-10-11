@@ -75,30 +75,30 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 
   const auto f_multiplier  = Thyra::createMember(ov_x_space);
 
-  const auto hess_vec_prod_f_xx = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_xp = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_px = Thyra::createMember(p_space);
-  const auto hess_vec_prod_f_pp = Thyra::createMember(p_space);
+  const auto hess_vec_prod_f_xx = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_xp = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_px = Thyra::createMembers(p_space,1);
+  const auto hess_vec_prod_f_pp = Thyra::createMembers(p_space,1);
 
-  const auto ov_hess_vec_prod_f_xx = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_xp = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_px = Thyra::createMember(ov_p_space);
-  const auto ov_hess_vec_prod_f_pp = Thyra::createMember(ov_p_space);
+  const auto ov_hess_vec_prod_f_xx = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_xp = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_px = Thyra::createMembers(ov_p_space,1);
+  const auto ov_hess_vec_prod_f_pp = Thyra::createMembers(ov_p_space,1);
 
-  const auto diff_x_out = Thyra::createMember(x_space);
-  const auto one_x_out  = Thyra::createMember(x_space);
-  const auto diff_p_out = Thyra::createMember(p_space);
-  const auto one_p_out  = Thyra::createMember(p_space);
+  const auto diff_x_out = Thyra::createMembers(x_space,1);
+  const auto one_x_out  = Thyra::createMembers(x_space,1);
+  const auto diff_p_out = Thyra::createMembers(p_space,1);
+  const auto one_p_out  = Thyra::createMembers(p_space,1);
 
-  const auto hess_vec_prod_f_xx_out = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_xp_out = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_px_out = Thyra::createMember(p_space);
-  const auto hess_vec_prod_f_pp_out = Thyra::createMember(p_space);
+  const auto hess_vec_prod_f_xx_out = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_xp_out = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_px_out = Thyra::createMembers(p_space,1);
+  const auto hess_vec_prod_f_pp_out = Thyra::createMembers(p_space,1);
 
-  const auto ov_hess_vec_prod_f_xx_out = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_xp_out = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_px_out = Thyra::createMember(ov_p_space);
-  const auto ov_hess_vec_prod_f_pp_out = Thyra::createMember(ov_p_space);
+  const auto ov_hess_vec_prod_f_xx_out = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_xp_out = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_px_out = Thyra::createMembers(ov_p_space,1);
+  const auto ov_hess_vec_prod_f_pp_out = Thyra::createMembers(ov_p_space,1);
 
   ov_hess_vec_prod_f_xx->assign(0.0);
   ov_hess_vec_prod_f_xp->assign(0.0);
@@ -116,10 +116,15 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
   ov_hess_vec_prod_f_pp_out->assign(0.0);
 
   {
-    auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xx_out);
-    auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xp_out);
-    auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_px_out);
-    auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_pp_out);
+    auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_xx_out);
+    auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_xp_out);
+    auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_px_out);
+    auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_pp_out);
+
+    auto ov_hess_vec_prod_f_xx_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_xx_out_data);
+    auto ov_hess_vec_prod_f_xp_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_xp_out_data);
+    auto ov_hess_vec_prod_f_px_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_px_out_data);
+    auto ov_hess_vec_prod_f_pp_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_pp_out_data);
 
     auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
     auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
@@ -128,14 +133,19 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
       auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
       auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
       for (size_t i=0; i<p_dof_lids.size(); ++i) {
-        ov_hess_vec_prod_f_px_out_data[p_dof_lids[i]] += 4.0;
-        ov_hess_vec_prod_f_pp_out_data[p_dof_lids[i]] += 4.0;
+        ov_hess_vec_prod_f_px_out_data_host(p_dof_lids[i],0) += 4.0;
+        ov_hess_vec_prod_f_pp_out_data_host(p_dof_lids[i],0) += 4.0;
       }
       for (size_t i=0; i<x_dof_lids.size(); ++i) {
-        ov_hess_vec_prod_f_xx_out_data[x_dof_lids[i]] += 4.0;
-        ov_hess_vec_prod_f_xp_out_data[x_dof_lids[i]] += 4.0;
+        ov_hess_vec_prod_f_xx_out_data_host(x_dof_lids[i],0) += 4.0;
+        ov_hess_vec_prod_f_xp_out_data_host(x_dof_lids[i],0) += 4.0;
       }
     }
+
+    Kokkos::deep_copy(ov_hess_vec_prod_f_xx_out_data, ov_hess_vec_prod_f_xx_out_data_host);
+    Kokkos::deep_copy(ov_hess_vec_prod_f_xp_out_data, ov_hess_vec_prod_f_xp_out_data_host);
+    Kokkos::deep_copy(ov_hess_vec_prod_f_px_out_data, ov_hess_vec_prod_f_px_out_data_host);
+    Kokkos::deep_copy(ov_hess_vec_prod_f_pp_out_data, ov_hess_vec_prod_f_pp_out_data_host);
   }
 
   auto x_cas_manager = Albany::createCombineAndScatterManager(x_space, ov_x_space);
@@ -215,38 +225,38 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
     p_cas_manager->combine(ov_hess_vec_prod_f_px, hess_vec_prod_f_px, ADD);
     p_cas_manager->combine(ov_hess_vec_prod_f_pp, hess_vec_prod_f_pp, ADD);
 
-    Thyra::V_VmV(diff_x_out.ptr(), *one_x_out, *hess_vec_prod_f_xx);
+    Thyra::V_VmV(diff_x_out->col(0).ptr(), *(one_x_out->col(0)), *(hess_vec_prod_f_xx->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xx_out", *one_x_out,
-            "hess_vec_prod_f_xx", *diff_x_out,
+            "hess_vec_prod_f_xx_out", *(one_x_out->col(0)),
+            "hess_vec_prod_f_xx", *(diff_x_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
 
-    Thyra::V_VmV(diff_x_out.ptr(), *one_x_out, *hess_vec_prod_f_xp);
+    Thyra::V_VmV(diff_x_out->col(0).ptr(), *(one_x_out->col(0)), *(hess_vec_prod_f_xp->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xp_out", *one_x_out,
-            "hess_vec_prod_f_xp", *diff_x_out,
+            "hess_vec_prod_f_xp_out", *(one_x_out->col(0)),
+            "hess_vec_prod_f_xp", *(diff_x_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
 
-    Thyra::V_VmV(diff_p_out.ptr(), *one_p_out, *hess_vec_prod_f_px);
+    Thyra::V_VmV(diff_p_out->col(0).ptr(), *(one_p_out->col(0)), *(hess_vec_prod_f_px->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_px_out", *one_p_out,
-            "hess_vec_prod_f_px", *diff_p_out,
+            "hess_vec_prod_f_px_out", *(one_p_out->col(0)),
+            "hess_vec_prod_f_px", *(diff_p_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
 
-    Thyra::V_VmV(diff_p_out.ptr(), *one_p_out, *hess_vec_prod_f_pp);
+    Thyra::V_VmV(diff_p_out->col(0).ptr(), *(one_p_out->col(0)), *(hess_vec_prod_f_pp->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_pp_out", *one_p_out,
-            "hess_vec_prod_f_pp", *diff_p_out,
+            "hess_vec_prod_f_pp_out", *(one_p_out->col(0)),
+            "hess_vec_prod_f_pp", *(diff_p_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -272,8 +282,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xx_out", *hess_vec_prod_f_xx_out,
-            "hess_vec_prod_f_xx", *hess_vec_prod_f_xx,
+            "hess_vec_prod_f_xx_out", *(hess_vec_prod_f_xx_out->col(0)),
+            "hess_vec_prod_f_xx", *(hess_vec_prod_f_xx->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -302,8 +312,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xp_out", *hess_vec_prod_f_xp_out,
-            "hess_vec_prod_f_xp", *hess_vec_prod_f_xp,
+            "hess_vec_prod_f_xp_out", *(hess_vec_prod_f_xp_out->col(0)),
+            "hess_vec_prod_f_xp", *(hess_vec_prod_f_xp->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -332,8 +342,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_px_out", *hess_vec_prod_f_px_out,
-            "hess_vec_prod_f_px", *hess_vec_prod_f_px,
+            "hess_vec_prod_f_px_out", *(hess_vec_prod_f_px_out->col(0)),
+            "hess_vec_prod_f_px", *(hess_vec_prod_f_px->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -362,8 +372,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank0)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_pp_out", *hess_vec_prod_f_pp_out,
-            "hess_vec_prod_f_pp", *hess_vec_prod_f_pp,
+            "hess_vec_prod_f_pp_out", *(hess_vec_prod_f_pp_out->col(0)),
+            "hess_vec_prod_f_pp", *(hess_vec_prod_f_pp->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -432,30 +442,30 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 
   const auto f_multiplier  = Thyra::createMember(ov_x_space);
 
-  const auto hess_vec_prod_f_xx = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_xp = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_px = Thyra::createMember(p_space);
-  const auto hess_vec_prod_f_pp = Thyra::createMember(p_space);
+  const auto hess_vec_prod_f_xx = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_xp = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_px = Thyra::createMembers(p_space,1);
+  const auto hess_vec_prod_f_pp = Thyra::createMembers(p_space,1);
 
-  const auto ov_hess_vec_prod_f_xx = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_xp = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_px = Thyra::createMember(ov_p_space);
-  const auto ov_hess_vec_prod_f_pp = Thyra::createMember(ov_p_space);
+  const auto ov_hess_vec_prod_f_xx = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_xp = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_px = Thyra::createMembers(ov_p_space,1);
+  const auto ov_hess_vec_prod_f_pp = Thyra::createMembers(ov_p_space,1);
 
-  const auto diff_x_out = Thyra::createMember(x_space);
-  const auto one_x_out  = Thyra::createMember(x_space);
-  const auto diff_p_out = Thyra::createMember(p_space);
-  const auto one_p_out  = Thyra::createMember(p_space);
+  const auto diff_x_out = Thyra::createMembers(x_space,1);
+  const auto one_x_out  = Thyra::createMembers(x_space,1);
+  const auto diff_p_out = Thyra::createMembers(p_space,1);
+  const auto one_p_out  = Thyra::createMembers(p_space,1);
 
-  const auto hess_vec_prod_f_xx_out = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_xp_out = Thyra::createMember(x_space);
-  const auto hess_vec_prod_f_px_out = Thyra::createMember(p_space);
-  const auto hess_vec_prod_f_pp_out = Thyra::createMember(p_space);
+  const auto hess_vec_prod_f_xx_out = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_xp_out = Thyra::createMembers(x_space,1);
+  const auto hess_vec_prod_f_px_out = Thyra::createMembers(p_space,1);
+  const auto hess_vec_prod_f_pp_out = Thyra::createMembers(p_space,1);
 
-  const auto ov_hess_vec_prod_f_xx_out = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_xp_out = Thyra::createMember(ov_x_space);
-  const auto ov_hess_vec_prod_f_px_out = Thyra::createMember(ov_p_space);
-  const auto ov_hess_vec_prod_f_pp_out = Thyra::createMember(ov_p_space);
+  const auto ov_hess_vec_prod_f_xx_out = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_xp_out = Thyra::createMembers(ov_x_space,1);
+  const auto ov_hess_vec_prod_f_px_out = Thyra::createMembers(ov_p_space,1);
+  const auto ov_hess_vec_prod_f_pp_out = Thyra::createMembers(ov_p_space,1);
 
   ov_hess_vec_prod_f_xx->assign(0.0);
   ov_hess_vec_prod_f_xp->assign(0.0);
@@ -473,10 +483,15 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
   ov_hess_vec_prod_f_pp_out->assign(0.0);
 
   {
-    auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xx_out);
-    auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_xp_out);
-    auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_px_out);
-    auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstLocalData(ov_hess_vec_prod_f_pp_out);
+    auto ov_hess_vec_prod_f_xx_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_xx_out);
+    auto ov_hess_vec_prod_f_xp_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_xp_out);
+    auto ov_hess_vec_prod_f_px_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_px_out);
+    auto ov_hess_vec_prod_f_pp_out_data = Albany::getNonconstDeviceData(ov_hess_vec_prod_f_pp_out);
+
+    auto ov_hess_vec_prod_f_xx_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_xx_out_data);
+    auto ov_hess_vec_prod_f_xp_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_xp_out_data);
+    auto ov_hess_vec_prod_f_px_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_px_out_data);
+    auto ov_hess_vec_prod_f_pp_out_data_host = Kokkos::create_mirror_view(ov_hess_vec_prod_f_pp_out_data);
 
     auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
     auto x_elem_dof_lids = x_dof_mgr->elem_dof_lids().host();
@@ -485,14 +500,19 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
       auto p_dof_lids = Kokkos::subview(p_elem_dof_lids,cell,ALL);
       auto x_dof_lids = Kokkos::subview(x_elem_dof_lids,cell,ALL);
       for (size_t i=0; i<p_dof_lids.size(); ++i) {
-        ov_hess_vec_prod_f_px_out_data[p_dof_lids[i]] += 12.0;
-        ov_hess_vec_prod_f_pp_out_data[p_dof_lids[i]] += 12.0;
+        ov_hess_vec_prod_f_px_out_data_host(p_dof_lids[i],0) += 12.0;
+        ov_hess_vec_prod_f_pp_out_data_host(p_dof_lids[i],0) += 12.0;
       }
       for (size_t i=0; i<x_dof_lids.size(); ++i) {
-        ov_hess_vec_prod_f_xx_out_data[x_dof_lids[i]] += 12.0;
-        ov_hess_vec_prod_f_xp_out_data[x_dof_lids[i]] += 12.0;
+        ov_hess_vec_prod_f_xx_out_data_host(x_dof_lids[i],0) += 12.0;
+        ov_hess_vec_prod_f_xp_out_data_host(x_dof_lids[i],0) += 12.0;
       }
     }
+
+    Kokkos::deep_copy(ov_hess_vec_prod_f_xx_out_data, ov_hess_vec_prod_f_xx_out_data_host);
+    Kokkos::deep_copy(ov_hess_vec_prod_f_xp_out_data, ov_hess_vec_prod_f_xp_out_data_host);
+    Kokkos::deep_copy(ov_hess_vec_prod_f_px_out_data, ov_hess_vec_prod_f_px_out_data_host);
+    Kokkos::deep_copy(ov_hess_vec_prod_f_pp_out_data, ov_hess_vec_prod_f_pp_out_data_host);
   }
 
   auto x_cas_manager = Albany::createCombineAndScatterManager(x_space, ov_x_space);
@@ -576,38 +596,38 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
     p_cas_manager->combine(ov_hess_vec_prod_f_px, hess_vec_prod_f_px, ADD);
     p_cas_manager->combine(ov_hess_vec_prod_f_pp, hess_vec_prod_f_pp, ADD);
 
-    Thyra::V_VmV(diff_x_out.ptr(), *one_x_out, *hess_vec_prod_f_xx);
+    Thyra::V_VmV(diff_x_out->col(0).ptr(), *(one_x_out->col(0)), *(hess_vec_prod_f_xx->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xx_out", *one_x_out,
-            "hess_vec_prod_f_xx", *diff_x_out,
+            "hess_vec_prod_f_xx_out", *(one_x_out->col(0)),
+            "hess_vec_prod_f_xx", *(diff_x_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
 
-    Thyra::V_VmV(diff_x_out.ptr(), *one_x_out, *hess_vec_prod_f_xp);
+    Thyra::V_VmV(diff_x_out->col(0).ptr(), *(one_x_out->col(0)), *(hess_vec_prod_f_xp->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xp_out", *one_x_out,
-            "hess_vec_prod_f_xp", *diff_x_out,
+            "hess_vec_prod_f_xp_out", *(one_x_out->col(0)),
+            "hess_vec_prod_f_xp", *(diff_x_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
 
-    Thyra::V_VmV(diff_p_out.ptr(), *one_p_out, *hess_vec_prod_f_px);
+    Thyra::V_VmV(diff_p_out->col(0).ptr(), *(one_p_out->col(0)), *(hess_vec_prod_f_px->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_px_out", *one_p_out,
-            "hess_vec_prod_f_px", *diff_p_out,
+            "hess_vec_prod_f_px_out", *(one_p_out->col(0)),
+            "hess_vec_prod_f_px", *(diff_p_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
 
-    Thyra::V_VmV(diff_p_out.ptr(), *one_p_out, *hess_vec_prod_f_pp);
+    Thyra::V_VmV(diff_p_out->col(0).ptr(), *(one_p_out->col(0)), *(hess_vec_prod_f_pp->col(0)));
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_pp_out", *one_p_out,
-            "hess_vec_prod_f_pp", *diff_p_out,
+            "hess_vec_prod_f_pp_out", *(one_p_out->col(0)),
+            "hess_vec_prod_f_pp", *(diff_p_out->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -633,8 +653,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xx_out", *ov_hess_vec_prod_f_xx_out,
-            "hess_vec_prod_f_xx", *ov_hess_vec_prod_f_xx,
+            "hess_vec_prod_f_xx_out", *(ov_hess_vec_prod_f_xx_out->col(0)),
+            "hess_vec_prod_f_xx", *(ov_hess_vec_prod_f_xx->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -663,8 +683,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_xp_out", *hess_vec_prod_f_xp_out,
-            "hess_vec_prod_f_xp", *hess_vec_prod_f_xp,
+            "hess_vec_prod_f_xp_out", *(hess_vec_prod_f_xp_out->col(0)),
+            "hess_vec_prod_f_xp", *(hess_vec_prod_f_xp->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -693,8 +713,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_px_out", *hess_vec_prod_f_px_out,
-            "hess_vec_prod_f_px", *hess_vec_prod_f_px,
+            "hess_vec_prod_f_px_out", *(hess_vec_prod_f_px_out->col(0)),
+            "hess_vec_prod_f_px", *(hess_vec_prod_f_px->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
@@ -723,8 +743,8 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 
     TEUCHOS_TEST_FOR_EXCEPT(
         !Thyra::testRelNormDiffErr(
-            "hess_vec_prod_f_pp_out", *hess_vec_prod_f_pp_out,
-            "hess_vec_prod_f_pp", *hess_vec_prod_f_pp,
+            "hess_vec_prod_f_pp_out", *(hess_vec_prod_f_pp_out->col(0)),
+            "hess_vec_prod_f_pp", *(hess_vec_prod_f_pp->col(0)),
             "maxSensError", tol,
             "warningTol", 1.0, // Don't warn
             &*out_test, verbLevel));
