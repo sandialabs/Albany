@@ -46,8 +46,8 @@ private:
   int sideDim;
   int numQPs;
   int fieldDim;
-  int dims_2;
-  int dims_3;
+  size_t dims_2;
+  size_t dims_3;
   std::vector<PHX::Device::size_type> dims;
 
   bool target_value, rmsScaling, extrudedParams, isFieldGradient;

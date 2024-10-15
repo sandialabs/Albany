@@ -518,7 +518,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int  ws = workset.wsIndex;
   const int neq = dof_mgr->getNumFields();
 
-  const int num_responses = this->global_response.size();
+  const size_t num_responses = this->global_response.size();
 
   const int g_px_size = hess_vec_prod_g_px_data.extent(0);
   const int g_pp_size = hess_vec_prod_g_pp_data.extent(0);
