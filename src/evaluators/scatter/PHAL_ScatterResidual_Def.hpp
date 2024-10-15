@@ -531,7 +531,7 @@ evaluateFields(typename Traits::EvalData workset)
     Albany::DualView<int*> basal_elem_LIDs("basal_elem_LIDs", elem_lids_host.size());
     Albany::DualView<int*> field_elem_LIDs("field_elem_LIDs", elem_lids_host.size());
 
-    for (int i = 0; i < elem_lids_host.size(); ++i) {
+    for (size_t i = 0; i < elem_lids_host.size(); ++i) {
       basal_elem_LIDs.host()(i) = cell_layers_data->getColumnId(i);
       field_elem_LIDs.host()(i) = cell_layers_data->getId(i,fieldLayer);
     }
@@ -543,13 +543,13 @@ evaluateFields(typename Traits::EvalData workset)
     Albany::DualView<int*> top_nodes_dv("top_nodes",top_nodes.size());
     Albany::DualView<int*> bot_nodes_dv("bot_nodes",bot_nodes.size());
 
-    for (int i = 0; i < p_offsets.size(); ++i) {
+    for (size_t i = 0; i < p_offsets.size(); ++i) {
       p_offsets_dv.host()(i) = p_offsets[i];
     }
-    for (int i = 0; i < top_nodes.size(); ++i) {
+    for (size_t i = 0; i < top_nodes.size(); ++i) {
       top_nodes_dv.host()(i) = top_nodes[i];
     }
-    for (int i = 0; i < bot_nodes.size(); ++i) {
+    for (size_t i = 0; i < bot_nodes.size(); ++i) {
       bot_nodes_dv.host()(i) = bot_nodes[i];
     }
 
@@ -710,8 +710,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
 
-  const int hess_vec_prod_f_px_data_size = hess_vec_prod_f_px_data.extent(0);
-  const int hess_vec_prod_f_pp_data_size = hess_vec_prod_f_pp_data.extent(0);
+  const size_t hess_vec_prod_f_px_data_size = hess_vec_prod_f_px_data.extent(0);
+  const size_t hess_vec_prod_f_pp_data_size = hess_vec_prod_f_pp_data.extent(0);
 
   const auto& fields_offsets = m_fields_offsets.dev();
   const int eq_offset = this->offset;
@@ -863,7 +863,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   Albany::DualView<int*> basal_elem_LIDs("basal_elem_LIDs", elem_lids_host.size());
   Albany::DualView<int*> field_elem_LIDs("field_elem_LIDs", elem_lids_host.size());
 
-  for (int i = 0; i < elem_lids_host.size(); ++i) {
+  for (size_t i = 0; i < elem_lids_host.size(); ++i) {
     basal_elem_LIDs.host()(i) = layers_data->getColumnId(i);
     field_elem_LIDs.host()(i) = layers_data->getId(i,fieldLayer);
   }
@@ -875,13 +875,13 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   Albany::DualView<int*> top_offsets_dv("top_offsets",top_offsets.size());
   Albany::DualView<int*> bot_offsets_dv("bot_offsets",bot_offsets.size());
 
-  for (int i = 0; i < p_offsets.size(); ++i) {
+  for (size_t i = 0; i < p_offsets.size(); ++i) {
     p_offsets_dv.host()(i) = p_offsets[i];
   }
-  for (int i = 0; i < top_offsets.size(); ++i) {
+  for (size_t i = 0; i < top_offsets.size(); ++i) {
     top_offsets_dv.host()(i) = top_offsets[i];
   }
-  for (int i = 0; i < bot_offsets.size(); ++i) {
+  for (size_t i = 0; i < bot_offsets.size(); ++i) {
     bot_offsets_dv.host()(i) = bot_offsets[i];
   }
 
