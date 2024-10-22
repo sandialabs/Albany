@@ -50,9 +50,8 @@ public:
 	       const bool adjoint_model = false);
 
   Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
-  createSolver (const Teuchos::RCP<const Teuchos_Comm>&    solverComm, 
-                const Teuchos::RCP<ModelEvaluator>&  model,
-		const Teuchos::RCP<ModelEvaluator>&  adjointModel,
+  createSolver (const Teuchos::RCP<ModelEvaluator>&  model,
+                const Teuchos::RCP<ModelEvaluator>&  adjointModel,
                 const bool forwardMode); 
 
   Teuchos::ParameterList&
@@ -66,12 +65,6 @@ public:
   {
     return m_appParams;
   }
-
-  Teuchos::RCP<Piro::ObserverBase<double>>
-  returnObserver() const
-  {
-    return m_observer;
-  };
 
   // Functions to generate reference parameter lists for validation
   //  EGN 9/2013: made these three functions public, as they pertain to valid
@@ -91,8 +84,6 @@ protected:
               const Teuchos::RCP<const Teuchos_Comm>&     comm);
 
   void setSolverParamDefaults(Teuchos::ParameterList* appParams, int myRank);
-
-  Teuchos::RCP<Piro::ObserverBase<double>>  m_observer;
 
   //! Parameter list specifying what solver to create
   Teuchos::RCP<Teuchos::ParameterList>      m_appParams;

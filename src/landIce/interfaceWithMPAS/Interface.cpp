@@ -315,7 +315,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   Teuchos::ArrayRCP<const ST> solution_constView;
   try {
     auto model = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(mpiComm, model, Teuchos::null, true);
+    solver = slvrfctry->createSolver(model, Teuchos::null, true);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
