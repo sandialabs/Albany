@@ -155,9 +155,8 @@ SolverFactory::createModel (const Teuchos::RCP<Application>& app,
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
 SolverFactory::
-createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-	      const Teuchos::RCP<ModelEvaluator>&     model_tmp,
-	      const Teuchos::RCP<ModelEvaluator>&     adjointModel_tmp,
+createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
+              const Teuchos::RCP<ModelEvaluator>&     adjointModel_tmp,
               const bool                              forwardMode)
 {
   const auto piroParams = Teuchos::sublist(m_appParams, "Piro");
@@ -254,24 +253,13 @@ createSolver (const Teuchos::RCP<const Teuchos_Comm>& solverComm,
     }
   }
 
-  const auto app    = model_tmp->getAlbanyApp();
-  const auto solMgr = app->getAdaptSolMgr();
+  const auto app = model_tmp->getAlbanyApp();
+
+  auto observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
 
   Piro::SolverFactory piroFactory;
-  m_observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
-
   return piroFactory.createSolver<ST>(
-       piroParams, modelWithSolve, adjointModelWithSolve, m_observer);
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      true,
-      std::logic_error,
-      "Reached end of createModel()"
-          << "\n");
-
-  // Silence compiler warning in case it wasn't used (due to ifdef logic)
-  (void) solverComm;
-
-  return Teuchos::null;
+       piroParams, modelWithSolve, adjointModelWithSolve, observer);
 }
 
 void SolverFactory::
