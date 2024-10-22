@@ -22,16 +22,12 @@ ObserverImpl (const Teuchos::RCP<Application> &app)
 
 void ObserverImpl::
 observeSolution(double stamp,
-                const Thyra_Vector& nonOverlappedSolution,
-                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
-                const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
-                const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
+                const Thyra_Vector& x,
+                const Teuchos::Ptr<const Thyra_MultiVector>& dxdp,
+                const Teuchos::Ptr<const Thyra_Vector>& x_dot,
+                const Teuchos::Ptr<const Thyra_Vector>& x_dotdot)
 {
-  app_->evaluateStateFieldManager (stamp,
-                                   nonOverlappedSolution,
-                                   nonOverlappedSolutionDot,
-                                   nonOverlappedSolutionDotDot,
-                                   nonOverlappedSolution_dxdp);
+  app_->evaluateStateFieldManager (stamp, x, x_dot, x_dotdot, dxdp);
 
   //! update distributed parameters in the mesh
   auto distParamLib = app_->getDistributedParameterLibrary();
@@ -43,22 +39,16 @@ observeSolution(double stamp,
                    /*overlapped*/ true);
   }
 
-  StatelessObserverImpl::observeSolution (stamp,
-                                          nonOverlappedSolution,
-                                          nonOverlappedSolution_dxdp,
-                                          nonOverlappedSolutionDot,
-                                          nonOverlappedSolutionDotDot);
+  StatelessObserverImpl::observeSolution (stamp, x, dxdp, x_dot, x_dotdot);
 }
 
 void ObserverImpl::
 observeSolution(double stamp,
-                const Thyra_MultiVector& nonOverlappedSolution, 
-                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp)
+                const Thyra_MultiVector& x, 
+                const Teuchos::Ptr<const Thyra_MultiVector>& dxdp)
 {
-  app_->evaluateStateFieldManager(stamp, nonOverlappedSolution, 
-                                  nonOverlappedSolution_dxdp);
-  StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution, 
-                                         nonOverlappedSolution_dxdp);
+  app_->evaluateStateFieldManager(stamp, x, dxdp);
+  StatelessObserverImpl::observeSolution(stamp, x, dxdp);
 }
 
 void ObserverImpl::
