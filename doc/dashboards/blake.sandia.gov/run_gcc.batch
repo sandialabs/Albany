@@ -6,6 +6,7 @@
 #prior to entering the sbatch command. The env will propagate to the
 #batch job.
 #SBATCH --output=log-gcc.out  
+#SBATCH --error=log-gcc.err
 if [ X"$SLURM_STEP_ID" = "X" -a X"$SLURM_PROCID" = "X"0 ]
 then
   echo "print SLURM_JOB_ID = $SLURM_JOB_ID"

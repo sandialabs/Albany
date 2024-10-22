@@ -1,6 +1,9 @@
 #!/bin/bash
-# MALI build script
+# Build SCORPIO
 BASE_DIR=/home/projects/albany/nightlyCDashAlbanyBlake
+bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
+
+# MALI build script
 cd ${BASE_DIR}/repos-gcc/E3SM.MALI.dev/components/mpas-albany-landice
 
 # External libs
