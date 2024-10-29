@@ -2,6 +2,7 @@
 rm -rf CMake*
 PWD=`pwd`
 
+# NOTE: superlu is slow on weaver so it doesn't make sense to enable it right now.
 TRILINOS_INSTALL=${PWD}/install
 NVCC_WRAPPER=${PWD}/nvcc_wrapper_volta
 BLAS_DIR=${OPENBLAS_ROOT}
@@ -126,5 +127,3 @@ cmake \
     -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
     -D Trilinos_ENABLE_Zoltan:BOOL=ON \
 ../
-
-# NOTE: superlu is slow on weaver so it doesn't make sense to enable it right now.
