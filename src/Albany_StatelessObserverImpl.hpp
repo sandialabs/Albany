@@ -27,25 +27,11 @@ public:
 
   RealType getTimeParamValueOrDefault(RealType defaultValue) const;
 
-  Teuchos::RCP<const Thyra_VectorSpace> getNonOverlappedVectorSpace() const;
-
-  virtual void observeSolution (
-    double stamp,
-    const Thyra_Vector& nonOverlappedSolution,
-    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
-    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
-    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot);
-
-  virtual void observeSolution (
-    double stamp,
-    const Thyra_Vector& nonOverlappedSolution,
-    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
-    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot);
-
-  virtual void observeSolution (
-    double stamp,
-    const Thyra_MultiVector& nonOverlappedSolution,
-    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp);
+  void observeSolution (double stamp,
+                        const Teuchos::RCP<const Thyra_Vector>& x,
+                        const Teuchos::RCP<const Thyra_Vector>& x_dot,
+                        const Teuchos::RCP<const Thyra_Vector>& x_dotdot,
+                        const Teuchos::RCP<const Thyra_MultiVector>& x_dxdp);
 
 protected:
   Teuchos::RCP<Application> app_;
