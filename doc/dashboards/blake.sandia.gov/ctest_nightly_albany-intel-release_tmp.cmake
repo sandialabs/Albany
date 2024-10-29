@@ -92,14 +92,6 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (MPI_PATH $ENV{MPI_ROOT})  
-set (BOOST_PATH /home/projects/albany/tpls/boost/1.83.0/oneapi/2023.2.0) 
-set (NETCDF_PATH $ENV{NETCDF_C_ROOT})
-set (PNETCDF_PATH $ENV{PARALLEL_NETCDF_ROOT})
-set (HDF5_PATH $ENV{HDF5_ROOT})
-set (SUPERLU_PATH $ENV{SUPERLU_ROOT})
-set (MKL_PATH $ENV{MKLROOT})
-#set (ZLIB_PATH $ENV{ZLIB_ROOT})  
 
 if (CLEAN_BUILD)
   # Initial cache info
