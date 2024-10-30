@@ -3,9 +3,9 @@ rm -rf CMake*
 PWD=`pwd`
 INSTALL_DIR=$PWD/install
 
+# Note: zoltan needs parmetis if metis is enabled on intel
 #IKT FIXME: the following paths aren't read by cdash 
 #and are hence hard-coded below - need to fix this.
-
 MKL_PATH=${MKLROOT}
 SUPERLU_PATH=${SUPERLU_ROOT}
 BOOST_PATH=/home/projects/albany/tpls/boost/1.83.0/oneapi/2023.2.0
@@ -13,6 +13,7 @@ NETCDF_PATH=${NETCDF_C_ROOT}
 PNETCDF_PATH=${PARALLEL_NETCDF_ROOT}
 HDF5_PATH=${HDF5_ROOT}
 METIS_PATH=${METIS_ROOT}
+PARMETIS_PATH=${PARMETIS_ROOT}
 
 #ZLIB_PATH=${ZLIB_ROOT} # zlib module not working
 #      -D TPL_ENABLE_Zlib=ON \
@@ -61,6 +62,9 @@ cmake \
   -D TPL_ENABLE_METIS:BOOL=ON \
   -D METIS_INCLUDE_DIRS:FILEPATH=${METIS_PATH}/include \
   -D METIS_LIBRARY_DIRS:FILEPATH=${METIS_PATH}/lib \
+  -D TPL_ENABLE_ParMETIS:BOOL=ON \
+  -D ParMETIS_INCLUDE_DIRS:FILEPATH=${PARMETIS_PATH}/include \
+  -D ParMETIS_LIBRARY_DIRS:FILEPATH=${PARMETIS_PATH}/lib \
   -D TPL_ENABLE_Matio:BOOL=OFF \
   -D TPL_ENABLE_X11:BOOL=OFF \
   -D BUILD_SHARED_LIBS:BOOL=ON \
@@ -105,6 +109,7 @@ cmake \
   -D Trilinos_ENABLE_Kokkos:BOOL=ON \
   -D Trilinos_ENABLE_MueLu:BOOL=ON \
   -D Trilinos_ENABLE_NOX:BOOL=ON \
+  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
   -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
   -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
   -D Trilinos_ENABLE_Phalanx:BOOL=ON \
