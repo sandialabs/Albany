@@ -523,45 +523,17 @@ evaluateFields(typename Traits::EvalData workset)
     const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
     const auto p_dof_mgr = p->get_dof_mgr();
     const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().dev();
-    const auto p_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
-    const auto top_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
-    const auto bot_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
+    const auto p_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,field_pos);
+    const auto top_nodes = node_dof_mgr->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
+    const auto bot_nodes = node_dof_mgr->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
 
     const auto elem_lids_host = Kokkos::subview(elem_lids_ws.host(),ws,Kokkos::ALL);
-    Albany::DualView<int*> basal_elem_LIDs("basal_elem_LIDs", elem_lids_host.size());
-    Albany::DualView<int*> field_elem_LIDs("field_elem_LIDs", elem_lids_host.size());
 
-    for (size_t i = 0; i < elem_lids_host.size(); ++i) {
-      basal_elem_LIDs.host()(i) = cell_layers_data->getColumnId(i);
-      field_elem_LIDs.host()(i) = cell_layers_data->getId(i,fieldLayer);
-    }
+    const auto layerOrd = cell_layers_data->layerOrd;
+    const auto numHorizEntities = cell_layers_data->numHorizEntities;
+    const auto numLayers = cell_layers_data->numLayers;
 
-    basal_elem_LIDs.sync_to_dev();
-    field_elem_LIDs.sync_to_dev();
-
-    Albany::DualView<int*> p_offsets_dv("p_offsets",p_offsets.size());
-    Albany::DualView<int*> top_nodes_dv("top_nodes",top_nodes.size());
-    Albany::DualView<int*> bot_nodes_dv("bot_nodes",bot_nodes.size());
-
-    for (size_t i = 0; i < p_offsets.size(); ++i) {
-      p_offsets_dv.host()(i) = p_offsets[i];
-    }
-    for (size_t i = 0; i < top_nodes.size(); ++i) {
-      top_nodes_dv.host()(i) = top_nodes[i];
-    }
-    for (size_t i = 0; i < bot_nodes.size(); ++i) {
-      bot_nodes_dv.host()(i) = bot_nodes[i];
-    }
-
-    p_offsets_dv.sync_to_dev();
-    top_nodes_dv.sync_to_dev();
-    bot_nodes_dv.sync_to_dev();
-
-    const auto p_offsets_dev = p_offsets_dv.dev();
-    const auto top_nodes_dev = top_nodes_dv.dev();
-    const auto bot_nodes_dev = bot_nodes_dv.dev();
-
-    const int num_nodes_side = p_offsets.size();
+    const int num_nodes_side = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos).size();
 
     // Pick a cell layer that contains the field level. Can be same as fieldLevel,
     // except for the last level.
@@ -569,15 +541,16 @@ evaluateFields(typename Traits::EvalData workset)
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
       const auto elem_LID = elem_lids(cell);
 
-      const LO basal_elem_LID = basal_elem_LIDs.dev()(elem_LID);
-      const LO field_elem_LID = field_elem_LIDs.dev()(basal_elem_LID);
+      const LO basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+      const LO field_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                           basal_elem_LID * numLayers + fieldLayer;
 
       // Bottom nodes
       for (int i=0; i<num_nodes_side; ++i) {
-        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets_dev(i));
+        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(i));
         if (row<0) continue;
 
-        const int deriv = bot_nodes_dev(i);
+        const int deriv = bot_nodes(i);
         for (int col=0; col<num_cols; ++col) {
           double val = 0;
           for (int node=0; node<numNodes; ++node) {
@@ -591,10 +564,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
       // Top nodes
       for (int i=0; i<num_nodes_side; ++i) {
-        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets_dev(i));
+        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(i));
         if (row<0) continue;
 
-        const int deriv = top_nodes_dev(i);
+        const int deriv = top_nodes(i);
         for (int col=0; col<num_cols; ++col) {
           double val = 0;
           for (int node=0; node<numNodes; ++node) {
@@ -854,44 +827,16 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
   //       to guarantee corresponding nodes are vertically aligned.
-  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
-  const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
+  const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
   const auto p_offsets   = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
-  const auto numSideNodes = p_offsets.size();
+  const auto numSideNodes = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos).size();
 
   const auto elem_lids_host = Kokkos::subview(elem_lids_ws.host(),ws,Kokkos::ALL);
-  Albany::DualView<int*> basal_elem_LIDs("basal_elem_LIDs", elem_lids_host.size());
-  Albany::DualView<int*> field_elem_LIDs("field_elem_LIDs", elem_lids_host.size());
 
-  for (size_t i = 0; i < elem_lids_host.size(); ++i) {
-    basal_elem_LIDs.host()(i) = layers_data->getColumnId(i);
-    field_elem_LIDs.host()(i) = layers_data->getId(i,fieldLayer);
-  }
-
-  basal_elem_LIDs.sync_to_dev();
-  field_elem_LIDs.sync_to_dev();
-
-  Albany::DualView<int*> p_offsets_dv("p_offsets",p_offsets.size());
-  Albany::DualView<int*> top_offsets_dv("top_offsets",top_offsets.size());
-  Albany::DualView<int*> bot_offsets_dv("bot_offsets",bot_offsets.size());
-
-  for (size_t i = 0; i < p_offsets.size(); ++i) {
-    p_offsets_dv.host()(i) = p_offsets[i];
-  }
-  for (size_t i = 0; i < top_offsets.size(); ++i) {
-    top_offsets_dv.host()(i) = top_offsets[i];
-  }
-  for (size_t i = 0; i < bot_offsets.size(); ++i) {
-    bot_offsets_dv.host()(i) = bot_offsets[i];
-  }
-
-  p_offsets_dv.sync_to_dev();
-  top_offsets_dv.sync_to_dev();
-  bot_offsets_dv.sync_to_dev();
-
-  const auto p_offsets_dev = p_offsets_dv.dev();
-  const auto top_offsets_dev = top_offsets_dv.dev();
-  const auto bot_offsets_dev = bot_offsets_dv.dev();
+  const auto layerOrd = layers_data->layerOrd;
+  const auto numHorizEntities = layers_data->numHorizEntities;
+  const auto numLayers = layers_data->numLayers;
 
   const auto offsets = m_fields_offsets.dev();
   Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
@@ -908,14 +853,15 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
       }
     }
 
-    const LO basal_elem_LID = basal_elem_LIDs.dev()(elem_LID);
-    const LO field_elem_LID = field_elem_LIDs.dev()(basal_elem_LID);
+    const LO basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+    const LO field_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                         basal_elem_LID * numLayers + fieldLayer;
 
     // do bot_offsets
     for (std::size_t node=0; node<numSideNodes; ++node) {
-      const LO row = p_elem_dof_lids(field_elem_LID,p_offsets_dev(node));
+      const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(node));
       if (row>=0) {
-        const auto& dx = value.dx(bot_offsets_dev(node)).dx(0);
+        const auto& dx = value.dx(bot_offsets(node)).dx(0);
         if (f_px_is_active)
           KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_px_data(row,0)), dx);
         if (f_pp_is_active)
@@ -925,9 +871,9 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
     // do top_offsets
     for (std::size_t node=0; node<numSideNodes; ++node) {
-      const LO row = p_elem_dof_lids(field_elem_LID,p_offsets_dev(node));
+      const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(node));
       if (row>=0) {
-        const auto& dx = value.dx(top_offsets_dev(node)).dx(0);
+        const auto& dx = value.dx(top_offsets(node)).dx(0);
         if (f_px_is_active)
           KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_px_data(row,0)), dx);
         if (f_pp_is_active)
