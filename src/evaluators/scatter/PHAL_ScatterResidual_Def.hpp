@@ -533,6 +533,10 @@ evaluateFields(typename Traits::EvalData workset)
     const auto numHorizEntities = cell_layers_data->numHorizEntities;
     const auto numLayers = cell_layers_data->numLayers;
 
+    // Note: The DOFManager stores offsets in nested vectors of non-uniform length. In order to
+    // make the offsets available on device, they were converted to a single kokkos view large enough
+    // to hold all of the vectors. A side effect is that array bounds can't be obtained from the kokkos view
+    // extents and have to be obtained from the non-kokkos offsets vector or from another source.
     const int num_nodes_side = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos).size();
 
     // Pick a cell layer that contains the field level. Can be same as fieldLevel,
