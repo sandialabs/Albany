@@ -14,9 +14,11 @@ set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set (TRILINOS_INSTALL "${CTEST_BINARY_DIRECTORY}/TrilinosInstall")
+set (CTEST_BUILD_TARGET all)
 IF(CTEST_BUILD_OPTION MATCHES "sfad6")
   set (SFAD_SIZE 6)
 ELSEIF(CTEST_BUILD_OPTION MATCHES "sfad12")
+  set (CTEST_BUILD_TARGET install) # install sfad12 for MALI
   set (SFAD_SIZE 12)
 ELSEIF(CTEST_BUILD_OPTION MATCHES "sfad16")
   set (SFAD_SIZE 16)
@@ -250,9 +252,6 @@ endif ()
 #
 # Build the rest of Albany and install everything
 #
-
-set (CTEST_BUILD_TARGET all)
-#set (CTEST_BUILD_TARGET install)
 
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 

@@ -48,6 +48,7 @@ set (CTEST_DROP_METHOD "https")
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set (TRILINOS_INSTALL "${CTEST_BINARY_DIRECTORY}/TrilinosInstall")
+set (ALBANY_INSTALL "${CTEST_BINARY_DIRECTORY}/AlbanyInstall")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -240,8 +241,8 @@ if (BUILD_ALBANY)
   # Build the rest of Albany and install everything
   #
 
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
+  #set (CTEST_BUILD_TARGET all)
+  set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
