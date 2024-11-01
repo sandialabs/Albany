@@ -10,6 +10,7 @@ module load zlib/1.2.11/gcc/8.3.1
 module load hdf5/1.10.7/gcc/8.3.1/openmpi/4.1.1
 module load parallel-netcdf/1.12.2/gcc/8.3.1/openmpi/4.1.1
 module load netcdf-c/4.8.1/gcc/8.3.1/openmpi/4.1.1
+module load netcdf-fortran/4.5.4/gcc/8.3.1/openmpi/4.1.1
 module load parmetis/4.0.3/gcc/8.3.1/openmpi/4.1.1
 module load boost/1.70.0/gcc/8.3.1
 module load superlu/5.3.0/gcc/8.3.1

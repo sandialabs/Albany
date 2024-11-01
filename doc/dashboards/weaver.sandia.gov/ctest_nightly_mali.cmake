@@ -4,11 +4,8 @@ set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
-set (DOWNLOAD_TRILINOS FALSE)
-set (BUILD_TRILINOS FALSE)
-set (DOWNLOAD_ALBANY TRUE) 
-set (BUILD_ALBANY TRUE)
-set (BUILD_ALBANY_SFAD FALSE) 
+set (DOWNLOAD_MALI TRUE) 
+set (BUILD_MALI TRUE)
 
 # Begin User inputs:
 set (CTEST_SITE "weaver.sandia.gov" ) # generally the output of hostname
@@ -21,9 +18,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-#set (CTEST_NAME "weaver-CUDA-Albany")
 set (CTEST_BINARY_NAME build)
-#set (CTEST_BUILD_NAME "weaver-CUDA-Albany")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -39,7 +34,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
   ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
-set (CTEST_CMAKE_COMMAND "cmake")
+set (CTEST_BUILD_COMMAND "bash ${CTEST_DASHBOARD_ROOT}/do-make-mpas")
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_BUILD_FLAGS "-j40")
 
@@ -47,7 +42,7 @@ set (CTEST_DROP_METHOD "https")
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "${CTEST_BINARY_DIRECTORY}/TrilinosInstall")
+set (TRILINOS_INSTALL "${CTEST_BINARY_DIRECTORY}/TrilinosInstall") 
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -114,8 +109,8 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
-set (CTEST_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
+set (CTEST_BUILD_NAME "MALI-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
+set (CTEST_NAME "MALI-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-${CUDA_VERSION}")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 if (CTEST_DROP_METHOD STREQUAL "https")
@@ -130,6 +125,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
+set (Mali_REPOSITORY_LOCATION git@github.com:MALI-Dev/E3SM.git)
 
 #set (NVCC_WRAPPER "$ENV{jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
 set (NVCC_WRAPPER ${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_volta)
@@ -144,7 +140,7 @@ if (CLEAN_BUILD)
   CMAKE_TYPE:STRING=Release
   CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
   TESTING:BOOL=OFF
-  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
+  PRODUCT_REPO:STRING=${Mali_REPOSITORY_LOCATION}
   " )
 
   ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
@@ -152,18 +148,18 @@ if (CLEAN_BUILD)
 endif ()
 
 
-if (DOWNLOAD_ALBANY)
+if (DOWNLOAD_MALI)
 
   set (CTEST_CHECKOUT_COMMAND)
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   
   #
-  # Get Albany
+  # Get MPAS-Albany-landice
   #
 
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/E3SM.MALI.dev")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Albany_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Albany
+      clone ${Mali_REPOSITORY_LOCATION} -b develop --recurse-submodules=externals/scorpio ${CTEST_SOURCE_DIRECTORY}/E3SM.MALI.dev
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -172,7 +168,7 @@ if (DOWNLOAD_ALBANY)
     message(STATUS "err: ${_err}")
     message(STATUS "res: ${HAD_ERROR}")
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone Albany repository!")
+      message(FATAL_ERROR "Cannot clone MALI repository!")
     endif ()
   endif ()
 
@@ -202,51 +198,16 @@ ctest_start(${CTEST_TEST_TYPE})
 # Set the common Trilinos config options & build Trilinos
 # 
 
-if (BUILD_ALBANY)
-
-  # Configure the Albany build 
-  #
-
-  set (CONFIGURE_OPTIONS
-    CDASH-ALBANY-FILE.TXT
-    )
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuild")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuild)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-  endif ()
+if (BUILD_MALI)
 
   #
-  # Build the rest of Albany and install everything
+  # Build MALI, no configuration required
   #
 
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+  MESSAGE("\nBuilding MALI with script ${CTEST_BUILD_COMMAND} ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
+    BUILD "${CTEST_SOURCE_DIRECTORY}/E3SM.MALI.dev/components/mpas-albany-landice"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -258,40 +219,18 @@ if (BUILD_ALBANY)
       )
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
+      message ("Cannot submit MALI build results!")
     endif ()
 
   endif ()
 
   if (HAD_ERROR)
-    message ("Cannot build Albany!")
+    message ("Cannot build MALI!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
+    message ("Encountered build errors in MALI build. Exiting!")
   endif ()
-
-  #
-  # Run Albany tests
-  #
-
-  #  Over-write default limit for output posted to CDash site
-  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
-  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
-
-  set (CTEST_TEST_TIMEOUT 1500)
-  CTEST_TEST (
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    RETURN_VALUE HAD_ERROR)
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany test results!")
-    endif ()
-  endif ()
-
 
 endif ()
 

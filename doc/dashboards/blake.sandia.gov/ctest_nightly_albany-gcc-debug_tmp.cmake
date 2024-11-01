@@ -38,6 +38,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set (TRILINOS_INSTALL "/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosDebugInstallGccNoWarn")
+set (ALBANY_INSTALL "/home/projects/albany/nightlyCDashAlbanyBlake/build-gcc/AlbanyDebugInstallGccNoWarn")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -191,8 +192,8 @@ if (BUILD_ALBANY_DEBUG)
   # Build the rest of Albany and install everything
   #
 
-  set (CTEST_BUILD_TARGET all)
-  #set (CTEST_BUILD_TARGET install)
+  #set (CTEST_BUILD_TARGET all)
+  set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 

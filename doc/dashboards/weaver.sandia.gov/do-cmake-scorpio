@@ -1,13 +1,13 @@
 #!/bin/bash
 # SCORPIO build script
-BASE_DIR=/projects/albany/nightlyCDashAlbanyBlake
-mkdir -p ${BASE_DIR}/build-gcc/ScoBuildReleaseGcc
-cd ${BASE_DIR}/build-gcc/ScoBuildReleaseGcc
+BASE_DIR=/projects/albany/nightlyCDashWeaver
+mkdir -p ${BASE_DIR}/build/ScoBuild
+cd ${BASE_DIR}/build/ScoBuild
 
 rm -rf CMake*
 
-SCORPIO_SRC=${BASE_DIR}/repos-gcc/E3SM.MALI.dev/externals/scorpio
-SCORPIO_INSTALL=${BASE_DIR}/build-gcc/ScorpioReleaseInstallGcc
+SCORPIO_SRC=${BASE_DIR}/repos/E3SM.MALI.dev/externals/scorpio
+SCORPIO_INSTALL=${BASE_DIR}/build/ScorpioInstall
 
 cmake \
   -D CMAKE_INSTALL_PREFIX:PATH=${SCORPIO_INSTALL} \
@@ -23,7 +23,7 @@ cmake \
   -D PIO_ENABLE_TESTS=OFF \
 ${SCORPIO_SRC}
 
-make -j 96
+make -j 16
 make install
 cd ${BASE_DIR}
 

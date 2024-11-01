@@ -1,16 +1,16 @@
 #!/bin/bash
 # Build SCORPIO
-BASE_DIR=/home/projects/albany/nightlyCDashAlbanyBlake
-bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
+BASE_DIR=/home/projects/albany/nightlyCDashWeaver
+bash ${BASE_DIR}/do-cmake-scorpio
 
 # MALI build script
-cd ${BASE_DIR}/repos-gcc/E3SM.MALI.dev/components/mpas-albany-landice
+cd ${BASE_DIR}/repos/E3SM.MALI.dev/components/mpas-albany-landice
 
 # External libs
-SCORPIO_INSTALL=${BASE_DIR}/build-gcc/ScorpioReleaseInstallGcc
-TRILINOS_INSTALL=/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc
-ALBANY_INSTALL=${BASE_DIR}/build-gcc/AlbanyReleaseInstallGccSFad12
-MALI_INSTALL=${BASE_DIR}/build-gcc/MALIReleaseInstallGcc
+SCORPIO_INSTALL=${BASE_DIR}/build/ScorpioInstall
+TRILINOS_INSTALL=/home/projects/albany/nightlyCDashTrilinosBlake/build/TrilinosInstall
+ALBANY_INSTALL=${BASE_DIR}/build/AlbanyInstallSFad12
+MALI_INSTALL=${BASE_DIR}/build/MALIInstall
 source ${ALBANY_INSTALL}/export_albany.in
 echo ${ALBANY_LINK_LIBS}
 echo ${LD_LIBRARY_PATH}
@@ -18,14 +18,16 @@ echo ${LD_LIBRARY_PATH}
 make clean \
   CORE=landice
 
-make -j 96 gfortran \
+make -j 40 gfortran \
   CORE=landice \
   ALBANY=true \
   USE_PIO2=true \
+  GEN_F90=true \
   NETCDF=${NETCDF_FORTRAN_ROOT} \
   PNETCDF=${PARALLEL_NETCDF_ROOT} \
   PIO=${SCORPIO_INSTALL} \
   MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL}/lib64 -Wl,-R${TRILINOS_INSTALL}/lib64" \
+  MPAS_EXTERNAL_INCLUDES="-I${ALBANY_INSTALL}/include" \
   EXE_NAME=landice_model;
 
 mkdir -p ${MALI_INSTALL}
