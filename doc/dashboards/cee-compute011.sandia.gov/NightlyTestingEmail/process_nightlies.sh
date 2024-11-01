@@ -12,6 +12,6 @@ git clone git@github.com:TriBITSPub/TriBITS.git
 
 now=$(date +"%Y-%m-%d")
 
-./albany_cdash_status.sh --date=$now --email-from-address=ikalash@skybrige-login5.sandia.gov --send-email-to=ikalash@sandia.gov,mperego@sandia.gov,jwatkin@sandia.gov,lbertag@sandia.gov 
+./albany_cdash_status.sh --date=$now --email-from-address=ikalash@cee-compute003.sandia.gov --send-email-to=ikalash@sandia.gov,mperego@sandia.gov,jwatkin@sandia.gov,lbertag@sandia.gov 
 
 
