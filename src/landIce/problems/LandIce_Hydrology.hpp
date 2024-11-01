@@ -872,7 +872,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //--- Shared Parameter for basal friction coefficient: lambda ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
 
-  param_name = ParamEnumName::Lambda;
+  param_name = ParamEnumName::BedRoughness;
   p->set<std::string>("Parameter Name", param_name);
   p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);

@@ -33,6 +33,8 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
     hydro_ndofs_dot = 0;
   }
 
+  effectivePressure_from_basalFrictionEval = false;
+
   TEUCHOS_TEST_FOR_EXCEPTION (eliminate_h && unsteady, std::logic_error,
                               "Error! Water Thickness can be eliminated only in the steady case.\n");
   TEUCHOS_TEST_FOR_EXCEPTION (has_h_till && !unsteady, std::logic_error,

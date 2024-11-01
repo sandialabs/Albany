@@ -49,6 +49,8 @@ StokesFOThickness::StokesFOThickness(
   // We have two values for ice_thickness: the initial one, and the updated one.
   initial_ice_thickness_name = ice_thickness_name;
   ice_thickness_name += "_computed";
+
+  effectivePressure_from_basalFrictionEval = true;
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

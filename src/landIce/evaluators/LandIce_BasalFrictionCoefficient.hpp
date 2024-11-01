@@ -47,15 +47,15 @@ private:
 
   // Coefficients for computing beta (if not given)
   double n;                                             // [adim] exponent of Glen's law
-  PHX::MDField<const ScalarT,Dim> muParam;           // [yr^q m^{-q}], friction coefficient of the power Law with exponent q
-  PHX::MDField<const ScalarT,Dim> lambdaParam;          // [km],  Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
+  PHX::MDField<const ScalarT,Dim> muParam;              // [yr^q m^{-q}], friction coefficient of the power Law with exponent q
+  PHX::MDField<const ScalarT,Dim> bedRoughnessParam;    // [km],  Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
   PHX::MDField<const ScalarT,Dim> powerParam;           // [adim], Exponent (for POWER_LAW and REGULARIZED COULOMB only)
 
   ScalarT printedMu;
-  ScalarT printedLambda;
+  ScalarT printedBedRoughness;
   ScalarT printedQ;
 
-  ParamScalarT mu, lambda, power;
+  ParamScalarT mu, bedRoughness, power;
 
   double beta_val;   // beta value [kPa yr/m] (for CONSTANT only)
   double flowRate_val;   // flow rate value [Pa^{-n} s^{-1}] (for CONSTANT only)
@@ -63,17 +63,18 @@ private:
 
   // Input:
   PHX::MDField<const RealType>          BF;
-  PHX::MDField<const VelocityST>        u_norm;          // [m yr^{-1}]
-  PHX::MDField<const ParamScalarT>      lambdaField;     // [km], characteristic length
-  PHX::MDField<const ParamScalarT>      muField;         // [yr^q m^{-q}] or [adim], Power Law with exponent q, Coulomb Friction
-  PHX::MDField<const EffPressureST>     N;               // [kPa]
-  PHX::MDField<const MeshScalarT>       coordVec;        // [km]
-  PHX::MDField<const TemperatureST>     flowRate;        // [Pa^{-n} s^{-1}]
-  PHX::MDField<const MeshScalarT>       bed_topo_field;  // [km]
-  PHX::MDField<const MeshScalarT>       thickness_field; // [km]
+  PHX::MDField<const VelocityST>        u_norm;             // [m yr^{-1}]
+  PHX::MDField<const ParamScalarT>      bedRoughnessField;  // [km], characteristic length
+  PHX::MDField<const ParamScalarT>      muField;            // [yr^q m^{-q}] or [adim], Power Law with exponent q, Coulomb Friction
+  PHX::MDField<const EffPressureST>     N;                  // [kPa]
+  PHX::MDField<const MeshScalarT>       coordVec;           // [km]
+  PHX::MDField<const TemperatureST>     flowRate;           // [Pa^{-n} s^{-1}]
+  PHX::MDField<const MeshScalarT>       bed_topo_field;     // [km]
+  PHX::MDField<const MeshScalarT>       thickness_field;    // [km]
 
   // Output:
   PHX::MDField<ScalarT>       beta;     // [kPa yr m^{-1}]
+  PHX::MDField<EffPressureST> outN;     // [kPa]
 
   std::string                 basalSideName;  // Only if is_side_equation=true
 
@@ -87,6 +88,7 @@ private:
   double g;               // [m s^{-2}]
 
   bool use_pressurized_bed;
+  bool save_pressure_field;
   double overburden_fraction;  // [adim]
   double pressure_smoothing_length_scale; //[km]
 
@@ -105,7 +107,7 @@ private:
   enum class FLOW_RATE_TYPE {CONSTANT, VISCOSITY_FLOW_RATE};
   BETA_TYPE beta_type;
   EFFECTIVE_PRESSURE_TYPE effectivePressure_type;
-  FIELD_TYPE mu_type, lambda_type;
+  FIELD_TYPE mu_type, bedRoughness_type;
   FLOW_RATE_TYPE flowRate_type;
 
   PHAL::MDFieldMemoizer<Traits> memoizer;

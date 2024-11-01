@@ -103,8 +103,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     const std::vector<double>& bedTopographyData,
     const std::vector<double>& smbData,
     const std::vector<double>& stiffeningFactorData,
-    const std::vector<double>& effectivePressureData,
+          std::vector<double>& effectivePressureData,
     const std::vector<double>& muData,
+    const std::vector<double>& bedRoughnessData,
     const std::vector<double>& temperatureDataOnPrisms,
     std::vector<double>& bodyForceMagnitudeOnBasalCell,
     std::vector<double>& dissipationHeatOnPrisms,
@@ -152,9 +153,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   STKFieldType* smbField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_mass_balance");
   STKFieldType* dirichletField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "dirichlet_field");
   STKFieldType* muField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
+  STKFieldType* bedRoughnessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_roughness");
   STKFieldType* stiffeningFactorLogField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "stiffening_factor_log");
   STKFieldType* effectivePressureField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
   STKFieldType* betaField;
+  STKFieldType* effectivePressureBasalField;
 
   auto& probParamList = paramList->sublist("Problem");
   const auto& landiceBcList = probParamList.sublist("LandIce BCs");
@@ -165,6 +168,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   auto ss_mesh = meshStruct->sideSetMeshStructs.at("basalside");
   auto ss_mesh_stk = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(ss_mesh,true);
   betaField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "beta");
+  effectivePressureBasalField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
 
   for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
@@ -219,6 +223,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     if ((il == 0) && !muData.empty() && (muField != nullptr)) {
       double* muVal = stk::mesh::field_data(*muField, node);
       muVal[0] = muData[ib];
+    }
+
+    if ((il == 0) && !bedRoughnessData.empty() && (bedRoughnessField != nullptr)) {
+      double* bedRoughnessVal = stk::mesh::field_data(*bedRoughnessField, node);
+      bedRoughnessVal[0] = bedRoughnessData[ib];
     }
   }
 
@@ -387,6 +396,14 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
+  if (Teuchos::nonnull(ss_mesh_stk) && !effectivePressureData.empty() && (effectivePressureBasalField!=nullptr)) {
+    for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
+      stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
+      const double* effectivePressureVal = stk::mesh::field_data(*effectivePressureBasalField,node);      
+      effectivePressureData[vertexLayerShift * ib] = effectivePressureVal[0];
+    }
+  }
+
   if (Teuchos::nonnull(ss_mesh_stk) && !betaData.empty() && (betaField!=nullptr)) {
     for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
       stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
@@ -474,6 +491,38 @@ void velocity_solver_finalize() {
   if(kokkosInitializedByAlbany)
     Kokkos::finalize();
 }
+
+
+//DEPRECATED
+void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
+    int globalTrianglesStride, bool ordering, bool first_time_step,
+    const std::vector<int>& indexToVertexID,
+    const std::vector<int>& indexToTriangleID, double minBeta,
+    const std::vector<double>& regulThk,
+    const std::vector<double>& levelsNormalizedThickness,
+    const std::vector<double>& elevationData,
+    const std::vector<double>& thicknessData,
+          std::vector<double>& betaData,
+    const std::vector<double>& bedTopographyData,
+    const std::vector<double>& smbData,
+    const std::vector<double>& stiffeningFactorData,
+    const std::vector<double>& effectivePressureData,
+    const std::vector<double>& muData,
+    const std::vector<double>& temperatureDataOnPrisms,
+    std::vector<double>& bodyForceMagnitudeOnBasalCell,
+    std::vector<double>& dissipationHeatOnPrisms,
+    std::vector<double>& velocityOnVertices,
+    int& error,
+    const double& deltat) {
+      std::vector<double> effectivePressureDataNonConst(effectivePressureData);
+      const std::vector<double> bedRoughnessData;
+      velocity_solver_solve_fo(nLayers, globalVerticesStride, globalTrianglesStride, ordering, first_time_step,
+                               indexToVertexID,indexToTriangleID, minBeta, regulThk, levelsNormalizedThickness, 
+                               elevationData, thicknessData, betaData, bedTopographyData, smbData, stiffeningFactorData,
+                               effectivePressureDataNonConst, muData, bedRoughnessData, temperatureDataOnPrisms, 
+                               bodyForceMagnitudeOnBasalCell,dissipationHeatOnPrisms, velocityOnVertices, error, deltat );
+}
+
 
 /*duality:
  *
@@ -573,8 +622,12 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   // Basal Friction BC
   auto& basalParams = landiceBcList.sublist("BC 0");
   auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
-  bool zeroBetaOnShelf = basalFrictionParams.get<bool>("Zero Beta On Floating Ice", true);
-  int basal_cub_degree = physParamList.get<bool>("Use GLP") ? 8 : (zeroBetaOnShelf ? 4 : 3);
+  bool zeroEffectPressOnShelf = basalFrictionParams.get<bool>("Zero Effective Pressure On Floating Ice At Nodes", !physParamList.get<bool>("Use GLP"));
+  bool zeroBetaOnShelf = basalFrictionParams.get<bool>("Zero Beta On Floating Ice", physParamList.get<bool>("Use GLP"));
+  if(zeroEffectPressOnShelf && zeroBetaOnShelf)  
+    std::cout<<"\nWARNING: Both BC options \"Zero Effective Pressure On Floating Ice At Nodes\" and \"Zero Beta On Floating Ice\" are set to true. To avoid unexpected beahvior only one should be set to true.\n"<<std::endl;
+
+  int basal_cub_degree = physParamList.get<bool>("Use GLP") ? 8 : 4;
 
   //TODO: remove this after fixing MPAS
   basal_cub_degree = basalParams.get<int>("Cubature Degree", basal_cub_degree);
@@ -585,10 +638,12 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type","Power Law"));
   basalFrictionParams.set("Type",betaType);
   basalFrictionParams.set("Power Exponent", basalFrictionParams.get("Power Exponent",1.0));
-  basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
   basalFrictionParams.set("Mu Type",basalFrictionParams.get("Mu Type","Field"));
+  basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
+  basalFrictionParams.set("Bed Roughness Type",basalFrictionParams.get("Bed Roughness Type","Field"));
   basalFrictionParams.set("Effective Pressure Type",basalFrictionParams.get("Effective Pressure Type","Field"));
   basalFrictionParams.set<bool>("Zero Beta On Floating Ice", zeroBetaOnShelf);
+  basalFrictionParams.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", zeroEffectPressOnShelf);
 
   //Lateral floating ice BCs
   int lateral_cub_degree = 3;
@@ -663,7 +718,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
-  discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",fp+10);
+  discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",fp+11);
   Teuchos::ParameterList& field0  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",0+fp));
   Teuchos::ParameterList& field1  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",1+fp));
   Teuchos::ParameterList& field2  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",2+fp));
@@ -674,7 +729,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   Teuchos::ParameterList& field7  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",7+fp));
   Teuchos::ParameterList& field8  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",8+fp));
   Teuchos::ParameterList& field9  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",9+fp));
-  //Teuchos::ParameterList& field10 = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",10+fp));
+  Teuchos::ParameterList& field10 = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",10+fp));
 
   //set temperature
   field0.set<std::string>("Field Name", "temperature");
@@ -704,30 +759,36 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   field4.set<std::string>("Field Type", "Node Scalar");
   field4.set<std::string>("Field Origin", "Mesh");
 
-  //set surface mass balance
-  field5.set<std::string>("Field Name", "surface_mass_balance");
+    //set mu field
+  field5.set<std::string>("Field Name", "bed_roughness");
   field5.set<std::string>("Field Type", "Node Scalar");
   field5.set<std::string>("Field Origin", "Mesh");
 
-  //set dirichlet field
-  field6.set<std::string>("Field Name", "dirichlet_field");
-  field6.set<std::string>("Field Type", "Node Vector");
+  //set surface mass balance
+  field6.set<std::string>("Field Name", "surface_mass_balance");
+  field6.set<std::string>("Field Type", "Node Scalar");
   field6.set<std::string>("Field Origin", "Mesh");
 
-  //set stiffening factor
-  field7.set<std::string>("Field Name", "stiffening_factor_log");
-  field7.set<std::string>("Field Type", "Node Scalar");
+  //set dirichlet field
+  field7.set<std::string>("Field Name", "dirichlet_field");
+  field7.set<std::string>("Field Type", "Node Vector");
   field7.set<std::string>("Field Origin", "Mesh");
 
-  //set effective pressure
-  field8.set<std::string>("Field Name", "effective_pressure");
+  //set stiffening factor
+  field8.set<std::string>("Field Name", "stiffening_factor_log");
   field8.set<std::string>("Field Type", "Node Scalar");
   field8.set<std::string>("Field Origin", "Mesh");
 
+  //set effective pressure
+  field9.set<std::string>("Field Name", "effective_pressure");
+  field9.set<std::string>("Field Type", "Node Scalar");
+  field9.set<std::string>("Field Origin", "Mesh");
+  field9.set<std::string>("Field Usage", "Input-Output");
+
   // Outputs
-  field9.set<std::string>("Field Name", "body_force");
-  field9.set<std::string>("Field Type", "Elem Vector");
-  field9.set<std::string>("Field Usage", "Output");
+  field10.set<std::string>("Field Name", "body_force");
+  field10.set<std::string>("Field Type", "Elem Vector");
+  field10.set<std::string>("Field Usage", "Output");
 
   // Side set outputs
   auto& ss_pl =discretizationList->sublist("Side Set Discretizations");
@@ -738,12 +799,17 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   auto& basal_req = basal_pl.sublist("Required Fields Info");
 
   int bfp = basal_req.get<int>("Number Of Fields",0);
-  basal_req.set<int>("Number Of Fields",bfp+1);
+  basal_req.set<int>("Number Of Fields",bfp+2);
 
   auto& ss_field0 = basal_req.sublist(util::strint("Field",0+bfp));
+  auto& ss_field1 = basal_req.sublist(util::strint("Field",1+bfp));
   ss_field0.set<std::string>("Field Name", "beta");
   ss_field0.set<std::string>("Field Type", "Node Scalar");
   ss_field0.set<std::string>("Field Usage", "Output");
+
+  ss_field1.set<std::string>("Field Name", "effective_pressure");
+  ss_field1.set<std::string>("Field Type", "Node Scalar");
+  ss_field1.set<std::string>("Field Usage", "Output");
 
   // Register LandIce problems
   auto& pb_factories = Albany::FactoriesContainer<Albany::ProblemFactory>::instance();

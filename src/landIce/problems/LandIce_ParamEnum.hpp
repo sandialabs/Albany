@@ -15,7 +15,7 @@ namespace LandIce
 enum class ParamEnum
 {
   Alpha,
-  Lambda,
+  BedRoughness,
   Mu,
   Power,
   Homotopy,
@@ -28,8 +28,8 @@ enum class ParamEnum
 namespace ParamEnumName
 {
   static const std::string Alpha           = "Hydraulic-Over-Hydrostatic Potential Ratio";
-  static const std::string Lambda          = "Bed Roughness";
-  static const std::string Mu              = "Mu Coefficient";
+  static const std::string BedRoughness    = "Bed Roughness";
+  static const std::string Mu              = "Mu";
   static const std::string Power           = "Power Exponent";
   static const std::string HomotopyParam   = "Homotopy Parameter";
   static const std::string GLHomotopyParam = "Glen's Law Homotopy Parameter";

@@ -53,6 +53,8 @@ StokesFOThermoCoupled( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     TEUCHOS_TEST_FOR_EXCEPTION(!found, std::logic_error, "Error! If 'Needs Basal Friction' is true, there must be a 'Basal Friction' bc on Basal Side Set.\n");
   }
 
+  effectivePressure_from_basalFrictionEval = true;
+
   compute_dissipation &= needsDiss;
 
   dof_names.resize(neq-1);
