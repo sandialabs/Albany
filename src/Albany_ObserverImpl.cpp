@@ -22,16 +22,12 @@ ObserverImpl (const Teuchos::RCP<Application> &app)
 
 void ObserverImpl::
 observeSolution(double stamp,
-                const Thyra_Vector& nonOverlappedSolution,
-                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
-                const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
-                const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot)
+                const Thyra_Vector& x,
+                const Teuchos::Ptr<const Thyra_MultiVector>& dxdp,
+                const Teuchos::Ptr<const Thyra_Vector>& x_dot,
+                const Teuchos::Ptr<const Thyra_Vector>& x_dotdot)
 {
-  app_->evaluateStateFieldManager (stamp,
-                                   nonOverlappedSolution,
-                                   nonOverlappedSolutionDot,
-                                   nonOverlappedSolutionDotDot,
-                                   nonOverlappedSolution_dxdp);
+  app_->evaluateStateFieldManager (stamp, x, x_dot, x_dotdot, dxdp);
 
   //! update distributed parameters in the mesh
   auto distParamLib = app_->getDistributedParameterLibrary();
@@ -44,21 +40,28 @@ observeSolution(double stamp,
   }
 
   StatelessObserverImpl::observeSolution (stamp,
-                                          nonOverlappedSolution,
-                                          nonOverlappedSolution_dxdp,
-                                          nonOverlappedSolutionDot,
-                                          nonOverlappedSolutionDotDot);
+                                          Teuchos::rcpFromRef(x),
+                                          Teuchos::rcpFromPtr(x_dot),
+                                          Teuchos::rcpFromPtr(x_dotdot),
+                                          Teuchos::rcpFromPtr(dxdp));
 }
 
 void ObserverImpl::
 observeSolution(double stamp,
-                const Thyra_MultiVector& nonOverlappedSolution, 
-                const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp)
+                const Thyra_MultiVector& x, 
+                const Teuchos::Ptr<const Thyra_MultiVector>& dxdp)
 {
-  app_->evaluateStateFieldManager(stamp, nonOverlappedSolution, 
-                                  nonOverlappedSolution_dxdp);
-  StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution, 
-                                         nonOverlappedSolution_dxdp);
+  app_->evaluateStateFieldManager(stamp, x, dxdp);
+  Teuchos::Ptr<const Thyra_Vector> x_dot,x_dotdot;
+
+  int x_ncols = x.domain()->dim();
+  if (x_ncols==1) {
+    x_dot = x.col(1).ptr();
+  } else if (x_ncols==2) {
+    x_dot = x.col(1).ptr();
+    x_dotdot = x.col(2).ptr();
+  }
+  observeSolution (stamp, *x.col(0), dxdp, x_dot, x_dotdot);
 }
 
 void ObserverImpl::

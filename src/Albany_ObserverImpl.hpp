@@ -13,25 +13,26 @@
 
 namespace Albany {
 
-class ObserverImpl : public StatelessObserverImpl, public Piro::ROL_ObserverBase<ST> {
+class ObserverImpl : public StatelessObserverImpl,
+                     public Piro::ROL_ObserverBase<ST>
+{
 public:
   explicit ObserverImpl(const Teuchos::RCP<Application>& app);
 
   // Bring in scope the version we don't override
   using StatelessObserverImpl::observeSolution;
 
-  void observeSolution(
-    double stamp, const Thyra_Vector& nonOverlappedSolution,
-    const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp,
-    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDot,
-    const Teuchos::Ptr<const Thyra_Vector>& nonOverlappedSolutionDotDot) override;
+  // Override from ROL_ObserverBase
+  void observeSolution (double stamp, const Thyra_Vector& x,
+                        const Teuchos::Ptr<const Thyra_MultiVector>& x_dxdp,
+                        const Teuchos::Ptr<const Thyra_Vector>& x_dot,
+                        const Teuchos::Ptr<const Thyra_Vector>& x_dotdot) override;
 
-  void observeSolution(
-      double stamp, const Thyra_MultiVector& nonOverlappedSolution, 
-      const Teuchos::Ptr<const Thyra_MultiVector>& nonOverlappedSolution_dxdp) override;
+  void observeSolution (double stamp,
+                        const Thyra_MultiVector& x, 
+                        const Teuchos::Ptr<const Thyra_MultiVector>& dxdp) override;
 
-  void parameterChanged(
-      const std::string& param) override;
+  void parameterChanged (const std::string& param) override;
 
   void parametersChanged() override;
   
