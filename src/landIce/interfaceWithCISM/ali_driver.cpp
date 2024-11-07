@@ -646,7 +646,7 @@ void ali_driver_run(AliToGlimmer * ftg_ptr, double& cur_time_yr, double time_inc
     //if (!first_time_step)
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
     auto albanyModel = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(reducedMpiCommT, albanyModel, Teuchos::null, true);
+    solver = slvrfctry->createSolver(albanyModel, Teuchos::null, true);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
