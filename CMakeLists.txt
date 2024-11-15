@@ -469,11 +469,24 @@ ELSE()
   SET(ALBANY_PYTHON FALSE)
 ENDIF()
 
+# set optional dependency of mesh on solution, defaults to Disabled
+OPTION(ENABLE_MESH_DEPENDS_ON_SOLUTION "Flag to turn on dependency of mesh on parameters, e.g for shape optimization" OFF)
+IF (ENABLE_MESH_DEPENDS_ON_SOLUTION)
+  MESSAGE("-- MESH_DEPENDS_ON_SOLUTION              Enabled.")
+  SET(ALBANY_MESH_DEPENDS_ON_SOLUTION TRUE)
+ELSE()
+  MESSAGE("-- MESH_DEPENDS_ON_SOLUTION          NOT Enabled.")
+  SET(ALBANY_MESH_DEPENDS_ON_SOLUTION FALSE)
+ENDIF()
+
 # set optional dependency of mesh on parameters, defaults to Disabled
-OPTION(ENABLE_MESH_DEPENDS_ON_PARAMETERS "Flag to turn on dependency of mesh on parameters, e.g for shape optimization" OFF)
+OPTION(ENABLE_MESH_DEPENDS_ON_PARAMETERS "Flag to turn on dependency of mesh on parameters, e.g for shape optimization" ${ALBANY_MESH_DEPENDS_ON_SOLUTION})
 IF (ENABLE_MESH_DEPENDS_ON_PARAMETERS)
   MESSAGE("-- MESH_DEPENDS_ON_PARAMETERS              Enabled.")
   SET(ALBANY_MESH_DEPENDS_ON_PARAMETERS TRUE)
+ELSEIF(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+  MESSAGE(FATAL_ERROR
+  "\nMESH_DEPENDS_ON_PARAMETERS cannot be OFF if MESH_DEPENDS_ON_SOLUTION is ON: ")
 ELSE()
   MESSAGE("-- MESH_DEPENDS_ON_PARAMETERS          NOT Enabled.")
   SET(ALBANY_MESH_DEPENDS_ON_PARAMETERS FALSE)

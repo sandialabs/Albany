@@ -110,6 +110,7 @@ SimpleBinaryOperation (const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl) :
   SimpleOperationBase<EvalT,Traits,InOutScalarT,BinaryOperation<InOutScalarT>> (p,dl)
 {
+  this->op.setup(p);
   field1 = PHX::MDField<const FieldScalarT> (p.get<std::string>("Parameter Field 1"), 
       p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout"));
   this->addDependentField(field1);
@@ -150,6 +151,12 @@ BinarySumOp<EvalT, Traits, InOutScalarT, FieldScalarT>::
 BinarySumOp (const Teuchos::ParameterList& p,
              const Teuchos::RCP<Albany::Layouts>& dl) :
   SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Sum>(p,dl) {}
+
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
+BinaryAXPYOp<EvalT, Traits, InOutScalarT, FieldScalarT>::
+BinaryAXPYOp (const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl) :
+  SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::AXPY>(p,dl) {}
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
 BinaryLogOp<EvalT, Traits, InOutScalarT, FieldScalarT>::

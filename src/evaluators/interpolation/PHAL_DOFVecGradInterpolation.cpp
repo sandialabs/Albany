@@ -10,4 +10,7 @@
 #include "PHAL_DOFVecGradInterpolation_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::DOFVecGradInterpolationBase)
+
+#if !defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
 PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::FastSolutionVecGradInterpolationBase)
+#endif

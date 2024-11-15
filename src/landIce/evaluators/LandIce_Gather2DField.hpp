@@ -52,6 +52,7 @@ protected:
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node>  field2D;
+  PHX::MDField<ScalarT,Cell,Node>  field2D_dot;
 
   int offset; // Offset of first DOF being gathered
   int numNodes;
@@ -60,6 +61,7 @@ protected:
   std::string meshPart;
 
   bool extruded;
+  bool enableTransient;
 };
 
 } // namespace LandIce

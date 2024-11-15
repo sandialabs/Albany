@@ -240,16 +240,32 @@ endif()
 ###    Coupled Thickness tests   ###
 ####################################
 
-set (testName ${testNameRoot}_CoupledThickness)
-
 IF(NOT Kokkos_ENABLE_CUDA)
   #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
   #see issue #420. 
+  set (testName ${testNameRoot}_CoupledThickness)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.yaml
                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.yaml)
 
   add_test(${testName} ${Albany.exe} input_fo_gis_coupled.yaml)
   set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward")
+
+  if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    set (testName ${testNameRoot}_Humboldt_Transient_Sensitivities)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_sensitivities.yaml
+    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_sensitivities.yaml)
+
+    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_sensitivities.yaml)
+    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+  
+  else()
+    set (testName ${testNameRoot}_Humboldt_Transient)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient.yaml)
+    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+  endif()
+
 endif()
 
 ####################################

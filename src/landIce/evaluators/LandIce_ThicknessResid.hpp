@@ -47,10 +47,11 @@ private:
 
   // Input:
 
-  PHX::MDField<const ScalarT,Cell,Node>   dH;
-  PHX::MDField<const RealType,Cell,Node>  H0;
+  PHX::MDField<const ScalarT,Cell,Node>       Hdiff;
+  PHX::MDField<const ScalarT,Cell,Node>       dHdt;
+  PHX::MDField<const ParamScalarT,Cell,Node>  H0;
   PHX::MDField<const ScalarT> V;
-  PHX::MDField<const ParamScalarT,Cell,Node> SMB;
+  PHX::MDField<const ParamScalarT,Cell,Node>  SMB;
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
   
   // Output:
@@ -75,6 +76,7 @@ private:
   Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell;
 
   std::string sideSetID;
+  bool unsteady;
 
 };
 

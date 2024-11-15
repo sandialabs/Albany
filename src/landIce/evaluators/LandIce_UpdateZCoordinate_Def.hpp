@@ -22,15 +22,19 @@
 namespace LandIce {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-UpdateZCoordinateMovingTop<EvalT, Traits>::
-UpdateZCoordinateMovingTop (const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename ScalarT>
+UpdateZCoordinateMovingTopBase<EvalT, Traits, ScalarT>::
+UpdateZCoordinateMovingTopBase (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
   bedTopo(p.get<std::string> ("Bed Topography Name"), dl->node_scalar),
   topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector)
 {
+  bool lossyConversion = p.isParameter("Allow Loss Of Derivative Terms") ? p.get<bool>("Allow Loss Of Derivative Terms") : false;
+  
+  TEUCHOS_TEST_FOR_EXCEPTION ((!std::is_same<MeshScalarT,ScalarT>::value && !lossyConversion), std::runtime_error, "Error! UpdateZCoordinateMovingTopBase: This Evaluator would lead to loss of derivative information.\n"); 
+
   this->addDependentField(coordVecIn);
   this->addDependentField(bedTopo);
   if(p.isParameter("Thickness Name")) {
@@ -61,20 +65,18 @@ UpdateZCoordinateMovingTop (const Teuchos::ParameterList& p,
   rho_w = p_list->get<double>("Water Density");
 }
 
-template<typename EvalT, typename Traits>
-void UpdateZCoordinateMovingTop<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void UpdateZCoordinateMovingTopBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& /* fm */)
 {
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void UpdateZCoordinateMovingTop<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void UpdateZCoordinateMovingTopBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  using ref_t = typename PHAL::Ref<MeshScalarT>::type;
-
   // Mesh data
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
 
@@ -105,22 +107,24 @@ evaluateFields(typename Traits::EvalData workset)
       const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
       const int ilevel = pos==bot ? ilayer : ilayer+1;
       for (auto node : nodes) {
-        MeshScalarT h;
+        ScalarT h;
         if(haveThickness) {
-          h = std::max(H(cell,node), MeshScalarT(minH));
+          h = std::max(H(cell,node), ScalarT(minH));
         } else {
-          h = std::max(H0(cell,node) + dH(cell,node), MeshScalarT(minH));
+          h = std::max(H0(cell,node) + dH(cell,node), ScalarT(minH));
         }
-        MeshScalarT bed = bedTopo(cell,node);
-        auto floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
+        ScalarT bed = Albany::convertScalar<const ScalarT>(bedTopo(cell,node));
+        bool floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
 
-        MeshScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
-        ref_t vals = topSurface(cell,node);
-        vals = lowSurf+h;
+        ScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
 
-        for(int icomp=0; icomp< numDims; icomp++) {
-          ref_t val = coordVecOut(cell,node,icomp);
-          val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*h)
+        typename PHAL::Ref<ScalarT>::type vals = topSurface(cell,node);
+        vals = lowSurf+h; 
+        
+	ScalarT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
+	for(int icomp=0; icomp< numDims; icomp++) {
+          typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
+          val = (icomp==2) ? Albany::convertScalar<MeshScalarT>(zcoord)
                            : coordVecIn(cell,node,icomp);
         }
       }

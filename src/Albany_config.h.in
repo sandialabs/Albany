@@ -21,8 +21,11 @@
 #cmakedefine CMAKE_CXX_COMPILER_ID "${CMAKE_CXX_COMPILER_ID}"
 #cmakedefine CMAKE_CXX_COMPILER_VERSION "${CMAKE_CXX_COMPILER_VERSION}"
 
-// Whether mesh and parameters depend on each others and/or solution
+// Whether mesh coordinates depend on parameters
 #cmakedefine ALBANY_MESH_DEPENDS_ON_PARAMETERS
+
+// Whether mesh coordinates depend on solution
+#cmakedefine ALBANY_MESH_DEPENDS_ON_SOLUTION
 
 // Whether the Omega_h interface is enabled
 #cmakedefine ALBANY_OMEGAH
