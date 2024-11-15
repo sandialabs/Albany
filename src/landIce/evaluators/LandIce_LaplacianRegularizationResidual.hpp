@@ -55,8 +55,8 @@ namespace LandIce {
     PHX::MDField<const ScalarT>       gradField;
     PHX::MDField<const ParamScalarT>  forcing;
     PHX::MDField<const MeshScalarT>   gradBF;
-    PHX::MDField<const MeshScalarT>   BF;
-    PHX::MDField<const MeshScalarT>   side_BF;
+    PHX::MDField<const RealType>      BF;
+    PHX::MDField<const RealType>      side_BF;
     PHX::MDField<const MeshScalarT>   w_measure;
     PHX::MDField<const MeshScalarT>   w_side_measure;
 

@@ -742,12 +742,16 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFGradInterpolationEvalua
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
+#else
     if(offsetToFirstDOF == -1)
     {
       return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     }
     else  //works only for solution or a set of solution components
       return rcp(new PHAL::FastSolutionGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
+#endif
 }
 
 template<typename EvalT, typename Traits, typename ScalarType>
@@ -865,11 +869,14 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFTensorGradInterpolation
 
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
-
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    return rcp(new PHAL::DOFTensorGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
+#else
     if(offsetToFirstDOF == -1)
       return rcp(new PHAL::DOFTensorGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     else  //works only for solution or a set of solution components
       return rcp(new PHAL::FastSolutionTensorGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
+#endif
 
 }
 
@@ -891,11 +898,14 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructDOFVecGradInterpolationEva
 
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
-
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    return rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
+#else
     if(offsetToFirstDOF == -1)
       return rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
     else  //works only for solution or a set of solution components
       return rcp(new PHAL::FastSolutionVecGradInterpolationBase<EvalT,Traits,ScalarType>(*p,dl));
+#endif
 }
 
 template<typename EvalT, typename Traits, typename ScalarType>

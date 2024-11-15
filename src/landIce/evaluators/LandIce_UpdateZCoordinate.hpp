@@ -20,13 +20,13 @@
 
 namespace LandIce {
 
-template<typename EvalT, typename Traits>
-class UpdateZCoordinateMovingTop : public PHX::EvaluatorWithBaseImpl<Traits>,
+template<typename EvalT, typename Traits, typename ScalarT>
+class UpdateZCoordinateMovingTopBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 		                               public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
+  UpdateZCoordinateMovingTopBase(const Teuchos::ParameterList& p,
                              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData /* d */,
@@ -41,18 +41,22 @@ private:
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node,Dim>   coordVecIn;
   PHX::MDField<const MeshScalarT, Cell, Node>       bedTopo;
-  PHX::MDField<const MeshScalarT, Cell, Node>       H;
+  PHX::MDField<const ScalarT, Cell, Node>           H;
   PHX::MDField<const RealType, Cell, Node>          H0;
-  PHX::MDField<const MeshScalarT, Cell, Node>       dH;
+  PHX::MDField<const ScalarT, Cell, Node>           dH;
 
   // Output:
-  PHX::MDField<MeshScalarT, Cell, Node>       topSurface;
+  PHX::MDField<ScalarT, Cell, Node>           topSurface;
   PHX::MDField<MeshScalarT, Cell, Node, Dim>  coordVecOut;
 
   bool haveThickness;
   double minH, rho_i, rho_w;
   int numDims, numNodes;
 };
+
+// Shortcut name
+template<typename EvalT, typename Traits>
+using UpdateZCoordinateMovingTop = UpdateZCoordinateMovingTopBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
 template<typename EvalT, typename Traits>
 class UpdateZCoordinateMovingBed : public PHX::EvaluatorWithBaseImpl<Traits>,

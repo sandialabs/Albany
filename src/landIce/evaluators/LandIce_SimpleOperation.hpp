@@ -116,6 +116,17 @@ struct Sum
 };
 
 template<typename ScalarT>
+struct AXPY
+{
+  void setup (const Teuchos::ParameterList& p) { factor = p.get<double>("Scaling Factor"); }
+  ScalarT operator() (const ScalarT& x, const ScalarT& y) const {
+    return factor*x+y;
+  }
+  private:
+    double factor;
+};
+
+template<typename ScalarT>
 struct Log
 {
   void setup (const Teuchos::ParameterList& /*p*/) {}
