@@ -113,7 +113,13 @@ evaluateFields(typename Traits::EvalData workset)
   const auto bot = layers_data->bot_side_pos;
   const auto top = layers_data->top_side_pos;
   const auto ws = workset.wsIndex;
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+  const auto elem_lids_ws = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
+
+  // Grab some info from the layers data for device access
+  const auto layerOrd = layers_data->layerOrd;
+  const auto numHorizEntities = layers_data->numHorizEntities;
+  const auto numLayers = layers_data->numLayers;
 
   // Pick element layer that contains the field level
   const auto fieldLayer = fieldLevel==layers_data->numLayers
@@ -122,34 +128,35 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Distributed parameter vector
   const auto& p      = workset.distParamLib->get(this->param_name);
-  const auto  p_data = Albany::getLocalData(p->overlapped_vector().getConst());
+  const auto  p_data = Albany::getDeviceData(p->overlapped_vector().getConst());
 
   // Parameter dof numbering info
-  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().dev();
 
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
   //       to guarantee corresponding nodes are vertically aligned.
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
-  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
-  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
-  const int num_nodes_2d = offsets_p.size();
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,field_pos);
+  const int num_nodes_2d = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos).size();
 
   // Idea: loop over cells. Grab p data from a cell at the right layer,
   //       using offsets that correspond to the elem-side where the param is defined.
   //       Inside, loop over 2d nodes, and process top/bot sides separately
-  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                        KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
-    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
-    const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+    const auto basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+    const auto param_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                           basal_elem_LID * numLayers + fieldLayer;
 
     for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
-      const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
-      const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
-      for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
-        this->val(cell,node) = p_val;
-      }
+      const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p(node2d));
+      const auto p_val = p_lid>=0 ? p_data(p_lid) : 0;
+      this->val(cell,offsets_bot(node2d)) = p_val;
+      this->val(cell,offsets_top(node2d)) = p_val;
     }
-  }
+  });
 }
 
 // **************************************************************
@@ -545,7 +552,12 @@ evaluateFields(typename Traits::EvalData workset)
   const auto bot = layers_data->bot_side_pos;
   const auto top = layers_data->top_side_pos;
   const auto ws = workset.wsIndex;
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+  const auto elem_lids_ws = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
+
+  const auto layerOrd = layers_data->layerOrd;
+  const auto numHorizEntities = layers_data->numHorizEntities;
+  const auto numLayers = layers_data->numLayers;
 
   // Direction vector for the Hessian-vector product
   const auto vvec = workset.hessianWorkset.direction_p;
@@ -578,7 +590,8 @@ evaluateFields(typename Traits::EvalData workset)
       Teuchos::Exceptions::InvalidParameter,
       "\nError in GatherScalarExtruded2DNodalParameter<HessianVec, Traits>: "
       "direction_p is not set and the direction is acrive.\n");
-  const auto vvec_data = is_p_direction_active ? Albany::getLocalData(vvec->col(0).getConst()) : Teuchos::null;
+  Albany::ThyraVDeviceView<const ST> vvec_data;
+  if (is_p_direction_active) vvec_data = Albany::getDeviceData(vvec->col(0).getConst());
 
   // Pick element layer that contains the field level
   const auto fieldLayer = fieldLevel==layers_data->numLayers
@@ -587,28 +600,30 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
-  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
+  const auto p_data = Albany::getDeviceData(p->overlapped_vector().getConst());
 
   // Parameter dof numbering info
   const auto p_dof_mgr        = p->get_dof_mgr();
-  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().dev();
 
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
   //       to guarantee corresponding nodes are vertically aligned.
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
-  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
-  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
-  const int num_nodes_2d = offsets_p.size();
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,field_pos);
+  const int num_nodes_2d = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos).size();
 
   using ref_t = typename PHAL::Ref<ParamScalarT>::type;
-  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
-    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
-    const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+    const auto basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+    const auto param_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                           basal_elem_LID * numLayers + fieldLayer;
     for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
-      const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
-      const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
-      for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
+      const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p(node2d));
+      const auto p_val = p_lid>=0 ? p_data(p_lid) : 0;
+      for (auto node : {offsets_bot(node2d), offsets_top(node2d)}) {
         ref_t val = this->val(cell,node);
         val = HessianVecFad(val.size(), p_val);
         // If we differentiate w.r.t. this parameter, we have to set the first
@@ -618,10 +633,10 @@ evaluateFields(typename Traits::EvalData workset)
         // If we differentiate w.r.t. this parameter direction, we have to set
         // the second derivative to the related direction value
         if (is_p_direction_active)
-          val.val().fastAccessDx(0) = p_lid>=0 ? vvec_data[p_lid] : 0;
+          val.val().fastAccessDx(0) = p_lid>=0 ? vvec_data(p_lid) : 0;
       }
     }
-  }
+  });
 }
 
 } // namespace PHAL
