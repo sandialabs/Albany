@@ -281,7 +281,6 @@ typename std::enable_if<
 create_copy( const std::string& /* name */,
     const Kokkos::DynRankView<T,P...> & src )
 {
-  using Src = Kokkos::DynRankView<T,P...>;
   using Dst = typename Kokkos::DynRankView<T,P...>::non_const_type;
   auto sm = src.impl_map();
   auto sl = sm.layout();
@@ -289,8 +288,7 @@ create_copy( const std::string& /* name */,
   sl.dimension[fad_rank] = sm.dimension_scalar();
   auto real_rank = fad_rank + 1;
   auto ml = Kokkos::Impl::reconstructLayout(sl, real_rank);
-  auto dst = Dst( src.label(), ml );
-  return dst;
+  return Dst ( src.label(), ml );
 }
 
 } // namespace PHAL

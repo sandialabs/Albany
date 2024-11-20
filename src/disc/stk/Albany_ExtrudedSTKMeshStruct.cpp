@@ -174,9 +174,8 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
   const CellTopologyData& ctd = *shards_ctd.getCellTopologyData();
 
   // NOTE: I am marking the mesh as Unstructured rather than Extruded, since
-  //       I am planning to develop a generic interface for Extruded meshes,
-  //       which does not store 3d data (only basal). In order to not confuse
-  //       the two, I keep this mesh as Unstructured.
+  //       I am reserving Extruded for disc/Albany_ExtrudedMesh.*pp, which does
+  //       not store the full 3d mesh.
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Unstructured, ctd, numDim,
                           nsNames, ssNames, worksetSize,
@@ -313,8 +312,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   singlePartVecBottom[0] = nsPartVec["bottom"];
   singlePartVecTop[0] = nsPartVec["top"];
   singlePartVecLateral[0] = nsPartVec["lateral"];
-
-  using SFT = AbstractSTKFieldContainer::STKFieldType;
 
   // Fields required for extrusion
   std::string thickness_name = params->get<std::string>("Thickness Field Name","thickness");
@@ -561,8 +558,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   out->getOStream()->flush();
 
   // Extrude fields
-  extrudeBasalFields (nodes2D,cells2D,maxGlobalCells2dId,maxGlobalNodes2dId);
-  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalCells2dId,maxGlobalNodes2dId);
+  extrudeBasalFields (nodes2D,cells2D,maxGlobalNodes2dId);
+  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalNodes2dId);
 
   // Loading required input fields from file
   this->loadRequiredInputFields (comm);
@@ -719,7 +716,7 @@ void ExtrudedSTKMeshStruct::
 interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
                                const std::vector<stk::mesh::Entity>& cells2d,
                                const std::vector<double>& levelsNormalizedThickness,
-                               GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
+                               GO maxGlobalNodes2dId)
 {
   Teuchos::Array<std::string> node_fields_names, cell_fields_names;
   Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
@@ -937,7 +934,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
 void ExtrudedSTKMeshStruct::
 extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
                     const std::vector<stk::mesh::Entity>& cells2d,
-                    GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
+                    GO maxGlobalNodes2dId)
 {
   Teuchos::Array<std::string> node_fields_names, cell_fields_names;
   Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
@@ -1057,7 +1054,7 @@ ExtrudedSTKMeshStruct::getValidDiscretizationParameters() const {
 
   using TAS = Teuchos::Array<std::string>;
   using TAI = Teuchos::Array<int>;
-  validPL->set<bool>("Export 2D Data", "", "If true, exports the 2D mesh in GMSH format");
+  validPL->set<bool>("Export 2D Data", false, "If true, exports the 2D mesh in GMSH format");
   validPL->set<TAS>("Extrude Basal Node Fields", TAS(), "List of basal node fields to be extruded");
   validPL->set<TAS>("Extrude Basal Elem Fields", TAS(), "List of basal elem fields to be extruded");
   validPL->set<TAI>("Basal Node Fields Ranks",TAI(), "Ranks of basal node fields to be extruded");

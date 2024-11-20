@@ -13,8 +13,8 @@ cmake \
     -D ALBANY_CTEST_TIMEOUT=500 \
     -D ENABLE_CHECK_FPE:BOOL=OFF \
     -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by core' \
-    -D ENABLE_ALBANY_PYTHON:BOOL=ON \
     -D ENABLE_OMEGAH:BOOL=ON \
+    -D ENABLE_ALBANY_PYTHON:BOOL=ON \
     -D PYTHON_EXECUTABLE='/home/projects/albany/tpls/python/gcc/12.2.0/openmpi/4.1.5/gcc-env/bin/python' \
     -D CMAKE_INSTALL_PREFIX:PATH=${ALBANY_INSTALL} \
     -D BUILD_SHARED_LIBS:BOOL=ON \

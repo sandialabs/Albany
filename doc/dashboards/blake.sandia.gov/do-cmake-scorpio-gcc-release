@@ -8,16 +8,19 @@ rm -rf CMake*
 
 SCORPIO_SRC=${BASE_DIR}/repos-gcc/E3SM.MALI.dev/externals/scorpio
 SCORPIO_INSTALL=${BASE_DIR}/build-gcc/ScorpioReleaseInstallGcc
-CC=mpicc
-CXX=mpicxx
-FC=mpif90
 
 cmake \
   -D CMAKE_INSTALL_PREFIX:PATH=${SCORPIO_INSTALL} \
+  -D CMAKE_C_COMPILER=mpicc \
+  -D CMAKE_CXX_COMPILER=mpicxx \
+  -D CMAKE_Fortran_COMPILER=mpif90 \
   -D PnetCDF_PATH=${PARALLEL_NETCDF_ROOT} \
   -D NetCDF_C_PATH=${NETCDF_C_ROOT} \
   -D NetCDF_Fortran_PATH=${NETCDF_FORTRAN_ROOT} \
+  -D WITH_HDF5=ON \
+  -D HDF5_PATH=${HDF5_ROOT} \
   -D PIO_ENABLE_TIMING=OFF \
+  -D PIO_ENABLE_TESTS=OFF \
 ${SCORPIO_SRC}
 
 make -j 96

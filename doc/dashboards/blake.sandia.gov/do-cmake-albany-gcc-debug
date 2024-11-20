@@ -1,6 +1,7 @@
 rm -rf CMake* 
 
 TRILINOS_INSTALL="/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosDebugInstallGccNoWarn"
+ALBANY_INSTALL=
 
 cmake \
     -D ALBANY_TRILINOS_DIR:FILEPATH=${TRILINOS_INSTALL} \
@@ -13,7 +14,10 @@ cmake \
     -D ALBANY_CTEST_TIMEOUT=2400 \
     -D ENABLE_CHECK_FPE:BOOL=OFF \
     -D ALBANY_MPI_EXEC_TRAILING_OPTIONS='--map-by core' \
-    -D ENABLE_ALBANY_PYTHON:BOOL=ON \
     -D ENABLE_OMEGAH:BOOL=ON \
+    -D ENABLE_ALBANY_PYTHON:BOOL=ON \
     -D PYTHON_EXECUTABLE='/home/projects/albany/tpls/python/gcc/12.2.0/openmpi/4.1.5/gcc-env/bin/python' \
+    -D CMAKE_INSTALL_PREFIX:PATH=${ALBANY_INSTALL} \
+    -D BUILD_SHARED_LIBS:BOOL=ON \
+    -D ENABLE_MPAS_INTERFACE:BOOL=ON \
 ..

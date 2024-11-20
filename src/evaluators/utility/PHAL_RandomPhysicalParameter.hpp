@@ -94,7 +94,7 @@ class RandomPhysicalParameter<PHAL::AlbanyTraits::Residual,Traits>
         postRegistrationSetup(d, fm);
     }
 
-    void evaluateFields(typename Traits::EvalData d)
+    void evaluateFields(typename Traits::EvalData /* d */)
     {
       this->param_as_field(0) = this->distribution->fromNormalMapping(this->theta_as_field(0));
 
@@ -124,7 +124,7 @@ class RandomPhysicalParameter<PHAL::AlbanyTraits::Jacobian,Traits>
         postRegistrationSetup(d, fm);
     }
 
-    void evaluateFields(typename Traits::EvalData d)
+    void evaluateFields(typename Traits::EvalData /* d */)
     {
       double theta_val = this->theta_as_field(0).val();
       this->param_as_field(0).val() = this->distribution->fromNormalMapping(theta_val);
@@ -155,7 +155,7 @@ class RandomPhysicalParameter<PHAL::AlbanyTraits::Tangent,Traits>
         postRegistrationSetup(d, fm);
     }
 
-    void evaluateFields(typename Traits::EvalData d)
+    void evaluateFields(typename Traits::EvalData /* d */)
     {
       double theta_val = this->theta_as_field(0).val();
       this->param_as_field(0).val() = this->distribution->fromNormalMapping(theta_val);
@@ -192,7 +192,7 @@ class RandomPhysicalParameter<PHAL::AlbanyTraits::DistParamDeriv,Traits>
         postRegistrationSetup(d, fm);
     }
 
-    void evaluateFields(typename Traits::EvalData d)
+    void evaluateFields(typename Traits::EvalData /* d */)
     {
       double theta_val = this->theta_as_field(0).val();
       this->param_as_field(0).val() = this->distribution->fromNormalMapping(theta_val);
@@ -229,7 +229,7 @@ class RandomPhysicalParameter<PHAL::AlbanyTraits::HessianVec,Traits>
         postRegistrationSetup(d, fm);
     }
 
-    void evaluateFields(typename Traits::EvalData d)
+    void evaluateFields(typename Traits::EvalData /* d */)
     {
       double theta_val = this->theta_as_field(0).val().val();
       this->param_as_field(0).val().val() = this->distribution->fromNormalMapping(theta_val);

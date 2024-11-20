@@ -93,12 +93,6 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (MPI_PATH $ENV{MPI_ROOT})  
-set (MKL_PATH $ENV{MKL_ROOT})  
-set (BOOST_PATH $ENV{BOOST_ROOT}) 
-set (NETCDF_PATH $ENV{NETCDF_ROOT}) 
-set (HDF5_PATH $ENV{HDF5_ROOT})
-set (ZLIB_PATH $ENV{ZLIB_ROOT})  
 
 if (CLEAN_BUILD)
   # Initial cache info

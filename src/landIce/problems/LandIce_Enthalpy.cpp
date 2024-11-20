@@ -70,7 +70,6 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 
 	  const int numNodes = cellBasis->getCardinality();
 	  const int worksetSize = meshSpecs[0]->worksetSize;
-	  const int numCellSides = cellType->getFaceCount();
     const int cubDegree = this->params->get("Cubature Degree", 3);
 	  Intrepid2::DefaultCubatureFactory cubFactory;
 	  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
@@ -130,7 +129,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 	           << ", SideQuadPts= " << numBasalSideQPs << std::endl;
 
 	      dl_basal = rcp(new Albany::Layouts(numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,
-		  										numDim-1,numDim,numCellSides,vecDim,basalSideName));
+                                           numDim-1,numDim,vecDim,basalSideName));
 
 	      dl->side_layouts[basalSideName] = dl_basal;
 	  }

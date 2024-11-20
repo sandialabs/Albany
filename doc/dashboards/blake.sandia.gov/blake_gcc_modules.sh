@@ -14,5 +14,6 @@ module load superlu-dist/8.1.2
 module load parallel-netcdf/1.12.3
 module load netcdf-c/4.9.2
 module load netcdf-fortran/4.6.0
+module load parmetis/4.0.3
 source /home/projects/albany/tpls/python/gcc/12.2.0/openmpi/4.1.5/gcc-env/bin/activate # activate python env
 module list

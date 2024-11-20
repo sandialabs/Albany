@@ -6,7 +6,7 @@ cd $BASE_DIR
 BUILD_OPT="$1"
 
 if [ -z "$BUILD_OPT" ]; then
-   echo "Please supply an argument: sfad6, sfad12 or sfad24"
+   echo "Please supply an argument: sfad6, sfad12, sfad16 or sfad24"
    exit 1;
 fi
 rm -rf gcc_modules.out 
@@ -23,6 +23,9 @@ if [ "$BUILD_OPT" = "sfad6" ] ; then
 fi
 if [ "$BUILD_OPT" = "sfad12" ] ; then
   LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyGccSFad12.txt
+fi
+if [ "$BUILD_OPT" = "sfad16" ] ; then
+  LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyGccSFad16.txt
 fi
 if [ "$BUILD_OPT" = "sfad24" ] ; then
   LOG_FILE=$BASE_DIR/nightly_log_blakeAlbanyGccSFad24.txt

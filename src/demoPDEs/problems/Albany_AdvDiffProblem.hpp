@@ -105,7 +105,7 @@ Teuchos::RCP<const PHX::FieldTag>
 Albany::AdvDiffProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
-  Albany::StateManager& stateMgr,
+  Albany::StateManager& /* stateMgr */,
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
@@ -241,7 +241,7 @@ Albany::AdvDiffProblem::constructEvaluators(
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, Teuchos::null);
   }
 
   return Teuchos::null;

@@ -368,7 +368,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
-operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
+operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
 
   ParamScalarT mu, bedRoughness, power;
 

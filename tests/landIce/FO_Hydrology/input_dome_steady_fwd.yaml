@@ -105,7 +105,7 @@ ANONYMOUS:
         Type: Given Field
   Discretization:
     Number Of Time Derivatives: 0
-    Method: Extruded
+    Method: STKExtruded
     Exodus Output File Name: results-fwd/dome.exo
     Columnwise Ordering: true
     NumLayers: 5

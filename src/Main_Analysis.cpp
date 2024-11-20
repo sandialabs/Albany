@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
                                    && slvrfctry.getParameters()->sublist("Piro").sublist("Analysis").get<bool>("Transient");
 
     const auto albanyAdjointModel = explicitMatrixTranspose || transientAnalysis ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
-    const auto solver      = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel, false);
+    const auto solver      = slvrfctry.createSolver(albanyModel, albanyAdjointModel, false);
 
     stackedTimer->stop("Albany: Setup Time");
 

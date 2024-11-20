@@ -46,10 +46,10 @@ private:
   void interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
                                       const std::vector<stk::mesh::Entity>& cells2d,
                                       const std::vector<double>& levelsNormalizedThickness,
-                                      GO numGlobalCells2d, GO numGlobalNodes2d);
+                                      GO numGlobalNodes2d);
   void extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
                            const std::vector<stk::mesh::Entity>& cells2d,
-                           GO numGlobalCells2d, GO numGlobalNodes2d);
+                           GO numGlobalNodes2d);
 
   Teuchos::RCP<const Teuchos::ParameterList>
   getValidDiscretizationParameters() const;

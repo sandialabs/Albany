@@ -36,7 +36,7 @@ ODEResid<EvalT, Traits>::ODEResid(Teuchos::ParameterList& p) :
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void ODEResid<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& vm)
 {
   this->utils.setFieldData(X,vm);

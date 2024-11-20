@@ -1,7 +1,0 @@
-#cronjob runs on skybridge-login5
-#00 19 * * 1-7 cd /ascldap/users/ikalash/nightlyAlbanyCDash; ssh-keyscan -t rsa github.com >> /home/ikalash/.ssh/known_hosts; bash -l -c "bash clean-up.sh; git clone git@github.com:trilinos/Trilinos.git >& trilinos-clone.log; cd Trilinos; git checkout develop; cd ..; git clone git@github.com:sandialabs/Albany.git >& albany-clone.log; bash build-codes-nightly.sh"
-00 08 * * 1-7 cd /ascldap/users/ikalash/nightlyAlbanyCDash/NightlyTestingEmail; source /ascldap/users/ikalash/nightlyAlbanyCDash/NightlyTestingEmail/process_nightlies.sh >& /ascldap/users/ikalash/nightlyAlbanyCDash/NightlyTestingEmail/process_nightlies.out
-10 08 * * 1-5 cd /ascldap/users/ikalash/nightlyAlbanyCDash/LCMNightlyTestingEmail; bash -l -c "bash process_nightlies_lcm.sh >& process_nightlies_lcm.out"
-20 10 * * 1-7 cd /ascldap/users/ikalash/nightlyAlbanyCDash/SpiritTestingEmail; bash -l -c "bash process_nightlies_spirit.sh >& process_nightlies_spirit.out"
-30 10 * * 1-7 chgrp wg-albany -R /ascldap/users/ikalash/nightlyAlbanyCDash/*
-32 10 * * 1-7 chmod ug+rwX -R /ascldap/users/ikalash/nightlyAlbanyCDash/*

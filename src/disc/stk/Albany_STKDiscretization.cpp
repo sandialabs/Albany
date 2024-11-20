@@ -776,9 +776,7 @@ STKDiscretization::writeSolutionToFile(
 {
 #ifdef ALBANY_DISABLE_OUTPUT_MESH
   *out << "[STKDiscretization::writeSolutionToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
-  (void) soln;
   (void) time;
-  (void) overlapped;
   (void) force_write_solution;
 #else
 #ifdef ALBANY_SEACAS
@@ -824,6 +822,8 @@ STKDiscretization::writeSolutionToFile(
   outputInterval++;
 #endif
 #endif
+  (void) soln;
+  (void) overlapped;
 }
 
 void
@@ -835,8 +835,8 @@ STKDiscretization::writeSolutionMVToFile(
 {
 #ifdef ALBANY_DISABLE_OUTPUT_MESH
   *out << "[STKDiscretization::writeSolutionMVToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
-  (void) soln;
   (void) time;
+  (void) soln;
   (void) overlapped;
   (void) force_write_solution;
 #else
@@ -1849,7 +1849,7 @@ STKDiscretization::computeSideSets()
     TEUCHOS_TEST_FOR_EXCEPTION (
         ctd.name!=topo_hexa->name &&
         ctd.name!=topo_wedge->name, std::runtime_error,
-        "Extruded meshses only allowed if there is one element per layer (hexa or wedges).\n"
+        "Extruded meshes only allowed if there is one element per layer (hexa or wedges).\n"
         "  - current topology name: " << ctd.name << "\n");
 
     const auto& sol_dof_mgr = getDOFManager();
@@ -2011,7 +2011,7 @@ STKDiscretization::determine_entity_pos(
     const auto num_children = bulkData->num_connectivity(parent,rank);
     const auto children = bulkData->begin(parent,rank);
     for (unsigned isub=0; isub<num_children; ++isub) {
-      if (bulkData->relation_exist(parent,rank,isub) && children[isub]==child)
+      if (children[isub]==child)
         return isub;
     }
   }

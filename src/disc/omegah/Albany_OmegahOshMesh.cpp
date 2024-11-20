@@ -9,7 +9,8 @@ namespace Albany {
 
 OmegahOshMesh::
 OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-               const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams)
+               const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+               const int /* numParams */)
 {
   auto& lib = get_omegah_lib();
 

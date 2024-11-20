@@ -1,0 +1,292 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+          #Write Solution to MatrixMarket: -1
+          #Write Jacobian to MatrixMarket: -1
+          #Write Residual to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Transient
+    Name: LandIce Coupled FO H 3D
+    Compute Sensitivities: false
+    Allow Loss Of Derivative Terms: true
+    Time Step: 2.0e-01
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Flat Bed Approximation: true
+    Cubature Degree: 4
+    Basal Cubature Degree: 4
+    Surface Cubature Degree: 4
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Surface Velocity Mismatch
+    Dirichlet BCs:
+      SDBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
+      SDBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
+    Neumann BCs: {}
+    LandIce BCs:
+      Number: 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Field
+          Beta Field Name: basal_friction
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 4
+        Side Set Name: lateralside
+    Parameters:
+      Number Of Parameters: 0
+      Parameter 0:
+        Type: Scalar
+        Name: Glen's Law Homotopy Parameter
+    LandIce Physical Parameters:
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.81e+00
+      Clausius-Clapeyron Coefficient: 0.0
+    LandIce Viscosity:
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 0.3
+      Glen's Law A: 2.400304414e-24            # [Pa^-n s^-1
+      Glen's Law n: 3.0
+      Flow Rate Type: Temperature Based
+    Body Force:
+      Type: FO INTERP SURF GRAD
+  Discretization:
+    Method: STKExtruded
+    Number Of Time Derivatives: 1
+    Exodus Output File Name: output/humboldt_transient.exo
+    Columnwise Ordering: false
+    NumLayers: 5
+    Thickness Field Name: ice_thickness
+    #Surface Height Field Name: surface_height
+    Use Glimmer Spacing: true
+    Extrude Basal Node Fields: [ice_thickness, surface_height, bed_topography]
+    Basal Node Fields Ranks: [1, 1]
+    Interpolate Basal Node Layered Fields: [temperature,velocity]
+    Basal Node Layered Fields Ranks: [1,2]
+    Required Fields Info:
+      Number Of Fields: 5
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2:
+        Field Name: temperature
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3:
+        Field Name: bed_topography 
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 4:
+        Field Name: velocity
+        Field Type: Node Vector
+        Field Origin: Mesh
+    Side Set Discretizations:
+      Side Sets: [basalside, upperside]
+      basalside:
+        Method: Ioss
+        Number Of Time Derivatives: 1
+        Restart Index: 1
+        Exodus Output File Name: humboldt_transient_basal.exo
+        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
+        Use Serial Mesh: ${USE_SERIAL_MESH}
+        Required Fields Info:
+          Number Of Fields: 6
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
+          Field 1:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
+          Field 2:
+            Field Name: temperature
+            Field Type: Node Layered Scalar
+            Field Origin: File
+            Number Of Layers: 8
+            File Name: ../AsciiMeshes/Humboldt/nodal_temperature.ascii
+          Field 3:
+            Field Name: basal_friction
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/basal_friction.ascii
+          Field 4:
+            Field Name: bed_topography #surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii #surface_height.ascii
+          Field 5:
+            Field Name: velocity
+            Field Origin: File
+            Field Type: Node Layered Vector
+            Number Of Layers: 2
+            Vector Dim: 2
+            File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
+      upperside:
+        Method: SideSetSTK
+        Number Of Time Derivatives: 1
+        Exodus Output File Name: humboldt_transient_surface.exo
+        Required Fields Info:
+          Number Of Fields: 2
+          Field 0:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity.ascii
+          Field 1:
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
+  Piro:
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 1
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.0
+          Initial Time Index: 0
+          Initial Time Step: 0.2
+          Final Time: 0.4
+          Final Time Index: 1000
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
+          Output Time List: ''
+          Output Index List: ''
+          #Output Time Interval: 1.0e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: Backward Euler
+        VerboseObject:
+          Verbosity Level: medium
+        Solver Name: Demo Solver
+        Demo Solver: 
+          VerboseObject:
+            Verbosity Level: medium
+          NOX:
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0:
+                Test Type: NormF
+                Norm Type: Two Norm
+                Scale Type: Unscaled
+                Tolerance: 1.0e-04
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 50
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Linear Solver:
+                  Write Linear System: false
+                  Tolerance: 1.0e-4  #used for forward solve
+                Stratimikos Linear Solver:
+                  NOX Stratimikos Options: {}
+                  Stratimikos:
+                    Linear Solver Type: Belos
+                    Linear Solver Types:
+                      Belos:
+                        VerboseObject:
+                          Verbosity Level: medium
+                        Solver Type: Block GMRES
+                        Solver Types:
+                          Block GMRES:
+                            Convergence Tolerance: 1.0e-07
+                            Output Frequency: 10
+                            Output Style: 1
+                            Verbosity: 33
+                            Maximum Iterations: 100
+                            Block Size: 1
+                            Num Blocks: 50
+                            Flexible Gmres: false
+                    Preconditioner Type: Ifpack2
+                    Preconditioner Types:
+                      Ifpack2:
+                        Overlap: 0
+                        Prec Type: Amesos2 # RILUK
+                        Ifpack2 Settings:
+                          Amesos2: {}
+                          Amesos2 solver name: klu
+                          'fact: iluk level-of-fill': 0
+                Rescue Bad Newton Solve: true
+            Line Search:
+              Full Step:
+                Full Step: 1.0
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: true
+                Parameters: false
+                Details: false
+                Linear Solver Details: false
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Minimal
+
+      Stratimikos:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                VerboseObject:
+                  Verbosity Level: medium
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Convergence Tolerance: 1.0e-07
+                    Output Frequency: 10
+                    Output Style: 1
+                    Verbosity: 33
+                    Maximum Iterations: 100
+                    Block Size: 1
+                    Num Blocks: 50
+                    Flexible Gmres: false
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2 # RILUK
+                Ifpack2 Settings:
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+                  'fact: iluk level-of-fill': 0
+
+
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    #Sensitivity For Parameter 0:
+    #  Test Value: 1.829334359669e+07
+    Test Value: 6.299846947873e+06
+...

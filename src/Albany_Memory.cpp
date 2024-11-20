@@ -62,6 +62,7 @@ class MemoryAnalyzer {
     setd(keepcost);
 # undef setd
 #endif
+    (void) data;
   }
 
   static void collectGetrusage (Int* data) {
@@ -74,6 +75,7 @@ class MemoryAnalyzer {
     setd(nsignals); setd(nvcsw); setd(nivcsw);
 # undef setd
 #endif
+    (void) data;
   }
 
   // For the RPI BG/Q.
@@ -92,7 +94,8 @@ class MemoryAnalyzer {
     setd(shared); setd(persist); setd(heapavail); setd(stackavail); setd(stack);
     setd(heap); setd(guard); setd(mmap);
 # undef setd
-#endif    
+#endif
+    (void) data;
   }
 
   void calcStats (const std::vector<Int>& d) {

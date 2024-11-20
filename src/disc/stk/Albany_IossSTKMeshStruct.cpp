@@ -52,7 +52,7 @@ namespace Albany
 IossSTKMeshStruct::
 IossSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                   const Teuchos::RCP<const Teuchos_Comm>& comm,
-					        const int numParams_)
+                  const int numParams_)
  : GenericSTKMeshStruct(params_, -1, numParams_)
  , out(Teuchos::VerboseObjectBase::getDefaultOStream())
  , useSerialMesh(false)
@@ -557,7 +557,7 @@ IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for initial guess/condition.");
   validPL->set<Teuchos::ParameterList>("Required Fields Info",Teuchos::ParameterList());
-  validPL->set<bool>("Write points coordinates to ascii file", "", "Write the mesh points coordinates to file?");
+  validPL->set<bool>("Write points coordinates to ascii file", false, "Write the mesh points coordinates to file?");
 
   Teuchos::Array<std::string> emptyStringArray;
   validPL->set<Teuchos::Array<std::string> >("Additional Node Sets", emptyStringArray, "Declare additional node sets not present in the input file");

@@ -673,9 +673,8 @@ ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::string expres
 			      "Error! Invalid call ExpressionParser::ExpressionParser(), neq = " << neq
 			      << ", spatialDim = " << spatialDim << ".");
 
-  bool success;
-
 #ifdef ALBANY_PAMGEN
+  bool success;
   // set up RTCompiler
   rtcFunctionX.addVar("double", "x");
   rtcFunctionX.addVar("double", "y");

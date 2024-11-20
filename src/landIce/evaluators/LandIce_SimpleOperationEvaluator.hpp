@@ -134,6 +134,14 @@ public:
 };
 
 template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
+class BinaryAXPYOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::AXPY>
+{
+public:
+  BinaryAXPYOp (const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits, typename InOutScalarT, typename FieldScalarT>
 class BinaryLogOp : public SimpleBinaryOperation<EvalT,Traits,InOutScalarT,FieldScalarT,BinaryOps::Log>
 {
 public:

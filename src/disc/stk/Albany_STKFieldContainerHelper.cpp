@@ -5,11 +5,10 @@
 //*****************************************************************//
 
 #include "Albany_STKFieldContainerHelper.hpp"
-#include "Albany_STKUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_ThyraUtils.hpp"
 
-#include <stk_mesh/base/FieldBase.hpp>
+#include <stk_mesh/base/Field.hpp>
 #include <type_traits>
 #include <numeric>
 
@@ -29,13 +28,6 @@ fillVector (      Thyra_Vector&    field_thyra,
             const bool overlapped,
             const std::vector<int>& components)
 {
-  constexpr int rank = FieldRank<FieldType>::n;
-  static_assert(rank==0 || rank==1,
-                "Error! Can only handle Scalar and Vector fields for now.\n");
-
-  using ScalarT = typename FieldScalar<FieldType>::type;
-  using ViewT = Kokkos::View<const ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
-
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const bool restricted = dof_mgr->part_name()!=dof_mgr->elem_block_name();
 
@@ -111,13 +103,6 @@ saveVector(const Thyra_Vector& field_thyra,
            const bool overlapped,
            const std::vector<int>& components)
 {
-  constexpr int rank = FieldRank<FieldType>::n;
-  static_assert(rank==0 || rank==1,
-                "Error! Can only handle scalar and vector fields for now.\n");
-
-  using ScalarT = typename FieldScalar<FieldType>::type;
-  using ViewT = Kokkos::View<ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
-  
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const bool restricted = dof_mgr->part_name()!=dof_mgr->elem_block_name();
 
@@ -176,11 +161,7 @@ void STKFieldContainerHelper::
 copySTKField(const FieldType& source,
                    FieldType& target)
 {
-  constexpr int rank = FieldRank<FieldType>::n;
-  static_assert(rank==0 || rank==1,
-                "Error! Can only handle scalar and vector fields for now.\n");
-
-  using ScalarT = typename FieldScalar<FieldType>::type;
+  using ScalarT = FieldType::value_type;
   using SrcViewT = Kokkos::View<const ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
   using TgtViewT = Kokkos::View<      ScalarT**,Kokkos::LayoutRight,Kokkos::HostSpace>;
 

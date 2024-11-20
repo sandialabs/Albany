@@ -57,7 +57,7 @@ public :
   virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
 			 PHX::FieldManager<Traits>& fm);
   virtual void evaluateFields (typename Traits::EvalData workset);
-  virtual ScalarT & getValue(const std::string &n) { return m_constant;};
+  virtual ScalarT & getValue(const std::string &/* n */) { return m_constant;};
 private :
   ScalarT     m_constant;
   std::size_t m_num_qp;
@@ -99,7 +99,8 @@ EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
 template<typename EvalT,typename Traits>
 void 
 Constant<EvalT,Traits>::
-DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+DependentFields(Source<EvalT,Traits> &/* source */,
+                Teuchos::ParameterList& /* p */) {
 }
 
 template<typename EvalT,typename Traits>
@@ -145,7 +146,7 @@ public :
   virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
 			 PHX::FieldManager<Traits>& fm);
   virtual void evaluateFields (typename Traits::EvalData workset);
-  virtual ScalarT & getValue(const std::string &n) { return m_constant;};
+  virtual ScalarT & getValue(const std::string &/* n */) { return m_constant;};
 private :
   ScalarT     m_constant;
   std::size_t m_num_qp;
@@ -224,7 +225,8 @@ EvaluatedFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
 template<typename EvalT,typename Traits>
 void 
 Table<EvalT,Traits>::
-DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
+DependentFields(Source<EvalT,Traits> &/* source */,
+                Teuchos::ParameterList& /* p */) {
 }
 
 template<typename EvalT,typename Traits>
@@ -298,7 +300,7 @@ public :
   virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
 			 PHX::FieldManager<Traits>& fm);
   virtual void evaluateFields (typename Traits::EvalData workset);
-  virtual ScalarT & getValue(const std::string &n) { return m_constant;};
+  virtual ScalarT & getValue(const std::string &/* n */) { return m_constant;};
 private :
   ScalarT     m_constant; 
   std::size_t m_num_qp;
@@ -410,7 +412,7 @@ public :
   virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
 			 PHX::FieldManager<Traits>& fm);
   virtual void evaluateFields (typename Traits::EvalData workset);
-  virtual ScalarT & getValue(const std::string &n) { return m_factor;};
+  virtual ScalarT & getValue(const std::string &/* n */) { return m_factor;};
 private :
   ScalarT     m_factor;
   double      m_constant;
@@ -778,11 +780,11 @@ inline bool Monotone::check_for_existance(Teuchos::ParameterList &source_list)
   return exists;
 }
 
-inline Monotone::Monotone(Teuchos::ParameterList &source_list)
+inline Monotone::Monotone(Teuchos::ParameterList& /* source_list */)
 {
 }
 
-inline RealType Monotone::evaluateFields(const RealType time)
+inline RealType Monotone::evaluateFields(const RealType /* time */)
 { return 1.0; }
 
 
@@ -996,7 +998,7 @@ Source<EvalT, Traits>::~Source() {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void Source<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   for (std::size_t i=0; i<m_sources.size(); ++i) {

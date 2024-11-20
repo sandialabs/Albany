@@ -97,7 +97,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
     const int                                                 neq_,
     const int                                                 numDim_,
-    const Teuchos::RCP<StateInfoStruct>&                      sis,
+    const Teuchos::RCP<StateInfoStruct>&                      /* sis */,
     const int                                                 num_params_)
     : GenericSTKFieldContainer(
           params_,
@@ -114,7 +114,7 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
 #endif
   //IKT FIXME? - currently won't write dxdp to output file if problem is steady,
   //as this output doesn't work in same way.  May want to change in the future.
-  const auto& sens_method = params_->get<std::string>("Sensitivity Method","NONE");
+  const auto& sens_method = params_->get<std::string>("Sensitivity Method","None");
 
   output_sens_field = this->num_params > 0 && num_time_deriv > 0 && sens_method != "None";
 
@@ -179,24 +179,23 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   }
 
   //Transient sensitivities output to Exodus
-  const int num_sens = (sens_method == "Forward") ? this->num_params : 1;
-  for (int np = 0; np < num_sens; np++) {
-    if (output_sens_field == true) {
-      solution_field_dxdp[np] = &metaData_->declare_field<double>(
-          stk::topology::NODE_RANK,
-          params_->get<std::string>(
-              sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]));
-      stk::mesh::put_field_on_mesh(
-          *solution_field_dxdp[np],
-          metaData_->universal_part(),
-          neq_,
-          nullptr);
-    }
+  if(output_sens_field) {
+    const int num_sens = (sens_method == "Forward") ? this->num_params : 1;
+    for (int np = 0; np < num_sens; np++) {
+        solution_field_dxdp[np] = &metaData_->declare_field<double>(
+            stk::topology::NODE_RANK,
+            params_->get<std::string>(
+                sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]));
+        stk::mesh::put_field_on_mesh(
+            *solution_field_dxdp[np],
+            metaData_->universal_part(),
+            neq_,
+            nullptr);
 #ifdef ALBANY_SEACAS
-    if (output_sens_field == true)
       stk::io::set_field_role(
           *solution_field_dxdp[np], Ioss::Field::TRANSIENT);
 #endif
+    }
   }
 }
 
@@ -352,9 +351,6 @@ fillVectorImpl(Thyra_Vector&                         field_vector,
                const Teuchos::RCP<const DOFManager>& field_dof_mgr,
                const bool                            overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (!this->solutionFieldContainer, std::logic_error,
-    "Error OrdinarySTKFieldContainer::fillVectorImpl not called from a solution field container.\n");
-
   // Figure out if it's a nodal or elem field
   const auto& fp = field_dof_mgr->getGeometricFieldPattern();
   const auto& ftopo = field_dof_mgr->get_topology();

@@ -101,7 +101,7 @@ namespace LandIce
   template<typename EvalT, typename Traits, typename VelocityType>
   KOKKOS_INLINE_FUNCTION
   void w_Resid<EvalT,Traits,VelocityType>::
-  operator() (const wResid_Cell_Tag& tag, const int& cell) const {
+  operator() (const wResid_Cell_Tag&, const int& cell) const {
 
     MeshScalarT diam_z(0);//, diam_xy(0), diam_z(0);
     for (std::size_t i = 0; i < numNodes; ++i) {
@@ -120,7 +120,7 @@ namespace LandIce
   template<typename EvalT, typename Traits, typename VelocityType>
   KOKKOS_INLINE_FUNCTION
   void w_Resid<EvalT,Traits,VelocityType>::
-  operator() (const wResid_Side_Tag& tag, const int& side_idx) const {
+  operator() (const wResid_Side_Tag&, const int& side_idx) const {
 
     // Get the local data of side and cell
     const int cell = sideSet.ws_elem_idx.d_view(side_idx);

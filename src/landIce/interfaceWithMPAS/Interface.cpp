@@ -324,7 +324,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   Teuchos::ArrayRCP<const ST> solution_constView;
   try {
     auto model = slvrfctry->createModel(albanyApp);
-    solver = slvrfctry->createSolver(mpiComm, model, Teuchos::null, true);
+    solver = slvrfctry->createSolver(model, Teuchos::null, true);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -714,7 +714,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   discretizationList->set("Workset Size", discretizationList->get("Workset Size", -1));
 
-  discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
+  discretizationList->set("Method", discretizationList->get("Method", "STKExtruded")); //set to STKExtruded is not defined
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);

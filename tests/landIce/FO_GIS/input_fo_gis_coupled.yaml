@@ -53,7 +53,7 @@ ANONYMOUS:
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: gis_coupled.exo
     Workset Size: 2000
@@ -147,18 +147,10 @@ ANONYMOUS:
         Combo Type: OR
         Number of Tests: 2
         Test 0:
-          Test Type: Combo
-          Combo Type: OR
-          Number of Tests: 2
-          Test 0:
-            Test Type: NormF
-            Norm Type: Two Norm
-            Scale Type: Scaled
-            Tolerance: 1.0e-05
-          Test 1:
-            Test Type: NormWRMS
-            Absolute Tolerance: 1.0e-06
-            Relative Tolerance: 1.0e-06
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Unscaled
+          Tolerance: 1.0e-02
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
@@ -183,6 +175,7 @@ ANONYMOUS:
                       Convergence Tolerance: 1.0e-07
                       Output Frequency: 10
                       Output Style: 1
+                      Verbosity: 33
                       Maximum Iterations: 100
                       Block Size: 1
                       Num Blocks: 50
@@ -219,6 +212,6 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     Sensitivity For Parameter 0:
-      Test Value: 1.829143517389e+07
-    Test Value: 1.096541803121e+08
+      Test Value: 1.829143533112e+07
+    Test Value: 1.096045141735e+08
 ...

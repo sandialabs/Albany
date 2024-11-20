@@ -229,7 +229,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
     ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, paramList);
   }
 
   return Teuchos::null;

@@ -1,0 +1,2 @@
+00 01 * * 1,3,5 source /lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm/install_and_test.sh
+00 05 * * 1,3,5 source /lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm/post_install.sh

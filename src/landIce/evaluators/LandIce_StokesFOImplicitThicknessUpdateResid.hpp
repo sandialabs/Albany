@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_ScalarOrdinalTypes.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -44,7 +45,6 @@ private:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> gradBF;
   PHX::MDField<const ScalarT,Cell,Node> dH;
-  PHX::MDField<const ScalarT,Cell,Node> H0;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

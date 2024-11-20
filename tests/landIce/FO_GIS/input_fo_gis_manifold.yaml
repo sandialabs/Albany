@@ -58,7 +58,7 @@ ANONYMOUS:
       Y_0: 0.0
   Discretization:
     Columnwise Ordering: true
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: gis_manifold.exo
     NumLayers: 5

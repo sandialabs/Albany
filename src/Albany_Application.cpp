@@ -1309,7 +1309,7 @@ Application::computeGlobalResidualImpl(
     const Teuchos::RCP<const Thyra_Vector> x,
     const Teuchos::RCP<const Thyra_Vector> x_dot,
     const Teuchos::RCP<const Thyra_Vector> x_dotdot,
-    Teuchos::Array<ParamVec> const&        p,
+    Teuchos::Array<ParamVec> const&        /* p */,
     const Teuchos::RCP<Thyra_Vector>&      f,
     double                                 dt)
 {
@@ -2035,7 +2035,7 @@ Application::applyGlobalDistParamDerivImpl(
     const Teuchos::RCP<const Thyra_Vector>&      x,
     const Teuchos::RCP<const Thyra_Vector>&      xdot,
     const Teuchos::RCP<const Thyra_Vector>&      xdotdot,
-    const Teuchos::Array<ParamVec>&              p,
+    const Teuchos::Array<ParamVec>&              /* p */,
     const std::string&                           dist_param_name,
     const bool                                   trans,
     const Teuchos::RCP<const Thyra_MultiVector>& V,
@@ -2102,9 +2102,12 @@ Application::applyGlobalDistParamDerivImpl(
   RCP<Thyra_MultiVector> overlapped_V;
   if (trans) {
     overlapped_V = Thyra::createMembers(
-        cas_manager->getOverlappedVectorSpace(), V_bc->domain()->dim());
+        cas_manager->getOverlappedVectorSpace(), V->domain()->dim());
     overlapped_V->assign(0.0);
-    cas_manager->scatter(V_bc, overlapped_V, CombineMode::INSERT);
+    if (dfm != Teuchos::null)
+      cas_manager->scatter(V_bc, overlapped_V, CombineMode::INSERT);
+    else
+      cas_manager->scatter(V, overlapped_V, CombineMode::INSERT);
   } else {
     const auto& vs = distParamLib->get(dist_param_name)->overlap_vector_space();
     overlapped_V   = Thyra::createMembers(vs, V->domain()->dim());

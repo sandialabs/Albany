@@ -9,7 +9,8 @@
 
 #include "Albany_ScalarOrdinalTypes.hpp"
 
-#include "Panzer_ConnManager.hpp"
+#include <Panzer_ConnManager.hpp>
+#include <Panzer_FieldPattern.hpp>
 
 #include <vector>
 
@@ -40,12 +41,12 @@ public:
     return this->getElementBlock(elem_block_name());
   }
 
-  const std::vector<LO> & getNeighborElementBlock(const std::string & blockId) const override
+  const std::vector<LO> & getNeighborElementBlock(const std::string & /* blockId */) const override
   {
     static std::vector<LO> emptyVec;
     throw std::runtime_error(
         "Error! Albany does not use elements halos, so the method\n"
-        "       'OmegahConnManager::getNeighborElementBlock' should not have been called.\n");
+        "       'ConnManager::getNeighborElementBlock' should not have been called.\n");
     return emptyVec;
   }
 
@@ -100,10 +101,29 @@ public:
 
     return topologies[0];
   }
+
+  // Overload, not shadow
+  using panzer::ConnManager::buildConnectivity;
+  void buildConnectivity(const Teuchos::RCP<const panzer::FieldPattern> &fp) {
+    if (is_connectivity_built()) {
+      TEUCHOS_TEST_FOR_EXCEPTION (not m_fp->equals(*fp), std::runtime_error,
+          "Error! Rebuilding conn mgr with a different field pattern!\n"
+          "Old FP\n" << *m_fp << "\n"
+          "New FP\n" << *fp << "\n");
+      return;
+    }
+
+    this->buildConnectivity(*fp);
+
+    // Store copy of input pattern for later checks
+    m_fp = fp;
+  }
+
+  bool is_connectivity_built () const { return not m_fp.is_null(); }
 protected:
   std::vector<std::string> m_elem_blocks_names;
 
-  bool m_is_connectivity_built = false;
+  Teuchos::RCP<const panzer::FieldPattern> m_fp;
 };
 
 } // namespace Albany

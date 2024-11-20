@@ -1,12 +1,15 @@
 #!/bin/bash
-# MALI build script
+# Build SCORPIO
 BASE_DIR=/home/projects/albany/nightlyCDashAlbanyBlake
+bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
+
+# MALI build script
 cd ${BASE_DIR}/repos-gcc/E3SM.MALI.dev/components/mpas-albany-landice
 
 # External libs
 SCORPIO_INSTALL=${BASE_DIR}/build-gcc/ScorpioReleaseInstallGcc
 TRILINOS_INSTALL=/home/projects/albany/nightlyCDashTrilinosBlake/build-gcc/TrilinosReleaseInstallGcc
-ALBANY_INSTALL=${BASE_DIR}/build-gcc/AlbanyReleaseInstallGcc
+ALBANY_INSTALL=${BASE_DIR}/build-gcc/AlbanyReleaseInstallGccSFad12
 MALI_INSTALL=${BASE_DIR}/build-gcc/MALIReleaseInstallGcc
 source ${ALBANY_INSTALL}/export_albany.in
 echo ${ALBANY_LINK_LIBS}

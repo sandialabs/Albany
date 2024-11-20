@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
     // Explicit adjoint model is not needed if we are not computing adjoint sensitivities
     const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
     const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
-    const auto solver = slvrfctry.createSolver(comm, albanyModel, albanyAdjointModel, true);
+    const auto solver = slvrfctry.createSolver(albanyModel, albanyAdjointModel, true);
 
     stackedTimer->stop("Albany: Setup Time");
 

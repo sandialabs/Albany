@@ -70,6 +70,7 @@ public:
     * \param[in] fp Field pattern to build connectivity for
     */
   void buildConnectivity(const panzer::FieldPattern & fp) override;
+  using ConnManager::buildConnectivity;
 
   void writeConnectivity();
 

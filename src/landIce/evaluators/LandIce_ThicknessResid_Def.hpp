@@ -27,14 +27,21 @@ template<typename EvalT, typename Traits>
 ThicknessResid<EvalT, Traits>::
 ThicknessResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  dH       (p.get<std::string> ("Thickness Increment Variable Name"), dl->node_scalar),
-  H0       (p.get<std::string> ("Past Thickness Name"), dl->node_scalar),
+  Hdiff    (p.get<std::string> ("Thickness Change Variable Name"), dl->node_scalar),
+  H0       (p.get<std::string> ("Initial Thickness Name"), dl->node_scalar),
   coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
-  this->addDependentField(dH);
+  this->addDependentField(Hdiff);
   this->addDependentField(H0);
   this->addDependentField(coordVec);
+
+  unsteady = p.get<bool>("Unsteady");
+  if(unsteady) {
+    dHdt = decltype(dHdt)(p.get<std::string> ("Thickness Dot Variable Name"), dl->node_scalar);
+    this->addDependentField(dHdt);
+  } 
+
   if(p.isParameter("SMB Name")) {
    SMB = decltype(SMB)(p.get<std::string> ("SMB Name"), dl->node_scalar);
    have_SMB = true;
@@ -126,14 +133,14 @@ evaluateFields(typename Traits::EvalData workset)
 
     Kokkos::DynRankView<ScalarT, PHX::Device> dofSide;
     Kokkos::DynRankView<ScalarT, PHX::Device> dofSideVec;
-    Kokkos::DynRankView<ScalarT, PHX::Device> dH_Side;
+    Kokkos::DynRankView<ScalarT, PHX::Device> dHdt_Side;
     Kokkos::DynRankView<ScalarT, PHX::Device> SMB_Side;
-    Kokkos::DynRankView<ScalarT, PHX::Device> H0_Side;
+    Kokkos::DynRankView<ScalarT, PHX::Device> H_Side;
     Kokkos::DynRankView<ScalarT, PHX::Device> V_Side;
 
-    Kokkos::DynRankView<ScalarT, PHX::Device> dH_Cell;
+    Kokkos::DynRankView<ScalarT, PHX::Device> dHdt_Cell;
     Kokkos::DynRankView<ScalarT, PHX::Device> SMB_Cell;
-    Kokkos::DynRankView<ScalarT, PHX::Device> H0_Cell;
+    Kokkos::DynRankView<ScalarT, PHX::Device> H_Cell;
     Kokkos::DynRankView<ScalarT, PHX::Device> V_Cell;
     Kokkos::DynRankView<ScalarT, PHX::Device> gradH_Side;
     Kokkos::DynRankView<ScalarT, PHX::Device> divV_Side;
@@ -171,9 +178,9 @@ evaluateFields(typename Traits::EvalData workset)
 
       dofSide = Kokkos::createDynRankView(Residual.get_view(), "XXX", 1, numQPsSide);
       dofSideVec = Kokkos::createDynRankView(Residual.get_view(), "XXX", 1, numQPsSide, numVecFODims);
-      dH_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      dHdt_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
       SMB_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
-      H0_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      H_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
       V_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide, numVecFODims);
 
       // Pre-Calculate reference element quantities
@@ -218,19 +225,18 @@ evaluateFields(typename Traits::EvalData workset)
       FST::multiplyMeasure(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      dH_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
+      dHdt_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
       SMB_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
-      H0_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
+      H_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
       V_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes, numVecFODims);
       gradH_Side = createDynRankView(Residual.get_view(), "xxx", numQPsSide, numVecFODims);
       divV_Side = createDynRankView(Residual.get_view(), "xxx", numQPsSide);
 
       std::map<LO, std::size_t>::const_iterator it;
-
       for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
-        dH_Cell(node) = dH(elem_LID, node);
-        H0_Cell(node) = H0(elem_LID, node);
+        dHdt_Cell(node) = unsteady ? dHdt(elem_LID, node) : ScalarT(Hdiff(elem_LID, node)/ *dt);
+        H_Cell(node) = Hdiff(elem_LID, node) + H0(elem_LID, node);//unsteady ? ScalarT(Hdiff(elem_LID, node) + H0(elem_LID, node)) : ScalarT(H0(elem_LID, node));
         SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
           V_Cell(node, dim) = V(iSide, i, dim);
@@ -239,8 +245,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       // This is needed, since evaluate currently sums into
       for (unsigned int qp = 0; qp < numQPsSide; qp++) {
-        dH_Side(qp) = 0.0;
-        H0_Side(qp) = 0.0;
+        dHdt_Side(qp) = 0.0;
+        H_Side(qp) = 0.0;
         SMB_Side(qp) = 0.0;
         divV_Side(qp) = 0.0;
         for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
@@ -254,9 +260,9 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i];
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           const MeshScalarT& tmp = trans_basis_refPointsSide(0, node, qp);
-          dH_Side(qp) += dH_Cell(node) * tmp;
+          dHdt_Side(qp) += dHdt_Cell(node) * tmp;
           SMB_Side(qp) += SMB_Cell(node) * tmp;
-          H0_Side(qp) += H0_Cell(node) * tmp;
+          H_Side(qp) += H_Cell(node) * tmp;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             V_Side(qp, dim) += V_Cell(node, dim) * tmp;
         }
@@ -267,7 +273,7 @@ evaluateFields(typename Traits::EvalData workset)
           std::size_t node = side.node[i];
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
             const MeshScalarT& tmp = trans_gradBasis_refPointsSide(0, node, qp, dim);
-            gradH_Side(qp, dim) += H0_Cell(node) * tmp;
+            gradH_Side(qp, dim) += H_Cell(node) * tmp;
             divV_Side(qp) += V_Cell(node, dim) * tmp;
           }
         }
@@ -277,11 +283,11 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i];
         ScalarT res = 0;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-          ScalarT divHV = divV_Side(qp)* H0_Side(qp);
+          ScalarT divHV = divV_Side(qp)* H_Side(qp);
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             divHV += gradH_Side(qp, dim)*V_Side(qp,dim);
 
-         ScalarT tmp = dH_Side(qp) + (*dt/1000.0) * divHV - *dt*SMB_Side(qp);
+          ScalarT tmp = dHdt_Side(qp) + divHV/1000.0 - SMB_Side(qp);
           res +=tmp * weighted_trans_basis_refPointsSide(0, node, qp);
         }
         Residual(elem_LID,node) = res;

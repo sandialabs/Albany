@@ -139,7 +139,7 @@ template<typename EvalT, typename Traits>
 template<int NumNodes>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
-operator() (const LandIce_3D_Opt_Tag<NumNodes>& tag, const int& cell) const{
+operator() (const LandIce_3D_Opt_Tag<NumNodes>&, const int& cell) const{
   static constexpr int num_nodes = LandIce_3D_Opt_Tag<NumNodes>::num_nodes;
   ScalarT res0[num_nodes] = {};
   ScalarT res1[num_nodes] = {};
@@ -174,7 +174,7 @@ operator() (const LandIce_3D_Opt_Tag<NumNodes>& tag, const int& cell) const{
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
-operator() (const LandIce_3D_Tag& tag, const int& cell) const{
+operator() (const LandIce_3D_Tag&, const int& cell) const{
 
   for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
@@ -238,7 +238,7 @@ operator() (const LandIce_3D_Tag& tag, const int& cell) const{
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
-operator() (const POISSON_3D_Tag& tag, const int& cell) const{
+operator() (const POISSON_3D_Tag&, const int& cell) const{
 
   for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
@@ -258,7 +258,7 @@ operator() (const POISSON_3D_Tag& tag, const int& cell) const{
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
-operator() (const LandIce_2D_Tag& tag, const int& cell) const{
+operator() (const LandIce_2D_Tag&, const int& cell) const{
 
   for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
@@ -279,7 +279,7 @@ operator() (const LandIce_2D_Tag& tag, const int& cell) const{
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
-operator() (const LandIce_XZ_2D_Tag& tag, const int& cell) const{
+operator() (const LandIce_XZ_2D_Tag&, const int& cell) const{
 
   for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;
@@ -300,7 +300,7 @@ operator() (const LandIce_XZ_2D_Tag& tag, const int& cell) const{
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
-operator() (const POISSON_2D_Tag& tag, const int& cell) const{
+operator() (const POISSON_2D_Tag&, const int& cell) const{
 
   for (unsigned int node=0; node<numNodes; ++node){
     Residual(cell,node,0)=0.;

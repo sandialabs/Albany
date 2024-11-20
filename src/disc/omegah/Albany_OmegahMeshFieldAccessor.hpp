@@ -22,9 +22,9 @@ public:
                        const int numComps);
 
   // Read from mesh methods
-  void fillSolnVector (Thyra_Vector&        soln,
-                       const dof_mgr_ptr_t& sol_dof_mgr,
-                       const bool           overlapped) override
+  void fillSolnVector (Thyra_Vector&        /* soln */,
+                       const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                       const bool           /* overlapped */) override
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::fillSolnVector");
   }
@@ -34,9 +34,9 @@ public:
                    const dof_mgr_ptr_t& field_dof_mgr,
                    const bool           overlapped) override;
 
-  void fillSolnMultiVector (Thyra_MultiVector&   soln,
-                            const dof_mgr_ptr_t& sol_dof_mgr,
-                            const bool           overlapped) override
+  void fillSolnMultiVector (Thyra_MultiVector&   /* soln */,
+                            const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                            const bool           /* overlapped */) override
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::fillSolnMultiVector");
   }
@@ -47,44 +47,44 @@ public:
                    const dof_mgr_ptr_t& field_dof_mgr,
                    const bool           overlapped) override;
 
-  void saveSolnVector (const Thyra_Vector& soln,
-                       const mv_ptr_t&     soln_dxdp,
-                       const dof_mgr_ptr_t& sol_dof_mgr,
-                       const bool           overlapped) override
+  void saveSolnVector (const Thyra_Vector&  /* soln */,
+                       const mv_ptr_t&      /* soln_dxdp */,
+                       const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                       const bool           /* overlapped */) override
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveSolnVector");
   }
 
-  void saveSolnVector (const Thyra_Vector&  soln,
-                       const mv_ptr_t&      soln_dxdp,
-                       const Thyra_Vector&  soln_dot,
-                       const dof_mgr_ptr_t& sol_dof_mgr,
-                       const bool           overlapped) override
+  void saveSolnVector (const Thyra_Vector&  /* soln */,
+                       const mv_ptr_t&      /* soln_dxdp */,
+                       const Thyra_Vector&  /* soln_dot */,
+                       const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                       const bool           /* overlapped */) override
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveSolnVector");
   }
 
-  void saveSolnVector (const Thyra_Vector&  soln,
-                       const mv_ptr_t&      soln_dxdp,
-                       const Thyra_Vector&  soln_dot,
-                       const Thyra_Vector&  soln_dotdot,
-                       const dof_mgr_ptr_t& sol_dof_mgr,
-                       const bool           overlapped) override
+  void saveSolnVector (const Thyra_Vector&  /* soln */,
+                       const mv_ptr_t&      /* soln_dxdp */,
+                       const Thyra_Vector&  /* soln_dot */,
+                       const Thyra_Vector&  /* soln_dotdot */,
+                       const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                       const bool           /* overlapped */) override
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveSolnVector");
   }
 
-  void saveResVector (const Thyra_Vector&  res,
-                      const dof_mgr_ptr_t& dof_mgr,
-                      const bool          overlapped) override
+  void saveResVector (const Thyra_Vector&  /* res */,
+                      const dof_mgr_ptr_t& /* dof_mgr */,
+                      const bool           /* overlapped */) override
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveResVector");
   }
 
-  void saveSolnMultiVector (const Thyra_MultiVector& soln,
-                            const mv_ptr_t&          soln_dxdp,
-                            const dof_mgr_ptr_t&     node_vs,
-                            const bool          overlapped) override
+  void saveSolnMultiVector (const Thyra_MultiVector& /* soln */,
+                            const mv_ptr_t&          /* soln_dxdp */,
+                            const dof_mgr_ptr_t&     /* node_vs */,
+                            const bool               /* overlapped */) override
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveSolnMultiVector");
   }

@@ -32,10 +32,23 @@ StokesFOThickness::StokesFOThickness(
   TEUCHOS_TEST_FOR_EXCEPTION (surfaceSideName=="__INVALID__", std::runtime_error,
     "Error! StokesFOThickness requires a valid surfaceSideName, since the thickness equation is solved on the surface.\n");
   // Defining the thickness equation only in 2D (basal side)
+
+  std::string sol_method = params->get<std::string>("Solution Method");
+  if (sol_method=="Transient") {
+    unsteady = true;
+  } else {
+    unsteady = false;
+  }
+
   sideSetEquations[2].push_back(surfaceSideName);
 
   dof_names.resize(2);
-  dof_names[1] = "ice_thickness Increment";
+  dof_names[1] = ice_thickness_name + "_change";
+  if(unsteady) {
+    dof_names_dot.resize(2);
+    dof_names_dot[0] = dof_names[0] + "_dot";
+    dof_names_dot[1] = ice_thickness_name + "_dot";
+  }
 
   resid_names.resize(2);
   resid_names[1] = dof_names[1] + " Residual";
@@ -43,12 +56,16 @@ StokesFOThickness::StokesFOThickness(
   scatter_names.resize(2);
   scatter_names[1] = "Scatter " + resid_names[1];
 
-  dof_offsets.resize(2);
+  dof_offsets.resize(2,0);
   dof_offsets[1] = vecDimFO;
 
   // We have two values for ice_thickness: the initial one, and the updated one.
   initial_ice_thickness_name = ice_thickness_name;
-  ice_thickness_name += "_computed";
+
+  if(unsteady) {
+    surface_height_name += "_computed";
+    ice_thickness_name += "_computed";
+  }
 
   effectivePressure_from_basalFrictionEval = true;
 }
@@ -77,7 +94,7 @@ StokesFOThickness::buildFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
 {
   // Allocate memory for unmanaged fields
   fieldUtils = Teuchos::rcp(new Albany::FieldUtils(fm0, dl));
-  buildStokesFOBaseFields(fm0);
+  buildStokesFOBaseFields();
 
   // Call constructFields<EvalT>() for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructFieldsOp<StokesFOThickness> op(*this, fm0);
@@ -181,6 +198,7 @@ StokesFOThickness::getValidProblemParameters() const
 
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
+  validPL->set<bool>("Allow Loss Of Derivative Terms", false, "Allow loss of derivative terms in mesh coordinates");
   validPL->set<double>("Time Step", 1.0, "Time step for divergence flux ");
   validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
 
@@ -190,12 +208,13 @@ StokesFOThickness::getValidProblemParameters() const
 void StokesFOThickness::setFieldsProperties () {
   StokesFOBase::setFieldsProperties();
 
-  // Fix the scalar type of ice_thickness_name, since in StokesFOThickness it depends on the solution.
-  // Note: the ST of surface_height doesn't *need* to be Scalar,
-  //       But if they don't match StokesFOLateralResid would need a second template argument.
-  //       This simply makes life easier.
-  setSingleFieldProperties(ice_thickness_name, FRT::Scalar, FST::Scalar);
-  setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::Scalar);
+  if(unsteady) {
+    setSingleFieldProperties(ice_thickness_name, FRT::Scalar, FST::Scalar);
+    setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::Scalar);
+  } else {
+    setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::ParamScalar);
+  }
+  setSingleFieldProperties(initial_ice_thickness_name, FRT::Scalar, FST::ParamScalar);  
 }
 
 } // namespace LandIce

@@ -65,15 +65,17 @@ mkdir albany-cuda-gcc
 cd albany-cuda-gcc
 cp ${HOME}/Albany/doc/dashboards/weaver.sandia.gov/do-cmake-albany .
 ```
-Edit the configuration script to point to the trilinos install directory and nvcc_wrapper location:
+Edit the configuration script to point to the trilinos install directory, albany install directory and nvcc_wrapper location:
 ```sh
-TRILINSTALLDIR=${HOME}/Trilinos/albany-cuda-gcc/install
+TRILINOS_INSTALL=${HOME}/Trilinos/albany-cuda-gcc/install
+ALBANY_INSTALL=${HOME}/Albany/albany-cuda-gcc/install
 NVCC_WRAPPER=${HOME}/Trilinos/albany-cuda-gcc/nvcc_wrapper_volta
 ```
-Configure and build Albany on a compute node:
+Configure, build and install Albany on a compute node:
 ```sh
 bsub -Is -gpu num=4 -n 40 bash
 source do-cmake-albany
 make -j 40
+make install
 exit
 ```

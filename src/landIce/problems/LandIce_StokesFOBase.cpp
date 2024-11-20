@@ -133,7 +133,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   Intrepid2::DefaultCubatureFactory cubFactory;
 
   int defaultCubDegree = 3;
-  bool tensorProductCell = (discParams->get<std::string>("Method") == "Extruded") && ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
+  bool tensorProductCell = (discParams->get<std::string>("Method") == "STKExtruded") && ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
   std::string tensorCubDegName = "Cubature Degrees (Horiz Vert)";
   if(tensorProductCell && params->isParameter(tensorCubDegName)) {
     TEUCHOS_TEST_FOR_EXCEPTION (params->isParameter("Cubature Degree") && params->isParameter(tensorCubDegName), std::logic_error,
@@ -158,7 +158,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
   if(depthIntegratedModel) {
 
-    TEUCHOS_TEST_FOR_EXCEPTION ((discParams->get<std::string>("Method") != "Extruded") || (discParams->isParameter("NumLayers") && (discParams->get<int>("NumLayers") != 1)) || (cellType->getKey() != shards::Wedge<6>::key), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION ((discParams->get<std::string>("Method") != "STKExtruded") || (discParams->isParameter("NumLayers") && (discParams->get<int>("NumLayers") != 1)) || (cellType->getKey() != shards::Wedge<6>::key), std::logic_error,
                                   "Error! Depth Integrated Model can be used only for 1-layer extruded meshes with Wedge cells\n");
 
     using tri_basis = Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, RealType, RealType>;
@@ -168,7 +168,6 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   }
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int numCellSides    = cellType->getSideCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
@@ -213,7 +212,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       unsigned int numSideQPs      = sideCubature[ssName]->getNumPoints();
 
       dl->side_layouts[ssName] = rcp(new Albany::Layouts(numSideVertices,numSideNodes,
-                                                         numSideQPs,sideDim,numDim,numCellSides,vecDimFO,ssName));
+                                                         numSideQPs,sideDim,numDim,vecDimFO,ssName));
     }
   }
 
@@ -238,7 +237,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numSurfaceSideQPs      = sideCubature[surfaceSideName]->getNumPoints();
 
     dl->side_layouts[surfaceSideName] = rcp(new Albany::Layouts(numSurfaceSideVertices,numSurfaceSideNodes,
-                                                                numSurfaceSideQPs,sideDim,numDim,numCellSides,vecDimFO,surfaceSideName));
+                                                                numSurfaceSideQPs,sideDim,numDim,vecDimFO,surfaceSideName));
   }
 
   // If we have thickness or surface velocity diagnostics, we may need basal side stuff
@@ -262,7 +261,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int numbasalSideQPs      = sideCubature[basalSideName]->getNumPoints();
 
     dl->side_layouts[basalSideName] = rcp(new Albany::Layouts(numbasalSideVertices,numbasalSideNodes,
-                                                              numbasalSideQPs,sideDim,numDim,numCellSides,vecDimFO,basalSideName));
+                                                              numbasalSideQPs,sideDim,numDim,vecDimFO,basalSideName));
   }
 
 #ifdef OUTPUT_TO_SCREEN
@@ -326,7 +325,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 }
 
 void
-StokesFOBase::buildStokesFOBaseFields(PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
+StokesFOBase::buildStokesFOBaseFields()
 {
   // Allocate memory for unmanaged fields
   fieldUtils->allocateComputeBasisFunctionsFields();

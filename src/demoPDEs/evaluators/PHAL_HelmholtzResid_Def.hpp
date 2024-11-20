@@ -66,7 +66,7 @@ HelmholtzResid(const Teuchos::ParameterList& p) :
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void HelmholtzResid<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
+postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(wBF,fm);
@@ -86,7 +86,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void HelmholtzResid<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
   typedef Intrepid2::RealSpaceTools<PHX::Device> RST;

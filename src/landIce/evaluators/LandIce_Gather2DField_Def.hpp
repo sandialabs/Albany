@@ -34,6 +34,13 @@ Gather2DField(const Teuchos::ParameterList& p,
 {
   this->addEvaluatedField(field2D);
 
+  const std::string transientFieldName = "Time Dependent 2D Field Name";
+  enableTransient = p.isParameter(transientFieldName);
+  if (enableTransient) {
+    field2D_dot = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string>(transientFieldName), dl->node_scalar);
+    this->addEvaluatedField(field2D_dot);
+  }
+
   fieldLevel = p.get<int>("Field Level");
   TEUCHOS_TEST_FOR_EXCEPTION (fieldLevel<0, Teuchos::Exceptions::InvalidParameter,
       "[Gather2DField] Error! Field level must be non-negative.\n");
@@ -66,6 +73,8 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field2D,fm);
+  if (enableTransient)
+    this->utils.setFieldData(field2D_dot,fm);
 }
 
 template<typename EvalT, typename Traits>
@@ -91,6 +100,13 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const auto  x_data  = Albany::getLocalData(workset.x);
+
+  Teuchos::ArrayRCP<const RealType> xdot_data;  
+  const bool gather_xdot  = workset.transientTerms && enableTransient;
+  if(gather_xdot)
+    xdot_data  = Albany::getLocalData(workset.xdot);
+
+  
   const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
@@ -115,6 +131,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
         for (int inode=0; inode<num_nodes; ++inode) {
           const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
           field2D(cell,nodes[inode]) = x_data[ldof];
+          if(gather_xdot)
+            field2D_dot(cell,nodes[inode]) = xdot_data[ldof];
         }
       };
 
@@ -143,6 +161,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
         field2D(cell,nodes[i]) = x_data[ldof];
+        if(gather_xdot)
+          field2D_dot(cell,nodes[i]) = xdot_data[ldof];
       }
     }
   }
@@ -165,6 +185,11 @@ evaluateFields (typename PHALTraits::EvalData workset)
       "  - num layers : " + std::to_string(layers_data->numLayers) + "\n");
 
   const auto  x_data        = Albany::getLocalData(workset.x);
+  Teuchos::ArrayRCP<const RealType> xdot_data;  
+  const bool gather_xdot  = workset.transientTerms && enableTransient;
+  if(gather_xdot)
+    xdot_data  = Albany::getLocalData(workset.xdot);
+
   const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
@@ -193,6 +218,11 @@ evaluateFields (typename PHALTraits::EvalData workset)
           val = ScalarT(val.size(),x_data[ldof]);
           val.setUpdateValue(!workset.ignore_residual);
           val.fastAccessDx(firstunk) = workset.j_coeff;
+          if(gather_xdot) {
+            ref_t valdot = field2D_dot(cell,nodes[inode]);
+            valdot = ScalarT(valdot.size(),xdot_data[ldof]);
+            valdot.fastAccessDx(firstunk) = workset.m_coeff;
+          }
         }
       };
 
@@ -225,6 +255,137 @@ evaluateFields (typename PHALTraits::EvalData workset)
         ref_t val = field2D(cell,nodes[i]);
         val = ScalarT(val.size(), x_data[ldof]);
         val.fastAccessDx(nodes[i]*neq + offset) = workset.j_coeff;
+        if(gather_xdot) {
+          ref_t valdot = field2D_dot(cell,nodes[i]);
+          valdot = ScalarT(valdot.size(),xdot_data[ldof]);
+          valdot.fastAccessDx(nodes[i]*neq + offset) = workset.m_coeff;
+        }
+      }
+    }
+  }
+}
+
+
+//**********************************************************************
+template<>
+void Gather2DField<PHALTraits::Tangent, PHALTraits>::
+evaluateFields (typename PHALTraits::EvalData workset)
+{
+    // Mesh data
+  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const int   bot = layers_data->bot_side_pos;
+  const int   top = layers_data->top_side_pos;
+
+  ALBANY_EXPECT (fieldLevel==0 || fieldLevel==layers_data->numLayers,
+      "Field level must be 0 or match the number of layers in the mesh.\n"
+      "  - field level: " + std::to_string(fieldLevel) + "\n"
+      "  - num layers : " + std::to_string(layers_data->numLayers) + "\n");
+
+  const auto  x_data        = Albany::getLocalData(workset.x);
+  Teuchos::ArrayRCP<const RealType> xdot_data;  
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_data, Vxdot_data;
+  const bool gather_Vx = Teuchos::nonnull(workset.Vx);
+  if(gather_Vx)
+    Vx_data = Albany::getLocalData(workset.Vx);
+  const bool gather_xdot  = Teuchos::nonnull(workset.xdot) && enableTransient;
+  const bool gather_Vxdot = Teuchos::nonnull(workset.Vxdot) && enableTransient;
+  if(gather_xdot)
+    xdot_data  = Albany::getLocalData(workset.xdot);
+  if(gather_Vxdot)
+    Vxdot_data = Albany::getLocalData(workset.Vxdot);
+  
+  const auto& dof_mgr       = workset.disc->getDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
+
+  const int   neq = dof_mgr->getNumFields();
+
+  if (extruded) {
+#ifdef ALBANY_DEBUG
+    check_topology(dof_mgr->get_topology());
+#endif
+    const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
+    const int field_side_pos = field_layer==0 ? bot : top;
+    const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
+    for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
+      const int elem_LID = elem_lids(cell);
+      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+
+      const auto f = [&] (const std::vector<int>& nodes) {
+        const int num_nodes = nodes.size();
+        for (int inode=0; inode<num_nodes; ++inode) {
+          LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
+
+          ref_t val = field2D(cell,nodes[inode]);   
+          if (gather_Vx) {
+            val = TanFadType(val.size(),x_data[ldof]);
+            for (int k=0; k<workset.num_cols_x; ++k)
+              val.fastAccessDx(k) = workset.j_coeff*Vx_data[ldof][k];
+          } else {
+            val = TanFadType(x_data[ldof]);
+          }
+
+          if(gather_xdot) {
+            ref_t valdot = field2D_dot(cell,nodes[inode]);
+            if (gather_Vxdot) {
+              valdot = TanFadType(valdot.size(),xdot_data[ldof]);
+              for (int k=0; k<workset.num_cols_x; ++k)
+                valdot.fastAccessDx(k) = workset.m_coeff*Vxdot_data[ldof][k];
+            } else {
+              valdot = TanFadType(xdot_data[ldof]);
+            }
+          }
+        }
+      };
+
+      // Run lambda on both top and bottom nodes in the cell, but make sure
+      // we order them in whatever way the nodes on $field_side_pos would be ordered
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_side_pos));
+      f(node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_side_pos));
+    }
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets.is_null(), std::logic_error,
+        "Side sets defined in input file but not properly specified on the mesh.\n");
+
+    // Check for early return
+    if (workset.sideSets->count(meshPart)==0) {
+      return;
+    }
+
+    for (const auto& side : workset.sideSets->at(meshPart)) {
+      // Get the data that corresponds to the side
+      const int cell = side.ws_elem_idx;
+      const int elem_LID = elem_lids(cell);
+      const int side_pos = side.side_pos;
+      
+      // Note: explicitly as for the offsets to be ordered as the dofs on this side pos
+      const auto& offsets =      dof_mgr->getGIDFieldOffsetsSide(offset,side_pos);
+      const auto& nodes   = node_dof_mgr->getGIDFieldOffsetsSide(0,     side_pos);
+      const int numSideNodes = nodes.size();
+      for (int i=0; i<numSideNodes; ++i){
+        const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
+        ref_t val = field2D(cell,nodes[i]);
+
+        if (gather_Vx) {
+          val = TanFadType(val.size(),x_data[ldof]);
+          for (int k=0; k<workset.num_cols_x; ++k)
+            val.fastAccessDx(k) = workset.j_coeff*Vx_data[ldof][k];
+        } else {
+          val = TanFadType(x_data[ldof]);
+        }
+
+        if(gather_xdot) {
+          ref_t valdot = field2D_dot(cell,nodes[i]);
+          if (gather_Vxdot) {
+            valdot = TanFadType(valdot.size(),xdot_data[ldof]);
+            for (int k=0; k<workset.num_cols_x; ++k)
+              valdot.fastAccessDx(k) = workset.m_coeff*Vxdot_data[ldof][k];
+          } else {
+            valdot = TanFadType(xdot_data[ldof]);
+          }
+        }
       }
     }
   }
@@ -279,6 +440,11 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const auto x_data = Albany::getLocalData(workset.x);
+  Teuchos::ArrayRCP<const RealType> xdot_data;  
+  const bool gather_xdot  = workset.transientTerms && enableTransient;
+  if(gather_xdot)
+    xdot_data  = Albany::getLocalData(workset.xdot);
+
   const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
@@ -306,6 +472,10 @@ evaluateFields (typename PHALTraits::EvalData workset)
           const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
           ref_t val = field2D(cell,nodes[inode]);
           val = HessianVecFad(val.size(), x_data[ldof]);
+
+          if(gather_xdot)
+            field2D_dot(cell,nodes[inode]) = xdot_data[ldof];
+
           if (is_x_active) {
             int firstunk = neq*nodes[inode] + offset;
             val.fastAccessDx(firstunk).val() = workset.j_coeff;
@@ -348,7 +518,10 @@ evaluateFields (typename PHALTraits::EvalData workset)
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
         ref_t val = field2D(cell,nodes[i]);
         val = HessianVecFad(val.size(), x_data[ldof]);
-
+        
+        if(gather_xdot)
+          field2D_dot(cell,nodes[i]) = xdot_data[ldof];
+        
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to workset.j_coeff
         if (is_x_active)

@@ -68,7 +68,7 @@ ANONYMOUS:
   Discretization:
     Columnwise Ordering: true
     Number Of Time Derivatives: 0
-    Method: Extruded
+    Method: STKExtruded
     Exodus Output File Name: gis_beta_smb.exo
     Workset Size: 2500
     NumLayers: 5

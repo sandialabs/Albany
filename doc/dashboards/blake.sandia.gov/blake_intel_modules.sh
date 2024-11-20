@@ -13,6 +13,7 @@ module load superlu-dist/8.1.2
 module load parallel-netcdf/1.12.3
 module load netcdf-c/4.9.2
 module load netcdf-fortran/4.6.1
+module load parmetis/4.0.3
 source /home/projects/albany/tpls/python/oneapi/2023.2.0/mpi/2021.10.0/oneapi-env/bin/activate # activate python env
-ulimit -l unlimited # Unlimited memory locking. Error: map_hfi_mem: mmap of rcvhdr_bufbase size 262144 failed: Resource temporarily unavailable
+ulimit -l unlimited # Unlimited memory locking (Note: Run this on compute node). Error: map_hfi_mem: mmap of rcvhdr_bufbase size 262144 failed: Resource temporarily unavailable
 module list
