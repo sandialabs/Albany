@@ -22,7 +22,7 @@ ANONYMOUS:
         Type: Vector
         Dimension: 2
         Scalar 0:
-          Name: Mu Coefficient
+          Name: Mu
           Lower Bound: -10.0
           Upper Bound: 3.0
           Nominal Value: -2.0

@@ -44,26 +44,28 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   worksetSize = -1;
   is_power_parameter = false;
   use_pressurized_bed = false;
+  save_pressure_field = false;
   overburden_fraction = 0.0;
   pressure_smoothing_length_scale = 1.0;
   Teuchos::ParameterList beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
   //Validate Parameters
   Teuchos::ParameterList validPL;
-  validPL.set<std::string>("Type", "", "Type Of Beta: Constant, Power Law, Regularized Coulomb");
-  validPL.set<std::string>("Mu Type", "Field", "Mu Type: Field, Exponent Of Field, Exponent Of Field At Nodes");
-  validPL.set<std::string>("Bed Roughness Type", "Field", "Lambda Type: Field, Exponent Of Field, Exponent Of Field At Nodes");
-  validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
+  validPL.set<std::string>("Type", "Power Law", "Type Of Beta: Constant, Power Law, Regularized Coulomb");
+  validPL.set<double>("Power Exponent", 1.0, "Exponent of Power Law or Regularized Coulomb Law");
+  validPL.set<std::string>("Mu Type", "Field", "Mu Type: Constant,Field, Exponent Of Field, Exponent Of Field At Nodes");
   validPL.set<std::string>("Mu Field Name", "", "Name of the Field Mu");
+  validPL.set<double>("Mu", 1.0, "Constant value for Mu");
+  validPL.set<std::string>("Bed Roughness Type", "Field", "Bed Roughness Type: Field, Exponent Of Field, Exponent Of Field At Nodes");
+  validPL.set<double>("Bed Roughness", 1.0, "Constant value for Bed Roughness");
+  validPL.set<std::string>("Flow Rate Type", "Viscosity Flow Rate", "Type of Flow Rate: Constant, Flow Rate Type");
+  validPL.set<double>("Flow Rate", 3.17e-24, "Constant Value for Flow Rate");
   validPL.set<std::string>("Effective Pressure Type", "Field", "Type of N: One, Field, Hydrostatic, Hydrostatic Computed At Nodes");
   validPL.set<double>("Effective Pressure", 1.0, "Effective Pressure [kPa]");
   validPL.set<double>("Minimum Fraction Overburden Pressure", 1.0, "Minimum Fraction Overburden Pressure");
   validPL.set<double>("Length Scale Factor", 1.0, "Length Scale Factor [km]");
-  validPL.set<double>("Power Exponent", 1.0, "Name of the Field Mu");
+  validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
   validPL.set<double>("Beta", 1.0, "Constant value for beta");
-  validPL.set<double>("Mu Coefficient", 1.0, "Constant value for Mu");
-  validPL.set<double>("Bed Roughness", 1.0, "Constant value for LAmbda");
-
   validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");
   validPL.set<bool>("Zero Beta On Floating Ice", false, "Whether to zero beta on floating ice");
   validPL.set<bool>("Exponentiate Scalar Parameters", false, "Whether the scalar parameters needs to be exponentiate");
@@ -103,19 +105,19 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), layout);
   this->addEvaluatedField(beta);
 
-  printedMu      = -9999.999;
-  printedLambda  = -9999.999;
-  printedQ       = -9999.999;
+  printedMu            = -9999.999;
+  printedBedRoughness  = -9999.999;
+  printedQ             = -9999.999;
 
   if (betaType == "CONSTANT") {
     beta_type = BETA_TYPE::CONSTANT;
     beta_val = beta_list.get<double>("Beta");
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Constant beta value = " << beta_val << " (loaded from xml input file).\n";
+    *output << "LandIce::BasalFrictionCoefficient: Constant beta value = " << beta_val << " (loaded from yaml input file).\n";
 #endif
   } else if (betaType == "FIELD") {
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Prescribed beta field.\n";
+    *output << "LandIce::BasalFrictionCoefficient: Prescribed beta field.\n";
 #endif
 
       //turning this into a Power Law BC
@@ -141,13 +143,26 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     beta_type = BETA_TYPE::REGULARIZED_COULOMB;
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
-            << "      beta = mu * N * |u|^{q-1} / [|u| + lambda*A*N^n]^q\n\n"
+            << "      beta = mu * N * |u|^{q-1} / [|u| + bedRoughness*A*N^n]^q\n\n"
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    n            = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
-    ice_softness = PHX::MDField<const TemperatureST>(p.get<std::string>("Ice Softness Variable Name"), dl->cell_scalar2);
-    this->addDependentField (ice_softness);
+    std::string flowRateType = util::upper_case(beta_list.get<std::string>("Flow Rate Type", "Viscosity Flow Rate"));
+    n = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
+    if(flowRateType == "VISCOSITY FLOW RATE") {
+      flowRate_type = FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE;
+      flowRate = PHX::MDField<const TemperatureST>(p.get<std::string>("Flow Rate Variable Name"), dl->cell_scalar2);
+      this->addDependentField (flowRate);
+    } else if (flowRateType == "CONSTANT") {  //"Constant"
+      flowRate_type = FLOW_RATE_TYPE::CONSTANT;
+      flowRate_val = beta_list.get<double>("Flow Rate");
+#ifdef OUTPUT_TO_SCREEN
+      *output << "LandIce::BasalFrictionCoefficient: Constant Flow Rate value = " << flowRate_val << " (loaded from yaml input file).\n";
+#endif
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << flowRateType << "\" is not a valid parameter for Is not a valid parameter for Flow Rate Type\n");
+    }
 
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -171,9 +186,18 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     } else if (effectivePressureType == "HYDROSTATIC") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
       use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
+      if(save_pressure_field && nodal) {
+        outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
+        this->addEvaluatedField (outN);
+      }
     } else if (effectivePressureType == "HYDROSTATIC COMPUTED AT NODES") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES;
       use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
+      save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
+      if(save_pressure_field && nodal) {
+        outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
+        this->addEvaluatedField (outN);
+      }
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << effectivePressureType << "\" is not a valid parameter for Effective Pressure Type\n");
@@ -222,7 +246,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     }
 
     if(mu_type == FIELD_TYPE::CONSTANT) {
-      muParam     = PHX::MDField<const ScalarT,Dim>("Mu Coefficient", dl->shared_param);
+      muParam     = PHX::MDField<const ScalarT,Dim>("Mu", dl->shared_param);
       this->addDependentField (muParam);
     } else {
       std::string mu_field_name;
@@ -247,33 +271,33 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
     if (beta_type == BETA_TYPE::REGULARIZED_COULOMB) {
 
-      std::string lambdaType = util::upper_case((beta_list.isParameter("Bed Roughness Type") ? beta_list.get<std::string>("Bed Roughness Type") : "Field"));
+      std::string bedRoughnessType = util::upper_case((beta_list.isParameter("Bed Roughness Type") ? beta_list.get<std::string>("Bed Roughness Type") : "Field"));
 
-      auto layout_lambda_field = layout;
-      if(lambdaType == "CONSTANT") {
-        lambda_type = FIELD_TYPE::CONSTANT;
-      } else if (lambdaType == "FIELD") {
-        lambda_type = FIELD_TYPE::FIELD;
-      } else if (lambdaType == "EXPONENT OF FIELD AT NODES") {
-        lambda_type = FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES;
+      auto layout_bedRoughness_field = layout;
+      if(bedRoughnessType == "CONSTANT") {
+        bedRoughness_type = FIELD_TYPE::CONSTANT;
+      } else if (bedRoughnessType == "FIELD") {
+        bedRoughness_type = FIELD_TYPE::FIELD;
+      } else if (bedRoughnessType == "EXPONENT OF FIELD AT NODES") {
+        bedRoughness_type = FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES;
         if(!nodal) {
           BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-          layout_lambda_field = nodal_layout;
+          layout_bedRoughness_field = nodal_layout;
           this->addDependentField (BF);
         }
-      } else if (lambdaType == "EXPONENT OF FIELD") {
-        lambda_type = FIELD_TYPE::EXPONENT_OF_FIELD;
+      } else if (bedRoughnessType == "EXPONENT OF FIELD") {
+        bedRoughness_type = FIELD_TYPE::EXPONENT_OF_FIELD;
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << lambdaType << "\" is not a valid parameter for Lambda Type\n");
+          std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << bedRoughnessType << "\" is not a valid parameter for Bed Roughness Type\n");
       }
 
-      if(lambda_type == FIELD_TYPE::CONSTANT) {
-        lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-        this->addDependentField (lambdaParam);
+      if(bedRoughness_type == FIELD_TYPE::CONSTANT) {
+        bedRoughnessParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
+        this->addDependentField (bedRoughnessParam);
       } else {
-        lambdaField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), layout_lambda_field);
-        this->addDependentField (lambdaField);
+        bedRoughnessField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), layout_bedRoughness_field);
+        this->addDependentField (bedRoughnessField);
       }
       u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
       this->addDependentField (u_norm);
@@ -346,7 +370,7 @@ KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
 
-  ParamScalarT mu, lambda, power;
+  ParamScalarT mu, bedRoughness, power;
 
   if ((beta_type == BETA_TYPE::POWER_LAW)||(beta_type==BETA_TYPE::REGULARIZED_COULOMB) ) {
     if (logParameters) {
@@ -362,11 +386,11 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
 
   if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
     if (logParameters) {
-      if (lambda_type == FIELD_TYPE::CONSTANT)
-        lambda = std::exp(Albany::convertScalar<const ParamScalarT>(lambdaParam(0)));
+      if (bedRoughness_type == FIELD_TYPE::CONSTANT)
+        bedRoughness = std::exp(Albany::convertScalar<const ParamScalarT>(bedRoughnessParam(0)));
     } else {
-      if (lambda_type == FIELD_TYPE::CONSTANT)
-        lambda = Albany::convertScalar<const ParamScalarT>(lambdaParam(0));
+      if (bedRoughness_type == FIELD_TYPE::CONSTANT)
+        bedRoughness = Albany::convertScalar<const ParamScalarT>(bedRoughnessParam(0));
     }
   }
 
@@ -410,6 +434,9 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
           NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (overburden_fraction*rho_i*
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
+          if(save_pressure_field) {
+            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
+          }
 	} else {
           MeshScalarT thickness(0), bed_topo(0);
           for (int node=0; node<numNodes; ++node) {
@@ -428,6 +455,9 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
           NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (overburden_fraction*rho_i*
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
+          if(save_pressure_field) {
+            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
+          }
 	} else {
           NVal = 0;
           for (int node=0; node<numNodes; ++node) {
@@ -467,28 +497,40 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
         beta(cell,ipt) = muValue * NVal * std::pow (u_norm(cell,ipt), power-1.0);
 
       if (beta_type == BETA_TYPE::REGULARIZED_COULOMB) {
-        ParamScalarT lambdaValue;
-        switch (lambda_type) {
+        ParamScalarT bedRoughnessValue;
+        switch (bedRoughness_type) {
         case FIELD_TYPE::FIELD:
-          lambdaValue = lambdaField(cell,ipt);
+          bedRoughnessValue = bedRoughnessField(cell,ipt);
           break;
         case FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES:
           if(nodal)
-            lambdaValue = std::exp(lambdaField(cell,ipt));
+            bedRoughnessValue = std::exp(bedRoughnessField(cell,ipt));
           else {
-            lambdaValue = 0;
+            bedRoughnessValue = 0;
             for (int node=0; node<numNodes; ++node)
-              lambdaValue += std::exp(lambdaField(cell,node))*BF(cell,node,ipt);
+              bedRoughnessValue += std::exp(bedRoughnessField(cell,node))*BF(cell,node,ipt);
           }
           break;
         case FIELD_TYPE::EXPONENT_OF_FIELD:
-          lambdaValue = std::exp(lambdaField(cell,ipt));
+          bedRoughnessValue = std::exp(bedRoughnessField(cell,ipt));
           break;
         case FIELD_TYPE::CONSTANT:
-          lambdaValue = lambda;
+          bedRoughnessValue = bedRoughness;
           break;
         }
-        beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + lambdaValue*ice_softness(cell)*std::pow(NVal,n),  power);
+
+        const double secsInYr = 365*24*3600;
+        const double scaling = secsInYr*pow(1000,n+1); //turns flow rate from [Pa^{-n} s^{-1}] to [k^{-1} kPa^{-n} yr^{-1}]
+        switch (flowRate_type) {
+        case FLOW_RATE_TYPE::CONSTANT: {
+          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
+          }
+          break;
+        case FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE:
+          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate(cell)*std::pow(NVal,n),  power); //bedRoughness in km
+          break;
+        }
+
       }
     }
   }
@@ -583,18 +625,18 @@ evaluateFields (typename Traits::EvalData workset)
 
   if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
       if (logParameters) {
-        if (lambda_type == FIELD_TYPE::CONSTANT) {
-          auto hostLambda_view = Kokkos::create_mirror_view(lambdaParam.get_view());
-          Kokkos::deep_copy(hostLambda_view, lambdaParam.get_view());
-          ScalarT hostLambda = hostLambda_view(0);
-          lambda = std::exp(Albany::convertScalar<ParamScalarT>(hostLambda));
+        if (bedRoughness_type == FIELD_TYPE::CONSTANT) {
+          auto hostBedRoughness_view = Kokkos::create_mirror_view(bedRoughnessParam.get_view());
+          Kokkos::deep_copy(hostBedRoughness_view, bedRoughnessParam.get_view());
+          ScalarT hostBedRoughness = hostBedRoughness_view(0);
+          bedRoughness = std::exp(Albany::convertScalar<ParamScalarT>(hostBedRoughness));
         }
       } else {
-        if (lambda_type == FIELD_TYPE::CONSTANT) {
-          auto hostLambda_view = Kokkos::create_mirror_view(lambdaParam.get_view());
-          Kokkos::deep_copy(hostLambda_view, lambdaParam.get_view());
-          ScalarT hostLambda = hostLambda_view(0);
-          lambda = Albany::convertScalar<ParamScalarT>(hostLambda);
+        if (bedRoughness_type == FIELD_TYPE::CONSTANT) {
+          auto hostBedRoughness_view = Kokkos::create_mirror_view(bedRoughnessParam.get_view());
+          Kokkos::deep_copy(hostBedRoughness_view, bedRoughnessParam.get_view());
+          ScalarT hostBedRoughness = hostBedRoughness_view(0);
+          bedRoughness = Albany::convertScalar<ParamScalarT>(hostBedRoughness);
         }
       }
 #ifdef OUTPUT_TO_SCREEN
@@ -604,12 +646,12 @@ evaluateFields (typename Traits::EvalData workset)
       output->setProcRankAndSize (procRank, numProcs);
       output->setOutputToRootOnly (0);
 
-      if (lambda_type==FIELD_TYPE::CONSTANT && printedLambda!=lambda) {
-        *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] lambda = " << lambda << "\n";
-        printedLambda = lambda;
+      if (bedRoughness_type==FIELD_TYPE::CONSTANT && printedBedRoughness!=bedRoughness) {
+        *output << "[Basal Friction Coefficient" << PHX::print<EvalT>() << "] bedRoughness = " << bedRoughness << "\n";
+        printedBedRoughness = bedRoughness;
       }
 #endif
-      TEUCHOS_TEST_FOR_EXCEPTION ((lambda_type == FIELD_TYPE::CONSTANT) && lambda<0, Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION ((bedRoughness_type == FIELD_TYPE::CONSTANT) && bedRoughness<0, Teuchos::Exceptions::InvalidParameter,
                                   "\nError in LandIce::BasalFrictionCoefficient: \"Bed Roughness\" must be >= 0.\n");
   } 
 

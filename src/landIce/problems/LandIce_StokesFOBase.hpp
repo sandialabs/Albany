@@ -261,6 +261,14 @@ protected:
   bool viscosity_use_p0_temperature;
   bool compute_dissipation;
 
+  //if true, and the effective_pressure is not an input field,
+  //  the effective pressure is computed by the BasalFriction Evaluator.
+  //  Alternatively it's computed using the EffectivePressure Evaluator.
+  //  This flag is set to true in the StokesFO and StokesFOThermoCoupled problems,
+  //  and is set to false in the StokesFO Hydrology problem.
+  bool effectivePressure_from_basalFrictionEval;
+
+
   //Whether to compute rigid body modes
   bool computeConstantModes, computeRotationModes;
 
@@ -312,6 +320,7 @@ protected:
   std::string damage_factor_name;
   std::string effective_pressure_name;
   std::string basal_friction_name;
+  std::string bed_roughness_name;
   std::string sliding_velocity_name;
   std::string vertically_averaged_velocity_name;
 
@@ -1275,7 +1284,7 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                              ? corrected_temperature_name
                              : temperature_name;
   p->set<std::string>("Temperature Variable Name", visc_temp_name);
-  p->set<std::string>("Ice Softness Variable Name", flow_factor_name);
+  p->set<std::string>("Flow Rate Variable Name", flow_factor_name);
   p->set<std::string>("Stiffening Factor Log QP Name", stiffening_factor_log_name);
   p->set<std::string>("Damage Factor QP Name", damage_factor_name);
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
@@ -1522,7 +1531,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
 
     // If we are given an effective pressure field or if a subclass sets up an evaluator to compute it,
     // we don't need a surrogate model for it
-    if (!is_input_field[effective_pressure_name] && !is_ss_input_field[ssName][effective_pressure_name]) {
+    if (!is_input_field[effective_pressure_name] && !is_ss_input_field[ssName][effective_pressure_name] && !effectivePressure_from_basalFrictionEval) {
       p = Teuchos::rcp(new Teuchos::ParameterList("LandIce Effective Pressure Surrogate"));
 
       // Input
@@ -1624,7 +1633,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_side_name);
     p->set<std::string>("BF Variable Name", side_fname(Albany::bf_name, ssName));
     p->set<std::string>("Effective Pressure QP Variable Name", effective_pressure_side_name);
-    p->set<std::string>("Ice Softness Variable Name", flow_factor_side_name);
+    p->set<std::string>("Flow Rate Variable Name",  side_fname(flow_factor_name, ssName),flow_factor_side_name);
     p->set<std::string>("Bed Roughness Variable Name", bed_roughness_side_name);
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Coordinate Vector Variable Name", side_fname(Albany::coord_vec_name, ssName));
@@ -1635,6 +1644,9 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
     p->set<std::string>("Bed Topography Variable Name", bed_topography_side_name);
     p->set<std::string>("Effective Pressure Variable Name", effective_pressure_side_name);
+    if(effectivePressure_from_basalFrictionEval) {
+      p->set<std::string>("Effective Pressure Output Variable Name", effective_pressure_side_name);
+    }
     p->set<std::string>("Ice Thickness Variable Name", ice_thickness_side_name);
     p->set<bool>("Is Thickness A Parameter",is_dist_param[ice_thickness_name]);
     p->set<Teuchos::RCP<std::map<std::string,bool>>>("Dist Param Query Map",Teuchos::rcpFromRef(is_dist_param));
@@ -1644,7 +1656,7 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", beta_side_name);
 
-    if(!PHAL::is_field_evaluated<EvalT>(fm0, beta_side_name, dl_side->node_scalar)) {
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, beta_side_name, dl_side->node_scalar)||!PHAL::is_field_evaluated<EvalT>(fm0, effective_pressure_side_name, dl_side->node_scalar)) {
       auto N_st = get_scalar_type(effective_pressure_name);
       auto A_st = get_scalar_type(flow_factor_name);
       ev = createEvaluatorWithThreeScalarTypes<BasalFrictionCoefficient,EvalT>(p,dl_side,N_st,FST::Scalar,A_st);
@@ -1738,7 +1750,7 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     std::string damage_factor_side_name                = basal_fname(damage_factor_name);
     std::string effective_pressure_side_name           = basal_fname(effective_pressure_name);
     std::string vertically_averaged_velocity_side_name = basal_fname(vertically_averaged_velocity_name);
-    std::string bed_roughness_side_name                = basal_fname("bed_roughness");
+    std::string bed_roughness_side_name                = basal_fname(bed_roughness_name);
 
     // -------------------------------- LandIce evaluators ------------------------- //
 

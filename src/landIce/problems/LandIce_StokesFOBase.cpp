@@ -99,6 +99,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   bed_topography_name         = params->sublist("Variables Names").get<std::string>("Bed Topography Name"    ,"bed_topography");
   bed_topography_param_name   = bed_topography_name + "_param";
   bed_topography_observed_name= "observed_" + bed_topography_name;
+  bed_roughness_name          = params->sublist("Variables Names").get<std::string>("Bed Roughness Name"    ,"bed_roughness");
   flow_factor_name            = params->sublist("Variables Names").get<std::string>("Flow Factor Name"       ,"flow_factor");
   stiffening_factor_log_name  = params->sublist("Variables Names").get<std::string>("Stiffening Factor Log Name" ,"stiffening_factor_log");
   damage_factor_name          = params->sublist("Variables Names").get<std::string>("Damage Factor Name"     ,"damage_factor");
@@ -611,11 +612,11 @@ void StokesFOBase::setupEvaluatorRequests ()
     ss_build_interp_ev[ssName][dof_names[0]][IReq::CELL_TO_SIDE] = true;
     ss_build_interp_ev[ssName][dof_names[0]][IReq::QP_VAL      ] = true;
     ss_build_interp_ev[ssName][dof_names[0]][IReq::GRAD_QP_VAL ] = true;
-    if (is_input_field["effective_pressure"]) {
+    if (is_input_field[effective_pressure_name]) {
       ss_build_interp_ev[ssName][effective_pressure_name][IReq::CELL_TO_SIDE] = true;
       ss_build_interp_ev[ssName][effective_pressure_name][IReq::QP_VAL ] = true;
       ss_build_interp_ev[ssName][effective_pressure_name][IReq::GRAD_QP_VAL ] = true;
-    } else if (is_ss_input_field[ssName]["effective_pressure"]) {
+    } else if (is_ss_input_field[ssName][effective_pressure_name]) {
       ss_build_interp_ev[ssName][effective_pressure_name][IReq::QP_VAL ] = true;
       ss_build_interp_ev[ssName][effective_pressure_name][IReq::GRAD_QP_VAL ] = true;
     }

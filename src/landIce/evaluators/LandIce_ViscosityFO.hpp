@@ -48,8 +48,7 @@ private:
   TemprT flowRate(const TemprT& T) const;
 
   const double pi, actenh, actenl, gascon, switchingT;
-  const double arrmlh, arrmll, scyr, k4scyr;
-  const double arrmh, arrml;
+  const double arrmlh, arrmll, scyr;
 
   bool extractStrainRateSq;
   bool useStereographicMap;
@@ -59,15 +58,16 @@ private:
   Teuchos::ParameterList* stereographicMapList;
 
   // Coefficients for Glen's law
-  double A; // Pa^-n s^-1
+  double A; // [Pa^{-n} s^{-1}]
   double n; // nondimensional
+  double flowRateScaling; //turns flowRate from [Pa^{-n} s^{-1}] to [k^{-1} kPa^{-n} yr^{-1}]
 
   // Input:
   PHX::MDField<const VelT,Cell,QuadPoint,VecDim,Dim> Ugrad; //[(k yr)^{-1}], k=1000
   PHX::MDField<const VelT,Cell,QuadPoint,VecDim> U; //[m/yr]
   PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
   PHX::MDField<const TemprT> temperature; // [K]
-  PHX::MDField<const RealType,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
+  PHX::MDField<const RealType,Cell> flowFactorA;  // [Pa^{-n} s^{-1} ], This is the coefficient A.
   PHX::MDField<const ParamScalarT,Cell,QuadPoint> stiffeningFactorLog; // [nondimensional]
   PHX::MDField<const RealType,Cell,QuadPoint> damageFactor; // e.g.,  (1-damage), [nondimensional]
   PHX::MDField<const ScalarT> homotopyParam;

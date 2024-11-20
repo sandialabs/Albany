@@ -73,6 +73,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   adjustSurfaceHeight = false;
   adjustBedTopo = false;
+  effectivePressure_from_basalFrictionEval = true;
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >

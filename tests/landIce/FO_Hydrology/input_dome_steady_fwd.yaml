@@ -23,7 +23,7 @@ ANONYMOUS:
         Type: Vector
         Dimension: 2
         Scalar 0:
-          Name: Mu Coefficient
+          Name: Mu
           Nominal Value: 1e-2
         Scalar 1:
           Name: Transmissivity

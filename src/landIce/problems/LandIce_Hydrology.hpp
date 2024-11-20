@@ -729,7 +729,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Sliding Velocity Variable Name", sliding_velocity_name);
     p->set<std::string>("BF Variable Name", Albany::bf_name);
     p->set<std::string>("Effective Pressure Variable Name", effective_pressure_name);
-    p->set<std::string>("Ice Softness Variable Name", ice_softness_name);
+    p->set<std::string>("Flow Rate Variable Name", ice_softness_name);
     p->set<Teuchos::ParameterList*>("Viscosity Parameter List", &visc_pl);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Basal Friction Coefficient"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
@@ -872,7 +872,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //--- Shared Parameter for basal friction coefficient: lambda ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
 
-  param_name = ParamEnumName::Lambda;
+  param_name = ParamEnumName::BedRoughness;
   p->set<std::string>("Parameter Name", param_name);
   p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
   p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
