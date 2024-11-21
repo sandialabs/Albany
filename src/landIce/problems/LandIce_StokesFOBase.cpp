@@ -563,10 +563,10 @@ void StokesFOBase::setFieldsProperties ()
   setSingleFieldProperties(ice_thickness_name,                FRT::Scalar, FST::MeshScalar);
   setSingleFieldProperties(surface_height_name,               FRT::Scalar, FST::MeshScalar);
   setSingleFieldProperties(vertically_averaged_velocity_name, FRT::Vector, FST::Scalar);
-  setSingleFieldProperties(corrected_temperature_name,        FRT::Scalar);
+  setSingleFieldProperties(corrected_temperature_name,        FRT::Scalar, viscosity_use_corrected_temperature ? FST::MeshScalar : FST::Real);
   setSingleFieldProperties(bed_topography_name,               FRT::Scalar, FST::MeshScalar);
   setSingleFieldProperties(body_force_name,                   FRT::Vector);
-  setSingleFieldProperties(flow_factor_name,                  FRT::Scalar);
+  setSingleFieldProperties(flow_factor_name,                  FRT::Scalar, viscosity_use_corrected_temperature ? FST::MeshScalar : FST::Real);
   setSingleFieldProperties(flux_divergence_name,              FRT::Scalar, FST::Scalar);
 
   setSingleFieldProperties(Albany::coord_vec_name,            FRT::Vector, FST::MeshScalar);
@@ -621,7 +621,7 @@ void StokesFOBase::setupEvaluatorRequests ()
       ss_build_interp_ev[ssName][effective_pressure_name][IReq::GRAD_QP_VAL ] = true;
     }
     ss_build_interp_ev[ssName][flow_factor_name][IReq::CELL_TO_SIDE] = true;
-    setSingleFieldProperties(effective_pressure_name, FRT::Scalar);
+    setSingleFieldProperties(effective_pressure_name, FRT::Scalar, FST::MeshScalar);
     setSingleFieldProperties(sliding_velocity_name,   FRT::Scalar, FST::Scalar);
 
     auto& bfc = it->sublist("Basal Friction Coefficient");
@@ -656,7 +656,7 @@ void StokesFOBase::setupEvaluatorRequests ()
             ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
             ss_build_interp_ev[ssName][fname][IReq::QP_VAL] = true;
           }
-          setSingleFieldProperties(fname, FRT::Scalar);
+          setSingleFieldProperties(fname, FRT::Scalar, FST::ParamScalar);
         }
       }
     }

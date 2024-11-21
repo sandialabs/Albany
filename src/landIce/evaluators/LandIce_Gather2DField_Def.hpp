@@ -299,8 +299,6 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
 
-  const int   neq = dof_mgr->getNumFields();
-
   if (extruded) {
 #ifdef ALBANY_DEBUG
     check_topology(dof_mgr->get_topology());

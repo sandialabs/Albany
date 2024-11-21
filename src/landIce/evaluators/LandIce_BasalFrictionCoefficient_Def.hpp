@@ -186,6 +186,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     } else if (effectivePressureType == "HYDROSTATIC") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
       use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
+      save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
       if(save_pressure_field && nodal) {
         outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
         this->addEvaluatedField (outN);
@@ -397,6 +398,9 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
   ParamScalarT muValue = 1.0;
   typename Albany::StrongestScalarType<EffPressureST,MeshScalarT>::type NVal = N_val;
 
+  TEUCHOS_TEST_FOR_EXCEPTION ((save_pressure_field && !std::is_constructible<EffPressureST,MeshScalarT>::value), std::logic_error,
+                                "Error! BasalFrictionCoefficient: Trying to convert a FAD type (NVal) into a double (outN).\n");
+
   if(beta_type != BETA_TYPE::CONSTANT) {
     for (int ipt=0; ipt<dim; ++ipt) {
 
@@ -435,7 +439,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
+            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
           }
 	} else {
           MeshScalarT thickness(0), bed_topo(0);
@@ -456,7 +460,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
+            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
           }
 	} else {
           NVal = 0;
