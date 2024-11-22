@@ -398,9 +398,6 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
   ParamScalarT muValue = 1.0;
   typename Albany::StrongestScalarType<EffPressureST,MeshScalarT>::type NVal = N_val;
 
-  TEUCHOS_TEST_FOR_EXCEPTION ((save_pressure_field && !std::is_constructible<EffPressureST,MeshScalarT>::value), std::logic_error,
-                                "Error! BasalFrictionCoefficient: Trying to convert a FAD type (NVal) into a double (outN).\n");
-
   if(beta_type != BETA_TYPE::CONSTANT) {
     for (int ipt=0; ipt<dim; ++ipt) {
 
@@ -669,6 +666,8 @@ evaluateFields (typename Traits::EvalData workset)
     worksetSize = workset.numCells;
   }
 
+  TEUCHOS_TEST_FOR_EXCEPTION ((save_pressure_field && !std::is_constructible<EffPressureST,MeshScalarT>::value), std::logic_error,
+                                "Error! BasalFrictionCoefficient: Trying to convert a FAD type (NVal) into a double (outN).\n");
   Kokkos::parallel_for(BasalFrictionCoefficient_Policy(0, worksetSize), *this);
 }
 
