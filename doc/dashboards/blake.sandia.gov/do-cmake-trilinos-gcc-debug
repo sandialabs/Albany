@@ -21,7 +21,7 @@ cmake \
   -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
   -D CMAKE_C_COMPILER:FILEPATH=mpicc \
   -D CMAKE_Fortran_COMPILER:FILEPATH=mpif77 \
-  -D CMAKE_CXX_FLAGS:STRING='-Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Wno-mismatched-new-delete -Wno-catch-value -Wno-use-after-free -Werror' \
+  -D CMAKE_CXX_FLAGS:STRING='-Werror=parentheses -Werror=sign-compare -Werror=unused-variable' \
   -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
   -D TPL_ENABLE_MPI:BOOL=ON \
   -D TPL_ENABLE_BLAS=ON \
@@ -60,6 +60,7 @@ cmake \
   -D Belos_HIDE_DEPRECATED_CODE=ON  \
   -D Ifpack2_HIDE_DEPRECATED_CODE=ON \
   -D Ifpack2_ENABLE_DEPRECATED_CODE=OFF \
+  -D Kokkos_ARCH_SPR:BOOL=ON \
   -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
   -D Kokkos_ENABLE_SERIAL:BOOL=ON \
   -D MueLu_ENABLE_DEPRECATED_CODE=OFF \

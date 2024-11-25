@@ -8,7 +8,7 @@ cmake \
     -D CMAKE_BUILD_TYPE:STRING=DEBUG \
     -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
     -D CMAKE_C_COMPILER:FILEPATH=mpicc \
-    -D CMAKE_CXX_FLAGS:STRING='-O3 -Wall -Wno-clobbered -Wno-vla -Wno-pragmas -Wno-unknown-pragmas -Wno-unused-local-typedefs -Wno-literal-suffix -Wno-deprecated-declarations -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-maybe-uninitialized -Wno-nonnull-compare -Wno-address -Wno-inline -Wno-return-type -Wno-mismatched-new-delete -Wno-catch-value -Wno-use-after-free -Werror' \
+    -D CMAKE_CXX_FLAGS:STRING='-Werror=parentheses -Werror=sign-compare -Werror=unused-variable' \
     -D ENABLE_LANDICE:BOOL=ON \
     -D ENABLE_DEMO_PDES:BOOL=ON \
     -D ALBANY_CTEST_TIMEOUT=2400 \
