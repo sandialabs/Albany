@@ -157,7 +157,7 @@ cmake -G Ninja \
       -D MPI_EXEC=/tpls/install/bin/mpirun \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
-      -D KOKKOS_ENABLE_LIBDL:BOOL=ON \
+      -D Kokkos_ENABLE_LIBDL:BOOL=ON \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
