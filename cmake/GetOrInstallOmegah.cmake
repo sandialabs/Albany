@@ -50,6 +50,8 @@ else ()
   )
 
   # Set options for Omega_h before adding the subdirectory
+  get_target_property(Kokkos_INCLUDE_DIR Kokkos::kokkos INTERFACE_INCLUDE_DIRECTORIES)
+  string(REPLACE "include/kokkos" "" Kokkos_INSTALL_DIR ${Kokkos_INCLUDE_DIR})
   set(Kokkos_PREFIX ${Kokkos_INSTALL_DIR} PATH "Path to Kokkos install")
 
   option (Omega_h_USE_Kokkos "Use Kokkos as a backend" ON)
