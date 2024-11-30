@@ -1,0 +1,1 @@
+00 23 * * 1-6,7 cd /home/ikalash/nightlyAlbanyCDash; bash -l -c "source nightly_cron_script_trilinos_hayka_serial.sh; source nightly_cron_script_albany_hayka_serial.sh" 

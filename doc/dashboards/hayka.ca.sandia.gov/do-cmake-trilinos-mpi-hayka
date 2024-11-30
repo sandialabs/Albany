@@ -29,30 +29,31 @@ rm -f CMakeCache.txt
 rm -rf CMakeFiles
 
 BUILD_DIR=`pwd`
+INSTALL_LOCATION=$BUILD_DIR/install
 
 cmake -G Ninja \
-      -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+      -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION} \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D TPL_BLAS_LIBRARIES:FILEPATH=$OPENBLAS_LIB/libopenblas.so \
-      -D TPL_LAPACK_LIBRARIES:FILEPATH=$OPENBLAS_LIB/libopenblas.so \
+      -D TPL_BLAS_LIBRARIES:FILEPATH=${OPENBLAS_LIB}/libopenblas.so \
+      -D TPL_LAPACK_LIBRARIES:FILEPATH=${OPENBLAS_LIB}/libopenblas.so \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=$OPENMPI_BIN \
-      -D CMAKE_C_COMPILER=$OPENMPI_BIN/mpicc \
-      -D CMAKE_CXX_COMPILER=$OPENMPI_BIN/mpicxx \
-      -D CMAKE_Fortran_COMPILER=$OPENMPI_BIN/mpif90 \
+      -D MPI_BASE_DIR:PATH=${OPENMPI_BIN} \
+      -D CMAKE_C_COMPILER=${OPENMPI_BIN}/mpicc \
+      -D CMAKE_CXX_COMPILER=${OPENMPI_BIN}/mpicxx \
+      -D CMAKE_Fortran_COMPILER=${OPENMPI_BIN}/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF_C_INC \
-      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF_C_LIB \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_INC} \
+      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_C_LIB} \
       -D TPL_Netcdf_PARALLEL:BOOL=ON \
       -D TPL_ENABLE_Pnetcdf=ON \
-      -D Pnetcdf_INCLUDE_DIRS:PATH=$PARALLEL_NETCDF_INC \
-      -D Pnetcdf_LIBRARY_DIRS:PATH=$PARALLEL_NETCDF_LIB \
+      -D Pnetcdf_INCLUDE_DIRS:PATH=${PARALLEL_NETCDF_INC} \
+      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_LIB} \
 \
       -D TPL_ENABLE_HDF5:BOOL=ON \
-      -D HDF5_INCLUDE_DIRS:PATH=$HDF5_INC \
-      -D HDF5_LIBRARY_DIRS:PATH=$HDF5_LIB \
+      -D HDF5_INCLUDE_DIRS:PATH=${HDF5_INC} \
+      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_LIB} \
 \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
@@ -156,7 +157,7 @@ cmake -G Ninja \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-      -D MPI_EXEC=$OPENMPI_BIN/mpirun \
+      -D MPI_EXEC=${OPENMPI_BIN}/mpirun \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D Kokkos_ENABLE_LIBDL:BOOL=ON \
@@ -164,19 +165,4 @@ cmake -G Ninja \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
       -D CMAKE_CXX_STANDARD=17 \
-       ..
-
-#      -D Trios_ENABLE_XDMF:BOOL=OFF \
-#
-# Optional build capabilities:
-# (1) These 6 lines regarding  SEACAS/netcdf  are needed
-#     for reading exodus meshes, but require an
-#     installed netcdf. Also used for Pamgen meshes.
-#        -D Trilinos_ENABLE_SEACAS:BOOL=ON \
-#        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
-#        -D TPL_ENABLE_Netcdf:BOOL=ON \
-#        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
-#        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
-
-#      -D Trilinos_EXTRA_REPOSITORIES="preCopyrightTrilinos" \
-#      -D Trilinos_ENABLE_MueLu:BOOL=ON \
+.. 
