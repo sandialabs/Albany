@@ -21,6 +21,8 @@ Nightly, cee-compute030, Albany-Linux-4.18.0-513.11.1.el8_9.x86_64-gcc-10.3.0-De
 Nightly, cee-compute030, Trilinos-Linux-4.18.0-513.11.1.el8_9.x86_64-gcc-10.3.0-Debug-Serial
 Nightly, cee-compute004, Albany-Linux-4.18.0-513.11.1.el8_9.x86_64-Intel(R)-18.0.0-Release-Serial
 Nightly, cee-compute004, Trilinos-Linux-4.18.0-513.11.1.el8_9.x86_64-Intel(R)-18.0.0-Release-Serial
+Nightly, hayka.ca.sandia.gov, Albany-Linux-5.14.0-427.42.1.el9_4.x86_64-gcc-11.4.0-Release
+Nightly, hayka.ca.sandia.gov, Trilinos-Linux-5.14.0-427.42.1.el9_4.x86_64-gcc-11.4.0-Release
 Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.83.1.el7.x86_64-gcc-10.1.0-Release-Serial-No-Epetra
 Nightly, mockba.ca.sandia.gov, Albany-Linux-3.10.0-1160.83.1.el7.x86_64-gcc-10.1.0-Release-Serial
 Nightly, mockba.ca.sandia.gov, CismAlbany-Linux-3.10.0-1160.83.1.el7.x86_64-gcc-10.1.0-Release-Serial
