@@ -190,8 +190,8 @@ if (BUILD_ALBANY_RELEASE)
   # Build the rest of Albany and install everything
   #
 
-  #set (CTEST_BUILD_TARGET all)
-  set (CTEST_BUILD_TARGET install)
+  set (CTEST_BUILD_TARGET all)
+  #set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
