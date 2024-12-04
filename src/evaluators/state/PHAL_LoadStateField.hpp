@@ -37,13 +37,11 @@ private:
 
   using ExecutionSpace = typename PHX::Device::execution_space;
 
-  PHX::MDField<ScalarType> data;
+  PHX::MDField<ScalarType> field;
   std::string fieldName;
   std::string stateName;
 
   MDFieldMemoizer<Traits> memoizer;
-
-  MDFieldVectorRight<ScalarType> dataVec;
 };
 
 template<typename EvalT, typename Traits>
@@ -65,13 +63,11 @@ private:
 
   using ExecutionSpace = typename PHX::Device::execution_space;
 
-  PHX::MDField<ParamScalarT> data;
+  PHX::MDField<ParamScalarT> field;
   std::string fieldName;
   std::string stateName;
 
   MDFieldMemoizer<Traits> memoizer;
-
-  MDFieldVectorRight<ParamScalarT> dataVec;
 };
 
 // Shortcut names
