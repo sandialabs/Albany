@@ -56,7 +56,7 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
   Kokkos::parallel_for(this->getName(),
                        Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>({0,0,0},{stateData.extent(0),stateData.extent(1),stateData.extent(2)}),
                        KOKKOS_CLASS_LAMBDA(const int i, const int j, const int k) {
-    field(i,j,k) = stateData(i,j,k);
+    field.access(i,j,k) = stateData.access(i,j,k);  //works also when rank is less than 3
   });
 }
 
@@ -102,7 +102,7 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   Kokkos::parallel_for(this->getName(),
                        Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>({0,0,0},{stateData.extent(0),stateData.extent(1),stateData.extent(2)}),
                        KOKKOS_CLASS_LAMBDA(const int i, const int j, const int k) {
-    field(i,j,k) = stateData(i,j,k);
+    field.access(i,j,k) = stateData.access(i,j,k); //works also when rank is less than 3
   });
 }
 
