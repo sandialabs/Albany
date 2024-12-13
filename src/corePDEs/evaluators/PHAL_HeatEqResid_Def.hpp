@@ -107,9 +107,10 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(TResidual,fm);
 
   // Allocate workspace
-  flux = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
-  if (haveAbsorption) aterm = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs);
-  if (haveConvection) convection = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs);
+  flux = Kokkos::createDynRankView(Temperature.get_view(), "flux", worksetSize, numQPs, numDims);
+  if (haveSource) neg_source = Kokkos::createDynRankView(Temperature.get_view(), "neg_source", worksetSize, numQPs);
+  if (haveAbsorption) aterm = Kokkos::createDynRankView(Temperature.get_view(), "aterm", worksetSize, numQPs);
+  if (haveConvection) convection = Kokkos::createDynRankView(Temperature.get_view(), "convection", worksetSize, numQPs);
 }
 
 //**********************************************************************
@@ -124,8 +125,6 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
 
   if (haveSource) {
-    auto neg_source = PHAL::create_copy("neg_source", Source.get_view());
-
     for (size_t i =0; i< Source.extent(0); i++)
      for (size_t j =0; j< Source.extent(1); j++)
        neg_source(i,j) = Source(i,j) * -1.0;

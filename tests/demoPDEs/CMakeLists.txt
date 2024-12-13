@@ -4,6 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+  add_subdirectory(Helmholtz2D)
   add_subdirectory(AdvDiff)
   add_subdirectory(ReactDiffSystem)
   add_subdirectory(ODE)

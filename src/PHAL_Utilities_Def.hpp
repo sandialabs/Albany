@@ -260,35 +260,4 @@ void scale (ArrayT& a, const T& val) {
   loop(sl, a);
 }
 
-template< class T , class ... P >
-inline
-typename std::enable_if<
-  !Kokkos::is_dynrankview_fad<Kokkos::DynRankView<T,P...>>::value,
-  typename Kokkos::DynRankView<T,P...>::non_const_type >::type
-create_copy( const std::string& name,
-    const Kokkos::DynRankView<T,P...> & src )
-{
-  using dst_type = typename Kokkos::DynRankView<T,P...>::non_const_type;
-  auto layout = Kokkos::Impl::reconstructLayout(src.layout(), src.rank());
-  return dst_type( name , layout );
-}
-
-template< class T , class ... P >
-inline
-typename std::enable_if<
-  Kokkos::is_dynrankview_fad<Kokkos::DynRankView<T,P...>>::value,
-  typename Kokkos::DynRankView<T,P...>::non_const_type >::type
-create_copy( const std::string& /* name */,
-    const Kokkos::DynRankView<T,P...> & src )
-{
-  using Dst = typename Kokkos::DynRankView<T,P...>::non_const_type;
-  auto sm = src.impl_map();
-  auto sl = sm.layout();
-  auto fad_rank = src.rank();
-  sl.dimension[fad_rank] = sm.dimension_scalar();
-  auto real_rank = fad_rank + 1;
-  auto ml = Kokkos::Impl::reconstructLayout(sl, real_rank);
-  return Dst ( src.label(), ml );
-}
-
 } // namespace PHAL
