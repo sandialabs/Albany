@@ -61,6 +61,12 @@ HelmholtzResid(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
   this->registerSacadoParameter("Ksqr", paramLib);
 
+  Teuchos::RCP<PHX::DataLayout> qp_scalar_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  std::vector<PHX::DataLayout::size_type> dims;
+  qp_scalar_dl->dimensions(dims);
+  worksetSize = dims[0];
+  numQPs  = dims[1];
 }
 
 //**********************************************************************
@@ -81,6 +87,10 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   }
   this->utils.setFieldData(UResidual,fm);
   this->utils.setFieldData(VResidual,fm);
+
+  // Allocate workspace
+  U_ksqr = Kokkos::createDynRankView(U.get_view(), "U_ksqr", worksetSize, numQPs);
+  V_ksqr = Kokkos::createDynRankView(U.get_view(), "V_ksqr", worksetSize, numQPs);
 }
 
 //**********************************************************************
@@ -101,9 +111,6 @@ evaluateFields(typename Traits::EvalData /* workset */)
     FST::integrate(UResidual.get_view(), USource.get_view(), wBF.get_view(), true); // "true" sums into
     FST::integrate(VResidual.get_view(), VSource.get_view(), wBF.get_view(), true);
   }
-
-  auto U_ksqr = create_copy("U_ksqr", U.get_view());
-  auto V_ksqr = create_copy("V_ksqr", V.get_view());
 
   RST::scale(U_ksqr, U.get_view(), ksqr);
   RST::scale(V_ksqr, V.get_view(), ksqr);

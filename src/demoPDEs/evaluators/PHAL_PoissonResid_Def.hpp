@@ -23,7 +23,9 @@ PoissonResid(const Teuchos::ParameterList& p,
   Source      (p.get<std::string>  ("Source Name"), dl->qp_scalar ),
   haveSource  (p.get<bool>("Have Source")),
   PhiResidual (p.get<std::string>  ("Residual Name"),  dl->node_scalar ),
-  PhiFlux     (p.get<std::string>  ("Flux QP Variable Name"), dl->qp_gradient)
+  PhiFlux     (p.get<std::string>  ("Flux QP Variable Name"), dl->qp_gradient),
+  worksetSize (dl->qp_scalar->extent(0)),
+  numQPs    (dl->qp_scalar->extent(1))
 {
   this->addDependentField(wBF);
   //this->addDependentField(Potential);
@@ -53,6 +55,9 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   if (haveSource)  this->utils.setFieldData(Source,fm);
 
   this->utils.setFieldData(PhiResidual,fm);
+
+  // Allocate workspace
+  if (haveSource) neg_source = Kokkos::createDynRankView(Source.get_view(), "neg_source", worksetSize, numQPs);
 }
 
 //**********************************************************************
@@ -67,7 +72,6 @@ evaluateFields(typename Traits::EvalData /* workset */)
 
   FST::integrate(PhiResidual.get_view(), PhiFlux.get_view(), wGradBF.get_view(), false); // "false" overwrites
 
-  auto neg_source = PHAL::create_copy("neg_Source", Source.get_view());
   if (haveSource) {
     for (unsigned int i=0; i<Source.extent(0); i++)
       for (unsigned int j=0; j<Source.extent(1); j++)

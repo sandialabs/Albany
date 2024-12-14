@@ -44,6 +44,8 @@ private:
   PHX::MDField<const ScalarT> Source;
 
   bool haveSource;
+  unsigned int worksetSize, numQPs;
+  Kokkos::DynRankView<ScalarT, PHX::Device> neg_source;
 
   // Output:
   PHX::MDField<ScalarT> PhiResidual;

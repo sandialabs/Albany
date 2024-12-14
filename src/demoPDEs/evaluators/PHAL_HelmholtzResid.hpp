@@ -54,7 +54,10 @@ private:
 
   bool haveSource;
 
+  unsigned int worksetSize, numQPs;
   ScalarT ksqr;
+  Kokkos::DynRankView<ScalarT, PHX::Device> U_ksqr;
+  Kokkos::DynRankView<ScalarT, PHX::Device> V_ksqr;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> UResidual;

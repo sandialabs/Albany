@@ -60,6 +60,7 @@ private:
   bool haverhoCp;
   unsigned int numQPs, numDims, numNodes, worksetSize;
   Kokkos::DynRankView<ScalarT, PHX::Device> flux;
+  Kokkos::DynRankView<ScalarT, PHX::Device> neg_source;
   Kokkos::DynRankView<ScalarT, PHX::Device> aterm;
   Kokkos::DynRankView<ScalarT, PHX::Device> convection;
 };
