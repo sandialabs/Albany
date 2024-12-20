@@ -100,6 +100,8 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   bed_topography_param_name   = bed_topography_name + "_param";
   bed_topography_observed_name= "observed_" + bed_topography_name;
   bed_roughness_name          = params->sublist("Variables Names").get<std::string>("Bed Roughness Name"    ,"bed_roughness");
+  bulk_friction_name          = params->sublist("Variables Names").get<std::string>("Bulk Friction Coefficient Name", "bulk_friction");
+  basal_debris_name           = params->sublist("Variables Names").get<std::string>("Basal Debris Factor Name", "basal_debris");
   flow_factor_name            = params->sublist("Variables Names").get<std::string>("Flow Factor Name"       ,"flow_factor");
   stiffening_factor_log_name  = params->sublist("Variables Names").get<std::string>("Stiffening Factor Log Name" ,"stiffening_factor_log");
   damage_factor_name          = params->sublist("Variables Names").get<std::string>("Damage Factor Name"     ,"damage_factor");
@@ -138,7 +140,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   std::string tensorCubDegName = "Cubature Degrees (Horiz Vert)";
   if(tensorProductCell && params->isParameter(tensorCubDegName)) {
     TEUCHOS_TEST_FOR_EXCEPTION (params->isParameter("Cubature Degree") && params->isParameter(tensorCubDegName), std::logic_error,
-                                  "Error! Either provide parameter 'Cubatur Degree' or 'Cubature Degrees (Horiz Vert)', not both\n");
+                                  "Error! Either provide parameter 'Cubature Degree' or 'Cubature Degrees (Horiz Vert)', not both\n");
     Teuchos::Array<int> tensorCubDegrees;
     tensorCubDegrees = params->get<Teuchos::Array<int>>(tensorCubDegName);
     if(cellType->getKey() == shards::Wedge<6>::key)
@@ -150,9 +152,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, degree);
     }    
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (!tensorProductCell && params->isParameter(tensorCubDegName), std::logic_error,
-                                  "Error! Parameter 'Cubature Degrees (Horiz Vert)' should be provided only for extruded meshes with Wedge or Hexaedron cells\n"
-                                  "        Use 'Cubature Degree instead'");
+    //TEUCHOS_TEST_FOR_EXCEPTION (!tensorProductCell && params->isParameter(tensorCubDegName), std::logic_error, "Error! Parameter 'Cubature Degrees (Horiz Vert)' should be provided only for extruded meshes with Wedge or Hexaedron cells\n""        Use 'Cubature Degree instead'");
     int cubDegree = params->get("Cubature Degree", defaultCubDegree);
     cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   }  
@@ -643,6 +643,7 @@ void StokesFOBase::setupEvaluatorRequests ()
       } else {
         // We have a sliding law, which requires a mu (possibly a field),
         // and possibly a bed roughness
+	// debris friction also requires bulk friction coefficient + basal debris factor
         const auto mu_type = util::upper_case(bfc.get<std::string>("Mu Type"));
         if (mu_type!="CONSTANT") {
           auto mu_field_name = bfc.get<std::string>("Mu Field Name");
@@ -662,6 +663,28 @@ void StokesFOBase::setupEvaluatorRequests ()
           }
           setSingleFieldProperties(fname, FRT::Scalar, FST::ParamScalar);
         }
+	if (type=="DEBRIS FRICTION") {
+	  // For debris friction slip law, we have bed roughness as in reg Coulomb
+	  // As well as two new parameters: bulk friction coefficient and basal debris factor
+	  auto fname = "bed_roughness";
+	  if (is_input_field[fname] || is_ss_input_field[ssName][fname]) {
+	    ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
+	    ss_build_interp_ev[ssName][fname][IReq::QP_VAL] = true;
+	  }
+	  setSingleFieldProperties(fname, FRT::Scalar, FST::ParamScalar);
+	  auto bname = "bulk_friction";
+	  if (is_input_field[bname] || is_ss_input_field[ssName][bname]) {
+	    ss_build_interp_ev[ssName][bname][IReq::CELL_TO_SIDE] = true;
+	    ss_build_interp_ev[ssName][bname][IReq::QP_VAL] = true;
+	  }
+	  setSingleFieldProperties(bname, FRT::Scalar, FST::ParamScalar);
+	  auto dname = "basal_debris";
+	  if (is_input_field[dname] || is_ss_input_field[ssName][dname]) {
+	    ss_build_interp_ev[ssName][dname][IReq::CELL_TO_SIDE] = true;
+	    ss_build_interp_ev[ssName][dname][IReq::QP_VAL] = true;
+	  }
+	  setSingleFieldProperties(dname, FRT::Scalar, FST::ParamScalar);
+	}
       }
     }
 

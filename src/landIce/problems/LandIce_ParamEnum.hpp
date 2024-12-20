@@ -18,6 +18,8 @@ enum class ParamEnum
   BedRoughness,
   Mu,
   Power,
+  BulkFriction,
+  BasalDebris,
   Homotopy,
   GLHomotopy,
   Theta_0,
@@ -31,6 +33,8 @@ namespace ParamEnumName
   static const std::string BedRoughness    = "Bed Roughness";
   static const std::string Mu              = "Mu";
   static const std::string Power           = "Power Exponent";
+  static const std::string BulkFriction    = "Bulk Friction Coefficient";
+  static const std::string BasalDebris     = "Basal Debris Factor";
   static const std::string HomotopyParam   = "Homotopy Parameter";
   static const std::string GLHomotopyParam = "Glen's Law Homotopy Parameter";
   static const std::string theta_0         = "Theta 0"; 
