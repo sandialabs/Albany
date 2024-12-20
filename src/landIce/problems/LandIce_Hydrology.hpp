@@ -883,6 +883,34 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ptr_lambda = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ptr_lambda);
 
+  //--- Shared Parameter for basal friction coefficient: bulk friction coefficient ---//
+  p = Teuchos::rcp(new Teuchos::ParameterList("Bulk Friction Coefficient: bulk_friction"));
+
+  param_name = ParamEnumName::BulkFriction;
+  p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", params->sublist("LandIce Bulk Friction Coefficient").get<double>(param_name,-1.0));
+
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_bulk_friction;
+  ptr_bulk_friction = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ptr_bulk_friction);
+
+  //--- Shared Parameter for basal friction coefficient: basal debris factor ---//
+  p = Teuchos::rcp(new Teuchos::ParameterList("Basal Debris Factor: basal_debris"));
+
+  param_name = ParamEnumName::BasalDebris;
+  p->set<std::string>("Parameter Name", param_name);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  p->set<double>("Default Nominal Value", params->sublist("LandIce Basal Debris Factor").get<double>(param_name,-1.0));
+
+  Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_basal_debris;
+  ptr_basal_debris = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ptr_basal_debris);
+
   //--- Shared Parameter for basal friction coefficient: mu ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: mu"));
 
