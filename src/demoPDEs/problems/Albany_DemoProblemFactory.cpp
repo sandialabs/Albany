@@ -10,6 +10,7 @@
 #include "Albany_NavierStokes.hpp"
 #include "Albany_AdvDiffProblem.hpp"
 #include "Albany_ReactDiffSystem.hpp"
+#include "Albany_PoissonAdvDiffSystem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #include "Albany_ThermalProblem.hpp"
@@ -40,8 +41,9 @@ bool DemoProblemFactory::provides (const std::string& key) const
          key == "NavierStokes 3D" ||
          key == "AdvDiff 1D" ||
          key == "AdvDiff 2D" ||
-         key=="Reaction-Diffusion System 3D" ||
+         key == "Reaction-Diffusion System 3D" ||
          key == "Reaction-Diffusion System" ||
+         key == "Poisson-Advection-Diffusion System 2D" ||
          key == "Thermal 1D" ||
          key == "Thermal 2D" ||
          key == "Thermal 3D" ||
@@ -82,6 +84,8 @@ create (const std::string& key,
   } else if (key=="Reaction-Diffusion System 3D" ||
              key == "Reaction-Diffusion System") {
     problem = Teuchos::rcp(new ReactDiffSystem(problemParams, paramLib, 3));
+  } else if (key=="Poisson-Advection-Diffusion System 2D") {
+    problem = Teuchos::rcp(new PoissonAdvDiffSystem(problemParams, paramLib, 2));
   } else if (key == "ThermoElectrostatics 1D") {
     problem = Teuchos::rcp(new ThermoElectrostaticsProblem(problemParams, paramLib, 1));
   } else if (key == "ThermoElectrostatics 2D") {
