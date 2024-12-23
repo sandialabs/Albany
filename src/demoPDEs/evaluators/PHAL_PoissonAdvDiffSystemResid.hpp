@@ -41,11 +41,16 @@ private:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Phi; 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> PhiGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> U; 
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> UDot; 
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> UGrad;
+
+  bool supportsTransient; 
   
   double kappa;   //diffusion coefficient
-  double rhom;    // density of negative ions 
+  double rhom;    //density of negative ions 
+  double d;       //kinematic diffusivity coefficient
+  double c;       //advection coefficient
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

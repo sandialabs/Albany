@@ -23,8 +23,7 @@ PoissonAdvDiffSystem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_),
   use_sdbcs_(false)
 {
-  //IKT 12/23/2024 TODO: ultimately this will be 2 not 1 when we add rhop equation.
-  neq = 1;  
+  neq = 2;  
 }
 
 Albany::PoissonAdvDiffSystem::
@@ -72,8 +71,10 @@ Albany::PoissonAdvDiffSystem::constructDirichletEvaluators(
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   //IKT 12/23/2024 TODO: add rhop as a DBC name once we have that PDE in the code.
-   dirichletNames[0] = "Phi";
+   for (unsigned int i=0; i<neq; i++) {
+     std::stringstream s; s << "U" << i;
+     dirichletNames[i] = s.str();
+   }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);

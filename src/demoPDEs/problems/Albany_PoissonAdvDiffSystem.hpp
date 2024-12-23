@@ -146,12 +146,6 @@ Albany::PoissonAdvDiffSystem::constructEvaluators(
       supportsTransient = true;
    int offset=0;
 
-   // This problem appears to be only defined as a transient problem, throw exception if it is not
-   TEUCHOS_TEST_FOR_EXCEPTION(
-      number_of_time_deriv != 0,
-      std::logic_error,
-      "Albany_PoissonAdvDiffSystem must be defined as a steady calculation.");
-
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
@@ -160,11 +154,9 @@ Albany::PoissonAdvDiffSystem::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names(1);
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Phi";
-     //IKT 12/23/2024: will need to change this.  Phi will never had a dot, but 
-     //the other variable rhop will.  Keeping 'enable transient' logic for now.
+     dof_names[0] = "U";
      if (supportsTransient)
-       dof_names_dot[0] = dof_names[0]+"_dot";
+       dof_names_dot[0] = dof_names[0]+" Dot";
      resid_names[0] = "PoissonAdvDiff System Residual";
 
      if (supportsTransient) fm0.template registerEvaluator<EvalT>
@@ -214,8 +206,9 @@ Albany::PoissonAdvDiffSystem::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("QP Variable Name", "Phi");
-    p->set<string>("Gradient QP Variable Name", "Phi Gradient");
+    p->set<string>("QP Variable Name", "U");
+    if (supportsTransient) p->set<string>("QP Time Derivative Variable Name", "U Dot");
+    p->set<string>("Gradient QP Variable Name", "U Gradient");
  
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);
@@ -225,6 +218,7 @@ Albany::PoissonAdvDiffSystem::constructEvaluators(
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Options");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    p->set<bool>("Supports Transient", supportsTransient);
 
     //Output
     p->set<string>("Residual Name", "PoissonAdvDiff System Residual");
