@@ -70,3 +70,23 @@ IF(ALBANY_SEACAS)
     set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
   endif()
 ENDIF()
+
+######################
+###   HDSA tests   ###
+######################
+
+if (ALBANY_IFPACK2)
+  set (testName ${testNameRoot}_HDSA_Piro)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_piro.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_piro.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_piro.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
+  set (testName ${testNameRoot}_HDSA_AdvDiff)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_advDiff.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_advDiff.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_advDiff.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
+endif()
+

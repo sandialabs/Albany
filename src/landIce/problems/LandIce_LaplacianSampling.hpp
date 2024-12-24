@@ -219,6 +219,12 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   }
 
   {
+    stateName = "target_field";
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
+  {
     stateName = "solution_opt";
     ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
     fm0.template registerEvaluator<EvalT> (ev);
