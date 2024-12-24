@@ -2,27 +2,37 @@
 ---
 ANONYMOUS:
   Debug Output:
-    Write Solution to MatrixMarket: -1
-    Write Jacobian to MatrixMarket: -1
+          #Write Solution to MatrixMarket: -1
+          #Write Jacobian to MatrixMarket: -1
   Problem:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Laplacian Sampling 2D
     Compute Sensitivities: true
-    Side Name: SideSet0
+    Side Name: SideSetX
     Response Functions:
       Number Of Responses: 5
-      Response 0: # misfit
-        Scaling: 1.0
-        Name: Squared L2 Difference Source ST Target PST
-        Source Field Name: prior_sample
-        Field Rank: Scalar
-        Target Field Name: solution_opt
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 0: 
+          Scaling: 0.5
+          Name: Squared L2 Difference Source ST Target PST
+          Source Field Name: prior_sample
+          Field Rank: Scalar
+          Target Field Name: target_field
+        Response 1: 
+          Scaling: 5.0e-4
+          Name: Squared L2 Difference Source PST Target PST
+          Source Field Name: weighted_normal_sample
+          #Side Set Name: basalside
+          Field Rank: Scalar
+          Target Value: 0.0
       Response 1:  #regularization term
         Scaling Coefficient: 1.0
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/A_prior.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/A_prior.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/E_prior.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/E_prior.mm
         Matrix A Is Symmetric: true
         Field Name: weighted_normal_sample
         D Solver Settings:
@@ -49,25 +59,25 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
       Response 2:
-        Scaling Coefficient: 1.0e3
+        Scaling Coefficient: 1.0
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/D.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/D.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
         Matrix A Is Symmetric: true
         #Matrix D Is Diagonal: true
         Field Name: weighted_normal_sample
       Response 3:
         Scaling Coefficient: 1.0
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/A_ell.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/A_ell.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state.mm
         Matrix A Is Symmetric: true
         Field Name: solution_opt
       Response 4:
-        Scaling Coefficient: 1.0e3
+        Scaling Coefficient: 1.0
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/D.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/D.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
         Matrix A Is Symmetric: true
         #Matrix D Is Diagonal: true
         Field Name: solution_opt
@@ -97,11 +107,11 @@ ANONYMOUS:
         Type: Distributed
         Name: solution_diff_sample_1
     LandIce Laplacian Regularization:
-      Mass Coefficient: 1.0
-      Laplacian Coefficient: 0.0
-      Robin Coefficient: 0.0
-      #Advection Vector: [2.5, 0.0]
-      Lump Mass Matrix: true
+      Mass Coefficient: 0.0
+      Laplacian Coefficient: 1.0
+      Robin Coefficient: 2.0
+      Advection Vector: [0.0, 0.0]
+      Lump Mass Matrix: false
     Cubature Degree: 4
     Hessian:
       Response 0:
@@ -235,52 +245,59 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
   Discretization:
-    1D Elements: 50
+    1D Elements: 199
     2D Elements: 1
+    2D Scale: 0.01
     Method: STK2D
-    Exodus Output File Name: hdsa_analysis_piro.exo
+    Exodus Output File Name: hdsa_analysis_advDiff.exo
     Number Of Time Derivatives: 0
     Required Fields Info:
-      Number Of Fields: 7
+      Number Of Fields: 8
       Field 0:
         Field Name: weighted_normal_sample
         Field Type: Node Scalar
         Field Origin: File
-        File Name: ../AsciiMeshes/HDSA/p_opt.ascii
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt.ascii
         Field Usage: Input-Output
       Field 1:
         Field Name: solution_opt
         Field Origin: File
         Field Type: Node Scalar
-        File Name: ../AsciiMeshes/HDSA/x_opt.ascii
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/x_opt.ascii
       Field 2:
         Field Name: solution_diff_sample_0
         Field Origin: File
         Field Type: Node Scalar
-        File Name: ../AsciiMeshes/HDSA/x_diff_p_opt.ascii
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_opt.ascii
       Field 3:
         Field Name: solution_diff_sample_1
         Field Origin: File
         Field Type: Node Scalar
-        File Name: ../AsciiMeshes/HDSA/x_diff_p_1.ascii
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_1.ascii
       Field 4:
         Field Name: param_opt
         Field Type: Node Scalar
         Field Origin: File
-        File Name: ../AsciiMeshes/HDSA/p_opt.ascii
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt.ascii
       Field 5:
         Field Name: param_sample_0
         Field Type: Node Scalar
         Field Origin: File
-        File Name: ../AsciiMeshes/HDSA/p_opt.ascii
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt.ascii
       Field 6:
         Field Name: param_sample_1
         Field Type: Node Scalar
         Field Origin: File
-        File Name: ../AsciiMeshes/HDSA/p_1.ascii
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_1.ascii
+      Field 7:
+        Field Name: target_field
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Expression: ['50.0 - 30.0 * (x - 0.5)^2']
+        #File Name: ./z_sampl.ascii
       Side Set Discretizations:
-        Side Sets: [SideSet0]
-        SideSet0:
+        Side Sets: [SideSetX]
+        SideSetX:
           Method: SideSetSTK
           Number Of Time Derivatives: 0
           Use Serial Mesh: false
@@ -322,7 +339,7 @@ ANONYMOUS:
 
         MD Prior:
           alpha_u: 0.25
-          alpha_z: 1.e-4
+          alpha_z: 2.7778e-8
           alpha_d: 1.e-5
           Number Of Singular Values: 50
           Oversampling Factor: 1
@@ -476,9 +493,9 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Absolute Tolerance: 1.0e-06
+    Absolute Tolerance: 1.0e-05
     Test Value: 0.0
-    Relative Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-05
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [38.3712008017]
+    Piro Analysis Test Values: [2983.20695086]
 ...

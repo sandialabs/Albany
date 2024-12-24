@@ -165,7 +165,7 @@ void LandIce::LaplacianSampling::constructNeumannEvaluators (const Teuchos::RCP<
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
    std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
    Teuchos::ArrayRCP<std::string> dof_names(1);
-     dof_names[0] = "sample";
+   dof_names[0] = "prior_sample";
 
 
    nfm.resize(1); // LandIce problem only has one element block
