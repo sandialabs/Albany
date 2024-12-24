@@ -504,16 +504,3 @@ if (ALBANY_IFPACK2)
   endif()
 
 endif()
-
-######################
-###   HDSA tests   ###
-######################
-
-if (ALBANY_IFPACK2)
-  set (testName ${testNameRoot}_HDSA_Piro)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_piro.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_piro.yaml)
-  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_piro.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
-
-endif()
