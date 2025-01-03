@@ -23,15 +23,12 @@ CoupledPoissonResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Gradient Data Layout") ),
   rhop       (p.get<std::string>                   ("QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  Phi       (p.get<std::string>                   ("QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   PhiGrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ) 
 {
 
-  this->addDependentField(Phi.fieldTag()); //IKT: note that we don't actually need Phi for residual evaluation
   this->addDependentField(PhiGrad.fieldTag());
   this->addDependentField(rhop.fieldTag());
   this->addDependentField(wBF.fieldTag());
@@ -51,7 +48,7 @@ CoupledPoissonResid(const Teuchos::ParameterList& p) :
   Teuchos::ParameterList* bf_list =
   p.get<Teuchos::ParameterList*>("Parameter List");
 
-  Phi.fieldTag().dataLayout().dimensions(dims);
+  rhop.fieldTag().dataLayout().dimensions(dims);
 
   kappa = bf_list->get("Diffusivity", 4.4e9); 
   rhom = bf_list->get("Density of negative ions", 1.0e23); 
@@ -68,7 +65,6 @@ void CoupledPoissonResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(Phi,fm);
   this->utils.setFieldData(PhiGrad,fm);
   this->utils.setFieldData(rhop,fm);
   this->utils.setFieldData(wBF,fm);

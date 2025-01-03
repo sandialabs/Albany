@@ -233,7 +233,6 @@ Albany::CoupledPoissonAdvDiffSystem::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("QP Variable Name", "Phi");
     p->set<string>("QP Variable Name", "rhop");
     p->set<string>("Gradient QP Variable Name", "Phi Gradient");
  
@@ -261,8 +260,8 @@ Albany::CoupledPoissonAdvDiffSystem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<string>("QP Variable Name", "rhop");
-    p->set<string>("Gradient QP Variable Name", "rhop Gradient");
-    p->set<string>("Gradient QP Variable Name", "Phi Gradient");
+    p->set<string>("Gradient QP rhop Variable Name", "rhop Gradient");
+    p->set<string>("Gradient QP Phi Variable Name", "Phi Gradient");
     p->set<string>("QP Time Derivative Variable Name", "rhop Dot");
  
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);

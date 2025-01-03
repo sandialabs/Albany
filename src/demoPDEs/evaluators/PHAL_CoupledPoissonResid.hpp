@@ -40,8 +40,7 @@ private:
   // Input:
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Phi; //electric potential
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> PhiGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> PhiGrad; //gradient of electric potential
   PHX::MDField<const ScalarT,Cell,QuadPoint> rhop; //density of + ions.
 
   double kappa;   //diffusion coefficient

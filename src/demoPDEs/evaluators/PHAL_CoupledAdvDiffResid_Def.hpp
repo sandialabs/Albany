@@ -25,9 +25,9 @@ CoupledAdvDiffResid(const Teuchos::ParameterList& p) :
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
   rhopDot      (p.get<std::string>                   ("QP Time Derivative Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  rhopGrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
+  rhopGrad      (p.get<std::string>                   ("Gradient QP rhop Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
-  PhiGrad      (p.get<std::string>                   ("Gradient QP Variable Name"),
+  PhiGrad      (p.get<std::string>                   ("Gradient QP Phi Variable Name"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
   Residual   (p.get<std::string>                   ("Residual Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ) 
