@@ -60,8 +60,8 @@ CoupledAdvDiffResid(const Teuchos::ParameterList& p) :
   d    = bf_list->get("Kinematic diffusivity", 1.0e-10); 
   c    = bf_list->get("Advection coefficient", 3.89e-9); 
   
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << " numDims = " << numDims << "\n";
+  //Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  //*out << " numDims = " << numDims << "\n";
   
 
 }
@@ -89,6 +89,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
+      Residual(cell,node) = 0.0; 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	//drhop/dt - div(d*grad(rhop) + c*rhop*grad(phi)) = 0 
         Residual(cell,node) += rhopDot(cell,qp)*wBF(cell,node,qp) + 
@@ -96,7 +97,6 @@ evaluateFields(typename Traits::EvalData workset)
 		               d*rhopGrad(cell,qp,1)*wGradBF(cell,node,qp,1) + 
 		               c*rhop(cell,qp)*PhiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) + 
 		               c*rhop(cell,qp)*PhiGrad(cell,qp,1)*wGradBF(cell,node,qp,1); 
-				 
       }
     }        
   }

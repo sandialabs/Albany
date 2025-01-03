@@ -283,13 +283,10 @@ Albany::CoupledPoissonAdvDiffSystem::constructEvaluators(
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    Teuchos::RCP<const PHX::FieldTag> ret_tag;
     PHX::Tag<typename EvalT::ScalarT> phi_tag("Scatter Phi", dl->dummy);
     fm0.requireField<EvalT>(phi_tag);
     PHX::Tag<typename EvalT::ScalarT> rhop_tag("Scatter rhop", dl->dummy);
     fm0.requireField<EvalT>(rhop_tag);
-    ret_tag = rhop_tag.clone();
-    return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);

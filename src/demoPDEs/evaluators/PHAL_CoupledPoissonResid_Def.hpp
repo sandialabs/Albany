@@ -56,8 +56,8 @@ CoupledPoissonResid(const Teuchos::ParameterList& p) :
   kappa = bf_list->get("Diffusivity", 4.4e9); 
   rhom = bf_list->get("Density of negative ions", 1.0e23); 
   
-  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << " numDims = " << numDims << "\n";
+  //Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  //*out << " numDims = " << numDims << "\n";
   
 
 }
@@ -83,6 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
+      Residual(cell,node) = 0.0; 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         //- div(kappa*grad(phi)) = rhop - rhom 
         Residual(cell,node) += kappa*PhiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) + 
