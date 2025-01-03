@@ -4,7 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_PoissonAdvDiffSystem.hpp"
+#include "Albany_CoupledPoissonAdvDiffSystem.hpp"
+#include "InitialCondition.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -12,26 +13,32 @@
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include <string>
 
 
-Albany::PoissonAdvDiffSystem::
-PoissonAdvDiffSystem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Albany::CoupledPoissonAdvDiffSystem::
+CoupledPoissonAdvDiffSystem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, 2),
+  Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
+  params(params_),
   use_sdbcs_(false)
 {
+  if (numDim==1) periodic = params->get("Periodic BC", false);
+  else           periodic = false;
+  if (periodic) *out <<" Periodic Boundary Conditions being used." <<std::endl;
+
+  this->setNumEquations(2);
+
 }
 
-Albany::PoissonAdvDiffSystem::
-~PoissonAdvDiffSystem()
+Albany::CoupledPoissonAdvDiffSystem::
+~CoupledPoissonAdvDiffSystem()
 {
 }
 
 void
-Albany::PoissonAdvDiffSystem::
+Albany::CoupledPoissonAdvDiffSystem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -40,15 +47,21 @@ buildProblem(
 
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
+
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM,
 		  Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
+
+  if (meshSpecs[0]->nsNames.size() > 0) { // Build a nodeset evaluator if nodesets are present
+     constructDirichletEvaluators(meshSpecs[0]->nsNames);
+  }
+
+
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Albany::PoissonAdvDiffSystem::
+Albany::CoupledPoissonAdvDiffSystem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -58,36 +71,37 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<PoissonAdvDiffSystem> op(
+  ConstructEvaluatorsOp<CoupledPoissonAdvDiffSystem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
 void
-Albany::PoissonAdvDiffSystem::constructDirichletEvaluators(
-        const Albany::MeshSpecsStruct& meshSpecs)
+Albany::CoupledPoissonAdvDiffSystem::constructDirichletEvaluators(
+        const std::vector<std::string>& nodeSetIDs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   for (unsigned int i=0; i<neq; i++) {
-     std::stringstream s; s << "U" << i;
-     dirichletNames[i] = s.str();
-   }
+   dirichletNames[0] = "Phi";
+   dirichletNames[1] = "rhop";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+   dfm = dirUtils.constructBCEvaluators(nodeSetIDs, dirichletNames,
                                           this->params, this->paramLib);
-   use_sdbcs_ = dirUtils.useSDBCs(); 
-   offsets_ = dirUtils.getOffsets(); 
+   use_sdbcs_ = dirUtils.useSDBCs();
+   offsets_ = dirUtils.getOffsets();
    nodeSetIDs_ = dirUtils.getNodeSetIDs();
 }
 
+
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::PoissonAdvDiffSystem::getValidProblemParameters() const
+Albany::CoupledPoissonAdvDiffSystem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidPoissonAdvDiffSystemParams");
+    this->getGenericProblemParams("ValidCoupledPoissonAdvDiffSystemParams");
 
+  if (numDim==1)
+    validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic BC for 1D problems");
   validPL->sublist("Options", false, "");
 
   return validPL;

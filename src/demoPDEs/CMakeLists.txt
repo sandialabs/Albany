@@ -10,6 +10,7 @@ set(SOURCES
     problems/Albany_AdvDiffProblem.cpp
     problems/Albany_ReactDiffSystem.cpp
     problems/Albany_PoissonAdvDiffSystem.cpp
+    problems/Albany_CoupledPoissonAdvDiffSystem.cpp
     problems/Albany_Helmholtz2DProblem.cpp
     problems/Albany_ODEProblem.cpp
     problems/Albany_NavierStokes.cpp
@@ -19,6 +20,8 @@ set(SOURCES
     evaluators/PHAL_AdvDiffResid.cpp
     evaluators/PHAL_ReactDiffSystemResid.cpp
     evaluators/PHAL_PoissonAdvDiffSystemResid.cpp
+    evaluators/PHAL_CoupledPoissonResid.cpp
+    evaluators/PHAL_CoupledAdvDiffResid.cpp
     evaluators/PHAL_HelmholtzResid.cpp
     evaluators/PHAL_JouleHeating.cpp
     evaluators/PHAL_NSBodyForce.cpp
@@ -45,6 +48,7 @@ set(SOURCES
     problems/Albany_AdvDiffProblem.hpp
     problems/Albany_ReactDiffSystem.hpp
     problems/Albany_PoissonAdvDiffSystem.hpp
+    problems/Albany_CoupledPoissonAdvDiffSystem.hpp
     problems/Albany_Helmholtz2DProblem.hpp
     problems/Albany_NavierStokes.hpp
     problems/Albany_ODEProblem.hpp
@@ -57,6 +61,10 @@ set(SOURCES
     evaluators/PHAL_ReactDiffSystemResid_Def.hpp
     evaluators/PHAL_PoissonAdvDiffSystemResid.hpp
     evaluators/PHAL_PoissonAdvDiffSystemResid_Def.hpp
+    evaluators/PHAL_CoupledPoissonResid.hpp
+    evaluators/PHAL_CoupledPoissonResid_Def.hpp
+    evaluators/PHAL_CoupledAdvDiffResid.hpp
+    evaluators/PHAL_CoupledAdvDiffResid_Def.hpp
     evaluators/PHAL_HelmholtzResid.hpp
     evaluators/PHAL_HelmholtzResid_Def.hpp
     evaluators/PHAL_JouleHeating.hpp
