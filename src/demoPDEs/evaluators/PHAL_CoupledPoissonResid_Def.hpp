@@ -85,7 +85,6 @@ evaluateFields(typename Traits::EvalData workset)
         Residual(cell,node) += kappa*PhiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) + 
                                kappa*PhiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) -
 			       (rhop(cell,qp) - rhom)*wBF(cell,node,qp);
-        std::cout << "IKT cell, qp, rhop = " << cell << ", " << qp << ", " << rhop(cell,qp) << "\n"; 
       }
     }        
   }
