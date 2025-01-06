@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_POISSONPROBLEM_HPP
-#define ALBANY_POISSONPROBLEM_HPP
+#ifndef ALBANY_POISSONSYSTEMPROBLEM_HPP
+#define ALBANY_POISSONSYSTEMPROBLEM_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -21,16 +21,16 @@ namespace Albany {
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
    */
-  class PoissonProblem : public AbstractProblem {
+  class PoissonSystemProblem : public AbstractProblem {
   public:
   
     //! Default constructor
-    PoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
+    PoissonSystemProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		 const Teuchos::RCP<ParamLib>& paramLib,
 		 const int numDim_);
 
     //! Destructor
-    ~PoissonProblem();
+    ~PoissonSystemProblem();
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -58,10 +58,10 @@ namespace Albany {
   private:
 
     //! Private to prohibit copying
-    PoissonProblem(const PoissonProblem&);
+    PoissonSystemProblem(const PoissonSystemProblem&);
     
     //! Private to prohibit copying
-    PoissonProblem& operator=(const PoissonProblem&);
+    PoissonSystemProblem& operator=(const PoissonSystemProblem&);
 
   public:
 
@@ -107,7 +107,7 @@ namespace Albany {
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Albany::PoissonProblem::constructEvaluators(
+Albany::PoissonSystemProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
   Albany::StateManager& stateMgr,
@@ -157,7 +157,7 @@ Albany::PoissonProblem::constructEvaluators(
    TEUCHOS_TEST_FOR_EXCEPTION(
       number_of_time_deriv != 0,
       std::logic_error,
-      "Albany_PoissonProblem must be defined as a steady calculation.");
+      "Albany_PoissonSystemProblem must be defined as a steady calculation.");
 
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -257,4 +257,4 @@ Albany::PoissonProblem::constructEvaluators(
 
   return Teuchos::null;
 }
-#endif // ALBANY_POISSONPROBLEM_HPP
+#endif // ALBANY_POISSONSYSTEMPROBLEM_HPP

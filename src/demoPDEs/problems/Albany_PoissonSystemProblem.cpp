@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_PoissonProblem.hpp"
+#include "Albany_PoissonSystemProblem.hpp"
 #include "InitialCondition.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
@@ -15,8 +15,8 @@
 #include "Albany_ProblemUtils.hpp"
 
 
-Albany::PoissonProblem::
-PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+Albany::PoissonSystemProblem::
+PoissonSystemProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
@@ -32,13 +32,13 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 }
 
-Albany::PoissonProblem::
-~PoissonProblem()
+Albany::PoissonSystemProblem::
+~PoissonSystemProblem()
 {
 }
 
 void
-Albany::PoissonProblem::
+Albany::PoissonSystemProblem::
 buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
@@ -61,7 +61,7 @@ buildProblem(
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-Albany::PoissonProblem::
+Albany::PoissonSystemProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -71,14 +71,14 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<PoissonProblem> op(
+  ConstructEvaluatorsOp<PoissonSystemProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
 void
-Albany::PoissonProblem::constructDirichletEvaluators(
+Albany::PoissonSystemProblem::constructDirichletEvaluators(
         const std::vector<std::string>& nodeSetIDs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
@@ -94,7 +94,7 @@ Albany::PoissonProblem::constructDirichletEvaluators(
 
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::PoissonProblem::getValidProblemParameters() const
+Albany::PoissonSystemProblem::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidPoissonParams");

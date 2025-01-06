@@ -11,7 +11,7 @@ set(SOURCES
     problems/Albany_ReactDiffSystem.cpp
     problems/Albany_PoissonAdvDiffSystem.cpp
     problems/Albany_CoupledPoissonAdvDiffSystem.cpp
-    problems/Albany_PoissonProblem.cpp
+    problems/Albany_PoissonSystemProblem.cpp
     problems/Albany_AdvDiffSystemProblem.cpp
     problems/Albany_Helmholtz2DProblem.cpp
     problems/Albany_ODEProblem.cpp
@@ -51,7 +51,7 @@ set(SOURCES
     problems/Albany_ReactDiffSystem.hpp
     problems/Albany_PoissonAdvDiffSystem.hpp
     problems/Albany_CoupledPoissonAdvDiffSystem.hpp
-    problems/Albany_PoissonProblem.hpp
+    problems/Albany_PoissonSystemProblem.hpp
     problems/Albany_AdvDiffSystemProblem.hpp
     problems/Albany_Helmholtz2DProblem.hpp
     problems/Albany_NavierStokes.hpp
