@@ -198,6 +198,8 @@ Albany::PoissonProblem::constructEvaluators(
 
 
    // Register rhop
+   // IKT 1/6/2024: for some reason the following block will create a rhop_1, rhop_2, rhop_3 and rhop_4 field
+   // in the output file.  The latter 3 fields are all 0.  Input file only has rhop or nothing.  
    {
      Teuchos::RCP<Teuchos::ParameterList> p         = Teuchos::rcp(new Teuchos::ParameterList);
      std::string                          stateName = "rhop";

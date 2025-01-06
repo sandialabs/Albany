@@ -48,8 +48,6 @@ CoupledPoissonResid(const Teuchos::ParameterList& p) :
   Teuchos::ParameterList* bf_list =
   p.get<Teuchos::ParameterList*>("Parameter List");
 
-  rhop.fieldTag().dataLayout().dimensions(dims);
-
   kappa = bf_list->get("Diffusivity", 4.4e9); 
   rhom = bf_list->get("Density of negative ions", 1.0e23); 
   
