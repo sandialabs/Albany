@@ -34,7 +34,7 @@ ANONYMOUS:
     Method: Ioss
     Exodus Input File Name: poisson_restart.exo
     Exodus Output File Name: poisson_out.exo
-    Restart Index: 2
+    Restart Index: 1
     Number Of Time Derivatives: 0
   Piro:
     LOCA:
