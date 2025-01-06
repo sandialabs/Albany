@@ -17,6 +17,7 @@
 #include "Albany_ThermalProblem.hpp"
 #include "Albany_AdvectionProblem.hpp"
 #include "Albany_PoissonProblem.hpp"
+#include "Albany_AdvDiffSystemProblem.hpp"
 
 namespace Albany
 {
@@ -48,6 +49,7 @@ bool DemoProblemFactory::provides (const std::string& key) const
          key == "Poisson-Advection-Diffusion System 2D" ||
          key == "Coupled Poisson-Advection-Diffusion System 2D" ||
          key == "Poisson 2D" ||
+         key == "AdvDiff System 2D" ||
          key == "Thermal 1D" ||
          key == "Thermal 2D" ||
          key == "Thermal 3D" ||
@@ -94,6 +96,8 @@ create (const std::string& key,
     problem = Teuchos::rcp(new CoupledPoissonAdvDiffSystem(problemParams, paramLib, 2));
   } else if (key=="Poisson 2D") {
     problem = Teuchos::rcp(new PoissonProblem(problemParams, paramLib, 2));
+  } else if (key=="AdvDiff System 2D") {
+    problem = Teuchos::rcp(new AdvDiffSystemProblem(problemParams, paramLib, 2));
   } else if (key == "ThermoElectrostatics 1D") {
     problem = Teuchos::rcp(new ThermoElectrostaticsProblem(problemParams, paramLib, 1));
   } else if (key == "ThermoElectrostatics 2D") {

@@ -54,9 +54,6 @@ CoupledAdvDiffResid(const Teuchos::ParameterList& p) :
   Teuchos::ParameterList* bf_list =
   p.get<Teuchos::ParameterList*>("Parameter List");
 
-
-  rhop.fieldTag().dataLayout().dimensions(dims);
-
   d    = bf_list->get("Kinematic diffusivity", 1.0e-10); 
   c    = bf_list->get("Advection coefficient", 3.89e-9); 
   
@@ -96,7 +93,8 @@ evaluateFields(typename Traits::EvalData workset)
 		               d*rhopGrad(cell,qp,0)*wGradBF(cell,node,qp,0) + 
 		               d*rhopGrad(cell,qp,1)*wGradBF(cell,node,qp,1) + 
 		               c*rhop(cell,qp)*PhiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) + 
-		               c*rhop(cell,qp)*PhiGrad(cell,qp,1)*wGradBF(cell,node,qp,1); 
+		               c*rhop(cell,qp)*PhiGrad(cell,qp,1)*wGradBF(cell,node,qp,1);
+	if (cell == 0) std::cout << "IKT PhiGrad = (" << PhiGrad(cell,qp,0) << ", " << PhiGrad(cell,qp,1) << ")\n"; 	
       }
     }        
   }
