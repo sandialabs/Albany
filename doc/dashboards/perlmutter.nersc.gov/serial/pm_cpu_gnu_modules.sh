@@ -9,13 +9,7 @@ module load cray-mpich/8.1.28
 module load cray-hdf5-parallel/1.12.2.9
 module load cray-netcdf-hdf5parallel/4.9.0.9
 module load cray-parallel-netcdf/1.12.3.9
-module load cmake/3.24.3
-
-module load cray-python/3.9.13.1
-
-module load e4s/23.05
-spack env activate -V gcc
-spack load superlu
+module load cmake/3.30.2
 
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
