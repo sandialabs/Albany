@@ -3,7 +3,7 @@
 ANONYMOUS:
   Problem:
     Phalanx Graph Visualization Detail: 0
-    Name: Poisson 2D 
+    Name: Poisson System 2D 
     Solution Method: Steady
     Dirichlet BCs:
       DBC on NS nodeset0 for DOF Phi: 0.0
