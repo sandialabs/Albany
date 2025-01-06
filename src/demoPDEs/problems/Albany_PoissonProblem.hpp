@@ -201,7 +201,6 @@ Albany::PoissonProblem::constructEvaluators(
    {
      Teuchos::RCP<Teuchos::ParameterList> p         = Teuchos::rcp(new Teuchos::ParameterList);
      std::string                          stateName = "rhop";
-     //Albany::StateStruct::MeshFieldEntity entity    = Albany::StateStruct::NodalDistParameter;
      Albany::StateStruct::MeshFieldEntity entity    = Albany::StateStruct::NodalData;
      p                                              = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
      // Load parameter using its field name

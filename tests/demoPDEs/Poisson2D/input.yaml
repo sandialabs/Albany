@@ -16,18 +16,18 @@ ANONYMOUS:
     Parameters:
       Number Of Parameters: 0
     Response Functions:
-      Response 2:
-        Type: Scalar Response
-        Name: Solution Average
       Number Of Responses: 3
-      Response 1:
-        Equation: 1
-        Type: Scalar Response
-        Name: Solution Max Value
       Response 0:
         Equation: 0
         Type: Scalar Response
         Name: Solution Max Value
+      Response 1:
+        Equation: 0
+        Type: Scalar Response
+        Name: Solution Min Value
+      Response 2:
+        Type: Scalar Response
+        Name: Solution Average
   Debug Output:
     Write Solution to MatrixMarket: 0
   Discretization:
@@ -92,7 +92,7 @@ ANONYMOUS:
     Test Value: 1.000000000461e-02
     Relative Tolerance: 1.0e-04
   Regression For Response 1:
-    Test Value: 1.000000000461e-02
+    Test Value: -4.450048434497e-01
     Relative Tolerance: 1.0e-04
   Regression For Response 2:
     Test Value: -2.875031027577e-01
