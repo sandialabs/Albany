@@ -257,7 +257,7 @@ Albany::AdvDiffSystemProblem::constructEvaluators(
   {
     Teuchos::RCP<Teuchos::ParameterList> p         = Teuchos::rcp(new Teuchos::ParameterList);
     std::string                          stateName = "Phi";
-    Albany::StateStruct::MeshFieldEntity entity    = Albany::StateStruct::NodalData;
+    Albany::StateStruct::MeshFieldEntity entity    = Albany::StateStruct::NodalDataToElemNode;
     p                                              = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
     // Load parameter using its field name
     std::string fieldName = "Phi";
@@ -267,9 +267,6 @@ Albany::AdvDiffSystemProblem::constructEvaluators(
     using LoadStateFieldST = PHAL::LoadStateFieldBase<EvalT, PHAL::AlbanyTraits, typename EvalT::ScalarT>;
     ev                     = Teuchos::rcp(new LoadStateFieldST(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    //Interpolation Phi from nodes to QPs
-    ev = evalUtils.constructDOFInterpolationEvaluator(stateName);
-    fm0.template registerEvaluator<EvalT> (ev);
     //Create gradient of Phi 
     ev = evalUtils.constructDOFGradInterpolationEvaluator(stateName);
     fm0.template registerEvaluator<EvalT> (ev);
