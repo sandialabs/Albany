@@ -91,10 +91,9 @@ evaluateFields(typename Traits::EvalData workset)
 	//drhop/dt - div(d*grad(rhop) + c*rhop*grad(phi)) = 0 
         Residual(cell,node) += rhopDot(cell,qp)*wBF(cell,node,qp) + 
 		               d*rhopGrad(cell,qp,0)*wGradBF(cell,node,qp,0) + 
-		               d*rhopGrad(cell,qp,1)*wGradBF(cell,node,qp,1) + 
+		               d*rhopGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
 		               c*rhop(cell,qp)*PhiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) + 
 		               c*rhop(cell,qp)*PhiGrad(cell,qp,1)*wGradBF(cell,node,qp,1);
-	if (cell == 0) std::cout << "IKT PhiGrad = (" << PhiGrad(cell,qp,0) << ", " << PhiGrad(cell,qp,1) << ")\n"; 	
       }
     }        
   }
