@@ -67,6 +67,7 @@ set (SOURCES
   Albany_NullSpaceUtils.cpp
   Albany_ObserverImpl.cpp
   Albany_PiroObserver.cpp
+  Albany_PiroTempusObserver.cpp
   Albany_StatelessObserverImpl.cpp
   Albany_StateManager.cpp
   PHAL_Utilities.cpp
