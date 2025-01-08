@@ -14,6 +14,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "STKConnManager.hpp"
+#include "Albany_TmplSTKMeshStruct.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -1014,6 +1015,7 @@ STKDiscretization::getSolutionDxDp(
 {
   solutionFieldContainer->fillSolnSensitivity(result, getDOFManager(), overlapped);
 }
+
 
 /*****************************************************************/
 /*** Private functions follow. These are just used in above code */
@@ -2444,18 +2446,117 @@ create_dof_mgr (const std::string& part_name,
 
 Teuchos::RCP<AdaptationData>
 STKDiscretization::
-checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
-                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
-                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                    const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const
 {
-  return Teuchos::rcp(new AdaptationData());
+  auto adapt_data = Teuchos::rcp(new AdaptationData());
+
+  // Only do adaptation for simple 1d problems
+  auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
+  if (mesh1d.is_null()) {
+    std::cout << "NOT a STK1D mesh...\n";
+    return adapt_data;
+  }
+  auto& adapt_params = discParams->sublist("Mesh Adaptivity");
+  auto adapt_type = adapt_params.get<std::string>("Type","None");
+  if (adapt_type=="None") {
+    std::cout << "NO adaptation...\n";
+    return adapt_data;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Uniform-Hessian-Based", std::runtime_error,
+      "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+      " - valid choices: None, Uniform-Hessian-Based\n");
+
+  double tol = adapt_params.get<double>("Max Hessian");
+  auto data = getLocalData(solution);
+  // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
+  // TODO: replace with
+  //  1. if |C_i| > threshold, mark for refinement the whole mesh
+  //  2. Interpolate solution (and all elem/node fields if possible, but not necessary for adv-diff example)
+  int num_nodes = data.size();
+  std::cout << "adapt mesh, curr sol:";
+  for (int i=0; i<num_nodes; ++i) {
+    std::cout << " " << data[i];
+  }
+  std::cout << "\n";
+  getCoordinates();
+
+  adapt_data->x = solution;
+  adapt_data->x_dot = solution_dot;
+  adapt_data->x_dotdot = solution_dotdot;
+  adapt_data->dxdp = dxdp;
+  for (int i=1; i<num_nodes-1; ++i) {
+    auto h_prev = coordinates[i] - coordinates[i-1];
+    auto h_next = coordinates[i+1] - coordinates[i];
+    auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
+    if (std::fabs(hess)>tol) {
+      printf("hess=%f, hprev=%f, hnext=%f,up=%f, uc=%f, un=%f\n",hess,h_prev,h_next,data[i-1],data[i],data[i+1]);
+      adapt_data->type = AdaptationType::Topology;
+      break;
+    }
+  }
+
+  return adapt_data;
 }
 
 void STKDiscretization::
-adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */)
+adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
-  throw NotYetImplemented ("STKDiscretization::adapt");
+  // Not sure if we allow calling adapt in general, but just in case
+  if (adaptData->type==AdaptationType::None) {
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
+      "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
+
+  // Solution oscillates. We need to half dx
+  std::cout << "adapting mesh:\n"
+            << "  creating new 1d mesh..." << std::flush;;
+  auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
+  int num_params = mesh1d->getNumParams();
+  int ne_x = discParams->get<int>("1D Elements");
+  auto& adapt_params = discParams->sublist("Mesh Adaptivity");
+  int factor = adapt_params.get("Refining Factor",2);
+  discParams->set("1D Elements",factor*ne_x);
+  stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
+  stkMeshStruct->setFieldData(comm,mesh1d->sis_);
+  this->setFieldData(mesh1d->sis_);
+  stkMeshStruct->setBulkData(comm);
+  std::cout << "done!\n" << std::flush;;
+
+  std::cout << "  old ne_x: " << ne_x << "\n";
+  std::cout << "  new ne_x: " << factor*ne_x << "\n";
+
+  updateMesh();
+
+  int num_time_deriv = discParams->get<int>("Number Of Time Derivatives");
+  auto x_mv_new = Thyra::createMembers(getVectorSpace(),num_time_deriv);
+
+  for (int ideriv=0; ideriv<num_time_deriv; ++ideriv) {
+    auto data_new = getNonconstLocalData(x_mv_new->col(ideriv));
+    auto x = ideriv==0 ? adaptData->x : (ideriv==1 ? adaptData->x_dot : adaptData->x_dotdot);
+    auto data_old = getLocalData(x);
+    int num_nodes_new = data_new.size();
+
+    std::cout << "  new solution space size: " << num_nodes_new << "\n";
+    for (int inode=0; inode<num_nodes_new; ++inode) {
+      int coarse = inode / factor;
+      int rem    = inode % factor;
+      if (rem == 0) {
+        // Same node as coarse mesh
+        data_new[inode] = data_old[coarse];
+      } else {
+        // Convex interpolation of two coarse points
+        double alpha = static_cast<double>(rem) / factor;
+        data_new[inode] = data_old[coarse]*(1-alpha) + data_old[coarse+1]*alpha;
+      }
+    }
+  }
+
+  writeSolutionMVToMeshDatabase(*x_mv_new, Teuchos::null, 0, false);
 }
 
 }  // namespace Albany

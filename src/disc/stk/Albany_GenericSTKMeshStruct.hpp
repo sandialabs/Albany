@@ -126,6 +126,8 @@ public:
   std::vector<std::string>  m_nodesets_from_sidesets;
 
   int num_params; 
+
+  Teuchos::RCP<StateInfoStruct> sis_;
 };
 
 } // namespace Albany
