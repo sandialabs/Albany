@@ -8,9 +8,10 @@
 #define ALBANY_DISCRETIZATION_UTILS_HPP
 
 #include "Albany_KokkosTypes.hpp"
+#include "Albany_ThyraTypes.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
-#include "Kokkos_DualView.hpp"
 
+#include "Kokkos_DualView.hpp"
 #include "Intrepid2_Basis.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 
@@ -43,6 +44,25 @@ enum class MeshType {
   Structured,   // structured in all directions
   Extruded,     // structured vertically
   Unstructured  // No structure known (e.g., read from file)
+};
+
+// When adapting mesh, we'll return an enum stating what kind of adaptation happened
+enum class AdaptationType {
+  None,
+  Movement,
+  Topology
+};
+
+struct AdaptationData {
+  AdaptationType type = AdaptationType::None;
+
+  // Current value of solution and its time deriv.
+  // If adapting, the discretization can interpolate these onto
+  // the new mesh.
+  Teuchos::RCP<const Thyra_Vector> x;
+  Teuchos::RCP<const Thyra_Vector> x_dot;
+  Teuchos::RCP<const Thyra_Vector> x_dotdot;
+  Teuchos::RCP<const Thyra_MultiVector> dxdp;
 };
 
 inline std::string e2str (const FE_Type fe_type)
