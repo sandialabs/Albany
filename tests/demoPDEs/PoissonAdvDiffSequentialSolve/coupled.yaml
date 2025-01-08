@@ -1,0 +1,15 @@
+DemoPDEs:
+  Alternating System:
+    Model Input Files: [thermal.yaml, mechanical.yaml]
+    Initial Time: 0.00000000000000000e+00
+    Final Time: 864000.0 
+    Initial Time Step: 7200.0  
+    Maximum Steps: 10000
+    Reduction Factor: 5.00000000000000000e-01
+    Amplification Factor: 1.50000000000000000e+00
+    Exodus Write Interval: 1
+  Problem:
+    Solution Method: LandIce Sequential Coupling
+    Name: blah
+    Phalanx Graph Visualization Detail: 0
+...

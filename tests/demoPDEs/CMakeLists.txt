@@ -8,6 +8,9 @@
   add_subdirectory(AdvDiff)
   add_subdirectory(ReactDiffSystem)
   add_subdirectory(PoissonAdvDiffSystem)
+#IF(ENABLE_LANDICE)
+  add_subdirectory(PoissonAdvDiffSequentialSolve)
+#ENDIF
   add_subdirectory(CoupledPoissonAdvDiffSystem)
   add_subdirectory(PoissonSystem2D)
   add_subdirectory(AdvDiffSystem2D)

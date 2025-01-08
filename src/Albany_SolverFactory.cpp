@@ -312,6 +312,7 @@ SolverFactory::getValidAppParameters() const
     validPL->sublist(util::strint("Regression For Response", i), false, "Regression Results sublist");
   }
   validPL->sublist("Piro", false, "Piro sublist");
+  validPL->sublist("Alternating System", false, "Alternating system sublist");
 
   return validPL;
 }

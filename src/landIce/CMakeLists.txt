@@ -86,6 +86,7 @@ set(SOURCES
   evaluators/hydrology/LandIce_HydrologySurfaceWaterInput.cpp
   evaluators/hydrology/LandIce_HydrologyWaterDischarge.cpp
   evaluators/hydrology/LandIce_HydrologyWaterThickness.cpp
+  solvers/LandIce_SequentialCoupling.cpp
 )
 
 set(HEADERS
@@ -203,6 +204,7 @@ set(HEADERS
   problems/LandIce_StokesFOThermoCoupled.hpp
   problems/LandIce_StokesFOThickness.hpp
   problems/LandIce_StokesFOHydrology.hpp
+  solvers/LandIce_SequentialCoupling.hpp
 )
 
 # This is not very satisfactory, since it injects CISM specific stuff into
@@ -240,6 +242,7 @@ set (LANDICE_INCLUDE_DIRS
      ${CMAKE_CURRENT_SOURCE_DIR}/evaluators/hydrology
      ${CMAKE_CURRENT_SOURCE_DIR}/utility
      ${CMAKE_CURRENT_SOURCE_DIR}/problems
+     ${CMAKE_CURRENT_SOURCE_DIR}/solvers
 )
 
 target_include_directories(landIce PUBLIC

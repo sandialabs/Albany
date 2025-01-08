@@ -34,6 +34,10 @@
 #include "Thyra_VectorStdOps.hpp"
 #include "Thyra_MultiVectorStdOps.hpp"
 
+#ifdef ALBANY_LANDICE
+#include "LandIce_SequentialCoupling.hpp" 
+#endif
+
 #if defined(ALBANY_CHECK_FPE) || defined(ALBANY_STRONG_FPE_CHECK) || defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
 #endif
@@ -120,26 +124,50 @@ int main(int argc, char *argv[])
 
     const bool reportMPIInfo = debugParams.get<bool>("Report MPI Info", false);
     if (reportMPIInfo) Albany::PrintMPIInfo(std::cout);
-
+  
     // Make sure all the pb factories are registered *before* the Application
     // is created (since in the App ctor the pb factories are queried)
     Albany::register_pb_factories();
 
-    // Create app (null initial guess)
-    const auto albanyApp = slvrfctry.createApplication(comm);
-    //Forward model model evaluator
-    const auto albanyModel = slvrfctry.createModel(albanyApp, false);
+    Teuchos::ParameterList &problemParams = slvrfctry.getParameters()->sublist("Problem", true); 
+    const std::string solutionMethod = problemParams.get("Solution Method", "Steady");
+#ifndef ALBANY_LANDICE
+    if (solutionMethod == "LandIce Sequential Coupling") 
+      ALBANY_ABORT("Solution Method = 'LandIce Sequential Coupling' is only available when LandIce is enabled!\n"); 
+#endif
+
+    Teuchos::RCP<Albany::Application> albanyApp = Teuchos::null; 
+    Teuchos::RCP<Albany::ModelEvaluator> albanyModel = Teuchos::null; 
+    Teuchos::RCP<Albany::ModelEvaluator> albanyAdjointModel = Teuchos::null; 
+
+    if (solutionMethod != "LandIce Sequential Coupling") {
+      // Create app (null initial guess)
+      albanyApp = slvrfctry.createApplication(comm);
+      //Forward model model evaluator
+      albanyModel = slvrfctry.createModel(albanyApp, false);
     
-    //Adjoint model model evaluator 
+      //Adjoint model model evaluator 
+      const bool explicitMatrixTranspose = slvrfctry.getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
+                                          slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
+                                          false;
 
-    const bool explicitMatrixTranspose = slvrfctry.getParameters()->sublist("Piro").isParameter("Enable Explicit Matrix Transpose") ? 
-                                        slvrfctry.getParameters()->sublist("Piro").get<bool>("Enable Explicit Matrix Transpose") : 
-                                        false;
+      // Explicit adjoint model is not needed if we are not computing adjoint sensitivities
+      const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
+      albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null;
+    }
 
-    // Explicit adjoint model is not needed if we are not computing adjoint sensitivities
-    const bool explicitAdjointModel = albanyApp->isAdjointSensitivities() && explicitMatrixTranspose;
-    const auto albanyAdjointModel = explicitAdjointModel ? slvrfctry.createModel(albanyApp, true) : Teuchos::null; 
-    const auto solver = slvrfctry.createSolver(albanyModel, albanyAdjointModel, true);
+    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver; 
+    if (solutionMethod != "LandIce Sequential Coupling") {
+      solver = slvrfctry.createSolver(albanyModel, albanyAdjointModel, true);
+    }
+#ifdef ALBANY_LANDICE
+    else {
+      if (albanyAdjointModel != Teuchos::null) 
+        ALBANY_ABORT("Adjoint sensitivities do not work currently for 'LandIce Sequential Coupling'!\n"); 
+      solver = Teuchos::rcp(new LandIce::SequentialCoupling(slvrfctry.getParameters(), comm));
+    }
+#endif 
+
 
     stackedTimer->stop("Albany: Setup Time");
 
