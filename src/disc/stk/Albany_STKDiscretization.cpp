@@ -1077,7 +1077,8 @@ void STKDiscretization::computeVectorSpaces()
     it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
   }
 
-  coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
+  const int meshDim = stkMeshStruct->numDim;
+  coordinates.resize(meshDim * getLocalSubdim(getOverlapNodeVectorSpace()));
 }
 
 void
