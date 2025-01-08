@@ -42,7 +42,8 @@ public:
 
    Teuchos::RCP<const CombineAndScatterManager> get_cas_manager() const { return cas_manager; }
 
-   Teuchos::RCP<Thyra_MultiVector> getCurrentSolution() { return current_soln; }
+   Teuchos::RCP<const Thyra_MultiVector> getCurrentSolution() { return current_soln; }
+   Teuchos::RCP<const Thyra_MultiVector> getCurrentDxDp() { return current_dxdp; }
 
    void scatterX (const Thyra_Vector& x,
                   const Teuchos::Ptr<const Thyra_Vector> x_dot,
@@ -52,6 +53,7 @@ public:
    void scatterX (const Thyra_MultiVector& soln,
                   const Teuchos::Ptr<const Thyra_MultiVector> dxdp = Teuchos::null);
 
+   void reset_solution_space (const bool initial_condition);
 private:
 
     Teuchos::RCP<const CombineAndScatterManager> cas_manager;
@@ -60,6 +62,8 @@ private:
 
     // The solution directly from the discretization class
     Teuchos::RCP<Thyra_MultiVector> current_soln;
+    Teuchos::RCP<Thyra_MultiVector> current_dxdp;
+
     Teuchos::RCP<Thyra_MultiVector> overlapped_soln;
     Teuchos::RCP<Thyra_MultiVector> overlapped_soln_dxdp;
 

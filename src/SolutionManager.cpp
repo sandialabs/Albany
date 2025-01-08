@@ -34,7 +34,7 @@ SolutionManager::SolutionManager(
   Teuchos::RCP<Teuchos::ParameterList> problemParams =
       Teuchos::sublist(appParams_, "Problem", true);
 
-  num_params_ = Albany::CalculateNumberParams(problemParams);
+  Albany::CalculateNumberParams(problemParams,&num_params_);
 
   // Want the initial time in the parameter library to be correct
   // if this is a restart solution
@@ -66,31 +66,10 @@ SolutionManager::SolutionManager(
     paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
   }
 
-  {
-    auto owned_vs      = disc_->getVectorSpace();
-    auto overlapped_vs = disc_->getOverlapVectorSpace();
+  reset_solution_space(true);
 
-    overlapped_soln = Thyra::createMembers(overlapped_vs, num_time_deriv + 1);
-    if (num_params_ > 0) {
-      overlapped_soln_dxdp = Thyra::createMembers(overlapped_vs, num_params_);
-    } else {
-      overlapped_soln_dxdp = Teuchos::null;
-    }
-
-    // TODO: ditch the overlapped_*T and keep only overlapped_*.
-    //       You need to figure out how to pass the graph in a Tpetra-free way
-    //       though...
-    overlapped_f = Thyra::createMember(overlapped_vs);
-
-    // This call allocates the non-overlapped MV
-    current_soln = Thyra::createMembers(owned_vs,num_time_deriv+1);
-    if (disc_->hasRestartSolution()) {
-      disc_->getSolutionMV(*current_soln);
-    }
-
-    // Create the CombineAndScatterManager for handling distributed memory linear
-    // algebra communications
-    cas_manager = Albany::createCombineAndScatterManager(owned_vs, overlapped_vs);
+  if (disc_->hasRestartSolution()) {
+    disc_->getSolutionMV(*current_soln);
   }
 
   auto pbParams = Teuchos::sublist(appParams_, "Problem", true);
@@ -139,6 +118,41 @@ SolutionManager::SolutionManager(
           overlapped_soln->col(1),
           current_soln->col(1),
           Albany::CombineMode::INSERT);
+    }
+  }
+}
+
+void SolutionManager::
+reset_solution_space (const bool initial_condition)
+{
+  auto owned_vs      = disc_->getVectorSpace();
+  auto overlapped_vs = disc_->getOverlapVectorSpace();
+
+  overlapped_soln = Thyra::createMembers(overlapped_vs, num_time_deriv + 1);
+  if (num_params_ > 0) {
+    overlapped_soln_dxdp = Thyra::createMembers(overlapped_vs, num_params_);
+  } else {
+    overlapped_soln_dxdp = Teuchos::null;
+  }
+
+  // TODO: ditch the overlapped_*T and keep only overlapped_*.
+  //       You need to figure out how to pass the graph in a Tpetra-free way
+  //       though...
+  overlapped_f = Thyra::createMember(overlapped_vs);
+
+  // This call allocates the non-overlapped MV
+  current_soln = Thyra::createMembers(owned_vs,num_time_deriv+1);
+  current_dxdp = Thyra::createMembers(owned_vs,num_params_);
+
+  // Create the CombineAndScatterManager for handling distributed memory linear
+  // algebra communications
+  cas_manager = Albany::createCombineAndScatterManager(owned_vs, overlapped_vs);
+
+  if (not initial_condition) {
+    // This must be a sol mgr reset after mesh adaptation. Get new solution from the disc
+    disc_->getSolutionMV(*current_soln);
+    if (num_params_ > 0) {
+      disc_->getSolutionDxDp(*current_dxdp);
     }
   }
 }
