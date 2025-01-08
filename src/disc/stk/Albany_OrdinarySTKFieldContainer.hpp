@@ -78,6 +78,10 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
                             const dof_mgr_ptr_t& soln_dof_mgr,
                             const bool           overlapped);
 
+  void fillSolnSensitivity (Thyra_MultiVector&   dxdp,
+                            const dof_mgr_ptr_t& soln_dof_mgr,
+                            const bool           overlapped);
+
   void saveVector (const Thyra_Vector&  field_vector,
                    const std::string&   field_name,
                    const dof_mgr_ptr_t& field_dof_mgr,

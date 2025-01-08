@@ -241,6 +241,14 @@ ExtrudedDiscretization::getSolutionMV(
   // solutionFieldContainer->fillSolnMultiVector(result, getDOFManager(), overlapped);
 }
 
+void
+ExtrudedDiscretization::getSolutionDxDp(
+    Thyra_MultiVector& /* result */,
+    const bool         /* overlapped */) const
+{
+  throw NotYetImplemented("ExtrudedDiscretization::getSolutionDxDp");
+}
+
 /*****************************************************************/
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/

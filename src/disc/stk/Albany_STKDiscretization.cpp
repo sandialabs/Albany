@@ -996,8 +996,6 @@ STKDiscretization::getField(Thyra_Vector& result, const std::string& name) const
 void
 STKDiscretization::getSolutionField(Thyra_Vector& result, const bool overlapped) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
-
   solutionFieldContainer->fillSolnVector(result, getDOFManager(), overlapped);
 }
 
@@ -1006,9 +1004,15 @@ STKDiscretization::getSolutionMV(
     Thyra_MultiVector& result,
     const bool         overlapped) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
-
   solutionFieldContainer->fillSolnMultiVector(result, getDOFManager(), overlapped);
+}
+
+void
+STKDiscretization::getSolutionDxDp(
+    Thyra_MultiVector& result,
+    const bool         overlapped) const
+{
+  solutionFieldContainer->fillSolnSensitivity(result, getDOFManager(), overlapped);
 }
 
 /*****************************************************************/

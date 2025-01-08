@@ -54,6 +54,9 @@ public:
   virtual void fillSolnMultiVector (Thyra_MultiVector&   soln,
                                     const dof_mgr_ptr_t& sol_dof_mgr,
                                     const bool           overlapped) = 0;
+  virtual void fillSolnSensitivity (Thyra_MultiVector&   dxdp,
+                                    const dof_mgr_ptr_t& sol_dof_mgr,
+                                    const bool           overlapped) = 0;
 
   // Write to mesh methods
   virtual void saveVector (const Thyra_Vector&  field_vector,

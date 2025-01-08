@@ -198,6 +198,9 @@ public:
   getSolutionMV(Thyra_MultiVector& result, bool overlapped) const;
 
   void
+  getSolutionDxDp (Thyra_MultiVector& result, bool overlapped) const;
+
+  void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const;
   void
   setField(

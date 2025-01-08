@@ -132,6 +132,10 @@ public:
   }
 
   void getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const override;
+  void getSolutionDxDp (Thyra_MultiVector& /* result */, bool /* overlapped */) const override
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionDxDp");
+  }
 
   void getField(      Thyra_Vector& field_vector,
                 const std::string&  field_name) const override;
