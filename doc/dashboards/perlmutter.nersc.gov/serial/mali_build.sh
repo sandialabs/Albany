@@ -3,7 +3,7 @@ SCORPIO_DIR=/global/common/software/fanssie/scorpio-gnu
 
 cd ${BASE_DIR}/repos/E3SM/components/mpas-albany-landice
 
-source /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstall/export_albany.in
+source /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstallSfad12/export_albany.in
 echo ${ALBANY_LINK_LIBS}
 
 echo ${LD_LIBRARY_PATH}

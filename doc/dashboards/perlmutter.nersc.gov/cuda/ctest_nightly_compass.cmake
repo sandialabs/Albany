@@ -8,7 +8,7 @@ set (DOWNLOAD_COMPASS TRUE)
 set (BUILD_COMPASS TRUE)
 
 # Begin User inputs:
-set (CTEST_SITE "pm-cpu" ) # generally the output of hostname
+set (CTEST_SITE "pm-gpu" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -35,8 +35,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/TrilinosInstall")
-set (ALBANY_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstallSfad12")
+set (TRILINOS_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/TrilinosInstall")
+set (ALBANY_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/AlbanyInstallSfad12")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -81,7 +81,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "compass-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-serial")
+set (CTEST_BUILD_NAME "compass-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 

@@ -6,9 +6,6 @@ cd $BASE_DIR
 unset http_proxy
 unset https_proxy
 
-export jenkins_albany_dir=${BASE_DIR}/repos/Albany
-export jenkins_trilinos_dir=${BASE_DIR}/repos/Trilinos
-
 source convert-cmake-to-cdash.sh
 source create-new-cdash-cmake-script.sh
 

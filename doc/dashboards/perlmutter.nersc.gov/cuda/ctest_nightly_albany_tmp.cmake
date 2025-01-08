@@ -2,13 +2,17 @@
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
+# Get input arguments
+set (FAD_CONFIGURATION "$ENV{FAD_CONFIGURATION}")
+set (FAD_SIZE "$ENV{FAD_SIZE}")
+set (BASE_DIR "$ENV{BASE_DIR}")
+
 # What to build and test
 set (CLEAN_BUILD FALSE)
 set (DOWNLOAD_TRILINOS FALSE)
 set (BUILD_TRILINOS FALSE)
 set (DOWNLOAD_ALBANY TRUE) 
-set (BUILD_ALBANY TRUE) 
-set (BUILD_ALBANY_SFAD FALSE) 
+set (BUILD_ALBANY TRUE)
 
 # Begin User inputs:
 set (CTEST_SITE "pm-gpu" ) # generally the output of hostname
@@ -38,8 +42,17 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/TrilinosInstall")
-set (ALBANY_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda/builds/AlbanyInstall")
+set (TRILINOS_INSTALL "${BASE_DIR}/builds/TrilinosInstall")
+if (${FAD_CONFIGURATION} MATCHES "slfad")
+  set (ALBANY_INSTALL "${BASE_DIR}/builds/AlbanyInstall")
+endif()
+if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "12")
+  set (ALBANY_INSTALL "${BASE_DIR}/builds/AlbanyInstallSfad12")
+endif()
+if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "24")
+  set (ALBANY_INSTALL "${BASE_DIR}/builds/AlbanyInstallSfad24")
+endif()
+
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -86,7 +99,15 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda")
+if (${FAD_CONFIGURATION} MATCHES "slfad")
+  set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda")
+endif()
+if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "12")
+  set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda-sfad12")
+endif()
+if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "24")
+  set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda-sfad24")
+endif()
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
@@ -166,12 +187,22 @@ if (BUILD_ALBANY)
     CDASH-ALBANY-FILE.TXT
     )
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc)
+  if (${FAD_CONFIGURATION} MATCHES "slfad")
+    set (ALBANY_BUILD_DIR "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc")
+  endif()
+  if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "12")
+    set (ALBANY_BUILD_DIR "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGccSfad12")
+  endif()
+  if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "24")
+    set (ALBANY_BUILD_DIR "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGccSfad24")
+  endif()
+
+  if (NOT EXISTS "${ALBANY_BUILD_DIR}")
+    file (MAKE_DIRECTORY ${ALBANY_BUILD_DIR})
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc"
+    BUILD "${ALBANY_BUILD_DIR}"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -201,7 +232,7 @@ if (BUILD_ALBANY)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc"
+    BUILD "${ALBANY_BUILD_DIR}"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -235,7 +266,7 @@ if (BUILD_ALBANY)
   set (CTEST_TEST_TIMEOUT 500)
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildCudaGcc"
+    BUILD "${ALBANY_BUILD_DIR}"
     RETURN_VALUE  HAD_ERROR
     )
 

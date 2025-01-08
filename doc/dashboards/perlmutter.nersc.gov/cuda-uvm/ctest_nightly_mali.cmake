@@ -4,11 +4,11 @@ set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
 set (CLEAN_BUILD FALSE)
-set (DOWNLOAD_COMPASS TRUE)
-set (BUILD_COMPASS TRUE)
+set (DOWNLOAD_MALI TRUE)
+set (BUILD_MALI TRUE) 
 
 # Begin User inputs:
-set (CTEST_SITE "pm-cpu" ) # generally the output of hostname
+set (CTEST_SITE "pm-gpu" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -35,8 +35,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/TrilinosInstall")
-set (ALBANY_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstallSfad12")
+set (TRILINOS_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda-uvm/builds/TrilinosInstall")
+set (ALBANY_INSTALL "/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda-uvm/builds/AlbanyInstall")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -81,12 +81,11 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "compass-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-serial")
+set (CTEST_BUILD_NAME "MALI-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-cuda-uvm")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 
-set (CTEST_BUILD_COMMAND "bash ${CTEST_DASHBOARD_ROOT}/compass_build.sh")
-set (CTEST_TEST_COMMAND "bash ${CTEST_DASHBOARD_ROOT}/compass_test.sh")
+set (CTEST_BUILD_COMMAND "bash ${CTEST_DASHBOARD_ROOT}/mali_build.sh")
 
 set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_BUILD_FLAGS "-j128")
@@ -95,7 +94,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (Compass_REPOSITORY_LOCATION git@github.com:MPAS-Dev/compass.git)
+set (Mali_REPOSITORY_LOCATION https://github.com/MALI-Dev/E3SM.git)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -104,25 +103,25 @@ if (CLEAN_BUILD)
   CMAKE_TYPE:STRING=Release
   CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
   TESTING:BOOL=OFF
-  PRODUCT_REPO:STRING=${Compass_REPOSITORY_LOCATION}
+  PRODUCT_REPO:STRING=${Mali_REPOSITORY_LOCATION}
   " )
 
   ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
   file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 endif ()
 
-if (DOWNLOAD_COMPASS)
+if (DOWNLOAD_MALI)
 
   set (CTEST_CHECKOUT_COMMAND)
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   
   #
-  # Get Compass
+  # Get MPAS-Albany-landice
   #
 
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/compass")
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/E3SM")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Compass_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/compass
+      clone ${Mali_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/E3SM
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -131,7 +130,7 @@ if (DOWNLOAD_COMPASS)
     message(STATUS "err: ${_err}")
     message(STATUS "res: ${HAD_ERROR}")
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone Compass repository!")
+      message(FATAL_ERROR "Cannot clone MALI repository!")
     endif ()
   endif ()
 
@@ -139,15 +138,15 @@ if (DOWNLOAD_COMPASS)
   
   # Pull the repo
   execute_process (COMMAND "${CTEST_GIT_COMMAND}" pull
-      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/compass
+      WORKING_DIRECTORY ${CTEST_SOURCE_DIRECTORY}/E3SM
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
-  message(STATUS "Output of Compass pull: ${_out}")
+  message(STATUS "Output of MALI pull: ${_out}")
   message(STATUS "Text sent to standard error stream: ${_err}")
   message(STATUS "command result status: ${HAD_ERROR}")
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot pull Compass!")
+    message(FATAL_ERROR "Cannot pull MALI!")
   endif ()
 
 endif ()
@@ -156,16 +155,16 @@ endif ()
 ctest_start(${CTEST_TEST_TYPE})
 
 
-if (BUILD_COMPASS)
+if (BUILD_MALI)
 
   #
-  # Build compass python environment
+  # Build MALI, no configuration required
   #
 
-  MESSAGE("\nBuilding compass with script '${CTEST_BUILD_COMMAND}' ...\n")
+  MESSAGE("\nBuilding MALI with script ${CTEST_BUILD_COMMAND} ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_SOURCE_DIRECTORY}/compass"
+    BUILD "${CTEST_SOURCE_DIRECTORY}/E3SM/components/mpas-albany-landice"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -177,46 +176,19 @@ if (BUILD_COMPASS)
       )
 
     if (S_HAD_ERROR)
-      message ("Cannot submit Compass build results!")
+      message ("Cannot submit MALI build results!")
     endif ()
 
   endif ()
 
   if (HAD_ERROR)
-    message ("Cannot build Compass!")
+    message ("Cannot build MALI!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Compass build. Exiting!")
+    message ("Encountered build errors in MALI build. Exiting!")
   endif ()
-
-  #
-  # Run compass landice tests
-  #
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/compass_tests")
-    file (MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}/compass_tests")
-  endif ()
-
-  #  Over-write default limit for output posted to CDash site
-  set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
-  set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
-
-  set (CTEST_TEST_TIMEOUT 500)
-
-  CTEST_TEST(
-    BUILD "${CTEST_SOURCE_DIRECTORY}/compass_tests"
-    RETURN_VALUE  HAD_ERROR
-  )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Compass test results!")
-    endif ()
-  endif ()
+  
 endif ()
 
 
