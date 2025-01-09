@@ -1,9 +1,10 @@
 BASE_DIR=/lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm
 DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
 
-# get albany repo once (instead of for each build)
-mkdir ${BASE_DIR}/repos
-git clone https://github.com/sandialabs/Albany.git ${BASE_DIR}/repos/Albany
+# Update albany repo to get most recent changes
+cd ${BASE_DIR}/repos/Albany
+git pull
+cd ${BASE_DIR}
 
 # load modules
 source ${BASE_DIR}/frontier_gpu_modules.sh >& ${BASE_DIR}/modules_albany.out

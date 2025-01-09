@@ -16,4 +16,9 @@ module load cray-hdf5-parallel/1.12.2.1
 module load cray-netcdf-hdf5parallel/4.9.0.1
 module load cray-parallel-netcdf/1.12.3.1
 
+# Frontier's boost module is not compatible with our modules.
+# A pre-built version of boost is available here for members of cli193,
+# otherwise, you need to supply boost header files yourself
+export BOOST_ROOT=/lustre/orion/cli193/proj-shared/automated_testing/boost_1_86_0
+
 export MPICH_GPU_SUPPORT_ENABLED=1
