@@ -3,6 +3,8 @@
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
+set (DEPLOY_DIR "$ENV{DEPLOY_DIR}")
+
 # What to build and test
 set (CLEAN_BUILD FALSE)
 

@@ -6,13 +6,24 @@ set (CTEST_TEST_TYPE Nightly)
 set (FAD_CONFIGURATION "$ENV{FAD_CONFIGURATION}")
 set (FAD_SIZE "$ENV{FAD_SIZE}")
 set (BASE_DIR "$ENV{BASE_DIR}")
+set (DEPLOY_DIR "$ENV{DEPLOY_DIR}")
 
 # What to build and test
 set (CLEAN_BUILD FALSE)
 set (DOWNLOAD_TRILINOS FALSE)
 set (BUILD_TRILINOS FALSE)
-set (DOWNLOAD_ALBANY TRUE) 
+set (DOWNLOAD_ALBANY FALSE) 
 set (BUILD_ALBANY TRUE)
+
+if (${FAD_CONFIGURATION} MATCHES "slfad")
+  set (TEST_ALBANY TRUE)
+endif()
+if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "12")
+  set (TEST_ALBANY FALSE)
+endif()
+if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "24")
+  set (TEST_ALBANY FALSE)
+endif()
 
 # Begin User inputs:
 set (CTEST_SITE "pm-gpu-uvm" ) # generally the output of hostname
@@ -42,15 +53,15 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "${BASE_DIR}/builds/TrilinosInstall")
+set (TRILINOS_INSTALL "${DEPLOY_DIR}/builds/TrilinosInstall")
 if (${FAD_CONFIGURATION} MATCHES "slfad")
-  set (ALBANY_INSTALL "${BASE_DIR}/builds/AlbanyInstall")
+  set (ALBANY_INSTALL "${DEPLOY_DIR}/builds/AlbanyInstall")
 endif()
 if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "12")
-  set (ALBANY_INSTALL "${BASE_DIR}/builds/AlbanyInstallSfad12")
+  set (ALBANY_INSTALL "${DEPLOY_DIR}/builds/AlbanyInstallSfad12")
 endif()
 if (${FAD_CONFIGURATION} MATCHES "sfad" AND ${FAD_SIZE} MATCHES "24")
-  set (ALBANY_INSTALL "${BASE_DIR}/builds/AlbanyInstallSfad24")
+  set (ALBANY_INSTALL "${DEPLOY_DIR}/builds/AlbanyInstallSfad24")
 endif()
 
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
@@ -256,6 +267,9 @@ if (BUILD_ALBANY)
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
     message ("Encountered build errors in Albany build. Exiting!")
   endif ()
+endif()
+
+if (TEST_ALBANY)
   #
   # Run Albany tests
   #

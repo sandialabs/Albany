@@ -2,8 +2,8 @@
 
 #SBATCH -A m4274_g
 #SBATCH --job-name=AlbanyTesting
-#SBATCH --output=AlbanyTesting.gpu.sfad12.%j.out
-#SBATCH --error=AlbanyTesting.gpu.sfad12.%j.err
+#SBATCH --output=logs/AlbanyTesting.gpu.sfad12.%j.out
+#SBATCH --error=logs/AlbanyTesting.gpu.sfad12.%j.err
 #SBATCH --constraint=gpu
 #SBATCH --nodes=1
 #SBATCH --qos=regular

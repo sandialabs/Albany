@@ -25,4 +25,4 @@ export no_proxy='localhost,127.0.0.0/8,*.ccs.ornl.gov'
 
 LOG_FILE=$BASE_DIR/test_log_frontier_Albany.txt
 
-eval "env BUILD_OR_TEST=test env TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
+eval "BUILD_OR_TEST=test TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
