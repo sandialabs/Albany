@@ -80,12 +80,7 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
       // This should trigger the nonlinear solver to be rebuilt, which should create new linear
       // algebra objects (jac and residual)
       auto stepper = integrator.getStepper();
-      auto stepper_impl = Teuchos::rcp_dynamic_cast<Tempus::StepperImplicit<ST>>(stepper);
-      if (Teuchos::nonnull(stepper_impl)) {
-        stepper_impl->setDefaultSolver();
-      } else {
-        throw std::runtime_error("Cannot handle explicit case yet, sorry.\n");
-      }
+      stepper->setModel(model_);
       stepper->initialize();
     }
   }
