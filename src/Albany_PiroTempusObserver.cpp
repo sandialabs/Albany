@@ -50,7 +50,9 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
 
   auto time     = state_nc->getTime();
   auto disc = app_->getDiscretization();
-  auto adaptData = disc->checkForAdaptation(state_nc->getX(),state_nc->getXDot(),state_nc->getXDotDot(),dxdp);
+  
+  auto state = state_nc.getConst();
+  auto adaptData = disc->checkForAdaptation(state->getX(),state->getXDot(),state->getXDotDot(),dxdp);
 
   // Before observing the solution, check if we need to adapt
   if (adaptData->type!=AdaptationType::None) {
@@ -87,7 +89,7 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
       stepper->initialize();
     }
   }
-  observeSolutionImpl (state_nc->getX(),state_nc->getXDot(),state_nc->getXDotDot(),dxdp,time);
+  observeSolutionImpl (state->getX(),state->getXDot(),state->getXDotDot(),dxdp,time);
 }
 
 } // namespace Albany

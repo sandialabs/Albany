@@ -42,8 +42,10 @@ public:
 
    Teuchos::RCP<const CombineAndScatterManager> get_cas_manager() const { return cas_manager; }
 
-   Teuchos::RCP<const Thyra_MultiVector> getCurrentSolution() { return current_soln; }
-   Teuchos::RCP<const Thyra_MultiVector> getCurrentDxDp() { return current_dxdp; }
+   Teuchos::RCP<Thyra_MultiVector> getCurrentSolution() { return current_soln; }
+   Teuchos::RCP<Thyra_MultiVector> getCurrentDxDp() { return current_dxdp; }
+   Teuchos::RCP<const Thyra_MultiVector> getCurrentSolution() const { return current_soln; }
+   Teuchos::RCP<const Thyra_MultiVector> getCurrentDxDp() const { return current_dxdp; }
 
    void scatterX (const Thyra_Vector& x,
                   const Teuchos::Ptr<const Thyra_Vector> x_dot,
