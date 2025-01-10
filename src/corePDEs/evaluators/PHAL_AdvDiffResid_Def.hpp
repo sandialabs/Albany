@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_StringUtils.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -59,8 +60,12 @@ AdvDiffResid(const Teuchos::ParameterList& p) :
   vecDim  = dims[2];
 
 
-  a = bf_list->get("Advection a", 1.0);
-  b = bf_list->get("Advection b", 1.0);
+  beta = bf_list->get<Teuchos::Array<double>>("Advection Coefficient");
+  TEUCHOS_TEST_FOR_EXCEPTION (static_cast<std::size_t>(beta.size())!=numDims, std::logic_error,
+      "Error! The input array for 'Advection Coefficient' should have the same extent as the mesh num dims.\n"
+      " - beta: [" << util::join(beta,",") << "]\n"
+      " - num dims: " << numDims << "\n");
+
   mu = bf_list->get("Viscosity mu", 0.1);
   useAugForm = bf_list->get("Use Augmented Form", false);
   formType = bf_list->get("Augmented Form Type", 1);
@@ -73,7 +78,7 @@ AdvDiffResid(const Teuchos::ParameterList& p) :
        "Invalid Augmented Form Type: " << formType << "; valid options are 1 and 2");
 
 
-  std::cout << "a, b, mu: " << a << ", " << b << ", " << mu << std::endl;
+  std::cout << "beta, mu: [" << util::join(beta,",") << "], " << ", " << mu << std::endl;
   std::cout << " vecDim = " << vecDim << std::endl;
   std::cout << " numDims = " << numDims << std::endl;
   std::cout << "Augmented Form? " << useAugForm << std::endl;
@@ -108,15 +113,23 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
         for (std::size_t i=0; i<vecDim; i++)
           Residual(cell,node,i) = 0.0;
+        // std::cout << "--------------------\n";
+        // std::cout << "after init, res(" << cell << "," << node << "): " << Residual(cell,node,0) << "\n";
         for (std::size_t qp=0; qp < numQPs; ++qp) {
-          //du/dt + a*du/dx + b*du/dy - mu*delta(u) = 0
-          Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp) +
-                                   a*UGrad(cell,qp,0,0)*wBF(cell,node,qp) +
-                                   b*UGrad(cell,qp,0,1)*wBF(cell,node,qp) +
-                                   mu*UGrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
-                                   mu*UGrad(cell,qp,0,1)*wGradBF(cell,node,qp,1);
+          //du/dt + beta*grad(u) - mu*delta(u) = 0
+          Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp);
+          // std::cout << "udot(" << cell << "," << qp << "): " << UDot(cell,qp,0) << "\n";
+          // std::cout << "wBF(" << cell << "," << node << "," << qp << "): " << wBF(cell,node,qp) << "\n";
+          for (std::size_t idim=0; idim<numDims; ++idim) {
+            // std::cout << "ugrad(" << cell << "," << qp << "," << idim << "): " << UGrad(cell,qp,0,idim) << "\n";
+            // std::cout << "wGradBF(" << cell << "," << node << "," << qp << "," << idim << "): " << wGradBF(cell,node,qp,idim) << "\n";
+            Residual(cell,node,0) += beta[idim]*UGrad(cell,qp,0,idim)*wBF(cell,node,qp) +
+                                     mu*UGrad(cell,qp,0,idim)*wGradBF(cell,node,qp,idim);
+          }
         }
-       }
+        // std::cout << "mu=" << mu << ", beta="<<beta[0] << "\n";
+        // std::cout << "res(" << cell << "," << node << "): " << Residual(cell,node,0) << "\n";
+      }
     }
   }
   else { //augmented form of advection diffusion equation
@@ -126,12 +139,12 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t i=0; i<vecDim; i++)
             Residual(cell,node,i) = 0.0;
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-            //du/dt + (a,b).q - mu*div(q) = 0
-            Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp) +
-                                     a*U(cell,qp,1)*wBF(cell,node,qp) +
-                                     b*U(cell,qp,2)*wBF(cell,node,qp) +
-                                     mu*U(cell,qp,1)*wGradBF(cell,node,qp,0) +
-                                     mu*U(cell,qp,2)*wGradBF(cell,node,qp,1);
+            //du/dt + beta*q - mu*div(q) = 0
+            Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp);
+            for (std::size_t idim=0; idim<numDims; ++idim) {
+              Residual(cell,node,0) += beta[idim]*U(cell,qp,idim+1)*wBF(cell,node,qp) +
+                                       mu*U(cell,qp,idim+1)*wGradBF(cell,node,qp,idim);
+            }
             //q - grad(u) = 0
             Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) - UGrad(cell,qp,0,0)*wBF(cell,node,qp);
             Residual(cell,node,2) += U(cell,qp,2)*wBF(cell,node,qp) - UGrad(cell,qp,0,1)*wBF(cell,node,qp);
@@ -149,11 +162,11 @@ evaluateFields(typename Traits::EvalData workset)
             Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp) +
                                      U(cell,qp,1)*wBF(cell,node,qp) +
                                      U(cell,qp,2)*wBF(cell,node,qp);
-            //q - (a,b).grad(u) + mu*delta(u) = 0
-            Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) - a*UGrad(cell,qp,0,0)*wBF(cell,node,qp)
-                                  -  mu*UGrad(cell,qp,0,0)*wGradBF(cell,node,qp,0);
-            Residual(cell,node,2) += U(cell,qp,2)*wBF(cell,node,qp) - b*UGrad(cell,qp,0,1)*wBF(cell,node,qp)
-                                  -  mu*UGrad(cell,qp,0,1)*wGradBF(cell,node,qp,1);
+            //q - beta*grad(u) + mu*delta(u) = 0
+            for (std::size_t idim=0; idim<numDims; ++idim) {
+              Residual(cell,node,idim+1) += U(cell,qp,idim+1)*wBF(cell,node,qp) - beta[idim]*UGrad(cell,qp,0,idim)*wBF(cell,node,qp)
+                                         - mu*UGrad(cell,qp,0,idim)*wGradBF(cell,node,qp,idim);
+            }
           }
         }
       }

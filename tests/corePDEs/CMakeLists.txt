@@ -4,6 +4,8 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+# Advection-diffusion
+add_subdirectory(AdvDiff)
 # Heat Transfer Problems ###############
 add_subdirectory(ExtrudedMesh)
 add_subdirectory(SteadyHeat2D)

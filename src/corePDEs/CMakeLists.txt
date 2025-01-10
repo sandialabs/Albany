@@ -6,20 +6,25 @@
 
 
 set(SOURCES
+    problems/Albany_AdvDiffProblem.cpp
     problems/Albany_CoreProblemFactory.cpp
     problems/Albany_HeatProblem.cpp
     problems/Albany_PopulateMesh.cpp
     problems/Albany_SideLaplacianProblem.cpp
+    evaluators/PHAL_AdvDiffResid.cpp
     evaluators/PHAL_HeatEqResid.cpp
     evaluators/PHAL_SideLaplacianResidual.cpp
     evaluators/PHAL_ThermalConductivity.cpp
   )
 
   set(HEADERS
+    problems/Albany_AdvDiffProblem.hpp
     problems/Albany_CoreProblemFactory.hpp
     problems/Albany_HeatProblem.hpp
     problems/Albany_PopulateMesh.hpp
     problems/Albany_SideLaplacianProblem.hpp
+    evaluators/PHAL_AdvDiffResid.hpp
+    evaluators/PHAL_AdvDiffResid_Def.hpp
     evaluators/PHAL_HeatEqResid.hpp
     evaluators/PHAL_HeatEqResid_Def.hpp
     evaluators/PHAL_SideLaplacianResidual.hpp

@@ -5,7 +5,6 @@
 ##*****************************************************************//
 
   add_subdirectory(Helmholtz2D)
-  add_subdirectory(AdvDiff)
   add_subdirectory(ReactDiffSystem)
   add_subdirectory(ODE)
   add_subdirectory(ThermoElectrostatics2D)
