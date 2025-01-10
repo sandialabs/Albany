@@ -2462,12 +2462,11 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
   auto& adapt_params = discParams->sublist("Mesh Adaptivity");
   auto adapt_type = adapt_params.get<std::string>("Type","None");
   if (adapt_type=="None") {
-    std::cout << "NO adaptation...\n";
     return adapt_data;
   }
-  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Uniform-Hessian-Based", std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
       "Error! Adaptation type '" << adapt_type << "' not supported.\n"
-      " - valid choices: None, Uniform-Hessian-Based\n");
+      " - valid choices: None, Minimally-Oscillatory\n");
 
   double tol = adapt_params.get<double>("Max Hessian");
   auto data = getLocalData(solution);
@@ -2476,11 +2475,6 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
   //  1. if |C_i| > threshold, mark for refinement the whole mesh
   //  2. Interpolate solution (and all elem/node fields if possible, but not necessary for adv-diff example)
   int num_nodes = data.size();
-  std::cout << "adapt mesh, curr sol:";
-  for (int i=0; i<num_nodes; ++i) {
-    std::cout << " " << data[i];
-  }
-  std::cout << "\n";
   getCoordinates();
 
   adapt_data->x = solution;
@@ -2491,8 +2485,9 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
     auto h_prev = coordinates[i] - coordinates[i-1];
     auto h_next = coordinates[i+1] - coordinates[i];
     auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
-    if (std::fabs(hess)>tol) {
-      printf("hess=%f, hprev=%f, hnext=%f,up=%f, uc=%f, un=%f\n",hess,h_prev,h_next,data[i-1],data[i],data[i+1]);
+    auto grad_prev = (data[i]-data[i-1]) / h_prev;
+    auto grad_next = (data[i+1]-data[i]) / h_next;
+    if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
       adapt_data->type = AdaptationType::Topology;
       break;
     }
@@ -2513,22 +2508,17 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
 
   // Solution oscillates. We need to half dx
-  std::cout << "adapting mesh:\n"
-            << "  creating new 1d mesh..." << std::flush;;
   auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
   int num_params = mesh1d->getNumParams();
   int ne_x = discParams->get<int>("1D Elements");
   auto& adapt_params = discParams->sublist("Mesh Adaptivity");
+  discParams->set("Workset Size", stkMeshStruct->meshSpecs()[0]->worksetSize);
   int factor = adapt_params.get("Refining Factor",2);
   discParams->set("1D Elements",factor*ne_x);
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
   stkMeshStruct->setFieldData(comm,mesh1d->sis_);
   this->setFieldData(mesh1d->sis_);
   stkMeshStruct->setBulkData(comm);
-  std::cout << "done!\n" << std::flush;;
-
-  std::cout << "  old ne_x: " << ne_x << "\n";
-  std::cout << "  new ne_x: " << factor*ne_x << "\n";
 
   updateMesh();
 
@@ -2541,7 +2531,6 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     auto data_old = getLocalData(x);
     int num_nodes_new = data_new.size();
 
-    std::cout << "  new solution space size: " << num_nodes_new << "\n";
     for (int inode=0; inode<num_nodes_new; ++inode) {
       int coarse = inode / factor;
       int rem    = inode % factor;

@@ -21,25 +21,23 @@ ANONYMOUS:
       Number Of Parameters: 0
     Response Functions:
       Number Of Responses: 3
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Min Value
       Response 2:
         Type: Scalar Response
         Name: Solution Average
-      Response 1:
-        Equation: 1
-        Type: Scalar Response
-        Name: Solution Max Value
-      Response 0:
-        Equation: 0
-        Type: Scalar Response
-        Name: Solution Max Value
   Discretization:
     1D Elements: 10
     1D Scale: 1.0
     Method: STK1D
     Exodus Output File Name: adv_diff1D_adapt.exo
     Mesh Adaptivity:
-      Type: Uniform-Hessian-Based
-      Max Hessian: 1.0
+      Type: Minimally-Oscillatory
+      Max Hessian: 10.0
       Refining Factor: 2
   Piro:
     Tempus:
@@ -124,12 +122,12 @@ ANONYMOUS:
             Ifpack2 Settings:
               'fact: ilut level-of-fill': 1.0e+00
   Regression For Response 0:
-    Test Value: 2.435402154398e-01
+    Test Value: 1.0
     Relative Tolerance: 1.0e-04
   Regression For Response 1:
-    Test Value: 2.915474759851e-01
+    Test Value: 0.0
     Relative Tolerance: 1.0e-04
   Regression For Response 2:
-    Test Value: 5.749999999897e-02
+    Test Value: 7.142857096097e-02
     Relative Tolerance: 1.0e-04
 ...
