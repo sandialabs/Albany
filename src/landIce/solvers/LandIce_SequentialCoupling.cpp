@@ -38,7 +38,8 @@ fileExistsParallel(std::string const& filename, Teuchos::RCP<Teuchos::Comm<int> 
   return fileExists(full_filename);
 }
 
-// In "Mechanics 3D", extract "Mechanics".
+// In "Poisson System 2D", extract "Poisson System".
+// IKT 1/14/2025: this routine is needed.
 inline std::string
 getName(std::string const& method)
 {
@@ -236,27 +237,32 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
   do_outputs_.resize(num_subdomains_);
   do_outputs_init_.resize(num_subdomains_);
   prob_types_.resize(num_subdomains_);
-  std::cout << "IKT num_subdomains_ = " << num_subdomains_ << "\n"; 
-  exit(1); 
 
-  /*
   // Create solver factories once at the beginning
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
     solver_factories_[subdomain]   = Teuchos::rcp(new Albany::SolverFactory(model_filenames_[subdomain], comm_));
-    Teuchos::ParameterList& params = solver_factories_[subdomain]->getParameters();
+    //Teuchos::ParameterList& params = solver_factories_[subdomain]->getParameters();
+    Teuchos::RCP<Teuchos::ParameterList> params = solver_factories_[subdomain]->getParameters();
 
-    Teuchos::ParameterList& problem_params = params.sublist("Problem", true);
-    problem_params.set<bool>("ACE Sequential Thermomechanical", true);
+    Teuchos::ParameterList& problem_params = params->sublist("Problem", true);
+    //IKT 1/14/2025: I believe we won't need an analog of the following here, but 
+    //keeping commented out just in case.
+    //problem_params.set<bool>("LandIce Sequential Solver", true);
 
     std::string const problem_name = getName(problem_params.get<std::string>("Name"));
-    if (problem_name == "Mechanics") {
-      prob_types_[subdomain] = MECHANICAL;
-    } else if (problem_name == "ACE Thermal") {
-      prob_types_[subdomain] = THERMAL;
+    std::cout << "IKT problem_name = " << problem_name << "\n"; 
+    if (problem_name == "Poisson System") {
+      prob_types_[subdomain] = POISSON;
+    } else if (problem_name == "AdvDiff System") {
+      prob_types_[subdomain] = ADVDIFF;
     } else {
-      ALBANY_ABORT("ACE Sequential thermo-mechanical solver only supports coupling of 'Mechanics' and 'ACE Thermal' problems!");
+      //IKT 1/14/2025 TODO: will need to change this when we switch over to the true landice couplings
+      ALBANY_ABORT("LandIce Sequential solver only supports coupling of 'Poisson System' and 'Adv Diff System' problems!");
     }
-
+  }
+  std::cout << "IKT here!\n"; 
+  exit(1); 
+/*
     auto const problem_type = prob_types_[subdomain];
 
     // Error checks - only needs to be done once at the beginning
