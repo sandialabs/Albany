@@ -173,13 +173,10 @@ class SequentialCoupling : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   mutable std::vector<Teuchos::RCP<Thyra::ModelEvaluator<ST>>> model_evaluators_;
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     ics_x_;
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     ics_xdot_;
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     ics_xdotdot_;
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     prev_x_;
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     prev_xdot_;
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     prev_xdotdot_;
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     this_x_;
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     this_xdot_;
-  mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     this_xdotdot_;
 
   // variable with previous thermal Exodus output file, for mechanical restarts
   mutable std::string prev_thermal_exo_outfile_name_{""};
@@ -188,8 +185,6 @@ class SequentialCoupling : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
 
   mutable std::vector<bool>             do_outputs_;
   mutable std::vector<bool>             do_outputs_init_;
-
-  bool std_init_guess_{false};
 
   enum PROB_TYPE
   {
@@ -214,9 +209,6 @@ class SequentialCoupling : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   Teuchos::RCP<Teuchos::ParameterList>   alt_system_params_;
   Teuchos::RCP<Teuchos::Comm<int> const> comm_;
   Teuchos::Array<std::string>            model_filenames_;
-  // Min value of z-coordinate in initial mesh - needed for wave pressure NBC
-  mutable double zmin_{0.0};
-  mutable int    init_file_index_;
 
 };
 

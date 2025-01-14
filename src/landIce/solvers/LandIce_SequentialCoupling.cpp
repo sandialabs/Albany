@@ -175,9 +175,8 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
     : fos_(Teuchos::VerboseObjectBase::getDefaultOStream()), comm_(comm)
 {
   std::cout << "IKT in LandIce::SequentialCoupling constructor!\n"; 
-  exit(1); 
   //IKT 1/7/2025 TODO: implement new guts of this function 
-/*  alt_system_params_ = Teuchos::sublist(app_params, "Alternating System");
+  alt_system_params_ = Teuchos::sublist(app_params, "Alternating System");
   // Get names of individual model input files
   model_filenames_ = alt_system_params_->get<Teuchos::Array<std::string>>("Model Input Files");
 
@@ -187,18 +186,14 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
   initial_time_step_ = alt_system_params_->get<ST>("Initial Time Step", 1.0);
 
   auto const dt  = initial_time_step_;
-  auto const dt2 = dt * dt;
 
   min_time_step_    = alt_system_params_->get<ST>("Minimum Time Step", dt);
   max_time_step_    = alt_system_params_->get<ST>("Maximum Time Step", dt);
   reduction_factor_ = alt_system_params_->get<ST>("Reduction Factor", 1.0);
   increase_factor_  = alt_system_params_->get<ST>("Amplification Factor", 1.0);
   output_interval_  = alt_system_params_->get<int>("Exodus Write Interval", 1);
-  std_init_guess_   = alt_system_params_->get<bool>("Standard Initial Guess", false);
-  // IKT, 8/19/2022: the following lets you start the output files created by the code
-  // at an index other than zero.
-  init_file_index_ = alt_system_params_->get<int>("Exodus ACE Output File Initial Index", 0);
 
+  std::cout << "IKT dt = " << dt << "\n"; 
   // Firewalls
   ALBANY_ASSERT(maximum_steps_ >= 1, "");
   ALBANY_ASSERT(final_time_ >= initial_time_, "");
@@ -228,24 +223,23 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
   sub_outargs_.resize(num_subdomains_);
   curr_x_.resize(num_subdomains_);
   prev_step_x_.resize(num_subdomains_);
-  internal_states_.resize(num_subdomains_);
-
-  // IKT NOTE 6/4/2020:the xdotdot arrays are
-  // not relevant for thermal problems,
+ 
+  // IKT NOTE: the "dot" arrays are
+  // not relevant for the steady Poisson problem,
   // but they are constructed anyway.
   ics_x_.resize(num_subdomains_);
   ics_xdot_.resize(num_subdomains_);
-  ics_xdotdot_.resize(num_subdomains_);
   prev_x_.resize(num_subdomains_);
   prev_xdot_.resize(num_subdomains_);
-  prev_xdotdot_.resize(num_subdomains_);
   this_x_.resize(num_subdomains_);
   this_xdot_.resize(num_subdomains_);
-  this_xdotdot_.resize(num_subdomains_);
   do_outputs_.resize(num_subdomains_);
   do_outputs_init_.resize(num_subdomains_);
   prob_types_.resize(num_subdomains_);
+  std::cout << "IKT num_subdomains_ = " << num_subdomains_ << "\n"; 
+  exit(1); 
 
+  /*
   // Create solver factories once at the beginning
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
     solver_factories_[subdomain]   = Teuchos::rcp(new Albany::SolverFactory(model_filenames_[subdomain], comm_));
