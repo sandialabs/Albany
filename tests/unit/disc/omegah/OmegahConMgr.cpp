@@ -34,11 +34,16 @@
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
 
+template <size_t Dim = 2>
 Teuchos::RCP<Albany::OmegahGenericMesh>
 createOmegahBoxMesh(const Teuchos::RCP<const Teuchos_Comm>& comm) {
   auto pl = Teuchos::rcp(new Teuchos::ParameterList());
-  pl->set("Number of Elements",Teuchos::Array<int>(2,2));
-  return Teuchos::rcp(new Albany::OmegahBoxMesh<2>(pl,comm,0));
+  if (Dim == 2) {
+    pl->set("Number of Elements",Teuchos::Array<int>(2,2));
+  } else if (Dim == 1) {
+    pl->set("Number of Elements",Teuchos::Array<int>(1,2));
+  }
+  return Teuchos::rcp(new Albany::OmegahBoxMesh<Dim>(pl,comm,0));
 }
 
 struct PartSpecs {
@@ -128,6 +133,30 @@ void checkOwnership(Omega_h::Mesh& mesh, const Albany::OmegahConnManager& connMg
       }
     }
   }
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D)
+{
+  auto teuchosComm = Albany::getDefaultComm();
+
+  auto mesh = createOmegahBoxMesh<1>(teuchosComm);
+  auto conn_mgr = createOmegahConnManager(mesh);
+  out << "Testing OmegahConnManager constructor\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D_buildConnectivity)
+{
+  auto teuchosComm = Albany::getDefaultComm();
+
+  auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
+
+  auto mesh = createOmegahBoxMesh<1>(teuchosComm);
+  auto conn_mgr = createOmegahConnManager(mesh);
+  conn_mgr->buildConnectivity(patternC1);
+  REQUIRE(2 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
+  out << "Testing OmegahConnManager::buildConnectivity()\n";
+  success = true;
 }
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager)
