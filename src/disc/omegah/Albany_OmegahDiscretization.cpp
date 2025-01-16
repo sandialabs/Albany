@@ -304,4 +304,70 @@ create_dof_mgr (const std::string& field_name,
   return dof_mgr;
 }
 
+Teuchos::RCP<AdaptationData>
+OmegahDiscretization::
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
+                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
+                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
+                    const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const
+{
+  throw NotYetImplemented("OmegaDiscretization::checkForAdaptation");
+}
+
+void OmegahDiscretization::
+adapt (const Teuchos::RCP<AdaptationData>& adaptData)
+{
+  // Not sure if we allow calling adapt in general, but just in case
+  if (adaptData->type==AdaptationType::None) {
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
+      "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
+
+  return;
+//
+//  // Solution oscillates. We need to half dx
+//  auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
+//  int num_params = mesh1d->getNumParams();
+//  int ne_x = discParams->get<int>("1D Elements");
+//  auto& adapt_params = discParams->sublist("Mesh Adaptivity");
+//  discParams->set("Workset Size", stkMeshStruct->meshSpecs()[0]->worksetSize);
+//  int factor = adapt_params.get("Refining Factor",2);
+//  discParams->set("1D Elements",factor*ne_x);
+//  stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
+//  stkMeshStruct->setFieldData(comm,mesh1d->sis_);
+//  this->setFieldData(mesh1d->sis_);
+//  stkMeshStruct->setBulkData(comm);
+//
+//  updateMesh();
+//
+//  int num_time_deriv = discParams->get<int>("Number Of Time Derivatives");
+//  auto x_mv_new = Thyra::createMembers(getVectorSpace(),num_time_deriv);
+//
+//  for (int ideriv=0; ideriv<num_time_deriv; ++ideriv) {
+//    auto data_new = getNonconstLocalData(x_mv_new->col(ideriv));
+//    auto x = ideriv==0 ? adaptData->x : (ideriv==1 ? adaptData->x_dot : adaptData->x_dotdot);
+//    auto data_old = getLocalData(x);
+//    int num_nodes_new = data_new.size();
+//
+//    for (int inode=0; inode<num_nodes_new; ++inode) {
+//      int coarse = inode / factor;
+//      int rem    = inode % factor;
+//      if (rem == 0) {
+//        // Same node as coarse mesh
+//        data_new[inode] = data_old[coarse];
+//      } else {
+//        // Convex interpolation of two coarse points
+//        double alpha = static_cast<double>(rem) / factor;
+//        data_new[inode] = data_old[coarse]*(1-alpha) + data_old[coarse+1]*alpha;
+//      }
+//    }
+//  }
+//
+//  writeSolutionMVToMeshDatabase(*x_mv_new, Teuchos::null, 0, false);
+}
+
+
+
 }  // namespace Albany
