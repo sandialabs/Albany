@@ -92,7 +92,7 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
 {
   m_elem_blocks_names = {inPartId};
 
-  TEUCHOS_TEST_FOR_EXCEPTION (mesh->dim()!=2 && mesh->dim()!=3, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (mesh->dim()!=1 && mesh->dim()!=2 && mesh->dim()!=3, std::logic_error,
       "Error! The OmegahConnManager currently only supports 2d/3d meshes.\n"
       "  - input mesh dim: " + std::to_string(mesh->dim()) + "\n");
 
