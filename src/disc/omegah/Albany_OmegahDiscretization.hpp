@@ -174,15 +174,9 @@ public:
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const override
-  {
-    throw NotYetImplemented("OmegaDiscretization::checkForAdaptation");
-  }
+                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const override;
 
-  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override
-  {
-    throw NotYetImplemented("OmegaDiscretization::adapt");
-  }
+  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override;
 
 protected:
 
