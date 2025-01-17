@@ -3,6 +3,8 @@
 set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
+set (DEPLOY_DIR "$ENV{DEPLOY_DIR}")
+
 # What to build and test
 set (CLEAN_BUILD FALSE)
 
@@ -98,7 +100,7 @@ set (PE_MPICH_GTL_LIBS_amd_gfx90a $ENV{PE_MPICH_GTL_LIBS_amd_gfx90a})
 
 set (MPICH_DIR $ENV{MPICH_DIR})
 set (CRAY_LIBSCI_PREFIX_DIR $ENV{CRAY_LIBSCI_PREFIX_DIR})
-set (BOOST_ROOT /lustre/orion/cli193/proj-shared/automated_testing/boost_1_86_0)
+set (BOOST_ROOT $ENV{BOOST_ROOT})
 set (NETCDF_DIR $ENV{NETCDF_DIR})
 set (PNETCDF_DIR $ENV{PNETCDF_DIR})
 set (HDF5_DIR $ENV{HDF5_DIR})

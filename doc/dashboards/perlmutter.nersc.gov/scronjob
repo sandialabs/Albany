@@ -1,6 +1,6 @@
 #SCRON -A m4274
 #SCRON -q regular
-#SCRON -t 03:00:00
+#SCRON -t 02:00:00
 #SCRON -o MALITesting.serial.%j.out
 #SCRON --open-mode=append
 #SCRON --constraint=cpu
@@ -9,7 +9,7 @@
 
 #SCRON -A m4274_g
 #SCRON -q regular
-#SCRON -t 03:00:00
+#SCRON -t 02:00:00
 #SCRON -o MALITesting.cuda.%j.out
 #SCRON --open-mode=append
 #SCRON --constraint=gpu
@@ -20,7 +20,7 @@
 
 #SCRON -A m4274_g
 #SCRON -q regular
-#SCRON -t 03:00:00
+#SCRON -t 02:00:00
 #SCRON -o MALITesting.cudauvm.%j.out
 #SCRON --open-mode=append
 #SCRON --constraint=gpu

@@ -1,18 +1,27 @@
 #!/bin/csh
 
+FAD_CONFIGURATION=${1}
+FAD_SIZE=${2}
+
 BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda-uvm
+DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda-uvm
 cd $BASE_DIR
 
-unset http_proxy
-unset https_proxy
+source convert-cmake-to-cdash-albany.sh ${FAD_CONFIGURATION} ${FAD_SIZE}
+source create-new-cdash-cmake-script-albany.sh ${FAD_CONFIGURATION} ${FAD_SIZE}
 
-export jenkins_albany_dir=${BASE_DIR}/repos/Albany
-export jenkins_trilinos_dir=${BASE_DIR}/repos/Trilinos
+if [ "$FAD_CONFIGURATION" = "slfad" ] ; then
+  LOG_FILE=$BASE_DIR/biweekly_log_pm_gpu_Albany_slfad.txt
+  CMAKE_FILENAME=$BASE_DIR/ctest_nightly_albany_slfad.cmake
+fi
+if [ "$FAD_CONFIGURATION" = "sfad" ] && [ "$FAD_SIZE" = "12" ]; then
+  LOG_FILE=$BASE_DIR/biweekly_log_pm_gpu_Albany_sfad12.txt
+  CMAKE_FILENAME=$BASE_DIR/ctest_nightly_albany_sfad12.cmake
+fi
+if [ "$FAD_CONFIGURATION" = "sfad" ] && [ "$FAD_SIZE" = "24" ]; then
+  LOG_FILE=$BASE_DIR/biweekly_log_pm_gpu_Albany_sfad24.txt
+  CMAKE_FILENAME=$BASE_DIR/ctest_nightly_albany_sfad24.cmake
+fi
 
-source convert-cmake-to-cdash-albany.sh
-source create-new-cdash-cmake-script-albany.sh
-
-LOG_FILE=$BASE_DIR/biweekly_log_pm_gpu_Albany.txt
-
-eval "env TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
+eval "BASE_DIR=${BASE_DIR} DEPLOY_DIR=${DEPLOY_DIR} TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S ${CMAKE_FILENAME}" > $LOG_FILE 2>&1
 
