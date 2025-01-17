@@ -318,7 +318,12 @@ evaluateFields(typename Traits::EvalData workset)
   const auto bot = layers_data->bot_side_pos;
   const auto top = layers_data->top_side_pos;
   const auto ws = workset.wsIndex;
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+  const auto elem_lids_ws = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
+
+  const auto layerOrd = layers_data->layerOrd;
+  const auto numHorizEntities = layers_data->numHorizEntities;
+  const auto numLayers = layers_data->numLayers;
 
   // Pick element layer that contains the field level
   const auto fieldLayer = fieldLevel==layers_data->numLayers
@@ -327,16 +332,17 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Distributed parameter vector
   const auto p      = workset.distParamLib->get(this->param_name);
-  const auto p_data = Albany::getLocalData(p->overlapped_vector().getConst());
+  const auto p_data = Albany::getDeviceData(p->overlapped_vector().getConst());
 
   const auto Vp = workset.Vp;
-  const auto Vp_data = !Vp.is_null() ? Albany::getLocalData(Vp) : Teuchos::null;
+  Albany::ThyraMVDeviceView<const ST> Vp_data;
+  if (!Vp.is_null()) Vp_data = Albany::getDeviceData(Vp);
 
   // Parameter/solution dof numbering info
   const auto& sol_dof_mgr = workset.disc->getDOFManager();
   const auto& p_dof_mgr       = p->get_dof_mgr();
-  const auto& elem_dof_lids   = sol_dof_mgr->elem_dof_lids().host();
-  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
+  const auto& elem_dof_lids   = sol_dof_mgr->elem_dof_lids().dev();
+  const auto& p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().dev();
 
   // Idea: loop over cells. Grab p data from a cell at the right layer,
   //       using offsets that correspond to the elem-side where the param is defined.
@@ -344,10 +350,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
   //       to guarantee corresponding nodes are vertically aligned.
-  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,top,field_pos);
-  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,bot,field_pos);
-  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos);
-  const int num_nodes_2d = offsets_p.size();
+  const auto& offsets_top = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
+  const auto& offsets_bot = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
+  const auto& offsets_p   = p->get_dof_mgr()->getGIDFieldOffsetsSideKokkos(0,field_pos);
+  const int num_nodes_2d = p->get_dof_mgr()->getGIDFieldOffsetsSide(0,field_pos).size();
 
   // Are we differentiating w.r.t. this parameter?
   const bool is_active = (workset.dist_param_deriv_name == this->param_name);
@@ -358,72 +364,87 @@ evaluateFields(typename Traits::EvalData workset)
     const int num_deriv = this->numNodes;
     const bool trans = workset.transpose_dist_param_deriv;
 
-        if (Vp != Teuchos::null) {
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                         KOKKOS_CLASS_LAMBDA(const int& cell) {
+      const auto elem_LID = elem_lids(cell);
+      const auto basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+      const auto param_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                             basal_elem_LID * numLayers + fieldLayer;
+      for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
+        const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p(node2d));
+        const auto p_val = p_lid>=0 ? p_data(p_lid) : 0;
+        ParamScalarT v_bot(num_deriv, offsets_bot(node2d), p_val);
+        if (p_lid < 0) v_bot.fastAccessDx(offsets_bot(node2d)) = 0;
+        this->val(cell,offsets_bot(node2d)) = v_bot;
+
+        ParamScalarT v_top(num_deriv, offsets_top(node2d), p_val);
+        if (p_lid < 0) v_top.fastAccessDx(offsets_top(node2d)) = 0;
+        this->val(cell,offsets_top(node2d)) = v_top;
+      }
+    });
+
+    if (Vp != Teuchos::null) {
       const int num_cols = workset.Vp->domain()->dim();
+      const int num_dofs = elem_dof_lids.extent(1);
       if (trans) {
         const int num_dofs = elem_dof_lids.extent(1);
         workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_dofs,num_cols);
       } else {
         workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_deriv,num_cols);
       }
-    }
-    const auto& local_Vp = workset.local_Vp;
-    
-    for (std::size_t cell=0; cell<workset.numCells; ++cell) {
-      const auto elem_LID = elem_lids(cell);
-      const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
-      const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
-      for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
-        const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
-        const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
-        for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
-          ParamScalarT v(num_deriv, node, p_val);
-          if(p_lid < 0) {
-            v.fastAccessDx(node) = 0;
-          }
-          this->val(cell,node) = v;
-        }
-      }
 
-      if (Vp != Teuchos::null) {
-        const int num_cols = workset.Vp->domain()->dim();
+      const auto& local_Vp = workset.local_Vp;
 
-        if (trans) {
-          auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-          for (int eq=0; eq<neq; ++eq) {
-            const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
-            for (const auto o : sol_offsets) {
+      if (trans) {
+        for (int eq=0; eq<neq; ++eq) {
+          const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsetsKokkos(eq);
+          const int num_offsets = sol_offsets.size();
+
+          Kokkos::parallel_for(this->getName()+"_transvp",RangePolicy(0,workset.numCells),
+                        KOKKOS_CLASS_LAMBDA(const int& cell) { 
+            const auto elem_LID = elem_lids(cell);
+            const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+            for (int i=0; i<num_offsets;++i) {
+              const auto o = sol_offsets(i);
               const LO lid = dof_lids(o);
               for (int col=0; col<num_cols; ++col)
-                local_Vp(cell,o,col) = Vp_data[col][lid];
+                local_Vp(cell,o,col) = Vp_data(lid,col);
             }
-          }
-        } else {
-          for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
-            const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
-            for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
-              for (int col=0; col<num_cols; ++col) {
-                local_Vp(cell,node,col) = p_lid>=0 ? Vp_data[col][p_lid] : 0;
-              }
-            }
-          }
+          });
         }
+      } else {
+        Kokkos::parallel_for(this->getName()+"_notransvp",RangePolicy(0,workset.numCells),
+                          KOKKOS_CLASS_LAMBDA(const int& cell) {
+          const auto elem_LID = elem_lids(cell);
+          const auto basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+          const auto param_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                                basal_elem_LID * numLayers + fieldLayer;
+          for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
+            const auto p_lid = p_elem_dof_lids(param_elem_LID,offsets_p(node2d));
+            for (int col=0; col<num_cols; ++col) {
+              const auto p_val = p_lid>=0 ? Vp_data(p_lid,col) : 0;
+              local_Vp(cell,offsets_bot(node2d),col) = p_val;
+              local_Vp(cell,offsets_top(node2d),col) = p_val;
+            }
+          }
+        });
       }
     }
   } else {
     // If not active, just set the parameter value in the phalanx field
-    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    Kokkos::parallel_for(this->getName()+"_notransvp",RangePolicy(0,workset.numCells),
+                             KOKKOS_CLASS_LAMBDA(const int& cell) {
       const auto elem_LID = elem_lids(cell);
-      const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
-      const auto param_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+      const auto basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+      const auto param_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                              basal_elem_LID * numLayers + fieldLayer;
       for (int node2d=0; node2d<num_nodes_2d; ++node2d) {
-        const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p[node2d]);
-        const auto p_val = p_lid>=0 ? p_data[p_lid] : 0;
-        for (auto node : {offsets_bot[node2d], offsets_top[node2d]}) {
-          this->val(cell,node) = p_val;
-        }
+        const LO p_lid = p_elem_dof_lids(param_elem_LID,offsets_p(node2d));
+        const auto p_val = p_lid>=0 ? p_data(p_lid) : 0;
+        this->val(cell,offsets_bot(node2d)) = p_val;
+        this->val(cell,offsets_top(node2d)) = p_val;
       }
-    }
+    });
   }
 }
 
