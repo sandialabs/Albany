@@ -130,6 +130,9 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
   const int fieldLevel;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 // **************************************************************
