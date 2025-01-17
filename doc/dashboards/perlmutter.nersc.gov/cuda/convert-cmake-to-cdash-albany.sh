@@ -3,7 +3,7 @@
 FAD_CONFIGURATION=${1}
 FAD_SIZE=${2}
 
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda-uvm
+BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda
 
 if [ "$FAD_CONFIGURATION" = "slfad" ] ; then
   FRAG_NAME="${BASE_DIR}/cdash-albany-frag-slfad.txt"
