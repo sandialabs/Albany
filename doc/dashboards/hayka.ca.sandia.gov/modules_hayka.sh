@@ -1,7 +1,7 @@
 module purge
 module load sems-gcc/11.4.0
 module load sems-openmpi/4.1.6
-module load  sems-boost/1.84.0
+module load sems-boost/1.84.0
 module load sems-openblas/0.3.10
 module load sems-netcdf-cxx/4.2       
 module load sems-hdf5/1.14.3       
