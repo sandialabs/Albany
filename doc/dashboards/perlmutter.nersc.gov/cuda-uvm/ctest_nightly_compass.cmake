@@ -8,7 +8,7 @@ set (DOWNLOAD_COMPASS TRUE)
 set (BUILD_COMPASS TRUE)
 
 # Begin User inputs:
-set (CTEST_SITE "pm-gpu" ) # generally the output of hostname
+set (CTEST_SITE "pm-gpu-uvm" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?

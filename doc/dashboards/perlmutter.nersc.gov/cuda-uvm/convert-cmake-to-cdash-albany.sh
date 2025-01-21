@@ -8,17 +8,17 @@ BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda-uvm
 if [ "$FAD_CONFIGURATION" = "slfad" ] ; then
   FRAG_NAME="${BASE_DIR}/cdash-albany-frag-slfad.txt"
   TMP_NAME="tmp_slfad.txt"
-  awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-pm_cpu-albany-slfad >& ${FRAG_NAME}
+  awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-pm_gpu-albany-slfad >& ${FRAG_NAME}
 fi
 if [ "$FAD_CONFIGURATION" = "sfad" ] && [ "$FAD_SIZE" = "12" ]; then
   FRAG_NAME="${BASE_DIR}/cdash-albany-frag-sfad12.txt"
   TMP_NAME="tmp_sfad12.txt"
-  awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-pm_cpu-albany-sfad >& ${FRAG_NAME}
+  awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-pm_gpu-albany-sfad >& ${FRAG_NAME}
 fi
 if [ "$FAD_CONFIGURATION" = "sfad" ] && [ "$FAD_SIZE" = "24" ]; then
   FRAG_NAME="${BASE_DIR}/cdash-albany-frag-sfad24.txt"
   TMP_NAME="tmp_sfad24.txt"
-  awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-pm_cpu-albany-sfad >& ${FRAG_NAME}
+  awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-pm_gpu-albany-sfad >& ${FRAG_NAME}
 fi
 
 sed -i "s/\"/'/g" ${FRAG_NAME}

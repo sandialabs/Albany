@@ -23,5 +23,3 @@ cmake \
 \
       -D ENABLE_MPAS_INTERFACE:BOOL=ON \
       -D ENABLE_OMEGAH:BOOL=OFF \
-\
-..
