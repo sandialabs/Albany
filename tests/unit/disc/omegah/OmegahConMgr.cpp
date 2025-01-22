@@ -147,6 +147,11 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D)
 
 TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D_buildConnectivity)
 {
+  const std::map<GO,std::array<GO,2>> elementGidToDofs = {
+    {0, {0, 1}},
+    {1, {1, 2}}
+  };
+
   auto teuchosComm = Albany::getDefaultComm();
 
   auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_LINE_C1_FEM>();
@@ -155,6 +160,15 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D_buildConnectivity)
   auto conn_mgr = createOmegahConnManager(mesh);
   conn_mgr->buildConnectivity(patternC1);
   REQUIRE(2 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
+  const auto localElmIds = conn_mgr->getElementBlock();
+  for( auto lid : localElmIds ) {
+    auto ptr = conn_mgr->getConnectivity(lid);
+    auto elmGid = conn_mgr->getElementGlobalId(lid);
+    const std::array<GO,2> dofs = {ptr[0], ptr[1]};
+    const auto expectedDofs = elementGidToDofs.at(elmGid);
+    REQUIRE( expectedDofs == dofs );
+  }
+
   out << "Testing OmegahConnManager::buildConnectivity()\n";
   success = true;
 }
