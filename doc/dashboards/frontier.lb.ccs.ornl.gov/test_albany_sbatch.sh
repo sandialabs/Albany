@@ -22,6 +22,9 @@ export http_proxy=http://proxy.ccs.ornl.gov:3128/
 export https_proxy=http://proxy.ccs.ornl.gov:3128/
 export no_proxy='localhost,127.0.0.0/8,*.ccs.ornl.gov'
 
+FAD_CONFIGURATION="slfad"
+FAD_SIZE="none"
+
 LOG_FILE=$BASE_DIR/test_log_frontier_Albany.txt
 
-eval "BUILD_OR_TEST=test TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany.cmake" > $LOG_FILE 2>&1
+eval "BUILD_OR_TEST=test FAD_CONFIGURATION=${FAD_CONFIGURATION} FAD_SIZE=${FAD_SIZE} BASE_DIR=${BASE_DIR} DEPLOY_DIR=${DEPLOY_DIR} TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany_slfad.cmake" > $LOG_FILE 2>&1

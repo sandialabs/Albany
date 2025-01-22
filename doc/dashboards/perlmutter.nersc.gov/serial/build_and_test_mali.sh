@@ -2,8 +2,8 @@
 
 #SBATCH -A m4274
 #SBATCH --job-name=AlbanyTesting
-#SBATCH --output=logs/AlbanyTesting.cpu.sfad12.%j.out
-#SBATCH --error=logs/AlbanyTesting.cpu.sfad12.%j.err
+#SBATCH --output=logs/AlbanyTesting.cpu.mali.%j.out
+#SBATCH --error=logs/AlbanyTesting.cpu.mali.%j.err
 #SBATCH --constraint=cpu
 #SBATCH --qos=regular
 #SBATCH --time=02:00:00

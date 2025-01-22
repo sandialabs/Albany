@@ -11,6 +11,8 @@ module load cray-netcdf-hdf5parallel/4.9.0.9
 module load cray-parallel-netcdf/1.12.3.9
 module load cmake/3.30.2
 
+export CRAYPE_LINK_TYPE=dynamic
+
 export MPICH_ENV_DISPLAY=1
 export MPICH_VERSION_DISPLAY=1
 export OMP_STACKSIZE=128M

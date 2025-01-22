@@ -2,12 +2,12 @@
 
 #SBATCH -A m4274_g
 #SBATCH --job-name=AlbanyTesting
-#SBATCH --output=logs/AlbanyTesting.gpu.sfad12.%j.out
-#SBATCH --error=logs/AlbanyTesting.gpu.sfad12.%j.err
+#SBATCH --output=logs/AlbanyTesting.gpu.slfad.%j.out
+#SBATCH --error=logs/AlbanyTesting.gpu.slfad.%j.err
 #SBATCH --constraint=gpu
 #SBATCH --nodes=1
 #SBATCH --qos=regular
-#SBATCH --time=02:00:00
+#SBATCH --time=04:00:00
 #SBATCH --ntasks-per-node=4
 #SBATCH --gpus-per-task=1
 #SBATCH --gpus-per-node=4
