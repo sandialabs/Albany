@@ -380,12 +380,53 @@ writeMeshDatabaseToFile (const double /* time */,
 
 Teuchos::RCP<AdaptationData>
 OmegahDiscretization::
-checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
-                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
-                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                    const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const
 {
-  throw NotYetImplemented("OmegaDiscretization::checkForAdaptation");
+  auto adapt_data = Teuchos::rcp(new AdaptationData());
+
+  // Only do adaptation for simple 1d problems
+  auto mesh = m_mesh_struct->getOmegahMesh();
+  if (mesh->dim() != 1) {
+    std::cout << "NOT a 1D Omega_h mesh...\n";
+    return adapt_data;
+  }
+  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto adapt_type = adapt_params.get<std::string>("Type","None");
+  if (adapt_type=="None") {
+    return adapt_data;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
+      "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+      " - valid choices: None, Minimally-Oscillatory\n");
+
+  double tol = adapt_params.get<double>("Max Hessian");
+  auto data = getLocalData(solution);
+  // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
+  // TODO: replace with
+  //  1. if |C_i| > threshold, mark for refinement the whole mesh
+  //  2. Interpolate solution (and all elem/node fields if possible, but not necessary for adv-diff example)
+  int num_nodes = data.size();
+  adapt_data->x = solution;
+  adapt_data->x_dot = solution_dot;
+  adapt_data->x_dotdot = solution_dotdot;
+  adapt_data->dxdp = dxdp;
+  for (int i=1; i<num_nodes-1; ++i) {
+    auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
+    auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
+    auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
+    auto grad_prev = (data[i]-data[i-1]) / h_prev;
+    auto grad_next = (data[i+1]-data[i]) / h_next;
+    if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
+      adapt_data->type = AdaptationType::Topology;
+      break;
+    }
+  }
+
+  return adapt_data;
+
 }
 
 void OmegahDiscretization::
@@ -400,46 +441,108 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
 
   return;
-//
-//  // Solution oscillates. We need to half dx
-//  auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
-//  int num_params = mesh1d->getNumParams();
-//  int ne_x = discParams->get<int>("1D Elements");
-//  auto& adapt_params = discParams->sublist("Mesh Adaptivity");
-//  discParams->set("Workset Size", stkMeshStruct->meshSpecs()[0]->worksetSize);
-//  int factor = adapt_params.get("Refining Factor",2);
-//  discParams->set("1D Elements",factor*ne_x);
-//  stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
-//  stkMeshStruct->setFieldData(comm,mesh1d->sis_);
-//  this->setFieldData(mesh1d->sis_);
-//  stkMeshStruct->setBulkData(comm);
-//
-//  updateMesh();
-//
-//  int num_time_deriv = discParams->get<int>("Number Of Time Derivatives");
-//  auto x_mv_new = Thyra::createMembers(getVectorSpace(),num_time_deriv);
-//
-//  for (int ideriv=0; ideriv<num_time_deriv; ++ideriv) {
-//    auto data_new = getNonconstLocalData(x_mv_new->col(ideriv));
-//    auto x = ideriv==0 ? adaptData->x : (ideriv==1 ? adaptData->x_dot : adaptData->x_dotdot);
-//    auto data_old = getLocalData(x);
-//    int num_nodes_new = data_new.size();
-//
-//    for (int inode=0; inode<num_nodes_new; ++inode) {
-//      int coarse = inode / factor;
-//      int rem    = inode % factor;
-//      if (rem == 0) {
-//        // Same node as coarse mesh
-//        data_new[inode] = data_old[coarse];
-//      } else {
-//        // Convex interpolation of two coarse points
-//        double alpha = static_cast<double>(rem) / factor;
-//        data_new[inode] = data_old[coarse]*(1-alpha) + data_old[coarse+1]*alpha;
-//      }
-//    }
-//  }
-//
-//  writeSolutionMVToMeshDatabase(*x_mv_new, Teuchos::null, 0, false);
+}
+
+void OmegahDiscretization::
+writeSolution(
+    const Thyra_Vector& /* solution */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+    const double        /* time */,
+    const bool          /* overlapped */,
+    const bool          /* force_write_solution */) {
+  std::cout << "WARNING! This call to OmegahDiscretization::writeSolution does nothing.\n";
+}
+
+void OmegahDiscretization::
+writeSolution(
+    const Thyra_Vector& /* solution */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+    const Thyra_Vector& /* solution_dot */,
+    const double        /* time */,
+    const bool          /* overlapped */,
+    const bool          /* force_write_solution */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
+}
+
+void OmegahDiscretization::
+writeSolution(
+      const Thyra_Vector& /* solution */,
+      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+      const Thyra_Vector& /* solution_dot */,
+      const Thyra_Vector& /* solution_dotdot */,
+      const double        /* time */,
+      const bool          /* overlapped */,
+      const bool          /* force_write_solution */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
+}
+
+void OmegahDiscretization::
+writeSolutionMV( //MV = multivector
+    const Thyra_MultiVector& /* solution */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+    const double             /* time */,
+    const bool               /* overlapped */,
+    const bool               /* force_write_solution */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMV");
+}
+
+//! Write the solution to the mesh database.
+void OmegahDiscretization::
+writeSolutionToMeshDatabase(
+    const Thyra_Vector& /* solution */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+    const double        /* time */,
+    const bool          /* overlapped */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
+}
+
+void OmegahDiscretization::
+writeSolutionToMeshDatabase(
+    const Thyra_Vector& /* solution */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+    const Thyra_Vector& /* solution_dot */,
+    const double        /* time */,
+    const bool          /* overlapped */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
+}
+
+void OmegahDiscretization::
+writeSolutionToMeshDatabase(
+    const Thyra_Vector& /* solution */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+    const Thyra_Vector& /* solution_dot */,
+    const Thyra_Vector& /* solution_dotdot */,
+    const double        /* time */,
+    const bool          /* overlapped */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
+}
+
+void OmegahDiscretization::
+writeSolutionMVToMeshDatabase(
+    const Thyra_MultiVector& /* solution */,
+    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
+    const double             /* time */,
+    const bool               /* overlapped */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToMeshDatabase");
+}
+
+//! Write the solution to file. Must call writeSolution first.
+void OmegahDiscretization::
+writeSolutionToFile(
+    const Thyra_Vector& /* solution */,
+    const double        /* time */,
+    const bool          /* overlapped */,
+    const bool          /* force_write_solution */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToFile");
+}
+
+void OmegahDiscretization::
+writeSolutionMVToFile(
+    const Thyra_MultiVector& /* solution */,
+    const double             /* time */,
+    const bool               /* overlapped */,
+    const bool               /* force_write_solution */) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToFile");
 }
 
 }  // namespace Albany
