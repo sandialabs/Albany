@@ -160,6 +160,12 @@ public:
         } else if(mesh->dim()==2) {
           shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
           elementBlockTopologies.push_back(triTopo);
+        } else if(mesh->dim()==1) {
+          shards::CellTopology edgeTopo(shards::getCellTopologyData< shards::Line<2> >());
+          elementBlockTopologies.push_back(edgeTopo);
+        } else {
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+              "Error! Omega_h simplex mesh dimension must be 1, 2, or 3.\n");
         }
         break;
       case OMEGA_H_HYPERCUBE:
@@ -169,6 +175,9 @@ public:
         } else if(mesh->dim()==2) {
           shards::CellTopology quad(shards::getCellTopologyData< shards::Quadrilateral<4> >());
           elementBlockTopologies.push_back(quad);
+        } else {
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+              "Error! Omega_h hypercube mesh dimension must be 2 or 3.\n");
         }
         break;
       default:
