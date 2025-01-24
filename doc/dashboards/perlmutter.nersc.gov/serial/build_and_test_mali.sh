@@ -18,9 +18,6 @@ DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/ser
 
 source ${BASE_DIR}/pm_cpu_gnu_modules.sh >& ${BASE_DIR}/modules_albany.out
 
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${DEPLOY_DIR}/builds/TrilinosInstall/lib64"
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${DEPLOY_DIR}/builds/AlbanyInstallSfad12/lib64"
-
 bash ${BASE_DIR}/nightly_cron_script_mali_pm_cpu.sh
 
 mkdir ${BASE_DIR}/repos/compass_tests
