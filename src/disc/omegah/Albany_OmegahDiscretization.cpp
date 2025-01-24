@@ -455,13 +455,13 @@ writeSolution(
 
 void OmegahDiscretization::
 writeSolution(
-    const Thyra_Vector& /* solution */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-    const Thyra_Vector& /* solution_dot */,
-    const double        /* time */,
-    const bool          /* overlapped */,
-    const bool          /* force_write_solution */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
+    const Thyra_Vector& solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+    const Thyra_Vector& solution_dot,
+    const double        time,
+    const bool          overlapped,
+    const bool          force_write_solution) {
+  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, time, overlapped);
 }
 
 void OmegahDiscretization::
@@ -494,19 +494,24 @@ writeSolutionToMeshDatabase(
     const double        time,
     const bool          overlapped)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp == Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
   const auto& dof_mgr = getDOFManager();
-  m_field_accessor->saveVector("solution", soln_dxdp, dof_mgr, overlapped); //FIXME - m_field_accessor not accessible
-  TEUCHOS_TEST_FOR_EXCEPTION(soln_dxdp == Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
+  auto field_accessor = m_mesh_struct->get_field_accessor();
+  field_accessor->saveVector(solution, "solution", dof_mgr, overlapped);
 }
 
 void OmegahDiscretization::
 writeSolutionToMeshDatabase(
-    const Thyra_Vector& /* solution */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-    const Thyra_Vector& /* solution_dot */,
-    const double        /* time */,
-    const bool          /* overlapped */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
+    const Thyra_Vector& solution,
+    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+    const Thyra_Vector& solution_dot,
+    const double        time,
+    const bool          overlapped) {
+  TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp == Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
+  const auto& dof_mgr = getDOFManager();
+  auto field_accessor = m_mesh_struct->get_field_accessor();
+  field_accessor->saveVector(solution, "solution", dof_mgr, overlapped);
+  field_accessor->saveVector(solution_dot, "solution_dot", dof_mgr, overlapped);
 }
 
 void OmegahDiscretization::
