@@ -9,18 +9,36 @@ namespace Albany {
 
 OmegahOshMesh::
 OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-               const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+               const Teuchos::RCP<Omega_h::Mesh> mesh, 
                const int /* numParams */)
 {
+  loadOmegahMesh(params, mesh, 0);
+}
+
+OmegahOshMesh::
+OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+    const int /* numParams */) {
   auto& lib = get_omegah_lib();
-
   const auto& filename = params->get<std::string>("Filename");
+  auto mesh = Teuchos::RCP<Omega_h::Mesh>(new Omega_h::Mesh(&lib));
+  Omega_h::binary::read(filename, lib.world(), mesh.get());
+  loadOmegahMesh(params, mesh, 0);
+}
 
-  m_mesh = Teuchos::RCP(new Omega_h::Mesh (&lib));
-  Omega_h::binary::read(filename, lib.world(), m_mesh.get());
+void OmegahOshMesh::
+loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
+               const Teuchos::RCP<Omega_h::Mesh> mesh, 
+               const int /* numParams */)
+{
+  m_mesh = mesh;
   if (params->get("Rebalance",true)) {
     m_mesh->balance(); // re-partition to the number of ranks in world communicator
   }
+  m_field_accessor = Teuchos::rcp(new OmegahMeshFieldAccessor(m_mesh));
+  m_coords_d = m_mesh->coords().view();
+  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
+  Kokkos::deep_copy(m_coords_h,m_coords_d);
 
   // Node/Side sets names
   std::vector<std::string> nsNames, ssNames;

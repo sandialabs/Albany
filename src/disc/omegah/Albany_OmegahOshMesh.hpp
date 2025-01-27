@@ -9,6 +9,10 @@ class OmegahOshMesh : public OmegahGenericMesh
 {
 public:
   OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                 const Teuchos::RCP<Omega_h::Mesh> mesh, 
+                 const int numParams);
+
+  OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                  const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams);
 
   void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
@@ -16,6 +20,10 @@ public:
     throw NotYetImplemented("OmegahOshMesh::setBulkData");
     m_bulk_data_set = true;
   }
+private:
+  void loadOmegahMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                 const Teuchos::RCP<Omega_h::Mesh> mesh, 
+                 const int numParams);
 };
 
 } // namespace Albany

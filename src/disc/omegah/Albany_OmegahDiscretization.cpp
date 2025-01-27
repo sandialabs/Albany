@@ -1,9 +1,13 @@
 #include "Albany_OmegahDiscretization.hpp"
+#include "Albany_OmegahOshMesh.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_StringUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "OmegahConnManager.hpp"
+#include "Omega_h_adapt.hpp"
+#include "Omega_h_adapt.hpp"
+#include "Omega_h_array_ops.hpp"
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
@@ -53,6 +57,9 @@ updateMesh ()
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
+  //HACK - I assume this should go elsewhere {
+  ms->worksetSize = nelems;
+  //} 
   int max_ws_size = ms->worksetSize;
   int num_ws = 1 + (nelems-1) / max_ws_size;
   TEUCHOS_TEST_FOR_EXCEPTION (num_ws!=1, std::runtime_error,
@@ -114,7 +121,7 @@ updateMesh ()
     m_ws_local_dof_views[ws] = {};
   }
 
-  computeNodeSets ();
+  computeNodeSets (); //FIXME fails here
   computeGraphs ();
 }
 
@@ -358,6 +365,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 void OmegahDiscretization::
 adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
+  printf("%s\n", __func__);
   // Not sure if we allow calling adapt in general, but just in case
   if (adaptData->type==AdaptationType::None) {
     return;
@@ -366,6 +374,42 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
 
+
+  auto ohMesh = m_mesh_struct->getOmegahMesh();
+  auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
+  const auto desired_nelems = nelems*2;
+
+  Omega_h::AdaptOpts opts(&(*ohMesh));
+  while (double(nelems) < desired_nelems) {
+    std::cout << "element count " << nelems << " < target "
+      << desired_nelems << ", will adapt\n";
+    if (!ohMesh->has_tag(0, "metric")) {
+      std::cout << "mesh had no metric, adding implied and adapting to it\n";
+      Omega_h::add_implied_metric_tag(ohMesh.get());
+      Omega_h::adapt(ohMesh.get(), opts);
+      nelems = ohMesh->nglobal_ents(ohMesh->dim());
+      std::cout << "mesh now has " << nelems << " total elements\n";
+    }
+    auto metrics = ohMesh->get_array<double>(0, "metric");
+    metrics = Omega_h::multiply_each_by(metrics, 1.2);
+    auto const metric_ncomps =
+      Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
+    ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
+    std::cout << "adapting to scaled metric\n";
+    Omega_h::adapt(ohMesh.get(), opts);
+    nelems = ohMesh->nglobal_ents(ohMesh->dim());
+    std::cout << "mesh now has " << nelems << " total elements\n";
+  }
+
+  //create new meshstruct
+  auto ignored = 0;
+  m_mesh_struct = Teuchos::rcp(new OmegahOshMesh(m_disc_params, ohMesh, ignored));
+  {
+  auto ohMesh2 = m_mesh_struct->getOmegahMesh();
+  assert(ohMesh2->dim() == 1);
+  }
+
+  updateMesh();
   return;
 }
 
