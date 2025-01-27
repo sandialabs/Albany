@@ -64,8 +64,8 @@ protected:
   DeviceView1d<const double>                m_coords_d;
   DeviceView1d<      double>::HostMirror    m_coords_h;
 
-  mutable GO m_max_node_gid = -1;
-  mutable GO m_max_elem_gid = -1;
+  mutable GO m_max_node_gid = -1; //set when get_max_node_gid() called
+  mutable GO m_max_elem_gid = -1; //set when get_max_elem_gid() called
 
   bool m_has_restart_solution = false;
 };
