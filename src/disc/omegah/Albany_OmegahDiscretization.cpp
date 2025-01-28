@@ -11,6 +11,50 @@
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
+namespace debug {
+template <typename T>
+void printTagInfo(Omega_h::Mesh mesh, std::ostringstream& oss, int dim, int tag, std::string type) {
+    auto tagbase = mesh.get_tag(dim, tag);
+    auto array = Omega_h::as<T>(tagbase)->array();
+
+    Omega_h::Real min = get_min(array);
+    Omega_h::Real max = get_max(array);
+
+    oss << std::setw(18) << std::left << tagbase->name().c_str()
+        << std::setw(5) << std::left << dim 
+        << std::setw(7) << std::left << type 
+        << std::setw(5) << std::left << tagbase->ncomps() 
+        << std::setw(10) << std::left << min 
+        << std::setw(10) << std::left << max 
+        << "\n";
+}
+
+void printAllTags(Omega_h::Mesh& mesh) {
+  std::ostringstream oss;
+  // always print two places to the right of the decimal
+  // for floating point types (i.e., imbalance)
+  oss.precision(2);
+  oss << std::fixed;
+
+  oss << "\nTag Properties by Dimension: (Name, Dim, Type, Number of Components, Min. Value, Max. Value)\n";
+  for (int dim=0; dim <= mesh.dim(); dim++) {
+    for (int tag=0; tag < mesh.ntags(dim); tag++) {
+      auto tagbase = mesh.get_tag(dim, tag);
+      if (tagbase->type() == OMEGA_H_I8)
+        printTagInfo<Omega_h::I8>(mesh, oss, dim, tag, "I8");
+      if (tagbase->type() == OMEGA_H_I32)
+        printTagInfo<Omega_h::I32>(mesh, oss, dim, tag, "I32");
+      if (tagbase->type() == OMEGA_H_I64)
+        printTagInfo<Omega_h::I64>(mesh, oss, dim, tag, "I64");
+      if (tagbase->type() == OMEGA_H_F64)
+        printTagInfo<Omega_h::Real>(mesh, oss, dim, tag, "F64");
+    }
+  }
+
+  std::cout << oss.str();
+}
+}
+
 namespace Albany {
 
 OmegahDiscretization::
@@ -214,6 +258,7 @@ computeGraphs ()
 void OmegahDiscretization::
 setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
 {
+  fprintf(stderr, "OmegahDiscretization::setFieldData\n");
   auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
   field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
   auto mesh_fields = m_mesh_struct->get_field_accessor();
@@ -252,7 +297,7 @@ getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
   auto dof_mgr = getDOFManager();
   for (int icol=0; icol<m_num_time_deriv; ++icol) {
     auto col = solution.col(icol);
-    accessor->fillVector(*col,names[icol],dof_mgr,false);
+    accessor->fillVector(*col,names[icol],dof_mgr,false); //fails here
   }
 }
 
@@ -439,7 +484,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 void OmegahDiscretization::
 adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
-  printf("%s\n", __func__);
+  fprintf(stderr,"OmegahDiscretization::adapt\n");
   // Not sure if we allow calling adapt in general, but just in case
   if (adaptData->type==AdaptationType::None) {
     return;
@@ -450,10 +495,17 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
 
   auto ohMesh = m_mesh_struct->getOmegahMesh();
+  if (ohMesh->has_tag(0, solution_dof_name())) {
+    fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name());
+  } else {
+    fprintf(stderr,"OmegahDiscretization::adapt does NOT have tag %s\n", solution_dof_name());
+  }
+  debug::printAllTags(*ohMesh);
   auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
   const auto desired_nelems = nelems*2;
 
   Omega_h::AdaptOpts opts(&(*ohMesh));
+  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
   while (double(nelems) < desired_nelems) {
     std::cout << "element count " << nelems << " < target "
       << desired_nelems << ", will adapt\n";
@@ -474,6 +526,13 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     nelems = ohMesh->nglobal_ents(ohMesh->dim());
     std::cout << "mesh now has " << nelems << " total elements\n";
   }
+
+  if (ohMesh->has_tag(0, solution_dof_name())) {
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt has tag %s\n", solution_dof_name());
+  } else {
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name());
+  }
+
 
   //create new meshstruct
   auto ignored = 0;
