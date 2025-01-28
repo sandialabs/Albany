@@ -21,7 +21,11 @@ addFieldOnMesh (const std::string& name,
     case FE_Type::HGRAD:
     {
       Omega_h::Write<ST> f(m_mesh->nverts(),name);
-      m_mesh->add_tag<ST>(OMEGA_H_VERT,name,numComps,f,false);
+      if(! m_mesh->has_tag(OMEGA_H_VERT,name)) {
+        m_mesh->add_tag<ST>(OMEGA_H_VERT,name,numComps,f,false);
+      } else {
+        m_mesh->set_tag<ST>(OMEGA_H_VERT,name,f,false);
+      }
       break;
     }
     default:
