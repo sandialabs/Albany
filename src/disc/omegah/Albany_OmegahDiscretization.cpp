@@ -101,9 +101,6 @@ updateMesh ()
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
-  //HACK - I assume this should go elsewhere {
-  ms->worksetSize = nelems;
-  //} 
   int max_ws_size = ms->worksetSize;
   int num_ws = 1 + (nelems-1) / max_ws_size;
   TEUCHOS_TEST_FOR_EXCEPTION (num_ws!=1, std::runtime_error,
@@ -426,7 +423,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   } else {
     fprintf(stderr,"OmegahDiscretization::adapt does NOT have tag %s\n", solution_dof_name());
   }
-  debug::printAllTags(*ohMesh);
+  //debug::printAllTags(*ohMesh);
   auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
   const auto desired_nelems = nelems*2;
 
