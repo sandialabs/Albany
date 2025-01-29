@@ -1,11 +1,9 @@
 #include "Albany_OmegahDiscretization.hpp"
-#include "Albany_OmegahOshMesh.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_StringUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "OmegahConnManager.hpp"
-#include "Omega_h_adapt.hpp"
 #include "Omega_h_adapt.hpp"
 #include "Omega_h_array_ops.hpp"
 
@@ -101,10 +99,8 @@ updateMesh ()
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
-  int max_ws_size = ms->worksetSize;
-  int num_ws = 1 + (nelems-1) / max_ws_size;
-  TEUCHOS_TEST_FOR_EXCEPTION (num_ws!=1, std::runtime_error,
-      "Error! We are not yet supporting 2+ worksets with Omega_h.\n");
+  int ws_size = m_mesh_struct->meshSpecs[0]->worksetSize;
+  int num_ws = 1 + (nelems-1) / ws_size;
 
   m_workset_sizes.resize(num_ws);
   int min_ws_size = nelems / num_ws;
@@ -113,9 +109,11 @@ updateMesh ()
     m_workset_sizes[ws] = min_ws_size + (ws<remainder ? 1 : 0);
   }
 
-  m_workset_elements = DualView<int**>("ws_elems",1,max_ws_size);
-  for (int i=0; i<nelems; ++i) {
-    m_workset_elements.host()(0,i) = i;
+  m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
+  for (int iws=0,ielem=0; iws<num_ws; ++iws) {
+    for (int i=0; i<m_workset_sizes[iws]; ++i,++ielem) {
+      m_workset_elements.host()(0,i) = ielem;
+    }
   }
   m_workset_elements.sync_to_dev();
 
@@ -139,7 +137,7 @@ updateMesh ()
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
   const int mdim = mesh.dim();
-  m_nodes_coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
+  m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
@@ -459,7 +457,6 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   //create new meshstruct
   auto ignored = 0;
-  m_mesh_struct = Teuchos::rcp(new OmegahOshMesh(m_disc_params, ohMesh, ignored));
   {
   auto ohMesh2 = m_mesh_struct->getOmegahMesh();
   assert(ohMesh2->dim() == 1);
