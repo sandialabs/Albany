@@ -174,8 +174,6 @@ Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim
 }
 
 GO getMaxGlobalEntDofId(const Omega_h::Mesh& mesh, Omega_h::GOs& dofGlobalIds) {
-  if(!dofGlobalIds.size())
-    return 0;
   auto worldComm = mesh.library()->world();
   return Omega_h::get_max(worldComm,dofGlobalIds);
 }
