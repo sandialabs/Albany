@@ -7,8 +7,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_UnitTestSetupHelpers.hpp"
 #include "OmegahConnManager.hpp"
-#include "Albany_OmegahBoxMesh.hpp"
-#include "Albany_OmegahOshMesh.hpp"
+#include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_CommUtils.hpp"
 
@@ -38,12 +37,10 @@ template <size_t Dim = 2>
 Teuchos::RCP<Albany::OmegahGenericMesh>
 createOmegahBoxMesh(const Teuchos::RCP<const Teuchos_Comm>& comm) {
   auto pl = Teuchos::rcp(new Teuchos::ParameterList());
-  if (Dim == 2) {
-    pl->set("Number of Elements",Teuchos::Array<int>(2,2));
-  } else if (Dim == 1) {
-    pl->set("Number of Elements",Teuchos::Array<int>(1,2));
-  }
-  return Teuchos::rcp(new Albany::OmegahBoxMesh<Dim>(pl,comm,0));
+  pl->set("Method","Box" + std::to_string(Dim) + "D");
+  pl->set("Number of Elements",Teuchos::Array<int>(Dim,2));
+  auto p = Teuchos::rcp(new Albany::OmegahGenericMesh(pl,comm,0));
+  return p;
 }
 
 struct PartSpecs {
@@ -53,13 +50,14 @@ struct PartSpecs {
 };
 
 Teuchos::RCP<Albany::OmegahGenericMesh>
-createOmegahOshMesh(const std::string& filename,
-                    const Teuchos::RCP<const Teuchos_Comm>& comm,
-                    const std::vector<PartSpecs>& set_parts)
+createOmegahMesh(const std::string& filename,
+                 const Teuchos::RCP<const Teuchos_Comm>& comm,
+                 const std::vector<PartSpecs>& set_parts)
 {
   REQUIRE(!filename.empty());
 
   auto pl = Teuchos::rcp(new Teuchos::ParameterList());
+  pl->set<std::string>("Method", "OshFile");
   pl->set("Filename",filename);
   Teuchos::Array<std::string> pnames;
   for (const auto& ps : set_parts) {
@@ -68,7 +66,7 @@ createOmegahOshMesh(const std::string& filename,
     pl->sublist(ps.name).set("Id",ps.id);
   }
   pl->set("Mark Parts",pnames);
-  return Teuchos::rcp(new Albany::OmegahOshMesh(pl,comm,0));
+  return Teuchos::rcp(new Albany::OmegahGenericMesh(pl,comm,0));
 }
 
 auto createOmegahConnManager(const Teuchos::RCP<Albany::OmegahGenericMesh>& mesh) {
@@ -281,7 +279,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
   std::vector<PartSpecs> lateralSide = {
     { lateralSide_name, Topo_type::edge, lateralSide_classId }
   };
-  auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
+  auto mesh = createOmegahMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
 
   auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name);
   out << "Testing OmegahConnManager::partCtor()\n";
@@ -300,7 +298,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
   std::vector<PartSpecs> lateralSide = {
     { lateralSide_name, Topo_type::edge, lateralSide_classId }
   };
-  auto albanyMesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
+  auto albanyMesh = createOmegahMesh("gis_unstruct_basal_populated.osh",teuchosComm, lateralSide);
   auto mesh = albanyMesh->getOmegahMesh();
 
   //define tag for uppper half of lateral side
@@ -427,7 +425,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildConnectivityOwnershi
 
   auto patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM>();
 
-  auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm,{});
+  auto mesh = createOmegahMesh("gis_unstruct_basal_populated.osh",teuchosComm,{});
   auto conn_mgr = createOmegahConnManager(mesh);
   conn_mgr->buildConnectivity(patternC1);
   checkOwnership(*mesh->getOmegahMesh(),*conn_mgr);
@@ -445,7 +443,7 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
     { "lateralside", Topo_type::edge, lateralSide_classId }
   };
 
-  auto mesh = createOmegahOshMesh("gis_unstruct_basal_populated.osh",teuchosComm,{lateralSide});
+  auto mesh = createOmegahMesh("gis_unstruct_basal_populated.osh",teuchosComm,{lateralSide});
 
   auto conn_mgr = createOmegahConnManager(mesh, lateralSide_name);
 

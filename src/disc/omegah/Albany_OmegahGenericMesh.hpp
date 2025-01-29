@@ -13,6 +13,10 @@ public:
   template<typename T>
   using strmap_t = std::map<std::string,T>;
 
+  OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                     const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const int num_params);
+
   virtual ~OmegahGenericMesh () = default;
 
   // ------------- Override from base class ------------- //
@@ -20,6 +24,7 @@ public:
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis) override;
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   LO get_num_local_nodes () const override;
   LO get_num_local_elements  () const override;
@@ -52,7 +57,17 @@ public:
                            Omega_h::Read<Omega_h::I8> is_entity_in_part,
                            const bool markDownward);
 
+  void reset_mesh (const Teuchos::RCP<Omega_h::Mesh> mesh);
+
 protected:
+  void loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params);
+
+  // Builds a box mesh
+  void buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim);
+
+  // Create a nodeSet tag in the mesh
+  Omega_h::Read<Omega_h::I8>
+  create_ns_tag (const std::string& name, const int comp, const double tgt_value) const;
 
   Teuchos::RCP<Omega_h::Mesh>  m_mesh;
 
