@@ -1,8 +1,28 @@
 #include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahUtils.hpp"
+#include "Albany_Omegah.hpp"
+
+#include <Omega_h_build.hpp>  // for Omega_h::build_box
+#include <Omega_h_file.hpp>   // for Omega_h::binary::read
+#include <Omega_h_mark.hpp>   // for Omega_h::mark_by_class
 
 namespace Albany
 {
+
+OmegahGenericMesh::
+OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                   const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+                   const int /* num_params */)
+{
+  const auto& method = params->get<std::string>("Method");
+  if (method=="OshFile") {
+    loadOmegahMesh(params);
+  } else if (method=="Box1D" or method=="Box2D" or method=="Box3D") {
+    // Digits have CONSECUTIVE char values. So '1' = '0'+1, etc.
+    int dim = method[3] - '0';
+    buildBox(params,dim);
+  }
+}
 
 void OmegahGenericMesh::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
@@ -12,6 +32,12 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
   if (not sis.is_null()) {
     m_field_accessor->addStateStructs (sis);
   }
+}
+
+void OmegahGenericMesh::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
+{
+  m_bulk_data_set = true;
 }
 
 LO OmegahGenericMesh::get_num_local_nodes () const
@@ -163,6 +189,240 @@ mark_part_entities (const std::string& name,
       topo = down_topo;
     }
   }
+}
+
+void OmegahGenericMesh::
+loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
+{
+  auto& lib = get_omegah_lib();
+  m_mesh = Teuchos::RCP<Omega_h::Mesh>(new Omega_h::Mesh(&lib));
+
+  const auto& filename = params->get<std::string>("Filename");
+  Omega_h::binary::read(filename, lib.world(), m_mesh.get());
+  if (params->get("Rebalance",true)) {
+    m_mesh->balance(); // re-partition to the number of ranks in world communicator
+  }
+
+  m_coords_d = m_mesh->coords().view();
+  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
+  Kokkos::deep_copy(m_coords_h,m_coords_d);
+
+  // Node/Side sets names
+  std::vector<std::string> nsNames, ssNames;
+
+  // The omegah 'exo2osh' converter creates geometric model entities from node
+  // and side sets that exist within the exodus file.
+  // The mesh entities in the sets are then 'classified' (sets the association)
+  // on those model entities.
+  // 'Classification' of mesh entities to the geometric model is an alternative
+  // to the generic creation of 'parts' (sets of mesh entities with a label) and
+  // provides a subset of the functionality.
+  // Note, 'classification' is the approach taken when having (at a minimum) a
+  // topological definition of the domain is a common part of the mesh
+  // generation/adaptation workflow.
+  // A dimension and id uniquely defines a geometric model entity.
+  const auto& parts_names = params->get<Teuchos::Array<std::string>>("Mark Parts",{});
+  for (const auto& pn : parts_names) {
+          auto& pl = params->sublist(pn);
+    const auto topo_str = pl.get<std::string>("Topo");
+    const auto topo = str2topo(pl.get<std::string>("Topo"));
+    const int dim = topo_dim(topo);
+    const int id  = pl.get<int>("Id");
+    const bool markDownward = pl.get<int>("Mark Downward",true); // Is default=true ok?
+    auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
+    this->declare_part(pn,topo,is_in_part,markDownward);
+
+    if (dim==0) {
+      nsNames.push_back(pn);
+    } else if (dim==m_mesh->dim()-1) {
+      ssNames.push_back(pn);
+    }
+  }
+
+  const CellTopologyData* ctd;
+
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      m_mesh->family()!=Omega_h_Family::OMEGA_H_SIMPLEX and m_mesh->family()!=Omega_h_Family::OMEGA_H_HYPERCUBE,
+      std::runtime_error,
+      "Error! OmegahOshMesh only available for simplex/hypercube meshes.\n");
+
+  Topo_type elem_topo;
+  switch (m_mesh->dim()) {
+    case 1:
+      ctd = shards::getCellTopologyData<shards::Line<2>>();
+      elem_topo = Topo_type::edge;
+      break;
+    case 2:
+      if (m_mesh->family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
+        ctd = shards::getCellTopologyData<shards::Triangle<3>>();
+        elem_topo = Topo_type::triangle;
+      } else {
+        ctd = shards::getCellTopologyData<shards::Quadrilateral<4>>();
+        elem_topo = Topo_type::quadrilateral;
+      }
+      break;
+    case 3:
+      if (m_mesh->family()==Omega_h_Family::OMEGA_H_SIMPLEX) {
+        ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();
+        elem_topo = Topo_type::tetrahedron;
+      } else {
+        ctd = shards::getCellTopologyData<shards::Hexahedron<8>>();
+        elem_topo = Topo_type::hexahedron;
+      }
+      break;
+  }
+  std::string ebName = "element_block_0";
+  std::map<std::string,int> ebNameToIndex = 
+  {
+    { ebName, 0}
+  };
+  this->declare_part(ebName,elem_topo);
+
+  // Omega_h does not know what worksets are, so all elements are in one workset
+  this->meshSpecs.resize(1);
+  int ws_size_max = params->get<int>("Workset Size", -1);
+  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
+                          nsNames, ssNames, ws_size, ebName,
+                          ebNameToIndex));
+}
+
+
+void OmegahGenericMesh::
+buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
+{
+  using I8 = Omega_h::I8;
+
+  auto nelems = params->get<Teuchos::Array<int>>("Number of Elements");
+  auto scale  = params->get<Teuchos::Array<double>>("Box Scaling",Teuchos::Array<double>(dim,1.0));
+  TEUCHOS_TEST_FOR_EXCEPTION (nelems.size()!=dim, std::logic_error,
+      "Input array for 'Number of Elements' has the wrong dimension.\n"
+      "  - Expected length: " << dim << "\n"
+      "  - Input length   : " << nelems.size() << "\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (scale.size()!=dim, std::logic_error,
+      "Input array for 'Box Scaling' has the wrong dimension.\n"
+      "  - Expected length: " << dim << "\n"
+      "  - Input length   : " << scale.size() << "\n");
+
+  std::string topo_str = "Simplex";
+  if (params->isParameter("Topology Type")) {
+    topo_str = params->get<std::string>("Topology Type");
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (topo_str!="Simplex" and topo_str!="Hypercube", std::runtime_error,
+      "Error! Invalid topology type '" << topo_str << "'\n"
+      "   Valid choices: Simplex, Hypercube\n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (topo_str=="Hypercube", std::runtime_error,
+      "Error! Hypercube box meshes not yet supported.\n");
+
+  int nelemx = 0;
+  int nelemy = 0;
+  int nelemz = 0;
+
+  double scalex = 1.0;
+  double scaley = 1.0;
+  double scalez = 1.0;
+
+  nelemx = nelems[0];
+  scalex = scale[0];
+  if (dim>1) {
+    nelemy = nelems[1];
+    scaley = scale[1];
+    if (dim>2) {
+      nelemz = nelems[2];
+      scalez = scale[2];
+    }
+  }
+
+  // Create the omegah mesh obj
+  Topo_type elem_topo;
+  if (topo_str=="Simplex") {
+    m_mesh = Teuchos::rcp(new Omega_h::Mesh(Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_SIMPLEX,
+                                            scalex,scaley,scalez,nelemx,nelemy,nelemz)));
+    elem_topo = dim==3 ? Topo_type::tetrahedron
+                       : dim==2 ? Topo_type::triangle : Topo_type::edge;
+  } else {
+    m_mesh = Teuchos::rcp(new Omega_h::Mesh(Omega_h::build_box(get_omegah_lib().world(),OMEGA_H_HYPERCUBE,
+                                            scalex,scaley,scalez,nelemx,nelemy,nelemz)));
+
+    elem_topo = dim==3 ? Topo_type::hexahedron
+                       : dim==2 ? Topo_type::quadrilateral : Topo_type::edge;
+  }
+
+  m_mesh->set_parting(OMEGA_H_ELEM_BASED);
+  m_coords_d = m_mesh->coords().view();
+  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
+  Kokkos::deep_copy(m_coords_h,m_coords_d);
+
+  // Create the mesh specs
+  std::vector<std::string> nsNames, ssNames;
+
+  std::string ebName = "element_block_0";
+  std::map<std::string,int> ebNameToIndex = 
+  {
+    { ebName, 0}
+  };
+  this->declare_part(ebName,elem_topo);
+
+  // Add nodesets/sidesets
+  struct NsSpecs {
+    NsSpecs (std::string n, int i, double c) : name(n), icoord(i), coord_val(c) {}
+    std::string name;
+    int icoord;
+    double coord_val;
+  };
+
+  std::vector<NsSpecs> nsSpecs;
+  Omega_h::Read<I8> tag;
+  for (int idim=0; idim<m_mesh->dim(); ++idim) {
+    nsNames.push_back("NodeSet" + std::to_string(idim*2));
+    tag = create_ns_tag(nsNames.back(),idim,0);
+    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
+
+    nsNames.push_back("NodeSet" + std::to_string(idim*2+1));
+    tag = create_ns_tag(nsNames.back(),idim,scale[idim]);
+    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
+
+    ssNames.push_back("SideSet" + std::to_string(idim*2));
+    this->declare_part(ssNames.back(),get_side_topo(elem_topo));
+    ssNames.push_back("SideSet" + std::to_string(idim*2+1));
+    this->declare_part(ssNames.back(),get_side_topo(elem_topo));
+  }
+
+  // Omega_h does not know what worksets are, so all elements are in one workset
+  const CellTopologyData* ctd;
+
+  switch (dim) {
+    case 1: ctd = shards::getCellTopologyData<shards::Line<2>>();         break;
+    case 2: ctd = shards::getCellTopologyData<shards::Triangle<3>>();     break;
+    case 3: ctd = shards::getCellTopologyData<shards::Tetrahedron<4>>();  break;
+  }
+
+  this->meshSpecs.resize(1);
+  int ws_size_max = params->get<int>("Workset Size", -1);
+  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  this->meshSpecs[0] = Teuchos::rcp(
+      new MeshSpecsStruct(MeshType::Structured, *ctd, dim,
+                          nsNames, ssNames, ws_size, ebName,
+                          ebNameToIndex));
+}
+
+Omega_h::Read<Omega_h::I8>
+OmegahGenericMesh::
+create_ns_tag (const std::string& name,
+               const int comp,
+               const double tgt_value) const
+{
+  Omega_h::Write<Omega_h::I8> tag (m_mesh->nverts(),1);
+  auto coords = m_coords_d;
+  auto mdim = m_mesh->dim();
+  auto f = OMEGA_H_LAMBDA (LO inode) {
+    tag[inode] = coords(mdim*inode+comp)==tgt_value;
+  };
+  Kokkos::parallel_for("create_ns_tag:" + name,tag.size(),f);
+  return Omega_h::read(tag);
 }
 
 } // namespace Albany
