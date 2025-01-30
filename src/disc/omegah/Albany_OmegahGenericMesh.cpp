@@ -366,16 +366,35 @@ buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
   };
   this->declare_part(ebName,elem_topo);
 
+  //create maps from geometric model ids to node and side sets based on the 
+  //classification information in omega_h::build_box meshes
+  //- the key is the [side|node] set name
+  //- the tuple of integers are the geometric model entity 
+  // dimension and id (in that order)
+  using GeomMdlToSets = std::map<std::string, std::tuple<int,int>>;
+  GeomMdlToSets geomMdlToNodeSets;
+  if( dim==1 ) {
+    const int vtxDim = 0;
+    geomMdlToNodeSets.insert({"NodeSet0", {vtxDim,2}});
+    geomMdlToNodeSets.insert({"NodeSet1", {vtxDim,0}});
+    //vertices that are not at the endpoints of the line have id=1
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Construction of the map from geometric model ids to node/side sets is only supported for 1d domains.\n");
+  }
+
   Omega_h::Read<I8> tag;
+  for( auto& [name, ent] : geomMdlToNodeSets ) {
+    const auto dim = std::get<0>(ent);
+    const auto id = std::get<1>(ent);
+    fprintf(stderr, "name: %s dim: %d id: %d\n", 
+        name.c_str(), dim, id);
+    nsNames.push_back(name);
+    tag = create_ns_tag_from_class(name,dim,dim,id);
+    this->declare_part(name,Topo_type::vertex,tag,false);
+  }
+
   for (int idim=0; idim<m_mesh->dim(); ++idim) {
-    nsNames.push_back("NodeSet" + std::to_string(idim*2));
-    tag = create_ns_tag(nsNames.back(),idim,0);
-    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
-
-    nsNames.push_back("NodeSet" + std::to_string(idim*2+1));
-    tag = create_ns_tag(nsNames.back(),idim,scale[idim]);
-    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
-
     ssNames.push_back("SideSet" + std::to_string(idim*2));
     this->declare_part(ssNames.back(),get_side_topo(elem_topo));
     ssNames.push_back("SideSet" + std::to_string(idim*2+1));

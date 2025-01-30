@@ -160,6 +160,7 @@ updateMesh ()
     m_ws_local_dof_views[ws] = {};
   }
 
+  //update node sets //TODO
   computeNodeSets (); //FIXME fails here
   computeGraphs ();
 }
