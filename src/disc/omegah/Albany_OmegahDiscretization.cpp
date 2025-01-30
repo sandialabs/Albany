@@ -528,14 +528,6 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name());
   }
 
-
-  //create new meshstruct
-  auto ignored = 0;
-  {
-  auto ohMesh2 = m_mesh_struct->getOmegahMesh();
-  assert(ohMesh2->dim() == 1);
-  }
-
   updateMesh();
   return;
 }
