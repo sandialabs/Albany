@@ -366,15 +366,6 @@ buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
   };
   this->declare_part(ebName,elem_topo);
 
-  // Add nodesets/sidesets
-  struct NsSpecs {
-    NsSpecs (std::string n, int i, double c) : name(n), icoord(i), coord_val(c) {}
-    std::string name;
-    int icoord;
-    double coord_val;
-  };
-
-  std::vector<NsSpecs> nsSpecs;
   Omega_h::Read<I8> tag;
   for (int idim=0; idim<m_mesh->dim(); ++idim) {
     nsNames.push_back("NodeSet" + std::to_string(idim*2));
