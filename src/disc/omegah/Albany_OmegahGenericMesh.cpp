@@ -383,14 +383,13 @@ buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
       "Construction of the map from geometric model ids to node/side sets is only supported for 1d domains.\n");
   }
 
-  Omega_h::Read<I8> tag;
   for( auto& [name, ent] : geomMdlToNodeSets ) {
-    const auto dim = std::get<0>(ent);
-    const auto id = std::get<1>(ent);
+    const auto geomMdlEntDim = std::get<0>(ent);
+    const auto geomMdlEntId = std::get<1>(ent);
     fprintf(stderr, "name: %s dim: %d id: %d\n", 
-        name.c_str(), dim, id);
+        name.c_str(), geomMdlEntDim, geomMdlEntId);
     nsNames.push_back(name);
-    tag = create_ns_tag_from_class(name,dim,dim,id);
+    auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
     this->declare_part(name,Topo_type::vertex,tag,false);
   }
 
