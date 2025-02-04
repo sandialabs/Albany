@@ -7,6 +7,7 @@
 #include "OmegahConnManager.hpp"
 #include "Omega_h_adapt.hpp"
 #include "Omega_h_array_ops.hpp"
+#include "Omega_h_file.hpp"
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
@@ -295,7 +296,7 @@ getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
   };
   auto accessor = m_mesh_struct->get_field_accessor();
   auto dof_mgr = getDOFManager();
-  for (int icol=0; icol<m_num_time_deriv; ++icol) {
+  for (int icol=0; icol<=m_num_time_deriv; ++icol) {
     auto col = solution.col(icol);
     accessor->fillVector(*col,names[icol],dof_mgr,false); //fails here
   }
@@ -317,6 +318,7 @@ setField (const Thyra_Vector& field_vector,
           const std::string&  field_name,
           bool                /* overlapped */)
 {
+  fprintf(stderr,"OmegahDiscretization::setField\n");
   auto accessor = m_mesh_struct->get_field_accessor();
   auto dof_mgr = getDOFManager(field_name);
   accessor->saveVector(field_vector,field_name,dof_mgr,false);
@@ -366,6 +368,25 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 {
   fprintf(stderr,"OmegahDiscretization::checkForAdaptation\n");
   auto adapt_data = Teuchos::rcp(new AdaptationData());
+
+  auto ignoredTime = 0.;
+  auto ignoredForce = false;
+  Teuchos::RCP<const Thyra_MultiVector> nullMV = Teuchos::null;
+
+  if(solution != Teuchos::null &&
+     solution_dot != Teuchos::null &&
+     solution_dotdot != Teuchos::null) {
+     writeSolution(*(solution.get()), nullMV, *(solution_dot.get()), *(solution_dotdot.get()), ignoredTime);
+  }
+
+  if(solution != Teuchos::null &&
+      solution_dot != Teuchos::null) {
+     writeSolution(solution, Teuchos::null, solution_dot, ignoredTime);
+  }
+
+  if(solution != Teuchos::null) {
+     writeSolution(solution, Teuchos::null, ignoredTime);
+  }
 
   // Only do adaptation for simple 1d problems
   auto mesh = m_mesh_struct->getOmegahMesh();
@@ -427,8 +448,18 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
 
-
   auto ohMesh = m_mesh_struct->getOmegahMesh();
+  {
+    auto field_name = solution_dof_name();
+    auto mesh_data_h  = hostRead(ohMesh->get_array<Omega_h::Real>(0,field_name));
+    fprintf(stderr, "field_name %s\n", field_name);
+    for(int i=0; i<mesh_data_h.size(); i++) {
+      fprintf(stderr, "tag[%d] %f\n", i, mesh_data_h[i]);
+    }
+  }
+
+
+  Omega_h::vtk::write_parallel("before_adapt.vtk", ohMesh.get());
   if (ohMesh->has_tag(0, solution_dof_name())) {
     fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name());
   } else {
@@ -439,7 +470,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   const auto desired_nelems = nelems*2;
 
   Omega_h::AdaptOpts opts(&(*ohMesh));
-  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
+  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP; //FIXME tag exists, contents are zero
   while (double(nelems) < desired_nelems) {
     std::cout << "element count " << nelems << " < target "
       << desired_nelems << ", will adapt\n";
@@ -466,6 +497,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   } else {
     fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name());
   }
+
+  Omega_h::vtk::write_parallel("after_adapt.vtk", ohMesh.get());
 
   //create node and side set tags
   m_mesh_struct->createNodeSets();
@@ -501,14 +534,15 @@ writeSolution(
 
 void OmegahDiscretization::
 writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const Thyra_Vector& /* solution_dotdot */,
-      const double        /* time */,
-      const bool          /* overlapped */,
-      const bool          /* force_write_solution */) {
+      const Thyra_Vector& solution,
+      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+      const Thyra_Vector& solution_dot,
+      const Thyra_Vector& solution_dotdot,
+      const double        time,
+      const bool          overlapped,
+      const bool          force_write_solution) {
   TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
+  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, solution_dotdot, time, overlapped);
 }
 
 void OmegahDiscretization::
@@ -529,6 +563,7 @@ writeSolutionToMeshDatabase(
     const double        time,
     const bool          overlapped)
 {
+  fprintf(stderr, "OmegahDiscretization::writeSolutionToMeshDatabase(0)\n");
   TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
   const auto& dof_mgr = getDOFManager();
   auto field_accessor = m_mesh_struct->get_field_accessor();
@@ -542,6 +577,7 @@ writeSolutionToMeshDatabase(
     const Thyra_Vector& solution_dot,
     const double        time,
     const bool          overlapped) {
+  fprintf(stderr, "OmegahDiscretization::writeSolutionToMeshDatabase(1)\n");
   TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
   const auto& dof_mgr = getDOFManager();
   auto field_accessor = m_mesh_struct->get_field_accessor();
@@ -557,6 +593,7 @@ writeSolutionToMeshDatabase(
     const Thyra_Vector& /* solution_dotdot */,
     const double        /* time */,
     const bool          /* overlapped */) {
+  fprintf(stderr, "OmegahDiscretization::writeSolutionToMeshDatabase(2)\n");
   TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
 }
 
