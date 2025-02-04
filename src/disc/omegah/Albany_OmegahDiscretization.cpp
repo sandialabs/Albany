@@ -433,6 +433,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
                     const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
                     const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const
 {
+  fprintf(stderr,"OmegahDiscretization::checkForAdaptation\n");
   auto adapt_data = Teuchos::rcp(new AdaptationData());
 
   // Only do adaptation for simple 1d problems
@@ -443,6 +444,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   }
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
   auto adapt_type = adapt_params.get<std::string>("Type","None");
+  fprintf(stderr,"adapt type: %s\n", adapt_type.c_str());
   if (adapt_type=="None") {
     return adapt_data;
   }
