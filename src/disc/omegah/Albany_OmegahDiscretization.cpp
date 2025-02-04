@@ -2,6 +2,7 @@
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_StringUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Utils.hpp"
 
 #include "OmegahConnManager.hpp"
 #include "Omega_h_adapt.hpp"
@@ -132,13 +133,17 @@ updateMesh ()
     auto gid = node_gids[i];
     auto lid = node_indexer->getLocalElement(gid);
     m_node_lid_to_omegah_pos[lid] = i;
+    fprintf(stderr, "lid %d i %d\n", lid, i);
   }
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
   const int mdim = mesh.dim();
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
+  fprintf(stderr, "m_nodes_coordinates.size() %d\n", m_nodes_coordinates.size());
+  fprintf(stderr, "num_ws %d\n", num_ws);
   for (int ws=0; ws<num_ws; ++ws) {
+    fprintf(stderr, "m_workset_sizes[%d] %d\n", ws, m_workset_sizes[ws]);
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
       m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
@@ -160,8 +165,7 @@ updateMesh ()
     m_ws_local_dof_views[ws] = {};
   }
 
-  //update node sets //TODO
-  computeNodeSets (); //FIXME fails here
+  computeNodeSets ();
   computeGraphs ();
 }
 
@@ -295,6 +299,7 @@ getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
     auto col = solution.col(icol);
     accessor->fillVector(*col,names[icol],dof_mgr,false); //fails here
   }
+  printThyraMultiVector(std::cout,Teuchos::rcpFromRef(solution).getConst());
 }
 
 void
@@ -539,6 +544,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   //create node and side set tags
   m_mesh_struct->createNodeSets();
   m_mesh_struct->createSideSets();
+
+  //update coordinates
+  m_mesh_struct->setCoordinates();
 
   updateMesh();
   return;

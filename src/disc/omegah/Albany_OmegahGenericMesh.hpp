@@ -65,6 +65,8 @@ public:
   std::vector<std::string> createNodeSets();
   std::vector<std::string> createSideSets();
 
+  void setCoordinates();
+
 protected:
   void loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params);
 
