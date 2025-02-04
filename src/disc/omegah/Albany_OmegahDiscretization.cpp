@@ -94,12 +94,10 @@ updateMesh ()
   m_node_dof_managers[""]     = node_dof_mgr;
 
   // Compute workset information
-  // NOTE: these arrays are all of size 1, for the foreseable future.
-  //       Still, make impl generic (where possible), in case things change.
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
-  int ws_size = m_mesh_struct->meshSpecs[0]->worksetSize;
+  int ws_size = ms->worksetSize;
   int num_ws = 1 + (nelems-1) / ws_size;
 
   m_workset_sizes.resize(num_ws);
@@ -112,12 +110,12 @@ updateMesh ()
   m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
   for (int iws=0,ielem=0; iws<num_ws; ++iws) {
     for (int i=0; i<m_workset_sizes[iws]; ++i,++ielem) {
-      m_workset_elements.host()(0,i) = ielem;
+      m_workset_elements.host()(iws,i) = ielem;
     }
   }
   m_workset_elements.sync_to_dev();
 
-  m_wsEBNames.resize(1,ms->ebName);
+  m_wsEBNames.resize(num_ws,ms->ebName);
   m_wsPhysIndex.resize(num_ws);
   for (int i=0; i<num_ws; ++i) {
     m_wsPhysIndex[i] = ms->ebNameToIndex[m_wsEBNames[i]];
