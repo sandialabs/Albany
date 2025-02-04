@@ -117,7 +117,7 @@ updateMesh ()
   }
   m_workset_elements.sync_to_dev();
 
-  m_wsEBNames.resize(1,ms->ebName);
+  m_wsEBNames.resize(num_ws,ms->ebName);
   m_wsPhysIndex.resize(num_ws);
   for (int i=0; i<num_ws; ++i) {
     m_wsPhysIndex[i] = ms->ebNameToIndex[m_wsEBNames[i]];
@@ -467,9 +467,14 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
     auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
     auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
+    fprintf(stderr,"i %d data[i-1] %f data[i] %f data[i+1] %f\n",
+       i, data[i-1], data[i], data[i+1]);
     auto grad_prev = (data[i]-data[i-1]) / h_prev;
     auto grad_next = (data[i+1]-data[i]) / h_next;
+    fprintf(stderr,"h_prev %f h_next %f hess %f grad_prev %f grad_next %f\n",
+        h_prev, h_next, hess, grad_prev, grad_next);
     if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
+      fprintf(stderr,"hess > tol\n");
       adapt_data->type = AdaptationType::Topology;
       break;
     }
@@ -530,6 +535,10 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   } else {
     fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name());
   }
+
+  //create node and side set tags
+  m_mesh_struct->createNodeSets();
+  m_mesh_struct->createSideSets();
 
   updateMesh();
   return;
