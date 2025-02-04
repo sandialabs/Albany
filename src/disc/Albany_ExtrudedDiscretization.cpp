@@ -204,7 +204,7 @@ ExtrudedDiscretization::
 checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
                     const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
                     const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                    const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const
+                    const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */)
 {
   // We can't just do
   //  return m_basal_disc->checkForAdaptation(solution,solution_dot,solution_dotdot);
