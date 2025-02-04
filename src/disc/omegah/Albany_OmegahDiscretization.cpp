@@ -438,29 +438,10 @@ OmegahDiscretization::
 checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
                     const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                     const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
   fprintf(stderr,"OmegahDiscretization::checkForAdaptation\n");
   auto adapt_data = Teuchos::rcp(new AdaptationData());
-
-  auto ignoredTime = 0.;
-  auto ignoredForce = false;
-  Teuchos::RCP<const Thyra_MultiVector> nullMV = Teuchos::null;
-
-  if(solution != Teuchos::null &&
-     solution_dot != Teuchos::null &&
-     solution_dotdot != Teuchos::null) {
-     writeSolution(*(solution.get()), nullMV, *(solution_dot.get()), *(solution_dotdot.get()), ignoredTime);
-  }
-
-  if(solution != Teuchos::null &&
-      solution_dot != Teuchos::null) {
-     writeSolution(solution, Teuchos::null, solution_dot, ignoredTime);
-  }
-
-  if(solution != Teuchos::null) {
-     writeSolution(solution, Teuchos::null, ignoredTime);
-  }
 
   // Only do adaptation for simple 1d problems
   auto mesh = m_mesh_struct->getOmegahMesh();
@@ -477,6 +458,23 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
       "Error! Adaptation type '" << adapt_type << "' not supported.\n"
       " - valid choices: None, Minimally-Oscillatory\n");
+
+  auto ignoredTime = 0.;
+  Teuchos::RCP<const Thyra_MultiVector> nullMV = Teuchos::null;
+
+  if(solution != Teuchos::null &&
+     solution_dot != Teuchos::null &&
+     solution_dotdot != Teuchos::null) {
+     writeSolution(*(solution.get()), nullMV, *(solution_dot.get()), *(solution_dotdot.get()), ignoredTime);
+  } else if(solution != Teuchos::null &&
+      solution_dot != Teuchos::null) {
+     writeSolution(*(solution.get()), nullMV, *(solution_dot.get()), ignoredTime);
+  } else if(solution != Teuchos::null) {
+     writeSolution(*(solution.get()), nullMV, ignoredTime);
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+        "Error! all the solution vectors are null\n");
+  }
 
   double tol = adapt_params.get<double>("Max Hessian");
   auto data = getLocalData(solution);
