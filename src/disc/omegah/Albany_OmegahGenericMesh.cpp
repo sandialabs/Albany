@@ -293,8 +293,8 @@ OmegahGenericMesh::GeomMdlToSets OmegahGenericMesh::setGeomModelToNodeSets(int d
   GeomMdlToSets gm2ns;
   if( dim==1 ) {
     const int vtxDim = 0;
-    gm2ns.insert({"NodeSet0", {vtxDim,2}});
-    gm2ns.insert({"NodeSet1", {vtxDim,0}});
+    gm2ns.insert({"NodeSet0", {vtxDim,0}});
+    gm2ns.insert({"NodeSet1", {vtxDim,2}});
     //vertices that are not at the endpoints of the line have id=1
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
@@ -307,13 +307,48 @@ OmegahGenericMesh::GeomMdlToSets OmegahGenericMesh::setGeomModelToSideSets(int d
   GeomMdlToSets gm2ss;
   if( dim==1 ) {
     const int vtxDim = 0;
-    gm2ss.insert({"SideSet0", {vtxDim,2}});
-    gm2ss.insert({"SideSet1", {vtxDim,0}});
+    gm2ss.insert({"SideSet0", {vtxDim,0}});
+    gm2ss.insert({"SideSet1", {vtxDim,2}});
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
       "Construction of the map from geometric model ids to node/side sets is only supported for 1d domains.\n");
   }
   return gm2ss;
+}
+
+std::vector<std::string>
+OmegahGenericMesh::createNodeSets() {
+  std::vector<std::string> nsNames;
+  for( auto& [name, ent] : geomMdlToNodeSets ) {
+    const auto geomMdlEntDim = std::get<0>(ent);
+    const auto geomMdlEntId = std::get<1>(ent);
+    fprintf(stderr, "name: %s dim: %d id: %d\n",
+        name.c_str(), geomMdlEntDim, geomMdlEntId);
+    nsNames.push_back(name);
+    auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
+    this->declare_part(name,Topo_type::vertex,tag,false);
+  }
+  return nsNames;
+}
+
+std::vector<std::string>
+OmegahGenericMesh::createSideSets() {
+  std::vector<std::string> ssNames;
+  for( auto& [name, ent] : geomMdlToSideSets ) {
+    const auto geomMdlEntDim = std::get<0>(ent);
+    const auto geomMdlEntId = std::get<1>(ent);
+    fprintf(stderr, "name: %s dim: %d id: %d\n",
+        name.c_str(), geomMdlEntDim, geomMdlEntId);
+    ssNames.push_back(name);
+    if(getOmegahMesh()->dim()==1) {
+      auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
+      this->declare_part(name,Topo_type::vertex,tag,false);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+          "Omega_h BuildBox: Only 1d meshes supported.\n");
+    }
+  }
+  return ssNames;
 }
 
 void OmegahGenericMesh::
@@ -384,8 +419,6 @@ buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
   Kokkos::deep_copy(m_coords_h,m_coords_d);
 
   // Create the mesh specs
-  std::vector<std::string> nsNames, ssNames;
-
   std::string ebName = "element_block_0";
   std::map<std::string,int> ebNameToIndex =
   {
@@ -395,31 +428,8 @@ buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
 
   geomMdlToNodeSets = setGeomModelToNodeSets(dim);
   geomMdlToSideSets = setGeomModelToSideSets(dim);
-
-  for( auto& [name, ent] : geomMdlToNodeSets ) {
-    const auto geomMdlEntDim = std::get<0>(ent);
-    const auto geomMdlEntId = std::get<1>(ent);
-    fprintf(stderr, "name: %s dim: %d id: %d\n",
-        name.c_str(), geomMdlEntDim, geomMdlEntId);
-    nsNames.push_back(name);
-    auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
-    this->declare_part(name,Topo_type::vertex,tag,false);
-  }
-
-  for( auto& [name, ent] : geomMdlToSideSets ) {
-    const auto geomMdlEntDim = std::get<0>(ent);
-    const auto geomMdlEntId = std::get<1>(ent);
-    fprintf(stderr, "name: %s dim: %d id: %d\n",
-        name.c_str(), geomMdlEntDim, geomMdlEntId);
-    ssNames.push_back(name);
-    if(dim==1) {
-      auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
-      this->declare_part(name,Topo_type::vertex,tag,false);
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-          "Omega_h BuildBox: Only 1d meshes supported.\n");
-    }
-  }
+  auto nsNames = createNodeSets();
+  auto ssNames = createSideSets();
 
   // Omega_h does not know what worksets are, so all elements are in one workset
   const CellTopologyData* ctd;

@@ -59,6 +59,12 @@ public:
 
   void reset_mesh (const Teuchos::RCP<Omega_h::Mesh> mesh);
 
+  using GeomMdlToSets = std::map<std::string, std::tuple<int,int>>;
+  GeomMdlToSets setGeomModelToNodeSets(int dim) const;
+  GeomMdlToSets setGeomModelToSideSets(int dim) const;
+  std::vector<std::string> createNodeSets();
+  std::vector<std::string> createSideSets();
+
 protected:
   void loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params);
 
@@ -86,11 +92,8 @@ private:
   //- the key is the [side|node] set name
   //- the tuple of integers are the geometric model entity
   // dimension and id (in that order)
-  using GeomMdlToSets = std::map<std::string, std::tuple<int,int>>;
   GeomMdlToSets geomMdlToNodeSets;
   GeomMdlToSets geomMdlToSideSets;
-  GeomMdlToSets setGeomModelToNodeSets(int dim) const;
-  GeomMdlToSets setGeomModelToSideSets(int dim) const;
 
 };
 
