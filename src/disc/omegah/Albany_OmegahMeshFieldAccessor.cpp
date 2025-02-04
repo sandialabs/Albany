@@ -115,6 +115,10 @@ fillVector (Thyra_Vector&        field_vector,
 
   auto owned_h = hostRead(m_mesh->owned(dim));
   auto mesh_data_h  = hostRead(m_mesh->get_array<ST>(dim,field_name));
+  fprintf(stderr, "field_name %s\n", field_name.c_str());
+  for(int i=0; i<mesh_data_h.size(); i++) {
+    fprintf(stderr, "mesh_data_h[%d] %f\n", i, mesh_data_h[i]);
+  }
   auto thyra_data_h = getNonconstLocalData(field_vector);
   auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
   auto nents_per_elem = elem_ents_h.size() / nelems;
@@ -142,6 +146,7 @@ saveVector (const Thyra_Vector&  field_vector,
             const dof_mgr_ptr_t& field_dof_mgr,
             const bool           overlapped)
 {
+  fprintf(stderr, "OmegahMeshFieldAccessor::saveVector\n");
   // Figure out if it's a nodal or elem field
   const auto& fp = field_dof_mgr->getGeometricFieldPattern();
   const auto& ftopo = field_dof_mgr->get_topology();
