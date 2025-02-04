@@ -65,10 +65,6 @@ protected:
   // Builds a box mesh
   void buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim);
 
-  // Create a nodeSet tag in the mesh
-  Omega_h::Read<Omega_h::I8>
-  create_ns_tag (const std::string& name, const int comp, const double tgt_value) const;
-
   Teuchos::RCP<Omega_h::Mesh>  m_mesh;
 
   // Given a part name, returns its topology (in the form of an Omega_h enum
@@ -83,6 +79,19 @@ protected:
   mutable GO m_max_elem_gid = -1; //set when get_max_elem_gid() called
 
   bool m_has_restart_solution = false;
+
+private:
+  //create maps from geometric model ids to node and side sets based on the
+  //classification information in omega_h::build_box meshes
+  //- the key is the [side|node] set name
+  //- the tuple of integers are the geometric model entity
+  // dimension and id (in that order)
+  using GeomMdlToSets = std::map<std::string, std::tuple<int,int>>;
+  GeomMdlToSets geomMdlToNodeSets;
+  GeomMdlToSets geomMdlToSideSets;
+  GeomMdlToSets setGeomModelToNodeSets(int dim) const;
+  GeomMdlToSets setGeomModelToSideSets(int dim) const;
+
 };
 
 } // namespace Albany
