@@ -11,49 +11,49 @@
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
-namespace debug {
-template <typename T>
-void printTagInfo(Omega_h::Mesh mesh, std::ostringstream& oss, int dim, int tag, std::string type) {
-    auto tagbase = mesh.get_tag(dim, tag);
-    auto array = Omega_h::as<T>(tagbase)->array();
-
-    Omega_h::Real min = get_min(array);
-    Omega_h::Real max = get_max(array);
-
-    oss << std::setw(18) << std::left << tagbase->name().c_str()
-        << std::setw(5) << std::left << dim 
-        << std::setw(7) << std::left << type 
-        << std::setw(5) << std::left << tagbase->ncomps() 
-        << std::setw(10) << std::left << min 
-        << std::setw(10) << std::left << max 
-        << "\n";
-}
-
-void printAllTags(Omega_h::Mesh& mesh) {
-  std::ostringstream oss;
-  // always print two places to the right of the decimal
-  // for floating point types (i.e., imbalance)
-  oss.precision(2);
-  oss << std::fixed;
-
-  oss << "\nTag Properties by Dimension: (Name, Dim, Type, Number of Components, Min. Value, Max. Value)\n";
-  for (int dim=0; dim <= mesh.dim(); dim++) {
-    for (int tag=0; tag < mesh.ntags(dim); tag++) {
-      auto tagbase = mesh.get_tag(dim, tag);
-      if (tagbase->type() == OMEGA_H_I8)
-        printTagInfo<Omega_h::I8>(mesh, oss, dim, tag, "I8");
-      if (tagbase->type() == OMEGA_H_I32)
-        printTagInfo<Omega_h::I32>(mesh, oss, dim, tag, "I32");
-      if (tagbase->type() == OMEGA_H_I64)
-        printTagInfo<Omega_h::I64>(mesh, oss, dim, tag, "I64");
-      if (tagbase->type() == OMEGA_H_F64)
-        printTagInfo<Omega_h::Real>(mesh, oss, dim, tag, "F64");
-    }
-  }
-
-  std::cout << oss.str();
-}
-}
+//namespace debug {
+//template <typename T>
+//void printTagInfo(Omega_h::Mesh mesh, std::ostringstream& oss, int dim, int tag, std::string type) {
+//    auto tagbase = mesh.get_tag(dim, tag);
+//    auto array = Omega_h::as<T>(tagbase)->array();
+//
+//    Omega_h::Real min = get_min(array);
+//    Omega_h::Real max = get_max(array);
+//
+//    oss << std::setw(18) << std::left << tagbase->name().c_str()
+//        << std::setw(5) << std::left << dim 
+//        << std::setw(7) << std::left << type 
+//        << std::setw(5) << std::left << tagbase->ncomps() 
+//        << std::setw(10) << std::left << min 
+//        << std::setw(10) << std::left << max 
+//        << "\n";
+//}
+//
+//void printAllTags(Omega_h::Mesh& mesh) {
+//  std::ostringstream oss;
+//  // always print two places to the right of the decimal
+//  // for floating point types (i.e., imbalance)
+//  oss.precision(2);
+//  oss << std::fixed;
+//
+//  oss << "\nTag Properties by Dimension: (Name, Dim, Type, Number of Components, Min. Value, Max. Value)\n";
+//  for (int dim=0; dim <= mesh.dim(); dim++) {
+//    for (int tag=0; tag < mesh.ntags(dim); tag++) {
+//      auto tagbase = mesh.get_tag(dim, tag);
+//      if (tagbase->type() == OMEGA_H_I8)
+//        printTagInfo<Omega_h::I8>(mesh, oss, dim, tag, "I8");
+//      if (tagbase->type() == OMEGA_H_I32)
+//        printTagInfo<Omega_h::I32>(mesh, oss, dim, tag, "I32");
+//      if (tagbase->type() == OMEGA_H_I64)
+//        printTagInfo<Omega_h::I64>(mesh, oss, dim, tag, "I64");
+//      if (tagbase->type() == OMEGA_H_F64)
+//        printTagInfo<Omega_h::Real>(mesh, oss, dim, tag, "F64");
+//    }
+//  }
+//
+//  std::cout << oss.str();
+//}
+//}
 
 namespace Albany {
 
@@ -441,6 +441,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
                     const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
   fprintf(stderr,"OmegahDiscretization::checkForAdaptation\n");
+  fprintf(stderr,"OmegahDiscretization::checkForAdaptation meshPtr %p\n", m_mesh_struct->getOmegahMesh().get());
   auto adapt_data = Teuchos::rcp(new AdaptationData());
 
   // Only do adaptation for simple 1d problems
@@ -461,6 +462,8 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
+
+  printThyraVector(std::cout,solution);
 
   auto ignoredTime = 0.;
   if(solution_dot != Teuchos::null &&
@@ -499,6 +502,17 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       break;
     }
   }
+
+  auto ohMesh = m_mesh_struct->getOmegahMesh();
+  {
+    auto field_name = solution_dof_name();
+    auto mesh_data_h  = hostRead(ohMesh->get_array<Omega_h::Real>(0,field_name));
+    fprintf(stderr, "checkForAdaptation field_name %s\n", field_name);
+    for(int i=0; i<mesh_data_h.size(); i++) {
+      fprintf(stderr, "tag[%d] %f\n", i, mesh_data_h[i]);
+    }
+  }
+
 
   return adapt_data;
 
