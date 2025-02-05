@@ -385,21 +385,17 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       "Error! Adaptation type '" << adapt_type << "' not supported.\n"
       " - valid choices: None, Minimally-Oscillatory\n");
 
-  auto ignoredTime = 0.;
-  Teuchos::RCP<const Thyra_MultiVector> nullMV = Teuchos::null;
+  TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
+      "Error! the dxdp Thyra_MultiVector is expected to be null\n");
 
-  if(solution != Teuchos::null &&
-     solution_dot != Teuchos::null &&
+  auto ignoredTime = 0.;
+  if(solution_dot != Teuchos::null &&
      solution_dotdot != Teuchos::null) {
-     writeSolution(*(solution.get()), nullMV, *(solution_dot.get()), *(solution_dotdot.get()), ignoredTime);
-  } else if(solution != Teuchos::null &&
-      solution_dot != Teuchos::null) {
-     writeSolution(*(solution.get()), nullMV, *(solution_dot.get()), ignoredTime);
-  } else if(solution != Teuchos::null) {
-     writeSolution(*(solution.get()), nullMV, ignoredTime);
+     writeSolution(*solution, dxdp, *solution_dot, *solution_dotdot, ignoredTime);
+  } else if(solution_dot != Teuchos::null) {
+     writeSolution(*solution, dxdp, *solution_dot, ignoredTime);
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-        "Error! all the solution vectors are null\n");
+     writeSolution(*solution, dxdp, ignoredTime);
   }
 
   double tol = adapt_params.get<double>("Max Hessian");
