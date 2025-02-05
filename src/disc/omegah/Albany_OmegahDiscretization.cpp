@@ -478,7 +478,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   const auto desired_nelems = nelems*2;
 
   Omega_h::AdaptOpts opts(&(*ohMesh));
-  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP; //FIXME tag exists, contents are zero
+  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
+  opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
   while (double(nelems) < desired_nelems) {
     std::cout << "element count " << nelems << " < target "
       << desired_nelems << ", will adapt\n";
@@ -575,7 +576,7 @@ writeSolutionToMeshDatabase(
   TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
   const auto& dof_mgr = getDOFManager();
   auto field_accessor = m_mesh_struct->get_field_accessor();
-  field_accessor->saveVector(solution, "solution", dof_mgr, overlapped);
+  field_accessor->saveVector(solution, solution_dof_name(), dof_mgr, overlapped);
 }
 
 void OmegahDiscretization::
@@ -589,8 +590,8 @@ writeSolutionToMeshDatabase(
   TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
   const auto& dof_mgr = getDOFManager();
   auto field_accessor = m_mesh_struct->get_field_accessor();
-  field_accessor->saveVector(solution, "solution", dof_mgr, overlapped);
-  field_accessor->saveVector(solution_dot, "solution_dot", dof_mgr, overlapped);
+  field_accessor->saveVector(solution, solution_dof_name(), dof_mgr, overlapped);
+  field_accessor->saveVector(solution_dot, std::string(solution_dof_name())+"_dot", dof_mgr, overlapped);
 }
 
 void OmegahDiscretization::
