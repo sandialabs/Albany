@@ -2,6 +2,55 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_OmegahUtils.hpp"
 
+#include "Omega_h_adapt.hpp"
+#include "Omega_h_array_ops.hpp"
+#include "Omega_h_file.hpp"
+namespace debug {
+template <typename T>
+void printTagInfo(Omega_h::Mesh mesh, std::ostringstream& oss, int dim, int tag, std::string type) {
+    auto tagbase = mesh.get_tag(dim, tag);
+    auto array = Omega_h::as<T>(tagbase)->array();
+
+    Omega_h::Real min = get_min(array);
+    Omega_h::Real max = get_max(array);
+
+    oss << std::setw(18) << std::left << tagbase->name().c_str()
+        << std::setw(5) << std::left << dim 
+        << std::setw(7) << std::left << type 
+        << std::setw(5) << std::left << tagbase->ncomps() 
+        << std::setw(10) << std::left << min 
+        << std::setw(10) << std::left << max 
+        << "\n";
+}
+
+void printAllTags(Omega_h::Mesh& mesh) {
+  std::ostringstream oss;
+  // always print two places to the right of the decimal
+  // for floating point types (i.e., imbalance)
+  oss.precision(2);
+  oss << std::fixed;
+
+  oss << "\nTag Properties by Dimension: (Name, Dim, Type, Number of Components, Min. Value, Max. Value)\n";
+  for (int dim=0; dim <= mesh.dim(); dim++) {
+    for (int tag=0; tag < mesh.ntags(dim); tag++) {
+      auto tagbase = mesh.get_tag(dim, tag);
+      if (tagbase->type() == OMEGA_H_I8)
+        printTagInfo<Omega_h::I8>(mesh, oss, dim, tag, "I8");
+      if (tagbase->type() == OMEGA_H_I32)
+        printTagInfo<Omega_h::I32>(mesh, oss, dim, tag, "I32");
+      if (tagbase->type() == OMEGA_H_I64)
+        printTagInfo<Omega_h::I64>(mesh, oss, dim, tag, "I64");
+      if (tagbase->type() == OMEGA_H_F64)
+        printTagInfo<Omega_h::Real>(mesh, oss, dim, tag, "F64");
+    }
+  }
+
+  std::cout << oss.str();
+}
+}
+
+
+
 namespace Albany {
 
 OmegahMeshFieldAccessor::
@@ -22,8 +71,10 @@ addFieldOnMesh (const std::string& name,
     {
       Omega_h::Write<ST> f(m_mesh->nverts(),name);
       if(! m_mesh->has_tag(OMEGA_H_VERT,name)) {
+        fprintf(stderr, "%s add_tag %s\n", __func__, name.c_str());
         m_mesh->add_tag<ST>(OMEGA_H_VERT,name,numComps,f,false);
       } else {
+        fprintf(stderr, "%s set_tag %s\n", __func__, name.c_str());
         m_mesh->set_tag<ST>(OMEGA_H_VERT,name,f,false);
       }
       break;
@@ -146,7 +197,8 @@ saveVector (const Thyra_Vector&  field_vector,
             const dof_mgr_ptr_t& field_dof_mgr,
             const bool           overlapped)
 {
-  fprintf(stderr, "OmegahMeshFieldAccessor::saveVector\n");
+  fprintf(stderr, "OmegahMeshFieldAccessor::saveVector %s\n", field_name.c_str());
+  fprintf(stderr, "OmegahMeshFieldAccessor::saveVector meshPtr %p\n", m_mesh.get());
   // Figure out if it's a nodal or elem field
   const auto& fp = field_dof_mgr->getGeometricFieldPattern();
   const auto& ftopo = field_dof_mgr->get_topology();
@@ -191,11 +243,22 @@ saveVector (const Thyra_Vector&  field_vector,
     }
   }
 
+  debug::printAllTags(*m_mesh);
+
   if(! m_mesh->has_tag(dim,field_name)) {
     m_mesh->add_tag(dim,field_name, ncomps, read(mesh_data_h.write()));
   } else {
     m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
   }
+
+  {
+    auto foo  = hostRead(m_mesh->get_array<Omega_h::Real>(0,field_name));
+    fprintf(stderr, "saveVector field_name %s\n", field_name.c_str());
+    for(int i=0; i<foo.size(); i++) {
+      fprintf(stderr, "tag[%d] %.13f\n", i, foo[i]);
+    }
+  }
+
 }
 
 } // namespace Albany
