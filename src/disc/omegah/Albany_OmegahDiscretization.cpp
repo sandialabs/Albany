@@ -158,9 +158,14 @@ updateMesh ()
         for (int idim=0; idim<mdim; ++idim) {
           coords[idim] = m_ws_elem_coords[ws][ielem][inode][idim];
         }
-        fprintf(stderr, "ws %d elm %d node %d coords %f %f\n", ws, ielem, inode,
-            m_ws_elem_coords[ws][ielem][inode][0],
-            m_ws_elem_coords[ws][ielem][inode][1]);
+        if(mdim == 1) {
+          fprintf(stderr, "ws %d elm %d node %d coords %f\n", ws, ielem, inode,
+              m_ws_elem_coords[ws][ielem][inode][0]);
+        } else if(mdim == 2) {
+          fprintf(stderr, "ws %d elm %d node %d coords %f %f\n", ws, ielem, inode,
+              m_ws_elem_coords[ws][ielem][inode][0],
+              m_ws_elem_coords[ws][ielem][inode][1]);
+        }
       }
     }
     elms_in_prior_worksets += m_workset_sizes[ws];
