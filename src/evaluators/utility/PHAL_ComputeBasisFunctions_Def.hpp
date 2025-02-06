@@ -111,6 +111,19 @@ evaluateFields(typename Traits::EvalData workset)
   IFST::multiplyMeasure    (wGradBF.get_view(), weighted_measure.get_view(), GradBF.get_view());
 
   (void)isJacobianDetNegative;
+
+  //debug {
+  for (size_t cell=0; cell<workset.numCells; ++cell) {
+    std::cout << "cell " << cell << "\n";
+    for (size_t v=0; v<numNodes; ++v) {
+      std::cout << "  node " << v << ":";
+      for (size_t dim=0; dim<numDims; ++dim) {
+        std::cout << " " << coordVec(cell,v,dim);
+      }
+      std::cout << "\n";
+    }
+  }
+  // }
 }
 
 //**********************************************************************
