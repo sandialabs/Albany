@@ -243,7 +243,7 @@ saveVector (const Thyra_Vector&  field_vector,
     }
   }
 
-  debug::printAllTags(*m_mesh);
+  //debug::printAllTags(*m_mesh);
 
   if(! m_mesh->has_tag(dim,field_name)) {
     m_mesh->add_tag(dim,field_name, ncomps, read(mesh_data_h.write()));
