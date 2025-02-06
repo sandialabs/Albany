@@ -527,6 +527,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 void OmegahDiscretization::
 adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
+  static int adaptCount = 0;
   fprintf(stderr,"OmegahDiscretization::adapt\n");
   // Not sure if we allow calling adapt in general, but just in case
   if (adaptData->type==AdaptationType::None) {
@@ -546,8 +547,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     }
   }
 
-
-  Omega_h::vtk::write_parallel("before_adapt.vtk", ohMesh.get());
+  std::string beforeAdaptName = "before_adapt" + std::to_string(adaptCount) + ".vtk";
+  Omega_h::vtk::write_parallel(beforeAdaptName, ohMesh.get());
   if (ohMesh->has_tag(0, solution_dof_name())) {
     fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name());
   } else {
@@ -587,7 +588,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name());
   }
 
-  Omega_h::vtk::write_parallel("after_adapt.vtk", ohMesh.get());
+  std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
+  Omega_h::vtk::write_parallel(afterAdaptName, ohMesh.get());
 
   //create node and side set tags
   m_mesh_struct->createNodeSets();
@@ -597,6 +599,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   m_mesh_struct->setCoordinates();
 
   updateMesh();
+  adaptCount ++;
   return;
 }
 
