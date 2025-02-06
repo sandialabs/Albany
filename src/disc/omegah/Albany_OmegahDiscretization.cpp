@@ -143,21 +143,27 @@ updateMesh ()
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
   fprintf(stderr, "m_nodes_coordinates.size() %d\n", m_nodes_coordinates.size());
   fprintf(stderr, "num_ws %d\n", num_ws);
+  int elms_in_prior_worksets = 0;
   for (int ws=0; ws<num_ws; ++ws) {
     fprintf(stderr, "m_workset_sizes[%d] %d\n", ws, m_workset_sizes[ws]);
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
       m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
       for (int inode=0; inode<num_elem_nodes; ++inode) {
-        LO node_lid = node_elem_dof_lids(ielem,inode);
+        const auto elmIdx = ielem + elms_in_prior_worksets;
+        LO node_lid = node_elem_dof_lids(elmIdx,inode);
         int omh_pos = m_node_lid_to_omegah_pos[node_lid];
         m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
         auto coords = &m_nodes_coordinates[node_lid*mdim];
         for (int idim=0; idim<mdim; ++idim) {
           coords[idim] = m_ws_elem_coords[ws][ielem][inode][idim];
         }
+        fprintf(stderr, "ws %d elm %d node %d coords %f %f\n", ws, ielem, inode,
+            m_ws_elem_coords[ws][ielem][inode][0],
+            m_ws_elem_coords[ws][ielem][inode][1]);
       }
     }
+    elms_in_prior_worksets += m_workset_sizes[ws];
   }
 
   m_side_sets.resize(num_ws);
