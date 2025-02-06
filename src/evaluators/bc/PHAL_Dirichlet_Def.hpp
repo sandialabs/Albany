@@ -110,11 +110,15 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  std::cout << "\nDIRICHLET\n";
+  std::cout << "  nsn: " << this->nodeSetID << "\n";
+  std::cout << "  size: " << ns_node_elem_pos.size() << "\n";
   for (const auto& ep : ns_node_elem_pos) {
     const int ielem = ep.first;
     const int pos   = ep.second;
     const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
     f_nonconstView[x_lid] = x_constView[x_lid] - this->value;
+    std::cout << "  ielem=" << ielem << ", pos=" << pos << ", x_lid=" << x_lid << ", val=" << this->value << ", sol_offset[pos]=" << sol_offsets[pos] << ", x_value=" << x_constView << "\n";
   }
 }
 
@@ -163,6 +167,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     const int ielem = ep.first;
     const int pos   = ep.second;
     const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+
 
     // Extract the row, zero it out, then put j_coeff on diagonal
     Albany::getLocalRowValues(jac,x_lid,matrixIndices,matrixEntries);

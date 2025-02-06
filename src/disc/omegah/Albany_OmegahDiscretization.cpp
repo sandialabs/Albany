@@ -112,9 +112,12 @@ updateMesh ()
   }
 
   m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
+  std::cout << "elem_LIDS\n";
   for (int iws=0,ielem=0; iws<num_ws; ++iws) {
+    std::cout << " ws: " << iws << "\n";
+    std::cout << "  el lids:";
     for (int i=0; i<m_workset_sizes[iws]; ++i,++ielem) {
-      m_workset_elements.host()(0,i) = ielem;
+      m_workset_elements.host()(iws,i) = ielem;
     }
   }
   m_workset_elements.sync_to_dev();
@@ -138,6 +141,8 @@ updateMesh ()
   }
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
+
+
 
   const int mdim = mesh.dim();
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
@@ -209,8 +214,14 @@ computeNodeSets ()
 
     auto& ns_elem_pos = m_node_sets[nsn];
 
+    ns_elem_pos.clear();
     ns_elem_pos.reserve(owned_on_ns.size());
+    std::cout << "NODE SET: " << nsn << " has size " << owned_on_ns.size() << "\n";
     for (auto i : owned_on_ns) {
+      std::cout << " node omegah lid: " << i << "\n";
+      
+      // FIXME! This is only looking at the FIRST elem that node=i is part of.
+      //        we need to LOOP over all elems that have node=i
       auto node_adj_start = v2e_a2ab[i];
       auto ielem = v2e_ab2b[node_adj_start];
 
@@ -226,7 +237,10 @@ computeNodeSets ()
           " - node set: " << nsn << "\n"
           " - node lid (osh): " << i << "\n"
           " - ielem: " << ielem << "\n");
+
+      std::cout << "    elem=" << ns_elem_pos.back().first << ", " << ns_elem_pos.back().second << "\n";
     }
+
   }
 }
 

@@ -315,11 +315,11 @@ evaluateFields(typename Traits::EvalData workset)
     const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
     std::cout << " cell " << cell << "\n";
     for (int node=0; node<this->numNodes; ++node) {
-      std::cout << "  node  " << node << ":";
+      std::cout << "  node  " << node << "\n";
       for (int eq=0; eq<numFields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+this->offset));
         this->device_sol.get_ref(cell,node,eq) = x_data(lid);
-        std::cout << " " << x_data(lid);
+        std::cout << " lid, x: " << lid << ", " << x_data(lid) << "\n";
         if (gather_xdot) {
           this->device_sol.get_ref_dot(cell,node,eq) = xdot_data(lid);
         }
@@ -327,7 +327,6 @@ evaluateFields(typename Traits::EvalData workset)
           this->device_sol.get_ref_dotdot(cell,node,eq) = xdotdot_data(lid);
         }
       }
-      std::cout << "\n";
     }
   });
 }
@@ -402,11 +401,11 @@ evaluateFields(typename Traits::EvalData workset)
     const auto elem_LID = elem_lids_dev(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids.dev(),elem_LID,ALL);
     for (int node=0; node<this->numNodes; ++node) {
-      std::cout << "  node  " << node << ":";
+      std::cout << "  node  " << node << "\n";
       int firstunk = fields_offsets(node,first_dof);
       for (int eq=0; eq<this->numFields; ++eq) {
         const auto lid = dof_lids(fields_offsets(node,eq+first_dof));
-        std::cout << " " << x_data(lid);
+        std::cout << " lid, x: " << lid << ", " << x_data(lid) << "\n";
 
         ref_t valref = this->device_sol.get_ref(cell,node,eq);
         valref = FadType(valref.size(), x_data(lid));
@@ -424,7 +423,6 @@ evaluateFields(typename Traits::EvalData workset)
           valref.fastAccessDx(firstunk + eq) = n_coeff;
         }
       }
-      std::cout << "\n";
     }
   });
 }

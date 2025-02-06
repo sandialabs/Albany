@@ -57,6 +57,14 @@ void DOFManager::build ()
   m_elem_dof_lids = dview(lids);
   m_elem_dof_lids.sync_to_host();
 
+  std::cout << "DOF_LIDS\n";
+  for (size_t i=0; i<m_elem_dof_lids.host().extent(0); ++i) {
+    std::cout << "  ielem: " << i << "\n";
+    for (size_t j=0; j<m_elem_dof_lids.host().extent(1); ++j) {
+      std::cout << " " << m_elem_dof_lids.host()(i,j);
+    } std::cout << "\n";
+  }
+
   // 3. Build cell vector space/indexer
   auto cell_gids = m_conn_mgr->getElementsInBlock(elem_block_name());
   auto cell_vs = createVectorSpace (this->getComm(), cell_gids);
