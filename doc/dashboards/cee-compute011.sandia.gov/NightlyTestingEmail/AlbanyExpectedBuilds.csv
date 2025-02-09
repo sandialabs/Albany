@@ -20,8 +20,8 @@ Nightly, cee-compute030, Albany-Linux-4.18.0-513.11.1.el8_9.x86_64-gcc-10.3.0-De
 Nightly, cee-compute030, Trilinos-Linux-4.18.0-513.11.1.el8_9.x86_64-gcc-10.3.0-Debug-Serial
 Nightly, cee-compute004, Albany-Linux-4.18.0-513.11.1.el8_9.x86_64-Intel(R)-18.0.0-Release-Serial
 Nightly, cee-compute004, Trilinos-Linux-4.18.0-513.11.1.el8_9.x86_64-Intel(R)-18.0.0-Release-Serial
-Nightly, hayka.ca.sandia.gov, Albany-Linux-5.14.0-503.16.1.el9_5.x86_64-gcc-11.4.0-Release
-Nightly, hayka.ca.sandia.gov, Trilinos-Linux-5.14.0-503.16.1.el9_5.x86_64-gcc-11.4.0-Release
+Nightly, hayka.ca.sandia.gov, Albany-Linux-5.14.0-503.21.1.el9_5.x86_64-gcc-11.4.0-Release
+Nightly, hayka.ca.sandia.gov, Trilinos-Linux-5.14.0-503.21.1.el9_5.x86_64-gcc-11.4.0-Release
 Nightly, weaver.sandia.gov, Trilinos-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2
 Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2
 Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2-sfad6
