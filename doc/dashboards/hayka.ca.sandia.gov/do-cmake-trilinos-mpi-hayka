@@ -59,10 +59,10 @@ cmake -G Ninja \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
-      -D Boost_INCLUDE_DIRS:FILEPATH=/tpls/install/include \
-      -D Boost_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
-      -D BoostLib_INCLUDE_DIRS:FILEPATH=/tpls/install/include \
-      -D BoostLib_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
+      -D Boost_INCLUDE_DIRS:FILEPATH=$BOOST_ROOT/include \
+      -D Boost_LIBRARY_DIRS:FILEPATH=$BOOST_ROOT/lib \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOST_ROOT/include \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOST_ROOT/lib \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
