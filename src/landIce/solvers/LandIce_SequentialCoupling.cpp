@@ -210,8 +210,8 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
   // number of models
   num_subdomains_ = model_filenames_.size();
 
-  // throw error if number of model filenames provided is > 2
-  ALBANY_ASSERT(num_subdomains_ <= 2, "SequentialCoupling solver requires no more than 2 models!");
+  // throw error if number of model filenames provided is != 2
+  ALBANY_ASSERT(num_subdomains_ == 2, "SequentialCoupling solver requires 2 models!");
 
   // Arrays to cache useful info for each subdomain for later use
   apps_.resize(num_subdomains_);
@@ -250,7 +250,6 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
     //problem_params.set<bool>("LandIce Sequential Solver", true);
 
     std::string const problem_name = getName(problem_params.get<std::string>("Name"));
-    std::cout << "IKT problem_name = " << problem_name << "\n"; 
     if (problem_name == "Poisson System") {
       prob_types_[subdomain] = POISSON;
     } else if (problem_name == "AdvDiff System") {
@@ -259,91 +258,75 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
       //IKT 1/14/2025 TODO: will need to change this when we switch over to the true landice couplings
       ALBANY_ABORT("LandIce Sequential solver only supports coupling of 'Poisson System' and 'Adv Diff System' problems!");
     }
-  }
-  std::cout << "IKT here!\n"; 
-  exit(1); 
-/*
+
     auto const problem_type = prob_types_[subdomain];
 
     // Error checks - only needs to be done once at the beginning
-    bool const have_piro = params.isSublist("Piro");
+    bool const have_piro = params->isSublist("Piro");
     ALBANY_ASSERT(have_piro == true, "Error! Piro sublist not found.\n");
 
-    Teuchos::ParameterList& piro_params = params.sublist("Piro");
+    Teuchos::ParameterList& piro_params = params->sublist("Piro");
 
-    std::string const msg{"All subdomains must have the same solution method (NOX or Tempus)"};
-
-    if (problem_type == THERMAL) {
+    if (problem_type == ADVDIFF) { //This will be thickness equation for LandIce, since it is dynamic 
       auto const is_dynamic = piro_params.isSublist("Tempus");
-      ALBANY_ASSERT(is_dynamic == true, "ACE Thermomechanical Coupling requires Tempus for thermal solve.");
+      ALBANY_ASSERT(is_dynamic == true, "LandIce Sequential Coupling requires Tempus for advection-diffusion solve.");
 
       Teuchos::ParameterList& tempus_params = piro_params.sublist("Tempus");
-
       tempus_params.set("Abort on Failure", false);
 
       Teuchos::ParameterList& time_step_control_params =
           piro_params.sublist("Tempus").sublist("Tempus Integrator").sublist("Time Step Control").sublist("Time Step Control Strategy");
 
       std::string const integrator_step_type = time_step_control_params.get("Strategy Type", "Constant");
-
       std::string const msg{
           "Non-constant time-stepping through Tempus not supported "
-          "with ACE sequential thermo-mechanical coupling; \n"
+          "with LandIce Sequential Coupling; \n"
           "In this case, variable time-stepping is "
           "handled within the coupling loop.\n"
           "Please rerun with 'Strategy Type: "
           "Constant' in 'Time Step Control Strategy' sublist.\n"};
       ALBANY_ASSERT(integrator_step_type == "Constant", msg);
-    } else if (problem_type == MECHANICAL) {
-      auto const is_tempus         = piro_params.isSublist("Tempus");
-      auto const is_trapezoid_rule = piro_params.isSublist("Trapezoid Rule");
-      if (is_tempus == true) {
-        mechanical_solver_                    = MechanicalSolver::Tempus;
-        Teuchos::ParameterList& tempus_params = piro_params.sublist("Tempus");
-        tempus_params.set("Abort on Failure", false);
-
-        Teuchos::ParameterList& time_step_control_params =
-            piro_params.sublist("Tempus").sublist("Tempus Integrator").sublist("Time Step Control").sublist("Time Step Control Strategy");
-
-        std::string const integrator_step_type = time_step_control_params.get("Strategy Type", "Constant");
-
-        std::string const msg{
-            "Non-constant time-stepping through Tempus not supported "
-            "with ACE sequential thermo-mechanical coupling; \n"
-            "In this case, variable time-stepping is "
-            "handled within the coupling loop.\n"
-            "Please rerun with 'Strategy Type: "
-            "Constant' in 'Time Step Control Strategy' sublist.\n"};
-        ALBANY_ASSERT(integrator_step_type == "Constant", msg);
-      } else {
-        mechanical_solver_ = MechanicalSolver::TrapezoidRule;
-        ALBANY_ASSERT(is_trapezoid_rule == true, "ACE Thermomechanical Coupling requires Tempus or Trapezoid Rule for mechanical solve.");
+    }
+    else if (problem_type == POISSON) { //This will be steady velocity solve for LandIce 
+      std::string const sol_method    = problem_params.get<std::string>("Solution Method"); 
+      bool is_steady = false; 
+      if (sol_method == "Steady") {
+        is_steady = true; 
+      }
+      auto const is_loca              = piro_params.isSublist("LOCA");
+      auto const is_nox               = piro_params.isSublist("NOX");
+      if (!is_steady && !is_loca && !is_nox) {  
+        ALBANY_ABORT("LandIce Sequential Coupling requires LOCA or NOX steady solver for Poisson solve.");
       }
     } else {
-      ALBANY_ABORT("ACE Thermomechanical Coupling only supports coupling of ACE Thermal and Mechanical problems.");
+      //IKT 2/11/2025: will need to change the following for LandIce 
+      ALBANY_ABORT("LandIce Sequential Coupling only supports coupling of Poisson and AdvDiff problems.");
     }
-  }
 
-  // Parameters
-  Teuchos::ParameterList& problem_params  = app_params->sublist("Problem");
-  bool const              have_parameters = problem_params.isSublist("Parameters");
-  ALBANY_ASSERT(have_parameters == false, "Parameters not supported.");
+    //IKT 2/11/2025: I don't think we actually can't have parameters and responses, so the following
+    //maybe should be deleted.  I am keeping it as left-over from ACE.
 
-  // Responses
-  bool const have_responses = problem_params.isSublist("Response Functions");
-  ALBANY_ASSERT(have_responses == false, "Responses not supported.");
+    // Parameters
+    int const        num_params = problem_params.sublist("Parameters").get<int>("Number Of Parameters");
+    ALBANY_ASSERT(num_params == 0, "Parameters not supported.");
 
-  // Check that the first problem type is thermal and the second problem type is mechanical,
+    // Responses
+    int const     num_responses = problem_params.sublist("Response Functions").get<int>("Number Of Responses");
+    ALBANY_ASSERT(num_responses == 0, "Responses not supported.");
+
+  } //End subdomain loop 
+
+  // Check that the first problem type is Poisson and the second problem type is AdvDiff,
   // as the current version of the coupling algorithm requires this ordering.
   // If ordering is wrong, through error.
   PROB_TYPE prob_type = prob_types_[0];
-  ALBANY_ASSERT(prob_type == THERMAL, "The first problem type needs to be 'ACE Thermal'!");
-  if (num_subdomains_ > 1) {
-    prob_type = prob_types_[1];
-    ALBANY_ASSERT(prob_type == MECHANICAL, "The second problem type needs to be 'Mechanics'!");
-  }
+  ALBANY_ASSERT(prob_type == POISSON, "The first problem type needs to be 'Poisson System 2D'!");
+  prob_type = prob_types_[1];
+  ALBANY_ASSERT(prob_type == ADVDIFF, "The second problem type needs to be 'AdvDiff System 2D'!");
+
+  std::cout << "IKT here!\n"; 
+  std::exit(1); 
   return;
-  */
 }
 
 SequentialCoupling::~SequentialCoupling() { return; }

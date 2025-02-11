@@ -2,11 +2,12 @@ DemoPDEs:
   Alternating System:
     Model Input Files: [poisson.yaml, advdiff.yaml]
     Initial Time: 0.00000000000000000e+00
-    Final Time: 5.0 
+    #Final Time: 5.0 
+    Final Time: 1.0e-1 
     Initial Time Step: 1.0e-2
     Maximum Steps: 10000
-    Reduction Factor: 5.00000000000000000e-01
-    Amplification Factor: 1.50000000000000000e+00
+    #Reduction Factor: 5.00000000000000000e-01
+    #Amplification Factor: 1.50000000000000000e+00
     Exodus Write Interval: 1
   Problem:
     Solution Method: LandIce Sequential Coupling
