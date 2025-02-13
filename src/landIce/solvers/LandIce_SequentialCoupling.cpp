@@ -471,13 +471,14 @@ SequentialCoupling::evalModelImpl(Thyra_ModelEvaluator::InArgs<ST> const&, Thyra
 {
   std::cout << "IKT entering evalModelImpl!\n"; 
   SequentialCouplingLoop();
+  std::cout << "IKT exiting evalModelImpl!\n"; 
 }
 
 
 void
 SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double const current_time) const
 {
-  std::cout << "IKT in createPoissonSolverAppDiscME!\n"; 
+  std::cout << "IKT starting in createPoissonSolverAppDiscME!\n"; 
   auto const              subdomain      = 0;
   Teuchos::RCP<Teuchos::ParameterList> params         = solver_factories_[subdomain]->getParameters();
   Teuchos::ParameterList& problem_params = params->sublist("Problem", true);
@@ -501,7 +502,7 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
       "input file.");
   if (file_index > 0) {
     // Change input Exodus file to previous mechanical Exodus output file, for restarts.
-    disc_params.set<std::string>("Exodus Input File Name", prev_mechanical_exo_outfile_name_);
+    disc_params.set<std::string>("Exodus Input File Name", prev_advdiff_exo_outfile_name_);
     // Set restart index based on 'disable exodus output initial time' variable
     // provided in input file
     const bool disable_exo_out_init_time = disc_params.get<bool>("Disable Exodus Output Initial Time");
@@ -538,7 +539,6 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
 
   Albany::STKDiscretization& stk_disc = *static_cast<Albany::STKDiscretization*>(disc.get());
   if (file_index == 0) {
-    //IKT TO DO: implement the following routine in the discretization! 
     stk_disc.outputExodusSolutionInitialTime(true);
   }
 
@@ -550,17 +550,18 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
   stk_mesh_structs_[subdomain]   = abs_stk_mesh_struct_rcp;
   model_evaluators_[subdomain]   = solver_factories_[subdomain]->returnModel();
   curr_x_[subdomain]             = Teuchos::null;
-  prev_thermal_exo_outfile_name_ = filename;
+  prev_poisson_exo_outfile_name_ = filename;
   // Delete previously-written Exodus files to not have inundation of output files
   if (file_index > 0 && ((file_index - 1) % output_interval_) != 0) {
-    deleteParallel(prev_mechanical_exo_outfile_name_, comm_);
+    deleteParallel(prev_advdiff_exo_outfile_name_, comm_);
   }
+  std::cout << "IKT finished in createPoissonSolverAppDiscME!\n"; 
 }
 
 void
 SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double const current_time, double const next_time, double const time_step) const
 {
-  std::cout << "IKT in createAdvDiffSolverAppDiscME!\n"; 
+  std::cout << "IKT starting in createAdvDiffSolverAppDiscME!\n"; 
   //IKT 1/7/2025 TODO: fill in this function
   /*auto const              subdomain      = 1;
   Teuchos::ParameterList& params         = solver_factories_[subdomain]->getParameters();
@@ -596,7 +597,7 @@ SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double co
 
   // After the initial run, we will do restarts from the previously written Exodus output file.
   // Change input Exodus file to previous thermal Exodus output file, for restarts.
-  disc_params.set<std::string>("Exodus Input File Name", prev_thermal_exo_outfile_name_);
+  disc_params.set<std::string>("Exodus Input File Name", prev_poisson_exo_outfile_name_);
   if (!disc_params.isParameter("Disable Exodus Output Initial Time")) {
     disc_params.set<bool>("Disable Exodus Output Initial Time", true);
   }
@@ -658,10 +659,10 @@ SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double co
   stk_mesh_structs_[subdomain]      = abs_stk_mesh_struct_rcp;
   model_evaluators_[subdomain]      = solver_factories_[subdomain]->returnModel();
   curr_x_[subdomain]                = Teuchos::null;
-  prev_mechanical_exo_outfile_name_ = filename;
+  prev_advdiff_exo_outfile_name_ = filename;
   // Delete previously-written Exodus files to not have inundation of output files
   if ((file_index % output_interval_) != 0) {
-    deleteParallel(prev_thermal_exo_outfile_name_, comm_);
+    deleteParallel(prev_poisson_exo_outfile_name_, comm_);
   }
   */
 }
@@ -1006,7 +1007,7 @@ SequentialCoupling::AdvanceAdvDiff(
     // Check whether there was adaptation by testing whether an adapted mesh exists,
     // and if so, rename it.
     if (fileExistsParallel(tmp_adapt_filename, comm_) == true) {
-      renameParallel(tmp_adapt_filename, prev_mechanical_exo_outfile_name_, comm_);
+      renameParallel(tmp_adapt_filename, prev_advdiff_exo_outfile_name_, comm_);
     }
 
     // Check whether solver did OK.

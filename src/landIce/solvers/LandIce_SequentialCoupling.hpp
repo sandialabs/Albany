@@ -179,9 +179,9 @@ class SequentialCoupling : public Thyra::ResponseOnlyModelEvaluatorBase<ST>
   mutable std::vector<Teuchos::RCP<Thyra::VectorBase<ST>>>     this_xdot_;
 
   // variable with previous thermal Exodus output file, for mechanical restarts
-  mutable std::string prev_thermal_exo_outfile_name_{""};
+  mutable std::string prev_poisson_exo_outfile_name_{""};
   // variable with previous mechanical Exodus output file, for thermal restarts
-  mutable std::string prev_mechanical_exo_outfile_name_{""};
+  mutable std::string prev_advdiff_exo_outfile_name_{""};
 
   mutable std::vector<bool>             do_outputs_;
   mutable std::vector<bool>             do_outputs_init_;

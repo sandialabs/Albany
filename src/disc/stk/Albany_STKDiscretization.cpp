@@ -81,6 +81,9 @@ STKDiscretization::STKDiscretization(
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }
   }
+  const bool disable_init_exo_output = discParams_->get<bool>("Disable Exodus Output Initial Time", false);
+  if (disable_init_exo_output == true) output_initial_soln_to_exo_file = false;
+
 }
 
 STKDiscretization::~STKDiscretization()
@@ -795,28 +798,31 @@ STKDiscretization::writeSolutionToFile(
   if ((stkMeshStruct->exoOutput &&
       !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
       (force_write_solution == true) ) {
-    double time_label = monotonicTimeLabel(time);
+    // Skip this write if outputInterval == 0 and output_initial_soln_to_exo_file == false
+    if ((output_initial_soln_to_exo_file == true) || (outputInterval > 0)) {
+      double time_label = monotonicTimeLabel(time);
 
-    mesh_data->begin_output_step(outputFileIdx, time_label);
-    int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
-    // Writing mesh global variables
-    auto fc = stkMeshStruct->getFieldContainer();
-    for (auto& it : fc->getMeshVectorStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
-    }
-    for (const auto& it : fc->getMeshScalarIntegerStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
-    }
-    for (const auto& it : fc->getMeshScalarInteger64States()) {
-      mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
-    }
-    mesh_data->end_output_step(outputFileIdx);
+      mesh_data->begin_output_step(outputFileIdx, time_label);
+      int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
+      // Writing mesh global variables
+      auto fc = stkMeshStruct->getFieldContainer();
+      for (auto& it : fc->getMeshVectorStates()) {
+        mesh_data->write_global(outputFileIdx, it.first, it.second);
+      }
+      for (const auto& it : fc->getMeshScalarIntegerStates()) {
+        mesh_data->write_global(outputFileIdx, it.first, it.second);
+      }
+      for (const auto& it : fc->getMeshScalarInteger64States()) {
+        mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
+      }
+      mesh_data->end_output_step(outputFileIdx);
 
-    if (comm->getRank() == 0) {
-      *out << "STKDiscretization::writeSolutionToFile: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " << out_step << " in file "
-           << stkMeshStruct->exoOutFile << std::endl;
+      if (comm->getRank() == 0) {
+        *out << "STKDiscretization::writeSolutionToFile: writing time " << time;
+        if (time_label != time) *out << " with label " << time_label;
+        *out << " to index " << out_step << " in file "
+             << stkMeshStruct->exoOutFile << std::endl;
+      }
     }
   }
   outputInterval++;
@@ -857,28 +863,32 @@ STKDiscretization::writeSolutionMVToFile(
   if ((stkMeshStruct->exoOutput &&
       !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
       (force_write_solution == true) ) {
-    double time_label = monotonicTimeLabel(time);
+    // Skip this write if outputInterval == 0 and output_initial_soln_to_exo_file == false
+    if ((output_initial_soln_to_exo_file == true) || (outputInterval > 0)) {
 
-    mesh_data->begin_output_step(outputFileIdx, time_label);
-    int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
-    // Writing mesh global variables
-    auto fc = stkMeshStruct->getFieldContainer();
-    for (auto& it : fc->getMeshVectorStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
-    }
-    for (const auto& it : fc->getMeshScalarIntegerStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
-    }
-    for (const auto& it : fc->getMeshScalarInteger64States()) {
-      mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
-    }
-    mesh_data->end_output_step(outputFileIdx);
+      double time_label = monotonicTimeLabel(time);
 
-    if (comm->getRank() == 0) {
-      *out << "STKDiscretization::writeSolutionMVToFile: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " << out_step << " in file "
-           << stkMeshStruct->exoOutFile << std::endl;
+      mesh_data->begin_output_step(outputFileIdx, time_label);
+      int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
+      // Writing mesh global variables
+      auto fc = stkMeshStruct->getFieldContainer();
+      for (auto& it : fc->getMeshVectorStates()) {
+        mesh_data->write_global(outputFileIdx, it.first, it.second);
+      }
+      for (const auto& it : fc->getMeshScalarIntegerStates()) {
+        mesh_data->write_global(outputFileIdx, it.first, it.second);
+      }
+      for (const auto& it : fc->getMeshScalarInteger64States()) {
+        mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
+      }
+      mesh_data->end_output_step(outputFileIdx);
+
+      if (comm->getRank() == 0) {
+        *out << "STKDiscretization::writeSolutionMVToFile: writing time " << time;
+        if (time_label != time) *out << " with label " << time_label;
+        *out << " to index " << out_step << " in file "
+             << stkMeshStruct->exoOutFile << std::endl;
+      }
     }
   }
   outputInterval++;

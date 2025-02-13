@@ -45,6 +45,8 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
  , m_disc_params (discParams)
 {
   sideSetDiscretizations["basalside"] = basal_disc;
+  const bool disable_init_exo_output = discParams->get<bool>("Disable Exodus Output Initial Time", false);
+  if (disable_init_exo_output == true) output_initial_soln_to_exo_file = false;
 }
 
 void
