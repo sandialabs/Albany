@@ -293,16 +293,19 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   constexpr auto ALL = Kokkos::ALL();
-  const auto dgdp_data = Albany::getNonconstLocalData(dgdp);
+  const auto dgdp_data = Albany::getNonconstDeviceData(dgdp);
   const int  ws = workset.wsIndex;
   const int num_deriv = numNodes;
 
-  const auto elem_lids     = workset.disc->getElementLIDs_host(ws);
+  const auto elem_lids_all = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_all.dev(),ws,ALL);
+
   const auto param = workset.distParamLib->get(workset.dist_param_deriv_name);
-  const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().host();
+  const auto p_elem_dof_lids = param->get_dof_mgr()->elem_dof_lids().dev();
 
   // Loop over cells in workset
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(p_elem_dof_lids,elem_LID,ALL);
 
@@ -314,11 +317,11 @@ evaluateFields(typename Traits::EvalData workset)
         // If param defined at this node, update dg/dp
         const int row = dof_lids(deriv);
         if(row >=0){
-          dgdp_data[res][row] += this->local_response(cell, res).dx(deriv);
+          KU::atomic_add<ExecutionSpace>(&dgdp_data(row,res), this->local_response(cell, res).dx(deriv));
         }
       } // deriv
     } // response
-  } // cell
+  }); // cell
 }
 
 template<typename Traits>
@@ -327,10 +330,14 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   auto g = workset.g;
   if (g != Teuchos::null) {
-    auto g_nonconstView = Albany::getNonconstLocalData(g);
-    for (std::size_t res=0; res<this->global_response.size(); ++res) {
-      g_nonconstView[res] = this->global_response[res].val();
-    }
+    auto g_nonconstView = Albany::getNonconstDeviceData(g);
+    MDFieldVectorRight<const ScalarT> gr(this->global_response);
+    global_response_reader = gr;
+    Kokkos::parallel_for(this->getName(),
+                        Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
+                        KOKKOS_CLASS_LAMBDA(const int i) {
+      g_nonconstView(i) = global_response_reader[i].val();
+    });
   }
 
   auto dgdp = workset.dgdp;
@@ -478,18 +485,18 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // Extract multivectors raw data
-  using mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>;
+  using mv_data_t = Albany::ThyraMVDeviceView<ST>;
   mv_data_t hess_vec_prod_g_xx_data, hess_vec_prod_g_xp_data,
                  hess_vec_prod_g_px_data, hess_vec_prod_g_pp_data;
 
   if (!hess_vec_prod_g_xx.is_null())
-    hess_vec_prod_g_xx_data = Albany::getNonconstLocalData(hess_vec_prod_g_xx);
+    hess_vec_prod_g_xx_data = Albany::getNonconstDeviceData(hess_vec_prod_g_xx);
   if (!hess_vec_prod_g_xp.is_null())
-    hess_vec_prod_g_xp_data = Albany::getNonconstLocalData(hess_vec_prod_g_xp);
+    hess_vec_prod_g_xp_data = Albany::getNonconstDeviceData(hess_vec_prod_g_xp);
   if (!hess_vec_prod_g_px.is_null())
-    hess_vec_prod_g_px_data = Albany::getNonconstLocalData(hess_vec_prod_g_px);
+    hess_vec_prod_g_px_data = Albany::getNonconstDeviceData(hess_vec_prod_g_px);
   if (!hess_vec_prod_g_pp.is_null())
-    hess_vec_prod_g_pp_data = Albany::getNonconstLocalData(hess_vec_prod_g_pp);
+    hess_vec_prod_g_pp_data = Albany::getNonconstDeviceData(hess_vec_prod_g_pp);
 
   const bool do_xx        = !hess_vec_prod_g_xx.is_null();
   const bool do_xp        = !hess_vec_prod_g_xp.is_null();
@@ -500,10 +507,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Get some data from the discretization
   const auto param_name = workset.dist_param_deriv_name;
-  Albany::DualView<int**>::host_t p_elem_dof_lids;
+  Albany::DualView<const int**>::dev_t p_elem_dof_lids;
   if (do_dist_pp || do_dist_px) {
     auto dist_param = workset.distParamLib->get(param_name);
-    p_elem_dof_lids = dist_param->get_dof_mgr()->elem_dof_lids().host();
+    p_elem_dof_lids = dist_param->get_dof_mgr()->elem_dof_lids().dev();
   }
 
   const auto& dof_mgr   = workset.disc->getDOFManager();
@@ -511,67 +518,74 @@ evaluateFields(typename Traits::EvalData workset)
   const int  ws = workset.wsIndex;
   const int neq = dof_mgr->getNumFields();
 
-  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto& elem_lids     = workset.disc->getElementLIDs_host(ws);
+  const size_t num_responses = this->global_response.size();
 
-  for (size_t cell=0; cell<workset.numCells; ++cell) {
-    const auto elem_LID = elem_lids(cell);
+  const int g_px_size = hess_vec_prod_g_px_data.extent(0);
+  const int g_pp_size = hess_vec_prod_g_pp_data.extent(0);
 
-    // Loop over responses
-    for (size_t res=0; res<this->global_response.size(); ++res) {
-      auto lresp = this->local_response(cell, res);
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().dev();
+  const auto elem_lids_all  = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_all.dev(),ws,Kokkos::ALL);
 
-      if (do_xx || do_xp) {
-        // Loop over equations per node
-        for (int eq_dof=0; eq_dof<neq; eq_dof++) {
-
-          // Get offsets of this dof in the lids array
-          const auto offsets = dof_mgr->getGIDFieldOffsets(eq_dof);
-
-          const int num_nodes = offsets.size();
-
+  if (do_xx || do_xp) {
+    for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+      // Get offsets of this dof in the lids array
+      auto offsets = dof_mgr->getGIDFieldOffsetsKokkos(eq_dof);
+      const int num_nodes = offsets.size();
+      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                         KOKKOS_CLASS_LAMBDA(const int& cell) {
+        const auto elem_LID = elem_lids(cell);
+        // Loop over responses
+        for (size_t res=0; res<num_responses; ++res) {
+          auto lresp = this->local_response(cell, res);
           for (int i=0; i<num_nodes; ++i) {
 
-            const int deriv   = offsets[i];
+            const int deriv   = offsets(i);
             const int dof_lid = elem_dof_lids(elem_LID,deriv);
-
+            
             if (do_xx)
-              hess_vec_prod_g_xx_data[res][dof_lid] += lresp.dx(deriv).dx(0);
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xx_data(dof_lid,res)), lresp.dx(deriv).dx(0));
 
             if (do_xp)
-              hess_vec_prod_g_xp_data[res][dof_lid] += lresp.dx(deriv).dx(0);
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_xp_data(dof_lid,res)), lresp.dx(deriv).dx(0));
           }
         }
-      }
-
-      if (do_dist_px) {
-        for (int deriv=0; deriv<numNodes; ++deriv) {
-          const int row = p_elem_dof_lids(elem_LID,deriv);
-          if (row>=0) {
-            hess_vec_prod_g_px_data[res][row] += lresp.dx(deriv).dx(0);
-          }
-        }
-      }
-      if (do_dist_pp) {
-        for (int deriv=0; deriv<numNodes; ++deriv) {
-          const int row = p_elem_dof_lids(elem_LID,deriv);
-          if (row>=0) {
-            hess_vec_prod_g_pp_data[res][row] += lresp.dx(deriv).dx(0);
-          }
-        }
-      }
-
-      if (do_scalar_px) {
-        for (int deriv=0; deriv<hess_vec_prod_g_px_data[res].size(); ++deriv) {
-          hess_vec_prod_g_px_data[res][deriv] += lresp.dx(deriv).dx(0);
-        }
-      }
-      if (do_scalar_pp) {
-        for (int deriv=0; deriv<hess_vec_prod_g_pp_data[res].size(); ++deriv) {
-          hess_vec_prod_g_pp_data[res][deriv] += lresp.dx(deriv).dx(0);
-        }
-      }
+      });
     }
+  } else {
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                         KOKKOS_CLASS_LAMBDA(const int& cell) {
+      const auto elem_LID = elem_lids(cell);
+      for (size_t res=0; res<num_responses; ++res) {
+        auto lresp = this->local_response(cell, res);
+        if (do_dist_px) {
+          for (int deriv=0; deriv<numNodes; ++deriv) {
+            const int row = p_elem_dof_lids(elem_LID,deriv);
+            if (row>=0) {
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_px_data(row,res)), lresp.dx(deriv).dx(0));
+            }
+          }
+        }
+        if (do_dist_pp) {
+          for (int deriv=0; deriv<numNodes; ++deriv) {
+            const int row = p_elem_dof_lids(elem_LID,deriv);
+            if (row>=0) {
+              KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_pp_data(row,res)), lresp.dx(deriv).dx(0));
+            }
+          }
+        }
+        if (do_scalar_px) {
+          for (int deriv=0; deriv<g_px_size; ++deriv) {
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_px_data(deriv,res)), lresp.dx(deriv).dx(0));
+          }
+        }
+        if (do_scalar_pp) {
+          for (int deriv=0; deriv<g_pp_size; ++deriv) {
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_g_pp_data(deriv,res)), lresp.dx(deriv).dx(0));
+          }
+        }
+      }
+    });
   }
 }
 
@@ -588,10 +602,14 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   const auto g = workset.g;
   if (g != Teuchos::null) {
-    const auto g_nonconstView = Albany::getNonconstLocalData(g);
-    for (size_t res=0; res<this->global_response.size(); res++) {
-      g_nonconstView[res] = this->global_response[res].val().val();
-    }
+    Albany::ThyraVDeviceView<ST> g_nonconstView = Albany::getNonconstDeviceData(g);
+    MDFieldVectorRight<const ScalarT> gr(this->global_response);
+    global_response_reader = gr;
+    Kokkos::parallel_for(this->getName(),
+                        Kokkos::RangePolicy<ExecutionSpace>(0,this->global_response.size()),
+                        KOKKOS_CLASS_LAMBDA(const int i) {
+      g_nonconstView(i) = this->global_response[i].val().val();
+    });
   }
 
   const auto& hws = workset.hessianWorkset;

@@ -87,6 +87,9 @@ public:
 private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
   const int fieldLevel;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 
@@ -111,6 +114,9 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 
@@ -124,6 +130,9 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
   const int fieldLevel;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 // **************************************************************
@@ -419,6 +428,9 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::HessianVec::ParamScalarT ParamScalarT;
   const int fieldLevel;
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 } // namespace PHAL

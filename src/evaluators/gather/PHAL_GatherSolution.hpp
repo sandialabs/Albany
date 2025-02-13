@@ -297,6 +297,10 @@ private:
   using Base::get_ref_dotdot;
   using Base::numFields;
   using Base::m_fields_offsets;
+
+protected:
+  using ExecutionSpace = typename PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 // **************************************************************

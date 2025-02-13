@@ -55,6 +55,10 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
 
   layout->dimensions(dims);
 
+  // std::vector isn't accessible on device
+  dims_2 = (fieldDim >= 1) ? dims[2] : 0;
+  dims_3 = (fieldDim >= 2) ? dims[3] : 0;
+
   std::string sideSetNameForMetric =
       (plist->isParameter("Is Side Set Planar") && plist->get<bool>("Is Side Set Planar")) ?
           sideSetName + "_planar" :
@@ -167,15 +171,7 @@ evaluateFields(typename Traits::EvalData workset)
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
-
-  if (fieldDim == 1) {
-    diff_1.resize(dims[2]);
-  } else if (fieldDim == 2) {
-    diff_2.resize(dims[2]);
-    for(size_t i=0; i<dims[2]; i++)
-      diff_2[i].resize(dims[3]);
-  }
+  Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {
@@ -184,10 +180,10 @@ evaluateFields(typename Traits::EvalData workset)
     switch (fieldDim)
     {
       case 0:
-        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-        {
+        Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -200,46 +196,52 @@ evaluateFields(typename Traits::EvalData workset)
             sum += sq * w_measure(sideSet_idx,qp);
           }
 
-          this->local_response_eval(cell, 0) = sum*scaling;
-          this->global_response_eval(0) += sum*scaling;
-        }
+          this->local_response_eval(cell,0) = sum*scaling;
+          KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
+        });
         break;
       case 1:
-        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-        {
+        Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+
+          ScalarT diff_1[8] = {0};
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
           {
             ScalarT sq = 0;
             RealType rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : 1.0;
-            // Computing squared difference at qp
-            // Precompute differentce and access fields only n times (not n^2)
-            for (size_t i=0; i<dims[2]; ++i)
+
+            for (size_t i=0; i<dims_2; ++i)
               diff_1[i] = sourceField(sideSet_idx,qp,i) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i));
 
             if(isFieldGradient){
-              for (int i=0; i<sideDim; ++i)
-                for (int j=0; j<sideDim; ++j)
+              for (int i=0; i<sideDim; ++i) {
+                for (int j=0; j<sideDim; ++j) {
                   sq += diff_1[i]*metric(sideSet_idx,qp,i,j)*diff_1[j];
+                }
+              }
             } else {
-              for (size_t i=0; i<dims[2]; ++i)
+              for (size_t i=0; i<dims_2; ++i) {
                 sq += diff_1[i]*diff_1[i];
+              }
             }
             sum += sq / rms2 * w_measure(sideSet_idx,qp);
           }
 
-          this->local_response_eval(cell, 0) = sum*scaling;
-          this->global_response_eval(0) += sum*scaling;
-        }
+          this->local_response_eval(cell,0) = sum*scaling;
+          KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
+        });
         break;
       case 2:
-        for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-        {
+        Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+
+          ScalarT diff_2[8][8] = {0};
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -248,27 +250,27 @@ evaluateFields(typename Traits::EvalData workset)
             RealType rms2 = rmsScaling ? std::pow(rootMeanSquareField(sideSet_idx,qp),2) : 1.0;
             // Computing squared difference at qp
             // Precompute differentce and access fields only n^2 times (not n^4)
-            for (size_t i=0; i<dims[2]; ++i)
-              for (size_t j=0; j<dims[3]; ++j)
+            for (size_t i=0; i<dims_2; ++i)
+              for (size_t j=0; j<dims_3; ++j)
                 diff_2[i][j] = sourceField(sideSet_idx,qp,i,j) - (target_value ? target_value_val : targetField(sideSet_idx,qp,i,j));
 
             if(isFieldGradient){
-              for (size_t i=0; i<dims[2]; ++i)
+              for (size_t i=0; i<dims_2; ++i)
                 for (int j=0; j<sideDim; ++j)
                   for (int k=0; k<sideDim; ++k)
                     sq += diff_2[i][j] * metric(sideSet_idx,qp,j,k) * diff_2[i][k];
             } else {
-              for (size_t i=0; i<dims[2]; ++i)
-                for (size_t j=0; j<dims[3]; ++j)
+              for (size_t i=0; i<dims_2; ++i)
+                for (size_t j=0; j<dims_3; ++j)
                   sq += diff_2[i][j] * diff_2[i][j];
             }
 
             sum += sq / rms2 * w_measure(sideSet_idx,qp);
           }
 
-          this->local_response_eval(cell, 0) = sum*scaling;
-          this->global_response_eval(0) += sum*scaling;
-        }
+          this->local_response_eval(cell,0) = sum*scaling;
+          KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
+        });
         break;
     }
 

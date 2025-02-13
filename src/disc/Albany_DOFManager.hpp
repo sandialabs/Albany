@@ -66,11 +66,15 @@ public:
   using panzer::DOFManager::getGIDFieldOffsets_closure;
   const std::vector<int>&
   getGIDFieldOffsetsSubcell (int fieldNum, int subcell_dim, int subcell_pos) const;
+  Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,int,decltype(Kokkos::ALL)>
+  getGIDFieldOffsetsSubcellKokkos (int fieldNum, int subcell_dim, int subcell_pos) const;
 
   // Special case of the above, for subcell being the top or bottom side
   // NOTE: only for quad/hexa/wedge
   const std::vector<int>&
   getGIDFieldOffsetsSide (int fieldNum, int side) const;
+  Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,int,decltype(Kokkos::ALL)>
+  getGIDFieldOffsetsSideKokkos (int fieldNum, int side) const;
 
   // If side!=orderedAsInSide, this version returns side offsets ordered
   // in such a way that off[i] on side=$side is directly above/below
@@ -78,6 +82,8 @@ public:
   // This makes sense ONLY IF $side and $orderAsInSide are both in {top,bot}
   const std::vector<int>&
   getGIDFieldOffsetsSide (int fieldNum, int side, int orderAsInSide) const;
+  Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,int,decltype(Kokkos::ALL)>
+  getGIDFieldOffsetsSideKokkos (int fieldNum, int side, int orderAsInSide) const;
 
   const std::string& part_name () const {
     return m_part_name;
@@ -123,10 +129,15 @@ private:
   DualView<const int**>                     m_elem_dof_lids;
 
   using vec4int = std::vector<std::vector<std::vector<std::vector<int>>>>;
+
+  // Convert DOF vec4ints to Kokkos Views for device access
+  void convertVecsToViews (vec4int& vec, Kokkos::View<int****, PHX::Device>& view, std::string view_name);
+
   // m_subcell_closures[ifield][dim][ord] is the vector of the offsets of
   // field $ifield on the $ord-th subcell of dimension $dim. More precisely,
   // it's the closure of all offsets on all entities belonging to that subcell
   vec4int       m_subcell_closures;
+  Kokkos::View<int****, PHX::Device> m_subcell_closures_view;
 
   // Shortcut for location of top/bot sides in the cell list of sides.
   bool m_top_bot_well_defined = false;
@@ -145,6 +156,7 @@ private:
   //    dof at offset m_subcell_closures[F][side_dim][top]
   // NOTE: this 
   vec4int       m_side_closure_orderd_as_side;
+  Kokkos::View<int****, PHX::Device> m_side_closure_orderd_as_side_view;
 
   Teuchos::RCP<ConnManager>           m_conn_mgr;
 

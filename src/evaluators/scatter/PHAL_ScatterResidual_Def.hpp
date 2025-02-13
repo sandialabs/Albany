@@ -394,7 +394,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // In case the parameter has not been gathered, e.g. parameter
   // is used only in Dirichlet conditions.
-  if(workset.local_Vp[0].size() == 0) { return; }
+  if(workset.local_Vp.size() == 0) { return; }
 
   this->gather_fields_offsets (workset.disc->getDOFManager());
 
@@ -412,6 +412,8 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto eq_offset = this->offset;
 
+  const auto& local_Vp = workset.local_Vp;
+
   if (trans) {
     const auto& pname        = workset.dist_param_deriv_name;
     const auto& p_dof_mgr    = workset.disc->getDOFManager(pname);
@@ -420,7 +422,6 @@ evaluateFields(typename Traits::EvalData workset)
     const int num_deriv = numNodes;//local_Vp.size()/numFields;
     for (size_t cell=0; cell<workset.numCells; ++cell) {
       const auto  elem_LID = elem_lids(cell);
-      const auto& local_Vp = workset.local_Vp[cell];
       const auto  dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
       for (int i=0; i<num_deriv; ++i) {
@@ -431,7 +432,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (int node=0; node<numNodes; ++node) {
               for (int eq=0; eq<numFields; ++eq) {
                 auto res = get_resid(cell,node,eq);
-                val += res.dx(i)*local_Vp[fields_offsets(node,eq+eq_offset)][col];
+                val += res.dx(i)*local_Vp(cell,fields_offsets(node,eq+eq_offset),col);
               }
             }
             fpV_data[col][row] += val;
@@ -441,8 +442,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else {
     for (size_t cell=0; cell<workset.numCells; ++cell) {
-      const auto& local_Vp  = workset.local_Vp[cell];
-      const int   num_deriv = local_Vp.size();
+      const int   num_deriv = local_Vp.extent(1);
       const auto  elem_LID  = elem_lids(cell);
       const auto  dof_lids  = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
@@ -453,7 +453,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int col=0; col<num_cols; ++col) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
-              val += res.dx(i)*local_Vp[i][col];
+              val += res.dx(i)*local_Vp(cell,i,col);
             }
             fpV_data[col][row] += val;
           }
@@ -481,7 +481,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // In case the parameter has not been gathered, e.g. parameter
   // is used only in Dirichlet conditions.
-  if(workset.local_Vp[0].size() == 0) { return; }
+  if(workset.local_Vp.size() == 0) { return; }
 
   const auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
   if(level_it == extruded_params_levels->end()) {
@@ -495,15 +495,21 @@ evaluateFields(typename Traits::EvalData workset)
   const int ws = workset.wsIndex;
 
   const auto fpV = workset.fpV;
-  const auto fpV_data = Albany::getNonconstLocalData(fpV);
+  const auto fpV_data = Albany::getNonconstDeviceData(fpV);
 
   const bool trans    = workset.transpose_dist_param_deriv;
   const int  num_cols = workset.Vp->domain()->dim();
 
   const auto dof_mgr   = workset.disc->getDOFManager();
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+  const auto elem_lids_ws = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
 
-  const auto resid_offsets = m_fields_offsets.host();
+  const auto resid_offsets = m_fields_offsets.dev();
+
+  const auto& local_Vp = workset.local_Vp;
+
+  const int offset = this->offset;
+  const auto& device_resid = this->device_resid;
 
   if (trans) {
     const auto& cell_layers_data = workset.disc->getMeshStruct()->local_cell_layers_data;
@@ -516,65 +522,90 @@ evaluateFields(typename Traits::EvalData workset)
     const auto node_dof_mgr = workset.disc->getNodeDOFManager();
     const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
     const auto p_dof_mgr = p->get_dof_mgr();
-    const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().host();
-    const auto p_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
-    const auto top_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
-    const auto bot_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
+    const auto p_elem_dof_lids = p->get_dof_mgr()->elem_dof_lids().dev();
+    const auto p_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,field_pos);
+    const auto top_nodes = node_dof_mgr->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
+    const auto bot_nodes = node_dof_mgr->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
 
-    const int num_nodes_side = p_offsets.size();
+    const auto elem_lids_host = Kokkos::subview(elem_lids_ws.host(),ws,Kokkos::ALL);
+
+    const auto layerOrd = cell_layers_data->layerOrd;
+    const auto numHorizEntities = cell_layers_data->numHorizEntities;
+    const auto numLayers = cell_layers_data->numLayers;
+
+    // Note: The DOFManager stores offsets in nested vectors of non-uniform length. In order to
+    // make the offsets available on device, they were converted to a single kokkos view large enough
+    // to hold all of the vectors. A side effect is that array bounds can't be obtained from the kokkos view
+    // extents and have to be obtained from the non-kokkos offsets vector or from another source.
+    const int num_nodes_side = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos).size();
+
     // Pick a cell layer that contains the field level. Can be same as fieldLevel,
     // except for the last level.
-    for (size_t cell=0; cell<workset.numCells; ++cell) {
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
       const auto elem_LID = elem_lids(cell);
-      const auto& local_Vp = workset.local_Vp[cell];
 
-      const LO basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
-      const LO field_elem_LID = cell_layers_data->getId(basal_elem_LID,fieldLayer);
-      const auto p_elem_gids = p->get_dof_mgr()->getElementGIDs(field_elem_LID);
+      const LO basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+      const LO field_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                           basal_elem_LID * numLayers + fieldLayer;
 
-      auto do_derivatives = [&](const std::vector<int>& derivs) {
-        for (int i=0; i<num_nodes_side; ++i) {
-          const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[i]);
-          if (row<0) continue;
+      // Bottom nodes
+      for (int i=0; i<num_nodes_side; ++i) {
+        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(i));
+        if (row<0) continue;
 
-          const int deriv = derivs[i];
-          for (int col=0; col<num_cols; ++col) {
-            double val = 0;
-            for (int node=0; node<numNodes; ++node) {
-              for (int eq=0; eq<numFields; ++eq) {
-                auto res = get_resid(cell,node,eq);
-                val += res.dx(deriv)*local_Vp[resid_offsets(node,eq+this->offset)][col];
-              }
+        const int deriv = bot_nodes(i);
+        for (int col=0; col<num_cols; ++col) {
+          double val = 0;
+          for (int node=0; node<numNodes; ++node) {
+            for (int eq=0; eq<numFields; ++eq) {
+              auto res = this->device_resid.get(cell,node,eq);
+              val += res.dx(deriv)*local_Vp(cell,resid_offsets(node,eq+this->offset),col);
             }
-            fpV_data[col][row] += val;
           }
+          KU::atomic_add<ExecutionSpace>(&(fpV_data(row,col)), val);
         }
-      };
-      do_derivatives(bot_nodes);
-      do_derivatives(top_nodes);
-    }
+      }
+      // Top nodes
+      for (int i=0; i<num_nodes_side; ++i) {
+        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(i));
+        if (row<0) continue;
+
+        const int deriv = top_nodes(i);
+        for (int col=0; col<num_cols; ++col) {
+          double val = 0;
+          for (int node=0; node<numNodes; ++node) {
+            for (int eq=0; eq<numFields; ++eq) {
+              auto res = this->device_resid.get(cell,node,eq);
+              val += res.dx(deriv)*local_Vp(cell,resid_offsets(node,eq+this->offset),col);
+            }
+          }
+          KU::atomic_add<ExecutionSpace>(&(fpV_data(row,col)), val);
+        }
+      }
+    });
   } else {
     constexpr auto ALL = Kokkos::ALL();
-    const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
-    for (size_t cell=0; cell<workset.numCells; ++cell) {
-      const auto  elem_LID  = elem_lids(cell);
-      const auto& local_Vp  = workset.local_Vp[cell];
-      const int   num_deriv = local_Vp.size();
-      const auto  dof_lids  = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-
+    const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
+    const int num_deriv = local_Vp.extent(1);
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
+      const auto elem_LID = elem_lids(cell);
+      
+      const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
       for (int node=0; node<numNodes; ++node) {
         for (int eq=0; eq<numFields; ++eq) {
-          auto res = get_resid(cell,node,eq);
-          const int row = dof_lids(resid_offsets(node,eq+this->offset));
+          auto res = device_resid.get(cell,node,eq);
+          const int row = dof_lids(resid_offsets(node,eq+offset));
           for (int col=0; col<num_cols; ++col) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
-              val += res.dx(i)*local_Vp[i][col];
-            fpV_data[col][row] += val;
+              val += res.dx(i)*local_Vp(cell,i,col);
+            KU::atomic_add<ExecutionSpace>(&(fpV_data(row,col)), val);
           }
         }
       }
-    }
+    });
   }
 }
 
@@ -622,20 +653,20 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto f_multiplier = workset.hessianWorkset.overlapped_f_multiplier;
 
-  using mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST> >;
+  using mv_data_t = Albany::ThyraMVDeviceView<ST>;
   mv_data_t hess_vec_prod_f_xx_data, hess_vec_prod_f_xp_data,
             hess_vec_prod_f_px_data, hess_vec_prod_f_pp_data;
 
-  auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);
+  auto f_multiplier_data = Albany::getNonconstDeviceData(f_multiplier);
 
   if(f_xx_is_active)
-    hess_vec_prod_f_xx_data = Albany::getNonconstLocalData(hess_vec_prod_f_xx);
+    hess_vec_prod_f_xx_data = Albany::getNonconstDeviceData(hess_vec_prod_f_xx);
   if(f_xp_is_active)
-    hess_vec_prod_f_xp_data = Albany::getNonconstLocalData(hess_vec_prod_f_xp);
+    hess_vec_prod_f_xp_data = Albany::getNonconstDeviceData(hess_vec_prod_f_xp);
   if(f_px_is_active)
-    hess_vec_prod_f_px_data = Albany::getNonconstLocalData(hess_vec_prod_f_px);
+    hess_vec_prod_f_px_data = Albany::getNonconstDeviceData(hess_vec_prod_f_px);
   if(f_pp_is_active)
-    hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
+    hess_vec_prod_f_pp_data = Albany::getNonconstDeviceData(hess_vec_prod_f_pp);
 
   constexpr auto ALL = Kokkos::ALL();
   const int ws = workset.wsIndex;
@@ -645,27 +676,33 @@ evaluateFields(typename Traits::EvalData workset)
   // If the parameter associated to workset.dist_param_deriv_name is a distributed parameter,
   // the function needs to access the associated dof manager to deduce the IDs of the entries
   // of the resulting vector.
-  Albany::DualView<const int**>::host_t p_elem_dof_lids;
+  Albany::DualView<const int**>::dev_t p_elem_dof_lids;
   if(l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
     auto p_dof_mgr = workset.disc->getDOFManager(workset.dist_param_deriv_name);
-    p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+    p_elem_dof_lids = p_dof_mgr->elem_dof_lids().dev();
   }
 
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
-  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto elem_lids_ws = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
 
-  const auto& fields_offsets = m_fields_offsets.host();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
+
+  const size_t hess_vec_prod_f_px_data_size = hess_vec_prod_f_px_data.extent(0);
+  const size_t hess_vec_prod_f_pp_data_size = hess_vec_prod_f_pp_data.extent(0);
+
+  const auto& fields_offsets = m_fields_offsets.dev();
   const int eq_offset = this->offset;
-  for (size_t cell=0; cell<workset.numCells; ++cell) {
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     ScalarT value=0.0;
     for (int node=0; node<numNodes; ++node) {
       for (int eq=0; eq<numFields; ++eq) {
-        auto res = get_resid(cell,node,eq);
+        auto res = this->device_resid.get(cell,node,eq);
         const int row = dof_lids(fields_offsets(node,eq+eq_offset));
 
-        value += res * f_multiplier_data[row];
+        value += res * f_multiplier_data(row);
       }
     }
 
@@ -675,9 +712,9 @@ evaluateFields(typename Traits::EvalData workset)
           const int row = dof_lids(fields_offsets(node,eq+eq_offset));
           const auto& dx = value.dx(fields_offsets(node,eq)).dx(0);
           if (f_xx_is_active)
-            hess_vec_prod_f_xx_data[0][row] += dx;
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_xx_data(row,0)), dx);
           if (f_xp_is_active)
-            hess_vec_prod_f_xp_data[0][row] += dx;
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_xp_data(row,0)), dx);
         }
       }
 
@@ -686,9 +723,9 @@ evaluateFields(typename Traits::EvalData workset)
         if(row >=0){
           const auto& dx = value.dx(node).dx(0);
           if(f_px_is_active)
-            hess_vec_prod_f_px_data[0][row] += dx;
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_px_data(row,0)), dx);
           if(f_pp_is_active)
-            hess_vec_prod_f_pp_data[0][row] += dx;
+            KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_pp_data(row,0)), dx);
         }
       }
     } // node
@@ -698,13 +735,13 @@ evaluateFields(typename Traits::EvalData workset)
     // the nodes:
     if(!l1_is_distributed && (f_px_is_active || f_pp_is_active)) {
       if(f_px_is_active)
-        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_px_data[0].size(); ++l1_i)
-          hess_vec_prod_f_px_data[0][l1_i] += value.dx(l1_i).dx(0);
+        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_px_data_size; ++l1_i)
+          KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_px_data(l1_i,0)), value.dx(l1_i).dx(0));
       if(f_pp_is_active)
-        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_pp_data[0].size(); ++l1_i)
-          hess_vec_prod_f_pp_data[0][l1_i] += value.dx(l1_i).dx(0);
+        for (unsigned int l1_i=0; l1_i<hess_vec_prod_f_pp_data_size; ++l1_i)
+          KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_pp_data(l1_i,0)), value.dx(l1_i).dx(0));
     }
-  } // cell
+  }); // cell
 }
 
 // **********************************************************************
@@ -755,7 +792,8 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   constexpr auto ALL = Kokkos::ALL();
   const int ws = workset.wsIndex;
-  const auto elem_lids = workset.disc->getElementLIDs_host(ws);
+  const auto elem_lids_ws = workset.disc->getWsElementLIDs();
+  const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
 
   const auto& hws = workset.hessianWorkset;
 
@@ -764,7 +802,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   // Here we scatter the *local* response derivative
   const auto f_multiplier = hws.overlapped_f_multiplier;
-  const auto f_multiplier_data = Albany::getNonconstLocalData(f_multiplier);
+  const auto f_multiplier_data = Albany::getNonconstDeviceData(f_multiplier);
 
   auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
   int fieldLevel = level_it->second;
@@ -772,13 +810,13 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   const auto hess_vec_prod_f_px = hws.overlapped_hess_vec_prod_f_px;
   const auto hess_vec_prod_f_pp = hws.overlapped_hess_vec_prod_f_pp;
 
-  using mv_data_t = Teuchos::ArrayRCP<Teuchos::ArrayRCP<ST>>;
+  using mv_data_t = Albany::ThyraMVDeviceView<ST>;
   mv_data_t hess_vec_prod_f_px_data, hess_vec_prod_f_pp_data;
 
   if(f_px_is_active)
-    hess_vec_prod_f_px_data = Albany::getNonconstLocalData(hess_vec_prod_f_px);
+    hess_vec_prod_f_px_data = Albany::getNonconstDeviceData(hess_vec_prod_f_px);
   if(f_pp_is_active)
-    hess_vec_prod_f_pp_data = Albany::getNonconstLocalData(hess_vec_prod_f_pp);
+    hess_vec_prod_f_pp_data = Albany::getNonconstDeviceData(hess_vec_prod_f_pp);
 
   const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
   const int top = layers_data->top_side_pos;
@@ -788,48 +826,65 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   const auto dof_mgr      = workset.disc->getDOFManager();
   const auto p_dof_mgr    = workset.disc->getDOFManager(workset.dist_param_deriv_name);
-  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
+  const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().dev();
 
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
   //       to guarantee corresponding nodes are vertically aligned.
-  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
-  const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
+  const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
   const auto p_offsets   = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
-  const auto numSideNodes = p_offsets.size();
+  const auto numSideNodes = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos).size();
 
-  const auto offsets = m_fields_offsets.host();
-  for (size_t cell=0; cell<workset.numCells; ++cell) {
+  const auto elem_lids_host = Kokkos::subview(elem_lids_ws.host(),ws,Kokkos::ALL);
+
+  const auto layerOrd = layers_data->layerOrd;
+  const auto numHorizEntities = layers_data->numHorizEntities;
+  const auto numLayers = layers_data->numLayers;
+
+  const auto offsets = m_fields_offsets.dev();
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                       KOKKOS_CLASS_LAMBDA(const int& cell) {
     const auto elem_LID = elem_lids(cell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     ScalarT value=0.0;
     for (int node=0; node<numNodes; ++node) {
       for (int eq=0; eq<numFields; ++eq) {
-        const auto res = get_resid(cell,node,eq);
+        const auto res = this->device_resid.get(cell,node,eq);
         const auto lid = dof_lids(offsets(node,eq+this->offset));
 
-        value += res * f_multiplier_data[lid];
+        value += res * f_multiplier_data(lid);
       }
     }
 
-    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
-    const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
-    const auto do_nodes = [&] (const std::vector<int>& offsets) {
-      for (std::size_t node=0; node<numSideNodes; ++node) {
-        const LO row = p_elem_dof_lids(field_elem_LID,p_offsets[node]);
-        if (row>=0) {
-          const auto& dx = value.dx(offsets[node]).dx(0);
-          if (f_px_is_active)
-            hess_vec_prod_f_px_data[0][row] += dx;
-          if (f_pp_is_active)
-            hess_vec_prod_f_pp_data[0][row] += dx;
-        }
-      }
-    };
+    const LO basal_elem_LID = layerOrd ? elem_LID % numHorizEntities : elem_LID / numLayers;
+    const LO field_elem_LID = layerOrd ? basal_elem_LID + fieldLayer*numHorizEntities :
+                                         basal_elem_LID * numLayers + fieldLayer;
 
-    do_nodes (bot_offsets);
-    do_nodes (top_offsets);
-  }
+    // do bot_offsets
+    for (std::size_t node=0; node<numSideNodes; ++node) {
+      const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(node));
+      if (row>=0) {
+        const auto& dx = value.dx(bot_offsets(node)).dx(0);
+        if (f_px_is_active)
+          KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_px_data(row,0)), dx);
+        if (f_pp_is_active)
+          KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_pp_data(row,0)), dx);
+      }
+    }
+
+    // do top_offsets
+    for (std::size_t node=0; node<numSideNodes; ++node) {
+      const LO row = p_elem_dof_lids(field_elem_LID,p_offsets(node));
+      if (row>=0) {
+        const auto& dx = value.dx(top_offsets(node)).dx(0);
+        if (f_px_is_active)
+          KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_px_data(row,0)), dx);
+        if (f_pp_is_active)
+          KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_pp_data(row,0)), dx);
+      }
+    }
+  });
 }
 
 } // namespace PHAL

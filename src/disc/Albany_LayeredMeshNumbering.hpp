@@ -62,7 +62,6 @@ struct LayeredMeshNumbering {
     return layerOrd ? 1 : numLayers;
   }
 
-
   T getColumnId (const T id) const {
     return layerOrd ? id % numHorizEntities : id / numLayers;
   }

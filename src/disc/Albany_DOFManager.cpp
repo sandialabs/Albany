@@ -65,6 +65,11 @@ void DOFManager::build ()
   // 4. Possibly restrict the DOFs list
   restrict (part_name());
 
+  // Allocate/populate nodes view
+  convertVecsToViews (m_subcell_closures, m_subcell_closures_view, "m_subcell_closures_view");
+  if (m_topo_dim>2 && m_top_bot_well_defined)
+    convertVecsToViews (m_side_closure_orderd_as_side, m_side_closure_orderd_as_side_view, "m_side_closure_orderd_as_side_view");
+
   // Done
   m_built = true;
 }
@@ -161,11 +166,28 @@ getGIDFieldOffsetsSubcell (int fieldNum,
   return m_subcell_closures[fieldNum][subcell_dim][subcell_pos];
 }
 
+Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,int,decltype(Kokkos::ALL)>
+DOFManager::
+getGIDFieldOffsetsSubcellKokkos (int fieldNum,
+                                 int subcell_dim,
+                                 int subcell_pos) const
+{
+  return Kokkos::subview(m_subcell_closures_view,fieldNum,subcell_dim,subcell_pos,Kokkos::ALL);
+}
+
+
 const std::vector<int>&
 DOFManager::
 getGIDFieldOffsetsSide (int fieldNum, int side) const
 {
   return getGIDFieldOffsetsSubcell(fieldNum,m_topo_dim-1,side);
+}
+
+Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,int,decltype(Kokkos::ALL)>
+DOFManager::
+getGIDFieldOffsetsSideKokkos (int fieldNum, int side) const
+{
+  return getGIDFieldOffsetsSubcellKokkos(fieldNum,m_topo_dim-1,side);
 }
 
 const std::vector<int>&
@@ -189,6 +211,44 @@ getGIDFieldOffsetsSide (int fieldNum, int side, const int orderAsInSide) const
       "Order as side id " << orderAsInSide  << " out of bounds [0, " << m_side_closure_orderd_as_side[fieldNum][side].size() << ")\n");
 #endif
   return m_side_closure_orderd_as_side[fieldNum][side][orderAsInSide];
+}
+
+Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,int,decltype(Kokkos::ALL)>
+DOFManager::
+getGIDFieldOffsetsSideKokkos(int fieldNum, int side, const int orderAsInSide) const
+{
+  return Kokkos::subview(m_side_closure_orderd_as_side_view,fieldNum,side,orderAsInSide,Kokkos::ALL);
+}
+
+void 
+DOFManager::
+convertVecsToViews (vec4int& vec, Kokkos::View<int****, PHX::Device>& view, std::string view_name) 
+{
+  size_t max_size_i = vec.size();
+  size_t max_size_j = 0; size_t max_size_k = 0; size_t max_size_l = 0;
+  for (size_t i=0; i < vec.size(); ++i) {
+    max_size_j = std::max(max_size_j, vec[i].size());
+    for (size_t j=0; j < vec[i].size(); ++j) {
+      max_size_k = std::max(max_size_k, vec[i][j].size());
+      for (size_t k=0; k < vec[i][j].size(); ++k) {
+        max_size_l = std::max(max_size_l, vec[i][j][k].size());
+      }
+    }
+  }
+
+  view = Kokkos::View<int****,PHX::Device>(view_name,
+                                           max_size_i,
+                                           max_size_j,
+                                           max_size_k,
+                                           max_size_l);
+
+  const auto view_host = Kokkos::create_mirror_view(view);
+  for (size_t i=0; i < vec.size(); ++i)
+    for (size_t j=0; j < vec[i].size(); ++j)
+      for (size_t k=0; k < vec[i][j].size(); ++k)
+        for (size_t l=0; l < vec[i][j][k].size(); ++l)
+          view_host(i,j,k,l) = vec[i][j][k][l];
+  Kokkos::deep_copy(view,view_host);
 }
 
 void DOFManager::

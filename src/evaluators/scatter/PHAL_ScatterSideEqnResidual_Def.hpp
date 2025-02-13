@@ -474,7 +474,7 @@ doEvaluateFields(typename Traits::EvalData workset,
   }
 
   // Check for early return
-  if(workset.local_Vp[0].size() == 0) {
+  if(workset.local_Vp.size() == 0) {
     // In case the parameter has not been gathered.
     // E.g., parameter is used only in Dirichlet conditions. 
     return;
@@ -496,6 +496,8 @@ doEvaluateFields(typename Traits::EvalData workset,
   const auto node_dof_mgr  = workset.disc->getNodeDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
+  const auto& local_Vp = workset.local_Vp;
+
   constexpr auto ALL = Kokkos::ALL();
   const int neq = dof_mgr->getNumFields();
   const int numSides = sideSet.size();
@@ -504,8 +506,7 @@ doEvaluateFields(typename Traits::EvalData workset,
 
     const auto icell = side.ws_elem_idx;
     const auto elem_LID = elem_lids(icell);
-    const auto& local_Vp = workset.local_Vp[icell];
-
+    
     const auto& side_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,side.side_pos);
     const int numNodes = side_nodes.size();
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -524,7 +525,7 @@ doEvaluateFields(typename Traits::EvalData workset,
             const int node = side_nodes[inode];
             for (int eq = 0; eq < this->numFields; eq++) {
               auto res = this->get_resid(iside,inode,eq);
-              val += res.dx(i)*local_Vp[node*neq+eq+this->offset][col];
+              val += res.dx(i)*local_Vp(icell,node*neq+eq+this->offset,col);
             }
           }
           fpV_data[col][row] += val;
@@ -541,7 +542,7 @@ doEvaluateFields(typename Traits::EvalData workset,
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
-              val += res.dx(i)*local_Vp[i][col];
+              val += res.dx(i)*local_Vp(icell,i,col);
             }
             fpV_data[col][row] += val;
           }
