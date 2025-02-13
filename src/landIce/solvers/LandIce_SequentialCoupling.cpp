@@ -489,16 +489,14 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
   renameExodusFile(file_index, filename);
   *fos_ << "Renaming output file to - " << filename << '\n';
   disc_params.set<std::string>("Exodus Output File Name", filename);
-  disc_params.set<std::string>("Exodus Solution Name", "temperature");
-  disc_params.set<std::string>("Exodus SolutionDot Name", "temperature_dot");
-  disc_params.set<bool>("Output DTK Field to Exodus", false);
+  disc_params.set<std::string>("Exodus Solution Name", "Phi");
   if (!disc_params.isParameter("Disable Exodus Output Initial Time")) {
     disc_params.set<bool>("Disable Exodus Output Initial Time", true);
   }
-  int const thermal_exo_write_interval = disc_params.get<int>("Exodus Write Interval", 1);
+  int const poisson_exo_write_interval = disc_params.get<int>("Exodus Write Interval", 1);
   ALBANY_ASSERT(
-      thermal_exo_write_interval == 1,
-      "'Exodus Write Interval' for Thermal Problem must be 1!  This parameter is controlled by variables in coupled "
+      poisson_exo_write_interval == 1,
+      "'Exodus Write Interval' for Poisson Problem must be 1!  This parameter is controlled by variables in coupled "
       "input file.");
   if (file_index > 0) {
     // Change input Exodus file to previous mechanical Exodus output file, for restarts.
@@ -514,7 +512,7 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
     // Remove Initial Condition sublist
     problem_params.remove("Initial Condition", true);
   }
-  //IKT 2/13/2025: may need to hook in the following to problem...
+  //IKT 2/13/2025: may need to hook in the following to the problem, or may not need this...
   problem_params.set<double>("LandIce Sequential Coupling Problem Current Time", current_time);
 
   // Create app (null initial guess)
@@ -528,9 +526,9 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
 
   solvers_[subdomain] = solver;
   apps_[subdomain]    = app;
-  auto num_dims       = app->getSpatialDimension();
   //IKT 2/13/2025: probably won't need something like the following throw... 
-  /*if (num_dims != 3) {
+  /*auto num_dims       = app->getSpatialDimension();
+  if (num_dims != 3) {
     ALBANY_ABORT("LandIce Sequential Coupling solver only works in 3D!  Poisson problem has " << num_dims << " dimensions.");
   }*/
   // Get STK mesh structs to control Exodus output interval
@@ -562,39 +560,25 @@ void
 SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double const current_time, double const next_time, double const time_step) const
 {
   std::cout << "IKT starting in createAdvDiffSolverAppDiscME!\n"; 
-  //IKT 1/7/2025 TODO: fill in this function
-  /*auto const              subdomain      = 1;
-  Teuchos::ParameterList& params         = solver_factories_[subdomain]->getParameters();
-  Teuchos::ParameterList& problem_params = params.sublist("Problem", true);
-  Teuchos::ParameterList& disc_params    = params.sublist("Discretization", true);
-  // Check if using wave pressure NBC, and if so, inject zmin_ value into that PL
-  if (problem_params.isSublist("Neumann BCs")) {
-    Teuchos::ParameterList&               nbc_params = problem_params.sublist("Neumann BCs");
-    Teuchos::ParameterList::ConstIterator it;
-    for (it = nbc_params.begin(); it != nbc_params.end(); it++) {
-      const std::string nbc_sublist = nbc_params.name(it);
-      const std::string wp          = "wave_pressure";
-      std::size_t       found       = nbc_sublist.find(wp);
-      if (found != std::string::npos) {
-        Teuchos::ParameterList& pnbc_sublist = nbc_params.sublist(nbc_sublist);
-        pnbc_sublist.set<double>("Min z-Value", zmin_);
-      }
-    }
-  }
+  auto const              subdomain      = 1;
+  Teuchos::RCP<Teuchos::ParameterList> params = solver_factories_[subdomain]->getParameters();
+  Teuchos::ParameterList& problem_params = params->sublist("Problem", true);
+  Teuchos::ParameterList& disc_params    = params->sublist("Discretization", true);
+  
+  //IKT 2/13/2025: the following will ultimately be removed, but keeping
+  //it for now to have the coupling solver emulate what is in LCM 
   std::string filename = disc_params.get<std::string>("Exodus Output File Name");
-  renameExodusFile(file_index + init_file_index_, filename);
+  renameExodusFile(file_index, filename);
   *fos_ << "Renaming output file to - " << filename << '\n';
   disc_params.set<std::string>("Exodus Output File Name", filename);
-  disc_params.set<std::string>("Exodus Solution Name", "disp");
-  disc_params.set<std::string>("Exodus SolutionDot Name", "disp_dot");
-  disc_params.set<std::string>("Exodus SolutionDotDot Name", "disp_dotdot");
-  disc_params.set<bool>("Output DTK Field to Exodus", false);
-  int const mechanics_exo_write_interval = disc_params.get<int>("Exodus Write Interval", 1);
+  disc_params.set<std::string>("Exodus Solution Name", "rhop");
+  disc_params.set<std::string>("Exodus SolutionDot Name", "rhop_dot");
+  int const advdiff_exo_write_interval = disc_params.get<int>("Exodus Write Interval", 1);
   ALBANY_ASSERT(
-      mechanics_exo_write_interval == 1,
-      "'Exodus Write Interval' for Mechanics Problem must be 1!  This parameter is controlled by variables in coupled "
+      advdiff_exo_write_interval == 1,
+      "'Exodus Write Interval' for AdvDiff Problem must be 1!  This parameter is controlled by variables in coupled "
       "input file.");
-
+  
   // After the initial run, we will do restarts from the previously written Exodus output file.
   // Change input Exodus file to previous thermal Exodus output file, for restarts.
   disc_params.set<std::string>("Exodus Input File Name", prev_poisson_exo_outfile_name_);
@@ -617,36 +601,42 @@ SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double co
   }
   // Remove Initial Condition sublist
   problem_params.remove("Initial Condition", true);
-  // Set flag to tell code that we have an ACE Sequential Thermomechanical Problem
-  problem_params.set("ACE Sequential Thermomechanical", true, "ACE Sequential Thermomechanical Problem");
 
-  if (mechanical_solver_ == MechanicalSolver::TrapezoidRule) {
-    Teuchos::ParameterList& piro_params = params.sublist("Piro", true);
-    Teuchos::ParameterList& tr_params   = piro_params.sublist("Trapezoid Rule", true);
-    tr_params.set<int>("Num Time Steps", 1);
-    tr_params.set<double>("Initial Time", current_time);
-    tr_params.set<double>("Final Time", next_time);
-    tr_params.remove("Write Only Converged Solution", false);
-    tr_params.remove("Sensitivity Method", false);
-    tr_params.remove("Jacobian Operator", false);
-    tr_params.remove("Exit on Failed NOX Solve", false);
-    tr_params.remove("On Failure Solve With Zero Initial Guess", false);
-  }
+  // Set flag to tell code that we have an LandIce Sequential Coupling Problem
+  // IKT 2/13/2025: this is left over from LCM.  I don't think we need it.
+  //problem_params.set<bool>("LandIce Sequential Coupling Problem", true);
 
-  Teuchos::RCP<Albany::Application>                       app{Teuchos::null};
-  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver = solver_factories_[subdomain]->createAndGetAlbanyApp(app, comm_, comm_);
+  Teuchos::ParameterList& piro_params = params->sublist("Piro", true);
+  Teuchos::ParameterList& tempus_params   = piro_params.sublist("Tempus", true);
+  Teuchos::ParameterList& tempus_integrator_params = tempus_params.sublist("Tempus Integrator", true); 
+  Teuchos::ParameterList& time_step_control_params = tempus_integrator_params.sublist("Time Step Control", true);  
+  time_step_control_params.set<double>("Initial Time", current_time);
+  time_step_control_params.set<double>("Final Time", next_time);
+  //IKT 2/13/2025: keeping the following around in case we need to remove some 
+  //params from the Tempus SLs.
+  //time_step_conrol_params.remove("Write Only Converged Solution", false);
+
+  // Create app (null initial guess)
+  Teuchos::RCP<Albany::Application> app = solver_factories_[subdomain]->createApplication(comm_);
+  //Forward model model evaluator
+  Teuchos::RCP<Albany::ModelEvaluator> model = solver_factories_[subdomain]->createModel(app, false);
+  //Adjoint model model evaluator - assuming this is null for now 
+  Teuchos::RCP<Albany::ModelEvaluator> adjoint_model = Teuchos::null; 
+  // Create solver   
+  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver = solver_factories_[subdomain]->createSolver(model, adjoint_model, true);
 
   solvers_[subdomain] = solver;
   apps_[subdomain]    = app;
-  auto num_dims       = app->getSpatialDimension();
+  /*auto num_dims       = app->getSpatialDimension();
   if (num_dims != 3) {
-    ALBANY_ABORT("ACE Thermo-Mechanical solver only works in 3D!  Mechanics problem has " << num_dims << " dimensions.");
-  }
+    ALBANY_ABORT("LandIce Sequential Coupling solver only works in 3D!  AdvDiff problem has " << num_dims << " dimensions.");
+  }*/
 
   // Get STK mesh structs to control Exodus output interval
   Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
   discs_[subdomain]                                 = disc;
 
+  
   Albany::STKDiscretization& stk_disc = *static_cast<Albany::STKDiscretization*>(disc.get());
   if (file_index == 0) {
     stk_disc.outputExodusSolutionInitialTime(true);
@@ -664,7 +654,8 @@ SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double co
   if ((file_index % output_interval_) != 0) {
     deleteParallel(prev_poisson_exo_outfile_name_, comm_);
   }
-  */
+  
+  std::cout << "IKT finished in createAdvDiffSolverAppDiscME!\n"; 
 }
 
 bool

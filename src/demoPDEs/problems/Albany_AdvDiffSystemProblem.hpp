@@ -164,29 +164,6 @@ Albany::AdvDiffSystemProblem::constructEvaluators(
 
    // Define Field Names
 
-   /*{ // Gather Solution Phi (electric potential) 
-     Teuchos::ArrayRCP<string> dof_names(1);
-     Teuchos::ArrayRCP<string> dof_names_dot(1);
-     Teuchos::ArrayRCP<string> resid_names(1);
-     dof_names[0] = "Phi";
-     if(number_of_time_deriv > 0)
-       dof_names_dot[0] = dof_names[0]+" Dot";
-     resid_names[0] = dof_names[0]+" Residual";
-     
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
-
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
-
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
-
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Phi"));
-     offset ++;
-   }*/
-
    { // Gather Solution rhop (positive ion density)
      Teuchos::ArrayRCP<string> dof_names(1);
      Teuchos::ArrayRCP<string> dof_names_dot(1);
