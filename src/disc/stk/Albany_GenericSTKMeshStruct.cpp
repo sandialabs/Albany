@@ -1376,6 +1376,10 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
   validPL->set<int>("Response Function Index", 0, "Response function index (for adjoint transient sensitivities)");
   validPL->set<int>("Sensitivity Parameter Index", 0, "Parameter sensitivity index (for transient sensitivities)");
 
+  //IKT 2/13/2025: this is for the LandIce Sequential Coupling problem.  Ultimately will not need this option
+  //but need it for now.
+  validPL->set<bool>("Disable Exodus Output Initial Time", false, "Flag to disable Exodus output at initial time");
+
   return validPL;
 }
 

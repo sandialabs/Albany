@@ -280,7 +280,14 @@ public:
       const Thyra_MultiVector& solution,
       const double             time,
       const bool               overlapped = false,
-      const bool               force_write_solution = false); 
+      const bool               force_write_solution = false);
+
+  void
+  outputExodusSolutionInitialTime(const bool output_initial_soln_to_exo_file_)
+  {
+    output_initial_soln_to_exo_file = output_initial_soln_to_exo_file_;
+  };
+ 
 
    /** Add a solution field
      */
@@ -421,6 +428,9 @@ public:
 
   size_t outputFileIdx;
 #endif
+
+  // Boolean for disabling output of initial solution to Exodus file
+  bool output_initial_soln_to_exo_file{true};
 
   Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };

@@ -159,5 +159,8 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   // needed at the Problem scope when running Schwarz coupling
   validPL->set<Teuchos::RCP<NOX::StatusTest::Generic>>("Constitutive Model NOX Status Test", Teuchos::RCP<NOX::StatusTest::Generic>(), "NOX status test that facilitates communication between a ModelEvaluator and a NOX solver");
 
+  validPL->set<double>("LandIce Sequential Coupling Problem Current Time", 0.0, "Current Time in LandIce Sequential Coupling Problem");
+
+
   return validPL;
 }

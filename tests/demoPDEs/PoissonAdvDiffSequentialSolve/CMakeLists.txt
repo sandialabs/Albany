@@ -12,6 +12,8 @@ IF (ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/poisson.yaml COPYONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/advdiff.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/advdiff.yaml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/poisson_restart.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/poisson_restart.exo COPYONLY)
 
   # Create the test with this name and standard executable
   #add_test(${testName} ${Albany.exe} input.yaml)

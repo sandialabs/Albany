@@ -78,6 +78,16 @@ public:
   Teuchos::RCP<const Teuchos::ParameterList>  getValidParameterParameters() const;
   Teuchos::RCP<const Teuchos::ParameterList>  getValidResponseParameters()  const;
 
+  Teuchos::RCP<Thyra::ModelEvaluator<ST>>
+  returnModel() const
+  {
+    return model_;
+  };
+
+
+private: 
+  Teuchos::RCP<Thyra::ModelEvaluator<ST>> model_;
+
 protected:
 
   void setup (const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,

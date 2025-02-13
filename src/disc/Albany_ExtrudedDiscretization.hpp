@@ -190,6 +190,12 @@ public:
   void setSolutionFieldMV (const Thyra_MultiVector& solnT,
                            const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
                            const bool overlapped);
+  void
+  outputExodusSolutionInitialTime(const bool output_initial_soln_to_exo_file_)
+  {
+    output_initial_soln_to_exo_file = output_initial_soln_to_exo_file_;
+  };
+
 
   void computeCoordinates();
   void createDOFManagers();
@@ -268,6 +274,10 @@ public:
   strmap_t<std::map<GO, std::vector<int>>>  sideNodeNumerationMap;
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    projectors;
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
+
+  // Boolean for disabling output of initial solution to Exodus file
+  bool output_initial_soln_to_exo_file{true};
+
 };
 
 }  // namespace Albany

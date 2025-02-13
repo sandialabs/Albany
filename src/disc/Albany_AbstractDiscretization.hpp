@@ -387,7 +387,12 @@ public:
       const Thyra_MultiVector& solution,
       const double             time,
       const bool               overlapped = false,
-      const bool               force_write_solution = false) = 0; 
+      const bool               force_write_solution = false) = 0;
+
+  // Routine that disables writing out of initial condition to Exodus file
+  virtual void
+  outputExodusSolutionInitialTime(const bool output_initial_soln_to_exo_file_) = 0;
+ 
 
 protected:
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;

@@ -324,8 +324,6 @@ SequentialCoupling::SequentialCoupling(Teuchos::RCP<Teuchos::ParameterList> cons
   prob_type = prob_types_[1];
   ALBANY_ASSERT(prob_type == ADVDIFF, "The second problem type needs to be 'AdvDiff System 2D'!");
 
-  std::cout << "IKT here!\n"; 
-  std::exit(1); 
   return;
 }
 
@@ -471,6 +469,7 @@ SequentialCoupling::createOutArgsImpl() const
 void
 SequentialCoupling::evalModelImpl(Thyra_ModelEvaluator::InArgs<ST> const&, Thyra_ModelEvaluator::OutArgs<ST> const&) const
 {
+  std::cout << "IKT entering evalModelImpl!\n"; 
   SequentialCouplingLoop();
 }
 
@@ -478,14 +477,15 @@ SequentialCoupling::evalModelImpl(Thyra_ModelEvaluator::InArgs<ST> const&, Thyra
 void
 SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double const current_time) const
 {
-  //IKT 1/7/2025 TODO: fill in this function! 
-  /*
+  std::cout << "IKT in createPoissonSolverAppDiscME!\n"; 
   auto const              subdomain      = 0;
-  Teuchos::ParameterList& params         = solver_factories_[subdomain]->getParameters();
-  Teuchos::ParameterList& problem_params = params.sublist("Problem", true);
-  Teuchos::ParameterList& disc_params    = params.sublist("Discretization", true);
+  Teuchos::RCP<Teuchos::ParameterList> params         = solver_factories_[subdomain]->getParameters();
+  Teuchos::ParameterList& problem_params = params->sublist("Problem", true);
+  Teuchos::ParameterList& disc_params    = params->sublist("Discretization", true);
+  //IKT 2/13/2025: we are not going to want to do solution transfer through output files eventually
+  //but making it this way first to mimic what LCM is doing.
   std::string             filename       = disc_params.get<std::string>("Exodus Output File Name");
-  renameExodusFile(file_index + init_file_index_, filename);
+  renameExodusFile(file_index, filename);
   *fos_ << "Renaming output file to - " << filename << '\n';
   disc_params.set<std::string>("Exodus Output File Name", filename);
   disc_params.set<std::string>("Exodus Solution Name", "temperature");
@@ -513,33 +513,36 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
     // Remove Initial Condition sublist
     problem_params.remove("Initial Condition", true);
   }
-  problem_params.set<double>("ACE Thermomechanical Problem Current Time", current_time);
+  //IKT 2/13/2025: may need to hook in the following to problem...
+  problem_params.set<double>("LandIce Sequential Coupling Problem Current Time", current_time);
 
-  Teuchos::RCP<Albany::Application>                       app{Teuchos::null};
-  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver = solver_factories_[subdomain]->createAndGetAlbanyApp(app, comm_, comm_);
+  // Create app (null initial guess)
+  Teuchos::RCP<Albany::Application> app = solver_factories_[subdomain]->createApplication(comm_);
+  //Forward model model evaluator
+  Teuchos::RCP<Albany::ModelEvaluator> model = solver_factories_[subdomain]->createModel(app, false);
+  //Adjoint model model evaluator - assuming this is null for now 
+  Teuchos::RCP<Albany::ModelEvaluator> adjoint_model = Teuchos::null; 
+  // Create solver   
+  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>> solver = solver_factories_[subdomain]->createSolver(model, adjoint_model, true); 
 
   solvers_[subdomain] = solver;
   apps_[subdomain]    = app;
   auto num_dims       = app->getSpatialDimension();
-  if (num_dims != 3) {
-    ALBANY_ABORT("ACE Thermo-Mechanical solver only works in 3D!  Thermal problem has " << num_dims << " dimensions.");
-  }
+  //IKT 2/13/2025: probably won't need something like the following throw... 
+  /*if (num_dims != 3) {
+    ALBANY_ABORT("LandIce Sequential Coupling solver only works in 3D!  Poisson problem has " << num_dims << " dimensions.");
+  }*/
   // Get STK mesh structs to control Exodus output interval
   Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
   discs_[subdomain]                                 = disc;
 
   Albany::STKDiscretization& stk_disc = *static_cast<Albany::STKDiscretization*>(disc.get());
   if (file_index == 0) {
+    //IKT TO DO: implement the following routine in the discretization! 
     stk_disc.outputExodusSolutionInitialTime(true);
-    // Calculate and store the min value of the z-coordinate in the initial mesh.
-    // This is needed for the wave pressure NBC
-    Teuchos::RCP<const Thyra_MultiVector> coord_mv = stk_disc.getCoordMV();
-    // Since sequential ACE solver is only valid in 3D, the following will always be valid
-    Teuchos::RCP<const Thyra_Vector> z_coord = coord_mv->col(2);
-    zmin_                                    = Thyra::min(*z_coord);
-    // std::cout << "IKTIKT zmin_ = " << zmin_ << "\n";
   }
 
+  
   auto  abs_stk_mesh_struct_rcp  = stk_disc.getSTKMeshStruct();
   auto& abs_stk_mesh_struct      = *abs_stk_mesh_struct_rcp;
   do_outputs_[subdomain]         = abs_stk_mesh_struct.exoOutput;
@@ -552,12 +555,12 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
   if (file_index > 0 && ((file_index - 1) % output_interval_) != 0) {
     deleteParallel(prev_mechanical_exo_outfile_name_, comm_);
   }
-  */
 }
 
 void
 SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double const current_time, double const next_time, double const time_step) const
 {
+  std::cout << "IKT in createAdvDiffSolverAppDiscME!\n"; 
   //IKT 1/7/2025 TODO: fill in this function
   /*auto const              subdomain      = 1;
   Teuchos::ParameterList& params         = solver_factories_[subdomain]->getParameters();
@@ -681,26 +684,30 @@ void
 SequentialCoupling::SequentialCouplingLoop() const
 {
   //IKT 1/7/2025 TODO: implement this function!
-/*  std::string const delim(72, '=');
+  std::cout << "IKT entering SequentialCouplingLoop()!\n"; 
+  std::string const delim(72, '=');
 
   *fos_ << std::scientific << std::setprecision(17);
 
   // If initial time is within an interval, reset to its beginning
   ST   time_step{initial_time_step_};
-  auto interval_index = find_time_interval_index(event_initial_times_, event_final_times_, initial_time_);
+  //IKT 2/12/2025: check with Alejandro what the event_initial_times_ and event_final_times_ were for
+  //I don't recall ever using them in LCM.
+  /*auto interval_index = find_time_interval_index(event_initial_times_, event_final_times_, initial_time_);
   if (interval_index != -1) {
     initial_time_ = event_initial_times_[interval_index];
     time_step     = event_time_steps_[interval_index];
-  }
+  }*/
   int stop{0};
   ST  current_time{initial_time_};
 
   // Time-stepping loop
   while (stop < maximum_steps_ && current_time < final_time_) {
-    if (interval_index != -1) {
+    //IKT 2/15/2025: commenting out the following for now until figure out how it's supposed to work.
+    /*if (interval_index != -1) {
       *fos_ << delim << std::endl;
       *fos_ << "Subclycling within an event interval.\n";
-    }
+    }*/
 
     *fos_ << delim << std::endl;
     *fos_ << "Time stop          :" << stop << '\n';
@@ -717,13 +724,14 @@ SequentialCoupling::SequentialCouplingLoop() const
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
         // Create new solvers, apps, discs and model evaluators
         auto const prob_type = prob_types_[subdomain];
-        if (prob_type == THERMAL) {
-          createThermalSolverAppDiscME(stop, current_time);
+        if (prob_type == POISSON) {
+          createPoissonSolverAppDiscME(stop, current_time);
         }
-        if (prob_type == MECHANICAL && failed_ == false) {
-          createMechanicalSolverAppDiscME(stop, current_time, next_time, time_step);
+        if (prob_type == ADVDIFF && failed_ == false) {
+          createAdvDiffSolverAppDiscME(stop, current_time, next_time, time_step);
         }
 
+	/*
         // Before the coupling loop, get internal states, and figure out whether
         // output needs to be done or not.
         if (num_iter_ == 0) {
@@ -757,15 +765,17 @@ SequentialCoupling::SequentialCouplingLoop() const
         if (failed_ == true) {
           // Break out of the subdomain loop
           break;
-        }
+        }*/
       }  // Subdomains loop
 
+      exit(1); 
       if (failed_ == true) {
         // Break out of the coupling loop.
         break;
       }
     } while (continueSolve() == true);
-
+  } //Time-stepping loop.  IKT 2/12/2025: dummy for now!  
+/*
     // One of the subdomains failed to solve. Reduce step.
     if (failed_ == true) {
       auto const reduced_step = reduction_factor_ * time_step;

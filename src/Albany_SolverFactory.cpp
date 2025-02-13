@@ -149,8 +149,9 @@ SolverFactory::createModel (const Teuchos::RCP<Application>& app,
   const auto problemParams = Teuchos::sublist(m_appParams, "Problem");
   problemParams->sublist("Response Functions")
       .validateParameters(*getValidResponseParameters(), 0);
-
-  return Teuchos::rcp(new ModelEvaluator(app,m_appParams,adjoint_model));
+  Teuchos::RCP<ModelEvaluator> model = Teuchos::rcp(new ModelEvaluator(app,m_appParams,adjoint_model));
+  model_ = model; 
+  return model; 
 }
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
