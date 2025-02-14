@@ -385,7 +385,6 @@ evaluateFields(typename Traits::EvalData workset)
 
     if (Vp != Teuchos::null) {
       const int num_cols = workset.Vp->domain()->dim();
-      const int num_dofs = elem_dof_lids.extent(1);
       if (trans) {
         const int num_dofs = elem_dof_lids.extent(1);
         workset.local_Vp = Kokkos::View<double***, PHX::Device>("local_Vp",workset.numCells,num_dofs,num_cols);
