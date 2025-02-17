@@ -20,3 +20,5 @@ export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 export HDF5_USE_FILE_LOCKING=FALSE
 export FI_CXI_RX_MATCH_MODE=software
+
+unset MPICH_GPU_SUPPORT_ENABLED
