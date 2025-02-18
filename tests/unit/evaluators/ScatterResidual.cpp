@@ -411,7 +411,6 @@ TEUCHOS_UNIT_TEST(evaluator_unit_tester, scatterResidualHessianVecTensorRank1)
 {
   using EvalType = PHAL::AlbanyTraits::HessianVec;
   using Scalar = EvalType::ScalarT;
-  using vec_str_pairs = std::vector<std::pair<std::string,std::string>>;
 
   constexpr auto ALL = Kokkos::ALL();
   constexpr auto ADD = Albany::CombineMode::ADD;

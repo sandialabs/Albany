@@ -132,6 +132,10 @@ public:
   }
 
   void getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const override;
+  void getSolutionDxDp (Thyra_MultiVector& /* result */, bool /* overlapped */) const override
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionDxDp");
+  }
 
   void getField(      Thyra_Vector& field_vector,
                 const std::string&  field_name) const override;
@@ -238,6 +242,20 @@ public:
       const bool               /* force_write_solution */ = false) override {
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToFile");
   } 
+
+  Teuchos::RCP<AdaptationData>
+  checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
+                      const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
+                      const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
+                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const override
+  {
+    throw NotYetImplemented("OmegaDiscretization::checkForAdaptation");
+  }
+
+  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override
+  {
+    throw NotYetImplemented("OmegaDiscretization::adapt");
+  }
 
 protected:
 

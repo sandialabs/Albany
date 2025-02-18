@@ -1,0 +1,141 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem:
+    Phalanx Graph Visualization Detail: 1
+    Name: AdvDiff 2D
+    Solution Method: Transient
+    Number of PDE Equations: 1
+    Dirichlet BCs: {}
+    Initial Condition:
+      Function: Circle
+    Options:
+      Use Augmented Form: true
+      Augmented Form Type: 2
+      Advection Coefficient: [1.0,1.0]
+      Viscosity mu: 0.1
+    Parameters:
+      Number Of Parameters: 0
+    Response Functions:
+      Number Of Responses: 3
+      Response 2:
+        Type: Scalar Response
+        Name: Solution Average
+      Response 1:
+        Equation: 1
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 0:
+        Equation: 0
+        Type: Scalar Response
+        Name: Solution Max Value
+  Debug Output:
+    Write Solution to MatrixMarket: -1
+  Discretization:
+    1D Elements: 20
+    1D Scale: 1.0
+    2D Elements: 20
+    2D Scale: 1.0
+    Periodic_x BC: true
+    Periodic_y BC: true
+    Method: STK2D
+    Exodus Output File Name: advdiff2D_out.exo
+  Piro:
+    Tempus:
+      Integrator Name: Tempus Integrator
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control:
+          Initial Time: 0.0
+          Initial Time Index: 0
+          Initial Time Step: 0.025
+          Final Time: 0.5
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
+          Output Time List: ''
+          Output Index List: ''
+          #Output Time Interval: 1.00000000000000000e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper:
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Demo Solver:
+          NOX:
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver:
+                  Tolerance: 1.0e-05
+            Line Search:
+              Full Step:
+                Full Step: 1.0
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: true
+                Details: false
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Minimal
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0:
+                Test Type: NormF
+                Tolerance: 1.0e-08
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 10
+      Stratimikos:
+        Linear Solver Type: Belos
+        Linear Solver Types:
+          Belos:
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES:
+                Convergence Tolerance: 1.0e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types:
+          Ifpack2:
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings:
+              'fact: ilut level-of-fill': 1.0e+00
+  Regression For Response 0:
+    Test Value: 2.435402154398e-01
+    Relative Tolerance: 1.0e-04
+  Regression For Response 1:
+    Test Value: 2.915474759851e-01
+    Relative Tolerance: 1.0e-04
+  Regression For Response 2:
+    Test Value: 5.749999999897e-02
+    Relative Tolerance: 1.0e-04
+...

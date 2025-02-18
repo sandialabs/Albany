@@ -7,7 +7,6 @@
 
 set(SOURCES
     problems/Albany_DemoProblemFactory.cpp
-    problems/Albany_AdvDiffProblem.cpp
     problems/Albany_ReactDiffSystem.cpp
     problems/Albany_Helmholtz2DProblem.cpp
     problems/Albany_ODEProblem.cpp
@@ -15,7 +14,6 @@ set(SOURCES
     problems/Albany_ThermoElectrostaticsProblem.cpp
     problems/Albany_ThermalProblem.cpp
     problems/Albany_AdvectionProblem.cpp
-    evaluators/PHAL_AdvDiffResid.cpp
     evaluators/PHAL_ReactDiffSystemResid.cpp
     evaluators/PHAL_HelmholtzResid.cpp
     evaluators/PHAL_JouleHeating.cpp
@@ -40,7 +38,6 @@ set(SOURCES
 
   set(HEADERS
     problems/Albany_DemoProblemFactory.hpp
-    problems/Albany_AdvDiffProblem.hpp
     problems/Albany_ReactDiffSystem.hpp
     problems/Albany_Helmholtz2DProblem.hpp
     problems/Albany_NavierStokes.hpp
@@ -48,8 +45,6 @@ set(SOURCES
     problems/Albany_ThermoElectrostaticsProblem.hpp
     problems/Albany_ThermalProblem.hpp
     problems/Albany_AdvectionProblem.hpp
-    evaluators/PHAL_AdvDiffResid.hpp
-    evaluators/PHAL_AdvDiffResid_Def.hpp
     evaluators/PHAL_ReactDiffSystemResid.hpp
     evaluators/PHAL_ReactDiffSystemResid_Def.hpp
     evaluators/PHAL_HelmholtzResid.hpp

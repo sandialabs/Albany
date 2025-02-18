@@ -10,6 +10,7 @@
 #include "Albany_Macros.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
 #include "Albany_STKFieldContainerHelper.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_StringUtils.hpp"
@@ -282,6 +283,14 @@ fillSolnMultiVector (      Thyra_MultiVector& solution,
 }
 
 void MultiSTKFieldContainer::
+fillSolnSensitivity(Thyra_MultiVector&                    /* dxdp */,
+                    const Teuchos::RCP<const DOFManager>& /* solution_dof_mgr */,
+                    const bool                            /* overlapped */)
+{
+  throw NotYetImplemented ("MultiSTKFieldContainer::fillSolnSensitivity");
+}
+
+void MultiSTKFieldContainer::
 saveVector (const Thyra_Vector&  field_vector,
             const std::string&   field_name,
             const dof_mgr_ptr_t& field_dof_mgr,
@@ -322,7 +331,7 @@ saveSolnVector (const Thyra_Vector&  soln,
 {
   // TODO: why can't we save also solution_dot?
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVectorT with soln_dot,\n"
+  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVector with soln_dot,\n"
        << "but this function has not been extended to write soln_dot properly to the Exodus file.\n"
        << "Exodus file will contain only soln, not soln_dot.\n";
 
@@ -339,7 +348,7 @@ saveSolnVector (const Thyra_Vector&  soln,
 {
   // TODO: why can't we save also solution_dot?
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVectorT with soln_dot and soln_dotdot,\n"
+  *out << "IKT WARNING: calling MultiSTKFieldContainer::saveSolnVector with soln_dot and soln_dotdot,\n"
        << "but this function has not been extended to write soln_dot[dot] properly to the Exodus file.\n"
        << "Exodus file will contain only soln, not soln_dot nor soln_dotdot.\n";
 
