@@ -365,7 +365,7 @@ quadraticForm(const Thyra_MultiVector& X) {
     if(diagonalD_)
       Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::solveImpl, Solver not initialized, call initializeSolver first.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::quadraticForm, D solver not initialized.\n");
       D_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
     }
 
@@ -540,6 +540,8 @@ solveImpl(
     X->scale(1.0/coeff_);
     return solveStatus1;
   }  
+  if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
+    std::cout << "\n\nAtDinvA_LOWS::solveImpl, first solve\n" << std::endl;
 
   vec1_->assign(0.0);
   // v1 = A^{-T} B
@@ -555,7 +557,8 @@ solveImpl(
   } else {
     D_->apply(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr(), 1.0/coeff_, 0.0);
   }
-
+  if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
+    std::cout << "\n\nAtDinvA_LOWS::solveImpl, second solve\n" << std::endl;
   // X = coeff^{-1} A^{-1} D A^{-T} B
   solveStatus2 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec2_, X, solveCriteria);
 
