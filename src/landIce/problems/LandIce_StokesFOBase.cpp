@@ -156,6 +156,9 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   }  
 
+  //Add cubature to discretization, to be used for interpolating QuadPoint Fields 
+  discParams->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device, RealType, RealType>>>("Cell Cubature", cellCubature);
+
   if(depthIntegratedModel) {
 
     TEUCHOS_TEST_FOR_EXCEPTION ((discParams->get<std::string>("Method") != "STKExtruded") || (discParams->isParameter("NumLayers") && (discParams->get<int>("NumLayers") != 1)) || (cellType->getKey() != shards::Wedge<6>::key), std::logic_error,
