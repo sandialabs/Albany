@@ -41,6 +41,13 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::fillSolnMultiVector");
   }
 
+  void fillSolnSensitivity(Thyra_MultiVector&                    /* dxdp */,
+                           const Teuchos::RCP<const DOFManager>& /* solution_dof_mgr */,
+                           const bool                            /* overlapped */) override
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::fillSolnSensitivity");
+  }
+
   // Write to mesh methods
   void saveVector (const Thyra_Vector&  field_vector,
                    const std::string&   field_name,

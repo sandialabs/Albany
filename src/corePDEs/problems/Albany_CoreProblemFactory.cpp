@@ -7,6 +7,7 @@
 #include "Albany_CoreProblemFactory.hpp"
 
 #include "Albany_HeatProblem.hpp"
+#include "Albany_AdvDiffProblem.hpp"
 #include "Albany_PopulateMesh.hpp"
 #include "Albany_SideLaplacianProblem.hpp"
 
@@ -18,6 +19,8 @@ bool CoreProblemFactory::provides (const std::string& key) const
   return key == "Heat 1D" ||
          key == "Heat 2D" ||
          key == "Heat 3D" ||
+         key == "AdvDiff 1D" ||
+         key == "AdvDiff 2D" ||
          key == "Populate Mesh" ||
          key == "Side Laplacian 3D";
 }
@@ -40,6 +43,10 @@ create (const std::string& key,
     problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 2, comm));
   } else if (key == "Heat 3D") {
     problem = Teuchos::rcp(new HeatProblem(problemParams, paramLib, 3, comm));
+  } else if (key == "AdvDiff 1D") {
+    problem = Teuchos::rcp(new AdvDiffProblem(problemParams, paramLib, 1));
+  } else if (key == "AdvDiff 2D") {
+    problem = Teuchos::rcp(new AdvDiffProblem(problemParams, paramLib, 2));
   } else if (key == "Populate Mesh") {
     problem = Teuchos::rcp(new PopulateMesh(problemParams, discParams, paramLib));
   } else if (key == "Side Laplacian 3D") {

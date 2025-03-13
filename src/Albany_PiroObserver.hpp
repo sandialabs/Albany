@@ -71,7 +71,7 @@ public:
 
   void parameterChanged (const std::string& param) { impl_.parameterChanged(param); }
 
-private:
+protected:
 
   void observeSolutionImpl (const Teuchos::RCP<const Thyra_Vector>& x,
                             const Teuchos::RCP<const Thyra_Vector>& x_dot,

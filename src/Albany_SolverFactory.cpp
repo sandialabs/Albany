@@ -6,6 +6,7 @@
 
 #include "Albany_SolverFactory.hpp"
 #include "Albany_PiroObserver.hpp"
+#include "Albany_PiroTempusObserver.hpp"
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
@@ -255,7 +256,13 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
 
   const auto app = model_tmp->getAlbanyApp();
 
-  auto observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
+  Teuchos::RCP<PiroObserver> observer;
+
+  if (solutionMethod=="Transient") {
+    observer = Teuchos::rcp(new PiroTempusObserver(app, modelWithSolve));
+  } else {
+    observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
+  }
 
   Piro::SolverFactory piroFactory;
   return piroFactory.createSolver<ST>(
