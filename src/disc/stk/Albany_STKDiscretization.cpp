@@ -2453,12 +2453,6 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
 {
   auto adapt_data = Teuchos::rcp(new AdaptationData());
 
-  // Only do adaptation for simple 1d problems
-  auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
-  if (mesh1d.is_null()) {
-    std::cout << "NOT a STK1D mesh...\n";
-    return adapt_data;
-  }
   auto& adapt_params = discParams->sublist("Mesh Adaptivity");
   auto adapt_type = adapt_params.get<std::string>("Type","None");
   if (adapt_type=="None") {
@@ -2467,6 +2461,11 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
   TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
       "Error! Adaptation type '" << adapt_type << "' not supported.\n"
       " - valid choices: None, Minimally-Oscillatory\n");
+
+  // Only do adaptation for simple 1d problems
+  auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
+  TEUCHOS_TEST_FOR_EXCEPTION (mesh1d.is_null(), std::runtime_error,
+      "Error! Adaptation for STK is only supported for a simple 1D problem, with STK1D discretization.\n");
 
   double tol = adapt_params.get<double>("Max Hessian");
   auto data = getLocalData(solution);
