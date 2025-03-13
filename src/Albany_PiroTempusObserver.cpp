@@ -6,7 +6,8 @@
 
 #include "Albany_PiroTempusObserver.hpp"
 
-#include <Tempus_IntegratorForwardSensitivity.hpp>
+#include <Thyra_DefaultMultiVectorProductVector.hpp>
+
 #include <Tempus_Stepper.hpp>
 #include <Tempus_StepperImplicit.hpp>
 
@@ -43,16 +44,36 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
   // since we don't want to write the solution to file, or to observe responses
   Teuchos::RCP<const Thyra_MultiVector> dxdp;
   auto integrator_ptr = Teuchos::rcpFromRef(integrator);
-  auto fwd_sens_integrator = Teuchos::rcp_dynamic_cast<const Tempus::IntegratorForwardSensitivity<ST>>(integrator_ptr);
-  if (Teuchos::nonnull(fwd_sens_integrator)) {
-    dxdp = fwd_sens_integrator->getDxDp();
-  }
 
   auto time     = state_nc->getTime();
   auto disc = app_->getDiscretization();
   
   auto state = state_nc.getConst();
-  auto adaptData = disc->checkForAdaptation(state->getX(),state->getXDot(),state->getXDotDot(),dxdp);
+  auto x = state->getX();
+  auto xdot = state->getXDot();
+  auto xdotdot = state->getXDotDot();
+
+  // If piro created a sensitivity tempus integrator, x/xdot/xdotdot will
+  // be in fact product vectors, so we need to extract the pieces
+  using DMVPV = Thyra::DefaultMultiVectorProductVector<ST>;
+  auto px       = Teuchos::rcp_dynamic_cast<const DMVPV>(x);
+  auto pxdot    = Teuchos::rcp_dynamic_cast<const DMVPV>(xdot);
+  auto pxdotdot = Teuchos::rcp_dynamic_cast<const DMVPV>(xdotdot);
+  if (Teuchos::nonnull(px)) {
+    x = px->getMultiVector()->col(0);
+    if (Teuchos::nonnull(pxdot)) {
+      xdot = pxdot->getMultiVector()->col(0);
+      if (Teuchos::nonnull(pxdotdot)) {
+        xdotdot = pxdotdot->getMultiVector()->col(0);
+      }
+    }
+
+    const int num_param = px->getMultiVector()->domain()->dim() - 1;
+    const Teuchos::Range1D rng(1, num_param);
+    dxdp = px->getMultiVector()->subView(rng);
+  }
+
+  auto adaptData = disc->checkForAdaptation(x,xdot,xdotdot,dxdp);
 
   // Before observing the solution, check if we need to adapt
   if (adaptData->type!=AdaptationType::None) {
@@ -65,11 +86,15 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
     auto sol = app_->getAdaptSolMgr()->getCurrentSolution();
 
     // Reset vectors now that they have been adapted
-    state_nc->setX(sol->col(0));
+    // TODO: we may need to revise these lines in case the state stores product vectors.
+    x = sol->col(0);
+    state_nc->setX(x);
     if (num_time_derivs>0) {
-      state_nc->setXDot(sol->col(1));
+      xdot = sol->col(1);
+      state_nc->setXDot(xdot);
       if (num_time_derivs>1) {
-        state_nc->setXDotDot(sol->col(2));
+        xdotdot = sol->col(2);
+        state_nc->setXDotDot(xdotdot);
       }
     }
     if (Teuchos::nonnull(dxdp)) {
@@ -84,7 +109,7 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
       stepper->initialize();
     }
   }
-  observeSolutionImpl (state->getX(),state->getXDot(),state->getXDotDot(),dxdp,time);
+  observeSolutionImpl (x,xdot,xdotdot,dxdp,time);
 }
 
 } // namespace Albany
