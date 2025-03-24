@@ -21,4 +21,6 @@ export OMP_PLACES=threads
 export HDF5_USE_FILE_LOCKING=FALSE
 export FI_CXI_RX_MATCH_MODE=software
 
+export SUPERLU_DIR=/global/cfs/cdirs/fanssie/software/tpls/superlu-7.0.0
+
 unset MPICH_GPU_SUPPORT_ENABLED

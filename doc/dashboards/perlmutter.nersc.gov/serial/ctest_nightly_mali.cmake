@@ -81,7 +81,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "MALI-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-serial")
+set (CTEST_BUILD_NAME "MALI-gcc-serial")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 

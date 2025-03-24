@@ -1,6 +1,8 @@
 BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda-uvm
 DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda-uvm
 SCORPIO_DIR=/global/common/software/fanssie/scorpio-gnu
+ALBANY_INSTALL_DIR=${DEPLOY_DIR}/builds/AlbanyInstallSfad12
+TRILINOS_INSTALL_DIR=${DEPLOY_DIR}/builds/TrilinosInstall
 
 cd ${BASE_DIR}/repos/E3SM/components/mpas-albany-landice
 
@@ -16,7 +18,8 @@ make -j 12 gnu-cray \
   CORE=landice \
   PIO=${SCORPIO_DIR} \
   NETCDF=${NETCDF_DIR} \
-  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS}" \
+  PNETCDF=${PARALLEL_NETCDF_DIR} \
+  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL_DIR}/lib64 -Wl,-R${TRILINOS_INSTALL_DIR}/lib64" \
   DEBUG=false \
   EXE_NAME=landice_model;
 

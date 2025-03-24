@@ -20,7 +20,9 @@ cmake \
   -D MPI_EXEC=srun \
   -D MPI_EXEC_NUMPROCS_FLAG:STRING="-n" \
 \
-  -D TPL_ENABLE_SuperLU:BOOL=OFF \
+  -D TPL_ENABLE_SuperLU:BOOL=ON \
+  -D SuperLU_INCLUDE_DIRS:STRING="${SUPERLU_DIR}/include" \
+  -D SuperLU_LIBRARY_DIRS:STRING="${SUPERLU_DIR}/lib64" \
   -D ML_ENABLE_SuperLU:BOOL=OFF \
   -D TPL_ENABLE_BLAS:BOOL=ON \
   -D TPL_BLAS_LIBRARIES:STRING="${CRAY_PE_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
@@ -121,5 +123,8 @@ cmake \
   -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
   -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
+\
+  -D Tacho_ENABLE_INT_INT:BOOL=ON \
+  -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
 \
 ../

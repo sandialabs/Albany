@@ -72,7 +72,7 @@ getuname(cpu    -m)
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 
 
-set (CTEST_BUILD_NAME "Trilinos-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_CONFIGURATION}-serial")
+set (CTEST_BUILD_NAME "Trilinos-gcc-serial")
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "cmake")
@@ -92,6 +92,7 @@ set (BOOST_DIR $ENV{BOOST_DIR})
 set (NETCDF_DIR $ENV{NETCDF_DIR})
 set (PNETCDF_DIR $ENV{PNETCDF_DIR})
 set (HDF5_DIR $ENV{HDF5_DIR})
+set (SUPERLU_DIR $ENV{SUPERLU_DIR})
  
 if (CLEAN_BUILD)
   # Initial cache info
