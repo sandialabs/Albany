@@ -1113,7 +1113,6 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   // Get the input arguments
   //
 
-  ObserverImpl observer(app);
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // Thyra vectors

@@ -46,8 +46,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> UDot;
   
   double mu;   //viscosity coefficient
-  double a;    //advection coefficient
-  double b;    //advection coefficient
+  Teuchos::Array<double> beta; // Advection coefficients
   bool useAugForm; //use augmented form?
   int formType; //augmented form type
   

@@ -107,6 +107,7 @@ public:
   Teuchos::RCP<Thyra_Vector> getSolutionField (const bool overlapped = false) const override;
 
   void getSolutionMV (Thyra_MultiVector& result, bool overlapped) const override;
+  void getSolutionDxDp (Thyra_MultiVector& result, bool overlapped) const override;
 
   void getField (Thyra_Vector& field_vector, const std::string& field_name) const override;
   void setField (const Thyra_Vector& field_vector,
@@ -170,6 +171,14 @@ public:
                               const double             time,
                               const bool               overlapped = false,
                               const bool               force_write_solution = false) override; 
+
+  Teuchos::RCP<AdaptationData>
+  checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
+                      const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                      const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const override;
+
+  void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 
   void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
 

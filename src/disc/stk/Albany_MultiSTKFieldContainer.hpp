@@ -81,6 +81,10 @@ public:
                             const dof_mgr_ptr_t&     sol_dof_mgr,
                             const bool               overlapped);
 
+  void fillSolnSensitivity (Thyra_MultiVector&   dxdp,
+                            const dof_mgr_ptr_t& soln_dof_mgr,
+                            const bool           overlapped);
+
   void transferSolutionToCoords();
 
 private:

@@ -298,6 +298,9 @@ public:
   getSolutionMV(Thyra_MultiVector& soln, bool overlapped = false) const = 0;
 
   virtual void
+  getSolutionDxDp(Thyra_MultiVector& dxdp, bool overlapped = false) const = 0;
+
+  virtual void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const = 0;
   virtual void
   setField(
@@ -388,6 +391,16 @@ public:
       const double             time,
       const bool               overlapped = false,
       const bool               force_write_solution = false) = 0; 
+
+  // Check if mesh adaptation is needed, and if so what kind (topological or just mesh-movement)
+  virtual Teuchos::RCP<AdaptationData>
+  checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
+                      const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                      const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const = 0;
+
+  // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
+  virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
 
 protected:
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
