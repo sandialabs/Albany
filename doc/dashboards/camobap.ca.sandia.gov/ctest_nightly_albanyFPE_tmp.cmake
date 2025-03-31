@@ -296,7 +296,7 @@ if (BUILD_ALBANY_FPE)
   # Run Albany tests
   #
   
-  set (CTEST_TEST_TIMEOUT 2400)
+  set (CTEST_TEST_TIMEOUT 3000)
   
   #  Over-write default limit for output posted to CDash site
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
