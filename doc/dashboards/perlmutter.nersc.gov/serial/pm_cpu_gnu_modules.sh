@@ -23,4 +23,7 @@ export FI_CXI_RX_MATCH_MODE=software
 
 export SUPERLU_DIR=/global/cfs/cdirs/fanssie/software/tpls/superlu-7.0.0
 
+# Need this to avoid error when running seacas decomp
+export LD_LIBRARY_PATH=${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
+
 unset MPICH_GPU_SUPPORT_ENABLED
