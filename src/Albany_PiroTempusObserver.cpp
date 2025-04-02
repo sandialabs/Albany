@@ -85,16 +85,18 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
     // Get new solution
     auto sol = app_->getAdaptSolMgr()->getCurrentSolution();
 
+    Teuchos::RCP<Thyra_Vector> x_nc, xdot_nc, xdotdot_nc;
+
     // Reset vectors now that they have been adapted
     // TODO: we may need to revise these lines in case the state stores product vectors.
-    x = sol->col(0);
-    state_nc->setX(x);
+    x = x_nc = sol->col(0);
+    state_nc->setX(x_nc);
     if (num_time_derivs>0) {
-      xdot = sol->col(1);
-      state_nc->setXDot(xdot);
+      xdot = xdot_nc = sol->col(1);
+      state_nc->setXDot(xdot_nc);
       if (num_time_derivs>1) {
-        xdotdot = sol->col(2);
-        state_nc->setXDotDot(xdotdot);
+        xdotdot = xdotdot_nc = sol->col(2);
+        state_nc->setXDotDot(xdotdot_nc);
       }
     }
     if (Teuchos::nonnull(dxdp)) {
