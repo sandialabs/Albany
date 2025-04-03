@@ -11,7 +11,6 @@
 #SBATCH --ntasks=128
 #SBATCH --ntasks-per-node=128
 #SBATCH --ntasks-per-socket=64
-#SBATCH --cpu-bind=cores
 #SBATCH --hint=nomultithread
 
 # Env variables
@@ -28,4 +27,4 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ALBANY_INSTALL}/lib64
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${TRILINOS_INSTALL}/lib64
 
 # Run Case
-srun ${APPDIR}/Albany input_albany_MueLu.yaml
+srun --cpu-bind=cores ${APPDIR}/Albany input_albany_MueLu.yaml

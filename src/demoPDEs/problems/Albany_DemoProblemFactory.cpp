@@ -8,7 +8,6 @@
 
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_NavierStokes.hpp"
-#include "Albany_AdvDiffProblem.hpp"
 #include "Albany_ReactDiffSystem.hpp"
 #include "Albany_PoissonAdvDiffSystem.hpp"
 #include "Albany_CoupledPoissonAdvDiffSystem.hpp"
@@ -42,8 +41,6 @@ bool DemoProblemFactory::provides (const std::string& key) const
          key == "NavierStokes 1D" ||
          key == "NavierStokes 2D" ||
          key == "NavierStokes 3D" ||
-         key == "AdvDiff 1D" ||
-         key == "AdvDiff 2D" ||
          key == "Reaction-Diffusion System 3D" ||
          key == "Reaction-Diffusion System" ||
          key == "Poisson-Advection-Diffusion System 2D" ||
@@ -83,10 +80,6 @@ create (const std::string& key,
     problem = Teuchos::rcp(new NavierStokes(problemParams, paramLib, 2));
   } else if (key == "NavierStokes 3D") {
     problem = Teuchos::rcp(new NavierStokes(problemParams, paramLib, 3));
-  } else if (key == "AdvDiff 1D") {
-    problem = Teuchos::rcp(new AdvDiffProblem(problemParams, paramLib, 1));
-  } else if (key == "AdvDiff 2D") {
-    problem = Teuchos::rcp(new AdvDiffProblem(problemParams, paramLib, 2));
   } else if (key=="Reaction-Diffusion System 3D" ||
              key == "Reaction-Diffusion System") {
     problem = Teuchos::rcp(new ReactDiffSystem(problemParams, paramLib, 3));

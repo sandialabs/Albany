@@ -201,6 +201,25 @@ ExtrudedDiscretization::writeSolutionMVToFile(
   throw NotYetImplemented("ExtrudedDiscretization::writeSolutionMVToFile");
 }
 
+Teuchos::RCP<AdaptationData>
+ExtrudedDiscretization::
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
+                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
+                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
+                    const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const
+{
+  // We can't just do
+  //  return m_basal_disc->checkForAdaptation(solution,solution_dot,solution_dotdot);
+  // We need to decide WHAT to bass to basal disc: the whole solution or the projection?
+  throw NotYetImplemented("ExtrudedDiscretization::checkForAdaptation");
+}
+
+void ExtrudedDiscretization::
+adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */)
+{
+  throw NotYetImplemented("ExtrudedDiscretization::adapt");
+}
+
 Teuchos::RCP<Thyra_Vector>
 ExtrudedDiscretization::getSolutionField(bool /* overlapped */) const
 {
@@ -241,6 +260,14 @@ ExtrudedDiscretization::getSolutionMV(
   // TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
   // solutionFieldContainer->fillSolnMultiVector(result, getDOFManager(), overlapped);
+}
+
+void
+ExtrudedDiscretization::getSolutionDxDp(
+    Thyra_MultiVector& /* result */,
+    const bool         /* overlapped */) const
+{
+  throw NotYetImplemented("ExtrudedDiscretization::getSolutionDxDp");
 }
 
 /*****************************************************************/

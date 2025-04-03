@@ -5,7 +5,6 @@
 ##*****************************************************************//
 
   add_subdirectory(Helmholtz2D)
-  add_subdirectory(AdvDiff)
   add_subdirectory(ReactDiffSystem)
   add_subdirectory(PoissonAdvDiffSystem)
 #IF(ENABLE_LANDICE)

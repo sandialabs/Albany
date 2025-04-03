@@ -242,7 +242,27 @@ fillSolnMultiVector(Thyra_MultiVector&                    solution,
     TEUCHOS_TEST_FOR_EXCEPTION (col.is_null(), std::runtime_error,
         "Error! Could not extract column from multivector.\n");
 
-    fillVectorImpl(*solution.col(icomp), solution_field[icomp]->name(), solution_dof_mgr, overlapped);
+    fillVectorImpl(*col, solution_field[icomp]->name(), solution_dof_mgr, overlapped);
+  }
+}
+
+void OrdinarySTKFieldContainer::
+fillSolnSensitivity(Thyra_MultiVector&                    dxdp,
+                    const Teuchos::RCP<const DOFManager>& solution_dof_mgr,
+                    const bool                            overlapped)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    dxdp.domain()->dim() != this->num_params, std::runtime_error,
+    "Error in fillSolnSensitivity! Wrong number of vectors in dxdp.\n"
+    "  - num vectors: " << dxdp.domain()->dim() << "\n"
+    "  - num_params : " << this->num_params << "\n");
+
+  for (int iparam = 0; iparam < solution_field_dxdp.size(); ++iparam) {
+    auto col = dxdp.col(iparam);
+    TEUCHOS_TEST_FOR_EXCEPTION (col.is_null(), std::runtime_error,
+        "Error! Could not extract column from multivector.\n");
+
+    fillVectorImpl(*col, solution_field_dxdp[iparam]->name(), solution_dof_mgr, overlapped);
   }
 }
 

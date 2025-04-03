@@ -14,15 +14,15 @@ source convert-cmake-to-cdash-albany.sh ${FAD_CONFIGURATION} ${FAD_SIZE}
 source create-new-cdash-cmake-script-albany.sh ${FAD_CONFIGURATION} ${FAD_SIZE}
 
 if [ "$FAD_CONFIGURATION" = "slfad" ] ; then
-  LOG_FILE=$BASE_DIR/biweekly_log_frontier_Albany_slfad.txt
+  LOG_FILE=$BASE_DIR/build_log_frontier_Albany_slfad.txt
   CMAKE_FILENAME=$BASE_DIR/ctest_nightly_albany_slfad.cmake
 fi
 if [ "$FAD_CONFIGURATION" = "sfad" ] && [ "$FAD_SIZE" = "12" ]; then
-  LOG_FILE=$BASE_DIR/biweekly_log_frontier_Albany_sfad12.txt
+  LOG_FILE=$BASE_DIR/build_log_frontier_Albany_sfad12.txt
   CMAKE_FILENAME=$BASE_DIR/ctest_nightly_albany_sfad12.cmake
 fi
 if [ "$FAD_CONFIGURATION" = "sfad" ] && [ "$FAD_SIZE" = "24" ]; then
-  LOG_FILE=$BASE_DIR/biweekly_log_frontier_Albany_sfad24.txt
+  LOG_FILE=$BASE_DIR/build_log_frontier_Albany_sfad24.txt
   CMAKE_FILENAME=$BASE_DIR/ctest_nightly_albany_sfad24.cmake
 fi
 

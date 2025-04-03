@@ -137,4 +137,7 @@ cmake \
 \
   -D Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC:BOOL=OFF \
 \
-..
+  -D Tacho_ENABLE_INT_INT:BOOL=ON \
+  -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
+\
+

@@ -198,6 +198,9 @@ public:
   getSolutionMV(Thyra_MultiVector& result, bool overlapped) const;
 
   void
+  getSolutionDxDp (Thyra_MultiVector& result, bool overlapped) const;
+
+  void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const;
   void
   setField(
@@ -289,13 +292,21 @@ public:
   };
  
 
-   /** Add a solution field
-     */
-   void addSolutionField(const std::string & fieldName,const std::string & blockId);
+  Teuchos::RCP<AdaptationData>
+  checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
+                      const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                      const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const override;
 
-   /** Add a solution field
-     */
-   void addCellField(const std::string & fieldName,const std::string & blockId);
+  void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
+
+  /** Add a solution field
+    */
+  void addSolutionField(const std::string & fieldName,const std::string & blockId);
+
+  /** Add a solution field
+    */
+  void addCellField(const std::string & fieldName,const std::string & blockId);
 
   void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis);
 

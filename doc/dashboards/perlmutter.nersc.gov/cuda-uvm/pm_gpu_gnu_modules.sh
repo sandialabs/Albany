@@ -27,6 +27,9 @@ export KOKKOS_MAP_DEVICE_ID_BY=mpi_rank
 export CUDA_MANAGED_FORCE_DEVICE_ALLOC=1
 export TPETRA_ASSUME_GPU_AWARE_MPI=0
 
+# Need this to avoid error when running seacas decomp
+export LD_LIBRARY_PATH=${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
+
 # To enable GPU-aware MPI, use the following two environment variables instead
 #export TPETRA_ASSUME_GPU_AWARE_MPI=1
 #export FI_HMEM_CUDA_USE_GDRCOPY=0

@@ -15,4 +15,18 @@ bash ${BASE_DIR}/nightly_cron_script_albany_frontier.sh slfad none
 bash ${BASE_DIR}/nightly_cron_script_albany_frontier.sh sfad 12
 bash ${BASE_DIR}/nightly_cron_script_albany_frontier.sh sfad 24
 
+# build MALI
+bash ${BASE_DIR}/nightly_cron_script_mali_frontier.sh
+
 sbatch test_albany_sbatch.sh
+
+cp build_log_frontier_Albany.txt ${DEPLOY_DIR}/logs/build_log_frontier_Albany_slfad.txt
+cp build_log_frontier_Albany.txt ${DEPLOY_DIR}/logs/build_log_frontier_Albany_sfad12.txt
+cp build_log_frontier_Albany.txt ${DEPLOY_DIR}/logs/build_log_frontier_Albany_sfad24.txt
+cp build_log_frontier_Trilinos.txt ${DEPLOY_DIR}/logs/build_log_frontier_Trilinos.txt
+cp build_log_frontier_MALI.txt ${DEPLOY_DIR}/logs/build_log_frontier_MALI.txt
+
+chmod -R 2770 ${DEPLOY_DIR}
+chown -R :cli193 ${DEPLOY_DIR}
+
+
