@@ -146,46 +146,33 @@ public:
 
   // --- Methods to write solution in the output file --- //
 
-  //! Write the solution to the output file. Calls next two together.
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override {
-    std::cout << "WARNING! This call to OmegahDiscretization::writeSolution does nothing.\n";
-  } 
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
-  } 
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const Thyra_Vector& /* solution_dotdot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
-  } 
-  void
-  writeSolutionMV(
-      const Thyra_MultiVector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double             /* time */,
-      const bool               /* overlapped */ = false,
-      const bool               /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMV");
-  } 
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false) override;
+
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false) override;
+
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const Thyra_Vector& solution_dotdot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false) override;
+
+  void writeSolutionMV (const Thyra_MultiVector& solution,
+                        const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                        const double             time,
+                        const bool               overlapped = false,
+                        const bool               force_write_solution = false) override;
+
   //! Write the solution to the mesh database.
   void
   writeSolutionToMeshDatabase(

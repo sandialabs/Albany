@@ -272,6 +272,53 @@ setField (const Thyra_Vector& field_vector,
   accessor->saveVector(field_vector,field_name,dof_mgr,false);
 }
 
+void OmegahDiscretization::
+writeSolution (const Thyra_Vector& solution,
+               const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+               const double        time,
+               const bool          overlapped,
+               const bool          force_write_solution)
+{
+  writeSolutionToMeshDatabase(solution, solution_dxdp, time, overlapped);
+  writeSolutionToFile(solution, time, overlapped, force_write_solution);
+}
+
+void OmegahDiscretization::
+writeSolution (const Thyra_Vector& solution,
+               const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+               const Thyra_Vector& solution_dot,
+               const double        time,
+               const bool          overlapped,
+               const bool          force_write_solution)
+{
+  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, time, overlapped);
+  writeSolutionToFile(solution, time, overlapped, force_write_solution);
+}
+
+void OmegahDiscretization::
+writeSolution (const Thyra_Vector& solution,
+               const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+               const Thyra_Vector& solution_dot,
+               const Thyra_Vector& solution_dotdot,
+               const double        time,
+               const bool          overlapped,
+               const bool          force_write_solution)
+{
+  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, solution_dot, time, overlapped);
+  writeSolutionToFile(solution, time, overlapped, force_write_solution);
+}
+
+void OmegahDiscretization::
+writeSolutionMV(const Thyra_MultiVector& solution,
+                const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                const double             time,
+                const bool               overlapped,
+                const bool               force_write_solution)
+{
+  writeSolutionMVToMeshDatabase(solution, solution_dxdp, time, overlapped);
+  writeSolutionMVToFile(solution, time, overlapped, force_write_solution);
+}
+
 Teuchos::RCP<DOFManager>
 OmegahDiscretization::
 create_dof_mgr (const std::string& part_name,
