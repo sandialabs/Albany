@@ -411,7 +411,10 @@ protected:
   strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
 
   // Dof manager for a scalar node field
-  strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+  strmap_t<dof_mgr_ptr_t>          m_node_dof_managers;
+
+  // Hash all params used to create a dof mgr, and store it here
+  std::map<size_t,dof_mgr_ptr_t>   m_hash_to_dof_mgr;
 
   // Struct containing node/elem state arrays
   StateArrays                           m_stateArrays;
