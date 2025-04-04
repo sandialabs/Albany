@@ -15,7 +15,8 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
                       const Teuchos::RCP<OmegahGenericMesh>&      mesh,
                       const Teuchos::RCP<const Teuchos_Comm>&     comm,
                       const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
-                      const std::map<int, std::vector<std::string>>& sideSetEquations)
+                      const std::map<int, std::vector<std::string>>& sideSetEquations,
+                      const int num_params)
  : m_disc_params (discParams)
  , m_mesh_struct(mesh)
  , m_comm (comm)
@@ -33,44 +34,48 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
     }
   }
 
-  auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
-  field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
-  auto mesh_fields = m_mesh_struct->get_field_accessor();
-  for (auto st : mesh_fields->getNodalParameterSIS()) {
-    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
-    int numComps;
-    switch (st->dim.size()) {
-      case 2: numComps = 1; break;
-      case 3: numComps = st->dim[2]; break;
-      default:
-        throw std::runtime_error(
-            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
-            "  - state name: " + st->name + "\n"
-            "  - input dims: (" + util::join(st->dim,",") + ")\n");
-    }
-    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
-    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+  auto field_accessor = m_mesh_struct->get_field_accessor();
 
-    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
-      auto node_dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
-      m_node_dof_managers[st->meshPart] = node_dof_mgr;
+  // Add solution (and their dof mgrs)
+  for (const auto& n : m_sol_names) {
+    field_accessor->addFieldOnMesh(n,0,neq);
+
+    // Create dof mgrs for solution
+    m_dof_managers[n][""] = create_dof_mgr ("",FE_Type::HGRAD,1,neq);
+    m_node_dof_managers[""] = create_dof_mgr ("",FE_Type::HGRAD,1,1);
+  }
+  m_dof_managers[nodes_dof_name()][""] = create_dof_mgr("",FE_Type::HGRAD,1,1);
+
+  // Possibly add sensitivities (and their dof mgrs)
+  const auto& sens_method = m_disc_params->get<std::string>("Sensitivity Method","None");
+  if (sens_method=="Forward") {
+    for (int ip=0; ip<num_params; ++ip) {
+      auto sens_name = "sensitivity_dx_dp" + std::to_string(ip);
+      field_accessor->addFieldOnMesh (sens_name,0,neq);
+      m_dof_managers[sens_name][""] = create_dof_mgr ("",FE_Type::HGRAD,1,neq);
     }
+  } else if (sens_method=="Adjoint") {
+    const int resp_idx = m_disc_params->get<int>("Response Function Index");
+    const int p_idx    = m_disc_params->get<int>("Sensitivity Parameter Index");
+
+
+    auto sens_name = "sensitivity_dg" + std::to_string(resp_idx) + "_dp" + std::to_string(ip);
+    field_accessor->addFieldOnMesh (sens_name,0,neq);
+    m_dof_managers[sens_name][""] = create_dof_mgr ("",FE_Type::HGRAD,1,1); // resp are scalar
+  }
+
+  // Add dof mgrs for nodal sis
+  for (const auto& st : field_accessor->getNodalSIS()) {
+    int ncmp = 1;
+    for (size_t i=2; i<st->dim.size(); ++i) { ncmp*= st->dim[i]; }
+
+    m_dof_managers[st->name][st->meshPart] = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,ncmp);
   }
 }
 
 void OmegahDiscretization::
 updateMesh ()
 {
-  printf ("TODO: change name to the method?\n");
-
-  // Create DOF managers
-  auto sol_dof_mgr  = create_dof_mgr(solution_dof_name(),"",FE_Type::HGRAD,1,m_neq);
-  auto node_dof_mgr = create_dof_mgr(nodes_dof_name(),"",FE_Type::HGRAD,1,1);
-
-  m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
-  m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
-  m_node_dof_managers[""]     = node_dof_mgr;
-
   // Compute workset information
   // NOTE: these arrays are all of size 1, for the foreseable future.
   //       Still, make impl generic (where possible), in case things change.
@@ -111,6 +116,8 @@ updateMesh ()
     auto lid = node_indexer->getLocalElement(gid);
     m_node_lid_to_omegah_pos[lid] = i;
   }
+
+  auto node_dof_mgr = getNodeDOFManager();
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 

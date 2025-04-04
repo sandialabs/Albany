@@ -23,9 +23,9 @@ public:
       const int neq,
       const Teuchos::RCP<OmegahGenericMesh>&      mesh,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
-      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
-      const std::map<int, std::vector<std::string>>& sideSetEquations =
-          std::map<int, std::vector<std::string>>());
+      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes,
+      const std::map<int, std::vector<std::string>>& sideSetEquations,
+      const int num_params);
 
   //! Destructor
   virtual ~OmegahDiscretization() = default;

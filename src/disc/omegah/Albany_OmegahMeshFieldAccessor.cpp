@@ -13,71 +13,67 @@ OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh)
 
 void OmegahMeshFieldAccessor::
 addFieldOnMesh (const std::string& name,
-                const FE_Type fe_type,
+                const int entityDim,
                 const int numComps)
 {
-
-  switch (fe_type) {
-    case FE_Type::HGRAD:
-    {
-      Omega_h::Write<ST> f(m_mesh->nverts(),name);
-      m_mesh->add_tag<ST>(OMEGA_H_VERT,name,numComps,f,false);
-      break;
-    }
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (fe_type!=FE_Type::HGRAD, std::runtime_error,
-          "[OmegahMeshFieldAccessor::addFieldOnMesh] Error! Unsupported value for fe_type.\n"
-          "  - input value: " << e2str(fe_type) << "\n"
-          "  - supported values: " << e2str(FE_Type::HGRAD) << "\n");
-  }
+  Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
+  m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
 }
 
 void OmegahMeshFieldAccessor::
 addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
 {
-  // Extract underlying integer value from an enum
-  auto e2i = [] (const StateStruct::MeshFieldEntity e) {
-    return static_cast<typename std::underlying_type<StateStruct::MeshFieldEntity>::type>(e);
+  if (sis.is_null()) {
+    return;
+  }
+
+  auto product = [](const auto& vec, int start) {
+    return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());
   };
 
-  auto get_nodal_state_ncomps = [](const StateStruct& st) {
+  auto get_ent_dim_and_ncomp = [&] (const StateStruct& st) {
     const auto& dims = st.dim;
-    int ncomps = -1;
-    switch (dims.size()) {
-      case 2:
-        ncomps = 1;
+    std::pair<int,int> dim_ncomp;
+    switch (st.stateType()) {
+      case StateStruct::GlobalState:
+        dim_ncomp.first  = -1;
+        dim_ncomp.second = product(st.dim,0);
         break;
-      case 3:
-        ncomps = dims[2];
+      case StateStruct::NodeState:
+        dim_ncomp.first  =  0;
+        dim_ncomp.second = product(st.dim,st.entity==StateStruct::NodalData ? 1 : 2);
         break;
-      case 4:
-        ncomps = dims[2]*dims[3];
+      case StateStruct::ElemState:
+        dim_ncomp.first  = m_mesh->dim();
+        dim_ncomp.second = product(st.dim,0);
         break;
       default:
-        throw std::runtime_error(
-            "Error! Unsupported rank for state field.\n"
-            "  - state name: " + st.name + "\n"
-            "  - state rank: " + std::to_string(dims.size()) + "\n");
+        throw std::runtime_error("Invalid/unsupported state type.\n");
     }
-    return ncomps;
+    return dim_ncomp;
   };
+
   for (const auto& st : *sis) {
-    if (st->entity==StateStruct::NodalDataToElemNode) {
-      nodal_sis.push_back(st);
-    } else if (st->entity==StateStruct::NodalDistParameter) {
-      nodal_sis.push_back(st);
+    // These will be warranted a dof mgr later
+    if (st->entity==StateStruct::NodalDistParameter) {
       nodal_parameter_sis.push_back(st);
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-          "Error! Unsupported state mesh entity type for Omega_h.\n"
-          "  - input value: " << e2i(st->entity) << "\n"
-          "  - supported values:\n"
-          "       NodalDataToElemNode: " << e2i(StateStruct::NodalDataToElemNode) << "\n"
-          "       NodalDistParameter : " << e2i(StateStruct::NodalDistParameter)  << "\n");
+      nodal_sis.push_back(st);
+    } else if (st->entity==StateStruct::NodalDataToElemNode) {
+      nodal_sis.push_back(st);
     }
 
-    // TODO: this needs to change for non-nodal states
-    addFieldOnMesh(st->name,FE_Type::HGRAD,get_nodal_state_ncomps(*st));
+    auto dim_ncomp = get_ent_dim_and_ncomp(*st);
+    int ent_dim = dim_ncomp.first;
+    int ncomp = dim_ncomp.second;
+    if (ent_dim==-1) {
+      if (ncomp==1) {
+        mesh_scalar_states.emplace(st->name,st->initValue);
+      } else {
+        mesh_vector_states[st->name].resize(ncomp,st->initValue);
+      }
+    } else {
+      addFieldOnMesh(st->name,ent_dim,ncomp);
+    }
   }
 }
 

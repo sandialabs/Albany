@@ -343,7 +343,7 @@ createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh
 #ifdef ALBANY_OMEGAH
   } else if (mesh->meshLibName()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(mesh);
-    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations, num_params));
 #endif
   }
   return disc;
