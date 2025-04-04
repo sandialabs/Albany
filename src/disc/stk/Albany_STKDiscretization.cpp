@@ -1570,8 +1570,8 @@ STKDiscretization::computeWorksetInfo()
       state.reset_from_host_ptr(data,buck.size(),num_qps,dim,dim);
     }
     for (auto& svs : scalarValue_states) {
-      auto& state = m_stateArrays.elemStateArrays[b][*svs];
-      state.reset_from_host_ptr(&time[*svs],1);
+      auto& state = m_stateArrays.elemStateArrays[b][svs];
+      state.reset_from_host_ptr(&time[svs],1);
     }
   }
 }
