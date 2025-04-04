@@ -10,8 +10,8 @@ cp build/Testing/Temporary/LastTest_*bz2 saved/
 cp build/Testing/Temporary/ctest*json saved/
 cd $BASE_DIR/repos/ali-perf-data/
 git pull
-cp $BASE_DIR/saved/* $BASE_DIR/repos/ali-perf-data/ali/pm_cuda_biweekly_data
-cd $BASE_DIR/repos/ali-perf-data/ali/pm_cuda_biweekly_data
+cp $BASE_DIR/saved/* $BASE_DIR/repos/ali-perf-data/ali/pm_cuda_data
+cd $BASE_DIR/repos/ali-perf-data/ali/pm_cuda_data
 now=$(date +"%Y%m%d")
 FILE=ctest-$now.json
 git add $FILE
