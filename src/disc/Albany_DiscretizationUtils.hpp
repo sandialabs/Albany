@@ -9,6 +9,7 @@
 
 #include "Albany_KokkosTypes.hpp"
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_CommTypes.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
 
 #include "Kokkos_DualView.hpp"
@@ -174,6 +175,47 @@ using WorksetArray = Teuchos::ArrayRCP<T>;
 //             dependencies.
 using WorksetConn = Kokkos::View<LO***, Kokkos::LayoutRight, PHX::Device>;
 using Conn        = WorksetArray<WorksetConn>;
+
+// ===== Utilities to serially read data from file ====== //
+
+// Fwd-declare
+class CombineAndScatterManager;
+
+Teuchos::RCP<Thyra_MultiVector>
+readScalarFileSerial (const std::string& fname,
+                      const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                      const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+Teuchos::RCP<Thyra_MultiVector>
+readLayeredScalarFileSerial (const std::string &fname,
+                             const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                             std::vector<double>& normalizedLayersCoords,
+                             const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+Teuchos::RCP<Thyra_MultiVector>
+readLayeredVectorFileSerial (const std::string &fname,
+                             const Teuchos::RCP<const Thyra_VectorSpace>& vs,
+                             std::vector<double>& normalizedLayersCoords,
+                             const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+// Calls one of the above, depending on inputs, and takes care of
+// redistributing the vector over MPI ranks, as well as set scaling fators (if requested)
+Teuchos::RCP<Thyra_MultiVector>
+loadField (const std::string& field_name,
+           const Teuchos::ParameterList& field_params,
+           const CombineAndScatterManager& cas_manager,
+           const Teuchos::RCP<const Teuchos_Comm>& comm,
+           bool node, bool scalar, bool layered,
+           const Teuchos::RCP<Teuchos::FancyOStream> out,
+           std::vector<double>& norm_layers_coords);
+
+Teuchos::RCP<Thyra_MultiVector>
+fillField (const std::string& field_name,
+           const Teuchos::ParameterList& field_params,
+           const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
+           bool nodal, bool scalar, bool layered,
+           const Teuchos::RCP<Teuchos::FancyOStream> out,
+           std::vector<double>& norm_layers_coords);
 
 }  // namespace Albany
 
