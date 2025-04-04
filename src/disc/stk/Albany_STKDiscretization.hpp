@@ -301,8 +301,6 @@ public:
     */
   void addCellField(const std::string & fieldName,const std::string & blockId);
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis);
-
   Teuchos::RCP<AbstractSTKFieldContainer> getSolutionFieldContainer() {
     return solutionFieldContainer;
   }
@@ -312,6 +310,8 @@ public:
                             const stk::mesh::Entity child) const;
 
  protected:
+
+  void createSolutionFieldContainer();
 
   friend class BlockedSTKDiscretization;
   friend class STKConnManager;

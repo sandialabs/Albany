@@ -308,9 +308,6 @@ public:
       const std::string&  field_name,
       bool                overlapped) = 0;
 
-  virtual void
-  setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
-
   // Update mesh internals, such as coordinates, DOF numbers, etc.
   // To be run either after creation or after modification/adaptation.
   virtual void updateMesh () {};

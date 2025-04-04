@@ -180,8 +180,6 @@ public:
 
   void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
-
  protected:
 
   void getSolutionField(Thyra_Vector& result, bool overlapped) const;

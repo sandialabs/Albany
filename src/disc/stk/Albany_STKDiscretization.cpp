@@ -82,6 +82,7 @@ STKDiscretization::STKDiscretization(
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }
   }
+  createSolutionFieldContainer();
 }
 
 STKDiscretization::~STKDiscretization()
@@ -2330,9 +2331,9 @@ STKDiscretization::updateMesh()
 }
 
 void STKDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
+createSolutionFieldContainer()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: createSolutionFieldContainer");
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
   auto mSTKFieldContainer = Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer>(fieldContainer,false);
@@ -2367,10 +2368,10 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
 
   if (Teuchos::nonnull(mSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, solution_vector, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, solution_vector, num_params));
   } else if (Teuchos::nonnull(oSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, num_params));
   } else {
     ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }
@@ -2516,7 +2517,6 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   discParams->set("1D Elements",factor*ne_x);
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
   stkMeshStruct->setFieldData(comm,mesh1d->sis_);
-  this->setFieldData(mesh1d->sis_);
   stkMeshStruct->setBulkData(comm);
 
   updateMesh();

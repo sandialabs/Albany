@@ -1322,12 +1322,6 @@ buildCellSideNodeNumerationMaps()
   }
 }
 
-void ExtrudedDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
-{
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
-}
-
 Teuchos::RCP<DOFManager>
 ExtrudedDiscretization::
 create_dof_mgr (const std::string& part_name,
