@@ -16,9 +16,9 @@ public:
 
   void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) override;
 
-  // TODO: move this in the base class
+  // TODO: move this in the base class?
   void addFieldOnMesh (const std::string& name,
-                       const FE_Type fe_type,
+                       const int entityDim,
                        const int numComps);
 
   // Read from mesh methods

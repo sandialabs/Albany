@@ -29,6 +29,8 @@ public:
   GO get_max_node_gid () const override;
   GO get_max_elem_gid () const override;
 
+  // NOTE: return ptr to DERIVED type (compare with AbstractMeshStruct).
+  //       This is OK in C++ (covariant return type)
   Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override { return m_field_accessor; }
 
   // ------------- Omegah specific methods -------------- //
