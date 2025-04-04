@@ -32,6 +32,30 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
       m_sol_names[2] += "_dotdot";
     }
   }
+
+  auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
+  field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
+  auto mesh_fields = m_mesh_struct->get_field_accessor();
+  for (auto st : mesh_fields->getNodalParameterSIS()) {
+    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
+    int numComps;
+    switch (st->dim.size()) {
+      case 2: numComps = 1; break;
+      case 3: numComps = st->dim[2]; break;
+      default:
+        throw std::runtime_error(
+            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
+            "  - state name: " + st->name + "\n"
+            "  - input dims: (" + util::join(st->dim,",") + ")\n");
+    }
+    auto dof_mgr = create_dof_mgr (st->name,st->meshPart,FE_Type::HGRAD,1,numComps);
+    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+
+    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
+      auto node_dof_mgr = create_dof_mgr (nodes_dof_name(),st->meshPart,FE_Type::HGRAD,1,1);
+      m_node_dof_managers[st->meshPart] = node_dof_mgr;
+    }
+  }
 }
 
 void OmegahDiscretization::
@@ -202,34 +226,6 @@ computeGraphs ()
 
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
       "Error! SideSet equation support not yet added for Omega_h discretization.\n");
-}
-
-void OmegahDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
-{
-  auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
-  field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
-  auto mesh_fields = m_mesh_struct->get_field_accessor();
-  for (auto st : mesh_fields->getNodalParameterSIS()) {
-    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
-    int numComps;
-    switch (st->dim.size()) {
-      case 2: numComps = 1; break;
-      case 3: numComps = st->dim[2]; break;
-      default:
-        throw std::runtime_error(
-            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
-            "  - state name: " + st->name + "\n"
-            "  - input dims: (" + util::join(st->dim,",") + ")\n");
-    }
-    auto dof_mgr = create_dof_mgr (st->name,st->meshPart,FE_Type::HGRAD,1,numComps);
-    m_dof_managers[st->name][st->meshPart] = dof_mgr;
-
-    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
-      auto node_dof_mgr = create_dof_mgr (nodes_dof_name(),st->meshPart,FE_Type::HGRAD,1,1);
-      m_node_dof_managers[st->meshPart] = node_dof_mgr;
-    }
-  }
 }
 
 void

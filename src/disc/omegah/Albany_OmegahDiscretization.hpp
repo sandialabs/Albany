@@ -144,8 +144,6 @@ public:
                 const std::string&  field_name,
                 bool                overlapped) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
-
   // --- Methods to write solution in the output file --- //
 
   //! Write the solution to the output file. Calls next two together.

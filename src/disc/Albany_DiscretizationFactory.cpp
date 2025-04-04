@@ -254,27 +254,20 @@ DiscretizationFactory::createDiscretization(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis,
         const Teuchos::RCP<RigidBodyModes>& rigidBodyModes) 
 {
-    TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: createDiscretization");
-    TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
-            std::logic_error,
-            "meshStruct accessed, but it has not been constructed" << std::endl);
+  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: createDiscretization");
+  TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
+          std::logic_error,
+          "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
+  // Complete setup of mesh
+  setMeshStructFieldData(sis, side_set_sis);
+  setMeshStructBulkData();
 
-    setMeshStructFieldData(sis, side_set_sis);
-    disc->setFieldData(sis);
-    Teuchos::RCP<StateInfoStruct> dummy_sis;
-    for (auto it : disc->getSideSetDiscretizations()) {
-      if (side_set_sis.count(it.first)==1) {
-        it.second->setFieldData(side_set_sis.at(it.first));
-      } else {
-        it.second->setFieldData({});
-      }
-    }
-    setMeshStructBulkData();
-    disc->updateMesh();
+  // Create discretization
+  auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
+  disc->updateMesh();
 
-    return disc;
+  return disc;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
