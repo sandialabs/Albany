@@ -13,9 +13,7 @@ public:
   template<typename T>
   using strmap_t = std::map<std::string,T>;
 
-  OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                     const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const int num_params);
+  OmegahGenericMesh(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   virtual ~OmegahGenericMesh () = default;
 
@@ -60,14 +58,17 @@ public:
   void reset_mesh (const Teuchos::RCP<Omega_h::Mesh> mesh);
 
 protected:
-  void loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params);
+  // Load a mesh from a .osh file
+  void loadOmegahMesh ();
 
   // Builds a box mesh
-  void buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim);
+  void buildBox (const int dim);
 
   // Create a nodeSet tag in the mesh
   Omega_h::Read<Omega_h::I8>
   create_ns_tag (const std::string& name, const int comp, const double tgt_value) const;
+
+  Teuchos::RCP<Teuchos::ParameterList> m_params;
 
   Teuchos::RCP<Omega_h::Mesh>  m_mesh;
 

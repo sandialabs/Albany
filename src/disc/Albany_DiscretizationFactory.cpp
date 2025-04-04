@@ -87,8 +87,8 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 #endif // ALBANY_SEACAS
     }
 #ifdef ALBANY_OMEGAH
-    else if (method=="Box1D" or method=="Box2D" or method=="Box3D" or method=="OshFile") {
-        mesh = Teuchos::rcp(new OmegahGenericMesh(disc_params, comm, numParams));
+    else if (method == "Omegah") {
+        mesh = Teuchos::rcp(new OmegahGenericMesh(disc_params));
     }
 #endif
     else if (method == "Ascii") {
@@ -176,7 +176,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                   "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                   "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
                   " Exodus, Ascii," <<
-                  " Ascii2D, STKExtruded, Extruded" << std::endl);
+                  " Ascii2D, STKExtruded, Extruded, Omegah" << std::endl);
   }
 
   if (disc_params->isSublist ("Side Set Discretizations")) {
