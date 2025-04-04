@@ -10,8 +10,7 @@ class OmegahBoxMesh : public OmegahGenericMesh {
 public:
   static_assert (Dim>=1 && Dim<=3, "Unsupported dimension for OmegahBoxMesh");
 
-  OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                 const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams);
+  OmegahBoxMesh (const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 

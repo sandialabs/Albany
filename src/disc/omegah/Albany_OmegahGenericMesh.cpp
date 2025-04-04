@@ -4,6 +4,13 @@
 namespace Albany
 {
 
+OmegahGenericMesh::
+OmegahGenericMesh(const Teuchos::RCP<Teuchos::ParameterList>& params)
+ : m_params(params)
+{
+  // Nothing to do here
+}
+
 void OmegahGenericMesh::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
               const Teuchos::RCP<StateInfoStruct>& sis)

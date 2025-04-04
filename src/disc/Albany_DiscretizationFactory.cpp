@@ -24,6 +24,7 @@
 
 #ifdef ALBANY_OMEGAH
 #include "Albany_OmegahBoxMesh.hpp"
+#include "Albany_OmegahOshMesh.hpp"
 #include "Albany_OmegahDiscretization.hpp"
 #endif
 
@@ -87,12 +88,19 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 #endif // ALBANY_SEACAS
     }
 #ifdef ALBANY_OMEGAH
-    else if (method == "Box1D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<1>(disc_params, comm, numParams));
-    } else if (method == "Box2D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<2>(disc_params, comm, numParams));
-    } else if (method == "Box3D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<3>(disc_params, comm, numParams));
+    else if (method == "Omegah") {
+        auto input_mesh_type = disc_params->get<std::string>("Input Mesh Type","UNKNOWN");
+        if (input_mesh_type=="Box1D") {
+            mesh = Teuchos::rcp(new OmegahBoxMesh<1>(disc_params));
+        } else if (input_mesh_type == "Box2D") {
+            mesh = Teuchos::rcp(new OmegahBoxMesh<2>(disc_params));
+        } else if (input_mesh_type == "Box3D") {
+            mesh = Teuchos::rcp(new OmegahBoxMesh<3>(disc_params));
+        } else if (input_mesh_type == "OshFile") {
+            mesh = Teuchos::rcp(new OmegahOshMesh(disc_params));
+        } else {
+            throw Teuchos::Exceptions::InvalidParameter("Invalid value for 'Input Mesh Type': " + input_mesh_type + "\n");
+        }
     }
 #endif
     else if (method == "Ascii") {
@@ -180,7 +188,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                   "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                   "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
                   " Exodus, Ascii," <<
-                  " Ascii2D, STKExtruded, Extruded" << std::endl);
+                  " Ascii2D, STKExtruded, Extruded, Omegah" << std::endl);
   }
 
   if (disc_params->isSublist ("Side Set Discretizations")) {

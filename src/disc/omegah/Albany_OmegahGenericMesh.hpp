@@ -13,6 +13,8 @@ public:
   template<typename T>
   using strmap_t = std::map<std::string,T>;
 
+  OmegahGenericMesh(const Teuchos::RCP<Teuchos::ParameterList>& params);
+
   virtual ~OmegahGenericMesh () = default;
 
   // ------------- Override from base class ------------- //
@@ -53,6 +55,8 @@ public:
                            const bool markDownward);
 
 protected:
+
+  Teuchos::RCP<Teuchos::ParameterList> m_params;
 
   Teuchos::RCP<Omega_h::Mesh>  m_mesh;
 
