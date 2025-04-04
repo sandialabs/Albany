@@ -37,9 +37,9 @@ template <size_t Dim = 2>
 Teuchos::RCP<Albany::OmegahGenericMesh>
 createOmegahBoxMesh(const Teuchos::RCP<const Teuchos_Comm>& comm) {
   auto pl = Teuchos::rcp(new Teuchos::ParameterList());
-  pl->set("Method","Box" + std::to_string(Dim) + "D");
+  pl->set("Mesh Creation Method","Box" + std::to_string(Dim) + "D");
   pl->set("Number of Elements",Teuchos::Array<int>(Dim,2));
-  auto p = Teuchos::rcp(new Albany::OmegahGenericMesh(pl,comm,0));
+  auto p = Teuchos::rcp(new Albany::OmegahGenericMesh(pl));
   return p;
 }
 
@@ -57,7 +57,7 @@ createOmegahMesh(const std::string& filename,
   REQUIRE(!filename.empty());
 
   auto pl = Teuchos::rcp(new Teuchos::ParameterList());
-  pl->set<std::string>("Method", "OshFile");
+  pl->set<std::string>("Mesh Creation Method", "OshFile");
   pl->set("Filename",filename);
   Teuchos::Array<std::string> pnames;
   for (const auto& ps : set_parts) {
@@ -66,7 +66,7 @@ createOmegahMesh(const std::string& filename,
     pl->sublist(ps.name).set("Id",ps.id);
   }
   pl->set("Mark Parts",pnames);
-  return Teuchos::rcp(new Albany::OmegahGenericMesh(pl,comm,0));
+  return Teuchos::rcp(new Albany::OmegahGenericMesh(pl));
 }
 
 auto createOmegahConnManager(const Teuchos::RCP<Albany::OmegahGenericMesh>& mesh) {

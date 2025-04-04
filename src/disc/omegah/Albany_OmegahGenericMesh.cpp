@@ -10,17 +10,16 @@ namespace Albany
 {
 
 OmegahGenericMesh::
-OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                   const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-                   const int /* num_params */)
+OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
+ : m_params(params)
 {
-  const auto& method = params->get<std::string>("Method");
+  const auto& method = m_params->get<std::string>("Mesh Creation Method");
   if (method=="OshFile") {
-    loadOmegahMesh(params);
+    loadOmegahMesh();
   } else if (method=="Box1D" or method=="Box2D" or method=="Box3D") {
     // Digits have CONSECUTIVE char values. So '1' = '0'+1, etc.
     int dim = method[3] - '0';
-    buildBox(params,dim);
+    buildBox(dim);
   }
 }
 
@@ -192,14 +191,14 @@ mark_part_entities (const std::string& name,
 }
 
 void OmegahGenericMesh::
-loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
+loadOmegahMesh ()
 {
   auto& lib = get_omegah_lib();
   m_mesh = Teuchos::RCP<Omega_h::Mesh>(new Omega_h::Mesh(&lib));
 
-  const auto& filename = params->get<std::string>("Filename");
+  const auto& filename = m_params->get<std::string>("Filename");
   Omega_h::binary::read(filename, lib.world(), m_mesh.get());
-  if (params->get("Rebalance",true)) {
+  if (m_params->get("Rebalance",true)) {
     m_mesh->balance(); // re-partition to the number of ranks in world communicator
   }
 
@@ -221,9 +220,9 @@ loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
   // topological definition of the domain is a common part of the mesh
   // generation/adaptation workflow.
   // A dimension and id uniquely defines a geometric model entity.
-  const auto& parts_names = params->get<Teuchos::Array<std::string>>("Mark Parts",{});
+  const auto& parts_names = m_params->get<Teuchos::Array<std::string>>("Mark Parts",{});
   for (const auto& pn : parts_names) {
-          auto& pl = params->sublist(pn);
+          auto& pl = m_params->sublist(pn);
     const auto topo_str = pl.get<std::string>("Topo");
     const auto topo = str2topo(pl.get<std::string>("Topo"));
     const int dim = topo_dim(topo);
@@ -280,7 +279,7 @@ loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
 
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
-  int ws_size_max = params->get<int>("Workset Size", -1);
+  int ws_size_max = m_params->get<int>("Workset Size", -1);
   int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
@@ -288,14 +287,13 @@ loadOmegahMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
                           ebNameToIndex));
 }
 
-
 void OmegahGenericMesh::
-buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
+buildBox (const int dim)
 {
   using I8 = Omega_h::I8;
 
-  auto nelems = params->get<Teuchos::Array<int>>("Number of Elements");
-  auto scale  = params->get<Teuchos::Array<double>>("Box Scaling",Teuchos::Array<double>(dim,1.0));
+  auto nelems = m_params->get<Teuchos::Array<int>>("Number of Elements");
+  auto scale  = m_params->get<Teuchos::Array<double>>("Box Scaling",Teuchos::Array<double>(dim,1.0));
   TEUCHOS_TEST_FOR_EXCEPTION (nelems.size()!=dim, std::logic_error,
       "Input array for 'Number of Elements' has the wrong dimension.\n"
       "  - Expected length: " << dim << "\n"
@@ -306,8 +304,8 @@ buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
       "  - Input length   : " << scale.size() << "\n");
 
   std::string topo_str = "Simplex";
-  if (params->isParameter("Topology Type")) {
-    topo_str = params->get<std::string>("Topology Type");
+  if (m_params->isParameter("Topology Type")) {
+    topo_str = m_params->get<std::string>("Topology Type");
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (topo_str!="Simplex" and topo_str!="Hypercube", std::runtime_error,
@@ -401,7 +399,7 @@ buildBox (const Teuchos::RCP<Teuchos::ParameterList>& params, const int dim)
   }
 
   this->meshSpecs.resize(1);
-  int ws_size_max = params->get<int>("Workset Size", -1);
+  int ws_size_max = m_params->get<int>("Workset Size", -1);
   int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Structured, *ctd, dim,

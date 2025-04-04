@@ -24,28 +24,28 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 2D)
   const int num_params = 2;
 
   auto params = Teuchos::rcp(new Teuchos::ParameterList(""));
-  params->set<std::string>("Method","Box2D");
+  params->set<std::string>("Mesh Creation Method","Box2D");
 
   // ---------------------------------- //
   //      Test exceptions handling      //
   // ---------------------------------- //
 
   // Missing required parameter
-  TEST_THROW (OmegahGenericMesh(params,comm,num_params),std::logic_error);
+  TEST_THROW (OmegahGenericMesh(params),std::logic_error);
 
   // Wrong dimensions
   params->set<Teuchos::Array<int>>("Number of Elements",Teuchos::Array<int>(3,1));
-  TEST_THROW (OmegahGenericMesh(params,comm,num_params),std::logic_error);
+  TEST_THROW (OmegahGenericMesh(params),std::logic_error);
   params->set<Teuchos::Array<int>>("Number of Elements",nelems);
   params->set<Teuchos::Array<double>>("Box Scaling",Teuchos::Array<double>(1,1));
-  TEST_THROW (OmegahGenericMesh(params,comm,num_params),std::logic_error);
+  TEST_THROW (OmegahGenericMesh(params),std::logic_error);
 
   // ---------------------------------- //
   //        Test normal oprations       //
   // ---------------------------------- //
 
   params->remove("Box Scaling");
-  auto mesh = Teuchos::rcp(new OmegahGenericMesh(params,comm,num_params));
+  auto mesh = Teuchos::rcp(new OmegahGenericMesh(params));
 
   auto coords = mesh->coords_host();
   auto omegah_mesh = mesh->getOmegahMesh();
@@ -71,28 +71,28 @@ TEUCHOS_UNIT_TEST(OmegahBoxMesh, 1D)
   const int num_params = 1;
 
   auto params = Teuchos::rcp(new Teuchos::ParameterList(""));
-  params->set<std::string>("Method","Box2D");
+  params->set<std::string>("Mesh Creation Method","Box2D");
 
   // ---------------------------------- //
   //      Test exceptions handling      //
   // ---------------------------------- //
 
   // Missing required parameter
-  TEST_THROW (OmegahGenericMesh(params,comm,num_params),std::logic_error);
+  TEST_THROW (OmegahGenericMesh(params),std::logic_error);
 
   // Wrong dimensions
   params->set<Teuchos::Array<int>>("Number of Elements",Teuchos::Array<int>(2,1));
-  TEST_THROW (OmegahGenericMesh(params,comm,num_params),std::logic_error);
+  TEST_THROW (OmegahGenericMesh(params),std::logic_error);
   params->set<Teuchos::Array<int>>("Number of Elements",nelems);
   params->set<Teuchos::Array<double>>("Box Scaling",Teuchos::Array<double>(3,1));
-  TEST_THROW (OmegahGenericMesh(params,comm,num_params),std::logic_error);
+  TEST_THROW (OmegahGenericMesh(params),std::logic_error);
 
   // ---------------------------------- //
   //        Test normal oprations       //
   // ---------------------------------- //
 
   params->remove("Box Scaling");
-  auto mesh = Teuchos::rcp(new OmegahGenericMesh(params,comm,num_params));
+  auto mesh = Teuchos::rcp(new OmegahGenericMesh(params));
 
   auto coords = mesh->coords_host();
   auto omegah_mesh = mesh->getOmegahMesh();
