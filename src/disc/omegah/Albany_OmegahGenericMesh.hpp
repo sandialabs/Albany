@@ -56,6 +56,8 @@ public:
 
 protected:
 
+  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);
+
   Teuchos::RCP<Teuchos::ParameterList> m_params;
 
   Teuchos::RCP<Omega_h::Mesh>  m_mesh;

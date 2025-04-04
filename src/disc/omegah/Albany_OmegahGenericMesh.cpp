@@ -1,6 +1,12 @@
 #include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahUtils.hpp"
 
+#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_Gather.hpp"
+
+#include <regex>
+
 namespace Albany
 {
 
@@ -169,6 +175,202 @@ mark_part_entities (const std::string& name,
 
       topo = down_topo;
     }
+  }
+}
+
+void OmegahGenericMesh::
+loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
+{
+  auto out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  out->setProcRankAndSize(comm->getRank(), comm->getSize());
+  out->setOutputToRootOnly(0);
+
+  *out << "[OmegahGenericMesh] Processing field requirements...\n";
+
+  // Get nodes/elems global ids
+  auto node_gids = m_mesh->globals(0);
+  auto elem_gids = m_mesh->globals(m_mesh->dim());
+  auto node_gids_h = hostRead(node_gids);
+  auto elem_gids_h = hostRead(elem_gids);
+
+  // NOTE: the reinterpret_cast is safe, since both Albany and Omegah use 64bit int for Global ids
+  Teuchos::ArrayView<const GO> node_gids_av(reinterpret_cast<const GO*>(node_gids_h.data()),node_gids_h.size());
+  Teuchos::ArrayView<const GO> elem_gids_av(reinterpret_cast<const GO*>(elem_gids_h.data()),elem_gids_h.size());
+
+  auto nodes_vs = createVectorSpace(comm,node_gids_av);
+  auto elems_vs = createVectorSpace(comm,elem_gids_av);
+
+  // Check whether we need the serial map or not. The only scenario where we DO need it is if we are
+  // loading a field from an ASCII file. So let's check the fields info to see if that's the case.
+  auto& req_fields_info = m_params->sublist("Required Fields Info");
+  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+  bool node_field_ascii_loads = false;
+  bool elem_field_ascii_loads = false;
+  std::string fname, fusage, ftype, forigin;
+  for (int ifield=0; ifield<num_fields; ++ifield) {
+    std::stringstream ss;
+    ss << "Field " << ifield;
+    auto& fparams = req_fields_info.sublist(ss.str());
+
+    fusage = fparams.get<std::string>("Field Usage", "Input");
+    ftype  = fparams.get<std::string>("Field Type","INVALID");
+    if (fusage == "Input" || fusage == "Input-Output") {
+      forigin = fparams.get<std::string>("Field Origin","INVALID");
+      if (forigin=="File" && fparams.isParameter("File Name")) {
+        if (ftype.find("Node")!=std::string::npos) {
+          node_field_ascii_loads = true;
+        } else if (ftype.find("Elem")!=std::string::npos) {
+          elem_field_ascii_loads = true;
+        }
+      }
+    }
+  }
+
+  // NOTE: the serial vs cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
+  //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
+  //       Therefore, we must create a root vs. Moreover, we need the GIDs sorted (so that, regardless
+  //       of the GID, we read the serial input files in the correct order), and we can't sort them
+  //       once the vs is created.
+
+  auto serial_nodes_vs = nodes_vs;
+  auto serial_elems_vs = elems_vs;
+  if (node_field_ascii_loads) {
+    Teuchos::Array<GO> all_node_gids;
+    gatherV(comm,node_gids_av,all_node_gids,0);
+    std::sort(all_node_gids.begin(),all_node_gids.end());
+    auto it = std::unique(all_node_gids.begin(),all_node_gids.end());
+    all_node_gids.erase(it,all_node_gids.end());
+    serial_nodes_vs = createVectorSpace(comm,all_node_gids);
+  }
+  if (elem_field_ascii_loads) {
+    Teuchos::Array<GO> all_elem_gids;
+    gatherV(comm,elem_gids_av,all_elem_gids,0);
+    std::sort(all_elem_gids.begin(),all_elem_gids.end());
+    serial_elems_vs = createVectorSpace(comm,all_elem_gids);
+  }
+
+  // Creating the combine and scatter manager object (to transfer from serial to parallel vectors)
+  auto cas_manager_node = createCombineAndScatterManager(serial_nodes_vs,nodes_vs);
+  auto cas_manager_elem = createCombineAndScatterManager(serial_elems_vs,elems_vs);
+
+  std::string valid_ftype_r = "(Node|Elem) (Layered) (Scalar|Vector)|(Node|Elem) (Scalar|Vector)";
+  std::string valid_fusage_r = R"(Input(-Output)?|Output|Unused)";
+
+  std::regex nodal_r("Node");
+  std::regex scalar_r("Scalar");
+  std::regex layered_r("Layered");
+  std::regex input_r("Input");
+  for (int ifield=0; ifield<num_fields; ++ifield) {
+    std::stringstream ss;
+    ss << "Field " << ifield;
+    Teuchos::ParameterList& fparams = req_fields_info.sublist(ss.str());
+
+    // First, get the name and usage of the field, and check if it's used
+    if (fparams.isParameter("State Name")) {
+      fname = fparams.get<std::string>("State Name");
+    } else {
+      fname = fparams.get<std::string>("Field Name");
+    }
+
+    fusage = fparams.get<std::string>("Field Usage", "Input");
+    TEUCHOS_TEST_FOR_EXCEPTION (not std::regex_search(fusage,std::regex(valid_fusage_r)),
+        Teuchos::Exceptions::InvalidParameterValue,
+        "Error! Invalid field usage format.\n"
+        " - field name: " << fname << "\n"
+        " - field usage: " << fusage << "\n"
+        " - valid usage regex: " << valid_fusage_r << "\n");
+
+    if (fusage == "Unused") {
+      *out << "  - Skipping field '" << fname << "' since it's listed as unused.\n";
+      continue;
+    }
+
+    // The field is used somehow. Check that it is present in the mesh
+    ftype = fparams.get<std::string>("Field Type","INVALID");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (not std::regex_search(ftype,std::regex(valid_ftype_r)),
+        Teuchos::Exceptions::InvalidParameterValue,
+        "Error! Invalid field type format.\n"
+        " - field name: " << fname << "\n"
+        " - field type: " << ftype << "\n"
+        " - valid type regex: " << valid_ftype_r << "\n");
+
+    // Check if it's an output file (nothing to be done then). If not, check that the usage is a valid string
+    if (fusage == "Output") {
+      *out << "  - Skipping field '" << fname << "' since it's listed as output. Make sure there's an evaluator set to save it!\n";
+      continue;
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (fusage!="Input" && fusage!="Input-Output",
+          Teuchos::Exceptions::InvalidParameter,
+          "Error! 'Field Usage' for field '" << fname << "' must be one of 'Input', 'Output', 'Input-Output' or 'Unused'.\n");
+    }
+
+    // Ok, it's an input (or input-output) field. Find out where the field comes from
+    forigin = fparams.get<std::string>("Field Origin","INVALID");
+    if (forigin=="Mesh") {
+      *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
+      continue;
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (forigin!="File",
+          Teuchos::Exceptions::InvalidParameter,
+          "Error! 'Field Origin' for field '" << fname << "' must be one of 'File' or 'Mesh'.\n");
+    }
+
+    // The field is not already present (with updated values) in the mesh, and must be loaded/computed filled here.
+
+    // Detect load type
+    bool load_ascii = fparams.isParameter("File Name");
+    bool load_math_expr = fparams.isParameter("Field Expression");
+    bool load_value = fparams.isParameter("Field Value") || fparams.isParameter("Random Value");
+    TEUCHOS_TEST_FOR_EXCEPTION ( load_ascii && load_value, std::logic_error,
+        "Error! You cannot specify both 'File Name' and 'Field Value' (or 'Random Value') for loading a field.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION ( load_math_expr, std::logic_error,
+        "Error! 'Field Expression' not supported by Omegah meshes (yet).\n");
+
+    // Depending on the input field type, we need to use different pointers/importers/vectors
+    bool nodal = std::regex_search(ftype,nodal_r);
+    bool scalar = std::regex_search(ftype,scalar_r);
+    bool layered = std::regex_search(ftype,layered_r);
+
+    auto cas_manager = nodal ? cas_manager_node : cas_manager_elem;
+    auto serial_vs = cas_manager->getOwnedVectorSpace();
+    auto vs = cas_manager->getOverlappedVectorSpace();  // It is not overlapped, it is just distributed.
+
+    std::vector<double> norm_layers_coords;
+    if (layered) {
+      norm_layers_coords = m_field_accessor->getMeshVectorStates()[fname + "_NLC"];
+    }
+    Teuchos::RCP<Thyra_MultiVector> field_mv;
+    if (load_ascii) {
+      field_mv = loadField (fname, fparams, *cas_manager, comm, nodal, scalar, layered, out, norm_layers_coords);
+    } else if (load_value) {
+      field_mv = fillField (fname, fparams, vs, nodal, scalar, layered, out, norm_layers_coords);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+          "Error! No means were specified for loading field '" + fname + "'.\n");
+    }
+
+  //   auto field_mv_view = getLocalData(field_mv.getConst());
+
+  //   //Now we have to stuff the vector in the mesh data
+  //   using SFT = AbstractSTKFieldContainer::STKFieldType;
+  //   stk::topology::rank_t entity_rank = nodal ? stk::topology::NODE_RANK : stk::topology::ELEM_RANK;
+  //   SFT* stk_field = metaData->get_field<double> (entity_rank, fname);
+  //   TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::logic_error,
+  //       "Error! Field " << fname << " not present (perhaps is not '" << ftype << "'?).\n");
+
+  //   stk::mesh::EntityId gid;
+  //   LO lid;
+  //   auto indexer = createGlobalLocalIndexer(vs);
+  //   for (unsigned int i(0); i<entities->size(); ++i) {
+  //     double* values = stk::mesh::field_data(*stk_field, (*entities)[i]);
+
+  //     gid = bulkData->identifier((*entities)[i]) - 1;
+  //     lid = indexer->getLocalElement(GO(gid));
+  //     for (int iDim(0); iDim<field_mv_view.size(); ++iDim) {
+  //       values[iDim] = field_mv_view[iDim][lid];
+  //     }
+  //   }
   }
 }
 
