@@ -82,7 +82,7 @@ STKDiscretization::STKDiscretization(
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }
   }
-  createSolutionFieldContainer()
+  createSolutionFieldContainer();
 }
 
 STKDiscretization::~STKDiscretization()
