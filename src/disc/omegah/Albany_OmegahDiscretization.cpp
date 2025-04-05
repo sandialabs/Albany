@@ -34,6 +34,12 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
     }
   }
 
+  auto& output_pl = m_disc_params->sublist("Output Specs");
+  m_output_freq = output_pl.get("Frequency",-1);
+  if (m_output_freq>0) {
+    m_output_enabled = true;
+  }
+
   auto field_accessor = m_mesh_struct->get_field_accessor();
 
   // Add solution (and their dof mgrs)

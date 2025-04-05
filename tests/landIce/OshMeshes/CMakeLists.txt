@@ -1,0 +1,2 @@
+file(COPY        ${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.osh
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
