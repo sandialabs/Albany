@@ -154,6 +154,8 @@ readScalarFileSerial (const std::string& fname,
   }
 
   ifile.close();
+
+  return mvec;
 }
 
 Teuchos::RCP<Thyra_MultiVector>
@@ -192,6 +194,8 @@ readVectorFileSerial (const std::string& fname,
     } 
     ifile.close();
   } 
+
+  return mvec;
 }
 
 Teuchos::RCP<Thyra_MultiVector>
@@ -243,6 +247,8 @@ readLayeredScalarFileSerial (const std::string &fname,
     }
     ifile.close();
   }
+
+  return mvec;
 }
 
 
@@ -305,6 +311,8 @@ readLayeredVectorFileSerial (const std::string &fname,
     }
     ifile.close();
   }
+
+  return mvec;
 }
 
 Teuchos::RCP<Thyra_MultiVector>
