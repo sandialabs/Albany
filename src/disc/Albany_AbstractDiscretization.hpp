@@ -351,14 +351,12 @@ public:
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double        time,
       const bool          overlapped = false) = 0;
   virtual void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
-      const double        time,
       const bool          overlapped = false) = 0;
   virtual void
   writeSolutionToMeshDatabase(
@@ -366,28 +364,18 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
-      const double        time,
       const bool          overlapped = false) = 0;
   virtual void
   writeSolutionMVToMeshDatabase(
       const Thyra_MultiVector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double             time,
       const bool               overlapped = false) = 0;
 
   //! Write the solution to file. Must call writeSolution first.
   virtual void
-  writeSolutionToFile(
-      const Thyra_Vector& solution,
+  writeMeshDatabaseToFile(
       const double        time,
-      const bool          overlapped = false,
       const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolutionMVToFile(
-      const Thyra_MultiVector& solution,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false) = 0; 
 
   // Check if mesh adaptation is needed, and if so what kind (topological or just mesh-movement)
   virtual Teuchos::RCP<AdaptationData>
