@@ -18,7 +18,11 @@ bash ${BASE_DIR}/nightly_cron_script_albany_frontier.sh sfad 24
 # build MALI
 bash ${BASE_DIR}/nightly_cron_script_mali_frontier.sh
 
+# run regression tests
 sbatch test_albany_sbatch.sh
+
+# run performance tests
+sbatch perf_test_albany_sbatch.sh
 
 cp build_log_frontier_Albany.txt ${DEPLOY_DIR}/logs/build_log_frontier_Albany_slfad.txt
 cp build_log_frontier_Albany.txt ${DEPLOY_DIR}/logs/build_log_frontier_Albany_sfad12.txt

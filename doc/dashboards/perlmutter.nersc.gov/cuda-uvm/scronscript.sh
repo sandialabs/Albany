@@ -7,3 +7,4 @@ source ${BASE_DIR}/build_trilinos.sh
 sbatch ${BASE_DIR}/build_and_test_albany_slfad.sh
 sbatch ${BASE_DIR}/build_and_test_albany_sfad12.sh
 sbatch ${BASE_DIR}/build_and_test_albany_sfad24.sh
+#sbatch ${BASE_DIR}/run_performance_tests.sh

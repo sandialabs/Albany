@@ -5,8 +5,8 @@ module load cpe/24.11
 module load libunwind/1.8.1
 module load cray-python/3.11.7
 module load subversion/1.14.2
-module load git/2.45.1
-module load cmake/3.27.9
+module load git
+module load cmake
 module load cray-hdf5-parallel/1.14.3.3
 module load cray-netcdf-hdf5parallel/4.9.0.15
 module load cray-parallel-netcdf/1.12.3.15
