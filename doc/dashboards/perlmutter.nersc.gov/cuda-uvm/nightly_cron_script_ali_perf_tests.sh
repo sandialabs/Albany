@@ -18,4 +18,4 @@ printenv |& tee out-env.txt
 
 LOG_FILE=$BASE_DIR/biweekly_log_perf_tests.txt
 
-eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_perf_tests.cmake" > $LOG_FILE 2>&1
+eval "env TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_perf_tests.cmake" > $LOG_FILE 2>&1
