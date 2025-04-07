@@ -80,6 +80,12 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
     }
   }
 
+  auto& output_pl = m_disc_params->sublist("Output Specs");
+  m_output_freq = output_pl.get("Frequency",-1);
+  if (m_output_freq>0) {
+    m_output_enabled = true;
+  }
+
   auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
 
   // Add solution (and their dof mgrs)
@@ -316,6 +322,53 @@ setField (const Thyra_Vector& field_vector,
   accessor->saveVector(field_vector,field_name,dof_mgr,false);
 }
 
+void OmegahDiscretization::
+writeSolution (const Thyra_Vector& solution,
+               const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+               const double        time,
+               const bool          overlapped,
+               const bool          force_write_solution)
+{
+  writeSolutionToMeshDatabase(solution, solution_dxdp, overlapped);
+  writeMeshDatabaseToFile(time, force_write_solution);
+}
+
+void OmegahDiscretization::
+writeSolution (const Thyra_Vector& solution,
+               const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+               const Thyra_Vector& solution_dot,
+               const double        time,
+               const bool          overlapped,
+               const bool          force_write_solution)
+{
+  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, overlapped);
+  writeMeshDatabaseToFile(time, force_write_solution);
+}
+
+void OmegahDiscretization::
+writeSolution (const Thyra_Vector& solution,
+               const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+               const Thyra_Vector& solution_dot,
+               const Thyra_Vector& solution_dotdot,
+               const double        time,
+               const bool          overlapped,
+               const bool          force_write_solution)
+{
+  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, solution_dot, overlapped);
+  writeMeshDatabaseToFile(time, force_write_solution);
+}
+
+void OmegahDiscretization::
+writeSolutionMV(const Thyra_MultiVector& solution,
+                const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                const double             time,
+                const bool               overlapped,
+                const bool               force_write_solution)
+{
+  writeSolutionMVToMeshDatabase(solution, solution_dxdp, overlapped);
+  writeMeshDatabaseToFile(time, force_write_solution);
+}
+
 Teuchos::RCP<DOFManager>
 OmegahDiscretization::
 create_dof_mgr (const std::string& part_name,
@@ -473,49 +526,6 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   updateMesh();
   return;
-}
-
-void OmegahDiscretization::
-writeSolution(
-    const Thyra_Vector& solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-    const double        time,
-    const bool          overlapped,
-    const bool          force_write_solution) {
-  writeSolutionToMeshDatabase(solution, solution_dxdp, time, overlapped);
-}
-
-void OmegahDiscretization::
-writeSolution(
-    const Thyra_Vector& solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-    const Thyra_Vector& solution_dot,
-    const double        time,
-    const bool          overlapped,
-    const bool          force_write_solution) {
-  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, time, overlapped);
-}
-
-void OmegahDiscretization::
-writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const Thyra_Vector& /* solution_dotdot */,
-      const double        /* time */,
-      const bool          /* overlapped */,
-      const bool          /* force_write_solution */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
-}
-
-void OmegahDiscretization::
-writeSolutionMV( //MV = multivector
-    const Thyra_MultiVector& /* solution */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-    const double             /* time */,
-    const bool               /* overlapped */,
-    const bool               /* force_write_solution */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMV");
 }
 
 //! Write the solution to the mesh database.

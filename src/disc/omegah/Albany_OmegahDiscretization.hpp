@@ -146,38 +146,33 @@ public:
 
   // --- Methods to write solution in the output file --- //
 
-  //! Write the solution to the output file. Calls next two together.
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override;
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override;
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const Thyra_Vector& /* solution_dotdot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override;
-  void
-  writeSolutionMV( //MV = multivector
-      const Thyra_MultiVector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double             /* time */,
-      const bool               /* overlapped */ = false,
-      const bool               /* force_write_solution */ = false) override;
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false) override;
+
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false) override;
+
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const Thyra_Vector& solution_dotdot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false) override;
+
+  void writeSolutionMV (const Thyra_MultiVector& solution,
+                        const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                        const double             time,
+                        const bool               overlapped = false,
+                        const bool               force_write_solution = false) override;
+
   //! Write the solution to the mesh database.
   void
   writeSolutionToMeshDatabase(
@@ -264,6 +259,11 @@ protected:
   //       But I think we can get rid of it. In principle, we should handle time derivatives
   //       from the app/problem side.
   int m_num_time_deriv;
+
+  // TODO: would be nice to move this to the base class. And maybe use a small struct to handle it?
+  int m_output_counter = 0;
+  int m_output_freq = -1;
+  bool m_output_enabled = false;
 };
 
 }  // namespace Albany
