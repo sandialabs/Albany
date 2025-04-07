@@ -523,7 +523,6 @@ void OmegahDiscretization::
 writeSolutionToMeshDatabase(
     const Thyra_Vector& solution,
     const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-    const double        time,
     const bool          overlapped)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
@@ -537,7 +536,6 @@ writeSolutionToMeshDatabase(
     const Thyra_Vector& solution,
     const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
     const Thyra_Vector& solution_dot,
-    const double        time,
     const bool          overlapped) {
   TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
   const auto& dof_mgr = getDOFManager();
@@ -552,7 +550,6 @@ writeSolutionToMeshDatabase(
     const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
     const Thyra_Vector& /* solution_dot */,
     const Thyra_Vector& /* solution_dotdot */,
-    const double        /* time */,
     const bool          /* overlapped */) {
   TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
 }
@@ -561,29 +558,16 @@ void OmegahDiscretization::
 writeSolutionMVToMeshDatabase(
     const Thyra_MultiVector& /* solution */,
     const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-    const double             /* time */,
     const bool               /* overlapped */) {
   TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToMeshDatabase");
 }
 
 //! Write the solution to file. Must call writeSolution first.
 void OmegahDiscretization::
-writeSolutionToFile(
-    const Thyra_Vector& /* solution */,
+writeMeshDatabaseToFile(
     const double        /* time */,
-    const bool          /* overlapped */,
     const bool          /* force_write_solution */) {
   TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToFile");
 }
-
-void OmegahDiscretization::
-writeSolutionMVToFile(
-    const Thyra_MultiVector& /* solution */,
-    const double             /* time */,
-    const bool               /* overlapped */,
-    const bool               /* force_write_solution */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToFile");
-}
-
 
 }  // namespace Albany

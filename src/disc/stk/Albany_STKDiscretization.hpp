@@ -247,14 +247,12 @@ public:
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
-      const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionToMeshDatabase(
@@ -262,28 +260,18 @@ public:
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
-      const double /* time */,
       const bool overlapped = false);
   void
   writeSolutionMVToMeshDatabase(
       const Thyra_MultiVector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double /* time */,
       const bool overlapped = false);
 
   //! Write the solution to file. Must call writeSolution first.
   void
-  writeSolutionToFile(
-      const Thyra_Vector& solution,
+  writeMeshDatabaseToFile(
       const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolutionMVToFile(
-      const Thyra_MultiVector& solution,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false); 
+      const bool          force_write_solution = false) override;
 
   Teuchos::RCP<AdaptationData>
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
