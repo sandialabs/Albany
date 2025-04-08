@@ -21,7 +21,6 @@ QuadraticLinearOperatorBasedResponseFunction(const Teuchos::RCP<const Albany::Ap
   SamplingBasedScalarResponseFunction(app->getComm()),
   app_(app)
 {
-  std::cout << "now I'm here" <<std::endl;
   auto coeff = responseParams.get<double>("Scaling Coefficient");
   field_name_ = responseParams.get<std::string>("Field Name");
   bool isMisfit = responseParams.isParameter("Target Field Name");
@@ -398,7 +397,8 @@ quadraticForm(const Thyra_MultiVector& X) {
     A_->apply(Thyra::EOpTransp::NOTRANS, X, vec1_.ptr(), 1.0, 0.0);
 
     if(AequalsD_) {
-      return coeff_*Thyra::dot(*vec1_,*vec1_);
+      vec2_->assign(X);
+      return coeff_*Thyra::dot(*vec2_,*vec1_);
     }
 
     // inv(D) A X
@@ -517,8 +517,7 @@ loadLinearOperators() {
 
   A_ = Albany::createThyraLinearOp(tpetra_A_mat);  
   vec1_ = Thyra::createMember(A_->range());
-  if(!AequalsD_)
-    vec2_ = Thyra::createMember(A_->range());
+  vec2_ = Thyra::createMember(A_->range());
 }
 
 
