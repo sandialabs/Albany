@@ -155,7 +155,7 @@ namespace Albany {
     
     QuadraticLinearOperatorBasedResponseFunction& operator=(const QuadraticLinearOperatorBasedResponseFunction&);
 
-    Teuchos::RCP<const Application> app_;
+    const Teuchos::RCP<const Application> app_;
     std::string field_name_;
     std::string target_name_;
     Teuchos::RCP<AtDinvA_LOWS> twoAtDinvA_;

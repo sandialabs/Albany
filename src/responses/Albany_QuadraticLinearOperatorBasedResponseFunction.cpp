@@ -21,6 +21,7 @@ QuadraticLinearOperatorBasedResponseFunction(const Teuchos::RCP<const Albany::Ap
   SamplingBasedScalarResponseFunction(app->getComm()),
   app_(app)
 {
+  std::cout << "now I'm here" <<std::endl;
   auto coeff = responseParams.get<double>("Scaling Coefficient");
   field_name_ = responseParams.get<std::string>("Field Name");
   bool isMisfit = responseParams.isParameter("Target Field Name");
@@ -49,7 +50,7 @@ numResponses() const
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluateResponse(const double /*current_time*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
@@ -57,7 +58,7 @@ evaluateResponse(const double /*current_time*/,
 {  
   Teuchos::RCP<const Thyra_Vector> field;
   if(field_name_=="solution") 
-    field = app_->getDiscretization()->getSolutionField();
+    field = x;
   else 
     field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
   twoAtDinvA_->setupFwdOp(field->space());
@@ -83,7 +84,7 @@ evaluateTangent(const double /* alpha */,
 		const double /*omega*/,
 		const double /*current_time*/,
 		bool /*sum_derivs*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		Teuchos::Array<ParamVec>& /*p*/,
@@ -100,7 +101,7 @@ evaluateTangent(const double /* alpha */,
     if (g_.is_null()) {
       Teuchos::RCP<const Thyra_Vector> field;
       if(field_name_=="solution") 
-        field = app_->getDiscretization()->getSolutionField();
+        field = x;
       else 
         field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
         
@@ -133,7 +134,7 @@ evaluateTangent(const double /* alpha */,
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluateGradient(const double /*current_time*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
@@ -148,7 +149,7 @@ evaluateGradient(const double /*current_time*/,
     if (g_.is_null()) {
       Teuchos::RCP<const Thyra_Vector> field;
       if(field_name_=="solution") 
-        field = app_->getDiscretization()->getSolutionField();
+        field = x;
       else 
         field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
       twoAtDinvA_->setupFwdOp(field->space());
