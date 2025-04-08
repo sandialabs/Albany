@@ -577,7 +577,7 @@ void OmegahDiscretization::
 writeMeshDatabaseToFile(
     const double        /* time */,
     const bool          /* force_write_solution */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToFile");
+  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeMeshDatabaseToFile");
 }
 
 }  // namespace Albany
