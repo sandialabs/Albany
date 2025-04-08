@@ -157,6 +157,7 @@ namespace Albany {
 
     Teuchos::RCP<const Application> app_;
     std::string field_name_;
+    std::string target_name_;
     Teuchos::RCP<AtDinvA_LOWS> twoAtDinvA_;
     Teuchos::RCP<Thyra_Vector> g_;
   };
