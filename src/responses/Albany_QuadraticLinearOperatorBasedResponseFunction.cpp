@@ -171,8 +171,21 @@ evaluateGradient(const double /*current_time*/,
   
   // Evaluate dg/dx
   if (!dg_dx.is_null()) {
-    // V_StV stands for V_out = Scalar * V_in
-    dg_dx->assign(0.0);
+    if(field_name_ == "solution") {
+      Teuchos::RCP<const Thyra_Vector> field = x;
+      twoAtDinvA_->setupFwdOp(field->space());
+
+      //  coeff A' inv(D) A p
+      if(target_name_ == "")
+        twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *field, dg_dx.ptr(), 1.0, 0.0);
+      else {
+        Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+        diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+        twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *diff_field, dg_dx.ptr(), 1.0, 0.0);
+      }
+    }
+    else
+      dg_dx->assign(0.0);
   }
 
   // Evaluate dg/dxdot
@@ -225,15 +238,22 @@ void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluate_HessVecProd_xx(
     const double /* current_time */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* v */,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /* param_array */,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dxdx)
 {
   if (!Hv_dxdx.is_null()) {
-    Hv_dxdx->assign(0.0);
+    if(field_name_ == "solution") {
+      twoAtDinvA_->setupFwdOp(x->space());
+
+      // coeff A' inv(D) A v
+      twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *v, Hv_dxdx.ptr(), 1.0, 0.0);
+    }
+    else
+      Hv_dxdx->assign(0.0);
   }
 }
 
