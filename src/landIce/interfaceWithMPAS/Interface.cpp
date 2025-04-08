@@ -255,6 +255,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       //Compute mesh layers associated to quad points
       std::vector<int> layerVec(numQPs);
       auto quadPointCoordsHost = Kokkos::create_mirror_view(quadPointCoords);
+      Kokkos::deep_copy(quadPointCoordsHost, quadPointCoords);
       for(int qp=0; qp<numQPs; qp++) {
         int il=0; 
         auto z = (quadPointCoordsHost(qp,2)+1.0)/2; //quad points are defined on [-1,1]
