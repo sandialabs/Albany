@@ -9,7 +9,7 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Omegah
-    Input Mesh Type: OshFile
+    Mesh Creation Method: OshFile
     Filename: ../OshMeshes/gis_unstruct_2d.osh
     # Exodus Output File Name: gis_unstruct_basal_populated.exo
     Required Fields Info:
