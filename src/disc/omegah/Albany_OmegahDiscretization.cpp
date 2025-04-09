@@ -601,7 +601,7 @@ writeMeshDatabaseToFile (const double time,
 {
   ++m_output_counter;
   if (m_output_counter % m_output_freq == 0) {
-    const auto& fname = m_disc_params.get<std::string>("Output Filename");
+    const auto& fname = m_disc_params->get<std::string>("Output Filename");
     Omega_h::binary::write(fname, m_mesh_struct->getOmegahMesh().get());
   }
 }
