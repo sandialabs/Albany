@@ -1,6 +1,7 @@
 #include "Albany_OmegahMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_OmegahUtils.hpp"
+#include "Albany_StringUtils.hpp"
 
 namespace Albany {
 
@@ -25,6 +26,14 @@ addFieldOnMesh (const std::string& name,
 }
 
 void OmegahMeshFieldAccessor::
+setFieldOnMesh (const std::string& name,
+                const int entityDim,
+                const Omega_h::Read<ST>& f)
+{
+  m_mesh->set_tag<ST>(entityDim,name,f,false);
+}
+
+void OmegahMeshFieldAccessor::
 addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
 {
   if (sis.is_null()) {
@@ -36,7 +45,6 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
   };
 
   auto get_ent_dim_and_ncomp = [&] (const StateStruct& st) {
-    const auto& dims = st.dim;
     std::pair<int,int> dim_ncomp;
     switch (st.stateType()) {
       case StateStruct::GlobalState:
@@ -77,6 +85,15 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
       }
     } else {
       addFieldOnMesh(st->name,ent_dim,ncomp);
+    }
+
+    std::cout << "state '" << st->name << "' is " << (st->layered ? "" : "NOT") << " layered.\n"
+              << "  dims: " << util::join(st->dim,",") << "\n";
+
+    if (st->layered) {
+      // Need to also add the global vector state for the normalized layers coords
+      auto nlayers = st->dim.back();
+      mesh_vector_states[st->name].resize(nlayers);
     }
   }
 }

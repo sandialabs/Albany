@@ -355,7 +355,7 @@ writeSolution (const Thyra_Vector& solution,
                const bool          overlapped,
                const bool          force_write_solution)
 {
-  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, solution_dot, overlapped);
+  writeSolutionToMeshDatabase(solution, solution_dxdp, solution_dot, solution_dotdot, overlapped);
   writeMeshDatabaseToFile(time, force_write_solution);
 }
 
@@ -596,13 +596,20 @@ writeSolutionMVToMeshDatabase (const Thyra_MultiVector& solution,
 
 //! Write the solution to file. Must call writeSolution first.
 void OmegahDiscretization::
-writeMeshDatabaseToFile (const double time,
+writeMeshDatabaseToFile (const double /* time */,
                          const bool   force_write_solution)
 {
   ++m_output_counter;
-  if (m_output_counter % m_output_freq == 0) {
+  if (m_output_counter % m_output_freq == 0 or force_write_solution) {
     const auto& fname = m_disc_params->get<std::string>("Output Filename");
-    Omega_h::binary::write(fname, m_mesh_struct->getOmegahMesh().get());
+    const auto& format = m_disc_params->get<std::string>("Output Format","osh");
+    if (format=="osh") {
+      Omega_h::binary::write(fname, m_mesh_struct->getOmegahMesh().get());
+    } else if (format=="vtk") {
+      Omega_h::vtk::write_parallel(fname, m_mesh_struct->getOmegahMesh().get());
+    } else {
+      throw std::runtime_error("Unsupported output mesh format: " + format + "\n");
+    }
   }
 }
 

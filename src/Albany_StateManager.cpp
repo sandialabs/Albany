@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Albany_StateManager.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -115,6 +116,10 @@ StateManager::registerStateVariable(
 
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
+  stateRef.layered             = (dl->name(dl->rank() - 1) == PHX::print<LayerDim>());
+  std::vector<std::string> names;
+  dl->names(names);
+  std::cout << "registered " << stateName << ", layered=" << stateRef.layered << ": " << util::join(names,",") << "\n";
 
   // If space is needed for old state
 
