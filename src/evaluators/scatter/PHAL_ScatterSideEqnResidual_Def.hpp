@@ -140,6 +140,7 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
   constexpr auto ALL = Kokkos::ALL();
 
   std::set<LO> all_ss_eqns_lids;
+  std::map<int,std::set<GO>> all_gids;
   for (int ws=0; ws<num_ws; ++ws) {
     const auto& ssMap = disc.getSideSets(ws);
     if (ssMap.find(this->sideSetName)==ssMap.end()) {
@@ -153,10 +154,12 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
       const int side_pos = side.side_pos;
 
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+      auto& gids = dof_mgr->getElementGIDs(elem_LID);
       for (int eq = 0; eq < this->numFields; eq++) {
         const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq+this->offset,side_pos);
         for (auto o : offsets) {
           all_ss_eqns_lids.insert(dof_lids[o]);
+          all_gids[ws].insert(gids[o]);
         }
       }
     }
@@ -188,6 +191,10 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
   for (int ws=0; ws<num_ws; ++ws) {
     std::cout << "ss eqn lids on ws=" << ws << ":";
     for (auto l : ss_eqns_dofs_lids[ws]) { std::cout << " " << l; } std::cout << "\n";
+  }
+  for (int ws=0; ws<num_ws; ++ws) {
+    std::cout << "ss eqn gids on ws=" << ws << ":";
+    for (auto l : all_gids[ws]) { std::cout << " " << l; } std::cout << "\n";
   }
   // Avoid doing this again
   ss_eqns_dofs_lids_gathered = true;
@@ -326,6 +333,9 @@ doPostEvaluate(typename Traits::EvalData workset)
   auto Jac = workset.Jac;
   const int numCellNodes = node_dof_mgr->getGIDFieldOffsets(0).size();
   const auto& ss_eqn_lids = this->ss_eqns_dofs_lids.at(workset.wsIndex);
+  const RealType j_coeff = workset.j_coeff;
+  Teuchos::Array<ST> vals;
+  Teuchos::Array<LO> cols;
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto elem_LID = elem_lids(icell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -335,8 +345,13 @@ doPostEvaluate(typename Traits::EvalData workset)
       for (auto o : offsets) {
         auto lrow = dof_lids[o];
         if (ss_eqn_lids.count(lrow)==0) {
-          // LID not on the sideset
-          Albany::setLocalRowValue(Jac,lrow,lrow, 1.0);
+          // LID not on the sideset. Diagonalize
+
+          // Extract the row, zero it out, then put j_coeff on diagonal
+          Albany::getLocalRowValues(Jac, lrow, cols, vals);
+          for (auto& val : vals) { val = 0.0; }
+          Albany::setLocalRowValues(Jac, lrow, cols(), vals());
+          Albany::setLocalRowValue(Jac,lrow,lrow, j_coeff);
         }
       }
     }
