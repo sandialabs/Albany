@@ -87,10 +87,8 @@ protected:
 
   int tensorRank;
 
-  // We store the ss_nodes for all worksets, so we can zero residual
-  // and diagonalize jacobian OUTSIDE the side set
-  std::set<GO> ss_nodes_gids;
-  bool ss_nodes_gids_gathered = false;
+  std::vector<std::set<LO>> ss_eqns_dofs_lids;  // All lids of the ss eqn dofs, grouped by ws
+  bool ss_eqns_dofs_lids_gathered = false;
 };
 
 template<typename EvalT, typename Traits> class ScatterSideEqnResidual;
