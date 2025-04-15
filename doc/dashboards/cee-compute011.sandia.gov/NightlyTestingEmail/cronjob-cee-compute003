@@ -1,5 +1,5 @@
 #cronjob runs on cee-compute003
-00 09 * * 1-7 cd /home/ikalash/nightlyTestPostProcess/AlbanyNightlyTestingEmail; bash -l -c "bash process_nightlies.sh >& process_nightlies.out"
+00 09 * * 1-7 cd /home/ikalash/nightlyTestPostProcess/AlbanyNightlyTestingEmail; bash -l -c "source clean_up.sh; bash process_nightlies.sh >& process_nightlies.out"
 30 09 * * 1-5 cd /home/ikalash/nightlyTestPostProcess/LCMNightlyTestingEmail; bash -l -c "bash process_nightlies_lcm.sh >& process_nightlies.out"
+00 10 * * 1,3,5 cd /home/ikalash/nightlyTestPostProcess/AlbanyNightlyTestingEmailMyCDashOrg; bash -l -c "source clean_up.sh; source modules.sh >& modules.out; bash process_nightlies_my.cdash.org.sh >& process_nightlies.out"
 20 10 * * 1-7 cd /home/ikalash/nightlyTestPostProcess/SpiritTestingEmail; bash -l -c "bash process_nightlies_spirit.sh >& process_nightlies_spirit.out"
-
