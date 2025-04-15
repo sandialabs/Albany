@@ -198,21 +198,7 @@ ScatterResidual(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl)
  : ScatterResidualBase<AlbanyTraits::Jacobian,Traits>(p,dl)
 {
-  // If there are some sideset eqn, we cannot couple to all neq equations,
-  // since the Jac entries corresponding to SS eqns are not present inside the volume.
-  // The user can specify the idx of the volume eqns, and we'll enter only
-  // those. The contribution of sideset equations to this volume residual
-  // are to be added via ad-hoc contributors on the sideset.
-  // If the 'Volume Equations' array is not passed, we'll assume all equations
-  // are defined over the whole volume.
-  if (p.isType<Teuchos::Array<int>>("Volume Equations")) {
-    const auto& veqn = p.get<Teuchos::Array<int>>("Volume Equations");
-    m_volume_eqns.resize("",veqn.size());
-    for (int i=0; i<veqn.size(); ++i) {
-      m_volume_eqns.host()[i] = veqn[i];
-    }
-    m_volume_eqns.sync_to_dev();
-  }
+  // Nothing to do here
 }
 
 // **********************************************************************
@@ -222,18 +208,6 @@ void ScatterResidual<AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   this->gather_fields_offsets (workset.disc->getDOFManager());
-  if (m_volume_eqns.size()>0 && m_volume_eqns_offsets.size()==0) {
-    const auto& dof_mgr = workset.disc->getDOFManager();
-    const int neq_vol = m_volume_eqns.host().size();
-    m_volume_eqns_offsets.resize("",numNodes*neq_vol);
-    for (int ieq=0; ieq<neq_vol; ++ieq) {
-      const auto& offsets = dof_mgr->getGIDFieldOffsets(m_volume_eqns.host()[ieq]);
-      for (int node=0; node<numNodes; ++node) {
-        m_volume_eqns_offsets.host()[node*neq_vol+ieq] = offsets[node];
-      }
-    }
-    m_volume_eqns_offsets.sync_to_dev();
-  }
 
   constexpr auto ALL = Kokkos::ALL();
 
@@ -255,13 +229,7 @@ evaluateFields(typename Traits::EvalData workset)
   auto Jac_kokkos = workset.Jac_kokkos;
 
   const auto& fields_offsets = m_fields_offsets.dev();
-  const auto vol_eqn_off = m_volume_eqns_offsets.dev();
-  const bool all_vol_eqn = vol_eqn_off.size()==0;
-  int nunk = all_vol_eqn ? neq*numNodes : vol_eqn_off.size();
-  if (not all_vol_eqn and m_lids.size()==0) {
-    m_lids.resize("",nunk);
-  }
-  const auto lids = m_lids.dev();
+  int nunk = neq*numNodes;
   Kokkos::parallel_for(this->getName(),
                        RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int cell) {
@@ -273,19 +241,10 @@ evaluateFields(typename Traits::EvalData workset)
         auto res = this->device_resid.get(cell,node,eq);
 
         const auto row = dof_lids(fields_offsets(node,eq+this->offset));
-        if (all_vol_eqn) {
-          for (int i=0; i<nunk; ++i) {
-            vals[i] = res.fastAccessDx(i);
-          }
-          Jac_kokkos.sumIntoValues(row, dof_lids.data(), nunk, vals, false, is_atomic);
-        } else {
-          // We need to  pick only the volume equation derivs
-          for (unsigned ioff=0; ioff<vol_eqn_off.size(); ++ioff) {
-            lids[ioff] = dof_lids(vol_eqn_off(ioff));
-            vals[ioff] = res.fastAccessDx(vol_eqn_off(ioff));
-          }
-          Jac_kokkos.sumIntoValues(row, lids.data(), nunk, vals, false, is_atomic);
+        for (int i=0; i<nunk; ++i) {
+          vals[i] = res.fastAccessDx(i);
         }
+        Jac_kokkos.sumIntoValues(row, dof_lids.data(), nunk, vals, false, is_atomic);
         if (scatter_f) {
           KU::atomic_add<ExecutionSpace>(&f_data(row), res.val());
         }
