@@ -792,6 +792,11 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
     auto serial_vs = cas_manager->getOwnedVectorSpace();
     auto vs = cas_manager->getOverlappedVectorSpace();  // It is not overlapped, it is just distributed.
     Teuchos::RCP<Thyra_MultiVector> field_mv;
+
+    std::vector<double> norm_layers_coords;
+    if (layered) {
+      norm_layers_coords = fieldContainer->getMeshVectorStates()[fname + "_NLC"];
+    }
     if (load_ascii) {
       field_mv = loadField (fname, fparams, *cas_manager, comm, nodal, scalar, layered, out, norm_layers_coords);
     } else if (load_value) {
