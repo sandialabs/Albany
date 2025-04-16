@@ -204,7 +204,7 @@ loadOmegahMesh ()
   auto& lib = get_omegah_lib();
   m_mesh = Teuchos::RCP<Omega_h::Mesh>(new Omega_h::Mesh(&lib));
 
-  const auto& filename = m_params->get<std::string>("Filename");
+  const auto& filename = m_params->get<std::string>("Input Filename");
   Omega_h::binary::read(filename, lib.world(), m_mesh.get());
   if (m_params->get("Rebalance",true)) {
     m_mesh->balance(); // re-partition to the number of ranks in world communicator

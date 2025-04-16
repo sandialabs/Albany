@@ -6,6 +6,7 @@
 #include "OmegahConnManager.hpp"
 #include "Omega_h_adapt.hpp"
 #include "Omega_h_array_ops.hpp"
+#include <Omega_h_file.hpp>   // for Omega_h::binary::write
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
@@ -78,6 +79,12 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
     if (m_num_time_deriv>1) {
       m_sol_names[2] += "_dotdot";
     }
+  }
+
+  auto& output_pl = m_disc_params->sublist("Output Specs");
+  m_output_freq = output_pl.get("Frequency",1); // default to "output all snapshots"
+  if (m_output_freq>0) {
+    m_output_enabled = true;
   }
 
   auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
@@ -476,54 +483,90 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 }
 
 void OmegahDiscretization::
-writeSolutionToMeshDatabase(
-    const Thyra_Vector& solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-    const bool          overlapped)
+writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                             const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                             const bool          overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
+  TEUCHOS_TEST_FOR_EXCEPTION (solution_dxdp != Teuchos::null, std::runtime_error,
+      "OmegahDiscretization::writeSolutionToMeshDatabase does not support writing sensitivities yet.");
+
   const auto& dof_mgr = getDOFManager();
   auto field_accessor = m_mesh_struct->get_field_accessor();
-  field_accessor->saveVector(solution, "solution", dof_mgr, overlapped);
+  field_accessor->saveVector(solution, solution_dof_name(), dof_mgr, overlapped);
 }
 
 void OmegahDiscretization::
-writeSolutionToMeshDatabase(
-    const Thyra_Vector& solution,
-    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-    const Thyra_Vector& solution_dot,
-    const bool          overlapped) {
-  TEUCHOS_TEST_FOR_EXCEPTION(solution_dxdp != Teuchos::null, std::runtime_error, "OmegahDiscretization::writeSolutionToMeshDatabase does not support Thyra_MultiVector");
+writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                             const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                             const Thyra_Vector& solution_dot,
+                             const bool          overlapped)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (solution_dxdp != Teuchos::null, std::runtime_error,
+      "OmegahDiscretization::writeSolutionToMeshDatabase does not support writing sensitivities yet.");
+
   const auto& dof_mgr = getDOFManager();
   auto field_accessor = m_mesh_struct->get_field_accessor();
-  field_accessor->saveVector(solution, "solution", dof_mgr, overlapped);
-  field_accessor->saveVector(solution_dot, "solution_dot", dof_mgr, overlapped);
+  field_accessor->saveVector(solution,     solution_dof_name(),          dof_mgr, overlapped);
+  field_accessor->saveVector(solution_dot, solution_dof_name() + "_dot", dof_mgr, overlapped);
 }
 
 void OmegahDiscretization::
-writeSolutionToMeshDatabase(
-    const Thyra_Vector& /* solution */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-    const Thyra_Vector& /* solution_dot */,
-    const Thyra_Vector& /* solution_dotdot */,
-    const bool          /* overlapped */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
+writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                             const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                             const Thyra_Vector& solution_dot,
+                             const Thyra_Vector& solution_dotdot,
+                             const bool          overlapped)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (solution_dxdp != Teuchos::null, std::runtime_error,
+      "OmegahDiscretization::writeSolutionToMeshDatabase does not support writing sensitivities yet.");
+
+  const auto& dof_mgr = getDOFManager();
+  auto field_accessor = m_mesh_struct->get_field_accessor();
+  field_accessor->saveVector(solution,        solution_dof_name(),             dof_mgr, overlapped);
+  field_accessor->saveVector(solution_dot,    solution_dof_name() + "_dot",    dof_mgr, overlapped);
+  field_accessor->saveVector(solution_dotdot, solution_dof_name() + "_dotdot", dof_mgr, overlapped);
 }
 
 void OmegahDiscretization::
-writeSolutionMVToMeshDatabase(
-    const Thyra_MultiVector& /* solution */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-    const bool               /* overlapped */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToMeshDatabase");
+writeSolutionMVToMeshDatabase (const Thyra_MultiVector& solution,
+                               const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                               const bool               overlapped)
+{
+  switch (m_num_time_deriv) {
+    case 0:
+      writeSolutionToMeshDatabase(*solution.col(0),solution_dxdp,overlapped);
+      break;
+    case 1:
+      writeSolutionToMeshDatabase(*solution.col(0),solution_dxdp,*solution.col(1),overlapped);
+      break;
+    case 2:
+      writeSolutionToMeshDatabase(*solution.col(0),solution_dxdp,*solution.col(1),*solution.col(2),overlapped);
+      break;
+    default:
+      throw std::runtime_error("Unexpected value for m_num_time_deriv:" + std::to_string(m_num_time_deriv) + "\n");
+  }
 }
 
 //! Write the solution to file. Must call writeSolution first.
 void OmegahDiscretization::
-writeMeshDatabaseToFile(
-    const double        /* time */,
-    const bool          /* force_write_solution */) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeMeshDatabaseToFile");
+writeMeshDatabaseToFile (const double /* time */,
+                         const bool   force_write_solution)
+{
+  ++m_output_counter;
+  if (m_output_counter % m_output_freq == 0 or force_write_solution) {
+    // const auto& sh_tag = *m_mesh_struct->getOmegahMesh()->get_tag<ST>(0,"surface_height");
+    // debug::printTag(sh_tag, std::cout);
+
+    const auto& fname = m_disc_params->get<std::string>("Output Filename");
+    const auto& format = m_disc_params->get<std::string>("Output Format","osh");
+    if (format=="osh") {
+      Omega_h::binary::write(fname, m_mesh_struct->getOmegahMesh().get());
+    } else if (format=="vtk") {
+      Omega_h::vtk::write_parallel(fname, m_mesh_struct->getOmegahMesh().get());
+    } else {
+      throw std::runtime_error("Unsupported output mesh format: " + format + "\n");
+    }
+  }
 }
 
 }  // namespace Albany

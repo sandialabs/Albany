@@ -230,6 +230,12 @@ protected:
   //       But I think we can get rid of it. In principle, we should handle time derivatives
   //       from the app/problem side.
   int m_num_time_deriv;
+
+  // TODO: would be nice to move this to the base class. And maybe use a small struct to handle it?
+  int m_output_counter = 0;
+  int m_output_freq = -1;
+  std::vector<double> m_output_times;
+  bool m_output_enabled = false;
 };
 
 }  // namespace Albany

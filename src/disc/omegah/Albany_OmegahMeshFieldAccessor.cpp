@@ -210,6 +210,7 @@ saveVector (const Thyra_Vector&  field_vector,
   }
 
   if(! m_mesh->has_tag(dim,field_name)) {
+    throw std::runtime_error(field_name + " tag not defined");
     m_mesh->add_tag(dim,field_name, ncomps, read(mesh_data_h.write()));
   } else {
     m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
