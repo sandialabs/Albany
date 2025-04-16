@@ -255,13 +255,13 @@ DiscretizationFactory::createDiscretization(
           std::logic_error,
           "meshStruct accessed, but it has not been constructed" << std::endl);
 
-  // Complete setup of mesh
+  // Complete setup of fields in mesh
   setMeshStructFieldData(sis, side_set_sis);
-  setMeshStructBulkData();
 
   // Create discretization
   auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
-  disc->updateMesh();
+
+  disc->updateMesh(comm);
 
   return disc;
 }
@@ -270,12 +270,6 @@ Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
 DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
     meshStruct = mesh;
     return meshStruct->meshSpecs;
-}
-
-void
-DiscretizationFactory::setMeshStructFieldData(
-        const Teuchos::RCP<StateInfoStruct>& sis) {
-    setMeshStructFieldData(sis, empty_side_set_sis);
 }
 
 void

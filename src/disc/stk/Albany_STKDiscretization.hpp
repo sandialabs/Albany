@@ -151,8 +151,7 @@ public:
 
   //! After mesh modification, need to update the element connectivity and nodal
   //! coordinates
-  void
-  updateMesh();
+  void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   //! Function that transforms an STK mesh of a unit cube (for LandIce problems)
   void
@@ -300,8 +299,7 @@ public:
   void
   writeCoordsToMatrixMarket() const;
 
-  void
-  buildSideSetProjectors();
+  void buildSideSetProjectors (const std::string& ss_name) override;
 
   double previous_time_label;
 

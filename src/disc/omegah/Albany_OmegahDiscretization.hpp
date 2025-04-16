@@ -30,7 +30,7 @@ public:
   //! Destructor
   virtual ~OmegahDiscretization() = default;
 
-  void updateMesh () override;
+  void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   //! Get Node set lists
   const NodeSetList&

@@ -217,6 +217,7 @@ public:
 
   //! Get sideSet discretizations map
   const strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() const { return sideSetDiscretizations; }
+  strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() { return sideSetDiscretizations; }
 
   //! Get the map side_id->side_set_elem_id
   virtual const std::map<std::string, std::map<GO, GO>>&
@@ -310,7 +311,8 @@ public:
 
   // Update mesh internals, such as coordinates, DOF numbers, etc.
   // To be run either after creation or after modification/adaptation.
-  virtual void updateMesh () {};
+  void updateMesh (const Teuchos::RCP<const Teuchos_Comm>& comm);
+  virtual void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
   // --- Methods to write solution in the output file --- //
 
@@ -369,6 +371,10 @@ public:
 
   // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
+
+  virtual void buildSideSetProjectors (const std::string& ss_name) {
+    throw NotYetImplemented("AbstractDiscretization::buildSideSetProjectors");
+  }
 
 protected:
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;

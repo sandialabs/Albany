@@ -127,7 +127,7 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
 }
 
 void OmegahDiscretization::
-updateMesh ()
+updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   // Compute workset information
   const auto& ms = m_mesh_struct->meshSpecs[0];
@@ -470,16 +470,14 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name().c_str());
   }
 
+  // //create new meshstruct
+  // auto ignored = 0;
+  // {
+  // auto ohMesh2 = m_mesh_struct->getOmegahMesh();
+  // assert(ohMesh2->dim() == 1);
+  // }
 
-  //create new meshstruct
-  auto ignored = 0;
-  {
-  auto ohMesh2 = m_mesh_struct->getOmegahMesh();
-  assert(ohMesh2->dim() == 1);
-  }
-
-  updateMesh();
-  return;
+  updateMesh(m_comm);
 }
 
 void OmegahDiscretization::

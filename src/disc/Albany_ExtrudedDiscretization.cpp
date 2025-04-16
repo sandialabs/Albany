@@ -1173,12 +1173,13 @@ void ExtrudedDiscretization::printCoords() const
 }
 
 void
-ExtrudedDiscretization::updateMesh()
+ExtrudedDiscretization::
+updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: updateMesh");
 
   // First, make sure the basal disc is updated
-  m_basal_disc->updateMesh();
+  m_basal_disc->updateMesh(comm);
 
   createDOFManagers();
 
