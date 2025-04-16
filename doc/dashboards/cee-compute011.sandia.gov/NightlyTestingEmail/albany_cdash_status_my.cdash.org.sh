@@ -50,5 +50,5 @@ ${TRIBITS_DIR}/ci_support/cdash_analyze_and_report.py \
 --limit-table-rows=50 \
 --write-failing-tests-without-issue-trackers-to-file="albanyNightlyBuildsTwoif.csv" \
 --write-email-to-file="albanyNightlyBuilds.html" \
---expected-builds-file="AlbanyExpectedBuildsMyCDashOrg.csv" \
+--expected-builds-file="${ALBANY_CDASH_STATUS_DIR}/AlbanyExpectedBuildsMyCDashOrg.csv" \
 "$@"
