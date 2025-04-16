@@ -44,11 +44,11 @@ ${TRIBITS_DIR}/ci_support/cdash_analyze_and_report.py \
 --cdash-project-name="Albany" \
 --build-set-name="Albany Nightly Builds" \
 --cdash-site-url="https://my.cdash.org" \
---cdash-builds-filters="filtercount=1&showfilters=1&field1=groupname&compare1=61&value1=Nightly" \
---cdash-nonpassed-tests-filters="filtercount=2&showfilters=1&filtercombine=and&field1=groupname&compare1=61&value1=Nightly&field2=status&compare2=62&value2=passed" \
+--cdash-builds-filters="filtercount=1&showfilters=1&field1=groupname&compare1=62&value1=Experimental" \
+--cdash-nonpassed-tests-filters="filtercount=2&showfilters=1&filtercombine=and&field1=groupname&compare1=62&value1=Experimental&field2=status&compare2=62&value2=Passed" \
 --require-test-history-match-nonpassing-tests=off \
 --limit-table-rows=50 \
 --write-failing-tests-without-issue-trackers-to-file="albanyNightlyBuildsTwoif.csv" \
 --write-email-to-file="albanyNightlyBuilds.html" \
---expected-builds-file="AlbanyExpectedBuildsMyCDashOrg.csv" \
+--expected-builds-file="${ALBANY_CDASH_STATUS_DIR}/AlbanyExpectedBuildsMyCDashOrg.csv" \
 "$@"
