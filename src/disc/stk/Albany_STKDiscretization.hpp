@@ -208,40 +208,6 @@ public:
       const std::string&  field_name,
       const bool          overlapped = false);
 
-  // --- Methods to write solution in the output file --- //
-
-  void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolutionMV(
-      const Thyra_MultiVector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false); 
-
   //! Write the solution to the mesh database.
   void
   writeSolutionToMeshDatabase(
