@@ -426,9 +426,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   auto ohMesh = m_mesh_struct->getOmegahMesh();
   if (ohMesh->has_tag(0, solution_dof_name())) {
-    fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name());
+    fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name().c_str());
   } else {
-    fprintf(stderr,"OmegahDiscretization::adapt does NOT have tag %s\n", solution_dof_name());
+    fprintf(stderr,"OmegahDiscretization::adapt does NOT have tag %s\n", solution_dof_name().c_str());
   }
   //debug::printAllTags(*ohMesh);
   auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
@@ -458,9 +458,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   }
 
   if (ohMesh->has_tag(0, solution_dof_name())) {
-    fprintf(stderr,"OmegahDiscretization::adapt post adapt has tag %s\n", solution_dof_name());
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt has tag %s\n", solution_dof_name().c_str());
   } else {
-    fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name());
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name().c_str());
   }
 
 

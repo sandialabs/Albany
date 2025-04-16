@@ -30,8 +30,8 @@ public:
   using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
   using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
-  static const char* solution_dof_name () { return "ordinary_solution"; }
-  static const char* nodes_dof_name    () { return "mesh_nodes"; }
+  static std::string solution_dof_name () { return "ordinary_solution"; }
+  static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
   AbstractDiscretization() = default;
@@ -302,11 +302,11 @@ public:
 
   virtual void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const = 0;
+
   virtual void
-  setField(
-      const Thyra_Vector& field_vector,
-      const std::string&  field_name,
-      bool                overlapped) = 0;
+  setField (const Thyra_Vector& field_vector,
+            const std::string&  field_name,
+            bool                overlapped) = 0;
 
   // Update mesh internals, such as coordinates, DOF numbers, etc.
   // To be run either after creation or after modification/adaptation.
