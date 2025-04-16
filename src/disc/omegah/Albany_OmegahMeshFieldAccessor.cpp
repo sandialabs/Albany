@@ -16,12 +16,10 @@ addFieldOnMesh (const std::string& name,
                 const int entityDim,
                 const int numComps)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (m_mesh->has_tag(entityDim,name), std::logic_error,
+      "Error! Tag '" + name + "' is already defined on the mesh.\n");
   Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
-  if(! m_mesh->has_tag(entityDim,name)) {
-    m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
-  } else {
-    m_mesh->set_tag<ST>(entityDim,name,f,false);
-  }
+  m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
 }
 
 void OmegahMeshFieldAccessor::
@@ -36,7 +34,6 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
   };
 
   auto get_ent_dim_and_ncomp = [&] (const StateStruct& st) {
-    const auto& dims = st.dim;
     std::pair<int,int> dim_ncomp;
     switch (st.stateType()) {
       case StateStruct::GlobalState:
@@ -77,6 +74,12 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
       }
     } else {
       addFieldOnMesh(st->name,ent_dim,ncomp);
+    }
+
+    if (st->layered) {
+      // Need to also add the global vector state for the normalized layers coords
+      auto nlayers = st->dim.back();
+      mesh_vector_states[st->name+"_NLC"].resize(nlayers);
     }
   }
 }
