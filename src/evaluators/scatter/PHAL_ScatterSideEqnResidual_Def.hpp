@@ -153,7 +153,6 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
       const int side_pos = side.side_pos;
 
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-      auto& gids = dof_mgr->getElementGIDs(elem_LID);
       for (int eq = 0; eq < this->numFields; eq++) {
         const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq+this->offset,side_pos);
         for (auto o : offsets) {
@@ -321,7 +320,6 @@ doPostEvaluate(typename Traits::EvalData workset)
 
   // Set J=identity outside of the sideset, so it's not singular
   auto Jac = workset.Jac;
-  const int numCellNodes = node_dof_mgr->getGIDFieldOffsets(0).size();
   const auto& ss_eqn_lids = this->ss_eqns_dofs_lids.at(workset.wsIndex);
   const RealType j_coeff = workset.j_coeff;
   Teuchos::Array<ST> vals;
