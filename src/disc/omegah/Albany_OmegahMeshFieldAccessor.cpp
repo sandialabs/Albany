@@ -23,6 +23,30 @@ addFieldOnMesh (const std::string& name,
 }
 
 void OmegahMeshFieldAccessor::
+setFieldOnMesh (const std::string& name,
+                const int entityDim,
+                const Teuchos::RCP<const Thyra_MultiVector>& mv)
+{
+  auto tag = m_mesh->get_tag<ST>(entityDim,name);
+  TEUCHOS_TEST_FOR_EXCEPTION (tag->ncomps()!=mv->domain()->dim(), std::logic_error,
+      "Error! Cannot copy MV on mesh tag, since the number of vecs does not match the tag ncomps.\n"
+      "  - tag name: " + name + "\n"
+      "  - tag ncomps: " << tag->ncomps() << "\n"
+      "  - MV num vecs: " << mv->domain()->dim() << "\n");
+
+  // Create 1d view of input MV
+  auto dev_mv = getDeviceData(mv);
+  ThyraVDeviceView<const ST> dev_v1d (dev_mv.data(),dev_mv.size());
+
+  // Create 1d array, deep copy MV into it
+  Omega_h::Write<ST> arr(tag->array().size());
+  Kokkos::deep_copy(arr.view(),dev_v1d);
+
+  // Copy in omegah mesh
+  m_mesh->set_tag<ST>(entityDim,name,arr,false);
+}
+
+void OmegahMeshFieldAccessor::
 addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
 {
   if (sis.is_null()) {

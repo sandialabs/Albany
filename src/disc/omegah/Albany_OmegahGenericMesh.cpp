@@ -30,13 +30,15 @@ OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
 }
 
 void OmegahGenericMesh::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis)
 {
   m_field_accessor = Teuchos::rcp(new OmegahMeshFieldAccessor(m_mesh));
   if (not sis.is_null()) {
     m_field_accessor->addStateStructs (sis);
   }
+
+  loadRequiredInputFields(comm);
 }
 
 void OmegahGenericMesh::
@@ -601,27 +603,7 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
           "Error! No means were specified for loading field '" + fname + "'.\n");
     }
 
-  //   auto field_mv_view = getLocalData(field_mv.getConst());
-
-  //   //Now we have to stuff the vector in the mesh data
-  //   using SFT = AbstractSTKFieldContainer::STKFieldType;
-  //   stk::topology::rank_t entity_rank = nodal ? stk::topology::NODE_RANK : stk::topology::ELEM_RANK;
-  //   SFT* stk_field = metaData->get_field<double> (entity_rank, fname);
-  //   TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::logic_error,
-  //       "Error! Field " << fname << " not present (perhaps is not '" << ftype << "'?).\n");
-
-  //   stk::mesh::EntityId gid;
-  //   LO lid;
-  //   auto indexer = createGlobalLocalIndexer(vs);
-  //   for (unsigned int i(0); i<entities->size(); ++i) {
-  //     double* values = stk::mesh::field_data(*stk_field, (*entities)[i]);
-
-  //     gid = bulkData->identifier((*entities)[i]) - 1;
-  //     lid = indexer->getLocalElement(GO(gid));
-  //     for (int iDim(0); iDim<field_mv_view.size(); ++iDim) {
-  //       values[iDim] = field_mv_view[iDim][lid];
-  //     }
-  //   }
+    m_field_accessor->setFieldOnMesh (fname,nodal ? 0 : m_mesh->dim(), field_mv.getConst());
   }
 }
 

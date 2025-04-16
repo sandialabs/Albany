@@ -21,6 +21,10 @@ public:
                        const int entityDim,
                        const int numComps);
 
+  void setFieldOnMesh (const std::string& name,
+                       const int entityDim,
+                       const Teuchos::RCP<const Thyra_MultiVector>& mv);
+
   // Read from mesh methods
   void fillSolnVector (Thyra_Vector&        /* soln */,
                        const dof_mgr_ptr_t& /* sol_dof_mgr */,
