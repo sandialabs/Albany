@@ -51,7 +51,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   //Validate Parameters
   Teuchos::ParameterList validPL;
-  validPL.set<std::string>("Type", "Power Law", "Type Of Beta: Constant, Power Law, Regularized Coulomb");
+  validPL.set<std::string>("Type", "Power Law", "Type Of Beta: Constant, Power Law, Regularized Coulomb, Debris Friction");
   validPL.set<double>("Power Exponent", 1.0, "Exponent of Power Law or Regularized Coulomb Law");
   validPL.set<std::string>("Mu Type", "Field", "Mu Type: Constant,Field, Exponent Of Field, Exponent Of Field At Nodes");
   validPL.set<std::string>("Mu Field Name", "", "Name of the Field Mu");
@@ -69,7 +69,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");
   validPL.set<bool>("Zero Beta On Floating Ice", false, "Whether to zero beta on floating ice");
   validPL.set<bool>("Exponentiate Scalar Parameters", false, "Whether the scalar parameters needs to be exponentiate");
-  validPL.set<bool>("Use Pressurized Bed Above Sea Level", false, "Whether to use a Downs & Johnson (2022) type parameterization for basal water pressure"); 
+  validPL.set<bool>("Use Pressurized Bed Above Sea Level", false, "Whether to use a Downs & Johnson (2022) type parameterization for basal water pressure");
+  validPL.set<std::string>("Bulk Friction Coefficient Type", "Constant", "Bulk Friction Coefficient Type: Field");
+  validPL.set<double>("Bulk Friction Coefficient", 0.0, "Constant value for Bulk Friction Coefficient (for debris friction slip)");
+  validPL.set<std::string>("Basal Debris Factor Type", "Constant", "Basal Debris Factor Type: Field");
+  validPL.set<double>("Basal Debris Factor", 0.0, "Constant value for Basal Debris Factor (for debris friction slip)"); 
   beta_list.validateParameters(validPL,0);
 
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
@@ -108,6 +112,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   printedMu            = -9999.999;
   printedBedRoughness  = -9999.999;
   printedQ             = -9999.999;
+  printedBulkFriction  = -9999.999;
+  printedBasalDebris   = -9999.999;
 
   if (betaType == "CONSTANT") {
     beta_type = BETA_TYPE::CONSTANT;
@@ -164,6 +170,31 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << flowRateType << "\" is not a valid parameter for Is not a valid parameter for Flow Rate Type\n");
     }
 
+  } else if (betaType == "DEBRIS FRICTION") {
+    beta_type = BETA_TYPE::DEBRIS_FRICTION;
+#ifdef OUTPUT_TO_SCREEN
+    *output << "Velocity-dependent beta (debris friction law):\n\n"
+	    << "    beta = mu * N * |u|^{q-1} / [|u| + bedRoughness*A*N^n]^q + BulkFrictionCoefficient*N/|u| + BasalDebrisFactor*|u|\n\n"
+	    << " with N being the effective pressure, |u| the sliding velocity\n";
+#endif
+
+    std::string flowRateType = util::upper_case(beta_list.get<std::string>("Flow Rate Type", "Viscosity Flow Rate"));
+    n = p.get<Teuchos::ParameterList*>("Viscosity Parameter List")->get<double>("Glen's Law n");
+    if(flowRateType == "VISCOSITY FLOW RATE") {
+      flowRate_type = FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE;
+      flowRate = PHX::MDField<const TemperatureST>(p.get<std::string>("Flow Rate Variable Name"), dl->cell_scalar2);
+      this->addDependentField (flowRate);
+    } else if (flowRateType == "CONSTANT") {  //"Constant"
+      flowRate_type = FLOW_RATE_TYPE::CONSTANT;
+      flowRate_val = beta_list.get<double>("Flow Rate");
+#ifdef OUTPUT_TO_SCREEN
+      *output << "LandIce::BasalFrictionCoefficient: Constant Flow Rate value = " << flowRate_val << " (loaded from yaml input file).\n";
+#endif
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << flowRateType << "\" is not a valid parameter for Is not a valid parameter for Flow Rate Type\n");
+    }
+
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
@@ -186,7 +217,6 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     } else if (effectivePressureType == "HYDROSTATIC") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
       use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
-      save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
       if(save_pressure_field && nodal) {
         outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
         this->addEvaluatedField (outN);
@@ -303,6 +333,80 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
       this->addDependentField (u_norm);
 
+    } else if (beta_type == BETA_TYPE::DEBRIS_FRICTION) {
+
+      std::string bedRoughnessType = util::upper_case((beta_list.isParameter("Bed Roughness Type") ? beta_list.get<std::string>("Bed Roughness Type") : "Field"));
+
+      auto layout_bedRoughness_field = layout;
+      if(bedRoughnessType == "CONSTANT") {
+        bedRoughness_type = FIELD_TYPE::CONSTANT;
+      } else if (bedRoughnessType == "FIELD") {
+        bedRoughness_type = FIELD_TYPE::FIELD;
+      } else if (bedRoughnessType == "EXPONENT OF FIELD AT NODES") {
+        bedRoughness_type = FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES;
+        if(!nodal) {
+          BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+          layout_bedRoughness_field = nodal_layout;
+          this->addDependentField (BF);
+        }
+      } else if (bedRoughnessType == "EXPONENT OF FIELD") {
+        bedRoughness_type = FIELD_TYPE::EXPONENT_OF_FIELD;
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << bedRoughnessType << "\" is not a valid parameter for Bed Roughness Type\n");
+      }
+
+      if(bedRoughness_type == FIELD_TYPE::CONSTANT) {
+        bedRoughnessParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
+        this->addDependentField (bedRoughnessParam);
+      } else {
+        bedRoughnessField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Roughness Variable Name"), layout_bedRoughness_field);
+        this->addDependentField (bedRoughnessField);
+      }
+
+      std::string bulkFrictionType = util::upper_case((beta_list.isParameter("Bulk Friction Coefficient Type") ? beta_list.get<std::string>("Bulk Friction Coefficient Type") : "Field"));
+
+      auto layout_bulkFriction_field = layout;
+      if (bulkFrictionType == "CONSTANT") {
+	bulkFriction_type = FIELD_TYPE::CONSTANT;
+      } else if (bulkFrictionType == "FIELD") {
+        bulkFriction_type = FIELD_TYPE::FIELD;
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  std::endl << "Error in LandIce::BasalFrictionCoefficient: \"" << bulkFrictionType << "\" is not a valid parameter for Bulk Friction Coefficient Type\n");
+      }
+
+      if (bulkFriction_type == FIELD_TYPE::CONSTANT) {
+        bulkFrictionParam = PHX::MDField<ScalarT,Dim>("Bulk Friction Coefficient", dl->shared_param);
+	this->addDependentField (bulkFrictionParam);
+      } else {
+	bulkFrictionField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bulk Friction Coefficient Variable Name"), layout_bulkFriction_field);
+	this->addDependentField (bulkFrictionField);
+      }
+
+      std::string basalDebrisType = util::upper_case((beta_list.isParameter("Basal Debris Factor Type") ? beta_list.get<std::string>("Basal Debris Factor Type") : "Field"));
+
+      auto layout_basalDebris_field = layout;
+      if (basalDebrisType == "CONSTANT") {
+        basalDebris_type = FIELD_TYPE::CONSTANT;
+      } else if (basalDebrisType == "FIELD") {
+        basalDebris_type = FIELD_TYPE::FIELD;
+      } else {
+      	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	  std::endl << "Error in LandIce:BasalFrictionCoefficient: \"" << basalDebrisType << "\" is not a valid parameter for Basal Debris Factor Type\n");
+      } 
+
+      if (basalDebris_type == FIELD_TYPE::CONSTANT) {
+        basalDebrisParam = PHX::MDField<ScalarT,Dim>("Basal Debris Factor", dl->shared_param);
+	this->addDependentField (basalDebrisParam);
+      } else {
+      	basalDebrisField = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Debris Factor Variable Name"), layout_basalDebris_field);
+	this->addDependentField (basalDebrisField);
+      } 
+
+      u_norm = PHX::MDField<const VelocityST>(p.get<std::string> ("Sliding Velocity Variable Name"), layout);
+      this->addDependentField (u_norm);
+
     } else if (beta_type == BETA_TYPE::POWER_LAW) {
       auto paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
       is_power_parameter = paramLib->isParameter("Power Exponent");
@@ -369,11 +473,11 @@ postRegistrationSetup (typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
-operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
+operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
 
-  ParamScalarT mu, bedRoughness, power;
+  ParamScalarT mu, bedRoughness, power, bulkFriction, basalDebris;
 
-  if ((beta_type == BETA_TYPE::POWER_LAW)||(beta_type==BETA_TYPE::REGULARIZED_COULOMB) ) {
+  if ((beta_type == BETA_TYPE::POWER_LAW) || (beta_type==BETA_TYPE::REGULARIZED_COULOMB) || (beta_type==BETA_TYPE::DEBRIS_FRICTION) ) {
     if (logParameters) {
       power = std::exp(Albany::convertScalar<const ParamScalarT>(powerParam(0)));
       if (mu_type == FIELD_TYPE::CONSTANT)
@@ -385,7 +489,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
     }
   }
 
-  if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
+  if ( (beta_type== BETA_TYPE::REGULARIZED_COULOMB) || (beta_type == BETA_TYPE::DEBRIS_FRICTION) ) {
     if (logParameters) {
       if (bedRoughness_type == FIELD_TYPE::CONSTANT)
         bedRoughness = std::exp(Albany::convertScalar<const ParamScalarT>(bedRoughnessParam(0)));
@@ -394,6 +498,13 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
         bedRoughness = Albany::convertScalar<const ParamScalarT>(bedRoughnessParam(0));
     }
   }
+
+  if (beta_type == BETA_TYPE::DEBRIS_FRICTION) {
+    if (bulkFriction_type == FIELD_TYPE::CONSTANT)
+      bulkFriction = Albany::convertScalar<const ParamScalarT>(bulkFrictionParam(0));
+    if (basalDebris_type == FIELD_TYPE::CONSTANT)
+      basalDebris = Albany::convertScalar<const ParamScalarT>(basalDebrisParam(0));
+  } 
 
   ParamScalarT muValue = 1.0;
   typename Albany::StrongestScalarType<EffPressureST,MeshScalarT>::type NVal = N_val;
@@ -436,7 +547,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
+            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
           }
 	} else {
           MeshScalarT thickness(0), bed_topo(0);
@@ -457,7 +568,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
+            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
           }
 	} else {
           NVal = 0;
@@ -533,8 +644,65 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
         }
 
       }
-    }
-  }
+      if (beta_type == BETA_TYPE::DEBRIS_FRICTION) {
+        ParamScalarT bedRoughnessValue;
+	ParamScalarT bulkFrictionValue;
+	ParamScalarT basalDebrisValue;
+        switch (bedRoughness_type) {
+        case FIELD_TYPE::FIELD:
+          bedRoughnessValue = bedRoughnessField(cell,ipt);
+          break;
+        case FIELD_TYPE::EXPONENT_OF_FIELD_AT_NODES:
+          if(nodal)
+            bedRoughnessValue = std::exp(bedRoughnessField(cell,ipt));
+          else {
+            bedRoughnessValue = 0;
+            for (int node=0; node<numNodes; ++node)
+              bedRoughnessValue += std::exp(bedRoughnessField(cell,node))*BF(cell,node,ipt);
+          }
+          break;
+        case FIELD_TYPE::EXPONENT_OF_FIELD:
+          bedRoughnessValue = std::exp(bedRoughnessField(cell,ipt));
+          break;
+        case FIELD_TYPE::CONSTANT:
+          bedRoughnessValue = bedRoughness;
+          break;
+        }
+
+	switch (bulkFriction_type) {
+	case FIELD_TYPE::FIELD:
+	  bulkFrictionValue = bulkFrictionField(cell,ipt);
+	  break;
+	case FIELD_TYPE::CONSTANT:
+	  bulkFrictionValue = bulkFriction;
+	  break;
+	}
+
+	switch (basalDebris_type) {
+	case FIELD_TYPE::FIELD:
+	  basalDebrisValue = basalDebrisField(cell,ipt);
+	  break;
+	case FIELD_TYPE::CONSTANT:
+	  basalDebrisValue = basalDebris;
+	  break;
+	} 
+
+        const double secsInYr = 365*24*3600;
+        const double scaling = secsInYr*pow(1000,n+1); //turns flow rate from [Pa^{-n} s^{-1}] to [k^{-1} kPa^{-n} yr^{-1}]
+        switch (flowRate_type) {
+        case FLOW_RATE_TYPE::CONSTANT: { 
+          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
+//          beta(cell,ipt) = ((muValue * NVal * std::pow (u_norm(cell,ipt), power-1.0)) / std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n), power)) + (bulkFrictionValue * NVal / u_norm(cell,ipt)) + (basalDebrisValue * u_norm(cell,ipt));
+	  }
+	  break;
+        case FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE:
+          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
+  //        beta(cell,ipt) = ((muValue * NVal * std::pow (u_norm(cell,ipt), power-1.0)) / std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate(cell)*std::pow(NVal,n), power)) + (bulkFrictionValue * NVal / u_norm(cell,ipt)) + (basalDebrisValue * u_norm(cell,ipt));
+          break;
+        }
+
+      }
+  }  // end of for loop
 
   if (is_side_equation && zero_on_floating) {
     for (int ipt=0; ipt<dim; ++ipt) {
@@ -562,9 +730,8 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
       beta(cell,ipt) *= h*h;
     }
   }
-
+}  // end of function
 }
-
 //**********************************************************************
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
@@ -573,7 +740,7 @@ evaluateFields (typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
 
-  if ( (beta_type == BETA_TYPE::POWER_LAW) || (beta_type == BETA_TYPE::REGULARIZED_COULOMB) ) {
+  if ( (beta_type == BETA_TYPE::POWER_LAW) || (beta_type == BETA_TYPE::REGULARIZED_COULOMB) || (beta_type == BETA_TYPE::DEBRIS_FRICTION) ) {
     if (logParameters) {
         auto hostPower_view = Kokkos::create_mirror_view(powerParam.get_view());
         Kokkos::deep_copy(hostPower_view, powerParam.get_view());
@@ -624,7 +791,7 @@ evaluateFields (typename Traits::EvalData workset)
           "   Input value: " + std::to_string(Albany::ADValue(mu)) + "\n");
   }
 
-  if (beta_type== BETA_TYPE::REGULARIZED_COULOMB) {
+  if ( (beta_type== BETA_TYPE::REGULARIZED_COULOMB) || (beta_type == BETA_TYPE::DEBRIS_FRICTION) ) {
       if (logParameters) {
         if (bedRoughness_type == FIELD_TYPE::CONSTANT) {
           auto hostBedRoughness_view = Kokkos::create_mirror_view(bedRoughnessParam.get_view());
@@ -656,6 +823,21 @@ evaluateFields (typename Traits::EvalData workset)
                                   "\nError in LandIce::BasalFrictionCoefficient: \"Bed Roughness\" must be >= 0.\n");
   } 
 
+  if (beta_type == BETA_TYPE::DEBRIS_FRICTION) {
+    if (bulkFriction_type == FIELD_TYPE::CONSTANT) {
+      auto hostBulkFriction_view = Kokkos::create_mirror_view(bulkFrictionParam.get_view());
+      Kokkos::deep_copy(hostBulkFriction_view, bulkFrictionParam.get_view());
+      ScalarT hostBulkFriction = hostBulkFriction_view(0);
+      bulkFriction = Albany::convertScalar<ParamScalarT>(hostBulkFriction);
+    } 
+    if (basalDebris_type == FIELD_TYPE::CONSTANT) {
+      auto hostBasalDebris_view = Kokkos::create_mirror_view(basalDebrisParam.get_view());
+      Kokkos::deep_copy(hostBasalDebris_view, basalDebrisParam.get_view());
+      ScalarT hostBasalDebris = hostBasalDebris_view(0);
+      basalDebris = Albany::convertScalar<ParamScalarT>(hostBasalDebris);
+    } 
+  } 
+
   dim = nodal ? numNodes : numQPs;
 
   if (is_side_equation) {
@@ -666,8 +848,6 @@ evaluateFields (typename Traits::EvalData workset)
     worksetSize = workset.numCells;
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION ((save_pressure_field && !std::is_constructible<EffPressureST,MeshScalarT>::value), std::logic_error,
-                                "Error! BasalFrictionCoefficient: Trying to convert a FAD type (NVal) into a double (outN).\n");
   Kokkos::parallel_for(BasalFrictionCoefficient_Policy(0, worksetSize), *this);
 }
 
