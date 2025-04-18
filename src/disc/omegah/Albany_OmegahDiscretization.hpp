@@ -23,14 +23,14 @@ public:
       const int neq,
       const Teuchos::RCP<OmegahGenericMesh>&      mesh,
       const Teuchos::RCP<const Teuchos_Comm>&     comm,
-      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null,
-      const std::map<int, std::vector<std::string>>& sideSetEquations =
-          std::map<int, std::vector<std::string>>());
+      const Teuchos::RCP<RigidBodyModes>& rigidBodyModes,
+      const std::map<int, std::vector<std::string>>& sideSetEquations,
+      const int num_params);
 
   //! Destructor
   virtual ~OmegahDiscretization() = default;
 
-  void updateMesh () override;
+  void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   //! Get Node set lists
   const NodeSetList&
@@ -144,8 +144,6 @@ public:
                 const std::string&  field_name,
                 bool                overlapped) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
-
   //! Write the solution to the mesh database.
   void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
                                     const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
@@ -174,24 +172,17 @@ public:
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const override
-  {
-    throw NotYetImplemented("OmegaDiscretization::checkForAdaptation");
-  }
+                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const override;
 
-  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override
-  {
-    throw NotYetImplemented("OmegaDiscretization::adapt");
-  }
+  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override;
 
 protected:
 
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
-                  const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   void computeNodeSets ();
   void computeGraphs ();
@@ -232,6 +223,12 @@ protected:
   //       But I think we can get rid of it. In principle, we should handle time derivatives
   //       from the app/problem side.
   int m_num_time_deriv;
+
+  // TODO: would be nice to move this to the base class. And maybe use a small struct to handle it?
+  int m_output_counter = 0;
+  int m_output_freq = -1;
+  std::vector<double> m_output_times;
+  bool m_output_enabled = false;
 };
 
 }  // namespace Albany

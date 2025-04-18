@@ -365,15 +365,8 @@ void ExtrudedDiscretization::createDOFManagers()
 
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
-    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
-    m_dof_managers[field_name][part_name] = dof_mgr;
-    m_node_dof_managers[part_name] = Teuchos::null;
-  }
-
-  // For each part, also make a Node dof manager
-  for (auto& it : m_node_dof_managers) {
-    const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
+    m_dof_managers[field_name][part_name] = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
+    m_node_dof_managers[part_name] = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
   }
 }
 
@@ -1180,12 +1173,13 @@ void ExtrudedDiscretization::printCoords() const
 }
 
 void
-ExtrudedDiscretization::updateMesh()
+ExtrudedDiscretization::
+updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: updateMesh");
 
   // First, make sure the basal disc is updated
-  m_basal_disc->updateMesh();
+  m_basal_disc->updateMesh(comm);
 
   createDOFManagers();
 
@@ -1256,27 +1250,31 @@ buildCellSideNodeNumerationMaps()
   }
 }
 
-void ExtrudedDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
-{
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
-}
-
 Teuchos::RCP<DOFManager>
 ExtrudedDiscretization::
 create_dof_mgr (const std::string& part_name,
                 const std::string& field_name,
-                const FE_Type /* fe_type */,
-                const int /* order */,
-                const int dof_dim) const
+                const FE_Type fe_type,
+                const int order,
+                const int dof_dim)
 {
+  std::size_t hash = 0;
+  hash ^= std::hash<std::string>()(part_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(order) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(dof_dim) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(static_cast<int>(fe_type)) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  auto& dof_mgr = m_hash_to_dof_mgr[hash];
+  if (Teuchos::nonnull(dof_mgr)) {
+    return dof_mgr;
+  }
+
   const auto& ebn = m_extruded_mesh->meshSpecs()[0]->ebName;;
   std::vector<std::string> elem_blocks =  {ebn};
 
   // Create conn and dof managers
   auto conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager();
   auto conn_mgr = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   const auto& topo = conn_mgr->get_topology();
   Teuchos::RCP<panzer::FieldPattern> fp;
@@ -1289,9 +1287,9 @@ create_dof_mgr (const std::string& part_name,
     fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  //       and call the fields comp_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("comp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();

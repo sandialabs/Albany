@@ -504,3 +504,12 @@ if (ALBANY_IFPACK2)
   endif()
 
 endif()
+
+if (ALBANY_OMEGAH)
+  set (testName ${testNameRoot}_PopulateMeshes_Omega_h)
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_populate_meshes_omegah.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_populate_meshes_omegah.yaml)
+
+  add_test(${testName} ${Albany.exe} input_fo_gis_populate_meshes_omegah.yaml)
+endif()

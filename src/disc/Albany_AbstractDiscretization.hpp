@@ -30,8 +30,8 @@ public:
   using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
   using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
-  static const char* solution_dof_name () { return "ordinary_solution"; }
-  static const char* nodes_dof_name    () { return "mesh_nodes"; }
+  static std::string solution_dof_name () { return "ordinary_solution"; }
+  static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
   AbstractDiscretization() = default;
@@ -217,6 +217,7 @@ public:
 
   //! Get sideSet discretizations map
   const strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() const { return sideSetDiscretizations; }
+  strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() { return sideSetDiscretizations; }
 
   //! Get the map side_id->side_set_elem_id
   virtual const std::map<std::string, std::map<GO, GO>>&
@@ -302,18 +303,16 @@ public:
 
   virtual void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const = 0;
-  virtual void
-  setField(
-      const Thyra_Vector& field_vector,
-      const std::string&  field_name,
-      bool                overlapped) = 0;
 
   virtual void
-  setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+  setField (const Thyra_Vector& field_vector,
+            const std::string&  field_name,
+            bool                overlapped) = 0;
 
   // Update mesh internals, such as coordinates, DOF numbers, etc.
   // To be run either after creation or after modification/adaptation.
-  virtual void updateMesh () {};
+  void updateMesh (const Teuchos::RCP<const Teuchos_Comm>& comm);
+  virtual void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
   // --- Methods to write solution in the output file --- //
 
@@ -373,6 +372,10 @@ public:
   // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
 
+  virtual void buildSideSetProjectors (const std::string& ss_name) {
+    throw NotYetImplemented("AbstractDiscretization::buildSideSetProjectors");
+  }
+
 protected:
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 
@@ -385,7 +388,10 @@ protected:
   strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
 
   // Dof manager for a scalar node field
-  strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+  strmap_t<dof_mgr_ptr_t>          m_node_dof_managers;
+
+  // Hash all params used to create a dof mgr, and store it here
+  std::map<size_t,dof_mgr_ptr_t>   m_hash_to_dof_mgr;
 
   // Struct containing node/elem state arrays
   StateArrays                           m_stateArrays;

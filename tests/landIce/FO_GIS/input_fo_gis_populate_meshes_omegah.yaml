@@ -1,0 +1,47 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+  Problem:
+    Solution Method: Steady
+    Name: Populate Mesh
+  Discretization:
+    Number Of Time Derivatives: 0
+    Method: Omegah
+    Mesh Creation Method: OshFile
+    Input Filename: ../OshMeshes/gis_unstruct_2d.osh
+    Output Filename: gis_unstruct_2d_populated.osh
+    # Exodus Output File Name: gis_unstruct_basal_populated.exo
+    Required Fields Info:
+      Number Of Fields: 4
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii
+      Field 2:
+        Field Name: temperature
+        Field Type: Node Layered Scalar
+        Number Of Layers: 11
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
+      Field 3:
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction.ascii
+  Piro:
+    NOX:
+      Status Tests:
+        Test Type: NormF
+        Tolerance: 1.0
+      Printing:
+        Output Information:
+          Details: false
+...

@@ -8,9 +8,8 @@
 namespace Albany {
 
 OmegahOshMesh::
-OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-               const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-               const int /* numParams */)
+OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
+ : OmegahGenericMesh(params)
 {
   auto& lib = get_omegah_lib();
 
@@ -21,6 +20,10 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
   if (params->get("Rebalance",true)) {
     m_mesh->balance(); // re-partition to the number of ranks in world communicator
   }
+
+  m_coords_d = m_mesh->coords().view();
+  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
+  Kokkos::deep_copy(m_coords_h,m_coords_d);
 
   // Node/Side sets names
   std::vector<std::string> nsNames, ssNames;
@@ -101,5 +104,10 @@ OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
                           ebNameToIndex));
 }
 
-} // namespace Albany
+void OmegahOshMesh::
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
+{
+  m_bulk_data_set = true;
+}
 
+} // namespace Albany

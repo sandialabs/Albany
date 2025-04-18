@@ -81,6 +81,8 @@ TetTriVtx getPerm_tet(Source& source, Dest& dest, const int src2destTetFace[4]) 
   return src2destTetTriVtx;
 }
 
+
+
 struct OmegahTriVtx {
   int idx[3];
   OmegahTriVtx() {
@@ -134,9 +136,73 @@ TriVtx getPerm_tri(Source& source, Dest& dest) {
   return src2dest;
 }
 
+struct OmegahEdgeVtx {
+  int idx[2];
+  OmegahEdgeVtx() {
+    const int elem_dim = 1;
+    const int vtx_dim = 0;
+    const int ignored = -1;
+    for(int vert=0; vert<Omega_h::simplex_degree(elem_dim, vtx_dim); vert++) {
+      idx[vert] = Omega_h::simplex_down_template(elem_dim, vtx_dim, vert, ignored);
+    }
+  }
+};
+
+struct ShardsEdgeVtx {
+  int idx[2];
+  ShardsEdgeVtx() {
+    shards::CellTopology edgeTopo(shards::getCellTopologyData< shards::Line<2> >());
+    const int elem_dim = 1;
+    const int bdry_dim = 0;
+    const int vtx_dim = 0;
+    for(size_t vert=0; vert<edgeTopo.getSubcellCount(vtx_dim); vert++) {
+      idx[vert] = edgeTopo.getNodeMap(elem_dim, bdry_dim, vert);
+    }
+  }
+};
+
+struct EdgeVtx {
+  int perm[2];
+  void print(std::string name) const {
+    std::stringstream ss;
+    ss << "\nedge: " << name << "vert(0,1)= ";
+    for (int i=0; i<2; i++) {
+      ss << perm[i] << " ";
+    }
+    ss << "\n";
+    std::cerr << ss.str();
+  }
+};
+
+template<typename Source, typename Dest>
+EdgeVtx getPerm_edge(Source& source, Dest& dest) {
+  const int elm_dim = 1;
+  const int vtx_dim = 0;
+
+  //compute the shards to omegah permutation
+  EdgeVtx src2dest;
+  shards::CellTopology edgeTopo(shards::getCellTopologyData< shards::Line<2> >());
+  auto perm = shards::findPermutation(edgeTopo.getCellTopologyData(),dest.idx,source.idx);
+  for(int vert=0; vert<Omega_h::simplex_degree(elm_dim,vtx_dim); vert++) {
+    src2dest.perm[vert] = edgeTopo.getNodePermutationInverse(perm,vert);
+  }
+  return src2dest;
+}
 
 struct Omegah2ShardsPerm {
   const std::string name = "Omega_h-to-Shards";
+
+  /////// Edges ///////// {
+  /* edgeVtx[i] contains the Shards vertex index for the i'th vertex of an Omegah
+   * edge
+   */
+  const EdgeVtx edgeVtx;
+  EdgeVtx getOmegah2ShardsPerm_edge() {
+    const OmegahEdgeVtx ohEdgeVtx;
+    const ShardsEdgeVtx shEdgeVtx;
+    return getPerm_edge(ohEdgeVtx,shEdgeVtx);
+  }
+  ///// END Edges }
 
   /////// Triangles ///////// {
   /* triVtx[i] contains the Shards vertex index for the i'th vertex of an Omegah
@@ -172,6 +238,7 @@ struct Omegah2ShardsPerm {
   ///// END Tetrahedrons }
 
   Omegah2ShardsPerm() :
+    edgeVtx(getOmegah2ShardsPerm_edge()),
     triVtx(getOmegah2ShardsPerm_tri()),
     tetTriVtx(getOmegah2ShardsPerm_tet())
   {}
@@ -182,6 +249,14 @@ struct Omegah2ShardsPerm {
  */
 struct Shards2OmegahPerm {
   const std::string name = "Shards-to-Omega_h";
+
+  /////// Edges /////////
+  const EdgeVtx edgeVtx;
+  EdgeVtx getShards2OmegahPerm_edge() {
+    const ShardsEdgeVtx shEdgeVtx;
+    const OmegahEdgeVtx ohEdgeVtx;
+    return getPerm_edge(shEdgeVtx,ohEdgeVtx);
+  }
 
   /////// Triangles /////////
   const TriVtx triVtx;
@@ -203,6 +278,7 @@ struct Shards2OmegahPerm {
   ///// END Tetrahedrons }
 
   Shards2OmegahPerm() :
+    edgeVtx(getShards2OmegahPerm_edge()),
     triVtx(getShards2OmegahPerm_tri()),
     tetTriVtx(getShards2OmegahPerm_tet())
   {}

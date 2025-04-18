@@ -317,7 +317,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
-  stk_disc->updateMesh();
+  stk_disc->updateMesh(albanyApp->getComm());
   albanyApp->finalSetUp(paramList);
 
   if (keptMesh) albanyApp->getPhxSetup()->reboot_memoizer();
