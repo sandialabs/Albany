@@ -87,60 +87,9 @@ ExtrudedDiscretization::setupMLCoords()
 }
 
 void
-ExtrudedDiscretization::writeSolution(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const double        /* time */,
-    const bool          /* overlapped */,
-    const bool          /* force_write_solution */)
-{
-  printf("WARNING ExtrudedDiscretization::writeSolution not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
-}
-
-void
-ExtrudedDiscretization::writeSolution(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const Thyra_Vector& /* soln_dot */,
-    const double        /* time */,
-    const bool          /* overlapped */,
-    const bool          /* force_write_solution */)
-{
-  printf("WARNING ExtrudedDiscretization::writeSolution not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
-}
-
-void
-ExtrudedDiscretization::writeSolution(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const Thyra_Vector& /* soln_dot */,
-    const Thyra_Vector& /* soln_dotdot */,
-    const double        /* time */,
-    const bool          /* overlapped */,
-    const bool          /* force_write_solution */)
-{
-  printf("WARNING ExtrudedDiscretization::writeSolution not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSolution");
-}
-
-void
-ExtrudedDiscretization::writeSolutionMV(
-    const Thyra_MultiVector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const double             /* time */,
-    const bool               /* overlapped */,
-    const bool               /* force_write_solution */)
-{
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolutionMV");
-}
-
-void
 ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& /* soln */,
     const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const double /* time */,
     const bool /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
@@ -151,7 +100,6 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& /* soln */,
     const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
     const Thyra_Vector& /* soln_dot */,
-    const double /* time */,
     const bool /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
@@ -163,7 +111,6 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
     const Thyra_Vector& /* soln_dot */,
     const Thyra_Vector& /* soln_dotdot */,
-    const double /* time */,
     const bool /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
@@ -173,30 +120,17 @@ void
 ExtrudedDiscretization::writeSolutionMVToMeshDatabase(
     const Thyra_MultiVector& /* soln */,
     const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const double /* time */,
     const bool /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
 }
 
 void
-ExtrudedDiscretization::writeSolutionToFile(
-    const Thyra_Vector& /* soln */,
+ExtrudedDiscretization::writeMeshDatabaseToFile(
     const double        /* time */,
-    const bool          /* overlapped */,
     const bool          /* force_write_solution */)
 {
   throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToFile");
-}
-
-void
-ExtrudedDiscretization::writeSolutionMVToFile(
-    const Thyra_MultiVector& /* soln */,
-    const double             /* time */,
-    const bool               /* overlapped */,
-    const bool               /* force_write_solution */)
-{
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolutionMVToFile");
 }
 
 Teuchos::RCP<AdaptationData>
