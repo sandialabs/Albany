@@ -229,6 +229,7 @@ list (APPEND HEADERS
 
 #discretization
 list (APPEND SOURCES
+  disc/Albany_AbstractDiscretization.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
   disc/Albany_DOFManager.cpp
