@@ -26,14 +26,7 @@ public:
   // STK int field
   using STKIntState  = stk::mesh::Field<int>;
 
-  using ValueState = std::vector<const std::string*>;
   using STKState   = std::vector<STKFieldType*>;
-
-  using MeshScalarState          = std::map<std::string, double>;
-  using MeshVectorState          = std::map<std::string, std::vector<double>>;
-  using MeshScalarIntegerState   = std::map<std::string, int>;
-  using MeshScalarInteger64State = std::map<std::string, GO>;
-  using MeshVectorIntegerState   = std::map<std::string, std::vector<int>>;
 
   AbstractSTKFieldContainer (bool solutionFieldContainer_) : solutionFieldContainer(solutionFieldContainer_) {}
 
@@ -69,36 +62,6 @@ public:
     return proc_rank_field;
   }
 
-  ValueState&
-  getScalarValueStates()
-  {
-    return scalarValue_states;
-  }
-  MeshScalarState&
-  getMeshScalarStates()
-  {
-    return mesh_scalar_states;
-  }
-  MeshVectorState&
-  getMeshVectorStates()
-  {
-    return mesh_vector_states;
-  }
-  MeshScalarIntegerState&
-  getMeshScalarIntegerStates()
-  {
-    return mesh_scalar_integer_states;
-  }
-  MeshScalarInteger64State&
-  getMeshScalarInteger64States()
-  {
-    return mesh_scalar_integer_64_states;
-  }
-  MeshVectorIntegerState&
-  getMeshVectorIntegerStates()
-  {
-    return mesh_vector_integer_states;
-  }
   STKState&
   getCellScalarStates()
   {
@@ -146,12 +109,6 @@ protected:
   STKFieldType*    coordinates_field   = nullptr;
   STKIntState*     proc_rank_field     = nullptr;
 
-  ValueState                scalarValue_states;
-  MeshScalarState           mesh_scalar_states;
-  MeshVectorState           mesh_vector_states;
-  MeshScalarIntegerState    mesh_scalar_integer_states;
-  MeshScalarInteger64State  mesh_scalar_integer_64_states;
-  MeshVectorIntegerState    mesh_vector_integer_states;
   STKState                  cell_scalar_states;
   STKState                  cell_vector_states;
   STKState                  cell_tensor_states;
