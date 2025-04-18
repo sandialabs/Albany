@@ -41,7 +41,7 @@ public:
   virtual ~GenericSTKFieldContainer() = default;
 
   // Add StateStructs to the list of stored ones
-  void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis);
+  void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis);
 
   Teuchos::RCP<Teuchos::ParameterList> getParams() const {return params; }
 
