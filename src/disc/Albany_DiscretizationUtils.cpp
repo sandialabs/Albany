@@ -291,7 +291,7 @@ readLayeredVectorFileSerial (const std::string &fname,
         "  - file name: " << fname << "\n"
         "  - number of nodes in file: " << numNodes << "\n"
         "  - expected number of nodes: " << nonConstData[0].size() << "\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (numLayers != normalizedLayersCoords.size(),
+    TEUCHOS_TEST_FOR_EXCEPTION (numLayers != static_cast<int>(normalizedLayersCoords.size()),
         Teuchos::Exceptions::InvalidParameterValue,
         "[readLayeredVectorFileSerial] Error! Unexpected number of layers.\n"
         "  - file name: " << fname << "\n"
