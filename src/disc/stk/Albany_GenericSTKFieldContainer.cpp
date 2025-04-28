@@ -76,12 +76,10 @@ inline Ioss::Field::RoleType role_type(const bool output) {
 #endif
 
 void GenericSTKFieldContainer::
-addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
+addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
 {
   if (sis==Teuchos::null)
     return;
-
-  using namespace Albany;
 
   // Code to parse the vector of StateStructs and create STK fields
   for(std::size_t i = 0; i < sis->size(); i++) {
@@ -169,7 +167,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
     } // end QuadPoint
     // Single scalar at center of the workset
     else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
-      scalarValue_states.push_back(&st.name); // Just save a pointer to the name allocated in st
+      scalarValue_states.push_back(st.name); // Just save a pointer to the name allocated in st
     } // End scalar at center of element
     else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter))
     { // Data at the node points

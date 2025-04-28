@@ -27,11 +27,16 @@ namespace Albany {
 class AbstractMeshFieldAccessor
 {
 public:
+  using ValueState               = std::vector<std::string>;
+  using MeshScalarState          = std::map<std::string, double>;
+  using MeshVectorState          = std::map<std::string, std::vector<double>>;
+  using MeshScalarIntegerState   = std::map<std::string, int>;
+  using MeshScalarInteger64State = std::map<std::string, GO>;
+  using MeshVectorIntegerState   = std::map<std::string, std::vector<int>>;
 
   using dof_mgr_ptr_t = Teuchos::RCP<const DOFManager>;
   using mv_ptr_t      = Teuchos::RCP<const Thyra_MultiVector>;
 
-  //! Destructor
   virtual ~AbstractMeshFieldAccessor () = default;
 
   // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
@@ -89,9 +94,25 @@ public:
                                     const mv_ptr_t&          soln_dxdp,
                                     const dof_mgr_ptr_t&     node_vs,
                                     const bool          overlapped) = 0;
+
+  ValueState&         getScalarValueStates () { return scalarValue_states; }
+  MeshScalarState&    getMeshScalarStates  () { return mesh_scalar_states; }
+  MeshVectorState&    getMeshVectorStates  () { return mesh_vector_states; }
+
+  MeshScalarIntegerState&   getMeshScalarIntegerStates   () { return mesh_scalar_integer_states;    }
+  MeshScalarInteger64State& getMeshScalarInteger64States () { return mesh_scalar_integer_64_states; }
+  MeshVectorIntegerState&   getMeshVectorIntegerStates   () { return mesh_vector_integer_states;    }
+
 protected:
   StateInfoStruct nodal_sis;
   StateInfoStruct nodal_parameter_sis;
+
+  ValueState                scalarValue_states;
+  MeshScalarState           mesh_scalar_states;
+  MeshVectorState           mesh_vector_states;
+  MeshScalarIntegerState    mesh_scalar_integer_states;
+  MeshScalarInteger64State  mesh_scalar_integer_64_states;
+  MeshVectorIntegerState    mesh_vector_integer_states;
 };
 
 }  // namespace Albany
