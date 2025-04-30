@@ -22,10 +22,10 @@ PoissonResid(const Teuchos::ParameterList& p,
   PhiGrad     (p.get<std::string>  ("Gradient QP Variable Name"), dl->qp_gradient),
   Source      (p.get<std::string>  ("Source Name"), dl->qp_scalar ),
   haveSource  (p.get<bool>("Have Source")),
-  PhiResidual (p.get<std::string>  ("Residual Name"),  dl->node_scalar ),
-  PhiFlux     (p.get<std::string>  ("Flux QP Variable Name"), dl->qp_gradient),
   worksetSize (dl->qp_scalar->extent(0)),
-  numQPs    (dl->qp_scalar->extent(1))
+  numQPs      (dl->qp_scalar->extent(1)),
+  PhiResidual (p.get<std::string>  ("Residual Name"),  dl->node_scalar ),
+  PhiFlux     (p.get<std::string>  ("Flux QP Variable Name"), dl->qp_gradient)
 {
   this->addDependentField(wBF);
   //this->addDependentField(Potential);
