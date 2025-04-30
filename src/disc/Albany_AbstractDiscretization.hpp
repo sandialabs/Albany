@@ -302,18 +302,16 @@ public:
 
   virtual void
   getField(Thyra_Vector& field_vector, const std::string& field_name) const = 0;
-  virtual void
-  setField(
-      const Thyra_Vector& field_vector,
-      const std::string&  field_name,
-      bool                overlapped) = 0;
 
   virtual void
-  setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+  setField (const Thyra_Vector& field_vector,
+            const std::string&  field_name,
+            bool                overlapped) = 0;
 
   // Update mesh internals, such as coordinates, DOF numbers, etc.
   // To be run either after creation or after modification/adaptation.
-  virtual void updateMesh () {};
+  void updateMesh (const Teuchos::RCP<const Teuchos_Comm>& comm);
+  virtual void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
   // --- Methods to write solution in the output file --- //
 
@@ -372,6 +370,10 @@ public:
 
   // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
+
+  virtual void buildSideSetProjectors (const std::string& ss_name) {
+    throw NotYetImplemented("AbstractDiscretization::buildSideSetProjectors");
+  }
 
 protected:
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;

@@ -52,14 +52,8 @@ class DiscretizationFactory {
                          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
                          const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
-    void
-    setMeshStructFieldData(
-      const Teuchos::RCP<StateInfoStruct>& sis);
-
-    void
-    setMeshStructFieldData(
-      const Teuchos::RCP<StateInfoStruct>& sis,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
+    void setMeshStructFieldData (const Teuchos::RCP<StateInfoStruct>& sis,
+                                 const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
 
     void setMeshStructBulkData();
 
