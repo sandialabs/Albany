@@ -91,7 +91,7 @@ public:
 
   //! After mesh modification, need to update the element connectivity and nodal
   //! coordinates
-  void updateMesh() override;
+  void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   //! Function that transforms an STK mesh of a unit cube (for LandIce problems)
   void transformMesh();
@@ -145,9 +145,11 @@ public:
 
   void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void buildSideSetProjectors (const std::string& /* ss_name */) override {
+    printf("ExtrudedDiscretization::buildSideSetProjectors NEEDS IMPL!\n");
+  }
 
- protected:
+protected:
 
   void getSolutionField(Thyra_Vector& result, bool overlapped) const;
 
@@ -193,7 +195,7 @@ public:
                   const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   // ==================== Members =================== //
 

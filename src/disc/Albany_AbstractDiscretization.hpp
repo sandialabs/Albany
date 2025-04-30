@@ -30,8 +30,8 @@ public:
   using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
   using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
-  static const char* solution_dof_name () { return "ordinary_solution"; }
-  static const char* nodes_dof_name    () { return "mesh_nodes"; }
+  static std::string solution_dof_name () { return "ordinary_solution"; }
+  static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
   AbstractDiscretization() = default;
@@ -217,6 +217,7 @@ public:
 
   //! Get sideSet discretizations map
   const strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() const { return sideSetDiscretizations; }
+  strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() { return sideSetDiscretizations; }
 
   //! Get the map side_id->side_set_elem_id
   virtual const std::map<std::string, std::map<GO, GO>>&
@@ -387,7 +388,10 @@ protected:
   strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
 
   // Dof manager for a scalar node field
-  strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+  strmap_t<dof_mgr_ptr_t>          m_node_dof_managers;
+
+  // Hash all params used to create a dof mgr, and store it here
+  std::map<size_t,dof_mgr_ptr_t>   m_hash_to_dof_mgr;
 
   // Struct containing node/elem state arrays
   StateArrays                           m_stateArrays;

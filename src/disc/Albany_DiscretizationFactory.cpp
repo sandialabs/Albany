@@ -23,7 +23,7 @@
 #include "Albany_Utils.hpp" // For CalculateNumberParams
 
 #ifdef ALBANY_OMEGAH
-#include "Albany_OmegahBoxMesh.hpp"
+#include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahDiscretization.hpp"
 #endif
 
@@ -87,12 +87,8 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 #endif // ALBANY_SEACAS
     }
 #ifdef ALBANY_OMEGAH
-    else if (method == "Box1D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<1>(disc_params, comm, numParams));
-    } else if (method == "Box2D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<2>(disc_params, comm, numParams));
-    } else if (method == "Box3D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<3>(disc_params, comm, numParams));
+    else if (method == "Omegah") {
+        mesh = Teuchos::rcp(new OmegahGenericMesh(disc_params));
     }
 #endif
     else if (method == "Ascii") {
@@ -180,7 +176,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                   "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                   "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
                   " Exodus, Ascii," <<
-                  " Ascii2D, STKExtruded, Extruded" << std::endl);
+                  " Ascii2D, STKExtruded, Extruded, Omegah" << std::endl);
   }
 
   if (disc_params->isSublist ("Side Set Discretizations")) {
@@ -329,7 +325,7 @@ createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh
 #ifdef ALBANY_OMEGAH
   } else if (mesh->meshLibName()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(mesh);
-    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations, num_params));
 #endif
   }
   return disc;

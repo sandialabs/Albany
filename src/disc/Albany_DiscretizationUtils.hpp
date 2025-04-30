@@ -34,7 +34,7 @@ public:
     : std::runtime_error(func_name + " not yet implemented!\n") {}
 };
 
-enum class FE_Type {
+enum class FE_Type : int {
   HVOL,
   HDIV,
   HCURL,

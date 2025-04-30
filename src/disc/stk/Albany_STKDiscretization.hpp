@@ -151,8 +151,7 @@ public:
 
   //! After mesh modification, need to update the element connectivity and nodal
   //! coordinates
-  void
-  updateMesh();
+  void updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   //! Function that transforms an STK mesh of a unit cube (for LandIce problems)
   void
@@ -255,8 +254,6 @@ public:
     */
   void addCellField(const std::string & fieldName,const std::string & blockId);
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis);
-
   Teuchos::RCP<AbstractSTKFieldContainer> getSolutionFieldContainer() {
     return solutionFieldContainer;
   }
@@ -266,6 +263,8 @@ public:
                             const stk::mesh::Entity child) const;
 
  protected:
+
+  void createSolutionFieldContainer();
 
   friend class BlockedSTKDiscretization;
   friend class STKConnManager;
@@ -300,18 +299,16 @@ public:
   void
   writeCoordsToMatrixMarket() const;
 
-  void
-  buildSideSetProjectors();
+  void buildSideSetProjectors (const std::string& ss_name) override;
 
   double previous_time_label;
 
   // If node_as_elements=true, build the ConnMgr as if nodes are the "cells".
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
-                  const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   // ==================== Members =================== //
 

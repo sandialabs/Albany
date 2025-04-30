@@ -8,14 +8,9 @@ namespace Albany {
 class OmegahOshMesh : public OmegahGenericMesh
 {
 public:
-  OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params,
-                 const Teuchos::RCP<const Teuchos_Comm>& comm, const int numParams);
+  OmegahOshMesh (const Teuchos::RCP<Teuchos::ParameterList>& params);
 
-  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
-  {
-    throw NotYetImplemented("OmegahOshMesh::setBulkData");
-    m_bulk_data_set = true;
-  }
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 };
 
 } // namespace Albany

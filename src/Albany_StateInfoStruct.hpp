@@ -44,7 +44,8 @@ struct StateStruct
 {
   enum StateType
   {
-    ElemState = 1,
+    GlobalState,
+    ElemState,
     NodeState
   };
   
@@ -135,6 +136,7 @@ struct StateStruct
   StateType stateType () const {
     switch (entity) {
       case StateStruct::WorksetValue:
+        return GlobalState;
       case StateStruct::ElemData:
       case StateStruct::QuadPoint:
       case StateStruct::ElemNode:

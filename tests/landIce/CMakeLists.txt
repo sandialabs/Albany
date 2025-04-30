@@ -1,3 +1,6 @@
+if (ALBANY_OMEGAH)
+  add_subdirectory(OshMeshes)
+endif()
 add_subdirectory(ExoMeshes)
 add_subdirectory(AsciiMeshes)
 add_subdirectory(FO_AIS)

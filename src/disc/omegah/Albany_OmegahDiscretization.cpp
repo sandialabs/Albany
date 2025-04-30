@@ -4,8 +4,55 @@
 #include "Albany_ThyraUtils.hpp"
 
 #include "OmegahConnManager.hpp"
+#include "Omega_h_adapt.hpp"
+#include "Omega_h_array_ops.hpp"
+#include <Omega_h_file.hpp>   // for Omega_h::binary::write
 
 #include <Panzer_IntrepidFieldPattern.hpp>
+
+namespace debug {
+template <typename T>
+void printTagInfo(Omega_h::Mesh mesh, std::ostringstream& oss, int dim, int tag, std::string type) {
+    auto tagbase = mesh.get_tag(dim, tag);
+    auto array = Omega_h::as<T>(tagbase)->array();
+
+    Omega_h::Real min = get_min(array);
+    Omega_h::Real max = get_max(array);
+
+    oss << std::setw(18) << std::left << tagbase->name().c_str()
+        << std::setw(5) << std::left << dim
+        << std::setw(7) << std::left << type
+        << std::setw(5) << std::left << tagbase->ncomps()
+        << std::setw(10) << std::left << min
+        << std::setw(10) << std::left << max
+        << "\n";
+}
+
+void printAllTags(Omega_h::Mesh& mesh) {
+  std::ostringstream oss;
+  // always print two places to the right of the decimal
+  // for floating point types (i.e., imbalance)
+  oss.precision(2);
+  oss << std::fixed;
+
+  oss << "\nTag Properties by Dimension: (Name, Dim, Type, Number of Components, Min. Value, Max. Value)\n";
+  for (int dim=0; dim <= mesh.dim(); dim++) {
+    for (int tag=0; tag < mesh.ntags(dim); tag++) {
+      auto tagbase = mesh.get_tag(dim, tag);
+      if (tagbase->type() == OMEGA_H_I8)
+        printTagInfo<Omega_h::I8>(mesh, oss, dim, tag, "I8");
+      if (tagbase->type() == OMEGA_H_I32)
+        printTagInfo<Omega_h::I32>(mesh, oss, dim, tag, "I32");
+      if (tagbase->type() == OMEGA_H_I64)
+        printTagInfo<Omega_h::I64>(mesh, oss, dim, tag, "I64");
+      if (tagbase->type() == OMEGA_H_F64)
+        printTagInfo<Omega_h::Real>(mesh, oss, dim, tag, "F64");
+    }
+  }
+
+  std::cout << oss.str();
+}
+}
 
 namespace Albany {
 
@@ -15,7 +62,8 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
                       const Teuchos::RCP<OmegahGenericMesh>&      mesh,
                       const Teuchos::RCP<const Teuchos_Comm>&     comm,
                       const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
-                      const std::map<int, std::vector<std::string>>& sideSetEquations)
+                      const std::map<int, std::vector<std::string>>& sideSetEquations,
+                      const int num_params)
  : m_disc_params (discParams)
  , m_mesh_struct(mesh)
  , m_comm (comm)
@@ -32,31 +80,61 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
       m_sol_names[2] += "_dotdot";
     }
   }
+
+  auto& output_pl = m_disc_params->sublist("Output Specs");
+  m_output_freq = output_pl.get("Frequency",1); // default to "output all snapshots"
+  if (m_output_freq>0) {
+    m_output_enabled = true;
+  }
+
+  auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
+
+  // Add solution (and their dof mgrs)
+  for (const auto& n : m_sol_names) {
+    field_accessor->addFieldOnMesh(n,0,neq);
+
+    // Create dof mgrs for solution
+    m_dof_managers[n][""] = create_dof_mgr ("",FE_Type::HGRAD,1,neq);
+    m_node_dof_managers[""] = create_dof_mgr ("",FE_Type::HGRAD,1,1);
+  }
+  m_dof_managers[nodes_dof_name()][""] = create_dof_mgr("",FE_Type::HGRAD,1,1);
+
+  // Possibly add sensitivities (and their dof mgrs)
+  const auto& sens_method = m_disc_params->get<std::string>("Sensitivity Method","None");
+  if (sens_method=="Forward") {
+    for (int ip=0; ip<num_params; ++ip) {
+      auto sens_name = "sensitivity_dx_dp" + std::to_string(ip);
+      field_accessor->addFieldOnMesh (sens_name,0,neq);
+      m_dof_managers[sens_name][""] = create_dof_mgr ("",FE_Type::HGRAD,1,neq);
+    }
+  } else if (sens_method=="Adjoint") {
+    const int resp_idx = m_disc_params->get<int>("Response Function Index");
+    const int p_idx    = m_disc_params->get<int>("Sensitivity Parameter Index");
+
+
+    auto sens_name = "sensitivity_dg" + std::to_string(resp_idx) + "_dp" + std::to_string(p_idx);
+    field_accessor->addFieldOnMesh (sens_name,0,neq);
+    m_dof_managers[sens_name][""] = create_dof_mgr ("",FE_Type::HGRAD,1,1); // resp are scalar
+  }
+
+  // Add dof mgrs for nodal sis
+  for (const auto& st : field_accessor->getNodalSIS()) {
+    int ncmp = 1;
+    for (size_t i=2; i<st->dim.size(); ++i) { ncmp*= st->dim[i]; }
+
+    m_dof_managers[st->name][st->meshPart] = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,ncmp);
+  }
 }
 
 void OmegahDiscretization::
-updateMesh ()
+updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
-  printf ("TODO: change name to the method?\n");
-
-  // Create DOF managers
-  auto sol_dof_mgr  = create_dof_mgr(solution_dof_name(),"",FE_Type::HGRAD,1,m_neq);
-  auto node_dof_mgr = create_dof_mgr(nodes_dof_name(),"",FE_Type::HGRAD,1,1);
-
-  m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
-  m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
-  m_node_dof_managers[""]     = node_dof_mgr;
-
   // Compute workset information
-  // NOTE: these arrays are all of size 1, for the foreseable future.
-  //       Still, make impl generic (where possible), in case things change.
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
-  int max_ws_size = ms->worksetSize;
-  int num_ws = 1 + (nelems-1) / max_ws_size;
-  TEUCHOS_TEST_FOR_EXCEPTION (num_ws!=1, std::runtime_error,
-      "Error! We are not yet supporting 2+ worksets with Omega_h.\n");
+  int ws_size = ms->worksetSize;
+  int num_ws = 1 + (nelems-1) / ws_size;
 
   m_workset_sizes.resize(num_ws);
   int min_ws_size = nelems / num_ws;
@@ -65,13 +143,15 @@ updateMesh ()
     m_workset_sizes[ws] = min_ws_size + (ws<remainder ? 1 : 0);
   }
 
-  m_workset_elements = DualView<int**>("ws_elems",1,max_ws_size);
-  for (int i=0; i<nelems; ++i) {
-    m_workset_elements.host()(0,i) = i;
+  m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
+  for (int iws=0,ielem=0; iws<num_ws; ++iws) {
+    for (int i=0; i<m_workset_sizes[iws]; ++i,++ielem) {
+      m_workset_elements.host()(iws,i) = ielem;
+    }
   }
   m_workset_elements.sync_to_dev();
 
-  m_wsEBNames.resize(1,ms->ebName);
+  m_wsEBNames.resize(num_ws,ms->ebName);
   m_wsPhysIndex.resize(num_ws);
   for (int i=0; i<num_ws; ++i) {
     m_wsPhysIndex[i] = ms->ebNameToIndex[m_wsEBNames[i]];
@@ -87,11 +167,13 @@ updateMesh ()
     auto lid = node_indexer->getLocalElement(gid);
     m_node_lid_to_omegah_pos[lid] = i;
   }
+
+  auto node_dof_mgr = getNodeDOFManager();
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
   const int mdim = mesh.dim();
-  m_nodes_coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
+  m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
@@ -114,7 +196,7 @@ updateMesh ()
     m_ws_local_dof_views[ws] = {};
   }
 
-  computeNodeSets ();
+  computeNodeSets (); //FIXME fails here
   computeGraphs ();
 }
 
@@ -204,34 +286,6 @@ computeGraphs ()
       "Error! SideSet equation support not yet added for Omega_h discretization.\n");
 }
 
-void OmegahDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
-{
-  auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
-  field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
-  auto mesh_fields = m_mesh_struct->get_field_accessor();
-  for (auto st : mesh_fields->getNodalParameterSIS()) {
-    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
-    int numComps;
-    switch (st->dim.size()) {
-      case 2: numComps = 1; break;
-      case 3: numComps = st->dim[2]; break;
-      default:
-        throw std::runtime_error(
-            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
-            "  - state name: " + st->name + "\n"
-            "  - input dims: (" + util::join(st->dim,",") + ")\n");
-    }
-    auto dof_mgr = create_dof_mgr (st->name,st->meshPart,FE_Type::HGRAD,1,numComps);
-    m_dof_managers[st->name][st->meshPart] = dof_mgr;
-
-    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
-      auto node_dof_mgr = create_dof_mgr (nodes_dof_name(),st->meshPart,FE_Type::HGRAD,1,1);
-      m_node_dof_managers[st->meshPart] = node_dof_mgr;
-    }
-  }
-}
-
 void
 OmegahDiscretization::
 getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
@@ -271,17 +325,26 @@ setField (const Thyra_Vector& field_vector,
 
 Teuchos::RCP<DOFManager>
 OmegahDiscretization::
-create_dof_mgr (const std::string& field_name,
-                const std::string& part_name,
+create_dof_mgr (const std::string& part_name,
                 const FE_Type fe_type,
                 const int order,
-                const int dof_dim) const
+                const int dof_dim)
 {
+  std::size_t hash = 0;
+  hash ^= std::hash<std::string>()(part_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(order) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(dof_dim) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(static_cast<int>(fe_type)) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  auto& dof_mgr = m_hash_to_dof_mgr[hash];
+  if (Teuchos::nonnull(dof_mgr)) {
+    return dof_mgr;
+  }
+
   const auto& mesh_specs = m_mesh_struct->meshSpecs[0];
 
   // Create conn and dof managers
   auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   shards::CellTopology topo (&mesh_specs->ctd);
   Teuchos::RCP<panzer::FieldPattern> fp;
@@ -294,14 +357,127 @@ create_dof_mgr (const std::string& field_name,
     fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  //       and call the fields comp_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("comp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();
 
   return dof_mgr;
+}
+
+Teuchos::RCP<AdaptationData>
+OmegahDiscretization::
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const
+{
+  auto adapt_data = Teuchos::rcp(new AdaptationData());
+
+  // Only do adaptation for simple 1d problems
+  auto mesh = m_mesh_struct->getOmegahMesh();
+  if (mesh->dim() != 1) {
+    std::cout << "NOT a 1D Omega_h mesh...\n";
+    return adapt_data;
+  }
+  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto adapt_type = adapt_params.get<std::string>("Type","None");
+  if (adapt_type=="None") {
+    return adapt_data;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
+      "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+      " - valid choices: None, Minimally-Oscillatory\n");
+
+  double tol = adapt_params.get<double>("Max Hessian");
+  auto data = getLocalData(solution);
+  // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
+  // TODO: replace with
+  //  1. if |C_i| > threshold, mark for refinement the whole mesh
+  //  2. Interpolate solution (and all elem/node fields if possible, but not necessary for adv-diff example)
+  int num_nodes = data.size();
+  adapt_data->x = solution;
+  adapt_data->x_dot = solution_dot;
+  adapt_data->x_dotdot = solution_dotdot;
+  adapt_data->dxdp = dxdp;
+  for (int i=1; i<num_nodes-1; ++i) {
+    auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
+    auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
+    auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
+    auto grad_prev = (data[i]-data[i-1]) / h_prev;
+    auto grad_next = (data[i+1]-data[i]) / h_next;
+    if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
+      adapt_data->type = AdaptationType::Topology;
+      break;
+    }
+  }
+
+  return adapt_data;
+
+}
+
+void OmegahDiscretization::
+adapt (const Teuchos::RCP<AdaptationData>& adaptData)
+{
+  fprintf(stderr,"OmegahDiscretization::adapt\n");
+  // Not sure if we allow calling adapt in general, but just in case
+  if (adaptData->type==AdaptationType::None) {
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
+      "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
+
+
+  auto ohMesh = m_mesh_struct->getOmegahMesh();
+  if (ohMesh->has_tag(0, solution_dof_name())) {
+    fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name().c_str());
+  } else {
+    fprintf(stderr,"OmegahDiscretization::adapt does NOT have tag %s\n", solution_dof_name().c_str());
+  }
+  //debug::printAllTags(*ohMesh);
+  auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
+  const auto desired_nelems = nelems*2;
+
+  Omega_h::AdaptOpts opts(&(*ohMesh));
+  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
+  while (double(nelems) < desired_nelems) {
+    std::cout << "element count " << nelems << " < target "
+      << desired_nelems << ", will adapt\n";
+    if (!ohMesh->has_tag(0, "metric")) {
+      std::cout << "mesh had no metric, adding implied and adapting to it\n";
+      Omega_h::add_implied_metric_tag(ohMesh.get());
+      Omega_h::adapt(ohMesh.get(), opts);
+      nelems = ohMesh->nglobal_ents(ohMesh->dim());
+      std::cout << "mesh now has " << nelems << " total elements\n";
+    }
+    auto metrics = ohMesh->get_array<double>(0, "metric");
+    metrics = Omega_h::multiply_each_by(metrics, 1.2);
+    auto const metric_ncomps =
+      Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
+    ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
+    std::cout << "adapting to scaled metric\n";
+    Omega_h::adapt(ohMesh.get(), opts);
+    nelems = ohMesh->nglobal_ents(ohMesh->dim());
+    std::cout << "mesh now has " << nelems << " total elements\n";
+  }
+
+  if (ohMesh->has_tag(0, solution_dof_name())) {
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt has tag %s\n", solution_dof_name().c_str());
+  } else {
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name().c_str());
+  }
+
+  // //create new meshstruct
+  // auto ignored = 0;
+  // {
+  // auto ohMesh2 = m_mesh_struct->getOmegahMesh();
+  // assert(ohMesh2->dim() == 1);
+  // }
+
+  updateMesh(m_comm);
 }
 
 void OmegahDiscretization::

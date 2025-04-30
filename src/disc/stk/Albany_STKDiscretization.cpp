@@ -82,6 +82,7 @@ STKDiscretization::STKDiscretization(
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }
   }
+  createSolutionFieldContainer();
 }
 
 STKDiscretization::~STKDiscretization()
@@ -933,15 +934,8 @@ void STKDiscretization::computeVectorSpaces()
 
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
-    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
-    m_dof_managers[field_name][part_name] = dof_mgr;
-    m_node_dof_managers[part_name] = Teuchos::null;
-  }
-
-  // For each part, also make a Node dof manager
-  for (auto& it : m_node_dof_managers) {
-    const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
+    m_dof_managers[field_name][part_name] = create_dof_mgr(part_name,FE_Type::HGRAD,1,dof_dim);
+    m_node_dof_managers[part_name] = create_dof_mgr(part_name,FE_Type::HGRAD,1,dof_dim);
   }
 
   const int meshDim = stkMeshStruct->numDim;
@@ -2043,7 +2037,7 @@ STKDiscretization::setupExodusOutput()
 }
 
 void
-STKDiscretization::buildSideSetProjectors()
+STKDiscretization::buildSideSetProjectors(const std::string& ss_name)
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: buildSideSetProjectors");
   Teuchos::RCP<ThyraCrsMatrixFactory>   ov_graphP, graphP;
@@ -2060,90 +2054,94 @@ STKDiscretization::buildSideSetProjectors()
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
   const auto cell_indexer = getDOFManager()->cell_indexer();
-  for (auto it : sideSetDiscretizationsSTK) {
-    // Extract the discretization
-    const std::string&           sideSetName = it.first;
-    const STKDiscretization&     ss_disc     = *it.second;
 
-    // A dof manager defined exclusively on the side
-    const auto ss_dofMgr = ss_disc.getDOFManager();
-    const auto ss_ov_vs  = ss_dofMgr->ov_vs();
-    const auto ss_vs     = ss_dofMgr->vs();
+  // First, build the side numeration maps
+  stkMeshStruct->buildCellSideNodeNumerationMap(
+      ss_name,
+      sideToSideSetCellMap[ss_name],
+      sideNodeNumerationMap[ss_name]);
 
-    // Extract the sides
-    stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.at(it.first);
-    stk::mesh::Selector selector =
-        stk::mesh::Selector(part) &
-        stk::mesh::Selector(stkMeshStruct->metaData->locally_owned_part());
-    std::vector<stk::mesh::Entity> sides;
-    stk::mesh::get_selected_entities(
-        selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
+  // Extract the discretization
+  const auto& ss_disc = sideSetDiscretizations.at(ss_name);
+
+  // A dof manager defined exclusively on the side
+  const auto ss_dofMgr = ss_disc->getDOFManager();
+  const auto ss_ov_vs  = ss_dofMgr->ov_vs();
+  const auto ss_vs     = ss_dofMgr->vs();
+
+  // Extract the sides
+  stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.at(ss_name);
+  stk::mesh::Selector selector =
+      stk::mesh::Selector(part) &
+      stk::mesh::Selector(stkMeshStruct->metaData->locally_owned_part());
+  std::vector<stk::mesh::Entity> sides;
+  stk::mesh::get_selected_entities(
+      selector, stkMeshStruct->bulkData->buckets(SIDE_RANK), sides);
 
 #ifdef ALBANY_DEBUG
-    const auto ss_cells = ss_dofMgr->getAlbanyConnManager()->getElementsInBlock();
-    TEUCHOS_TEST_FOR_EXCEPTION (sides.size()!=ss_cells.size(), std::runtime_error,
-        "Error! Conflicting data between sideset sides and sideset-dofMgr data.\n"
-        "  - num sides in sideset: " << std::to_string(sides.size()) << "\n"
-        "  - num elems on sideset dof mgr: " << ss_cells.size() << "\n");
+  const auto ss_cells = ss_dofMgr->getAlbanyConnManager()->getElementsInBlock();
+  TEUCHOS_TEST_FOR_EXCEPTION (sides.size()!=ss_cells.size(), std::runtime_error,
+      "Error! Conflicting data between sideset sides and sideset-dofMgr data.\n"
+      "  - num sides in sideset: " << std::to_string(sides.size()) << "\n"
+      "  - num elems on sideset dof mgr: " << ss_cells.size() << "\n");
 #endif
 
-    // The projector: build both overlapped and non-overlapped range vs
-    graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, ss_vs));
-    ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(ov_vs, ss_ov_vs));
+  // The projector: build both overlapped and non-overlapped range vs
+  graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(vs, ss_vs));
+  ov_graphP = Teuchos::rcp(new ThyraCrsMatrixFactory(ov_vs, ss_ov_vs));
 
-    // Recall, if node_map(i,j)=k, then on side_gid=i, the j-th side node corresponds
-    // to the k-th node in the side set cell numeration.
-    const auto& node_numeration_map = sideNodeNumerationMap.at(it.first);
-    const auto& side_cell_gid_map   = sideToSideSetCellMap.at(it.first);
-    for (auto side : sides) {
-      TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
-          "Error! Found a side with not exactly one element attached.\n"
-          "  - side stk ID: " << bulkData->identifier(side) << "\n"
-          "  - num elems  : " << bulkData->num_elements(side) << "\n");
+  // Recall, if node_map(i,j)=k, then on side_gid=i, the j-th side node corresponds
+  // to the k-th node in the side set cell numeration.
+  const auto& node_numeration_map = sideNodeNumerationMap.at(ss_name);
+  const auto& side_cell_gid_map   = sideToSideSetCellMap.at(ss_name);
+  for (auto side : sides) {
+    TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
+        "Error! Found a side with not exactly one element attached.\n"
+        "  - side stk ID: " << bulkData->identifier(side) << "\n"
+        "  - num elems  : " << bulkData->num_elements(side) << "\n");
 
-      const auto side_gid    = stk_gid(side);
-      const int num_side_nodes = bulkData->num_nodes(side);
-      const auto ss_elem_gid = side_cell_gid_map.at(side_gid);
-      const auto ss_elem_lid = ss_dofMgr->cell_indexer()->getLocalElement(ss_elem_gid);
+    const auto side_gid    = stk_gid(side);
+    const int num_side_nodes = bulkData->num_nodes(side);
+    const auto ss_elem_gid = side_cell_gid_map.at(side_gid);
+    const auto ss_elem_lid = ss_dofMgr->cell_indexer()->getLocalElement(ss_elem_gid);
 
-      const auto elem = bulkData->begin_elements(side)[0];
+    const auto elem = bulkData->begin_elements(side)[0];
 
-      const auto pos = determine_entity_pos(elem,side);
-      const auto ielem = cell_indexer->getLocalElement(stk_gid(elem));
-      const auto elem_dof_gids = dofMgr->getElementGIDs(ielem);
-      const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(ss_elem_lid);
+    const auto pos = determine_entity_pos(elem,side);
+    const auto ielem = cell_indexer->getLocalElement(stk_gid(elem));
+    const auto elem_dof_gids = dofMgr->getElementGIDs(ielem);
+    const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(ss_elem_lid);
 
-      const auto& permutation = node_numeration_map.at(side_gid);
-      for (int eq=0; eq<neq; ++eq) {
-        const auto& offsets    = dofMgr->getGIDFieldOffsetsSubcell(eq,sideDim,pos);
-        const auto& ss_offsets = ss_dofMgr->getGIDFieldOffsets(eq);
-        for (int i=0; i<num_side_nodes; ++i) {
-          cols[0] = elem_dof_gids[offsets[i]];
-          const GO row = ss_elem_dof_gids[ss_offsets[permutation[i]]];
-          ov_graphP->insertGlobalIndices(row, cols());
-          if (ss_dofMgr->indexer()->isLocallyOwnedElement(row)) {
-            graphP->insertGlobalIndices(row, cols());
-          }
+    const auto& permutation = node_numeration_map.at(side_gid);
+    for (int eq=0; eq<neq; ++eq) {
+      const auto& offsets    = dofMgr->getGIDFieldOffsetsSubcell(eq,sideDim,pos);
+      const auto& ss_offsets = ss_dofMgr->getGIDFieldOffsets(eq);
+      for (int i=0; i<num_side_nodes; ++i) {
+        cols[0] = elem_dof_gids[offsets[i]];
+        const GO row = ss_elem_dof_gids[ss_offsets[permutation[i]]];
+        ov_graphP->insertGlobalIndices(row, cols());
+        if (ss_dofMgr->indexer()->isLocallyOwnedElement(row)) {
+          graphP->insertGlobalIndices(row, cols());
         }
       }
     }
-
-    // Fill graphs
-    ov_graphP->fillComplete();
-    graphP->fillComplete();
-
-    ov_P = ov_graphP->createOp(true);
-    assign(ov_P, 1.0);
-    ov_projectors[sideSetName] = ov_P;
-
-    P = graphP->createOp(true);
-    assign(P, 1.0);
-    projectors[sideSetName] = P;
   }
+
+  // Fill graphs
+  ov_graphP->fillComplete();
+  graphP->fillComplete();
+
+  ov_P = ov_graphP->createOp(true);
+  assign(ov_P, 1.0);
+  ov_projectors[ss_name] = ov_P;
+
+  P = graphP->createOp(true);
+  assign(P, 1.0);
+  projectors[ss_name] = P;
 }
 
 void
-STKDiscretization::updateMesh()
+STKDiscretization::updateMeshImpl (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: updateMesh");
   bulkData = stkMeshStruct->bulkData;
@@ -2178,26 +2176,12 @@ STKDiscretization::updateMesh()
 #ifdef OUTPUT_TO_SCREEN
   printCoords();
 #endif
-
-  // Update sideset discretizations (if any)
-  for (auto it : sideSetDiscretizationsSTK) {
-    it.second->updateMesh();
-
-    stkMeshStruct->buildCellSideNodeNumerationMap(
-        it.first,
-        sideToSideSetCellMap[it.first],
-        sideNodeNumerationMap[it.first]);
-  }
-
-  if (sideSetDiscretizations.size()>0) {
-    buildSideSetProjectors();
-  }
 }
 
 void STKDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
+createSolutionFieldContainer()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
+  TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: createSolutionFieldContainer");
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
   auto mSTKFieldContainer = Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer>(fieldContainer,false);
@@ -2244,11 +2228,20 @@ setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
 Teuchos::RCP<DOFManager>
 STKDiscretization::
 create_dof_mgr (const std::string& part_name,
-                const std::string& field_name,
                 const FE_Type fe_type,
                 const int order,
-                const int dof_dim) const
+                const int dof_dim)
 {
+  std::size_t hash = 0;
+  hash ^= std::hash<std::string>()(part_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(order) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(dof_dim) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(static_cast<int>(fe_type)) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  auto& dof_mgr = m_hash_to_dof_mgr[hash];
+  if (Teuchos::nonnull(dof_mgr)) {
+    return dof_mgr;
+  }
+
   // Figure out which element blocks this part belongs to
   std::vector<std::string> elem_blocks;
   const auto& ebn = stkMeshStruct->ebNames_;
@@ -2286,7 +2279,7 @@ create_dof_mgr (const std::string& part_name,
 
   // Create conn and dof managers
   auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
 
   const auto& topo = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
   Teuchos::RCP<panzer::FieldPattern> fp;
@@ -2299,9 +2292,9 @@ create_dof_mgr (const std::string& part_name,
     fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  //       and call the fields comp_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("comp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();
@@ -2381,10 +2374,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   discParams->set("1D Elements",factor*ne_x);
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
   stkMeshStruct->setFieldData(comm,mesh1d->sis_);
-  this->setFieldData(mesh1d->sis_);
-  stkMeshStruct->setBulkData(comm);
 
-  updateMesh();
+  updateMesh(comm);
 
   int num_time_deriv = discParams->get<int>("Number Of Time Derivatives");
   auto x_mv_new = Thyra::createMembers(getVectorSpace(),num_time_deriv);
@@ -2409,7 +2400,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     }
   }
 
-  writeSolutionMVToMeshDatabase(*x_mv_new, Teuchos::null, 0, false);
+  writeSolutionMVToMeshDatabase(*x_mv_new, Teuchos::null, false);
 }
 
 }  // namespace Albany
