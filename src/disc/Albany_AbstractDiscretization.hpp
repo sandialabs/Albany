@@ -30,8 +30,8 @@ public:
   using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
   using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
-  static const char* solution_dof_name () { return "ordinary_solution"; }
-  static const char* nodes_dof_name    () { return "mesh_nodes"; }
+  static std::string solution_dof_name () { return "ordinary_solution"; }
+  static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
   AbstractDiscretization() = default;
@@ -317,80 +317,51 @@ public:
 
   // --- Methods to write solution in the output file --- //
 
-  //! Write the solution to the output file. Calls next two together.
-  virtual void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolutionMV(
-      const Thyra_MultiVector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false) = 0; 
+  //! All these overloads call a corresponding overload of writeSolutionToMeshDatabase and writeMeshDatabaseToFile
+  void writeSolution(const Thyra_Vector& solution,
+                     const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                     const double        time,
+                     const bool          overlapped = false,
+                     const bool          force_write_solution = false);
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false);
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const Thyra_Vector& solution_dotdot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false);
+  virtual void writeSolutionMV (const Thyra_MultiVector& solution,
+                                const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                const double             time,
+                                const bool               overlapped = false,
+                                const bool               force_write_solution = false);
+
   //! Write the solution to the mesh database.
-  virtual void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double        time,
-      const bool          overlapped = false) = 0;
-  virtual void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const double        time,
-      const bool          overlapped = false) = 0;
-  virtual void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
-      const double        time,
-      const bool          overlapped = false) = 0;
-  virtual void
-  writeSolutionMVToMeshDatabase(
-      const Thyra_MultiVector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double             time,
-      const bool               overlapped = false) = 0;
+  virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                            const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                            const bool          overlapped) = 0;
+  virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                            const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                            const Thyra_Vector& solution_dot,
+                                            const bool          overlapped) = 0;
+  virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                            const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                            const Thyra_Vector& solution_dot,
+                                            const Thyra_Vector& solution_dotdot,
+                                            const bool          overlapped) = 0;
+  virtual void writeSolutionMVToMeshDatabase (const Thyra_MultiVector& solution,
+                                              const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                              const bool               overlapped) = 0;
 
   //! Write the solution to file. Must call writeSolution first.
-  virtual void
-  writeSolutionToFile(
-      const Thyra_Vector& solution,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolutionMVToFile(
-      const Thyra_MultiVector& solution,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false) = 0; 
+  virtual void writeMeshDatabaseToFile (const double time,
+                                        const bool   force_write_solution) = 0;
 
   // Check if mesh adaptation is needed, and if so what kind (topological or just mesh-movement)
   virtual Teuchos::RCP<AdaptationData>
