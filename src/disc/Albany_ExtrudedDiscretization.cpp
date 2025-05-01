@@ -92,7 +92,8 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
     const bool /* overlapped */)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  printf("WARNING ExtrudedDiscretization::writeSolutionToMeshDatabase not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
 }
 
 void
@@ -102,7 +103,8 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& /* soln_dot */,
     const bool /* overlapped */)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  printf("WARNING ExtrudedDiscretization::writeSolutionToMeshDatabase not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
 }
 
 void
@@ -113,7 +115,8 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& /* soln_dotdot */,
     const bool /* overlapped */)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  printf("WARNING ExtrudedDiscretization::writeSolutionToMeshDatabase not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
 }
 
 void
@@ -122,7 +125,8 @@ ExtrudedDiscretization::writeSolutionMVToMeshDatabase(
     const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
     const bool /* overlapped */)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  printf("WARNING ExtrudedDiscretization::writeSolutionMVToMeshDatabase not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
 }
 
 void
@@ -130,7 +134,8 @@ ExtrudedDiscretization::writeMeshDatabaseToFile(
     const double        /* time */,
     const bool          /* force_write_solution */)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToFile");
+  printf("WARNING ExtrudedDiscretization::writeSMeshDatabaseToFile not yet implemented\n");
+  // throw NotYetImplemented("ExtrudedDiscretization::writeSMeshDatabaseToFile");
 }
 
 Teuchos::RCP<AdaptationData>

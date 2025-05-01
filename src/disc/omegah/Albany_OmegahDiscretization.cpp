@@ -374,7 +374,8 @@ void OmegahDiscretization::
 writeMeshDatabaseToFile (const double /* time */,
                          const bool   force_write_solution)
 {
-  throw NotYetImplemented("OmegahDiscretization::writeMeshDatabaseToFile");
+  std::cout << "WARNING OmegahDiscretization::writeMeshDatabaseToFile not yet implemented\n";
+  // throw NotYetImplemented("OmegahDiscretization::writeMeshDatabaseToFile");
 }
 
 }  // namespace Albany
