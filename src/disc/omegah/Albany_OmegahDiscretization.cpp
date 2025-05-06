@@ -208,7 +208,13 @@ void OmegahDiscretization::
 setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
 {
   auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
-  field_accessor->addFieldOnMesh (solution_dof_name(),FE_Type::HGRAD,m_neq);
+  field_accessor->addFieldOnMesh (solution_dof_name(),0,m_neq);
+  if (m_num_time_deriv>0) {
+    field_accessor->addFieldOnMesh (solution_dof_name()+"_dot",0,m_neq);
+    if (m_num_time_deriv>1) {
+      field_accessor->addFieldOnMesh (solution_dof_name()+"_dotdot",0,m_neq);
+    }
+  }
   auto mesh_fields = m_mesh_struct->get_field_accessor();
   for (auto st : mesh_fields->getNodalParameterSIS()) {
     // TODO: get mesh part from st, create dof mgr on that part for st.name dof
