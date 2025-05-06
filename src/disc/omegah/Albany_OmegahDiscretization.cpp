@@ -4,8 +4,55 @@
 #include "Albany_ThyraUtils.hpp"
 
 #include "OmegahConnManager.hpp"
+#include "Omega_h_adapt.hpp"
+#include "Omega_h_array_ops.hpp"
+#include <Omega_h_file.hpp>   // for Omega_h::binary::write
 
 #include <Panzer_IntrepidFieldPattern.hpp>
+
+namespace debug {
+template <typename T>
+void printTagInfo(Omega_h::Mesh mesh, std::ostringstream& oss, int dim, int tag, std::string type) {
+    auto tagbase = mesh.get_tag(dim, tag);
+    auto array = Omega_h::as<T>(tagbase)->array();
+
+    Omega_h::Real min = get_min(array);
+    Omega_h::Real max = get_max(array);
+
+    oss << std::setw(18) << std::left << tagbase->name().c_str()
+        << std::setw(5) << std::left << dim
+        << std::setw(7) << std::left << type
+        << std::setw(5) << std::left << tagbase->ncomps()
+        << std::setw(10) << std::left << min
+        << std::setw(10) << std::left << max
+        << "\n";
+}
+
+void printAllTags(Omega_h::Mesh& mesh) {
+  std::ostringstream oss;
+  // always print two places to the right of the decimal
+  // for floating point types (i.e., imbalance)
+  oss.precision(2);
+  oss << std::fixed;
+
+  oss << "\nTag Properties by Dimension: (Name, Dim, Type, Number of Components, Min. Value, Max. Value)\n";
+  for (int dim=0; dim <= mesh.dim(); dim++) {
+    for (int tag=0; tag < mesh.ntags(dim); tag++) {
+      auto tagbase = mesh.get_tag(dim, tag);
+      if (tagbase->type() == OMEGA_H_I8)
+        printTagInfo<Omega_h::I8>(mesh, oss, dim, tag, "I8");
+      if (tagbase->type() == OMEGA_H_I32)
+        printTagInfo<Omega_h::I32>(mesh, oss, dim, tag, "I32");
+      if (tagbase->type() == OMEGA_H_I64)
+        printTagInfo<Omega_h::I64>(mesh, oss, dim, tag, "I64");
+      if (tagbase->type() == OMEGA_H_F64)
+        printTagInfo<Omega_h::Real>(mesh, oss, dim, tag, "F64");
+    }
+  }
+
+  std::cout << oss.str();
+}
+}
 
 namespace Albany {
 
@@ -308,6 +355,119 @@ create_dof_mgr (const std::string& field_name,
   dof_mgr->build();
 
   return dof_mgr;
+}
+
+Teuchos::RCP<AdaptationData>
+OmegahDiscretization::
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const
+{
+  auto adapt_data = Teuchos::rcp(new AdaptationData());
+
+  // Only do adaptation for simple 1d problems
+  auto mesh = m_mesh_struct->getOmegahMesh();
+  if (mesh->dim() != 1) {
+    std::cout << "NOT a 1D Omega_h mesh...\n";
+    return adapt_data;
+  }
+  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto adapt_type = adapt_params.get<std::string>("Type","None");
+  if (adapt_type=="None") {
+    return adapt_data;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
+      "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+      " - valid choices: None, Minimally-Oscillatory\n");
+
+  double tol = adapt_params.get<double>("Max Hessian");
+  auto data = getLocalData(solution);
+  // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
+  // TODO: replace with
+  //  1. if |C_i| > threshold, mark for refinement the whole mesh
+  //  2. Interpolate solution (and all elem/node fields if possible, but not necessary for adv-diff example)
+  int num_nodes = data.size();
+  adapt_data->x = solution;
+  adapt_data->x_dot = solution_dot;
+  adapt_data->x_dotdot = solution_dotdot;
+  adapt_data->dxdp = dxdp;
+  for (int i=1; i<num_nodes-1; ++i) {
+    auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
+    auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
+    auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
+    auto grad_prev = (data[i]-data[i-1]) / h_prev;
+    auto grad_next = (data[i+1]-data[i]) / h_next;
+    if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
+      adapt_data->type = AdaptationType::Topology;
+      break;
+    }
+  }
+
+  return adapt_data;
+
+}
+
+void OmegahDiscretization::
+adapt (const Teuchos::RCP<AdaptationData>& adaptData)
+{
+  fprintf(stderr,"OmegahDiscretization::adapt\n");
+  // Not sure if we allow calling adapt in general, but just in case
+  if (adaptData->type==AdaptationType::None) {
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
+      "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
+
+
+  auto ohMesh = m_mesh_struct->getOmegahMesh();
+  if (ohMesh->has_tag(0, solution_dof_name())) {
+    fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name().c_str());
+  } else {
+    fprintf(stderr,"OmegahDiscretization::adapt does NOT have tag %s\n", solution_dof_name().c_str());
+  }
+  //debug::printAllTags(*ohMesh);
+  auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
+  const auto desired_nelems = nelems*2;
+
+  Omega_h::AdaptOpts opts(&(*ohMesh));
+  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
+  while (double(nelems) < desired_nelems) {
+    std::cout << "element count " << nelems << " < target "
+      << desired_nelems << ", will adapt\n";
+    if (!ohMesh->has_tag(0, "metric")) {
+      std::cout << "mesh had no metric, adding implied and adapting to it\n";
+      Omega_h::add_implied_metric_tag(ohMesh.get());
+      Omega_h::adapt(ohMesh.get(), opts);
+      nelems = ohMesh->nglobal_ents(ohMesh->dim());
+      std::cout << "mesh now has " << nelems << " total elements\n";
+    }
+    auto metrics = ohMesh->get_array<double>(0, "metric");
+    metrics = Omega_h::multiply_each_by(metrics, 1.2);
+    auto const metric_ncomps =
+      Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
+    ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
+    std::cout << "adapting to scaled metric\n";
+    Omega_h::adapt(ohMesh.get(), opts);
+    nelems = ohMesh->nglobal_ents(ohMesh->dim());
+    std::cout << "mesh now has " << nelems << " total elements\n";
+  }
+
+  if (ohMesh->has_tag(0, solution_dof_name())) {
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt has tag %s\n", solution_dof_name().c_str());
+  } else {
+    fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name().c_str());
+  }
+
+  // //create new meshstruct
+  // auto ignored = 0;
+  // {
+  // auto ohMesh2 = m_mesh_struct->getOmegahMesh();
+  // assert(ohMesh2->dim() == 1);
+  // }
+
+  updateMesh();
 }
 
 void OmegahDiscretization::
