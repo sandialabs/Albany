@@ -13,6 +13,8 @@ public:
   template<typename T>
   using strmap_t = std::map<std::string,T>;
 
+  OmegahGenericMesh(const Teuchos::RCP<Teuchos::ParameterList>& params);
+
   virtual ~OmegahGenericMesh () = default;
 
   // ------------- Override from base class ------------- //
@@ -20,6 +22,7 @@ public:
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<Albany::StateInfoStruct>& sis) override;
+  void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   LO get_num_local_nodes () const override;
   LO get_num_local_elements  () const override;
@@ -52,7 +55,22 @@ public:
                            Omega_h::Read<Omega_h::I8> is_entity_in_part,
                            const bool markDownward);
 
+  void reset_mesh (const Teuchos::RCP<Omega_h::Mesh> mesh);
+
 protected:
+  // Load a mesh from a .osh file
+  void loadOmegahMesh ();
+
+  // Builds a box mesh
+  void buildBox (const int dim);
+
+  // Create a nodeSet tag in the mesh
+  Omega_h::Read<Omega_h::I8>
+  create_ns_tag (const std::string& name, const int comp, const double tgt_value) const;
+
+  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+  Teuchos::RCP<Teuchos::ParameterList> m_params;
 
   Teuchos::RCP<Omega_h::Mesh>  m_mesh;
 
@@ -64,8 +82,8 @@ protected:
   DeviceView1d<const double>                m_coords_d;
   DeviceView1d<      double>::HostMirror    m_coords_h;
 
-  mutable GO m_max_node_gid = -1;
-  mutable GO m_max_elem_gid = -1;
+  mutable GO m_max_node_gid = -1; //set when get_max_node_gid() called
+  mutable GO m_max_elem_gid = -1; //set when get_max_elem_gid() called
 
   bool m_has_restart_solution = false;
 };
