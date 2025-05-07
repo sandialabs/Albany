@@ -68,9 +68,14 @@ protected:
   // Builds a box mesh
   void buildBox (const int dim);
 
-  using GeomMdlToSets = std::map<std::string, std::tuple<int,int>>;
-  GeomMdlToSets setGeomModelToNodeSets(int dim) const;
-  GeomMdlToSets setGeomModelToSideSets(int dim) const;
+  struct GeoModelEntity {
+    int dim;
+    int id;
+  };
+
+  using PartToGeoModelEntities = strmap_t<std::vector<GeoModelEntity>>;
+  PartToGeoModelEntities setNodeSetsGeoModelEntities () const;
+  PartToGeoModelEntities setSideSetsGeoModelEntities () const;
 
   void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
@@ -92,12 +97,10 @@ protected:
   bool m_has_restart_solution = false;
 
 private:
-  // Maps from geometric model ids to node and side sets based on the
-  // classification information in omega_h::build_box meshes
-  //  - the key is the [side|node] set name
-  //  - the tuple of integers are the geometric model entity dimension and id (in that order)
-  GeomMdlToSets geomMdlToNodeSets;
-  GeomMdlToSets geomMdlToSideSets;
+
+  // For each node/side set name, store the geometric model entities that belong to it
+  PartToGeoModelEntities nodeSetsGeoModelEntities;
+  PartToGeoModelEntities sideSetsGeoModelEntities;
 };
 
 } // namespace Albany

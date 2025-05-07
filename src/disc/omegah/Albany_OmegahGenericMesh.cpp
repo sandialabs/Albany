@@ -2,15 +2,19 @@
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_Omegah.hpp"
 
-#include <Omega_h_build.hpp>  // for Omega_h::build_box
-#include <Omega_h_file.hpp>   // for Omega_h::binary::read
-#include <Omega_h_mark.hpp>   // for Omega_h::mark_by_class
+#include <Omega_h_for.hpp>        // for Omega_h::parallel_for
+#include <Omega_h_build.hpp>      // for Omega_h::build_box
+#include <Omega_h_file.hpp>       // for Omega_h::binary::read
+#include <Omega_h_mark.hpp>       // for Omega_h::mark_by_class
 
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Gather.hpp"
 
 #include <regex>
+
+// Uncomment this to print some debug output
+// #define DEBUG_OUTPUT
 
 namespace Albany
 {
@@ -295,65 +299,154 @@ loadOmegahMesh ()
                           ebNameToIndex));
 }
 
+OmegahGenericMesh::PartToGeoModelEntities
+OmegahGenericMesh::setNodeSetsGeoModelEntities() const
+{
+  int dim = m_mesh->dim();
+  PartToGeoModelEntities ns_gm_entitites;
+  const int nodeDim = 0;
+  const int edgeDim = 1;
+  const int faceDim = 2;
+  if (dim==1) {
+    auto& ns0 = ns_gm_entitites["NodeSet0"];
+    auto& ns1 = ns_gm_entitites["NodeSet1"];
 
-OmegahGenericMesh::GeomMdlToSets OmegahGenericMesh::setGeomModelToNodeSets(int dim) const {
-  GeomMdlToSets gm2ns;
-  if( dim==1 ) {
-    const int vtxDim = 0;
-    gm2ns.insert({"NodeSet0", {vtxDim,0}});
-    gm2ns.insert({"NodeSet1", {vtxDim,2}});
-    //vertices that are not at the endpoints of the line have id=1
+    // Class ids are
+    //  x=0 -> 0
+    //  x=1 -> 2
+    //vertices that are not at the endpoints of the line have class id=1
+    ns0.push_back({nodeDim,0});
+    ns1.push_back({nodeDim,2});
+  } else if (dim==2) {
+    auto& ns0 = ns_gm_entitites["NodeSet0"];
+    auto& ns1 = ns_gm_entitites["NodeSet1"];
+    auto& ns2 = ns_gm_entitites["NodeSet2"];
+    auto& ns3 = ns_gm_entitites["NodeSet3"];
+    // Class ids are
+    //  x=0 -> 0, 3, and 6 (0,6 are corners, 3 is the geo model edge)
+    //  x=1 -> 2, 5, and 8 (2,8 are corners, 5 is the geo model edge)
+    //  y=0 -> 0, 1, and 2 (0,2 are corners, 1 is the geo model edge)
+    //  y=1 -> 6, 7, and 8 (6,8 are corners, 7 is the geo model edge)
+    ns0.push_back({nodeDim,0});
+    ns0.push_back({edgeDim,3});
+    ns0.push_back({nodeDim,6});
+
+    ns1.push_back({nodeDim,2});
+    ns1.push_back({edgeDim,5});
+    ns1.push_back({nodeDim,8});
+
+    ns2.push_back({nodeDim,0});
+    ns2.push_back({edgeDim,1});
+    ns2.push_back({nodeDim,2});
+
+    ns3.push_back({nodeDim,6});
+    ns3.push_back({edgeDim,7});
+    ns3.push_back({nodeDim,8});
   } else {
+    // TODO: implement dim=3
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
       "Construction of the map from geometric model ids to node/side sets is only supported for 1d domains.\n");
   }
-  return gm2ns;
+  return ns_gm_entitites;
 }
 
-OmegahGenericMesh::GeomMdlToSets OmegahGenericMesh::setGeomModelToSideSets(int dim) const {
-  GeomMdlToSets gm2ss;
-  if( dim==1 ) {
-    const int vtxDim = 0;
-    gm2ss.insert({"SideSet0", {vtxDim,0}});
-    gm2ss.insert({"SideSet1", {vtxDim,2}});
+OmegahGenericMesh::PartToGeoModelEntities
+OmegahGenericMesh::setSideSetsGeoModelEntities() const
+{
+  int dim = m_mesh->dim();
+  PartToGeoModelEntities ss_gm_entitites;
+  // Class ids follow the same numbering as explained in the ns equivalent fcn,
+  // with the difference that we now only care about geom model sides (vertices in 1d,
+  // edges in 2d, faces in 3d)
+  const int nodeDim = 0;
+  const int edgeDim = 1;
+  const int faceDim = 2;
+  if (dim==1) {
+    auto& ss0 = ss_gm_entitites["SideSet0"];
+    auto& ss1 = ss_gm_entitites["SideSet1"];
+
+    ss0.push_back({nodeDim,0});
+    ss1.push_back({nodeDim,2});
+  } else if (dim==2) {
+    auto& ss0 = ss_gm_entitites["SideSet0"];
+    auto& ss1 = ss_gm_entitites["SideSet1"];
+    auto& ss2 = ss_gm_entitites["SideSet2"];
+    auto& ss3 = ss_gm_entitites["SideSet3"];
+
+    ss0.push_back({edgeDim,3});
+    ss1.push_back({edgeDim,5});
+    ss2.push_back({edgeDim,1});
+    ss3.push_back({edgeDim,7});
   } else {
+    // TODO: implement dim=3
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
       "Construction of the map from geometric model ids to node/side sets is only supported for 1d domains.\n");
   }
-  return gm2ss;
+  return ss_gm_entitites;
 }
 
 std::vector<std::string>
-OmegahGenericMesh::createNodeSets() {
+OmegahGenericMesh::createNodeSets()
+{
   std::vector<std::string> nsNames;
-  for( auto& [name, ent] : geomMdlToNodeSets ) {
-    const auto geomMdlEntDim = std::get<0>(ent);
-    const auto geomMdlEntId = std::get<1>(ent);
-    fprintf(stderr, "name: %s dim: %d id: %d\n",
-        name.c_str(), geomMdlEntDim, geomMdlEntId);
+  for( auto& [name, gm_ents] : nodeSetsGeoModelEntities ) {
     nsNames.push_back(name);
-    auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
+
+    Omega_h::Write<Omega_h::I8> tag (m_mesh->nents(0),0);
+
+    for (auto ent : gm_ents) {
+      auto id_tag = Omega_h::mark_by_class(m_mesh.get(),0,ent.dim,ent.id);
+
+      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or id_tag[i]); };
+      Omega_h::parallel_for(tag.size(),f);
+    }
+#ifdef DEBUG_OUTPUT
+    std::cout << "ns " << name << " tag:";
+    for (int i=0; i<tag.size(); ++i) { std::cout << " " << static_cast<int>(tag[i]); } std::cout << "\n";
+#endif
     this->declare_part(name,Topo_type::vertex,tag,false);
   }
   return nsNames;
 }
 
 std::vector<std::string>
-OmegahGenericMesh::createSideSets() {
+OmegahGenericMesh::createSideSets()
+{
   std::vector<std::string> ssNames;
-  for( auto& [name, ent] : geomMdlToSideSets ) {
-    const auto geomMdlEntDim = std::get<0>(ent);
-    const auto geomMdlEntId = std::get<1>(ent);
-    fprintf(stderr, "name: %s dim: %d id: %d\n",
-        name.c_str(), geomMdlEntDim, geomMdlEntId);
+  int sideDim = m_mesh->dim()-1;
+  Topo_type elem_topo = m_part_topo.at("element_block_0");
+  Topo_type side_topo;
+  switch (sideDim) {
+    case 0: side_topo = Topo_type::vertex; break;
+    case 1: side_topo = Topo_type::edge; break;
+    case 2:
+      switch (elem_topo) {
+        case Topo_type::hexahedron: side_topo = Topo_type::quadrilateral;
+        case Topo_type::tetrahedron: side_topo = Topo_type::triangle;
+        default:
+          // TODO: should we handle wedges? Maybe not, since so fare this method is only called for box mesh?
+          throw std::runtime_error("Error! Side topology not yet implemented for box mesh.\n");
+      } break;
+    default:
+      throw std::runtime_error("Error! Unsupported side dimension (" + std::to_string(sideDim) + ").\n");
+  }
+
+  for( auto& [name, gm_ents] : sideSetsGeoModelEntities ) {
     ssNames.push_back(name);
-    if(getOmegahMesh()->dim()==1) {
-      auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
-      this->declare_part(name,Topo_type::vertex,tag,false);
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-          "Omega_h BuildBox: Only 1d meshes supported.\n");
+
+    Omega_h::Write<Omega_h::I8> tag (m_mesh->nents(sideDim),0);
+
+    for (auto ent : gm_ents) {
+      auto id_tag = Omega_h::mark_by_class(m_mesh.get(),sideDim,ent.dim,ent.id);
+
+      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or id_tag[i]); };
+      Omega_h::parallel_for(tag.size(),f);
     }
+#ifdef DEBUG_OUTPUT
+    std::cout << "ss " << name << " tag:";
+    for (int i=0; i<tag.size(); ++i) { std::cout << " " << static_cast<int>(tag[i]); } std::cout << "\n";
+#endif
+    this->declare_part(name,side_topo,tag,false);
   }
   return ssNames;
 }
@@ -426,6 +519,47 @@ buildBox (const int dim)
                        : dim==2 ? Topo_type::quadrilateral : Topo_type::edge;
   }
 
+#ifdef DEBUG_OUTPUT
+  // This chunk prints ALL mesh entities, along with their geometric classification and centroids
+  int mdim = m_mesh->dim();
+  auto coords = m_mesh->coords();
+  Omega_h::Reals centroids;
+  Omega_h::TagSet tags;
+  Omega_h::get_all_dim_tags(m_mesh.get(),0,&tags);
+  for (int idim=0; idim<=mdim; ++idim) {
+    std::cout << "DIM=" << idim << "\n";
+    for (auto n : tags[idim]) {
+      auto tag = m_mesh->get_tagbase(idim,n);
+      auto ids = tag->class_ids();
+      std::cout << "tag=" << n << ", ids:";
+      for (int i=0;i<ids.size(); ++i) {
+        std::cout << " " << ids[i];
+      } std::cout << "\n";
+    }
+    auto class_id = m_mesh->get_tag<Omega_h::ClassId>(idim,"class_id");
+    auto class_dim = m_mesh->get_tag<Omega_h::Byte>(idim,"class_dim");
+    auto gids = m_mesh->globals(idim);
+    std::cout << "  gids size: " << gids.size() << "\n";
+    std::cout << "  class_id size: " << class_id->array().size() << "\n";
+    std::cout << "  class_dim size: " << class_dim->array().size() << "\n";
+    for (int i=0; i<gids.size(); ++i) {
+      std::cout << "i=" << i
+                << ", gid=" << gids[i]
+                << ", class_id=" << class_id->array()[i]
+                << ", class_dim=" << static_cast<int>(class_dim->array()[i]);
+      if (idim==0) {
+        centroids = coords;
+      } else {
+        centroids = Omega_h::average_field(m_mesh.get(), idim, Omega_h::LOs(m_mesh->nents(idim), 0, 1),mdim,coords);
+      }
+      std::cout << ", centroids=[" << centroids[mdim*i];
+      for (int k=1; k<mdim; ++k) {
+        std::cout << " " << centroids[mdim*i+k];
+      }
+      std::cout << "]\n";
+    }
+  }
+#endif
   m_mesh->set_parting(OMEGA_H_ELEM_BASED);
   setCoordinates();
 
@@ -437,8 +571,8 @@ buildBox (const int dim)
   };
   this->declare_part(ebName,elem_topo);
 
-  geomMdlToNodeSets = setGeomModelToNodeSets(dim);
-  geomMdlToSideSets = setGeomModelToSideSets(dim);
+  nodeSetsGeoModelEntities = setNodeSetsGeoModelEntities();
+  sideSetsGeoModelEntities = setSideSetsGeoModelEntities();
   auto nsNames = createNodeSets();
   auto ssNames = createSideSets();
 
@@ -459,7 +593,6 @@ buildBox (const int dim)
                           nsNames, ssNames, ws_size, ebName,
                           ebNameToIndex));
 }
-
 
 void OmegahGenericMesh::
 loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
