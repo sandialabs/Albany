@@ -295,6 +295,69 @@ loadOmegahMesh ()
                           ebNameToIndex));
 }
 
+
+OmegahGenericMesh::GeomMdlToSets OmegahGenericMesh::setGeomModelToNodeSets(int dim) const {
+  GeomMdlToSets gm2ns;
+  if( dim==1 ) {
+    const int vtxDim = 0;
+    gm2ns.insert({"NodeSet0", {vtxDim,0}});
+    gm2ns.insert({"NodeSet1", {vtxDim,2}});
+    //vertices that are not at the endpoints of the line have id=1
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Construction of the map from geometric model ids to node/side sets is only supported for 1d domains.\n");
+  }
+  return gm2ns;
+}
+
+OmegahGenericMesh::GeomMdlToSets OmegahGenericMesh::setGeomModelToSideSets(int dim) const {
+  GeomMdlToSets gm2ss;
+  if( dim==1 ) {
+    const int vtxDim = 0;
+    gm2ss.insert({"SideSet0", {vtxDim,0}});
+    gm2ss.insert({"SideSet1", {vtxDim,2}});
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+      "Construction of the map from geometric model ids to node/side sets is only supported for 1d domains.\n");
+  }
+  return gm2ss;
+}
+
+std::vector<std::string>
+OmegahGenericMesh::createNodeSets() {
+  std::vector<std::string> nsNames;
+  for( auto& [name, ent] : geomMdlToNodeSets ) {
+    const auto geomMdlEntDim = std::get<0>(ent);
+    const auto geomMdlEntId = std::get<1>(ent);
+    fprintf(stderr, "name: %s dim: %d id: %d\n",
+        name.c_str(), geomMdlEntDim, geomMdlEntId);
+    nsNames.push_back(name);
+    auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
+    this->declare_part(name,Topo_type::vertex,tag,false);
+  }
+  return nsNames;
+}
+
+std::vector<std::string>
+OmegahGenericMesh::createSideSets() {
+  std::vector<std::string> ssNames;
+  for( auto& [name, ent] : geomMdlToSideSets ) {
+    const auto geomMdlEntDim = std::get<0>(ent);
+    const auto geomMdlEntId = std::get<1>(ent);
+    fprintf(stderr, "name: %s dim: %d id: %d\n",
+        name.c_str(), geomMdlEntDim, geomMdlEntId);
+    ssNames.push_back(name);
+    if(getOmegahMesh()->dim()==1) {
+      auto tag = Omega_h::mark_by_class(m_mesh.get(),0,geomMdlEntDim,geomMdlEntId);
+      this->declare_part(name,Topo_type::vertex,tag,false);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+          "Omega_h BuildBox: Only 1d meshes supported.\n");
+    }
+  }
+  return ssNames;
+}
+
 void OmegahGenericMesh::setCoordinates() {
   m_coords_d = m_mesh->coords().view();
   m_coords_h = Kokkos::create_mirror_view(m_coords_d);
@@ -367,39 +430,17 @@ buildBox (const int dim)
   setCoordinates();
 
   // Create the mesh specs
-  std::vector<std::string> nsNames, ssNames;
-
   std::string ebName = "element_block_0";
-  std::map<std::string,int> ebNameToIndex = 
+  std::map<std::string,int> ebNameToIndex =
   {
     { ebName, 0}
   };
   this->declare_part(ebName,elem_topo);
 
-  // Add nodesets/sidesets
-  struct NsSpecs {
-    NsSpecs (std::string n, int i, double c) : name(n), icoord(i), coord_val(c) {}
-    std::string name;
-    int icoord;
-    double coord_val;
-  };
-
-  std::vector<NsSpecs> nsSpecs;
-  Omega_h::Read<I8> tag;
-  for (int idim=0; idim<m_mesh->dim(); ++idim) {
-    nsNames.push_back("NodeSet" + std::to_string(idim*2));
-    tag = create_ns_tag(nsNames.back(),idim,0);
-    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
-
-    nsNames.push_back("NodeSet" + std::to_string(idim*2+1));
-    tag = create_ns_tag(nsNames.back(),idim,scale[idim]);
-    this->declare_part(nsNames.back(),Topo_type::vertex,tag,false);
-
-    ssNames.push_back("SideSet" + std::to_string(idim*2));
-    this->declare_part(ssNames.back(),get_side_topo(elem_topo));
-    ssNames.push_back("SideSet" + std::to_string(idim*2+1));
-    this->declare_part(ssNames.back(),get_side_topo(elem_topo));
-  }
+  geomMdlToNodeSets = setGeomModelToNodeSets(dim);
+  geomMdlToSideSets = setGeomModelToSideSets(dim);
+  auto nsNames = createNodeSets();
+  auto ssNames = createSideSets();
 
   // Omega_h does not know what worksets are, so all elements are in one workset
   const CellTopologyData* ctd;
@@ -419,21 +460,6 @@ buildBox (const int dim)
                           ebNameToIndex));
 }
 
-Omega_h::Read<Omega_h::I8>
-OmegahGenericMesh::
-create_ns_tag (const std::string& name,
-               const int comp,
-               const double tgt_value) const
-{
-  Omega_h::Write<Omega_h::I8> tag (m_mesh->nverts(),1);
-  auto coords = m_coords_d;
-  auto mdim = m_mesh->dim();
-  auto f = OMEGA_H_LAMBDA (LO inode) {
-    tag[inode] = coords(mdim*inode+comp)==tgt_value;
-  };
-  Kokkos::parallel_for("create_ns_tag:" + name,tag.size(),f);
-  return Omega_h::read(tag);
-}
 
 void OmegahGenericMesh::
 loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
