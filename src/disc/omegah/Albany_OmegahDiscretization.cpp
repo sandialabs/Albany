@@ -301,7 +301,7 @@ getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
   };
   auto accessor = m_mesh_struct->get_field_accessor();
   auto dof_mgr = getDOFManager();
-  for (int icol=0; icol<m_num_time_deriv; ++icol) {
+  for (int icol=0; icol<=m_num_time_deriv; ++icol) {
     auto col = solution.col(icol);
     accessor->fillVector(*col,names[icol],dof_mgr,false);
   }
