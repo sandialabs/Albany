@@ -69,7 +69,9 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
         dim_ncomp.second = product(st.dim,0);
         break;
       default:
-        throw std::runtime_error("Invalid/unsupported state type.\n");
+        throw std::runtime_error(
+            "Error! Invalid/unsupported state type.\n"
+            "  - state name: " + st.name + "\n");
     }
     return dim_ncomp;
   };
@@ -176,6 +178,9 @@ saveVector (const Thyra_Vector&  field_vector,
       "[OmegahMeshFieldAccessor::fillVector] Only P0 or P1 fields supported for now.\n");
   auto dim = entity_dims_with_dofs[0];
 
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(dim,field_name), std::runtime_error,
+      "Error! Field '" + field_name + "' was not found as a tag in the mesh.\n");
+
   // TODO: you may want to do this on device, but you need an overload of
   //       the getNonconstDeviceData util that accepts a ref not an RCP.
   const auto& elem_dof_lids = field_dof_mgr->elem_dof_lids().host();
@@ -205,12 +210,7 @@ saveVector (const Thyra_Vector&  field_vector,
     }
   }
 
-  if(! m_mesh->has_tag(dim,field_name)) {
-    throw std::runtime_error(field_name + " tag not defined");
-    m_mesh->add_tag(dim,field_name, ncomps, read(mesh_data_h.write()));
-  } else {
-    m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
-  }
+  m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
 }
 
 } // namespace Albany
