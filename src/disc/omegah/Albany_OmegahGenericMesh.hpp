@@ -57,6 +57,8 @@ public:
 
   void reset_mesh (const Teuchos::RCP<Omega_h::Mesh> mesh);
 
+  void setCoordinates();
+
 protected:
   // Load a mesh from a .osh file
   void loadOmegahMesh ();

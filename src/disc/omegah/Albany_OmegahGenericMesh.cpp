@@ -279,7 +279,7 @@ loadOmegahMesh ()
       break;
   }
   std::string ebName = "element_block_0";
-  std::map<std::string,int> ebNameToIndex = 
+  std::map<std::string,int> ebNameToIndex =
   {
     { ebName, 0}
   };
@@ -293,6 +293,12 @@ loadOmegahMesh ()
       new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
                           nsNames, ssNames, ws_size, ebName,
                           ebNameToIndex));
+}
+
+void OmegahGenericMesh::setCoordinates() {
+  m_coords_d = m_mesh->coords().view();
+  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
+  Kokkos::deep_copy(m_coords_h,m_coords_d);
 }
 
 void OmegahGenericMesh::
@@ -358,9 +364,7 @@ buildBox (const int dim)
   }
 
   m_mesh->set_parting(OMEGA_H_ELEM_BASED);
-  m_coords_d = m_mesh->coords().view();
-  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
-  Kokkos::deep_copy(m_coords_h,m_coords_d);
+  setCoordinates();
 
   // Create the mesh specs
   std::vector<std::string> nsNames, ssNames;
