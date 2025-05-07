@@ -95,15 +95,11 @@ updateMesh ()
   m_node_dof_managers[""]     = node_dof_mgr;
 
   // Compute workset information
-  // NOTE: these arrays are all of size 1, for the foreseable future.
-  //       Still, make impl generic (where possible), in case things change.
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = mesh.nelems();
-  int max_ws_size = ms->worksetSize;
-  int num_ws = 1 + (nelems-1) / max_ws_size;
-  TEUCHOS_TEST_FOR_EXCEPTION (num_ws!=1, std::runtime_error,
-      "Error! We are not yet supporting 2+ worksets with Omega_h.\n");
+  int ws_size = ms->worksetSize;
+  int num_ws = 1 + (nelems-1) / ws_size;
 
   m_workset_sizes.resize(num_ws);
   int min_ws_size = nelems / num_ws;
@@ -112,13 +108,15 @@ updateMesh ()
     m_workset_sizes[ws] = min_ws_size + (ws<remainder ? 1 : 0);
   }
 
-  m_workset_elements = DualView<int**>("ws_elems",1,max_ws_size);
-  for (int i=0; i<nelems; ++i) {
-    m_workset_elements.host()(0,i) = i;
+  m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
+  for (int iws=0,ielem=0; iws<num_ws; ++iws) {
+    for (int i=0; i<m_workset_sizes[iws]; ++i,++ielem) {
+      m_workset_elements.host()(iws,i) = ielem;
+    }
   }
   m_workset_elements.sync_to_dev();
 
-  m_wsEBNames.resize(1,ms->ebName);
+  m_wsEBNames.resize(num_ws,ms->ebName);
   m_wsPhysIndex.resize(num_ws);
   for (int i=0; i<num_ws; ++i) {
     m_wsPhysIndex[i] = ms->ebNameToIndex[m_wsEBNames[i]];
@@ -134,11 +132,12 @@ updateMesh ()
     auto lid = node_indexer->getLocalElement(gid);
     m_node_lid_to_omegah_pos[lid] = i;
   }
+
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
   const int mdim = mesh.dim();
-  m_nodes_coordinates.resize(3 * getLocalSubdim(getOverlapNodeVectorSpace()));
+  m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
@@ -161,7 +160,7 @@ updateMesh ()
     m_ws_local_dof_views[ws] = {};
   }
 
-  computeNodeSets ();
+  computeNodeSets (); //FIXME fails here
   computeGraphs ();
 }
 
