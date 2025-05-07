@@ -138,12 +138,14 @@ updateMesh ()
 
   const int mdim = mesh.dim();
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
+  int elms_in_prior_worksets = 0;
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
       m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
       for (int inode=0; inode<num_elem_nodes; ++inode) {
-        LO node_lid = node_elem_dof_lids(ielem,inode);
+        const auto elmIdx = ielem + elms_in_prior_worksets;
+        LO node_lid = node_elem_dof_lids(elmIdx,inode);
         int omh_pos = m_node_lid_to_omegah_pos[node_lid];
         m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
         auto coords = &m_nodes_coordinates[node_lid*mdim];
@@ -152,6 +154,7 @@ updateMesh ()
         }
       }
     }
+    elms_in_prior_worksets += m_workset_sizes[ws];
   }
 
   m_side_sets.resize(num_ws);
@@ -160,7 +163,7 @@ updateMesh ()
     m_ws_local_dof_views[ws] = {};
   }
 
-  computeNodeSets (); //FIXME fails here
+  computeNodeSets ();
   computeGraphs ();
 }
 
@@ -192,8 +195,11 @@ computeNodeSets ()
 
     auto& ns_elem_pos = m_node_sets[nsn];
 
+    ns_elem_pos.clear();
     ns_elem_pos.reserve(owned_on_ns.size());
     for (auto i : owned_on_ns) {
+      // FIXME! This is only looking at the FIRST elem that node=i is part of.
+      //        we need to LOOP over all elems that have node=i
       auto node_adj_start = v2e_a2ab[i];
       auto ielem = v2e_ab2b[node_adj_start];
 
@@ -380,6 +386,17 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       "Error! Adaptation type '" << adapt_type << "' not supported.\n"
       " - valid choices: None, Minimally-Oscillatory\n");
 
+  TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
+      "Error! the dxdp Thyra_MultiVector is expected to be null\n");
+
+  if(solution_dot != Teuchos::null and solution_dotdot != Teuchos::null) {
+     writeSolutionToMeshDatabase(*solution, dxdp, *solution_dot, *solution_dotdot, false);
+  } else if(solution_dot != Teuchos::null) {
+     writeSolutionToMeshDatabase(*solution, dxdp, *solution_dot, false);
+  } else {
+     writeSolutionToMeshDatabase(*solution, dxdp, false);
+  }
+
   double tol = adapt_params.get<double>("Max Hessian");
   auto data = getLocalData(solution);
   // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
@@ -410,6 +427,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 void OmegahDiscretization::
 adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
+  static int adaptCount = 0;
   fprintf(stderr,"OmegahDiscretization::adapt\n");
   // Not sure if we allow calling adapt in general, but just in case
   if (adaptData->type==AdaptationType::None) {
@@ -419,8 +437,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
 
-
   auto ohMesh = m_mesh_struct->getOmegahMesh();
+  std::string beforeAdaptName = "before_adapt" + std::to_string(adaptCount) + ".vtk";
+  Omega_h::vtk::write_parallel(beforeAdaptName, ohMesh.get());
   if (ohMesh->has_tag(0, solution_dof_name())) {
     fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name().c_str());
   } else {
@@ -432,6 +451,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   Omega_h::AdaptOpts opts(&(*ohMesh));
   opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
+  opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
   while (double(nelems) < desired_nelems) {
     std::cout << "element count " << nelems << " < target "
       << desired_nelems << ", will adapt\n";
@@ -459,14 +479,19 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name().c_str());
   }
 
-  // //create new meshstruct
-  // auto ignored = 0;
-  // {
-  // auto ohMesh2 = m_mesh_struct->getOmegahMesh();
-  // assert(ohMesh2->dim() == 1);
-  // }
+  std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
+  Omega_h::vtk::write_parallel(afterAdaptName, ohMesh.get());
+
+  //create node and side set tags
+  m_mesh_struct->createNodeSets();
+  m_mesh_struct->createSideSets();
+
+  //update coordinates
+  m_mesh_struct->setCoordinates();
 
   updateMesh();
+  adaptCount ++;
+  return;
 }
 
 void OmegahDiscretization::
