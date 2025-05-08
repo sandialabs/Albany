@@ -13,71 +13,96 @@ OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh)
 
 void OmegahMeshFieldAccessor::
 addFieldOnMesh (const std::string& name,
-                const FE_Type fe_type,
+                const int entityDim,
                 const int numComps)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (m_mesh->has_tag(entityDim,name), std::logic_error,
+      "Error! Tag '" + name + "' is already defined on the mesh.\n");
+  Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
+  m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
+}
 
-  switch (fe_type) {
-    case FE_Type::HGRAD:
-    {
-      Omega_h::Write<ST> f(m_mesh->nverts(),name);
-      m_mesh->add_tag<ST>(OMEGA_H_VERT,name,numComps,f,false);
-      break;
-    }
-    default:
-      TEUCHOS_TEST_FOR_EXCEPTION (fe_type!=FE_Type::HGRAD, std::runtime_error,
-          "[OmegahMeshFieldAccessor::addFieldOnMesh] Error! Unsupported value for fe_type.\n"
-          "  - input value: " << e2str(fe_type) << "\n"
-          "  - supported values: " << e2str(FE_Type::HGRAD) << "\n");
-  }
+void OmegahMeshFieldAccessor::
+setFieldOnMesh (const std::string& name,
+                const int entityDim,
+                const Teuchos::RCP<const Thyra_MultiVector>& mv)
+{
+  auto tag = m_mesh->get_tag<ST>(entityDim,name);
+  TEUCHOS_TEST_FOR_EXCEPTION (tag->ncomps()!=mv->domain()->dim(), std::logic_error,
+      "Error! Cannot copy MV on mesh tag, since the number of vecs does not match the tag ncomps.\n"
+      "  - tag name: " + name + "\n"
+      "  - tag ncomps: " << tag->ncomps() << "\n"
+      "  - MV num vecs: " << mv->domain()->dim() << "\n");
+
+  // Create 1d view of input MV
+  auto dev_mv = getDeviceData(mv);
+  ThyraVDeviceView<const ST> dev_v1d (dev_mv.data(),dev_mv.size());
+
+  // Create 1d array, deep copy MV into it
+  Omega_h::Write<ST> arr(tag->array().size());
+  Kokkos::deep_copy(arr.view(),dev_v1d);
+
+  // Copy in omegah mesh
+  m_mesh->set_tag<ST>(entityDim,name,arr,false);
 }
 
 void OmegahMeshFieldAccessor::
 addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
 {
-  // Extract underlying integer value from an enum
-  auto e2i = [] (const StateStruct::MeshFieldEntity e) {
-    return static_cast<typename std::underlying_type<StateStruct::MeshFieldEntity>::type>(e);
+  if (sis.is_null()) {
+    return;
+  }
+
+  auto product = [](const auto& vec, int start) {
+    return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());
   };
 
-  auto get_nodal_state_ncomps = [](const StateStruct& st) {
-    const auto& dims = st.dim;
-    int ncomps = -1;
-    switch (dims.size()) {
-      case 2:
-        ncomps = 1;
+  auto get_ent_dim_and_ncomp = [&] (const StateStruct& st) {
+    std::pair<int,int> dim_ncomp;
+    switch (st.stateType()) {
+      case StateStruct::NodeState:
+        dim_ncomp.first  =  0;
+        dim_ncomp.second = product(st.dim,st.entity==StateStruct::NodalData ? 1 : 2);
         break;
-      case 3:
-        ncomps = dims[2];
-        break;
-      case 4:
-        ncomps = dims[2]*dims[3];
+      case StateStruct::ElemState:
+        dim_ncomp.first  = m_mesh->dim();
+        dim_ncomp.second = product(st.dim,0);
         break;
       default:
         throw std::runtime_error(
-            "Error! Unsupported rank for state field.\n"
-            "  - state name: " + st.name + "\n"
-            "  - state rank: " + std::to_string(dims.size()) + "\n");
+            "Error! Invalid/unsupported state type.\n"
+            "  - state name: " + st.name + "\n");
     }
-    return ncomps;
+    return dim_ncomp;
   };
+
   for (const auto& st : *sis) {
-    if (st->entity==StateStruct::NodalDataToElemNode) {
-      nodal_sis.push_back(st);
-    } else if (st->entity==StateStruct::NodalDistParameter) {
-      nodal_sis.push_back(st);
+    // These will be warranted a dof mgr later
+    if (st->entity==StateStruct::NodalDistParameter) {
       nodal_parameter_sis.push_back(st);
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-          "Error! Unsupported state mesh entity type for Omega_h.\n"
-          "  - input value: " << e2i(st->entity) << "\n"
-          "  - supported values:\n"
-          "       NodalDataToElemNode: " << e2i(StateStruct::NodalDataToElemNode) << "\n"
-          "       NodalDistParameter : " << e2i(StateStruct::NodalDistParameter)  << "\n");
+      nodal_sis.push_back(st);
+    } else if (st->entity==StateStruct::NodalDataToElemNode) {
+      nodal_sis.push_back(st);
     }
 
-    // TODO: this needs to change for non-nodal states
-    addFieldOnMesh(st->name,FE_Type::HGRAD,get_nodal_state_ncomps(*st));
+    auto dim_ncomp = get_ent_dim_and_ncomp(*st);
+    int ent_dim = dim_ncomp.first;
+    int ncomp = dim_ncomp.second;
+    if (ent_dim==-1) {
+      if (ncomp==1) {
+        mesh_scalar_states.emplace(st->name,st->initValue);
+      } else {
+        mesh_vector_states[st->name].resize(ncomp,st->initValue);
+      }
+    } else {
+      addFieldOnMesh(st->name,ent_dim,ncomp);
+    }
+
+    if (st->layered) {
+      // Need to also add the global vector state for the normalized layers coords
+      auto nlayers = st->dim.back();
+      mesh_vector_states[st->name+"_NLC"].resize(nlayers);
+    }
   }
 }
 
@@ -152,6 +177,9 @@ saveVector (const Thyra_Vector&  field_vector,
   TEUCHOS_TEST_FOR_EXCEPTION (entity_dims_with_dofs.size()!=1, std::runtime_error,
       "[OmegahMeshFieldAccessor::fillVector] Only P0 or P1 fields supported for now.\n");
   auto dim = entity_dims_with_dofs[0];
+
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(dim,field_name), std::runtime_error,
+      "Error! Field '" + field_name + "' was not found as a tag in the mesh.\n");
 
   // TODO: you may want to do this on device, but you need an overload of
   //       the getNonconstDeviceData util that accepts a ref not an RCP.
