@@ -140,6 +140,7 @@ struct StateStruct
       case StateStruct::ElemNode:
         return ElemState;
       case StateStruct::NodalData:
+      case StateStruct::NodalDistParameter:
       case StateStruct::NodalDataToElemNode:
         return NodeState;
       default:
