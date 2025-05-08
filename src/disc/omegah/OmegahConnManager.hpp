@@ -78,7 +78,7 @@ public:
     * about the required connectivity (e.g. <code>buildConnectivity</code>
     * has never been called).
     */
-  Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override;
+  Teuchos::RCP<ConnManager> albanyNoConnectivityClone() const override;
 
   /** Get global id of the specified element.
     * Note, this function requires a device-to-host

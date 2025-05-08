@@ -51,6 +51,10 @@ struct AbstractMeshStruct {
 
     virtual Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor() const = 0;
 
+    virtual Teuchos::RCP<AbstractMeshStruct> clone () const {
+      throw std::runtime_error("Error! This mesh struct does not override the clone method.\n");
+    }
+
     Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
     Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
     Teuchos::ArrayRCP<double> mesh_layers_ratio;

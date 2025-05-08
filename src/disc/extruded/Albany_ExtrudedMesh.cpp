@@ -108,6 +108,21 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
   lateral_ms[0]->numDim = lat_topo.dimension;
   lateral_ms[0]->ctd = lat_topo;
+
+  m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
+                                                                m_elem_layers_data_lid));
+
+  // For the upperside, we use the same disc as the basalside.
+  sideSetMeshStructs["upperside"] = m_basal_mesh;
+  // const auto& ss_discs = params->sublist("Side Set Discretizations").get<Teuchos::Array<std::string>>("Side Sets");
+  // if (std::find(ss_discs.begin(),ss_discs.end(),std::string("upperside"))!=ss_discs.end()) {
+  //   const auto& ss_pl = params->sublist("Side Set Discretizations").sublist("upperside");
+  //   if (ss_pl.get<std::string>("Method")=="Use Basal") {
+  //     sideSetMeshStructs["upperside"] = m_basal_mesh;
+  //   } else if (ss_pl.get<std::string>("Method")=="Clone Basal") {
+  //     sideSetMeshStructs["upperside"] = m_basal_mesh->clone();
+  //   }
+  // }
 }
 
 std::string ExtrudedMesh::

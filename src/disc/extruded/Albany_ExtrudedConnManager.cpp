@@ -31,8 +31,8 @@ ExtrudedConnManager(const Teuchos::RCP<ConnManager>&         conn_mgr_h,
   m_elem_blocks_names.resize(1, mesh->meshSpecs[0]->ebName);
 }
 
-Teuchos::RCP<panzer::ConnManager>
-ExtrudedConnManager::noConnectivityClone() const
+Teuchos::RCP<ConnManager>
+ExtrudedConnManager::albanyNoConnectivityClone() const
 {
   auto panzer_conn_mgr_h = m_conn_mgr_h->noConnectivityClone();
   auto conn_mgr_h = Teuchos::rcp_dynamic_cast<ConnManager>(panzer_conn_mgr_h);

@@ -179,7 +179,8 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                   " Ascii2D, STKExtruded, Extruded, Omegah" << std::endl);
   }
 
-  if (disc_params->isSublist ("Side Set Discretizations")) {
+  // Handle side disc, but not for Extruded, which does all in house
+  if (method!="Extruded" and disc_params->isSublist ("Side Set Discretizations")) {
     TEUCHOS_TEST_FOR_EXCEPTION (mesh->meshSpecs.size()!=1, std::logic_error,
         "Error! So far, side set mesh is allowed only for meshes with 1 element block.\n");
     auto ms = mesh->meshSpecs[0];
@@ -194,7 +195,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 
       auto& ss_mesh = mesh->sideSetMeshStructs[ss_name];
 
-      // If this is the basalside of an extruded mesh, we already created the mesh object
+      // If this is the basalside of an Extruded/STKExtruded mesh, we already created the mesh object
       if (ss_mesh.is_null()) {
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
 
@@ -221,6 +222,9 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
           // of layers. Notice that if that's the case, it probably is impossible to build a new
           // set of maps, since there is no way to correctly map the side nodes to the cell nodes.
           ss_mesh_stk->ignore_side_maps = params_ss->get<bool>("Ignore Side Maps", false);
+        // } else if (ss_method=="UseBasalMesh") {
+        //   TEUCHOS_TEST_FOR_EXCEPTION (ms->mesh_type!=MeshType::Extruded or ss_name!="upperside", std::runtime_error,
+        //       "Error! The disc method 'UseBasalMesh' is only available for the 'upperside' side disc of 'Extruded' meshes.\n");
         } else {
           // This can be the case if we restart from existing volume and side meshes
           ss_mesh = createMeshStruct (params_ss,comm, numParams);
@@ -259,7 +263,7 @@ DiscretizationFactory::createDiscretization(
 
     setMeshStructFieldData(sis, side_set_sis);
     disc->setFieldData(sis);
-    Teuchos::RCP<StateInfoStruct> dummy_sis;
+
     for (auto it : disc->getSideSetDiscretizations()) {
       if (side_set_sis.count(it.first)==1) {
         it.second->setFieldData(side_set_sis.at(it.first));

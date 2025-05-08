@@ -280,7 +280,7 @@ StateManager::initStateArrays(
   for (auto const& it : sideSetStateInfo) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         ss_discs.find(it.first) == ss_discs.end(), std::logic_error,
-        "Error! Side Set " << it.first << "has sideSet states registered but no discretizations.\n");
+        "Error! Side Set " << it.first << " has sideSet states registered but no discretizations.\n");
   }
 
   // Then we make sure that for every side discretization there is a

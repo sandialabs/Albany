@@ -41,6 +41,13 @@ public:
     return this->getElementBlock(elem_block_name());
   }
 
+  Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override {
+    return albanyNoConnectivityClone();
+  }
+
+  // Returns an ALBANY conn manager clone
+  virtual Teuchos::RCP<ConnManager> albanyNoConnectivityClone () const = 0;
+
   const std::vector<LO> & getNeighborElementBlock(const std::string & /* blockId */) const override
   {
     static std::vector<LO> emptyVec;

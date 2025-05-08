@@ -25,8 +25,8 @@ DummyConnManager (const Teuchos::RCP<const DummyMesh>& mesh)
   std::iota(m_elem_lids.begin(),m_elem_lids.end(),0);
 }
 
-Teuchos::RCP<panzer::ConnManager>
-DummyConnManager::noConnectivityClone() const
+Teuchos::RCP<ConnManager>
+DummyConnManager::albanyNoConnectivityClone() const
 {
   return Teuchos::rcp(new DummyConnManager(m_mesh));
 }

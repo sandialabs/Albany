@@ -24,7 +24,7 @@
 #include <string>
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace Albany {
 
@@ -45,6 +45,11 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
  , m_disc_params (discParams)
 {
   sideSetDiscretizations["basalside"] = basal_disc;
+  sideSetDiscretizations["upperside"] = basal_disc;
+  // if (extruded_mesh->sideSetMeshStructs.count("upperside")==1) {
+  //   // We store the same disc on both upper and basal side
+  //   sideSetDiscretizations["upperside"] = basal_disc;
+  // }
 }
 
 void
@@ -370,15 +375,8 @@ void ExtrudedDiscretization::createDOFManagers()
 
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
-    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
-    m_dof_managers[field_name][part_name] = dof_mgr;
-    m_node_dof_managers[part_name] = Teuchos::null;
-  }
-
-  // For each part, also make a Node dof manager
-  for (auto& it : m_node_dof_managers) {
-    const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
+    m_dof_managers[field_name][part_name] = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
+    m_node_dof_managers[part_name] = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,1);
   }
 }
 
@@ -801,15 +799,22 @@ ExtrudedDiscretization::computeSideSets()
         }
         for (int iside=0; iside<num_sides and pos==-1; ++iside) {
           const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,iside);
+          if (offsets.size()!=side_nodes.size()) {
+            // This side has the wrong topo, so it's not it.
+            continue;
+          }
           pos = iside;
           for (auto o : offsets) {
-            if (std::find(side_nodes.begin(),side_nodes.end(),elem_nodes[o])==side_nodes.end()) {
+            auto it = std::find(side_nodes.begin(),side_nodes.end(),elem_nodes[o]);
+            if (it==side_nodes.end()) {
               pos = -1; break;
             }
           }
         }
         TEUCHOS_TEST_FOR_EXCEPTION (pos==-1, std::runtime_error,
             "Error! Could not locate side inside an element.\n"
+            " - side set       : " + ss + "\n"
+            " - basal side sets: " + util::join(basal_ss_names,",") + "\n"
             " - side nodes gids: " + util::join(side_nodes,",") + "\n"
             " - elem nodes gids: " + util::join(elem_nodes,",") + "\n");
         return pos;
@@ -1271,17 +1276,27 @@ Teuchos::RCP<DOFManager>
 ExtrudedDiscretization::
 create_dof_mgr (const std::string& part_name,
                 const std::string& field_name,
-                const FE_Type /* fe_type */,
-                const int /* order */,
-                const int dof_dim) const
+                const FE_Type fe_type,
+                const int order,
+                const int dof_dim)
 {
+  std::size_t hash = 0;
+  hash ^= std::hash<std::string>()(part_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(order) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(dof_dim) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(static_cast<int>(fe_type)) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  auto& dof_mgr = m_hash_to_dof_mgr[hash];
+  if (Teuchos::nonnull(dof_mgr)) {
+    return dof_mgr;
+  }
+
   const auto& ebn = m_extruded_mesh->meshSpecs()[0]->ebName;;
   std::vector<std::string> elem_blocks =  {ebn};
 
   // Create conn and dof managers
-  auto conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager();
+  auto conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager()->albanyNoConnectivityClone();
   auto conn_mgr = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   const auto& topo = conn_mgr->get_topology();
   Teuchos::RCP<panzer::FieldPattern> fp;
@@ -1294,9 +1309,9 @@ create_dof_mgr (const std::string& part_name,
     fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  //       and call the fields comp_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("comp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();

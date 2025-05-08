@@ -38,8 +38,10 @@ public:
   std::vector<int> getConnectivityMask (const std::string& sub_part_name) const override;
   const Ownership* getOwnership(LO localElmtId) const override;
 
+  // Allows to clone conn mgr and still retain the Albany::ConnManager type
+  Teuchos::RCP<ConnManager> albanyNoConnectivityClone() const override;
+
   // Methods called by panzer
-  Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override;
   void buildConnectivity(const panzer::FieldPattern & fp) override;
 
   int part_dim (const std::string& part_name) const override;

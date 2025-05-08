@@ -30,6 +30,7 @@ public:
   GO get_max_elem_gid () const override;
 
   Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override { return m_field_accessor; }
+  Teuchos::RCP<AbstractMeshStruct> clone () const;
 
   // ------------- Omegah specific methods -------------- //
 

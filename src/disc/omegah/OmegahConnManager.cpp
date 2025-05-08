@@ -468,8 +468,8 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   owners = buildConnectivityOwnership();
 }
 
-Teuchos::RCP<panzer::ConnManager>
-OmegahConnManager::noConnectivityClone() const
+Teuchos::RCP<ConnManager>
+OmegahConnManager::albanyNoConnectivityClone() const
 {
   //FIXME there may be object ownership/persistence issues here
   return Teuchos::RCP(new OmegahConnManager(albanyMesh)); //FIXME

@@ -29,7 +29,7 @@ public:
 
   void buildConnectivity(const panzer::FieldPattern & fp) override;
 
-  Teuchos::RCP<panzer::ConnManager> noConnectivityClone() const override;
+  Teuchos::RCP<ConnManager> albanyNoConnectivityClone() const override;
 
   const GO * getConnectivity(LO ielem) const override
   {

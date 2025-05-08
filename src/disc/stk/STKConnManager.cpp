@@ -74,8 +74,8 @@ STKConnManager(const Teuchos::RCP<const stk::mesh::MetaData>& metaData,
   buildLocalElementMapping();
 }
 
-Teuchos::RCP<panzer::ConnManager>
-STKConnManager::noConnectivityClone() const
+Teuchos::RCP<ConnManager>
+STKConnManager::albanyNoConnectivityClone() const
 {
   std::vector<std::string> elem_blocks_names;
   for (const auto& it : m_elem_blocks) {

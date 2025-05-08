@@ -2,6 +2,8 @@
 
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_CommUtils.hpp"
+#include "Albany_StringUtils.hpp"
+
 
 #include <unordered_set>
 
@@ -365,6 +367,9 @@ void DOFManager::
 buildVectorSpaces (const std::vector<GO>& owned,
                    const std::vector<GO>& ghosted)
 {
+  // std::cout << "build vs\n"
+  //           << " owned: [" << util::join(owned,",") << "]\n"
+  //           << " ghosted: [" << util::join(ghosted,",") << "]\n";
 #ifdef ALBANY_DEBUG
   // Sanity check
   auto owned_copy = owned;
@@ -447,13 +452,23 @@ albanyBuildGlobalUnknowns ()
   for (int ielem=0; ielem<numElems; ++ielem) {
     const int  ndofs = m_conn_mgr->getConnectivitySize(ielem);
     const auto conn  = m_conn_mgr->getConnectivity(ielem);
+    // std::cout << "ielem=" << ielem << ", conn=[" << conn[0];
+    // for (int i=1; i<ndofs; ++i) {
+    //   std::cout << " " << conn[i];
+    // } std::cout << "]\n";
     const auto ownership  = m_conn_mgr->getOwnership(ielem);
     elementGIDs_[ielem].resize(ndofs);
     for (int idof=0; idof<ndofs; ++idof) {
       if(ownership[idof]==Owned)
+      {
+        // std::cout << " " << conn[idof] << " is owned\n";
         add_if_not_there(owned_,ownedSet,conn[idof]);
+      }
       else if (ownership[idof]==Ghosted)
+      {
+        // std::cout << " " << conn[idof] << " is ghosted\n";
         add_if_not_there(ghosted_,ghostedSet,conn[idof]);
+      }
       else
         TEUCHOS_TEST_FOR_EXCEPTION (false, std::logic_error,
             "Error! Found a dof with Unset ownership.\n"
