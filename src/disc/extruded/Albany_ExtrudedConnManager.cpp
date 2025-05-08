@@ -313,10 +313,11 @@ buildConnectivity(const panzer::FieldPattern & fp)
     auto add_layer_conn = [&](const int dof_layer,
                               Ownership* ownership, GO* connectivity) {
       for (int idof_h=0; idof_h<ndofs_h; ++idof_h) {
+        auto own2d = ownership_h[idof_h];
         for (int ifield=0; ifield<m_num_fields; ++ifield) {
           auto dof2d = conn_h[idof_h]*m_num_fields+ifield;
           connectivity[idof_h*m_num_fields+ifield] = dofs_layers_data.getId(dof2d,dof_layer);
-          ownership[idof_h*m_num_fields+ifield] = ownership_h[idof_h*m_num_fields+ifield];
+          ownership[idof_h*m_num_fields+ifield] = own2d;
         }
       }
     };
