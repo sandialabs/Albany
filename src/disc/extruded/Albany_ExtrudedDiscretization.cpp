@@ -24,7 +24,7 @@
 #include <string>
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace Albany {
 
@@ -717,15 +717,22 @@ ExtrudedDiscretization::computeSideSets()
         }
         for (int iside=0; iside<num_sides and pos==-1; ++iside) {
           const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,iside);
+          if (offsets.size()!=side_nodes.size()) {
+            // This side has the wrong topo, so it's not it.
+            continue;
+          }
           pos = iside;
           for (auto o : offsets) {
-            if (std::find(side_nodes.begin(),side_nodes.end(),elem_nodes[o])==side_nodes.end()) {
+            auto it = std::find(side_nodes.begin(),side_nodes.end(),elem_nodes[o]);
+            if (it==side_nodes.end()) {
               pos = -1; break;
             }
           }
         }
         TEUCHOS_TEST_FOR_EXCEPTION (pos==-1, std::runtime_error,
             "Error! Could not locate side inside an element.\n"
+            " - side set       : " + ss + "\n"
+            " - basal side sets: " + util::join(basal_ss_names,",") + "\n"
             " - side nodes gids: " + util::join(side_nodes,",") + "\n"
             " - elem nodes gids: " + util::join(elem_nodes,",") + "\n");
         return pos;
