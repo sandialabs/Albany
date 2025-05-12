@@ -1915,8 +1915,8 @@ STKDiscretization::buildSideSetProjectors()
 
     // Recall, if node_map(i,j)=k, then on side_gid=i, the j-th side node corresponds
     // to the k-th node in the side set cell numeration.
-    const auto& node_numeration_map = sideNodeNumerationMap.at(ss_name);
-    const auto& side_cell_gid_map   = sideToSideSetCellMap.at(ss_name);
+    const auto& node_numeration_map = m_side_nodes_to_ss_cell_nodes.at(ss_name);
+    const auto& side_cell_gid_map   = m_side_to_ss_cell.at(ss_name);
     for (auto side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
           "Error! Found a side with not exactly one element attached.\n"
@@ -2007,8 +2007,8 @@ STKDiscretization::updateMesh()
 
     stkMeshStruct->buildCellSideNodeNumerationMap(
         ss_name,
-        sideToSideSetCellMap[ss_name],
-        sideNodeNumerationMap[ss_name]);
+        m_side_to_ss_cell[ss_name],
+        m_side_nodes_to_ss_cell_nodes[ss_name]);
   }
 
   if (sideSetDiscretizations.size()>0) {
