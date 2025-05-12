@@ -557,21 +557,21 @@ ExtrudedDiscretization::computeWorksetInfo()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: computeWorksetInfo");
 
-  const int num_elems = m_extruded_mesh->get_num_local_elements();
-  const int ws_size = m_extruded_mesh->meshSpecs[0]->worksetSize;
-  const int num_ws  = (num_elems + ws_size - 1) / ws_size;
+  // Ensure we don't have extruded worksets spanning 2+ basal worksets or viceversa
+  const int num_layers = m_extruded_mesh->cell_layers_gid()->numLayers;
+  const auto& basal_ws_sizes = m_basal_disc->getWorksetsSizes();
+  const int num_ws = basal_ws_sizes.size();
 
+  const int nominal_ws_size = basal_ws_sizes[0]*num_layers;
   m_workset_sizes.resize(num_ws);
-  m_workset_elements = DualView<int**>("ws_elem",num_ws,ws_size);
+  m_workset_elements = DualView<int**>("ws_elem",num_ws,nominal_ws_size);
   for (int ws=0,lid=0; ws<num_ws; ++ws) {
-    // For the last ws, we may have less elems.
-    int this_ws_size = ws==(num_ws-1) ? num_elems-ws*ws_size : ws_size;
-    m_workset_sizes[ws] = this_ws_size;
+    int this_ws_size = m_workset_sizes[ws] = basal_ws_sizes[ws]*num_layers;
     for (int ie=0; ie<this_ws_size; ++ie, ++lid) {
       m_workset_elements.host()(ws,ie) = lid;
     }
     // Fill the remainder (if any) with very invalid numbers
-    for (int ie=this_ws_size; ie<ws_size; ++ie) {
+    for (int ie=this_ws_size; ie<nominal_ws_size; ++ie) {
       m_workset_elements.host()(ws,ie) = -1;
     }
   }
