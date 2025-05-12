@@ -380,13 +380,17 @@ protected:
   //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
-  // One dof mgr per dof per part
   // Notice that the dof mgr on a side is not the restriction
   // of the volume dof mgr to that side, since local ids are different.
+  // Note: the double map works as map[field_name][part_name] = dof_mgr
   strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
 
-  // Dof manager for a scalar node field
+  // Dof manager for a scalar node field (part_name->dof_mgr)
   strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+
+  // Hash all params used to create a dof mgr, and store it here.
+  // This helps to build only one copy of dof mgrs with same specs
+  std::map<size_t,dof_mgr_ptr_t>        m_hash_to_dof_mgr;
 
   // Struct containing node/elem state arrays
   StateArrays                           m_stateArrays;
