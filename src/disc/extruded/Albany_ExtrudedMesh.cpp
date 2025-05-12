@@ -108,6 +108,9 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
   lateral_ms[0]->numDim = lat_topo.dimension;
   lateral_ms[0]->ctd = lat_topo;
+
+  m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
+                                                                m_elem_layers_data_lid));
 }
 
 std::string ExtrudedMesh::
