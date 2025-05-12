@@ -1230,11 +1230,11 @@ buildCellSideNodeNumerationMaps()
   // ONLY for basalside and upperside, since that's where we are likely to load data from mesh
   for (int ws=0; ws<getNumWorksets(); ++ws) {
     for (std::string ssn : {"basalside","upperside"}) {
-      auto& s2ssc = sideToSideSetCellMap[ssn];
-      auto& s2nn = sideNodeNumerationMap[ssn];
+      auto& s2c   = m_side_to_ss_cell[ssn];
+      auto& sn2cn = m_side_nodes_to_ss_cell_nodes[ssn];
 
       for (const auto& s : m_sideSets[ws][ssn]) {
-        const GO basal_elem_GID = s2ssc[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
+        const GO basal_elem_GID = s2c[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
         const LO basal_elem_LID = basal_node_dof_mgr->cell_indexer()->getLocalElement(basal_elem_GID);
         const auto elem_LID = node_dof_mgr->cell_indexer()->getLocalElement(s.elem_GID);
         const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
@@ -1248,13 +1248,13 @@ buildCellSideNodeNumerationMaps()
           auto gid3d = elem_nodes[offsets[i]];
           side_nodes[i] = node_layers_gid->getColumnId(gid3d);
         }
-        s2nn[s.side_GID].resize(offsets.size());
+        sn2cn[s.side_GID].resize(offsets.size());
         for (size_t i=0; i<offsets.size(); ++i) {
           auto it = std::find(side_nodes.begin(),side_nodes.end(),basal_nodes[i]);
           TEUCHOS_TEST_FOR_EXCEPTION (it==side_nodes.end(), std::runtime_error,
               "Error! Could not locate node in the basal mesh.\n");
 
-          s2nn[s.side_GID][i] = std::distance(side_nodes.begin(),it);
+          sn2cn[s.side_GID][i] = std::distance(side_nodes.begin(),it);
         }
       }
     }
