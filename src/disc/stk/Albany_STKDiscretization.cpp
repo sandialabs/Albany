@@ -74,11 +74,11 @@ STKDiscretization::STKDiscretization(
       discParams(discParams_)
 {
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
-    for (auto it : stkMeshStruct->sideSetMeshStructs) {
-      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
+    for (const auto& [ss_name, ss_mesh] : stkMeshStruct->sideSetMeshStructs) {
+      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,true);
       auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, stk_mesh, comm));
-      sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
-      sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
+      sideSetDiscretizations.insert(std::make_pair(ss_name, side_disc));
+      sideSetDiscretizationsSTK.insert(std::make_pair(ss_name, side_disc));
     }
   }
 }
@@ -602,11 +602,10 @@ STKDiscretization::writeSolutionToMeshDatabase(
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
 
   // If any, process side discs as well
-  for (auto it : sideSetDiscretizations) {
-    auto disc = it.second;
-    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizations) {
+    auto vs = overlapped ? ss_disc->getOverlapVectorSpace() : ss_disc->getVectorSpace();
     auto ss_soln = Thyra::createMember(vs);
-    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    auto P = overlapped ? ov_projectors.at(ss_name) : projectors.at(ss_name);
     P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
     Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
     if (not soln_dxdp.is_null()) {
@@ -614,7 +613,7 @@ STKDiscretization::writeSolutionToMeshDatabase(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,overlapped);
+    ss_disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,overlapped);
   }
 }
 
@@ -630,12 +629,11 @@ STKDiscretization::writeSolutionToMeshDatabase(
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
 
   // If any, process side discs as well
-  for (auto it : sideSetDiscretizations) {
-    auto disc = it.second;
-    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizations) {
+    auto vs = overlapped ? ss_disc->getOverlapVectorSpace() : ss_disc->getVectorSpace();
     auto ss_soln = Thyra::createMember(vs);
     auto ss_soln_dot = Thyra::createMember(vs);
-    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    auto P = overlapped ? ov_projectors.at(ss_name) : projectors.at(ss_name);
     P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
     P->apply(Thyra::NOTRANS, soln_dot, ss_soln_dot.ptr(), 1.0, 0.0);
     Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
@@ -644,7 +642,7 @@ STKDiscretization::writeSolutionToMeshDatabase(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,*ss_soln_dot,overlapped);
+    ss_disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,*ss_soln_dot,overlapped);
   }
 }
 
@@ -661,13 +659,12 @@ STKDiscretization::writeSolutionToMeshDatabase(
   solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
 
   // If any, process side discs as well
-  for (auto it : sideSetDiscretizations) {
-    auto disc = it.second;
-    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizations) {
+    auto vs = overlapped ? ss_disc->getOverlapVectorSpace() : ss_disc->getVectorSpace();
     auto ss_soln = Thyra::createMember(vs);
     auto ss_soln_dot = Thyra::createMember(vs);
     auto ss_soln_dotdot = Thyra::createMember(vs);
-    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    auto P = overlapped ? ov_projectors.at(ss_name) : projectors.at(ss_name);
     P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
     P->apply(Thyra::NOTRANS, soln_dot, ss_soln_dot.ptr(), 1.0, 0.0);
     P->apply(Thyra::NOTRANS, soln_dotdot, ss_soln_dot.ptr(), 1.0, 0.0);
@@ -677,7 +674,7 @@ STKDiscretization::writeSolutionToMeshDatabase(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,*ss_soln_dot,*ss_soln_dotdot,overlapped);
+    ss_disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,*ss_soln_dot,*ss_soln_dotdot,overlapped);
   }
 }
 
@@ -692,11 +689,10 @@ STKDiscretization::writeSolutionMVToMeshDatabase(
   solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 
   // If any, process side discs as well
-  for (auto it : sideSetDiscretizations) {
-    auto disc = it.second;
-    auto vs = overlapped ? disc->getOverlapVectorSpace() : disc->getVectorSpace();
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizations) {
+    auto vs = overlapped ? ss_disc->getOverlapVectorSpace() : ss_disc->getVectorSpace();
     auto ss_soln = Thyra::createMembers(vs,soln.domain()->dim());
-    auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
+    auto P = overlapped ? ov_projectors.at(ss_name) : projectors.at(ss_name);
     P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
     Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
     if (not soln_dxdp.is_null()) {
@@ -704,7 +700,7 @@ STKDiscretization::writeSolutionMVToMeshDatabase(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolutionMVToMeshDatabase(*ss_soln,ss_soln_dxdp,overlapped);
+    ss_disc->writeSolutionMVToMeshDatabase(*ss_soln,ss_soln_dxdp,overlapped);
   }
 }
 
@@ -740,14 +736,14 @@ STKDiscretization::writeMeshDatabaseToFile(
     int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
     // Writing mesh global variables
     auto fc = stkMeshStruct->getFieldContainer();
-    for (auto& it : fc->getMeshVectorStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
+    for (auto& [name, values] : fc->getMeshVectorStates()) {
+      mesh_data->write_global(outputFileIdx, name, values);
     }
-    for (const auto& it : fc->getMeshScalarIntegerStates()) {
-      mesh_data->write_global(outputFileIdx, it.first, it.second);
+    for (const auto& [name, value] : fc->getMeshScalarIntegerStates()) {
+      mesh_data->write_global(outputFileIdx, name, value);
     }
-    for (const auto& it : fc->getMeshScalarInteger64States()) {
-      mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
+    for (const auto& [name, value] : fc->getMeshScalarInteger64States()) {
+      mesh_data->write_global(outputFileIdx, name, static_cast<int64_t>(value), stk::util::ParameterType::INT64);
     }
     mesh_data->end_output_step(outputFileIdx);
 
@@ -760,7 +756,7 @@ STKDiscretization::writeMeshDatabaseToFile(
   }
   outputInterval++;
 
-  for (auto it : sideSetDiscretizations) {
+  for (const auto it : sideSetDiscretizations) {
     it.second->writeMeshDatabaseToFile(time, force_write_solution);
   }
 #endif
@@ -925,10 +921,9 @@ void STKDiscretization::computeVectorSpaces()
     name_to_partAndDim[sis->name] = std::make_pair(sis->meshPart,dof_dim);
   }
 
-  for (const auto& it : name_to_partAndDim) {
-    const auto& field_name = it.first;
-    const auto& part_name  = it.second.first;
-    const auto& dof_dim    = it.second.second;
+  for (const auto& [field_name, part_and_dim] : name_to_partAndDim) {
+    const auto& part_name  = part_and_dim.first;
+    const auto& dof_dim    = part_and_dim.second;
 
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
@@ -938,9 +933,8 @@ void STKDiscretization::computeVectorSpaces()
   }
 
   // For each part, also make a Node dof manager
-  for (auto& it : m_node_dof_managers) {
-    const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
+  for (auto& [part_name, dof_mgr] : m_node_dof_managers) {
+    dof_mgr = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
   }
 
   const int meshDim = stkMeshStruct->numDim;
@@ -1027,16 +1021,14 @@ STKDiscretization::computeGraphs()
   const auto& cell_layers_data_lid = stkMeshStruct->local_cell_layers_data;
   const auto& cell_layers_data_gid = stkMeshStruct->global_cell_layers_data;
   const auto SIDE_RANK = metaData->side_rank();
-  for (const auto& it : sideSetEquations) {
-    const int side_eq = it.first;
-
+  for (const auto& [side_eq, ss_names] : sideSetEquations) {
     // If the side eqn is column-coupled, it needs special treatment.
     // A side eqn can be coupled to the whole column if
     //   1) the mesh is layered, AND
     //   2) all sidesets where it's defined are on the top or bottom
     int allowColumnCoupling = not cell_layers_data_lid.is_null();
     if (not cell_layers_data_lid.is_null()) {
-      for (const auto& ss_name : it.second) {
+      for (const auto& ss_name : ss_names) {
         std::vector<stk::mesh::Entity> sides;
         stk::mesh::Selector sel (*stkMeshStruct->ssPartVec.at(ss_name));
         stk::mesh::get_selected_entities(sel,bulkData()->buckets(SIDE_RANK),sides);
@@ -1066,7 +1058,7 @@ STKDiscretization::computeGraphs()
     Teuchos::reduceAll(*comm(),Teuchos::REDUCE_AND,1,&allowColumnCoupling,&globalAllowColumnCoupling);
 
     // Loop over all side sets where this eqn is defined
-    for (const auto& ss_name : it.second) {
+    for (const auto& ss_name : ss_names) {
       for (int ws=0; ws<getNumWorksets(); ++ws) {
         const auto& elem_lids = getElementLIDs_host(ws);
         const auto& ss = sideSets[ws].at(ss_name);
@@ -1377,10 +1369,7 @@ STKDiscretization::computeSideSets()
   std::map<std::string, int> max_sides;
   std::map<std::string, int> current_local_index;
   for (size_t i = 0; i < sideSets.size(); ++i) {
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
+    for (const auto& [ss_key,ss_val] : sideSets[i]) {
       // Initialize values if this is the first time seeing a sideset key
       if (num_local_worksets.find(ss_key) == num_local_worksets.end())
         num_local_worksets[ss_key] = 0;
@@ -1420,10 +1409,7 @@ STKDiscretization::computeSideSets()
 
   // 3) Populate global views
   for (size_t i = 0; i < sideSets.size(); ++i) {
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
+    for (const auto& [ss_key,ss_val] : sideSets[i]) {
       int current_index = current_local_index[ss_key];
       int numSides = max_sides[ss_key];
 
@@ -1497,10 +1483,7 @@ STKDiscretization::computeSideSets()
   for (size_t i = 0; i < sideSets.size(); ++i) {
     LocalSideSetInfoList& lssList = sideSetViews[i];
 
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
+    for (const auto& [ss_key,ss_val] : sideSets[i]) {
       int current_index = current_local_index[ss_key];
       std::pair<int,int> range(0, ss_val.size());
 
@@ -1538,10 +1521,7 @@ STKDiscretization::computeSideSets()
 
     // Determine total number of sideset indices per each sideset name
     for (auto& ssList : sideSets) {
-      for (auto& ss_it : ssList) {
-        std::string             ss_key = ss_it.first;
-        std::vector<SideStruct> ss_val = ss_it.second;
-
+      for (const auto& [ss_key,ss_val] : ssList) {
         if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
           sideset_idx_offset[ss_key] = 0;
         if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
@@ -1591,10 +1571,7 @@ STKDiscretization::computeSideSets()
 
       // Loop over the sides that form the boundary condition
       // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
-      for (auto& ss_it : sideSets[ws]) {
-        std::string             ss_key = ss_it.first;
-        std::vector<SideStruct> ss_val = ss_it.second;
-
+      for (const auto& [ss_key,ss_val] : sideSets[ws]) {
         Kokkos::DualView<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
 
         for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
@@ -1857,17 +1834,17 @@ STKDiscretization::setupExodusOutput()
      * }
      */
     auto fc = stkMeshStruct->getFieldContainer();
-    for (auto& it : fc->getMeshVectorStates()) {
+    for (const auto& [name,values] : fc->getMeshVectorStates()) {
       const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
-      mesh_data->add_global(outputFileIdx, it.first, it.second, DV_Type);
+      mesh_data->add_global(outputFileIdx, name, values, DV_Type);
     }
-    for (const auto& it : fc->getMeshScalarIntegerStates()) {
+    for (const auto& [name, value] : fc->getMeshScalarIntegerStates()) {
      const auto INT_Type = stk::util::ParameterType::INTEGER;
-     mesh_data->add_global(outputFileIdx, it.first, it.second, INT_Type);
+     mesh_data->add_global(outputFileIdx, name, value, INT_Type);
     }
-    for (const auto& it : fc->getMeshScalarInteger64States()) {
+    for (const auto& [name, value] : fc->getMeshScalarInteger64States()) {
      const auto INT64_Type = stk::util::ParameterType::INT64;
-     mesh_data->add_global(outputFileIdx, it.first, it.second, INT64_Type);
+     mesh_data->add_global(outputFileIdx, name, value, INT64_Type);
     }
 
     // STK and Ioss/Exodus only allow TRANSIENT fields to be exported.
@@ -1909,18 +1886,14 @@ STKDiscretization::buildSideSetProjectors()
   const auto vs = getVectorSpace();
   const auto ov_vs = getOverlapVectorSpace();
   const auto cell_indexer = getDOFManager()->cell_indexer();
-  for (auto it : sideSetDiscretizationsSTK) {
-    // Extract the discretization
-    const std::string&           sideSetName = it.first;
-    const STKDiscretization&     ss_disc     = *it.second;
-
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizationsSTK) {
     // A dof manager defined exclusively on the side
-    const auto ss_dofMgr = ss_disc.getDOFManager();
+    const auto ss_dofMgr = ss_disc->getDOFManager();
     const auto ss_ov_vs  = ss_dofMgr->ov_vs();
     const auto ss_vs     = ss_dofMgr->vs();
 
     // Extract the sides
-    stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.at(it.first);
+    stk::mesh::Part&    part = *stkMeshStruct->ssPartVec.at(ss_name);
     stk::mesh::Selector selector =
         stk::mesh::Selector(part) &
         stk::mesh::Selector(stkMeshStruct->metaData->locally_owned_part());
@@ -1942,8 +1915,8 @@ STKDiscretization::buildSideSetProjectors()
 
     // Recall, if node_map(i,j)=k, then on side_gid=i, the j-th side node corresponds
     // to the k-th node in the side set cell numeration.
-    const auto& node_numeration_map = sideNodeNumerationMap.at(it.first);
-    const auto& side_cell_gid_map   = sideToSideSetCellMap.at(it.first);
+    const auto& node_numeration_map = sideNodeNumerationMap.at(ss_name);
+    const auto& side_cell_gid_map   = sideToSideSetCellMap.at(ss_name);
     for (auto side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
           "Error! Found a side with not exactly one element attached.\n"
@@ -1983,11 +1956,11 @@ STKDiscretization::buildSideSetProjectors()
 
     ov_P = ov_graphP->createOp(true);
     assign(ov_P, 1.0);
-    ov_projectors[sideSetName] = ov_P;
+    ov_projectors[ss_name] = ov_P;
 
     P = graphP->createOp(true);
     assign(P, 1.0);
-    projectors[sideSetName] = P;
+    projectors[ss_name] = P;
   }
 }
 
@@ -2029,13 +2002,13 @@ STKDiscretization::updateMesh()
 #endif
 
   // Update sideset discretizations (if any)
-  for (auto it : sideSetDiscretizationsSTK) {
-    it.second->updateMesh();
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizationsSTK) {
+    ss_disc->updateMesh();
 
     stkMeshStruct->buildCellSideNodeNumerationMap(
-        it.first,
-        sideToSideSetCellMap[it.first],
-        sideNodeNumerationMap[it.first]);
+        ss_name,
+        sideToSideSetCellMap[ss_name],
+        sideNodeNumerationMap[ss_name]);
   }
 
   if (sideSetDiscretizations.size()>0) {

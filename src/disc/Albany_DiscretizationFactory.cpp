@@ -188,9 +188,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     int sideDim = ms->numDim - 1;
-    for (int i(0); i<sideSets.size(); ++i) {
-      const std::string& ss_name = sideSets[i];
-
+    for (const auto& ss_name : sideSets) {
       auto& ss_mesh = mesh->sideSetMeshStructs[ss_name];
 
       // If this is the basalside of an extruded mesh, we already created the mesh object
