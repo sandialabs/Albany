@@ -136,7 +136,7 @@ public:
 
   void setFieldData() override;
 
- protected:
+protected:
 
   void getSolutionField(Thyra_Vector& result, bool overlapped) const;
 
@@ -182,7 +182,7 @@ public:
                   const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   // ==================== Members =================== //
 
