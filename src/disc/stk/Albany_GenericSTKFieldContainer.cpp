@@ -52,8 +52,8 @@ GenericSTKFieldContainer::GenericSTKFieldContainer(
   save_solution_field = params_->get("Save Solution Field", true);
 }
 
-#ifdef ALBANY_SEACAS
 namespace {
+#ifdef ALBANY_SEACAS
 //amb 13 Nov 2014. After new STK was integrated, fields with output set to false
 // were nonetheless being written to Exodus output files. As a possibly
 // temporary but also possibly permanent fix, set the role of such fields to
@@ -72,8 +72,17 @@ namespace {
 inline Ioss::Field::RoleType role_type(const bool output) {
   return output ? Ioss::Field::TRANSIENT : Ioss::Field::MESH_REDUCTION;
 }
-}
 #endif
+
+void set_output_role (AbstractSTKFieldContainer::STKFieldType& f, bool output) {
+#ifdef ALBANY_SEACAS
+  stk::io::set_field_role(f, role_type(output));
+#else
+  (void) f;
+  (void) output;
+#endif
+}
+}
 
 void GenericSTKFieldContainer::
 addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
@@ -93,30 +102,18 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
         // Scalar on cell
         cell_scalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
         stk::mesh::put_field_on_mesh(*cell_scalar_states.back(), metaData->universal_part(), 1, nullptr);
-#ifdef ALBANY_SEACAS
-        stk::io::set_field_role(*cell_scalar_states.back(), role_type(st.output));
-#endif
-      }
-      else if (dim.size()==2)
-      {
+        set_output_role(*cell_scalar_states.back(),st.output);
+      } else if (dim.size()==2) {
         // Vector on cell
         cell_vector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
         stk::mesh::put_field_on_mesh(*cell_vector_states.back(), metaData->universal_part(), dim[1], nullptr);
-#ifdef ALBANY_SEACAS
-        stk::io::set_field_role(*cell_vector_states.back(), role_type(st.output));
-#endif
-      }
-      else if (dim.size()==3)
-      {
+        set_output_role(*cell_vector_states.back(),st.output);
+      } else if (dim.size()==3) {
         // 2nd order tensor on cell
         cell_tensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
         stk::mesh::put_field_on_mesh(*cell_tensor_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
-#ifdef ALBANY_SEACAS
-        stk::io::set_field_role(*cell_tensor_states.back(), role_type(st.output));
-#endif
-      }
-      else
-      {
+        set_output_role(*cell_tensor_states.back(),st.output);
+      } else {
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Unexpected state rank.\n");
       }
       //Debug
@@ -131,22 +128,16 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
         //Debug
         //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
         //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
-#ifdef ALBANY_SEACAS
-          stk::io::set_field_role(*qpscalar_states.back(), role_type(st.output));
-#endif
-        }
-        else if(dim.size() == 3){ // Vector at QPs
+          set_output_role(*qpscalar_states.back(),st.output);
+        } else if(dim.size() == 3){ // Vector at QPs
           qpvector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
           stk::mesh::put_field_on_mesh(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
           //Debug
           //      cout << "Allocating qpv field name " << qpvector_states.back()->name() <<
           //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ")" <<endl;
-#ifdef ALBANY_SEACAS
-          stk::io::set_field_role(*qpvector_states.back(), role_type(st.output));
-#endif
-        }
-        else if(dim.size() == 4){ // Tensor at QPs
+          set_output_role(*qpvector_states.back(),st.output);
+        } else if(dim.size() == 4){ // Tensor at QPs
           qptensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
 #ifdef IKT_DEBUG
@@ -157,9 +148,7 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
           auto num_tens_entries = dim[3]*dim[2];
           stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
                          metaData->universal_part(), num_tens_entries, dim[1], nullptr);
-#ifdef ALBANY_SEACAS
-          stk::io::set_field_role(*qptensor_states.back(), role_type(st.output));
-#endif
+          set_output_role(*qptensor_states.back(),st.output);
         }
         // Something other than a scalar, vector, or tensor
         else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
