@@ -43,6 +43,8 @@ public:
   virtual void
   addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
 
+  const StateInfoStruct& getAllSIS()            const { return all_sis;             }
+  const StateInfoStruct& getElemSIS()           const { return elem_sis;            }
   const StateInfoStruct& getNodalSIS()          const { return nodal_sis;           }
   const StateInfoStruct& getNodalParameterSIS() const { return nodal_parameter_sis; }
 
@@ -104,8 +106,12 @@ public:
   MeshVectorIntegerState&   getMeshVectorIntegerStates   () { return mesh_vector_integer_states;    }
 
 protected:
-  StateInfoStruct nodal_sis;
-  StateInfoStruct nodal_parameter_sis;
+  // This should always include ALL the ones below
+  StateInfoStruct all_sis;
+
+  StateInfoStruct elem_sis;               // Fields which will be avail as <Cell[,tags]>
+  StateInfoStruct nodal_sis;              // Fields that are associated with Node tags
+  StateInfoStruct nodal_parameter_sis;    // Like nodal_sis, but the App will use this to create dist parameters
 
   ValueState                scalarValue_states;
   MeshScalarState           mesh_scalar_states;

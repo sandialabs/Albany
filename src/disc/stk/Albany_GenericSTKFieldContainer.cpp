@@ -92,6 +92,8 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
 
   // Code to parse the vector of StateStructs and create STK fields
   for (const auto& st : *sis) {
+    // Add to the stored SIS
+    all_sis.push_back(st);
 
     StateStruct::FieldDims& dim = st->dim;
     if (st->entity == StateStruct::ElemData) {
@@ -113,6 +115,7 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
       } else {
         throw std::logic_error("Error! Unexpected state rank.\n");
       }
+      elem_sis.push_back(st);
     } else if(st->entity == StateStruct::QuadPoint || st->entity == StateStruct::ElemNode){
       if(dim.size() == 2){ // Scalar at QPs
         qpscalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
@@ -133,6 +136,7 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
       } else {
         throw std::logic_error("Error: GenericSTKFieldContainer - cannot match QPData");
       }
+      elem_sis.push_back(st);
     } else if(dim.size() == 1 && st->entity == StateStruct::WorksetValue) {
       // A single value that applies over the entire workset (time)
       scalarValue_states.push_back(st->name); // Just save a pointer to the name allocated in st
