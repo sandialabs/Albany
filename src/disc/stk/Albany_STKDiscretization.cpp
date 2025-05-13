@@ -10,7 +10,6 @@
 #include <Albany_ThyraUtils.hpp>
 #include "Albany_Macros.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "STKConnManager.hpp"

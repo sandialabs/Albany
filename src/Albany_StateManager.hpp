@@ -14,8 +14,6 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
-#include "Albany_AbstractNodeFieldContainer.hpp"
-
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_StateInfoStruct.hpp"

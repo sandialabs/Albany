@@ -12,8 +12,6 @@
 // This includes name, number of quantities (scalar,vector,tensor),
 // Element vs Node location, etc.
 
-#include "Albany_AbstractNodeFieldContainer.hpp"
-
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "Albany_DualDynRankView.hpp"
 
@@ -174,12 +172,8 @@ struct StateStruct
   StateStruct();
 };
 
-// New container class approach
-class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
-{
-public:
-  NodeFieldContainer  nodal_field_container;
-};
+// Alias to a vector of state struct pointers
+using StateInfoStruct = std::vector<Teuchos::RCP<StateStruct>>;
 
 }  // namespace Albany
 
