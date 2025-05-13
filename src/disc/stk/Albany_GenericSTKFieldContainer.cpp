@@ -91,107 +91,84 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
     return;
 
   // Code to parse the vector of StateStructs and create STK fields
-  for(std::size_t i = 0; i < sis->size(); i++) {
-    StateStruct& st = *((*sis)[i]);
-    StateStruct::FieldDims& dim = st.dim;
+  for (const auto& st : *sis) {
 
-    if(st.entity == StateStruct::ElemData){
-
-      if (dim.size()==1)
-      {
+    StateStruct::FieldDims& dim = st->dim;
+    if (st->entity == StateStruct::ElemData) {
+      if (dim.size()==1) {
         // Scalar on cell
-        cell_scalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
+        cell_scalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
         stk::mesh::put_field_on_mesh(*cell_scalar_states.back(), metaData->universal_part(), 1, nullptr);
-        set_output_role(*cell_scalar_states.back(),st.output);
+        set_output_role(*cell_scalar_states.back(),st->output);
       } else if (dim.size()==2) {
         // Vector on cell
-        cell_vector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
+        cell_vector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
         stk::mesh::put_field_on_mesh(*cell_vector_states.back(), metaData->universal_part(), dim[1], nullptr);
-        set_output_role(*cell_vector_states.back(),st.output);
+        set_output_role(*cell_vector_states.back(),st->output);
       } else if (dim.size()==3) {
         // 2nd order tensor on cell
-        cell_tensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
+        cell_tensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
         stk::mesh::put_field_on_mesh(*cell_tensor_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
-        set_output_role(*cell_tensor_states.back(),st.output);
+        set_output_role(*cell_tensor_states.back(),st->output);
       } else {
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Unexpected state rank.\n");
+        throw std::logic_error("Error! Unexpected state rank.\n");
       }
-      //Debug
-      //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
-      //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
+    } else if(st->entity == StateStruct::QuadPoint || st->entity == StateStruct::ElemNode){
+      if(dim.size() == 2){ // Scalar at QPs
+        qpscalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+        stk::mesh::put_field_on_mesh(*qpscalar_states.back(), metaData->universal_part(), dim[1], nullptr);
+        set_output_role(*qpscalar_states.back(),st->output);
+      } else if(dim.size() == 3){ // Vector at QPs
+        qpvector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+        // Multi-dim order is Fortran Ordering, so reversed here
+        stk::mesh::put_field_on_mesh(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
+        set_output_role(*qpvector_states.back(),st->output);
+      } else if(dim.size() == 4){ // Tensor at QPs
+        qptensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+        // Multi-dim order is Fortran Ordering, so reversed here
+        auto num_tens_entries = dim[3]*dim[2];
+        stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
+                       metaData->universal_part(), num_tens_entries, dim[1], nullptr);
+        set_output_role(*qptensor_states.back(),st->output);
+      } else {
+        throw std::logic_error("Error: GenericSTKFieldContainer - cannot match QPData");
+      }
+    } else if(dim.size() == 1 && st->entity == StateStruct::WorksetValue) {
+      // A single value that applies over the entire workset (time)
+      scalarValue_states.push_back(st->name); // Just save a pointer to the name allocated in st
+    } else if((st->entity == StateStruct::NodalData) ||(st->entity == StateStruct::NodalDataToElemNode) || (st->entity == StateStruct::NodalDistParameter)) {
+      auto& nodeContainer = sis->nodal_field_container;
 
-    } else if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode){
+      // Definitely a nodal state
+      nodal_sis.push_back(st);
+      StateStruct::FieldDims nodalFieldDim;
+      if(st->entity == StateStruct::NodalDataToElemNode) {
+        nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
+        nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, nodalFieldDim, metaData, st->output);
+      } else if(st->entity == StateStruct::NodalDistParameter) {
+        // Also a dist parameter
+        nodal_parameter_sis.push_back(st);
+        nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
+        nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, nodalFieldDim, metaData, st->output);
+      } else {
+        nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, dim, metaData, st->output);
+        nodalFieldDim = dim;
+      }
 
-        if(dim.size() == 2){ // Scalar at QPs
-          qpscalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
-          stk::mesh::put_field_on_mesh(*qpscalar_states.back(), metaData->universal_part(), dim[1], nullptr);
-        //Debug
-        //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
-        //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
-          set_output_role(*qpscalar_states.back(),st.output);
-        } else if(dim.size() == 3){ // Vector at QPs
-          qpvector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
-          // Multi-dim order is Fortran Ordering, so reversed here
-          stk::mesh::put_field_on_mesh(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
-          //Debug
-          //      cout << "Allocating qpv field name " << qpvector_states.back()->name() <<
-          //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ")" <<endl;
-          set_output_role(*qpvector_states.back(),st.output);
-        } else if(dim.size() == 4){ // Tensor at QPs
-          qptensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st.name));
-          // Multi-dim order is Fortran Ordering, so reversed here
-#ifdef IKT_DEBUG
-          //Debug
-          std::cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
-                      " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" << std::endl;
-#endif
-          auto num_tens_entries = dim[3]*dim[2];
-          stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                         metaData->universal_part(), num_tens_entries, dim[1], nullptr);
-          set_output_role(*qptensor_states.back(),st.output);
-        }
-        // Something other than a scalar, vector, or tensor
-        else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-            "Error: GenericSTKFieldContainer - cannot match QPData");
-    } // end QuadPoint
-    // Single scalar at center of the workset
-    else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
-      scalarValue_states.push_back(st.name); // Just save a pointer to the name allocated in st
-    } // End scalar at center of element
-    else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter))
-    { // Data at the node points
-        auto& nodeContainer = sis->nodal_field_container;
-
-        if(st.entity == StateStruct::NodalDataToElemNode) {
-          nodal_sis.push_back((*sis)[i]);
-          StateStruct::FieldDims nodalFieldDim;
-          //convert ElemNode dims to NodalData dims.
-          nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
-          nodeContainer[st.name] = Albany::buildSTKNodeField(st.name, nodalFieldDim, metaData, st.output);
-        } else if(st.entity == StateStruct::NodalDistParameter) {
-          nodal_parameter_sis.push_back((*sis)[i]);
-          StateStruct::FieldDims nodalFieldDim;
-          //convert ElemNode dims to NodalData dims.
-          nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
-          nodeContainer[st.name] = Albany::buildSTKNodeField(st.name, nodalFieldDim, metaData, st.output);
-        } else {
-          nodal_sis.push_back((*sis)[i]);
-          nodeContainer[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, st.output);
-        }
-
-    } // end Node class - anything else is an error
-    else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-            "Error: GenericSTKFieldContainer - cannot match unknown entity : " << st.entity << std::endl);
+      // Add to node container
+      nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, nodalFieldDim, metaData, st->output);
+    } else {
+      throw std::logic_error("Error: GenericSTKFieldContainer - cannot match unknown entity : " + std::to_string(static_cast<int>(st->entity)) + "\n");
+    }
 
     // Checking if the field is layered, in which case the normalized layer coordinates need to be stored in the meta data
-    if (st.layered)
-    {
-      std::string tmp_str = st.name + "_NLC";
+    if (st->layered) {
+      std::string tmp_str = st->name + "_NLC";
 
       TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
                                   "Error! Another layered state with the same name already exists.\n");
       TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error,
-                                  "Error! Invalid layer dimension for state " + st.name + ".\n");
+                                  "Error! Invalid layer dimension for state " + st->name + ".\n");
       mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
     }
   }
