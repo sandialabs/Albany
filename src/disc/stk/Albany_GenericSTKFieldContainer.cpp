@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 #include "Albany_GenericSTKFieldContainer.hpp"
-#include "Albany_STKNodeFieldContainer.hpp"
 
 #include "Albany_Utils.hpp"
 #include "Albany_StateInfoStruct.hpp"
@@ -140,27 +139,29 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
     } else if(dim.size() == 1 && st->entity == StateStruct::WorksetValue) {
       // A single value that applies over the entire workset (time)
       scalarValue_states.push_back(st->name); // Just save a pointer to the name allocated in st
-    } else if((st->entity == StateStruct::NodalData) ||(st->entity == StateStruct::NodalDataToElemNode) || (st->entity == StateStruct::NodalDistParameter)) {
-      auto& nodeContainer = sis->nodal_field_container;
-
+    } else if ((st->entity == StateStruct::NodalData) ||(st->entity == StateStruct::NodalDataToElemNode) || (st->entity == StateStruct::NodalDistParameter)) {
       // Definitely a nodal state
       nodal_sis.push_back(st);
-      StateStruct::FieldDims nodalFieldDim;
+      auto nodalFieldDim = dim;
       if(st->entity == StateStruct::NodalDataToElemNode) {
-        nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
-        nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, nodalFieldDim, metaData, st->output);
+        nodalFieldDim.erase(nodalFieldDim.begin()); // Remove the <Cell> extent
       } else if(st->entity == StateStruct::NodalDistParameter) {
         // Also a dist parameter
         nodal_parameter_sis.push_back(st);
-        nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
-        nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, nodalFieldDim, metaData, st->output);
-      } else {
-        nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, dim, metaData, st->output);
-        nodalFieldDim = dim;
+        nodalFieldDim.erase(nodalFieldDim.begin()); // Remove the <Cell> extent
       }
 
-      // Add to node container
-      nodeContainer[st->name] = Albany::buildSTKNodeField(st->name, nodalFieldDim, metaData, st->output);
+      auto& fld = metaData->declare_field<double>(stk::topology::NODE_RANK, st->name);
+      switch(nodalFieldDim.size()) {
+        case 1: // scalar
+          stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), 1, nullptr);
+          break;
+        case 2: // vector
+          stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[1], nullptr);
+          break;
+        case 3: // tensor
+          stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[2], nodalFieldDim[1], nullptr);
+      }
     } else {
       throw std::logic_error("Error: GenericSTKFieldContainer - cannot match unknown entity : " + std::to_string(static_cast<int>(st->entity)) + "\n");
     }
