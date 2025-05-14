@@ -93,22 +93,24 @@ get_basal_part_name (const std::string& extruded_part_name) const
 }
 
 void ExtrudedMesh::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& /* sis */)
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
+  // Ensure field data is set on basal mesh
+  m_basal_mesh->setFieldData(comm);
+
   // Register surface height and mesh thickness in the 2d mesh
   std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");
   std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
-  auto mesh_sis = Teuchos::rcp(new StateInfoStruct());
+  StateInfoStruct mesh_sis;
   auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
 
   StateStruct::FieldDims dims = {
     static_cast<PHX::DataLayout::size_type>(m_basal_mesh->meshSpecs[0]->worksetSize),
     m_basal_mesh->meshSpecs[0]->ctd.node_count
   };
-  mesh_sis->emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN,dims,"")));
-  mesh_sis->emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN,dims,"")));
-  m_basal_mesh->setFieldData(comm,mesh_sis);
+  mesh_sis.emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN,dims,"")));
+  mesh_sis.emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN,dims,"")));
+  m_basal_mesh->get_field_accessor()->addStateStructs(mesh_sis);
 }
 
 void ExtrudedMesh::

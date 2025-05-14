@@ -2378,7 +2378,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   int factor = adapt_params.get("Refining Factor",2);
   discParams->set("1D Elements",factor*ne_x);
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
-  stkMeshStruct->setFieldData(comm,mesh1d->sis_);
+  stkMeshStruct->setFieldData(comm);
   this->setFieldData();
   stkMeshStruct->setBulkData(comm);
 

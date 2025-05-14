@@ -63,8 +63,7 @@ public:
     return m_basal_mesh->get_field_accessor();
   }
 
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
