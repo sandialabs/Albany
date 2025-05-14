@@ -144,7 +144,7 @@ public:
                 const std::string&  field_name,
                 bool                overlapped) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void setFieldData() override;
 
   //! Write the solution to the mesh database.
   void writeSolutionToMeshDatabase (const Thyra_Vector& solution,

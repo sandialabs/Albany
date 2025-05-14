@@ -258,14 +258,9 @@ DiscretizationFactory::createDiscretization(
     auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
 
     setMeshStructFieldData(sis, side_set_sis);
-    disc->setFieldData(sis);
-    Teuchos::RCP<StateInfoStruct> dummy_sis;
+    disc->setFieldData();
     for (auto it : disc->getSideSetDiscretizations()) {
-      if (side_set_sis.count(it.first)==1) {
-        it.second->setFieldData(side_set_sis.at(it.first));
-      } else {
-        it.second->setFieldData({});
-      }
+      it.second->setFieldData();
     }
     setMeshStructBulkData();
     disc->updateMesh();

@@ -145,7 +145,7 @@ public:
 
   void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void setFieldData() override;
 
  protected:
 
