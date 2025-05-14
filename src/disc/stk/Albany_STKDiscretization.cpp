@@ -1204,7 +1204,6 @@ STKDiscretization::computeWorksetInfo()
 
   m_ws_elem_coords.resize(numBuckets);
 
-  nodesOnElemStateVec.resize(numBuckets);
   m_stateArrays.elemStateArrays.resize(numBuckets);
   const StateInfoStruct& nodal_states =
       stkMeshStruct->getFieldContainer()->getNodalSIS();
@@ -1216,20 +1215,16 @@ STKDiscretization::computeWorksetInfo()
     stk::mesh::Bucket& buck = *buckets[b];
     m_ws_elem_coords[b].resize(buck.size());
 
-    nodesOnElemStateVec[b].resize(nodal_states.size());
-
     for (size_t is = 0; is < nodal_states.size(); ++is) {
       const std::string&            name = nodal_states[is]->name;
       const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
       auto& state = m_stateArrays.elemStateArrays[b][name];
-      std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
       int dim0 = buck.size();  // may be different from dim[0];
       const auto& field = *metaData->get_field<double>(NODE_RANK, name);
       switch (dim.size()) {
         case 2:  // scalar
         {          
-          stateVec.resize(dim0 * dim[1]);
-          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1]);
+          state.resize(name,dim0,dim[1]);
           auto state_h = state.host();
           for (int i = 0; i < dim0; i++) {
             stk::mesh::Entity        element = buck[i];
@@ -1244,8 +1239,7 @@ STKDiscretization::computeWorksetInfo()
         }
         case 3:  // vector
         {
-          stateVec.resize(dim0 * dim[1] * dim[2]);
-          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2]);
+          state.resize(name, dim0, dim[1], dim[2]);
           auto state_h = state.host();
           for (int i = 0; i < dim0; i++) {
             stk::mesh::Entity        element = buck[i];
@@ -1263,8 +1257,7 @@ STKDiscretization::computeWorksetInfo()
         }
         case 4:  // tensor
         {
-          stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
-          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2],dim[3]);
+          state.resize(name, dim0, dim[1], dim[2], dim[3]);
           auto state_h = state.host();
           for (int i = 0; i < dim0; i++) {
             stk::mesh::Entity        element = buck[i];
