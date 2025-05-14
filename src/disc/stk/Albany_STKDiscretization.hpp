@@ -354,9 +354,6 @@ public:
   //! Connectivity map from elementGID to workset and LID in workset
   WsLIDList elemGIDws;
 
-  // States: vector of length worksets of a map from field name to shards array
-  std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
-
   //! Number of elements on this processor
   GO  maxGlobalNodeGID;
 
