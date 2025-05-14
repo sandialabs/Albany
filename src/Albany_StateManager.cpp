@@ -115,6 +115,7 @@ StateManager::registerStateVariable(
 
   stateRef.output              = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
+  stateRef.layered             = (dl->name(dl->rank() - 1) == PHX::print<LayerDim>());
 
   // If space is needed for old state
 

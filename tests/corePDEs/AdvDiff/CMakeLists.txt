@@ -16,4 +16,12 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_adapt.yaml COPYONLY)
   add_test(${testName}_adapt ${SerialAlbany.exe} input_adapt.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
+
+  if (ENABLE_OMEGAH)
+    # Create adaptivity test (serial only)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_adapt_Omega_h.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_adapt_Omega_h.yaml COPYONLY)
+    add_test(${testName}_adapt_Omega_h ${SerialAlbany.exe} input_adapt_Omega_h.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
+  ENDIF()
 ENDIF ()
