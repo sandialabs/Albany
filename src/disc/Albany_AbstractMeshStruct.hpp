@@ -37,8 +37,7 @@ struct AbstractMeshStruct {
     //! Internal mesh specs type needed
     virtual std::string meshLibName() const = 0;
 
-    virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                               const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+    virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
     virtual void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 

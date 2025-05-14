@@ -31,17 +31,13 @@ OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
     int dim = method[3] - '0';
     buildBox(dim);
   }
+
+  m_field_accessor = Teuchos::rcp(new OmegahMeshFieldAccessor(m_mesh));
 }
 
 void OmegahGenericMesh::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis)
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
-  m_field_accessor = Teuchos::rcp(new OmegahMeshFieldAccessor(m_mesh));
-  if (not sis.is_null()) {
-    m_field_accessor->addStateStructs (sis);
-  }
-
   loadRequiredInputFields(comm);
 }
 
