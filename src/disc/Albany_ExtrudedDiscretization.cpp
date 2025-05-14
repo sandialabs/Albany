@@ -1261,8 +1261,7 @@ buildCellSideNodeNumerationMaps()
   }
 }
 
-void ExtrudedDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
+void ExtrudedDiscretization::setFieldData()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
 }

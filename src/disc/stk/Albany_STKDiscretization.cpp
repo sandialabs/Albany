@@ -2193,8 +2193,7 @@ STKDiscretization::updateMesh()
   }
 }
 
-void STKDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
+void STKDiscretization::setFieldData()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
@@ -2380,7 +2379,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   discParams->set("1D Elements",factor*ne_x);
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
   stkMeshStruct->setFieldData(comm,mesh1d->sis_);
-  this->setFieldData(mesh1d->sis_);
+  this->setFieldData();
   stkMeshStruct->setBulkData(comm);
 
   updateMesh();
