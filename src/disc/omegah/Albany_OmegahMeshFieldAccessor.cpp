@@ -47,12 +47,8 @@ setFieldOnMesh (const std::string& name,
 }
 
 void OmegahMeshFieldAccessor::
-addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
+addStateStructs(const StateInfoStruct& sis)
 {
-  if (sis.is_null()) {
-    return;
-  }
-
   auto product = [](const auto& vec, int start) {
     return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());
   };
@@ -76,7 +72,7 @@ addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
     return dim_ncomp;
   };
 
-  for (const auto& st : *sis) {
+  for (const auto& st : sis) {
     // These will be warranted a dof mgr later
     if (st->entity==StateStruct::NodalDistParameter) {
       nodal_parameter_sis.push_back(st);

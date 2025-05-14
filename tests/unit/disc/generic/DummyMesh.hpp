@@ -180,8 +180,7 @@ public:
   //! Internal mesh specs type needed
   std::string meshLibName() const override { return "dummy"; }
 
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
-                     const Teuchos::RCP<StateInfoStruct>& /* sis */) override {}
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */) override {}
 
   void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& /* comm */) override {}
 

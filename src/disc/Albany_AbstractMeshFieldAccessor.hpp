@@ -40,8 +40,12 @@ public:
   virtual ~AbstractMeshFieldAccessor () = default;
 
   // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
-  virtual void
-  addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+  void addStateStructs(const Teuchos::RCP<const StateInfoStruct>& sis) {
+    if (Teuchos::nonnull(sis))
+      addStateStructs(*sis);
+  }
+
+  virtual void addStateStructs(const StateInfoStruct& sis) = 0;
 
   const StateInfoStruct& getAllSIS()            const { return all_sis;             }
   const StateInfoStruct& getElemSIS()           const { return elem_sis;            }

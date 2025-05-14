@@ -84,13 +84,10 @@ void set_output_role (AbstractSTKFieldContainer::STKFieldType& f, bool output) {
 }
 
 void GenericSTKFieldContainer::
-addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
+addStateStructs(const StateInfoStruct& sis)
 {
-  if (sis==Teuchos::null)
-    return;
-
   // Code to parse the vector of StateStructs and create STK fields
-  for (const auto& st : *sis) {
+  for (const auto& st : sis) {
     // Add to the stored SIS
     all_sis.push_back(st);
 
