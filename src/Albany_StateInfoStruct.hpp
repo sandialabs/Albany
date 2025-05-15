@@ -60,37 +60,9 @@ struct StateStruct
 
   StateStruct(const std::string& name_, MeshFieldEntity ent)
       : name(name_),
-        entity(ent),
-        responseIDtoRequire(""),
-        output(true),
-        restartDataAvailable(false),
-        saveOldState(false),
-        layered(false),
-        meshPart(""),
-        pParentStateStruct(NULL)
+        entity(ent)
   {
-  }
-
-  StateStruct(
-      const std::string& name_,
-      MeshFieldEntity    ent,
-      const FieldDims&   dims,
-      const std::string& type,
-      const std::string& meshPart_ = "",
-      const std::string& ebName_   = "")
-      : name(name_),
-        dim(dims),
-        entity(ent),
-        initType(type),
-        responseIDtoRequire(""),
-        output(true),
-        restartDataAvailable(false),
-        saveOldState(false),
-        layered(false),
-        meshPart(meshPart_),
-        ebName(ebName_),
-        pParentStateStruct(NULL)
-  {
+    // Nothing to do
   }
 
   void
@@ -161,13 +133,9 @@ struct StateStruct
   std::string responseIDtoRequire{""};
   bool        output{false};
   bool        restartDataAvailable{false};
-  // Bool that this state is to be copied into name+"_old"
-  bool        saveOldState{false};
   bool        layered{false};
   std::string meshPart{""};
   std::string ebName{""};
-  // If this is a copy (name = parentName+"_old"), ptr to parent struct
-  StateStruct* pParentStateStruct{nullptr};
 
   StateStruct();
 };
