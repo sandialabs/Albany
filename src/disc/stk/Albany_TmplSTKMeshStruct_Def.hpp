@@ -341,6 +341,17 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Rebalance the mesh before starting the simulation if indicated
   rebalanceInitialMesh(comm);
 
+  stk::mesh::Selector select_owned_inpart = stk::mesh::Selector(metaData->universal_part()) &
+                                            stk::mesh::Selector(metaData->locally_owned_part());
+
+  const auto& ebucks = bulkData->get_buckets(stk::topology::ELEM_RANK, select_owned_inpart);
+  std::cout << "ebucks size:";
+  for (const auto& b : ebucks) { std::cout << " " << b->size(); } std::cout << "\n";
+
+  const auto& nbucks = bulkData->get_buckets(stk::topology::NODE_RANK, select_owned_inpart);
+  std::cout << "nbucks size:";
+  for (const auto& b : nbucks) { std::cout << " " << b->size(); } std::cout << "\n";
+
   m_bulk_data_set = true;
 }
 
