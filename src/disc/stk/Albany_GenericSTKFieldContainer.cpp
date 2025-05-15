@@ -187,7 +187,8 @@ getState (const int ws, const StateStruct& st) const
   StateView state;
   if (st.stateType()==StateStruct::ElemState) {
     // Simple case: just wrap the 
-    auto data = reinterpret_cast<double*>(bucket->field_data_location(st.name));
+    const auto& stk_field = *metaData->get_field<double>(stk::topology::ELEM_RANK, st.name);
+    auto data = reinterpret_cast<double*>(bucket->field_data_location(stk_field));
     auto d = st.dim;
     d[0] = bucket->size();
 

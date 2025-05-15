@@ -397,6 +397,7 @@ void ExtrudedMesh::interpolateBasalFields (const Teuchos::Array<std::string>& ba
       const auto& bstate = basal_states[ws].at(name);
             auto& state = states[ws][name];
       auto bstate_h = bstate.host();
+      auto  state_h = state.host();
 
       bstate.dimensions(dims);
       int rank = dims.size();
