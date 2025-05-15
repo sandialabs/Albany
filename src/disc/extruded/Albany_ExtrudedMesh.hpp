@@ -25,14 +25,14 @@ public:
   // Checks that the extruded part name is "extruded_XYZ", and return XYZ
   std::string get_basal_part_name (const std::string& extruded_part_name) const;
 
-  const Teuchos::RCP<LayeredMeshNumbering<GO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<GO>>
   cell_layers_gid () const { return m_elem_layers_data_gid; }
-  const Teuchos::RCP<LayeredMeshNumbering<LO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>
   cell_layers_lid () const { return m_elem_layers_data_lid; }
 
-  const Teuchos::RCP<LayeredMeshNumbering<GO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<GO>>
   node_layers_gid () const { return m_node_layers_data_gid; }
-  const Teuchos::RCP<LayeredMeshNumbering<LO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>
   node_layers_lid () const { return m_node_layers_data_lid; }
 
   const Teuchos::RCP<AbstractMeshStruct>& basal_mesh () const { return m_basal_mesh; }
@@ -69,6 +69,9 @@ public:
   void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
 protected:
+
+  void extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields);
+  void interpolateBasalFields (const Teuchos::Array<std::string>& basal_fields);
 
   Teuchos::RCP<const Teuchos_Comm>          m_comm;
   Teuchos::RCP<Teuchos::ParameterList>      m_params;

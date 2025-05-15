@@ -10,7 +10,7 @@ ExtrudedMeshFieldAccessor (const Teuchos::RCP<AbstractMeshFieldAccessor>& basal_
 
   // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
 void ExtrudedMeshFieldAccessor::
-addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis)
+addStateStructs(const StateInfoStruct& sis)
 {
 }
 

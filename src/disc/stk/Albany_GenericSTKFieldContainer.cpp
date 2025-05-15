@@ -176,4 +176,33 @@ addStateStructs(const StateInfoStruct& sis)
   }
 }
 
+StateView GenericSTKFieldContainer::
+getState (const int ws, const StateStruct& st) const
+{
+  auto select_owned = stk::mesh::Selector(metaData->universal_part()) &
+                      stk::mesh::Selector(metaData->locally_owned_part());
+
+  const auto& buckets = bulkData->get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+  const auto& bucket = buckets[ws];
+  StateView state;
+  if (st.stateType()==StateStruct::ElemState) {
+    // Simple case: just wrap the 
+    auto data = reinterpret_cast<double*>(bucket->field_data_location(st.name));
+    auto d = st.dim;
+    d[0] = bucket->size();
+
+    switch (st.dim.size()) {
+      case 1: state.reset_from_host_ptr(data,d[0]); break;
+      case 2: state.reset_from_host_ptr(data,d[0],d[1]); break;
+      case 3: state.reset_from_host_ptr(data,d[0],d[1],d[2]); break;
+      case 4: state.reset_from_host_ptr(data,d[0],d[1],d[2],d[3]); break;
+
+      default:
+        throw std::runtime_error("[GenericSTKFieldCotnainer::getState] Unsupported elem state rank.\n");
+    }
+  } else {
+  }
+  return state;
+}
+
 } // namespace Albany

@@ -45,6 +45,9 @@ public:
       addStateStructs(*sis);
   }
 
+  // Retrieve a state from the mesh, and wraps it in a dual view
+  StateView getState (const int ws, const StateStruct& st) const {}
+
   virtual void addStateStructs(const StateInfoStruct& sis) = 0;
 
   const StateInfoStruct& getAllSIS()            const { return all_sis;             }

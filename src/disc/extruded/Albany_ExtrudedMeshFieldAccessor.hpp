@@ -35,7 +35,7 @@ public:
   virtual ~ExtrudedMeshFieldAccessor () = default;
 
   // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
-  void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void addStateStructs(const StateInfoStruct& sis) override;
 
   // Read from mesh methods
   void fillSolnVector (Thyra_Vector&        soln,

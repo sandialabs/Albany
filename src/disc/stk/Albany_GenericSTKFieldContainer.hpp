@@ -43,6 +43,9 @@ public:
   // Add StateStructs to the list of stored ones
   void addStateStructs(const StateInfoStruct& sis);
 
+  // Retrieve a state from the mesh, and wraps it in a dual view
+  StateView getState (const int ws, const StateStruct& st) const;
+
   Teuchos::RCP<Teuchos::ParameterList> getParams() const {return params; }
 
   Teuchos::RCP<stk::mesh::MetaData> getMetaData() {return metaData;}
