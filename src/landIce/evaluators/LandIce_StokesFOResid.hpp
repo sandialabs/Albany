@@ -14,6 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 #include "PHAL_Dimension.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
@@ -77,8 +78,8 @@ public:
   struct POISSON_2D_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_3D_Tag> LandIce_3D_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_3D_Opt_Tag<8>> LandIce_3D_Opt_Hex_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_3D_Opt_Tag<6>> LandIce_3D_Opt_Wedge_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,KU::AlbanyLaunchBounds,LandIce_3D_Opt_Tag<8>> LandIce_3D_Opt_Hex_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,KU::AlbanyLaunchBounds,LandIce_3D_Opt_Tag<6>> LandIce_3D_Opt_Wedge_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_3D_Tag> POISSON_3D_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_2D_Tag> LandIce_2D_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,LandIce_XZ_2D_Tag> LandIce_XZ_2D_Policy;
