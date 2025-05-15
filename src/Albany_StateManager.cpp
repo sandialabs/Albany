@@ -280,7 +280,7 @@ StateManager::initStateArrays(
   for (auto const& it : sideSetStateInfo) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         ss_discs.find(it.first) == ss_discs.end(), std::logic_error,
-        "Error! Side Set " << it.first << "has sideSet states registered but no discretizations.\n");
+        "Error! Side Set " << it.first << " has sideSet states registered but no discretizations.\n");
   }
 
   // Then we make sure that for every side discretization there is a
@@ -355,7 +355,6 @@ StateManager::doSetStateArrays(
     const std::string& ebName       = (*stateInfoPtr)[i]->ebName;
     const double       init_val     = (*stateInfoPtr)[i]->initValue;
     bool               have_restart = (*stateInfoPtr)[i]->restartDataAvailable;
-    StateStruct* pParentStruct = (*stateInfoPtr)[i]->pParentStateStruct;
 
     // JTO: specifying zero recovers previous behavior
     // if (stateName == "zero")
@@ -388,16 +387,6 @@ StateManager::doSetStateArrays(
           *out << " from restart file." << std::endl;
           // If we are restarting, arrays should already be initialized from
           // exodus file
-          continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
-          *out << " from restarted parent state." << std::endl;
-          // If we are restarting, my parent is initialized from exodus file
-          // Copy over parent's state
-
-          for (int ws = 0; ws < numElemWorksets; ws++)
-
-            esa[ws][stateName] = esa[ws][pParentStruct->name];
-
           continue;
         } else if (init_type == "scalar")
           *out << " with initialization type 'scalar' and value: " << init_val
@@ -495,16 +484,6 @@ StateManager::doSetStateArrays(
           // If we are restarting, arrays should already be initialized from
           // exodus file
           continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
-          *out << " from restarted parent state." << std::endl;
-          // If we are restarting, my parent is initialized from exodus file
-          // Copy over parent's state
-
-          for (int ws = 0; ws < numNodeWorksets; ws++)
-
-            nsa[ws][stateName] = nsa[ws][pParentStruct->name];
-
-          continue;
         } else if (init_type == "scalar")
           *out << " with initialization type 'scalar' and value: " << init_val
                << std::endl;
@@ -574,14 +553,6 @@ StateManager::doSetStateArrays(
           // If we are restarting, arrays should already be initialized from
           // exodus file
           continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
-          TEUCHOS_TEST_FOR_EXCEPTION(
-              true,
-              std::logic_error,
-              "Error: At the moment it is not possible to restart a "
-              "NodalDataToElemNode field or a NodalDistParameter field from "
-              "parent structure"
-                  << std::endl);
         } else if ((init_type == "scalar") || (init_type == "identity")) {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
