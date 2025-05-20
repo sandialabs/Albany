@@ -49,7 +49,8 @@ ANONYMOUS:
       Test Values: [2.04624e+01, 1.7204e+01, 1.807939094659e+01, 1.808049301099e+01, 7.683350875615e+00]
   Discretization:
     Number of Elements: [40,40]
-    Method: Box2D
+    Method: Omegah
+    Mesh Creation Method: Box2D
   Piro:
     LOCA:
       Bifurcation: { }
