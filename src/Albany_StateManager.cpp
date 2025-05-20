@@ -280,7 +280,7 @@ StateManager::initStateArrays(
   for (auto const& it : sideSetStateInfo) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         ss_discs.find(it.first) == ss_discs.end(), std::logic_error,
-        "Error! Side Set " << it.first << "has sideSet states registered but no discretizations.\n");
+        "Error! Side Set " << it.first << " has sideSet states registered but no discretizations.\n");
   }
 
   // Then we make sure that for every side discretization there is a
@@ -294,6 +294,10 @@ StateManager::initStateArrays(
     }
     doSetStateArrays(it.second, sis);
   }
+
+  // Now that node state have ALL been inited, we can transfer NodalDataToElemNode states
+  // values to thier Elem state counterparts
+  disc->getMeshStruct()->get_field_accessor()->transferNodeStatesToElemStates();
 }
 
 std::vector<std::string>
@@ -334,10 +338,11 @@ StateManager::doSetStateArrays(
   Teuchos::RCP<Teuchos::FancyOStream> out(
       Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  // Get states from STK mesh
-  StateArrays&   sa  = disc->getStateArrays();
-  StateArrayVec& esa = sa.elemStateArrays;
-  StateArrayVec& nsa = sa.nodeStateArrays;
+  // Get states from mesh accessor
+  auto mfa = disc->getMeshStruct()->get_field_accessor();
+  StateArrayVec& esa = mfa->getElemStates();
+  StateArrayVec& nsa = mfa->getNodeStates();
+  StateArray&    gsa = mfa->getGlobalStates();
 
   int numElemWorksets = esa.size();
   int numNodeWorksets = nsa.size();
@@ -362,6 +367,19 @@ StateManager::doSetStateArrays(
     *out << "StateManager: initializing state:  " << stateName << "\n";
     switch ((*stateInfoPtr)[i]->entity) {
       case StateStruct::WorksetValue:
+        if (have_restart) {
+          *out << " from restart file." << std::endl;
+          // If we are restarting, arrays should already be initialized from
+          // exodus file
+          continue;
+        } else if (init_type=="scalar") {
+          auto gsa_h = gsa[stateName].host();
+          for (size_t i=0; i<gsa_h.size(); ++i) {
+            gsa_h.data()[i] = init_val;
+          }
+        }
+        break;
+
       case StateStruct::ElemData:
       case StateStruct::QuadPoint:
       case StateStruct::ElemNode:

@@ -92,11 +92,6 @@ public:
   {
     return qptensor_states;
   }
-  std::map<std::string, double>&
-  getTime()
-  {
-    return time;
-  }
 
   virtual void transferSolutionToCoords() = 0;
 
@@ -115,8 +110,6 @@ protected:
   STKState                  qpscalar_states;
   STKState                  qpvector_states;
   STKState                  qptensor_states;
-
-  std::map<std::string, double> time;
 
   const bool solutionFieldContainer;
 };

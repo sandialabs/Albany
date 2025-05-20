@@ -301,20 +301,6 @@ namespace Albany
     void printCoords() const;
     void printCoords(const size_t i_block) const;
 
-    //! Set stateArrays
-    void
-    setStateArrays(StateArrays &sa)
-    {
-      stateArrays = sa;
-    }
-
-    //! Get stateArrays
-    StateArrays &
-    getStateArrays()
-    {
-      return stateArrays;
-    }
-
     //! Get nodal parameters state info struct
     const StateInfoStruct &
     getNodalParameterSIS() const
@@ -838,7 +824,6 @@ namespace Albany
     WsLIDList elemGIDws;
 
     // States: vector of length worksets of a map from field name to shards array
-    StateArrays stateArrays;
     std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
 
     //! list of all owned nodes, saved for setting solution

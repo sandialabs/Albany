@@ -1204,9 +1204,7 @@ STKDiscretization::computeWorksetInfo()
 
   m_ws_elem_coords.resize(numBuckets);
 
-  m_stateArrays.elemStateArrays.resize(numBuckets);
-  const StateInfoStruct& nodal_states =
-      stkMeshStruct->getFieldContainer()->getNodalSIS();
+  stkMeshStruct->get_field_accessor()->createStateArrays(m_workset_sizes);
 
   // Clear map if remeshing
   if (!elemGIDws.empty()) { elemGIDws.clear(); }
@@ -1215,71 +1213,6 @@ STKDiscretization::computeWorksetInfo()
     stk::mesh::Bucket& buck = *buckets[b];
     m_ws_elem_coords[b].resize(buck.size());
 
-    for (size_t is = 0; is < nodal_states.size(); ++is) {
-      const std::string&            name = nodal_states[is]->name;
-      const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
-      auto& state = m_stateArrays.elemStateArrays[b][name];
-      int dim0 = buck.size();  // may be different from dim[0];
-      const auto& field = *metaData->get_field<double>(NODE_RANK, name);
-      switch (dim.size()) {
-        case 2:  // scalar
-        {          
-          state.resize(name,dim0,dim[1]);
-          auto state_h = state.host();
-          for (int i = 0; i < dim0; i++) {
-            stk::mesh::Entity        element = buck[i];
-            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-              stk::mesh::Entity rowNode = rel[j];
-              state_h(i, j) = *stk::mesh::field_data(field, rowNode);
-            }
-          }
-          state.sync_to_dev();
-          break;
-        }
-        case 3:  // vector
-        {
-          state.resize(name, dim0, dim[1], dim[2]);
-          auto state_h = state.host();
-          for (int i = 0; i < dim0; i++) {
-            stk::mesh::Entity        element = buck[i];
-            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-              stk::mesh::Entity rowNode = rel[j];
-              double*           entry = stk::mesh::field_data(field, rowNode);
-              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                state_h(i, j, k) = entry[k];
-              }
-            }
-          }
-          state.sync_to_dev();
-          break;
-        }
-        case 4:  // tensor
-        {
-          state.resize(name, dim0, dim[1], dim[2], dim[3]);
-          auto state_h = state.host();
-          for (int i = 0; i < dim0; i++) {
-            stk::mesh::Entity        element = buck[i];
-            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-              stk::mesh::Entity rowNode = rel[j];
-              double*           entry = stk::mesh::field_data(field, rowNode);
-              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                for (int l = 0; l < static_cast<int>(dim[3]); l++) {
-                  state_h(i, j, k, l) = entry[k * dim[3] + l];  // check this,
-                                                              // is stride
-                                                              // Correct?
-                }
-              }
-            }
-          }
-          state.sync_to_dev();
-          break;
-        }
-      }
-    }
-    
     stk::mesh::Entity element = buck[0];
 
     // i is the element index within bucket b
@@ -1303,13 +1236,14 @@ STKDiscretization::computeWorksetInfo()
     }
   }
 
+  auto& elemStateArrays = stkMeshStruct->get_field_accessor()->getElemStates();
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
       for (int b = 0; b < numBuckets; b++) {
-        auto has_sheight = m_stateArrays.elemStateArrays[b].count("surface_height")==1;
+        auto has_sheight = elemStateArrays[b].count("surface_height")==1;
         DualDynRankView<double> sHeight;
         if (has_sheight) {
-          sHeight = m_stateArrays.elemStateArrays[b]["surface_height"];
+          sHeight = elemStateArrays[b]["surface_height"];
         }
         for (std::size_t i = 0; i < buckets[b]->size(); i++) {
           int  nodes_per_element = buckets[b]->num_nodes(i);
@@ -1344,83 +1278,6 @@ STKDiscretization::computeWorksetInfo()
           sHeight.sync_to_dev();
         }
       }
-    }
-  }
-
-  using ValueState = AbstractSTKFieldContainer::ValueState;
-  using STKState = AbstractSTKFieldContainer::STKState;
-
-  // Pull out pointers to shards::Arrays for every bucket, for every state
-  // Code is data-type dependent
-
-  AbstractSTKFieldContainer& container = *stkMeshStruct->getFieldContainer();
-
-  ValueState& scalarValue_states = container.getScalarValueStates();
-  STKState&   cell_scalar_states = container.getCellScalarStates();
-  STKState&   cell_vector_states = container.getCellVectorStates();
-  STKState&   cell_tensor_states = container.getCellTensorStates();
-  STKState&   qpscalar_states    = container.getQPScalarStates();
-  STKState&   qpvector_states    = container.getQPVectorStates();
-  STKState&   qptensor_states    = container.getQPTensorStates();
-  std::map<std::string, double>& time  = container.getTime();
-
-  // Setup state arrays DualDynRankView's, so that host view stores a pointer
-  // to the stk field data
-  for (std::size_t b = 0; b < buckets.size(); b++) {
-    stk::mesh::Bucket& buck = *buckets[b];
-    for (auto& css : cell_scalar_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*css));
-
-      auto& state = m_stateArrays.elemStateArrays[b][css->name()];
-      state.reset_from_host_ptr(data,buck.size());
-    }
-    for (auto& cvs : cell_vector_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*cvs));
-      auto vec_dim = stk::mesh::field_scalars_per_entity(*cvs,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][cvs->name()];
-      state.reset_from_host_ptr(data,buck.size(),vec_dim);
-    }
-    for (auto& cts : cell_tensor_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*cts));
-      auto dim0 = stk::mesh::field_extent0_per_entity(*cts,buck);
-      auto dim1 = stk::mesh::field_extent1_per_entity(*cts,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][cts->name()];
-      state.reset_from_host_ptr(data,buck.size(),dim0,dim1);
-    }
-    for (auto& qpss : qpscalar_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpss));
-      auto num_qps = stk::mesh::field_scalars_per_entity(*qpss,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][qpss->name()];
-      state.reset_from_host_ptr(data,buck.size(),num_qps);
-    }
-    for (auto& qpvs : qpvector_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpvs));
-      auto num_qps = stk::mesh::field_extent0_per_entity(*qpvs,buck);
-      auto vec_dim = stk::mesh::field_extent1_per_entity(*qpvs,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][qpvs->name()];
-      state.reset_from_host_ptr(data,buck.size(),num_qps,vec_dim);
-    }
-    for (auto& qpts : qptensor_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpts));
-      auto num_qps = stk::mesh::field_extent0_per_entity(*qpts,buck);
-      auto dimSq   = stk::mesh::field_extent1_per_entity(*qpts,buck);
-
-      auto dim = static_cast<int>(std::floor(std::sqrt(double(dimSq))));
-      TEUCHOS_TEST_FOR_EXCEPTION (dimSq!=(dim*dim), std::logic_error,
-          "Error! QP Tensor states only supported for square tensors.\n"
-          " - state name: " + qpts->name() + "\n"
-          " - num scalars per qp: " + std::to_string(dimSq) + "\n");
-
-      auto& state = m_stateArrays.elemStateArrays[b][qpts->name()];
-      state.reset_from_host_ptr(data,buck.size(),num_qps,dim,dim);
-    }
-    for (auto& svs : scalarValue_states) {
-      auto& state = m_stateArrays.elemStateArrays[b][svs];
-      state.reset_from_host_ptr(&time[svs],1);
     }
   }
 }
@@ -2362,8 +2219,10 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   discParams->set("Workset Size", stkMeshStruct->meshSpecs()[0]->worksetSize);
   int factor = adapt_params.get("Refining Factor",2);
   discParams->set("1D Elements",factor*ne_x);
+  auto sis = Teuchos::rcp(new StateInfoStruct(getMeshStruct()->get_field_accessor()->getAllSIS()));
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
   stkMeshStruct->setFieldData(comm);
+  stkMeshStruct->getFieldContainer()->addStateStructs(sis);
   this->setFieldData();
   stkMeshStruct->setBulkData(comm);
 
