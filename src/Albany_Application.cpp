@@ -3150,7 +3150,10 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);
 
-  workset.stateArrayPtr = &disc->getStateArrays(StateStruct::ElemState)[ws];
+  auto mfa = disc->getMeshStruct()->get_field_accessor();
+
+  workset.stateArrayPtr = &mfa->getElemStates()[ws];
+  workset.globalStates  = mfa->getGlobalStates();
 }
 
 void

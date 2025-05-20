@@ -132,9 +132,16 @@ addStateStructs(const StateInfoStruct& sis)
         throw std::logic_error("Error: GenericSTKFieldContainer - cannot match QPData");
       }
       elem_sis.push_back(st);
-    } else if(dim.size() == 1 && st->entity == StateStruct::WorksetValue) {
-      // A single value that applies over the entire workset (time)
-      scalarValue_states.push_back(st->name); // Just save a pointer to the name allocated in st
+    } else if(st->stateType()==StateStruct::GlobalState) {
+      TEUCHOS_TEST_FOR_EXCEPTION (st->dim.size()>1, std::runtime_error,
+          "Unsupported rank (" << st->dim.size() << ") for GlobalState " << st->name << "\n");
+      // A single scalar/vector that applies over the entire workset (e.g. time)
+      if (st->dim[0]==1) {
+        mesh_scalar_states[st->name] = 0;
+      } else {
+        mesh_vector_states[st->name].resize(st->dim[0],0);
+      }
+      global_sis.push_back(st);
     } else if ((st->entity == StateStruct::NodalData) ||(st->entity == StateStruct::NodalDataToElemNode) || (st->entity == StateStruct::NodalDistParameter)) {
       // Definitely a nodal state
       nodal_sis.push_back(st);
@@ -157,6 +164,7 @@ addStateStructs(const StateInfoStruct& sis)
           break;
         case 3: // tensor
           stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[2], nodalFieldDim[1], nullptr);
+          break;
       }
       set_output_role(fld,st->output);
     } else {
@@ -172,6 +180,150 @@ addStateStructs(const StateInfoStruct& sis)
       TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error,
                                   "Error! Invalid layer dimension for state " + st->name + ".\n");
       mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
+    }
+  }
+}
+
+void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& worksets_sizes)
+{
+  const auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const auto NODE_RANK = stk::topology::NODE_RANK;
+
+  auto select_owned_part = stk::mesh::Selector(metaData->universal_part()) &
+                           stk::mesh::Selector(metaData->locally_owned_part());
+  const auto& elem_buckets = bulkData->get_buckets(ELEM_RANK,select_owned_part);
+  const auto& node_buckets = bulkData->get_buckets(NODE_RANK,select_owned_part);
+
+  // Sanity checks
+  TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes.size()!=elem_buckets.size(), std::logic_error,
+      "[GenericSTKFieldContainer::createStateArrays] Error! Input worksets_sizes length does not match mesh num elem buckets.\n"
+      " - worksets_sizes length : " << worksets_sizes.size() + "\n"
+      " - num mesh elem buckets: " << elem_buckets.size() + "\n");
+  for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
+    TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes[ws]!=elem_buckets[ws]->size(), std::logic_error,
+        "[GenericSTKFieldContainer::createStateArrays] Error! Input workset size does not match mesh bucket size.\n"
+        " - workset id        : " << ws << "\n"
+        " - input workset_size: " << worksets_sizes[ws] + "\n"
+        " - mesh bucket size  : " << elem_buckets[ws]->size() + "\n");
+  }
+
+  elemStateArrays.resize(elem_buckets.size());
+  nodeStateArrays.resize(node_buckets.size());
+  double* data;
+
+  // Elem states
+  for (const auto& st : elem_sis) {
+    auto f = metaData->get_field<double>(ELEM_RANK,st->name);
+    auto dim = st->dim;
+    for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
+      const auto& b = *elem_buckets[ws];
+      data = reinterpret_cast<double*>(b.field_data_location(*f));
+      auto& state = elemStateArrays[ws][st->name];
+      switch (dim.size()) {
+        case 1:
+          state.reset_from_host_ptr(data,b.size()); break;
+        case 2:
+          state.reset_from_host_ptr(data,b.size(),dim[1]); break;
+        case 3:
+          state.reset_from_host_ptr(data,b.size(),dim[1],dim[2]); break;
+        case 4:
+          state.reset_from_host_ptr(data,b.size(),dim[1],dim[2],dim[3]); break;
+        default:
+          throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+      }
+    }
+  }
+
+  // Nodal states
+  for (const auto& st : nodal_sis) {
+    auto f = metaData->get_field<double>(NODE_RANK,st->name);
+    auto dim = st->dim;
+    if (st->entity != StateStruct::NodalData) {
+      dim.erase(dim.begin()); // NodalDistParameter and NodalDataToElemNode have <Cell> as first dim
+    }
+    for (size_t ws=0; ws<node_buckets.size(); ++ws) {
+      const auto& b = *node_buckets[ws];
+      data = reinterpret_cast<double*>(b.field_data_location(*f));
+      switch (dim.size()) {
+        case 1:
+          nodeStateArrays[ws][st->name].reset_from_host_ptr(data,b.size()); break;
+        case 2:
+          nodeStateArrays[ws][st->name].reset_from_host_ptr(data,b.size(),dim[1]); break;
+        case 3:
+          nodeStateArrays[ws][st->name].reset_from_host_ptr(data,b.size(),dim[1],dim[2]); break;
+        default:
+          throw std::runtime_error("Error! Unsupported rank for node state '" + st->name + "'.\n");
+      }
+    }
+  }
+
+  // Global states
+  for (const auto& st : global_sis) {
+    auto& state = globalStates[st->name];
+    if (st->dim.size()==1) {
+      state.reset_from_host_ptr(&mesh_scalar_states[st->name],1);
+    } else if (st->dim.size()==1) {
+      state.reset_from_host_ptr(mesh_vector_states[st->name].data(),st->dim[0]);
+    } else {
+      throw std::runtime_error("Error! Unsupported rank for global state '" + st->name + "'.\n");
+    }
+  }
+}
+
+void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
+{
+  const auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const auto NODE_RANK = stk::topology::NODE_RANK;
+
+  auto select_owned_part = stk::mesh::Selector(metaData->universal_part()) &
+                           stk::mesh::Selector(metaData->locally_owned_part());
+  const auto& elem_buckets = bulkData->get_buckets(ELEM_RANK,select_owned_part);
+
+  for (const auto& st : nodal_sis) {
+    if (st->entity!=StateStruct::NodalDataToElemNode)
+      continue;
+    const auto& dim = st->dim;
+    const auto rank = st->dim.size();
+
+    auto fn = metaData->get_field<double>(NODE_RANK,st->name);
+    for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
+      const auto& b = *elem_buckets[ws];
+      auto& state = elemStateArrays[ws][st->name];
+      switch (rank) {
+        case 2:
+          state.resize(st->name,b.size(),dim[1]); break;
+        case 3:
+          state.resize(st->name,b.size(),dim[1],dim[2]); break;
+        case 4:
+          state.resize(st->name,b.size(),dim[1],dim[2],dim[3]); break;
+        default:
+          throw std::runtime_error("Error! Unsupported rank for elem node state '" + st->name + "'.\n");
+      }
+
+      auto& state_h = state.host();
+      for (size_t i=0; i<b.size(); ++i) {
+        const auto& elem  = b[i];
+        const auto* nodes = bulkData->begin_nodes(elem);
+        for (size_t j=0; j<dim[1]; ++j) {
+          const auto* data = stk::mesh::field_data(*fn,nodes[j]);
+          switch(rank) {
+            case 2:
+              state_h(i, j) = *data; break;
+            case 3:
+              for (size_t k=0; k<dim[2]; ++k) {
+                state_h(i,j,k) = data[k];
+              } break;
+            case 4:
+              for (size_t k=0; k<dim[2]; ++k) {
+                for (size_t l=0; l<dim[3]; ++l) {
+                  // TODO: CHECK THIS. Is the striding correct? Or should it be l*dim[2]+k?
+                  state_h(i,j,k,l) = data[k*dim[3]+l];
+                }
+              } break;
+          }
+        }
+      }
+      state.sync_to_dev();
     }
   }
 }

@@ -24,7 +24,6 @@ namespace Albany {
 class GenericSTKFieldContainer : public AbstractSTKFieldContainer
 {
 public:
-
   GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                            const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                            const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
@@ -42,6 +41,9 @@ public:
 
   // Add StateStructs to the list of stored ones
   void addStateStructs(const StateInfoStruct& sis);
+
+  void createStateArrays (const WorksetArray<int>& worksets_sizes);
+  void transferNodeStatesToElemStates ();
 
   Teuchos::RCP<Teuchos::ParameterList> getParams() const {return params; }
 
