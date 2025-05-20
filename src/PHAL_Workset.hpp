@@ -139,6 +139,7 @@ struct Workset
   int spatial_dimension_{0};
 
   Albany::StateArray* stateArrayPtr;
+  Albany::StateArray  globalStates;
 
   bool transientTerms     = false;
   bool accelerationTerms  = false;

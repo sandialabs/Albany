@@ -106,9 +106,6 @@ public:
   void
   initStateArrays(const Teuchos::RCP<AbstractDiscretization>& disc);
 
-  StateArrays&
-  getSideSetStateArrays(const std::string& sideSet);
-
   bool
   areStateVarsAllocated() const
   {

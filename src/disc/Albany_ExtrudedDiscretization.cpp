@@ -595,78 +595,6 @@ ExtrudedDiscretization::computeWorksetInfo()
   m_wsEBNames.resize(num_ws,m_extruded_mesh->meshSpecs[0]->ebName);
   m_wsPhysIndex.resize(num_ws,0);
 
-  m_stateArrays.elemStateArrays.resize(num_ws);
-  const auto& field_container = m_extruded_mesh->get_field_accessor();
-  for (auto& state : field_container->getNodalSIS()) {
-    const std::string&            name = state->name;
-    const StateStruct::FieldDims& dim  = state->dim;
-
-    const auto& dof_mgr = getDOFManager(name);
-    auto thyra_vec = Thyra::createMember(dof_mgr->ov_vs());
-
-    field_container->fillVector(*thyra_vec,name,dof_mgr,true);
-
-    auto data = getLocalData(thyra_vec.getConst());
-    for (int ws = 0; ws < num_ws; ws++) {
-      auto& state_arr = m_stateArrays.elemStateArrays[ws][name];
-      const int dim0 = m_workset_sizes[ws];
-      switch (dim.size()) {
-        case 2:  // scalar
-        {
-          auto dofs_lids = dof_mgr->elem_dof_lids().host();
-          state_arr.resize(name,dim0,dim[1]);
-          auto state_h = state_arr.host();
-          for (int i=0; i<dim0; ++i) {
-            const int elem_lid = m_workset_elements.host()(ws,i);
-            for (int j=0; j<static_cast<int>(dim[1]); ++j) {
-              const int dof_lid = dofs_lids(elem_lid,j);
-              state_h(i,j) = data[dof_lid];
-            }
-          }
-          break;
-        }
-        case 3:  // vector
-        {
-          auto dofs_lids = dof_mgr->elem_dof_lids().host();
-          state_arr.resize(name,dim0,dim[1],dim[2]);
-          auto state_h = state_arr.host();
-          for (int i=0; i<dim0; ++i) {
-            const int elem_lid = m_workset_elements.host()(ws,i);
-            for (int j=0; j<static_cast<int>(dim[1]); ++j) {
-              for (int k=0; k<static_cast<int>(dim[2]); ++k) {
-                const int dof_lid = dofs_lids(elem_lid,j*dim[2]+k);
-                state_h(i,j,k) = data[dof_lid];
-              }
-            }
-          }
-          break;
-        }
-        case 4:  // tensor
-        {
-          auto dofs_lids = dof_mgr->elem_dof_lids().host();
-          state_arr.resize(name,dim0,dim[1],dim[2],dim[3]);
-          auto state_h = state_arr.host();
-          for (int i=0; i<dim0; ++i) {
-            const int elem_lid = m_workset_elements.host()(ws,i);
-            for (int j=0; j<static_cast<int>(dim[1]); ++j) {
-              for (int k=0; k<static_cast<int>(dim[2]); ++k) {
-                for (int l=0; l<static_cast<int>(dim[3]); ++l) {
-                  const int dof_lid = dofs_lids(elem_lid,j*dim[2]*dim[3]+k*dim[3]+l);
-                  state_h(i,j,k,l) = data[dof_lid];
-                }
-              }
-            }
-          }
-          break;
-        }
-        default:
-          throw std::runtime_error ("Invalid/unsupported rank for nodal state: " + std::to_string(dim.size()) + "\n");
-      }
-      state_arr.sync_to_dev();
-    }
-  }
-
-
   // Clear map (in case we're remeshing)
   m_elemGIDws.clear();
   m_ws_elem_coords.resize(num_ws);
@@ -691,6 +619,8 @@ ExtrudedDiscretization::computeWorksetInfo()
       }
     }
   }
+
+  // TODO: tell field accessor to init states
 }
 
 void
