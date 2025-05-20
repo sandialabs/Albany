@@ -19,36 +19,35 @@
 
 namespace Albany {
 
-GenericSTKFieldContainer::GenericSTKFieldContainer(
-  const Teuchos::RCP<Teuchos::ParameterList>& params_,
-  const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
-  const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-  const int numDim_,
-  const int num_params_)
-  : AbstractSTKFieldContainer(false),
-    metaData(metaData_),
-    bulkData(bulkData_),
-    params(params_),
-    numDim(numDim_),
-    num_params(num_params_) {
+GenericSTKFieldContainer::
+GenericSTKFieldContainer (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                          const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+                          const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
+                          const int neq_,
+                          const int numDim_,
+                          const int num_params_)
+ : AbstractSTKFieldContainer (neq_>0)
+ , metaData(metaData_)
+ , bulkData(bulkData_)
+ , params(params_)
+ , neq (neq_)
+ , numDim(numDim_)
+ , num_params(num_params_)
+{
+  if (neq_>0) {
+    save_solution_field = params_->get("Save Solution Field", true);
+  }
 }
 
-GenericSTKFieldContainer::GenericSTKFieldContainer(
-  const Teuchos::RCP<Teuchos::ParameterList>& params_,
-  const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
-  const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-  const int neq_,
-  const int numDim_,
-  const int num_params_)
-  : AbstractSTKFieldContainer(true),
-    metaData(metaData_),
-    bulkData(bulkData_),
-    params(params_),
-    neq(neq_),
-    numDim(numDim_),
-    num_params(num_params_)
+GenericSTKFieldContainer::
+GenericSTKFieldContainer (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                          const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+                          const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
+                          const int numDim_,
+                          const int num_params_)
+ : GenericSTKFieldContainer(params_,metaData_,bulkData_,0,numDim_,num_params_)
 {
-  save_solution_field = params_->get("Save Solution Field", true);
+  // Nothing to do here
 }
 
 namespace {
