@@ -1236,54 +1236,47 @@ STKDiscretization::computeWorksetInfo()
     }
   }
 
-  auto& elemStateArrays = stkMeshStruct->get_field_accessor()->getElemStates();
+  auto sHeight = metaData->get_field<double>(stk::topology::NODE_RANK,"surface_height");
+  auto has_sheight = sHeight!=nullptr;
+  std::set<stk::mesh::Entity> processed_nodes;
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
-      for (int b = 0; b < numBuckets; b++) {
-        auto has_sheight = elemStateArrays[b].count("surface_height")==1;
-        DualDynRankView<double> sHeight;
-        if (has_sheight) {
-          sHeight = elemStateArrays[b]["surface_height"];
-        }
-        for (std::size_t i = 0; i < buckets[b]->size(); i++) {
-          int  nodes_per_element = buckets[b]->num_nodes(i);
+      for (int ib = 0; ib < numBuckets; ib++) {
+
+        const auto& b = *buckets[ib];
+        for (std::size_t i = 0; i < b.size(); i++) {
+          int  nodes_per_element = b.num_nodes(i);
           bool anyXeqZero        = false;
-          for (int j = 0; j < nodes_per_element; j++)
-            if (m_ws_elem_coords[b][i][j][d] == 0.0) anyXeqZero = true;
-          if (anyXeqZero) {
-            bool flipZeroToScale = false;
-            for (int j = 0; j < nodes_per_element; j++)
-              if (m_ws_elem_coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
-                flipZeroToScale = true;
-            if (flipZeroToScale) {
-              for (int j = 0; j < nodes_per_element; j++) {
-                if (m_ws_elem_coords[b][i][j][d] == 0.0) {
-                  double* xleak = new double[stkMeshStruct->numDim];
-                  for (int k = 0; k < stkMeshStruct->numDim; k++)
-                    if (k == d)
-                      xleak[d] = stkMeshStruct->PBCStruct.scale[d];
-                    else
-                      xleak[k] = m_ws_elem_coords[b][i][j][k];
-                  std::string transformType = stkMeshStruct->transformType;
-                  double      alpha         = stkMeshStruct->felixAlpha;
-                  alpha *= M_PI / 180.;  // convert alpha, read in from
-                                       // ParameterList, to radians
-                  if ((transformType == "ISMIP-HOM Test A" ||
-                       transformType == "ISMIP-HOM Test B" ||
-                       transformType == "ISMIP-HOM Test C" ||
-                       transformType == "ISMIP-HOM Test D") &&
-                      d == 0) {
-                    xleak[2] -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
-                    if (has_sheight) {
-                      sHeight.host()(i, j) -=
-                          stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
-                    }
-                  }
-                  m_ws_elem_coords[b][i][j] = xleak;  // replace ptr to coords
-                  toDelete.push_back(xleak);
-        }}}}}
-        if (has_sheight) {
-          sHeight.sync_to_dev();
+          const auto& elem  = b[i];
+          const auto* nodes = bulkData->begin_nodes(elem);
+          for (int j = 0; j < nodes_per_element; j++) {
+            if (m_ws_elem_coords[ib][i][j][d] == 0.0) {
+              double* xleak = new double[stkMeshStruct->numDim];
+              for (int k = 0; k < stkMeshStruct->numDim; k++)
+                if (k == d)
+                  xleak[d] = stkMeshStruct->PBCStruct.scale[d];
+                else
+                  xleak[k] = m_ws_elem_coords[ib][i][j][k];
+              std::string transformType = stkMeshStruct->transformType;
+              double      alpha         = stkMeshStruct->felixAlpha;
+              alpha *= M_PI / 180.;  // convert alpha, read in from
+                                   // ParameterList, to radians
+              if ((transformType == "ISMIP-HOM Test A" ||
+                   transformType == "ISMIP-HOM Test ib" ||
+                   transformType == "ISMIP-HOM Test C" ||
+                   transformType == "ISMIP-HOM Test D") &&
+                  d == 0) {
+                xleak[2] -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+                if (has_sheight and processed_nodes.count(nodes[j])==0) {
+                  auto& sh_data = *stk::mesh::field_data(*sHeight,nodes[j]);
+                  sh_data -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+                  processed_nodes.insert(nodes[j]);
+                }
+              }
+              m_ws_elem_coords[ib][i][j] = xleak;  // replace ptr to coords
+              toDelete.push_back(xleak);
+            }
+          }
         }
       }
     }
