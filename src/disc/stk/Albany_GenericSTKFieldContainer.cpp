@@ -159,6 +159,7 @@ addStateStructs(const StateInfoStruct& sis)
         case 3: // tensor
           stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[2], nodalFieldDim[1], nullptr);
       }
+      set_output_role(fld,st->output);
     } else {
       throw std::logic_error("Error: GenericSTKFieldContainer - cannot match unknown entity : " + std::to_string(static_cast<int>(st->entity)) + "\n");
     }
