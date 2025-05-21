@@ -23,7 +23,7 @@
 #include "Albany_Utils.hpp" // For CalculateNumberParams
 
 #ifdef ALBANY_OMEGAH
-#include "Albany_OmegahBoxMesh.hpp"
+#include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahDiscretization.hpp"
 #endif
 
@@ -87,12 +87,8 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 #endif // ALBANY_SEACAS
     }
 #ifdef ALBANY_OMEGAH
-    else if (method == "Box1D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<1>(disc_params, comm, numParams));
-    } else if (method == "Box2D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<2>(disc_params, comm, numParams));
-    } else if (method == "Box3D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<3>(disc_params, comm, numParams));
+    else if (method == "Omegah") {
+        mesh = Teuchos::rcp(new OmegahGenericMesh(disc_params));
     }
 #endif
     else if (method == "Ascii") {
@@ -104,8 +100,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         //FixME very hacky! needed for printing 2d mesh
         Teuchos::RCP<GenericSTKMeshStruct> meshStruct2D;
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
-        Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
-        meshStruct2D->setFieldData(comm, sis);
+        meshStruct2D->setFieldData(comm);
         meshStruct2D->setBulkData(comm);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -180,7 +175,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                   "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                   "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
                   " Exodus, Ascii," <<
-                  " Ascii2D, STKExtruded, Extruded" << std::endl);
+                  " Ascii2D, STKExtruded, Extruded, Omegah" << std::endl);
   }
 
   if (disc_params->isSublist ("Side Set Discretizations")) {
@@ -262,14 +257,9 @@ DiscretizationFactory::createDiscretization(
     auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
 
     setMeshStructFieldData(sis, side_set_sis);
-    disc->setFieldData(sis);
-    Teuchos::RCP<StateInfoStruct> dummy_sis;
+    disc->setFieldData();
     for (auto it : disc->getSideSetDiscretizations()) {
-      if (side_set_sis.count(it.first)==1) {
-        it.second->setFieldData(side_set_sis.at(it.first));
-      } else {
-        it.second->setFieldData({});
-      }
+      it.second->setFieldData();
     }
     setMeshStructBulkData();
     disc->updateMesh();
@@ -295,10 +285,13 @@ DiscretizationFactory::setMeshStructFieldData(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-  meshStruct->setFieldData(comm, sis);
-  for (auto& it : meshStruct->sideSetMeshStructs) {
-    auto this_ss_sis = side_set_sis.count(it.first)>0 ? side_set_sis.at(it.first) : Teuchos::null;
-    it.second->setFieldData(comm,this_ss_sis);
+  meshStruct->setFieldData(comm);
+  meshStruct->get_field_accessor()->addStateStructs(sis);
+  for (auto& [ss_name, ss_mesh] : meshStruct->sideSetMeshStructs) {
+    ss_mesh->setFieldData(comm);
+  }
+  for (auto& [ss_name, ss_sis] : side_set_sis) {
+    meshStruct->sideSetMeshStructs.at(ss_name)->get_field_accessor()->addStateStructs(ss_sis);
   }
 }
 

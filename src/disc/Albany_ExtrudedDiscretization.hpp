@@ -141,11 +141,11 @@ public:
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const override;
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) override;
 
   void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void setFieldData() override;
 
  protected:
 

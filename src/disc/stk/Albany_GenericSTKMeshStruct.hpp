@@ -39,8 +39,7 @@ public:
 
   int getNumParams() const {return num_params; }
 
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   void printParts(stk::mesh::MetaData *metaData);
 
@@ -90,8 +89,6 @@ public:
   std::vector<std::string>  m_nodesets_from_sidesets;
 
   int num_params; 
-
-  Teuchos::RCP<StateInfoStruct> sis_;
 };
 
 } // namespace Albany

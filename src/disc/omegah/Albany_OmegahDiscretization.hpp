@@ -144,7 +144,7 @@ public:
                 const std::string&  field_name,
                 bool                overlapped) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void setFieldData() override;
 
   //! Write the solution to the mesh database.
   void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
@@ -174,15 +174,9 @@ public:
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const override
-  {
-    throw NotYetImplemented("OmegaDiscretization::checkForAdaptation");
-  }
+                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) override;
 
-  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override
-  {
-    throw NotYetImplemented("OmegaDiscretization::adapt");
-  }
+  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override;
 
 protected:
 

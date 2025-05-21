@@ -308,8 +308,7 @@ public:
       const std::string&  field_name,
       bool                overlapped) = 0;
 
-  virtual void
-  setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+  virtual void setFieldData() = 0;
 
   // Update mesh internals, such as coordinates, DOF numbers, etc.
   // To be run either after creation or after modification/adaptation.
@@ -368,7 +367,7 @@ public:
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const = 0;
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) = 0;
 
   // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
