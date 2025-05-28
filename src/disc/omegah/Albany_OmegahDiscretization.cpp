@@ -374,7 +374,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   // Only do adaptation for simple 1d problems
   auto mesh = m_mesh_struct->getOmegahMesh();
   if (mesh->dim() != 1) {
-    std::cout << "NOT a 1D Omega_h mesh...\n";
+    std::cout << "NOT a 1D Omega_h mesh...we will not adapt.\n";
     return adapt_data;
   }
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
@@ -428,24 +428,22 @@ void OmegahDiscretization::
 adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
   static int adaptCount = 0;
-  fprintf(stderr,"OmegahDiscretization::adapt\n");
   // Not sure if we allow calling adapt in general, but just in case
   if (adaptData->type==AdaptationType::None) {
     return;
   }
 
+  auto ohMesh = m_mesh_struct->getOmegahMesh();
   TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->dim()!=1, std::runtime_error,
+      "Error! Adaptation not supported for this mesh. We only implemented a simple 1d case.\n");
 
-  auto ohMesh = m_mesh_struct->getOmegahMesh();
   std::string beforeAdaptName = "before_adapt" + std::to_string(adaptCount) + ".vtk";
   Omega_h::vtk::write_parallel(beforeAdaptName, ohMesh.get());
-  if (ohMesh->has_tag(0, solution_dof_name())) {
-    fprintf(stderr,"OmegahDiscretization::adapt has tag %s\n", solution_dof_name().c_str());
-  } else {
-    fprintf(stderr,"OmegahDiscretization::adapt does NOT have tag %s\n", solution_dof_name().c_str());
-  }
-  //debug::printAllTags(*ohMesh);
+
+  // Note: the code below is hard-coding a simple adaptation for a 1d mesh,
+  //       where the number of elements is doubled.
   auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
   const auto desired_nelems = nelems*2;
 
@@ -453,14 +451,11 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
   opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
   while (double(nelems) < desired_nelems) {
-    std::cout << "element count " << nelems << " < target "
-      << desired_nelems << ", will adapt\n";
     if (!ohMesh->has_tag(0, "metric")) {
       std::cout << "mesh had no metric, adding implied and adapting to it\n";
       Omega_h::add_implied_metric_tag(ohMesh.get());
       Omega_h::adapt(ohMesh.get(), opts);
       nelems = ohMesh->nglobal_ents(ohMesh->dim());
-      std::cout << "mesh now has " << nelems << " total elements\n";
     }
     auto metrics = ohMesh->get_array<double>(0, "metric");
     metrics = Omega_h::multiply_each_by(metrics, 1.2);
@@ -471,12 +466,6 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     Omega_h::adapt(ohMesh.get(), opts);
     nelems = ohMesh->nglobal_ents(ohMesh->dim());
     std::cout << "mesh now has " << nelems << " total elements\n";
-  }
-
-  if (ohMesh->has_tag(0, solution_dof_name())) {
-    fprintf(stderr,"OmegahDiscretization::adapt post adapt has tag %s\n", solution_dof_name().c_str());
-  } else {
-    fprintf(stderr,"OmegahDiscretization::adapt post adapt does NOT have tag %s\n", solution_dof_name().c_str());
   }
 
   std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
