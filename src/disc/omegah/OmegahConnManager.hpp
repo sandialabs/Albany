@@ -150,8 +150,8 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION (m_elem_blocks_names.size() != 1, std::logic_error,
         "Error! The OmegahConnManager currently only supports a single block on each process\n");
     TEUCHOS_TEST_FOR_EXCEPTION ( OMEGA_H_SIMPLEX != mesh->family(), std::logic_error,
-        "Error! The OmegahConnManager currently supports 2d and 3d meshes with"
-        "       straight sided triangles and tets\n");
+        "Error! The OmegahConnManager currently supports 1d, 2d, 3d meshes with"
+        "        edges, triangles, and tets.\n");
     switch (mesh->family()) {
       case OMEGA_H_SIMPLEX:
         if(mesh->dim()==3) {
@@ -160,6 +160,12 @@ public:
         } else if(mesh->dim()==2) {
           shards::CellTopology triTopo(shards::getCellTopologyData< shards::Triangle<3> >());
           elementBlockTopologies.push_back(triTopo);
+        } else if(mesh->dim()==1) {
+          shards::CellTopology edgeTopo(shards::getCellTopologyData< shards::Line<2> >());
+          elementBlockTopologies.push_back(edgeTopo);
+        } else {
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+              "Error! Omega_h simplex mesh dimension must be 1, 2, or 3.\n");
         }
         break;
       case OMEGA_H_HYPERCUBE:
@@ -169,6 +175,9 @@ public:
         } else if(mesh->dim()==2) {
           shards::CellTopology quad(shards::getCellTopologyData< shards::Quadrilateral<4> >());
           elementBlockTopologies.push_back(quad);
+        } else {
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+              "Error! Omega_h hypercube mesh dimension must be 2 or 3.\n");
         }
         break;
       default:

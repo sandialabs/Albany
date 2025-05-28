@@ -30,7 +30,8 @@ ANONYMOUS:
 
   Discretization:
     Number of Elements: [40,40]
-    Method: Box2D
+    Method: Omegah
+    Mesh Creation Method: Box2D
   Regression For Response 0:
     Test Value: 5.8333333333e-01
     Relative Tolerance: 1.0e-05
