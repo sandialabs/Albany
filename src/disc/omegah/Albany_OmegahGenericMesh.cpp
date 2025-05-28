@@ -302,6 +302,8 @@ loadOmegahMesh ()
 OmegahGenericMesh::PartToGeoModelEntities
 OmegahGenericMesh::setNodeSetsGeoModelEntities() const
 {
+  // NOTE: this routine is explicitly tailored for BOX meshes only.
+
   int dim = m_mesh->dim();
   PartToGeoModelEntities ns_gm_entitites;
   const int nodeDim = 0;
@@ -353,6 +355,8 @@ OmegahGenericMesh::setNodeSetsGeoModelEntities() const
 OmegahGenericMesh::PartToGeoModelEntities
 OmegahGenericMesh::setSideSetsGeoModelEntities() const
 {
+  // NOTE: this routine is explicitly tailored for BOX meshes only.
+
   int dim = m_mesh->dim();
   PartToGeoModelEntities ss_gm_entitites;
   // Class ids follow the same numbering as explained in the ns equivalent fcn,
