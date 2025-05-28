@@ -151,7 +151,7 @@ public:
         "Error! The OmegahConnManager currently only supports a single block on each process\n");
     TEUCHOS_TEST_FOR_EXCEPTION ( OMEGA_H_SIMPLEX != mesh->family(), std::logic_error,
         "Error! The OmegahConnManager currently supports 1d, 2d, 3d meshes with"
-        "        edges, trianges, and tets\n");
+        "        edges, triangles, and tets.\n");
     switch (mesh->family()) {
       case OMEGA_H_SIMPLEX:
         if(mesh->dim()==3) {
