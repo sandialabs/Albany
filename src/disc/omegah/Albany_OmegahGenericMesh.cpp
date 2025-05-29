@@ -308,7 +308,6 @@ OmegahGenericMesh::setNodeSetsGeoModelEntities() const
   PartToGeoModelEntities ns_gm_entitites;
   const int nodeDim = 0;
   const int edgeDim = 1;
-  const int faceDim = 2;
   if (dim==1) {
     auto& ns0 = ns_gm_entitites["NodeSet0"];
     auto& ns1 = ns_gm_entitites["NodeSet1"];
@@ -364,7 +363,6 @@ OmegahGenericMesh::setSideSetsGeoModelEntities() const
   // edges in 2d, faces in 3d)
   const int nodeDim = 0;
   const int edgeDim = 1;
-  const int faceDim = 2;
   if (dim==1) {
     auto& ss0 = ss_gm_entitites["SideSet0"];
     auto& ss1 = ss_gm_entitites["SideSet1"];
