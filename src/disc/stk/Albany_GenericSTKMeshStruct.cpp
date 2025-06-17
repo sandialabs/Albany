@@ -75,8 +75,7 @@ GenericSTKMeshStruct::GenericSTKMeshStruct(
 }
 
 void GenericSTKMeshStruct::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis)
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(), std::logic_error,
        "[GenericSTKMeshStruct::SetupFieldData] metaData->initialize(numDim) not yet called" << std::endl);
@@ -132,7 +131,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
     this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
         metaData, bulkData, numDim, num_params));
   }
-  fieldContainer->addStateStructs(sis);
 
 // Exodus is only for 2D and 3D. Have 1D version as well
   exoOutput = params->isType<std::string>("Exodus Output File Name");
@@ -158,9 +156,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
 
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
-
-  // Store a copy of the state info struct
-  sis_ = sis;
 }
 
 void GenericSTKMeshStruct::setAllPartsIO()

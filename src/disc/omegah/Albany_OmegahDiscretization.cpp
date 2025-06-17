@@ -256,8 +256,7 @@ computeGraphs ()
       "Error! SideSet equation support not yet added for Omega_h discretization.\n");
 }
 
-void OmegahDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
+void OmegahDiscretization::setFieldData()
 {
   auto field_accessor = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
   field_accessor->addFieldOnMesh (solution_dof_name(),0,m_neq);

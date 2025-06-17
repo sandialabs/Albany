@@ -10,7 +10,6 @@
 #include <Albany_ThyraUtils.hpp>
 #include "Albany_Macros.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "STKConnManager.hpp"
@@ -2194,8 +2193,7 @@ STKDiscretization::updateMesh()
   }
 }
 
-void STKDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& /* sis */)
+void STKDiscretization::setFieldData()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
@@ -2380,8 +2378,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   int factor = adapt_params.get("Refining Factor",2);
   discParams->set("1D Elements",factor*ne_x);
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
-  stkMeshStruct->setFieldData(comm,mesh1d->sis_);
-  this->setFieldData(mesh1d->sis_);
+  stkMeshStruct->setFieldData(comm);
+  this->setFieldData();
   stkMeshStruct->setBulkData(comm);
 
   updateMesh();

@@ -41,7 +41,7 @@ public:
   virtual ~GenericSTKFieldContainer() = default;
 
   // Add StateStructs to the list of stored ones
-  void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis);
+  void addStateStructs(const StateInfoStruct& sis);
 
   Teuchos::RCP<Teuchos::ParameterList> getParams() const {return params; }
 
@@ -56,6 +56,7 @@ protected:
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
   Teuchos::RCP<Teuchos::ParameterList> params;
+
 
   int neq;
   int numDim;
