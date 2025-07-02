@@ -102,12 +102,11 @@ getuname(cpu    -m)
 
 set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-FPE-Serial")
 
-
 if (CTEST_DROP_METHOD STREQUAL "https")
   set(CTEST_DROP_METHOD "https")
   set (CTEST_PROJECT_NAME "Albany")
-  set(CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
-  set(CTEST_DROP_LOCATION "/cdash/submit.php?project=Albany")
+  set(CTEST_DROP_SITE "albany-cdash.sandia.gov")
+  set(CTEST_DROP_LOCATION "/submit.php?project=Albany")
   set(CTEST_DROP_SITE_CDASH TRUE)
 endif ()
 
