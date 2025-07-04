@@ -5,6 +5,8 @@ cd $BASE_DIR
 
 unset http_proxy
 unset https_proxy
+unset HTTP_PROXY
+unset HTTPS_PROXY 
 
 source attaway_modules_intel.sh >& intel_modules.out  
 
