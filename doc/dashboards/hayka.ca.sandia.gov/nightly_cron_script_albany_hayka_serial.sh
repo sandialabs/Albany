@@ -8,6 +8,8 @@ rm -rf ctest_nightly_albany_serial.cmake
 
 unset http_proxy
 unset https_proxy
+unset HTTP_PROXY 
+unset HTTPS_PROXY 
 
 source modules_hayka.sh >& hayka_modules.out  
 
