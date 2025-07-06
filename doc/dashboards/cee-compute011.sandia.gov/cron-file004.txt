@@ -1,4 +1,4 @@
 MAILTO=""
 # Run the script in the Albany repo in my home directory
-# This runs the intel set of tests on cee-compute003
+# This runs the intel set of tests on cee-compute004
 35 23 * * * bash -l -c "ulimit -S -n 2048; rm -rf /scratch/albany/*; cd /projects/albany/nightlyAlbanyCDash; cp /projects/albany/gitconfig_for_omegah ~/.gitconfig; /projects/albany/nightlyAlbanyCDash/nightly_cron_script.sh intel-trilinos; /projects/albany/nightlyAlbanyCDash/nightly_cron_script.sh intel-albany; bash process_results_intel.sh"; chgrp wg-albany -R /projects/albany/nightlyAlbanyCDash/*; chmod ug+rwX -R /projects/albany/nightlyAlbanyCDash/*; chgrp wg-albany /scratch/albany; chgrp wg-albany -R /scratch/albany/*; chmod ug+rwX -R /scratch/albany/*
