@@ -298,8 +298,7 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 template<unsigned Dim, class traits>
 void
 TmplSTKMeshStruct<Dim, traits>::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis)
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   // Create global mesh: Dim-D structured, rectangular
   std::vector<double> h_dim[traits_type::size];
@@ -319,7 +318,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
       x[idx][i] = x[idx][i - 1] + h_dim[idx][i - 1]; // place the coordinates of the element nodes
   }
 
-  GenericSTKMeshStruct::setFieldData(comm, sis);
+  GenericSTKMeshStruct::setFieldData(comm);
 }
 
 template<unsigned Dim, class traits>

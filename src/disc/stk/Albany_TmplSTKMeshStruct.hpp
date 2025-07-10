@@ -92,8 +92,7 @@ class TmplSTKMeshStruct : public GenericSTKMeshStruct {
   ~TmplSTKMeshStruct() = default;
 
   //! Sets mesh generation parameters
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const Teuchos::RCP<StateInfoStruct>& sis);
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm);
 

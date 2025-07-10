@@ -14,7 +14,7 @@ public:
   OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh);
   ~OmegahMeshFieldAccessor () = default;
 
-  void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void addStateStructs(const StateInfoStruct& sis) override;
 
   // TODO: move this in the base class?
   void addFieldOnMesh (const std::string& name,

@@ -255,7 +255,7 @@ public:
     */
   void addCellField(const std::string & fieldName,const std::string & blockId);
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis);
+  void setFieldData();
 
   Teuchos::RCP<AbstractSTKFieldContainer> getSolutionFieldContainer() {
     return solutionFieldContainer;
