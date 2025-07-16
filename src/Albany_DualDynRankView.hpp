@@ -125,6 +125,22 @@ struct DualDynRankView {
     sync_to_host();
   }
 
+  void reset_from_dev_ptr (DT* ptr,
+                           const size_t n0,
+                           const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                           const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                           const size_t n3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                           const size_t n4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                           const size_t n5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                           const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                           const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
+  {
+    ALBANY_ASSERT (ptr!=nullptr, "Invalid host ptr.");
+    d_view = dev_t(ptr,n0,n1,n2,n3,n4,n5,n6,n7);
+    create_host_view<DeviceMemSpace>();
+    sync_to_host();
+  }
+
   void reset_from_host_ptr (DT* ptr,
                             const size_t n0,
                             const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
