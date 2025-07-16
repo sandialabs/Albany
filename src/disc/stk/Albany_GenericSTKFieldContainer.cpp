@@ -215,7 +215,7 @@ void GenericSTKFieldContainer::createStateArrays ()
         case 4:
           elemStateArrays[ws][st->name].reset_from_host_ptr(data,b.size(),dim[1],dim[2],dim[3]); break;
         default:
-          throw std::runtime_error("Error! Unsupported rank for node state.\n");
+          throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
       }
     }
   }

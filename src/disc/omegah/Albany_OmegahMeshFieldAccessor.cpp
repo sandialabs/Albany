@@ -102,6 +102,124 @@ addStateStructs(const StateInfoStruct& sis)
   }
 }
 
+void OmegahMeshFieldAccessor::createStateArrays ()
+{
+  int num_elems = m_mesh->nelems();
+  int num_nodes = m_mesh->nverts();
+
+  // We don't have workset sizes in here, so use single workset
+  elemStateArrays.resize(1);
+  nodeStateArrays.resize(1);
+
+  // Elem states
+  for (const auto& st : elem_sis) {
+    auto f = m_mesh->get_tag<ST>(m_mesh->dim(),st->name);
+    auto dim = st->dim;
+    // TODO: I don't like const cast, but I don't know how else to get
+    //       a WRITABLE handle to the data stored in the mesh
+    auto data = const_cast<ST*>(f->array().data());
+    switch (dim.size()) {
+      case 1:
+        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems); break;
+      case 2:
+        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems,dim[1]); break;
+      case 3:
+        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2]); break;
+      case 4:
+        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2],dim[3]); break;
+      default:
+        throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+    }
+  }
+
+  // Nodal states
+  for (const auto& st : nodal_sis) {
+    auto f = m_mesh->get_tag<ST>(0,st->name);
+    auto dim = st->dim;
+    if (st->entity != StateStruct::NodalData) {
+      dim.erase(dim.begin()); // NodalDistParameter and NodalDataToElemNode have <Cell> as first dim
+    }
+    // TODO: I don't like const cast, but I don't know how else to get
+    //       a WRITABLE handle to the data stored in the mesh
+    auto data = const_cast<ST*>(f->array().data());
+    switch (dim.size()) {
+      case 1:
+        nodeStateArrays[0][st->name].reset_from_dev_ptr(data,num_nodes); break;
+      case 2:
+        nodeStateArrays[0][st->name].reset_from_dev_ptr(data,num_nodes,dim[1]); break;
+      case 3:
+        nodeStateArrays[0][st->name].reset_from_dev_ptr(data,num_nodes,dim[1],dim[2]); break;
+      default:
+        throw std::runtime_error("Error! Unsupported rank for node state '" + st->name + "'.\n");
+    }
+  }
+
+  // Global states
+  for (const auto& st : global_sis) {
+    auto& state = globalStates[st->name];
+    if (st->dim.size()==1) {
+      state.reset_from_host_ptr(&mesh_scalar_states[st->name],1);
+    } else if (st->dim.size()==1) {
+      state.reset_from_host_ptr(mesh_vector_states[st->name].data(),st->dim[0]);
+    } else {
+      throw std::runtime_error("Error! Unsupported rank for global state '" + st->name + "'.\n");
+    }
+  }
+}
+
+void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
+{
+  int num_elems = m_mesh->nelems();
+  auto elem_nodes = m_mesh->ask_elem_verts();
+  auto elem_nodes_h = hostRead(elem_nodes);
+  int num_elem_nodes = elem_nodes.size() / num_elems;
+
+  for (const auto& st : nodal_sis) {
+    if (st->entity!=StateStruct::NodalDataToElemNode)
+      continue;
+    const auto& dim = st->dim;
+    const auto rank = st->dim.size();
+
+    const auto& node_state = m_mesh->get_tag<ST>(0,st->name)->array();
+          auto& elem_state = elemStateArrays[0][st->name];
+    switch (rank) {
+      case 2:
+        elem_state.resize(st->name,num_elems,dim[1]); break;
+      case 3:
+        elem_state.resize(st->name,num_elems,dim[1],dim[2]); break;
+      case 4:
+        elem_state.resize(st->name,num_elems,dim[1],dim[2],dim[3]); break;
+      default:
+        throw std::runtime_error("Error! Unsupported rank for node state '" + st->name + "'.\n");
+    }
+
+    auto& elem_state_h = elem_state.host();
+    auto  node_state_h = hostRead(node_state);
+    for (int i=0; i<num_elems; ++i) {
+      for (int j=0; j<num_elem_nodes; ++j) {
+        switch(rank) {
+          case 2:
+            elem_state_h(i, j) = node_state_h[elem_nodes_h[i*num_elem_nodes+j]];
+            break;
+          case 3:
+            for (size_t k=0; k<dim[2]; ++k) {
+              auto offset = i*num_elem_nodes*dim[2]+j*dim[2]+k;
+              elem_state_h(i, j, k) = node_state_h[elem_nodes_h[offset]];
+            } break;
+          case 4:
+            for (size_t k=0; k<dim[2]; ++k) {
+              for (size_t l=0; l<dim[3]; ++l) {
+                auto offset = i*num_elem_nodes*dim[2]*dim[3]+j*dim[2]*dim[3]+k*dim[3]+l;
+                elem_state_h(i, j, k, l) = node_state_h[elem_nodes_h[offset]];
+              }
+            } break;
+        }
+      }
+    }
+    elem_state.sync_to_dev();
+  }
+}
+
 void OmegahMeshFieldAccessor::
 fillVector (Thyra_Vector&        field_vector,
             const std::string&   field_name,
