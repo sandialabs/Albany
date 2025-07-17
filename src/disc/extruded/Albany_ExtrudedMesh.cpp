@@ -109,8 +109,8 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   lateral_ms[0]->numDim = lat_topo.dimension;
   lateral_ms[0]->ctd = lat_topo;
 
-  m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
-                                                                m_elem_layers_data_lid));
+  // For the upperside, we use the same disc as the basalside.
+  sideSetMeshStructs["upperside"] = m_basal_mesh;
 }
 
 std::string ExtrudedMesh::
@@ -130,19 +130,76 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   // Ensure field data is set on basal mesh
   m_basal_mesh->setFieldData(comm);
 
-  // Register surface height and mesh thickness in the 2d mesh
+  // Register surface height and mesh thickness in the 2d mesh (if not already there)
   std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");
   std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
-  StateInfoStruct mesh_sis;
-  auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
 
-  StateStruct::FieldDims dims = {
-    static_cast<PHX::DataLayout::size_type>(m_basal_mesh->meshSpecs[0]->worksetSize),
-    m_basal_mesh->meshSpecs[0]->ctd.node_count
-  };
-  mesh_sis.emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN,dims,"")));
-  mesh_sis.emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN,dims,"")));
-  m_basal_mesh->get_field_accessor()->addStateStructs(mesh_sis);
+  StateInfoStruct extrusion_sis;
+  for (const auto& name : {thickness_name,surface_height_name}) {
+    bool found = false;
+    for (const auto& st : m_basal_mesh->get_field_accessor()->getElemSIS()) {
+      if (st->name==name) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found)
+      continue;
+
+    StateStruct::FieldDims dims = {
+      static_cast<PHX::DataLayout::size_type>(m_basal_mesh->meshSpecs[0]->worksetSize),
+      m_basal_mesh->meshSpecs[0]->ctd.node_count
+    };
+
+    auto st = extrusion_sis.emplace_back(Teuchos::rcp(new StateStruct(name,StateStruct::NodalDataToElemNode)));
+    st->dim = dims;
+    st->output = true;
+  }
+  m_basal_mesh->get_field_accessor()->addStateStructs(extrusion_sis);
+  
+  // Now the basal field accessor is definitely valid/inited, so we can create the extruded one
+  m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
+                                                                m_elem_layers_data_lid));
+
+  // // If user requests to extrude/interpolate basal fields, we must first add them to the mesh field accessor
+  // const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extruded Basal Fields",{});
+  // const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Extruded Basal Fields",{});
+
+  // const auto& basal_elem_sis = m_basal_mesh->get_field_accessor()->getElemSIS();
+  // StateInfoStruct extruded_sis, interpolate_sis;
+  // for (const auto& name : extrude_names) {
+  //   auto& st = extruded_sis.emplace_back();
+  //   for (const auto& bst : basal_elem_sis) {
+  //     if (st.name==name) {
+  //       st = Teuchos::rcp(new StateStruct("extruded_"+bst->name,bst->entity));
+  //       st->dims = bst->dims;
+  //       switch (bst->entity) {
+  //         case StateStruct::ElemData:
+  //           st->dims.push_back(num_elem_layers); break;
+  //         case StateStruct::ElemNode:
+  //         case StateStruct::NodalDistParameter:
+  //         case StateStruct::NodalDataToElemNode:
+  //           st->dims.push_back(num_node_layers); break;
+  //         default:
+  //           TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+  //               "Error! Unhandled/unsupported entity for state extrusion.\n");
+  //       }
+
+  //       if (bst->meshPart=="") {
+  //         st->meshPart = ""
+  //       } else {
+  //         st->meshPart = "extruded_" + st->meshPart;
+  //       }
+  //     }
+  //   }
+
+  //   TEUCHOS_TEST_FOR_EXCEPTION (basal_st==nullptr, std::runtime_error,
+  //       "Error! Could not locate basal state '" + name + "' to be extruded.\n");
+
+  // }
+
+  // m_field_accessor->addStateStructs(extruded_sis);
 }
 
 void ExtrudedMesh::
@@ -175,5 +232,281 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   m_bulk_data_set = true;
 }
+
+// void ExtrudedMesh::extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields)
+// {
+//   const auto& basal_states = m_basal_disc->getStateArrays(StateStruct::ElemState);
+
+//   // To avoid having to do this at every ws every time, we precompute the number of layers
+//   // for each field, which depends on the state location (e.g., cell states vs node states)
+//   const auto& basal_sis = m_extruded_mesh->basal_mesh()->get_field_accessor()->getElemSIS();
+//   const auto& elem_numbering = m_extruded_mesh->cell_layers_lid();
+//   auto get_entity = [&](const std::string& name) {
+//     StateStruct::MeshFieldEntity* entity = nullptr;
+//     for (const auto& st : basal_sis) {
+//       if (st.name==name) {
+//         entity = &st.entity;
+//         break;
+//       }
+//     }
+//     TEUCHOS_TEST_FOR_EXCEPTION (entity==nullptr, std::runtime_error,
+//         "Could not locate state '" + name + "' in the basal mesh.\n");
+//     return *entity;
+//   }
+
+//   std::vector<StateStruct::MeshFieldEntity> mfes = {
+//     StateStruct::ElemData,
+//     StateStruct::ElemNode,
+//     StateStruct::NodalDataToElemNode
+//   };
+
+//   auto& states = m_stateArrays.elemStateArrays;
+//   std::vector<int> dims;
+//   for (int ws=0; ws<getNumWorksets(); ++ws) {
+//     for (const auto& name : basal_fields) {
+//       const auto mfe = get_entity(name);
+//       TEUCHOS_TEST_FOR_EXCEPTION (std::find(mfes.begin(),mfes.end(),mfe)==mfes.end(),
+//         std::runtime_error,
+//         "Error! Unsupported MeshFieldEntity for basal state.\n"
+//         "  - state name: " + name + "\n");
+
+//       const auto& bstate = basal_states[ws].at(name);
+//             auto& state = states[ws][name];
+//       auto bstate_h = bstate.host();
+//       auto  state_h =  state.host();
+
+//       bstate.dimensions(dims);
+//       int rank = dims.size();
+
+//       if (mfe==StateStruct::ElemData) {
+//         TEUCHOS_TEST_FOR_EXCEPTION (rank<1 or rank>3, std::runtime_error,
+//             "Error! Unsupported basal state rank.\n"
+//             "  - state name: " + name + "\n"
+//             "  - state rank: " + std::to_string(rank) + "\n");
+//         // Extrude over cell layers
+//         switch (rank) {
+//           case 1:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               auto bval = bstate_h(ient);
+//               for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                 state_h(elem_numbering->getId(ient,ilay)) = bval;
+//               }
+//             }
+//             break;
+//           case 2:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int idim=0; idim<dims[1]; ++idim) {
+//                 auto bval = bstate_h(ient,idim);
+//                 for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                   state_h(elem_numbering->getId(ient,ilay),idim) = bval;
+//                 }
+//               }
+//             }
+//             break;
+//           case 3:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int idim=0; idim<dims[1]; ++idim) {
+//                 for (int jdim=0; jdim<dims[2]; ++jdim) {
+//                   auto bval = bstate_h(ient,idim,jdim);
+//                   for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                     state_h(elem_numbering->getId(ient,ilay),idim,jdim) = bval;
+//                   }
+//                 }
+//               }
+//             }
+//             break;
+//         }
+//       } else {
+//         TEUCHOS_TEST_FOR_EXCEPTION (rank<2 or rank>4, std::runtime_error,
+//             "Error! Unsupported basal state rank.\n"
+//             "  - state name: " + name + "\n"
+//             "  - state rank: " + std::to_string(rank) + "\n");
+//         // Extrude over node levels. Since it's still an elem state, we still use elem_numbering
+//         // to get the elem index, but then need to treat bottom/top nodes in elem separately
+//         int num_bnodes = dims[1];
+//         switch (rank) {
+//           case 2:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int inode=0; inode<dims[1]; ++inode) {
+//                 auto bval = bstate_h(ient,inode);
+//                 for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                   state_h(elem_numbering->getId(ient,ilay),inode) = bval;
+//                   state_h(elem_numbering->getId(ient,ilay),num_bnodes+inode) = bval;
+//                 }
+//               }
+//             }
+//             break;
+//           case 3:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int inode=0; inode<dims[1]; ++inode) {
+//                 for (int idim=0; idim<dims[2]; ++idim) {
+//                   auto bval = bstate_h(ient,inode,idim);
+//                   for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                     state_h(elem_numbering->getId(ient,ilay),inode,idim) = bval;
+//                     state_h(elem_numbering->getId(ient,ilay),num_bnodes+inode,idim) = bval;
+//                   }
+//                 }
+//               }
+//             }
+//             break;
+//           case 4:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int inode=0; inode<dims[1]; ++inode) {
+//                 for (int idim=0; idim<dims[2]; ++idim) {
+//                   for (int jdim=0; jdim<dims[3]; ++jdim) {
+//                     auto bval = bstate_h(ient,inode,idim,jdim);
+//                     for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                       state_h(elem_numbering->getId(ient,ilay),inode,idim,jdim) = bval;
+//                       state_h(elem_numbering->getId(ient,ilay),num_bnodes+inode,idim,jdim) = bval;
+//                     }
+//                   }
+//                 }
+//               }
+//             }
+//             break;
+//         }
+//       }
+//     }
+//   }
+// }
+
+// void ExtrudedMesh::interpolateBasalFields (const Teuchos::Array<std::string>& basal_fields)
+// {
+//   auto fnames = m_disc_params->get<Teuchos::Array<std::string>>("Interpolate Basal Fields",{});
+//   const auto& basal_states = m_basal_disc->getStateArrays(StateStruct::ElemState);
+
+//   // To avoid having to do this at every ws every time, we precompute the number of layers
+//   // for each field, which depends on the state location (e.g., cell states vs node states)
+//   const auto& basal_sis = m_extruded_mesh->basal_mesh()->get_field_accessor()->getElemSIS();
+//   const auto& elem_numbering = m_extruded_mesh->cell_layers_lid();
+//   auto get_entity = [&](const std::string& name) {
+//     StateStruct::MeshFieldEntity* entity = nullptr;
+//     for (const auto& st : basal_sis) {
+//       if (st.name==name) {
+//         entity = &st.entity;
+//         break;
+//       }
+//     }
+//     TEUCHOS_TEST_FOR_EXCEPTION (entity==nullptr, std::runtime_error,
+//         "Could not locate state '" + name + "' in the basal mesh.\n");
+//     return *entity;
+//   }
+
+//   std::vector<StateStruct::MeshFieldEntity> mfes = {
+//     StateStruct::ElemData,
+//     StateStruct::ElemNode,
+//     StateStruct::NodalDataToElemNode
+//   };
+
+//   auto& states = m_stateArrays.elemStateArrays;
+//   std::vector<int> dims;
+//   for (int ws=0; ws<getNumWorksets(); ++ws) {
+//     for (const auto& name : fnames) {
+//       const auto mfe = get_entity(name);
+//       TEUCHOS_TEST_FOR_EXCEPTION (std::find(mfes.begin(),mfes.end(),mfe)==mfes.end(),
+//         std::runtime_error,
+//         "Error! Unsupported MeshFieldEntity for basal state.\n"
+//         "  - state name: " + name + "\n");
+
+//       const auto& bstate = basal_states[ws].at(name);
+//             auto& state = states[ws][name];
+//       auto bstate_h = bstate.host();
+//       auto  state_h = state.host();
+
+//       bstate.dimensions(dims);
+//       int rank = dims.size();
+
+//       if (mfe==StateStruct::ElemData) {
+//         TEUCHOS_TEST_FOR_EXCEPTION (rank<1 or rank>3, std::runtime_error,
+//             "Error! Unsupported basal state rank.\n"
+//             "  - state name: " + name + "\n"
+//             "  - state rank: " + std::to_string(rank) + "\n");
+//         // Extrude over cell layers
+//         switch (rank) {
+//           case 1:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               auto bval = bstate_h(ient);
+//               for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                 state_h(elem_numbering->getId(ient,ilay)) = bval;
+//               }
+//             }
+//             break;
+//           case 2:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int idim=0; idim<dims[1]; ++idim) {
+//                 auto bval = bstate_h(ient,idim);
+//                 for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                   state_h(elem_numbering->getId(ient,ilay),idim) = bval;
+//                 }
+//               }
+//             }
+//             break;
+//           case 3:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int idim=0; idim<dims[1]; ++idim) {
+//                 for (int jdim=0; jdim<dims[2]; ++jdim) {
+//                   auto bval = bstate_h(ient,idim,jdim);
+//                   for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                     state_h(elem_numbering->getId(ient,ilay),idim,jdim) = bval;
+//                   }
+//                 }
+//               }
+//             }
+//             break;
+//         }
+//       } else {
+//         TEUCHOS_TEST_FOR_EXCEPTION (rank<2 or rank>4, std::runtime_error,
+//             "Error! Unsupported basal state rank.\n"
+//             "  - state name: " + name + "\n"
+//             "  - state rank: " + std::to_string(rank) + "\n");
+//         // Extrude over node levels. Since it's still an elem state, we still use elem_numbering
+//         // to get the elem index, but then need to treat bottom/top nodes in elem separately
+//         int num_bnodes = dims[1];
+//         switch (rank) {
+//           case 2:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int inode=0; inode<dims[1]; ++inode) {
+//                 auto bval = bstate_h(ient,inode);
+//                 for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                   state_h(elem_numbering->getId(ient,ilay),inode) = bval;
+//                   state_h(elem_numbering->getId(ient,ilay),num_bnodes+inode) = bval;
+//                 }
+//               }
+//             }
+//             break;
+//           case 3:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int inode=0; inode<dims[1]; ++inode) {
+//                 for (int idim=0; idim<dims[2]; ++idim) {
+//                   auto bval = bstate_h(ient,inode,idim);
+//                   for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                     state_h(elem_numbering->getId(ient,ilay),inode,idim) = bval;
+//                     state_h(elem_numbering->getId(ient,ilay),num_bnodes+inode,idim) = bval;
+//                   }
+//                 }
+//               }
+//             }
+//             break;
+//           case 4:
+//             for (int ient=0; ient<dims[0]; ++ient) {
+//               for (int inode=0; inode<dims[1]; ++inode) {
+//                 for (int idim=0; idim<dims[2]; ++idim) {
+//                   for (int jdim=0; jdim<dims[3]; ++jdim) {
+//                     auto bval = bstate_h(ient,inode,idim,jdim);
+//                     for (int ilay=0; ilay<elem_numbering->numLayers; ++ilay) {
+//                       state_h(elem_numbering->getId(ient,ilay),inode,idim,jdim) = bval;
+//                       state_h(elem_numbering->getId(ient,ilay),num_bnodes+inode,idim,jdim) = bval;
+//                     }
+//                   }
+//                 }
+//               }
+//             }
+//             break;
+//         }
+//       }
+//     }
+//   }
+// }
+
 
 } // namespace Albany

@@ -116,7 +116,7 @@ struct StateStruct
   }
 
   const std::string                  name{""};
-  FieldDims                          dim;
+  FieldDims                          dim = {};
   MeshFieldEntity                    entity;
   std::string                        initType{""};
   double                             initValue{0.0};

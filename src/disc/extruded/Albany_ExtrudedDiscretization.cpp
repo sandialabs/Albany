@@ -45,6 +45,7 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
  , m_disc_params (discParams)
 {
   sideSetDiscretizations["basalside"] = basal_disc;
+  sideSetDiscretizations["upperside"] = basal_disc;
 }
 
 void
@@ -286,6 +287,10 @@ void ExtrudedDiscretization::computeCoordinates ()
     for (int i = 0; i <= num_layers; i++)
       levelsNormalizedThickness[i] = double(i) / num_layers;
 
+  // Set normalized layers thickness in the mesh field accessor, for later use
+  auto& mvs = m_extruded_mesh->get_field_accessor()->getMeshVectorStates();
+  mvs["normalized_layers_thickness"] = levelsNormalizedThickness;
+
   const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
   const auto& basal_elem_lids = basal_node_dof_mgr->elem_dof_lids().host();
   const auto& basal_elems = basal_node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
@@ -342,8 +347,8 @@ void ExtrudedDiscretization::createDOFManagers()
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization:createDOFManagers");
 
   // Start creating dof mgr for the solution and node fields
-  auto sol_dof_mgr  = create_dof_mgr(solution_dof_name(),"",FE_Type::HGRAD,1,m_neq);
-  auto node_dof_mgr = create_dof_mgr(nodes_dof_name(),"",FE_Type::HGRAD,1,1);
+  auto sol_dof_mgr  = create_dof_mgr("",solution_dof_name(),FE_Type::HGRAD,1,m_neq);
+  auto node_dof_mgr = create_dof_mgr("",nodes_dof_name(),FE_Type::HGRAD,1,1);
 
   m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
   m_dof_managers[nodes_dof_name()][""]    = node_dof_mgr;
@@ -363,8 +368,10 @@ void ExtrudedDiscretization::createDOFManagers()
             "Error! Unsupported layout for nodal parameter '" + sis->name + ".\n");
     }
 
-    m_dof_managers[field_name][part_name] =create_dof_mgr(sis->name,sis->meshPart,FE_TYPE::HGRAD,1,dof_dim); 
-    m_node_dof_managers[part_name] = create_dof_mgr(sis->name,sis->meshPart,FE_TYPE::HGRAD,1,1);
+    const auto& fname = sis->name;
+    const auto& pname = sis->meshPart;
+    m_dof_managers[fname][pname] = create_dof_mgr(fname,pname,FE_Type::HGRAD,1,dof_dim);
+    m_node_dof_managers[pname]   = create_dof_mgr(fname,pname,FE_Type::HGRAD,1,1);
   }
 }
 

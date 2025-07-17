@@ -191,7 +191,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
     for (const auto& ss_name : sideSets) {
       auto& ss_mesh = mesh->sideSetMeshStructs[ss_name];
 
-      // If this is the basalside of an extruded mesh, we already created the mesh object
+      // Extruded meshes can create some side meshes, so check if mesh is already there
       if (ss_mesh.is_null()) {
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
 
