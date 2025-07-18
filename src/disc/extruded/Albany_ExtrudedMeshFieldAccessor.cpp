@@ -72,7 +72,7 @@ createStateArrays ()
 
   for (auto st : elem_sis) {
     auto bst = find_in_basal(st,m_basal_field_accessor->getElemSIS());
-    if (bst.is_valid()) {
+    if (bst.nonnull()) {
       // We only allow name clashing if this field was extruded/interpolated from a basal one
       if (bst->layered()) {
         // Ok, the basal state is just a layered field, which we need to interpolate in the full mesh
