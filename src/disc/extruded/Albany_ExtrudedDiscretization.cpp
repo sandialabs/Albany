@@ -562,23 +562,27 @@ ExtrudedDiscretization::computeGraphs()
 void
 ExtrudedDiscretization::computeWorksetInfo()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: computeWorksetInfo");
-
   // Ensure we don't have extruded worksets spanning 2+ basal worksets or viceversa
   const int num_layers = m_extruded_mesh->cell_layers_gid()->numLayers;
   const auto& basal_ws_sizes = m_basal_disc->getWorksetsSizes();
   const int num_ws = basal_ws_sizes.size();
+  const auto& basal_elem_lids = m_basal_disc->getWsElementLIDs();
 
+  auto cell_layer_lid  = m_extruded_mesh->cell_layers_lid (); // to get basal->extruded lid numbering
   const int nominal_ws_size = basal_ws_sizes[0]*num_layers;
   m_workset_sizes.resize(num_ws);
   m_workset_elements = DualView<int**>("ws_elem",num_ws,nominal_ws_size);
   for (int ws=0,lid=0; ws<num_ws; ++ws) {
-    int this_ws_size = m_workset_sizes[ws] = basal_ws_sizes[ws]*num_layers;
-    for (int ie=0; ie<this_ws_size; ++ie, ++lid) {
-      m_workset_elements.host()(ws,ie) = lid;
+    int ie=0;
+    for (int ib=0; ib<basal_ws_sizes[ws]; ++ib) {
+      for (int il=0; il<num_layers; ++il,++ie) {
+        int lid = cell_layer_lid->getId(ib,il);
+        m_workset_elements.host()(ws,ie) = lid;
+      }
     }
-    // Fill the remainder (if any) with very invalid numbers
-    for (int ie=this_ws_size; ie<nominal_ws_size; ++ie) {
+    
+    // Fill the remainder (if any) with invalid lid
+    for (; ie<nominal_ws_size; ++ie) {
       m_workset_elements.host()(ws,ie) = -1;
     }
   }
@@ -614,6 +618,7 @@ ExtrudedDiscretization::computeWorksetInfo()
   }
 
   // TODO: tell field accessor to init states
+  m_extruded_mesh->get_field_accessor()->createStateArrays();
 }
 
 void
@@ -1052,51 +1057,53 @@ ExtrudedDiscretization::computeSideSets()
 void
 ExtrudedDiscretization::computeNodeSets()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: computeNodeSets");
+  throw NotYetImplemented("ExtrudedDiscretization::computeNodeSets()");
+  // TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: computeNodeSets");
 
-  const auto& node_dof_mgr = getNodeDOFManager();
-  const auto& node_conn_mgr = node_dof_mgr->getAlbanyConnManager();
-  const auto& node_dof_lids = node_dof_mgr->elem_dof_lids().host();
-  const int num_elems = m_extruded_mesh->get_num_local_elements();
-  const int mesh_dim = getNumDim();
+  // const auto& node_dof_mgr = getNodeDOFManager();
+  // const auto& node_conn_mgr = node_dof_mgr->getAlbanyConnManager();
+  // const auto& node_dof_lids = node_dof_mgr->elem_dof_lids().host();
+  // const int num_elems = m_extruded_mesh->get_num_local_elements();
+  // const int mesh_dim = getNumDim();
 
-  // Loop over all node sets
-  for (const auto& ns : m_extruded_mesh->meshSpecs[0]->nsNames) {
-    auto& ns_gids     = m_nodeSetGIDs[ns];
-    auto& ns_elem_pos = m_nodeSets[ns];
-    auto& ns_coords   = m_nodeSetCoords[ns];
+  // // Loop over all node sets
+  // for (const auto& ns : m_extruded_mesh->meshSpecs[0]->nsNames) {
+  //   auto& ns_gids     = m_nodeSetGIDs[ns];
+  //   auto& ns_elem_pos = m_nodeSets[ns];
+  //   auto& ns_coords   = m_nodeSetCoords[ns];
 
-    // Get the mask for this nodeset from the conn mgr, and count how many nodes are in it
-    auto mask = node_conn_mgr->getConnectivityMask(ns);
+  //   // Get the mask for this nodeset from the conn mgr, and count how many nodes are in it
+  //   auto mask = node_conn_mgr->getConnectivityMask(ns);
 
-    std::set<GO> gids_found;
-    for (int ie=0; ie<num_elems; ++ie) {
-      const auto& node_gids = node_dof_mgr->getElementGIDs(ie);
-      const int conn_start = node_conn_mgr->getConnectivityStart(ie);
-      const int conn_size  = node_conn_mgr->getConnectivitySize(ie);
-      const auto ownership = node_conn_mgr->getOwnership(ie);
-      for (int in=0; in<conn_size; ++in) {
-        if (mask[conn_start+in]==1 and ownership[in]==Owned) {
-          auto it_bool = gids_found.insert(node_gids[in]);
-          if (it_bool.second) {
-            // Newly processed node
-            ns_gids.push_back(node_gids[in]);
-            ns_elem_pos.push_back(std::make_pair(ie,in));
-            const int node_lid = node_dof_lids(ie,in);
-            ns_coords.push_back(&m_nodes_coordinates[mesh_dim*node_lid]);
-          }
-        }
-      }
-    }
-  }
+  //   std::set<GO> gids_found;
+  //   for (int ie=0; ie<num_elems; ++ie) {
+  //     const auto& node_gids = node_dof_mgr->getElementGIDs(ie);
+  //     const int conn_start = node_conn_mgr->getConnectivityStart(ie);
+  //     const int conn_size  = node_conn_mgr->getConnectivitySize(ie);
+  //     const auto ownership = node_conn_mgr->getOwnership(ie);
+  //     for (int in=0; in<conn_size; ++in) {
+  //       if (mask[conn_start+in]==1 and ownership[in]==Owned) {
+  //         auto it_bool = gids_found.insert(node_gids[in]);
+  //         if (it_bool.second) {
+  //           // Newly processed node
+  //           ns_gids.push_back(node_gids[in]);
+  //           ns_elem_pos.push_back(std::make_pair(ie,in));
+  //           const int node_lid = node_dof_lids(ie,in);
+  //           ns_coords.push_back(&m_nodes_coordinates[mesh_dim*node_lid]);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 void
 ExtrudedDiscretization::buildSideSetProjectors()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: buildSideSetProjectors");
-  std::cout << "WARNING! ExtrudedDiscretization::buildSideSetProjectors not yet implemented!\n";
-  return;
+  throw NotYetImplemented("ExtrudedDiscretization::buildSideSetProjectors()");
+  // TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: buildSideSetProjectors");
+  // std::cout << "WARNING! ExtrudedDiscretization::buildSideSetProjectors not yet implemented!\n";
+  // return;
 }
 
 void ExtrudedDiscretization::printCoords() const 
@@ -1146,54 +1153,55 @@ ExtrudedDiscretization::updateMesh()
 void ExtrudedDiscretization::
 buildCellSideNodeNumerationMaps()
 {
+  throw NotYetImplemented("ExtrudedDiscretization::buildCellSideNodeNumerationMaps()");
   // The numeration is simple, since we decided the side gids
-  const auto& node_dof_mgr = getNodeDOFManager();
+  // const auto& node_dof_mgr = getNodeDOFManager();
 
-  const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
-  const auto& basal_elem_gids = m_basal_disc->getNodeDOFManager()->getAlbanyConnManager()->getElementsInBlock();
+  // const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
+  // const auto& basal_elem_gids = m_basal_disc->getNodeDOFManager()->getAlbanyConnManager()->getElementsInBlock();
 
-  const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
-  const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
+  // const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
+  // const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
 
-  std::vector<GO> side_nodes;
+  // std::vector<GO> side_nodes;
 
-  // ONLY for basalside and upperside, since that's where we are likely to load data from mesh
-  for (int ws=0; ws<getNumWorksets(); ++ws) {
-    for (std::string ssn : {"basalside","upperside"}) {
-      auto& s2c   = m_side_to_ss_cell[ssn];
-      auto& sn2cn = m_side_nodes_to_ss_cell_nodes[ssn];
+  // // ONLY for basalside and upperside, since that's where we are likely to load data from mesh
+  // for (int ws=0; ws<getNumWorksets(); ++ws) {
+  //   for (std::string ssn : {"basalside","upperside"}) {
+  //     auto& s2c   = m_side_to_ss_cell[ssn];
+  //     auto& sn2cn = m_side_nodes_to_ss_cell_nodes[ssn];
 
-      for (const auto& s : m_sideSets[ws][ssn]) {
-        const GO basal_elem_GID = s2c[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
-        const LO basal_elem_LID = basal_node_dof_mgr->cell_indexer()->getLocalElement(basal_elem_GID);
-        const auto elem_LID = node_dof_mgr->cell_indexer()->getLocalElement(s.elem_GID);
-        const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
-        const auto& basal_nodes = basal_node_dof_mgr->getElementGIDs(basal_elem_LID);
-        const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,s.side_pos);
+  //     for (const auto& s : m_sideSets[ws][ssn]) {
+  //       const GO basal_elem_GID = s2c[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
+  //       const LO basal_elem_LID = basal_node_dof_mgr->cell_indexer()->getLocalElement(basal_elem_GID);
+  //       const auto elem_LID = node_dof_mgr->cell_indexer()->getLocalElement(s.elem_GID);
+  //       const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
+  //       const auto& basal_nodes = basal_node_dof_mgr->getElementGIDs(basal_elem_LID);
+  //       const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,s.side_pos);
 
-        // Retrieve the gids of the basal mesh nodes that generated the gids of this side
-        // NOTE: if ordering==LAYER, they are the same
-        side_nodes.resize(offsets.size());
-        for (size_t i=0; i<offsets.size(); ++i) {
-          auto gid3d = elem_nodes[offsets[i]];
-          side_nodes[i] = node_layers_gid->getColumnId(gid3d);
-        }
-        sn2cn[s.side_GID].resize(offsets.size());
-        for (size_t i=0; i<offsets.size(); ++i) {
-          auto it = std::find(side_nodes.begin(),side_nodes.end(),basal_nodes[i]);
-          TEUCHOS_TEST_FOR_EXCEPTION (it==side_nodes.end(), std::runtime_error,
-              "Error! Could not locate node in the basal mesh.\n");
+  //       // Retrieve the gids of the basal mesh nodes that generated the gids of this side
+  //       // NOTE: if ordering==LAYER, they are the same
+  //       side_nodes.resize(offsets.size());
+  //       for (size_t i=0; i<offsets.size(); ++i) {
+  //         auto gid3d = elem_nodes[offsets[i]];
+  //         side_nodes[i] = node_layers_gid->getColumnId(gid3d);
+  //       }
+  //       sn2cn[s.side_GID].resize(offsets.size());
+  //       for (size_t i=0; i<offsets.size(); ++i) {
+  //         auto it = std::find(side_nodes.begin(),side_nodes.end(),basal_nodes[i]);
+  //         TEUCHOS_TEST_FOR_EXCEPTION (it==side_nodes.end(), std::runtime_error,
+  //             "Error! Could not locate node in the basal mesh.\n");
 
-          sn2cn[s.side_GID][i] = std::distance(side_nodes.begin(),it);
-        }
-      }
-    }
-  }
+  //         sn2cn[s.side_GID][i] = std::distance(side_nodes.begin(),it);
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 void ExtrudedDiscretization::setFieldData()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
+  // Nothing to do here
 }
 
 Teuchos::RCP<DOFManager>

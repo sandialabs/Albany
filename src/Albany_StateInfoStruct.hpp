@@ -130,6 +130,7 @@ struct StateStruct
   bool        output{false};
   bool        restartDataAvailable{false};
   bool        layered{false};
+  bool        extruded{false};
   std::string meshPart{""};
   std::string ebName{""};
 

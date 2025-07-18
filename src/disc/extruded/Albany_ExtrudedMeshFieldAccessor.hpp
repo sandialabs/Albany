@@ -35,8 +35,11 @@ public:
 
   virtual ~ExtrudedMeshFieldAccessor () = default;
 
+  // override, do not hide
+  using AbstractMeshFieldAccessor::addStateStructs;
+
   // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
-  void addStateStructs(const StateInfoStruct& sis) override;
+  void addStateStruct (const Teuchos::RCP<StateStruct>& st) override;
 
   void createStateArrays () override;
 

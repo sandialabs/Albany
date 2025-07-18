@@ -125,81 +125,73 @@ get_basal_part_name (const std::string& extruded_part_name) const
 }
 
 void ExtrudedMesh::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm)
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
   // Ensure field data is set on basal mesh
-  m_basal_mesh->setFieldData(comm);
+  m_basal_mesh->setFieldData(comm,side_set_sis["basalside"],{});
 
-  // Register surface height and mesh thickness in the 2d mesh (if not already there)
-  std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");
-  std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
-
-  StateInfoStruct extrusion_sis;
-  for (const auto& name : {thickness_name,surface_height_name}) {
-    bool found = false;
-    for (const auto& st : m_basal_mesh->get_field_accessor()->getElemSIS()) {
-      if (st->name==name) {
-        found = true;
-        break;
-      }
-    }
-
-    if (found)
-      continue;
-
-    StateStruct::FieldDims dims = {
-      static_cast<PHX::DataLayout::size_type>(m_basal_mesh->meshSpecs[0]->worksetSize),
-      m_basal_mesh->meshSpecs[0]->ctd.node_count
-    };
-
-    auto st = extrusion_sis.emplace_back(Teuchos::rcp(new StateStruct(name,StateStruct::NodalDataToElemNode)));
-    st->dim = dims;
-    st->output = true;
-  }
-  m_basal_mesh->get_field_accessor()->addStateStructs(extrusion_sis);
-  
   // Now the basal field accessor is definitely valid/inited, so we can create the extruded one
   m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
                                                                 m_elem_layers_data_lid));
 
-  // // If user requests to extrude/interpolate basal fields, we must first add them to the mesh field accessor
-  // const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extruded Basal Fields",{});
-  // const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Extruded Basal Fields",{});
+  m_field_accessor->addStateStructs(sis);
 
-  // const auto& basal_elem_sis = m_basal_mesh->get_field_accessor()->getElemSIS();
-  // StateInfoStruct extruded_sis, interpolate_sis;
-  // for (const auto& name : extrude_names) {
-  //   auto& st = extruded_sis.emplace_back();
-  //   for (const auto& bst : basal_elem_sis) {
-  //     if (st.name==name) {
-  //       st = Teuchos::rcp(new StateStruct("extruded_"+bst->name,bst->entity));
-  //       st->dims = bst->dims;
-  //       switch (bst->entity) {
-  //         case StateStruct::ElemData:
-  //           st->dims.push_back(num_elem_layers); break;
-  //         case StateStruct::ElemNode:
-  //         case StateStruct::NodalDistParameter:
-  //         case StateStruct::NodalDataToElemNode:
-  //           st->dims.push_back(num_node_layers); break;
-  //         default:
-  //           TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-  //               "Error! Unhandled/unsupported entity for state extrusion.\n");
-  //       }
+  // If user requests to extrude/interpolate basal fields, we must first add them to the mesh field accessor
+  const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
+  const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Interpolate Basal Fields",{});
 
-  //       if (bst->meshPart=="") {
-  //         st->meshPart = ""
-  //       } else {
-  //         st->meshPart = "extruded_" + st->meshPart;
-  //       }
-  //     }
-  //   }
+  const auto& basal_sis = m_basal_mesh->get_field_accessor()->getAllSIS();
+  auto process_list = [&](const Teuchos::Array<std::string>& names,
+                          const std::string& prefix) {
+    StateInfoStruct extruded_sis;
+    for (const auto& name : names) {
+      auto bst = basal_sis.find(name);
+      TEUCHOS_TEST_FOR_EXCEPTION (bst.is_null(),std::runtime_error,
+          "[ExtrudedMesh::setFieldData] Error! Cannot find state '" + name + "' in the basal mesh.\n");
 
-  //   TEUCHOS_TEST_FOR_EXCEPTION (basal_st==nullptr, std::runtime_error,
-  //       "Error! Could not locate basal state '" + name + "' to be extruded.\n");
+      std::string meshPart = bst->meshPart="" ? "" : "extruded_" + bst->meshPart;
+      int nlayers;
+      Teuchos::RCP<LayeredMeshNumbering<LO>> layers_lid;
+      switch (bst->entity) {
+        case StateStruct::ElemData:
+          layers_lid = m_elem_layers_data_lid;
+          break;
+        case StateStruct::ElemNode:
+        case StateStruct::NodalDistParameter:
+        case StateStruct::NodalDataToElemNode:
+          layers_lid = m_node_layers_data_lid;
+          break;
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+              "Error! Unhandled/unsupported entity for state " + name + ".\n");
+      }
 
-  // }
+      int nlayers = layers_lid->numLayers;
+      if (layers_lid->layerOrd) {
+        for (int il=0; il<nlayers; ++il) {
+          auto& st = extruded_sis.emplace_back(new StateStruct(prefix+name+"_"+std::to_string(il),bst->entity));
+          st->dim = bst->dim;
+          st->meshPart = meshPart;
+          st->extruded = true;
+        }
+      } else {
+        auto& st = extruded_sis.emplace_back(new StateStruct(prefix+name,bst->entity));
+        st->dim = bst->dim;
+        st->dim.push_back(nlayers);
+        st->meshPart = meshPart;
+        st->extruded = true;
+      }
+    }
+    m_field_accessor->addStateStruct(extruded_sis);
+  };
+
+  process_list(extrude_names,"extruded_");
+  process_list(interpolate_names,"interpolated_");
 
   // m_field_accessor->addStateStructs(extruded_sis);
+  m_field_data_set = true;
 }
 
 void ExtrudedMesh::

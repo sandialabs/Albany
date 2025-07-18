@@ -100,7 +100,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         //FixME very hacky! needed for printing 2d mesh
         Teuchos::RCP<GenericSTKMeshStruct> meshStruct2D;
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
-        meshStruct2D->setFieldData(comm);
+        meshStruct2D->setFieldData(comm,Teuchos::null,{});
         meshStruct2D->setBulkData(comm);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -283,14 +283,15 @@ DiscretizationFactory::setMeshStructFieldData(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-  meshStruct->setFieldData(comm);
-  meshStruct->get_field_accessor()->addStateStructs(sis);
-  for (auto& [ss_name, ss_mesh] : meshStruct->sideSetMeshStructs) {
-    ss_mesh->setFieldData(comm);
-  }
-  for (auto& [ss_name, ss_sis] : side_set_sis) {
-    meshStruct->sideSetMeshStructs.at(ss_name)->get_field_accessor()->addStateStructs(ss_sis);
-  }
+  meshStruct->setFieldData(comm,sis,side_set_sis);
+  // for (auto& [ss_name, ss_mesh] : meshStruct->sideSetMeshStructs) {
+  //   ss_mesh->setFieldData(comm);
+  // }
+
+  // meshStruct->get_field_accessor()->addStateStructs(sis);
+  // for (auto& [ss_name, ss_sis] : side_set_sis) {
+  //   meshStruct->sideSetMeshStructs.at(ss_name)->get_field_accessor()->addStateStructs(ss_sis);
+  // }
 }
 
 void DiscretizationFactory::
