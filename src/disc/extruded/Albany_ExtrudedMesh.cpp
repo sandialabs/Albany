@@ -152,7 +152,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
           "[ExtrudedMesh::setFieldData] Error! Cannot find state '" + name + "' in the basal mesh.\n");
 
       std::string meshPart = bst->meshPart="" ? "" : "extruded_" + bst->meshPart;
-      int nlayers;
       Teuchos::RCP<LayeredMeshNumbering<LO>> layers_lid;
       switch (bst->entity) {
         case StateStruct::ElemData:
@@ -184,7 +183,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
         st->extruded = true;
       }
     }
-    m_field_accessor->addStateStruct(extruded_sis);
+    m_field_accessor->addStateStructs(extruded_sis);
   };
 
   process_list(extrude_names,"extruded_");

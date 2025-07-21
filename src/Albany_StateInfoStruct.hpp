@@ -144,7 +144,7 @@ class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
 public:
   StateInfoStruct () = default;
 
-  Teuchos::RCP<StateStruct> find (const std::string& name) {
+  Teuchos::RCP<StateStruct> find (const std::string& name) const {
     for (const auto& entry : *this) {
       if (entry->name==name) return entry;
     }

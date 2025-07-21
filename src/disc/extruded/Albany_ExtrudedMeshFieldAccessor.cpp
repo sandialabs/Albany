@@ -63,18 +63,20 @@ createStateArrays ()
   // store the arrays, and we may not be able to store 2 fields with the same
   // name but different layout. 
   auto find_in_basal = [&](const Teuchos::RCP<StateStruct>& st, const StateInfoStruct& basal_states) {
+    Teuchos::RCP<StateStruct> p;
     for (auto bst : basal_states) {
-      if (st->name()==bst->name)
-        return bst;
+      if (st->name==bst->name)
+        p = bst;
+        break;
     }
-    return Teuchos::rcp();
+    return p;
   };
 
   for (auto st : elem_sis) {
     auto bst = find_in_basal(st,m_basal_field_accessor->getElemSIS());
-    if (bst.nonnull()) {
+    if (not bst.is_null()) {
       // We only allow name clashing if this field was extruded/interpolated from a basal one
-      if (bst->layered()) {
+      if (bst->layered) {
         // Ok, the basal state is just a layered field, which we need to interpolate in the full mesh
       } else {
       }
@@ -108,74 +110,74 @@ fillVector (Thyra_Vector&        field_vector,
 }
 
 void ExtrudedMeshFieldAccessor::
-fillSolnMultiVector (Thyra_MultiVector&   soln,
-                     const dof_mgr_ptr_t& sol_dof_mgr,
-                     const bool           overlapped)
+fillSolnMultiVector (Thyra_MultiVector&   /* soln */,
+                     const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                     const bool           /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::fillSolnMultiVector()");
 }
 
 void ExtrudedMeshFieldAccessor::
-fillSolnSensitivity (Thyra_MultiVector&   dxdp,
-                     const dof_mgr_ptr_t& sol_dof_mgr,
-                     const bool           overlapped)
+fillSolnSensitivity (Thyra_MultiVector&   /* dxdp */,
+                     const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                     const bool           /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::fillSolnSensitivity()");
 }
 
   // Write to mesh methods
 void ExtrudedMeshFieldAccessor::
-saveVector (const Thyra_Vector&  field_vector,
-            const std::string&   field_name,
-            const dof_mgr_ptr_t& field_dof_mgr,
-            const bool           overlapped)
+saveVector (const Thyra_Vector&  /* field_vector */,
+            const std::string&   /* field_name */,
+            const dof_mgr_ptr_t& /* field_dof_mgr */,
+            const bool           /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveVector()");
 }
 
 void ExtrudedMeshFieldAccessor::
-saveSolnVector (const Thyra_Vector& soln,
-                const mv_ptr_t&     soln_dxdp,
-                const dof_mgr_ptr_t& sol_dof_mgr,
-                const bool           overlapped)
+saveSolnVector (const Thyra_Vector&  /* soln */,
+                const mv_ptr_t&      /* soln_dxdp */,
+                const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                const bool           /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveSolnVector()");
 }
 
 void ExtrudedMeshFieldAccessor::
-saveSolnVector (const Thyra_Vector&  soln,
-                const mv_ptr_t&      soln_dxdp,
-                const Thyra_Vector&  soln_dot,
-                const dof_mgr_ptr_t& sol_dof_mgr,
-                const bool           overlapped)
+saveSolnVector (const Thyra_Vector&  /* soln */,
+                const mv_ptr_t&      /* soln_dxdp */,
+                const Thyra_Vector&  /* soln_dot */,
+                const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                const bool           /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveSolnVector()");
 }
 
 void ExtrudedMeshFieldAccessor::
-saveSolnVector (const Thyra_Vector&  soln,
-                const mv_ptr_t&      soln_dxdp,
-                const Thyra_Vector&  soln_dot,
-                const Thyra_Vector&  soln_dotdot,
-                const dof_mgr_ptr_t& sol_dof_mgr,
-                const bool           overlapped)
+saveSolnVector (const Thyra_Vector&  /* soln */,
+                const mv_ptr_t&      /* soln_dxdp */,
+                const Thyra_Vector&  /* soln_dot */,
+                const Thyra_Vector&  /* soln_dotdot */,
+                const dof_mgr_ptr_t& /* sol_dof_mgr */,
+                const bool           /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveSolnVector()");
 }
 
 void ExtrudedMeshFieldAccessor::
-saveResVector (const Thyra_Vector&  res,
-               const dof_mgr_ptr_t& dof_mgr,
-               const bool          overlapped)
+saveResVector (const Thyra_Vector&  /* res */,
+               const dof_mgr_ptr_t& /* dof_mgr */,
+               const bool           /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveResVector()");
 }
 
 void ExtrudedMeshFieldAccessor::
-saveSolnMultiVector (const Thyra_MultiVector& soln,
-                     const mv_ptr_t&          soln_dxdp,
-                     const dof_mgr_ptr_t&     node_vs,
-                     const bool          overlapped)
+saveSolnMultiVector (const Thyra_MultiVector& /* soln */,
+                     const mv_ptr_t&          /* soln_dxdp */,
+                     const dof_mgr_ptr_t&     /* node_vs */,
+                     const bool               /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveSolnMultiVector()");
 }

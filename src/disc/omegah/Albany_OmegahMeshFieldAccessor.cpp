@@ -47,7 +47,7 @@ setFieldOnMesh (const std::string& name,
 }
 
 void OmegahMeshFieldAccessor::
-addStateStruct(const Teuchos::RCP>StateStruct>& st)
+addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
   auto product = [](const auto& vec, int start) {
     return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());

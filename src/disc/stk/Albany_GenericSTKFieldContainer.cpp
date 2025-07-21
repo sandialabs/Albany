@@ -83,7 +83,7 @@ void set_output_role (AbstractSTKFieldContainer::STKFieldType& f, bool output) {
 }
 
 void GenericSTKFieldContainer::
-addStateStructs(const StateInfoStruct& sis)
+addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
   // Add to the stored SIS
   all_sis.push_back(st);
