@@ -2,6 +2,22 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_StringUtils.hpp"
 
+namespace {
+  void print (const Albany::AbstractMeshFieldAccessor& accessor) {
+    std::cout << " ELEM SIS:\n";
+    for (auto st : accessor.getElemSIS()) {
+      std::cout << "   " << st->name << ": (" << util::join(st->dim,",") << ")\n";
+    }
+    std::cout << " NODE SIS:\n";
+    for (auto st : accessor.getNodalSIS()) {
+      std::cout << "   " << st->name << ": (" << util::join(st->dim,",") << ")\n";
+    }
+    std::cout << " GLOB SIS:\n";
+    for (auto st : accessor.getGlobalSIS()) {
+      std::cout << "   " << st->name << ": (" << util::join(st->dim,",") << ")\n";
+    }
+  }
+}
 namespace Albany {
 
 ExtrudedMeshFieldAccessor::
@@ -17,20 +33,6 @@ ExtrudedMeshFieldAccessor (const Teuchos::RCP<AbstractMeshFieldAccessor>& basal_
 void ExtrudedMeshFieldAccessor::
 addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
-  auto print = [](const AbstractMeshFieldAccessor& accessor) {
-    std::cout << " ELEM SIS:\n";
-    for (auto st : accessor.getElemSIS()) {
-      std::cout << "   " << st->name << ": (" << util::join(st->dim,",") << ")\n";
-    }
-    std::cout << " NODE SIS:\n";
-    for (auto st : accessor.getNodalSIS()) {
-      std::cout << "   " << st->name << ": (" << util::join(st->dim,",") << ")\n";
-    }
-    std::cout << " GLOB SIS:\n";
-    for (auto st : accessor.getGlobalSIS()) {
-      std::cout << "   " << st->name << ": (" << util::join(st->dim,",") << ")\n";
-    }
-  };
   std::cout << "BASAL SIS:\n";
   print(*m_basal_field_accessor);
 
@@ -82,6 +84,8 @@ createStateArrays ()
       }
     }
   }
+  print(*m_basal_field_accessor);
+  print(*this);
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::createStateArrays()");
 }
 
