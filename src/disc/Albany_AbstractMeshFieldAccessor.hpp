@@ -62,7 +62,7 @@ public:
 
   // To be called by disc once the underlying mesh has been fully created,
   // so that we can grab pointers where appropriate
-  virtual void createStateArrays () = 0;
+  virtual void createStateArrays (const WorksetArray<int>& worksets_sizes) = 0;
 
   // For NodalDataToElemNode states, populate elem state array from corresponding node state array
   virtual void transferNodeStatesToElemStates () = 0;

@@ -145,6 +145,12 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
     nodal_sis.push_back(st);
     auto nodalFieldDim = dim;
     if(st->entity == StateStruct::NodalDataToElemNode) {
+      // Add as elem state as well
+      auto est = Teuchos::rcp(new StateStruct(*st));
+      est->entity = StateStruct::ElemNode;
+      est->output = false; // This is not to be outputed, it's just internal
+      addStateStruct(est);
+
       nodalFieldDim.erase(nodalFieldDim.begin()); // Remove the <Cell> extent
     } else if(st->entity == StateStruct::NodalDistParameter) {
       // Also a dist parameter
@@ -181,7 +187,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   }
 }
 
-void GenericSTKFieldContainer::createStateArrays ()
+void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
   const auto ELEM_RANK = stk::topology::ELEM_RANK;
   const auto NODE_RANK = stk::topology::NODE_RANK;
@@ -190,6 +196,19 @@ void GenericSTKFieldContainer::createStateArrays ()
                            stk::mesh::Selector(metaData->locally_owned_part());
   const auto& elem_buckets = bulkData->get_buckets(ELEM_RANK,select_owned_part);
   const auto& node_buckets = bulkData->get_buckets(NODE_RANK,select_owned_part);
+
+  // Sanity checks
+  TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes.size()!=elem_buckets.size(), std::logic_error,
+      "[GenericSTKFieldContainer::createStateArrays] Error! Input worksets_sizes length does not match mesh num elem buckets.\n"
+      " - worksets_sizes length : " << worksets_sizes.size() + "\n"
+      " - num mesh elem buckets: " << elem_buckets.size() + "\n");
+  for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
+    TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes[ws]!=elem_buckets[ws]->size(), std::logic_error,
+        "[GenericSTKFieldContainer::createStateArrays] Error! Input workset size does not match mesh bucket size.\n"
+        " - workset id        : " << ws << "\n"
+        " - input workset_size: " << workset_size[ws] + "\n"
+        " - mesh bucket size  : " << elem_bucket[ws]->size() + "\n");
+  }
 
   elemStateArrays.resize(elem_buckets.size());
   nodeStateArrays.resize(node_buckets.size());
@@ -202,15 +221,16 @@ void GenericSTKFieldContainer::createStateArrays ()
     for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
       const auto& b = *elem_buckets[ws];
       data = reinterpret_cast<double*>(b.field_data_location(*f));
+      auto& state = elemStateArrays[ws][st->name];
       switch (dim.size()) {
         case 1:
-          elemStateArrays[ws][st->name].reset_from_host_ptr(data,b.size()); break;
+          state.reset_from_host_ptr(data,b.size()); break;
         case 2:
-          elemStateArrays[ws][st->name].reset_from_host_ptr(data,b.size(),dim[1]); break;
+          state.reset_from_host_ptr(data,b.size(),dim[1]); break;
         case 3:
-          elemStateArrays[ws][st->name].reset_from_host_ptr(data,b.size(),dim[1],dim[2]); break;
+          state.reset_from_host_ptr(data,b.size(),dim[1],dim[2]); break;
         case 4:
-          elemStateArrays[ws][st->name].reset_from_host_ptr(data,b.size(),dim[1],dim[2],dim[3]); break;
+          state.reset_from_host_ptr(data,b.size(),dim[1],dim[2],dim[3]); break;
         default:
           throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
       }
@@ -268,19 +288,21 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
     const auto& dim = st->dim;
     const auto rank = st->dim.size();
 
-    auto f = metaData->get_field<double>(NODE_RANK,st->name);
+    auto f = metaData->get_field<double>(ELEM_RANK,st->name);
+    auto fn = metaData->get_field<double>(NODE_RANK,st->name);
     for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
-      auto& state = elemStateArrays[ws][st->name];
       const auto& b = *elem_buckets[ws];
+      data = reinterpret_cast<double*>(b.field_data_location(*f));
+      auto& state = elemStateArrays[ws][st->name];
       switch (rank) {
         case 2:
-          state.resize(st->name,b.size(),dim[1]); break;
+          state.reset_from_host_ptr(data,b.size(),dim[1]); break;
         case 3:
-          state.resize(st->name,b.size(),dim[1],dim[2]); break;
+          state.reset_from_host_ptr(data,b.size(),dim[1],dim[2]); break;
         case 4:
-          state.resize(st->name,b.size(),dim[1],dim[2],dim[3]); break;
+          state.reset_from_host_ptr(data,b.size(),dim[1],dim[2],dim[3]); break;
         default:
-          throw std::runtime_error("Error! Unsupported rank for node state '" + st->name + "'.\n");
+          throw std::runtime_error("Error! Unsupported rank for elem node state '" + st->name + "'.\n");
       }
 
       auto& state_h = state.host();
@@ -288,7 +310,7 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
         const auto& elem  = b[i];
         const auto* nodes = bulkData->begin_nodes(elem);
         for (size_t j=0; j<dim[1]; ++j) {
-          const auto* data = stk::mesh::field_data(*f,nodes[j]);
+          const auto* data = stk::mesh::field_data(*fn,nodes[j]);
           switch(rank) {
             case 2:
               state_h(i, j) = *data; break;

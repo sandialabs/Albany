@@ -618,7 +618,7 @@ ExtrudedDiscretization::computeWorksetInfo()
   }
 
   // TODO: tell field accessor to init states
-  m_extruded_mesh->get_field_accessor()->createStateArrays();
+  m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
 }
 
 void

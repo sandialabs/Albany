@@ -35,6 +35,13 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
 
+  // WARNING: if you remove this check, you MUST ensure all the states array logic is sound.
+  //          namely, we CAN'T make the states arrays view the stuff stored in memory when
+  //          using a Layered ordering, since the stride along layers does not match the
+  //          layer (local) size in the workset (unless num_ranks=1, num_worksets=1).
+  TEUCHOS_TEST_FOR_EXCEPTION (ordering!=LayeredMeshOrdering::COLUMN, std::runtime_error,
+      "[ExtrudedMesh] Error! We currently only support 'Columnwise Ordering: true'\n");
+
   m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
   m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,ordering));
   m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
@@ -142,52 +149,53 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
   const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Interpolate Basal Fields",{});
 
-  const auto& basal_sis = m_basal_mesh->get_field_accessor()->getAllSIS();
-  auto process_list = [&](const Teuchos::Array<std::string>& names,
-                          const std::string& prefix) {
-    StateInfoStruct extruded_sis;
-    for (const auto& name : names) {
-      auto bst = basal_sis.find(name);
-      TEUCHOS_TEST_FOR_EXCEPTION (bst.is_null(),std::runtime_error,
-          "[ExtrudedMesh::setFieldData] Error! Cannot find state '" + name + "' in the basal mesh.\n");
+  m_field_accessor->extrudeBasalStates
+  // const auto& basal_sis = m_basal_mesh->get_field_accessor()->getAllSIS();
+  // auto process_list = [&](const Teuchos::Array<std::string>& names,
+  //                         const std::string& prefix) {
+  //   StateInfoStruct extruded_sis;
+  //   for (const auto& name : names) {
+  //     auto bst = basal_sis.find(name);
+  //     TEUCHOS_TEST_FOR_EXCEPTION (bst.is_null(),std::runtime_error,
+  //         "[ExtrudedMesh::setFieldData] Error! Cannot find state '" + name + "' in the basal mesh.\n");
 
-      std::string meshPart = bst->meshPart="" ? "" : "extruded_" + bst->meshPart;
-      Teuchos::RCP<LayeredMeshNumbering<LO>> layers_lid;
-      switch (bst->entity) {
-        case StateStruct::ElemData:
-          layers_lid = m_elem_layers_data_lid;
-          break;
-        case StateStruct::ElemNode:
-        case StateStruct::NodalDistParameter:
-        case StateStruct::NodalDataToElemNode:
-          layers_lid = m_node_layers_data_lid;
-          break;
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-              "Error! Unhandled/unsupported entity for state " + name + ".\n");
-      }
+  //     std::string meshPart = bst->meshPart="" ? "" : "extruded_" + bst->meshPart;
+  //     Teuchos::RCP<LayeredMeshNumbering<LO>> layers_lid;
+  //     switch (bst->entity) {
+  //       case StateStruct::ElemData:
+  //         layers_lid = m_elem_layers_data_lid;
+  //         break;
+  //       case StateStruct::ElemNode:
+  //       case StateStruct::NodalDistParameter:
+  //       case StateStruct::NodalDataToElemNode:
+  //         layers_lid = m_node_layers_data_lid;
+  //         break;
+  //       default:
+  //         TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
+  //             "Error! Unhandled/unsupported entity for state " + name + ".\n");
+  //     }
 
-      int nlayers = layers_lid->numLayers;
-      if (layers_lid->layerOrd) {
-        for (int il=0; il<nlayers; ++il) {
-          auto& st = extruded_sis.emplace_back(new StateStruct(prefix+name+"_"+std::to_string(il),bst->entity));
-          st->dim = bst->dim;
-          st->meshPart = meshPart;
-          st->extruded = true;
-        }
-      } else {
-        auto& st = extruded_sis.emplace_back(new StateStruct(prefix+name,bst->entity));
-        st->dim = bst->dim;
-        st->dim.push_back(nlayers);
-        st->meshPart = meshPart;
-        st->extruded = true;
-      }
-    }
-    m_field_accessor->addStateStructs(extruded_sis);
-  };
+  //     int nlayers = layers_lid->numLayers;
+  //     if (layers_lid->layerOrd) {
+  //       for (int il=0; il<nlayers; ++il) {
+  //         auto& st = extruded_sis.emplace_back(new StateStruct(prefix+name+"_"+std::to_string(il),bst->entity));
+  //         st->dim = bst->dim;
+  //         st->meshPart = meshPart;
+  //         st->extruded = true;
+  //       }
+  //     } else {
+  //       auto& st = extruded_sis.emplace_back(new StateStruct(prefix+name,bst->entity));
+  //       st->dim = bst->dim;
+  //       st->dim.push_back(nlayers);
+  //       st->meshPart = meshPart;
+  //       st->extruded = true;
+  //     }
+  //   }
+  //   m_field_accessor->addStateStructs(extruded_sis);
+  // };
 
-  process_list(extrude_names,"extruded_");
-  process_list(interpolate_names,"interpolated_");
+  // process_list(extrude_names,"extruded_");
+  // process_list(interpolate_names,"interpolated_");
 
   // m_field_accessor->addStateStructs(extruded_sis);
   m_field_data_set = true;

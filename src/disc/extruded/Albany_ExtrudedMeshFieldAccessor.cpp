@@ -50,11 +50,20 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
     default:
       throw std::runtime_error("Unrecognized/unsupported StateInfo entity.\n");
   }
+
+  if (st->extruded) {
+    // This state is either extruded from basal mesh or interpolated from a layered basal state
+    // Either way, we must have a state with the same name
+    auto bst = find_basal_state(st);
+    if (bst->layered) {
+      // We are extruding, so nothing to do. The 3d state will be 
+    }
+  }
   print(*this);
 }
 
 void ExtrudedMeshFieldAccessor::
-createStateArrays ()
+createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
   // We need to be careful here. Say we have a state X with layout (Node).
   // If X is also a state in the basal mesh, we may have to extrude/interpolate
@@ -63,24 +72,22 @@ createStateArrays ()
   //  - state X is stored also in the basal mesh as (Node): extrude
   // The reason we need to be careful is that we only have the basal mesh to
   // store the arrays, and we may not be able to store 2 fields with the same
-  // name but different layout. 
-  auto find_in_basal = [&](const Teuchos::RCP<StateStruct>& st, const StateInfoStruct& basal_states) {
-    Teuchos::RCP<StateStruct> p;
-    for (auto bst : basal_states) {
-      if (st->name==bst->name)
-        p = bst;
-        break;
-    }
-    return p;
-  };
-
+  // name but different layout.
+  int num_ws = workset_sizes.size();
   for (auto st : elem_sis) {
-    auto bst = find_in_basal(st,m_basal_field_accessor->getElemSIS());
+    auto bst = find_basal_state(st);
     if (not bst.is_null()) {
       // We only allow name clashing if this field was extruded/interpolated from a basal one
-      if (bst->layered) {
-        // Ok, the basal state is just a layered field, which we need to interpolate in the full mesh
-      } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (not bst->extruded, std::runtime_error,
+          "[ExtrudedMeshFieldAccessor::createStateArrays] Error! Non-extruded state name clashes with basal disc state name.\n"
+          "  - state name: " + bst->name + "\n");
+      for (int ws=0; ws<num_ws; ++ws) {
+        auto& state = elemStateArrays[ws];
+        if (bst->layered) {
+          // The basal state will be interpolated
+        } else {
+          // The basal state will be extruded
+        }
       }
     }
   }
@@ -184,6 +191,22 @@ saveSolnMultiVector (const Thyra_MultiVector& /* soln */,
                      const bool               /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveSolnMultiVector()");
+}
+
+Teuchos::RCP<StateStruct>
+ExtrudedMeshFieldAccessor::find_basal_state (const Teuchos::RCP<StateStruct>& st)
+{
+  const auto& bes = m_basal_field_accessor->getElemSIS();
+  const auto& bns = m_basal_field_accessor->getNodalSIS();
+  const auto& bgs = m_basal_field_accessor->getGlobalSIS();
+  const auto& basal_states = st->stateType()==StateStruct::ElemState ? bes : (st->stateType()==StateStruct::NodeState ? bns : bgs);
+  Teuchos::RCP<StateStruct> p;
+  for (auto bst : basal_states) {
+    if (st->name==bst->name)
+      p = bst;
+      break;
+  }
+  return p;
 }
 
 }  // namespace Albany

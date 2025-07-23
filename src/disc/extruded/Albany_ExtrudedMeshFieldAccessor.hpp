@@ -41,7 +41,7 @@ public:
   // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
   void addStateStruct (const Teuchos::RCP<StateStruct>& st) override;
 
-  void createStateArrays () override;
+  void createStateArrays (const WorksetArray<int>& worksets_sizes);
 
   void transferNodeStatesToElemStates () override;
 
@@ -96,6 +96,7 @@ public:
                             const bool          overlapped) override;
 
 protected:
+  Teuchos::RCP<StateStruct> find_basal_state (const Teuchos::RCP<StateStruct>& st);
 
   // This class will rely on the basal mesh to store fields
   Teuchos::RCP<AbstractMeshFieldAccessor> m_basal_field_accessor;

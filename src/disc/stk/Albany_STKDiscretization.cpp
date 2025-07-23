@@ -1196,7 +1196,7 @@ STKDiscretization::computeWorksetInfo()
 
   m_ws_elem_coords.resize(numBuckets);
 
-  stkMeshStruct->get_field_accessor()->createStateArrays();
+  stkMeshStruct->get_field_accessor()->createStateArrays(m_workset_sizes);
 
   // Clear map if remeshing
   if (!elemGIDws.empty()) { elemGIDws.clear(); }

@@ -42,7 +42,7 @@ public:
   // Add StateStructs to the list of stored ones
   void addStateStruct(const Teuchos::RCP<StateStruct>& st);
 
-  void createStateArrays ();
+  void createStateArrays (const WorksetArray<int>& worksets_sizes);
   void transferNodeStatesToElemStates ();
 
   Teuchos::RCP<Teuchos::ParameterList> getParams() const {return params; }
