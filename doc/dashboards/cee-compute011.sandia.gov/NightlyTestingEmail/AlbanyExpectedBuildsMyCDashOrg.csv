@@ -1,27 +1,8 @@
 group, site, buildname 
-Nightly, pm-gpu, AlbanyPerfTests-gcc-cuda-sfad
-Nightly, pm-cpu, AlbanyPerfTests-gcc-serial-sfad
-Perlmutter-CPU, pm-cpu, Albany-gcc-serial
-Perlmutter-CPU, pm-cpu, compass-gcc-serial
-Perlmutter-CPU, pm-cpu, MALI-gcc-serial
-Perlmutter-CPU, pm-cpu, Trilinos-gcc-serial
-Perlmutter-GPU, pm-gpu, Albany-gcc-cuda
-Perlmutter-GPU, pm-gpu, compass-gcc-cuda
-Perlmutter-GPU, pm-gpu, MALI-gcc-cuda 
-Perlmutter-GPU, pm-gpu, Trilinos-gcc-cuda
-Perlmutter-GPU-UVM, pm-gpu-uvm, Albany-gcc-cuda-uvm
-Perlmutter-GPU-UVM, pm-gpu-uvm, compass-gcc-cuda-uvm
-Perlmutter-GPU-UVM, pm-gpu-uvm, MALI-gcc-cuda-uvm
-Perlmutter-GPU-UVM, pm-gpu-uvm, Trilinos-gcc-cuda-uvm
-Frontier, frontier, Albany-gcc-rocm
-Frontier, frontier, MALI-gcc-rocm
-Frontier, frontier, Trilinos-gcc-rocm
-Performance Builds, frontier, Albany-gcc-rocm-sfad12 
-Performance Builds, frontier, Albany-gcc-rocm-sfad24 
-Performance Builds, pm-gpu-uvm, Albany-gcc-cuda-uvm-sfad12 
-Performance Builds, pm-gpu-uvm, Albany-gcc-cuda-uvm-sfad24 
-Performance Builds, pm-gpu, Albany-gcc-cuda-sfad12
-Performance Builds, pm-gpu, Albany-gcc-cuda-sfad24
-Performance Builds, pm-cpu, Albany-gcc-serial-sfad12
-Performance Builds, pm-cpu, Albany-gcc-serial-sfad24
-
+Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2
+Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2-sfad6
+Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2-sfad12
+Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2-sfad16
+Nightly, weaver.sandia.gov, Albany-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2-sfad24
+Nightly, weaver.sandia.gov, Trilinos-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-cuda_11.2.r11.2-Release
+Nightly, weaver.sandia.gov, MALI-Linux-4.18.0-372.9.1.el8.ppc64le-gcc-8-Release-cuda_11.2.r11.2
