@@ -19,8 +19,6 @@ cmake \
     -D ENABLE_CHECK_FPE:BOOL=ON \
     -D ENABLE_MPAS_INTERFACE:BOOL=OFF \
     -D ENABLE_CISM_INTERFACE:BOOL=OFF \
-    -D ENABLE_CISM_CHECK_COMPARISONS:BOOL=OFF \
-    -D ENABLE_CISM_REDUCED_COMM:BOOL=OFF \
     -D SEACAS_EPU=${TRILINOSSRCDIR}/build/install/bin/epu \
     -D SEACAS_DECOMP=${TRILINOSSRCDIR}/build/install/bin/decomp \
     -D SEACAS_EXODIFF=${TRILINOSSRCDIR}/build/install/bin/exodiff \
@@ -30,7 +28,6 @@ cmake \
     -D TRILINOS_BUILD_DIR=${TRILINOSBLDDIR} \
     -D PYTHON_EXECUTABLE='/usr/bin/python3.6m' \
     -D PYTHON_INCLUDE_PATH='/usr/include/python3.6m' \
-    -D ENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON \
     -D SWIG_EXECUTABLE='/tpls/install/bin/swig' \
 ..
   
