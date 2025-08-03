@@ -9,6 +9,8 @@ rm -rf  albanyNightlyBuildsTwoif.csv
 
 git clone git@github.com:TriBITSPub/TriBITS.git
 
+source set_proxies.sh 
+source modules.sh 
 
 now=$(date +"%Y-%m-%d")
 
