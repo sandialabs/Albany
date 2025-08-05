@@ -36,28 +36,34 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   std::cout << "BASAL SIS:\n";
   print(*m_basal_field_accessor);
 
+  int num_state_layers = -1;
   switch (st->entity) {
     case StateStruct::ElemData:   [[fallthrough]];
-    case StateStruct::QuadPoint:  [[fallthrough]];
     case StateStruct::ElemNode:
+      num_state_layers = m_elem_numbering_lid->numLayers;
       elem_sis.push_back(st); break;
     case StateStruct::WorksetValue:
       global_sis.push_back(st); break;
     case StateStruct::NodalData:            [[fallthrough]];
     case StateStruct::NodalDataToElemNode:  [[fallthrough]];
     case StateStruct::NodalDistParameter:
+      num_state_layers = m_elem_numbering_lid->numLayers+1;
       nodal_sis.push_back(st); break;
+    case StateStruct::QuadPoint:  [[fallthrough]]; // No support for QP states yet
     default:
       throw std::runtime_error("Unrecognized/unsupported StateInfo entity.\n");
   }
 
-  if (st->extruded) {
-    // This state is either extruded from basal mesh or interpolated from a layered basal state
-    // Either way, we must have a state with the same name
-    auto bst = find_basal_state(st);
-    if (bst->layered) {
-      // We are extruding, so nothing to do. The 3d state will be 
+  if (find_basal_state(st).is_null()) {
+    auto bst = Teuchos::rcp(new StateStruct(st));
+    if (num_state_layers>0) {
+      bst->dim.push_back(m_elem_numbering_lid->numLayers);
     }
+    if (util::starts_with(st->name,"extruded_")) {
+      bst->ebName = get_basal_part_name(st->name);
+    }
+
+    m_basal_field_accessor->addStateStruct(bst);
   }
   print(*this);
 }
@@ -76,17 +82,46 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
   int num_ws = worksets_sizes.size();
   for (auto st : elem_sis) {
     auto bst = find_basal_state(st);
-    if (not bst.is_null()) {
-      // We only allow name clashing if this field was extruded/interpolated from a basal one
-      TEUCHOS_TEST_FOR_EXCEPTION (not bst->extruded, std::runtime_error,
-          "[ExtrudedMeshFieldAccessor::createStateArrays] Error! Non-extruded state name clashes with basal disc state name.\n"
-          "  - state name: " + bst->name + "\n");
-      for (int ws=0; ws<num_ws; ++ws) {
-        auto& state = elemStateArrays[ws];
-        if (bst->layered) {
-          // The basal state will be interpolated
-        } else {
-          // The basal state will be extruded
+    bool has_bst = bst.is_null();
+    // We only allow name clashing if this field was extruded/interpolated from a basal one
+    TEUCHOS_TEST_FOR_EXCEPTION (has_bst and not bst->extruded and not bst->layered, std::runtime_error,
+        "[ExtrudedMeshFieldAccessor::createStateArrays] Error! State name clashes with basal disc state name.\n"
+        "  - state name: " + bst->name + "\n"
+        "NOTE: name can clash only if the basal state is interpolated or extruded vertically.\n");
+    for (int ws=0; ws<num_ws; ++ws) {
+      auto& state = elemStateArrays[ws][st->name];
+      auto ws_size = worksets_sizes[ws];
+      if (has_bst) {
+        // There's a field in the basal mesh (either layered or basal-only), but the 3d field will have
+        // different dims. So we cannot "view" the basal mesh field. Instead, create state managed arrays
+        switch (st->dim.size()) {
+          case 1:
+            state.resize(data,ws_size); break;
+          case 2:
+            state.resize(data,ws_size,dim[1]); break;
+          case 3:
+            state.resize(data,ws_size,dim[1],dim[2]); break;
+          case 4:
+            state.resize(data,ws_size,dim[1],dim[2],dim[3]); break;
+          default:
+            throw std::runtime_error("Error! Unexpected/unsupported rank for elem state '" + st->name + "'.\n");
+        }
+      } else {
+        // The basal field accessor (BFA) did not have a state with this name. So we did register the 3d state as
+        // a "n+1 dimensional" state in the BFA. We can view that data here
+        auto dev_ptr = state.dev().data();
+        auto host_ptr = state.host().data();
+        switch (st->dim.size()) {
+          case 1:
+            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size); break;
+          case 2:
+            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,dim[1]); break;
+          case 3:
+            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,dim[1],dim[2]); break;
+          case 4:
+            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,dim[1],dim[2],dim[3]); break;
+          default:
+            throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
         }
       }
     }

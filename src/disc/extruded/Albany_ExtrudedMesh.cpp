@@ -120,17 +120,6 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   sideSetMeshStructs["upperside"] = m_basal_mesh;
 }
 
-std::string ExtrudedMesh::
-get_basal_part_name (const std::string& extruded_part_name) const
-{
-  const std::string prefix = "extruded_";
-  TEUCHOS_TEST_FOR_EXCEPTION (extruded_part_name.substr(0,prefix.length())!=prefix, std::logic_error,
-      "Error! Extruded part name does not start with 'extruded_'.\n"
-      " - part name: " + extruded_part_name + "\n");
-
-  return extruded_part_name.substr(prefix.length());
-}
-
 void ExtrudedMesh::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,

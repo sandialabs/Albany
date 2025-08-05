@@ -7,6 +7,7 @@
 #include <Albany_ExtrudedDiscretization.hpp>
 
 #include <Albany_ExtrudedConnManager.hpp>
+#include <Albany_ExtrudedMeshUtils.hpp>
 #include <Albany_CommUtils.hpp>
 #include <Albany_ThyraUtils.hpp>
 #include "Albany_Macros.hpp"
@@ -617,7 +618,6 @@ ExtrudedDiscretization::computeWorksetInfo()
     }
   }
 
-  // TODO: tell field accessor to init states
   m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
 }
 
@@ -687,7 +687,7 @@ ExtrudedDiscretization::computeSideSets()
             "Error! Unexpected value for side set name.\n"
             "  - ss name: " + ss + "\n"
             "  - supported values: basalside, upperside, lateralside, extruded_*\n");
-        basal_ss_names.push_back(m_extruded_mesh->get_basal_part_name(ss));
+        basal_ss_names.push_back(get_basal_part_name(ss));
       }
 
       // First, figure out the largest basal side GID (so we can build a proper LayeredMeshNumbering)
