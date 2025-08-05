@@ -149,7 +149,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
   const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Interpolate Basal Fields",{});
 
-  m_field_accessor->extrudeBasalStates
+  // m_field_accessor->extrudeBasalStates
   // const auto& basal_sis = m_basal_mesh->get_field_accessor()->getAllSIS();
   // auto process_list = [&](const Teuchos::Array<std::string>& names,
   //                         const std::string& prefix) {

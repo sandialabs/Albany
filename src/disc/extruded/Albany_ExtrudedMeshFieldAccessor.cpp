@@ -37,8 +37,8 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   print(*m_basal_field_accessor);
 
   switch (st->entity) {
-    case StateStruct::ElemData:   [[falthrough]];
-    case StateStruct::QuadPoint:  [[falthrough]];
+    case StateStruct::ElemData:   [[fallthrough]];
+    case StateStruct::QuadPoint:  [[fallthrough]];
     case StateStruct::ElemNode:
       elem_sis.push_back(st); break;
     case StateStruct::WorksetValue:
@@ -73,7 +73,7 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
   // The reason we need to be careful is that we only have the basal mesh to
   // store the arrays, and we may not be able to store 2 fields with the same
   // name but different layout.
-  int num_ws = workset_sizes.size();
+  int num_ws = worksets_sizes.size();
   for (auto st : elem_sis) {
     auto bst = find_basal_state(st);
     if (not bst.is_null()) {

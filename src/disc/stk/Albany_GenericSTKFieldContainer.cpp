@@ -179,8 +179,6 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   if (st->layered) {
     std::string tmp_str = st->name + "_NLC";
 
-    TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
-                                "Error! Another layered state with the same name already exists.\n");
     TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error,
                                 "Error! Invalid layer dimension for state " + st->name + ".\n");
     mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
@@ -206,8 +204,8 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
     TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes[ws]!=elem_buckets[ws]->size(), std::logic_error,
         "[GenericSTKFieldContainer::createStateArrays] Error! Input workset size does not match mesh bucket size.\n"
         " - workset id        : " << ws << "\n"
-        " - input workset_size: " << workset_size[ws] + "\n"
-        " - mesh bucket size  : " << elem_bucket[ws]->size() + "\n");
+        " - input workset_size: " << worksets_sizes[ws] + "\n"
+        " - mesh bucket size  : " << elem_buckets[ws]->size() + "\n");
   }
 
   elemStateArrays.resize(elem_buckets.size());
@@ -292,7 +290,7 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
     auto fn = metaData->get_field<double>(NODE_RANK,st->name);
     for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
       const auto& b = *elem_buckets[ws];
-      data = reinterpret_cast<double*>(b.field_data_location(*f));
+      auto data = reinterpret_cast<double*>(b.field_data_location(*f));
       auto& state = elemStateArrays[ws][st->name];
       switch (rank) {
         case 2:

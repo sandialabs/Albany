@@ -40,8 +40,8 @@ setFieldOnMesh (const std::string& name,
 
   // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
   // entity id stride faster (it's a 2d view with layout left)
-  int ncmps = dev_mv->extent(1);
-  int nents = dev_mv->extent(0);
+  int ncmps = dev_mv.extent(1);
+  int nents = dev_mv.extent(0);
   Kokkos::RangePolicy<> policy(0,nents*ncmps);
   auto tag_view = m_tags.at(name).view();
   auto lambda = KOKKOS_LAMBDA(int idx) {

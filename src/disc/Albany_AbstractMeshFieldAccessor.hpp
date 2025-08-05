@@ -7,6 +7,7 @@
 #ifndef ALBANY_ABSTRACT_MESH_FIELD_ACCESSOR_HPP
 #define ALBANY_ABSTRACT_MESH_FIELD_ACCESSOR_HPP
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_DOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
@@ -43,8 +44,9 @@ public:
 
   // Call the one above after looping over the input vector
   void addStateStructs(const StateInfoStruct& sis) {
-    for (const auto& st : sis)
+    for (const auto& st : sis) {
       addStateStruct(st);
+    }
   }
   void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) {
     if (Teuchos::nonnull(sis))

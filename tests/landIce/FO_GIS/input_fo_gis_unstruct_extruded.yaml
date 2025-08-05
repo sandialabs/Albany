@@ -55,7 +55,7 @@ ANONYMOUS:
   Discretization:
     Number Of Time Derivatives: 0
     Method: Extruded
-    Columnwise Ordering: false
+    Columnwise Ordering: true
     NumLayers: 5
     Thickness Field Name: ice_thickness
     # Use Glimmer Spacing: true
