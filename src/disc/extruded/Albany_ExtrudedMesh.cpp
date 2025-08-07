@@ -53,10 +53,12 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   std::vector<std::string> lateralParts = {"lateralside"};
 
   for (const auto& ns : basal_mesh_specs->nsNames) {
+    if (ns=="lateral") continue; // extruded_lateral would just be the same as lateral
     nsNames.push_back ("extruded_" + ns);
     nsNames.push_back ("basal_" + ns);
   }
   for (const auto& ss : basal_mesh_specs->ssNames) {
+    if (ss=="lateralside") continue; // extruded_lateralside would just be the same as lateralside
     auto pname = "extruded_" + ss;
     ssNames.push_back (pname);
     lateralParts.push_back(pname);

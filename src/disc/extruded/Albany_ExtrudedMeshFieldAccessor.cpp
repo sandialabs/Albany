@@ -1,4 +1,5 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
+#include "Albany_ExtrudedMeshUtils.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_StringUtils.hpp"
 
@@ -55,7 +56,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   }
 
   if (find_basal_state(st).is_null()) {
-    auto bst = Teuchos::rcp(new StateStruct(st));
+    auto bst = Teuchos::rcp(new StateStruct(*st));
     if (num_state_layers>0) {
       bst->dim.push_back(m_elem_numbering_lid->numLayers);
     }
@@ -96,13 +97,13 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
         // different dims. So we cannot "view" the basal mesh field. Instead, create state managed arrays
         switch (st->dim.size()) {
           case 1:
-            state.resize(data,ws_size); break;
+            state.resize(st->name,ws_size); break;
           case 2:
-            state.resize(data,ws_size,dim[1]); break;
+            state.resize(st->name,ws_size,st->dim[1]); break;
           case 3:
-            state.resize(data,ws_size,dim[1],dim[2]); break;
+            state.resize(st->name,ws_size,st->dim[1],st->dim[2]); break;
           case 4:
-            state.resize(data,ws_size,dim[1],dim[2],dim[3]); break;
+            state.resize(st->name,ws_size,st->dim[1],st->dim[2],st->dim[3]); break;
           default:
             throw std::runtime_error("Error! Unexpected/unsupported rank for elem state '" + st->name + "'.\n");
         }
@@ -115,11 +116,11 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
           case 1:
             state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size); break;
           case 2:
-            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,dim[1]); break;
+            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,st->dim[1]); break;
           case 3:
-            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,dim[1],dim[2]); break;
+            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,st->dim[1],st->dim[2]); break;
           case 4:
-            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,dim[1],dim[2],dim[3]); break;
+            state.reset_from_dev_host_ptr(dev_ptr,host_ptr,ws_size,st->dim[1],st->dim[2],st->dim[3]); break;
           default:
             throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
         }
@@ -128,7 +129,7 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
   }
   print(*m_basal_field_accessor);
   print(*this);
-  throw NotYetImplemented("ExtrudedMeshFieldAccessor::createStateArrays()");
+  // throw NotYetImplemented("ExtrudedMeshFieldAccessor::createStateArrays()");
 }
 
 void ExtrudedMeshFieldAccessor::
@@ -235,12 +236,15 @@ ExtrudedMeshFieldAccessor::find_basal_state (const Teuchos::RCP<StateStruct>& st
   const auto& bns = m_basal_field_accessor->getNodalSIS();
   const auto& bgs = m_basal_field_accessor->getGlobalSIS();
   const auto& basal_states = st->stateType()==StateStruct::ElemState ? bes : (st->stateType()==StateStruct::NodeState ? bns : bgs);
+  std::cout << "looking for " << st->name << " in basal " << (st->stateType()==StateStruct::ElemState ? "elem" : (st->stateType()==StateStruct::NodeState ? "node" : "global")) << " states...\n";
   Teuchos::RCP<StateStruct> p;
   for (auto bst : basal_states) {
-    if (st->name==bst->name)
+    if (st->name==bst->name) {
       p = bst;
       break;
+    }
   }
+  std::cout << " -> not found\n";
   return p;
 }
 
