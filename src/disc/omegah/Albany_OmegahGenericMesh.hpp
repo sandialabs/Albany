@@ -20,7 +20,9 @@ public:
   // ------------- Override from base class ------------- //
   std::string meshLibName () const override { return "Omega_h"; }
 
-  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
+  void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                     const Teuchos::RCP<StateInfoStruct>& sis,
+                     std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis) override;
   void setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
   LO get_num_local_nodes () const override;
