@@ -195,6 +195,15 @@ ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 }
 
 void ExtrudedSTKMeshStruct::
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
+{
+  basalMeshStruct->setFieldData(comm,side_set_sis["basalside"],{});
+  GenericSTKMeshStruct::setFieldData(comm,sis,side_set_sis);
+}
+
+void ExtrudedSTKMeshStruct::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;

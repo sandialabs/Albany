@@ -2222,7 +2222,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   discParams->set("1D Elements",factor*ne_x);
   auto sis = Teuchos::rcp(new StateInfoStruct(getMeshStruct()->get_field_accessor()->getAllSIS()));
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
-  stkMeshStruct->setFieldData(comm);
+  stkMeshStruct->setFieldData(comm,sis,{});
   stkMeshStruct->getFieldContainer()->addStateStructs(sis);
   this->setFieldData();
   stkMeshStruct->setBulkData(comm);
