@@ -16,8 +16,8 @@ public:
 
   void addStateStructs(const StateInfoStruct& sis) override;
 
-  void createStateArrays (const WorksetArray<int>& /* worksets_sizes */) override { throw NotYetImplemented("OmegahMeshFieldAccessor::createStateArrays"); }
-  void transferNodeStatesToElemStates () override { throw NotYetImplemented("OmegahMeshFieldAccessor::transferNodeStatesToElemStates"); }
+  void createStateArrays (const WorksetArray<int>& worksets_sizes) override;
+  void transferNodeStatesToElemStates () override;
 
   // TODO: move this in the base class?
   void addFieldOnMesh (const std::string& name,
