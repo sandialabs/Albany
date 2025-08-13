@@ -102,6 +102,8 @@ public:
 
 protected:
   Teuchos::RCP<Omega_h::Mesh>   m_mesh;
+
+  std::map<std::string,Omega_h::Write<ST>> m_tags;
 };
 
 } // namespace Albany

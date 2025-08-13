@@ -20,6 +20,7 @@ addFieldOnMesh (const std::string& name,
       "Error! Tag '" + name + "' is already defined on the mesh.\n");
   Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
   m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
+  m_tags[name] = f;
 }
 
 void OmegahMeshFieldAccessor::
@@ -36,14 +37,19 @@ setFieldOnMesh (const std::string& name,
 
   // Create 1d view of input MV
   auto dev_mv = getDeviceData(mv);
-  ThyraVDeviceView<const ST> dev_v1d (dev_mv.data(),dev_mv.size());
 
-  // Create 1d array, deep copy MV into it
-  Omega_h::Write<ST> arr(tag->array().size());
-  Kokkos::deep_copy(arr.view(),dev_v1d);
-
-  // Copy in omegah mesh
-  m_mesh->set_tag<ST>(entityDim,name,arr,false);
+  // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
+  // entity id stride faster (it's a 2d view with layout left)
+  int ncmps = dev_mv.extent(1);
+  int nents = dev_mv.extent(0);
+  Kokkos::RangePolicy<> policy(0,nents*ncmps);
+  auto tag_view = m_tags.at(name).view();
+  auto lambda = KOKKOS_LAMBDA(int idx) {
+    int ient = idx % nents;
+    int icmp = idx / nents;
+    tag_view (ient*ncmps + icmp) = dev_mv(ient,icmp);
+  };
+  Kokkos::parallel_for(policy,lambda);
 }
 
 void OmegahMeshFieldAccessor::
