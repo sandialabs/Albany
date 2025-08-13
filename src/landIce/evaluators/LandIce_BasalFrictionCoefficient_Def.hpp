@@ -476,6 +476,7 @@ void BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, Temperat
 operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
 
   ParamScalarT mu, bedRoughness, power, bulkFriction, basalDebris;
+  ParamScalarT N0, u0;     // declare regularization values for effective pressure and sliding velocity
 
   if ((beta_type == BETA_TYPE::POWER_LAW) || (beta_type==BETA_TYPE::REGULARIZED_COULOMB) || (beta_type==BETA_TYPE::DEBRIS_FRICTION) ) {
     if (logParameters) {
@@ -689,15 +690,17 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
 
         const double secsInYr = 365*24*3600;
         const double scaling = secsInYr*pow(1000,n+1); //turns flow rate from [Pa^{-n} s^{-1}] to [k^{-1} kPa^{-n} yr^{-1}]
+        N0    = 1.0e3;                 // Regularization value for effective pressure [kPa]
+        u0    = 500.0;                 // Regularization value for sliding velocity [m yr^-1]
         switch (flowRate_type) {
         case FLOW_RATE_TYPE::CONSTANT: { 
           beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
-//          beta(cell,ipt) = ((muValue * NVal * std::pow (u_norm(cell,ipt), power-1.0)) / std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n), power)) + (bulkFrictionValue * NVal / u_norm(cell,ipt)) + (basalDebrisValue * u_norm(cell,ipt));
+          beta(cell,ipt) += ((bulkFrictionValue * NVal / (1.0 + NVal / N0)) + (basalDebrisValue * u_norm(cell,ipt) / (1.0 + u_norm(cell,ipt) / u0))) / u_norm(cell,ipt);
 	  }
 	  break;
         case FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE:
           beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
-  //        beta(cell,ipt) = ((muValue * NVal * std::pow (u_norm(cell,ipt), power-1.0)) / std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate(cell)*std::pow(NVal,n), power)) + (bulkFrictionValue * NVal / u_norm(cell,ipt)) + (basalDebrisValue * u_norm(cell,ipt));
+          beta(cell,ipt) += ((bulkFrictionValue * NVal / (1.0 + NVal / N0)) + (basalDebrisValue * u_norm(cell,ipt) / (1.0 + u_norm(cell,ipt) / u0))) / u_norm(cell,ipt);
           break;
         }
 
