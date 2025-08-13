@@ -116,7 +116,7 @@ struct StateStruct
   }
 
   const std::string                  name{""};
-  FieldDims                          dim;
+  FieldDims                          dim = {};
   MeshFieldEntity                    entity;
   std::string                        initType{""};
   double                             initValue{0.0};
@@ -130,6 +130,7 @@ struct StateStruct
   bool        output{false};
   bool        restartDataAvailable{false};
   bool        layered{false};
+  bool        extruded{false};
   std::string meshPart{""};
   std::string ebName{""};
 
@@ -143,7 +144,7 @@ class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
 public:
   StateInfoStruct () = default;
 
-  Teuchos::RCP<StateStruct> find (const std::string& name) {
+  Teuchos::RCP<StateStruct> find (const std::string& name) const {
     for (const auto& entry : *this) {
       if (entry->name==name) return entry;
     }

@@ -20,6 +20,7 @@ addFieldOnMesh (const std::string& name,
       "Error! Tag '" + name + "' is already defined on the mesh.\n");
   Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
   m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
+  m_tags[name] = f;
 }
 
 void OmegahMeshFieldAccessor::
@@ -36,18 +37,23 @@ setFieldOnMesh (const std::string& name,
 
   // Create 1d view of input MV
   auto dev_mv = getDeviceData(mv);
-  ThyraVDeviceView<const ST> dev_v1d (dev_mv.data(),dev_mv.size());
 
-  // Create 1d array, deep copy MV into it
-  Omega_h::Write<ST> arr(tag->array().size());
-  Kokkos::deep_copy(arr.view(),dev_v1d);
-
-  // Copy in omegah mesh
-  m_mesh->set_tag<ST>(entityDim,name,arr,false);
+  // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
+  // entity id stride faster (it's a 2d view with layout left)
+  int ncmps = dev_mv.extent(1);
+  int nents = dev_mv.extent(0);
+  Kokkos::RangePolicy<> policy(0,nents*ncmps);
+  auto tag_view = m_tags.at(name).view();
+  auto lambda = KOKKOS_LAMBDA(int idx) {
+    int ient = idx % nents;
+    int icmp = idx / nents;
+    tag_view (ient*ncmps + icmp) = dev_mv(ient,icmp);
+  };
+  Kokkos::parallel_for(policy,lambda);
 }
 
 void OmegahMeshFieldAccessor::
-addStateStructs(const StateInfoStruct& sis)
+addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
   auto product = [](const auto& vec, int start) {
     return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());
@@ -72,37 +78,48 @@ addStateStructs(const StateInfoStruct& sis)
     return dim_ncomp;
   };
 
-  for (const auto& st : sis) {
-    // These will be warranted a dof mgr later
-    if (st->entity==StateStruct::NodalDistParameter) {
+  // nodal/nodal_parameter states  will be warranted a dof mgr later,
+  // while elem_sis are states that can be processed by LoadStateField
+  // and LoadSideSetStateField evaluators
+  switch(st->entity) {
+    case StateStruct::NodalDistParameter:
       nodal_parameter_sis.push_back(st);
       nodal_sis.push_back(st);
-    } else if (st->entity==StateStruct::NodalDataToElemNode) {
+      break;
+    case StateStruct::NodalDataToElemNode:
       nodal_sis.push_back(st);
-    }
+      elem_sis.push_back(st);
+      break;
+    case StateStruct::ElemData:   [[fallthrough]];
+    case StateStruct::ElemNode:   [[fallthrough]];
+    case StateStruct::QuadPoint:
+      elem_sis.push_back(st);
+      break;
+    default:
+      throw std::runtime_error("Error! Unrecognized/unsupported state entity type.\n");
+  }
 
-    auto dim_ncomp = get_ent_dim_and_ncomp(*st);
-    int ent_dim = dim_ncomp.first;
-    int ncomp = dim_ncomp.second;
-    if (ent_dim==-1) {
-      if (ncomp==1) {
-        mesh_scalar_states.emplace(st->name,st->initValue);
-      } else {
-        mesh_vector_states[st->name].resize(ncomp,st->initValue);
-      }
+  auto dim_ncomp = get_ent_dim_and_ncomp(*st);
+  int ent_dim = dim_ncomp.first;
+  int ncomp = dim_ncomp.second;
+  if (ent_dim==-1) {
+    if (ncomp==1) {
+      mesh_scalar_states.emplace(st->name,st->initValue);
     } else {
-      addFieldOnMesh(st->name,ent_dim,ncomp);
+      mesh_vector_states[st->name].resize(ncomp,st->initValue);
     }
+  } else {
+    addFieldOnMesh(st->name,ent_dim,ncomp);
+  }
 
-    if (st->layered) {
-      // Need to also add the global vector state for the normalized layers coords
-      auto nlayers = st->dim.back();
-      mesh_vector_states[st->name+"_NLC"].resize(nlayers);
-    }
+  if (st->layered) {
+    // Need to also add the global vector state for the normalized layers coords
+    auto nlayers = st->dim.back();
+    mesh_vector_states[st->name+"_NLC"].resize(nlayers);
   }
 }
 
-void OmegahMeshFieldAccessor::createStateArrays ()
+void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
   int num_elems = m_mesh->nelems();
   int num_nodes = m_mesh->nverts();
@@ -112,36 +129,40 @@ void OmegahMeshFieldAccessor::createStateArrays ()
   nodeStateArrays.resize(1);
 
   // Elem states
+  int ws_start = 0;
+  int num_ws = worksets_sizes.size();
   for (const auto& st : elem_sis) {
-    auto f = m_mesh->get_tag<ST>(m_mesh->dim(),st->name);
+    auto data = m_tags.at(st->name).data();
     auto dim = st->dim;
-    // TODO: I don't like const cast, but I don't know how else to get
-    //       a WRITABLE handle to the data stored in the mesh
-    auto data = const_cast<ST*>(f->array().data());
-    switch (dim.size()) {
-      case 1:
-        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems); break;
-      case 2:
-        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems,dim[1]); break;
-      case 3:
-        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2]); break;
-      case 4:
-        elemStateArrays[0][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2],dim[3]); break;
-      default:
-        throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+    int stride = 1;
+    for (auto d : dim) stride *= d;
+    stride /= dim[0];
+
+    for (int ws=0; ws<num_ws; ++ws) {
+      switch (dim.size()) {
+        case 1:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems); break;
+        case 2:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems,dim[1]); break;
+        case 3:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2]); break;
+        case 4:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2],dim[3]); break;
+        default:
+          throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+      }
+      data += worksets_sizes[ws]*stride;
     }
   }
 
   // Nodal states
+  // NOTE: nodal states have just 1 workset
   for (const auto& st : nodal_sis) {
-    auto f = m_mesh->get_tag<ST>(0,st->name);
+    auto data = m_tags.at(st->name).data();
     auto dim = st->dim;
     if (st->entity != StateStruct::NodalData) {
       dim.erase(dim.begin()); // NodalDistParameter and NodalDataToElemNode have <Cell> as first dim
     }
-    // TODO: I don't like const cast, but I don't know how else to get
-    //       a WRITABLE handle to the data stored in the mesh
-    auto data = const_cast<ST*>(f->array().data());
     switch (dim.size()) {
       case 1:
         nodeStateArrays[0][st->name].reset_from_dev_ptr(data,num_nodes); break;

@@ -105,6 +105,8 @@ public:
     return m_comm;
   }
 
+  int get_top_side_pos () const { return m_top; }
+  int get_bot_side_pos () const { return m_bot; }
 private:
   void albanyBuildGlobalUnknowns ();
 

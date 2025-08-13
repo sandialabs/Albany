@@ -1,4 +1,5 @@
 #include "Albany_ExtrudedConnManager.hpp"
+#include <Albany_ExtrudedMeshUtils.hpp>
 
 #include <Panzer_FieldAggPattern.hpp>
 #include <Panzer_GeometricAggFieldPattern.hpp>
@@ -123,7 +124,7 @@ getConnectivityMask (const std::string& sub_part_name) const
     if (sub_part_name=="lateral" or sub_part_name=="lateralside") {
       basal_ss_names = m_mesh->basal_mesh()->meshSpecs[0]->ssNames;
     } else {
-      basal_ss_names.push_back(m_mesh->get_basal_part_name(sub_part_name));
+      basal_ss_names.push_back(get_basal_part_name(sub_part_name));
     }
     LayeredMeshNumbering<LO> dofs_layers(m_num_hdofs_per_elem*m_num_fields,m_num_vdofs_per_elem,LayeredMeshOrdering::LAYER);
     for (const auto& basal_ssn : basal_ss_names) {
@@ -165,7 +166,7 @@ part_dim (const std::string& part_name) const
     return ms->numDim - 1;
   } else {
     try {
-      return m_conn_mgr_h->part_dim(m_mesh->get_basal_part_name(part_name));
+      return m_conn_mgr_h->part_dim(get_basal_part_name(part_name));
     } catch (...) {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
           "[ExtrudedConnManager::part_dim] Invalid part name: " + part_name + "\n");

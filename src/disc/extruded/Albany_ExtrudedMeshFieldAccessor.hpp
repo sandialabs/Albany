@@ -4,11 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_MESH_FIELD_ACCESSOR_HPP
-#define ALBANY_MESH_FIELD_ACCESSOR_HPP
+#ifndef ALBANY_EXTRUDED_MESH_FIELD_ACCESSOR_HPP
+#define ALBANY_EXTRUDED_MESH_FIELD_ACCESSOR_HPP
 
 #include "Albany_AbstractMeshFieldAccessor.hpp"
 #include "Albany_LayeredMeshNumbering.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -34,8 +35,15 @@ public:
 
   virtual ~ExtrudedMeshFieldAccessor () = default;
 
+  // override, do not hide
+  using AbstractMeshFieldAccessor::addStateStructs;
+
   // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
-  void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void addStateStruct (const Teuchos::RCP<StateStruct>& st) override;
+
+  void createStateArrays (const WorksetArray<int>& worksets_sizes);
+
+  void transferNodeStatesToElemStates () override;
 
   // Read from mesh methods
   void fillSolnVector (Thyra_Vector&        soln,
@@ -88,6 +96,7 @@ public:
                             const bool          overlapped) override;
 
 protected:
+  Teuchos::RCP<StateStruct> find_basal_state (const Teuchos::RCP<StateStruct>& st);
 
   // This class will rely on the basal mesh to store fields
   Teuchos::RCP<AbstractMeshFieldAccessor> m_basal_field_accessor;
@@ -97,4 +106,4 @@ protected:
 
 }  // namespace Albany
 
-#endif  // ALBANY_STK_MESH_FIELD_ACCESSOR_HPP
+#endif  // ALBANY_EXTRUDED_MESH_FIELD_ACCESSOR_HPP

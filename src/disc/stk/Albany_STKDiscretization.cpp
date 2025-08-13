@@ -1196,7 +1196,7 @@ STKDiscretization::computeWorksetInfo()
 
   m_ws_elem_coords.resize(numBuckets);
 
-  stkMeshStruct->get_field_accessor()->createStateArrays();
+  stkMeshStruct->get_field_accessor()->createStateArrays(m_workset_sizes);
 
   // Clear map if remeshing
   if (!elemGIDws.empty()) { elemGIDws.clear(); }
@@ -2201,7 +2201,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   int factor = adapt_params.get("Refining Factor",2);
   discParams->set("1D Elements",factor*ne_x);
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
-  stkMeshStruct->setFieldData(comm);
+  stkMeshStruct->setFieldData(comm,Teuchos::null,{});
   this->setFieldData();
   stkMeshStruct->setBulkData(comm);
 

@@ -7,6 +7,7 @@
 #ifndef ALBANY_ABSTRACT_MESH_FIELD_ACCESSOR_HPP
 #define ALBANY_ABSTRACT_MESH_FIELD_ACCESSOR_HPP
 
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_DOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
@@ -38,8 +39,16 @@ public:
 
   virtual ~AbstractMeshFieldAccessor () = default;
 
-  // Add states to mesh (and possibly to nodal_sis/nodal_parameter_sis)
-  void addStateStructs(const Teuchos::RCP<const StateInfoStruct>& sis) {
+  // Add state to mesh (and possibly to nodal_sis/nodal_parameter_sis)
+  virtual void addStateStruct (const Teuchos::RCP<StateStruct>& st) = 0;
+
+  // Call the one above after looping over the input vector
+  void addStateStructs(const StateInfoStruct& sis) {
+    for (const auto& st : sis) {
+      addStateStruct(st);
+    }
+  }
+  void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) {
     if (Teuchos::nonnull(sis))
       addStateStructs(*sis);
   }
@@ -55,12 +64,10 @@ public:
 
   // To be called by disc once the underlying mesh has been fully created,
   // so that we can grab pointers where appropriate
-  virtual void createStateArrays () = 0;
+  virtual void createStateArrays (const WorksetArray<int>& worksets_sizes) = 0;
 
   // For NodalDataToElemNode states, populate elem state array from corresponding node state array
   virtual void transferNodeStatesToElemStates () = 0;
-
-  virtual void addStateStructs(const StateInfoStruct& sis) = 0;
 
   const StateInfoStruct& getAllSIS()            const { return all_sis;             }
   const StateInfoStruct& getElemSIS()           const { return elem_sis;            }
