@@ -83,104 +83,101 @@ void set_output_role (AbstractSTKFieldContainer::STKFieldType& f, bool output) {
 }
 
 void GenericSTKFieldContainer::
-addStateStructs(const StateInfoStruct& sis)
+addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
-  // Code to parse the vector of StateStructs and create STK fields
-  for (const auto& st : sis) {
-    // Add to the stored SIS
-    all_sis.push_back(st);
+  // Add to the stored SIS
+  all_sis.push_back(st);
 
-    StateStruct::FieldDims& dim = st->dim;
-    if (st->entity == StateStruct::ElemData) {
-      if (dim.size()==1) {
-        // Scalar on cell
-        cell_scalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
-        stk::mesh::put_field_on_mesh(*cell_scalar_states.back(), metaData->universal_part(), 1, nullptr);
-        set_output_role(*cell_scalar_states.back(),st->output);
-      } else if (dim.size()==2) {
-        // Vector on cell
-        cell_vector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
-        stk::mesh::put_field_on_mesh(*cell_vector_states.back(), metaData->universal_part(), dim[1], nullptr);
-        set_output_role(*cell_vector_states.back(),st->output);
-      } else if (dim.size()==3) {
-        // 2nd order tensor on cell
-        cell_tensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
-        stk::mesh::put_field_on_mesh(*cell_tensor_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
-        set_output_role(*cell_tensor_states.back(),st->output);
-      } else {
-        throw std::logic_error("Error! Unexpected state rank.\n");
-      }
-      elem_sis.push_back(st);
-    } else if(st->entity == StateStruct::QuadPoint || st->entity == StateStruct::ElemNode){
-      if(dim.size() == 2){ // Scalar at QPs
-        qpscalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
-        stk::mesh::put_field_on_mesh(*qpscalar_states.back(), metaData->universal_part(), dim[1], nullptr);
-        set_output_role(*qpscalar_states.back(),st->output);
-      } else if(dim.size() == 3){ // Vector at QPs
-        qpvector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
-        // Multi-dim order is Fortran Ordering, so reversed here
-        stk::mesh::put_field_on_mesh(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
-        set_output_role(*qpvector_states.back(),st->output);
-      } else if(dim.size() == 4){ // Tensor at QPs
-        qptensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
-        // Multi-dim order is Fortran Ordering, so reversed here
-        auto num_tens_entries = dim[3]*dim[2];
-        stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                       metaData->universal_part(), num_tens_entries, dim[1], nullptr);
-        set_output_role(*qptensor_states.back(),st->output);
-      } else {
-        throw std::logic_error("Error: GenericSTKFieldContainer - cannot match QPData");
-      }
-      elem_sis.push_back(st);
-    } else if(st->stateType()==StateStruct::GlobalState) {
-      TEUCHOS_TEST_FOR_EXCEPTION (st->dim.size()>1, std::runtime_error,
-          "Unsupported rank (" << st->dim.size() << ") for GlobalState " << st->name << "\n");
-      // A single scalar/vector that applies over the entire workset (e.g. time)
-      if (st->dim[0]==1) {
-        mesh_scalar_states[st->name] = 0;
-      } else {
-        mesh_vector_states[st->name].resize(st->dim[0],0);
-      }
-      global_sis.push_back(st);
-    } else if ((st->entity == StateStruct::NodalData) ||(st->entity == StateStruct::NodalDataToElemNode) || (st->entity == StateStruct::NodalDistParameter)) {
-      // Definitely a nodal state
-      nodal_sis.push_back(st);
-      auto nodalFieldDim = dim;
-      if(st->entity == StateStruct::NodalDataToElemNode) {
-        nodalFieldDim.erase(nodalFieldDim.begin()); // Remove the <Cell> extent
-      } else if(st->entity == StateStruct::NodalDistParameter) {
-        // Also a dist parameter
-        nodal_parameter_sis.push_back(st);
-        nodalFieldDim.erase(nodalFieldDim.begin()); // Remove the <Cell> extent
-      }
-
-      auto& fld = metaData->declare_field<double>(stk::topology::NODE_RANK, st->name);
-      switch(nodalFieldDim.size()) {
-        case 1: // scalar
-          stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), 1, nullptr);
-          break;
-        case 2: // vector
-          stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[1], nullptr);
-          break;
-        case 3: // tensor
-          stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[2], nodalFieldDim[1], nullptr);
-          break;
-      }
-      set_output_role(fld,st->output);
+  StateStruct::FieldDims& dim = st->dim;
+  if (st->entity == StateStruct::ElemData) {
+    if (dim.size()==1) {
+      // Scalar on cell
+      cell_scalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+      stk::mesh::put_field_on_mesh(*cell_scalar_states.back(), metaData->universal_part(), 1, nullptr);
+      set_output_role(*cell_scalar_states.back(),st->output);
+    } else if (dim.size()==2) {
+      // Vector on cell
+      cell_vector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+      stk::mesh::put_field_on_mesh(*cell_vector_states.back(), metaData->universal_part(), dim[1], nullptr);
+      set_output_role(*cell_vector_states.back(),st->output);
+    } else if (dim.size()==3) {
+      // 2nd order tensor on cell
+      cell_tensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+      stk::mesh::put_field_on_mesh(*cell_tensor_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
+      set_output_role(*cell_tensor_states.back(),st->output);
     } else {
-      throw std::logic_error("Error: GenericSTKFieldContainer - cannot match unknown entity : " + std::to_string(static_cast<int>(st->entity)) + "\n");
+      throw std::logic_error("Error! Unexpected state rank.\n");
+    }
+    elem_sis.push_back(st);
+  } else if(st->entity == StateStruct::QuadPoint || st->entity == StateStruct::ElemNode){
+    if(dim.size() == 2){ // Scalar at QPs
+      qpscalar_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+      stk::mesh::put_field_on_mesh(*qpscalar_states.back(), metaData->universal_part(), dim[1], nullptr);
+      set_output_role(*qpscalar_states.back(),st->output);
+    } else if(dim.size() == 3){ // Vector at QPs
+      qpvector_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+      // Multi-dim order is Fortran Ordering, so reversed here
+      stk::mesh::put_field_on_mesh(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
+      set_output_role(*qpvector_states.back(),st->output);
+    } else if(dim.size() == 4){ // Tensor at QPs
+      qptensor_states.push_back(& metaData->declare_field< double >(stk::topology::ELEMENT_RANK, st->name));
+      // Multi-dim order is Fortran Ordering, so reversed here
+      auto num_tens_entries = dim[3]*dim[2];
+      stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
+                     metaData->universal_part(), num_tens_entries, dim[1], nullptr);
+      set_output_role(*qptensor_states.back(),st->output);
+    } else {
+      throw std::logic_error("Error: GenericSTKFieldContainer - cannot match QPData");
+    }
+    elem_sis.push_back(st);
+  } else if(st->stateType()==StateStruct::GlobalState) {
+    TEUCHOS_TEST_FOR_EXCEPTION (st->dim.size()>1, std::runtime_error,
+        "Unsupported rank (" << st->dim.size() << ") for GlobalState " << st->name << "\n");
+    // A single scalar/vector that applies over the entire workset (e.g. time)
+    if (st->dim[0]==1) {
+      mesh_scalar_states[st->name] = 0;
+    } else {
+      mesh_vector_states[st->name].resize(st->dim[0],0);
+    }
+    global_sis.push_back(st);
+  } else if ((st->entity == StateStruct::NodalData) ||(st->entity == StateStruct::NodalDataToElemNode) || (st->entity == StateStruct::NodalDistParameter)) {
+    // Definitely a nodal state
+    nodal_sis.push_back(st);
+    auto nodalFieldDim = dim;
+    if(st->entity == StateStruct::NodalDataToElemNode) {
+      nodalFieldDim.erase(nodalFieldDim.begin()); // Remove the <Cell> extent
+    } else if(st->entity == StateStruct::NodalDistParameter) {
+      // Also a dist parameter
+      nodal_parameter_sis.push_back(st);
+      nodalFieldDim.erase(nodalFieldDim.begin()); // Remove the <Cell> extent
     }
 
-    // Checking if the field is layered, in which case the normalized layer coordinates need to be stored in the meta data
-    if (st->layered) {
-      std::string tmp_str = st->name + "_NLC";
-
-      TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
-                                  "Error! Another layered state with the same name already exists.\n");
-      TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error,
-                                  "Error! Invalid layer dimension for state " + st->name + ".\n");
-      mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
+    auto& fld = metaData->declare_field<double>(stk::topology::NODE_RANK, st->name);
+    switch(nodalFieldDim.size()) {
+      case 1: // scalar
+        stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), 1, nullptr);
+        break;
+      case 2: // vector
+        stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[1], nullptr);
+        break;
+      case 3: // tensor
+        stk::mesh::put_field_on_mesh(fld , metaData->universal_part(), nodalFieldDim[2], nodalFieldDim[1], nullptr);
+        break;
     }
+    set_output_role(fld,st->output);
+  } else {
+    throw std::logic_error("Error: GenericSTKFieldContainer - cannot match unknown entity : " + std::to_string(static_cast<int>(st->entity)) + "\n");
+  }
+
+  // Checking if the field is layered, in which case the normalized layer coordinates need to be stored in the meta data
+  if (st->layered) {
+    std::string tmp_str = st->name + "_NLC";
+
+    TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
+                                "Error! Another layered state with the same name already exists.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (dim.back()<=0, std::logic_error,
+                                "Error! Invalid layer dimension for state " + st->name + ".\n");
+    mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
   }
 }
 

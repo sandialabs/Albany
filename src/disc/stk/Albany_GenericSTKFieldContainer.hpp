@@ -40,7 +40,7 @@ public:
   virtual ~GenericSTKFieldContainer() = default;
 
   // Add StateStructs to the list of stored ones
-  void addStateStructs(const StateInfoStruct& sis);
+  void addStateStruct(const Teuchos::RCP<StateStruct>& st);
 
   void createStateArrays (const WorksetArray<int>& worksets_sizes);
   void transferNodeStatesToElemStates ();

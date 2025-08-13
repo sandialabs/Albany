@@ -14,7 +14,7 @@ public:
   OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh);
   ~OmegahMeshFieldAccessor () = default;
 
-  void addStateStructs(const StateInfoStruct& sis) override;
+  void addStateStruct(const Teuchos::RCP<StateStruct>& st) override;
 
   void createStateArrays (const WorksetArray<int>& worksets_sizes) override;
   void transferNodeStatesToElemStates () override;
