@@ -202,8 +202,33 @@ ctest_start(${CTEST_TEST_TYPE})
 
 if (BUILD_MALI)
 
+  # HACK: override cmake command and reuse Albany configure output.
   #
-  # Build MALI, no configuration required
+
+  set (CTEST_CMAKE_COMMAND "true")
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
+    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
+    OPTIONS ""
+    RETURN_VALUE HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit MALI (Albany) configure results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Albany build was not configured!")
+  endif ()
+
+  #
+  # Build MALI
   #
 
   MESSAGE("\nBuilding MALI with script ${CTEST_BUILD_COMMAND} ...\n")
