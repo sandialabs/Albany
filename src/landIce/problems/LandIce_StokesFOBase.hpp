@@ -321,6 +321,8 @@ protected:
   std::string effective_pressure_name;
   std::string basal_friction_name;
   std::string bed_roughness_name;
+  std::string bulk_friction_name;
+  std::string basal_debris_name;
   std::string sliding_velocity_name;
   std::string vertically_averaged_velocity_name;
 
@@ -1591,6 +1593,49 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       fm0.template registerEvaluator<EvalT>(ptr_lambda);
     }
 
+  //--- Shared Parameter for basal friction coefficient: bulk friction coefficient ---//
+  //p = Teuchos::rcp(new Teuchos::ParameterList("Bulk Friction Coefficient: bulk_friction"));
+
+  //param_name = ParamEnumName::BulkFriction;
+  //p->set<std::string>("Parameter Name", param_name);
+  //p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+  //p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+  //p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+  //p->set<double>("Default Nominal Value", params->sublist("LandIce Bulk Friction Coefficient").get<double>(param_name,-1.0));
+
+  //Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_bulk_friction;
+    
+    //--- Shared Parameter for bulk friction coefficient: bulk_friction ---//
+    param_name = "Bulk Friction Coefficient";
+
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+      p = Teuchos::rcp(new Teuchos::ParameterList("Bulk Friction Coefficient: bulk_friction"));
+      p->set<std::string>("Parameter Name", param_name);
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", pl->sublist("Bulk Friction Coefficient").get<double>(param_name,-1.0));
+
+      Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_bulk_friction;
+      ptr_bulk_friction = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_bulk_friction);
+    }
+
+    //--- Shared Parameter for basal debris factor: basal_debris ---//
+    param_name = "Basal Debris Factor";
+
+    if(!PHAL::is_field_evaluated<EvalT>(fm0, param_name, dl->shared_param)) {
+      p = Teuchos::rcp(new Teuchos::ParameterList("Basal Debris Factor: basal_debris"));
+      p->set<std::string>("Parameter Name", param_name);
+      p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+      p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
+      p->set<double>("Default Nominal Value", pl->sublist("Basal Debris Factor").get<double>(param_name,-1.0));
+
+      Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_basal_debris;
+      ptr_basal_debris = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ptr_basal_debris);
+    }
     //--- Shared Parameter for basal friction coefficient: muPowerLaw ---//
     param_name = ParamEnumName::Mu;
 
