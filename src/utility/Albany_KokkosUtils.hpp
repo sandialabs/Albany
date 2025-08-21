@@ -97,6 +97,12 @@ atomic_add(D dst, const V& val)
   KU::AtomicAddImpl<ExeSpace, D, V>::atomic_add(dst, val);
 }
 
+#ifdef KOKKOS_ENABLE_CUDA
+typedef Kokkos::LaunchBounds<> AlbanyLaunchBounds;
+#else
+typedef Kokkos::LaunchBounds<128,2> AlbanyLaunchBounds;
+#endif
+
 }
 
 #endif // ALBANY_KOKKOS_UTILS_HPP
