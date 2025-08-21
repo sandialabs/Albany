@@ -20,6 +20,7 @@ addFieldOnMesh (const std::string& name,
       "Error! Tag '" + name + "' is already defined on the mesh.\n");
   Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
   m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
+  m_tags[name] = f;
 }
 
 void OmegahMeshFieldAccessor::
@@ -36,18 +37,23 @@ setFieldOnMesh (const std::string& name,
 
   // Create 1d view of input MV
   auto dev_mv = getDeviceData(mv);
-  ThyraVDeviceView<const ST> dev_v1d (dev_mv.data(),dev_mv.size());
 
-  // Create 1d array, deep copy MV into it
-  Omega_h::Write<ST> arr(tag->array().size());
-  Kokkos::deep_copy(arr.view(),dev_v1d);
-
-  // Copy in omegah mesh
-  m_mesh->set_tag<ST>(entityDim,name,arr,false);
+  // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
+  // entity id stride faster (it's a 2d view with layout left)
+  int ncmps = dev_mv.extent(1);
+  int nents = dev_mv.extent(0);
+  Kokkos::RangePolicy<> policy(0,nents*ncmps);
+  auto tag_view = m_tags.at(name).view();
+  auto lambda = KOKKOS_LAMBDA(int idx) {
+    int ient = idx % nents;
+    int icmp = idx / nents;
+    tag_view (ient*ncmps + icmp) = dev_mv(ient,icmp);
+  };
+  Kokkos::parallel_for(policy,lambda);
 }
 
 void OmegahMeshFieldAccessor::
-addStateStructs(const StateInfoStruct& sis)
+addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
   auto product = [](const auto& vec, int start) {
     return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());
@@ -72,33 +78,166 @@ addStateStructs(const StateInfoStruct& sis)
     return dim_ncomp;
   };
 
-  for (const auto& st : sis) {
-    // These will be warranted a dof mgr later
-    if (st->entity==StateStruct::NodalDistParameter) {
+  // nodal/nodal_parameter states  will be warranted a dof mgr later,
+  // while elem_sis are states that can be processed by LoadStateField
+  // and LoadSideSetStateField evaluators
+  switch(st->entity) {
+    case StateStruct::NodalDistParameter:
       nodal_parameter_sis.push_back(st);
       nodal_sis.push_back(st);
-    } else if (st->entity==StateStruct::NodalDataToElemNode) {
+      break;
+    case StateStruct::NodalDataToElemNode:
       nodal_sis.push_back(st);
-    }
+      elem_sis.push_back(st);
+      break;
+    case StateStruct::ElemData:   [[fallthrough]];
+    case StateStruct::ElemNode:   [[fallthrough]];
+    case StateStruct::QuadPoint:
+      elem_sis.push_back(st);
+      break;
+    default:
+      throw std::runtime_error("Error! Unrecognized/unsupported state entity type.\n");
+  }
 
-    auto dim_ncomp = get_ent_dim_and_ncomp(*st);
-    int ent_dim = dim_ncomp.first;
-    int ncomp = dim_ncomp.second;
-    if (ent_dim==-1) {
-      if (ncomp==1) {
-        mesh_scalar_states.emplace(st->name,st->initValue);
-      } else {
-        mesh_vector_states[st->name].resize(ncomp,st->initValue);
-      }
+  auto dim_ncomp = get_ent_dim_and_ncomp(*st);
+  int ent_dim = dim_ncomp.first;
+  int ncomp = dim_ncomp.second;
+  if (ent_dim==-1) {
+    if (ncomp==1) {
+      mesh_scalar_states.emplace(st->name,st->initValue);
     } else {
-      addFieldOnMesh(st->name,ent_dim,ncomp);
+      mesh_vector_states[st->name].resize(ncomp,st->initValue);
+    }
+  } else {
+    addFieldOnMesh(st->name,ent_dim,ncomp);
+  }
+
+  if (st->layered) {
+    // Need to also add the global vector state for the normalized layers coords
+    auto nlayers = st->dim.back();
+    mesh_vector_states[st->name+"_NLC"].resize(nlayers);
+  }
+}
+
+void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& worksets_sizes)
+{
+  int num_elems = m_mesh->nelems();
+  int num_nodes = m_mesh->nverts();
+
+  // We don't have workset sizes in here, so use single workset
+  elemStateArrays.resize(1);
+  nodeStateArrays.resize(1);
+
+  // Elem states
+  int ws_start = 0;
+  int num_ws = worksets_sizes.size();
+  for (const auto& st : elem_sis) {
+    auto data = m_tags.at(st->name).data();
+    auto dim = st->dim;
+    int stride = 1;
+    for (auto d : dim) stride *= d;
+    stride /= dim[0];
+
+    for (int ws=0; ws<num_ws; ++ws) {
+      switch (dim.size()) {
+        case 1:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems); break;
+        case 2:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems,dim[1]); break;
+        case 3:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2]); break;
+        case 4:
+          elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems,dim[1],dim[2],dim[3]); break;
+        default:
+          throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+      }
+      data += worksets_sizes[ws]*stride;
+    }
+  }
+
+  // Nodal states
+  // NOTE: nodal states have just 1 workset
+  for (const auto& st : nodal_sis) {
+    auto data = m_tags.at(st->name).data();
+    auto dim = st->dim;
+    if (st->entity != StateStruct::NodalData) {
+      dim.erase(dim.begin()); // NodalDistParameter and NodalDataToElemNode have <Cell> as first dim
+    }
+    switch (dim.size()) {
+      case 1:
+        nodeStateArrays[0][st->name].reset_from_dev_ptr(data,num_nodes); break;
+      case 2:
+        nodeStateArrays[0][st->name].reset_from_dev_ptr(data,num_nodes,dim[1]); break;
+      case 3:
+        nodeStateArrays[0][st->name].reset_from_dev_ptr(data,num_nodes,dim[1],dim[2]); break;
+      default:
+        throw std::runtime_error("Error! Unsupported rank for node state '" + st->name + "'.\n");
+    }
+  }
+
+  // Global states
+  for (const auto& st : global_sis) {
+    auto& state = globalStates[st->name];
+    if (st->dim.size()==1) {
+      state.reset_from_host_ptr(&mesh_scalar_states[st->name],1);
+    } else if (st->dim.size()==1) {
+      state.reset_from_host_ptr(mesh_vector_states[st->name].data(),st->dim[0]);
+    } else {
+      throw std::runtime_error("Error! Unsupported rank for global state '" + st->name + "'.\n");
+    }
+  }
+}
+
+void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
+{
+  int num_elems = m_mesh->nelems();
+  auto elem_nodes = m_mesh->ask_elem_verts();
+  auto elem_nodes_h = hostRead(elem_nodes);
+  int num_elem_nodes = elem_nodes.size() / num_elems;
+
+  for (const auto& st : nodal_sis) {
+    if (st->entity!=StateStruct::NodalDataToElemNode)
+      continue;
+    const auto& dim = st->dim;
+    const auto rank = st->dim.size();
+
+    const auto& node_state = m_mesh->get_tag<ST>(0,st->name)->array();
+          auto& elem_state = elemStateArrays[0][st->name];
+    switch (rank) {
+      case 2:
+        elem_state.resize(st->name,num_elems,dim[1]); break;
+      case 3:
+        elem_state.resize(st->name,num_elems,dim[1],dim[2]); break;
+      case 4:
+        elem_state.resize(st->name,num_elems,dim[1],dim[2],dim[3]); break;
+      default:
+        throw std::runtime_error("Error! Unsupported rank for node state '" + st->name + "'.\n");
     }
 
-    if (st->layered) {
-      // Need to also add the global vector state for the normalized layers coords
-      auto nlayers = st->dim.back();
-      mesh_vector_states[st->name+"_NLC"].resize(nlayers);
+    auto& elem_state_h = elem_state.host();
+    auto  node_state_h = hostRead(node_state);
+    for (int i=0; i<num_elems; ++i) {
+      for (int j=0; j<num_elem_nodes; ++j) {
+        switch(rank) {
+          case 2:
+            elem_state_h(i, j) = node_state_h[elem_nodes_h[i*num_elem_nodes+j]];
+            break;
+          case 3:
+            for (size_t k=0; k<dim[2]; ++k) {
+              auto offset = i*num_elem_nodes*dim[2]+j*dim[2]+k;
+              elem_state_h(i, j, k) = node_state_h[elem_nodes_h[offset]];
+            } break;
+          case 4:
+            for (size_t k=0; k<dim[2]; ++k) {
+              for (size_t l=0; l<dim[3]; ++l) {
+                auto offset = i*num_elem_nodes*dim[2]*dim[3]+j*dim[2]*dim[3]+k*dim[3]+l;
+                elem_state_h(i, j, k, l) = node_state_h[elem_nodes_h[offset]];
+              }
+            } break;
+        }
+      }
     }
+    elem_state.sync_to_dev();
   }
 }
 
