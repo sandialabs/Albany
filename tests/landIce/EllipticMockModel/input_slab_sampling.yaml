@@ -1,0 +1,127 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+    Write Jacobian to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Steady
+    Name: LandIce Laplacian Sampling 2D
+    Compute Sensitivities: true
+    Side Name: SideSet0
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+    Dirichlet BCs: {}
+    Neumann BCs: {}
+    Parameters:
+      Number Of Parameters: 0
+    LandIce Laplacian Regularization:
+      Mass Coefficient: 7.9788 # sqrt(2 / pi) /rho / sigma   
+      Laplacian Coefficient: 0.01 #4.2255e-01 #1.0e+02  # rho/sigma/4/sqrt(2 pi)
+      Robin Coefficient: 0.1987 #4.2255e-02 #1.0e+01    # 0.35211 / sigma / sqrt(pi)
+      Lump Mass Matrix: false
+    Cubature Degree: 3
+  Discretization:
+    1D Elements: 100
+    2D Elements: 100
+    1D Scale: 1.0
+    2D Scale: 1.0
+    Method: STK2D
+    Number Of Time Derivatives: 0
+    #Exodus Output File Name: humboldt_laplacian_2d_sampling.exo
+    Use Serial Mesh: false
+    Required Fields Info:
+      Number Of Fields: 1
+      Field 0:
+        Field Name: weighted_normal_sample
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Value: 1.0
+    Side Set Discretizations:
+      Side Sets: [SideSet0]
+      SideSet0:
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Use Serial Mesh: false
+  Piro:
+    Sensitivity Method: Adjoint
+    NOX:
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-05
+          Test 1:
+            Test Type: NormWRMS
+            Absolute Tolerance: 1.0e-05
+            Relative Tolerance: 1.0e-03
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 10
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Linear Solver:
+            Write Linear System: false
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Maximum Iterations: 100
+                      Convergence Tolerance: 1e-6
+                      Num Blocks: 100
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                  VerboseObject:
+                    Verbosity Level: medium
+              Preconditioner Type: Ifpack2
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: RILUK
+                  Ifpack2 Settings:
+                    'fact: level-of-fill': 0
+          Rescue Bad Newton Solve: true
+      Line Search:
+        Full Step:
+          Full Step: 1.0
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Test Value: 1.099246508182e+01
+    Relative Tolerance: 1.0e-06
+...
