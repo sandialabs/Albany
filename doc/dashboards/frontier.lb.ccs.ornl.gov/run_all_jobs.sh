@@ -6,6 +6,16 @@ cd ${BASE_DIR}/repos/Albany
 git pull
 cd ${BASE_DIR}
 
+# Update ali-perf-test repo to get most recent changes
+cd ${BASE_DIR}/repos/ali-perf-tests
+git pull
+cd ${BASE_DIR}
+
+# Update ali-perf-data repo to get most recent changes
+cd ${BASE_DIR}/repos/ali-perf-data
+git pull
+cd ${BASE_DIR}
+
 # load modules
 source ${BASE_DIR}/frontier_gpu_modules.sh >& ${BASE_DIR}/modules_albany.out
 
