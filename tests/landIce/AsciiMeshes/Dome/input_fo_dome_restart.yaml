@@ -6,7 +6,7 @@ ANONYMOUS:
     Solution Method: Continuation
     Compute Sensitivities: true
     Name: LandIce Stokes First Order 3D
-    Basal Side Name: basal
+    Basal Side Name: Basal
     Basal Cubature Degree: 3
     Flat Bed Approximation: true
     Parameters: 
@@ -28,7 +28,7 @@ ANONYMOUS:
       BC 0:
         Type: Basal Friction
         Cubature Degree: 3
-        Side Set Name: basal
+        Side Set Name: Basal
         Basal Friction Coefficient: 
           Type: Constant
           Beta: 1.0e+07
@@ -61,8 +61,8 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
     Side Set Discretizations: 
-      Side Sets: [basal]
-      basal: 
+      Side Sets: [Basal]
+      Basal:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Exodus Output File Name: dome_restart_basal_out.exo
