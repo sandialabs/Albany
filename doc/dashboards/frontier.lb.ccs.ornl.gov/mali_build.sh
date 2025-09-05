@@ -1,9 +1,12 @@
 BASE_DIR=/lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm
 DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
+
+# Build SCORPIO
+bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
+
+SCORPIO_DIR=${DEPLOY_DIR}/builds/scorpio-gnu
 ALBANY_INSTALL_DIR=${DEPLOY_DIR}/builds/AlbanyInstallSfad12
 TRILINOS_INSTALL_DIR=${DEPLOY_DIR}/builds/TrilinosInstall
-
-SCORPIO_DIR=/lustre/orion/cli193/proj-shared/automated_testing/scorpio-gnu
 
 cd ${BASE_DIR}/repos/E3SM/components/mpas-albany-landice
 
