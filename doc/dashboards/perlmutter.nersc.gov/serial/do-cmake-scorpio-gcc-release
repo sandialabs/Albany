@@ -1,0 +1,30 @@
+#!/bin/bash
+# SCORPIO build script
+BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
+DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial
+
+mkdir -p ${BASE_DIR}/build/ScoBuildReleaseGcc
+cd ${BASE_DIR}/build/ScoBuildReleaseGcc
+
+rm -rf CMake*
+
+SCORPIO_SRC=${BASE_DIR}/repos/E3SM/externals/scorpio
+SCORPIO_INSTALL=${DEPLOY_DIR}/builds/scorpio-gnu
+
+cmake \
+  -D CMAKE_INSTALL_PREFIX:PATH=${SCORPIO_INSTALL} \
+  -D CMAKE_C_COMPILER=mpicc \
+  -D CMAKE_CXX_COMPILER=mpicxx \
+  -D CMAKE_Fortran_COMPILER=mpif90 \
+  -D PnetCDF_PATH=${PNETCDF_DIR} \
+  -D NetCDF_C_PATH=${NETCDF_DIR} \
+  -D NetCDF_Fortran_PATH=${NETCDF_DIR} \
+  -D WITH_HDF5=ON \
+  -D HDF5_PATH=${HDF5_DIR} \
+  -D PIO_ENABLE_TIMING=OFF \
+  -D PIO_ENABLE_TESTS=OFF \
+${SCORPIO_SRC}
+
+make -j 96
+make install
+cd ${BASE_DIR}
