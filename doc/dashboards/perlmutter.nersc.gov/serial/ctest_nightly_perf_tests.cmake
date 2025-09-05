@@ -204,7 +204,7 @@ if (BUILD_ALI_PERF_TESTS)
     "-DSFAD12_EXE_DIR:FILEPATH=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstallSfad12/bin"
     "-DSFAD24_EXE_DIR:FILEPATH=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/AlbanyInstallSfad24/bin"
     "-DMALI_EXE_DIR:FILEPATH=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/mali"
-    "-DMESH_FILE_DIR:FILEPATH=/home/projects/albany/ali-perf-tests-meshes"
+    "-DMESH_FILE_DIR:FILEPATH=/global/cfs/cdirs/fanssie/automated_testing/ali-perf-tests-meshes"
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"

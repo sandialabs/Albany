@@ -5,7 +5,7 @@
 #SBATCH --output=logs/AlbanyPerfTesting.cuda.%j.out
 #SBATCH --error=logs/AlbanyPerfTesting.cuda.%j.err
 #SBATCH --constraint=gpu
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --qos=regular
 #SBATCH --time=02:00:00
 #SBATCH --ntasks-per-node=4
