@@ -12,7 +12,7 @@ ANONYMOUS:
       BC 0:
         Type: Basal Friction
         Cubature Degree: 3
-        Side Set Name: basal
+        Side Set Name: Basal
         Basal Friction Coefficient:
           Type: Constant
           Beta: 1e7

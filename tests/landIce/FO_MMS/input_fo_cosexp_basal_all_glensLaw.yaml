@@ -7,14 +7,14 @@ ANONYMOUS:
     Solution Method: Continuation
     Compute Sensitivities: true
     Dirichlet BCs: 
-      DBC on NS nodeset99 for DOF U1: 1.0
-      DBC on NS nodeset2 for DOF U0: 0.0
-      DBC on NS nodeset3 for DOF U0: 0.0
+      DBC on NS NodeSet99 for DOF U1: 1.0
+      DBC on NS NodeSet2 for DOF U0: 0.0
+      DBC on NS NodeSet3 for DOF U0: 0.0
     LandIce BCs: 
       Number: 4
       BC 0:
         Type: Syntetic Test
-        Side Set Name: sideset0
+        Side Set Name: SideSet0
         Cubature Degree: 3
         BC Params:
           Type: ExpTrig
@@ -24,7 +24,7 @@ ANONYMOUS:
           n: 3.0
       BC 1:
         Type: Syntetic Test
-        Side Set Name: sideset0
+        Side Set Name: SideSet0
         Cubature Degree: 3
         BC Params:
           Type: ExpTrig
@@ -34,7 +34,7 @@ ANONYMOUS:
           n: 3.0
       BC 2:
         Type: Syntetic Test
-        Side Set Name: sideset1
+        Side Set Name: SideSet1
         Cubature Degree: 3
         BC Params:
           Type: ExpTrig
@@ -44,7 +44,7 @@ ANONYMOUS:
           n: 3.0
       BC 3:
         Type: Syntetic Test
-        Side Set Name: sideset1
+        Side Set Name: SideSet1
         Cubature Degree: 3
         BC Params:
           Type: ExpTrig
