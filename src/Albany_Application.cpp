@@ -107,8 +107,15 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
       if (i == comm->MyPID()) {
         char buf[80];
         char hostname[80];
-        gethostname(hostname, sizeof(hostname));
-        sprintf(buf, "Host: %s   PID: %d", hostname, getpid());
+        // Ensure hostname is NUL-terminated even if truncated
+        if (gethostname(hostname, sizeof(hostname)) != 0) {
+          // Fallback if gethostname fails
+          hostname[0] = '\0';
+        } else {
+          hostname[sizeof(hostname) - 1] = '\0';
+        }
+        // Use snprintf to bound writes into buf (which is size 80)
+        (void)snprintf(buf, sizeof(buf), "Host: %s   PID: %d", hostname, getpid());
         *out << buf << std::endl;
         std::cout.flush();
         sleep(1);
@@ -1415,7 +1422,8 @@ Application::computeGlobalResidualImpl(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100];  // create string for file name
-  sprintf(nameResUnscaled, "resUnscaled%i_residual", countScale);
+  // Bound the formatted output to the buffer size
+  (void)snprintf(nameResUnscaled, sizeof(nameResUnscaled), "resUnscaled%i_residual", countScale);
   writeMatrixMarket(f, nameResUnscaled);
 #endif
 
@@ -1425,7 +1433,8 @@ Application::computeGlobalResidualImpl(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResScaled[100];  // create string for file name
-  sprintf(nameResScaled, "resScaled%i_residual", countScale);
+  // Bound the formatted output to the buffer size
+  (void)snprintf(nameResScaled, sizeof(nameResScaled), "resScaled%i_residual", countScale);
   writeMatrixMarket(f, nameResScaled);
 #endif
 
