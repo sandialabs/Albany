@@ -123,6 +123,7 @@ struct DualDynRankView {
     d_view = d;
     create_host_view<DeviceMemSpace>();
     sync_to_host();
+    built_from_ptr = false;
   }
 
   void reset_from_dev_ptr (DT* ptr,
@@ -139,6 +140,7 @@ struct DualDynRankView {
     d_view = dev_t(ptr,n0,n1,n2,n3,n4,n5,n6,n7);
     create_host_view<DeviceMemSpace>();
     sync_to_host();
+    built_from_ptr = true;
   }
 
   void reset_from_host_ptr (DT* ptr,
@@ -155,6 +157,7 @@ struct DualDynRankView {
     h_view = host_t(ptr,n0,n1,n2,n3,n4,n5,n6,n7);
     create_dev_view<DeviceMemSpace>();
     sync_to_dev();
+    built_from_ptr = true;
   }
 
   void resize (const std::string& name,
@@ -166,7 +169,9 @@ struct DualDynRankView {
                const size_t n5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
                const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
                const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG) {
-    ALBANY_ASSERT (d_view.size()==0, "Cannot resize a non-trivial DualDynRankView.");
+    ALBANY_ASSERT (not built_from_ptr,
+        "Cannot resize a DualDynRankView that was built from a pointer.\n"
+        "If you REALLY want to change the stored views, use the reset method.\n");
     *this = DualDynRankView<DT>(name,n0,n1,n2,n3,n4,n5,n6,n7);
   }
 
@@ -222,6 +227,7 @@ private:
   }
 #endif
 
+  bool    built_from_ptr = false;
   dev_t   d_view;
   host_t  h_view;
 };
