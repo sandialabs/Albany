@@ -21,9 +21,6 @@ public:
     return "Albany";
   }
 
-  // Checks that the extruded part name is "extruded_XYZ", and return XYZ
-  std::string get_basal_part_name (const std::string& extruded_part_name) const;
-
   const Teuchos::RCP<LayeredMeshNumbering<GO>>&
   cell_layers_gid () const { return m_elem_layers_data_gid; }
   const Teuchos::RCP<LayeredMeshNumbering<LO>>&
