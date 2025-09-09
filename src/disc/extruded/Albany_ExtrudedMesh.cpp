@@ -31,6 +31,13 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
 
+  // Create map part->basal_part
+  // upper/basal/bot/top parts map to the full basal mesh
+  m_part_to_basal_part["basalside"] = m_basal_mesh->meshSpecs[0]->ebName;
+  m_part_to_basal_part["upperside"] = m_basal_mesh->meshSpecs[0]->ebName;
+  m_part_to_basal_part["bottom"] = "";
+  m_part_to_basal_part["top"] = "";
+
   // Create extruded sideSets/nodeSets/elemBlocks names
   std::vector<std::string> nsNames = {"lateral", "bottom", "top"};
   std::vector<std::string> ssNames = {"lateralside", "basalside", "upperside"};
@@ -39,17 +46,25 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   for (const auto& ns : basal_mesh_specs->nsNames) {
     nsNames.push_back ("extruded_" + ns);
     nsNames.push_back ("basal_" + ns);
+
+    m_part_to_basal_part["extruded+" + ns] = ns;
+    m_part_to_basal_part["basal_+" + ns] = ns;
   }
   for (const auto& ss : basal_mesh_specs->ssNames) {
     auto pname = "extruded_" + ss;
     ssNames.push_back (pname);
     lateralParts.push_back(pname);
+    m_part_to_basal_part["extruded+" + ss] = ss;
   }
   std::string ebName = "extruded_" + basal_mesh_specs->ebName;
   std::map<std::string,int> ebNameToIndex =
   {
     { ebName, 0}
   };
+
+  // The whole mesh maps to the full basal mesh
+  m_part_to_basal_part[ebName] = basal_mesh_specs->ebName;
+  m_part_to_basal_part[""] = "";
 
   // Determine topology
   std::string elem2d_name(basal_mesh_specs->ctd.base->name);
@@ -79,17 +94,6 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
 
   meshSpecs[0]->sideSetMeshSpecs["basalside"] = m_basal_mesh->meshSpecs;
   sideSetMeshStructs["basalside"] = m_basal_mesh;
-}
-
-std::string ExtrudedMesh::
-get_basal_part_name (const std::string& extruded_part_name) const
-{
-  const std::string prefix = "extruded_";
-  TEUCHOS_TEST_FOR_EXCEPTION (extruded_part_name.substr(0,prefix.length())!=prefix, std::logic_error,
-      "Error! Extruded part name does not start with 'extruded_'.\n"
-      " - part name: " + extruded_part_name + "\n");
-
-  return extruded_part_name.substr(prefix.length());
 }
 
 void ExtrudedMesh::
