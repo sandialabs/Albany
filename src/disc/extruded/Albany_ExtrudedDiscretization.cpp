@@ -1160,8 +1160,8 @@ buildCellSideNodeNumerationMaps()
   // ONLY for basalside and upperside, since that's where we are likely to load data from mesh
   for (int ws=0; ws<getNumWorksets(); ++ws) {
     for (std::string ssn : {"basalside","upperside"}) {
-      auto& s2ssc = sideToSideSetCellMap[ssn];
-      auto& s2nn = sideNodeNumerationMap[ssn];
+      auto& s2ssc = m_side_to_ss_cell[ssn];
+      auto& s2nn = m_side_nodes_to_ss_cell_nodes[ssn];
 
       for (const auto& s : m_sideSets[ws][ssn]) {
         const GO basal_elem_GID = s2ssc[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);

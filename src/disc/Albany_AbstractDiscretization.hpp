@@ -219,12 +219,14 @@ public:
   const strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() const { return sideSetDiscretizations; }
 
   //! Get the map side_id->side_set_elem_id
-  virtual const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const = 0;
+  const strmap_t<std::map<GO, GO>>& getSideToSideSetCellMap() const {
+    return m_side_to_ss_cell;
+  }
 
   //! Get the map side_node_id->side_set_cell_node_id
-  virtual const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const = 0;
+  const strmap_t<std::map<GO, std::vector<int>>>& getSideNodeNumerationMap() const {
+    return m_side_nodes_to_ss_cell_nodes;
+  }
 
   //! Get MeshStruct
   virtual Teuchos::RCP<AbstractMeshStruct>
@@ -370,6 +372,13 @@ protected:
 
   // Dof manager for a scalar node field
   strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+
+  // For each ss, map the side_GID into vec, where vec[i]=k if the i-th
+  // node of the side corresponds to the k-th node of the cell in the side mesh
+  strmap_t<std::map<GO, std::vector<int>>> m_side_nodes_to_ss_cell_nodes;
+
+  // For each ss, map the side_GID to the cell_GID in the side mesh
+  strmap_t<std::map<GO, GO>>               m_side_to_ss_cell;
 
   // Workset information
   WorksetArray<int>           m_workset_sizes; // size of each ws

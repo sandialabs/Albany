@@ -123,18 +123,6 @@ public:
     return stkMeshStruct;
   }
 
-  const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const
-  {
-    return sideToSideSetCellMap;
-  }
-
-  const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const
-  {
-    return sideNodeNumerationMap;
-  }
-
   //! Flag if solution has a restart values -- used in Init Cond
   bool
   hasRestartSolution() const
@@ -370,8 +358,6 @@ public:
 
   // Sideset discretizations
   std::map<std::string, Teuchos::RCP<STKDiscretization>> sideSetDiscretizationsSTK;
-  std::map<std::string, std::map<GO, GO>>                sideToSideSetCellMap;
-  std::map<std::string, std::map<GO, std::vector<int>>>  sideNodeNumerationMap;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    projectors;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
 

@@ -73,18 +73,6 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::printCoords");
   }
 
-  //! Get the map side_id->side_set_elem_id
-  const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideToSideSetCellMap");
-  }
-
-  //! Get the map side_node_id->side_set_cell_node_id
-  const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideNodeNumerationMap");
-  }
-
   //! Get MeshStruct
   Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const override {

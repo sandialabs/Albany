@@ -72,17 +72,6 @@ public:
 
   Teuchos::RCP<AbstractMeshStruct> getMeshStruct() const override { return m_extruded_mesh; }
 
-  const std::map<std::string, std::map<GO, GO>>& getSideToSideSetCellMap() const override
-  {
-    throw NotYetImplemented("ExtrudedDiscretization::getSideToSideSetCellMap");
-  }
-
-  const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const override
-  {
-    throw NotYetImplemented("ExtrudedDiscretization::getSideNodeNumerationMap");
-  }
-
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const override { return false; }
 
@@ -147,7 +136,7 @@ public:
 
   void setFieldData() override;
 
- protected:
+protected:
 
   void getSolutionField(Thyra_Vector& result, bool overlapped) const;
 
@@ -238,8 +227,6 @@ public:
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
   // Sideset discretizations
-  strmap_t<std::map<GO, GO>>                sideToSideSetCellMap;
-  strmap_t<std::map<GO, std::vector<int>>>  sideNodeNumerationMap;
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    projectors;
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
 };
