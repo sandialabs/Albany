@@ -41,6 +41,7 @@ set (ALBANY_INCLUDE_DIRS
      ${Albany_SOURCE_DIR}/src/problems
      ${Albany_SOURCE_DIR}/src/responses
      ${Albany_SOURCE_DIR}/src/disc/stk
+     ${Albany_SOURCE_DIR}/src/disc/extruded
      ${Albany_SOURCE_DIR}/src/disc
      ${Albany_SOURCE_DIR}/src/utility
 )
@@ -234,9 +235,9 @@ list (APPEND SOURCES
   disc/Albany_MeshSpecs.cpp
   disc/Albany_DOFManager.cpp
   disc/Albany_DiscretizationUtils.cpp
-  disc/Albany_ExtrudedMesh.cpp
-  disc/Albany_ExtrudedConnManager.cpp
-  disc/Albany_ExtrudedDiscretization.cpp
+  disc/extruded/Albany_ExtrudedConnManager.cpp
+  disc/extruded/Albany_ExtrudedDiscretization.cpp
+  disc/extruded/Albany_ExtrudedMesh.cpp
   )
 list (APPEND HEADERS
   disc/Albany_DiscretizationUtils.hpp
@@ -247,9 +248,9 @@ list (APPEND HEADERS
   disc/Albany_MeshSpecs.hpp
   disc/Albany_ConnManager.hpp
   disc/Albany_DOFManager.hpp
-  disc/Albany_ExtrudedMesh.hpp
-  disc/Albany_ExtrudedConnManager.hpp
-  disc/Albany_ExtrudedDiscretization.hpp
+  disc/extruded/Albany_ExtrudedConnManager.hpp
+  disc/extruded/Albany_ExtrudedDiscretization.hpp
+  disc/extruded/Albany_ExtrudedMesh.hpp
   )
 
 #stk
