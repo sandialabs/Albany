@@ -349,14 +349,14 @@ StateManager::doSetStateArrays(
 
   // For each workset, loop over registered states
 
-  for (unsigned int i = 0; i < stateInfoPtr->size(); i++) {
-    const std::string& stateName    = (*stateInfoPtr)[i]->name;
-    const std::string& init_type    = (*stateInfoPtr)[i]->initType;
-    const std::string& ebName       = (*stateInfoPtr)[i]->ebName;
-    const double       init_val     = (*stateInfoPtr)[i]->initValue;
-    bool               have_restart = (*stateInfoPtr)[i]->restartDataAvailable;
-    StateStruct* pParentStruct = (*stateInfoPtr)[i]->pParentStateStruct;
-
+  bool transferNodalStates = false;
+  for (const auto& st : *stateInfoPtr) {
+    const std::string& stateName    = st->name;
+    const std::string& init_type    = st->initType;
+    const std::string& ebName       = st->ebName;
+    const double       init_val     = st->initValue;
+    bool               have_restart = st->restartDataAvailable;
+    StateStruct* pParentStruct = st->pParentStateStruct;
     // JTO: specifying zero recovers previous behavior
     // if (stateName == "zero")
     // {
@@ -365,7 +365,7 @@ StateManager::doSetStateArrays(
     // }
 
     *out << "StateManager: initializing state:  " << stateName << "\n";
-    switch ((*stateInfoPtr)[i]->entity) {
+    switch (st->entity) {
       case StateStruct::WorksetValue:
         if (have_restart) {
           *out << " from restart file." << std::endl;
