@@ -97,6 +97,14 @@ if (ALBANY_IFPACK2)
                        LABELS "LandIce;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_extruded.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_extruded.yaml)
+  add_test(${testName}_extruded ${Albany.exe} input_fo_gis_unstruct_extruded.yaml)
+  set_tests_properties(${testName}_extruded
+                       PROPERTIES
+                       LABELS "LandIce;Forward"
+                       FIXTURES_REQUIRED PopulateMeshes)
+
   # Memoization run
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_mem.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_mem.yaml)
