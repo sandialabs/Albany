@@ -21,9 +21,6 @@ public:
     return "Albany";
   }
 
-  // Checks that the extruded part name is "extruded_XYZ", and return XYZ
-  std::string get_basal_part_name (const std::string& extruded_part_name) const;
-
   const Teuchos::RCP<LayeredMeshNumbering<GO>>&
   cell_layers_gid () const { return m_elem_layers_data_gid; }
   const Teuchos::RCP<LayeredMeshNumbering<LO>>&
@@ -69,6 +66,10 @@ public:
 
   void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
+  std::string get_basal_part_name (const std::string& part_name) const {
+    return m_part_to_basal_part.at(part_name);
+  }
+
 protected:
 
   Teuchos::RCP<const Teuchos_Comm>          m_comm;
@@ -80,6 +81,8 @@ protected:
   Teuchos::RCP<LayeredMeshNumbering<LO>>    m_elem_layers_data_lid;
   Teuchos::RCP<LayeredMeshNumbering<GO>>    m_node_layers_data_gid;
   Teuchos::RCP<LayeredMeshNumbering<LO>>    m_node_layers_data_lid;
+
+  strmap_t<std::string>                     m_part_to_basal_part;
 };
 
 } // namespace Albany
