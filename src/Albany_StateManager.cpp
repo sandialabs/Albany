@@ -294,10 +294,6 @@ StateManager::initStateArrays(
     }
     doSetStateArrays(it.second, sis);
   }
-
-  // Now that node state have ALL been inited, we can transfer NodalDataToElemNode states
-  // values to thier Elem state counterparts
-  disc->getMeshStruct()->get_field_accessor()->transferNodeStatesToElemStates();
 }
 
 std::vector<std::string>
@@ -357,6 +353,10 @@ StateManager::doSetStateArrays(
     const double       init_val     = st->initValue;
     bool               have_restart = st->restartDataAvailable;
     StateStruct* pParentStruct = st->pParentStateStruct;
+
+    if (st->entity==StateStruct::NodalDataToElemNode) {
+      transferNodalStates = true;
+    }
     // JTO: specifying zero recovers previous behavior
     // if (stateName == "zero")
     // {
@@ -594,6 +594,11 @@ StateManager::doSetStateArrays(
     }
   }
   *out << std::endl;
+
+  // If we init-ed states with NodalDataToElemNode entity, we must transfer the
+  // new data to the elem-based states
+  if (transferNodalStates)
+    disc->getMeshStruct()->get_field_accessor()->transferNodeStatesToElemStates();
 }
 
 } // namespace Albany
