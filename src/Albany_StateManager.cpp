@@ -28,7 +28,7 @@ StateManager::registerStateVariable(
     StateStruct::MeshFieldEntity const*  fieldEntity,
     const std::string&                   meshPartName)
 {
-  std::string init_type = "";
+  std::string init_type = "none";
   double  init_val  = 0;
   std::string responseIDtoRequire = "";
   return registerStateVariable(
@@ -137,7 +137,7 @@ StateManager::registerSideSetStateVariable(
     const std::string&                   meshPartName)
 
 {
-  std::string init_type = "";
+  std::string init_type = "none";
   double  init_val  = 0;
   std::string responseIDtoRequire = "";
   return registerSideSetStateVariable(
@@ -352,27 +352,33 @@ StateManager::doSetStateArrays(
     const std::string& ebName       = st->ebName;
     const double       init_val     = st->initValue;
     bool               have_restart = st->restartDataAvailable;
+
+    *out << "[StateManager] Initializing state '" << stateName << "':";
+    if (have_restart) {
+      // If we are restarting, arrays should already be initialized from exodus file
+      *out << " from restart file." << std::endl;
+      continue;
+    } else if (init_type=="none") {
+      // Perhaps this is something we compute during the assembly, and does not need
+      // an initial value
+      *out << " no initialization needed." << std::endl;
+      continue;
+    } else if (init_type=="scalar") {
+      *out << " with initialization type 'scalar' and value: " << init_val << "\n";
+    } else if (init_type=="identity") {
+      *out << " with initialization type 'identity'" << std::endl;
+    } else {
+      throw std::runtime_error("[StateManager] Unknown state init type '" + init_type + "'\n");
+    }
     StateStruct* pParentStruct = st->pParentStateStruct;
 
     if (st->entity==StateStruct::NodalDataToElemNode) {
       transferNodalStates = true;
     }
-    // JTO: specifying zero recovers previous behavior
-    // if (stateName == "zero")
-    // {
-    //   init_val = 0.0;
-    //   init_type = "scalar";
-    // }
 
-    *out << "StateManager: initializing state:  " << stateName << "\n";
     switch (st->entity) {
       case StateStruct::WorksetValue:
-        if (have_restart) {
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from
-          // exodus file
-          continue;
-        } else if (init_type=="scalar") {
+        if (init_type=="scalar") {
           auto gsa_h = gsa[stateName].host();
           for (size_t i=0; i<gsa_h.size(); ++i) {
             gsa_h.data()[i] = init_val;
@@ -384,13 +390,7 @@ StateManager::doSetStateArrays(
       case StateStruct::QuadPoint:
       case StateStruct::ElemNode:
 
-        if (have_restart) {
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from
-          // exodus file
-          continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
-          *out << " from restarted parent state." << std::endl;
+        if (pParentStruct && pParentStruct->restartDataAvailable) {
           // If we are restarting, my parent is initialized from exodus file
           // Copy over parent's state
 
@@ -399,11 +399,7 @@ StateManager::doSetStateArrays(
             esa[ws][stateName] = esa[ws][pParentStruct->name];
 
           continue;
-        } else if (init_type == "scalar")
-          *out << " with initialization type 'scalar' and value: " << init_val
-               << std::endl;
-        else if (init_type == "identity")
-          *out << " with initialization type 'identity'" << std::endl;
+        }
 
         for (int ws = 0; ws < numElemWorksets; ws++) {
           /* because we loop over all worksets above, we need to check
@@ -490,13 +486,7 @@ StateManager::doSetStateArrays(
 
       case StateStruct::NodalData:
 
-        if (have_restart) {
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from
-          // exodus file
-          continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
-          *out << " from restarted parent state." << std::endl;
+        if (pParentStruct && pParentStruct->restartDataAvailable) {
           // If we are restarting, my parent is initialized from exodus file
           // Copy over parent's state
 
@@ -505,11 +495,7 @@ StateManager::doSetStateArrays(
             nsa[ws][stateName] = nsa[ws][pParentStruct->name];
 
           continue;
-        } else if (init_type == "scalar")
-          *out << " with initialization type 'scalar' and value: " << init_val
-               << std::endl;
-        else if (init_type == "identity")
-          *out << " with initialization type 'identity'" << std::endl;
+        }
 
         for (int ws = 0; ws < numNodeWorksets; ws++) {
           StateStruct::FieldDims dims;
@@ -569,12 +555,7 @@ StateManager::doSetStateArrays(
       case StateStruct::NodalDataToElemNode:
       case StateStruct::NodalDistParameter:
 
-        if (have_restart) {
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from
-          // exodus file
-          continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
+        if (pParentStruct && pParentStruct->restartDataAvailable) {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
               std::logic_error,

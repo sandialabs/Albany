@@ -146,7 +146,7 @@ struct StateStruct
   const std::string                  name{""};
   FieldDims                          dim;
   MeshFieldEntity                    entity;
-  std::string                        initType{""};
+  std::string                        initType = "none";
   double                             initValue{0.0};
   std::map<std::string, std::string> nameMap;
 
