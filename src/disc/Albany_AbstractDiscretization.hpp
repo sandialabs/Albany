@@ -230,21 +230,6 @@ public:
   virtual Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const = 0;
 
-  //! Set stateArrays
-  void setStateArrays(StateArrays& sa) { m_stateArrays = sa; }
-
-  //! Get stateArrays
-  StateArrays& getStateArrays() { return m_stateArrays; }
-
-  //! Get stateArray of given type
-  StateArrayVec& getStateArrays(const StateStruct::StateType type) {
-    if (type==StateStruct::ElemState) {
-      return getStateArrays().elemStateArrays;
-    } else {
-      return getStateArrays().nodeStateArrays;
-    }
-  }
-
   //! Get nodal parameters state info struct
   const StateInfoStruct& getNodalParameterSIS() const {
     return getMeshStruct()->get_field_accessor()->getNodalParameterSIS();
@@ -385,9 +370,6 @@ protected:
 
   // Dof manager for a scalar node field
   strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
-
-  // Struct containing node/elem state arrays
-  StateArrays                           m_stateArrays;
 
   // Workset information
   WorksetArray<int>           m_workset_sizes; // size of each ws

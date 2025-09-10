@@ -28,7 +28,7 @@ StateManager::registerStateVariable(
     StateStruct::MeshFieldEntity const*  fieldEntity,
     const std::string&                   meshPartName)
 {
-  std::string init_type = "";
+  std::string init_type = "none";
   double  init_val  = 0;
   std::string responseIDtoRequire = "";
   return registerStateVariable(
@@ -137,7 +137,7 @@ StateManager::registerSideSetStateVariable(
     const std::string&                   meshPartName)
 
 {
-  std::string init_type = "";
+  std::string init_type = "none";
   double  init_val  = 0;
   std::string responseIDtoRequire = "";
   return registerSideSetStateVariable(
@@ -280,7 +280,7 @@ StateManager::initStateArrays(
   for (auto const& it : sideSetStateInfo) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         ss_discs.find(it.first) == ss_discs.end(), std::logic_error,
-        "Error! Side Set " << it.first << "has sideSet states registered but no discretizations.\n");
+        "Error! Side Set " << it.first << " has sideSet states registered but no discretizations.\n");
   }
 
   // Then we make sure that for every side discretization there is a
@@ -334,45 +334,63 @@ StateManager::doSetStateArrays(
   Teuchos::RCP<Teuchos::FancyOStream> out(
       Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  // Get states from STK mesh
-  StateArrays&   sa  = disc->getStateArrays();
-  StateArrayVec& esa = sa.elemStateArrays;
-  StateArrayVec& nsa = sa.nodeStateArrays;
+  // Get states from mesh accessor
+  auto mfa = disc->getMeshStruct()->get_field_accessor();
+  StateArrayVec& esa = mfa->getElemStates();
+  StateArrayVec& nsa = mfa->getNodeStates();
+  StateArray&    gsa = mfa->getGlobalStates();
 
   int numElemWorksets = esa.size();
   int numNodeWorksets = nsa.size();
 
   // For each workset, loop over registered states
 
-  for (unsigned int i = 0; i < stateInfoPtr->size(); i++) {
-    const std::string& stateName    = (*stateInfoPtr)[i]->name;
-    const std::string& init_type    = (*stateInfoPtr)[i]->initType;
-    const std::string& ebName       = (*stateInfoPtr)[i]->ebName;
-    const double       init_val     = (*stateInfoPtr)[i]->initValue;
-    bool               have_restart = (*stateInfoPtr)[i]->restartDataAvailable;
-    StateStruct* pParentStruct = (*stateInfoPtr)[i]->pParentStateStruct;
+  bool transferNodalStates = false;
+  for (const auto& st : *stateInfoPtr) {
+    const std::string& stateName    = st->name;
+    const std::string& init_type    = st->initType;
+    const std::string& ebName       = st->ebName;
+    const double       init_val     = st->initValue;
+    bool               have_restart = st->restartDataAvailable;
 
-    // JTO: specifying zero recovers previous behavior
-    // if (stateName == "zero")
-    // {
-    //   init_val = 0.0;
-    //   init_type = "scalar";
-    // }
+    *out << "[StateManager] Initializing state '" << stateName << "':";
+    if (have_restart) {
+      // If we are restarting, arrays should already be initialized from exodus file
+      *out << " from restart file." << std::endl;
+      continue;
+    } else if (init_type=="none") {
+      // Perhaps this is something we compute during the assembly, and does not need
+      // an initial value
+      *out << " no initialization needed." << std::endl;
+      continue;
+    } else if (init_type=="scalar") {
+      *out << " with initialization type 'scalar' and value: " << init_val << "\n";
+    } else if (init_type=="identity") {
+      *out << " with initialization type 'identity'" << std::endl;
+    } else {
+      throw std::runtime_error("[StateManager] Unknown state init type '" + init_type + "'\n");
+    }
+    StateStruct* pParentStruct = st->pParentStateStruct;
 
-    *out << "StateManager: initializing state:  " << stateName << "\n";
-    switch ((*stateInfoPtr)[i]->entity) {
+    if (st->entity==StateStruct::NodalDataToElemNode) {
+      transferNodalStates = true;
+    }
+
+    switch (st->entity) {
       case StateStruct::WorksetValue:
+        if (init_type=="scalar") {
+          auto gsa_h = gsa[stateName].host();
+          for (size_t i=0; i<gsa_h.size(); ++i) {
+            gsa_h.data()[i] = init_val;
+          }
+        }
+        break;
+
       case StateStruct::ElemData:
       case StateStruct::QuadPoint:
       case StateStruct::ElemNode:
 
-        if (have_restart) {
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from
-          // exodus file
-          continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
-          *out << " from restarted parent state." << std::endl;
+        if (pParentStruct && pParentStruct->restartDataAvailable) {
           // If we are restarting, my parent is initialized from exodus file
           // Copy over parent's state
 
@@ -381,11 +399,7 @@ StateManager::doSetStateArrays(
             esa[ws][stateName] = esa[ws][pParentStruct->name];
 
           continue;
-        } else if (init_type == "scalar")
-          *out << " with initialization type 'scalar' and value: " << init_val
-               << std::endl;
-        else if (init_type == "identity")
-          *out << " with initialization type 'identity'" << std::endl;
+        }
 
         for (int ws = 0; ws < numElemWorksets; ws++) {
           /* because we loop over all worksets above, we need to check
@@ -472,13 +486,7 @@ StateManager::doSetStateArrays(
 
       case StateStruct::NodalData:
 
-        if (have_restart) {
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from
-          // exodus file
-          continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
-          *out << " from restarted parent state." << std::endl;
+        if (pParentStruct && pParentStruct->restartDataAvailable) {
           // If we are restarting, my parent is initialized from exodus file
           // Copy over parent's state
 
@@ -487,11 +495,7 @@ StateManager::doSetStateArrays(
             nsa[ws][stateName] = nsa[ws][pParentStruct->name];
 
           continue;
-        } else if (init_type == "scalar")
-          *out << " with initialization type 'scalar' and value: " << init_val
-               << std::endl;
-        else if (init_type == "identity")
-          *out << " with initialization type 'identity'" << std::endl;
+        }
 
         for (int ws = 0; ws < numNodeWorksets; ws++) {
           StateStruct::FieldDims dims;
@@ -551,12 +555,7 @@ StateManager::doSetStateArrays(
       case StateStruct::NodalDataToElemNode:
       case StateStruct::NodalDistParameter:
 
-        if (have_restart) {
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from
-          // exodus file
-          continue;
-        } else if (pParentStruct && pParentStruct->restartDataAvailable) {
+        if (pParentStruct && pParentStruct->restartDataAvailable) {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
               std::logic_error,
@@ -576,6 +575,11 @@ StateManager::doSetStateArrays(
     }
   }
   *out << std::endl;
+
+  // If we init-ed states with NodalDataToElemNode entity, we must transfer the
+  // new data to the elem-based states
+  if (transferNodalStates)
+    disc->getMeshStruct()->get_field_accessor()->transferNodeStatesToElemStates();
 }
 
 } // namespace Albany

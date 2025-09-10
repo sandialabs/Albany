@@ -29,12 +29,6 @@ using StateView     = DualDynRankView<double>;
 using StateArray    = std::map<std::string,StateView>;
 using StateArrayVec = std::vector<StateArray>;
 
-struct StateArrays
-{
-  StateArrayVec elemStateArrays;
-  StateArrayVec nodeStateArrays;
-};
-
 //! Container to get state info from StateManager to STK. Made into a struct so
 //  the information can continue to evolve without changing the interfaces.
 
@@ -43,7 +37,8 @@ struct StateStruct
   enum StateType
   {
     ElemState = 1,
-    NodeState
+    NodeState,
+    GlobalState
   };
   
   enum MeshFieldEntity
@@ -133,6 +128,7 @@ struct StateStruct
   StateType stateType () const {
     switch (entity) {
       case StateStruct::WorksetValue:
+        return GlobalState;
       case StateStruct::ElemData:
       case StateStruct::QuadPoint:
       case StateStruct::ElemNode:
@@ -150,7 +146,7 @@ struct StateStruct
   const std::string                  name{""};
   FieldDims                          dim;
   MeshFieldEntity                    entity;
-  std::string                        initType{""};
+  std::string                        initType = "none";
   double                             initValue{0.0};
   std::map<std::string, std::string> nameMap;
 
@@ -172,8 +168,20 @@ struct StateStruct
   StateStruct();
 };
 
-// Alias to a vector of state struct pointers
-using StateInfoStruct = std::vector<Teuchos::RCP<StateStruct>>;
+// Could just be an alias to a vector of state struct pointers,
+// but inheriting allows to define some helper methods
+class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
+{
+public:
+  StateInfoStruct () = default;
+
+  Teuchos::RCP<StateStruct> find (const std::string& name) {
+    for (const auto& entry : *this) {
+      if (entry->name==name) return entry;
+    }
+    return Teuchos::null;
+  }
+};
 
 }  // namespace Albany
 

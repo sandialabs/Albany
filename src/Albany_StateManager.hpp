@@ -42,7 +42,7 @@ public:
       const std::string&                   stateName,
       const Teuchos::RCP<PHX::DataLayout>& dl,
       const std::string&                   ebName,
-      const std::string&                   init_type           = "scalar",
+      const std::string&                   init_type           = "none", // 'none', 'scalar', 'ideantity'
       const double                         init_val            = 0.0,
       const bool                           outputToExodus      = true,
       const std::string&                   responseIDtoRequire = "",
@@ -105,9 +105,6 @@ public:
   /// Method to set discretization object
   void
   initStateArrays(const Teuchos::RCP<AbstractDiscretization>& disc);
-
-  StateArrays&
-  getSideSetStateArrays(const std::string& sideSet);
 
   bool
   areStateVarsAllocated() const

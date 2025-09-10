@@ -14,7 +14,10 @@ public:
   OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh);
   ~OmegahMeshFieldAccessor () = default;
 
-  void addStateStructs(const StateInfoStruct& sis) override;
+  void addStateStruct(const Teuchos::RCP<StateStruct>& st) override;
+
+  void createStateArrays (const WorksetArray<int>& worksets_sizes) override;
+  void transferNodeStatesToElemStates () override;
 
   // TODO: move this in the base class?
   void addFieldOnMesh (const std::string& name,
@@ -102,6 +105,8 @@ public:
 
 protected:
   Teuchos::RCP<Omega_h::Mesh>   m_mesh;
+
+  std::map<std::string,Omega_h::Write<ST>> m_tags;
 };
 
 } // namespace Albany
