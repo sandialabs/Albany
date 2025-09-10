@@ -339,7 +339,7 @@ ANONYMOUS:
 
         MD Prior:
           alpha_u: 0.25
-          alpha_z: 2.7778e-8
+          alpha_z: 44.0
           alpha_d: 1.e-5
           Number Of Singular Values: 50
           Oversampling Factor: 1
@@ -497,5 +497,5 @@ ANONYMOUS:
     Test Value: 0.0
     Relative Tolerance: 1.0e-05
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [2983.20695086]
+    Piro Analysis Test Values: [2982.53799582]
 ...

@@ -5,14 +5,14 @@
 # (mimiking piro H test, but with p = p_{piro}^3)
 #
 # find p that minimizes
-# g0 = 0.5*(x - T)' M^{-1} (x-T),  T = (1+X)^3
+# g0 = 0.5 (x - T)'(x-T),  T = (1+X)^3
 #
 # subject to:
 # f = x - p
 # p_opt = (1+X)^3
 # x_opt = (1+X)^3
 #
-# f_true  = x - p + 0.2 p^(2/3)
+# f_true  = x - p - 0.2 p^(2/3)
 #
 # p_sample_0 = p_opt
 # p_sample_1 = (X + X^2)^3
@@ -69,7 +69,7 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
       Response 2:
-        Scaling Coefficient: 1.0e3
+        Scaling Coefficient: 1.0
         Name: Quadratic Linear Operator Based
         Matrix A File Name: ../AsciiMeshes/HDSA/M.mm
         Matrix D File Name: ../AsciiMeshes/HDSA/M.mm
@@ -84,7 +84,7 @@ ANONYMOUS:
         Matrix A Is Symmetric: true
         Field Name: solution_opt
       Response 4:
-        Scaling Coefficient: 1.0e3
+        Scaling Coefficient: 1.0
         Name: Quadratic Linear Operator Based
         Matrix A File Name: ../AsciiMeshes/HDSA/M.mm
         Matrix D File Name: ../AsciiMeshes/HDSA/M.mm
@@ -347,7 +347,7 @@ ANONYMOUS:
 
         MD Prior:
           alpha_u: 0.25
-          alpha_z: 1.e-4
+          alpha_z: 0.25
           alpha_d: 1.e-5
           Number Of Singular Values: 50
           Oversampling Factor: 1
@@ -505,5 +505,5 @@ ANONYMOUS:
     Test Value: 0.0
     Relative Tolerance: 1.0e-05
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [38.371119419]
+    Piro Analysis Test Values: [38.886663847]
 ...
