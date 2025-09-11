@@ -192,12 +192,12 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
   const auto& node_buckets = bulkData->get_buckets(NODE_RANK,select_owned_part);
 
   // Sanity checks
-  TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes.size()!=elem_buckets.size(), std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes.size()!=static_cast<int>(elem_buckets.size()), std::logic_error,
       "[GenericSTKFieldContainer::createStateArrays] Error! Input worksets_sizes length does not match mesh num elem buckets.\n"
       " - worksets_sizes length : " << worksets_sizes.size() + "\n"
       " - num mesh elem buckets: " << elem_buckets.size() + "\n");
   for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
-    TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes[ws]!=elem_buckets[ws]->size(), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (worksets_sizes[ws]!=static_cast<int>(elem_buckets[ws]->size()), std::logic_error,
         "[GenericSTKFieldContainer::createStateArrays] Error! Input workset size does not match mesh bucket size.\n"
         " - workset id        : " << ws << "\n"
         " - input workset_size: " << worksets_sizes[ws] + "\n"

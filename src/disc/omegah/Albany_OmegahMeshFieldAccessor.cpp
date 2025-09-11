@@ -129,7 +129,6 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
   nodeStateArrays.resize(1);
 
   // Elem states
-  int ws_start = 0;
   int num_ws = worksets_sizes.size();
   for (const auto& st : elem_sis) {
     auto data = m_tags.at(st->name).data();
