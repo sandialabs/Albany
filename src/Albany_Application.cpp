@@ -94,46 +94,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   paramLib     = rcp(new ParamLib);
   distParamLib = rcp(new DistributedParameterLibrary);
 
-#ifdef ALBANY_DEBUG
-  int break_set  = (getenv("ALBANY_BREAK") == NULL) ? 0 : 1;
-  int env_status = 0;
-  int length     = 1;
-  comm->SumAll(&break_set, &env_status, length);
-  if (env_status != 0) {
-    *out << "Host and Process Ids for tasks" << std::endl;
-    comm->Barrier();
-    int nproc = comm->NumProc();
-    for (int i = 0; i < nproc; i++) {
-      if (i == comm->MyPID()) {
-        char buf[80];
-        char hostname[80];
-        gethostname(hostname, sizeof(hostname));
-        sprintf(buf, "Host: %s   PID: %d", hostname, getpid());
-        *out << buf << std::endl;
-        std::cout.flush();
-        sleep(1);
-      }
-      comm->Barrier();
-    }
-    if (comm->MyPID() == 0) {
-      char go = ' ';
-      std::cout << "\n";
-      std::cout << "** Client has paused because the environment variable "
-                   "ALBANY_BREAK has been set.\n";
-      std::cout << "** You may attach a debugger to processes now.\n";
-      std::cout << "**\n";
-      std::cout << "** Enter a character (not whitespace), then <Return> to "
-                   "continue. > ";
-      std::cout.flush();
-      std::cin >> go;
-      std::cout << "\n** Now pausing for 3 seconds.\n";
-      std::cout.flush();
-    }
-    sleep(3);
-  }
-  comm->Barrier();
-#endif
-
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
@@ -1414,9 +1374,7 @@ Application::computeGlobalResidualImpl(
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char nameResUnscaled[100];  // create string for file name
-  sprintf(nameResUnscaled, "resUnscaled%i_residual", countScale);
-  writeMatrixMarket(f, nameResUnscaled);
+  writeMatrixMarket(f, "resUnscaled", countScale);
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
@@ -1424,9 +1382,7 @@ Application::computeGlobalResidualImpl(
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char nameResScaled[100];  // create string for file name
-  sprintf(nameResScaled, "resScaled%i_residual", countScale);
-  writeMatrixMarket(f, nameResScaled);
+  writeMatrixMarket(f, "resScaled", countScale);
 #endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
