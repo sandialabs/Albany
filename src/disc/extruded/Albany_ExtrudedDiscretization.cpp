@@ -1200,17 +1200,23 @@ Teuchos::RCP<DOFManager>
 ExtrudedDiscretization::
 create_dof_mgr (const std::string& part_name,
                 const std::string& field_name,
-                const FE_Type /* fe_type */,
-                const int /* order */,
-                const int dof_dim) const
+                const FE_Type fe_type,
+                const int order,
+                const int dof_dim)
 {
+  auto& dof_mgr = get_hashed_dof_mgr(part_name,fe_type,order,dof_dim);
+  if (Teuchos::nonnull(dof_mgr)) {
+    // Not the first time we build a DOFManager for a field with these specs
+    return dof_mgr;
+  }
+
   const auto& ebn = m_extruded_mesh->meshSpecs()[0]->ebName;;
   std::vector<std::string> elem_blocks =  {ebn};
 
   // Create conn and dof managers
   auto conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager();
   auto conn_mgr = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   const auto& topo = conn_mgr->get_topology();
   Teuchos::RCP<panzer::FieldPattern> fp;
