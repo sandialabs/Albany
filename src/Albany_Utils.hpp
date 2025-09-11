@@ -164,7 +164,6 @@ struct CmdLineArgs
   bool        has_first_yaml_file;
   bool        has_second_yaml_file;
   bool        has_third_yaml_file;
-  bool        vtune;
 
   CmdLineArgs(
       const std::string& default_yaml_filename  = "input.yaml",
@@ -173,10 +172,6 @@ struct CmdLineArgs
   void
   parse_cmdline(int argc, char** argv, std::ostream& os);
 };
-
-// Connect executable to vtune for profiling
-void
-connect_vtune(const int p_rank);
 
 // Do a nice stack trace for debugging
 void
@@ -190,8 +185,6 @@ void
 safe_sscanf(int nitems, const char* str, const char* format, ...);
 void
 safe_fgets(char* str, int size, FILE* stream);
-void
-safe_system(char const* str);
 
 void
 assert_fail(std::string const& msg) __attribute__((noreturn));

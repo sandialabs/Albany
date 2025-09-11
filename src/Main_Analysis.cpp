@@ -49,11 +49,6 @@ int main(int argc, char *argv[]) {
 
     Teuchos::RCP<const Teuchos_Comm> comm = Albany::getDefaultComm();
 
-    // Connect vtune for performance profiling
-    if (cmd.vtune) {
-      Albany::connect_vtune(comm->getRank());
-    }
-
     Albany::SolverFactory slvrfctry (cmd.yaml_filename, comm);
     Teuchos::ParameterList &debugParams =
         slvrfctry.getParameters()->sublist("Debug Output", true);

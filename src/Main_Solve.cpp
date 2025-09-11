@@ -109,9 +109,6 @@ int main(int argc, char *argv[])
     Albany::init_omegah_lib(argc,argv,comm);
 #endif
 
-    // Connect vtune for performance profiling
-    if (cmd.vtune) { Albany::connect_vtune(comm->getRank()); }
-
     Albany::SolverFactory slvrfctry(cmd.yaml_filename, comm);
 
     Teuchos::ParameterList &debugParams =
