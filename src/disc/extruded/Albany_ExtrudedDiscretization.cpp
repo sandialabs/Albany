@@ -7,6 +7,7 @@
 #include <Albany_ExtrudedDiscretization.hpp>
 
 #include <Albany_ExtrudedConnManager.hpp>
+#include <Albany_ExtrudedMeshUtils.hpp>
 #include <Albany_CommUtils.hpp>
 #include <Albany_ThyraUtils.hpp>
 #include "Albany_Macros.hpp"
@@ -24,7 +25,7 @@
 #include <string>
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace Albany {
 
@@ -45,6 +46,7 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
  , m_disc_params (discParams)
 {
   sideSetDiscretizations["basalside"] = basal_disc;
+  sideSetDiscretizations["upperside"] = basal_disc;
 }
 
 void
@@ -286,6 +288,10 @@ void ExtrudedDiscretization::computeCoordinates ()
     for (int i = 0; i <= num_layers; i++)
       levelsNormalizedThickness[i] = double(i) / num_layers;
 
+  // Set normalized layers thickness in the mesh field accessor, for later use
+  auto& mvs = m_extruded_mesh->get_field_accessor()->getMeshVectorStates();
+  mvs["normalized_layers_thickness"] = levelsNormalizedThickness;
+
   const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
   const auto& basal_elem_lids = basal_node_dof_mgr->elem_dof_lids().host();
   const auto& basal_elems = basal_node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
@@ -340,14 +346,17 @@ void ExtrudedDiscretization::computeCoordinates ()
 void ExtrudedDiscretization::createDOFManagers()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization:createDOFManagers");
-  // NOTE: in Albany we use the mesh part name "" to refer to the whole mesh.
-  //       That's not the name that stk uses for the whole mesh. So if the
-  //       dof part name is "", we get the part stored in the stk mesh struct
-  //       for the element block, where we REQUIRE that there is only ONE element block.
 
-  strmap_t<std::pair<std::string,int>> name_to_partAndDim;
-  name_to_partAndDim[solution_dof_name()] = std::make_pair("",m_neq);
-  name_to_partAndDim[nodes_dof_name()] = std::make_pair("",1);
+  // Start creating dof mgr for the solution and node fields
+  auto sol_dof_mgr  = create_dof_mgr("",solution_dof_name(),FE_Type::HGRAD,1,m_neq);
+  auto node_dof_mgr = create_dof_mgr("",nodes_dof_name(),FE_Type::HGRAD,1,1);
+
+  m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
+  m_dof_managers[nodes_dof_name()][""]    = node_dof_mgr;
+
+  m_node_dof_managers[""]     = node_dof_mgr;
+
+  // Next, the nodal parameters
   for (const auto& sis : m_extruded_mesh->get_field_accessor()->getNodalParameterSIS()) {
     const auto& dims = sis->dim;
     int dof_dim = -1;
@@ -360,25 +369,10 @@ void ExtrudedDiscretization::createDOFManagers()
             "Error! Unsupported layout for nodal parameter '" + sis->name + ".\n");
     }
 
-    name_to_partAndDim[sis->name] = std::make_pair(sis->meshPart,dof_dim);
-  }
-
-  for (const auto& it : name_to_partAndDim) {
-    const auto& field_name = it.first;
-    const auto& part_name  = it.second.first;
-    const auto& dof_dim    = it.second.second;
-
-    // NOTE: for now we hard code P1. In the future, we must be able to
-    //       store this info somewhere and retrieve it here.
-    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
-    m_dof_managers[field_name][part_name] = dof_mgr;
-    m_node_dof_managers[part_name] = Teuchos::null;
-  }
-
-  // For each part, also make a Node dof manager
-  for (auto& it : m_node_dof_managers) {
-    const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
+    const auto& fname = sis->name;
+    const auto& pname = sis->meshPart;
+    m_dof_managers[fname][pname] = create_dof_mgr(fname,pname,FE_Type::HGRAD,1,dof_dim);
+    m_node_dof_managers[pname]   = create_dof_mgr(fname,pname,FE_Type::HGRAD,1,1);
   }
 }
 
@@ -569,23 +563,27 @@ ExtrudedDiscretization::computeGraphs()
 void
 ExtrudedDiscretization::computeWorksetInfo()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: computeWorksetInfo");
+  // Ensure we don't have extruded worksets spanning 2+ basal worksets or viceversa
+  const int num_layers = m_extruded_mesh->cell_layers_gid()->numLayers;
+  const auto& basal_ws_sizes = m_basal_disc->getWorksetsSizes();
+  const int num_ws = basal_ws_sizes.size();
+  const auto& basal_elem_lids = m_basal_disc->getWsElementLIDs();
 
-  const int num_elems = m_extruded_mesh->get_num_local_elements();
-  const int ws_size = m_extruded_mesh->meshSpecs[0]->worksetSize;
-  const int num_ws  = (num_elems + ws_size - 1) / ws_size;
-
+  auto cell_layers_lid  = m_extruded_mesh->cell_layers_lid (); // to get basal->extruded lid numbering
+  const int nominal_ws_size = basal_ws_sizes[0]*num_layers;
   m_workset_sizes.resize(num_ws);
-  m_workset_elements = DualView<int**>("ws_elem",num_ws,ws_size);
+  m_workset_elements = DualView<int**>("ws_elem",num_ws,nominal_ws_size);
   for (int ws=0,lid=0; ws<num_ws; ++ws) {
-    // For the last ws, we may have less elems.
-    int this_ws_size = ws==(num_ws-1) ? num_elems-ws*ws_size : ws_size;
-    m_workset_sizes[ws] = this_ws_size;
-    for (int ie=0; ie<this_ws_size; ++ie, ++lid) {
-      m_workset_elements.host()(ws,ie) = lid;
+    int ie=0;
+    for (int ib=0; ib<basal_ws_sizes[ws]; ++ib) {
+      for (int il=0; il<num_layers; ++il,++ie) {
+        int lid = cell_layers_lid->getId(ib,il);
+        m_workset_elements.host()(ws,ie) = lid;
+      }
     }
-    // Fill the remainder (if any) with very invalid numbers
-    for (int ie=this_ws_size; ie<ws_size; ++ie) {
+    
+    // Fill the remainder (if any) with invalid lid
+    for (; ie<nominal_ws_size; ++ie) {
       m_workset_elements.host()(ws,ie) = -1;
     }
   }
@@ -620,7 +618,7 @@ ExtrudedDiscretization::computeWorksetInfo()
     }
   }
 
-  // TODO: tell field accessor to init states
+  m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
 }
 
 void
@@ -635,418 +633,431 @@ ExtrudedDiscretization::computeSideSets()
 
   // Clean up existing sideset structure (in case we are remeshing)
   m_sideSets.clear();
-
   int num_ws = getNumWorksets();
   m_sideSets.resize(num_ws);  // Need a sideset list per workset
 
-  const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
-  const auto& basal_cell_indexer = m_basal_disc->getDOFManager()->cell_indexer();
-  const auto& node_dof_mgr = getNodeDOFManager();
-  const auto& cell_indexer = node_dof_mgr->cell_indexer();
-  const int num_glb_basal_elems = basal_cell_indexer->getNumGlobalElements();
-  const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
-  const auto& extr_conn_mgr = Teuchos::rcp_dynamic_cast<ExtrudedConnManager>(getNodeDOFManager()->getAlbanyConnManager(),true);
-  for (const auto& ss : m_extruded_mesh->meshSpecs[0]->ssNames) {
+  auto extrude_side_set = [&] (const std::string& bss, std::string ss) {
+    if (ss=="") ss = "extruded_" + ss;
+
     // Make sure the sideset exist even if no sides are owned on this process
     for (int i=0; i<num_ws; ++i) {
       m_sideSets[i][ss].resize(0);
+      ////////////////////// YOU ARE HERE //////////////////////
     }
+  };
+  // const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
+  // const auto& basal_cell_indexer = m_basal_disc->getDOFManager()->cell_indexer();
+  // const auto& node_dof_mgr = getNodeDOFManager();
+  // const auto& cell_indexer = node_dof_mgr->cell_indexer();
+  // const int num_glb_basal_elems = basal_cell_indexer->getNumGlobalElements();
+  // const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
+  // const auto& extr_conn_mgr = Teuchos::rcp_dynamic_cast<ExtrudedConnManager>(getNodeDOFManager()->getAlbanyConnManager(),true);
+  // for (const auto& ss : m_extruded_mesh->meshSpecs[0]->ssNames) {
+  //   // Make sure the sideset exist even if no sides are owned on this process
 
-    if (ss=="basalside" or ss=="upperside") {
-      // Side sets are just the basal mesh elems
-      const int num_sides = basal_cell_indexer->getNumLocalElements();
-      for (int iside=0; iside<num_sides; ++iside) {
-        SideStruct sStruct;
+  //   if (ss=="basalside" or ss=="upperside") {
+  //     // Side sets are just the basal mesh elems
+  //     const int num_sides = basal_cell_indexer->getNumLocalElements();
+  //     for (int iside=0; iside<num_sides; ++iside) {
+  //       SideStruct sStruct;
 
-        const GO basal_gid = basal_cell_indexer->getGlobalElement(iside);
-        const int ilayer = ss=="basalside" ? 0 : cell_layers_gid->numLayers-1;
+  //       const GO basal_gid = basal_cell_indexer->getGlobalElement(iside);
+  //       const int ilayer = ss=="basalside" ? 0 : cell_layers_gid->numLayers-1;
 
-        sStruct.elem_GID = cell_layers_gid->getId(basal_gid,ilayer);
-        sStruct.side_GID = basal_gid + (ss=="upperside" ? num_glb_basal_elems : 0);
+  //       sStruct.elem_GID = cell_layers_gid->getId(basal_gid,ilayer);
+  //       sStruct.side_GID = basal_gid + (ss=="upperside" ? num_glb_basal_elems : 0);
 
-        sStruct.ws_elem_idx = m_elemGIDws[sStruct.elem_GID].LID;
+  //       sStruct.ws_elem_idx = m_elemGIDws[sStruct.elem_GID].LID;
 
-        // Get the ws that this element lives in
-        int workset = m_elemGIDws[sStruct.elem_GID].ws;
+  //       // Get the ws that this element lives in
+  //       int workset = m_elemGIDws[sStruct.elem_GID].ws;
 
-        // Save the position of the side within element (0-based).
-        sStruct.side_pos = ss=="basalside" ? cell_layers_gid->bot_side_pos : cell_layers_gid->top_side_pos;
+  //       // Save the position of the side within element (0-based).
+  //       sStruct.side_pos = ss=="basalside" ? cell_layers_gid->bot_side_pos : cell_layers_gid->top_side_pos;
 
-        // Save the index of the element block that this elem lives in
-        sStruct.elem_ebIndex = m_extruded_mesh->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
+  //       // Save the index of the element block that this elem lives in
+  //       sStruct.elem_ebIndex = m_extruded_mesh->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
 
-        // Get or create the vector of side structs for this side set on this workset
-        auto& ss_vec = m_sideSets[workset][ss];
-        ss_vec.push_back(sStruct);
-      }
-    } else {
-      std::vector<std::string> basal_ss_names;
-      if (ss=="lateralside") {
-        // Extrude all sideSets from the basal mesh
-        basal_ss_names = m_extruded_mesh->basal_mesh()->meshSpecs[0]->ssNames;
-      } else {
-        TEUCHOS_TEST_FOR_EXCEPTION (ss.substr(0,9)!="extruded_", std::runtime_error,
-            "Error! Unexpected value for side set name.\n"
-            "  - ss name: " + ss + "\n"
-            "  - supported values: basalside, upperside, lateralside, extruded_*\n");
-        basal_ss_names.push_back(m_extruded_mesh->get_basal_part_name(ss));
-      }
+  //       // Get or create the vector of side structs for this side set on this workset
+  //       auto& ss_vec = m_sideSets[workset][ss];
+  //       ss_vec.push_back(sStruct);
+  //     }
+  //   } else {
+  //     std::vector<std::string> basal_ss_names;
+  //     if (ss=="lateralside") {
+  //       // Extrude all sideSets from the basal mesh
+  //       basal_ss_names = m_extruded_mesh->basal_mesh()->meshSpecs[0]->ssNames;
+  //     } else {
+  //       TEUCHOS_TEST_FOR_EXCEPTION (ss.substr(0,9)!="extruded_", std::runtime_error,
+  //           "Error! Unexpected value for side set name.\n"
+  //           "  - ss name: " + ss + "\n"
+  //           "  - supported values: basalside, upperside, lateralside, extruded_*\n");
+  //       basal_ss_names.push_back(get_basal_part_name(ss));
+  //     }
 
-      // First, figure out the largest basal side GID (so we can build a proper LayeredMeshNumbering)
-      GO max_basal_side_GID = -1;
-      for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
-        for (const auto& basal_ssn : basal_ss_names) {
-          auto basal_ss = m_basal_disc->getSideSets(ws).at(basal_ssn);
-          for (const auto& side : basal_ss) {
-            max_basal_side_GID = std::max(max_basal_side_GID,side.side_GID);
-          }
-        }
-      }
+  //     // First, figure out the largest basal side GID (so we can build a proper LayeredMeshNumbering)
+  //     GO max_basal_side_GID = -1;
+  //     for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
+  //       for (const auto& basal_ssn : basal_ss_names) {
+  //         auto basal_ss = m_basal_disc->getSideSets(ws).at(basal_ssn);
+  //         for (const auto& side : basal_ss) {
+  //           max_basal_side_GID = std::max(max_basal_side_GID,side.side_GID);
+  //         }
+  //       }
+  //     }
 
-      LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,cell_layers_gid->numLayers,cell_layers_gid->ordering);
-      auto get_basal_side_nodes = [&](const SideStruct& basal_side) {
-        std::vector<GO> nodes;
-        const int belem_LID = basal_cell_indexer->getLocalElement(basal_side.elem_GID);
-        const auto& belem_nodes = basal_node_dof_mgr->getElementGIDs(belem_LID);
-        const auto& offsets = basal_node_dof_mgr->getGIDFieldOffsetsSide(0,basal_side.side_pos);
-        for (auto o : offsets) {
-          nodes.push_back(belem_nodes[o]);
-        }
-        return nodes;
-      };
+  //     LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,cell_layers_gid->numLayers,cell_layers_gid->ordering);
+  //     auto get_basal_side_nodes = [&](const SideStruct& basal_side) {
+  //       std::vector<GO> nodes;
+  //       const int belem_LID = basal_cell_indexer->getLocalElement(basal_side.elem_GID);
+  //       const auto& belem_nodes = basal_node_dof_mgr->getElementGIDs(belem_LID);
+  //       const auto& offsets = basal_node_dof_mgr->getGIDFieldOffsetsSide(0,basal_side.side_pos);
+  //       for (auto o : offsets) {
+  //         nodes.push_back(belem_nodes[o]);
+  //       }
+  //       return nodes;
+  //     };
 
-      auto determine_side_pos = [&] (const GO elem_GID, std::vector<GO> basal_side_nodes) {
-        const int num_sides = node_dof_mgr->get_topology().getSideCount();
-        const int elem_LID = cell_indexer->getLocalElement(elem_GID);
-        const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
-        int pos = -1;
-        std::vector<GO> side_nodes;
-        GO ilay = cell_layers_gid->getLayerId(elem_GID);
-        const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
-        for (auto bn : basal_side_nodes) {
-          side_nodes.push_back(node_layers_gid->getId(bn,ilay));
-        }
-        for (auto bn : basal_side_nodes) {
-          side_nodes.push_back(node_layers_gid->getId(bn,ilay+1));
-        }
-        for (int iside=0; iside<num_sides and pos==-1; ++iside) {
-          const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,iside);
-          pos = iside;
-          for (auto o : offsets) {
-            if (std::find(side_nodes.begin(),side_nodes.end(),elem_nodes[o])==side_nodes.end()) {
-              pos = -1; break;
-            }
-          }
-        }
-        TEUCHOS_TEST_FOR_EXCEPTION (pos==-1, std::runtime_error,
-            "Error! Could not locate side inside an element.\n"
-            " - side nodes gids: " + util::join(side_nodes,",") + "\n"
-            " - elem nodes gids: " + util::join(elem_nodes,",") + "\n");
-        return pos;
-      };
-      for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
-        for (const auto& basal_ssn : basal_ss_names) {
-          auto basal_ss = m_basal_disc->getSideSets(ws).at(basal_ssn);
-          for (const auto& basal_side : basal_ss) {
-            const auto basal_elem_gid = basal_side.elem_GID;
-            const auto basal_side_nodes_gids = get_basal_side_nodes(basal_side);
-            for (int ilev=0; ilev<cell_layers_gid->numLayers; ++ilev) {
-              SideStruct sStruct;
-              sStruct.elem_GID = cell_layers_gid->getId(basal_elem_gid,ilev);
-              sStruct.side_GID = 2*num_glb_basal_elems + side_layers_gid.getId(basal_side.side_GID,ilev);
-              sStruct.ws_elem_idx = m_elemGIDws[sStruct.elem_GID].LID;
+  //     auto determine_side_pos = [&] (const GO elem_GID, std::vector<GO> basal_side_nodes) {
+  //       const int num_sides = node_dof_mgr->get_topology().getSideCount();
+  //       const int elem_LID = cell_indexer->getLocalElement(elem_GID);
+  //       const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
+  //       int pos = -1;
+  //       std::vector<GO> side_nodes;
+  //       GO ilay = cell_layers_gid->getLayerId(elem_GID);
+  //       const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
+  //       for (auto bn : basal_side_nodes) {
+  //         side_nodes.push_back(node_layers_gid->getId(bn,ilay));
+  //       }
+  //       for (auto bn : basal_side_nodes) {
+  //         side_nodes.push_back(node_layers_gid->getId(bn,ilay+1));
+  //       }
+  //       for (int iside=0; iside<num_sides and pos==-1; ++iside) {
+  //         const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,iside);
+  //         if (offsets.size()!=side_nodes.size()) {
+  //           // This side has the wrong topo, so it's not it.
+  //           continue;
+  //         }
+  //         pos = iside;
+  //         for (auto o : offsets) {
+  //           auto it = std::find(side_nodes.begin(),side_nodes.end(),elem_nodes[o]);
+  //           if (it==side_nodes.end()) {
+  //             pos = -1; break;
+  //           }
+  //         }
+  //       }
+  //       TEUCHOS_TEST_FOR_EXCEPTION (pos==-1, std::runtime_error,
+  //           "Error! Could not locate side inside an element.\n"
+  //           " - side set       : " + ss + "\n"
+  //           " - basal side sets: " + util::join(basal_ss_names,",") + "\n"
+  //           " - side nodes gids: " + util::join(side_nodes,",") + "\n"
+  //           " - elem nodes gids: " + util::join(elem_nodes,",") + "\n");
+  //       return pos;
+  //     };
+  //     for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
+  //       for (const auto& basal_ssn : basal_ss_names) {
+  //         auto basal_ss = m_basal_disc->getSideSets(ws).at(basal_ssn);
+  //         for (const auto& basal_side : basal_ss) {
+  //           const auto basal_elem_gid = basal_side.elem_GID;
+  //           const auto basal_side_nodes_gids = get_basal_side_nodes(basal_side);
+  //           for (int ilev=0; ilev<cell_layers_gid->numLayers; ++ilev) {
+  //             SideStruct sStruct;
+  //             sStruct.elem_GID = cell_layers_gid->getId(basal_elem_gid,ilev);
+  //             sStruct.side_GID = 2*num_glb_basal_elems + side_layers_gid.getId(basal_side.side_GID,ilev);
+  //             sStruct.ws_elem_idx = m_elemGIDws[sStruct.elem_GID].LID;
 
-              // Get the ws that this element lives in
-              int workset = m_elemGIDws[sStruct.elem_GID].ws;
+  //             // Get the ws that this element lives in
+  //             int workset = m_elemGIDws[sStruct.elem_GID].ws;
 
-              // Save the position of the side within element (0-based).
-              sStruct.side_pos = determine_side_pos(sStruct.elem_GID,basal_side_nodes_gids);
+  //             // Save the position of the side within element (0-based).
+  //             sStruct.side_pos = determine_side_pos(sStruct.elem_GID,basal_side_nodes_gids);
 
-              // Save the index of the element block that this elem lives in
-              sStruct.elem_ebIndex = m_extruded_mesh->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
+  //             // Save the index of the element block that this elem lives in
+  //             sStruct.elem_ebIndex = m_extruded_mesh->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
 
-              // Get or create the vector of side structs for this side set on this workset
-              auto& ss_vec = m_sideSets[workset][ss];
-              ss_vec.push_back(sStruct);
-            }
-          }
-        }
-      }
-    }
-  }
+  //             // Get or create the vector of side structs for this side set on this workset
+  //             auto& ss_vec = m_sideSets[workset][ss];
+  //             ss_vec.push_back(sStruct);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
-  // =============================================================
-  // (Kokkos Refactor) Convert sideSets to sideSetViews
+  // // =============================================================
+  // // (Kokkos Refactor) Convert sideSets to sideSetViews
 
-  // 1) Compute view extents (num_local_worksets, max_sideset_length, max_sides) and local workset counter (current_local_index)
-  std::map<std::string, int> num_local_worksets;
-  std::map<std::string, int> max_sideset_length;
-  std::map<std::string, int> max_sides;
-  std::map<std::string, int> current_local_index;
-  for (size_t i = 0; i < m_sideSets.size(); ++i) {
-    for (const auto& ss_it : m_sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
+  // // 1) Compute view extents (num_local_worksets, max_sideset_length, max_sides) and local workset counter (current_local_index)
+  // std::map<std::string, int> num_local_worksets;
+  // std::map<std::string, int> max_sideset_length;
+  // std::map<std::string, int> max_sides;
+  // std::map<std::string, int> current_local_index;
+  // for (size_t i = 0; i < m_sideSets.size(); ++i) {
+  //   for (const auto& ss_it : m_sideSets[i]) {
+  //     std::string             ss_key = ss_it.first;
+  //     std::vector<SideStruct> ss_val = ss_it.second;
 
-      // Initialize values if this is the first time seeing a sideset key
-      if (num_local_worksets.find(ss_key) == num_local_worksets.end())
-        num_local_worksets[ss_key] = 0;
-      if (max_sideset_length.find(ss_key) == max_sideset_length.end())
-        max_sideset_length[ss_key] = 0;
-      if (max_sides.find(ss_key) == max_sides.end())
-        max_sides[ss_key] = 0;
-      if (current_local_index.find(ss_key) == current_local_index.end())
-        current_local_index[ss_key] = 0;
+  //     // Initialize values if this is the first time seeing a sideset key
+  //     if (num_local_worksets.find(ss_key) == num_local_worksets.end())
+  //       num_local_worksets[ss_key] = 0;
+  //     if (max_sideset_length.find(ss_key) == max_sideset_length.end())
+  //       max_sideset_length[ss_key] = 0;
+  //     if (max_sides.find(ss_key) == max_sides.end())
+  //       max_sides[ss_key] = 0;
+  //     if (current_local_index.find(ss_key) == current_local_index.end())
+  //       current_local_index[ss_key] = 0;
 
-      // Update extents for given workset/sideset
-      num_local_worksets[ss_key]++;
-      max_sideset_length[ss_key] = std::max(max_sideset_length[ss_key], (int) ss_val.size());
-      for (size_t j = 0; j < ss_val.size(); ++j)
-        max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_pos);
-    }
-  }
+  //     // Update extents for given workset/sideset
+  //     num_local_worksets[ss_key]++;
+  //     max_sideset_length[ss_key] = std::max(max_sideset_length[ss_key], (int) ss_val.size());
+  //     for (size_t j = 0; j < ss_val.size(); ++j)
+  //       max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_pos);
+  //   }
+  // }
 
-  // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
-  for (const auto& ss_it : num_local_worksets) {
-    std::string             ss_key = ss_it.first;
+  // // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
+  // for (const auto& ss_it : num_local_worksets) {
+  //   std::string             ss_key = ss_it.first;
 
-    max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
+  //   max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
 
-    globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
-    globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].ws_elem_idx      = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("ws_elem_idx", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_pos         = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-  }
+  //   globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
+  //   globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
+  //   globalSideSetViews[ss_key].side_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+  //   globalSideSetViews[ss_key].elem_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+  //   globalSideSetViews[ss_key].ws_elem_idx      = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("ws_elem_idx", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+  //   globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+  //   globalSideSetViews[ss_key].side_pos         = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
+  //   globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
+  //   globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
+  //   globalSideSetViews[ss_key].cellsOnSide      = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+  //   globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
+  // }
 
-  // 3) Populate global views
-  for (size_t i = 0; i < m_sideSets.size(); ++i) {
-    for (const auto& ss_it : m_sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
+  // // 3) Populate global views
+  // for (size_t i = 0; i < m_sideSets.size(); ++i) {
+  //   for (const auto& ss_it : m_sideSets[i]) {
+  //     std::string             ss_key = ss_it.first;
+  //     std::vector<SideStruct> ss_val = ss_it.second;
 
-      int current_index = current_local_index[ss_key];
-      int numSides = max_sides[ss_key];
+  //     int current_index = current_local_index[ss_key];
+  //     int numSides = max_sides[ss_key];
 
-      int max_cells_on_side = 0;
-      std::vector<int> numCellsOnSide(numSides);
-      std::vector<std::vector<int>> cellsOnSide(numSides);
-      std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
-      for (size_t j = 0; j < ss_val.size(); ++j) {
-        int cell = ss_val[j].ws_elem_idx;
-        int side = ss_val[j].side_pos;
+  //     int max_cells_on_side = 0;
+  //     std::vector<int> numCellsOnSide(numSides);
+  //     std::vector<std::vector<int>> cellsOnSide(numSides);
+  //     std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
+  //     for (size_t j = 0; j < ss_val.size(); ++j) {
+  //       int cell = ss_val[j].ws_elem_idx;
+  //       int side = ss_val[j].side_pos;
 
-        cellsOnSide[side].push_back(cell);
-        sideSetIdxOnSide[side].push_back(j);
-      }
-      for (int side = 0; side < numSides; ++side) {
-        numCellsOnSide[side] = cellsOnSide[side].size();
-        max_cells_on_side = std::max(max_cells_on_side, numCellsOnSide[side]);
-      }
+  //       cellsOnSide[side].push_back(cell);
+  //       sideSetIdxOnSide[side].push_back(j);
+  //     }
+  //     for (int side = 0; side < numSides; ++side) {
+  //       numCellsOnSide[side] = cellsOnSide[side].size();
+  //       max_cells_on_side = std::max(max_cells_on_side, numCellsOnSide[side]);
+  //     }
 
-      for (int side = 0; side < numSides; ++side) {
-        globalSideSetViews[ss_key].numCellsOnSide.h_view(current_index, side) = numCellsOnSide[side];
-        for (int j = 0; j < numCellsOnSide[side]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = cellsOnSide[side][j];
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = sideSetIdxOnSide[side][j];
-        }
-        for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = -1;
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = -1;
-        }
-      }
+  //     for (int side = 0; side < numSides; ++side) {
+  //       globalSideSetViews[ss_key].numCellsOnSide.h_view(current_index, side) = numCellsOnSide[side];
+  //       for (int j = 0; j < numCellsOnSide[side]; ++j) {
+  //         globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = cellsOnSide[side][j];
+  //         globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = sideSetIdxOnSide[side][j];
+  //       }
+  //       for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
+  //         globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = -1;
+  //         globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = -1;
+  //       }
+  //     }
 
-      for (size_t j = 0; j < ss_val.size(); ++j) {
-        globalSideSetViews[ss_key].side_GID.h_view(current_index, j)      = ss_val[j].side_GID;
-        globalSideSetViews[ss_key].elem_GID.h_view(current_index, j)      = ss_val[j].elem_GID;
-        globalSideSetViews[ss_key].ws_elem_idx.h_view(current_index, j)   = ss_val[j].ws_elem_idx;
-        globalSideSetViews[ss_key].elem_ebIndex.h_view(current_index, j)  = ss_val[j].elem_ebIndex;
-        globalSideSetViews[ss_key].side_pos.h_view(current_index, j) = ss_val[j].side_pos;
-      }
+  //     for (size_t j = 0; j < ss_val.size(); ++j) {
+  //       globalSideSetViews[ss_key].side_GID.h_view(current_index, j)      = ss_val[j].side_GID;
+  //       globalSideSetViews[ss_key].elem_GID.h_view(current_index, j)      = ss_val[j].elem_GID;
+  //       globalSideSetViews[ss_key].ws_elem_idx.h_view(current_index, j)   = ss_val[j].ws_elem_idx;
+  //       globalSideSetViews[ss_key].elem_ebIndex.h_view(current_index, j)  = ss_val[j].elem_ebIndex;
+  //       globalSideSetViews[ss_key].side_pos.h_view(current_index, j) = ss_val[j].side_pos;
+  //     }
 
-      globalSideSetViews[ss_key].side_GID.modify_host();
-      globalSideSetViews[ss_key].elem_GID.modify_host();
-      globalSideSetViews[ss_key].ws_elem_idx.modify_host();
-      globalSideSetViews[ss_key].elem_ebIndex.modify_host();
-      globalSideSetViews[ss_key].side_pos.modify_host();
-      globalSideSetViews[ss_key].numCellsOnSide.modify_host();
-      globalSideSetViews[ss_key].cellsOnSide.modify_host();
-      globalSideSetViews[ss_key].sideSetIdxOnSide.modify_host();
+  //     globalSideSetViews[ss_key].side_GID.modify_host();
+  //     globalSideSetViews[ss_key].elem_GID.modify_host();
+  //     globalSideSetViews[ss_key].ws_elem_idx.modify_host();
+  //     globalSideSetViews[ss_key].elem_ebIndex.modify_host();
+  //     globalSideSetViews[ss_key].side_pos.modify_host();
+  //     globalSideSetViews[ss_key].numCellsOnSide.modify_host();
+  //     globalSideSetViews[ss_key].cellsOnSide.modify_host();
+  //     globalSideSetViews[ss_key].sideSetIdxOnSide.modify_host();
 
-      globalSideSetViews[ss_key].side_GID.sync_device();
-      globalSideSetViews[ss_key].elem_GID.sync_device();
-      globalSideSetViews[ss_key].ws_elem_idx.sync_device();
-      globalSideSetViews[ss_key].elem_ebIndex.sync_device();
-      globalSideSetViews[ss_key].side_pos.sync_device();
-      globalSideSetViews[ss_key].numCellsOnSide.sync_device();
-      globalSideSetViews[ss_key].cellsOnSide.sync_device();
-      globalSideSetViews[ss_key].sideSetIdxOnSide.sync_device();
+  //     globalSideSetViews[ss_key].side_GID.sync_device();
+  //     globalSideSetViews[ss_key].elem_GID.sync_device();
+  //     globalSideSetViews[ss_key].ws_elem_idx.sync_device();
+  //     globalSideSetViews[ss_key].elem_ebIndex.sync_device();
+  //     globalSideSetViews[ss_key].side_pos.sync_device();
+  //     globalSideSetViews[ss_key].numCellsOnSide.sync_device();
+  //     globalSideSetViews[ss_key].cellsOnSide.sync_device();
+  //     globalSideSetViews[ss_key].sideSetIdxOnSide.sync_device();
 
-      current_local_index[ss_key]++;
-    }
-  }
+  //     current_local_index[ss_key]++;
+  //   }
+  // }
 
-  // 4) Reset current_local_index
-  std::map<std::string, int>::iterator counter_it = current_local_index.begin();
-  while (counter_it != current_local_index.end()) {
-    std::string counter_key = counter_it->first;
-    current_local_index[counter_key] = 0;
-    counter_it++;
-  }
+  // // 4) Reset current_local_index
+  // std::map<std::string, int>::iterator counter_it = current_local_index.begin();
+  // while (counter_it != current_local_index.end()) {
+  //   std::string counter_key = counter_it->first;
+  //   current_local_index[counter_key] = 0;
+  //   counter_it++;
+  // }
 
-  // 5) Populate map of LocalSideSetInfos
-  for (size_t i = 0; i < m_sideSets.size(); ++i) {
-    LocalSideSetInfoList& lssList = sideSetViews[i];
+  // // 5) Populate map of LocalSideSetInfos
+  // for (size_t i = 0; i < m_sideSets.size(); ++i) {
+  //   LocalSideSetInfoList& lssList = sideSetViews[i];
 
-    for (const auto& ss_it : m_sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
+  //   for (const auto& ss_it : m_sideSets[i]) {
+  //     std::string             ss_key = ss_it.first;
+  //     std::vector<SideStruct> ss_val = ss_it.second;
 
-      int current_index = current_local_index[ss_key];
-      std::pair<int,int> range(0, ss_val.size());
+  //     int current_index = current_local_index[ss_key];
+  //     std::pair<int,int> range(0, ss_val.size());
 
-      lssList[ss_key].size           = ss_val.size();
-      lssList[ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
-      lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
-      lssList[ss_key].ws_elem_idx    = Kokkos::subview(globalSideSetViews[ss_key].ws_elem_idx, current_index, range );
-      lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
-      lssList[ss_key].side_pos  = Kokkos::subview(globalSideSetViews[ss_key].side_pos, current_index, range );
-      lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
-      lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
-      lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
-      lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
+  //     lssList[ss_key].size           = ss_val.size();
+  //     lssList[ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
+  //     lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
+  //     lssList[ss_key].ws_elem_idx    = Kokkos::subview(globalSideSetViews[ss_key].ws_elem_idx, current_index, range );
+  //     lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
+  //     lssList[ss_key].side_pos  = Kokkos::subview(globalSideSetViews[ss_key].side_pos, current_index, range );
+  //     lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
+  //     lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
+  //     lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
+  //     lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
 
-      current_local_index[ss_key]++;
-    }
-  }
+  //     current_local_index[ss_key]++;
+  //   }
+  // }
 
-  // 6) Determine size of global DOFView structure and allocate
-  std::map<std::string, int> total_sideset_idx;
-  std::map<std::string, int> sideset_idx_offset;
-  unsigned int maxSideNodes = 0;
-  const auto& cell_layers_data = m_extruded_mesh->cell_layers_lid();
-  if (!cell_layers_data.is_null()) {
-    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(m_extruded_mesh->meshSpecs[0]->ctd));
-    const int numLayers = cell_layers_data->numLayers;
-    const int numComps = getDOFManager()->getNumFields();
+  // // 6) Determine size of global DOFView structure and allocate
+  // std::map<std::string, int> total_sideset_idx;
+  // std::map<std::string, int> sideset_idx_offset;
+  // unsigned int maxSideNodes = 0;
+  // const auto& cell_layers_data = m_extruded_mesh->cell_layers_lid();
+  // if (!cell_layers_data.is_null()) {
+  //   const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(m_extruded_mesh->meshSpecs[0]->ctd));
+  //   const int numLayers = cell_layers_data->numLayers;
+  //   const int numComps = getDOFManager()->getNumFields();
 
-    // Determine maximum number of side nodes
-    for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
-      const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
-      const unsigned int numSideNodes = side.topology->node_count;
-      maxSideNodes = std::max(maxSideNodes, numSideNodes);
-    }
+  //   // Determine maximum number of side nodes
+  //   for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
+  //     const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
+  //     const unsigned int numSideNodes = side.topology->node_count;
+  //     maxSideNodes = std::max(maxSideNodes, numSideNodes);
+  //   }
 
-    // Determine total number of sideset indices per each sideset name
-    for (auto& ssList : m_sideSets) {
-      for (auto& ss_it : ssList) {
-        std::string             ss_key = ss_it.first;
-        std::vector<SideStruct> ss_val = ss_it.second;
+  //   // Determine total number of sideset indices per each sideset name
+  //   for (auto& ssList : m_sideSets) {
+  //     for (auto& ss_it : ssList) {
+  //       std::string             ss_key = ss_it.first;
+  //       std::vector<SideStruct> ss_val = ss_it.second;
 
-        if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
-          sideset_idx_offset[ss_key] = 0;
-        if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
-          total_sideset_idx[ss_key] = 0;
+  //       if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
+  //         sideset_idx_offset[ss_key] = 0;
+  //       if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
+  //         total_sideset_idx[ss_key] = 0;
 
-        total_sideset_idx[ss_key] += ss_val.size();
-      }
-    }
+  //       total_sideset_idx[ss_key] += ss_val.size();
+  //     }
+  //   }
 
-    // Allocate total localDOFView for each sideset name
-    for (auto& ss_it : num_local_worksets) {
-      std::string ss_key = ss_it.first;
-      allLocalDOFViews[ss_key] = Kokkos::DualView<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
-    }
-  }
+  //   // Allocate total localDOFView for each sideset name
+  //   for (auto& ss_it : num_local_worksets) {
+  //     std::string ss_key = ss_it.first;
+  //     allLocalDOFViews[ss_key] = Kokkos::DualView<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
+  //   }
+  // }
 
-  // Get topo data
-  auto ctd = m_extruded_mesh->meshSpecs[0]->ctd;
+  // // Get topo data
+  // auto ctd = m_extruded_mesh->meshSpecs[0]->ctd;
 
-  // Ensure we have ONE cell per layer.
-  const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-  const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-  TEUCHOS_TEST_FOR_EXCEPTION (
-      ctd.name!=topo_hexa->name &&
-      ctd.name!=topo_wedge->name, std::runtime_error,
-      "Extruded meshes only allowed if there is one element per layer (hexa or wedges).\n"
-      "  - current topology name: " << ctd.name << "\n");
+  // // Ensure we have ONE cell per layer.
+  // const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
+  // const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
+  // TEUCHOS_TEST_FOR_EXCEPTION (
+  //     ctd.name!=topo_hexa->name &&
+  //     ctd.name!=topo_wedge->name, std::runtime_error,
+  //     "Extruded meshes only allowed if there is one element per layer (hexa or wedges).\n"
+  //     "  - current topology name: " << ctd.name << "\n");
 
-  const auto& sol_dof_mgr = getDOFManager();
-  const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  // const auto& sol_dof_mgr = getDOFManager();
+  // const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
-  // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
-  const auto numLayers = cell_layers_data->numLayers;
-  const int top = cell_layers_data->top_side_pos;
-  const int bot = cell_layers_data->bot_side_pos;
+  // // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
+  // const auto numLayers = cell_layers_data->numLayers;
+  // const int top = cell_layers_data->top_side_pos;
+  // const int bot = cell_layers_data->bot_side_pos;
 
-  // 7) Populate localDOFViews for GatherVerticallyContractedSolution
-  for (int ws=0; ws<getNumWorksets(); ++ws) {
+  // // 7) Populate localDOFViews for GatherVerticallyContractedSolution
+  // for (int ws=0; ws<getNumWorksets(); ++ws) {
 
-    // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-    std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
+  //   // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
+  //   std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
 
-    const auto& elem_lids = getElementLIDs_host(ws);
+  //   const auto& elem_lids = getElementLIDs_host(ws);
 
-    // Loop over the sides that form the boundary condition
-    // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
-    for (auto& ss_it : m_sideSets[ws]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
+  //   // Loop over the sides that form the boundary condition
+  //   // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
+  //   for (auto& ss_it : m_sideSets[ws]) {
+  //     std::string             ss_key = ss_it.first;
+  //     std::vector<SideStruct> ss_val = ss_it.second;
 
-      Kokkos::DualView<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
+  //     Kokkos::DualView<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
 
-      for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
-        const auto& side = ss_val[sideSet_idx];
+  //     for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
+  //       const auto& side = ss_val[sideSet_idx];
 
-        // Get the data that corresponds to the side
-        const int ws_elem_idx = side.ws_elem_idx;
-        const int side_pos    = side.side_pos;
+  //       // Get the data that corresponds to the side
+  //       const int ws_elem_idx = side.ws_elem_idx;
+  //       const int side_pos    = side.side_pos;
 
-        // Check if this sideset is the top or bot of the mesh. If not, the data structure
-        // for coupling vertical dofs is not needed.
-        if (side_pos!=top && side_pos!=bot)
-          break;
+  //       // Check if this sideset is the top or bot of the mesh. If not, the data structure
+  //       // for coupling vertical dofs is not needed.
+  //       if (side_pos!=top && side_pos!=bot)
+  //         break;
 
-        const int elem_LID = elem_lids(ws_elem_idx);
-        const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
+  //       const int elem_LID = elem_lids(ws_elem_idx);
+  //       const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
 
-        for (int eq=0; eq<m_neq; ++eq) {
-          const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,top,side_pos);
-          const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,bot,side_pos);
-          const int numSideNodes = sol_top_offsets.size();
+  //       for (int eq=0; eq<m_neq; ++eq) {
+  //         const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,top,side_pos);
+  //         const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,bot,side_pos);
+  //         const int numSideNodes = sol_top_offsets.size();
 
-          for (int j=0; j<numSideNodes; ++j) {
-            for (int il=0; il<numLayers; ++il) {
-              const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-              globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
-                elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
-            }
+  //         for (int j=0; j<numSideNodes; ++j) {
+  //           for (int il=0; il<numLayers; ++il) {
+  //             const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
+  //             globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
+  //               elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
+  //           }
 
-            // Add top side in last layer
-            const int il = numLayers-1;
-            const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-            globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
-              elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
-          }
-        }
-      }
+  //           // Add top side in last layer
+  //           const int il = numLayers-1;
+  //           const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
+  //           globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
+  //             elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
+  //         }
+  //       }
+  //     }
 
-      globalDOFView.modify_host();
-      globalDOFView.sync_device();
+  //     globalDOFView.modify_host();
+  //     globalDOFView.sync_device();
 
-      // Set workset-local sub-view
-      std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
-      wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+  //     // Set workset-local sub-view
+  //     std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
+  //     wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
 
-      sideset_idx_offset[ss_key] += ss_val.size();
-    }
-  }
+  //     sideset_idx_offset[ss_key] += ss_val.size();
+  //   }
+  // }
+  throw NotYetImplemented("ExtrudedDiscretization::computeSideSets()");
 }
 
 void
@@ -1054,36 +1065,152 @@ ExtrudedDiscretization::computeNodeSets()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: computeNodeSets");
 
+  const auto elem_layers_lid = m_extruded_mesh->cell_layers_lid();
+  const auto node_layers_gid = m_extruded_mesh->node_layers_gid();
+
   const auto& node_dof_mgr = getNodeDOFManager();
-  const auto& node_conn_mgr = node_dof_mgr->getAlbanyConnManager();
-  const auto& node_dof_lids = node_dof_mgr->elem_dof_lids().host();
-  const int num_elems = m_extruded_mesh->get_num_local_elements();
+  const auto& node_indexer = node_dof_mgr->ov_indexer();
+  const int num_layers = elem_layers_lid->numLayers;
   const int mesh_dim = getNumDim();
 
-  // Loop over all node sets
-  for (const auto& ns : m_extruded_mesh->meshSpecs[0]->nsNames) {
+  // Loop over all basal node sets to create the extruded node sets
+  const auto& basal_mesh_specs = m_extruded_mesh->basal_mesh()->meshSpecs[0];
+  const auto& basal_ns_names = basal_mesh_specs->nsNames;
+  const auto& basal_nodes_per_elem = basal_mesh_specs->ctd.node_count;
+  auto extrude_node_set = [&] (const std::string& bns, std::string ns = "") {
+    if (ns=="") ns = "extruded_" + bns;
+
     auto& ns_gids     = m_nodeSetGIDs[ns];
     auto& ns_elem_pos = m_nodeSets[ns];
     auto& ns_coords   = m_nodeSetCoords[ns];
 
-    // Get the mask for this nodeset from the conn mgr, and count how many nodes are in it
-    auto mask = node_conn_mgr->getConnectivityMask(ns);
+    const auto& basal_ns_gids     = m_basal_disc->getNodeSetGIDs().at(bns);
+    const auto& basal_ns_elem_pos = m_basal_disc->getNodeSets().at(bns);
 
-    std::set<GO> gids_found;
-    for (int ie=0; ie<num_elems; ++ie) {
-      const auto& node_gids = node_dof_mgr->getElementGIDs(ie);
-      const int conn_start = node_conn_mgr->getConnectivityStart(ie);
-      const int conn_size  = node_conn_mgr->getConnectivitySize(ie);
-      const auto ownership = node_conn_mgr->getOwnership(ie);
-      for (int in=0; in<conn_size; ++in) {
-        if (mask[conn_start+in]==1 and ownership[in]==Owned) {
-          auto it_bool = gids_found.insert(node_gids[in]);
-          if (it_bool.second) {
-            // Newly processed node
-            ns_gids.push_back(node_gids[in]);
-            ns_elem_pos.push_back(std::make_pair(ie,in));
-            const int node_lid = node_dof_lids(ie,in);
-            ns_coords.push_back(&m_nodes_coordinates[mesh_dim*node_lid]);
+    const int num_basal_nodes = basal_ns_gids.size();
+    const int num_nodes = num_basal_nodes*(num_layers+1);
+
+    ns_gids.resize(num_nodes);
+    ns_elem_pos.resize(num_nodes);
+    ns_coords.resize(num_nodes);
+
+    for (int ib=0; ib<num_basal_nodes; ++ib) {
+      const auto& belem = basal_ns_elem_pos[ib].first;
+      const auto& bpos  = basal_ns_elem_pos[ib].second;
+      for (int il=0; il<=num_layers; ++il) {
+        const int inode = ib*num_layers+il; // Local order in nodeset is not relevant
+
+        ns_gids[inode] = node_layers_gid->getId(basal_ns_gids[ib],il);
+
+        // For first n-1 layers, use the elem above the node
+        if (il<num_layers) {
+          ns_elem_pos[inode].first = elem_layers_lid->getId(belem,il);
+          ns_elem_pos[inode].second = bpos;
+        } else {
+          ns_elem_pos[inode].first = elem_layers_lid->getId(belem,il-1);
+          ns_elem_pos[inode].second = bpos+basal_nodes_per_elem;
+        }
+
+        const int node_lid = node_indexer->getLocalElement(ns_gids[inode]);
+        ns_coords[inode] = &m_nodes_coordinates[mesh_dim*node_lid];
+      }
+    }
+  };
+
+  for (const auto& bns : basal_ns_names) {
+    extrude_node_set (bns);
+  }
+
+  // Now add top/bottom nodesets
+  const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
+  const int num_basal_elems = basal_node_dof_mgr->getAlbanyConnManager()->getElementsInBlock().size();
+  std::set<GO> processed;
+  
+  m_nodeSetGIDs["top"].resize(0);
+  m_nodeSets["top"].resize(0);
+  m_nodeSetCoords["top"].resize(0);
+  m_nodeSetGIDs["bot"].resize(0);
+  m_nodeSets["bot"].resize(0);
+  m_nodeSetCoords["bot"].resize(0);
+  const auto& offsets_top = node_dof_mgr->getGIDFieldOffsetsSide(0,node_dof_mgr->get_top_side_pos());
+  const auto& offsets_bot = node_dof_mgr->getGIDFieldOffsetsSide(0,node_dof_mgr->get_bot_side_pos());
+  for (int ibelem=0; ibelem<num_basal_elems; ++ibelem) {
+    const int ielem_bot = elem_layers_lid->getId(ibelem,0);
+    const int ielem_top = elem_layers_lid->getId(ibelem,num_layers-1);
+
+    const auto& nodes_bot = node_dof_mgr->getElementGIDs(ielem_bot);
+    const auto& nodes_top = node_dof_mgr->getElementGIDs(ielem_top);
+    
+    for (auto o : offsets_top) {
+      int node_lid = node_indexer->getLocalElement(nodes_top[o]);
+
+      m_nodeSetGIDs["top"].push_back(nodes_top[o]);
+      m_nodeSetCoords["top"].push_back(&m_nodes_coordinates[mesh_dim*node_lid]);
+      m_nodeSets["top"].emplace_back(ielem_top,o);
+    }
+    for (auto o : offsets_bot) {
+      int node_lid = node_indexer->getLocalElement(nodes_bot[o]);
+
+      m_nodeSetGIDs["bot"].push_back(nodes_bot[o]);
+      m_nodeSetCoords["bot"].push_back(&m_nodes_coordinates[mesh_dim*node_lid]);
+      m_nodeSets["bot"].emplace_back(ielem_bot,o);
+    }
+  }
+
+  // Finally, add the lateral side
+  if (std::find(basal_ns_names.begin(),basal_ns_names.end(),"lateral")!=basal_ns_names.end()) {
+    // The basal mesh has a "lateral" nodeset, so simply extrude it, but keep same name
+    extrude_node_set("lateral","lateral");
+  } else {
+    // Find all sides in the basal sideset that are not internal, and get all nodes inside them
+    auto side_cmp = [](const SideStruct& s1, const SideStruct& s2) { return s1.side_GID<s2.side_GID; };
+    std::set<SideStruct,decltype(side_cmp)> all_basal_sides(side_cmp);
+
+    for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
+      const auto& basal_side_sets = m_basal_disc->getSideSets(ws);
+      for (const auto& [ss_name,sides] : basal_side_sets) {
+        for (const auto& s : sides) {
+          if (not s.internal)
+            all_basal_sides.insert(s);
+        }
+      }
+    }
+
+    m_nodeSetGIDs["lateral"].resize(0);
+    m_nodeSets["lateral"].resize(0);
+    m_nodeSetCoords["lateral"].resize(0);
+
+    // Now we have ALL non-internal sides in the basal mesh. Get all their nodes,
+    // and add them to the lateral nodeset (being careful not to insert the same node twice)
+    std::set<GO> basal_lateral_nodes;
+    auto basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
+    auto basal_cell_indexer = basal_node_dof_mgr->cell_indexer();
+    for (const auto& bs : all_basal_sides) {
+      auto belem_lid = basal_cell_indexer->getLocalElement(bs.elem_GID);
+      const auto& basal_elem_nodes = basal_node_dof_mgr->getElementGIDs(belem_lid);
+      const auto& offsets = basal_node_dof_mgr->getGIDFieldOffsetsSide(0,bs.side_pos);
+
+      for (auto o : offsets) {
+        auto bnode_gid = basal_elem_nodes[o];
+        auto it_bool = basal_lateral_nodes.insert(bnode_gid);
+        if (it_bool.second) {
+          // First time we process this basal node gid. Add all extruded nodes to the nodeset
+          for (int il=0; il<=num_layers; ++il) {
+            m_nodeSetGIDs["lateral"].push_back(node_layers_gid->getId(bnode_gid,il));
+
+            int node_lid = node_indexer->getLocalElement(bnode_gid);
+            m_nodeSetCoords["lateral"].push_back(&m_nodes_coordinates[mesh_dim*node_lid]);
+
+            int ielem,node_pos;
+
+            if (il<num_layers) {
+              ielem = elem_layers_lid->getId(belem_lid,il);
+              node_pos = o;
+            } else {
+              ielem = elem_layers_lid->getId(belem_lid,il-1);
+              node_pos = o + basal_nodes_per_elem;
+            }
+            m_nodeSets["lateral"].emplace_back(ielem,node_pos);
           }
         }
       }
@@ -1094,9 +1221,10 @@ ExtrudedDiscretization::computeNodeSets()
 void
 ExtrudedDiscretization::buildSideSetProjectors()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: buildSideSetProjectors");
-  std::cout << "WARNING! ExtrudedDiscretization::buildSideSetProjectors not yet implemented!\n";
-  return;
+  throw NotYetImplemented("ExtrudedDiscretization::buildSideSetProjectors()");
+  // TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: buildSideSetProjectors");
+  // std::cout << "WARNING! ExtrudedDiscretization::buildSideSetProjectors not yet implemented!\n";
+  // return;
 }
 
 void ExtrudedDiscretization::printCoords() const 
@@ -1146,54 +1274,55 @@ ExtrudedDiscretization::updateMesh()
 void ExtrudedDiscretization::
 buildCellSideNodeNumerationMaps()
 {
+  throw NotYetImplemented("ExtrudedDiscretization::buildCellSideNodeNumerationMaps()");
   // The numeration is simple, since we decided the side gids
-  const auto& node_dof_mgr = getNodeDOFManager();
+  // const auto& node_dof_mgr = getNodeDOFManager();
 
-  const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
-  const auto& basal_elem_gids = m_basal_disc->getNodeDOFManager()->getAlbanyConnManager()->getElementsInBlock();
+  // const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
+  // const auto& basal_elem_gids = m_basal_disc->getNodeDOFManager()->getAlbanyConnManager()->getElementsInBlock();
 
-  const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
-  const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
+  // const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
+  // const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
 
-  std::vector<GO> side_nodes;
+  // std::vector<GO> side_nodes;
 
-  // ONLY for basalside and upperside, since that's where we are likely to load data from mesh
-  for (int ws=0; ws<getNumWorksets(); ++ws) {
-    for (std::string ssn : {"basalside","upperside"}) {
-      auto& s2ssc = sideToSideSetCellMap[ssn];
-      auto& s2nn = sideNodeNumerationMap[ssn];
+  // // ONLY for basalside and upperside, since that's where we are likely to load data from mesh
+  // for (int ws=0; ws<getNumWorksets(); ++ws) {
+  //   for (std::string ssn : {"basalside","upperside"}) {
+  //     auto& s2c   = m_side_to_ss_cell[ssn];
+  //     auto& sn2cn = m_side_nodes_to_ss_cell_nodes[ssn];
 
-      for (const auto& s : m_sideSets[ws][ssn]) {
-        const GO basal_elem_GID = s2ssc[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
-        const LO basal_elem_LID = basal_node_dof_mgr->cell_indexer()->getLocalElement(basal_elem_GID);
-        const auto elem_LID = node_dof_mgr->cell_indexer()->getLocalElement(s.elem_GID);
-        const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
-        const auto& basal_nodes = basal_node_dof_mgr->getElementGIDs(basal_elem_LID);
-        const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,s.side_pos);
+  //     for (const auto& s : m_sideSets[ws][ssn]) {
+  //       const GO basal_elem_GID = s2c[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
+  //       const LO basal_elem_LID = basal_node_dof_mgr->cell_indexer()->getLocalElement(basal_elem_GID);
+  //       const auto elem_LID = node_dof_mgr->cell_indexer()->getLocalElement(s.elem_GID);
+  //       const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
+  //       const auto& basal_nodes = basal_node_dof_mgr->getElementGIDs(basal_elem_LID);
+  //       const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,s.side_pos);
 
-        // Retrieve the gids of the basal mesh nodes that generated the gids of this side
-        // NOTE: if ordering==LAYER, they are the same
-        side_nodes.resize(offsets.size());
-        for (size_t i=0; i<offsets.size(); ++i) {
-          auto gid3d = elem_nodes[offsets[i]];
-          side_nodes[i] = node_layers_gid->getColumnId(gid3d);
-        }
-        s2nn[s.side_GID].resize(offsets.size());
-        for (size_t i=0; i<offsets.size(); ++i) {
-          auto it = std::find(side_nodes.begin(),side_nodes.end(),basal_nodes[i]);
-          TEUCHOS_TEST_FOR_EXCEPTION (it==side_nodes.end(), std::runtime_error,
-              "Error! Could not locate node in the basal mesh.\n");
+  //       // Retrieve the gids of the basal mesh nodes that generated the gids of this side
+  //       // NOTE: if ordering==LAYER, they are the same
+  //       side_nodes.resize(offsets.size());
+  //       for (size_t i=0; i<offsets.size(); ++i) {
+  //         auto gid3d = elem_nodes[offsets[i]];
+  //         side_nodes[i] = node_layers_gid->getColumnId(gid3d);
+  //       }
+  //       sn2cn[s.side_GID].resize(offsets.size());
+  //       for (size_t i=0; i<offsets.size(); ++i) {
+  //         auto it = std::find(side_nodes.begin(),side_nodes.end(),basal_nodes[i]);
+  //         TEUCHOS_TEST_FOR_EXCEPTION (it==side_nodes.end(), std::runtime_error,
+  //             "Error! Could not locate node in the basal mesh.\n");
 
-          s2nn[s.side_GID][i] = std::distance(side_nodes.begin(),it);
-        }
-      }
-    }
-  }
+  //         sn2cn[s.side_GID][i] = std::distance(side_nodes.begin(),it);
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 void ExtrudedDiscretization::setFieldData()
 {
-  TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
+  // Nothing to do here
 }
 
 Teuchos::RCP<DOFManager>
@@ -1214,7 +1343,8 @@ create_dof_mgr (const std::string& part_name,
   std::vector<std::string> elem_blocks =  {ebn};
 
   // Create conn and dof managers
-  auto conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager();
+  auto panzer_conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager()->noConnectivityClone();
+  auto conn_mgr_h = Teuchos::rcp_dynamic_cast<Albany::ConnManager>(panzer_conn_mgr_h,true); // Should NOT fail, so throw if cast fails
   auto conn_mgr = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
   dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
@@ -1229,9 +1359,9 @@ create_dof_mgr (const std::string& part_name,
     fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  //       and call the fields comp_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("comp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();

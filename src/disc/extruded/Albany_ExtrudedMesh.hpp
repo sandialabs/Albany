@@ -4,6 +4,7 @@
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_LayeredMeshNumbering.hpp"
 #include "Albany_DiscretizationUtils.hpp"
+#include "Albany_ExtrudedMeshFieldAccessor.hpp"
 
 #include <Teuchos_RCP.hpp>
 
@@ -21,14 +22,14 @@ public:
     return "Albany";
   }
 
-  const Teuchos::RCP<LayeredMeshNumbering<GO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<GO>>
   cell_layers_gid () const { return m_elem_layers_data_gid; }
-  const Teuchos::RCP<LayeredMeshNumbering<LO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>
   cell_layers_lid () const { return m_elem_layers_data_lid; }
 
-  const Teuchos::RCP<LayeredMeshNumbering<GO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<GO>>
   node_layers_gid () const { return m_node_layers_data_gid; }
-  const Teuchos::RCP<LayeredMeshNumbering<LO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>
   node_layers_lid () const { return m_node_layers_data_lid; }
 
   const Teuchos::RCP<AbstractMeshStruct>& basal_mesh () const { return m_basal_mesh; }
@@ -57,7 +58,7 @@ public:
   }
 
   Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override {
-    return m_basal_mesh->get_field_accessor();
+    return m_field_accessor;
   }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
@@ -68,10 +69,15 @@ public:
 
 protected:
 
+  // void extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields);
+  // void interpolateBasalFields (const Teuchos::Array<std::string>& basal_fields);
+
   Teuchos::RCP<const Teuchos_Comm>          m_comm;
   Teuchos::RCP<Teuchos::ParameterList>      m_params;
 
   Teuchos::RCP<AbstractMeshStruct>          m_basal_mesh;
+
+  Teuchos::RCP<ExtrudedMeshFieldAccessor>   m_field_accessor;
 
   Teuchos::RCP<LayeredMeshNumbering<GO>>    m_elem_layers_data_gid;
   Teuchos::RCP<LayeredMeshNumbering<LO>>    m_elem_layers_data_lid;
