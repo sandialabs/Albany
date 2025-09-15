@@ -8,7 +8,7 @@ TTTTT=`grep "(Timeout)" /projects/albany/nightlySpackBuild/spack_ctest.out -c`
 TT=`grep "...   Passed" /projects/albany/nightlySpackBuild/spack_ctest.out -c`
 
 
-echo "Subject: Albany Spack Build, cee-compute006 (linux-rhel7, gcc-10.1.0): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
+echo "Subject: Albany Spack Build, cee-compute035 (linux-rhel8, gcc-10.3.0): $TT tests passed, $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" >& a
 echo "" >& b
 cat a b >& c
 cat c results_spack >& d
