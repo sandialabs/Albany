@@ -1136,7 +1136,6 @@ void
 STKDiscretization::computeWorksetInfo()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeWorksetInfo");
-  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
 
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData->universal_part()) &
