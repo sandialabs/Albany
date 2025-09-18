@@ -50,4 +50,18 @@ writeSolutionMV (const Thyra_MultiVector& soln,
   writeMeshDatabaseToFile(time, force_write_solution);
 }
 
+auto AbstractDiscretization::
+get_dof_mgr (const std::string& part_name,
+                    const FE_Type fe_type,
+                    const int order,
+                    const int dof_dim)
+ -> dof_mgr_ptr_t&
+{
+  // NOTE: we assume order<10, and dof_dim<10, which is virtually never going to change
+  int type_order_dim = 100*static_cast<int>(fe_type) + 10*order + dof_dim;
+
+  std::string key = part_name + "_" + std::to_string(type_order_dim);
+  return m_key_to_dof_mgr[key];
+}
+
 } // namepace Albany

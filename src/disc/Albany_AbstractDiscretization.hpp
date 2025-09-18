@@ -360,18 +360,28 @@ public:
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
 
 protected:
+  dof_mgr_ptr_t&
+  get_dof_mgr (const std::string& part_name,
+               const FE_Type fe_type,
+               const int order,
+               const int dof_dim);
+
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 
   //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
-  // One dof mgr per dof per part
   // Notice that the dof mgr on a side is not the restriction
   // of the volume dof mgr to that side, since local ids are different.
+  // Note: the double map works as map[field_name][part_name] = dof_mgr
   strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
 
-  // Dof manager for a scalar node field
+  // Dof manager for a scalar node field (part_name->dof_mgr)
   strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+
+  // Store a all dof mgrs based on a key that encodes all params used to create it.
+  // This helps to build only one copy of dof mgrs with same specs
+  std::map<std::string,dof_mgr_ptr_t>      m_key_to_dof_mgr;
 
   // For each ss, map the side_GID into vec, where vec[i]=k if the i-th
   // node of the side corresponds to the k-th node of the cell in the side mesh

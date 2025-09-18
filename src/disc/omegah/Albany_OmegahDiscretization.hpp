@@ -170,10 +170,9 @@ protected:
 
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
-                  const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   void computeNodeSets ();
   void computeGraphs ();

@@ -86,9 +86,12 @@ updateMesh ()
 {
   printf ("TODO: change name to the method?\n");
 
+  // Make sure we don't reuse old dof mgrs (if adapting)
+  m_key_to_dof_mgr.clear();
+
   // Create DOF managers
-  auto sol_dof_mgr  = create_dof_mgr(solution_dof_name(),"",FE_Type::HGRAD,1,m_neq);
-  auto node_dof_mgr = create_dof_mgr(nodes_dof_name(),"",FE_Type::HGRAD,1,1);
+  auto sol_dof_mgr  = create_dof_mgr("",FE_Type::HGRAD,1,m_neq);
+  auto node_dof_mgr = create_dof_mgr("",FE_Type::HGRAD,1,1);
 
   m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
   m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
@@ -279,11 +282,11 @@ void OmegahDiscretization::setFieldData()
             "  - state name: " + st->name + "\n"
             "  - input dims: (" + util::join(st->dim,",") + ")\n");
     }
-    auto dof_mgr = create_dof_mgr (st->name,st->meshPart,FE_Type::HGRAD,1,numComps);
+    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
     m_dof_managers[st->name][st->meshPart] = dof_mgr;
 
     if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
-      auto node_dof_mgr = create_dof_mgr (nodes_dof_name(),st->meshPart,FE_Type::HGRAD,1,1);
+      auto node_dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
       m_node_dof_managers[st->meshPart] = node_dof_mgr;
     }
   }
@@ -328,17 +331,22 @@ setField (const Thyra_Vector& field_vector,
 
 Teuchos::RCP<DOFManager>
 OmegahDiscretization::
-create_dof_mgr (const std::string& field_name,
-                const std::string& part_name,
+create_dof_mgr (const std::string& part_name,
                 const FE_Type fe_type,
                 const int order,
-                const int dof_dim) const
+                const int dof_dim)
 {
+  auto& dof_mgr = get_dof_mgr(part_name,fe_type,order,dof_dim);
+  if (Teuchos::nonnull(dof_mgr)) {
+    // Not the first time we build a DOFManager for a field with these specs
+    return dof_mgr;
+  }
+
   const auto& mesh_specs = m_mesh_struct->meshSpecs[0];
 
   // Create conn and dof managers
   auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   shards::CellTopology topo (&mesh_specs->ctd);
   Teuchos::RCP<panzer::FieldPattern> fp;
@@ -353,7 +361,7 @@ create_dof_mgr (const std::string& field_name,
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
   //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("cmp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();
