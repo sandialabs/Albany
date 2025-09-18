@@ -1,39 +1,39 @@
 compilers:
 - compiler:
-    spec: gcc@=10.1.0
-    paths:
-      cc: /projects/sems/install/rhel7-x86_64/sems-compilers/tpl/gcc/10.1.0/gcc/4.8.5/base/4wwfxhh/bin/gcc
-      cxx: /projects/sems/install/rhel7-x86_64/sems-compilers/tpl/gcc/10.1.0/gcc/4.8.5/base/4wwfxhh/bin/g++
-      f77: /projects/sems/install/rhel7-x86_64/sems-compilers/tpl/gcc/10.1.0/gcc/4.8.5/base/4wwfxhh/bin/gfortran
-      fc: /projects/sems/install/rhel7-x86_64/sems-compilers/tpl/gcc/10.1.0/gcc/4.8.5/base/4wwfxhh/bin/gfortran
-    flags: {}
-    operating_system: rhel7
-    target: x86_64
-    modules: []
-    environment: {}
-    extra_rpaths: []
-- compiler:
-    spec: gcc@=4.4.7
-    paths:
-      cc: /usr/bin/gcc44
-      cxx: /usr/bin/g++44
-      f77: null
-      fc: null
-    flags: {}
-    operating_system: rhel7
-    target: x86_64
-    modules: []
-    environment: {}
-    extra_rpaths: []
-- compiler:
-    spec: gcc@=4.8.5
+    spec: gcc@=8.5.0
     paths:
       cc: /usr/bin/gcc
       cxx: /usr/bin/g++
       f77: /usr/bin/gfortran
       fc: /usr/bin/gfortran
     flags: {}
-    operating_system: rhel7
+    operating_system: rhel8
+    target: x86_64
+    modules: []
+    environment: {}
+    extra_rpaths: []
+- compiler:
+    spec: gcc@=11.4.0
+    paths:
+      cc: /projects/aue/cee/deploy/e1059ca4/linux-rhel8-x86_64/gcc-10.3.0/gcc-11.4.0-il2rw66/bin/gcc
+      cxx: /projects/aue/cee/deploy/e1059ca4/linux-rhel8-x86_64/gcc-10.3.0/gcc-11.4.0-il2rw66/bin/g++
+      f77: /projects/aue/cee/deploy/e1059ca4/linux-rhel8-x86_64/gcc-10.3.0/gcc-11.4.0-il2rw66/bin/gfortran
+      fc: /projects/aue/cee/deploy/e1059ca4/linux-rhel8-x86_64/gcc-10.3.0/gcc-11.4.0-il2rw66/bin/gfortran
+    flags: {}
+    operating_system: rhel8
+    target: x86_64
+    modules: []
+    environment: {}
+    extra_rpaths: []
+- compiler:
+    spec: gcc@=14.2.0
+    paths:
+      cc: /projects/aue/cee/deploy/200a9402/linux-rhel8-x86_64/gcc-12.3.0/gcc-14.2.0-u6n6v35/bin/gcc
+      cxx: /projects/aue/cee/deploy/200a9402/linux-rhel8-x86_64/gcc-12.3.0/gcc-14.2.0-u6n6v35/bin/g++
+      f77: /projects/aue/cee/deploy/200a9402/linux-rhel8-x86_64/gcc-12.3.0/gcc-14.2.0-u6n6v35/bin/gfortran
+      fc: /projects/aue/cee/deploy/200a9402/linux-rhel8-x86_64/gcc-12.3.0/gcc-14.2.0-u6n6v35/bin/gfortran
+    flags: {}
+    operating_system: rhel8
     target: x86_64
     modules: []
     environment: {}
