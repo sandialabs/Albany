@@ -332,13 +332,19 @@ create_dof_mgr (const std::string& field_name,
                 const std::string& part_name,
                 const FE_Type fe_type,
                 const int order,
-                const int dof_dim) const
+                const int dof_dim)
 {
+  auto& dof_mgr = get_hashed_dof_mgr(part_name,fe_type,order,dof_dim);
+  if (Teuchos::nonnull(dof_mgr)) {
+    // Not the first time we build a DOFManager for a field with these specs
+    return dof_mgr;
+  }
+
   const auto& mesh_specs = m_mesh_struct->meshSpecs[0];
 
   // Create conn and dof managers
   auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   shards::CellTopology topo (&mesh_specs->ctd);
   Teuchos::RCP<panzer::FieldPattern> fp;

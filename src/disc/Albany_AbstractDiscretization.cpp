@@ -50,4 +50,19 @@ writeSolutionMV (const Thyra_MultiVector& soln,
   writeMeshDatabaseToFile(time, force_write_solution);
 }
 
+auto AbstractDiscretization::
+get_hashed_dof_mgr (const std::string& part_name,
+                    const FE_Type fe_type,
+                    const int order,
+                    const int dof_dim)
+ -> dof_mgr_ptr_t&
+{
+  std::size_t hash = 0;
+  hash ^= std::hash<std::string>()(part_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(order) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(dof_dim) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  hash ^= std::hash<int>()(static_cast<int>(fe_type)) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+  return m_hash_to_dof_mgr[hash];
+}
+
 } // namepace Albany
