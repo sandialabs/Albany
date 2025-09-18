@@ -122,6 +122,8 @@ updateMesh ()
     m_wsPhysIndex[i] = ms->ebNameToIndex[m_wsEBNames[i]];
   }
 
+  m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
+
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
   auto node_gids = hostRead(mesh.globals(0));
