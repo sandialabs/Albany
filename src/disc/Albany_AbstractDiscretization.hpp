@@ -162,16 +162,18 @@ public:
   int getNumWorksets () const { return m_workset_sizes.size(); }
 
   //! Get Side set lists
-  virtual const SideSetList&
-  getSideSets(const int ws) const = 0;
+  const SideSetList& getSideSets(const int ws) const { return m_sideSets[ws]; }
 
   //! Get Side set view lists
-  virtual const LocalSideSetInfoList&
-  getSideSetViews(const int ws) const = 0;
+  const LocalSideSetInfoList&
+  getSideSetViews(const int ws) const { return m_sideSetViews.at(ws); }
 
   //! Get local DOF views for GatherVerticallyContractedSolution
-  virtual const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const = 0;
+  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const
+  {
+    return m_wsLocalDOFViews.at(workset);
+  }
 
   //! Get Dof Manager of field field_name
   Teuchos::RCP<const GlobalLocalIndexer>
@@ -264,8 +266,7 @@ public:
   getNumDim() const = 0;
 
   //! Get number of total DOFs per node
-  virtual int
-  getNumEq() const = 0;
+  int getNumEq() const { return m_neq; }
 
   //! Get Numbering for layered mesh (mesh structured in one direction)
   virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
@@ -366,6 +367,9 @@ protected:
                const int order,
                const int dof_dim);
 
+  // From std::vector<SideSet> build corresponding kokkos structures
+  void buildSideSetsViews ();
+
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 
   //! Jacobian matrix operator factory
@@ -389,6 +393,18 @@ protected:
 
   // For each ss, map the side_GID to the cell_GID in the side mesh
   strmap_t<std::map<GO, GO>>               m_side_to_ss_cell;
+
+  //! side sets stored as std::map(string ID, SideArray classes) per workset
+  //! (std::vector across worksets)
+  std::vector<SideSetList>            m_sideSets;
+  std::map<int, LocalSideSetInfoList> m_sideSetViews;
+
+  //! Number of equations (and unknowns) per node
+  // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
+  int m_neq;
+
+  //! GatherVerticallyContractedSolution connectivity
+  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> m_wsLocalDOFViews;
 
   // Workset information
   WorksetArray<int>           m_workset_sizes; // size of each ws

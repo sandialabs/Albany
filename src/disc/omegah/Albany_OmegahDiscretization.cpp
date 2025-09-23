@@ -67,9 +67,9 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
  , m_mesh_struct(mesh)
  , m_comm (comm)
  , m_side_set_equations(sideSetEquations)
- , m_neq (neq)
 {
   m_num_time_deriv = m_disc_params->get("Number Of Time Derivatives",0);
+  m_neq = neq;
 
   // TODO: get solution names from param list
   m_sol_names.resize(m_num_time_deriv+1,solution_dof_name());
@@ -125,6 +125,8 @@ updateMesh ()
     m_wsPhysIndex[i] = ms->ebNameToIndex[m_wsEBNames[i]];
   }
 
+  m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
+
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
   auto node_gids = hostRead(mesh.globals(0));
@@ -160,10 +162,10 @@ updateMesh ()
     elms_in_prior_worksets += m_workset_sizes[ws];
   }
 
-  m_side_sets.resize(num_ws);
+  m_sideSets.resize(num_ws);
   for (int ws=0; ws<num_ws; ++ws) {
-    m_side_set_views[ws] = {};
-    m_ws_local_dof_views[ws] = {};
+    m_sideSetViews[ws] = {};
+    m_wsLocalDOFViews[ws] = {};
   }
 
   computeNodeSets ();

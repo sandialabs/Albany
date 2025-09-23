@@ -46,24 +46,6 @@ public:
     return m_node_set_coords;
   }
 
-  //! Get Side set lists
-  const SideSetList&
-  getSideSets(const int ws) const override {
-    return m_side_sets[ws];
-  }
-
-  //! Get Side set view lists
-  const LocalSideSetInfoList&
-  getSideSetViews(const int ws) const override {
-    return m_side_set_views.at(ws);
-  }
-
-  //! Get local DOF views for GatherVerticallyContractedSolution
-  const strmap_t<Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const override {
-    return m_ws_local_dof_views.at(workset);
-  }
-
   //! Get coordinates (overlap map).
   const Teuchos::ArrayRCP<double>& getCoordinates() const override { return m_nodes_coordinates; }
 
@@ -105,12 +87,6 @@ public:
   int
   getNumDim() const override {
     return m_mesh_struct->meshSpecs[0]->numDim;
-  }
-
-  //! Get number of total DOFs per node
-  int
-  getNumEq() const override {
-    return m_neq;
   }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
@@ -191,10 +167,6 @@ protected:
   // TODO: move stuff below in base class?
   Teuchos::RCP<const Teuchos_Comm> m_comm;
 
-  std::map<int, LocalSideSetInfoList> m_side_set_views;
-  std::vector<SideSetList> m_side_sets;
-  std::map<int, strmap_t<Kokkos::DualView<LO****, PHX::Device>>> m_ws_local_dof_views;
-
   NodeSetList       m_node_sets;
   NodeSetCoordList  m_node_set_coords;
 
@@ -203,10 +175,6 @@ protected:
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_side_set_equations;
-
-  // Number of equations (and unknowns) per node
-  // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
-  const int m_neq;
 
   // TODO: I don't think this belongs in the disc class. We do store it for STK meshes,
   //       mainly b/c we need to know how many components the soln vector has.

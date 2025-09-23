@@ -41,25 +41,6 @@ public:
   const NodeSetGIDsList&  getNodeSetGIDs()   const override { return m_nodeSetGIDs;   }
   const NodeSetCoordList& getNodeSetCoords() const override { return m_nodeSetCoords; }
 
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const SideSetList& getSideSets(const int workset) const override
-  {
-    return m_sideSets[workset];
-  }
-
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const LocalSideSetInfoList& getSideSetViews(const int workset) const override
-  {
-    return sideSetViews.at(workset);
-  }
-
-  //! Get local DOF views for GatherVerticallyContractedSolution
-  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const override
-  {
-    return wsLocalDOFViews.at(workset);
-  }
-
   //! Get connectivity map from elementGID to workset
         WsLIDList& getElemGIDws()       override { return m_elemGIDws; }
   const WsLIDList& getElemGIDws() const override { return m_elemGIDws; }
@@ -87,9 +68,6 @@ public:
 
   //! Get number of spatial dimensions
   int getNumDim() const override { return m_extruded_mesh->meshSpecs[0]->numDim; }
-
-  //! Get number of total DOFs per node
-  int getNumEq() const override { return m_neq; }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
 
@@ -191,9 +169,6 @@ protected:
 
   Teuchos::RCP<AbstractDiscretization> m_basal_disc;
 
-  //! Number of equations (and unknowns) per node
-  const int m_neq;
-
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_sideSetEquations;
 
@@ -201,15 +176,6 @@ protected:
   NodeSetList      m_nodeSets;
   NodeSetGIDsList  m_nodeSetGIDs;
   NodeSetCoordList m_nodeSetCoords;
-
-  //! side sets stored as std::map(string ID, SideArray classes) per workset
-  std::vector<SideSetList> m_sideSets;
-  GlobalSideSetList globalSideSetViews;
-  std::map<int, LocalSideSetInfoList> sideSetViews;
-
-  //! GatherVerticallyContractedSolution connectivity
-  std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> allLocalDOFViews;
-  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> wsLocalDOFViews;
 
   // Coordinates spliced together, as [x0,y0,z0,x1,y1,z1,...]
   Teuchos::ArrayRCP<double>   m_nodes_coordinates;
