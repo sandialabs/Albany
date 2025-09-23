@@ -67,16 +67,17 @@ STKDiscretization::STKDiscretization(
       metaData(stkMeshStruct_->metaData),
       bulkData(stkMeshStruct_->bulkData),
       comm(comm_),
-      neq(neq_),
       sideSetEquations(sideSetEquations_),
       rigidBodyModes(rigidBodyModes_),
       stkMeshStruct(stkMeshStruct_),
       discParams(discParams_)
 {
+  m_neq = neq_;
+
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     for (auto it : stkMeshStruct->sideSetMeshStructs) {
       auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
-      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, stk_mesh, comm));
+      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, m_neq, stk_mesh, comm));
       sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }
@@ -907,9 +908,20 @@ void STKDiscretization::computeVectorSpaces()
   TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size() < 1,std::logic_error,
       "Error! Albany problems must have at least 1 element block.  Your mesh has 0 element blocks.\n");
 
-  strmap_t<std::pair<std::string,int>> name_to_partAndDim;
-  name_to_partAndDim[solution_dof_name()] = std::make_pair("",neq);
-  name_to_partAndDim[nodes_dof_name()] = std::make_pair("",1);
+  // Make sure we don't reuse old dof mgrs (if adapting)
+  m_key_to_dof_mgr.clear();
+
+  Teuchos::RCP<DOFManager> dof_mgr;
+
+  // Solution dof mgr
+  dof_mgr  = create_dof_mgr("",FE_Type::HGRAD,1,m_neq);
+  m_dof_managers[solution_dof_name()][""] = dof_mgr;
+
+  // Nodes dof mgr
+  dof_mgr = create_dof_mgr("",FE_Type::HGRAD,1,1);
+  m_dof_managers[nodes_dof_name()][""]    = dof_mgr;
+  m_node_dof_managers[""]                 = dof_mgr;
+
   for (const auto& sis : stkMeshStruct->getFieldContainer()->getNodalParameterSIS()) {
     const auto& dims = sis->dim;
     int dof_dim = -1;
@@ -922,25 +934,13 @@ void STKDiscretization::computeVectorSpaces()
             "Error! Unsupported layout for nodal parameter '" + sis->name + ".\n");
     }
 
-    name_to_partAndDim[sis->name] = std::make_pair(sis->meshPart,dof_dim);
-  }
-
-  for (const auto& it : name_to_partAndDim) {
-    const auto& field_name = it.first;
-    const auto& part_name  = it.second.first;
-    const auto& dof_dim    = it.second.second;
-
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
-    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
-    m_dof_managers[field_name][part_name] = dof_mgr;
-    m_node_dof_managers[part_name] = Teuchos::null;
-  }
+    dof_mgr = create_dof_mgr(sis->meshPart,FE_Type::HGRAD,1,dof_dim);
+    m_dof_managers[sis->name][sis->meshPart] = dof_mgr;
 
-  // For each part, also make a Node dof manager
-  for (auto& it : m_node_dof_managers) {
-    const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
+    dof_mgr = create_dof_mgr(sis->meshPart,FE_Type::HGRAD,1,1);
+    m_node_dof_managers[sis->meshPart] = dof_mgr;
   }
 
   const int meshDim = stkMeshStruct->numDim;
@@ -959,7 +959,7 @@ STKDiscretization::computeGraphs()
   // as well as what eqn are on each sideset
   std::vector<int> volumeEqns;
   std::map<std::string,std::vector<int>> ss_to_eqns;
-  for (int k=0; k < neq; ++k) {
+  for (int k=0; k < m_neq; ++k) {
     if (sideSetEquations.find(k) == sideSetEquations.end()) {
       volumeEqns.push_back(k);
     }
@@ -971,7 +971,7 @@ STKDiscretization::computeGraphs()
   const int num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
 
   // Handle the simple case, and return immediately
-  if (numVolumeEqns==neq) {
+  if (numVolumeEqns==m_neq) {
     // This is the easy case: couple everything with everything
     for (int icell=0; icell<num_elems; ++icell) {
       const auto& elem_gids = sol_dof_mgr->getElementGIDs(icell);
@@ -1069,7 +1069,7 @@ STKDiscretization::computeGraphs()
     for (const auto& ss_name : it.second) {
       for (int ws=0; ws<getNumWorksets(); ++ws) {
         const auto& elem_lids = getElementLIDs_host(ws);
-        const auto& ss = sideSets[ws].at(ss_name);
+        const auto& ss = m_sideSets[ws].at(ss_name);
 
         // Loop over all sides in this side set
         for (const auto& side : ss) {
@@ -1090,7 +1090,7 @@ STKDiscretization::computeGraphs()
             // Assume the worst, and couple with all eqns over the whole column
             const int numLayers = cell_layers_data_lid->numLayers;
             const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
-            for (int eq=0; eq<neq; ++eq) {
+            for (int eq=0; eq<m_neq; ++eq) {
               const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
               const int num_col_gids = eq_offsets.size();
               cols.resize(num_col_gids);
@@ -1113,7 +1113,7 @@ STKDiscretization::computeGraphs()
             //       contained in the other, but that starts to get too involved. Given that it's not
             //       a common scenario (need 2+ ss eqn defined on 2 different sidesets), and that we
             //       might have to redo this when we assemble by blocks, we just don't bother.
-            for (int col_eq=0; col_eq<neq; ++col_eq) {
+            for (int col_eq=0; col_eq<m_neq; ++col_eq) {
               const auto& col_eq_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(col_eq,side_pos);
               const int num_col_gids = col_eq_offsets.size();
               cols.resize(num_col_gids);
@@ -1287,23 +1287,23 @@ STKDiscretization::computeSideSets()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeSideSets");
   // Clean up existing sideset structure if remeshing
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    sideSets[i].clear();  // empty the ith map
+  for (auto& ss : m_sideSets) {
+    ss.clear();  // empty the ith map
   }
 
   int numBuckets = m_wsEBNames.size();
 
-  sideSets.resize(numBuckets);  // Need a sideset list per workset
+  m_sideSets.resize(numBuckets);  // Need a sideset list per workset
 
-  for (const auto& ss : stkMeshStruct->ssPartVec) {
+  for (const auto& [ss_name,ss_part] : stkMeshStruct->ssPartVec) {
     // Make sure the sideset exist even if no sides are owned
-    for (int i=0; i<numBuckets; ++i) {
-      sideSets[i][ss.first].resize(0);
+    for (auto& ss : m_sideSets) {
+      ss[ss_name].resize(0);
     }
 
     // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
-        stk::mesh::Selector(*(ss.second)) &
+        stk::mesh::Selector(*ss_part) &
         stk::mesh::Selector(metaData->locally_owned_part());
 
     std::vector<stk::mesh::Entity> sides;
@@ -1312,7 +1312,7 @@ STKDiscretization::computeSideSets()
         bulkData->buckets(metaData->side_rank()),
         sides);
 
-    *out << "STKDisc: sideset " << ss.first << " has size " << sides.size()
+    *out << "STKDisc: sideset " << ss_name << " has size " << sides.size()
          << "  on Proc 0." << std::endl;
 
     // loop over the sides to see what they are, then fill in the data holder
@@ -1327,7 +1327,7 @@ STKDiscretization::computeSideSets()
           bulkData->num_elements(sidee) != 1,
           std::logic_error,
           "STKDisc: cannot figure out side set topology for side set "
-              << ss.first << std::endl);
+              << ss_name << std::endl);
 
       stk::mesh::Entity elem = bulkData->begin_elements(sidee)[0];
 
@@ -1355,293 +1355,12 @@ STKDiscretization::computeSideSets()
           stkMeshStruct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
 
       // Get or create the vector of side structs for this side set on this workset
-      auto& ss_vec = sideSets[workset][ss.first];
+      auto& ss_vec = m_sideSets[workset][ss_name];
       ss_vec.push_back(sStruct);
     }
   }
 
-  // =============================================================
-  // (Kokkos Refactor) Convert sideSets to sideSetViews
-
-  // 1) Compute view extents (num_local_worksets, max_sideset_length, max_sides) and local workset counter (current_local_index)
-  std::map<std::string, int> num_local_worksets;
-  std::map<std::string, int> max_sideset_length;
-  std::map<std::string, int> max_sides;
-  std::map<std::string, int> current_local_index;
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
-      // Initialize values if this is the first time seeing a sideset key
-      if (num_local_worksets.find(ss_key) == num_local_worksets.end())
-        num_local_worksets[ss_key] = 0;
-      if (max_sideset_length.find(ss_key) == max_sideset_length.end())
-        max_sideset_length[ss_key] = 0;
-      if (max_sides.find(ss_key) == max_sides.end())
-        max_sides[ss_key] = 0;
-      if (current_local_index.find(ss_key) == current_local_index.end())
-        current_local_index[ss_key] = 0;
-
-      // Update extents for given workset/sideset
-      num_local_worksets[ss_key]++;
-      max_sideset_length[ss_key] = std::max(max_sideset_length[ss_key], (int) ss_val.size());
-      for (size_t j = 0; j < ss_val.size(); ++j)
-        max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_pos);
-    }
-  }
-
-  // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
-  for (const auto& ss_it : num_local_worksets) {
-    std::string             ss_key = ss_it.first;
-
-    max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
-
-    globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
-    globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].ws_elem_idx      = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("ws_elem_idx", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_pos         = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-  }
-
-  // 3) Populate global views
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
-      int current_index = current_local_index[ss_key];
-      int numSides = max_sides[ss_key];
-
-      int max_cells_on_side = 0;
-      std::vector<int> numCellsOnSide(numSides);
-      std::vector<std::vector<int>> cellsOnSide(numSides);
-      std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
-      for (size_t j = 0; j < ss_val.size(); ++j) {
-        int cell = ss_val[j].ws_elem_idx;
-        int side = ss_val[j].side_pos;
-
-        cellsOnSide[side].push_back(cell);
-        sideSetIdxOnSide[side].push_back(j);
-      }
-      for (int side = 0; side < numSides; ++side) {
-        numCellsOnSide[side] = cellsOnSide[side].size();
-        max_cells_on_side = std::max(max_cells_on_side, numCellsOnSide[side]);
-      }
-
-      for (int side = 0; side < numSides; ++side) {
-        globalSideSetViews[ss_key].numCellsOnSide.h_view(current_index, side) = numCellsOnSide[side];
-        for (int j = 0; j < numCellsOnSide[side]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = cellsOnSide[side][j];
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = sideSetIdxOnSide[side][j];
-        }
-        for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = -1;
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = -1;
-        }
-      }
-
-      for (size_t j = 0; j < ss_val.size(); ++j) {
-        globalSideSetViews[ss_key].side_GID.h_view(current_index, j)      = ss_val[j].side_GID;
-        globalSideSetViews[ss_key].elem_GID.h_view(current_index, j)      = ss_val[j].elem_GID;
-        globalSideSetViews[ss_key].ws_elem_idx.h_view(current_index, j)   = ss_val[j].ws_elem_idx;
-        globalSideSetViews[ss_key].elem_ebIndex.h_view(current_index, j)  = ss_val[j].elem_ebIndex;
-        globalSideSetViews[ss_key].side_pos.h_view(current_index, j) = ss_val[j].side_pos;
-      }
-
-      globalSideSetViews[ss_key].side_GID.modify_host();
-      globalSideSetViews[ss_key].elem_GID.modify_host();
-      globalSideSetViews[ss_key].ws_elem_idx.modify_host();
-      globalSideSetViews[ss_key].elem_ebIndex.modify_host();
-      globalSideSetViews[ss_key].side_pos.modify_host();
-      globalSideSetViews[ss_key].numCellsOnSide.modify_host();
-      globalSideSetViews[ss_key].cellsOnSide.modify_host();
-      globalSideSetViews[ss_key].sideSetIdxOnSide.modify_host();
-
-      globalSideSetViews[ss_key].side_GID.sync_device();
-      globalSideSetViews[ss_key].elem_GID.sync_device();
-      globalSideSetViews[ss_key].ws_elem_idx.sync_device();
-      globalSideSetViews[ss_key].elem_ebIndex.sync_device();
-      globalSideSetViews[ss_key].side_pos.sync_device();
-      globalSideSetViews[ss_key].numCellsOnSide.sync_device();
-      globalSideSetViews[ss_key].cellsOnSide.sync_device();
-      globalSideSetViews[ss_key].sideSetIdxOnSide.sync_device();
-
-      current_local_index[ss_key]++;
-    }
-  }
-
-  // 4) Reset current_local_index
-  std::map<std::string, int>::iterator counter_it = current_local_index.begin();
-  while (counter_it != current_local_index.end()) {
-    std::string counter_key = counter_it->first;
-    current_local_index[counter_key] = 0;
-    counter_it++;
-  }
-
-  // 5) Populate map of LocalSideSetInfos
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    LocalSideSetInfoList& lssList = sideSetViews[i];
-
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
-      int current_index = current_local_index[ss_key];
-      std::pair<int,int> range(0, ss_val.size());
-
-      lssList[ss_key].size           = ss_val.size();
-      lssList[ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
-      lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
-      lssList[ss_key].ws_elem_idx    = Kokkos::subview(globalSideSetViews[ss_key].ws_elem_idx, current_index, range );
-      lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
-      lssList[ss_key].side_pos  = Kokkos::subview(globalSideSetViews[ss_key].side_pos, current_index, range );
-      lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
-      lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
-      lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
-      lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
-
-      current_local_index[ss_key]++;
-    }
-  }
-
-  // 6) Determine size of global DOFView structure and allocate
-  std::map<std::string, int> total_sideset_idx;
-  std::map<std::string, int> sideset_idx_offset;
-  unsigned int maxSideNodes = 0;
-  const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
-  if (!cell_layers_data.is_null()) {
-    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->meshSpecs[0]->ctd));
-    const int numLayers = cell_layers_data->numLayers;
-    const int numComps = getDOFManager()->getNumFields();
-
-    // Determine maximum number of side nodes
-    for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
-      const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
-      const unsigned int numSideNodes = side.topology->node_count;
-      maxSideNodes = std::max(maxSideNodes, numSideNodes);
-    }
-
-    // Determine total number of sideset indices per each sideset name
-    for (auto& ssList : sideSets) {
-      for (auto& ss_it : ssList) {
-        std::string             ss_key = ss_it.first;
-        std::vector<SideStruct> ss_val = ss_it.second;
-
-        if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
-          sideset_idx_offset[ss_key] = 0;
-        if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
-          total_sideset_idx[ss_key] = 0;
-
-        total_sideset_idx[ss_key] += ss_val.size();
-      }
-    }
-
-    // Allocate total localDOFView for each sideset name
-    for (auto& ss_it : num_local_worksets) {
-      std::string ss_key = ss_it.first;
-      allLocalDOFViews[ss_key] = Kokkos::DualView<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
-    }
-  }
-
-  // Not all mesh structs that come through here are extruded mesh structs.
-  // If the mesh isn't extruded, we won't need to do any of the following work.
-  if (not cell_layers_data.is_null()) {
-    // Get topo data
-    auto ctd = stkMeshStruct->meshSpecs[0]->ctd;
-
-    // Ensure we have ONE cell per layer.
-    const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-    const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-    TEUCHOS_TEST_FOR_EXCEPTION (
-        ctd.name!=topo_hexa->name &&
-        ctd.name!=topo_wedge->name, std::runtime_error,
-        "Extruded meshes only allowed if there is one element per layer (hexa or wedges).\n"
-        "  - current topology name: " << ctd.name << "\n");
-
-    const auto& sol_dof_mgr = getDOFManager();
-    const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
-
-    // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
-    const auto numLayers = cell_layers_data->numLayers;
-    const int top = cell_layers_data->top_side_pos;
-    const int bot = cell_layers_data->bot_side_pos;
-
-    // 7) Populate localDOFViews for GatherVerticallyContractedSolution
-    for (int ws=0; ws<getNumWorksets(); ++ws) {
-
-      // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-      std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
-
-      const auto& elem_lids = getElementLIDs_host(ws);
-
-      // Loop over the sides that form the boundary condition
-      // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
-      for (auto& ss_it : sideSets[ws]) {
-        std::string             ss_key = ss_it.first;
-        std::vector<SideStruct> ss_val = ss_it.second;
-
-        Kokkos::DualView<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
-
-        for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
-          const auto& side = ss_val[sideSet_idx];
-
-          // Get the data that corresponds to the side
-          const int ws_elem_idx = side.ws_elem_idx;
-          const int side_pos    = side.side_pos;
-
-          // Check if this sideset is the top or bot of the mesh. If not, the data structure
-          // for coupling vertical dofs is not needed.
-          if (side_pos!=top && side_pos!=bot)
-            break;
-
-          const int elem_LID = elem_lids(ws_elem_idx);
-          const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
-
-          for (int eq=0; eq<neq; ++eq) {
-            const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,top,side_pos);
-            const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,bot,side_pos);
-            const int numSideNodes = sol_top_offsets.size();
-
-            for (int j=0; j<numSideNodes; ++j) {
-              for (int il=0; il<numLayers; ++il) {
-                const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-                globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
-                  elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
-              }
-
-              // Add top side in last layer
-              const int il = numLayers-1;
-              const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-              globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
-                elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
-            }
-          }
-        }
-
-        globalDOFView.modify_host();
-        globalDOFView.sync_device();
-
-        // Set workset-local sub-view
-        std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
-        wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
-
-        sideset_idx_offset[ss_key] += ss_val.size();
-      }
-    }
-  } else {
-    // We still need this view to be present (even if of size 0), so create them
-    std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> dummy;
-    for (int ws=0; ws<getNumWorksets(); ++ws) {
-      wsLocalDOFViews.emplace(std::make_pair(ws,dummy));
-    }
-  }
+  buildSideSetsViews();
 }
 
 int
@@ -1763,7 +1482,7 @@ STKDiscretization::computeNodeSets()
   const auto& cell_indexer = sol_dof_mgr->cell_indexer();
 
   std::vector<std::vector<int>> offsets (sol_dof_mgr->getNumFields());
-  for (int eq=0; eq<neq; ++eq) {
+  for (int eq=0; eq<m_neq; ++eq) {
     offsets[eq] = sol_dof_mgr->getGIDFieldOffsets(eq);
   }
 
@@ -1934,8 +1653,8 @@ STKDiscretization::buildSideSetProjectors()
 
     // Recall, if node_map(i,j)=k, then on side_gid=i, the j-th side node corresponds
     // to the k-th node in the side set cell numeration.
-    const auto& node_numeration_map = sideNodeNumerationMap.at(it.first);
-    const auto& side_cell_gid_map   = sideToSideSetCellMap.at(it.first);
+    const auto& node_numeration_map = m_side_nodes_to_ss_cell_nodes.at(it.first);
+    const auto& side_cell_gid_map   = m_side_to_ss_cell.at(it.first);
     for (auto side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
           "Error! Found a side with not exactly one element attached.\n"
@@ -1955,7 +1674,7 @@ STKDiscretization::buildSideSetProjectors()
       const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(ss_elem_lid);
 
       const auto& permutation = node_numeration_map.at(side_gid);
-      for (int eq=0; eq<neq; ++eq) {
+      for (int eq=0; eq<m_neq; ++eq) {
         const auto& offsets    = dofMgr->getGIDFieldOffsetsSubcell(eq,sideDim,pos);
         const auto& ss_offsets = ss_dofMgr->getGIDFieldOffsets(eq);
         for (int i=0; i<num_side_nodes; ++i) {
@@ -2021,13 +1740,13 @@ STKDiscretization::updateMesh()
 #endif
 
   // Update sideset discretizations (if any)
-  for (auto it : sideSetDiscretizationsSTK) {
-    it.second->updateMesh();
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizationsSTK) {
+    ss_disc->updateMesh();
 
     stkMeshStruct->buildCellSideNodeNumerationMap(
-        it.first,
-        sideToSideSetCellMap[it.first],
-        sideNodeNumerationMap[it.first]);
+        ss_name,
+        m_side_to_ss_cell[ss_name],
+        m_side_nodes_to_ss_cell_nodes[ss_name]);
   }
 
   if (sideSetDiscretizations.size()>0) {
@@ -2072,10 +1791,10 @@ void STKDiscretization::setFieldData()
 
   if (Teuchos::nonnull(mSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, solution_vector, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, m_neq, numDim, solution_vector, num_params));
   } else if (Teuchos::nonnull(oSTKFieldContainer)) {
     solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, num_params));
+      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, m_neq, numDim, num_params));
   } else {
     ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }
@@ -2084,11 +1803,17 @@ void STKDiscretization::setFieldData()
 Teuchos::RCP<DOFManager>
 STKDiscretization::
 create_dof_mgr (const std::string& part_name,
-                const std::string& field_name,
                 const FE_Type fe_type,
                 const int order,
-                const int dof_dim) const
+                const int dof_dim)
 {
+  auto& dof_mgr = get_dof_mgr(part_name,fe_type,order,dof_dim);
+  if (Teuchos::nonnull(dof_mgr)) {
+    // Not the first time we build a DOFManager for a field with these specs
+    return dof_mgr;
+  }
+  // Teuchos::RCP<DOFManager> dof_mgr;
+
   // Figure out which element blocks this part belongs to
   std::vector<std::string> elem_blocks;
   const auto& ebn = stkMeshStruct->ebNames_;
@@ -2126,7 +1851,7 @@ create_dof_mgr (const std::string& part_name,
 
   // Create conn and dof managers
   auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
 
   const auto& topo = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
   Teuchos::RCP<panzer::FieldPattern> fp;
@@ -2139,9 +1864,9 @@ create_dof_mgr (const std::string& part_name,
     fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  //       and call the fields cmp_N, N=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("cmp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();
@@ -2221,7 +1946,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   discParams->set("1D Elements",factor*ne_x);
   auto sis = Teuchos::rcp(new StateInfoStruct(getMeshStruct()->get_field_accessor()->getAllSIS()));
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
-  stkMeshStruct->setFieldData(comm);
+  stkMeshStruct->setFieldData(comm,sis,{});
   stkMeshStruct->getFieldContainer()->addStateStructs(sis);
   this->setFieldData();
   stkMeshStruct->setBulkData(comm);

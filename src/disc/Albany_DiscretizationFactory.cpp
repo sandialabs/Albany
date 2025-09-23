@@ -100,7 +100,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         //FixME very hacky! needed for printing 2d mesh
         Teuchos::RCP<GenericSTKMeshStruct> meshStruct2D;
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
-        meshStruct2D->setFieldData(comm);
+        meshStruct2D->setFieldData(comm,Teuchos::null,{});
         meshStruct2D->setBulkData(comm);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -188,12 +188,10 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     int sideDim = ms->numDim - 1;
-    for (int i(0); i<sideSets.size(); ++i) {
-      const std::string& ss_name = sideSets[i];
-
+    for (const auto& ss_name : sideSets) {
       auto& ss_mesh = mesh->sideSetMeshStructs[ss_name];
 
-      // If this is the basalside of an extruded mesh, we already created the mesh object
+      // Extruded meshes can create some side meshes, so check if mesh is already there
       if (ss_mesh.is_null()) {
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
 
@@ -285,14 +283,7 @@ DiscretizationFactory::setMeshStructFieldData(
         const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
 {
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-  meshStruct->setFieldData(comm);
-  meshStruct->get_field_accessor()->addStateStructs(sis);
-  for (auto& [ss_name, ss_mesh] : meshStruct->sideSetMeshStructs) {
-    ss_mesh->setFieldData(comm);
-  }
-  for (auto& [ss_name, ss_sis] : side_set_sis) {
-    meshStruct->sideSetMeshStructs.at(ss_name)->get_field_accessor()->addStateStructs(ss_sis);
-  }
+  meshStruct->setFieldData(comm,sis,side_set_sis);
 }
 
 void DiscretizationFactory::

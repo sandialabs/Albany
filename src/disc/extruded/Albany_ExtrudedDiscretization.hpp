@@ -41,25 +41,6 @@ public:
   const NodeSetGIDsList&  getNodeSetGIDs()   const override { return m_nodeSetGIDs;   }
   const NodeSetCoordList& getNodeSetCoords() const override { return m_nodeSetCoords; }
 
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const SideSetList& getSideSets(const int workset) const override
-  {
-    return m_sideSets[workset];
-  }
-
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const LocalSideSetInfoList& getSideSetViews(const int workset) const override
-  {
-    return sideSetViews.at(workset);
-  }
-
-  //! Get local DOF views for GatherVerticallyContractedSolution
-  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const override
-  {
-    return wsLocalDOFViews.at(workset);
-  }
-
   //! Get connectivity map from elementGID to workset
         WsLIDList& getElemGIDws()       override { return m_elemGIDws; }
   const WsLIDList& getElemGIDws() const override { return m_elemGIDws; }
@@ -71,17 +52,6 @@ public:
   void printCoords() const override;
 
   Teuchos::RCP<AbstractMeshStruct> getMeshStruct() const override { return m_extruded_mesh; }
-
-  const std::map<std::string, std::map<GO, GO>>& getSideToSideSetCellMap() const override
-  {
-    throw NotYetImplemented("ExtrudedDiscretization::getSideToSideSetCellMap");
-  }
-
-  const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const override
-  {
-    throw NotYetImplemented("ExtrudedDiscretization::getSideNodeNumerationMap");
-  }
 
   //! Flag if solution has a restart values -- used in Init Cond
   bool hasRestartSolution() const override { return false; }
@@ -98,9 +68,6 @@ public:
 
   //! Get number of spatial dimensions
   int getNumDim() const override { return m_extruded_mesh->meshSpecs[0]->numDim; }
-
-  //! Get number of total DOFs per node
-  int getNumEq() const override { return m_neq; }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
 
@@ -147,7 +114,7 @@ public:
 
   void setFieldData() override;
 
- protected:
+protected:
 
   void getSolutionField(Thyra_Vector& result, bool overlapped) const;
 
@@ -193,7 +160,7 @@ public:
                   const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   // ==================== Members =================== //
 
@@ -202,9 +169,6 @@ public:
 
   Teuchos::RCP<AbstractDiscretization> m_basal_disc;
 
-  //! Number of equations (and unknowns) per node
-  const int m_neq;
-
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_sideSetEquations;
 
@@ -212,15 +176,6 @@ public:
   NodeSetList      m_nodeSets;
   NodeSetGIDsList  m_nodeSetGIDs;
   NodeSetCoordList m_nodeSetCoords;
-
-  //! side sets stored as std::map(string ID, SideArray classes) per workset
-  std::vector<SideSetList> m_sideSets;
-  GlobalSideSetList globalSideSetViews;
-  std::map<int, LocalSideSetInfoList> sideSetViews;
-
-  //! GatherVerticallyContractedSolution connectivity
-  std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> allLocalDOFViews;
-  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> wsLocalDOFViews;
 
   // Coordinates spliced together, as [x0,y0,z0,x1,y1,z1,...]
   Teuchos::ArrayRCP<double>   m_nodes_coordinates;
@@ -238,8 +193,6 @@ public:
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
   // Sideset discretizations
-  strmap_t<std::map<GO, GO>>                sideToSideSetCellMap;
-  strmap_t<std::map<GO, std::vector<int>>>  sideNodeNumerationMap;
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    projectors;
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
 };

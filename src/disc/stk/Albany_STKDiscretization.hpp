@@ -70,27 +70,6 @@ public:
     return nodeSetCoords;
   }
 
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const SideSetList&
-  getSideSets(const int workset) const
-  {
-    return sideSets[workset];
-  }
-
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const LocalSideSetInfoList&
-  getSideSetViews(const int workset) const
-  {
-    return sideSetViews.at(workset);
-  }
-
-  //! Get local DOF views for GatherVerticallyContractedSolution
-  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const
-  {
-    return wsLocalDOFViews.at(workset);
-  }
-
   //! Get connectivity map from elementGID to workset
   WsLIDList&
   getElemGIDws()
@@ -123,18 +102,6 @@ public:
     return stkMeshStruct;
   }
 
-  const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const
-  {
-    return sideToSideSetCellMap;
-  }
-
-  const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const
-  {
-    return sideNodeNumerationMap;
-  }
-
   //! Flag if solution has a restart values -- used in Init Cond
   bool
   hasRestartSolution() const
@@ -163,13 +130,6 @@ public:
   getNumDim() const
   {
     return stkMeshStruct->numDim;
-  }
-
-  //! Get number of total DOFs per node
-  int
-  getNumEq() const
-  {
-    return neq;
   }
 
   const stk::mesh::MetaData&
@@ -308,10 +268,9 @@ public:
   // If node_as_elements=true, build the ConnMgr as if nodes are the "cells".
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
-                  const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   // ==================== Members =================== //
 
@@ -324,9 +283,6 @@ public:
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
 
-  //! Number of equations (and unknowns) per node
-  const int neq;
-
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> sideSetEquations;
 
@@ -337,16 +293,6 @@ public:
   NodeSetList      nodeSets;
   NodeSetGIDsList  nodeSetGIDs;
   NodeSetCoordList nodeSetCoords;
-
-  //! side sets stored as std::map(string ID, SideArray classes) per workset
-  //! (std::vector across worksets)
-  std::vector<SideSetList> sideSets;
-  GlobalSideSetList globalSideSetViews;
-  std::map<int, LocalSideSetInfoList> sideSetViews;
-
-  //! GatherVerticallyContractedSolution connectivity
-  std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> allLocalDOFViews;
-  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> wsLocalDOFViews;
 
   mutable Teuchos::ArrayRCP<double>                                 coordinates;
   Teuchos::RCP<Thyra_MultiVector>                                   coordMV;
@@ -370,8 +316,6 @@ public:
 
   // Sideset discretizations
   std::map<std::string, Teuchos::RCP<STKDiscretization>> sideSetDiscretizationsSTK;
-  std::map<std::string, std::map<GO, GO>>                sideToSideSetCellMap;
-  std::map<std::string, std::map<GO, std::vector<int>>>  sideNodeNumerationMap;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    projectors;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
 
