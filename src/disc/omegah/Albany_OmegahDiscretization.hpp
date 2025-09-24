@@ -142,6 +142,8 @@ public:
 
   void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override;
 
+  Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
+
 protected:
 
   Teuchos::RCP<DOFManager>

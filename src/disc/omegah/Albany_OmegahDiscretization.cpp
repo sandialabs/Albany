@@ -331,6 +331,12 @@ setField (const Thyra_Vector& field_vector,
   accessor->saveVector(field_vector,field_name,dof_mgr,false);
 }
 
+Teuchos::RCP<ConnManager>
+OmegahDiscretization::create_conn_mgr (const std::string& /* part_name */)
+{
+  return Teuchos::rcp(new OmegahConnManager(m_mesh_struct));
+}
+
 Teuchos::RCP<DOFManager>
 OmegahDiscretization::
 create_dof_mgr (const std::string& part_name,
@@ -347,7 +353,7 @@ create_dof_mgr (const std::string& part_name,
   const auto& mesh_specs = m_mesh_struct->meshSpecs[0];
 
   // Create conn and dof managers
-  auto conn_mgr = Teuchos::rcp(new OmegahConnManager(m_mesh_struct));
+  auto conn_mgr = create_conn_mgr(part_name);
   dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   shards::CellTopology topo (&mesh_specs->ctd);
