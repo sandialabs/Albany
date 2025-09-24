@@ -213,6 +213,8 @@ public:
   int determine_entity_pos (const stk::mesh::Entity parent,
                             const stk::mesh::Entity child) const;
 
+  Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
+
  protected:
 
   friend class BlockedSTKDiscretization;
