@@ -110,6 +110,8 @@ public:
 
   void setFieldData() override;
 
+  Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
+
 protected:
 
   void getSolutionField(Thyra_Vector& result, bool overlapped) const;

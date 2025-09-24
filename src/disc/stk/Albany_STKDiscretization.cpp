@@ -1470,6 +1470,48 @@ STKDiscretization::determine_entity_pos(
   return -1;
 }
 
+Teuchos::RCP<ConnManager>
+STKDiscretization::create_conn_mgr (const std::string& part_name)
+{
+  // Figure out which element blocks this part belongs to
+  std::vector<std::string> elem_blocks;
+  const auto& ebn = stkMeshStruct->ebNames_;
+  if (part_name=="") {
+    // Not specifying a mesh part is considered the same as the whole mesh
+    elem_blocks = ebn;
+  } else if (std::find(ebn.begin(),ebn.end(),part_name)!=ebn.end()) {
+    // The part name is just one of the element blocks.
+    elem_blocks = {part_name};
+  } else {
+    // This part is not an element block.
+    // We need to consider any element block that has non-empty interesection
+    // with this part. Note: the interesection is at the level of entities
+    // with rank equal to the specified part (e.g., it may be just nodes).
+    const auto& part = metaData->get_part(part_name);
+
+    for (const auto& eb : ebn) {
+      const auto& ebp = metaData->get_part(eb);
+      stk::mesh::Selector sel (*part);
+      sel |= *ebp;
+      const auto& buckets = bulkData->buckets(part->primary_entity_rank());
+      if (stk::mesh::count_selected_entities(sel,buckets)>0) {
+        elem_blocks.push_back(eb);
+      }
+    }
+  }
+
+  // Ensure that all topologies are the same
+  for (unsigned i=1; i<elem_blocks.size(); ++i) {
+    const auto& topo0 = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
+    const auto& topo  = stkMeshStruct->elementBlockCT_.at(elem_blocks[i]);
+    TEUCHOS_TEST_FOR_EXCEPTION (topo0.getName()!=topo.getName(), std::runtime_error,
+        "Error! DOFManager requires all element blocks to have the same topology.\n");
+  }
+
+  // Create conn manager
+  return Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
+}
+
 void
 STKDiscretization::computeNodeSets()
 {
@@ -1810,48 +1852,12 @@ create_dof_mgr (const std::string& part_name,
     // Not the first time we build a DOFManager for a field with these specs
     return dof_mgr;
   }
-  // Teuchos::RCP<DOFManager> dof_mgr;
-
-  // Figure out which element blocks this part belongs to
-  std::vector<std::string> elem_blocks;
-  const auto& ebn = stkMeshStruct->ebNames_;
-  if (part_name=="") {
-    // Not specifying a mesh part is considered the same as the whole mesh
-    elem_blocks = ebn;
-  } else if (std::find(ebn.begin(),ebn.end(),part_name)!=ebn.end()) {
-    // The part name is just one of the element blocks.
-    elem_blocks = {part_name};
-  } else {
-    // This part is not an element block.
-    // We need to consider any element block that has non-empty interesection
-    // with this part. Note: the interesection is at the level of entities
-    // with rank equal to the specified part (e.g., it may be just nodes).
-    const auto& part = metaData->get_part(part_name);
-
-    for (const auto& eb : ebn) {
-      const auto& ebp = metaData->get_part(eb);
-      stk::mesh::Selector sel (*part);
-      sel |= *ebp;
-      const auto& buckets = bulkData->buckets(part->primary_entity_rank());
-      if (stk::mesh::count_selected_entities(sel,buckets)>0) {
-        elem_blocks.push_back(eb);
-      }
-    }
-  }
-
-  // Ensure that all topologies are the same
-  for (unsigned i=1; i<elem_blocks.size(); ++i) {
-    const auto& topo0 = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
-    const auto& topo  = stkMeshStruct->elementBlockCT_.at(elem_blocks[i]);
-    TEUCHOS_TEST_FOR_EXCEPTION (topo0.getName()!=topo.getName(), std::runtime_error,
-        "Error! DOFManager requires all element blocks to have the same topology.\n");
-  }
 
   // Create conn and dof managers
-  auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
+  auto conn_mgr = create_conn_mgr(part_name);
   dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
 
-  const auto& topo = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
+  const auto& topo = stkMeshStruct->elementBlockCT_.at(conn_mgr->elem_block_name());
   Teuchos::RCP<panzer::FieldPattern> fp;
   if (topo.getName()==std::string("Particle")) {
     // ODE equations are defined on a Particle geometry, where Intrepid2 doesn't work.

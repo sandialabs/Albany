@@ -931,6 +931,14 @@ void ExtrudedDiscretization::setFieldData()
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
 }
 
+Teuchos::RCP<ConnManager>
+ExtrudedDiscretization::create_conn_mgr (const std::string& part_name)
+{
+  auto basal_part_name = m_extruded_mesh->get_basal_part_name(part_name);
+  auto conn_mgr_h = m_basal_disc->create_conn_mgr(basal_part_name);
+  return Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
+}
+
 Teuchos::RCP<DOFManager>
 ExtrudedDiscretization::
 create_dof_mgr (const std::string& part_name,
@@ -948,9 +956,11 @@ create_dof_mgr (const std::string& part_name,
   const auto& ebn = m_extruded_mesh->meshSpecs()[0]->ebName;;
   std::vector<std::string> elem_blocks =  {ebn};
 
-  // Create conn and dof managers
-  auto conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager();
-  auto conn_mgr = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
+  // Create conn manager
+  auto conn_mgr = create_conn_mgr(part_name);
+  auto conn_mgr_h = Teuchos::rcp_dynamic_cast<ExtrudedConnManager>(conn_mgr)->get_basal_conn_mgr();
+
+  // Create dof mgr
   dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   const auto& topo = conn_mgr->get_topology();

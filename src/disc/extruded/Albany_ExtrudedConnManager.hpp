@@ -44,6 +44,8 @@ public:
 
   int part_dim (const std::string& part_name) const override;
 
+  Teuchos::RCP<ConnManager> get_basal_conn_mgr () const { return m_conn_mgr_h; }
+
 protected:
   Teuchos::RCP<ConnManager>           m_conn_mgr_h;
   Teuchos::RCP<const ExtrudedMesh>    m_mesh;
