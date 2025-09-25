@@ -81,16 +81,6 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  if (loc==FL::Node)
-    saveNodeState(workset);
-  else
-    saveElemState(workset);
-}
-
-template<typename Traits>
-void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
-saveElemState(typename Traits::EvalData workset)
-{
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
       "Error! The mesh does not store any side set.\n");
 
@@ -108,28 +98,37 @@ saveElemState(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.find(sideSetName)==ssDiscs.end(), std::logic_error,
       "Error! No discretization found for side set " << sideSetName << ".\n");
 
-  const auto& ss_disc = ssDiscs.at(sideSetName);
-
-  TEUCHOS_TEST_FOR_EXCEPTION (ss_disc==Teuchos::null, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.at(sideSetName)==Teuchos::null, std::logic_error,
         "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
 
-  // Get side disc STK bulk/meta data
-  const auto& metaData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKMetaData();
-  const auto& bulkData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKBulkData();
+  if (loc==FL::Node and workset.wsIndex == (workset.numWs-1)) {
+    saveNodeState(workset);
+    // Transfer the (Cell,Node,...) state to the purely nodal state
+    auto ss_disc = workset.disc->getSideSetDiscretizations().at(sideSetName);
+    auto ss_mfa = ss_disc->getMeshStruct()->get_field_accessor();
+    ss_mfa->transferElemStateToNodeState (stateName);
+  } else {
+    saveElemState(workset);
+  }
 
-  // Establishing the kind of field layout
-  std::vector<PHX::DataLayout::size_type> dims;
-  field.dimensions(dims);
+}
 
-  // Get the stk field
-  typedef Albany::AbstractSTKFieldContainer::STKFieldType SFT;
-  SFT* stk_field = metaData.template get_field<double>(stk::topology::ELEM_RANK,stateName);
-  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
-    "Error! STK Field ptr is null.\n");
+template<typename Traits>
+void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
+saveElemState(typename Traits::EvalData workset)
+{
+  const auto& ss_disc = workset.disc->getSideSetDiscretizations().at(sideSetName);
+  const auto& side_to_ss_cell = workset.disc->getSideToSideSetCellMap().at(sideSetName);
+  const auto  ss_cell_indexer = ss_disc->getCellsGlobalLocalIndexer();
+  const auto  ss_elem_ws_idx = ss_disc->get_elements_workset_idx();
 
   const auto field_d_view = field.get_view();
   const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
   Kokkos::deep_copy(field_h_mirror, field_d_view);
+
+  auto ss_mfa = ss_disc->getMeshStruct()->get_field_accessor();
+  auto& state = ss_mfa->getElemStates()[workset.wsIndex].at(stateName);
+  auto state_h = state.host();
 
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
@@ -137,18 +136,18 @@ saveElemState(typename Traits::EvalData workset)
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
     const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
+    const GO ss_cell_GID = side_to_ss_cell.at(side_GID);
+    const int ss_cell_LID = ss_cell_indexer->getLocalElement(ss_cell_GID);
 
-    // Get the cell in the 2d mesh
-    const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
+    const int icell = ss_elem_ws_idx[ss_cell_LID].idx;
 
-    double* data = stk::mesh::field_data(*stk_field,cell2d);
     switch (rank) {
       case FRT::Scalar:
-        *data = field_h_mirror(sideSet_idx);
+        state_h(icell) = field_h_mirror(sideSet_idx);
         break;
       case FRT::Vector:
-        for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
-          data[idim] = field_h_mirror(sideSet_idx,idim);
+        for (int idim=0; idim<state_h.extent_int(1); ++idim) {
+          state_h(icell,idim) = field_h_mirror(sideSet_idx,idim);
         }
         break;
       case FRT::Gradient:
@@ -156,113 +155,95 @@ saveElemState(typename Traits::EvalData workset)
         for (int qp=0; qp<numQPs; ++qp) {
           meas += w_measure(sideSet_idx,qp);
         }
-        for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
-          data[idim] = 0.0;
-          for (int itan=0; itan<static_cast<int>(dims[1]); ++itan) {
+        for (int idim=0; idim<state_h.extent_int(1); ++idim) {
+          state_h(icell,idim) = 0;
+          for (int itan=0; itan<state_h.extent_int(1); ++itan) {
             tan_cell_val = 0;
             for (int qp=0; qp<numQPs; ++qp) {
               tan_cell_val += tangents(sideSet_idx,qp,idim,itan)*w_measure(sideSet_idx,qp);
             }
-            data[idim] +=  (tan_cell_val/meas) * field_h_mirror(sideSet_idx,itan);
+            state_h(icell,idim) +=  (tan_cell_val/meas) * field_h_mirror(sideSet_idx,itan);
           }
         }
         break;
       case FRT::Tensor:
-        for (int idim=0; idim<static_cast<int>(dims[1]); ++idim) {
-          for (int jdim=0; jdim<static_cast<int>(dims[2]); ++jdim) {
-            data[idim*dims[1]+jdim] = field_h_mirror(sideSet_idx,idim,jdim);
+        for (int idim=0; idim<state_h.extent_int(1); ++idim) {
+          for (int jdim=0; jdim<state_h.extent_int(2); ++jdim) {
+            state_h(icell,idim,jdim) = field_h_mirror(sideSet_idx,idim,jdim);
         }}
         break;
     }
   }
+  state.sync_to_dev();
 }
 
 template<typename Traits>
 void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
 saveNodeState(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
-      "Error! The mesh does not store any side set.\n");
-
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
-    return; // Side set not present in this workset
-
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc==Teuchos::null, std::logic_error,
-      "Error! The workset must store a valid discretization pointer.\n");
-
-  const auto& ssDiscs = workset.disc->getSideSetDiscretizations();
-
-  TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.size()==0, std::logic_error,
-      "Error! The discretization must store side set discretizations.\n");
-
-  TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.find(sideSetName)==ssDiscs.end(), std::logic_error,
-      "Error! No discretization found for side set " << sideSetName << ".\n");
-
-  const auto& ss_disc = ssDiscs.at(sideSetName);
-
-  TEUCHOS_TEST_FOR_EXCEPTION (ss_disc==Teuchos::null, std::logic_error,
-        "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
-
-  // Get side disc STK bulk/meta data
-  const auto& metaData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKMetaData();
-  const auto& bulkData = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(ss_disc)->getSTKBulkData();
-
-  // Get local node numeration map from the disc
-  const auto& ssNodeNumerationMaps = workset.disc->getSideNodeNumerationMap();
-  TEUCHOS_TEST_FOR_EXCEPTION (ssNodeNumerationMaps.find(sideSetName)==ssNodeNumerationMaps.end(),
-      std::logic_error, "Error! Sideset " << sideSetName << " has no sideNodeNumeration map.\n");
-
-  // Establishing the kind of field layout
-  std::vector<PHX::DataLayout::size_type> dims;
-  field.dimensions(dims);
-
-  // Get the stk field
-  typedef Albany::AbstractSTKFieldContainer::STKFieldType SFT;
-  SFT* stk_field = metaData.template get_field<double>(stk::topology::NODE_RANK,stateName);
-  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error,
-      "Error! STK field ptr is null.\n");
+  const auto& ss_disc = workset.disc->getSideSetDiscretizations().at(sideSetName);
+  const auto& side_to_ss_cell = workset.disc->getSideToSideSetCellMap().at(sideSetName);
+  const auto& side_to_node_map = workset.disc->getSideNodeNumerationMap().at(sideSetName);
+  const auto  ss_cell_indexer = ss_disc->getCellsGlobalLocalIndexer();
+  const auto  ss_elem_ws_idx = ss_disc->get_elements_workset_idx();
 
   const auto field_d_view = field.get_view();
   const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
   Kokkos::deep_copy(field_h_mirror, field_d_view);
 
+  auto ss_mfa = ss_disc->getMeshStruct()->get_field_accessor();
+  auto& state = ss_mfa->getElemStates()[workset.wsIndex].at(stateName);
+  auto state_h = state.host();
+
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
+  double tan_cell_val, meas;
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
     const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
+    const GO ss_cell_GID = side_to_ss_cell.at(side_GID);
+    const int ss_cell_LID = ss_cell_indexer->getLocalElement(ss_cell_GID);
+    const auto& node_map = side_to_node_map.at(side_GID);
 
-    // Get the lid ordering map
-    // Recall: map[i] = j means that the i-th node in the 3d side is the j-th node in the 2d cell
-    const auto& node_map = ssNodeNumerationMaps.at(sideSetName).at(side_GID);
+    const int icell = ss_elem_ws_idx[ss_cell_LID].idx;
 
-    // Get the cell in the 2d mesh
-    const auto cell2d = bulkData.get_entity(stk::topology::ELEM_RANK, side_GID+1);
-    const auto nodes2d = bulkData.begin_nodes(cell2d);
-
-    for (int inode=0; inode<numNodes; ++inode) {
-      double* data = stk::mesh::field_data(*stk_field,nodes2d[node_map[inode]]);
+    for (int side_node=0; side_node<numNodes; ++side_node) {
+      auto ss_cell_node = node_map[side_node];
       switch (rank) {
         case FRT::Scalar:
-          *data = field_h_mirror(sideSet_idx,inode);
+          state_h(icell,ss_cell_node) = field_h_mirror(sideSet_idx,side_node);
           break;
         case FRT::Vector:
-          for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
-            data[idim] = field_h_mirror(sideSet_idx,inode,idim);
+          for (int idim=0; idim<state_h.extent_int(1); ++idim) {
+            state_h(icell,ss_cell_node,idim) = field_h_mirror(sideSet_idx,side_node,idim);
           }
           break;
         case FRT::Gradient:
-          for (int idim=0; idim<static_cast<int>(dims[2]); ++idim) {
-            for (int jdim=0; jdim<static_cast<int>(dims[3]); ++jdim) {
-              data[idim*dims[2]+jdim] = field_h_mirror(sideSet_idx,inode,idim,jdim);
+          meas = 0;
+          for (int qp=0; qp<numQPs; ++qp) {
+            meas += w_measure(sideSet_idx,qp);
+          }
+          for (int idim=0; idim<state_h.extent_int(1); ++idim) {
+            state_h(icell,ss_cell_node,idim) = 0;
+            for (int itan=0; itan<state_h.extent_int(1); ++itan) {
+              tan_cell_val = 0;
+              for (int qp=0; qp<numQPs; ++qp) {
+                tan_cell_val += tangents(sideSet_idx,qp,idim,itan)*w_measure(sideSet_idx,qp);
+              }
+              state_h(icell,ss_cell_node,idim) +=  (tan_cell_val/meas) * field_h_mirror(sideSet_idx,side_node,itan);
+            }
+          }
+          break;
+        case FRT::Tensor:
+          for (int idim=0; idim<state_h.extent_int(1); ++idim) {
+            for (int jdim=0; jdim<state_h.extent_int(2); ++jdim) {
+              state_h(icell,ss_cell_node,idim,jdim) = field_h_mirror(sideSet_idx,side_node,idim,jdim);
           }}
           break;
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-              "Error! Unsupported field dimension. However, you should have gotten an error before!\n");
       }
     }
   }
+  state.sync_to_dev();
 }
 
 } // Namespace PHAL

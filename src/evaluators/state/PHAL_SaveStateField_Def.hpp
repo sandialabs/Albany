@@ -102,12 +102,19 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  if (this->nodalState)
-    saveNodeState(workset);
-  else if (this->worksetState)
+  if (this->worksetState) {
     saveWorksetState(workset);
-  else
+  } else {
     saveElemState(workset);
+    if (this->nodalState) {
+      auto disc = workset.disc;
+      auto last_ws = disc->getNumWorksets()-1;
+      if (workset.wsIndex==last_ws) {
+        auto mfa = disc->getMeshStruct()->get_field_accessor();
+        mfa->transferElemStateToNodeState(stateName);
+      }
+    }
+  }
 }
 
 template<typename Traits>
@@ -194,72 +201,5 @@ saveWorksetState(typename Traits::EvalData workset)
   state.sync_to_dev();
 }
 
-template<typename Traits>
-void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
-saveNodeState(typename Traits::EvalData workset)
-{
-  // Note: to save nodal fields, we need to open up the mesh, and work directly on it.
-  //       For this reason, we assume the mesh is stk. Moreover, since the cell buckets
-  //       and node buckets do not coincide (elem-bucket 12 does not necessarily contain
-  //       all nodes in node-bucket 12), we need to work with stk fields. To do this we
-  //       must extract entities from the bulk data and use them to access the values
-  //       of the stk field.
-
-  Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
-  TEUCHOS_TEST_FOR_EXCEPTION (disc==Teuchos::null, std::runtime_error, "Error! Discretization is needed to save nodal state.\n");
-
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> mesh = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(disc->getMeshStruct());
-  TEUCHOS_TEST_FOR_EXCEPTION (mesh==Teuchos::null, std::runtime_error, "Error! Save nodal states available only for stk meshes.\n");
-
-  stk::mesh::MetaData& metaData = *mesh->metaData;
-  stk::mesh::BulkData& bulkData = *mesh->bulkData;
-
-  using SFT = Albany::AbstractSTKFieldContainer::STKFieldType;
-  SFT* stk_field = metaData.get_field<double> (stk::topology::NODE_RANK, stateName);
-  TEUCHOS_TEST_FOR_EXCEPTION (stk_field==nullptr, std::runtime_error, "Error! Field not found.\n");
-  std::vector<PHX::DataLayout::size_type> dims;
-  field.dimensions(dims);
-
-  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
-  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
-
-  const auto& cell_indexer = node_dof_mgr->cell_indexer();
-
-  const auto field_d_view = field.get_view();
-  const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
-  Kokkos::deep_copy(field_h_mirror, field_d_view);
-
-  double* values;
-  stk::mesh::Entity e;
-  switch (dims.size()) {
-    case 2:   // node_scalar
-      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
-        const int elem_LID = elem_lids[cell];
-        const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
-        const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
-        const auto* nodes = bulkData.begin_nodes(elem);
-        for (unsigned int node=0; node<dims[1]; ++node) {
-          values = stk::mesh::field_data(*stk_field, nodes[node]);
-          values[0] = field_h_mirror(cell,node);
-        }
-      }
-      break;
-    case 3:   // node_vector
-      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
-        const int elem_LID = elem_lids[cell];
-        const GO  elem_GID = cell_indexer->getGlobalElement(elem_LID);
-        const auto& elem = bulkData.get_entity(stk::topology::ELEM_RANK,elem_GID+1);
-        const auto* nodes = bulkData.begin_nodes(elem);
-        for (unsigned int node=0; node<dims[1]; ++node) {
-          values = stk::mesh::field_data(*stk_field, nodes[node]);
-          for (unsigned int i=0; i<dims[2]; ++i)
-            values[i] = field_h_mirror(cell,node,i);
-        }
-      }
-      break;
-    default:  // error!
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error! Unexpected field dimension (only node_scalar/node_vector for now).\n");
-  }
-}
 
 } // namespace PHAL
