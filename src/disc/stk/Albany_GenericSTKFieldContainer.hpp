@@ -44,6 +44,7 @@ public:
 
   void createStateArrays (const WorksetArray<int>& worksets_sizes);
   void transferNodeStatesToElemStates ();
+  void transferElemStateToNodeState (const std::string& name) override;
 
   Teuchos::RCP<Teuchos::ParameterList> getParams() const {return params; }
 

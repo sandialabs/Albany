@@ -58,7 +58,6 @@ public:
 private:
 
   void saveElemState (typename Traits::EvalData d);
-  void saveNodeState (typename Traits::EvalData d);
   void saveWorksetState (typename Traits::EvalData d);
 
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;

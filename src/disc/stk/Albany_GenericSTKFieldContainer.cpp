@@ -325,4 +325,56 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
   }
 }
 
+void GenericSTKFieldContainer::
+transferElemStateToNodeState (const std::string& name)
+{
+  const auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const auto NODE_RANK = stk::topology::NODE_RANK;
+
+  auto select_owned_part = stk::mesh::Selector(metaData->universal_part()) &
+                           stk::mesh::Selector(metaData->locally_owned_part());
+  const auto& elem_buckets = bulkData->get_buckets(ELEM_RANK,select_owned_part);
+  auto* node_field = metaData->get_field<double>(stk::topology::NODE_RANK,name);
+  TEUCHOS_TEST_FOR_EXCEPTION(node_field==nullptr, std::runtime_error,
+      "Error! Cannot retrieve nodal field '" + name + "\n");
+
+  int num_buckets = elem_buckets.size();
+  for (int ws=0; ws<num_buckets; ++ws) {
+    auto& e_state_h = elemStateArrays[ws][name].host();
+
+    const auto& bucket = *elem_buckets[ws];
+    int nelems = bucket.size();
+    int nelem_nodes = e_state_h.extent(1);
+    int rank = e_state_h.rank();
+    int dim2,dim3;
+    for (int ie=0; ie<nelems; ++ie) {
+      auto e = bucket[ie];
+      const auto& nodes = bulkData->begin_nodes(e);
+      for (int in=0; in<nelem_nodes; ++in) {
+        auto values = stk::mesh::field_data(*node_field,nodes[in]);
+        switch(rank) {
+          case 2:
+            values[0] = e_state_h(ie,in);
+            break;
+          case 3:
+            dim2 = e_state_h.extent_int(2);
+            for (int j=0; j<dim2; ++j) {
+              values[j] = e_state_h(ie,in,j);
+            }
+          case 4:
+            dim2 = e_state_h.extent_int(2);
+            dim3 = e_state_h.extent_int(3);
+            for (int j=0; j<dim2; ++j) {
+              for (int k=0; k<dim3; ++k) {
+                values[j*dim3+k] = e_state_h(ie,in,j,k);
+              }
+            }
+          default:
+            throw std::runtime_error("Unsupported rank for state '" + name + "'\n");
+        }
+      }
+    }
+  }
+}
+
 } // namespace Albany
