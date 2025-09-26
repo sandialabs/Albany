@@ -310,6 +310,9 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
     bool nodal = nodal_sis.has_state(name);
     const auto& field_layers_coords = m_basal_field_accessor->getMeshVectorStates().at(name+"_NLC");
     const int num_field_layers = field_layers_coords.size();
+    std::cout << "interpolating " << name << ", nodal=" << nodal << "\n"
+              << " field_layers_coords=(" << util::join(field_layers_coords,",") << ")\n"
+              << " node_layers_coords=(" << util::join(node_layers_coords,",") << ")\n";
 
     // Will update il0, il1, h0
     auto set_combination_params = [&](int il) {
@@ -333,6 +336,7 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
     };
 
     for (int ws=0; ws<num_ws; ++ws) {
+      std::cout << " ws=" << ws << "\n";
       const auto& bstate = basal_states[ws].at(name);
       auto& state = elemStateArrays[ws][name];
       auto bview_h = bstate.host();
@@ -344,12 +348,18 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
           (nodal and (rank<2 or rank>3)) or (not nodal and (rank<1 or rank>2)), std::runtime_error,
           "[ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields] Error! Unsupported rank (" << rank << ") for state '" + name + "'\n");
 
-      for (int il=0; il<num_elem_layers; ++il) {
-        for (int ie=0; ie<dims[0]; ++ie) {
+      for (int ie=0; ie<dims[0]; ++ie) {
+        if (ie<2)
+          std::cout << "  ie=" << ie << "\n";
+        for (int il=0; il<num_elem_layers; ++il) {
+          if (ie<2)
+            std::cout << "   il=" << il << "\n";
           int ie3d = m_elem_numbering_lid->getId(ie,il);
           if (nodal) {
             for (int side : {0,1}) { // 0=elem-bottom, 1=elem-top
               set_combination_params(il+side);
+              if (ie<2)
+                std::cout << "    side=" << side << ", il0=" << il0 << ", il1=" << il1 << ", h0=" << h0 << "\n";
               for (int in=0; in<dims[1]; ++in) {
                 if (rank==2) {
                   view_h(ie3d,in+side*dims[1]) = h0*bview_h(ie,in,il0) + (1-h0)*bview_h(ie,in,il1);
@@ -357,6 +367,13 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
                   for (int j=0; j<dims[2]; ++j) {
                     view_h(ie3d,in+side*dims[1],j) = h0*bview_h(ie,in,j,il0) + (1-h0)*bview_h(ie,in,j,il1);
                   }
+                }
+              }
+              if (ie<2) {
+                for (int in=0; in<dims[1]; ++in) {
+                  std::cout << "      bstate0(" << ie << "," << in << "," << il0 << ")=" << bview_h(ie,in,il0)
+                            << ", bstate1(" << ie << "," << in << "," << il1 << ")=" << bview_h(ie,in,il1)
+                            << ", state(" << ie << "," << in+side*dims[1] << ")=" << view_h(ie,in+side*dims[1]) << "\n";
                 }
               }
             }

@@ -25,6 +25,7 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+#include "Albany_StringUtils.hpp"
 #include "Albany_Utils.hpp"
 
 namespace Albany {
@@ -810,6 +811,10 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
     fieldLayersCoords = it->second;
     int numFieldLayers = fieldLayersCoords.size();
 
+    std::cout << "interpolating " << fname << "\n"
+              << "  field_layers_coords: " << util::join(fieldLayersCoords,",") << ")\n"
+              << "  mesh_layers_coords: " << util::join(levelsNormalizedThickness,",") << ")\n";
+
     for (int inode=0; inode<numNodes2d; ++inode) {
       const stk::mesh::Entity& node2d = nodes2d[inode];
       stk::mesh::EntityId node2dId = bulkData2d.identifier(node2d) - 1;
@@ -818,6 +823,9 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
       values2d = get_data_2d(fname,field2d,node2d);
 
+      if (inode<12) {
+        std::cout << "inode=" << inode << "\n";
+      }
       // Loop on the layers
       for (int il=0; il<=numLayers; ++il) {
         // Retrieve 3D node
@@ -840,6 +848,10 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
           h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
         }
 
+        if (inode<12) {
+          std::cout << "il=" << il << "\n";
+          std::cout << " il0=" << il0 << ", il1=" << il1 << ", h0=" << h0 << "\n";
+        }
         // Extracting 3d pointer and stuffing the right data in it
         // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
         //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
@@ -850,6 +862,9 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
           case 1:
           {
             values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
+            if (inode<12) {
+              std::cout << "  bvalue0[" << il0 << "]=" << values2d[il0] << ", bvalue1[" << il1 << "]=" << values2d[il1] << ", value=" << values3d[0] << "\n";
+            }
             break;
           }
           case 2:

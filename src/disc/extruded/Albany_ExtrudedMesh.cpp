@@ -278,7 +278,7 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   std::vector<double> node_layers_coord(num_node_layers);
   if(useGlimmerSpacing) {
     for (int i = 0; i < num_node_layers; i++)
-      node_layers_coord[num_node_layers-i-1] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+      node_layers_coord[num_elem_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
   } else {
     //uniform layers
     for (int i = 0; i < num_node_layers; i++)
