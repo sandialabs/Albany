@@ -127,7 +127,7 @@ struct StateStruct
     }
   }
 
-  const std::string                  name = "";
+  std::string                        name = "";
   FieldDims                          dim = {};
   MeshFieldEntity                    entity;
   std::string                        initType = "none";
@@ -144,6 +144,11 @@ struct StateStruct
   bool        layered  = false;
   std::string meshPart = "";
   std::string ebName   = "";
+
+  // Flag for 3d states that are computed on the fly in extruded meshes from basal states
+  bool        extruded = false;
+  bool        interpolated = false;
+
   // If this is a copy (name = parentName+"_old"), ptr to parent struct
   StateStruct* pParentStateStruct = nullptr;
 };
@@ -155,11 +160,34 @@ class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
 public:
   StateInfoStruct () = default;
 
-  Teuchos::RCP<StateStruct> find (const std::string& name) {
+  bool has_state (const std::string& name) const {
+    for (const auto& entry : *this) {
+      if (entry->name==name) return true;
+    }
+    return false;
+  }
+
+  Teuchos::RCP<StateStruct> find (const std::string& name, bool throw_if_not_found = true) const {
     for (const auto& entry : *this) {
       if (entry->name==name) return entry;
     }
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_found,std::runtime_error,
+        "Error! Could not locate state '" + name + "' in this StateInfoStruct.\n");
+
     return Teuchos::null;
+  }
+
+  void remove (const std::string& name, bool throw_if_not_found = true) {
+    auto it = begin();
+    for (; it!=end(); ++it) {
+      auto st = *it;
+      if (st->name==name) {
+        erase(it);
+        return;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_found, std::runtime_error,
+        "Error! Could not locate state '" + name + "' in this StateInfoStruct.\n");
   }
 };
 

@@ -89,6 +89,13 @@ public:
     return m_elem_blocks_names[0];
   }
 
+  // // Overload, not shadow
+  // using panzer::ConnManager::getElementBlockIds;
+  // std::vector<std::string> void getElementBlockIds() const {
+  //   std::vector<std::string> elem_block_ids;
+  //   getElementBlockIds(elem_block_ids);
+  //   return elem_block_ids;
+  // }
   void getElementBlockIds(std::vector<std::string> & elementBlockIds) const override {
     elementBlockIds = m_elem_blocks_names;
   }

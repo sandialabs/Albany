@@ -11,6 +11,7 @@
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_DOFManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -134,6 +135,18 @@ public:
   MeshScalarInteger64State& getMeshScalarInteger64States () { return mesh_scalar_integer_64_states; }
   MeshVectorIntegerState&   getMeshVectorIntegerStates   () { return mesh_vector_integer_states;    }
 
+  void print () const {
+    auto print_sis = [](const std::string& header, const StateInfoStruct& sis) {
+      std::cout << header << "\n";
+      for (const auto& st : sis) {
+        std::cout << " " << st->name << ": (" << util::join(st->dim,",") << ")\n";
+      }
+    };
+
+    print_sis("elem SIS",elem_sis);
+    print_sis("nodal SIS",nodal_sis);
+    print_sis("global SIS",global_sis);
+  }
 protected:
   // This should always include ALL the ones below
   StateInfoStruct all_sis;

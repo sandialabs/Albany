@@ -96,11 +96,16 @@ using NodeSetCoordList = std::map<std::string, std::vector<double*>>;
 class SideStruct
 {
  public:
-  GO    side_GID;       // global id of side in the mesh
-  GO    elem_GID;       // global id of element containing side
-  int   ws_elem_idx;    // index of element containing side within this workset
-  int   elem_ebIndex;   // index of element block that contains element
-  int   side_pos;       // position of side relative to owning element
+  GO    side_GID;         // global id of side in the mesh
+  GO    elem_GID;         // global id of element containing side
+  int   ws_elem_idx;      // index of element containing side within this workset
+  int   elem_ebIndex;     // index of element block that contains element
+  int   side_pos;         // position of side relative to owning element
+
+  // Whether this side is internal to the mesh (i.e., 2 elements share it).
+  // As of 08/2025, this is false for ALL meshes, but we MAY want to track
+  // internal sidesets at some point, for which we'll set this to true
+  bool  internal = false;
 };
 using SideSetList = std::map<std::string, std::vector<SideStruct>>;
 

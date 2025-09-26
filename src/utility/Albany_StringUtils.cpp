@@ -5,6 +5,11 @@
 
 namespace util {
 
+bool starts_with (const std::string& s, const std::string& prefix)
+{
+  return s.substr(0,prefix.length())==prefix;
+}
+
 std::string
 strint(const std::string s, const int i, const char delim)
 {

@@ -195,7 +195,7 @@ struct DualDynRankView {
   }
 
   template<typename IntT>
-  void dimensions (std::vector<IntT>& dims) {
+  void dimensions (std::vector<IntT>& dims) const {
     dims.resize(rank());
     for (size_t i=0; i<dims.size(); ++i) {
       dims[i] = d_view.extent(i);

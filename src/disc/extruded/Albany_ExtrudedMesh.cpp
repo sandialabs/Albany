@@ -15,6 +15,7 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   // Sanity checks
   TEUCHOS_TEST_FOR_EXCEPTION (basal_mesh.is_null(), std::invalid_argument,
       "[ExtrudedMesh] Error! Invalid basal mesh pointer.\n");
+  sideSetMeshStructs["basalside"] = m_basal_mesh;
 
   const auto basal_mesh_specs = m_basal_mesh->meshSpecs[0];
   const int basalNumDim = basal_mesh_specs->numDim;
@@ -25,11 +26,26 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   TEUCHOS_TEST_FOR_EXCEPTION (m_params.is_null(), std::runtime_error,
       "[ExtrudedMesh] Error! Invalid parameter list pointer.\n");
 
-  // Create elem layers data
-  auto num_layers = m_params->get<int>("NumLayers");
+  // Create layered mesh numbering objects
+  const auto num_layers = m_params->get<int>("NumLayers");
+  const auto ordering = m_params->get("Columnwise Ordering", false)
+                      ? LayeredMeshOrdering::COLUMN
+                      : LayeredMeshOrdering::LAYER;
   TEUCHOS_TEST_FOR_EXCEPTION (num_layers<=0, Teuchos::Exceptions::InvalidParameterValue,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
+
+  // WARNING: if you remove this check, you MUST ensure all the states array logic is sound.
+  //          namely, we CAN'T make the states arrays view the stuff stored in memory when
+  //          using a Layered ordering, since the stride along layers does not match the
+  //          layer (local) size in the workset (unless num_ranks=1, num_worksets=1).
+  TEUCHOS_TEST_FOR_EXCEPTION (ordering!=LayeredMeshOrdering::COLUMN, std::runtime_error,
+      "[ExtrudedMesh] Error! We currently only support 'Columnwise Ordering: true'\n");
+
+  m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
+  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,ordering));
+  m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
+  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,ordering));
 
   // Create map part->basal_part
   // upper/basal/bot/top parts map to the full basal mesh
@@ -44,17 +60,19 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   std::vector<std::string> lateralParts = {"lateralside"};
 
   for (const auto& ns : basal_mesh_specs->nsNames) {
+    if (ns=="lateral") continue; // extruded_lateral would just be the same as lateral
     nsNames.push_back ("extruded_" + ns);
     nsNames.push_back ("basal_" + ns);
 
-    m_part_to_basal_part["extruded+" + ns] = ns;
-    m_part_to_basal_part["basal_+" + ns] = ns;
+    m_part_to_basal_part["extruded_" + ns] = ns;
+    m_part_to_basal_part["basal_" + ns] = ns;
   }
   for (const auto& ss : basal_mesh_specs->ssNames) {
+    if (ss=="lateralside") continue; // extruded_lateralside would just be the same as lateralside
     auto pname = "extruded_" + ss;
     ssNames.push_back (pname);
     lateralParts.push_back(pname);
-    m_part_to_basal_part["extruded+" + ss] = ss;
+    m_part_to_basal_part["extruded_" + ss] = ss;
   }
   std::string ebName = "extruded_" + basal_mesh_specs->ebName;
   std::map<std::string,int> ebNameToIndex =
@@ -67,19 +85,23 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   m_part_to_basal_part[""] = "";
 
   // Determine topology
-  std::string elem2d_name(basal_mesh_specs->ctd.base->name);
-  std::string tria = shards::getCellTopologyData<shards::Triangle<3> >()->name;
-  auto wedge_topo = shards::CellTopology(shards::getCellTopologyData<shards::Wedge<6>>());
-  shards::CellTopology elem_topo;
-  if (elem2d_name==tria) {
+  auto basal_topo = basal_mesh_specs->ctd;
+  auto tria_topo = *shards::getCellTopologyData<shards::Triangle<3> >();
+  auto quad_topo = *shards::getCellTopologyData<shards::Quadrilateral<4>>();
+  auto wedge_topo = *shards::getCellTopologyData<shards::Wedge<6>>();
+  CellTopologyData elem_topo, lat_topo;
+  if (basal_topo.name==tria_topo.name) {
     elem_topo = wedge_topo;
+    lat_topo  = quad_topo;
+  } else if (basal_topo.name==quad_topo.name) {
+    elem_topo = wedge_topo;
+    lat_topo  = quad_topo;
   } else {
     throw Teuchos::Exceptions::InvalidParameterValue(
-      "[ExtrudedSTKMeshStruct] Invalid/unsupported basal mesh element type.\n"
-      "  - valid element types: " + tria + "\n"
-      "  - basal alement type : " + elem2d_name + "\n");
+      "[ExtrudedMeshStruct] Invalid/unsupported basal mesh element type.\n"
+      "  - valid element types: " + std::string(tria_topo.name) + ", " + std::string(quad_topo.name) + "\n"
+      "  - basal alement type : " + std::string(basal_topo.name) + "\n");
   }
-  const CellTopologyData& ctd = *elem_topo.getCellTopologyData();
 
   // Compute workset size
   int basalWorksetSize = basal_mesh_specs->worksetSize;
@@ -89,11 +111,30 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
 
   // Finally, we can create the mesh specs
   this->meshSpecs.resize(1,Teuchos::rcp(
-        new MeshSpecsStruct(MeshType::Extruded, ctd, basalNumDim+1, nsNames, ssNames,
+        new MeshSpecsStruct(MeshType::Extruded, elem_topo, basalNumDim+1, nsNames, ssNames,
                             worksetSize, ebName, ebNameToIndex)));
 
-  meshSpecs[0]->sideSetMeshSpecs["basalside"] = m_basal_mesh->meshSpecs;
-  sideSetMeshStructs["basalside"] = m_basal_mesh;
+  // Create basalside, uppserside, and lateralside mesh specs
+  auto& ss_ms = meshSpecs[0]->sideSetMeshSpecs;
+
+  ss_ms["basalside"] = m_basal_mesh->meshSpecs;
+
+  // At this point, we cannot assume there will be a discretization on upper/lateral sides,
+  // so create "empty" mesh specs, just setting the cell topology and mesh dim. IF a side disc
+  // is created, these will be overwritten
+
+  auto& upper_ms = ss_ms["upperside"];
+  upper_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
+  upper_ms[0]->numDim = basal_topo.dimension;
+  upper_ms[0]->ctd = basal_topo;
+
+  auto& lateral_ms = ss_ms["lateralside"];
+  lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
+  lateral_ms[0]->numDim = lat_topo.dimension;
+  lateral_ms[0]->ctd = lat_topo;
+
+  // For the upperside, we use the same disc as the basalside.
+  sideSetMeshStructs["upperside"] = m_basal_mesh;
 }
 
 void ExtrudedMesh::
@@ -101,31 +142,104 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
               std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
-  // Ensure surface_height and thickness are valid states in the basal mesh
-  std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");
-  std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
-  auto& basal_sis = side_set_sis["basal_side"];
+  // Make sure we can dereference sis
+  if (sis.is_null()) {
+    auto nonnull_sis = Teuchos::rcp(new StateInfoStruct());
+    this->setFieldData(comm,nonnull_sis,side_set_sis);
+  }
+
+  // Make sure we can dereference the basal sis
+  auto basal_sis = side_set_sis["basalside"];
   if (basal_sis.is_null()) {
     basal_sis = Teuchos::rcp(new StateInfoStruct());
   }
+
   auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
 
-  StateStruct::FieldDims dims = {
-    static_cast<PHX::DataLayout::size_type>(m_basal_mesh->meshSpecs[0]->worksetSize),
-    m_basal_mesh->meshSpecs[0]->ctd.node_count
-  };
+  // If we extrude or interpolate a basal state, we will have a name clash.
+  // In fact, the ExtrudedMeshFieldAccessor will use the basal mesh field accessor
+  // to store the 3d states. This, in turn, is a pb when putting those fields on the
+  // mesh, as the underlying mesh database won't like 2 declarations of the same field
+  // with different layouts. Hence, we need to disambiguate the states.
+  // We use this rules:
+  //  - extruded fields: the 2d field keeps the original name, and the 3d one will NOT
+  //    be added to the mesh. That is, the 3d state array will be managed by the field accessor.
+  //  - interpolated fields: the basal layered field (whose number of layers may not match the
+  //    mesh number of layers) will be renamed ${name}_layers_data. We will also register a 3d
+  //    state with name ${name}, and layout compatible with the mesh actual number of layers
+  const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
+  const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
 
+  const int num_elem_layers = m_elem_layers_data_lid->numLayers;
+  const int num_node_layers = m_node_layers_data_lid->numLayers;
+  const bool layer_ord = m_elem_layers_data_lid->layerOrd;
+
+  for (const auto& n : extrude_names) {
+    TEUCHOS_TEST_FOR_EXCEPTION (not basal_sis->has_state(n), std::runtime_error,
+        "Error! Cannot extrude basal state '" + n + "'. State not found in basal SIS.\n");
+
+    auto st = sis->find(n);
+    st->extruded = true;
+  }
+
+  for (const auto& n : interpolate_names) {
+    TEUCHOS_TEST_FOR_EXCEPTION (not basal_sis->has_state(n), std::runtime_error,
+        "Error! Cannot interpolate basal state '" + n + "'. State not found in basal SIS.\n");
+
+    auto st = sis->find(n);
+    st->interpolated = true;
+  }
+
+  // We need to adjust states dimensions. 
+  // Say the 3d state was registered as ElemNode. Then, dim=(ws_nelem,nodes_per_3d_elem).
+  // ExtrudedMeshFieldAccessor will add a state to the basal mesh, but the dims must be compatible
+  // with the 2d mesh. In particular, we will append num_layers to the layout for column ordering,
+  // while we will register num_layers copies of the state for layer ordering. Either way, the
+  // layout should follow the dim of the basal mesh (in terms of num elems, num nodes per elem, etc)
+  // for (auto st : *sis) {
+  //   // extruded/interpolated states are NOT added to the 2d mesh, so skip those
+  //   if (not st->extruded and not st->interpolated) {
+  //     if (st->stateType()==StateStruct::ElemState) {
+  //       st->dim[0] = basal_wss;
+  //       st->dim.insert(st->dim.begin()+1,num_elem_layers);
+  //     } else if (st->stateType()==StateStruct::NodeState) {
+  //       TEUCHOS_TEST_FOR_EXCEPTION (st->entity==StateStruct::NodalData, std::runtime_error,
+  //           "Error! State '" + st->name + "' has entity 'NodalData', which we don't know how to support.\n");
+  //       // We register the 3d state as an ElemState, but the storage in the 2d state will be as a NodeState
+  //     }
+  //   }
+  // }
+
+  // Ensure surface_height and thickness are valid states in the basal mesh
+  std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");
+  std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
+  PHX::DataLayout::size_type basal_wss = m_basal_mesh->meshSpecs[0]->worksetSize;
+  PHX::DataLayout::size_type basal_nc  = m_basal_mesh->meshSpecs[0]->ctd.node_count;
   if (basal_sis->find(surface_height_name).is_null()) {
-    basal_sis->emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN,dims,"")));
+    auto st = basal_sis->emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN)));
+    st->dim = {basal_wss,basal_nc};
   }
   if (basal_sis->find(thickness_name).is_null()) {
-    basal_sis->emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN,dims,"")));
+    auto st = basal_sis->emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN)));
+    st->dim = {basal_wss,basal_nc};
   }
 
   // Ensure field data is set on basal mesh
+  // Since we store upper and basal stuff on same mesh, pass both basal and upper SIS
+  if (not side_set_sis["upperside"].is_null()) {
+    for (auto st : *side_set_sis["upperside"]) {
+      basal_sis->push_back(st);
+    }
+  }
   m_basal_mesh->setFieldData(comm,basal_sis,{});
 
-  // TODO: correctly register volume states
+  // Now the basal field accessor is definitely valid/inited, so we can create the extruded one
+  m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
+                                                                m_elem_layers_data_lid));
+
+  m_field_accessor->addStateStructs(sis);
+
+  m_field_data_set = true;
 }
 
 void ExtrudedMesh::
@@ -135,21 +249,16 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
     m_basal_mesh->setBulkData(comm);
   }
 
-  // Create layer data structures
+  // Complete initialization of layer data structures
   const auto max_basal_node_gid = m_basal_mesh->get_max_node_gid();
   const auto num_basal_nodes    = m_basal_mesh->get_num_local_nodes();
   const auto max_basal_elem_gid = m_basal_mesh->get_max_elem_gid();
   const auto num_basal_elems    = m_basal_mesh->get_num_local_elements();
 
-  const auto num_layers = m_params->get<int>("NumLayers");
-  const auto ordering = m_params->get("Columnwise Ordering", false)
-                      ? LayeredMeshOrdering::COLUMN
-                      : LayeredMeshOrdering::LAYER;
-
-  m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_basal_elem_gid+1,num_layers,ordering));
-  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_basal_elems,num_layers,ordering));
-  m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_basal_node_gid+1,num_layers+1,ordering));
-  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_basal_nodes,num_layers+1,ordering));
+  m_elem_layers_data_gid->numHorizEntities = max_basal_elem_gid+1;
+  m_elem_layers_data_lid->numHorizEntities = num_basal_elems;
+  m_node_layers_data_gid->numHorizEntities = max_basal_node_gid+1;
+  m_node_layers_data_lid->numHorizEntities = num_basal_nodes;
 
   auto set_pos = [&](auto data) {
     const auto& ctd = meshSpecs[0]->ctd;
@@ -160,6 +269,36 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   set_pos(m_elem_layers_data_lid);
   set_pos(m_node_layers_data_gid);
   set_pos(m_node_layers_data_lid);
+
+  // Set layer data in the field accessor
+  bool useGlimmerSpacing = m_params->get("Use Glimmer Spacing", false);
+  int num_elem_layers = m_elem_layers_data_lid->numLayers;
+  int num_node_layers = m_node_layers_data_lid->numLayers;
+
+  std::vector<double> node_layers_coord(num_node_layers);
+  if(useGlimmerSpacing) {
+    for (int i = 0; i < num_node_layers; i++)
+      node_layers_coord[num_node_layers-i-1] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+  } else {
+    //uniform layers
+    for (int i = 0; i < num_node_layers; i++)
+      node_layers_coord[i] = double(i) / num_elem_layers;
+  }
+
+  std::vector<double> elem_layer_thickness(num_elem_layers);
+  for (int i = 0; i < num_elem_layers; i++)
+    elem_layer_thickness[i] = node_layers_coord[i+1]-node_layers_coord[i];
+
+  auto& vec_states = m_field_accessor->getMeshVectorStates();
+  auto& int_states = m_field_accessor->getMeshScalarIntegerStates();
+  auto& int64_states = m_field_accessor->getMeshScalarInteger64States();
+
+  vec_states["elem_layer_thickness"] = elem_layer_thickness;
+  vec_states["node_layers_coords"] = node_layers_coord;
+  int_states["ordering"] = m_elem_layers_data_lid->layerOrd ? 0 : 1;
+  int_states["num_layers"] = num_elem_layers;
+  int64_states["max_2d_elem_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
+  int64_states["max_2d_node_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
 
   m_bulk_data_set = true;
 }

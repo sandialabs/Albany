@@ -72,6 +72,8 @@ inline std::string upper_case (const std::string& s) {
   return s_up;
 }
 
+bool starts_with (const std::string& s, const std::string& prefix);
+
 //! Utility to make a string out of a string + int with a delimiter:
 //! strint("dog",2,' ') = "dog 2"
 //! The default delimiter is ' '. Potential delimiters include '_' - "dog_2"
