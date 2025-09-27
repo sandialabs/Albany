@@ -109,7 +109,6 @@ cmake -GNinja \
       -D Trilinos_ENABLE_PanzerDofMgr=ON \
       -D Trilinos_ENABLE_ShyLU_DDFROSch=ON \
       -D Trilinos_ENABLE_PanzerExprEval=ON \
-      -D CMAKE_CXX_STANDARD=17 \
       -D TPL_FIND_SHARED_LIBS=ON \
       -D BUILD_SHARED_LIBS=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC=OFF \
