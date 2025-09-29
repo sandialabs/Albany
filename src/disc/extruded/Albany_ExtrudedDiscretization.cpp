@@ -53,7 +53,7 @@ ExtrudedDiscretization::setupMLCoords()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setupMLCoords");
   if (m_rigid_body_modes.is_null()) { return; }
-  if (!m_rigid_body_modes->isMueLuUsed() && !m_rigid_body_modes->isFROSchUsed()) { return; }
+  if (!m_rigid_body_modes->isTekoUsed() && !m_rigid_body_modes->isMueLuUsed() && !m_rigid_body_modes->isFROSchUsed()) { return; }
 
   const int numDim = getNumDim();
   auto coordMV = Thyra::createMembers(getNodeVectorSpace(), numDim);

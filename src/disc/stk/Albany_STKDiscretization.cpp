@@ -528,7 +528,7 @@ STKDiscretization::setupMLCoords()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setupMLCoords");
   if (rigidBodyModes.is_null()) { return; }
-  if (!rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
+  if (!rigidBodyModes->isTekoUsed() && !rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
 
   const int                                   numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::STKFieldType* coordinates_field =
@@ -576,19 +576,10 @@ STKDiscretization::writeCoordsToMatrixMarket() const
 #else
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
-  if ((rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
+  if ((rigidBodyModes->isTekoUsed() || rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
       stkMeshStruct->writeCoordsToMMFile) {
-    if (comm->getRank() == 0) {
-      std::cout << "Writing mesh coordinates to Matrix Market file."
-                << std::endl;
-    }
-    writeMatrixMarket(coordMV->col(0), "xCoords");
-    if (coordMV->domain()->dim() > 1) {
-      writeMatrixMarket(coordMV->col(1), "yCoords");
-    }
-    if (coordMV->domain()->dim() > 2) {
-      writeMatrixMarket(coordMV->col(2), "zCoords");
-    }
+    *out << "Writing mesh coordinates to Matrix Market file." << std::endl;
+    writeMatrixMarket(coordMV, "coords");
   }
 #endif
 }
