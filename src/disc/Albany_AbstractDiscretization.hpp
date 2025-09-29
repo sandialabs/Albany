@@ -162,16 +162,18 @@ public:
   int getNumWorksets () const { return m_workset_sizes.size(); }
 
   //! Get Side set lists
-  virtual const SideSetList&
-  getSideSets(const int ws) const = 0;
+  const SideSetList& getSideSets(const int ws) const { return m_sideSets[ws]; }
 
   //! Get Side set view lists
-  virtual const LocalSideSetInfoList&
-  getSideSetViews(const int ws) const = 0;
+  const LocalSideSetInfoList&
+  getSideSetViews(const int ws) const { return m_sideSetViews.at(ws); }
 
   //! Get local DOF views for GatherVerticallyContractedSolution
-  virtual const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const = 0;
+  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const
+  {
+    return m_wsLocalDOFViews.at(workset);
+  }
 
   //! Get Dof Manager of field field_name
   Teuchos::RCP<const GlobalLocalIndexer>
@@ -219,12 +221,14 @@ public:
   const strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() const { return sideSetDiscretizations; }
 
   //! Get the map side_id->side_set_elem_id
-  virtual const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const = 0;
+  const strmap_t<std::map<GO, GO>>& getSideToSideSetCellMap() const {
+    return m_side_to_ss_cell;
+  }
 
   //! Get the map side_node_id->side_set_cell_node_id
-  virtual const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const = 0;
+  const strmap_t<std::map<GO, std::vector<int>>>& getSideNodeNumerationMap() const {
+    return m_side_nodes_to_ss_cell_nodes;
+  }
 
   //! Get MeshStruct
   virtual Teuchos::RCP<AbstractMeshStruct>
@@ -262,8 +266,7 @@ public:
   getNumDim() const = 0;
 
   //! Get number of total DOFs per node
-  virtual int
-  getNumEq() const = 0;
+  int getNumEq() const { return m_neq; }
 
   //! Get Numbering for layered mesh (mesh structured in one direction)
   virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
@@ -358,18 +361,50 @@ public:
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
 
 protected:
+  dof_mgr_ptr_t&
+  get_dof_mgr (const std::string& part_name,
+               const FE_Type fe_type,
+               const int order,
+               const int dof_dim);
+
+  // From std::vector<SideSet> build corresponding kokkos structures
+  void buildSideSetsViews ();
+
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 
   //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
-  // One dof mgr per dof per part
   // Notice that the dof mgr on a side is not the restriction
   // of the volume dof mgr to that side, since local ids are different.
+  // Note: the double map works as map[field_name][part_name] = dof_mgr
   strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
 
-  // Dof manager for a scalar node field
+  // Dof manager for a scalar node field (part_name->dof_mgr)
   strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
+
+  // Store a all dof mgrs based on a key that encodes all params used to create it.
+  // This helps to build only one copy of dof mgrs with same specs
+  std::map<std::string,dof_mgr_ptr_t>      m_key_to_dof_mgr;
+
+  // For each ss, map the side_GID into vec, where vec[i]=k if the i-th
+  // node of the side corresponds to the k-th node of the cell in the side mesh
+  strmap_t<std::map<GO, std::vector<int>>> m_side_nodes_to_ss_cell_nodes;
+
+  // For each ss, map the side_GID to the cell_GID in the side mesh
+  strmap_t<std::map<GO, GO>>               m_side_to_ss_cell;
+
+  //! side sets stored as std::map(string ID, SideArray classes) per workset
+  //! (std::vector across worksets)
+  std::vector<SideSetList>            m_sideSets;
+  std::map<int, LocalSideSetInfoList> m_sideSetViews;
+
+  //! Number of equations (and unknowns) per node
+  // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
+  int m_neq;
+
+  //! GatherVerticallyContractedSolution connectivity
+  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> m_wsLocalDOFViews;
 
   // Workset information
   WorksetArray<int>           m_workset_sizes; // size of each ws
