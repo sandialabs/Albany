@@ -815,6 +815,11 @@ Application::initializePreconditioner()
   TEUCHOS_ASSERT(physicsBasedPreconditioner);
   TEUCHOS_FUNC_TIME_MONITOR("Albany: Initialize Preconditioner");
 #ifdef ALBANY_TEKO
+  // Note: this ensures we only use this for FO Thermo
+  const auto& problem_type = problemParams->get<std::string>("Name");
+  TEUCHOS_TEST_FOR_EXCEPTION(problem_type != "LandIce Stokes FO Thermo Coupled 3D", Teuchos::Exceptions::InvalidParameter,
+      "Albany::Application::initializePreconditioner(): physics-based preconditioner not available for " + problem_type);
+
   // Initialize Teko preconditioner operator
   const auto precParams = problem->getNullSpace()->getPL();
   const auto invLibParams = Teuchos::sublist(precParams, "Inverse Factory Library", true);

@@ -127,7 +127,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Random Parameters", false, "");
   validPL->sublist("Linear Combination Parameters", false, "");
   validPL->sublist("LogNormal Parameter", false, "");
-  validPL->sublist("Teko", false, "");
   validPL->sublist("Hessian", false, "");
   validPL->sublist("XFEM", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
