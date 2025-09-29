@@ -236,7 +236,23 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
     auto f = metaData->get_field<double>(NODE_RANK,st->name);
     auto dim = st->dim;
     if (st->entity != StateStruct::NodalData) {
-      dim.erase(dim.begin()); // NodalDistParameter and NodalDataToElemNode have <Cell> as first dim
+      // Add an elem state array, which the SaveStateField/SaveSideSetStateField evaluators will use
+      for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
+        const auto& b = *elem_buckets[ws];
+        auto& state = elemStateArrays[ws][st->name];
+        switch (dim.size()) {
+          case 2:
+            state.resize(st->name,b.size(),dim[1]); break;
+          case 3:
+            state.resize(st->name,b.size(),dim[1],dim[2]); break;
+          case 4:
+            state.resize(st->name,b.size(),dim[1],dim[2],dim[3]); break;
+          default:
+            throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+        }
+      }
+      // Remove <Cell> extent from dim, so we can use for sizing the nodeStateArray
+      dim.erase(dim.begin());
     }
     for (size_t ws=0; ws<node_buckets.size(); ++ws) {
       const auto& b = *node_buckets[ws];
@@ -286,17 +302,6 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
     for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
       const auto& b = *elem_buckets[ws];
       auto& state = elemStateArrays[ws][st->name];
-      switch (rank) {
-        case 2:
-          state.resize(st->name,b.size(),dim[1]); break;
-        case 3:
-          state.resize(st->name,b.size(),dim[1],dim[2]); break;
-        case 4:
-          state.resize(st->name,b.size(),dim[1],dim[2],dim[3]); break;
-        default:
-          throw std::runtime_error("Error! Unsupported rank for elem node state '" + st->name + "'.\n");
-      }
-
       auto& state_h = state.host();
       for (size_t i=0; i<b.size(); ++i) {
         const auto& elem  = b[i];
