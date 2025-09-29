@@ -70,18 +70,6 @@ public:
     return nodeSetCoords;
   }
 
-  //! Get connectivity map from elementGID to workset
-  WsLIDList&
-  getElemGIDws()
-  {
-    return elemGIDws;
-  }
-  WsLIDList const&
-  getElemGIDws() const
-  {
-    return elemGIDws;
-  }
-
   //! Retrieve coordinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const;
@@ -296,9 +284,6 @@ public:
 
   mutable Teuchos::ArrayRCP<double>                                 coordinates;
   Teuchos::RCP<Thyra_MultiVector>                                   coordMV;
-
-  //! Connectivity map from elementGID to workset and LID in workset
-  WsLIDList elemGIDws;
 
   //! Number of elements on this processor
   GO  maxGlobalNodeGID;

@@ -156,14 +156,11 @@ public:
 };
 using LocalSideSetInfoList = std::map<std::string, LocalSideSetInfo>;
 
-class wsLid
+struct WsIdx
 {
- public:
-  int ws;   // workset of element containing side
-  int LID;  // local id of element containing side
+  int ws;    // workset index
+  int idx;   // local idx within workset
 };
-
-using WsLIDList = std::map<GO, wsLid>;
 
 template <typename T>
 using WorksetArray = Teuchos::ArrayRCP<T>;
