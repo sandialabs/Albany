@@ -633,6 +633,7 @@ ExtrudedDiscretization::computeSideSets()
 
   int num_ws = getNumWorksets();
   m_sideSets.resize(num_ws);  // Need a sideset list per workset
+  Teuchos::Array<GO> side_GIDs;
 
   const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
   const auto& basal_cell_indexer = m_basal_disc->getDOFManager()->cell_indexer();
@@ -650,6 +651,7 @@ ExtrudedDiscretization::computeSideSets()
     if (ss=="basalside" or ss=="upperside") {
       // Side sets are just the basal mesh elems
       const int num_sides = basal_cell_indexer->getNumLocalElements();
+      side_GIDs.reserve(side_GIDs.size()+num_sides);
       for (int iside=0; iside<num_sides; ++iside) {
         SideStruct sStruct;
 
@@ -658,6 +660,7 @@ ExtrudedDiscretization::computeSideSets()
 
         sStruct.elem_GID = cell_layers_gid->getId(basal_gid,ilayer);
         sStruct.side_GID = basal_gid + (ss=="upperside" ? num_glb_basal_elems : 0);
+        side_GIDs.push_back(sStruct.side_GID);
 
         sStruct.ws_elem_idx = m_elemGIDws[sStruct.elem_GID].LID;
 
@@ -750,6 +753,7 @@ ExtrudedDiscretization::computeSideSets()
               sStruct.elem_GID = cell_layers_gid->getId(basal_elem_gid,ilev);
               sStruct.side_GID = 2*num_glb_basal_elems + side_layers_gid.getId(basal_side.side_GID,ilev);
               sStruct.ws_elem_idx = m_elemGIDws[sStruct.elem_GID].LID;
+              side_GIDs.push_back(sStruct.side_GID);
 
               // Get the ws that this element lives in
               int workset = m_elemGIDws[sStruct.elem_GID].ws;
@@ -769,6 +773,8 @@ ExtrudedDiscretization::computeSideSets()
       }
     }
   }
+  auto vs = createVectorSpace(m_comm,side_GIDs);
+  m_sides_indexer = createGlobalLocalIndexer(vs);
 
   buildSideSetsViews();
 }

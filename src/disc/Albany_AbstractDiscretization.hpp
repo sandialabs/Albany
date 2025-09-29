@@ -193,6 +193,9 @@ public:
   Teuchos::RCP<const GlobalLocalIndexer>
   getGlobalLocalIndexer () const { return getGlobalLocalIndexer(solution_dof_name()); }
 
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getSidesGlobalLocalIndexer() const { return m_sides_indexer; }
+
   //! Get GlobalLocalIndexer for overlapped solution field
   Teuchos::RCP<const GlobalLocalIndexer>
   getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(solution_dof_name()); }
@@ -398,6 +401,9 @@ protected:
   //! (std::vector across worksets)
   std::vector<SideSetList>            m_sideSets;
   std::map<int, LocalSideSetInfoList> m_sideSetViews;
+
+  // Provide side gid<->lid indexing. GIDs and LIDs are unique across worksets and sidesets
+  Teuchos::RCP<const GlobalLocalIndexer>    m_sides_indexer;
 
   //! Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown

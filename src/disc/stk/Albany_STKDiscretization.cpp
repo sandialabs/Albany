@@ -1295,6 +1295,7 @@ STKDiscretization::computeSideSets()
 
   m_sideSets.resize(numBuckets);  // Need a sideset list per workset
 
+  Teuchos::Array<GO> side_GIDs;
   for (const auto& [ss_name,ss_part] : stkMeshStruct->ssPartVec) {
     // Make sure the sideset exist even if no sides are owned
     for (auto& ss : m_sideSets) {
@@ -1319,17 +1320,15 @@ STKDiscretization::computeSideSets()
     // for side set options, look at
     // $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
 
-    for (std::size_t localSideID = 0; localSideID < sides.size();
-         localSideID++) {
-      stk::mesh::Entity sidee = sides[localSideID];
-
+    side_GIDs.reserve(side_GIDs.size()+sides.size());
+    for (const auto& side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION(
-          bulkData->num_elements(sidee) != 1,
+          bulkData->num_elements(side) != 1,
           std::logic_error,
           "STKDisc: cannot figure out side set topology for side set "
               << ss_name << std::endl);
 
-      stk::mesh::Entity elem = bulkData->begin_elements(sidee)[0];
+      stk::mesh::Entity elem = bulkData->begin_elements(side)[0];
 
       // containing the side. Note that if the side is internal, it will show up
       // twice in the
@@ -1338,7 +1337,8 @@ STKDiscretization::computeSideSets()
       SideStruct sStruct;
 
       // Save side stk GID.
-      sStruct.side_GID = bulkData->identifier(sidee) - 1;
+      sStruct.side_GID = bulkData->identifier(side) - 1;
+      side_GIDs.push_back(sStruct.side_GID);
 
       // Save elem GID and LID. Here, LID is the local id *within* the workset
       sStruct.elem_GID = bulkData->identifier(elem) - 1;
@@ -1348,7 +1348,7 @@ STKDiscretization::computeSideSets()
       int workset = elemGIDws[sStruct.elem_GID].ws;
 
       // Save the position of the side within element (0-based).
-      sStruct.side_pos = determine_entity_pos(elem, sidee);
+      sStruct.side_pos = determine_entity_pos(elem, side);
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
@@ -1359,6 +1359,8 @@ STKDiscretization::computeSideSets()
       ss_vec.push_back(sStruct);
     }
   }
+  auto vs = createVectorSpace(comm,side_GIDs);
+  m_sides_indexer = createGlobalLocalIndexer(vs);
 
   buildSideSetsViews();
 }
