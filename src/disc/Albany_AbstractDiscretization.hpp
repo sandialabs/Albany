@@ -196,6 +196,9 @@ public:
   Teuchos::RCP<const GlobalLocalIndexer>
   getSidesGlobalLocalIndexer() const { return m_sides_indexer; }
 
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getCellsGlobalLocalIndexer() const { return getDOFManager()->cell_indexer(); }
+
   //! Get GlobalLocalIndexer for overlapped solution field
   Teuchos::RCP<const GlobalLocalIndexer>
   getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(solution_dof_name()); }
