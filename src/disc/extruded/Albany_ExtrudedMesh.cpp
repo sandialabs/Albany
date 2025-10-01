@@ -240,6 +240,36 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   set_pos(m_node_layers_data_gid);
   set_pos(m_node_layers_data_lid);
 
+  // Set layer data in the field accessor
+  bool useGlimmerSpacing = m_params->get("Use Glimmer Spacing", false);
+  int num_elem_layers = m_elem_layers_data_lid->numLayers;
+  int num_node_layers = m_node_layers_data_lid->numLayers;
+
+  std::vector<double> node_layers_coord(num_node_layers);
+  if(useGlimmerSpacing) {
+    for (int i = 0; i < num_node_layers; i++)
+      node_layers_coord[num_elem_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+  } else {
+    //uniform layers
+    for (int i = 0; i < num_node_layers; i++)
+      node_layers_coord[i] = double(i) / num_elem_layers;
+  }
+
+  std::vector<double> elem_layer_thickness(num_elem_layers);
+  for (int i = 0; i < num_elem_layers; i++)
+    elem_layer_thickness[i] = node_layers_coord[i+1]-node_layers_coord[i];
+
+  auto& vec_states = m_field_accessor->getMeshVectorStates();
+  auto& int_states = m_field_accessor->getMeshScalarIntegerStates();
+  auto& int64_states = m_field_accessor->getMeshScalarInteger64States();
+
+  vec_states["elem_layer_thickness"] = elem_layer_thickness;
+  vec_states["node_layers_coords"] = node_layers_coord;
+  int_states["ordering"] = m_elem_layers_data_lid->layerOrd ? 0 : 1;
+  int_states["num_layers"] = num_elem_layers;
+  int64_states["max_2d_elem_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
+  int64_states["max_2d_node_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
+
   m_bulk_data_set = true;
 }
 
