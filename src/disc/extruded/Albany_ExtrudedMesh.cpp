@@ -15,6 +15,7 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   // Sanity checks
   TEUCHOS_TEST_FOR_EXCEPTION (basal_mesh.is_null(), std::invalid_argument,
       "[ExtrudedMesh] Error! Invalid basal mesh pointer.\n");
+  sideSetMeshStructs["basalside"] = m_basal_mesh;
 
   const auto basal_mesh_specs = m_basal_mesh->meshSpecs[0];
   const int basalNumDim = basal_mesh_specs->numDim;
@@ -52,17 +53,19 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   std::vector<std::string> lateralParts = {"lateralside"};
 
   for (const auto& ns : basal_mesh_specs->nsNames) {
+    if (ns=="lateral") continue; // extruded_lateral would just be the same as lateral
     nsNames.push_back ("extruded_" + ns);
     nsNames.push_back ("basal_" + ns);
 
-    m_part_to_basal_part["extruded+" + ns] = ns;
-    m_part_to_basal_part["basal_+" + ns] = ns;
+    m_part_to_basal_part["extruded_" + ns] = ns;
+    m_part_to_basal_part["basal_" + ns] = ns;
   }
   for (const auto& ss : basal_mesh_specs->ssNames) {
+    if (ss=="lateralside") continue; // extruded_lateralside would just be the same as lateralside
     auto pname = "extruded_" + ss;
     ssNames.push_back (pname);
     lateralParts.push_back(pname);
-    m_part_to_basal_part["extruded+" + ss] = ss;
+    m_part_to_basal_part["extruded_" + ss] = ss;
   }
   std::string ebName = "extruded_" + basal_mesh_specs->ebName;
   std::map<std::string,int> ebNameToIndex =
@@ -75,19 +78,23 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   m_part_to_basal_part[""] = "";
 
   // Determine topology
-  std::string elem2d_name(basal_mesh_specs->ctd.base->name);
-  std::string tria = shards::getCellTopologyData<shards::Triangle<3> >()->name;
-  auto wedge_topo = shards::CellTopology(shards::getCellTopologyData<shards::Wedge<6>>());
-  shards::CellTopology elem_topo;
-  if (elem2d_name==tria) {
+  auto basal_topo = basal_mesh_specs->ctd;
+  auto tria_topo = *shards::getCellTopologyData<shards::Triangle<3> >();
+  auto quad_topo = *shards::getCellTopologyData<shards::Quadrilateral<4>>();
+  auto wedge_topo = *shards::getCellTopologyData<shards::Wedge<6>>();
+  CellTopologyData elem_topo, lat_topo;
+  if (basal_topo.name==tria_topo.name) {
     elem_topo = wedge_topo;
+    lat_topo  = quad_topo;
+  } else if (basal_topo.name==quad_topo.name) {
+    elem_topo = wedge_topo;
+    lat_topo  = quad_topo;
   } else {
     throw Teuchos::Exceptions::InvalidParameterValue(
-      "[ExtrudedSTKMeshStruct] Invalid/unsupported basal mesh element type.\n"
-      "  - valid element types: " + tria + "\n"
-      "  - basal alement type : " + elem2d_name + "\n");
+      "[ExtrudedMeshStruct] Invalid/unsupported basal mesh element type.\n"
+      "  - valid element types: " + std::string(tria_topo.name) + ", " + std::string(quad_topo.name) + "\n"
+      "  - basal alement type : " + std::string(basal_topo.name) + "\n");
   }
-  const CellTopologyData& ctd = *elem_topo.getCellTopologyData();
 
   // Compute workset size
   int basalWorksetSize = basal_mesh_specs->worksetSize;
@@ -97,11 +104,27 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
 
   // Finally, we can create the mesh specs
   this->meshSpecs.resize(1,Teuchos::rcp(
-        new MeshSpecsStruct(MeshType::Extruded, ctd, basalNumDim+1, nsNames, ssNames,
+        new MeshSpecsStruct(MeshType::Extruded, elem_topo, basalNumDim+1, nsNames, ssNames,
                             worksetSize, ebName, ebNameToIndex)));
 
-  meshSpecs[0]->sideSetMeshSpecs["basalside"] = m_basal_mesh->meshSpecs;
-  sideSetMeshStructs["basalside"] = m_basal_mesh;
+  // Create basalside, uppserside, and lateralside mesh specs
+  auto& ss_ms = meshSpecs[0]->sideSetMeshSpecs;
+
+  ss_ms["basalside"] = m_basal_mesh->meshSpecs;
+
+  // At this point, we cannot assume there will be a discretization on upper/lateral sides,
+  // so create "empty" mesh specs, just setting the cell topology and mesh dim. IF a side disc
+  // is created, these will be overwritten
+
+  auto& upper_ms = ss_ms["upperside"];
+  upper_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
+  upper_ms[0]->numDim = basal_topo.dimension;
+  upper_ms[0]->ctd = basal_topo;
+
+  auto& lateral_ms = ss_ms["lateralside"];
+  lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
+  lateral_ms[0]->numDim = lat_topo.dimension;
+  lateral_ms[0]->ctd = lat_topo;
 }
 
 void ExtrudedMesh::
