@@ -4,6 +4,7 @@
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_LayeredMeshNumbering.hpp"
 #include "Albany_DiscretizationUtils.hpp"
+#include "Albany_ExtrudedMeshFieldAccessor.hpp"
 
 #include <Teuchos_RCP.hpp>
 
@@ -60,12 +61,12 @@ public:
   }
 
   Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override {
-    return m_basal_mesh->get_field_accessor();
+    return m_field_accessor;
   }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<StateInfoStruct>& sis,
-                     std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis) override;
+                     strmap_t<Teuchos::RCP<StateInfoStruct> > side_set_sis) override;
 
   void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
@@ -79,6 +80,8 @@ protected:
   Teuchos::RCP<Teuchos::ParameterList>      m_params;
 
   Teuchos::RCP<AbstractMeshStruct>          m_basal_mesh;
+
+  Teuchos::RCP<ExtrudedMeshFieldAccessor>   m_field_accessor;
 
   Teuchos::RCP<LayeredMeshNumbering<GO>>    m_elem_layers_data_gid;
   Teuchos::RCP<LayeredMeshNumbering<LO>>    m_elem_layers_data_lid;
