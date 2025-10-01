@@ -11,6 +11,9 @@ namespace Albany {
 
 class ExtrudedMesh : public AbstractMeshStruct {
 public:
+  template<typename T>
+  using strmap_t = std::map<std::string,T>;
+
   ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
                 const Teuchos::RCP<Teuchos::ParameterList>& params,
                 const Teuchos::RCP<const Teuchos_Comm>& comm);
@@ -21,14 +24,14 @@ public:
     return "Albany";
   }
 
-  const Teuchos::RCP<LayeredMeshNumbering<GO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<GO>>
   cell_layers_gid () const { return m_elem_layers_data_gid; }
-  const Teuchos::RCP<LayeredMeshNumbering<LO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>
   cell_layers_lid () const { return m_elem_layers_data_lid; }
 
-  const Teuchos::RCP<LayeredMeshNumbering<GO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<GO>>
   node_layers_gid () const { return m_node_layers_data_gid; }
-  const Teuchos::RCP<LayeredMeshNumbering<LO>>&
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>
   node_layers_lid () const { return m_node_layers_data_lid; }
 
   const Teuchos::RCP<AbstractMeshStruct>& basal_mesh () const { return m_basal_mesh; }

@@ -28,14 +28,21 @@ struct LayeredMeshNumbering {
   LayeredMeshOrdering ordering;
   int numLayers;
 
-  LayeredMeshNumbering(const T _numHorizEntities,
-                       const int _numLayers,
+  LayeredMeshNumbering(const int _numLayers,
                        const LayeredMeshOrdering _ordering)
   {
-    numHorizEntities = _numHorizEntities;
+    numHorizEntities = -1;
     ordering = _ordering;
     layerOrd = ordering == LayeredMeshOrdering::LAYER;
     numLayers = _numLayers;
+  }
+
+  LayeredMeshNumbering(const T _numHorizEntities,
+                       const int _numLayers,
+                       const LayeredMeshOrdering _ordering)
+   : LayeredMeshNumbering(_numLayers,_ordering)
+  {
+    numHorizEntities = _numHorizEntities;
   }
 
   T getId(const T column_id, const T level_index) const {

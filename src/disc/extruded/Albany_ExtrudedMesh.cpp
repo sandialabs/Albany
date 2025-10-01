@@ -31,6 +31,11 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
 
+  m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
+  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,ordering));
+  m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
+  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,ordering));
+
   // Create map part->basal_part
   // upper/basal/bot/top parts map to the full basal mesh
   m_part_to_basal_part["basalside"] = m_basal_mesh->meshSpecs[0]->ebName;
@@ -135,21 +140,16 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
     m_basal_mesh->setBulkData(comm);
   }
 
-  // Create layer data structures
+  // Complete initialization of layer data structures
   const auto max_basal_node_gid = m_basal_mesh->get_max_node_gid();
   const auto num_basal_nodes    = m_basal_mesh->get_num_local_nodes();
   const auto max_basal_elem_gid = m_basal_mesh->get_max_elem_gid();
   const auto num_basal_elems    = m_basal_mesh->get_num_local_elements();
 
-  const auto num_layers = m_params->get<int>("NumLayers");
-  const auto ordering = m_params->get("Columnwise Ordering", false)
-                      ? LayeredMeshOrdering::COLUMN
-                      : LayeredMeshOrdering::LAYER;
-
-  m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_basal_elem_gid+1,num_layers,ordering));
-  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_basal_elems,num_layers,ordering));
-  m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_basal_node_gid+1,num_layers+1,ordering));
-  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_basal_nodes,num_layers+1,ordering));
+  m_elem_layers_data_gid->numHorizEntities = max_basal_elem_gid+1;
+  m_elem_layers_data_lid->numHorizEntities = num_basal_elems;
+  m_node_layers_data_gid->numHorizEntities = max_basal_node_gid+1;
+  m_node_layers_data_lid->numHorizEntities = num_basal_nodes;
 
   auto set_pos = [&](auto data) {
     const auto& ctd = meshSpecs[0]->ctd;
