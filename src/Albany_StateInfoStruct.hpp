@@ -144,6 +144,11 @@ struct StateStruct
   bool        layered  = false;
   std::string meshPart = "";
   std::string ebName   = "";
+
+  // Flag for 3d states that are computed on the fly in extruded meshes from basal states
+  bool        extruded = false;
+  bool        interpolated = false;
+
   // If this is a copy (name = parentName+"_old"), ptr to parent struct
   StateStruct* pParentStateStruct = nullptr;
 };
