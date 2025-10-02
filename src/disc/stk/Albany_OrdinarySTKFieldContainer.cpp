@@ -137,39 +137,29 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     sol_sens_id_name_vec[0] = "sensitivity dg" + std::to_string(resp_fn_index) + "dp" + std::to_string(param_sens_index);
   }
 
+  // We don't know yet the number of nodes in the mesh
+  StateStruct::FieldDims sol_dim = {0, static_cast<PHX::DataLayout::size_type>(neq_)};
+
+  constexpr auto ND = StateStruct::NodalData;
   if (save_solution_field) {
     solution_field.resize(num_time_deriv + 1);
     solution_field_dtk.resize(num_time_deriv + 1);
     solution_field_dxdp.resize(this->num_params);
 
     for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
-      solution_field[num_vecs] = &metaData_->declare_field<double>(
-          stk::topology::NODE_RANK,
-          params_->get<std::string>(
-              sol_tag_name[num_vecs], sol_id_name[num_vecs]));
-      stk::mesh::put_field_on_mesh(
-          *solution_field[num_vecs], metaData_->universal_part(), neq_, nullptr); // KL: this
+      auto name = params_->get<std::string>(sol_tag_name[num_vecs], sol_id_name[num_vecs]);
+      auto st = Teuchos::rcp(new StateStruct(name,ND));
+      st->dim = sol_dim;
+      st->output = true;
+      addStateStruct(st);
 #if defined(ALBANY_DTK)
       if (output_dtk_field == true) {
-        solution_field_dtk[num_vecs] = &metaData_->declare_field<double>(
-            stk::topology::NODE_RANK,
-            params_->get<std::string>(
-                sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
-        stk::mesh::put_field_on_mesh(
-            *solution_field_dtk[num_vecs],
-            metaData_->universal_part(),
-            neq_,
-            nullptr);
+        auto name = params_->get<std::string>(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]);
+        auto st = Teuchos::rcp(new StateStruct(name,ND));
+        st->dim = sol_dim;
+        st->output = true;
+        addStateStruct(st);
       }
-#endif
-
-#ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*solution_field[num_vecs], Ioss::Field::TRANSIENT);
-#if defined(ALBANY_DTK)
-      if (output_dtk_field == true)
-        stk::io::set_field_role(
-            *solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
-#endif
 #endif
     }
   }
@@ -178,19 +168,11 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
   if(output_sens_field) {
     const int num_sens = (sens_method == "Forward") ? this->num_params : 1;
     for (int np = 0; np < num_sens; np++) {
-        solution_field_dxdp[np] = &metaData_->declare_field<double>(
-            stk::topology::NODE_RANK,
-            params_->get<std::string>(
-                sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]));
-        stk::mesh::put_field_on_mesh(
-            *solution_field_dxdp[np],
-            metaData_->universal_part(),
-            neq_,
-            nullptr);
-#ifdef ALBANY_SEACAS
-      stk::io::set_field_role(
-          *solution_field_dxdp[np], Ioss::Field::TRANSIENT);
-#endif
+        auto name = params_->get<std::string>(sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]);
+        auto st = Teuchos::rcp(new StateStruct(name,ND));
+        st->dim = sol_dim;
+        st->output = true;
+        addStateStruct(st);
     }
   }
 }
