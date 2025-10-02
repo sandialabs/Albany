@@ -212,15 +212,26 @@ ANONYMOUS:
                     Verbosity Level: low
               Preconditioner Type: Teko
               Preconditioner Types:
+                # When "Use Physics-Based Preconditioner" is on, this Teko preconditioner is built in Albany.
                 Teko:
+                  # Albany will construct an InverseFactoryOperator based on the settings in "myBlocks"
                   Inverse Type: myBlocks
+                  # Albany will construct a BlockedTpetraOperator from the jacobian based on "Strided Blocking"
+                  # Note: This assumes PDE equations are the fastest index in the matrix. The length of the array
+                  # is the number of blocks and the sum of all values in the array must be equal to the total number
+                  # of PDE equations. For example, "2 1 1" translates to [u v] [w] [T] for this problem. 
+                  # i.e. all values associated with u, v will be placed in one block.
                   Strided Blocking: "2 1 1"
                   Inverse Factory Library:
                     myBlocks:
+                      # Teko specific parameters (see Teko docs)
                       Type: Block Gauss-Seidel
                       Use Upper Triangle: true
+                      # Each block must have an Inverse Type associated to it. Albany will construct muelu blocks
+                      # specifically for this problem. The blocks are "myMueLuUV", "myMueLuW" and "myMueLuT". These
+                      # can be modified like any other MueLu preconditioner (see MueLu docs)
                       Inverse Type 1: myMueLuUV
-                      Inverse Type 2: myMueLuT
+                      Inverse Type 2: myMueLuT # Note: we reuse the same settings for W and T here.
                       Inverse Type 3: myMueLuT
                     myMueLuUV:
                       Type: MueLu
