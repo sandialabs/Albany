@@ -3178,7 +3178,7 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   workset.wsCoords             = coords[ws];
   workset.EBName               = wsEBNames[ws];
   workset.wsIndex              = ws;
-
+  workset.numWs                = disc->getNumWorksets();
 
   workset.savedMDFields = phxSetup->get_saved_fields(evalName);
 

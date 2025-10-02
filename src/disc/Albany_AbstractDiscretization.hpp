@@ -193,6 +193,12 @@ public:
   Teuchos::RCP<const GlobalLocalIndexer>
   getGlobalLocalIndexer () const { return getGlobalLocalIndexer(solution_dof_name()); }
 
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getSidesGlobalLocalIndexer() const { return m_sides_indexer; }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getCellsGlobalLocalIndexer() const { return getDOFManager()->cell_indexer(); }
+
   //! Get GlobalLocalIndexer for overlapped solution field
   Teuchos::RCP<const GlobalLocalIndexer>
   getOverlapGlobalLocalIndexer () const { return getOverlapGlobalLocalIndexer(solution_dof_name()); }
@@ -247,11 +253,9 @@ public:
   const WorksetArray<int>&
   getWsPhysIndex() const { return m_wsPhysIndex; }
 
-  //! Retrieve connectivity map from elementGID to workset
-  virtual WsLIDList&
-  getElemGIDws() = 0;
-  virtual const WsLIDList&
-  getElemGIDws() const = 0;
+  //! Retrieve array storing the ws idx and the idx within the ws of each element (indexed via elem LID)
+  const std::vector<WsIdx>& get_elements_workset_idx () const { return m_elem_ws_idx; }
+        std::vector<WsIdx>& get_elements_workset_idx ()       { return m_elem_ws_idx; }
 
   //! Flag if solution has a restart values -- used in Init Cond
   virtual bool
@@ -398,6 +402,12 @@ protected:
   //! (std::vector across worksets)
   std::vector<SideSetList>            m_sideSets;
   std::map<int, LocalSideSetInfoList> m_sideSetViews;
+
+  // Provide side gid<->lid indexing. GIDs and LIDs are unique across worksets and sidesets
+  Teuchos::RCP<const GlobalLocalIndexer>    m_sides_indexer;
+
+  // The index to which each element belongs to (indexed by elem LID)
+  std::vector<WsIdx>  m_elem_ws_idx;
 
   //! Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown

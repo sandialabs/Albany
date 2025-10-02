@@ -1197,8 +1197,11 @@ STKDiscretization::computeWorksetInfo()
   stkMeshStruct->get_field_accessor()->createStateArrays(m_workset_sizes);
   stkMeshStruct->get_field_accessor()->transferNodeStatesToElemStates();
 
-  // Clear map if remeshing
-  if (!elemGIDws.empty()) { elemGIDws.clear(); }
+  // Clear elem_LID->wsIdx index map if remeshing
+  m_elem_ws_idx.clear();
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+  int num_elems = cell_indexer->getNumLocalElements();
+  m_elem_ws_idx.resize(num_elems);
 
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
@@ -1211,11 +1214,11 @@ STKDiscretization::computeWorksetInfo()
       // Traverse all the elements in this bucket
       element = buck[i];
 
-      // Now, save a map from element GID to workset on this PE
-      elemGIDws[stk_gid(element)].ws = b;
+      int elem_LID = cell_indexer->getLocalElement(stk_gid(element));
 
-      // Now, save a map from element GID to local id on this workset on this PE
-      elemGIDws[stk_gid(element)].LID = i;
+      // Now, save a map from element GID to workset on this PE
+      m_elem_ws_idx[elem_LID].ws = b;
+      m_elem_ws_idx[elem_LID].idx = i;
 
       // Set coords at nodes
       const auto* nodes = bulkData->begin_nodes(element);
@@ -1286,6 +1289,8 @@ STKDiscretization::computeSideSets()
 
   m_sideSets.resize(numBuckets);  // Need a sideset list per workset
 
+  Teuchos::Array<GO> side_GIDs;
+  auto cell_indexer = getCellsGlobalLocalIndexer();
   for (const auto& [ss_name,ss_part] : stkMeshStruct->ssPartVec) {
     // Make sure the sideset exist even if no sides are owned
     for (auto& ss : m_sideSets) {
@@ -1310,17 +1315,15 @@ STKDiscretization::computeSideSets()
     // for side set options, look at
     // $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
 
-    for (std::size_t localSideID = 0; localSideID < sides.size();
-         localSideID++) {
-      stk::mesh::Entity sidee = sides[localSideID];
-
+    side_GIDs.reserve(side_GIDs.size()+sides.size());
+    for (const auto& side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION(
-          bulkData->num_elements(sidee) != 1,
+          bulkData->num_elements(side) != 1,
           std::logic_error,
           "STKDisc: cannot figure out side set topology for side set "
               << ss_name << std::endl);
 
-      stk::mesh::Entity elem = bulkData->begin_elements(sidee)[0];
+      stk::mesh::Entity elem = bulkData->begin_elements(side)[0];
 
       // containing the side. Note that if the side is internal, it will show up
       // twice in the
@@ -1329,17 +1332,19 @@ STKDiscretization::computeSideSets()
       SideStruct sStruct;
 
       // Save side stk GID.
-      sStruct.side_GID = bulkData->identifier(sidee) - 1;
+      sStruct.side_GID = bulkData->identifier(side) - 1;
+      side_GIDs.push_back(sStruct.side_GID);
 
       // Save elem GID and LID. Here, LID is the local id *within* the workset
       sStruct.elem_GID = bulkData->identifier(elem) - 1;
-      sStruct.ws_elem_idx = elemGIDws[sStruct.elem_GID].LID;
+      int elem_LID = cell_indexer->getLocalElement(sStruct.elem_GID);
+      sStruct.ws_elem_idx = m_elem_ws_idx[elem_LID].idx;
 
       // Get the ws that this element lives in
-      int workset = elemGIDws[sStruct.elem_GID].ws;
+      int workset = m_elem_ws_idx[elem_LID].ws;
 
       // Save the position of the side within element (0-based).
-      sStruct.side_pos = determine_entity_pos(elem, sidee);
+      sStruct.side_pos = determine_entity_pos(elem, side);
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
@@ -1350,6 +1355,8 @@ STKDiscretization::computeSideSets()
       ss_vec.push_back(sStruct);
     }
   }
+  auto vs = createVectorSpace(comm,side_GIDs);
+  m_sides_indexer = createGlobalLocalIndexer(vs);
 
   buildSideSetsViews();
 }

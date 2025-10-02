@@ -69,6 +69,8 @@ struct Workset
   unsigned int wsIndex;
   unsigned int numEqs;
 
+  unsigned int numWs;
+
   // Solution vector (and time derivatives)
   Teuchos::RCP<const Thyra_Vector> x;
   Teuchos::RCP<const Thyra_Vector> xdot;

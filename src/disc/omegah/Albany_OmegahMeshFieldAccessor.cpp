@@ -160,7 +160,22 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
     auto data = m_tags.at(st->name).data();
     auto dim = st->dim;
     if (st->entity != StateStruct::NodalData) {
-      dim.erase(dim.begin()); // NodalDistParameter and NodalDataToElemNode have <Cell> as first dim
+      // Add an elem state array, which the SaveStateField/SaveSideSetStateField evaluators will use
+      for (int ws=0; ws<worksets_sizes.size(); ++ws) {
+        auto& state = elemStateArrays[ws][st->name];
+        switch (dim.size()) {
+          case 2:
+            state.resize(st->name,worksets_sizes[ws],dim[1]); break;
+          case 3:
+            state.resize(st->name,worksets_sizes[ws],dim[1],dim[2]); break;
+          case 4:
+            state.resize(st->name,worksets_sizes[ws],dim[1],dim[2],dim[3]); break;
+          default:
+            throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+        }
+      }
+      // Remove <Cell> extent from dim, so we can use for sizing the nodeStateArray
+      dim.erase(dim.begin());
     }
     switch (dim.size()) {
       case 1:

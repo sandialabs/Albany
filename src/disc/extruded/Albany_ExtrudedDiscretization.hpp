@@ -41,10 +41,6 @@ public:
   const NodeSetGIDsList&  getNodeSetGIDs()   const override { return m_nodeSetGIDs;   }
   const NodeSetCoordList& getNodeSetCoords() const override { return m_nodeSetCoords; }
 
-  //! Get connectivity map from elementGID to workset
-        WsLIDList& getElemGIDws()       override { return m_elemGIDws; }
-  const WsLIDList& getElemGIDws() const override { return m_elemGIDws; }
-
   //! Retrieve coordinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>& getCoordinates() const override { return m_nodes_coordinates; }
 
@@ -179,9 +175,6 @@ protected:
 
   // Coordinates spliced together, as [x0,y0,z0,x1,y1,z1,...]
   Teuchos::ArrayRCP<double>   m_nodes_coordinates;
-
-  //! Connectivity map from elementGID to workset and LID in workset
-  WsLIDList m_elemGIDws;
 
   // Needed to pass coordinates to ML.
   Teuchos::RCP<RigidBodyModes> m_rigid_body_modes;

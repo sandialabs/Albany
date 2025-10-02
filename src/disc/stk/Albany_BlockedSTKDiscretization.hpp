@@ -220,18 +220,6 @@ namespace Albany
       return m_blocks[i_block]->getLocalDOFViews(workset);
     }
 
-    //! Get connectivity map from elementGID to workset
-    WsLIDList &
-    getElemGIDws()
-    {
-      return elemGIDws;
-    }
-    WsLIDList const &
-    getElemGIDws() const
-    {
-      return elemGIDws;
-    }
-
     //! Get map from ws, elem, node [, eq] -> [Node|DOF] GID
     const Conn &
     getWsElNodeEqID() const
@@ -819,9 +807,6 @@ namespace Albany
     WorksetArray<std::string> wsEBNames;
     WorksetArray<int> wsPhysIndex;
     WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double *>>> coords;
-
-    //! Connectivity map from elementGID to workset and LID in workset
-    WsLIDList elemGIDws;
 
     // States: vector of length worksets of a map from field name to shards array
     std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;

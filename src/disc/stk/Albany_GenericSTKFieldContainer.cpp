@@ -236,7 +236,23 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
     auto f = metaData->get_field<double>(NODE_RANK,st->name);
     auto dim = st->dim;
     if (st->entity != StateStruct::NodalData) {
-      dim.erase(dim.begin()); // NodalDistParameter and NodalDataToElemNode have <Cell> as first dim
+      // Add an elem state array, which the SaveStateField/SaveSideSetStateField evaluators will use
+      for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
+        const auto& b = *elem_buckets[ws];
+        auto& state = elemStateArrays[ws][st->name];
+        switch (dim.size()) {
+          case 2:
+            state.resize(st->name,b.size(),dim[1]); break;
+          case 3:
+            state.resize(st->name,b.size(),dim[1],dim[2]); break;
+          case 4:
+            state.resize(st->name,b.size(),dim[1],dim[2],dim[3]); break;
+          default:
+            throw std::runtime_error("Error! Unsupported rank for elem state '" + st->name + "'.\n");
+        }
+      }
+      // Remove <Cell> extent from dim, so we can use for sizing the nodeStateArray
+      dim.erase(dim.begin());
     }
     for (size_t ws=0; ws<node_buckets.size(); ++ws) {
       const auto& b = *node_buckets[ws];
@@ -286,17 +302,6 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
     for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
       const auto& b = *elem_buckets[ws];
       auto& state = elemStateArrays[ws][st->name];
-      switch (rank) {
-        case 2:
-          state.resize(st->name,b.size(),dim[1]); break;
-        case 3:
-          state.resize(st->name,b.size(),dim[1],dim[2]); break;
-        case 4:
-          state.resize(st->name,b.size(),dim[1],dim[2],dim[3]); break;
-        default:
-          throw std::runtime_error("Error! Unsupported rank for elem node state '" + st->name + "'.\n");
-      }
-
       auto& state_h = state.host();
       for (size_t i=0; i<b.size(); ++i) {
         const auto& elem  = b[i];
@@ -321,6 +326,58 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
         }
       }
       state.sync_to_dev();
+    }
+  }
+}
+
+void GenericSTKFieldContainer::
+transferElemStateToNodeState (const std::string& name)
+{
+  const auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const auto NODE_RANK = stk::topology::NODE_RANK;
+
+  auto select_owned_part = stk::mesh::Selector(metaData->universal_part()) &
+                           stk::mesh::Selector(metaData->locally_owned_part());
+  const auto& elem_buckets = bulkData->get_buckets(ELEM_RANK,select_owned_part);
+  auto* node_field = metaData->get_field<double>(stk::topology::NODE_RANK,name);
+  TEUCHOS_TEST_FOR_EXCEPTION(node_field==nullptr, std::runtime_error,
+      "Error! Cannot retrieve nodal field '" + name + "\n");
+
+  int num_buckets = elem_buckets.size();
+  for (int ws=0; ws<num_buckets; ++ws) {
+    auto& e_state_h = elemStateArrays[ws][name].host();
+
+    const auto& bucket = *elem_buckets[ws];
+    int nelems = bucket.size();
+    int nelem_nodes = e_state_h.extent(1);
+    int rank = e_state_h.rank();
+    int dim2,dim3;
+    for (int ie=0; ie<nelems; ++ie) {
+      auto e = bucket[ie];
+      const auto& nodes = bulkData->begin_nodes(e);
+      for (int in=0; in<nelem_nodes; ++in) {
+        auto values = stk::mesh::field_data(*node_field,nodes[in]);
+        switch(rank) {
+          case 2:
+            values[0] = e_state_h(ie,in);
+            break;
+          case 3:
+            dim2 = e_state_h.extent_int(2);
+            for (int j=0; j<dim2; ++j) {
+              values[j] = e_state_h(ie,in,j);
+            }
+          case 4:
+            dim2 = e_state_h.extent_int(2);
+            dim3 = e_state_h.extent_int(3);
+            for (int j=0; j<dim2; ++j) {
+              for (int k=0; k<dim3; ++k) {
+                values[j*dim3+k] = e_state_h(ie,in,j,k);
+              }
+            }
+          default:
+            throw std::runtime_error("Unsupported rank for state '" + name + "'\n");
+        }
+      }
     }
   }
 }

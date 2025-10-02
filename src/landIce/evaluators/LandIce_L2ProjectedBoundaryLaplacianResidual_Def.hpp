@@ -164,6 +164,11 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
       }
     }
 
+    const auto  ss_disc = workset.disc->getSideSetDiscretizations().at(sideName);
+    const auto  ss_cell_indexer = ss_disc->getCellsGlobalLocalIndexer();
+    const auto& sides_indexer = workset.disc->getSidesGlobalLocalIndexer();
+    const auto& side_to_ss_cell_map = workset.disc->getSideToSideSetCellMap().at(sideName);
+    const auto& side_to_side_node_map = workset.disc->getSideNodeNumerationMap().at(sideName);
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
@@ -172,14 +177,17 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
       shards::CellTopology cell2dType(cellType->getCellTopologyData(sideDim,side));
       auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
       auto side_gid = sideSet.side_GID.h_view(sideSet_idx);
+      auto side_lid = sides_indexer->getLocalElement(side_gid);
 
       // The following line associates to each 3d-side GID the corresponding 2d-cell.
       // It's needed when the 3d mesh is not built online
-      side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
+      // side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
+      GO ss_cell_gid = side_to_ss_cell_map.at(side_gid);
+      int ss_cell_lid = ss_cell_indexer->getLocalElement(ss_cell_gid);
 
       //This map associates the nodes of a 2d cell to the nodes of the corresponding side of the 3d mesh
-      const auto& node_map = workset.disc->getSideNodeNumerationMap().at(sideName).at(side_gid);
-      auto side_workset = side_disc->getElemGIDws()[side_gid].ws;
+      const auto& node_map = side_to_side_node_map.at(side_gid);
+      auto side_workset = side_disc->get_elements_workset_idx()[ss_cell_lid].ws;
       auto side_side_set = side_disc->getSideSets(side_workset);
       if(side_side_set.find(bdEdgesName) != side_side_set.end()) {
         auto bdEdges_set = side_side_set[bdEdgesName];
@@ -208,6 +216,5 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
         }
       }
     }
-
   }
 }

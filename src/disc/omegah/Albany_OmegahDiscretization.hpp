@@ -61,16 +61,6 @@ public:
     return m_mesh_struct;
   }
 
-  //! Retrieve connectivity map from elementGID to workset
-  WsLIDList&
-  getElemGIDws() override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
-  }
-  const WsLIDList&
-  getElemGIDws() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
-  }
-
   //! Flag if solution has a restart values -- used in Init Cond
   bool
   hasRestartSolution() const override {
