@@ -24,7 +24,7 @@
 #include <string>
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace Albany {
 
@@ -46,6 +46,7 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
   m_neq = neq;
 
   sideSetDiscretizations["basalside"] = basal_disc;
+  sideSetDiscretizations["upperside"] = basal_disc;
 }
 
 void

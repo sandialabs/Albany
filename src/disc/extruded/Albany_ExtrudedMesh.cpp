@@ -125,6 +125,9 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
   lateral_ms[0]->numDim = lat_topo.dimension;
   lateral_ms[0]->ctd = lat_topo;
+
+  // For the upperside, we use the same disc as the basalside.
+  sideSetMeshStructs["upperside"] = m_basal_mesh;
 }
 
 void ExtrudedMesh::
