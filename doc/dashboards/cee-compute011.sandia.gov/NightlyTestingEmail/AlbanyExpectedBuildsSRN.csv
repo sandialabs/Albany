@@ -8,8 +8,8 @@ Nightly, cee-compute002, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-clang-11.0.1
 Nightly, cee-compute002, Trilinos-Linux-4.18.0-553.63.1.el8_10.x86_64-clang-11.0.1-Release-Serial
 Nightly, cee-compute004, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-Intel(R)-18.0.0-Release-Serial
 Nightly, cee-compute004, Trilinos-Linux-4.18.0-553.63.1.el8_10.x86_64-Intel(R)-18.0.0-Release-Serial
-Nightly, cee-compute005, Albany-Linux-4.18.0-553.58.1.el8_10.x86_64-clang-11.0.1-Debug-Serial
-Nightly, cee-compute005, Trilinos-Linux-4.18.0-553.58.1.el8_10.x86_64-clang-11.0.1-Debug-Serial
+Nightly, cee-compute005, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-clang-11.0.1-Debug-Serial
+Nightly, cee-compute005, Trilinos-Linux-4.18.0-553.63.1.el8_10.x86_64-clang-11.0.1-Debug-Serial
 Nightly, cee-compute030, Trilinos-Linux-4.18.0-553.63.1.el8_10.x86_64-gcc-10.3.0-Debug-Serial
 Nightly, cee-compute030, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-gcc-10.3.0-Debug-Serial
 Nightly, cee-compute031, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-gcc-10.3.0-Release-Serial
