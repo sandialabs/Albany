@@ -104,8 +104,17 @@ if (ALBANY_FROSCH)
     set_tests_properties(${testNameRoot}_Humboldt_lubricated
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
   endif()
+endif()
 
+if (ALBANY_MUELU AND ALBANY_TEKO)
+  # Copy input file from source to binary dir
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test_teko.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test_teko.yaml)
 
+  # Create the tests
+  set (testName ${testNameRoot}_Wet_Bed_Teko)
+  add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_teko.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 endif()
 
 if(${PYTHON_TEST})

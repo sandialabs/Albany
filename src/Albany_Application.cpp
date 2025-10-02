@@ -28,6 +28,11 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Zoltan2_TpetraCrsColorer.hpp"
 
+#ifdef ALBANY_TEKO
+#include "Teko_BlockedTpetraOperator.hpp"
+#include "Teko_InverseLibrary.hpp"
+#endif
+
 #include <stdexcept>
 #include <string>
 
@@ -322,13 +327,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 
   physicsBasedPreconditioner =
       problemParams->get("Use Physics-Based Preconditioner", false);
-  if (physicsBasedPreconditioner) {
-    precType = problemParams->get("Physics-Based Preconditioner", "Teko");
-#ifdef ALBANY_TEKO
-    if (precType == "Teko")
-      precParams = Teuchos::sublist(problemParams, "Teko", true);
-#endif
-  }
 
   //validate Hessian parameters
   if(problemParams->isSublist("Hessian")) {
@@ -811,6 +809,68 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
   }
 }
 
+void
+Application::initializePreconditioner()
+{
+  TEUCHOS_ASSERT(physicsBasedPreconditioner);
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: Initialize Preconditioner");
+#ifdef ALBANY_TEKO
+  // Note: this ensures we only use this for FO Thermo
+  const auto& problem_type = problemParams->get<std::string>("Name");
+  TEUCHOS_TEST_FOR_EXCEPTION(problem_type != "LandIce Stokes FO Thermo Coupled 3D", Teuchos::Exceptions::InvalidParameter,
+      "Albany::Application::initializePreconditioner(): physics-based preconditioner not available for " + problem_type);
+
+  // Initialize Teko preconditioner operator
+  const auto precParams = problem->getNullSpace()->getPL();
+  const auto invLibParams = Teuchos::sublist(precParams, "Inverse Factory Library", true);
+  const auto linearSolverBuilder = Teuchos::rcp(new Stratimikos::DefaultLinearSolverBuilder);
+  Stratimikos::enableMueLu<ST, LO, Tpetra_GO, KokkosNode>(*linearSolverBuilder);
+  const auto invLib = Teko::InverseLibrary::buildFromParameterList(*invLibParams, linearSolverBuilder);
+  const auto invFactory = invLib->getInverseFactory("myBlocks");
+  invFactoryOp = Teuchos::rcp(new Teko::TpetraHelpers::InverseFactoryOperator(invFactory));
+  invFactoryOp->initInverse();
+
+  // Read block decomposition
+  std::vector<int> decomp;
+  std::stringstream ss;
+  ss << precParams->get<std::string>("Strided Blocking");
+  while (not ss.eof()) {
+    int num = 0;
+    ss >> num;
+    TEUCHOS_ASSERT(num > 0);
+    decomp.push_back(num);
+  }
+  const int numBlocks = decomp.size();
+  const int numEqns = std::accumulate(decomp.begin(), decomp.end(), 0);
+
+  // Setup blockGIDs_
+  const auto numDofs = Albany::getLocalSubdim(disc->getVectorSpace());
+  TEUCHOS_ASSERT(numDofs % numEqns == 0);
+  const LO numDofsPerEqn = numDofs / numEqns;
+  blockGIDs_.resize(numBlocks);
+  for (int blk = 0; blk < numBlocks; ++blk) {
+    blockGIDs_[blk].resize(decomp[blk] * numDofsPerEqn);
+  }
+
+  // Fill blockGIDs_
+  const auto indexer = Albany::createGlobalLocalIndexer(disc->getVectorSpace());
+  int eqnStride = 0;
+  for (int blk = 0; blk < numBlocks; ++blk) {
+    int numEqnsPerBlock = decomp[blk];
+    for (LO blkLid = 0; blkLid < blockGIDs_[blk].size(); ++blkLid) {
+      const int eqn = (blkLid % numEqnsPerBlock) + eqnStride;
+      const LO lid = (blkLid / numEqnsPerBlock) * numEqns + eqn;
+      blockGIDs_[blk][blkLid] = indexer->getGlobalElement(lid);
+    }
+    eqnStride += numEqnsPerBlock;
+  }
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      "Albany::Application::initializePreconditioner(): Teko is needed for a physics-based preconditioner");
+  return Teuchos::null;
+#endif
+}
+
 RCP<AbstractDiscretization>
 Application::getDiscretization() const
 {
@@ -839,12 +899,6 @@ RCP<Thyra_LinearOp>
 Application::createJacobianOp() const
 {
   return disc->createJacobianOp();
-}
-
-RCP<Thyra_LinearOp>
-Application::getPreconditioner()
-{
-  return Teuchos::null;
 }
 
 RCP<ParamLib>
@@ -1736,6 +1790,31 @@ Application::computeGlobalJacobian(
       countRes++;  // increment residual counter
     }
   }
+}
+
+void
+Application::computeGlobalPreconditioner(
+  const Teuchos::RCP<const Thyra_LinearOp> &jac_lop,
+  Teuchos::RCP<Thyra_Preconditioner> &prec)
+{
+  TEUCHOS_ASSERT(physicsBasedPreconditioner);
+  TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Preconditioner");
+#ifdef ALBANY_TEKO
+  // Create new BlockedTpetraOperator from Jacobian and rebuild preconditioner
+  TEUCHOS_ASSERT(!blockGIDs_.empty());
+  TEUCHOS_ASSERT(Teuchos::nonnull(invFactoryOp));
+  const auto jac_top = getConstTpetraOperator(jac_lop);
+  const auto jac_blocked_btop = Teuchos::rcp(new Teko::TpetraHelpers::BlockedTpetraOperator(blockGIDs_, jac_top));
+  const auto jac_blocked_top = Teuchos::rcp_dynamic_cast<Tpetra_Operator>(jac_blocked_btop);
+  invFactoryOp->rebuildInverseOperator(jac_blocked_top);
+  const auto invFactoryOpT = Teuchos::rcp_dynamic_cast<Tpetra_Operator>(invFactoryOp);
+  const auto precOp = Thyra::createLinearOp(invFactoryOpT);
+  const auto defaultPrec = Teuchos::rcp_dynamic_cast<Thyra::DefaultPreconditioner<ST>>(prec);
+  defaultPrec->initializeRight(precOp);
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      "Albany::Application::computeGlobalPreconditioner(): Teko is needed for a physics-based preconditioner");
+#endif
 }
 
 void

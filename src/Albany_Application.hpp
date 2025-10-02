@@ -33,6 +33,10 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+#ifdef ALBANY_TEKO
+#include "Teko_TpetraInverseFactoryOperator.hpp"
+#endif
+
 #include <set>
 
 namespace Albany {
@@ -74,6 +78,9 @@ public:
   void
   setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const;
 
+  void
+  initializePreconditioner();
+
   //! Get underlying abstract discretization
   Teuchos::RCP<Albany::AbstractDiscretization>
   getDiscretization() const;
@@ -93,10 +100,6 @@ public:
   //! Create Jacobian operator
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const;
-
-  //! Get Preconditioner Operator
-  Teuchos::RCP<Thyra_LinearOp>
-  getPreconditioner();
 
   bool
   observeResponses() const
@@ -270,6 +273,10 @@ public:
   /*!
    * Set xdot to NULL for steady-state problems
    */
+  void computeGlobalPreconditioner(
+    const Teuchos::RCP<const Thyra_LinearOp> &jac,
+    Teuchos::RCP<Thyra_Preconditioner> &prec
+  );
 
   void
   computeGlobalTangent(
@@ -1195,9 +1202,11 @@ void
   Teuchos::Array<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
 
   //! Data for Physics-Based Preconditioners
-  bool                                 physicsBasedPreconditioner;
-  Teuchos::RCP<Teuchos::ParameterList> precParams;
-  std::string                          precType;
+  bool physicsBasedPreconditioner;
+#ifdef ALBANY_TEKO
+  std::vector<std::vector<GO>> blockGIDs_;
+  Teuchos::RCP<Teko::TpetraHelpers::InverseFactoryOperator> invFactoryOp;
+#endif
 
   //! Type of solution method
   SolutionMethodType solMethod;

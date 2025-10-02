@@ -11,6 +11,7 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_CommUtils.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
+#include "Albany_Utils.hpp"
 
 namespace Albany {
 
@@ -122,12 +123,26 @@ struct TpetraNullSpaceTraits {
   }
 };
 
+template <typename NullSpaceArray>
+struct WriteNullSpace
+{
+  static void writeNullSpaceMethod(const NullSpaceArray& nullSpaceArray) {};
+};
+
+template<>
+struct WriteNullSpace<Teuchos::RCP<const Tpetra_MultiVector>>
+{
+  static void writeNullSpaceMethod(const Teuchos::RCP<const Tpetra_MultiVector>& nullSpaceArray, const std::string name = "nullspace") {
+    writeMatrixMarket(nullSpaceArray, name);
+  };
+};
+
 } // namespace
 
 // The base structure is empty. The derived one, stores an array,
 // of the type specified by the Traits
 // This struct allows us to hide tpetra info from the header file.
-// When we decide what to use (MueLu/FROSch) we create a TraitsImpl
+// When we decide what to use (Teko/MueLu/FROSch) we create a TraitsImpl
 // templated on the 'actual' traits, and we grab the array.
 // This way the null space stores a persistent array (being stored inside
 // the class makes sure the array does not disappear like it would
@@ -147,7 +162,7 @@ RigidBodyModes::RigidBodyModes()
     computeConstantModes(false),
     physVectorDim(0), computeRotationModes(false),
     nullSpaceDim(0),
-    mueLuUsed(false), froschUsed(false), setNonElastRBM(false),
+    tekoUsed(false), mueLuUsed(false), froschUsed(false), setNonElastRBM(false),
     areProbParametersSet(false), arePiroParametersSet(false)
 {}
 
@@ -157,22 +172,33 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
   const Teuchos::RCP<Teuchos::ParameterList>
     stratList = Piro::extractStratimikosParams(piroParams);
 
-  mueLuUsed = froschUsed = false;
+  tekoUsed = mueLuUsed = froschUsed = false;
   if (Teuchos::nonnull(stratList) &&
       stratList->isParameter("Preconditioner Type")) {
     const std::string&
       ptype = stratList->get<std::string>("Preconditioner Type");
-    if (ptype == "MueLu") {
-      plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
+    if (ptype == "Teko") {
+      plist = sublist(sublist(stratList, "Preconditioner Types", true), ptype, true);
+      tekoUsed = true;
+    }
+    else if (ptype == "MueLu") {
+      plist = sublist(sublist(stratList, "Preconditioner Types", true), ptype, true);
       mueLuUsed = true;
     }
     else if (ptype == "FROSch") {
-      plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
+      plist = sublist(sublist(stratList, "Preconditioner Types", true), ptype, true);
       froschUsed = true;
     }
-  } 
+  }
 
-  nullSpaceTraits = Teuchos::rcp( new TraitsImpl<TpetraNullSpaceTraits>());
+  if (tekoUsed) {
+    // Two nullspace vectors. One for UV, one for W and T
+    nullSpaceTraits.push_back(Teuchos::rcp(new TraitsImpl<TpetraNullSpaceTraits>()));
+    nullSpaceTraits.push_back(Teuchos::rcp(new TraitsImpl<TpetraNullSpaceTraits>()));
+  }
+  else {
+    nullSpaceTraits.push_back(Teuchos::rcp(new TraitsImpl<TpetraNullSpaceTraits>()));
+  }
 
   arePiroParametersSet = true;
 }
@@ -218,13 +244,27 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
       "RigidBodyModes::setCoordinates was called before calling RigidBodyModes::setPiroPL.");
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-    !isMueLuUsed() && !isFROSchUsed(),
+    !tekoUsed && !mueLuUsed && !froschUsed,
     std::logic_error,
-    "setCoordinates was called without setting a MueLu or FROSch parameter list.");
+    "setCoordinates was called without setting a Teko, MueLu or FROSch parameter list.");
   
   coordMV = coordMV_;
 
-  if (isMueLuUsed()) {  // MueLu here
+  if (tekoUsed) {  // Teko here
+    auto t_coordMV = getTpetraMultiVector(coordMV);
+    auto invLibList = sublist(plist, "Inverse Factory Library", true);
+
+    auto mueluUVList = sublist(invLibList, "myMueLuUV", true);
+    mueluUVList->set("Coordinates", t_coordMV);
+
+    auto mueluTList = sublist(invLibList, "myMueLuT", true);
+    mueluTList->set("Coordinates", t_coordMV);
+
+    if (invLibList->isSublist("myMueLuW")) {
+      auto mueluWList = sublist(invLibList, "myMueLuW", true);
+      mueluWList->set("Coordinates", t_coordMV);
+    }
+  } else if (mueLuUsed) {  // MueLu here
     // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
     auto t_coordMV = getTpetraMultiVector(coordMV);
     if (plist->isSublist("Factories") == true) {
@@ -254,30 +294,57 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
 
     subtractCentroid(coordMV);
 
-    {  // MueLu and FROSch
+    {  // Teko, MueLu and FROSch
       TEUCHOS_TEST_FOR_EXCEPTION(soln_vs.is_null(), std::logic_error,
-          "nullSpaceDim > 0 and (isMueLuUsed() or isFROSchUsed()): solution vector space must be provided.");
+          "nullSpaceDim > 0 and (tekoUsed or mueLuUsed or froschUsed): solution vector space must be provided.");
 
       using NullSpaceTraits = TpetraNullSpaceTraits;
-      auto& tpetraTraitsArray =
-          Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits)->array;
-      tpetraTraitsArray =
-          Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), nullSpaceDim, false));
-      NullSpaceTraits nullSpace(tpetraTraitsArray);
+      if (tekoUsed) {
+        auto invLibList = sublist(plist, "Inverse Factory Library", true);
 
-      ComputeNullSpace(nullSpace, coordMV, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
+        auto& tpetraTraitsArrayUV =
+            Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits[0])->array;
+        tpetraTraitsArrayUV =
+            Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), nullSpaceDim-2, false));
+        NullSpaceTraits nullSpaceUV(tpetraTraitsArrayUV);
+        ComputeNullSpace(nullSpaceUV, coordMV, 2, computeConstantModes, physVectorDim, computeRotationModes);
+        auto mueluUVList = sublist(invLibList, "myMueLuUV", true);
+        mueluUVList->set("Nullspace", tpetraTraitsArrayUV);
 
-      if (isMueLuUsed()) {
-        plist->set("Nullspace", tpetraTraitsArray);
-      } else { // This means that FROSch is used
-        plist->set("Null Space", tpetraTraitsArray);
+        auto& tpetraTraitsArrayT =
+            Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits[1])->array;
+        tpetraTraitsArrayT =
+            Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), 1, false));
+        NullSpaceTraits nullSpaceT(tpetraTraitsArrayT);
+        ComputeNullSpace(nullSpaceT, coordMV, 1, computeConstantModes, 1, false);
+        auto mueluTList = sublist(invLibList, "myMueLuT", true);
+        mueluTList->set("Nullspace", tpetraTraitsArrayT);
+
+        if (invLibList->isSublist("myMueLuW")) {
+          auto mueluWList = sublist(invLibList, "myMueLuW", true);
+          mueluWList->set("Nullspace", tpetraTraitsArrayT);
+        }
+      }
+      else {
+        auto& tpetraTraitsArray =
+            Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits[0])->array;
+        tpetraTraitsArray =
+            Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), nullSpaceDim, false));
+        NullSpaceTraits nullSpace(tpetraTraitsArray);
+        ComputeNullSpace(nullSpace, coordMV, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
+        if (mueLuUsed) {
+          plist->set("Nullspace", tpetraTraitsArray);
+          // WriteNullSpace<Teuchos::RCP<const NullSpaceTraits::base_array_type>>::writeNullSpaceMethod(tpetraTraitsArray);
+        } else { // This means that FROSch is used
+          plist->set("Null Space", tpetraTraitsArray);
+        }
       }
     }
   }
-  if(isFROSchUsed()) {
+  if(froschUsed) {
     TEUCHOS_TEST_FOR_EXCEPTION(
       soln_overlap_vs.is_null(), std::logic_error,
-      "isFROSchUsed(): soln_overlap_map must be provided.");
+      "froschUsed: soln_overlap_map must be provided.");
     plist->set("Repeated Map",getTpetraMap(soln_overlap_vs));
   }
 }

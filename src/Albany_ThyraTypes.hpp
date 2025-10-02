@@ -26,7 +26,6 @@
 #include "Thyra_BlockedLinearOpBase.hpp"
 #include "Thyra_PhysicallyBlockedLinearOpBase.hpp"
 #include "Thyra_BlockedLinearOpWithSolveBase.hpp"
-//#include "Thyra_BlockedLinearOpWithSolveFactoryBase.hpp"
 
 // Spmd Thyra types
 #include "Thyra_SpmdVectorSpaceBase.hpp"
