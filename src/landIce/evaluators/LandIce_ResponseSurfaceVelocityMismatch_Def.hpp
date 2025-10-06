@@ -186,6 +186,7 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
   // ----------------- Surface side ---------------- //
   if (workset.sideSetViews->find(surfaceSideName) != workset.sideSetViews->end())
   {
+    printf("has upperside ss views\n");
     sideSet = workset.sideSetViews->at(surfaceSideName);
     Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                          KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
@@ -200,6 +201,9 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
           ScalarT diff2 = std::pow(velocity(sideSet_idx, qp, 0)  - observedVelocity (sideSet_idx, qp, 0),2) 
                               + std::pow(velocity(sideSet_idx, qp, 1)  - observedVelocity (sideSet_idx, qp, 1),2);
 
+          // std::cout << "[u,v](" << cell << "," << qp << "): [" << velocity(sideSet_idx,qp,0) << "," << velocity(sideSet_idx,qp,1) << "]\n";
+          // std::cout << "[ubar,vbar](" << cell << "," << qp << "): [" << observedVelocity(sideSet_idx,qp,0) << "," << observedVelocity(sideSet_idx,qp,1) << "]\n";
+          // std::cout << "diff2(" << cell << "," << qp << "): " << diff2 << "\n";
           // We have to add a small number to diff2, otherwise the derivative computations can generate NaNs.
           diff2 += eps;
 
@@ -220,6 +224,10 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
               + diff1 * diff1;
           data *= asinh_scaling * asinh_scaling;
           t += data * w_measure_surface(sideSet_idx,qp);
+          // std::cout << "[u,v](" << cell << "," << qp << "): [" << velocity(sideSet_idx,qp,0) << "," << velocity(sideSet_idx,qp,1) << "]\n";
+          // std::cout << "[ubar,vbar](" << cell << "," << qp << "): [" << observedVelocity(sideSet_idx,qp,0) << "," << observedVelocity(sideSet_idx,qp,1) << "]\n";
+          // std::cout << "diff0: " << diff0 << "\n";
+          // std::cout << "diff1: " << diff1 << "\n";
         }
 
       ScalarT result = t*scaling;
@@ -227,6 +235,8 @@ void LandIce::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typ
       KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);
       KU::atomic_add<ExecutionSpace>(&(this->p_resp(0)), result);
     });
+  } else {
+    printf("does NOT have upperside ss views\n");
   }
 
   // --------------- Regularization term on the basal side ----------------- //

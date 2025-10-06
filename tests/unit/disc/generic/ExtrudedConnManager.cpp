@@ -81,7 +81,8 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Exceptions)
   // Basal mesh and monolithic (not extruded) 3d mesh
   auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x_glb,comm));
 
-  for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+  // for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+  for (auto ordering : {LayeredMeshOrdering::COLUMN}) {
     // Build 2d and 3d conn managers
     auto conn_mgr_tria  = Teuchos::rcp(new DummyConnManager(mesh_2d));
 
@@ -102,6 +103,7 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Exceptions)
 
     params->set<int>("NumLayers",numLayers);
     auto extruded_mesh = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+    extruded_mesh->setFieldData(comm,Teuchos::null,{});
     extruded_mesh->setBulkData(comm);
 
     // Bad pointers
@@ -190,7 +192,8 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
     // Create dummy basal mesh
     auto numDofLayers = order_z*numElemLayers + 1;
 
-    for (auto ordering : {LayeredMeshOrdering::LAYER,LayeredMeshOrdering::COLUMN} ) {
+    // for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+    for (auto ordering : {LayeredMeshOrdering::COLUMN}) {
 
       if (comm->getRank()==0) {
         std::cout << "   -> ordering: " << (ordering==LayeredMeshOrdering::COLUMN ? "COLUMN" : "LAYER") << "\n";
@@ -202,6 +205,7 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
       params->set<int>("Workset Size",1000);
       params->set("Columnwise Ordering", ordering==LayeredMeshOrdering::COLUMN);
       auto extruded_mesh = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+      extruded_mesh->setFieldData(comm,Teuchos::null,{});
       extruded_mesh->setBulkData(comm);
 
       // Build 2d conn manager

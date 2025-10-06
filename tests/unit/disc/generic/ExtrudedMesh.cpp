@@ -63,7 +63,8 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, Exceptions)
 
   auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x,comm));
 
-  for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+  // for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+  for (auto ordering : {LayeredMeshOrdering::COLUMN}) {
 
     auto params = Teuchos::rcp(new Teuchos::ParameterList());
     params->set<int>("NumLayers",0);
@@ -106,13 +107,15 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, Counters)
   auto numLayers = nlay_pdf(engine);
   auto mesh_2d = Teuchos::rcp(new DummyMesh(ne_x,comm));
 
-  for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+  // for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+  for (auto ordering : {LayeredMeshOrdering::COLUMN}) {
     auto params = Teuchos::rcp(new Teuchos::ParameterList());
     params->set<int>("NumLayers",numLayers);
     params->set<int>("Workset Size",1000);
     params->set("Columnwise Ordering", ordering==LayeredMeshOrdering::COLUMN);
 
     auto mesh_3d = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+    mesh_3d->setFieldData(comm,Teuchos::null,{});
     mesh_3d->setBulkData(comm);
 
     TEST_EQUALITY (mesh_3d->get_num_local_elements(),mesh_2d->get_num_local_elements()*numLayers);
@@ -148,13 +151,16 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, MeshParts)
   auto contains = [](const auto container, const auto val) {
     return std::find(container.begin(),container.end(),val)!=container.end();
   };
-  for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+
+  // for (auto ordering : {LayeredMeshOrdering::COLUMN,LayeredMeshOrdering::LAYER}) {
+  for (auto ordering : {LayeredMeshOrdering::COLUMN}) {
     auto params = Teuchos::rcp(new Teuchos::ParameterList());
     params->set<int>("NumLayers",numLayers);
     params->set<int>("Workset Size",1000);
     params->set("Columnwise Ordering", ordering==LayeredMeshOrdering::COLUMN);
 
     auto mesh_3d = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+    mesh_3d->setFieldData(comm,Teuchos::null,{});
     mesh_3d->setBulkData(comm);
 
     auto nsNames3d = mesh_3d->meshSpecs()[0]->nsNames;

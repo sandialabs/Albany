@@ -285,6 +285,7 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
 
 void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
 {
+  printf("GenericSTKFieldContainer::transferNodeStatesToElemStates\n");
   const auto ELEM_RANK = stk::topology::ELEM_RANK;
   const auto NODE_RANK = stk::topology::NODE_RANK;
 
@@ -295,6 +296,7 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
   for (const auto& st : nodal_sis) {
     if (st->entity!=StateStruct::NodalDataToElemNode)
       continue;
+    printf("  transfer %s...\n",st->name.c_str());
     const auto& dim = st->dim;
     const auto rank = st->dim.size();
 

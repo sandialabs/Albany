@@ -125,6 +125,9 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
   lateral_ms[0]->numDim = lat_topo.dimension;
   lateral_ms[0]->ctd = lat_topo;
+
+  // For the upperside, we use the same disc as the basalside.
+  sideSetMeshStructs["upperside"] = m_basal_mesh;
 }
 
 void ExtrudedMesh::
@@ -185,11 +188,11 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
   PHX::DataLayout::size_type basal_wss = m_basal_mesh->meshSpecs[0]->worksetSize;
   PHX::DataLayout::size_type basal_nc  = m_basal_mesh->meshSpecs[0]->ctd.node_count;
-  if (basal_sis->find(surface_height_name).is_null()) {
+  if (not basal_sis->has_state(surface_height_name)) {
     auto st = basal_sis->emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN)));
     st->dim = {basal_wss,basal_nc};
   }
-  if (basal_sis->find(thickness_name).is_null()) {
+  if (not basal_sis->has_state(thickness_name)) {
     auto st = basal_sis->emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN)));
     st->dim = {basal_wss,basal_nc};
   }
