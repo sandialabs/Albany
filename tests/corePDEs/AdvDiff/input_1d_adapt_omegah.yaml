@@ -34,7 +34,6 @@ ANONYMOUS:
     Number of Elements: [10]
     Method: Omegah
     Mesh Creation Method: Box1D
-    Exodus Output File Name: adv_diff1D_adapt_omega_h.exo
     Mesh Adaptivity:
       Type: Minimally-Oscillatory
       Max Hessian: 10.0
