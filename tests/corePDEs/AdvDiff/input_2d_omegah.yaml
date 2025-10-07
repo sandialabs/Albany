@@ -1,52 +1,43 @@
 %YAML 1.1
 ---
 ANONYMOUS:
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+    Report Timers: false
   Problem:
-    Phalanx Graph Visualization Detail: 1
     Name: AdvDiff 2D
     Solution Method: Transient
     Number of PDE Equations: 1
-    Dirichlet BCs: {}
+    Dirichlet BCs:
+      DBC on NS NodeSet0 for DOF U0: 0.0
+      DBC on NS NodeSet2 for DOF U0: 0.0
     Initial Condition:
       Function: Circle
     Options:
-      Use Augmented Form: true
-      Augmented Form Type: 2
       Advection Coefficient: [1.0,1.0]
-      Viscosity mu: 0.1
+      Viscosity mu: 0.01
     Parameters:
       Number Of Parameters: 0
     Response Functions:
       Number Of Responses: 3
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Min Value
       Response 2:
         Type: Scalar Response
         Name: Solution Average
-      Response 1:
-        Equation: 1
-        Type: Scalar Response
-        Name: Solution Max Value
-      Response 0:
-        Equation: 0
-        Type: Scalar Response
-        Name: Solution Max Value
-  Debug Output:
-    Write Solution to MatrixMarket: -1
   Discretization:
-    1D Elements: 20
-    1D Scale: 1.0
-    2D Elements: 20
-    2D Scale: 1.0
-    Periodic_x BC: true
-    Periodic_y BC: true
-    Method: STK2D
-    Exodus Output File Name: advdiff2D_out.exo
+    Method: Omegah
+    Mesh Creation Method: Box2D
+    Number of Elements: [10,10]
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
       Tempus Integrator:
         Integrator Type: Integrator Basic
-        Screen Output Index List: '1'
-        Screen Output Index Interval: 100
         Stepper Name: Tempus Stepper
         Solution History:
           Storage Type: Unlimited
@@ -54,15 +45,10 @@ ANONYMOUS:
         Time Step Control:
           Initial Time: 0.0
           Initial Time Index: 0
-          Initial Time Step: 0.025
-          Final Time: 0.5
-          Final Time Index: 10000
+          Initial Time Step: 0.05
+          Final Time: 1.0
           Maximum Absolute Error: 1.0e-08
           Maximum Relative Error: 1.0e-08
-          Output Time List: ''
-          Output Index List: ''
-          #Output Time Interval: 1.00000000000000000e+01
-          Output Index Interval: 1000
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
@@ -118,7 +104,7 @@ ANONYMOUS:
                 Output Frequency: 10
                 Output Style: 1
                 Verbosity: 0
-                Maximum Iterations: 100
+                Maximum Iterations: 10
                 Block Size: 1
                 Num Blocks: 100
                 Flexible Gmres: false
@@ -130,12 +116,12 @@ ANONYMOUS:
             Ifpack2 Settings:
               'fact: ilut level-of-fill': 1.0e+00
   Regression For Response 0:
-    Test Value: 1.660314055733e-01
+    Test Value: 6.825290995201e-02
     Relative Tolerance: 1.0e-04
   Regression For Response 1:
-    Test Value: 4.670993457761e-01
+    Test Value: -8.259050370473e-04
     Relative Tolerance: 1.0e-04
   Regression For Response 2:
-    Test Value: 6.984498336586e-02
+    Test Value: 2.170508705497e-03
     Relative Tolerance: 1.0e-04
 ...
