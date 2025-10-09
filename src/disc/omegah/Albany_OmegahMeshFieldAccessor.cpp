@@ -68,7 +68,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
         break;
       case StateStruct::ElemState:
         dim_ncomp.first  = m_mesh->dim();
-        dim_ncomp.second = product(st.dim,0);
+        dim_ncomp.second = product(st.dim,1);
         break;
       default:
         throw std::runtime_error(
