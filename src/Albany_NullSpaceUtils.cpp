@@ -17,6 +17,20 @@ namespace Albany {
 
 namespace {
 
+int ComputeNullSpaceDim(
+  const int numPDEs_, const bool computeConstantModes_,
+  const int physVectorDim_, const bool computeRotationModes_)
+{
+  //the number of constant modes equals numPDEs
+  int nullSpaceDim_ = computeConstantModes_ ? numPDEs_ : 0;
+
+  //for 2d vector we add x-y rotations,
+  //for 3d vector we add x-y, x-z, y-z rotations
+  if(computeRotationModes_)
+    nullSpaceDim_ += (physVectorDim_==2) + 3*(physVectorDim_==3);
+  return nullSpaceDim_;
+}
+
 // The null space is assumed to be formed by constants (translations) for each equations.
 // In addition we can add rotation modes for physical vectors.
 // We assume there is at most a vector of dimension vectorDim (either equal to 2 or 3),
@@ -123,20 +137,6 @@ struct TpetraNullSpaceTraits {
   }
 };
 
-template <typename NullSpaceArray>
-struct WriteNullSpace
-{
-  static void writeNullSpaceMethod(const NullSpaceArray& nullSpaceArray) {};
-};
-
-template<>
-struct WriteNullSpace<Teuchos::RCP<const Tpetra_MultiVector>>
-{
-  static void writeNullSpaceMethod(const Teuchos::RCP<const Tpetra_MultiVector>& nullSpaceArray, const std::string name = "nullspace") {
-    writeMatrixMarket(nullSpaceArray, name);
-  };
-};
-
 } // namespace
 
 // The base structure is empty. The derived one, stores an array,
@@ -192,21 +192,37 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
   }
 
   if (tekoUsed) {
-    // Two nullspace vectors. One for UV, one for W and T
-    nullSpaceTraits.push_back(Teuchos::rcp(new TraitsImpl<TpetraNullSpaceTraits>()));
-    nullSpaceTraits.push_back(Teuchos::rcp(new TraitsImpl<TpetraNullSpaceTraits>()));
+    // Read block decomposition
+    std::stringstream ss;
+    ss << plist->get<std::string>("Strided Blocking");
+    while (not ss.eof()) {
+      int num = 0;
+      ss >> num;
+      TEUCHOS_ASSERT(num > 0);
+      tekoBlockDecomp.push_back(num);
+    }
+    const int numBlocks = tekoBlockDecomp.size();
+
+    // Read block preconditioner parameter lists
+    const auto& invType = plist->get<std::string>("Inverse Type");
+    auto invLibList = sublist(plist, "Inverse Factory Library", true);
+    auto invList = sublist(invLibList, invType, true);
+    for (int blk = 0; blk < numBlocks; ++blk) {
+      auto blkInvTypeKey = std::string("Inverse Type ") + std::to_string(blk+1);
+      const auto& blkInvType = invList->get<std::string>(blkInvTypeKey);
+      tekoBlockPlists.push_back(sublist(invLibList, blkInvType, true));
+    }
+
+    // Create nullspace vectors
+    for (int blk = 0; blk < numBlocks; ++blk) {
+      nullSpaceTraits.push_back(Teuchos::rcp(new TraitsImpl<TpetraNullSpaceTraits>()));
+    }
   }
   else {
     nullSpaceTraits.push_back(Teuchos::rcp(new TraitsImpl<TpetraNullSpaceTraits>()));
   }
 
   arePiroParametersSet = true;
-}
-
-void RigidBodyModes::
-updatePL(const Teuchos::RCP<Teuchos::ParameterList>& precParams)
-{
-  plist = precParams;
 }
 
 void RigidBodyModes::setParameters(
@@ -217,14 +233,7 @@ void RigidBodyModes::setParameters(
   computeConstantModes = computeConstantModes_;
   physVectorDim = physVectorDim_;
   computeRotationModes = computeRotationModes_;
-
-  //the number of constant modes equals numPDEs
-  nullSpaceDim = computeConstantModes_ ? numPDEs_ : 0;
-
-  //for 2d vector we add x-y rotations,
-  //for 3d vector we add x-y, x-z, y-z rotations
-  if(computeRotationModes_)
-    nullSpaceDim += (physVectorDim_==2) + 3*(physVectorDim_==3);
+  nullSpaceDim = ComputeNullSpaceDim(numPDEs_, computeConstantModes_, physVectorDim_, computeRotationModes_);
 
   areProbParametersSet = true;
 }
@@ -251,18 +260,21 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
   coordMV = coordMV_;
 
   if (tekoUsed) {  // Teko here
+    // Add coords if muelu/frosch block
     auto t_coordMV = getTpetraMultiVector(coordMV);
-    auto invLibList = sublist(plist, "Inverse Factory Library", true);
+    const int numBlocks = tekoBlockDecomp.size();
+    for (int blk = 0; blk < numBlocks; ++blk) {
+      auto blkPlist = tekoBlockPlists[blk];
+      const auto& blkPrecType = blkPlist->get<std::string>("Type");
+      if (blkPrecType != "MueLu" and blkPrecType != "FROSch")
+        continue;
 
-    auto mueluUVList = sublist(invLibList, "myMueLuUV", true);
-    mueluUVList->set("Coordinates", t_coordMV);
-
-    auto mueluTList = sublist(invLibList, "myMueLuT", true);
-    mueluTList->set("Coordinates", t_coordMV);
-
-    if (invLibList->isSublist("myMueLuW")) {
-      auto mueluWList = sublist(invLibList, "myMueLuW", true);
-      mueluWList->set("Coordinates", t_coordMV);
+      if (blkPrecType == "MueLu") {
+        blkPlist->set("Coordinates", t_coordMV);
+      }
+      else if (blkPrecType == "FROSch") {
+        blkPlist->set("Coordinates List", t_coordMV);
+      }
     }
   } else if (mueLuUsed) {  // MueLu here
     // It apperas MueLu only accepts Tpetra. Get the Tpetra MV then.
@@ -288,63 +300,72 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
                            const Teuchos::RCP<const Thyra_VectorSpace>& soln_vs,
                            const Teuchos::RCP<const Thyra_VectorSpace>& soln_overlap_vs)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      soln_vs.is_null(), std::logic_error,
+      "solution vector space must be provided.");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      soln_overlap_vs.is_null(), std::logic_error,
+      "soln_overlap_map must be provided.");
+
   setCoordinates(coordMV_in);
 
+  // Compute/set nullspace
   if (nullSpaceDim > 0) {
-
     subtractCentroid(coordMV);
+    if (tekoUsed) {
+      const int numBlocks = tekoBlockDecomp.size();
+      const int numEqns = numPDEs;
+      const auto numDofs = Albany::getLocalSubdim(soln_vs);
+      TEUCHOS_ASSERT(numDofs % numEqns == 0);
+      const LO numDofsPerEqn = numDofs / numEqns;
+      for (int blk = 0; blk < numBlocks; ++blk) {
+        // Add nullspace if muelu/frosch block
+        auto blkPlist = tekoBlockPlists[blk];
+        const auto& blkPrecType = blkPlist->get<std::string>("Type");
+        if (blkPrecType != "MueLu" and blkPrecType != "FROSch")
+          continue;
 
-    {  // Teko, MueLu and FROSch
-      TEUCHOS_TEST_FOR_EXCEPTION(soln_vs.is_null(), std::logic_error,
-          "nullSpaceDim > 0 and (tekoUsed or mueLuUsed or froschUsed): solution vector space must be provided.");
+        // Create tpetra map
+        const int blkNumEqns = tekoBlockDecomp[blk];
+        const int blkNumGIDs = blkNumEqns * numDofsPerEqn;
+        auto tpetraMap = Teuchos::rcp(new Tpetra_Map(Teuchos::OrdinalTraits<GO>::invalid(), blkNumGIDs, 0, Albany::getComm(soln_vs)));
 
-      using NullSpaceTraits = TpetraNullSpaceTraits;
-      if (tekoUsed) {
-        auto invLibList = sublist(plist, "Inverse Factory Library", true);
-
-        auto& tpetraTraitsArrayUV =
-            Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits[0])->array;
-        tpetraTraitsArrayUV =
-            Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), nullSpaceDim-2, false));
-        NullSpaceTraits nullSpaceUV(tpetraTraitsArrayUV);
-        ComputeNullSpace(nullSpaceUV, coordMV, 2, computeConstantModes, physVectorDim, computeRotationModes);
-        auto mueluUVList = sublist(invLibList, "myMueLuUV", true);
-        mueluUVList->set("Nullspace", tpetraTraitsArrayUV);
-
-        auto& tpetraTraitsArrayT =
-            Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits[1])->array;
-        tpetraTraitsArrayT =
-            Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), 1, false));
-        NullSpaceTraits nullSpaceT(tpetraTraitsArrayT);
-        ComputeNullSpace(nullSpaceT, coordMV, 1, computeConstantModes, 1, false);
-        auto mueluTList = sublist(invLibList, "myMueLuT", true);
-        mueluTList->set("Nullspace", tpetraTraitsArrayT);
-
-        if (invLibList->isSublist("myMueLuW")) {
-          auto mueluWList = sublist(invLibList, "myMueLuW", true);
-          mueluWList->set("Nullspace", tpetraTraitsArrayT);
-        }
-      }
-      else {
+        // Allocate/compute nullspace
+        const int blkPhysVectorDim = blkNumEqns < physVectorDim ? blkNumEqns : physVectorDim;
+        const int blkNullSpaceDim = ComputeNullSpaceDim(blkNumEqns, computeConstantModes, blkPhysVectorDim, computeRotationModes);
         auto& tpetraTraitsArray =
-            Teuchos::rcp_dynamic_cast<TraitsImpl<NullSpaceTraits>>(nullSpaceTraits[0])->array;
+            Teuchos::rcp_dynamic_cast<TraitsImpl<TpetraNullSpaceTraits>>(nullSpaceTraits[blk])->array;
         tpetraTraitsArray =
-            Teuchos::rcp(new NullSpaceTraits::base_array_type(getTpetraMap(soln_vs), nullSpaceDim, false));
-        NullSpaceTraits nullSpace(tpetraTraitsArray);
-        ComputeNullSpace(nullSpace, coordMV, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
-        if (mueLuUsed) {
-          plist->set("Nullspace", tpetraTraitsArray);
-          // WriteNullSpace<Teuchos::RCP<const NullSpaceTraits::base_array_type>>::writeNullSpaceMethod(tpetraTraitsArray);
-        } else { // This means that FROSch is used
-          plist->set("Null Space", tpetraTraitsArray);
+            Teuchos::rcp(new TpetraNullSpaceTraits::base_array_type(tpetraMap, blkNullSpaceDim, false));
+        TpetraNullSpaceTraits nullSpace(tpetraTraitsArray);
+        ComputeNullSpace(nullSpace, coordMV, blkNumEqns, computeConstantModes, blkPhysVectorDim, computeRotationModes);
+        if (blkPrecType == "MueLu") {
+          blkPlist->set("Nullspace", tpetraTraitsArray);
+        }
+        else if (blkPrecType == "FROSch") {
+          blkPlist->set("Null Space", tpetraTraitsArray);
         }
       }
     }
+    else {
+      auto& tpetraTraitsArray =
+          Teuchos::rcp_dynamic_cast<TraitsImpl<TpetraNullSpaceTraits>>(nullSpaceTraits[0])->array;
+      tpetraTraitsArray =
+          Teuchos::rcp(new TpetraNullSpaceTraits::base_array_type(getTpetraMap(soln_vs), nullSpaceDim, false));
+      TpetraNullSpaceTraits nullSpace(tpetraTraitsArray);
+      ComputeNullSpace(nullSpace, coordMV, numPDEs, computeConstantModes, physVectorDim, computeRotationModes);
+      if (mueLuUsed) {
+        plist->set("Nullspace", tpetraTraitsArray);
+      }
+      else if (froschUsed) {
+        plist->set("Null Space", tpetraTraitsArray);
+      }
+    }
   }
-  if(froschUsed) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_overlap_vs.is_null(), std::logic_error,
-      "froschUsed: soln_overlap_map must be provided.");
+
+  // Add repeated map
+  // TODO: Teko - Passing a "Repeated Map" of a block throws a segfault. This doesn't seem to be needed though. Consider removing all together.
+  if (froschUsed) {
     plist->set("Repeated Map",getTpetraMap(soln_overlap_vs));
   }
 }

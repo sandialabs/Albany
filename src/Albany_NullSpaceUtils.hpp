@@ -8,6 +8,7 @@
 #define ALBANY_NULL_SPACE_UTILS_HPP
 
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
 #include "Albany_MeshSpecs.hpp"
 
 namespace Albany {
@@ -26,9 +27,6 @@ public:
 
   //! Set Piro solver parameter list.
   void setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams);
-
-  //! Update the parameter list.
-  void updatePL(const Teuchos::RCP<Teuchos::ParameterList>& precParams);
 
   //! Is Teko used on this problem?
   bool isTekoUsed() const { return tekoUsed; }
@@ -56,6 +54,9 @@ public:
   //! Get the preconditioner parameter list
   Teuchos::RCP<Teuchos::ParameterList> getPL() const { return plist; }
 
+  //! Get Teko block decomposition
+  const std::vector<int> & getTekoBlockDecomp() const { TEUCHOS_ASSERT(!tekoBlockDecomp.empty()); return tekoBlockDecomp; }
+
 private:
   int numPDEs;
   bool computeConstantModes; //translations
@@ -66,6 +67,9 @@ private:
   bool areProbParametersSet, arePiroParametersSet;
 
   Teuchos::RCP<Teuchos::ParameterList> plist;
+
+  std::vector<int> tekoBlockDecomp;
+  std::vector<Teuchos::RCP<Teuchos::ParameterList>> tekoBlockPlists;
 
   Teuchos::RCP<Thyra_MultiVector> coordMV;
 

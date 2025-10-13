@@ -810,6 +810,12 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
 }
 
 void
+Application::setLinearSolverBuilder(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder>& linearSolverBuilder)
+{
+  this->linearSolverBuilder = linearSolverBuilder;
+}
+
+void
 Application::initializePreconditioner()
 {
   TEUCHOS_ASSERT(physicsBasedPreconditioner);
@@ -823,23 +829,14 @@ Application::initializePreconditioner()
   // Initialize Teko preconditioner operator
   const auto precParams = problem->getNullSpace()->getPL();
   const auto invLibParams = Teuchos::sublist(precParams, "Inverse Factory Library", true);
-  const auto linearSolverBuilder = Teuchos::rcp(new Stratimikos::DefaultLinearSolverBuilder);
-  Stratimikos::enableMueLu<ST, LO, Tpetra_GO, KokkosNode>(*linearSolverBuilder);
+  TEUCHOS_ASSERT(Teuchos::nonnull(linearSolverBuilder));
   const auto invLib = Teko::InverseLibrary::buildFromParameterList(*invLibParams, linearSolverBuilder);
   const auto invFactory = invLib->getInverseFactory("myBlocks");
   invFactoryOp = Teuchos::rcp(new Teko::TpetraHelpers::InverseFactoryOperator(invFactory));
   invFactoryOp->initInverse();
 
   // Read block decomposition
-  std::vector<int> decomp;
-  std::stringstream ss;
-  ss << precParams->get<std::string>("Strided Blocking");
-  while (not ss.eof()) {
-    int num = 0;
-    ss >> num;
-    TEUCHOS_ASSERT(num > 0);
-    decomp.push_back(num);
-  }
+  const auto& decomp = problem->getNullSpace()->getTekoBlockDecomp();
   const int numBlocks = decomp.size();
   const int numEqns = std::accumulate(decomp.begin(), decomp.end(), 0);
 
