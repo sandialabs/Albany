@@ -177,7 +177,6 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
       shards::CellTopology cell2dType(cellType->getCellTopologyData(sideDim,side));
       auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
       auto side_gid = sideSet.side_GID.h_view(sideSet_idx);
-      auto side_lid = sides_indexer->getLocalElement(side_gid);
 
       // The following line associates to each 3d-side GID the corresponding 2d-cell.
       // It's needed when the 3d mesh is not built online
