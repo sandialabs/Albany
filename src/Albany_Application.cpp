@@ -857,7 +857,7 @@ Application::initializePreconditioner()
   int eqnStride = 0;
   for (int blk = 0; blk < numBlocks; ++blk) {
     int numEqnsPerBlock = decomp[blk];
-    for (LO blkLid = 0; blkLid < blockGIDs_[blk].size(); ++blkLid) {
+    for (size_t blkLid = 0; blkLid < blockGIDs_[blk].size(); ++blkLid) {
       const int eqn = (blkLid % numEqnsPerBlock) + eqnStride;
       const LO lid = (blkLid / numEqnsPerBlock) * numEqns + eqn;
       blockGIDs_[blk][blkLid] = indexer->getGlobalElement(lid);
