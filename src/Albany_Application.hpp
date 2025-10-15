@@ -26,6 +26,8 @@
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Sacado_ScalarParameterVector.hpp"
 
+#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
@@ -77,6 +79,9 @@ public:
   template<typename Traits>
   void
   setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const;
+
+  void
+  setLinearSolverBuilder(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder>& linearSolverBuilder);
 
   void
   initializePreconditioner();
@@ -1204,8 +1209,9 @@ void
   //! Data for Physics-Based Preconditioners
   bool physicsBasedPreconditioner;
 #ifdef ALBANY_TEKO
-  std::vector<std::vector<GO>> blockGIDs_;
+  Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> linearSolverBuilder;
   Teuchos::RCP<Teko::TpetraHelpers::InverseFactoryOperator> invFactoryOp;
+  std::vector<std::vector<GO>> blockGIDs_;
 #endif
 
   //! Type of solution method

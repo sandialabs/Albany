@@ -106,7 +106,7 @@ if (ALBANY_FROSCH)
   endif()
 endif()
 
-if (ALBANY_MUELU AND ALBANY_TEKO)
+if (ALBANY_TEKO AND ALBANY_MUELU AND ALBANY_FROSCH)
   # Copy input file from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test_teko.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test_teko.yaml)
