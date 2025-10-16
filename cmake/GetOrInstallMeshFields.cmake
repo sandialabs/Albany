@@ -81,7 +81,7 @@ else ()
   FetchContent_Declare (
     MeshFields
     GIT_REPOSITORY git@github.com:SCOREC/meshFields
-    GIT_TAG        origin/cws/supportFetchContent
+    GIT_TAG        origin/main
     OVERRIDE_FIND_PACKAGE
   )
 
