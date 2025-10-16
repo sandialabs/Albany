@@ -222,7 +222,7 @@ if (ALBANY_OMEGAH)
   target_link_libraries(landIce PUBLIC Omega_h::omega_h)
 endif()
 if (ALBANY_MESHFIELDS)
-  target_link_libraries(landIce PUBLIC MeshFields::meshfields)
+  target_link_libraries(landIce PUBLIC meshfields::meshfields)
 endif()
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(landIce SYSTEM PUBLIC
