@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
     if (this->nodalState) {
       auto disc = workset.disc;
       auto last_ws = disc->getNumWorksets()-1;
-      if (workset.wsIndex==last_ws) {
+      if (static_cast<LO>(workset.wsIndex)==last_ws) {
         auto mfa = disc->getMeshStruct()->get_field_accessor();
         mfa->transferElemStateToNodeState(stateName);
       }

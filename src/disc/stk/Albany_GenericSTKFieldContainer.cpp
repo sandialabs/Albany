@@ -334,7 +334,6 @@ void GenericSTKFieldContainer::
 transferElemStateToNodeState (const std::string& name)
 {
   const auto ELEM_RANK = stk::topology::ELEM_RANK;
-  const auto NODE_RANK = stk::topology::NODE_RANK;
 
   auto select_owned_part = stk::mesh::Selector(metaData->universal_part()) &
                            stk::mesh::Selector(metaData->locally_owned_part());
