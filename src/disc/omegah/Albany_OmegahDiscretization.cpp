@@ -8,6 +8,11 @@
 #include "Omega_h_array_ops.hpp"
 #include <Omega_h_file.hpp>   // for Omega_h::binary::write
 
+#ifdef ALBANY_MESHFIELDS
+#include <KokkosController.hpp>
+#include <MeshField.hpp>
+#endif
+
 #include <Panzer_IntrepidFieldPattern.hpp>
 
 namespace debug {
@@ -434,6 +439,10 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       break;
     }
   }
+
+#ifdef ALBANY_MESHFIELDS
+  MeshField::OmegahMeshField<Kokkos::DefaultExecutionSpace, 2, MeshField::KokkosController> omf(*mesh);
+#endif
 
   return adapt_data;
 
