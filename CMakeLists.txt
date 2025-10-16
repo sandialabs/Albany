@@ -715,6 +715,18 @@ else()
   MESSAGE("-- Omega_h lib interface NOT Enabled.")
 ENDIF()
 
+# MeshFields
+OPTION(ENABLE_MESHFIELDS "Flag to turn on the MeshFields field interface for
+computing error indicators (via super convergent patch recovery) to
+drive mesh adaptation" OFF)
+IF (ENABLE_MESHFIELDS)
+  MESSAGE("-- MeshFields field interface    Enabled.")
+  SET(ALBANY_MESHFIELDS TRUE)
+  include (GetOrInstallMeshFields)
+else()
+  MESSAGE("-- MeshFields interface NOT Enabled.")
+ENDIF()
+
 # add a target to generate API documentation with Doxygen
 option (DISABLE_DOXYGEN "Whether to disable doxygen" ON)
 IF( NOT DISABLE_DOXYGEN )
