@@ -152,6 +152,12 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
   }
 }
 
+void ExtrudedMeshFieldAccessor::
+transferNodeStatesToElemStates ()
+{
+  m_basal_field_accessor->transferNodeStatesToElemStates();
+}
+
 // Read from mesh methods
 void ExtrudedMeshFieldAccessor::
 fillSolnVector (Thyra_Vector&        soln,
