@@ -160,10 +160,13 @@ class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
 public:
   StateInfoStruct () = default;
 
-  Teuchos::RCP<StateStruct> find (const std::string& name) {
+  Teuchos::RCP<StateStruct> find (const std::string& name, bool throw_if_not_found = true) const {
     for (const auto& entry : *this) {
       if (entry->name==name) return entry;
     }
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_found,std::runtime_error,
+        "Error! Could not locate state '" + name + "' in this StateInfoStruct.\n");
+
     return Teuchos::null;
   }
 };
