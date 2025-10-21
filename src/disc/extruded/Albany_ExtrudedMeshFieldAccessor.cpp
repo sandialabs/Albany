@@ -253,7 +253,7 @@ void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::st
   *out << "[ExtrudedMeshFieldAccessor] Extruding basal fields...\n";
   for (const auto& name : basal_fields) {
     *out << " - Extruding field '" + name + "'...";
-    bool nodal = nodal_sis.has_state(name);
+    bool nodal = Teuchos::nonnull(nodal_sis.find(name,false));
     for (int ws=0; ws<num_ws; ++ws) {
       const auto& bstate = basal_states[ws].at(name);
       auto& state = elemStateArrays[ws][name];
@@ -315,7 +315,7 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
   *out << "[ExtrudedMeshFieldAccessor] Interpolating basal fields...\n";
   for (const auto& name : basal_fields) {
     *out << " - Interpolating field '" + name + "'...";
-    bool nodal = nodal_sis.has_state(name);
+    bool nodal = Teuchos::nonnull(nodal_sis.find(name,false));
     const auto& field_layers_coords = m_basal_field_accessor->getMeshVectorStates().at(name+"_NLC");
     const int num_field_layers = field_layers_coords.size();
 

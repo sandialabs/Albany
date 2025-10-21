@@ -25,8 +25,11 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
   TEUCHOS_TEST_FOR_EXCEPTION (m_params.is_null(), std::runtime_error,
       "[ExtrudedMesh] Error! Invalid parameter list pointer.\n");
 
-  // Create elem layers data
-  auto num_layers = m_params->get<int>("NumLayers");
+  // Create layered mesh numbering objects
+  const auto num_layers = m_params->get<int>("NumLayers");
+  const auto ordering = m_params->get("Columnwise Ordering", false)
+                      ? LayeredMeshOrdering::COLUMN
+                      : LayeredMeshOrdering::LAYER;
   TEUCHOS_TEST_FOR_EXCEPTION (num_layers<=0, Teuchos::Exceptions::InvalidParameterValue,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
@@ -106,31 +109,84 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
               std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
-  // Ensure surface_height and thickness are valid states in the basal mesh
-  std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");
-  std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
-  auto& basal_sis = side_set_sis["basal_side"];
+  // Make sure we can dereference sis
+  if (sis.is_null()) {
+    auto nonnull_sis = Teuchos::rcp(new StateInfoStruct());
+    this->setFieldData(comm,nonnull_sis,side_set_sis);
+  }
+
+  // Make sure we can dereference the basal sis
+  auto basal_sis = side_set_sis["basalside"];
   if (basal_sis.is_null()) {
     basal_sis = Teuchos::rcp(new StateInfoStruct());
   }
+
   auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
 
-  StateStruct::FieldDims dims = {
-    static_cast<PHX::DataLayout::size_type>(m_basal_mesh->meshSpecs[0]->worksetSize),
-    m_basal_mesh->meshSpecs[0]->ctd.node_count
-  };
+  // If we extrude or interpolate a basal state, we will have a name clash.
+  // In fact, the ExtrudedMeshFieldAccessor will use the basal mesh field accessor
+  // to store the 3d states. This, in turn, is a pb when putting those fields on the
+  // mesh, as the underlying mesh database won't like 2 declarations of the same field
+  // with different layouts. Hence, we need to disambiguate the states.
+  // We use this rules:
+  //  - extruded fields: the 2d field keeps the original name, and the 3d one will NOT
+  //    be added to the mesh. That is, the 3d state array will be managed by the field accessor.
+  //  - interpolated fields: the basal layered field (whose number of layers may not match the
+  //    mesh number of layers) will be renamed ${name}_layers_data. We will also register a 3d
+  //    state with name ${name}, and layout compatible with the mesh actual number of layers
+  const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
+  const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
 
-  if (basal_sis->find(surface_height_name).is_null()) {
-    basal_sis->emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN,dims,"")));
+  const int num_elem_layers = m_elem_layers_data_lid->numLayers;
+  const int num_node_layers = m_node_layers_data_lid->numLayers;
+  const bool layer_ord = m_elem_layers_data_lid->layerOrd;
+
+  for (const auto& n : extrude_names) {
+    TEUCHOS_TEST_FOR_EXCEPTION (basal_sis->find(n,false).is_null(), std::runtime_error,
+        "Error! Cannot extrude basal state '" + n + "'. State not found in basal SIS.\n");
+
+    auto st = sis->find(n);
+    st->extruded = true;
   }
-  if (basal_sis->find(thickness_name).is_null()) {
-    basal_sis->emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN,dims,"")));
+
+  for (const auto& n : interpolate_names) {
+    TEUCHOS_TEST_FOR_EXCEPTION (basal_sis->find(n,false).is_null(), std::runtime_error,
+        "Error! Cannot interpolate basal state '" + n + "'. State not found in basal SIS.\n");
+
+    auto st = sis->find(n);
+    st->interpolated = true;
+  }
+
+  // Ensure surface_height and thickness are valid states in the basal mesh
+  std::string thickness_name = m_params->get<std::string>("Thickness Field Name","thickness");
+  std::string surface_height_name = m_params->get<std::string>("Surface Height Field Name","surface_height");
+  PHX::DataLayout::size_type basal_wss = m_basal_mesh->meshSpecs[0]->worksetSize;
+  PHX::DataLayout::size_type basal_nc  = m_basal_mesh->meshSpecs[0]->ctd.node_count;
+  if (basal_sis->find(surface_height_name,false).is_null()) {
+    auto st = basal_sis->emplace_back(Teuchos::rcp(new StateStruct(surface_height_name,NDTEN)));
+    st->dim = {basal_wss,basal_nc};
+  }
+  if (basal_sis->find(thickness_name,false).is_null()) {
+    auto st = basal_sis->emplace_back(Teuchos::rcp(new StateStruct(thickness_name,NDTEN)));
+    st->dim = {basal_wss,basal_nc};
   }
 
   // Ensure field data is set on basal mesh
+  // Since we store upper and basal stuff on same mesh, pass both basal and upper SIS
+  if (not side_set_sis["upperside"].is_null()) {
+    for (auto st : *side_set_sis["upperside"]) {
+      basal_sis->push_back(st);
+    }
+  }
   m_basal_mesh->setFieldData(comm,basal_sis,{});
 
-  // TODO: correctly register volume states
+  // Now the basal field accessor is definitely valid/inited, so we can create the extruded one
+  m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
+                                                                m_elem_layers_data_lid));
+
+  m_field_accessor->addStateStructs(sis);
+
+  m_field_data_set = true;
 }
 
 void ExtrudedMesh::
