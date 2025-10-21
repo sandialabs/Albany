@@ -43,8 +43,8 @@ public:
 
   void createStateArrays (const WorksetArray<int>& worksets_sizes);
 
-  // There are NO nodal states, everything is (cell[,..]) here
-  void transferNodeStatesToElemStates () override {}
+  // While 3d states are ALL elem states, the basal MFA needs to call this
+  void transferNodeStatesToElemStates ();
 
   // Read from mesh methods
   void fillSolnVector (Thyra_Vector&        soln,
