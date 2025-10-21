@@ -4,6 +4,7 @@ ANONYMOUS:
   Debug Output:
     Write Solution to MatrixMarket: 0
     Report MPI Info: true
+    Report Timers: false
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Continuation
@@ -82,8 +83,8 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Exodus Input File Name: gis_unstruct_basal_populated.exo
-        Exodus Output File Name: gis_unstruct_basal.exo
+        Exodus Input File Name: gis_unstruct_2d_populated.exo
+        Exodus Output File Name: gis_unstruct_extruded_basal.exo
         Required Fields Info:
           Number Of Fields: 4
           Field 0:
@@ -104,21 +105,20 @@ ANONYMOUS:
             Field Origin: Mesh
             Field Type: Node Scalar
       upperside:
-        Method: Ioss
-        Number Of Time Derivatives: 0
-        Restart Index: 1
-        Exodus Input File Name: gis_unstruct_surface_populated.exo
-        Exodus Output File Name: gis_unstruct_surface.exo
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
             Field Name: observed_surface_velocity
-            Field Origin: Mesh
             Field Type: Node Vector
+            Vector Dim: 2
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
           Field 1:
             Field Name: observed_surface_velocity_RMS
-            Field Origin: Mesh
             Field Type: Node Vector
+            Vector Dim: 2
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
   Regression For Response 0:
     Test Value: 1.109508809230e+08
     Sensitivity For Parameter 0:
