@@ -618,6 +618,15 @@ ExtrudedDiscretization::computeWorksetInfo()
   }
 
   // TODO: tell field accessor to init states
+  m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
+  m_extruded_mesh->get_field_accessor()->transferNodeStatesToElemStates();
+
+  // Extrude/interpolate basal fields
+  const auto& extrude_names = m_disc_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
+  const auto& interpolate_names = m_disc_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
+  auto emfa = Teuchos::rcp_dynamic_cast<ExtrudedMeshFieldAccessor>(m_extruded_mesh->get_field_accessor());
+  emfa->extrudeBasalFields(extrude_names);
+  emfa->interpolateBasalLayeredFields(interpolate_names);
 }
 
 void
