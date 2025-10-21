@@ -80,6 +80,28 @@ ELSE ()
                        FIXTURES_SETUP PopulateMeshes)
 ENDIF()
 
+####################################
+###    Populate mesh2d (test)    ###
+####################################
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_populate_mesh_2d.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_populate_mesh_2d.yaml)
+set (testName ${testNameRoot}_PopulateMesh2d)
+add_test(${testName} ${Albany.exe} input_fo_gis_populate_mesh_2d.yaml)
+
+# If Iopx is not present, we must decompose the input mesh first
+IF (NOT ALBANY_PARALELL_EXODUS)
+  set_tests_properties(${testName}
+                       PROPERTIES
+                       LABELS            "LandIce;Forward"
+                       FIXTURES_SETUP    PopulateMesh2d
+                       FIXTURES_REQUIRED meshSetup)
+ELSE ()
+  set_tests_properties(${testName}
+                       PROPERTIES
+                       LABELS         "LandIce;Forward"
+                       FIXTURES_SETUP PopulateMesh2d)
+ENDIF()
 
 ####################################
 ###        Unstruct tests        ###
@@ -103,7 +125,7 @@ if (ALBANY_IFPACK2)
   set_tests_properties(${testName}_extruded
                        PROPERTIES
                        LABELS "LandIce;Forward"
-                       FIXTURES_REQUIRED PopulateMeshes)
+                       FIXTURES_REQUIRED PopulateMesh2d)
 
   # Memoization run
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_mem.yaml
