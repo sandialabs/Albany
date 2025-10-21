@@ -102,6 +102,7 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Exceptions)
 
     params->set<int>("NumLayers",numLayers);
     auto extruded_mesh = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+    extruded_mesh->setFieldData(comm,Teuchos::null,{});
     extruded_mesh->setBulkData(comm);
 
     // Bad pointers
@@ -202,6 +203,7 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
       params->set<int>("Workset Size",1000);
       params->set("Columnwise Ordering", ordering==LayeredMeshOrdering::COLUMN);
       auto extruded_mesh = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+      extruded_mesh->setFieldData(comm,Teuchos::null,{});
       extruded_mesh->setBulkData(comm);
 
       // Build 2d conn manager
