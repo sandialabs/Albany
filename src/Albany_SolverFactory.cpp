@@ -32,7 +32,6 @@
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_FROSCH
-#include "Stratimikos_FROSch_decl.hpp"
 #include "Stratimikos_FROSch_def.hpp"
 #endif /* ALBANY_FROSCH */
 
@@ -237,23 +236,24 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
     adjointModelWithSolve = adjointModel; 
   } else {
     // Setup linear solver
-    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-    enableMueLu(linearSolverBuilder);
-    enableFROSch(linearSolverBuilder);
+    const auto linearSolverBuilder = Teuchos::rcp(new Stratimikos::DefaultLinearSolverBuilder);
+    enableMueLu(*linearSolverBuilder);
+    enableFROSch(*linearSolverBuilder);
 #ifdef ALBANY_TEKO
     // Note: We are not currently building Teko preconditioners through Stratimikos because this would require a block discretization
     // (i.e. a discretization that builds physically blocked Jacobians/vectors). This might be something we want to do in the future.
     // Instead, we will construct our own Teko block preconditioner for our problem of interest inside the Albany application. We'll
     // keep this here so we can use the same input schema.
-    Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
+    Teko::addTekoToStratimikosBuilder(*linearSolverBuilder, "Teko");
 #endif
-    linearSolverBuilder.setParameterList(stratList);
+    linearSolverBuilder->setParameterList(stratList);
 
     const Teuchos::RCP<Thyra_LOWS_Factory> lowsFactory =
-        createLinearSolveStrategy(linearSolverBuilder);
+        createLinearSolveStrategy(*linearSolverBuilder);
 
     const auto app = model_tmp->getAlbanyApp();
     if (app->suppliesPreconditioner()) {
+      app->setLinearSolverBuilder(linearSolverBuilder);
       lowsFactory->unsetPreconditionerFactory();
     }
 
