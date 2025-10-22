@@ -266,9 +266,6 @@ setCoordinates(const Teuchos::RCP<Thyra_MultiVector>& coordMV_)
     for (int blk = 0; blk < numBlocks; ++blk) {
       auto blkPlist = tekoBlockPlists[blk];
       const auto& blkPrecType = blkPlist->get<std::string>("Type");
-      if (blkPrecType != "MueLu" and blkPrecType != "FROSch")
-        continue;
-
       if (blkPrecType == "MueLu") {
         blkPlist->set("Coordinates", t_coordMV);
       }
