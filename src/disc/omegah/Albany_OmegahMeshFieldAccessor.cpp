@@ -121,15 +121,9 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
 
 void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
-  int num_elems = m_mesh->nelems();
-  int num_nodes = m_mesh->nverts();
-
-  // We don't have workset sizes in here, so use single workset
-  elemStateArrays.resize(1);
-  nodeStateArrays.resize(1);
-
   // Elem states
   int num_ws = worksets_sizes.size();
+  elemStateArrays.resize(worksets_sizes.size());
   for (const auto& st : elem_sis) {
     auto data = m_tags.at(st->name).data();
     auto dim = st->dim;
@@ -138,6 +132,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
     stride /= dim[0];
 
     for (int ws=0; ws<num_ws; ++ws) {
+      int num_elems = worksets_sizes[ws];
       switch (dim.size()) {
         case 1:
           elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems); break;
@@ -156,6 +151,8 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
   // Nodal states
   // NOTE: nodal states have just 1 workset
+  nodeStateArrays.resize(1);
+  int num_nodes = m_mesh->nverts();
   for (const auto& st : nodal_sis) {
     auto data = m_tags.at(st->name).data();
     auto dim = st->dim;
