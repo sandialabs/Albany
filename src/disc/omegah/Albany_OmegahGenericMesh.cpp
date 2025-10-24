@@ -40,8 +40,8 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
               const Teuchos::RCP<StateInfoStruct>& sis,
               std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
-  loadRequiredInputFields(comm);
   get_field_accessor()->addStateStructs(sis);
+  loadRequiredInputFields(comm);
 
   // We don't yet support side discretizations for omegah meshes
   (void) side_set_sis;

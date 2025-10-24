@@ -103,10 +103,18 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveSolnMultiVector");
   }
 
+  // To be called after adaptation, where the stored tags are no longer valid and need to be reset
+  void reset_mesh_tags ();
+
 protected:
   Teuchos::RCP<Omega_h::Mesh>   m_mesh;
 
-  std::map<std::string,Omega_h::Write<ST>> m_tags;
+  struct TagHandle {
+    Omega_h::Write<ST> array;
+    int                ent_dim;
+    int                ncomps;
+  };
+  std::map<std::string,TagHandle> m_tags;
 };
 
 } // namespace Albany

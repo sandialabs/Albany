@@ -20,7 +20,9 @@ addFieldOnMesh (const std::string& name,
       "Error! Tag '" + name + "' is already defined on the mesh.\n");
   Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
   m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
-  m_tags[name] = f;
+  m_tags[name].array = f;
+  m_tags[name].ncomps = numComps;
+  m_tags[name].ent_dim = entityDim;
 }
 
 void OmegahMeshFieldAccessor::
@@ -43,7 +45,7 @@ setFieldOnMesh (const std::string& name,
   int ncmps = dev_mv.extent(1);
   int nents = dev_mv.extent(0);
   Kokkos::RangePolicy<> policy(0,nents*ncmps);
-  auto tag_view = m_tags.at(name).view();
+  auto tag_view = m_tags.at(name).array.view();
   auto lambda = KOKKOS_LAMBDA(int idx) {
     int ient = idx % nents;
     int icmp = idx / nents;
@@ -121,23 +123,18 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
 
 void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
-  int num_elems = m_mesh->nelems();
-  int num_nodes = m_mesh->nverts();
-
-  // We don't have workset sizes in here, so use single workset
-  elemStateArrays.resize(1);
-  nodeStateArrays.resize(1);
-
   // Elem states
   int num_ws = worksets_sizes.size();
+  elemStateArrays.resize(worksets_sizes.size());
   for (const auto& st : elem_sis) {
-    auto data = m_tags.at(st->name).data();
+    auto data = m_tags.at(st->name).array.data();
     auto dim = st->dim;
     int stride = 1;
     for (auto d : dim) stride *= d;
     stride /= dim[0];
 
     for (int ws=0; ws<num_ws; ++ws) {
+      int num_elems = worksets_sizes[ws];
       switch (dim.size()) {
         case 1:
           elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems); break;
@@ -156,8 +153,10 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
   // Nodal states
   // NOTE: nodal states have just 1 workset
+  nodeStateArrays.resize(1);
+  int num_nodes = m_mesh->nverts();
   for (const auto& st : nodal_sis) {
-    auto data = m_tags.at(st->name).data();
+    auto data = m_tags.at(st->name).array.data();
     auto dim = st->dim;
     if (st->entity != StateStruct::NodalData) {
       // Add an elem state array, which the SaveStateField/SaveSideSetStateField evaluators will use
@@ -360,6 +359,24 @@ saveVector (const Thyra_Vector&  field_vector,
   }
 
   m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
+}
+
+void OmegahMeshFieldAccessor::reset_mesh_tags ()
+{
+  for (auto& [name, tag_handle] : m_tags) {
+    auto& array = tag_handle.array;
+    int dim     = tag_handle.ent_dim;
+    int ncmp    = tag_handle.ncomps;
+    if (m_mesh->has_tag(dim,name)) {
+      auto tag = m_mesh->get_tag<ST>(dim,name);
+      array = Omega_h::Write<ST>(tag->array().size(),name);
+      Kokkos::deep_copy(array.view(),tag->array().view());
+      m_mesh->set_tag(dim,name,read(array));
+    } else {
+      array = Omega_h::Write<ST>(m_mesh->nents(dim)*ncmp,name);
+      m_mesh->add_tag(dim,name,ncmp,read(array));
+    }
+  }
 }
 
 } // namespace Albany

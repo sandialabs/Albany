@@ -487,6 +487,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   //update coordinates
   m_mesh_struct->setCoordinates();
 
+  auto omegah_mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
+  omegah_mfa->reset_mesh_tags();
   updateMesh();
   adaptCount ++;
   return;

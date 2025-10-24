@@ -56,8 +56,6 @@ public:
                            Omega_h::Read<Omega_h::I8> is_entity_in_part,
                            const bool markDownward);
 
-  void reset_mesh (const Teuchos::RCP<Omega_h::Mesh> mesh);
-
   void setCoordinates();
   std::vector<std::string> createNodeSets();
   std::vector<std::string> createSideSets();
