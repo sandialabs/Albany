@@ -505,9 +505,9 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 
     const auto adaptRatio = 0.1;
     auto estimation =
-      Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio); //FIXME - move to meshfields namespace
+      MeshField::SPR::Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio);
 
-    const auto tgtLength = getSprSizeField(estimation, omf, coordFe);
+    const auto tgtLength = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
     Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
     mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
         Omega_h::ArrayType::VectorND);
