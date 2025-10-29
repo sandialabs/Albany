@@ -7,13 +7,53 @@
 #include "Omega_h_adapt.hpp"
 #include "Omega_h_array_ops.hpp"
 #include <Omega_h_file.hpp>   // for Omega_h::binary::write
+#include "Omega_h_recover.hpp" //project_by_fit
 
 #ifdef ALBANY_MESHFIELDS
 #include <KokkosController.hpp>
 #include <MeshField.hpp>
+#include <MeshField_SPR_ErrorEstimator.hpp>
 #endif
 
 #include <Panzer_IntrepidFieldPattern.hpp>
+
+//FIXME!
+using ExecutionSpace = Kokkos::DefaultExecutionSpace;
+using MemorySpace = Kokkos::DefaultExecutionSpace::memory_space;
+
+namespace {
+  constexpr bool isMeshfieldsEnabled() {
+#ifdef ALBANY_MESHFIELDS
+    return true;
+#else
+    return false;
+#endif
+  }
+
+  Omega_h::Reals getEffectiveStrainRate(Omega_h::Mesh &mesh) {
+    return mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
+  }
+
+  Omega_h::Reals recoverLinearStrain(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrain) {
+    return Omega_h::project_by_fit(&mesh, effectiveStrain);
+  }
+
+  template <typename ShapeField>
+  void setFieldAtVertices(Omega_h::Mesh &mesh, Omega_h::Reals recoveredStrain,
+      ShapeField field) {
+    auto setFieldAtVertices = KOKKOS_LAMBDA(const int &vtx) {
+      field(vtx, 0, 0, MeshField::Vertex) = recoveredStrain[vtx];
+    };
+    MeshField::parallel_for(ExecutionSpace(), {0}, {mesh.nverts()},
+        setFieldAtVertices, "setFieldAtVertices");
+  }
+
+  void printTriCount(Omega_h::Mesh &mesh, std::string_view prefix) {
+    const auto nTri = mesh.nglobal_ents(2);
+    if (!mesh.comm()->rank())
+      std::cout << prefix << " nTri: " << nTri << "\n";
+  }
+}
 
 namespace debug {
 template <typename T>
@@ -390,19 +430,14 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
                     const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
   auto adapt_data = Teuchos::rcp(new AdaptationData());
-
-  // Only do adaptation for simple 1d problems
   auto mesh = m_mesh_struct->getOmegahMesh();
-  if (mesh->dim() != 1) {
-    std::cout << "NOT a 1D Omega_h mesh...we will not adapt.\n";
-    return adapt_data;
-  }
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
   auto adapt_type = adapt_params.get<std::string>("Type","None");
   if (adapt_type=="None") {
     return adapt_data;
   }
-  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
+
+  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error, //FIXME - need an SPR option
       "Error! Adaptation type '" << adapt_type << "' not supported.\n"
       " - valid choices: None, Minimally-Oscillatory\n");
 
@@ -410,42 +445,91 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
 
   if(solution_dot != Teuchos::null and solution_dotdot != Teuchos::null) {
-     writeSolutionToMeshDatabase(*solution, dxdp, *solution_dot, *solution_dotdot, false);
+    writeSolutionToMeshDatabase(*solution, dxdp, *solution_dot, *solution_dotdot, false);
   } else if(solution_dot != Teuchos::null) {
-     writeSolutionToMeshDatabase(*solution, dxdp, *solution_dot, false);
+    writeSolutionToMeshDatabase(*solution, dxdp, *solution_dot, false);
   } else {
-     writeSolutionToMeshDatabase(*solution, dxdp, false);
+    writeSolutionToMeshDatabase(*solution, dxdp, false);
   }
 
-  double tol = adapt_params.get<double>("Max Hessian");
-  auto data = getLocalData(solution);
-  // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
-  // TODO: replace with
-  //  1. if |C_i| > threshold, mark for refinement the whole mesh
-  //  2. Interpolate solution (and all elem/node fields if possible, but not necessary for adv-diff example)
-  int num_nodes = data.size();
-  adapt_data->x = solution;
-  adapt_data->x_dot = solution_dot;
-  adapt_data->x_dotdot = solution_dotdot;
-  adapt_data->dxdp = dxdp;
-  for (int i=1; i<num_nodes-1; ++i) {
-    auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
-    auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
-    auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
-    auto grad_prev = (data[i]-data[i-1]) / h_prev;
-    auto grad_next = (data[i+1]-data[i]) / h_next;
-    if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
-      adapt_data->type = AdaptationType::Topology;
-      break;
+  if (mesh->dim() == 1) {
+    double tol = adapt_params.get<double>("Max Hessian");
+    auto data = getLocalData(solution);
+    // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
+    // TODO: replace with
+    //  1. if |C_i| > threshold, mark for refinement the whole mesh
+    //  2. Interpolate solution (and all elem/node fields if possible, but not necessary for adv-diff example)
+    int num_nodes = data.size();
+    adapt_data->x = solution;
+    adapt_data->x_dot = solution_dot;
+    adapt_data->x_dotdot = solution_dotdot;
+    adapt_data->dxdp = dxdp;
+    for (int i=1; i<num_nodes-1; ++i) {
+      auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
+      auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
+      auto hess = (data[i-1] - 2*data[i] + data[i+1]) / (h_prev*h_next);
+      auto grad_prev = (data[i]-data[i-1]) / h_prev;
+      auto grad_next = (data[i+1]-data[i]) / h_next;
+      if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
+        adapt_data->type = AdaptationType::Topology;
+        break;
+      }
     }
+    return adapt_data;
+  } else if (mesh->dim() == 2) {
+    if (!isMeshfieldsEnabled()) {
+      std::cout << "2D Omega_h mesh adaptation requires Meshfields "
+        << "(configure Albany with ENABLE_MESHFIELDS=ON to enable it) "
+        << "... we will not adapt.\n";
+      return adapt_data;
+    }
+
+    #ifdef ALBANY_MESHFIELDS
+    auto effectiveStrain = getEffectiveStrainRate(*mesh);
+    auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
+    mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
+        false, Omega_h::ArrayType::VectorND);
+
+    const auto MeshDim = 2;
+    const auto ShapeOrder = 1;
+    MeshField::OmegahMeshField<ExecutionSpace,
+                               MeshDim,
+                               MeshField::KokkosController> omf(*mesh);
+    auto recoveredStrainField = omf.CreateLagrangeField<Omega_h::Real, ShapeOrder, MeshDim>();
+    setFieldAtVertices(*mesh, recoveredStrain, recoveredStrainField);
+
+    auto coordField = omf.getCoordField();
+    const auto [shp, map] =
+      MeshField::Omegah::getTriangleElement<ShapeOrder>(*mesh);
+    MeshField::FieldElement coordFe(mesh->nelems(), coordField, shp, map);
+
+    const auto adaptRatio = 0.1;
+    auto estimation =
+      Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio); //FIXME - move to meshfields namespace
+
+    const auto tgtLength = getSprSizeField(estimation, omf, coordFe);
+    Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
+    mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
+        Omega_h::ArrayType::VectorND);
+
+    { // write vtk
+      const auto outname = std::string("foo");
+      const std::string vtkFileName = "beforeAdapt" + outname + ".vtk";
+      Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), 2);
+      const std::string vtkFileName_edges =
+        "beforeAdapt" + outname + "_edges.vtk";
+      Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), 1);
+    }
+
+    printTriCount(*mesh, "beforeAdapt");
+    #endif
+
+    return adapt_data;
+  } else { //meshdim != 1 && meshdim != 2
+    std::cout << "Only 1D and 2D (with Meshfields enabled) Omega_h mesh "
+      << "adaptation is supported ... we will not adapt.\n";
+    return adapt_data;
   }
-
-#ifdef ALBANY_MESHFIELDS
-  MeshField::OmegahMeshField<Kokkos::DefaultExecutionSpace, 2, MeshField::KokkosController> omf(*mesh);
-#endif
-
-  return adapt_data;
-
 }
 
 void OmegahDiscretization::
