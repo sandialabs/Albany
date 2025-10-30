@@ -479,8 +479,8 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     return adapt_data;
   } else if (mesh->dim() == 2) {
     if (!isMeshfieldsEnabled()) {
-      std::cout << "2D Omega_h mesh adaptation requires Meshfields "
-        << "(configure Albany with ENABLE_MESHFIELDS=ON to enable it) "
+      std::cout << "Warning: 2D Omega_h mesh adaptation requires Meshfields. "
+        << "Configure Albany with ENABLE_MESHFIELDS=ON to enable it. "
         << "... we will not adapt.\n";
       return adapt_data;
     }
@@ -514,11 +514,10 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
         Omega_h::ArrayType::VectorND);
 
     { // write vtk
-      const auto outname = std::string("foo");
-      const std::string vtkFileName = "beforeAdapt" + outname + ".vtk";
+      const auto outname = std::string("beforeAdapt2d");
+      const std::string vtkFileName = outname + ".vtk";
       Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), 2);
-      const std::string vtkFileName_edges =
-        "beforeAdapt" + outname + "_edges.vtk";
+      const std::string vtkFileName_edges = outname + "_edges.vtk";
       Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), 1);
     }
 
@@ -578,7 +577,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       nelems = ohMesh->nglobal_ents(ohMesh->dim());
       std::cout << "mesh now has " << nelems << " total elements\n";
     }
-  } else if (ohMesh->dim() == 2) {
+  } else if (ohMesh->dim() == 2 && isMeshfieldsEnabled()) {
     // adapt
     Omega_h::AdaptOpts opts(&(*ohMesh));
     opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
