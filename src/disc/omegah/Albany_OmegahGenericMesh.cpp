@@ -158,12 +158,9 @@ mark_part_entities (const std::string& name,
       "  - part dim : " << dim << "\n"
       "  - num ents : " << m_mesh->nents(dim) << "\n"
       "  - array dim: " << is_entity_in_part.size() << "\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (m_mesh->has_tag(dim,name), std::runtime_error,
-      "[OmegahGenericMesh::mark_part_entities] Error! A tag with this name was already set.\n"
-      "  - part name: " << name << "\n"
-      "  - part dim : " << dim << "\n");
-
-  m_mesh->add_tag(dim,name,1,is_entity_in_part);
+  if( ! m_mesh->has_tag(dim,name) ) {
+    m_mesh->add_tag(dim,name,1,is_entity_in_part);
+  }
 
   if (markDownward) {
     TEUCHOS_TEST_FOR_EXCEPTION (dim==0, std::logic_error,
