@@ -34,7 +34,7 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
     # 1d test with adaptivity
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_1d_adapt_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_1d_adapt_omegah.yaml COPYONLY)
-    add_test(${testName}_1d_adapt_Omega_h ${SerialAlbany.exe} input_1d_adapt_omegah.yaml)
+    add_test(${testName}_1d_adapt_omega_h ${SerialAlbany.exe} input_1d_adapt_omegah.yaml)
     set_tests_properties(${testName}_1d_adapt_omega_h PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
 
     # 2d test
