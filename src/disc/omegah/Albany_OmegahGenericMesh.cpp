@@ -197,7 +197,7 @@ mark_part_entities (const std::string& name,
           }
         }
       };
-      Kokkos::parallel_for ("OmegahGenericMesh::set_part_entities::markDownward",m_mesh->nents(topo_dim(topo)),f);
+      Kokkos::parallel_for ("OmegahGenericMesh::mark_part_entities::markDownward",m_mesh->nents(topo_dim(topo)),f);
       m_mesh->add_tag(topo_dim(down_topo),name,1,read(downMarked));
       upMarked = downMarked;
 
