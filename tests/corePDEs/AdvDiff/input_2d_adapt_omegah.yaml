@@ -36,7 +36,7 @@ ANONYMOUS:
     Mesh Adaptivity:
       Type: SPR
       Adapt Ratio: 0.1
-      Minimum Size: 0.81
+      Minimum Size: 0.08
       Maximum Size: 1.0
   Piro:
     Tempus:
