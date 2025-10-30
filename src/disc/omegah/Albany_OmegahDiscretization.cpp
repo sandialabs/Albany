@@ -545,8 +545,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   auto ohMesh = m_mesh_struct->getOmegahMesh();
   TEUCHOS_TEST_FOR_EXCEPTION (adaptData->type!=AdaptationType::Topology, std::runtime_error,
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->dim()!=1, std::runtime_error,
-      "Error! Adaptation not supported for this mesh. We only implemented a simple 1d case.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->dim()!=1 && ohMesh->dim()!=2, std::runtime_error,
+      "Error! Adaptation not supported for this mesh. We only implemented simple 1d and 2d cases.\n");
 
   std::string beforeAdaptName = "before_adapt" + std::to_string(adaptCount) + ".vtk";
   Omega_h::vtk::write_parallel(beforeAdaptName, ohMesh.get());
