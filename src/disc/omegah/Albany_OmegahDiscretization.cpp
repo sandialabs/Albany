@@ -438,10 +438,6 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     return adapt_data;
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error, //FIXME - need an SPR option
-      "Error! Adaptation type '" << adapt_type << "' not supported.\n"
-      " - valid choices: None, Minimally-Oscillatory\n");
-
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
 
@@ -454,6 +450,9 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   }
 
   if (mesh->dim() == 1) {
+    TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="Minimally-Oscillatory", std::runtime_error,
+        "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+        " - valid choices for 1D: None, Minimally-Oscillatory\n");
     double tol = adapt_params.get<double>("Max Hessian");
     auto data = getLocalData(solution);
     // Simple check: refine if a proxy of the hessian of x is larger than a tolerance
@@ -484,6 +483,9 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
         << "... we will not adapt.\n";
       return adapt_data;
     }
+    TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="SPR", std::runtime_error,
+        "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+        " - valid choices for 2D: None, SPR\n");
 
     #ifdef ALBANY_MESHFIELDS
     auto effectiveStrain = getEffectiveStrainRate(*mesh);
@@ -504,7 +506,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       MeshField::Omegah::getTriangleElement<ShapeOrder>(*mesh);
     MeshField::FieldElement coordFe(mesh->nelems(), coordField, shp, map);
 
-    const auto adaptRatio = 0.1;
+    const auto adaptRatio = adapt_params.get<double>("Adapt Ratio",0.1);
     auto estimation =
       MeshField::SPR::Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio);
 
@@ -578,7 +580,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       std::cout << "mesh now has " << nelems << " total elements\n";
     }
   } else if (ohMesh->dim() == 2 && isMeshfieldsEnabled()) {
-    // adapt
+
     Omega_h::AdaptOpts opts(&(*ohMesh));
     opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
     opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
@@ -586,8 +588,10 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     auto verbose = false;
     const auto tgtLength_oh = ohMesh->get_array<Omega_h::Real>(Omega_h::VERT, "tgtLength");
     const auto isos = Omega_h::isos_from_lengths(tgtLength_oh);
-    const auto min_size = 0.1;
-    const auto max_size = 1.0;
+
+    auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+    const auto min_size = adapt_params.get<double>("Minimum Size",0.08);
+    const auto max_size = adapt_params.get<double>("Maximum Size",1.0);
     auto metric = Omega_h::clamp_metrics(ohMesh->nverts(), isos, min_size, max_size);
     Omega_h::grade_fix_adapt(&(*ohMesh), opts, metric, verbose);
 

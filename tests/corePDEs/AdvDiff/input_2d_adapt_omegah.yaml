@@ -34,9 +34,10 @@ ANONYMOUS:
     Method: Omegah
     Mesh Creation Method: Box2D
     Mesh Adaptivity:
-      Type: Minimally-Oscillatory
-      Max Hessian: 10.0
-      Refining Factor: 2
+      Type: SPR
+      Adapt Ratio: 0.1
+      Minimum Size: 0.81
+      Maximum Size: 1.0
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
