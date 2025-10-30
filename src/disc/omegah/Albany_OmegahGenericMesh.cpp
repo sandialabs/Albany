@@ -147,19 +147,19 @@ mark_part_entities (const std::string& name,
                    const bool markDownward)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (m_part_topo.find(name)==m_part_topo.end(), std::runtime_error,
-      "[OmegahGenericMesh::set_part_entities] Error! Part not found.\n"
+      "[OmegahGenericMesh::mark_part_entities] Error! Part not found.\n"
       "  - part name: " << name << "\n");
 
   auto dim = topo_dim(m_part_topo[name]);
 
   TEUCHOS_TEST_FOR_EXCEPTION (is_entity_in_part.size()!=m_mesh->nents(dim), std::logic_error,
-      "[OmegahGenericMesh::set_part_entities] Error! Input array has the wrong dimensions.\n"
+      "[OmegahGenericMesh::mark_part_entities] Error! Input array has the wrong dimensions.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << dim << "\n"
       "  - num ents : " << m_mesh->nents(dim) << "\n"
       "  - array dim: " << is_entity_in_part.size() << "\n");
   TEUCHOS_TEST_FOR_EXCEPTION (m_mesh->has_tag(dim,name), std::runtime_error,
-      "[OmegahGenericMesh::set_part_entities] Error! A tag with this name was already set.\n"
+      "[OmegahGenericMesh::mark_part_entities] Error! A tag with this name was already set.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << dim << "\n");
 
@@ -167,7 +167,7 @@ mark_part_entities (const std::string& name,
 
   if (markDownward) {
     TEUCHOS_TEST_FOR_EXCEPTION (dim==0, std::logic_error,
-      "[OmegahGenericMesh::set_part_entities] Error! Cannot mark downward if the part dimension is 0.\n"
+      "[OmegahGenericMesh::mark_part_entities] Error! Cannot mark downward if the part dimension is 0.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << dim << "\n")
     Omega_h::Write<Omega_h::I8> downMarked;
