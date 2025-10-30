@@ -5,6 +5,7 @@
 
 #include "OmegahConnManager.hpp"
 #include "Omega_h_adapt.hpp"
+#include "Omega_h_metric.hpp" // isos_from_lengths, clamp_metrics
 #include "Omega_h_array_ops.hpp"
 #include <Omega_h_file.hpp>   // for Omega_h::binary::write
 #include "Omega_h_recover.hpp" //project_by_fit
@@ -523,6 +524,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 
     printTriCount(*mesh, "beforeAdapt");
     #endif
+    adapt_data->type = AdaptationType::Topology;
 
     return adapt_data;
   } else { //meshdim != 1 && meshdim != 2
@@ -550,30 +552,47 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   std::string beforeAdaptName = "before_adapt" + std::to_string(adaptCount) + ".vtk";
   Omega_h::vtk::write_parallel(beforeAdaptName, ohMesh.get());
 
-  // Note: the code below is hard-coding a simple adaptation for a 1d mesh,
-  //       where the number of elements is doubled.
-  auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
-  const auto desired_nelems = nelems*2;
+  if (ohMesh->dim() == 1) {
+    // Note: the code below is hard-coding a simple adaptation for a 1d mesh,
+    //       where the number of elements is doubled.
+    auto nelems = ohMesh->nglobal_ents(ohMesh->dim());
+    const auto desired_nelems = nelems*2;
 
-  Omega_h::AdaptOpts opts(&(*ohMesh));
-  opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
-  opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
-  while (double(nelems) < desired_nelems) {
-    if (!ohMesh->has_tag(0, "metric")) {
-      std::cout << "mesh had no metric, adding implied and adapting to it\n";
-      Omega_h::add_implied_metric_tag(ohMesh.get());
+    Omega_h::AdaptOpts opts(&(*ohMesh));
+    opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
+    opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
+    while (double(nelems) < desired_nelems) {
+      if (!ohMesh->has_tag(0, "metric")) {
+        std::cout << "mesh had no metric, adding implied and adapting to it\n";
+        Omega_h::add_implied_metric_tag(ohMesh.get());
+        Omega_h::adapt(ohMesh.get(), opts);
+        nelems = ohMesh->nglobal_ents(ohMesh->dim());
+      }
+      auto metrics = ohMesh->get_array<double>(0, "metric");
+      metrics = Omega_h::multiply_each_by(metrics, 1.2);
+      auto const metric_ncomps =
+        Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
+      ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
+      std::cout << "adapting to scaled metric\n";
       Omega_h::adapt(ohMesh.get(), opts);
       nelems = ohMesh->nglobal_ents(ohMesh->dim());
+      std::cout << "mesh now has " << nelems << " total elements\n";
     }
-    auto metrics = ohMesh->get_array<double>(0, "metric");
-    metrics = Omega_h::multiply_each_by(metrics, 1.2);
-    auto const metric_ncomps =
-      Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
-    ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
-    std::cout << "adapting to scaled metric\n";
-    Omega_h::adapt(ohMesh.get(), opts);
-    nelems = ohMesh->nglobal_ents(ohMesh->dim());
-    std::cout << "mesh now has " << nelems << " total elements\n";
+  } else if (ohMesh->dim() == 2) {
+    // adapt
+    Omega_h::AdaptOpts opts(&(*ohMesh));
+    opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
+    opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
+
+    auto verbose = false;
+    const auto tgtLength_oh = ohMesh->get_array<Omega_h::Real>(Omega_h::VERT, "tgtLength");
+    const auto isos = Omega_h::isos_from_lengths(tgtLength_oh);
+    const auto min_size = 0.1;
+    const auto max_size = 1.0;
+    auto metric = Omega_h::clamp_metrics(ohMesh->nverts(), isos, min_size, max_size);
+    Omega_h::grade_fix_adapt(&(*ohMesh), opts, metric, verbose);
+
+    printTriCount(*ohMesh, "afterAdapt");
   }
 
   std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
