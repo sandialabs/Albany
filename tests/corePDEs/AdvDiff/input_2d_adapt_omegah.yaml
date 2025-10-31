@@ -36,6 +36,7 @@ ANONYMOUS:
     Mesh Adaptivity:
       Type: SPR
       Adapt Ratio: 1.2
+      Error Threshold: 0.3
       Minimum Edge Length: 0.02
       Maximum Edge Length: 1.0
   Piro:

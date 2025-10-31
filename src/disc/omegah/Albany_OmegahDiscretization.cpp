@@ -510,24 +510,27 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     auto estimation =
       MeshField::SPR::Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio);
 
-    const auto tgtLength = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
-    Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
-    mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
-        Omega_h::ArrayType::VectorND);
+    const auto [tgtLength, error] = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
+    const auto errorThreshold = adapt_params.get<double>("Error Threshold",0.5);
+    std::cout << "Error: " << error << " Error Threshold: " << errorThreshold << '\n';
+    if( error > errorThreshold ) { //trigger adaptation
+      Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
+      mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
+          Omega_h::ArrayType::VectorND);
 
-    { // write vtk
-      const auto outname = std::string("beforeAdapt2d");
-      const std::string vtkFileName = outname + ".vtk";
-      Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), 2);
-      const std::string vtkFileName_edges = outname + "_edges.vtk";
-      Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), 1);
+      { // write vtk
+        const auto outname = std::string("beforeAdapt2d");
+        const std::string vtkFileName = outname + ".vtk";
+        Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), 2);
+        const std::string vtkFileName_edges = outname + "_edges.vtk";
+        Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), 1);
+      }
+
+      printTriCount(*mesh, "beforeAdapt");
+      adapt_data->type = AdaptationType::Topology;
     }
-
-    printTriCount(*mesh, "beforeAdapt");
-    #endif
-    adapt_data->type = AdaptationType::Topology;
-
     return adapt_data;
+    #endif //ALBANY_MESHFIELDS
   } else { //meshdim != 1 && meshdim != 2
     std::cout << "Only 1D and 2D (with Meshfields enabled) Omega_h mesh "
       << "adaptation is supported ... we will not adapt.\n";
