@@ -590,8 +590,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     const auto isos = Omega_h::isos_from_lengths(tgtLength_oh);
 
     auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
-    const auto min_size = adapt_params.get<double>("Minimum Size",0.08);
-    const auto max_size = adapt_params.get<double>("Maximum Size",1.0);
+    const auto min_size = adapt_params.get<double>("Minimum Edge Length",0.08);
+    const auto max_size = adapt_params.get<double>("Maximum Edge Length",1.0);
     auto metric = Omega_h::clamp_metrics(ohMesh->nverts(), isos, min_size, max_size);
     Omega_h::grade_fix_adapt(&(*ohMesh), opts, metric, verbose);
 

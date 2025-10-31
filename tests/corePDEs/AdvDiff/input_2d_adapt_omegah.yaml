@@ -35,9 +35,9 @@ ANONYMOUS:
     Mesh Creation Method: Box2D
     Mesh Adaptivity:
       Type: SPR
-      Adapt Ratio: 0.1
-      Minimum Size: 0.08
-      Maximum Size: 1.0
+      Adapt Ratio: 1.2
+      Minimum Edge Length: 0.02
+      Maximum Edge Length: 1.0
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
