@@ -720,6 +720,11 @@ OPTION(ENABLE_MESHFIELDS "Flag to turn on the MeshFields field interface for
 computing error indicators (via super convergent patch recovery) to
 drive mesh adaptation" OFF)
 IF (ENABLE_MESHFIELDS)
+  IF (NOT ENABLE_OMEGAH)
+    MESSAGE(FATAL_ERROR
+      "The MeshFields field interface requires Omega_h to be enabled. \
+      Reconfigure with -DENABLE_MESHFIELDS=ON and -DENABLE_OMEGAH=ON.")
+  ENDIF()
   MESSAGE("-- MeshFields field interface    Enabled.")
   SET(ALBANY_MESHFIELDS TRUE)
   include (GetOrInstallMeshFields)
