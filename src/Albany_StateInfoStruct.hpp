@@ -53,39 +53,23 @@ struct StateStruct
   };
   typedef std::vector<PHX::DataLayout::size_type> FieldDims;
 
-  StateStruct(const std::string& name_, MeshFieldEntity ent)
-      : name(name_),
-        entity(ent),
-        responseIDtoRequire(""),
-        output(true),
-        restartDataAvailable(false),
-        saveOldState(false),
-        layered(false),
-        meshPart(""),
-        pParentStateStruct(NULL)
-  {
-  }
+  StateStruct() = delete;
 
   StateStruct(
       const std::string& name_,
       MeshFieldEntity    ent,
-      const FieldDims&   dims,
-      const std::string& type,
+      const FieldDims&   dims = {},
+      const std::string& type = "none",
       const std::string& meshPart_ = "",
       const std::string& ebName_   = "")
       : name(name_),
         dim(dims),
         entity(ent),
         initType(type),
-        responseIDtoRequire(""),
-        output(true),
-        restartDataAvailable(false),
-        saveOldState(false),
-        layered(false),
         meshPart(meshPart_),
-        ebName(ebName_),
-        pParentStateStruct(NULL)
+        ebName(ebName_)
   {
+    // Nothing to do
   }
 
   void
@@ -143,29 +127,30 @@ struct StateStruct
     }
   }
 
-  const std::string                  name{""};
-  FieldDims                          dim;
+  const std::string                  name = "";
+  FieldDims                          dim = {};
   MeshFieldEntity                    entity;
   std::string                        initType = "none";
-  double                             initValue{0.0};
+  double                             initValue = 0;
   std::map<std::string, std::string> nameMap;
 
   // For proper PHAL_SaveStateField functionality - maybe only needed
   // temporarily?
   // If nonzero length, the responseID for response
   // field manager to require (assume dummy data layout)
-  std::string responseIDtoRequire{""};
-  bool        output{false};
-  bool        restartDataAvailable{false};
-  // Bool that this state is to be copied into name+"_old"
-  bool        saveOldState{false};
-  bool        layered{false};
-  std::string meshPart{""};
-  std::string ebName{""};
-  // If this is a copy (name = parentName+"_old"), ptr to parent struct
-  StateStruct* pParentStateStruct{nullptr};
+  std::string responseIDtoRequire = "";
+  bool        output = true;
+  bool        restartDataAvailable = false;
+  bool        layered  = false;
+  std::string meshPart = "";
+  std::string ebName   = "";
 
-  StateStruct();
+  // Flag for 3d states that are computed on the fly in extruded meshes from basal states
+  bool        extruded = false;
+  bool        interpolated = false;
+
+  // If this is a copy (name = parentName+"_old"), ptr to parent struct
+  StateStruct* pParentStateStruct = nullptr;
 };
 
 // Could just be an alias to a vector of state struct pointers,
@@ -175,10 +160,13 @@ class StateInfoStruct : public std::vector<Teuchos::RCP<StateStruct>>
 public:
   StateInfoStruct () = default;
 
-  Teuchos::RCP<StateStruct> find (const std::string& name) {
+  Teuchos::RCP<StateStruct> find (const std::string& name, bool throw_if_not_found = true) const {
     for (const auto& entry : *this) {
       if (entry->name==name) return entry;
     }
+    TEUCHOS_TEST_FOR_EXCEPTION(throw_if_not_found,std::runtime_error,
+        "Error! Could not locate state '" + name + "' in this StateInfoStruct.\n");
+
     return Teuchos::null;
   }
 };

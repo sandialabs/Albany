@@ -364,6 +364,11 @@ public:
   // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
 
+  virtual Teuchos::RCP<ConnManager>
+  create_conn_mgr (const std::string& part_name) {
+    throw std::runtime_error("Error! This discretization does not implement 'create_conn_mgr'.");
+  }
+
 protected:
   dof_mgr_ptr_t&
   get_dof_mgr (const std::string& part_name,

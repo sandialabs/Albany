@@ -160,6 +160,25 @@ struct DualDynRankView {
     built_from_ptr = true;
   }
 
+  void reset_from_dev_host_ptr (DT* dev_ptr, DT* host_ptr,
+                                const size_t n0,
+                                const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                const size_t n2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                const size_t n3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                const size_t n4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                const size_t n5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                const size_t n6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                const size_t n7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
+  {
+    ALBANY_ASSERT (dev_ptr!=nullptr,  "Invalid dev ptr.");
+    ALBANY_ASSERT (host_ptr!=nullptr, "Invalid host ptr.");
+
+    d_view = dev_t(dev_ptr,n0,n1,n2,n3,n4,n5,n6,n7);
+    h_view = host_t(host_ptr,n0,n1,n2,n3,n4,n5,n6,n7);
+
+    built_from_ptr = true;
+  }
+
   void resize (const std::string& name,
                const size_t n0,
                const size_t n1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
@@ -176,7 +195,7 @@ struct DualDynRankView {
   }
 
   template<typename IntT>
-  void dimensions (std::vector<IntT>& dims) {
+  void dimensions (std::vector<IntT>& dims) const {
     dims.resize(rank());
     for (size_t i=0; i<dims.size(); ++i) {
       dims[i] = d_view.extent(i);

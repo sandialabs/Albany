@@ -24,7 +24,7 @@
 #include <string>
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 namespace Albany {
 
@@ -46,6 +46,7 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
   m_neq = neq;
 
   sideSetDiscretizations["basalside"] = basal_disc;
+  sideSetDiscretizations["upperside"] = basal_disc;
 }
 
 void
@@ -618,6 +619,15 @@ ExtrudedDiscretization::computeWorksetInfo()
   }
 
   // TODO: tell field accessor to init states
+  m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
+  m_extruded_mesh->get_field_accessor()->transferNodeStatesToElemStates();
+
+  // Extrude/interpolate basal fields
+  const auto& extrude_names = m_disc_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
+  const auto& interpolate_names = m_disc_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
+  auto emfa = Teuchos::rcp_dynamic_cast<ExtrudedMeshFieldAccessor>(m_extruded_mesh->get_field_accessor());
+  emfa->extrudeBasalFields(extrude_names);
+  emfa->interpolateBasalLayeredFields(interpolate_names);
 }
 
 void
@@ -931,6 +941,14 @@ void ExtrudedDiscretization::setFieldData()
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
 }
 
+Teuchos::RCP<ConnManager>
+ExtrudedDiscretization::create_conn_mgr (const std::string& part_name)
+{
+  auto basal_part_name = m_extruded_mesh->get_basal_part_name(part_name);
+  auto conn_mgr_h = m_basal_disc->create_conn_mgr(basal_part_name);
+  return Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
+}
+
 Teuchos::RCP<DOFManager>
 ExtrudedDiscretization::
 create_dof_mgr (const std::string& part_name,
@@ -948,9 +966,11 @@ create_dof_mgr (const std::string& part_name,
   const auto& ebn = m_extruded_mesh->meshSpecs()[0]->ebName;;
   std::vector<std::string> elem_blocks =  {ebn};
 
-  // Create conn and dof managers
-  auto conn_mgr_h = m_basal_disc->getDOFManager(field_name)->getAlbanyConnManager();
-  auto conn_mgr = Teuchos::rcp(new ExtrudedConnManager(conn_mgr_h,m_extruded_mesh));
+  // Create conn manager
+  auto conn_mgr = create_conn_mgr(part_name);
+  auto conn_mgr_h = Teuchos::rcp_dynamic_cast<ExtrudedConnManager>(conn_mgr)->get_basal_conn_mgr();
+
+  // Create dof mgr
   dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,m_comm,part_name));
 
   const auto& topo = conn_mgr->get_topology();
