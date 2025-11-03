@@ -34,11 +34,26 @@ ANONYMOUS:
     Method: Omegah
     Mesh Creation Method: Box2D
     Mesh Adaptivity:
-      Type: SPR
+      Type: SPR # superconvergent patch recovery
+      # 'Adapt Ratio' defines the acceptable margin of error,
+      #   expressed as a factor greater than zero.
+      #   Setting this equal to zero would request zero element
+      #   size everywhere, i.e. infinite refinement.
+      #   Increasing it results in larger mesh elements;
+      #   this is a (nonlinear) scaling factor on the resulting
+      #   size field.
       Adapt Ratio: 1.2
+      # Error Thresold:
+      #  SPR computes the sum of error norms raised to the power
+      #  (2d/(2p+d)) over all elements, where d is the mesh
+      #  dimension and p is the recovered field polynomial order.
+      #  For this example d=2 and p=2.
+      #  The 'Error Threshold' specifies the maxium allowed error
+      #  before mesh adaptation is triggered;
+      #  i.e., `if (error > threshold) runMeshAdaptation(...)` .
       Error Threshold: 0.3
-      Minimum Edge Length: 0.02
-      Maximum Edge Length: 1.0
+      Minimum Edge Length: 0.02 # min desired edge length in physical space
+      Maximum Edge Length: 1.0 # max desired edge length in physical space
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
