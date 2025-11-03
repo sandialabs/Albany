@@ -88,8 +88,7 @@ SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
   }
 
   std::vector<std::string> ssNames; // Empty
-  int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
-  int worksetSize = computeWorksetSize(worksetSizeMax,inputMeshSpecs.worksetSize);
+  int worksetSize = computeWorksetSize(-1,inputMeshSpecs.worksetSize);
 
   std::string ebn = "Element Block 0";
   partVec.push_back(&metaData->declare_part_with_topology(ebn, etopology));
