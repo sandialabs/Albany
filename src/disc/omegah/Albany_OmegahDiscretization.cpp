@@ -512,7 +512,8 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 
     const auto [tgtLength, error] = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
     const auto errorThreshold = adapt_params.get<double>("Error Threshold",0.5);
-    std::cout << "Error: " << error << " Error Threshold: " << errorThreshold << '\n';
+    std::cout << "SPR Computed Error: " << error
+              << " Error Threshold: " << errorThreshold << '\n';
     if( error > errorThreshold ) { //trigger adaptation
       Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
       mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
