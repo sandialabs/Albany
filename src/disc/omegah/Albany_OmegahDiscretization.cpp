@@ -39,6 +39,7 @@ namespace {
     return Omega_h::project_by_fit(&mesh, effectiveStrain);
   }
 
+  #ifdef ALBANY_MESHFIELDS
   template <typename ShapeField>
   void setFieldAtVertices(Omega_h::Mesh &mesh, Omega_h::Reals recoveredStrain,
       ShapeField field) {
@@ -48,6 +49,7 @@ namespace {
     MeshField::parallel_for(ExecutionSpace(), {0}, {mesh.nverts()},
         setFieldAtVertices, "setFieldAtVertices");
   }
+  #endif
 
   void printTriCount(Omega_h::Mesh &mesh, std::string_view prefix) {
     const auto nTri = mesh.nglobal_ents(2);
