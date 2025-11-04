@@ -439,6 +439,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   if (adapt_type=="None") {
     return adapt_data;
   }
+  const auto verbose = adapt_params.get<bool>("Verbose",false);
 
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
@@ -480,9 +481,11 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     return adapt_data;
   } else if (mesh->dim() == 2) {
     if (!isMeshfieldsEnabled()) {
-      std::cout << "Warning: 2D Omega_h mesh adaptation requires Meshfields. "
-        << "Configure Albany with ENABLE_MESHFIELDS=ON to enable it. "
-        << "... we will not adapt.\n";
+      if (!mesh->comm()->rank()) {
+        std::cout << "Warning: 2D Omega_h mesh adaptation requires Meshfields. "
+          << "Configure Albany with ENABLE_MESHFIELDS=ON to enable it. "
+          << "... we will not adapt.\n";
+      }
       return adapt_data;
     }
     TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="SPR", std::runtime_error,
@@ -514,14 +517,19 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 
     const auto [tgtLength, error] = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
     const auto errorThreshold = adapt_params.get<double>("Error Threshold",0.5);
-    std::cout << "SPR Computed Error: " << error
-              << " Error Threshold: " << errorThreshold << '\n';
+    if(verbose) {
+      //FIXME - should this be a per-rank output?
+      //      - does getSprSizeField have a reduction?
+      std::cout << "SPR Computed Error: " << error
+                << " Error Threshold: " << errorThreshold << '\n';
+    }
     if( error > errorThreshold ) { //trigger adaptation
       Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
       mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
           Omega_h::ArrayType::VectorND);
 
-      { // write vtk
+      const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
+      if( writeVtk ) {
         const auto outname = std::string("beforeAdapt2d");
         const std::string vtkFileName = outname + ".vtk";
         Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), 2);
@@ -529,14 +537,16 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
         Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), 1);
       }
 
-      printTriCount(*mesh, "beforeAdapt");
+      if(verbose) printTriCount(*mesh, "beforeAdapt");
       adapt_data->type = AdaptationType::Topology;
     }
     return adapt_data;
     #endif //ALBANY_MESHFIELDS
   } else { //meshdim != 1 && meshdim != 2
-    std::cout << "Only 1D and 2D (with Meshfields enabled) Omega_h mesh "
-      << "adaptation is supported ... we will not adapt.\n";
+    if (!mesh->comm()->rank()) {
+      std::cout << "Only 1D and 2D (with Meshfields enabled) Omega_h mesh "
+                << "adaptation is supported ... we will not adapt.\n";
+    }
     return adapt_data;
   }
 }
@@ -556,8 +566,8 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->dim()!=1 && ohMesh->dim()!=2, std::runtime_error,
       "Error! Adaptation not supported for this mesh. We only implemented simple 1d and 2d cases.\n");
 
-  std::string beforeAdaptName = "before_adapt" + std::to_string(adaptCount) + ".vtk";
-  Omega_h::vtk::write_parallel(beforeAdaptName, ohMesh.get());
+  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  const auto verbose = adapt_params.get<bool>("Verbose",false);
 
   if (ohMesh->dim() == 1) {
     // Note: the code below is hard-coding a simple adaptation for a 1d mesh,
@@ -566,11 +576,12 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     const auto desired_nelems = nelems*2;
 
     Omega_h::AdaptOpts opts(&(*ohMesh));
+    opts.verbosity = (verbose ? Omega_h::EACH_ADAPT : Omega_h::SILENT);
     opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
     opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
     while (double(nelems) < desired_nelems) {
       if (!ohMesh->has_tag(0, "metric")) {
-        std::cout << "mesh had no metric, adding implied and adapting to it\n";
+        if(verbose) std::cout << "mesh had no metric, adding implied and adapting to it\n";
         Omega_h::add_implied_metric_tag(ohMesh.get());
         Omega_h::adapt(ohMesh.get(), opts);
         nelems = ohMesh->nglobal_ents(ohMesh->dim());
@@ -580,32 +591,33 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       auto const metric_ncomps =
         Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
       ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
-      std::cout << "adapting to scaled metric\n";
+      if(verbose) std::cout << "adapting to scaled metric\n";
       Omega_h::adapt(ohMesh.get(), opts);
       nelems = ohMesh->nglobal_ents(ohMesh->dim());
-      std::cout << "mesh now has " << nelems << " total elements\n";
+      if(verbose) std::cout << "mesh now has " << nelems << " total elements\n";
     }
   } else if (ohMesh->dim() == 2 && isMeshfieldsEnabled()) {
 
     Omega_h::AdaptOpts opts(&(*ohMesh));
+    opts.verbosity = (verbose ? Omega_h::EACH_ADAPT : Omega_h::SILENT);
     opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
     opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
 
-    auto verbose = false;
     const auto tgtLength_oh = ohMesh->get_array<Omega_h::Real>(Omega_h::VERT, "tgtLength");
     const auto isos = Omega_h::isos_from_lengths(tgtLength_oh);
-
-    auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
     const auto min_size = adapt_params.get<double>("Minimum Edge Length",0.08);
     const auto max_size = adapt_params.get<double>("Maximum Edge Length",1.0);
     auto metric = Omega_h::clamp_metrics(ohMesh->nverts(), isos, min_size, max_size);
     Omega_h::grade_fix_adapt(&(*ohMesh), opts, metric, verbose);
 
-    printTriCount(*ohMesh, "afterAdapt");
+    if(verbose) printTriCount(*ohMesh, "afterAdapt");
   }
 
-  std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
-  Omega_h::vtk::write_parallel(afterAdaptName, ohMesh.get());
+  const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
+  if( writeVtk ) {
+    std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
+    Omega_h::vtk::write_parallel(afterAdaptName, ohMesh.get());
+  }
 
   //create node and side set tags
   m_mesh_struct->createNodeSets();

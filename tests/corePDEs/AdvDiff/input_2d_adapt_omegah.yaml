@@ -54,6 +54,8 @@ ANONYMOUS:
       Error Threshold: 0.3
       Minimum Edge Length: 0.02 # min desired edge length in physical space
       Maximum Edge Length: 1.0 # max desired edge length in physical space
+      Write VTK Files: false # write VTK files before and after adaptation
+      Verbose: false # write additional mesh adaptation info to stdout
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
