@@ -528,14 +528,6 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
           Omega_h::ArrayType::VectorND);
 
-      const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
-      if( writeVtk ) {
-        const auto outname = std::string("beforeAdapt2d");
-        const std::string vtkFileName = outname + ".vtk";
-        Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), 2);
-        const std::string vtkFileName_edges = outname + "_edges.vtk";
-        Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), 1);
-      }
 
       if(verbose) printTriCount(*mesh, "beforeAdapt");
       adapt_data->type = AdaptationType::Topology;
@@ -568,6 +560,17 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
   const auto verbose = adapt_params.get<bool>("Verbose",false);
+  const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
+
+  if( writeVtk ) {
+    const auto outname = std::string("before_adapt") + std::to_string(adaptCount);
+    const std::string vtkFileName = outname + ".vtk";
+    Omega_h::vtk::write_parallel(vtkFileName, &(*ohMesh), ohMesh->dim());
+    if (ohMesh->dim() == 2) {
+      const std::string vtkFileName_edges = outname + "_edges.vtk";
+      Omega_h::vtk::write_parallel(vtkFileName_edges, &(*ohMesh), Omega_h::EDGE);
+    }
+  }
 
   if (ohMesh->dim() == 1) {
     // Note: the code below is hard-coding a simple adaptation for a 1d mesh,
@@ -613,7 +616,6 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     if(verbose) printTriCount(*ohMesh, "afterAdapt");
   }
 
-  const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
   if( writeVtk ) {
     std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
     Omega_h::vtk::write_parallel(afterAdaptName, ohMesh.get());
