@@ -1,9 +1,9 @@
 group, site, buildname 
 Nightly, attaway.sandia.gov, Albany-Linux-4.18.0-553.53.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
 Nightly, attaway.sandia.gov, Trilinos-Linux-4.18.0-553.53.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
-Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.56.1.el8_10.x86_64-gcc-11.1.0-Release-Serial
-Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.56.1.el8_10.x86_64-gcc-11.1.0-Debug-FPE-Serial
-Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.56.1.el8_10.x86_64-gcc-11.1.0-Release-OpenMP
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.75.1.el8_10.x86_64-gcc-11.1.0-Debug-FPE-Serial
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.75.1.el8_10.x86_64-gcc-11.1.0-Release-Serial
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.75.1.el8_10.x86_64-gcc-11.1.0-Release-OpenMP 
 Nightly, cee-compute002, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-clang-11.0.1-Release-Serial
 Nightly, cee-compute002, Trilinos-Linux-4.18.0-553.63.1.el8_10.x86_64-clang-11.0.1-Release-Serial
 Nightly, cee-compute004, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-Intel(R)-18.0.0-Release-Serial
@@ -14,5 +14,5 @@ Nightly, cee-compute030, Trilinos-Linux-4.18.0-553.63.1.el8_10.x86_64-gcc-10.3.0
 Nightly, cee-compute030, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-gcc-10.3.0-Debug-Serial
 Nightly, cee-compute031, Albany-Linux-4.18.0-553.63.1.el8_10.x86_64-gcc-10.3.0-Release-Serial
 Nightly, cee-compute031, Trilinos-Linux-4.18.0-553.63.1.el8_10.x86_64-gcc-10.3.0-Release-Serial
-Nightly, hayka.ca.sandia.gov, Albany-Linux-5.14.0-570.22.1.el9_6.x86_64-gcc-11.4.0-Release
-Nightly, hayka.ca.sandia.gov, Trilinos-Linux-5.14.0-570.22.1.el9_6.x86_64-gcc-11.4.0-Release
+Nightly, hayka.ca.sandia.gov, Albany-Linux-5.14.0-570.44.1.el9_6.x86_64-gcc-11.4.0-Release
+Nightly, hayka.ca.sandia.gov, Trilinos-Linux-5.14.0-570.44.1.el9_6.x86_64-gcc-11.4.0-Release
