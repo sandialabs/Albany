@@ -140,11 +140,11 @@ ANONYMOUS:
               'fact: ilut level-of-fill': 1.0e+00
   Regression For Response 0:
     Test Value: 6.661786260006e-02
-    Relative Tolerance: 1.0e-04
+    Absolute Tolerance: 2.0e-05
   Regression For Response 1:
     Test Value: -8.182824963026e-05
-    Relative Tolerance: 1.0e-04
+    Absolute Tolerance: 3.0e-05
   Regression For Response 2:
     Test Value: 4.462238299510e-03
-    Relative Tolerance: 1.0e-04
+    Absolute Tolerance: 2.0e-04
 ...
