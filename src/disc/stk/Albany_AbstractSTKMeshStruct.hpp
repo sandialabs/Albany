@@ -196,16 +196,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   virtual double
   restartDataTime() const = 0;
 
-  // Flag for transforming STK mesh; currently only needed for LandIce/Aeras
-  // problems
-  std::string transformType;
-  // alpha and L are parameters read in from ParameterList for LandIce problems
-  double felixAlpha;
-  double felixL;
-  // xShift, yShift and zShift are for "Right-shift" transformMesh routine
-  double xShift, yShift, zShift;
-  // beta values for Tanh Boundary Laner tranformMesh routine
-  Teuchos::Array<double> betas_BLtransform;
   // scale (for mesh generated inside Albany via STK1D, STK2D or STK3D)
   Teuchos::Array<double> scales;
 

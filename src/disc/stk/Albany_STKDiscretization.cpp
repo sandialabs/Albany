@@ -203,7 +203,7 @@ STKDiscretization::transformMesh()
   using std::endl;
   AbstractSTKFieldContainer::STKFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
-  std::string transformType = stkMeshStruct->transformType;
+  auto transformType = discParams->get<std::string>("Transform Type", "None");
 
   std::vector<stk::mesh::Entity> overlapnodes;
   stk::mesh::Selector selector(metaData->locally_owned_part());
@@ -232,9 +232,9 @@ STKDiscretization::transformMesh()
     }
   } else if (transformType == "Shift") {
     //*out << "Shift!\n";
-    double xshift = stkMeshStruct->xShift;
-    double yshift = stkMeshStruct->yShift;
-    double zshift = stkMeshStruct->zShift;
+    double xshift = discParams->get("x-shift", 0.0);
+    double yshift = discParams->get("y-shift", 0.0);
+    double zshift = discParams->get("z-shift", 0.0);
     //*out << "xshift, yshift, zshift = " << xshift << ", " << yshift << ", " <<
     // zshift << '\n';
     const int numDim = stkMeshStruct->numDim;
@@ -262,18 +262,18 @@ STKDiscretization::transformMesh()
     //*out << "IKT Tanh Boundary Layer!\n";
 
     /* The way this transform type works is it takes a uniform STK mesh of [0,L]
-   generated within Albany and applies the following transformation to it:
+       generated within Albany and applies the following transformation to it:
 
-   x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
+       x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
 
-   for a specified double beta (and similarly for x and y coordinates).  The
-   result is a mesh that is finer near x = 0 and coarser near x = L.  The
-   relative coarseness/fineness is controlled by the parameter beta: large beta
-   => finer boundary layer near x = 0.  If beta = 0, no transformation is
-   applied.*/
+       for a specified double beta (and similarly for x and y coordinates).  The
+       result is a mesh that is finer near x = 0 and coarser near x = L.  The
+       relative coarseness/fineness is controlled by the parameter beta: large beta
+       => finer boundary layer near x = 0.  If beta = 0, no transformation is
+       applied.*/
 
-    Teuchos::Array<double> betas  = stkMeshStruct->betas_BLtransform;
-    const int              numDim = stkMeshStruct->numDim;
+    auto betas = discParams->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
+    const int  numDim = stkMeshStruct->numDim;
     ALBANY_ASSERT(
         betas.length() >= numDim,
         "\n Length of Betas BL Transform array (= "
@@ -334,8 +334,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test A!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -364,8 +364,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test B!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -395,8 +395,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test C and D!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -442,7 +442,7 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Confined shelf transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double L = discParams->get("LandIce L", 1.0);
     cout << "L: " << L << endl;
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
@@ -462,7 +462,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Circular shelf transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
 #endif
@@ -490,7 +491,7 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "FO XZ MMS transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double L = discParams->get("LandIce L", 1.0);
     // hard-coding values of parameters...  make sure these are same as in the
     // FOStokes body force evaluator!
     double alpha0 = 4e-5;
@@ -1230,6 +1231,9 @@ STKDiscretization::computeWorksetInfo()
     }
   }
 
+  auto transformType = discParams->get<std::string>("Transform Type", "None");
+  double alpha = discParams->get("LandIce alpha", 0.0);
+  alpha *= M_PI / 180.;  // convert to radians
   auto& elemStateArrays = stkMeshStruct->get_field_accessor()->getElemStates();
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
@@ -1249,10 +1253,6 @@ STKDiscretization::computeWorksetInfo()
                   xleak[d] = stkMeshStruct->PBCStruct.scale[d];
                 else
                   xleak[k] = m_ws_elem_coords[b][i][j][k];
-              std::string transformType = stkMeshStruct->transformType;
-              double      alpha         = stkMeshStruct->felixAlpha;
-              alpha *= M_PI / 180.;  // convert alpha, read in from
-                                   // ParameterList, to radians
               if ((transformType == "ISMIP-HOM Test A" ||
                    transformType == "ISMIP-HOM Test B" ||
                    transformType == "ISMIP-HOM Test C" ||

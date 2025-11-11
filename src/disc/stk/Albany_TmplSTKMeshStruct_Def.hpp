@@ -232,14 +232,6 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Set the element types in the EBs
 
-  //get the type of transformation of STK mesh
-  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh
-  felixAlpha = params->get("LandIce alpha", 0.0); //for LandIce problems
-  felixL = params->get("LandIce L", 1.0); //for LandIce problems
-  xShift = params->get("x-shift", 0.0);
-  yShift = params->get("y-shift", 0.0);
-  zShift = params->get("z-shift", 0.0);
-  betas_BLtransform = params->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
 
   points_per_edge = params->get("Element Degree", 1) + 1; //get # of nodes per edge for Aeras::SpectralDiscretization (Aeras problems)
 
