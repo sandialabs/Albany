@@ -232,15 +232,6 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Set the element types in the EBs
 
-
-  points_per_edge = params->get("Element Degree", 1) + 1; //get # of nodes per edge for Aeras::SpectralDiscretization (Aeras problems)
-
-  //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
-  contigIDs = params->get("Contiguous IDs", true);
-
-  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)?
-  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
-
   for(unsigned int i = 0; i < numEB; i++){
     if (triangles)
       stk::mesh::set_topology(*partVec[i], optional_element_type);

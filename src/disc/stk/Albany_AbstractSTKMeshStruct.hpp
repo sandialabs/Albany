@@ -199,17 +199,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   // scale (for mesh generated inside Albany via STK1D, STK2D or STK3D)
   Teuchos::Array<double> scales;
 
-  // Points per edge in creating enriched spectral mesh in
-  // Aeras::SpectralDiscretization (for Aeras only).
-  int points_per_edge;
-
-  bool contigIDs;  // boolean specifying if ascii mesh has contiguous IDs; only
-                   // used for ascii meshes on 1 processor
-
-  // boolean flag for writing coordinates to matrix market file (e.g., for ML
-  // analysis)
-  bool writeCoordsToMMFile;
-
   // Info to map element block to physics set
   bool allElementBlocksHaveSamePhysics;
 

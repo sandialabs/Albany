@@ -577,8 +577,9 @@ STKDiscretization::writeCoordsToMatrixMarket() const
 #else
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
+  auto writeCoordsToMMFile = discParams->get("Write Coordinates to MatrixMarket", false);
   if ((rigidBodyModes->isTekoUsed() || rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
-      stkMeshStruct->writeCoordsToMMFile) {
+      writeCoordsToMMFile) {
     *out << "Writing mesh coordinates to Matrix Market file." << std::endl;
     writeMatrixMarket(coordMV, "coords");
   }

@@ -143,15 +143,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
     exoOutFile = params->get<std::string>("Exodus Output File Name");
   exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
 
-
-  points_per_edge = params->get("Element Degree", 1) + 1;
-
-  //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
-  contigIDs = params->get("Contiguous IDs", true);
-
-  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)?
-  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
-
   transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
 
   fieldContainer->addStateStructs(sis);
