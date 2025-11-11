@@ -40,13 +40,11 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
     const Teuchos::RCP<Teuchos::ParameterList>&   params_,
     const Teuchos::RCP<stk::mesh::MetaData>&      metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&      bulkData_,
-    const int                                     numDim_,
     const int                                     num_params_)
     : GenericSTKFieldContainer(
           params_,
           metaData_,
           bulkData_,
-          numDim_,
           num_params_)
 {
   // Do the coordinates
@@ -59,13 +57,14 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
         &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
   }
 
+  int numDim = metaData_->spatial_dimension();
   stk::mesh::put_field_on_mesh(
-      *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
+      *this->coordinates_field, metaData_->universal_part(), numDim, nullptr);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
 #endif
 
-  if (numDim_ == 3) {
+  if (numDim == 3) {
     this->coordinates_field3d = this->coordinates_field;
   } else {
     this->coordinates_field3d = &metaData_->declare_field<double>(
@@ -88,7 +87,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
     const Teuchos::RCP<stk::mesh::MetaData>&           metaData_,
     const Teuchos::RCP<stk::mesh::BulkData>&           bulkData_,
     const int                                          neq_,
-    const int                                          numDim_,
     const Teuchos::Array<Teuchos::Array<std::string>>& solution_vector,
     const int                                          num_params_)
     : GenericSTKFieldContainer(
@@ -96,7 +94,6 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
           metaData_,
           bulkData_,
           neq_,
-          numDim_,
           num_params_)
 {
   typedef typename AbstractSTKFieldContainer::STKFieldType       SFT;
@@ -116,6 +113,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
           "Check definition of solution vector and its derivatives.\n");
     }
 
+    int numDim = metaData_->spatial_dimension();
     for (int vec_num = 0; vec_num < solution_vector.size(); vec_num++) {
       if (solution_vector[vec_num].size() ==
           0) {  // Do the default solution vector
@@ -162,7 +160,7 @@ MultiSTKFieldContainer::MultiSTKFieldContainer(
 
         for (int i = 0; i < solution_vector[vec_num].size(); i += 2) {
           if (solution_vector[vec_num][i + 1] == "V") {
-            len = numDim_;  // vector
+            len = numDim;  // vector
             accum += len;
             SFT* solution = &metaData_->declare_field<double>(
                 stk::topology::NODE_RANK, solution_vector[vec_num][i]);

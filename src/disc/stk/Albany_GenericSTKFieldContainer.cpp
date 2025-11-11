@@ -24,14 +24,12 @@ GenericSTKFieldContainer (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
                           const int neq_,
-                          const int numDim_,
                           const int num_params_)
  : AbstractSTKFieldContainer (neq_>0)
  , metaData(metaData_)
  , bulkData(bulkData_)
  , params(params_)
  , neq (neq_)
- , numDim(numDim_)
  , num_params(num_params_)
 {
   if (neq_>0) {
@@ -43,9 +41,8 @@ GenericSTKFieldContainer::
 GenericSTKFieldContainer (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-                          const int numDim_,
                           const int num_params_)
- : GenericSTKFieldContainer(params_,metaData_,bulkData_,0,numDim_,num_params_)
+ : GenericSTKFieldContainer(params_,metaData_,bulkData_,0,num_params_)
 {
   // Nothing to do here
 }
