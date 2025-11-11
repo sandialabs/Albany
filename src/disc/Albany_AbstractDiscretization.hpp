@@ -30,7 +30,7 @@ public:
   using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
   using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
-  static std::string solution_dof_name () { return "ordinary_solution"; }
+  static std::string solution_dof_name () { return "solution"; }
   static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
