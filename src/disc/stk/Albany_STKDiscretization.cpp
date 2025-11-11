@@ -1797,48 +1797,26 @@ STKDiscretization::updateMesh()
 
 void STKDiscretization::setFieldData()
 {
+  using strarr_t = Teuchos::Array<std::string>;
+
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
-  Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
-  auto mSTKFieldContainer = Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer>(fieldContainer,false);
-  auto oSTKFieldContainer = Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer>(fieldContainer,false);
+  auto bulkData = stkMeshStruct->bulkData;
+  auto metaData = stkMeshStruct->metaData;
 
-  int num_time_deriv, numDim, num_params;
-  Teuchos::RCP<Teuchos::ParameterList> params;
+  int  num_time_deriv = discParams->get<int>("Number Of Time Derivatives");
+  bool user_specified_solution_components = false;
+  user_specified_solution_components |= discParams->get<strarr_t>("Solution Vector Components", {}).size()>0;
+  user_specified_solution_components |= num_time_deriv>=1 and discParams->get<strarr_t>("SolutionDot Vector Components", {}).size()>0;
+  user_specified_solution_components |= num_time_deriv>=2 and discParams->get<strarr_t>("SolutionDotDot Vector Components", {}).size()>0;
 
-  auto gSTKFieldContainer = Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer>(fieldContainer,false);
-  params = gSTKFieldContainer->getParams();
-  numDim = gSTKFieldContainer->getNumDim();
-  num_params = gSTKFieldContainer->getNumParams();
-
-  num_time_deriv = params->get<int>("Number Of Time Derivatives");
-
-  Teuchos::Array<std::string> default_solution_vector; // Empty
-  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
-  solution_vector.resize(num_time_deriv + 1);
-  solution_vector[0] =
-    params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
-
-
-  if(num_time_deriv >= 1){
-    solution_vector[1] =
-      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
-  }
-
-  if(num_time_deriv >= 2){
-    solution_vector[2] =
-      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
-  }
-
-  if (Teuchos::nonnull(mSTKFieldContainer)) {
-    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, m_neq, numDim, solution_vector, num_params));
-  } else if (Teuchos::nonnull(oSTKFieldContainer)) {
-    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, m_neq, numDim, num_params));
+  int num_params = stkMeshStruct->num_params;
+  if (user_specified_solution_components) {
+    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(discParams, metaData, bulkData, num_params));
   } else {
-    ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
+    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(discParams, metaData, bulkData, num_params));
   }
+  solutionFieldContainer->setSolutionFieldsMetadata(m_neq);
 
   // Proceed to set the solution field data in the side meshes as well (if any)
   for (auto& it : sideSetDiscretizations) {

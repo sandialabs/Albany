@@ -28,7 +28,7 @@ public:
 
   using STKState   = std::vector<STKFieldType*>;
 
-  AbstractSTKFieldContainer (bool solutionFieldContainer_) : solutionFieldContainer(solutionFieldContainer_) {}
+  AbstractSTKFieldContainer () = default;
 
   //! Destructor
   virtual ~AbstractSTKFieldContainer() = default;
@@ -95,6 +95,7 @@ public:
 
   virtual void transferSolutionToCoords() = 0;
 
+  virtual void setSolutionFieldsMetadata (const int neq) = 0;
 protected:
   // Note: for 3d meshes, coordinates_field3d==coordinates_field (they point to
   // the same field).
@@ -110,8 +111,6 @@ protected:
   STKState                  qpscalar_states;
   STKState                  qpvector_states;
   STKState                  qptensor_states;
-
-  const bool solutionFieldContainer;
 };
 
 }  // namespace Albany

@@ -22,27 +22,10 @@ namespace Albany {
 GenericSTKFieldContainer::
 GenericSTKFieldContainer (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
-                          const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-                          const int neq_,
-                          const int num_params_)
- : AbstractSTKFieldContainer (neq_>0)
- , metaData(metaData_)
- , bulkData(bulkData_)
- , params(params_)
- , neq (neq_)
- , num_params(num_params_)
-{
-  if (neq_>0) {
-    save_solution_field = params_->get("Save Solution Field", true);
-  }
-}
-
-GenericSTKFieldContainer::
-GenericSTKFieldContainer (const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                          const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
-                          const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-                          const int num_params_)
- : GenericSTKFieldContainer(params_,metaData_,bulkData_,0,num_params_)
+                          const Teuchos::RCP<stk::mesh::BulkData>& bulkData_)
+ : params (params_)
+ , metaData (metaData_)
+ , bulkData (bulkData_)
 {
   // Nothing to do here
 }
@@ -377,5 +360,68 @@ transferElemStateToNodeState (const std::string& name)
     }
   }
 }
+
+void GenericSTKFieldContainer::setGeometryFieldsMetadata ()
+{
+  int numDim = metaData->spatial_dimension();
+  auto& universal_part = metaData->universal_part();
+
+  this->coordinates_field = add_field_to_mesh<double> ("coordinates", true, false, numDim);
+
+  if (numDim == 3) {
+    this->coordinates_field3d = this->coordinates_field;
+  } else {
+    this->coordinates_field3d = add_field_to_mesh<double> ("coordinates3d", true, false, 3);
+  }
+
+  // Processor rank field, a scalar
+  this->proc_rank_field = add_field_to_mesh<int> ("proc_rank", false, false, 0);
+}
+
+template<typename T>
+stk::mesh::Field<T>*
+GenericSTKFieldContainer::
+add_field_to_mesh (const std::string& name,
+                   const bool nodal,
+                   const bool transient,
+                   const int ncmp)
+{
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+
+  auto rank = nodal ? NODE_RANK : ELEM_RANK;
+
+  auto fptr = metaData->get_field<T>(rank,name);
+  if (not fptr) {
+    fptr = &metaData->declare_field<T>(rank,name);
+  }
+  auto& universal_part = metaData->universal_part();
+  if (ncmp>0)
+    stk::mesh::put_field_on_mesh(*fptr,universal_part,ncmp,nullptr);
+  else
+    stk::mesh::put_field_on_mesh(*fptr,universal_part,nullptr);
+#ifdef ALBANY_SEACAS
+  if (transient)
+    stk::io::set_field_role(*fptr, Ioss::Field::TRANSIENT);
+  else
+    stk::io::set_field_role(*fptr, Ioss::Field::MESH);
+#endif
+
+  return fptr;
+}
+
+// Explicit instantiation
+template stk::mesh::Field<int>*
+GenericSTKFieldContainer::
+add_field_to_mesh<int> (const std::string& name,
+                        const bool nodal,
+                        const bool transient,
+                        const int);
+template stk::mesh::Field<double>*
+GenericSTKFieldContainer::
+add_field_to_mesh<double> (const std::string& name,
+                           const bool nodal,
+                           const bool transient,
+                           const int);
 
 } // namespace Albany

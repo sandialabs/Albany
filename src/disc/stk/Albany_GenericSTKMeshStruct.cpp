@@ -17,7 +17,6 @@
 #include "Albany_Utils.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
-#include "Albany_MultiSTKFieldContainer.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -99,43 +98,8 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
      bulkData = Teuchos::rcp(bulkDataPtr.release());
   }
 
-  // Build the container for the STK fields
-  Teuchos::Array<std::string> default_solution_vector; // Empty
-  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
-  solution_vector.resize(num_time_deriv + 1);
-  bool user_specified_solution_components = false;
-  solution_vector[0] =
-    params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
-
-  if(solution_vector[0].length() > 0)
-     user_specified_solution_components = true;
-
-  if(num_time_deriv >= 1){
-    solution_vector[1] =
-      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
-    if(solution_vector[1].length() > 0)
-       user_specified_solution_components = true;
-  }
-
-  if(num_time_deriv >= 2){
-    solution_vector[2] =
-      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
-    if(solution_vector[2].length() > 0)
-       user_specified_solution_components = true;
-  }
-
-  Teuchos::Array<std::string> default_residual_vector; // Empty
-  Teuchos::Array<std::string> residual_vector =
-    params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
-
-  // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
-  if(user_specified_solution_components && (residual_vector.length() > 0)){
-    this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(params,
-        metaData, bulkData, num_params));
-  } else {
-    this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
-        metaData, bulkData, num_params));
-  }
+  // Build the container for the STK fields and start adding geometry fields (like coords, proc_rank)
+  this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,metaData,bulkData,num_params,true));
 
 // Exodus is only for 2D and 3D. Have 1D version as well
   exoOutput = params->isType<std::string>("Exodus Output File Name");

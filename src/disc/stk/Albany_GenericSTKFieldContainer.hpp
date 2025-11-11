@@ -26,14 +26,7 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer
 public:
   GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                            const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
-                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-                           const int num_params_);
-
-  GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
-                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
-                           const int neq_,
-                           const int num_params_);
+                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_);
 
   virtual ~GenericSTKFieldContainer() = default;
 
@@ -49,19 +42,21 @@ public:
   Teuchos::RCP<stk::mesh::MetaData> getMetaData() {return metaData;}
   Teuchos::RCP<stk::mesh::BulkData> getBulkData() {return bulkData;}
 
-  int getNumParams() const {return num_params; }
-
 protected:
+
+  void setGeometryFieldsMetadata ();
+
+  template<typename T>
+  stk::mesh::Field<T>* add_field_to_mesh(const std::string& name,
+                                         const bool nodal,
+                                         const bool transient,
+                                         const int ncmp);
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;
   Teuchos::RCP<Teuchos::ParameterList> params;
 
-
-  int neq;
-  int num_params = 0;
-
-  bool save_solution_field = false;
+  bool solutionFieldContainer = false;
 };
 
 } // namespace Albany
