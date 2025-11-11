@@ -254,9 +254,21 @@ DiscretizationFactory::createDiscretization(
 
     auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
 
-    setMeshStructFieldData(sis, side_set_sis);
+    // Set data and solution fields info
+    meshStruct->setFieldData(comm,sis,side_set_sis);
     disc->setFieldData();
-    setMeshStructBulkData();
+
+    // Set mesh info
+    meshStruct->setBulkData(comm);
+    for (auto& it : meshStruct->sideSetMeshStructs) {
+      // Some meshes (e.g. extruded) may have already set the bulk data in some
+      // side meshes during the call above, so check first
+      if (not it.second->isBulkDataSet()) {
+        it.second->setBulkData(comm);
+      }
+    }
+
+    // Create internal disc structures
     disc->updateMesh();
 
     return disc;
@@ -266,35 +278,6 @@ Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> >
 DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
     meshStruct = mesh;
     return meshStruct->meshSpecs;
-}
-
-void
-DiscretizationFactory::setMeshStructFieldData(
-        const Teuchos::RCP<StateInfoStruct>& sis) {
-    setMeshStructFieldData(sis, empty_side_set_sis);
-}
-
-void
-DiscretizationFactory::setMeshStructFieldData(
-        const Teuchos::RCP<StateInfoStruct>& sis,
-        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-  meshStruct->setFieldData(comm,sis,side_set_sis);
-}
-
-void DiscretizationFactory::
-setMeshStructBulkData()
-{
-  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
-  meshStruct->setBulkData(comm);
-  for (auto& it : meshStruct->sideSetMeshStructs) {
-    // Some meshes (e.g. extruded) may have already set the bulk data in some
-    // side meshes during the call above, so check first
-    if (not it.second->isBulkDataSet()) {
-      it.second->setBulkData(comm);
-    }
-  }
 }
 
 Teuchos::RCP<AbstractDiscretization>
