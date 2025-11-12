@@ -101,14 +101,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   // Build the container for the STK fields and start adding geometry fields (like coords, proc_rank)
   this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,metaData,bulkData,num_params,true));
 
-// Exodus is only for 2D and 3D. Have 1D version as well
-  exoOutput = params->isType<std::string>("Exodus Output File Name");
-  if (exoOutput)
-    exoOutFile = params->get<std::string>("Exodus Output File Name");
-  exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
-
-  transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
-
   fieldContainer->addStateStructs(sis);
   for (auto& [ss_name, ss_mesh] : sideSetMeshStructs) {
     if (not ss_mesh->isFieldDataSet()) {

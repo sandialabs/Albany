@@ -162,13 +162,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
 
   int  numDim;
 
-  bool        exoOutput;
-  std::string exoOutFile;
-  int         exoOutputInterval;
   mutable GO  max_node_gid = -1;
   mutable GO  max_elem_gid = -1;
-
-  bool transferSolutionToCoords;
 
   int num_time_deriv;
 

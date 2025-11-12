@@ -82,6 +82,11 @@ STKDiscretization::STKDiscretization(
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
     }
   }
+
+  exoOutFile = discParams->get<std::string>("Exodus Output File Name", "");
+  exoOutput = exoOutFile!="";
+  exoOutputInterval = discParams->get<int>("Exodus Write Interval", 1);
+  transferSolutionToCoords = discParams->get<bool>("Transfer Solution to Coordinates", false);
 }
 
 STKDiscretization::~STKDiscretization()
@@ -714,7 +719,7 @@ STKDiscretization::writeMeshDatabaseToFile(
 #else
 #ifdef ALBANY_SEACAS
   TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution to file");
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+  if (exoOutput && transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();
 
     if (!mesh_data.is_null()) {
@@ -725,9 +730,8 @@ STKDiscretization::writeMeshDatabaseToFile(
   }
 
   // Skip this write unless the proper interval has been reached
-  if ((stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
-      (force_write_solution == true) ) {
+  if (exoOutput and
+      (outputInterval % exoOutputInterval == 0 or force_write_solution)) {
     double time_label = monotonicTimeLabel(time);
 
     mesh_data->begin_output_step(outputFileIdx, time_label);
@@ -747,9 +751,9 @@ STKDiscretization::writeMeshDatabaseToFile(
 
     if (comm->getRank() == 0) {
       *out << "STKDiscretization::writeMeshDatabaseToFile: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " << out_step << " in file "
-           << stkMeshStruct->exoOutFile << std::endl;
+      if (time_label != time)
+        *out << " with label " << time_label;
+      *out << " to index " << out_step << " in file " << exoOutFile << std::endl;
     }
   }
   outputInterval++;
@@ -1580,10 +1584,8 @@ void
 STKDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput) {
+  if (exoOutput) {
     outputInterval = 0;
-
-    std::string str = stkMeshStruct->exoOutFile;
 
     Ioss::Init::Initializer io;
 
@@ -1593,7 +1595,7 @@ STKDiscretization::setupExodusOutput()
     //IKT, 8/16/19: The following is needed to get correct output file for Schwarz problems
     //Please see: https://github.com/trilinos/Trilinos/issues/5479
     mesh_data->property_add(Ioss::Property("FLUSH_INTERVAL", 1));
-    outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
+    outputFileIdx = mesh_data->create_output_mesh(exoOutFile, stk::io::WRITE_RESULTS);
 
     // Adding mesh global variables
     /*
@@ -1636,7 +1638,7 @@ STKDiscretization::setupExodusOutput()
   }
 
 #else
-  if (stkMeshStruct->exoOutput) {
+  if (exoOutput) {
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
          << " disabling exodus output \n";
   }
