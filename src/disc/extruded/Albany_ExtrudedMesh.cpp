@@ -27,18 +27,18 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
       "[ExtrudedMesh] Error! Invalid parameter list pointer.\n");
 
   // Create layered mesh numbering objects
+  constexpr auto COLUMN = LayeredMeshOrdering::COLUMN;
+  constexpr auto LAYER  = LayeredMeshOrdering::LAYER;
   const auto num_layers = m_params->get<int>("NumLayers");
-  const auto ordering = m_params->get("Columnwise Ordering", false)
-                      ? LayeredMeshOrdering::COLUMN
-                      : LayeredMeshOrdering::LAYER;
+  const auto ordering = m_params->get("Columnwise Ordering", false) ? COLUMN : LAYER;
   TEUCHOS_TEST_FOR_EXCEPTION (num_layers<=0, Teuchos::Exceptions::InvalidParameterValue,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
 
   m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
-  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,ordering));
+  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,COLUMN));
   m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
-  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,ordering));
+  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,COLUMN));
 
   // Create map part->basal_part
   // upper/basal/bot/top parts map to the full basal mesh
