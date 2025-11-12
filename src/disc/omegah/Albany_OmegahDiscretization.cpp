@@ -2,6 +2,7 @@
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_StringUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_KokkosTypes.hpp" // PHX::Device::
 
 #include "OmegahConnManager.hpp"
 #include "Omega_h_adapt.hpp"
@@ -18,9 +19,8 @@
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
-//FIXME!
-using ExecutionSpace = Kokkos::DefaultExecutionSpace;
-using MemorySpace = Kokkos::DefaultExecutionSpace::memory_space;
+using ExecutionSpace = PHX::Device::execution_space;
+using MemorySpace = PHX::Device::memory_space;
 
 namespace {
   constexpr bool isMeshfieldsEnabled() {
