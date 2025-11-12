@@ -526,6 +526,10 @@ if (ALBANY_OMEGAH)
   target_link_libraries(albanyLib Omega_h::omega_h)
 endif()
 
+if (ALBANY_MESHFIELDS)
+  target_link_libraries(albanyLib meshfields)
+endif()
+
 install(TARGETS albanyLib EXPORT albany-export
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

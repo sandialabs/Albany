@@ -30,6 +30,9 @@
 // Whether the Omega_h interface is enabled
 #cmakedefine ALBANY_OMEGAH
 
+// Whether the MeshFields interface is enabled
+#cmakedefine ALBANY_MESHFIELDS
+
 // Whether this is a nightly test build
 #cmakedefine ALBANY_NIGHTLY_TEST
 
