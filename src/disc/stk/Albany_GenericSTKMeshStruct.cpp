@@ -82,6 +82,9 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(), std::logic_error,
        "[GenericSTKMeshStruct::SetupFieldData] metaData->initialize(numDim) not yet called" << std::endl);
 
+  TEUCHOS_TEST_FOR_EXCEPTION (m_field_data_set, std::runtime_error,
+    "[GenericSTKMeshStruct::setFieldData] Error! Field data was already set.\n");
+
   if (bulkData.is_null()) {
      auto mpiComm = getMpiCommFromTeuchosComm(comm);
      stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(mpiComm);

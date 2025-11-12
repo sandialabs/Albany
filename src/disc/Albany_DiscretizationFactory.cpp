@@ -256,9 +256,6 @@ DiscretizationFactory::createDiscretization(
 
     setMeshStructFieldData(sis, side_set_sis);
     disc->setFieldData();
-    for (auto it : disc->getSideSetDiscretizations()) {
-      it.second->setFieldData();
-    }
     setMeshStructBulkData();
     disc->updateMesh();
 
@@ -292,9 +289,8 @@ setMeshStructBulkData()
   TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
   meshStruct->setBulkData(comm);
   for (auto& it : meshStruct->sideSetMeshStructs) {
-    // For extruded meshes, the bulk data of the basal mesh
-    // should be set from inside the extruded mesh call,
-    // during the 'setBulkData' call above
+    // Some meshes (e.g. extruded) may have already set the bulk data in some
+    // side meshes during the call above, so check first
     if (not it.second->isBulkDataSet()) {
       it.second->setBulkData(comm);
     }

@@ -1838,6 +1838,11 @@ void STKDiscretization::setFieldData()
   } else {
     ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
   }
+
+  // Proceed to set the solution field data in the side meshes as well (if any)
+  for (auto& it : sideSetDiscretizations) {
+    it.second->setFieldData();
+  }
 }
 
 Teuchos::RCP<DOFManager>
