@@ -75,11 +75,17 @@ STKDiscretization::STKDiscretization(
   m_neq = neq_;
 
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
-    for (auto it : stkMeshStruct->sideSetMeshStructs) {
-      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
-      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, m_neq, stk_mesh, comm));
-      sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
-      sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
+    auto ss_discretizations_params = Teuchos::sublist(discParams,"Side Set Discretizations");
+    for (const auto& [ss_name,ss_mesh] : stkMeshStruct->sideSetMeshStructs) {
+      // Extract ss disc params, and ensure important params are synced with main disc params
+      auto ss_disc_params = Teuchos::sublist(ss_discretizations_params,ss_name);
+      ss_disc_params->set("Number Of Time Derivatives",discParams->get<int>("Number Of Time Derivatives"));
+      ss_disc_params->set("Sensitivity Method",discParams->get<std::string>("Sensitivity Method","None"));
+
+      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,true);
+      auto side_disc = Teuchos::rcp(new STKDiscretization(ss_disc_params, m_neq, stk_mesh, comm));
+      sideSetDiscretizations.insert(std::make_pair(ss_name, side_disc));
+      sideSetDiscretizationsSTK.insert(std::make_pair(ss_name, side_disc));
     }
   }
 
