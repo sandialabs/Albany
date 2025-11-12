@@ -205,7 +205,6 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   // Info for periodic BCs -- only for hand-coded STK meshes
   struct PeriodicBCStruct PBCStruct;
 
-
   virtual void
   buildCellSideNodeNumerationMap(
       const std::string&              sideSetName,
@@ -215,6 +214,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   // Useful for loading side meshes from file
   bool side_maps_present = false;
   bool ignore_side_maps  = false;
+
+  int num_params;
 
  protected:
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer;

@@ -1948,7 +1948,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   // Solution oscillates. We need to half dx
   auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
-  int num_params = mesh1d->getNumParams();
+  int num_params = mesh1d->num_params;
   int ne_x = discParams->get<int>("1D Elements");
   auto& adapt_params = discParams->sublist("Mesh Adaptivity");
   discParams->set("Workset Size", stkMeshStruct->meshSpecs()[0]->worksetSize);

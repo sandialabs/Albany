@@ -48,13 +48,13 @@
 namespace Albany
 {
 
-GenericSTKMeshStruct::GenericSTKMeshStruct(
-    const Teuchos::RCP<Teuchos::ParameterList>& params_,
-    const int numDim_,
-    const int numParams_)
-    : params(params_),
-      num_params(numParams_)
+GenericSTKMeshStruct::
+GenericSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                      const int numDim_,
+                      const int numParams_)
+ : params(params_)
 {
+  num_params = numParams_;
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
   metaData->use_simple_fields();
 
