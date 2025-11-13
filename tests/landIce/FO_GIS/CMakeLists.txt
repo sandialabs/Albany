@@ -117,15 +117,18 @@ if (ALBANY_IFPACK2)
   set_tests_properties(${testName}
                        PROPERTIES
                        LABELS "LandIce;Forward"
-                       FIXTURES_REQUIRED PopulateMeshes)
+                       FIXTURES_REQUIRED PopulateMeshes
+                       FIXTURES_SETUP ${testName})
 
+  # Logically extruded mesh
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_extruded.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_extruded.yaml)
   add_test(${testName}_extruded ${Albany.exe} input_fo_gis_unstruct_extruded.yaml)
   set_tests_properties(${testName}_extruded
                        PROPERTIES
                        LABELS "LandIce;Forward"
-                       FIXTURES_REQUIRED PopulateMesh2d)
+                       FIXTURES_REQUIRED PopulateMesh2d
+                       FIXTURES_SETUP ${testName}_extruded)
 
   # Memoization run
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_mem.yaml
@@ -145,7 +148,17 @@ if (ALBANY_IFPACK2)
                           PROPERTIES
                           LABELS "LandIce;Forward"
                           RUN_SERIAL TRUE
-                          DEPENDS ${testName})
+                          FIXTURES_REQUIRED ${testName})
+
+    # Restart the logically extruded mesh test
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_extruded_restart.yaml
+                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_extruded_restart.yaml)
+    add_test(${testName}_extruded_restart ${Albany.exe} input_fo_gis_unstruct_extruded_restart.yaml)
+    set_tests_properties(${testName}_extruded_restart
+                          PROPERTIES
+                          LABELS "LandIce;Forward"
+                          RUN_SERIAL TRUE
+                          FIXTURES_REQUIRED ${testName}_extruded)
   endif()
 endif()
 
