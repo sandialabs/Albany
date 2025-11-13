@@ -1827,6 +1827,7 @@ void STKDiscretization::setFieldData()
     solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(discParams, metaData, bulkData, num_params));
   }
   solutionFieldContainer->setSolutionFieldsMetadata(m_neq);
+  m_solution_mfa = solutionFieldContainer;
 
   // Proceed to set the solution field data in the side meshes as well (if any)
   for (auto& it : sideSetDiscretizations) {
