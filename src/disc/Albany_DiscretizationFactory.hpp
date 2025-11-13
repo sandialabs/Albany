@@ -60,7 +60,9 @@ class DiscretizationFactory {
 
     // This is used not only to create the main disc from the volume mesh, but also for
     // creating the side discretizations from the side meshes (if any).
-    Teuchos::RCP<AbstractDiscretization> createDiscretizationFromMeshStruct(
+    Teuchos::RCP<AbstractDiscretization>
+    createDiscretizationFromMeshStruct (
+      const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<AbstractMeshStruct>& mesh,
       const int neq,
       const std::map<int,std::vector<std::string> >& sideSetEquations,
