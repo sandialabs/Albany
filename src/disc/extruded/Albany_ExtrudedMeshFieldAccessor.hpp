@@ -31,7 +31,7 @@ class ExtrudedMeshFieldAccessor : public AbstractMeshFieldAccessor
 {
 public:
   ExtrudedMeshFieldAccessor (const Teuchos::RCP<AbstractMeshFieldAccessor>& basal_field_accessor,
-                             const Teuchos::RCP<LayeredMeshNumbering<LO>>&  elem_numbering_lid);
+                             const Teuchos::RCP<const LayeredMeshNumbering<LO>>&  elem_numbering_lid);
 
   virtual ~ExtrudedMeshFieldAccessor () = default;
 
@@ -104,7 +104,7 @@ protected:
   // This class will rely on the basal mesh to store fields
   Teuchos::RCP<AbstractMeshFieldAccessor> m_basal_field_accessor;
 
-  Teuchos::RCP<LayeredMeshNumbering<LO>>  m_elem_numbering_lid;
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>  m_elem_numbering_lid;
 };
 
 }  // namespace Albany

@@ -6,7 +6,7 @@ namespace Albany {
 
 ExtrudedMeshFieldAccessor::
 ExtrudedMeshFieldAccessor (const Teuchos::RCP<AbstractMeshFieldAccessor>& basal_field_accessor,
-                           const Teuchos::RCP<LayeredMeshNumbering<LO>>& elem_numbering_lid)
+                           const Teuchos::RCP<const LayeredMeshNumbering<LO>>& elem_numbering_lid)
  : m_basal_field_accessor(basal_field_accessor)
  , m_elem_numbering_lid(elem_numbering_lid)
 {
