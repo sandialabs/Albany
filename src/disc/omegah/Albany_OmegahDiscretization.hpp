@@ -79,6 +79,8 @@ public:
     return m_mesh_struct->meshSpecs[0]->numDim;
   }
 
+  void setNumEq (int neq) override;
+
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool /* overlapped */ = false) const override {

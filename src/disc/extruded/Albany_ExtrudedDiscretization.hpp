@@ -65,6 +65,8 @@ public:
   //! Get number of spatial dimensions
   int getNumDim() const override { return m_extruded_mesh->meshSpecs[0]->numDim; }
 
+  void setNumEq (int neq) override;
+
   // --- Get/set solution/residual/field vectors to/from mesh --- //
 
   Teuchos::RCP<Thyra_Vector> getSolutionField (const bool overlapped = false) const override;

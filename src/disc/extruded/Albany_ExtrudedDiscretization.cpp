@@ -43,10 +43,19 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
  , m_extruded_mesh(extruded_mesh)
  , m_disc_params (discParams)
 {
-  m_neq = neq;
+  setNumEq(neq);
 
   sideSetDiscretizations["basalside"] = basal_disc;
   sideSetDiscretizations["upperside"] = basal_disc;
+}
+
+void ExtrudedDiscretization::setNumEq (int neq)
+{
+  m_neq = neq;
+
+  // On the basal mesh, make the solution vector numNodeLayers times longer
+  int basal_neq = neq * m_extruded_mesh->node_layers_gid()->numLayers;
+  m_basal_disc->setNumEq(basal_neq);
 }
 
 void
