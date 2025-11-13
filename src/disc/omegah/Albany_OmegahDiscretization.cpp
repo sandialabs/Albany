@@ -118,15 +118,6 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
 {
   m_num_time_deriv = m_disc_params->get("Number Of Time Derivatives",0);
 
-  // TODO: get solution names from param list
-  m_sol_names.resize(m_num_time_deriv+1,solution_dof_name());
-  if (m_num_time_deriv>0) {
-    m_sol_names[1] += "_dot";
-    if (m_num_time_deriv>1) {
-      m_sol_names[2] += "_dotdot";
-    }
-  }
-
   if (neq>0) {
     setNumEq(neq);
   }
