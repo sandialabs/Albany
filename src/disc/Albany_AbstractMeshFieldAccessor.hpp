@@ -134,6 +134,9 @@ public:
   MeshScalarInteger64State& getMeshScalarInteger64States () { return mesh_scalar_integer_64_states; }
   MeshVectorIntegerState&   getMeshVectorIntegerStates   () { return mesh_vector_integer_states;    }
 
+  // Initializes the necessary metadata for the solution field(s)
+  virtual void setSolutionFieldsMetadata (const int neq) = 0;
+
 protected:
   // This should always include ALL the ones below
   StateInfoStruct all_sis;

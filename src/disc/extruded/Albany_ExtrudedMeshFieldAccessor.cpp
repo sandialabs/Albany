@@ -249,6 +249,12 @@ saveSolnMultiVector (const Thyra_MultiVector& /* soln */,
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveSolnMultiVector()");
 }
 
+void ExtrudedMeshFieldAccessor::setSolutionFieldsMetadata (const int neq)
+{
+  int basal_neq = neq * (m_elem_numbering_lid->numLayers+1);
+  m_basal_field_accessor->setSolutionFieldsMetadata(basal_neq);
+}
+
 void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields)
 {
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();

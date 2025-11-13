@@ -103,6 +103,8 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveSolnMultiVector");
   }
 
+  void setSolutionFieldsMetadata (const int neq) override;
+
   // To be called after adaptation, where the stored tags are no longer valid and need to be reset
   void reset_mesh_tags ();
 
