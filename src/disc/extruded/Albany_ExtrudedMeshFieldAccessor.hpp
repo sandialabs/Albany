@@ -96,6 +96,8 @@ public:
                             const dof_mgr_ptr_t&     node_vs,
                             const bool          overlapped) override;
 
+  void setSolutionFieldsMetadata (const int neq) override;
+
   void extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields);
   void interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields);
 
