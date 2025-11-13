@@ -240,6 +240,10 @@ public:
   virtual Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const = 0;
 
+  Teuchos::RCP<AbstractMeshFieldAccessor> get_solution_mesh_field_accessor () const {
+    return m_solution_mfa;
+  }
+
   //! Get nodal parameters state info struct
   const StateInfoStruct& getNodalParameterSIS() const {
     return getMeshStruct()->get_field_accessor()->getNodalParameterSIS();
@@ -431,6 +435,9 @@ protected:
   // For each workset, the element LID of its elements.
   // Note: with 1 workset, m_workset_elements(0,i)=i.
   DualView<int**>     m_workset_elements;
+
+  // The accessor that allows to read/write solution from/to the mesh
+  Teuchos::RCP<AbstractMeshFieldAccessor> m_solution_mfa;
 };
 
 }  // namespace Albany
