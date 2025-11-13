@@ -99,12 +99,11 @@ ExtrudedDiscretization::setupMLCoords()
 
 void
 ExtrudedDiscretization::writeSolutionToMeshDatabase(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const bool /* overlapped */)
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const bool overlapped)
 {
-  printf("WARNING ExtrudedDiscretization::writeSolutionToMeshDatabase not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  m_basal_disc->writeSolutionToMeshDatabase(soln,soln_dxdp,overlapped);
 }
 
 void
@@ -141,12 +140,10 @@ ExtrudedDiscretization::writeSolutionMVToMeshDatabase(
 }
 
 void
-ExtrudedDiscretization::writeMeshDatabaseToFile(
-    const double        /* time */,
-    const bool          /* force_write_solution */)
+ExtrudedDiscretization::writeMeshDatabaseToFile(const double time,
+                                                const bool   force_write_solution)
 {
-  printf("WARNING ExtrudedDiscretization::writeSMeshDatabaseToFile not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSMeshDatabaseToFile");
+  m_basal_disc->writeMeshDatabaseToFile(time,force_write_solution);
 }
 
 Teuchos::RCP<AdaptationData>
@@ -948,6 +945,14 @@ buildCellSideNodeNumerationMaps()
 void ExtrudedDiscretization::setFieldData()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
+
+  m_basal_disc->setFieldData();
+
+  const auto basal_sol_mfa = m_basal_disc->get_solution_mesh_field_accessor();
+  const auto elem_numbering_lid = m_extruded_mesh->cell_layers_lid();
+  m_solution_mfa = Teuchos::rcp(new ExtrudedMeshFieldAccessor(basal_sol_mfa,elem_numbering_lid));
+
+  m_solution_mfa->setSolutionFieldsMetadata(m_neq);
 }
 
 Teuchos::RCP<ConnManager>
