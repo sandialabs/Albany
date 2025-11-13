@@ -273,6 +273,8 @@ public:
   virtual int
   getNumDim() const = 0;
 
+  virtual void setNumEq (int neq) = 0;
+
   //! Get number of total DOFs per node
   int getNumEq() const { return m_neq; }
 
@@ -420,7 +422,7 @@ protected:
 
   //! Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
-  int m_neq;
+  int m_neq = 0;
 
   //! GatherVerticallyContractedSolution connectivity
   std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> m_wsLocalDOFViews;
