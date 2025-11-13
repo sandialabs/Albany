@@ -81,8 +81,8 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Restart Index: 1
-        Exodus Input File Name: gis_unstruct_2d_populated.exo
-        Exodus Output File Name: gis_unstruct_extruded_basal.exo
+        Exodus Input File Name: gis_unstruct_extruded_basal.exo
+        Exodus Output File Name: gis_unstruct_extruded_basal_restart.exo
         Required Fields Info:
           Number Of Fields: 4
           Field 0:
@@ -107,39 +107,27 @@ ANONYMOUS:
           Number Of Fields: 2
           Field 0:
             Field Name: observed_surface_velocity
-            Field Type: Node Vector
             Field Origin: Mesh
-            # Vector Dim: 2
-            # Field Origin: File
-            # File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
+            Field Type: Node Vector
           Field 1:
             Field Name: observed_surface_velocity_RMS
-            Field Type: Node Vector
             Field Origin: Mesh
-            # Vector Dim: 2
-            # Field Origin: File
-            # File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
-  Regression For Response 0:
-    Test Value: 1.109508809230e+08
-    Sensitivity For Parameter 0:
-      Test Value: 1.852225594771e+07
-    Relative Tolerance: 1.0e-06
-    Absolute Tolerance: 1.0e-06
+            Field Type: Node Vector
   Piro:
     LOCA:
-      Bifurcation: { }
-      Constraints: { }
+      Bifurcation: {}
+      Constraints: {}
       Predictor:
         Method: Constant
       Stepper:
-        Initial Value: 1.0e-01
+        Initial Value: 0.1
         Continuation Parameter: Glen's Law Homotopy Parameter
         Continuation Method: Natural
         Max Steps: 10
         Max Value: 1.0
         Min Value: 0.0
       Step Size:
-        Initial Step Size: 2.0e-01
+        Initial Step Size: 0.2
     NOX:
       Status Tests:
         Test Type: Combo
@@ -167,9 +155,9 @@ ANONYMOUS:
           Forcing Term Method: Constant
           Linear Solver:
             Write Linear System: false
-            Tolerance: 1.0e-4 # used for forward solves 
+            Tolerance: 1.0e-6 # used for forward solves 
           Stratimikos Linear Solver:
-            NOX Stratimikos Options: { }
+            NOX Stratimikos Options: {}
             Stratimikos:
               Linear Solver Type: Belos
               Linear Solver Types:
@@ -179,7 +167,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types:
                     Block GMRES:
-                      Convergence Tolerance: 1.0e-06
+                      Convergence Tolerance: 1.0e-6  #used for adjoint solves
                       Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
@@ -215,4 +203,10 @@ ANONYMOUS:
           Stepper Parameters: true
       Solver Options:
         Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06  
+    Test Value: 1.109508809174e+08
+    Sensitivity For Parameter 0:
+      Test Value: 1.852226833925e+07
 ...
