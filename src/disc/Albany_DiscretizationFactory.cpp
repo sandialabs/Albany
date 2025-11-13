@@ -252,7 +252,7 @@ DiscretizationFactory::createDiscretization(
             std::logic_error,
             "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
+    auto disc = createDiscretizationFromMeshStruct(discParams,meshStruct, neq, sideSetEquations, rigidBodyModes);
 
     // Set data and solution fields info
     meshStruct->setFieldData(comm,sis,side_set_sis);
@@ -282,7 +282,8 @@ DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
 
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::
-createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh,
+createDiscretizationFromMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                    const Teuchos::RCP<AbstractMeshStruct>& mesh,
                                     const int neq,
                                     const std::map<int, std::vector<std::string> >& sideSetEquations,
                                     const Teuchos::RCP<RigidBodyModes>& rigidBodyModes)
@@ -297,15 +298,16 @@ createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh
   {
     auto ext_mesh = Teuchos::rcp_dynamic_cast<ExtrudedMesh>(mesh);
     auto basal_mesh = ext_mesh->basal_mesh();
-    auto basal_disc = createDiscretizationFromMeshStruct(basal_mesh,neq,{},rigidBodyModes);
-    disc = Teuchos::rcp(new ExtrudedDiscretization (discParams,neq,ext_mesh,basal_disc,comm,rigidBodyModes, sideSetEquations));
+    auto basal_params = Teuchos::sublist(Teuchos::sublist(discParams,"Side Set Discretizations"),"basalside");
+    auto basal_disc = createDiscretizationFromMeshStruct(basal_params,basal_mesh,neq,{},rigidBodyModes);
+    disc = Teuchos::rcp(new ExtrudedDiscretization (params,neq,ext_mesh,basal_disc,comm,rigidBodyModes, sideSetEquations));
   } else if (mesh->meshLibName()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(mesh);
-    disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new STKDiscretization(params, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
   } else if (mesh->meshLibName()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(mesh);
-    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new OmegahDiscretization(params, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #endif
   }
   return disc;
