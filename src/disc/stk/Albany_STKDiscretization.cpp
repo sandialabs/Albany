@@ -75,13 +75,26 @@ STKDiscretization::STKDiscretization(
   m_neq = neq_;
 
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
-    for (auto it : stkMeshStruct->sideSetMeshStructs) {
-      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
-      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, m_neq, stk_mesh, comm));
-      sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
-      sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
+    auto ss_discretizations_params = Teuchos::sublist(discParams,"Side Set Discretizations");
+    for (const auto& [ss_name,ss_mesh] : stkMeshStruct->sideSetMeshStructs) {
+      // Extract ss disc params, and ensure important params are synced with main disc params
+      auto ss_disc_params = Teuchos::sublist(ss_discretizations_params,ss_name);
+      ss_disc_params->set("Number Of Time Derivatives",discParams->get<int>("Number Of Time Derivatives"));
+      ss_disc_params->set("Sensitivity Method",discParams->get<std::string>("Sensitivity Method","None"));
+      ss_disc_params->set("Response Function Index", discParams->get<int>("Response Function Index"));
+      ss_disc_params->set("Sensitivity Parameter Index", discParams->get<int>("Sensitivity Parameter Index"));
+
+      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,true);
+      auto side_disc = Teuchos::rcp(new STKDiscretization(ss_disc_params, m_neq, stk_mesh, comm));
+      sideSetDiscretizations.insert(std::make_pair(ss_name, side_disc));
+      sideSetDiscretizationsSTK.insert(std::make_pair(ss_name, side_disc));
     }
   }
+
+  exoOutFile = discParams->get<std::string>("Exodus Output File Name", "");
+  exoOutput = exoOutFile!="";
+  exoOutputInterval = discParams->get<int>("Exodus Write Interval", 1);
+  transferSolutionToCoords = discParams->get<bool>("Transfer Solution to Coordinates", false);
 }
 
 STKDiscretization::~STKDiscretization()
@@ -203,7 +216,7 @@ STKDiscretization::transformMesh()
   using std::endl;
   AbstractSTKFieldContainer::STKFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
-  std::string transformType = stkMeshStruct->transformType;
+  auto transformType = discParams->get<std::string>("Transform Type", "None");
 
   std::vector<stk::mesh::Entity> overlapnodes;
   stk::mesh::Selector selector(metaData->locally_owned_part());
@@ -232,9 +245,9 @@ STKDiscretization::transformMesh()
     }
   } else if (transformType == "Shift") {
     //*out << "Shift!\n";
-    double xshift = stkMeshStruct->xShift;
-    double yshift = stkMeshStruct->yShift;
-    double zshift = stkMeshStruct->zShift;
+    double xshift = discParams->get("x-shift", 0.0);
+    double yshift = discParams->get("y-shift", 0.0);
+    double zshift = discParams->get("z-shift", 0.0);
     //*out << "xshift, yshift, zshift = " << xshift << ", " << yshift << ", " <<
     // zshift << '\n';
     const int numDim = stkMeshStruct->numDim;
@@ -262,18 +275,18 @@ STKDiscretization::transformMesh()
     //*out << "IKT Tanh Boundary Layer!\n";
 
     /* The way this transform type works is it takes a uniform STK mesh of [0,L]
-   generated within Albany and applies the following transformation to it:
+       generated within Albany and applies the following transformation to it:
 
-   x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
+       x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
 
-   for a specified double beta (and similarly for x and y coordinates).  The
-   result is a mesh that is finer near x = 0 and coarser near x = L.  The
-   relative coarseness/fineness is controlled by the parameter beta: large beta
-   => finer boundary layer near x = 0.  If beta = 0, no transformation is
-   applied.*/
+       for a specified double beta (and similarly for x and y coordinates).  The
+       result is a mesh that is finer near x = 0 and coarser near x = L.  The
+       relative coarseness/fineness is controlled by the parameter beta: large beta
+       => finer boundary layer near x = 0.  If beta = 0, no transformation is
+       applied.*/
 
-    Teuchos::Array<double> betas  = stkMeshStruct->betas_BLtransform;
-    const int              numDim = stkMeshStruct->numDim;
+    auto betas = discParams->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
+    const int  numDim = stkMeshStruct->numDim;
     ALBANY_ASSERT(
         betas.length() >= numDim,
         "\n Length of Betas BL Transform array (= "
@@ -334,8 +347,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test A!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -364,8 +377,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test B!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -395,8 +408,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test C and D!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -442,7 +455,7 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Confined shelf transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double L = discParams->get("LandIce L", 1.0);
     cout << "L: " << L << endl;
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
@@ -462,7 +475,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Circular shelf transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
 #endif
@@ -490,7 +504,7 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "FO XZ MMS transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double L = discParams->get("LandIce L", 1.0);
     // hard-coding values of parameters...  make sure these are same as in the
     // FOStokes body force evaluator!
     double alpha0 = 4e-5;
@@ -576,8 +590,9 @@ STKDiscretization::writeCoordsToMatrixMarket() const
 #else
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
+  auto writeCoordsToMMFile = discParams->get("Write Coordinates to MatrixMarket", false);
   if ((rigidBodyModes->isTekoUsed() || rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
-      stkMeshStruct->writeCoordsToMMFile) {
+      writeCoordsToMMFile) {
     *out << "Writing mesh coordinates to Matrix Market file." << std::endl;
     writeMatrixMarket(coordMV, "coords");
   }
@@ -712,7 +727,7 @@ STKDiscretization::writeMeshDatabaseToFile(
 #else
 #ifdef ALBANY_SEACAS
   TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution to file");
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+  if (exoOutput && transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();
 
     if (!mesh_data.is_null()) {
@@ -723,9 +738,8 @@ STKDiscretization::writeMeshDatabaseToFile(
   }
 
   // Skip this write unless the proper interval has been reached
-  if ((stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
-      (force_write_solution == true) ) {
+  if (exoOutput and
+      (outputInterval % exoOutputInterval == 0 or force_write_solution)) {
     double time_label = monotonicTimeLabel(time);
 
     mesh_data->begin_output_step(outputFileIdx, time_label);
@@ -745,9 +759,9 @@ STKDiscretization::writeMeshDatabaseToFile(
 
     if (comm->getRank() == 0) {
       *out << "STKDiscretization::writeMeshDatabaseToFile: writing time " << time;
-      if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " << out_step << " in file "
-           << stkMeshStruct->exoOutFile << std::endl;
+      if (time_label != time)
+        *out << " with label " << time_label;
+      *out << " to index " << out_step << " in file " << exoOutFile << std::endl;
     }
   }
   outputInterval++;
@@ -1230,6 +1244,9 @@ STKDiscretization::computeWorksetInfo()
     }
   }
 
+  auto transformType = discParams->get<std::string>("Transform Type", "None");
+  double alpha = discParams->get("LandIce alpha", 0.0);
+  alpha *= M_PI / 180.;  // convert to radians
   auto& elemStateArrays = stkMeshStruct->get_field_accessor()->getElemStates();
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
@@ -1249,10 +1266,6 @@ STKDiscretization::computeWorksetInfo()
                   xleak[d] = stkMeshStruct->PBCStruct.scale[d];
                 else
                   xleak[k] = m_ws_elem_coords[b][i][j][k];
-              std::string transformType = stkMeshStruct->transformType;
-              double      alpha         = stkMeshStruct->felixAlpha;
-              alpha *= M_PI / 180.;  // convert alpha, read in from
-                                   // ParameterList, to radians
               if ((transformType == "ISMIP-HOM Test A" ||
                    transformType == "ISMIP-HOM Test B" ||
                    transformType == "ISMIP-HOM Test C" ||
@@ -1579,10 +1592,8 @@ void
 STKDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput) {
+  if (exoOutput) {
     outputInterval = 0;
-
-    std::string str = stkMeshStruct->exoOutFile;
 
     Ioss::Init::Initializer io;
 
@@ -1592,7 +1603,7 @@ STKDiscretization::setupExodusOutput()
     //IKT, 8/16/19: The following is needed to get correct output file for Schwarz problems
     //Please see: https://github.com/trilinos/Trilinos/issues/5479
     mesh_data->property_add(Ioss::Property("FLUSH_INTERVAL", 1));
-    outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
+    outputFileIdx = mesh_data->create_output_mesh(exoOutFile, stk::io::WRITE_RESULTS);
 
     // Adding mesh global variables
     /*
@@ -1635,7 +1646,7 @@ STKDiscretization::setupExodusOutput()
   }
 
 #else
-  if (stkMeshStruct->exoOutput) {
+  if (exoOutput) {
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
          << " disabling exodus output \n";
   }
@@ -1796,47 +1807,30 @@ STKDiscretization::updateMesh()
 
 void STKDiscretization::setFieldData()
 {
+  using strarr_t = Teuchos::Array<std::string>;
+
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
-  Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
-  auto mSTKFieldContainer = Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer>(fieldContainer,false);
-  auto oSTKFieldContainer = Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer>(fieldContainer,false);
+  auto bulkData = stkMeshStruct->bulkData;
+  auto metaData = stkMeshStruct->metaData;
 
-  int num_time_deriv, numDim, num_params;
-  Teuchos::RCP<Teuchos::ParameterList> params;
+  int  num_time_deriv = discParams->get<int>("Number Of Time Derivatives");
+  bool user_specified_solution_components = false;
+  user_specified_solution_components |= discParams->get<strarr_t>("Solution Vector Components", {}).size()>0;
+  user_specified_solution_components |= num_time_deriv>=1 and discParams->get<strarr_t>("SolutionDot Vector Components", {}).size()>0;
+  user_specified_solution_components |= num_time_deriv>=2 and discParams->get<strarr_t>("SolutionDotDot Vector Components", {}).size()>0;
 
-  auto gSTKFieldContainer = Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer>(fieldContainer,false);
-  params = gSTKFieldContainer->getParams();
-  numDim = gSTKFieldContainer->getNumDim();
-  num_params = gSTKFieldContainer->getNumParams();
-
-  num_time_deriv = params->get<int>("Number Of Time Derivatives");
-
-  Teuchos::Array<std::string> default_solution_vector; // Empty
-  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
-  solution_vector.resize(num_time_deriv + 1);
-  solution_vector[0] =
-    params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
-
-
-  if(num_time_deriv >= 1){
-    solution_vector[1] =
-      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
-  }
-
-  if(num_time_deriv >= 2){
-    solution_vector[2] =
-      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
-  }
-
-  if (Teuchos::nonnull(mSTKFieldContainer)) {
-    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, m_neq, numDim, solution_vector, num_params));
-  } else if (Teuchos::nonnull(oSTKFieldContainer)) {
-    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, m_neq, numDim, num_params));
+  int num_params = stkMeshStruct->num_params;
+  if (user_specified_solution_components) {
+    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(discParams, metaData, bulkData, num_params));
   } else {
-    ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
+    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(discParams, metaData, bulkData, num_params));
+  }
+  solutionFieldContainer->setSolutionFieldsMetadata(m_neq);
+
+  // Proceed to set the solution field data in the side meshes as well (if any)
+  for (auto& it : sideSetDiscretizations) {
+    it.second->setFieldData();
   }
 }
 
@@ -1942,7 +1936,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   // Solution oscillates. We need to half dx
   auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
-  int num_params = mesh1d->getNumParams();
+  int num_params = mesh1d->num_params;
   int ne_x = discParams->get<int>("1D Elements");
   auto& adapt_params = discParams->sublist("Mesh Adaptivity");
   discParams->set("Workset Size", stkMeshStruct->meshSpecs()[0]->worksetSize);

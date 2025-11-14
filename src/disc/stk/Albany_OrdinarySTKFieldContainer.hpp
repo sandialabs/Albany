@@ -15,19 +15,11 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
 {
  public:
   OrdinarySTKFieldContainer(
-      const Teuchos::RCP<Teuchos::ParameterList>&               params_,
-      const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
-      const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
-      const int                                                 numDim_,
-      const int                                                 num_params);
-
-  OrdinarySTKFieldContainer(
-      const Teuchos::RCP<Teuchos::ParameterList>&               params_,
-      const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
-      const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
-      const int                                                 neq_,
-      const int                                                 numDim_,
-      const int                                                 num_params);
+      const Teuchos::RCP<Teuchos::ParameterList>& params_,
+      const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
+      const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
+      const int                                   num_params,
+      const bool                                  set_geo_fields_meta_data = false);
 
   ~OrdinarySTKFieldContainer() = default;
 
@@ -114,6 +106,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
 
   void transferSolutionToCoords();
 
+  void setSolutionFieldsMetadata (const int neq) override;
 
  private:
   void fillVectorImpl (Thyra_Vector&        field_vector,
@@ -126,8 +119,6 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
                        const dof_mgr_ptr_t& field_dof_mgr,
                        const bool           overlapped);
 
-  void initializeProcRankField();
-
   Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*> solution_field;
   Teuchos::Array<AbstractSTKFieldContainer::STKFieldType*>
                                               solution_field_dtk;
@@ -136,6 +127,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer
   AbstractSTKFieldContainer::STKFieldType* residual_field;
 
   bool output_sens_field = false;
+  bool save_solution_field = false;
+  int num_params = 0;
 };
 
 }  // namespace Albany

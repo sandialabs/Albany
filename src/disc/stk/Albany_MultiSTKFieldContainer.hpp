@@ -16,20 +16,11 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer
 {
 public:
   MultiSTKFieldContainer(
-      const Teuchos::RCP<Teuchos::ParameterList>&     params_,
-      const Teuchos::RCP<stk::mesh::MetaData>&        metaData_,
-      const Teuchos::RCP<stk::mesh::BulkData>&        bulkData_,
-      const int                                       numDim_,
-      const int                                       num_params);
- 
-  MultiSTKFieldContainer(
-      const Teuchos::RCP<Teuchos::ParameterList>&           params_,
-      const Teuchos::RCP<stk::mesh::MetaData>&              metaData_,
-      const Teuchos::RCP<stk::mesh::BulkData>&              bulkData_,
-      const int                                             neq_,
-      const int                                             numDim_,
-      const Teuchos::Array<Teuchos::Array<std::string>>&    solution_vector,
-      const int                                             num_params);
+      const Teuchos::RCP<Teuchos::ParameterList>& params_,
+      const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
+      const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
+      const int                                   num_params,
+      const bool                                  set_geo_fields_meta_data = false);
 
   ~MultiSTKFieldContainer() = default;
 
@@ -85,6 +76,8 @@ public:
 
   void transferSolutionToCoords();
 
+  void setSolutionFieldsMetadata (const int neq) override;
+
 private:
   void fillVectorImpl (      Thyra_Vector&     field_vector,
                        const std::string&      field_name,
@@ -98,8 +91,6 @@ private:
                        const bool              overlapped,
                        const std::vector<int>& components = {});
 
-  void initializeProcRankField();
-
   // Containers for residual and solution
 
   Teuchos::Array<Teuchos::Array<std::string>> sol_vector_name;
@@ -107,6 +98,9 @@ private:
 
   Teuchos::Array<std::string> res_vector_name;
   Teuchos::Array<int>         res_index;
+
+  bool save_solution_field = false;
+  int neq = 0;
 };
 
 }  // namespace Albany

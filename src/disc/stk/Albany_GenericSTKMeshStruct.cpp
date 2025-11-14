@@ -17,7 +17,6 @@
 #include "Albany_Utils.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
-#include "Albany_MultiSTKFieldContainer.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -48,13 +47,13 @@
 namespace Albany
 {
 
-GenericSTKMeshStruct::GenericSTKMeshStruct(
-    const Teuchos::RCP<Teuchos::ParameterList>& params_,
-    const int numDim_,
-    const int numParams_)
-    : params(params_),
-      num_params(numParams_)
+GenericSTKMeshStruct::
+GenericSTKMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                      const int numDim_,
+                      const int numParams_)
+ : params(params_)
 {
+  num_params = numParams_;
   metaData = Teuchos::rcp(new stk::mesh::MetaData());
   metaData->use_simple_fields();
 
@@ -82,6 +81,9 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(), std::logic_error,
        "[GenericSTKMeshStruct::SetupFieldData] metaData->initialize(numDim) not yet called" << std::endl);
 
+  TEUCHOS_TEST_FOR_EXCEPTION (m_field_data_set, std::runtime_error,
+    "[GenericSTKMeshStruct::setFieldData] Error! Field data was already set.\n");
+
   if (bulkData.is_null()) {
      auto mpiComm = getMpiCommFromTeuchosComm(comm);
      stk::mesh::MeshBuilder meshBuilder = stk::mesh::MeshBuilder(mpiComm);
@@ -96,68 +98,8 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
      bulkData = Teuchos::rcp(bulkDataPtr.release());
   }
 
-  // Build the container for the STK fields
-  Teuchos::Array<std::string> default_solution_vector; // Empty
-  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
-  solution_vector.resize(num_time_deriv + 1);
-  bool user_specified_solution_components = false;
-  solution_vector[0] =
-    params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
-
-  if(solution_vector[0].length() > 0)
-     user_specified_solution_components = true;
-
-  if(num_time_deriv >= 1){
-    solution_vector[1] =
-      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
-    if(solution_vector[1].length() > 0)
-       user_specified_solution_components = true;
-  }
-
-  if(num_time_deriv >= 2){
-    solution_vector[2] =
-      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
-    if(solution_vector[2].length() > 0)
-       user_specified_solution_components = true;
-  }
-
-  Teuchos::Array<std::string> default_residual_vector; // Empty
-  Teuchos::Array<std::string> residual_vector =
-    params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
-
-  // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
-  if(user_specified_solution_components && (residual_vector.length() > 0)){
-    this->fieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(params,
-        metaData, bulkData, numDim, num_params));
-  } else {
-    this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,
-        metaData, bulkData, numDim, num_params));
-  }
-
-// Exodus is only for 2D and 3D. Have 1D version as well
-  exoOutput = params->isType<std::string>("Exodus Output File Name");
-  if (exoOutput)
-    exoOutFile = params->get<std::string>("Exodus Output File Name");
-  exoOutputInterval = params->get<int>("Exodus Write Interval", 1);
-
-  //get the type of transformation of STK mesh
-  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh
-  felixAlpha = params->get("LandIce alpha", 0.0); //for LandIce problems
-  felixL = params->get("LandIce L", 1.0); //for LandIce problems
-  xShift = params->get("x-shift", 0.0);
-  yShift = params->get("y-shift", 0.0);
-  zShift = params->get("z-shift", 0.0);
-  betas_BLtransform = params->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
-
-  points_per_edge = params->get("Element Degree", 1) + 1;
-
-  //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
-  contigIDs = params->get("Contiguous IDs", true);
-
-  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)?
-  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
-
-  transferSolutionToCoords = params->get<bool>("Transfer Solution to Coordinates", false);
+  // Build the container for the STK fields and start adding geometry fields (like coords, proc_rank)
+  this->fieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(params,metaData,bulkData,num_params,true));
 
   fieldContainer->addStateStructs(sis);
   for (auto& [ss_name, ss_mesh] : sideSetMeshStructs) {

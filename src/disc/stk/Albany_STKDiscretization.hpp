@@ -309,11 +309,15 @@ public:
 // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
   Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
-
-  int outputInterval;
-
-  size_t outputFileIdx;
 #endif
+
+  // IO related stuff
+  int outputInterval;
+  size_t outputFileIdx;
+  bool exoOutput;
+  std::string exoOutFile;
+  int exoOutputInterval;
+  bool transferSolutionToCoords;
 
   Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };

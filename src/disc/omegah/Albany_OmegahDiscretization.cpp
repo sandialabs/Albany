@@ -340,6 +340,11 @@ void OmegahDiscretization::setFieldData()
       m_node_dof_managers[st->meshPart] = node_dof_mgr;
     }
   }
+
+  // Proceed to set the solution field data in the side meshes as well (if any)
+  for (auto& it : sideSetDiscretizations) {
+    it.second->setFieldData();
+  }
 }
 
 void
