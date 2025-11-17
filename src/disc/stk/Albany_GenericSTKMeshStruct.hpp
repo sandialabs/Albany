@@ -37,8 +37,6 @@ public:
                                        std::map<GO,GO>& sideMap,
                                        std::map<GO,std::vector<int>>& sideNodeMap) override;
 
-  int getNumParams() const {return num_params; }
-
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<StateInfoStruct>& sis,
                      std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis) override;
@@ -89,8 +87,6 @@ public:
   bool requiresAutomaticAura;
 
   std::vector<std::string>  m_nodesets_from_sidesets;
-
-  int num_params; 
 };
 
 } // namespace Albany
