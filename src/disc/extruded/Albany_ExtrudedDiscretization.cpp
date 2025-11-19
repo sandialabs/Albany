@@ -108,35 +108,32 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
 
 void
 ExtrudedDiscretization::writeSolutionToMeshDatabase(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const Thyra_Vector& /* soln_dot */,
-    const bool /* overlapped */)
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Thyra_Vector& soln_dot,
+    const bool overlapped)
 {
-  printf("WARNING ExtrudedDiscretization::writeSolutionToMeshDatabase not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  m_basal_disc->writeSolutionToMeshDatabase(soln,soln_dxdp,soln_dot,overlapped);
 }
 
 void
 ExtrudedDiscretization::writeSolutionToMeshDatabase(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const Thyra_Vector& /* soln_dot */,
-    const Thyra_Vector& /* soln_dotdot */,
-    const bool /* overlapped */)
+    const Thyra_Vector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const Thyra_Vector& soln_dot,
+    const Thyra_Vector& soln_dotdot,
+    const bool overlapped)
 {
-  printf("WARNING ExtrudedDiscretization::writeSolutionToMeshDatabase not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  m_basal_disc->writeSolutionToMeshDatabase(soln,soln_dxdp,soln_dot,soln_dotdot,overlapped);
 }
 
 void
 ExtrudedDiscretization::writeSolutionMVToMeshDatabase(
-    const Thyra_MultiVector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const bool /* overlapped */)
+    const Thyra_MultiVector& soln,
+    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
+    const bool overlapped)
 {
-  printf("WARNING ExtrudedDiscretization::writeSolutionMVToMeshDatabase not yet implemented\n");
-  // throw NotYetImplemented("ExtrudedDiscretization::writeSolutionToMeshDatabase");
+  m_basal_disc->writeSolutionMVToMeshDatabase(soln,soln_dxdp,overlapped);
 }
 
 void
@@ -166,42 +163,33 @@ adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */)
 }
 
 Teuchos::RCP<Thyra_Vector>
-ExtrudedDiscretization::getSolutionField(bool /* overlapped */) const
+ExtrudedDiscretization::getSolutionField(bool overlapped) const
 {
-  throw NotYetImplemented("ExtrudedDiscretization::getSolutionField");
-  // // Copy soln vector into solution field, one node at a time
-  // Teuchos::RCP<Thyra_Vector> soln = Thyra::createMember(getVectorSpace());
-  // this->getSolutionField(*soln, overlapped);
-  // return soln;
+  return m_basal_disc->getSolutionField(overlapped);
 }
 
 void
 ExtrudedDiscretization::getField(
-    Thyra_Vector& /* result */,
-    const std::string& /* name */) const
+    Thyra_Vector& result,
+    const std::string& name) const
 {
-  throw NotYetImplemented("ExtrudedDiscretization::getField");
-  // auto dof_mgr = getDOFManager(name);
-  // solutionFieldContainer->fillVector(result, name, dof_mgr, false);
+  m_basal_disc->getField(result,name);
 }
 
 void
 ExtrudedDiscretization::getSolutionMV(
-    Thyra_MultiVector& /* result */,
-    const bool         /* overlapped */) const
+    Thyra_MultiVector& result,
+    const bool         overlapped) const
 {
-  throw NotYetImplemented("ExtrudedDiscretization::getSolutionMV");
-  // TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
-
-  // solutionFieldContainer->fillSolnMultiVector(result, getDOFManager(), overlapped);
+  m_basal_disc->getSolutionMV(result,overlapped);
 }
 
 void
 ExtrudedDiscretization::getSolutionDxDp(
-    Thyra_MultiVector& /* result */,
-    const bool         /* overlapped */) const
+    Thyra_MultiVector& result,
+    const bool         overlapped) const
 {
-  throw NotYetImplemented("ExtrudedDiscretization::getSolutionDxDp");
+  m_basal_disc->getSolutionDxDp(result,overlapped);
 }
 
 /*****************************************************************/
@@ -210,13 +198,11 @@ ExtrudedDiscretization::getSolutionDxDp(
 
 void
 ExtrudedDiscretization::setField(
-    const Thyra_Vector& /* result */,
-    const std::string&  /* name */,
-    bool                /* overlapped */)
+    const Thyra_Vector& result,
+    const std::string&  name,
+    bool                overlapped)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::setField");
-  // const auto dof_mgr = getDOFManager(name);
-  // solutionFieldContainer->saveVector(result,name,dof_mgr,overlapped);
+  m_basal_disc->setField(result,name,overlapped);
 }
 
 void ExtrudedDiscretization::computeCoordinates ()
