@@ -186,17 +186,6 @@ ExtrudedDiscretization::getField(
 }
 
 void
-ExtrudedDiscretization::getSolutionField(
-    Thyra_Vector& /* result */,
-    const bool /* overlapped */) const
-{
-  throw NotYetImplemented("ExtrudedDiscretization::getSolutionField");
-  // TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
-
-  // solutionFieldContainer->fillSolnVector(result, getDOFManager(), overlapped);
-}
-
-void
 ExtrudedDiscretization::getSolutionMV(
     Thyra_MultiVector& /* result */,
     const bool         /* overlapped */) const
@@ -228,53 +217,6 @@ ExtrudedDiscretization::setField(
   throw NotYetImplemented("ExtrudedDiscretization::setField");
   // const auto dof_mgr = getDOFManager(name);
   // solutionFieldContainer->saveVector(result,name,dof_mgr,overlapped);
-}
-
-void
-ExtrudedDiscretization::setSolutionField(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const bool          /* overlapped */)
-{
-  throw NotYetImplemented("ExtrudedDiscretization::setSolutionField");
-  // const auto& dof_mgr = getDOFManager();
-  // solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
-}
-
-void
-ExtrudedDiscretization::setSolutionField(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const Thyra_Vector& /* soln_dot */,
-    const bool          /* overlapped */)
-{
-  throw NotYetImplemented("ExtrudedDiscretization::setSolutionField");
-  // const auto& dof_mgr = getDOFManager();
-  // solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
-}
-
-void
-ExtrudedDiscretization::setSolutionField(
-    const Thyra_Vector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const Thyra_Vector& /* soln_dot */,
-    const Thyra_Vector& /* soln_dotdot */,
-    const bool          /* overlapped */)
-{
-  throw NotYetImplemented("ExtrudedDiscretization::setSolutionField");
-  // const auto& dof_mgr = getDOFManager();
-  // solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
-}
-
-void
-ExtrudedDiscretization::setSolutionFieldMV(
-    const Thyra_MultiVector& /* soln */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* soln_dxdp */,
-    const bool               /* overlapped */)
-{
-  throw NotYetImplemented("ExtrudedDiscretization::setSolutionFieldMV");
-  // const auto& dof_mgr = getDOFManager();
-  // solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 }
 
 void ExtrudedDiscretization::computeCoordinates ()
