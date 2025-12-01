@@ -72,7 +72,9 @@ STKDiscretization::STKDiscretization(
       stkMeshStruct(stkMeshStruct_),
       discParams(discParams_)
 {
-  m_neq = neq_;
+  if (neq_>0) {
+    setNumEq(neq_);
+  }
 
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
     auto ss_discretizations_params = Teuchos::sublist(discParams,"Side Set Discretizations");
@@ -846,6 +848,11 @@ STKDiscretization::monotonicTimeLabel(const double time)
   // Otherwise, just add 1.0 to previous
   previous_time_label += 1.0;
   return previous_time_label;
+}
+
+void STKDiscretization::setNumEq (int neq)
+{
+  m_neq = neq;
 }
 
 Teuchos::RCP<Thyra_Vector>
@@ -1827,6 +1834,7 @@ void STKDiscretization::setFieldData()
     solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(discParams, metaData, bulkData, num_params));
   }
   solutionFieldContainer->setSolutionFieldsMetadata(m_neq);
+  m_solution_mfa = solutionFieldContainer;
 
   // Proceed to set the solution field data in the side meshes as well (if any)
   for (auto& it : sideSetDiscretizations) {

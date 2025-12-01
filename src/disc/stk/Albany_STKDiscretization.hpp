@@ -131,6 +131,8 @@ public:
     return *bulkData;
   }
 
+  void setNumEq (int neq) override;
+
   // Used very often, so make it a function
   GO stk_gid (const stk::mesh::Entity e) const {
     // STK numbering is 1-based, while we want 0-based.

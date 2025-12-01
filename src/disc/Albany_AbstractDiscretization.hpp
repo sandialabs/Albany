@@ -240,6 +240,10 @@ public:
   virtual Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const = 0;
 
+  Teuchos::RCP<AbstractMeshFieldAccessor> get_solution_mesh_field_accessor () const {
+    return m_solution_mfa;
+  }
+
   //! Get nodal parameters state info struct
   const StateInfoStruct& getNodalParameterSIS() const {
     return getMeshStruct()->get_field_accessor()->getNodalParameterSIS();
@@ -268,6 +272,8 @@ public:
   //! Get number of spatial dimensions
   virtual int
   getNumDim() const = 0;
+
+  virtual void setNumEq (int neq) = 0;
 
   //! Get number of total DOFs per node
   int getNumEq() const { return m_neq; }
@@ -416,7 +422,7 @@ protected:
 
   //! Number of equations (and unknowns) per node
   // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
-  int m_neq;
+  int m_neq = 0;
 
   //! GatherVerticallyContractedSolution connectivity
   std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> m_wsLocalDOFViews;
@@ -431,6 +437,9 @@ protected:
   // For each workset, the element LID of its elements.
   // Note: with 1 workset, m_workset_elements(0,i)=i.
   DualView<int**>     m_workset_elements;
+
+  // The accessor that allows to read/write solution from/to the mesh
+  Teuchos::RCP<AbstractMeshFieldAccessor> m_solution_mfa;
 };
 
 }  // namespace Albany

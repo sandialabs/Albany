@@ -6,7 +6,7 @@ namespace Albany {
 
 ExtrudedMeshFieldAccessor::
 ExtrudedMeshFieldAccessor (const Teuchos::RCP<AbstractMeshFieldAccessor>& basal_field_accessor,
-                           const Teuchos::RCP<LayeredMeshNumbering<LO>>& elem_numbering_lid)
+                           const Teuchos::RCP<const LayeredMeshNumbering<LO>>& elem_numbering_lid)
  : m_basal_field_accessor(basal_field_accessor)
  , m_elem_numbering_lid(elem_numbering_lid)
 {
@@ -247,6 +247,12 @@ saveSolnMultiVector (const Thyra_MultiVector& /* soln */,
                      const bool               /* overlapped */)
 {
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveSolnMultiVector()");
+}
+
+void ExtrudedMeshFieldAccessor::setSolutionFieldsMetadata (const int neq)
+{
+  int basal_neq = neq * (m_elem_numbering_lid->numLayers+1);
+  m_basal_field_accessor->setSolutionFieldsMetadata(basal_neq);
 }
 
 void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields)

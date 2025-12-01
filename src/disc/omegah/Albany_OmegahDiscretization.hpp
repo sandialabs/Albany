@@ -79,6 +79,8 @@ public:
     return m_mesh_struct->meshSpecs[0]->numDim;
   }
 
+  void setNumEq (int neq) override;
+
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool /* overlapped */ = false) const override {
@@ -150,8 +152,6 @@ protected:
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
   Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
-
-  std::vector<std::string> m_sol_names;
 
   // Maps a Tpetra LID to the pos of a node in the omegah arrays
   std::vector<int>  m_node_lid_to_omegah_pos;

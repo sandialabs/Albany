@@ -31,7 +31,7 @@ class ExtrudedMeshFieldAccessor : public AbstractMeshFieldAccessor
 {
 public:
   ExtrudedMeshFieldAccessor (const Teuchos::RCP<AbstractMeshFieldAccessor>& basal_field_accessor,
-                             const Teuchos::RCP<LayeredMeshNumbering<LO>>&  elem_numbering_lid);
+                             const Teuchos::RCP<const LayeredMeshNumbering<LO>>&  elem_numbering_lid);
 
   virtual ~ExtrudedMeshFieldAccessor () = default;
 
@@ -96,6 +96,8 @@ public:
                             const dof_mgr_ptr_t&     node_vs,
                             const bool          overlapped) override;
 
+  void setSolutionFieldsMetadata (const int neq) override;
+
   void extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields);
   void interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields);
 
@@ -104,7 +106,7 @@ protected:
   // This class will rely on the basal mesh to store fields
   Teuchos::RCP<AbstractMeshFieldAccessor> m_basal_field_accessor;
 
-  Teuchos::RCP<LayeredMeshNumbering<LO>>  m_elem_numbering_lid;
+  Teuchos::RCP<const LayeredMeshNumbering<LO>>  m_elem_numbering_lid;
 };
 
 }  // namespace Albany

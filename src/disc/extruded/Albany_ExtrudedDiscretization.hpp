@@ -65,6 +65,8 @@ public:
   //! Get number of spatial dimensions
   int getNumDim() const override { return m_extruded_mesh->meshSpecs[0]->numDim; }
 
+  void setNumEq (int neq) override;
+
   // --- Get/set solution/residual/field vectors to/from mesh --- //
 
   Teuchos::RCP<Thyra_Vector> getSolutionField (const bool overlapped = false) const override;
@@ -113,22 +115,6 @@ public:
   Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
 
 protected:
-
-  void getSolutionField(Thyra_Vector& result, bool overlapped) const;
-
-  void setSolutionField (const Thyra_Vector& soln, const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp, const bool overlapped);
-  void setSolutionField (const Thyra_Vector& soln,
-                         const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-                         const Thyra_Vector& soln_dot,
-                         const bool          overlapped);
-  void setSolutionField (const Thyra_Vector& soln,
-                         const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-                         const Thyra_Vector& soln_dot,
-                         const Thyra_Vector& soln_dotdot,
-                         const bool          overlapped);
-  void setSolutionFieldMV (const Thyra_MultiVector& solnT,
-                           const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-                           const bool overlapped);
 
   void computeCoordinates();
   void createDOFManagers();

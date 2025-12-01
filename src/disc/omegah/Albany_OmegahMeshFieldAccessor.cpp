@@ -361,6 +361,14 @@ saveVector (const Thyra_Vector&  field_vector,
   m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
 }
 
+void OmegahMeshFieldAccessor::
+setSolutionFieldsMetadata (const int neq)
+{
+  // For now, just add a tag of the proper length
+  // TODO: if/when we add non-nodal FE types, this needs to be revisited
+  addFieldOnMesh("solution",0,neq);
+}
+
 void OmegahMeshFieldAccessor::reset_mesh_tags ()
 {
   for (auto& [name, tag_handle] : m_tags) {
