@@ -138,23 +138,23 @@ void AbstractDiscretization::buildSideSetsViews ()
       }
 
       for (int side = 0; side < numSides; ++side) {
-        globalSideSetViews[ss_key].numCellsOnSide.h_view(current_index, side) = numCellsOnSide[side];
+        globalSideSetViews[ss_key].numCellsOnSide.view_host()(current_index, side) = numCellsOnSide[side];
         for (int j = 0; j < numCellsOnSide[side]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = cellsOnSide[side][j];
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = sideSetIdxOnSide[side][j];
+          globalSideSetViews[ss_key].cellsOnSide.view_host()(current_index, side, j) = cellsOnSide[side][j];
+          globalSideSetViews[ss_key].sideSetIdxOnSide.view_host()(current_index, side, j) = sideSetIdxOnSide[side][j];
         }
         for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = -1;
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = -1;
+          globalSideSetViews[ss_key].cellsOnSide.view_host()(current_index, side, j) = -1;
+          globalSideSetViews[ss_key].sideSetIdxOnSide.view_host()(current_index, side, j) = -1;
         }
       }
 
       for (size_t j = 0; j < ss_val.size(); ++j) {
-        globalSideSetViews[ss_key].side_GID.h_view(current_index, j)      = ss_val[j].side_GID;
-        globalSideSetViews[ss_key].elem_GID.h_view(current_index, j)      = ss_val[j].elem_GID;
-        globalSideSetViews[ss_key].ws_elem_idx.h_view(current_index, j)   = ss_val[j].ws_elem_idx;
-        globalSideSetViews[ss_key].elem_ebIndex.h_view(current_index, j)  = ss_val[j].elem_ebIndex;
-        globalSideSetViews[ss_key].side_pos.h_view(current_index, j) = ss_val[j].side_pos;
+        globalSideSetViews[ss_key].side_GID.view_host()(current_index, j)      = ss_val[j].side_GID;
+        globalSideSetViews[ss_key].elem_GID.view_host()(current_index, j)      = ss_val[j].elem_GID;
+        globalSideSetViews[ss_key].ws_elem_idx.view_host()(current_index, j)   = ss_val[j].ws_elem_idx;
+        globalSideSetViews[ss_key].elem_ebIndex.view_host()(current_index, j)  = ss_val[j].elem_ebIndex;
+        globalSideSetViews[ss_key].side_pos.view_host()(current_index, j) = ss_val[j].side_pos;
       }
 
       globalSideSetViews[ss_key].side_GID.modify_host();
@@ -308,14 +308,14 @@ void AbstractDiscretization::buildSideSetsViews ()
             for (int j=0; j<numSideNodes; ++j) {
               for (int il=0; il<numLayers; ++il) {
                 const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-                globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
+                globalDOFView.view_host()(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
                   elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
               }
 
               // Add top side in last layer
               const int il = numLayers-1;
               const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-              globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
+              globalDOFView.view_host()(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
                 elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
             }
           }

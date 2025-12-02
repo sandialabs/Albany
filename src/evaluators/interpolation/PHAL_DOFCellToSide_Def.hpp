@@ -102,7 +102,7 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
       int thisSideNodes = cellType->getNodeCount(sideDim,side);
       for (int node=0; node<thisSideNodes; ++node) {
-        sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
+        sideNodes.view_host()(side,node) = cellType->getNodeMap(sideDim,side,node);
       }
     }
     sideNodes.modify_host();
@@ -138,8 +138,8 @@ void DOFCellToSideBase<EvalT, Traits, ScalarT>::
 operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
-  const int side = sideSet.side_pos.d_view(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
+  const int side = sideSet.side_pos.view_device()(sideSet_idx);
 
   switch (layout)
   {
@@ -157,13 +157,13 @@ operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
       break;
     case NODE_SCALAR:
       for (int node=0; node<dimsArray[1]; ++node) {
-        val_side(sideSet_idx,node) = val_cell(cell,sideNodes.d_view(side,node));
+        val_side(sideSet_idx,node) = val_cell(cell,sideNodes.view_device()(side,node));
       }
       break;
     case NODE_VECTOR:
       for (int node=0; node<dimsArray[1]; ++node) {
         for (int i=0; i<dimsArray[2]; ++i) {
-          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes.d_view(side,node),i);
+          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes.view_device()(side,node),i);
         }
       }
       break;
@@ -171,12 +171,12 @@ operator() (const CellToSide_Tag&, const int& sideSet_idx) const {
       for (int node=0; node<dimsArray[1]; ++node)
         for (int i=0; i<dimsArray[2]; ++i)
           for (int j=0; j<dimsArray[3]; ++j)
-            val_side(sideSet_idx,node,i,j) = val_cell(cell,sideNodes.d_view(side,node),i,j);
+            val_side(sideSet_idx,node,i,j) = val_cell(cell,sideNodes.view_device()(side,node),i,j);
       break;
     case VERTEX_VECTOR:
       for (int node=0; node<dimsArray[1]; ++node) {
         for (int i=0; i<dimsArray[2]; ++i) {
-          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes.d_view(side,node),i);
+          val_side(sideSet_idx,node,i) = val_cell(cell,sideNodes.view_device()(side,node),i);
         }
       }
       break;

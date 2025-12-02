@@ -837,9 +837,9 @@ computeField (const std::string& field_name,
   using layout = view_type::traits::array_layout;
 
   view_type x("x",entities.size(),1), y("y",entities.size(),1), z("z",entities.size(),1);
-  view_type::HostMirror x_h = Kokkos::create_mirror_view(x);
-  view_type::HostMirror y_h = Kokkos::create_mirror_view(y);
-  view_type::HostMirror z_h = Kokkos::create_mirror_view(z);
+  view_type::host_mirror_type x_h = Kokkos::create_mirror_view(x);
+  view_type::host_mirror_type y_h = Kokkos::create_mirror_view(y);
+  view_type::host_mirror_type z_h = Kokkos::create_mirror_view(z);
   const auto& coordinates = *this->getCoordinatesField3d();
   double* xyz;
   for (unsigned int i=0; i<entities.size(); ++i) {

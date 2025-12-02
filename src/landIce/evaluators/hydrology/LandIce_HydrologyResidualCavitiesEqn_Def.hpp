@@ -184,7 +184,7 @@ evaluateFieldsSide (typename Traits::EvalData workset)
   sideSet = workset.sideSetViews->at(sideSetName);
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the local data of cell
-    const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+    const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
 
     for (unsigned int node=0; node < numNodes; ++node) {
       res_node = 0;

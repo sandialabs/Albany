@@ -99,7 +99,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   for (unsigned int side=0; side<numSides; ++side) {
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (unsigned int node=0; node<thisSideNodes; ++node) {
-      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.view_host()(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
   sideNodes.modify_host();
@@ -150,8 +150,8 @@ void LandIce::LaplacianRegularizationResidual<EvalT, Traits>::
 operator() (const LaplacianRegularization_Side_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
-  const int side = sideSet.side_pos.d_view(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
+  const int side = sideSet.side_pos.view_device()(sideSet_idx);
   if(lumpedMassMatrix) {
     MeshScalarT side_trapezoid_weights= 0;
     for (unsigned int qp=0; qp<numSideQPs; ++qp)
@@ -159,12 +159,12 @@ operator() (const LaplacianRegularization_Side_Tag&, const int& sideSet_idx) con
     side_trapezoid_weights /= numSideNodes;
 
     for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-      auto cell_node = sideNodes.d_view(side,inode);
+      auto cell_node = sideNodes.view_device()(side,inode);
       residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
     }
   } else {
     for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-      auto cell_node = sideNodes.d_view(side,inode);
+      auto cell_node = sideNodes.view_device()(side,inode);
       for (unsigned int qp=0; qp<numSideQPs; ++qp) {
         residual(cell,cell_node) += robin_coeff*side_field(sideSet_idx,qp)*side_BF(sideSet_idx, inode, qp)*w_side_measure(sideSet_idx, qp);
       }

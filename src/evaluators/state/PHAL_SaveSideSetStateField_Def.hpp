@@ -135,7 +135,7 @@ saveElemState(typename Traits::EvalData workset)
   double tan_cell_val, meas;
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
-    const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
+    const int side_GID = sideSet.side_GID.view_host()(sideSet_idx);
     const GO ss_cell_GID = side_to_ss_cell.at(side_GID);
     const int ss_cell_LID = ss_cell_indexer->getLocalElement(ss_cell_GID);
 
@@ -200,7 +200,7 @@ saveNodeState(typename Traits::EvalData workset)
   double tan_cell_val, meas;
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
-    const int side_GID = sideSet.side_GID.h_view(sideSet_idx);
+    const int side_GID = sideSet.side_GID.view_host()(sideSet_idx);
     const GO ss_cell_GID = side_to_ss_cell.at(side_GID);
     const int ss_cell_LID = ss_cell_indexer->getLocalElement(ss_cell_GID);
     const auto& node_map = side_to_node_map.at(side_GID);
