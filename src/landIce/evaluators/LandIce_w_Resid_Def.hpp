@@ -74,7 +74,7 @@ namespace LandIce
     for (unsigned int side=0; side<numSides; ++side) {
       unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
       for (unsigned int node=0; node<thisSideNodes; ++node) {
-        sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
+        sideNodes.view_host()(side,node) = cellType->getNodeMap(sideDim,side,node);
       }
     }
     sideNodes.modify_host();
@@ -123,16 +123,16 @@ namespace LandIce
   operator() (const wResid_Side_Tag&, const int& side_idx) const {
 
     // Get the local data of side and cell
-    const int cell = sideSet.ws_elem_idx.d_view(side_idx);
-    const int side = sideSet.side_pos.d_view(side_idx);
+    const int cell = sideSet.ws_elem_idx.view_device()(side_idx);
+    const int side = sideSet.side_pos.view_device()(side_idx);
 
     for (unsigned int snode=0; snode<numSideNodes; ++snode){
-      int cnode = sideNodes.d_view(side,snode);
+      int cnode = sideNodes.view_device()(side,snode);
       Residual(cell,cnode) =0;
       }
 
     for (unsigned int snode=0; snode<numSideNodes; ++snode) {
-      int cnode = sideNodes.d_view(side,snode);
+      int cnode = sideNodes.view_device()(side,snode);
       for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
       Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
                                   velocity(cell,qp,0)  * normals(side_idx,qp,0) +

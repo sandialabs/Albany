@@ -72,7 +72,7 @@ namespace LandIce {
 
     PHX::MDField<ScalarT> p_resp, p_reg, p_reg_stiffening;
 
-    using scalar_view_host_mirror = typename PHX::MDField<ScalarT>::array_type::HostMirror;
+    using scalar_view_host_mirror = typename PHX::MDField<ScalarT>::array_type::host_mirror_type;
     scalar_view_host_mirror resp, reg, reg_stiffening;
     
     double scaling, alpha, asinh_scaling, alpha_stiffening;

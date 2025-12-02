@@ -309,7 +309,7 @@ template<typename EvalT, typename Traits, typename VelocityST>
 void EnthalpyResid<EvalT,Traits,VelocityST>::
 evaluateFields(typename Traits::EvalData d)
 {
-  typename PHX::MDField<ScalarT>::array_type::HostMirror hom = Kokkos::create_mirror_view(homotopy.get_view());
+  typename PHX::MDField<ScalarT>::array_type::host_mirror_type hom = Kokkos::create_mirror_view(homotopy.get_view());
   Kokkos::deep_copy(hom, homotopy.get_view());
 
   flux_reg_coeff = flux_reg_alpha*exp(flux_reg_beta*hom(0)); // [adim]

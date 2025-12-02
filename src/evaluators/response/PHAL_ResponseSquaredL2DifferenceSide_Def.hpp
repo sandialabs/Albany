@@ -183,7 +183,7 @@ evaluateFields(typename Traits::EvalData workset)
         Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
 
           ScalarT sum = 0;
           for (int qp=0; qp<numQPs; ++qp)
@@ -204,7 +204,7 @@ evaluateFields(typename Traits::EvalData workset)
         Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
 
           ScalarT diff_1[8] = {0};
 
@@ -239,7 +239,7 @@ evaluateFields(typename Traits::EvalData workset)
         Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
           // Get the local data of cell
-          const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+          const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
 
           ScalarT diff_2[8][8] = {0};
 

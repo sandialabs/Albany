@@ -116,7 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
                        KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
 
       ThicknessST gl_func[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
       ThicknessST H[2] = {0., 0.};

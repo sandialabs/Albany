@@ -19,7 +19,7 @@ namespace Albany
 template<typename DT>
 struct DualView {
   using dev_t  = ViewLR<DT,DeviceMemSpace>;
-  using host_t = typename dev_t::HostMirror;
+  using host_t = typename dev_t::host_mirror_type;
 
   using const_DT      = typename dev_t::traits::const_data_type;
   using nonconst_DT   = typename dev_t::traits::non_const_data_type;
