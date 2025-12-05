@@ -448,7 +448,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
 
-  TEUCHOS_TEST_FOR_EXCEPTION (mesh->nghost_layers()>=1, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (mesh->nghost_layers()<1, std::runtime_error,
       "Error! Adaptation requires a ghosted omegah mesh with at least one layer\n");
 
   if(solution_dot != Teuchos::null and solution_dotdot != Teuchos::null) {
@@ -548,6 +548,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     }
     return adapt_data;
   }
+  return adapt_data; //silence warning, shouldn't be here
 }
 
 void OmegahDiscretization::
@@ -564,7 +565,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       "Error! Adaptation type not supported. Only 'None' and 'Topology' are currently supported.\n");
   TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->dim()!=1 && ohMesh->dim()!=2, std::runtime_error,
       "Error! Adaptation not supported for this mesh. We only implemented simple 1d and 2d cases.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->nghost_layers()>=1, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->nghost_layers()<1, std::runtime_error,
       "Error! Adaptation requires a ghosted omegah mesh with at least one layer\n");
 
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
