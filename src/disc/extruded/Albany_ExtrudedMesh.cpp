@@ -147,6 +147,13 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
     basal_sis = Teuchos::rcp(new StateInfoStruct());
   }
 
+  const auto& upper_sis = side_set_sis["upperside"];
+  if (not upper_sis.is_null()) {
+    for (auto st : *upper_sis) {
+      basal_sis->push_back(st);
+    }
+  }
+
   auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
 
   // If we extrude or interpolate a basal state, we will have a name clash.
