@@ -24,7 +24,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
       global_sis.push_back(st);
       break;
     case StateStruct::NodeState:
-      nodal_sis.push_back(st); break;
+      nodal_sis.push_back(st);
       if (st->entity==StateStruct::NodalDistParameter)
         nodal_parameter_sis.push_back(st);
       elem_sis.push_back(st); // We store 3d states as (Cell, Node, ...)
