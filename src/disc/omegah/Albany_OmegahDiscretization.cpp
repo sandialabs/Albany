@@ -548,6 +548,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     }
     return adapt_data;
   }
+  return adapt_data; //silence warning, shouldn't be here
 }
 
 void OmegahDiscretization::
