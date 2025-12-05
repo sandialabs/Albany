@@ -194,7 +194,7 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
     auto dim = st->dim;
     for (size_t ws=0; ws<elem_buckets.size(); ++ws) {
       const auto& b = *elem_buckets[ws];
-      data = reinterpret_cast<double*>(b.field_data_location(*f));
+      data = stk::mesh::field_data(*f,b);
       auto& state = elemStateArrays[ws][st->name];
       switch (dim.size()) {
         case 1:
@@ -236,7 +236,7 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
     }
     for (size_t ws=0; ws<node_buckets.size(); ++ws) {
       const auto& b = *node_buckets[ws];
-      data = reinterpret_cast<double*>(b.field_data_location(*f));
+      data = stk::mesh::field_data(*f,b);
       switch (dim.size()) {
         case 1:
           nodeStateArrays[ws][st->name].reset_from_host_ptr(data,b.size()); break;
