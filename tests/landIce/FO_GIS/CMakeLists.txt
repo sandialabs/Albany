@@ -357,6 +357,11 @@ endif()
 set (testName ${testNameRoot}_AdjointSensitivity_BasalFriction_FluxDivergence)
 
 if (ALBANY_IFPACK2)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_stk_extruded.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_stk_extruded.yaml)
+  add_test(${testName}_STKExtruded ${Albany.exe} input_fo_gis_analysis_beta_stk_extruded.yaml)
+  set_tests_properties(${testName}_STKExtruded PROPERTIES LABELS "LandIce;Forward")
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta.yaml)
   add_test(${testName} ${Albany.exe} input_fo_gis_analysis_beta.yaml)
