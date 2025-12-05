@@ -16,7 +16,7 @@
 #include "Tpetra_KokkosCompat_ClassicNodeAPI_Wrapper.hpp"
 
 // Get Kokkos graph and matrix
-// #include "Kokkos_StaticCrsGraph.hpp"
+#include "KokkosSparse_StaticCrsGraph.hpp"
 #include "KokkosSparse_CrsMatrix.hpp"
 
 // Phalanx determines the Kokkos node we use for Tpetra types
