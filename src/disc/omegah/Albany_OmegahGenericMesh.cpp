@@ -214,6 +214,8 @@ loadOmegahMesh ()
   if (m_params->get("Rebalance",true)) {
     m_mesh->balance(); // re-partition to the number of ranks in world communicator
   }
+  // omegah error estimation and adaptation requires ghosts
+  m_mesh.get()->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
 
   m_coords_d = m_mesh->coords().view();
   m_coords_h = Kokkos::create_mirror_view(m_coords_d);
@@ -521,6 +523,8 @@ buildBox (const int dim)
     elem_topo = dim==3 ? Topo_type::hexahedron
                        : dim==2 ? Topo_type::quadrilateral : Topo_type::edge;
   }
+  // omegah error estimation and adaptation requires ghosts
+  m_mesh.get()->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
 
 #ifdef DEBUG_OUTPUT
   // This chunk prints ALL mesh entities, along with their geometric classification and centroids
@@ -563,7 +567,6 @@ buildBox (const int dim)
     }
   }
 #endif
-  m_mesh->set_parting(OMEGA_H_ELEM_BASED);
   setCoordinates();
 
   // Create the mesh specs
