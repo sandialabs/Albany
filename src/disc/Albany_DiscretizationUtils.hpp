@@ -42,6 +42,7 @@ enum class FE_Type {
 };
 
 enum class MeshType {
+  Unknown,
   Structured,   // structured in all directions
   Extruded,     // structured vertically
   Unstructured  // No structure known (e.g., read from file)
