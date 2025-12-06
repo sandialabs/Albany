@@ -60,12 +60,14 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
     m_part_to_basal_part["extruded_" + ns] = ns;
     m_part_to_basal_part["basal_" + ns] = ns;
   }
+  std::vector<std::string> extruded_ss_names;
   for (const auto& ss : basal_mesh_specs->ssNames) {
     if (ss=="lateralside") continue; // extruded_lateralside would just be the same as lateralside
     auto pname = "extruded_" + ss;
     ssNames.push_back (pname);
     lateralParts.push_back(pname);
     m_part_to_basal_part["extruded_" + ss] = ss;
+    extruded_ss_names.push_back(pname);
   }
   std::string ebName = "extruded_" + basal_mesh_specs->ebName;
   std::map<std::string,int> ebNameToIndex =
@@ -112,19 +114,22 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
 
   ss_ms["basalside"] = m_basal_mesh->meshSpecs;
 
-  // At this point, we cannot assume there will be a discretization on upper/lateral sides,
-  // so create "empty" mesh specs, just setting the cell topology and mesh dim. IF a side disc
-  // is created, these will be overwritten
-
-  auto& upper_ms = ss_ms["upperside"];
-  upper_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
-  upper_ms[0]->numDim = basal_topo.dimension;
-  upper_ms[0]->ctd = basal_topo;
-
-  auto& lateral_ms = ss_ms["lateralside"];
-  lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
-  lateral_ms[0]->numDim = lat_topo.dimension;
-  lateral_ms[0]->ctd = lat_topo;
+  // Create mesh specs for upper and lateral sides, as well as any extruded side set.
+  // We cannot assume there will be a discretization there, so the mesh specs is "empty"
+  // (meaning only topology and dim). If a side disc is created (which is AFTER the
+  // mesh is created) they will be overwritten.
+  auto create_ss_mesh_specs = [&](const std::string& ss_name, const auto& topo)
+  {
+    auto& ss_ms = meshSpecs[0]->sideSetMeshSpecs[ss_name];
+    ss_ms.resize(1);
+    ss_ms[0] = Teuchos::rcp( new MeshSpecsStruct() );
+    ss_ms[0]->ctd = topo;
+    ss_ms[0]->numDim = meshSpecs[0]->numDim-1;
+  };
+  create_ss_mesh_specs("upperside",basal_topo);
+  create_ss_mesh_specs("lateralside",lat_topo);
+  for (auto ss_name : extruded_ss_names)
+    create_ss_mesh_specs(ss_name,lat_topo);
 
   // For the upperside, we use the same disc as the basalside.
   sideSetMeshStructs["upperside"] = m_basal_mesh;
