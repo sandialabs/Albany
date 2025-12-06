@@ -64,7 +64,7 @@ jobs:
       - name: Run tests
         run: |
           cd ${GITHUB_WORKSPACE}/albany/build
-          ctest
+          ctest --output-on-failure
       - name: Upload log files
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
