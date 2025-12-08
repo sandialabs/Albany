@@ -45,16 +45,16 @@ jobs:
         run: |
           mkdir -p ${GITHUB_WORKSPACE}/albany/build && cd ${GITHUB_WORKSPACE}/albany/build
           cmake \
-            -D CMAKE_BUILD_TYPE:STRING=RELEASE                              \
-            -D CMAKE_INSTALL_PREFIX:PATH=${GITHUB_WORKSPACE}/albany/install \
+            -D CMAKE_BUILD_TYPE:STRING=RELEASE                                \
+            -D CMAKE_INSTALL_PREFIX:PATH=${GITHUB_WORKSPACE}/albany/install   \
             \
-            -D ALBANY_TRILINOS_DIR:PATH=${TRILINOS_ROOT}                    \
-            -D ALBANY_MPI_EXEC_MAX_NUMPROCS:STRING=2                        \
-            -D ALBANY_MPI_EXEC_TRAILING_OPTIONS:STRING="--bind-to core"     \
+            -D ALBANY_TRILINOS_DIR:PATH=${TRILINOS_ROOT}                      \
+            -D ALBANY_MPI_EXEC_MAX_NUMPROCS:STRING=4                          \
+            -D ALBANY_MPI_EXEC_TRAILING_OPTIONS:STRING="--bind-to hwthread"   \
             \
-            -D ENABLE_OMEGAH:BOOL=ON                                        \
-            -D ENABLE_DEMO_PDES:BOOL=ON                                     \
-            -D ENABLE_LANDICE:BOOL=ON                                       \
+            -D ENABLE_OMEGAH:BOOL=ON                                          \
+            -D ENABLE_DEMO_PDES:BOOL=ON                                       \
+            -D ENABLE_LANDICE:BOOL=ON                                         \
             \
             -S ${GITHUB_WORKSPACE}/albany/source
       - name: Build Albany
