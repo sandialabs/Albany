@@ -5,6 +5,23 @@
 #include <Panzer_IntrepidFieldPattern.hpp>
 #include <Intrepid2_TensorBasis.hpp>
 
+namespace {
+
+// panzer::FieldAggPattern does not expose anything that can be used to get the number
+// of fields (which is the size of the stored patterns vector). But since the patterns
+// vector is private, inheriting from it can be used to expose the protected member's size.
+// The alternative is to keep calling getFieldType(i++) until the code throws, but that
+// becomes annoying when debugging with GDB and `catch throw` set...
+struct FieldAggPatternAccessor : public panzer::FieldAggPattern
+{
+  FieldAggPatternAccessor (const panzer::FieldAggPattern& fap)
+    : FieldAggPattern(fap)
+  {}
+
+  int numFields () const { return patterns_.size(); }
+};
+}
+
 namespace Albany {
 
 ExtrudedConnManager::
@@ -198,15 +215,7 @@ buildConnectivity(const panzer::FieldPattern & fp)
 
   // Unfortunately, FieldAggPattern does not expose how many fields are in it,
   // so use try/catch block with one of the getters;
-  m_num_fields = 0;
-  while (true) {
-    try {
-      fp_agg->getFieldType(m_num_fields);
-      ++m_num_fields;
-    } catch(...) {
-      break;
-    }
-  };
+  m_num_fields = FieldAggPatternAccessor(*fp_agg).numFields();
 
   using IFP = panzer::Intrepid2FieldPattern;
   const auto line = shards::CellTopology(shards::getCellTopologyData<shards::Line<2>>());
