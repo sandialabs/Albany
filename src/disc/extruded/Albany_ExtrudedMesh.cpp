@@ -35,10 +35,10 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
 
-  m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
-  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,COLUMN));
-  m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
-  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,COLUMN));
+  layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
+  layers_data.cell.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,COLUMN));
+  layers_data.node.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
+  layers_data.node.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,COLUMN));
 
   // Create map part->basal_part
   // upper/basal/bot/top parts map to the full basal mesh
@@ -216,7 +216,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
   // Now the basal field accessor is definitely valid/inited, so we can create the extruded one
   m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
-                                                                m_elem_layers_data_lid));
+                                                                layers_data.cell.lid));
 
   m_field_accessor->addStateStructs(sis);
 
@@ -236,25 +236,19 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   const auto max_basal_elem_gid = m_basal_mesh->get_max_elem_gid();
   const auto num_basal_elems    = m_basal_mesh->get_num_local_elements();
 
-  m_elem_layers_data_gid->numHorizEntities = max_basal_elem_gid+1;
-  m_elem_layers_data_lid->numHorizEntities = num_basal_elems;
-  m_node_layers_data_gid->numHorizEntities = max_basal_node_gid+1;
-  m_node_layers_data_lid->numHorizEntities = num_basal_nodes;
+  layers_data.cell.gid->numHorizEntities = max_basal_elem_gid+1;
+  layers_data.cell.lid->numHorizEntities = num_basal_elems;
+  layers_data.node.gid->numHorizEntities = max_basal_node_gid+1;
+  layers_data.node.lid->numHorizEntities = num_basal_nodes;
 
-  auto set_pos = [&](auto data) {
-    const auto& ctd = meshSpecs[0]->ctd;
-    data->top_side_pos = ctd.side_count-1;
-    data->bot_side_pos = ctd.side_count-2;
-  };
-  set_pos(m_elem_layers_data_gid);
-  set_pos(m_elem_layers_data_lid);
-  set_pos(m_node_layers_data_gid);
-  set_pos(m_node_layers_data_lid);
+  const auto& ctd = meshSpecs[0]->ctd;
+  layers_data.top_side_pos = ctd.side_count-1;
+  layers_data.bot_side_pos = ctd.side_count-2;
 
   // Set layer data in the field accessor
   bool useGlimmerSpacing = m_params->get("Use Glimmer Spacing", false);
-  int num_elem_layers = m_elem_layers_data_lid->numLayers;
-  int num_node_layers = m_node_layers_data_lid->numLayers;
+  int num_elem_layers = layers_data.cell.lid->numLayers;
+  int num_node_layers = layers_data.node.lid->numLayers;
 
   std::vector<double> node_layers_coord(num_node_layers);
   if(useGlimmerSpacing) {
@@ -276,10 +270,10 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   vec_states["elem_layer_thickness"] = elem_layer_thickness;
   vec_states["node_layers_coords"] = node_layers_coord;
-  int_states["ordering"] = m_elem_layers_data_lid->layerOrd ? 0 : 1;
+  int_states["ordering"] = layers_data.cell.lid->layerOrd ? 0 : 1;
   int_states["num_layers"] = num_elem_layers;
-  int64_states["max_2d_elem_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
-  int64_states["max_2d_node_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
+  int64_states["max_2d_elem_gid"] = layers_data.cell.gid->numHorizEntities-1;
+  int64_states["max_2d_node_gid"] = layers_data.cell.gid->numHorizEntities-1;
 
   m_bulk_data_set = true;
 }

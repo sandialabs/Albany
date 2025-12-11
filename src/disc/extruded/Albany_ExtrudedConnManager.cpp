@@ -42,7 +42,7 @@ ExtrudedConnManager(const Teuchos::RCP<ConnManager>&         conn_mgr_h,
       "  Basal topology: " << m_conn_mgr_h->get_topology().getName() << "\n"
       "  Supported basal topologies: " << tri_topo.getName() << "\n");
 
-  auto layers_data = mesh->cell_layers_lid();
+  auto layers_data = mesh->layers_data.cell.lid;
   m_num_elems = layers_data->numHorizEntities*layers_data->numLayers;
 
   m_elem_blocks_names.resize(1, mesh->meshSpecs[0]->ebName);
@@ -66,14 +66,13 @@ getElementsInBlock (const std::string& blockId) const
   const auto& belems = m_conn_mgr_h->getElementsInBlock();
 
   std::vector<GO> elems;
-  const auto& cell_layers_lid = m_mesh->cell_layers_lid();
-  const auto& cell_layers_gid = m_mesh->cell_layers_gid();
+  const auto& layers_data = m_mesh->layers_data;
   elems.resize(m_num_elems);
   for (int ie=0; ie<m_num_elems; ++ie) {
     int ib, ilay;
-    cell_layers_lid->getIndices(ie,ib,ilay);
+    layers_data.cell.lid->getIndices(ie,ib,ilay);
     GO gid_b = belems[ib];
-    elems[ie] = cell_layers_gid->getId(gid_b,ilay);
+    elems[ie] = layers_data.cell.gid->getId(gid_b,ilay);
   }
   return elems;
 }
@@ -118,9 +117,9 @@ getConnectivityMask (const std::string& sub_part_name) const
   TEUCHOS_TEST_FOR_EXCEPTION (not is_connectivity_built(), std::logic_error,
       "Error! Cannot call getConnectivityMask before connectivity is build.\n");
   std::vector<int> mask(m_connectivity.size(),0);
-  const auto& cell_layers_lid = m_mesh->cell_layers_lid();
+  const auto& layers_data = m_mesh->layers_data;
   const int num_basal_elems = m_mesh->basal_mesh()->get_num_local_elements();
-  const int num_layers = cell_layers_lid->numLayers;
+  const int num_layers = layers_data.cell.lid->numLayers;
   if (sub_part_name=="basalside" or sub_part_name=="upperside" or
       sub_part_name=="bottom" or sub_part_name=="top") {
     const int ilay = sub_part_name=="basalside" or sub_part_name=="bottom" ? 0 : num_layers-1;
@@ -128,7 +127,7 @@ getConnectivityMask (const std::string& sub_part_name) const
 
     const int lid_offset = ilay==0 ? 0 : num_side_dofs*(m_num_vdofs_per_elem-1);
     for (int ie=0; ie<num_basal_elems; ++ie) {
-      const int ielem3d = cell_layers_lid->getId(ie,ilay);
+      const int ielem3d = layers_data.cell.lid->getId(ie,ilay);
       auto m = &mask[getConnectivityStart(ielem3d)];
       for (int idof=0; idof<num_side_dofs; ++idof) {
         m[lid_offset+idof] = 1;
@@ -151,7 +150,7 @@ getConnectivityMask (const std::string& sub_part_name) const
         for (int idof=0; idof<size_h; ++idof) {
           if (basal_mask[start_h+idof]==1) {
             for (int ilay=0; ilay<num_layers; ++ilay) {
-              const int ielem3d = cell_layers_lid->getId(ie,ilay);
+              const int ielem3d = layers_data.cell.lid->getId(ie,ilay);
               const int start3d = getConnectivityStart(ielem3d);
               auto m = &mask[start3d];
               for (int ilev=0; ilev<m_num_vdofs_per_elem; ++ilev) {
@@ -178,6 +177,9 @@ part_dim (const std::string& part_name) const
   const auto& ss_names = ms->ssNames;
   if (part_name==elem_block_name()) {
     return ms->numDim;
+  } else if (part_name=="top" or part_name=="bottom" or part_name=="lateral") {
+    // These are nodesets, but they still refer to an N-1 dimensional mesh part
+    return ms->numDim-1;
   } else if (std::find(ss_names.begin(),ss_names.end(),part_name)!=ss_names.end()) {
     return ms->numDim - 1;
   } else {
@@ -261,8 +263,7 @@ buildConnectivity(const panzer::FieldPattern & fp)
       "  - basal conn manager cell topo : " << m_conn_mgr_h->get_topology().getName() << "\n"
       "  - field pattern basal cell topo: " << basalShape.getName() << "\n");
 
-  auto cell_layers_gid = m_mesh->cell_layers_gid();
-  auto cell_layers_lid = m_mesh->cell_layers_lid();
+  const auto& layers_data = m_mesh->layers_data;
 
   // Build horiz and vertical intrepid patterns.
   // TODO: if you generalize to fields of different patterns,
@@ -296,8 +297,8 @@ buildConnectivity(const panzer::FieldPattern & fp)
   const LO cellIdCnt_v = fp_v->getSubcellIndices(1,0).size();
 
   // Total number of dofs in "vertical grid" (for a scalar field)
-  GO numDofLayers = (cell_layers_gid->numLayers+1) * nodeIdCnt_v
-                  +  cell_layers_gid->numLayers    * cellIdCnt_v;
+  GO numDofLayers = (layers_data.cell.gid->numLayers+1) * nodeIdCnt_v
+                  +  layers_data.cell.gid->numLayers    * cellIdCnt_v;
   m_num_dofs_layers = numDofLayers;
 
   m_num_dofs_per_elem = fp.numberIds();
@@ -307,7 +308,7 @@ buildConnectivity(const panzer::FieldPattern & fp)
   //  2. compute horiz conn for that ibelem
   //  3. add dofs for 3d elem on a per-layer basis (local ordering), but honoring
   //     the user requests when it comes to global ids.
-  LayeredMeshNumbering<GO> dofs_layers_data(m_num_fields*(max_gid_h+1),numDofLayers,cell_layers_gid->ordering);
+  LayeredMeshNumbering<GO> dofs_layers_data(m_num_fields*(max_gid_h+1),numDofLayers,layers_data.cell.gid->ordering);
 
   const int ndofs_v = fp_v->numberIds();
   const int ndofs_h = fp_h->numberIds();
@@ -331,8 +332,8 @@ buildConnectivity(const panzer::FieldPattern & fp)
       }
     };
 
-    for (int ilay=0; ilay<cell_layers_lid->numLayers; ++ilay) {
-      int ielem = cell_layers_lid->getId(ibelem,ilay);
+    for (int ilay=0; ilay<layers_data.cell.lid->numLayers; ++ilay) {
+      int ielem = layers_data.cell.lid->getId(ibelem,ilay);
 
       const GO ielem_offset = ielem*m_num_dofs_per_elem;
       for (int ilev_dof=0; ilev_dof<ndofs_v; ++ilev_dof) {

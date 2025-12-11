@@ -54,7 +54,7 @@ void ExtrudedDiscretization::setNumEq (int neq)
   m_neq = neq;
 
   // On the basal mesh, make the solution vector numNodeLayers times longer
-  int basal_neq = neq * m_extruded_mesh->node_layers_gid()->numLayers;
+  int basal_neq = neq * m_extruded_mesh->layers_data.node.gid->numLayers;
   m_basal_disc->setNumEq(basal_neq);
 }
 
@@ -209,9 +209,9 @@ void ExtrudedDiscretization::computeCoordinates ()
 {
   m_nodes_coordinates.resize(getNumDim() * getLocalSubdim(getOverlapNodeVectorSpace()));
 
-  const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
+  const auto& layers_data = m_extruded_mesh->layers_data;
 
-  const int num_layers = m_extruded_mesh->cell_layers_gid()->numLayers;
+  const int num_layers = m_extruded_mesh->layers_data.cell.gid->numLayers;
 
   std::vector<double> levelsNormalizedThickness(num_layers+1);
   bool useGlimmerSpacing = m_disc_params->get("Use Glimmer Spacing", false);
@@ -256,7 +256,7 @@ void ExtrudedDiscretization::computeCoordinates ()
         // if (ilev!=num_layers)V
         // int elem3d = cell_layers_lid->getId(ielem,min(ilev
         // const auto& node_gids = node_dof_mgr->getElementGIDs(ielem);
-        const GO node_gid = node_layers_gid->getId(basal_node_gid, ilev);
+        const GO node_gid = layers_data.node.gid->getId(basal_node_gid, ilev);
         const int node_lid = node_indexer->getLocalElement(node_gid);
         double* coords = &m_nodes_coordinates[mesh_dim*node_lid];
 
@@ -389,8 +389,7 @@ ExtrudedDiscretization::computeGraphs()
   }
 
   // Now, process rows/cols corresponding to ss equations
-  const auto& cell_layers_data_lid = m_extruded_mesh->cell_layers_lid();
-  const auto& cell_layers_data_gid = m_extruded_mesh->cell_layers_gid();
+  const auto& layers_data = m_extruded_mesh->layers_data;
   for (const auto& it : m_sideSetEquations) {
     const int side_eq = it.first;
 
@@ -414,12 +413,12 @@ ExtrudedDiscretization::computeGraphs()
       // Given any side of this sideSet, check layerId and pos within element,
       // to determine if we are on the top/bot of the mesh
       const auto pos = side->side_pos;
-      const auto layer = cell_layers_data_gid->getLayerId(side->elem_GID);
+      const auto layer = layers_data.cell.gid->getLayerId(side->elem_GID);
 
-      if (layer==(cell_layers_data_lid->numLayers-1)) {
-        allowColumnCoupling = pos==cell_layers_data_lid->top_side_pos;
+      if (layer==(layers_data.cell.lid->numLayers-1)) {
+        allowColumnCoupling = pos==layers_data.top_side_pos;
       } else if (layer==0) {
-        allowColumnCoupling = pos==cell_layers_data_lid->bot_side_pos;
+        allowColumnCoupling = pos==layers_data.bot_side_pos;
       } else {
         // This sideset is niether top nor bottom
         allowColumnCoupling = 0;
@@ -452,14 +451,14 @@ ExtrudedDiscretization::computeGraphs()
 
           if (globalAllowColumnCoupling) {
             // Assume the worst, and couple with all eqns over the whole column
-            const int numLayers = cell_layers_data_lid->numLayers;
-            const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
+            const int numLayers = layers_data.cell.lid->numLayers;
+            const LO basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
             for (int eq=0; eq<m_neq; ++eq) {
               const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
               const int num_col_gids = eq_offsets.size();
               cols.resize(num_col_gids);
               for (int il=0; il<numLayers; ++il) {
-                const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
+                const LO layer_elem_lid = layers_data.cell.lid->getId(basal_elem_LID,il);
                 const auto& elem_gids = sol_dof_mgr->getElementGIDs(layer_elem_lid);
 
                 for (int jdof=0; jdof<num_col_gids; ++jdof) {
@@ -586,7 +585,7 @@ ExtrudedDiscretization::computeSideSets()
   const auto& node_dof_mgr = getNodeDOFManager();
   const auto& cell_indexer = node_dof_mgr->cell_indexer();
   const int num_glb_basal_elems = basal_cell_indexer->getNumGlobalElements();
-  const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
+  const auto& layers_data = m_extruded_mesh->layers_data;
   const auto& extr_conn_mgr = Teuchos::rcp_dynamic_cast<ExtrudedConnManager>(getNodeDOFManager()->getAlbanyConnManager(),true);
   for (const auto& ss : m_extruded_mesh->meshSpecs[0]->ssNames) {
     // Make sure the sideset exist even if no sides are owned on this process
@@ -602,9 +601,9 @@ ExtrudedDiscretization::computeSideSets()
         SideStruct sStruct;
 
         const GO basal_gid = basal_cell_indexer->getGlobalElement(iside);
-        const int ilayer = ss=="basalside" ? 0 : cell_layers_gid->numLayers-1;
+        const int ilayer = ss=="basalside" ? 0 : layers_data.cell.gid->numLayers-1;
 
-        sStruct.elem_GID = cell_layers_gid->getId(basal_gid,ilayer);
+        sStruct.elem_GID = layers_data.cell.gid->getId(basal_gid,ilayer);
         sStruct.side_GID = basal_gid + (ss=="upperside" ? num_glb_basal_elems : 0);
         side_GIDs.push_back(sStruct.side_GID);
 
@@ -615,7 +614,7 @@ ExtrudedDiscretization::computeSideSets()
         int workset = m_elem_ws_idx[elem_LID].ws;
 
         // Save the position of the side within element (0-based).
-        sStruct.side_pos = ss=="basalside" ? cell_layers_gid->bot_side_pos : cell_layers_gid->top_side_pos;
+        sStruct.side_pos = ss=="basalside" ? layers_data.bot_side_pos : layers_data.top_side_pos;
 
         // Save the index of the element block that this elem lives in
         sStruct.elem_ebIndex = m_extruded_mesh->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
@@ -648,7 +647,7 @@ ExtrudedDiscretization::computeSideSets()
         }
       }
 
-      LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,cell_layers_gid->numLayers,cell_layers_gid->ordering);
+      LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,layers_data.cell.gid->numLayers,layers_data.cell.gid->ordering);
       auto get_basal_side_nodes = [&](const SideStruct& basal_side) {
         std::vector<GO> nodes;
         const int belem_LID = basal_cell_indexer->getLocalElement(basal_side.elem_GID);
@@ -666,13 +665,12 @@ ExtrudedDiscretization::computeSideSets()
         const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
         int pos = -1;
         std::vector<GO> side_nodes;
-        GO ilay = cell_layers_gid->getLayerId(elem_GID);
-        const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
+        GO ilay = layers_data.cell.gid->getLayerId(elem_GID);
         for (auto bn : basal_side_nodes) {
-          side_nodes.push_back(node_layers_gid->getId(bn,ilay));
+          side_nodes.push_back(layers_data.node.gid->getId(bn,ilay));
         }
         for (auto bn : basal_side_nodes) {
-          side_nodes.push_back(node_layers_gid->getId(bn,ilay+1));
+          side_nodes.push_back(layers_data.node.gid->getId(bn,ilay+1));
         }
         for (int iside=0; iside<num_sides and pos==-1; ++iside) {
           const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,iside);
@@ -695,9 +693,9 @@ ExtrudedDiscretization::computeSideSets()
           for (const auto& basal_side : basal_ss) {
             const auto basal_elem_gid = basal_side.elem_GID;
             const auto basal_side_nodes_gids = get_basal_side_nodes(basal_side);
-            for (int ilev=0; ilev<cell_layers_gid->numLayers; ++ilev) {
+            for (int ilev=0; ilev<layers_data.cell.gid->numLayers; ++ilev) {
               SideStruct sStruct;
-              sStruct.elem_GID = cell_layers_gid->getId(basal_elem_gid,ilev);
+              sStruct.elem_GID = layers_data.cell.gid->getId(basal_elem_gid,ilev);
               sStruct.side_GID = 2*num_glb_basal_elems + side_layers_gid.getId(basal_side.side_GID,ilev);
 
               auto elem_LID = cell_indexer->getLocalElement(sStruct.elem_GID);
@@ -831,8 +829,7 @@ buildCellSideNodeNumerationMaps()
   const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
   const auto& basal_elem_gids = m_basal_disc->getNodeDOFManager()->getAlbanyConnManager()->getElementsInBlock();
 
-  const auto& cell_layers_gid = m_extruded_mesh->cell_layers_gid();
-  const auto& node_layers_gid = m_extruded_mesh->node_layers_gid();
+  const auto& layers_data = m_extruded_mesh->layers_data;
 
   std::vector<GO> side_nodes;
 
@@ -843,7 +840,7 @@ buildCellSideNodeNumerationMaps()
       auto& s2nn = m_side_nodes_to_ss_cell_nodes[ssn];
 
       for (const auto& s : m_sideSets[ws][ssn]) {
-        const GO basal_elem_GID = s2ssc[s.side_GID] = cell_layers_gid->getColumnId(s.elem_GID);
+        const GO basal_elem_GID = s2ssc[s.side_GID] = layers_data.cell.gid->getColumnId(s.elem_GID);
         const LO basal_elem_LID = basal_node_dof_mgr->cell_indexer()->getLocalElement(basal_elem_GID);
         const auto elem_LID = node_dof_mgr->cell_indexer()->getLocalElement(s.elem_GID);
         const auto& elem_nodes = node_dof_mgr->getElementGIDs(elem_LID);
@@ -855,7 +852,7 @@ buildCellSideNodeNumerationMaps()
         side_nodes.resize(offsets.size());
         for (size_t i=0; i<offsets.size(); ++i) {
           auto gid3d = elem_nodes[offsets[i]];
-          side_nodes[i] = node_layers_gid->getColumnId(gid3d);
+          side_nodes[i] = layers_data.node.gid->getColumnId(gid3d);
         }
         s2nn[s.side_GID].resize(offsets.size());
         for (size_t i=0; i<offsets.size(); ++i) {
@@ -877,7 +874,7 @@ void ExtrudedDiscretization::setFieldData()
   m_basal_disc->setFieldData();
 
   const auto basal_sol_mfa = m_basal_disc->get_solution_mesh_field_accessor();
-  const auto elem_numbering_lid = m_extruded_mesh->cell_layers_lid();
+  const auto elem_numbering_lid = m_extruded_mesh->layers_data.cell.lid;
   m_solution_mfa = Teuchos::rcp(new ExtrudedMeshFieldAccessor(basal_sol_mfa,elem_numbering_lid));
 
   m_solution_mfa->setSolutionFieldsMetadata(m_neq);
