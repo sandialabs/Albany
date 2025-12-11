@@ -83,7 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = layers_data.layers_ratio;
+  const auto& dz_ref = layers_data.dz_ref;
   const int   numLayers = layers_data.cell.lid->numLayers;
   const int   bot = layers_data.bot_side_pos;
   const int   top = layers_data.top_side_pos;
@@ -92,7 +92,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i) {
-    sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
   }
 
   // We use this dof mgr to figure out which local node in the cell is on the
@@ -195,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = layers_data.layers_ratio;
+  const auto& dz_ref = layers_data.dz_ref;
   const int   numLayers = layers_data.cell.lid->numLayers;
   const int   bot = layers_data.bot_side_pos;
   const int   top = layers_data.top_side_pos;
@@ -204,7 +204,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i)
-    sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
 
   // We use this dof mgr to figure out which local node in the cell is on the
   // top or bottom side.
@@ -315,7 +315,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = layers_data.layers_ratio;
+  const auto& dz_ref = layers_data.dz_ref;
   const int   numLayers = layers_data.cell.lid->numLayers;
   const int   bot = layers_data.bot_side_pos;
   const int   top = layers_data.top_side_pos;
@@ -324,7 +324,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i) {
-    sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
   }
 
   // We use this dof mgr to figure out which local node in the cell is on the

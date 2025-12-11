@@ -223,18 +223,18 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
-  std::vector<double> levelsNormalizedThickness(numLayers + 1);
+  layers_data.z_ref.resize(numLayers + 1);
 
   if(useGlimmerSpacing)
     for (int i = 0; i < numLayers+1; i++)
-      levelsNormalizedThickness[numLayers-i] = 1.0- (1.0 - std::pow(double(i) / numLayers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+      layers_data.z_ref[numLayers-i] = 1.0- (1.0 - std::pow(double(i) / numLayers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
   else  //uniform layers
     for (int i = 0; i < numLayers+1; i++)
-      levelsNormalizedThickness[i] = double(i) / numLayers;
+      layers_data.z_ref[i] = double(i) / numLayers;
 
-  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers);
+  layers_data.dz_ref.resize(numLayers);
   for (int i = 0; i < numLayers; i++)
-    layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+    layers_data.dz_ref[i] = layers_data.z_ref[i+1]-layers_data.z_ref[i];
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData2D.universal_part()) & stk::mesh::Selector(metaData2D.locally_owned_part());
 
@@ -280,7 +280,6 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   const LO numLocalNodes2D = nodes2D.size();
   const LO numLocalSides2D = sides2D.size();
 
-  layers_data.layers_ratio = layerThicknessRatio;
   layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalCells2dId+1,numLayers,Ordering));
   layers_data.cell.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));
 
@@ -292,11 +291,8 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   auto& int_states = fieldContainer->getMeshScalarIntegerStates();
   auto& int64_states = fieldContainer->getMeshScalarInteger64States();
 
-  std::vector<double> ltr(layerThicknessRatio.size());
-  for(size_t i=0; i< ltr.size(); ++i) {
-    ltr[i]=layerThicknessRatio[i];
-  }
-  vec_states["layer_thickness_ratio"] = ltr;
+  vec_states["layers_dz_ref"] = layers_data.dz_ref;
+  vec_states["layers_z_ref"] = layers_data.z_ref;
   int_states["ordering"] = Ordering==LAYER ? 0 : 1;
   int_states["num_layers"] = numLayers;
   int64_states["max_2d_elem_gid"] = maxGlobalCells2dId;
@@ -364,7 +360,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
     thick_val = stk::mesh::field_data(*thickness_field, node2d);
     sHeight_val = stk::mesh::field_data(*surface_height_field, node2d);
-    coord[2] = sHeight_val[0] - thick_val[0] * (1. - levelsNormalizedThickness[il]);
+    coord[2] = sHeight_val[0] - thick_val[0] * (1. - layers_data.z_ref[il]);
   }
 
   *out << "done!\n";
@@ -564,7 +560,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Extrude fields
   extrudeBasalFields (nodes2D,cells2D,maxGlobalNodes2dId);
-  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalNodes2dId);
+  interpolateBasalLayeredFields (nodes2D,cells2D,layers_data.z_ref,maxGlobalNodes2dId);
 
   // Loading required input fields from file
   this->loadRequiredInputFields (comm);
@@ -720,7 +716,7 @@ buildCellSideNodeNumerationMap (const std::string& sideSetName,
 void ExtrudedSTKMeshStruct::
 interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
                                const std::vector<stk::mesh::Entity>& cells2d,
-                               const std::vector<double>& levelsNormalizedThickness,
+                               const std::vector<double>& layers_z,
                                GO maxGlobalNodes2dId)
 {
   Teuchos::Array<std::string> node_fields_names, cell_fields_names;
@@ -821,7 +817,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
         stk::mesh::Entity node3d = bulkData->get_entity(NODE_RANK, node3dId+1);
 
         // Find where the mesh layer stands in the field layers
-        double meshLayerCoord = levelsNormalizedThickness[il];
+        double meshLayerCoord = layers_z[il];
 
         auto where = std::upper_bound(fieldLayersCoords.begin(),fieldLayersCoords.end(),meshLayerCoord);
         il1 = std::distance(fieldLayersCoords.begin(),where);
@@ -893,7 +889,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
         auto cell3d = bulkData->get_entity(ELEM_RANK, prismId+1);
 
         // Since the
-        double meshLayerCoord = 0.5*(levelsNormalizedThickness[il] + levelsNormalizedThickness[il+1]);
+        double meshLayerCoord = 0.5*(layers_z[il] + layers_z[il+1]);
 
         // Find where the mesh layer stands in the field layers
         auto where = std::upper_bound(fieldLayersCoords.begin(),fieldLayersCoords.end(),meshLayerCoord);
