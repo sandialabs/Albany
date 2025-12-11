@@ -106,6 +106,16 @@ Omega_h::Read<Omega_h::I8> markDownward(Omega_h::Mesh& mesh, Omega_h::Read<Omega
   return downMarked;
 }
 
+Omega_h::LO getNumOwnedEnts(Omega_h::Mesh& mesh, int dim) {
+  REQUIRE(dim>=0 && dim <=3);
+  auto owned = oshMesh->owned(dim);
+  return Omega_h::get_sum(owned);
+}
+
+Omega_h::LO getNumOwnedElms(Omega_h::Mesh& mesh) {
+  auto dim = mesh.dim();
+  return getNumOwnedEnts(mesh,dim);
+}
 
 void checkOwnership(Omega_h::Mesh& mesh, const Albany::OmegahConnManager& connMgr) {
   const auto localElmIds = connMgr.getElementBlock();
@@ -201,6 +211,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
   auto elmGids = conn_mgr->getElementsInBlock();
   int elmGidsSize = elmGids.size(); 
   REQUIRE(elmGidsSize == conn_mgr->getOwnedElementCount());
+  auto numOwnedElms = getNumOwnedEnts(mesh->getOmegahMesh());
+  REQUIRE(numOwnedElms == conn_mgr->getOwnedElementCount());
   out << "Testing OmegahConnManager::getElementsInBlock()\n";
   success = true;
 }
