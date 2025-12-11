@@ -185,7 +185,7 @@ ANONYMOUS:
     Interpolate Basal Layered Fields: [temperature, velocity]
     Use Glimmer Spacing: true
     Required Fields Info:
-      Number Of Fields: 10
+      Number Of Fields: 9
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -215,16 +215,11 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 7:
-        Field Name: bed_topography
-        Field Type: Node Scalar
-        Field Origin: Mesh
-        Field Usage: Output
-      Field 8:
         Field Name: surface_height
         Field Type: Node Scalar
         Field Origin: Mesh
         Field Usage: Output
-      Field 9:
+      Field 8:
         Field Name: velocity
         Field Type: Node Vector
         Field Origin: Mesh
