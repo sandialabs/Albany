@@ -551,9 +551,9 @@ Application::createDiscretization()
       stateMgr.getSideSetStateInfoStruct(),
       problem->getNullSpace());
   // For extruded meshes, we need the number of layers in postRegistrationSetup
-  auto layeredMeshNumbering = disc->getLayeredMeshNumberingGO();
-  if (!layeredMeshNumbering.is_null()) {
-    int numLayers = layeredMeshNumbering->numLayers;
+  const auto& layers_data = disc->getMeshStruct()->layers_data;
+  if (!layers_data.cell.lid.is_null()) {
+    int numLayers = layers_data.cell.lid->numLayers;
     phxSetup->set_num_layers(numLayers);
   }
 }

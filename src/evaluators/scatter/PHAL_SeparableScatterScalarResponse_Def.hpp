@@ -165,10 +165,10 @@ evaluate2DFieldsDerivativesDueToColumnContraction(
   auto dg_data = Albany::getNonconstLocalData(dg);
 
   // Layers data
-  const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const int top = layers_data->top_side_pos;
-  const int bot = layers_data->bot_side_pos;
-  const int numLayers = layers_data->numLayers;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const int top = layers_data.top_side_pos;
+  const int bot = layers_data.bot_side_pos;
+  const int numLayers = layers_data.cell.lid->numLayers;
 
   // Dof mgr data
   const auto dof_mgr = workset.disc->getDOFManager();
@@ -192,7 +192,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(
   const auto& sideSet = workset.sideSets->find(sidesetName)->second;
   for (const auto& side : sideSet) {
     const int side_elem_LID = side.ws_elem_idx;
-    const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
+    const int basal_elem_LID = layers_data.cell.lid->getColumnId(side_elem_LID);
     const int side_pos = side.side_pos;
 
     for (std::size_t res=0; res<this->global_response.size(); ++res) {
@@ -200,7 +200,7 @@ evaluate2DFieldsDerivativesDueToColumnContraction(
 
       const auto f = [&] (const int ilayer, const int pos)
       {
-        const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
+        const int elem_LID = layers_data.cell.lid->getId(basal_elem_LID,ilayer);
         const int ilevel = pos==bot ? ilayer : ilayer+1;
         for (int eq=0; eq<neq; ++eq) {
           // Note: grab offsets on top/bot ordered in the same way as on sideset side,
@@ -369,14 +369,14 @@ evaluateFields(typename Traits::EvalData workset)
   const int ws = workset.wsIndex;
   const auto  elem_lids    = workset.disc->getElementLIDs_host(ws);
 
-  const auto& layers_data     = workset.disc->getLayeredMeshNumberingLO();
-  const int top = layers_data->top_side_pos;
-  const int bot = layers_data->bot_side_pos;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const int top = layers_data.top_side_pos;
+  const int bot = layers_data.bot_side_pos;
   const auto& p_dof_mgr       = workset.disc->getDOFManager(param_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
   const int fieldLevel = level_it->second;
-  const int fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==layers_data.cell.lid->numLayers ? fieldLevel-1 : fieldLevel;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
@@ -390,8 +390,8 @@ evaluateFields(typename Traits::EvalData workset)
   // Loop over cells in workset
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
-    const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+    const auto basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+    const auto field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,fieldLayer);
 
     // Loop over responses
     for (size_t res=0; res<this->global_response.size(); ++res) {
@@ -688,10 +688,10 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // Mesh data
-  const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const int top = layers_data->top_side_pos;
-  const int bot = layers_data->bot_side_pos;
-  const int numLayers = layers_data->numLayers;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const int top = layers_data.top_side_pos;
+  const int bot = layers_data.bot_side_pos;
+  const int numLayers = layers_data.cell.lid->numLayers;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   // Solution dof mgr data
@@ -715,8 +715,8 @@ evaluateFields(typename Traits::EvalData workset)
   // Loop over cells in workset
   for (size_t cell=0; cell < workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
-    const auto basal_elem_LID = layers_data->getColumnId(elem_LID);
-    const auto field_elem_LID = layers_data->getId(basal_elem_LID,fieldLayer);
+    const auto basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+    const auto field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,fieldLayer);
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
@@ -779,10 +779,10 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
   }
 
   // Layers data
-  const auto layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const int top = layers_data->top_side_pos;
-  const int bot = layers_data->bot_side_pos;
-  const int numLayers = layers_data->numLayers;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const int top = layers_data.top_side_pos;
+  const int bot = layers_data.bot_side_pos;
+  const int numLayers = layers_data.cell.lid->numLayers;
 
   // Dof mgr data
   const auto dof_mgr = workset.disc->getDOFManager();
@@ -793,14 +793,14 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
   const auto& sideSet = workset.sideSets->at(sideset);
   for (const auto& side : sideSet) {
     const int side_elem_LID = side.ws_elem_idx;
-    const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
+    const int basal_elem_LID = layers_data.cell.lid->getColumnId(side_elem_LID);
     const int side_pos = side.side_pos;
 
     for (size_t res=0; res<this->global_response.size(); ++res) {
       auto val = this->local_response(side_elem_LID, res);
       const auto f = [&] (const int ilayer, const int pos)
       {
-        const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
+        const int elem_LID = layers_data.cell.lid->getId(basal_elem_LID,ilayer);
         const int ilevel = pos==bot ? ilayer : ilayer+1;
         for (int eq=0; eq<neq; ++eq) {
           // Note: grab offsets on top/bot ordered in the same way as on sideset side,

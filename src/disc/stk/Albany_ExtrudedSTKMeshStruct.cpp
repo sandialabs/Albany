@@ -280,17 +280,13 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   const LO numLocalNodes2D = nodes2D.size();
   const LO numLocalSides2D = sides2D.size();
 
-  this->mesh_layers_ratio = layerThicknessRatio;
-  this->global_cell_layers_data =
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalCells2dId+1,numLayers,Ordering));
-  this->local_cell_layers_data =
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));
+  layers_data.layers_ratio = layerThicknessRatio;
+  layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalCells2dId+1,numLayers,Ordering));
+  layers_data.cell.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,Ordering));
 
   // Shards has both Hexa and Wedge with bot and top in the last two side positions
-  this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-  this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
-  this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-  this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+  layers_data.top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+  layers_data.bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
 
   auto& vec_states = fieldContainer->getMeshVectorStates();
   auto& int_states = fieldContainer->getMeshScalarIntegerStates();
@@ -339,15 +335,15 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   *out << "[ExtrudedSTKMesh] Adding nodes... ";
   out->getOStream()->flush();
 
-  LayeredMeshNumbering<LO> node_layers_data_LO (numLocalNodes2D,numLayers+1,Ordering);
-  LayeredMeshNumbering<GO> node_layers_data_GO (maxGlobalNodes2dId+1,numLayers+1,Ordering);
+  layers_data.node.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalNodes2D,numLayers+1,Ordering));
+  layers_data.node.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(maxGlobalNodes2dId+1,numLayers+1,Ordering));
   for (int i = 0; i < num_nodes; i++) {
-    int ib = node_layers_data_LO.getColumnId(i);
-    int il = node_layers_data_LO.getLayerId(i);
+    int ib = layers_data.node.lid->getColumnId(i);
+    int il = layers_data.node.lid->getLayerId(i);
     stk::mesh::Entity node;
     stk::mesh::Entity node2d = nodes2D[ib];
     stk::mesh::EntityId node2dId = bulkData2D.identifier(node2d) - 1;
-    GO nodeId = node_layers_data_GO.getId(node2dId,il) + 1;
+    GO nodeId = layers_data.node.gid->getId(node2dId,il) + 1;
     if (il == 0)
       node = bulkData->declare_node(nodeId, singlePartVecBottom);
     else if (il == numLayers)
@@ -382,20 +378,20 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   std::vector<GO> prismGlobalIds(2 * NumBaseElemeNodes);
 
   for (int i = 0; i < num_cells; i++) {
-    int ib = local_cell_layers_data->getColumnId(i);
-    int il = local_cell_layers_data->getLayerId(i);
+    int ib = layers_data.cell.lid->getColumnId(i);
+    int il = layers_data.cell.lid->getLayerId(i);
     GO cell2dId = bulkData2D.identifier(cells2D[ib])-1;
 
     stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[ib]);
     for (int j = 0; j < NumBaseElemeNodes; j++) {
       stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
-      stk::mesh::EntityId lowerId = node_layers_data_GO.getId(node2dId,il);
+      stk::mesh::EntityId lowerId = layers_data.node.gid->getId(node2dId,il);
 
       prismGlobalIds[j] = lowerId;
-      prismGlobalIds[j + NumBaseElemeNodes] = node_layers_data_GO.getId(node2dId,il+1);
+      prismGlobalIds[j + NumBaseElemeNodes] = layers_data.node.gid->getId(node2dId,il+1);
     }
 
-    stk::mesh::EntityId prismId = global_cell_layers_data->getId(cell2dId,il);
+    stk::mesh::EntityId prismId = layers_data.cell.gid->getId(cell2dId,il);
     stk::mesh::Entity elem = bulkData->declare_element(prismId + 1, singlePartVec);
     for (int j = 0; j < 2 * NumBaseElemeNodes; j++) {
       stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, prismGlobalIds[j] + 1);
@@ -438,7 +434,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   for (const auto& elem2d : cells2D) {
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
     stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, elem2d_id + 1, singlePartVec);
-    stk::mesh::EntityId elem3d_id = global_cell_layers_data->getId(elem2d_id,0);
+    stk::mesh::EntityId elem3d_id = layers_data.cell.gid->getId(elem2d_id,0);
     stk::mesh::Entity elem = bulkData->get_entity(ELEM_RANK, elem3d_id + 1);
     bulkData->declare_relation(elem, side, basalSideLID);
 
@@ -461,7 +457,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   for (const auto& elem2d : cells2D) {
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
     stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, elem2d_id + upperBasalOffset + 1, singlePartVec);
-    stk::mesh::EntityId elem3d_id = global_cell_layers_data->getId(elem2d_id,numLayers-1);
+    stk::mesh::EntityId elem3d_id = layers_data.cell.gid->getId(elem2d_id,numLayers-1);
     stk::mesh::Entity elem = bulkData->get_entity(ELEM_RANK, elem3d_id+1);
     bulkData->declare_relation(elem, side, upperSideLID);
 
@@ -511,7 +507,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     stk::mesh::EntityId sideId = side_layers_data_GO.getId(side2dId,il) + upperBasalOffset + 1;
     stk::mesh::Entity side = bulkData->declare_entity(SIDE_RANK, sideId, singlePartVec);
 
-    stk::mesh::EntityId prismId = global_cell_layers_data->getId(basalElemId,il);
+    stk::mesh::EntityId prismId = layers_data.cell.gid->getId(basalElemId,il);
     stk::mesh::Entity elem = bulkData->get_entity(ELEM_RANK, prismId + 1);
     bulkData->declare_relation(elem, side, sideLID);
 
@@ -553,11 +549,11 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     for (const auto& node2D : boundaryNodes2D) {
       const stk::mesh::EntityId node2dId = bulkData2D.identifier(node2D) - 1;
       for (int il=0; il<(numLayers+1); ++il) {
-        const GO nodeId = node_layers_data_GO.getId(node2dId,il);
+        const GO nodeId = layers_data.node.gid->getId(node2dId,il);
         stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, nodeId+1);
         bulkData->change_entity_parts(node, singlePartVecLateral);
       }
-      const GO nodeId = node_layers_data_GO.getId(node2dId,0);
+      const GO nodeId = layers_data.node.gid->getId(node2dId,0);
       stk::mesh::Entity node = bulkData->get_entity(NODE_RANK, nodeId+1);
       bulkData->change_entity_parts(node, singlePartVecBottom);
     }
@@ -918,7 +914,7 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
       // Loop on the layers
       for (int il=0; il<numLayers; ++il) {
         // Retrieving the id of the 3d cells
-        GO prismId = global_cell_layers_data->getId(cell2dId,il);
+        GO prismId = layers_data.cell.gid->getId(cell2dId,il);
         auto cell3d = bulkData->get_entity(ELEM_RANK, prismId+1);
         
         int numScalars3d = stk::mesh::field_scalars_per_entity(*field3d,cell3d);
@@ -1061,7 +1057,7 @@ extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
         const int numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
         for (int il=0; il<numLayers; ++il) {
           // Retrieving the id of the 3d cells
-          GO cell3dId = global_cell_layers_data->getId(cell2dId,il);
+          GO cell3dId = layers_data.cell.gid->getId(cell2dId,il);
           const auto cell3d = bulkData->get_entity(ELEM_RANK, cell3dId+1);
 
           // Stuffing the 3d field

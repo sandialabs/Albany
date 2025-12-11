@@ -109,20 +109,20 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  const auto layers_data  = workset.disc->getMeshStruct()->local_cell_layers_data;
-  const auto bot = layers_data->bot_side_pos;
-  const auto top = layers_data->top_side_pos;
+  const auto& layers_data  = workset.disc->getMeshStruct()->layers_data;
+  const auto bot = layers_data.bot_side_pos;
+  const auto top = layers_data.top_side_pos;
   const auto ws = workset.wsIndex;
   const auto elem_lids_ws = workset.disc->getWsElementLIDs();
   const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
 
   // Grab some info from the layers data for device access
-  const auto layerOrd = layers_data->layerOrd;
-  const auto numHorizEntities = layers_data->numHorizEntities;
-  const auto numLayers = layers_data->numLayers;
+  const auto layerOrd = layers_data.cell.lid->layerOrd;
+  const auto numHorizEntities = layers_data.cell.lid->numHorizEntities;
+  const auto numLayers = layers_data.cell.lid->numLayers;
 
   // Pick element layer that contains the field level
-  const auto fieldLayer = fieldLevel==layers_data->numLayers
+  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
                         ? fieldLevel-1 : fieldLevel;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
@@ -314,19 +314,19 @@ evaluateFields(typename Traits::EvalData workset)
 
   constexpr auto ALL = Kokkos::ALL();
 
-  const auto layers_data  = workset.disc->getMeshStruct()->local_cell_layers_data;
-  const auto bot = layers_data->bot_side_pos;
-  const auto top = layers_data->top_side_pos;
+  const auto& layers_data  = workset.disc->getMeshStruct()->layers_data;
+  const auto bot = layers_data.bot_side_pos;
+  const auto top = layers_data.top_side_pos;
   const auto ws = workset.wsIndex;
   const auto elem_lids_ws = workset.disc->getWsElementLIDs();
   const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
 
-  const auto layerOrd = layers_data->layerOrd;
-  const auto numHorizEntities = layers_data->numHorizEntities;
-  const auto numLayers = layers_data->numLayers;
+  const auto layerOrd = layers_data.cell.lid->layerOrd;
+  const auto numHorizEntities = layers_data.cell.lid->numHorizEntities;
+  const auto numLayers = layers_data.cell.lid->numLayers;
 
   // Pick element layer that contains the field level
-  const auto fieldLayer = fieldLevel==layers_data->numLayers
+  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
                         ? fieldLevel-1 : fieldLevel;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
@@ -568,16 +568,16 @@ evaluateFields(typename Traits::EvalData workset)
 {
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields())) return;
 
-  const auto layers_data  = workset.disc->getLayeredMeshNumberingLO();
-  const auto bot = layers_data->bot_side_pos;
-  const auto top = layers_data->top_side_pos;
+  const auto& layers_data  = workset.disc->getMeshStruct()->layers_data;
+  const auto bot = layers_data.bot_side_pos;
+  const auto top = layers_data.top_side_pos;
   const auto ws = workset.wsIndex;
   const auto elem_lids_ws = workset.disc->getWsElementLIDs();
   const auto elem_lids = Kokkos::subview(elem_lids_ws.dev(),ws,Kokkos::ALL);
 
-  const auto layerOrd = layers_data->layerOrd;
-  const auto numHorizEntities = layers_data->numHorizEntities;
-  const auto numLayers = layers_data->numLayers;
+  const auto layerOrd = layers_data.cell.lid->layerOrd;
+  const auto numHorizEntities = layers_data.cell.lid->numHorizEntities;
+  const auto numLayers = layers_data.cell.lid->numLayers;
 
   // Direction vector for the Hessian-vector product
   const auto vvec = workset.hessianWorkset.direction_p;
@@ -614,7 +614,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (is_p_direction_active) vvec_data = Albany::getDeviceData(vvec->col(0).getConst());
 
   // Pick element layer that contains the field level
-  const auto fieldLayer = fieldLevel==layers_data->numLayers
+  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
                         ? fieldLevel-1 : fieldLevel;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
