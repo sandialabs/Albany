@@ -278,16 +278,6 @@ public:
   //! Get number of total DOFs per node
   int getNumEq() const { return m_neq; }
 
-  //! Get Numbering for layered mesh (mesh structured in one direction)
-  virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
-  getLayeredMeshNumberingGO() const {
-    return getMeshStruct()->global_cell_layers_data;
-  }
-  virtual Teuchos::RCP<LayeredMeshNumbering<LO>>
-  getLayeredMeshNumberingLO() const {
-    return getMeshStruct()->local_cell_layers_data;
-  }
-
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   virtual Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool overlapped = false) const = 0;

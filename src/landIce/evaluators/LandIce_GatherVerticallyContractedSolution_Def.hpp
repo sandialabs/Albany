@@ -141,7 +141,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->layers_data.layers_ratio;
 
   // Compute quadWeights (cached)
   computeQuadWeights(layers_ratio);
@@ -190,7 +190,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   //       you could use cell layers_data and dof mgr instead
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->layers_data.layers_ratio;
 
   // Compute quadWeights (cached)
   computeQuadWeights(layers_ratio);
@@ -254,7 +254,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->layers_data.layers_ratio;
 
   // Compute quadWeights (cached)
   computeQuadWeights(layers_ratio);
@@ -302,7 +302,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->layers_data.layers_ratio;
 
   // Compute quadWeights (cached)
   computeQuadWeights(layers_ratio);
@@ -383,7 +383,7 @@ evaluateFields(typename PHALTraits::EvalData workset)
   //       you could use cell layers_data and dof mgr instead
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& layers_ratio = workset.disc->getMeshStruct()->layers_data.layers_ratio;
 
   // Compute quadWeights (cached)
   computeQuadWeights(layers_ratio);

@@ -70,14 +70,14 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
   using std::pow;
 
   // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const auto& layersRatio = workset.disc->getMeshStruct()->mesh_layers_ratio;
-  const int   numLayers = layers_data->numLayers;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const auto& layersRatio = layers_data.layers_ratio;
+  const int   numLayers = layers_data.cell.lid->numLayers;
   const int   lastLayer = numLayers-1;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
-  const auto top = layers_data->top_side_pos;
-  const auto bot = layers_data->bot_side_pos;
+  const auto top = layers_data.top_side_pos;
+  const auto bot = layers_data.bot_side_pos;
 
   // We use these only to figure out which local node in the cell is on the
   // top or bottom side.
@@ -98,7 +98,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 
   for (unsigned int cell=0; cell<workset.numCells; ++cell) {
     const LO elem_LID = elem_lids(cell);
-    const int ilayer = layers_data->getLayerId(elem_LID);
+    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
 
     auto lRatio = layersRatio[ilayer];
 

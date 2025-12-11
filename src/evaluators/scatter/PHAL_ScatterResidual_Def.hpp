@@ -471,10 +471,10 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& device_resid = this->device_resid;
 
   if (trans) {
-    const auto& cell_layers_data = workset.disc->getMeshStruct()->local_cell_layers_data;
-    const int top = cell_layers_data->top_side_pos;
-    const int bot = cell_layers_data->bot_side_pos;
-    const int fieldLayer = fieldLevel==cell_layers_data->numLayers
+    const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+    const int top = layers_data.top_side_pos;
+    const int bot = layers_data.bot_side_pos;
+    const int fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
                           ? fieldLevel-1 : fieldLevel;
     const int field_pos = fieldLevel==fieldLayer ? bot : top;
 
@@ -488,9 +488,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     const auto elem_lids_host = Kokkos::subview(elem_lids_ws.host(),ws,Kokkos::ALL);
 
-    const auto layerOrd = cell_layers_data->layerOrd;
-    const auto numHorizEntities = cell_layers_data->numHorizEntities;
-    const auto numLayers = cell_layers_data->numLayers;
+    const auto layerOrd = layers_data.cell.lid->layerOrd;
+    const auto numHorizEntities = layers_data.cell.lid->numHorizEntities;
+    const auto numLayers = layers_data.cell.lid->numLayers;
 
     // Note: The DOFManager stores offsets in nested vectors of non-uniform length. In order to
     // make the offsets available on device, they were converted to a single kokkos view large enough
@@ -777,10 +777,10 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   if(f_pp_is_active)
     hess_vec_prod_f_pp_data = Albany::getNonconstDeviceData(hess_vec_prod_f_pp);
 
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const int top = layers_data->top_side_pos;
-  const int bot = layers_data->bot_side_pos;
-  const auto fieldLayer = fieldLevel==layers_data->numLayers ? fieldLevel-1 : fieldLevel;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const int top = layers_data.top_side_pos;
+  const int bot = layers_data.bot_side_pos;
+  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers ? fieldLevel-1 : fieldLevel;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   const auto dof_mgr      = workset.disc->getDOFManager();
@@ -797,9 +797,9 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
 
   const auto elem_lids_host = Kokkos::subview(elem_lids_ws.host(),ws,Kokkos::ALL);
 
-  const auto layerOrd = layers_data->layerOrd;
-  const auto numHorizEntities = layers_data->numHorizEntities;
-  const auto numLayers = layers_data->numLayers;
+  const auto layerOrd = layers_data.cell.lid->layerOrd;
+  const auto numHorizEntities = layers_data.cell.lid->numHorizEntities;
+  const auto numLayers = layers_data.cell.lid->numLayers;
 
   const auto offsets = m_fields_offsets.dev();
   Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),

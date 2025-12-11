@@ -411,7 +411,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     std::vector<double> ltr;
     mesh_data->get_global (state_name, ltr, true);
     fieldContainer->getMeshVectorStates()[state_name] = ltr;
-    this->mesh_layers_ratio.assign(ltr.begin(),ltr.end());
+    layers_data.layers_ratio.assign(ltr.begin(),ltr.end());
 
     // Ordering
     int orderingAsInt;
@@ -444,22 +444,20 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     auto max_2d_node_gid = temp_any.get_value<int64_t>();
     fieldContainer->getMeshScalarInteger64States()[state_name] = max_2d_node_gid;
 
-    // Build GO cell layers data
+    // Build cell layers data
     auto ordering = orderingAsInt==0 ? LayeredMeshOrdering::LAYER : LayeredMeshOrdering::COLUMN;
-    this->global_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_2d_elem_gid,numLayers,ordering));
+    layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_2d_elem_gid,numLayers,ordering));
 
     // Build LO cell layers data
     stk::mesh::Selector select_owned_in_part(metaData->locally_owned_part());
     const auto& buckets = bulkData->buckets(stk::topology::ELEM_RANK);
     const LO numLocalCells3D = stk::mesh::count_selected_entities(select_owned_in_part,buckets);
     const LO numLocalCells2D = numLocalCells3D / numLayers;
-    this->local_cell_layers_data = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,ordering));
+    layers_data.cell.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,ordering));
 
     // Shards has both Hexa and Wedge with bot and top in the last two side positions
-    this->global_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-    this->global_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
-    this->local_cell_layers_data->top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
-    this->local_cell_layers_data->bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
+    layers_data.top_side_pos = this->meshSpecs[0]->ctd.side_count - 1;
+    layers_data.bot_side_pos = this->meshSpecs[0]->ctd.side_count - 2;
   }
 
   // Set 3d coords *before* loading fields, or else you won't have x/y/z available
