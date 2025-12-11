@@ -316,7 +316,7 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
   const auto& basal_states = m_basal_field_accessor->getElemStates();
   const int num_ws = basal_states.size();
   const int num_elem_layers = m_elem_numbering_lid->numLayers;
-  const auto& node_layers_coords = mesh_vector_states.at("node_layers_coords");
+  const auto& z_ref = mesh_vector_states.at("layers_z_ref");
 
   int il0, il1; // used for convex combination of data
   double h0;
@@ -331,8 +331,8 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
     // Will update il0, il1, h0
     auto set_combination_params = [&](int il) {
       // Find where the mesh layer stands in the field layers
-      double mesh_layer_coord = nodal ? node_layers_coords[il]
-                                      : (node_layers_coords[il] + node_layers_coords[il+1])/2;
+      double mesh_layer_coord = nodal ? z_ref[il]
+                                      : (z_ref[il] + z_ref[il+1])/2;
       auto where = std::upper_bound(field_layers_coords.begin(),field_layers_coords.end(),mesh_layer_coord);
       if (where==field_layers_coords.begin()) {
         // mesh layer is below the first field layer

@@ -250,26 +250,26 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   int num_elem_layers = layers_data.cell.lid->numLayers;
   int num_node_layers = layers_data.node.lid->numLayers;
 
-  std::vector<double> node_layers_coord(num_node_layers);
+  layers_data.z_ref.resize(num_node_layers);
   if(useGlimmerSpacing) {
     for (int i = 0; i < num_node_layers; i++)
-      node_layers_coord[num_elem_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+      layers_data.z_ref[num_elem_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
   } else {
     //uniform layers
     for (int i = 0; i < num_node_layers; i++)
-      node_layers_coord[i] = double(i) / num_elem_layers;
+      layers_data.z_ref[i] = double(i) / num_elem_layers;
   }
 
-  std::vector<double> elem_layer_thickness(num_elem_layers);
+  layers_data.dz_ref.resize(num_elem_layers);
   for (int i = 0; i < num_elem_layers; i++)
-    elem_layer_thickness[i] = node_layers_coord[i+1]-node_layers_coord[i];
+    layers_data.dz_ref[i] = layers_data.z_ref[i+1]-layers_data.z_ref[i];
 
   auto& vec_states = m_field_accessor->getMeshVectorStates();
   auto& int_states = m_field_accessor->getMeshScalarIntegerStates();
   auto& int64_states = m_field_accessor->getMeshScalarInteger64States();
 
-  vec_states["elem_layer_thickness"] = elem_layer_thickness;
-  vec_states["node_layers_coords"] = node_layers_coord;
+  vec_states["layers_dz_ref"] = layers_data.dz_ref;
+  vec_states["layers_z_ref"] = layers_data.z_ref;
   int_states["ordering"] = layers_data.cell.lid->layerOrd ? 0 : 1;
   int_states["num_layers"] = num_elem_layers;
   int64_states["max_2d_elem_gid"] = layers_data.cell.gid->numHorizEntities-1;

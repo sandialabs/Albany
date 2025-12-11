@@ -71,7 +71,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 
   // Mesh data
   const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
-  const auto& layersRatio = layers_data.layers_ratio;
+  const auto& dz_ref = layers_data.dz_ref;
   const int   numLayers = layers_data.cell.lid->numLayers;
   const int   lastLayer = numLayers-1;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
@@ -100,7 +100,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     const LO elem_LID = elem_lids(cell);
     const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
 
-    auto lRatio = layersRatio[ilayer];
+    auto dz = dz_ref[ilayer];
 
     //computing coordinates of the vertices of the triangle at the base of the prism
     MeshScalarT x0 = coords(cell, node0, 0);
@@ -150,9 +150,9 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     MeshScalarT A2 = e12_c*e12/4. + e20_c*e20/4.;
 
 /*  for Debugging
-    ThicknessScalarT H0 = lRatio;//2*x0+3*y0;
-    ThicknessScalarT H1 = lRatio;//2*x1+3*y1;
-    ThicknessScalarT H2 = lRatio;//2*x2+3*y2;
+    ThicknessScalarT H0 = dz;//2*x0+3*y0;
+    ThicknessScalarT H1 = dz;//2*x1+3*y1;
+    ThicknessScalarT H2 = dz;//2*x2+3*y2;
 
     //ScalarT vel0[2] = {7,-5.0}, vel1[2]={7.0,-5.0}, vel2[2]={7.0,-5.0};
     ScalarT vel0[2] = {2*x0+y0,-x0-3.0*y0},
@@ -161,7 +161,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 */
 
     //computing thickness of the layer at the triangle nodes
-    ThicknessScalarT H0 = H(cell,node0)*lRatio, H1 = H(cell,node1)*lRatio, H2 = H(cell,node2)*lRatio;
+    ThicknessScalarT H0 = H(cell,node0)*dz, H1 = H(cell,node1)*dz, H2 = H(cell,node2)*dz;
 
     //computing the vertically averaged velocity at the triangles nodes
     ScalarT vel0[2] = {(vel(cell, node0, 0)+vel(cell, node0p1, 0))/2., (vel(cell, node0, 1)+vel(cell, node0p1, 1))/2.},

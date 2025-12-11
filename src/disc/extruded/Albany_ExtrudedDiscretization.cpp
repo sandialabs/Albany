@@ -213,15 +213,6 @@ void ExtrudedDiscretization::computeCoordinates ()
 
   const int num_layers = m_extruded_mesh->layers_data.cell.gid->numLayers;
 
-  std::vector<double> levelsNormalizedThickness(num_layers+1);
-  bool useGlimmerSpacing = m_disc_params->get("Use Glimmer Spacing", false);
-  if(useGlimmerSpacing)
-    for (int i = 0; i <= num_layers; ++i)
-      levelsNormalizedThickness[num_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
-  else  //uniform layers
-    for (int i = 0; i <= num_layers; i++)
-      levelsNormalizedThickness[i] = double(i) / num_layers;
-
   const auto& basal_node_dof_mgr = m_basal_disc->getNodeDOFManager();
   const auto& basal_elem_lids = basal_node_dof_mgr->elem_dof_lids().host();
   const auto& basal_elems = basal_node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
@@ -263,7 +254,7 @@ void ExtrudedDiscretization::computeCoordinates ()
         for (int idim=0; idim<basal_dim; ++idim) {
           coords[idim] = bcoords[idim];
         }
-        coords[basal_dim] = s_h[basal_node_lid] - H[basal_node_lid] * (1. - levelsNormalizedThickness[ilev]);
+        coords[basal_dim] = s_h[basal_node_lid] - H[basal_node_lid] * (1. - layers_data.z_ref[ilev]);
       }
     }
   }

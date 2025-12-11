@@ -86,7 +86,11 @@ struct LayeredMeshData
   DataImpl cell = {};
   DataImpl node = {};
 
-  Teuchos::ArrayRCP<double> layers_ratio = {};
+  // "Reference" vertical coordinates of the layers: dz[i] = z[i+1]-z[i],
+  // where z[i] is the coordinate of the i-th node layer in [0,1], where 0 is the bottom
+  // and 1 is the top of the layered mesh.
+  std::vector<double> z_ref = {};
+  std::vector<double> dz_ref = {};
 
   // Position of top/bot side in the local element
   int bot_side_pos = -1;
