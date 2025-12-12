@@ -15,6 +15,8 @@
 #include <Omega_h_array_ops.hpp> //get_max
 #include <Omega_h_atomics.hpp> //atomic_fetch_add
 #include <Omega_h_int_scan.hpp> //offset_scan
+#include <Omega_h_mark.hpp> //collect_marked
+#include <Omega_h_map.hpp> //unmap
 
 #include "OmegahPermutation.hpp"
 
@@ -143,10 +145,13 @@ OmegahConnManager::getElementsInBlock (const std::string&) const
   const int dim = albanyMesh->part_dim(elem_block_name());
   assert(mesh->has_tag(dim, "global"));
   auto globals_d = mesh->globals(dim);
-  Omega_h::HostRead<Omega_h::GO> globalElmIds_h(globals_d);
+  auto owned_d = mesh->owned(dim);
+  auto keptIndicies_d = Omega_h::collect_marked(owned_d);
+  auto ownedGlobals_d = Omega_h::unmap(keptIndicies_d, globals_d, 1);
+  Omega_h::HostRead<Omega_h::GO> ownedGlobalElmIds_h(ownedGlobals_d);
   return std::vector<GO>(
-      globalElmIds_h.data(),
-      globalElmIds_h.data()+globalElmIds_h.size());
+      ownedGlobalElmIds_h.data(),
+      ownedGlobalElmIds_h.data()+ownedGlobalElmIds_h.size());
 }
 
 std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
