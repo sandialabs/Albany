@@ -866,10 +866,18 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
     *out << "done!\n";
   }
 
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device, RealType, RealType> > cellCubature; 
+  if(params->isParameter("Cell Cubature")) {
+    cellCubature = params->get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device, RealType, RealType>>>("Cell Cubature");
+  }
+
   // Interpolate cell fields
   for (int ifield=0; ifield<numCellFields; ++ifield) {
     const auto& fname = cell_fields_names[ifield];
     const auto  frank = cell_fields_ranks[ifield];
+    
+    //we only support scalr and vector fields
+    TEUCHOS_TEST_FOR_EXCEPTION ((frank != 1) && (frank != 2), std::logic_error, "Error! Invalid/unsupported field rank.\n");
 
     *out << "  - Interpolating " << ranks[frank] << " field " << fname << "...";
     // We also need to load the normalized layers coordinates
@@ -881,12 +889,29 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
     fieldLayersCoords = it->second;
 
     int numFieldLayers = fieldLayersCoords.size();
+    std::vector<double> fieldLevelCoords(numFieldLayers+1,0.0);
+    for (int i=0; i<numFieldLayers; ++i)
+      fieldLevelCoords[i+1] = 2.0*fieldLayersCoords[i]-fieldLevelCoords[i];
+    
+    double err = fieldLevelCoords[numFieldLayers]-1.0;
+    TEUCHOS_TEST_FOR_EXCEPTION(std::abs(fieldLevelCoords[numFieldLayers]-1.0) > 1e-12, std::logic_error, "Error, piece-wise constant field layers don't add up to 1.0.  fieldLevelCoords[numFieldLayers]-1 :" << err << "\n" );
+    fieldLevelCoords[numFieldLayers]=1.0;  
 
+    int numQPs = Teuchos::nonnull(cellCubature) ? cellCubature->getNumPoints() : 1;
+    Kokkos::DynRankView<double, PHX::Device> quadPointCoords("refPoints", numQPs, 3);
+
+    if(Teuchos::nonnull(cellCubature)) {
+      Kokkos::DynRankView<double, PHX::Device> quadPointWeights("refWeights", numQPs);
+      // Pre-Calculate reference element quantities
+      cellCubature->getCubature(quadPointCoords, quadPointWeights);
+    }  
+
+
+    SFT* field2d = metaData2d.get_field<double>(ELEM_RANK, fname);
+    SFT* field3d = metaData->get_field<double> (ELEM_RANK, fname);
     for (int icell=0; icell<numCells2d; ++icell) {
       const stk::mesh::Entity& cell2d = cells2d[icell];
       stk::mesh::EntityId cell2dId = bulkData2d.identifier(cell2d) - 1;
-
-      SFT* field2d = metaData2d.get_field<double>(ELEM_RANK, fname);
       numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
       values2d = get_data_2d(fname,field2d,cell2d);
 
@@ -895,44 +920,43 @@ interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
         // Retrieving the id of the 3d cells
         GO prismId = global_cell_layers_data->getId(cell2dId,il);
         auto cell3d = bulkData->get_entity(ELEM_RANK, prismId+1);
+        
+        int numScalars3d = stk::mesh::field_scalars_per_entity(*field3d,cell3d);
+        values3d = get_data_3d(fname,field3d,cell3d);
+        std::fill(values3d, values3d+numScalars3d, 0.0);        
 
         // Since the
         double meshLayerCoord = 0.5*(levelsNormalizedThickness[il] + levelsNormalizedThickness[il+1]);
+        double meshLayerThickness = levelsNormalizedThickness[il+1] - levelsNormalizedThickness[il];
 
-        // Find where the mesh layer stands in the field layers
-        auto where = std::upper_bound(fieldLayersCoords.begin(),fieldLayersCoords.end(),meshLayerCoord);
-        il1 = std::distance(fieldLayersCoords.begin(),where);
-        if (il1==0) { // mesh layer is below the first field layer
-          il0 = 0;
-          h0 = 0.; // Useless, (the 2 values in the convex combination will be the same) but for clarity we fix it to 0
-        } else if (il1==numFieldLayers) { // mesh layer is above the last field layer
-          il0 = il1 = numFieldLayers-1;
-          h0 = 0.; // Useless, (the 2 values in the convex combination will be the same) but for clarity we fix it to 0
-        } else {
-          il0 = il1-1;
-          h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
+        int numPointsPerComp = numScalars3d / (numScalars/numFieldLayers);
+        //we only consider two field types: Elem (numPointsPerComp) and QuadPoint
+        TEUCHOS_TEST_FOR_EXCEPTION ((numPointsPerComp != 1) && (numPointsPerComp != numQPs), std::logic_error, "Error! Number of Cubature Points are not consistent with field dimension\n");
+
+        // In case of Elem fields, the value in each 3d element is computed by averaging the (pice-wise constant) layered field over the element.
+        if (numPointsPerComp == 1) {
+          auto where1 = std::lower_bound(fieldLevelCoords.begin(),fieldLevelCoords.end(),levelsNormalizedThickness[il+1]);
+          il1 = std::distance(fieldLevelCoords.begin(),where1);
+          auto where0 = std::upper_bound(fieldLevelCoords.begin(),fieldLevelCoords.end(),levelsNormalizedThickness[il]);
+          il0 = std::distance(fieldLevelCoords.begin(),where0)-1;
+          for (int ilf=il0; ilf<il1; ilf++) {
+            double start = std::max(fieldLevelCoords[ilf],levelsNormalizedThickness[il]);
+            double end = std::min(fieldLevelCoords[ilf+1],levelsNormalizedThickness[il+1]);
+            for (int j=0; j<numScalars/numFieldLayers; ++j)
+              values3d[j*numPointsPerComp] += values2d[j*numFieldLayers+ilf]*(end-start)/meshLayerThickness;
+          }
         }
 
-        // Extracting 3d pointer and stuffing the right data in it
-        // TODO: find a way for ExtrudedSTKMeshStruct to automatically add the fields to be interpolated, so the user does not have to
-        //       specify them twice (in the 2d mesh and in the 3d mesh) in the input file. Note: this must be done before you call
-        //       the SetupFieldData method, which adds all the fields to the stk mesh.
-        SFT* field3d = metaData->get_field<double> (ELEM_RANK, cell_fields_names[ifield]);
-        values3d = get_data_3d(fname,field3d,cell3d);
-        switch (frank) {
-          case 1:
-          {
-            values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
-            break;
-          }
-          case 2:
-          {
-            for (int j=0; j<numScalars; ++j)
-              values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
-            break;
-          }
-          default:
-            TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+        // In case of QaudPoint fields, the value at each quadrature point is computed by evaluating the (pice-wise constant) layered field at the quadrature point.
+        else for (int iq=0; iq < numPointsPerComp; ++iq) {
+          double z = numPointsPerComp == 1 ? meshLayerCoord : meshLayerCoord + 0.5 * meshLayerThickness * quadPointCoords(iq,2);    //z coords of Cubature Points in Wedges and Hexas are in (-1,1)       
+
+          // Find where the mesh layer stands in the field layers
+          auto where = std::upper_bound(fieldLevelCoords.begin(),fieldLevelCoords.end(),z);
+          il0 = std::distance(fieldLevelCoords.begin(),where)-1;
+
+          for (int j=0; j<numScalars/numFieldLayers; ++j)
+            values3d[j*numPointsPerComp+iq] = values2d[j*numFieldLayers+il0];
         }
       }
     }
