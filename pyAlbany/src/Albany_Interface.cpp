@@ -67,7 +67,6 @@ PyParallelEnv::PyParallelEnv(RCP_Teuchos_Comm_PyAlbany _comm, int _num_threads, 
     if(!Kokkos::is_initialized()) {
         Kokkos::InitializationSettings args;
         if (this->num_threads > 0) args.set_num_threads(this->num_threads);
-        if (this->num_devices > 0) args.set_num_devices(this->num_devices);
         if (this->device_id > 0) args.set_device_id(this->device_id);
         Kokkos::initialize(args);
     }
@@ -434,17 +433,21 @@ bool PyProblem::performSolve()
         thyraReducedHessian.resize(solver->Ng());
 
         for (int g_index = 0; g_index < solver->Ng(); g_index++) {
-            thyraSensitivities[g_index].resize(n_params);
-            thyraReducedHessian[g_index].resize(n_params);
             Teuchos::RCP<Thyra_ProductMultiVector> prodvec_thyraSensitivity
                 = Teuchos::rcp_dynamic_cast<Thyra_ProductMultiVector>(thyraSensitivities_in[g_index][0]);
+            if(Teuchos::nonnull(prodvec_thyraSensitivity)) {
+              int num_blocks =  prodvec_thyraSensitivity->productSpace()->numBlocks();
+              thyraSensitivities[g_index].resize(num_blocks);
+              for (int j = 0; j < num_blocks; j++)
+                thyraSensitivities[g_index][j] = prodvec_thyraSensitivity->getNonconstMultiVectorBlock(j);
+            }
             Teuchos::RCP<Thyra_ProductMultiVector> prodvec_thyraReducedHessian
                 = Teuchos::rcp_dynamic_cast<Thyra_ProductMultiVector>(thyraReducedHessian_in[g_index][0]);
-            for (int j = 0; j < n_params; j++) {
-                if (!prodvec_thyraSensitivity.is_null())
-                    thyraSensitivities[g_index][j] = prodvec_thyraSensitivity->getNonconstMultiVectorBlock(j);
-                if (!prodvec_thyraReducedHessian.is_null())
-                    thyraReducedHessian[g_index][j] = prodvec_thyraReducedHessian->getNonconstMultiVectorBlock(j);
+            if(Teuchos::nonnull(prodvec_thyraReducedHessian)) {
+              int num_blocks =  prodvec_thyraReducedHessian->productSpace()->numBlocks();
+              thyraReducedHessian[g_index].resize(num_blocks);
+              for (int j = 0; j < num_blocks; j++)
+                thyraReducedHessian[g_index][j] = prodvec_thyraReducedHessian->getNonconstMultiVectorBlock(j);
             }
         }
     }
