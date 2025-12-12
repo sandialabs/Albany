@@ -88,6 +88,8 @@ ANONYMOUS:
                   VerboseObject:
                     Verbosity Level: low
               Preconditioner Type: MueLu
+              Preconditioner Types: 
+                MueLu: {}
       Line Search: 
         Full Step: 
           Full Step: 1.0
