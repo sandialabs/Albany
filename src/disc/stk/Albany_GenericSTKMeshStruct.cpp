@@ -706,6 +706,10 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
       nodal = false; scalar = true; layered = false;
       cas_manager = cas_manager_elem;
       entities = &elems;
+    } else if (ftype == "QuadPoint Scalar") {
+      nodal = false; scalar = false; layered = false; //saved as vector, numQuadPoints == Vector Dim
+      cas_manager = cas_manager_elem;
+      entities = &elems;
     } else if (ftype == "Node Vector") {
       nodal = true; scalar = false; layered = false;
       cas_manager = cas_manager_node;
@@ -720,6 +724,10 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
       entities = &nodes;
     } else if (ftype == "Elem Layered Scalar") {
       nodal = false; scalar = true; layered = true;
+      cas_manager = cas_manager_elem;
+      entities = &elems;
+    } else if (ftype == "QuadPoint Layered Scalar") {
+      nodal = false; scalar = false; layered = true; //saved as vector, numQuadPoints == Vector Dim
       cas_manager = cas_manager_elem;
       entities = &elems;
     } else if (ftype == "Node Layered Vector") {
