@@ -23,13 +23,16 @@ QuadraticLinearOperatorBasedResponseFunction(const Teuchos::RCP<const Albany::Ap
 {
   auto coeff = responseParams.get<double>("Scaling Coefficient");
   field_name_ = responseParams.get<std::string>("Field Name");
+  bool isMisfit = responseParams.isParameter("Target Field Name");
+  target_name_ = isMisfit ? responseParams.get<std::string>("Target Field Name") : "";
   auto file_name_A = responseParams.get<std::string>("Matrix A File Name");
   auto file_name_D = responseParams.get<std::string>("Matrix D File Name");
   bool symmetricA = responseParams.isParameter("Matrix A Is Symmetric") ?  responseParams.get<bool>("Matrix A Is Symmetric") : false;
   bool diagonalD = responseParams.isParameter("Matrix D Is Diagonal") ? responseParams.get<bool>("Matrix D Is Diagonal") : false;
+  bool verbose = responseParams.isParameter("Verbose") ? responseParams.get<bool>("Verbose") : true;
   Teuchos::RCP<Teuchos::ParameterList> solverParamList = responseParams.isSublist("D Solver Settings") ? 
       Teuchos::rcp(new Teuchos::ParameterList(responseParams.sublist("D Solver Settings"))) : Teuchos::null;
-  twoAtDinvA_ = Teuchos::rcp(new AtDinvA_LOWS(file_name_A,file_name_D,2.0*coeff,solverParamList,symmetricA,diagonalD));
+  twoAtDinvA_ = Teuchos::rcp(new AtDinvA_LOWS(file_name_A,file_name_D,2.0*coeff,solverParamList,symmetricA,diagonalD,verbose));
 }
 
 Albany::QuadraticLinearOperatorBasedResponseFunction::
@@ -47,17 +50,27 @@ numResponses() const
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluateResponse(const double /*current_time*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
 		const Teuchos::RCP<Thyra_Vector>& g)
 {  
-  Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
+  Teuchos::RCP<const Thyra_Vector> field;
+  if(field_name_=="solution") 
+    field = x;
+  else 
+    field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
   twoAtDinvA_->setupFwdOp(field->space());
 
-  // 0.5 coeff p' A' inv(D) A p
-  g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+  // coeff p' A' inv(D) A p
+  if(target_name_ == "")
+    g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+  else {
+    Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+    diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+    g->assign(0.5*twoAtDinvA_->quadraticForm(*diff_field));
+  }
 
   if (g_.is_null())
     g_ = Thyra::createMember(g->space());
@@ -71,7 +84,7 @@ evaluateTangent(const double /* alpha */,
 		const double /*omega*/,
 		const double /*current_time*/,
 		bool /*sum_derivs*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		Teuchos::Array<ParamVec>& /*p*/,
@@ -86,11 +99,22 @@ evaluateTangent(const double /* alpha */,
 {
   if (!g.is_null()) {
     if (g_.is_null()) {
-      Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
+      Teuchos::RCP<const Thyra_Vector> field;
+      if(field_name_=="solution") 
+        field = x;
+      else 
+        field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
+        
       twoAtDinvA_->setupFwdOp(field->space());
       
-      //  0.5 coeff p' A' inv(D) A p
-      g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+      // coeff p' A' inv(D) A p
+      if(target_name_ == "")
+        g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+      else {
+        Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+        diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+        g->assign(0.5*twoAtDinvA_->quadraticForm(*diff_field));
+      }
 
       g_ = Thyra::createMember(g->space());
       g_->assign(*g);
@@ -110,7 +134,7 @@ evaluateTangent(const double /* alpha */,
 void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluateGradient(const double /*current_time*/,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
 		const Teuchos::Array<ParamVec>& /*p*/,
@@ -123,11 +147,22 @@ evaluateGradient(const double /*current_time*/,
 {
   if (!g.is_null()) {
     if (g_.is_null()) {
-      Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
+      Teuchos::RCP<const Thyra_Vector> field;
+      if(field_name_=="solution") 
+        field = x;
+      else 
+        field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
       twoAtDinvA_->setupFwdOp(field->space());
       
-      //  0.5 coeff p' A' inv(D) A p
-      g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+      //  coeff p' A' inv(D) A p
+      if(target_name_ == "")
+        g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+      else {
+        Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+        diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+        g->assign(0.5*twoAtDinvA_->quadraticForm(*diff_field));
+      }
+      
 
       g_ = Thyra::createMember(g->space());
       g_->assign(*g);
@@ -137,8 +172,21 @@ evaluateGradient(const double /*current_time*/,
   
   // Evaluate dg/dx
   if (!dg_dx.is_null()) {
-    // V_StV stands for V_out = Scalar * V_in
-    dg_dx->assign(0.0);
+    if(field_name_ == "solution") {
+      Teuchos::RCP<const Thyra_Vector> field = x;
+      twoAtDinvA_->setupFwdOp(field->space());
+
+      //  2 coeff A' inv(D) A p
+      if(target_name_ == "")
+        twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *field, dg_dx.ptr(), 1.0, 0.0);
+      else {
+        Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+        diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+        twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *diff_field, dg_dx.ptr(), 1.0, 0.0);
+      }
+    }
+    else
+      dg_dx->assign(0.0);
   }
 
   // Evaluate dg/dxdot
@@ -174,8 +222,14 @@ evaluateDistParamDeriv(
       Teuchos::RCP<const Thyra_Vector> field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
       twoAtDinvA_->setupFwdOp(field->space());
 
-      //  coeff A' inv(D) A p
-      twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *field, dg_dp.ptr(), 1.0, 0.0);
+      //  2 coeff A' inv(D) A p
+      if(target_name_ == "")
+        twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *field, dg_dp.ptr(), 1.0, 0.0);
+      else {
+        Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+        diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+        twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *diff_field, dg_dp.ptr(), 1.0, 0.0);
+      }
     } else
       dg_dp->assign(0.0);
   }
@@ -185,15 +239,22 @@ void
 Albany::QuadraticLinearOperatorBasedResponseFunction::
 evaluate_HessVecProd_xx(
     const double /* current_time */,
-    const Teuchos::RCP<const Thyra_MultiVector>& /* v */,
-    const Teuchos::RCP<const Thyra_Vector>& /*x*/,
+    const Teuchos::RCP<const Thyra_MultiVector>& v,
+    const Teuchos::RCP<const Thyra_Vector>& x,
     const Teuchos::RCP<const Thyra_Vector>& /*xdot*/,
     const Teuchos::RCP<const Thyra_Vector>& /*xdotdot*/,
     const Teuchos::Array<ParamVec>& /* param_array */,
     const Teuchos::RCP<Thyra_MultiVector>& Hv_dxdx)
 {
   if (!Hv_dxdx.is_null()) {
-    Hv_dxdx->assign(0.0);
+    if(field_name_ == "solution") {
+      twoAtDinvA_->setupFwdOp(x->space());
+
+      // 2 coeff A' inv(D) A v
+      twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *v, Hv_dxdx.ptr(), 1.0, 0.0);
+    }
+    else
+      Hv_dxdx->assign(0.0);
   }
 }
 
@@ -248,7 +309,7 @@ evaluate_HessVecProd_pp(
     if((dist_param_name == field_name_) && (dist_param_direction_name == field_name_)) {
       twoAtDinvA_->setupFwdOp(app_->getDistributedParameterLibrary()->get(field_name_)->vector_space());
 
-      // coeff A' inv(D) A v
+      // 2 coeff A' inv(D) A v
       twoAtDinvA_->apply(Thyra::EOpTransp::NOTRANS, *v, Hv_dp.ptr(), 1.0, 0.0);
     }
     else
@@ -296,12 +357,16 @@ AtDinvA_LOWS(
   const double& coeff,
   const Teuchos::RCP<Teuchos::ParameterList> solverParameterList,
   const bool symmetricA,
-  const bool diagonalD) :
+  const bool diagonalD,
+  const bool verbose) :
   file_name_A_(file_name_A),
   file_name_D_(file_name_D),
   coeff_(coeff),
   symmetricA_(symmetricA),
-  diagonalD_(diagonalD) {
+  diagonalD_(diagonalD),
+  verbose_(verbose),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
+  {
     AequalsD_ = (file_name_A == file_name_D);
     TEUCHOS_TEST_FOR_EXCEPTION (AequalsD_ && !(symmetricA || diagonalD), std::runtime_error, 
        "Error! AtDinvA_LOWS::AtDinvA_LOWS, when A equals D, A must be symmetric, as D is\n");   
@@ -357,7 +422,8 @@ quadraticForm(const Thyra_MultiVector& X) {
     A_->apply(Thyra::EOpTransp::NOTRANS, X, vec1_.ptr(), 1.0, 0.0);
 
     if(AequalsD_) {
-      return coeff_*Thyra::dot(*vec1_,*vec1_);
+      vec2_->assign(X);
+      return coeff_*Thyra::dot(*vec2_,*vec1_);
     }
 
     // inv(D) A X
@@ -365,7 +431,10 @@ quadraticForm(const Thyra_MultiVector& X) {
     if(diagonalD_)
       Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::solveImpl, Solver not initialized, call initializeSolver first.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::quadraticForm, D solver not initialized.\n");
+      if (verbose_)
+        *out << "\nAtDinvA_LOWS::quadraticForm: linear solve for D\n" << std::endl;
+
       D_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
     }
 
@@ -476,8 +545,7 @@ loadLinearOperators() {
 
   A_ = Albany::createThyraLinearOp(tpetra_A_mat);  
   vec1_ = Thyra::createMember(A_->range());
-  if(!AequalsD_)
-    vec2_ = Thyra::createMember(A_->range());
+  vec2_ = Thyra::createMember(A_->range());
 }
 
 
@@ -510,6 +578,10 @@ applyImpl (const Thyra::EOpTransp /*M_trans*/, //operator is symmetric by constr
       Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
     else {
       TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::applyImpl, D Solver not initialized, call initializeFwdSolver first.\n");
+
+      if (verbose_)
+        *out << "\nAtDinvA_LOWS::applyImpl: linear solve for D\n" << std::endl;
+      
       D_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
     }
 
@@ -536,10 +608,15 @@ solveImpl(
   Thyra::SolveStatus<double> solveStatus1, solveStatus2;
 
   if(AequalsD_) { //X = coeff^{-1} A^{-1} 
+    if (verbose_)
+      *out << "\nAtDinvA_LOWS::solveImpl: linear solve for A\n" << std::endl;
+
     solveStatus1 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
     X->scale(1.0/coeff_);
     return solveStatus1;
   }  
+  if (verbose_)
+    *out << "\nAtDinvA_LOWS::solveImpl: first linear solve for A'\n" << std::endl;
 
   vec1_->assign(0.0);
   // v1 = A^{-T} B
@@ -555,6 +632,8 @@ solveImpl(
   } else {
     D_->apply(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr(), 1.0/coeff_, 0.0);
   }
+  if (verbose_)
+    *out << "\n\nAtDinvA_LOWS::solveImpl: second linear solve for A\n" << std::endl;
 
   // X = coeff^{-1} A^{-1} D A^{-T} B
   solveStatus2 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec2_, X, solveCriteria);
