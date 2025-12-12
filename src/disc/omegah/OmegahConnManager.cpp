@@ -20,6 +20,22 @@
 
 #include <fstream>
 
+namespace {
+  Omega_h::LO getNumOwnedEnts(Omega_h::Mesh& mesh, int dim) {
+    std::stringstream ss;
+    ss << "Error! Invalid mesh entity dimension passed to " << __func__
+       << " . dim = " << dim << " requested.\n";
+    TEUCHOS_TEST_FOR_EXCEPTION ((dim<0 || dim >3), std::logic_error, ss.str());
+    auto owned = mesh.owned(dim);
+    return Omega_h::get_sum(owned);
+  }
+
+  Omega_h::LO getNumOwnedElms(Omega_h::Mesh& mesh) {
+    auto dim = mesh.dim();
+    return getNumOwnedEnts(mesh,dim);
+  }
+}
+
 namespace Albany {
 
 [[nodiscard]]
@@ -96,6 +112,9 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
       "Error! The OmegahConnManager currently only supports 2d/3d meshes.\n"
       "  - input mesh dim: " + std::to_string(mesh->dim()) + "\n");
 
+  //build filtered entity arrays to account for ghosting in the omegah mesh HERE
+
+
   auto world = mesh->library()->world();
 
   //TODO this needs to be tested for a tag that has no entries on some processes
@@ -112,6 +131,10 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
   assert(mesh->has_tag(in_mesh->part_dim(inPartId), "global"));
 
   localElmIds = getLocalElmIds(*albanyMesh, inPartId);
+}
+
+int OmegahConnManager::getOwnedElementCount() const {
+    return getNumOwnedElms(*mesh);
 }
 
 std::vector<GO>

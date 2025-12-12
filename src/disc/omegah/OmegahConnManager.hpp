@@ -199,9 +199,7 @@ public:
     return localElmIds;
   }
 
-  int getOwnedElementCount() const {
-    return mesh->nelems();
-  }
+  int getOwnedElementCount() const;
 
   int getConnectivityStart (const LO localElmtId) const override;
   std::vector<int> getConnectivityMask (const std::string& sub_part_name) const override;
