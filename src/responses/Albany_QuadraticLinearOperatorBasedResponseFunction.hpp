@@ -155,8 +155,9 @@ namespace Albany {
     
     QuadraticLinearOperatorBasedResponseFunction& operator=(const QuadraticLinearOperatorBasedResponseFunction&);
 
-    Teuchos::RCP<const Application> app_;
+    const Teuchos::RCP<const Application> app_;
     std::string field_name_;
+    std::string target_name_;
     Teuchos::RCP<AtDinvA_LOWS> twoAtDinvA_;
     Teuchos::RCP<Thyra_Vector> g_;
   };
@@ -181,7 +182,8 @@ namespace Albany {
         const double& coeff,
         Teuchos::RCP<Teuchos::ParameterList> solverParamList,
         const bool symmetricA = false,
-        const bool diagonalD = false);
+        const bool diagonalD = false,
+        const bool verbose = false );
 
       //! Destructor
       virtual ~AtDinvA_LOWS();
@@ -254,6 +256,12 @@ namespace Albany {
 
       //! booleans denoting whether matrix A is symmetric, D is diagonal or A equals D
       bool symmetricA_, diagonalD_, AequalsD_;
+
+      //! whether to enable output
+      bool verbose_;
+
+      //! Output stream, defaults to printing just Proc 0
+      Teuchos::RCP<Teuchos::FancyOStream> out;
 
 
     }; // class DistributedParameterDerivativeOp
