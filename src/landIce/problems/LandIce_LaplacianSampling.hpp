@@ -172,6 +172,17 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
     ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
     fm0.template registerEvaluator<EvalT> (ev);
+
+    stateName = "target_field";
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    p->set<std::string>("Field Name", stateName);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
   }
   
   if(numDim == 3) {
