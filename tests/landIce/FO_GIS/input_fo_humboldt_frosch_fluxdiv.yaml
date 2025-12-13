@@ -394,10 +394,10 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 4.228108291457e+01
+    Test Value: 4.258724644802e+01
     Relative Tolerance: 1.0e-06
     Sensitivity For Parameter 0:
-      Test Value: 1.489986844501e+01
+      Test Value: 1.493730510108e+01  
   Regression For Response 1:
     Test Value: 5.967986097162e+00  
     Relative Tolerance: 1.0e-06
