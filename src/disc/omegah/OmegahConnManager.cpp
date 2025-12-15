@@ -23,7 +23,9 @@
 #include <fstream>
 
 namespace {
-  Omega_h::LO getNumOwnedEnts(Omega_h::Mesh& mesh, int dim) {
+  Omega_h::LO getNumOwnedEnts(const Omega_h::Mesh& cmesh, int dim) {
+    //Omegah isn't very const friendly and the Teuchos RCP returns const pointers/refs
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     std::stringstream ss;
     ss << "Error! Invalid mesh entity dimension passed to " << __func__
        << " . dim = " << dim << " requested.\n";
@@ -45,7 +47,7 @@ Omega_h::Read<Omega_h::I8> getIsEntInPart(const OmegahGenericMesh& albanyMesh, c
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    return Omega_h::Read<Omega_h::I8>(mesh->nents(part_dim), 1);
+    return Omega_h::Read<Omega_h::I8>(getNumOwnedEnts(*mesh,part_dim), 1);
   } else {
     return mesh->get_array<Omega_h::I8>(part_dim, part_name);
   }
@@ -57,8 +59,8 @@ Omega_h::LOs numberEntsInPart(const OmegahGenericMesh& albanyMesh, const std::st
   auto isInPart = getIsEntInPart(albanyMesh, part_name);
   const int part_dim = albanyMesh.part_dim(part_name);
   auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
-  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh->nents(part_dim));
-  Omega_h::parallel_for(mesh->nents(part_dim), OMEGA_H_LAMBDA(int i) {
+  auto partEntIdx = Omega_h::Write<Omega_h::LO>(isInPart.size());
+  Omega_h::parallel_for(isInPart.size(), OMEGA_H_LAMBDA(int i) {
     if(isInPart[i]) {
       partEntIdx[i] = partEntOffset[i];
     } else {
@@ -73,7 +75,7 @@ LO getNumEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    return mesh->nents(part_dim);
+    return getNumOwnedEnts(*mesh,part_dim);
   } else {
     const auto isInPart = getIsEntInPart(albanyMesh,part_name);
     return Omega_h::get_sum<Omega_h::I8>(isInPart);
@@ -184,7 +186,7 @@ std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
 Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt, const GO startingOffset) {
   if(!dofsPerEnt)
     return Omega_h::GOs();
-  const int numEnts = mesh.nents(entityDim);
+  const int numEnts = getNumOwnedEnts(mesh,entityDim);
   const int numDofs = numEnts*dofsPerEnt;
   auto worldComm = mesh.library()->world();
   const auto entGlobalIds = mesh.globals(entityDim);
@@ -256,7 +258,7 @@ void setElementToEntDofConnectivityMask(const OmegahGenericMesh& albanyMesh, con
     }
   };
   const auto kernelName = "setElementToEntDofConnectivityMask_dim" + std::to_string(part_dim);
-  Omega_h::parallel_for(mesh.nents(part_dim), setMask, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setMask, kernelName.c_str());
 }
 
 /**
@@ -297,7 +299,7 @@ void setElementToEntDofConnectivity(OmegahGenericMesh& albanyMesh, const std::st
     }
   };
   const auto kernelName = "setElementToEntDofConnectivity_dim" + std::to_string(part_dim);
-  Omega_h::parallel_for(mesh.nents(part_dim), setNumber, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setNumber, kernelName.c_str());
 }
 
 /**
@@ -324,8 +326,7 @@ void setElementDofConnectivity(const OmegahGenericMesh& albanyMesh, const std::s
   const int part_dim = albanyMesh.part_dim(part_name);
   const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(part_dim);
 
-  const auto& mesh = *albanyMesh.getOmegahMesh();
-  Omega_h::parallel_for(mesh.nents(part_dim), setNumber, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setNumber, kernelName.c_str());
 }
 
 /**
@@ -339,6 +340,7 @@ void setElementDofConnectivityMask(const OmegahGenericMesh& albanyMesh, const st
   auto isInPart = getIsEntInPart(albanyMesh, partId);
   auto partEntIdx = numberEntsInPart(albanyMesh, partId);
   auto setMask = OMEGA_H_LAMBDA(int elm) {
+    //FIXME add if(isInPart[elm]) { ???
     for(int k=0; k<dofsPerEnt; k++) {
       const auto elmPartIdx = partEntIdx[elm];
       const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+k);
@@ -347,8 +349,7 @@ void setElementDofConnectivityMask(const OmegahGenericMesh& albanyMesh, const st
   };
   const int partDim = albanyMesh.part_dim(partId);
   const auto kernelName = "setElementDofConnectivityMask_dim" + std::to_string(partDim);
-  const auto& mesh = *albanyMesh.getOmegahMesh();
-  Omega_h::parallel_for(mesh.nents(partDim), setMask, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setMask, kernelName.c_str());
 }
 
 LO OmegahConnManager::getPartConnectivitySize() const
@@ -531,13 +532,13 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
       elmToDim[dim] = mesh->ask_down(part_dim,dim);
       mask[dim] = mesh->get_array<Omega_h::I8>(dim, sub_part_name);
     } else {
-      mask[dim] = Omega_h::Read<Omega_h::I8>(mesh->nents(dim), 0);
+      mask[dim] = Omega_h::Read<Omega_h::I8>(getNumOwnedEnts(*mesh, dim), 0);
     }
   }
   if(m_dofsPerEnt[part_dim] > 0)
     mask[part_dim] = mesh->get_array<Omega_h::I8>(part_dim, sub_part_name);
   else
-    mask[part_dim] = Omega_h::Read<Omega_h::I8>(mesh->nents(part_dim), 0);
+    mask[part_dim] = Omega_h::Read<Omega_h::I8>(getNumOwnedEnts(*mesh, part_dim), 0);
 
   auto elm2dofMask = createElementToDofConnectivityMask(mask, elmToDim);
   // transfer to host
