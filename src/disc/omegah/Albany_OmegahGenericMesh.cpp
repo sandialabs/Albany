@@ -6,6 +6,7 @@
 #include <Omega_h_build.hpp>      // for Omega_h::build_box
 #include <Omega_h_file.hpp>       // for Omega_h::binary::read
 #include <Omega_h_mark.hpp>       // for Omega_h::mark_by_class
+#include <Omega_h_array_ops.hpp>  // for Omega_h::land_each
 
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ThyraUtils.hpp"
@@ -167,7 +168,6 @@ mark_part_entities (const std::string& name,
       "[OmegahGenericMesh::mark_part_entities] Error! Cannot mark downward if the part dimension is 0.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << dim << "\n")
-    Omega_h::Write<Omega_h::I8> downMarked;
 
     // NOTE: In the following, we keep converting Topo_type to its integer dim. That's because
     //       Omega_h::Mesh seems to store a valid nent(dim) count, but uninited nent(topo) count.
@@ -190,7 +190,9 @@ mark_part_entities (const std::string& name,
           for (int j=0; j<deg; ++j) {
             // Note: this has a race condition, but it doesn't matter,
             //       since all threads would write 1
-            downMarked[adj.ab2b[i*deg + j]] = 1;
+            downMarked[adj.ab2b[i*deg + j]] = 1; // I don't think this needs to consider
+                                                 // ownership as it wasn't doing
+                                                 // so with ghosting off
           }
         }
       };
@@ -244,7 +246,9 @@ loadOmegahMesh ()
     const int id  = pl.get<int>("Id");
     const bool markDownward = pl.get<int>("Mark Downward",true); // Is default=true ok?
     auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
-    this->declare_part(pn,topo,is_in_part,markDownward);
+    auto owned = m_mesh->owned(dim);
+    auto is_in_part_and_owned = Omega_h::land_each(is_in_part, owned);
+    this->declare_part(pn,topo,is_in_part_and_owned,markDownward);
 
     if (dim==0) {
       nsNames.push_back(pn);
@@ -401,8 +405,9 @@ OmegahGenericMesh::createNodeSets()
 
     for (auto ent : gm_ents) {
       auto id_tag = Omega_h::mark_by_class(m_mesh.get(),0,ent.dim,ent.id);
+      auto owned = m_mesh->owned(0);
 
-      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or id_tag[i]); };
+      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or (id_tag[i] and owned[i])); }; //FIXME I don't think the 'or' is needed
       Omega_h::parallel_for(tag.size(),f);
     }
 #ifdef DEBUG_OUTPUT
@@ -443,8 +448,9 @@ OmegahGenericMesh::createSideSets()
 
     for (auto ent : gm_ents) {
       auto id_tag = Omega_h::mark_by_class(m_mesh.get(),sideDim,ent.dim,ent.id);
+      auto owned = m_mesh->owned(sideDim);
 
-      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or id_tag[i]); };
+      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or (id_tag[i] and owned[i])); };
       Omega_h::parallel_for(tag.size(),f);
     }
 #ifdef DEBUG_OUTPUT
