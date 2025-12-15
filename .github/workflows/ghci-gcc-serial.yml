@@ -1,0 +1,77 @@
+name: gcc-12.3-serial
+
+on:
+  # Runs on PRs against master
+  pull_request:
+    branches: [ master ]
+    types: [opened, synchronize, ready_for_review, reopened]
+
+  # Manual run for debugging
+  workflow_dispatch:
+
+  # Also run nightly
+  schedule:
+    - cron: '0 7 * * *'  # Runs at 7 AM UTC, which is midnight MT during Standard Time
+
+permissions:
+  contents: read  # Required to read repository contents
+  packages: read  # Required to read packages from the GitHub Container Registry
+
+concurrency:
+  # Two runs are in the same group if they are testing the same git ref
+  #  - if trigger=pull_request, the ref is refs/pull/<PR_NUMBER>/merge
+  #  - for other triggers, the ref is the branch tested
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gcc-12-serial:
+    runs-on:  [ubuntu-latest]
+    container:
+      image: ghcr.io/sandialabs/albany:gcc-12-serial
+      credentials:
+        username: ${{ github.actor }}  # Use the GitHub actor as the username
+        password: ${{ secrets.GITHUB_TOKEN }}  # Use the GITHUB_TOKEN for authentication
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+        with:
+          path: albany/source
+      - name: Setup GIT
+        run: |
+          # This prevents ssh errors when Albany tries to pull Omega_h from github
+          git config --global url."https://github.com/".insteadOf git@github.com:
+      - name: Configure Albany
+        run: |
+          mkdir -p ${GITHUB_WORKSPACE}/albany/build && cd ${GITHUB_WORKSPACE}/albany/build
+          cmake \
+            -D CMAKE_BUILD_TYPE:STRING=RELEASE                                \
+            -D CMAKE_INSTALL_PREFIX:PATH=${GITHUB_WORKSPACE}/albany/install   \
+            \
+            -D ALBANY_TRILINOS_DIR:PATH=${TRILINOS_ROOT}                      \
+            -D ALBANY_MPI_EXEC_MAX_NUMPROCS:STRING=4                          \
+            -D ALBANY_MPI_EXEC_TRAILING_OPTIONS:STRING="--bind-to hwthread"   \
+            \
+            -D ENABLE_OMEGAH:BOOL=ON                                          \
+            -D ENABLE_DEMO_PDES:BOOL=ON                                       \
+            -D ENABLE_LANDICE:BOOL=ON                                         \
+            \
+            -S ${GITHUB_WORKSPACE}/albany/source
+      - name: Build Albany
+        run: |
+          cd ${GITHUB_WORKSPACE}/albany/build
+          make -j 4
+      - name: Run tests
+        run: |
+          cd ${GITHUB_WORKSPACE}/albany/build
+          ctest --output-on-failure
+      - name: Upload log files
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: |
+            albany/build/CMakeCache.txt
+            albany/build/Testing/Temporary/Last*
+          retention-days: 14
+
