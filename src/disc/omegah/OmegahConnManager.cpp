@@ -16,27 +16,45 @@
 #include <Omega_h_atomics.hpp> //atomic_fetch_add
 #include <Omega_h_int_scan.hpp> //offset_scan
 #include <Omega_h_mark.hpp> //collect_marked
-#include <Omega_h_map.hpp> //unmap
+#include <Omega_h_map.hpp> //unmap, fan_reduce
 
 #include "OmegahPermutation.hpp"
 
 #include <fstream>
 
 namespace {
-  Omega_h::LO getNumOwnedEnts(const Omega_h::Mesh& cmesh, int dim) {
+  Omega_h::LO getNumOwnedElms(Omega_h::Mesh& mesh) {
+    auto elmDim = mesh.dim();
+    auto isElmOwned = mesh.owned(elmDim);
+    return Omega_h::get_sum(isElmOwned);
+  }
+
+  //Tell Albany about entities that are in the closure of owned elements.  This
+  //matches what was done in an element based partition without ghosts.
+  Omega_h::LO getNumEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     //Omegah isn't very const friendly and the Teuchos RCP returns const pointers/refs
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     std::stringstream ss;
     ss << "Error! Invalid mesh entity dimension passed to " << __func__
        << " . dim = " << dim << " requested.\n";
     TEUCHOS_TEST_FOR_EXCEPTION ((dim<0 || dim >3), std::logic_error, ss.str());
-    auto owned = mesh.owned(dim);
-    return Omega_h::get_sum(owned);
-  }
-
-  Omega_h::LO getNumOwnedElms(Omega_h::Mesh& mesh) {
-    auto dim = mesh.dim();
-    return getNumOwnedEnts(mesh,dim);
+    const auto elmDim = mesh.dim();
+    if( dim == elmDim ) {
+      return getNumOwnedElms(mesh);
+    } else {
+      auto entToElm = mesh.ask_up(dim, elmDim);
+      auto isElmOwned = mesh.owned(elmDim);
+      //create an array that replaces the element indices that are adjacent to
+      //each ent with the ownership status of the element (1:owned, 0:o.w.)
+      auto entToOwned = Omega_h::unmap(entToElm.ab2b, isElmOwned, 1);
+      // For each vertex, get max ownership among adjacent elements
+      // (will be 1 if any element is owned, 0 otherwise)
+      auto entHasOwned = Omega_h::fan_reduce(entToElm.a2ab, Omega_h::read(entToOwned),1,OMEGA_H_MAX);
+      TEUCHOS_TEST_FOR_EXCEPTION (entHasOwned.size() != mesh.nents(dim), std::logic_error,
+        "Error! Incorrect array size when counting entities in the closure of owned mesh elements.\n");
+      // Sum to get total count of vertices with owned elements
+      return Omega_h::get_sum(entHasOwned);
+    }
   }
 }
 
@@ -47,7 +65,7 @@ Omega_h::Read<Omega_h::I8> getIsEntInPart(const OmegahGenericMesh& albanyMesh, c
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    return Omega_h::Read<Omega_h::I8>(getNumOwnedEnts(*mesh,part_dim), 1);
+    return Omega_h::Read<Omega_h::I8>(getNumEntsInClosureOfOwnedElms(*mesh,part_dim), 1);
   } else {
     return mesh->get_array<Omega_h::I8>(part_dim, part_name);
   }
@@ -75,7 +93,7 @@ LO getNumEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    return getNumOwnedEnts(*mesh,part_dim);
+    return getNumEntsInClosureOfOwnedElms(*mesh,part_dim);
   } else {
     const auto isInPart = getIsEntInPart(albanyMesh,part_name);
     return Omega_h::get_sum<Omega_h::I8>(isInPart);
@@ -186,7 +204,7 @@ std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
 Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt, const GO startingOffset) {
   if(!dofsPerEnt)
     return Omega_h::GOs();
-  const int numEnts = getNumOwnedEnts(mesh,entityDim);
+  const int numEnts = getNumEntsInClosureOfOwnedElms(mesh,entityDim);
   const int numDofs = numEnts*dofsPerEnt;
   auto worldComm = mesh.library()->world();
   const auto entGlobalIds = mesh.globals(entityDim);
@@ -532,13 +550,13 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
       elmToDim[dim] = mesh->ask_down(part_dim,dim);
       mask[dim] = mesh->get_array<Omega_h::I8>(dim, sub_part_name);
     } else {
-      mask[dim] = Omega_h::Read<Omega_h::I8>(getNumOwnedEnts(*mesh, dim), 0);
+      mask[dim] = Omega_h::Read<Omega_h::I8>(getNumEntsInClosureOfOwnedElms(*mesh, dim), 0);
     }
   }
   if(m_dofsPerEnt[part_dim] > 0)
     mask[part_dim] = mesh->get_array<Omega_h::I8>(part_dim, sub_part_name);
   else
-    mask[part_dim] = Omega_h::Read<Omega_h::I8>(getNumOwnedEnts(*mesh, part_dim), 0);
+    mask[part_dim] = Omega_h::Read<Omega_h::I8>(getNumEntsInClosureOfOwnedElms(*mesh, part_dim), 0);
 
   auto elm2dofMask = createElementToDofConnectivityMask(mask, elmToDim);
   // transfer to host
