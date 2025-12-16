@@ -143,17 +143,15 @@ target_compile_features(AlbanyInterface PUBLIC cxx_std_11)
 target_link_libraries(AlbanyInterface PRIVATE ${ALBANY_LIBRARIES} albanyPyInterface)
 set_target_properties(AlbanyInterface PROPERTIES SUFFIX ".so")
 
-if (INSTALL_ALBANY)
-  install(TARGETS pyalbanyLib
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  install(TARGETS albanyPyInterface
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
-  install(TARGETS AlbanyInterface
-    LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
-    ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
-endif()
+install(TARGETS pyalbanyLib
+  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+  ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+install(TARGETS albanyPyInterface
+  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+  ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+install(TARGETS AlbanyInterface
+  LIBRARY DESTINATION ${PyAlbany_INSTALL_DIR}
+  ARCHIVE DESTINATION ${PyAlbany_INSTALL_DIR})
 
 IF (ALBANY_PYTHON_TESTS)
   add_custom_command(TARGET AlbanyInterface POST_BUILD

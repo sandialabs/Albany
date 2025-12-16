@@ -64,7 +64,7 @@ SET(PyAlbany_INSTALL_PREFIX ${PyAlbany_DEFAULT_INSTALL_PREFIX}
 
 # Determine the install directory
 SET(PyAlbany_INSTALL_DIR
-  ${PyAlbany_INSTALL_PREFIX}/lib/python${PYTHON_VERSION}/site-packages/PyAlbany
+  ${PyAlbany_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION}/site-packages/PyAlbany
   )
 MESSAGE("-- PyAlbany installation path: ${PyAlbany_INSTALL_DIR}")
 
