@@ -1,4 +1,4 @@
-name: build-gcc-12.3-serial-image
+name: build-containers
 
 on:
   # Manual run for debugging
@@ -25,8 +25,8 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y podman
+          sudo apt-get update
+          sudo apt-get install -y podman
       - name: Check out the repository
         uses: actions/checkout@v5
         with:
