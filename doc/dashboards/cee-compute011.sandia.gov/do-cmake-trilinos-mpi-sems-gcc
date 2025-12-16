@@ -112,4 +112,5 @@ cmake -GNinja \
       -D TPL_FIND_SHARED_LIBS=ON \
       -D BUILD_SHARED_LIBS=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC=OFF \
+      -D TPL_ENABLE_gtest=OFF \
 ..
