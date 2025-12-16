@@ -12,7 +12,6 @@ cmake -Wno-dev                                                    \
   -D CMAKE_C_COMPILER:STRING="mpicc"                              \
   -D CMAKE_CXX_COMPILER:STRING="mpicxx"                           \
   -D CMAKE_Fortran_COMPILER:STRING="mpifort"                      \
-  -D CMAKE_CXX_STANDARD:STRING=17                                 \
   -D BUILD_SHARED_LIBS:BOOL=ON                                    \
   \
   -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF                          \
