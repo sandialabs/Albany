@@ -250,6 +250,10 @@ if (ALBANY_MUELU)
   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_depthInt_regCoulomb_constA.yaml)
   add_test(${testNameRoot}_Humboldt_DepthIntegrated_RegCoulomb_ConstA ${Albany.exe} input_fo_humboldt_depthInt_regCoulomb_constA.yaml)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_depthInt_debrisFriction.yaml
+  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_depthInt_debrisFriction.yaml)
+  add_test(${testNameRoot}_Humboldt_DepthIntegrated_DebrisFriction ${Albany.exe} input_fo_humboldt_depthInt_debrisFriction.yaml)
+
   if (NOT ALBANY_PARALELL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_MueLu
                        PROPERTIES
@@ -260,11 +264,18 @@ if (ALBANY_MUELU)
                        PROPERTIES
                        LABELS            "LandIce;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
+
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_RegCoulomb
                        PROPERTIES
                        LABELS            "LandIce;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
+
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_RegCoulomb_ConstA
+                       PROPERTIES
+                       LABELS            "LandIce;Forward"
+                       FIXTURES_REQUIRED humboldtMeshSetup)
+
+    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_DebrisFriction
                        PROPERTIES
                        LABELS            "LandIce;Forward"
                        FIXTURES_REQUIRED humboldtMeshSetup)
@@ -282,6 +293,10 @@ if (ALBANY_MUELU)
                        LABELS         "LandIce;Forward")
 
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_RegCoulomb_ConstA
+                       PROPERTIES
+                       LABELS         "LandIce;Forward")
+
+    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_DebrisFriction
                        PROPERTIES
                        LABELS         "LandIce;Forward")
   endif()

@@ -152,7 +152,9 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, degree);
     }    
   } else {
-    //TEUCHOS_TEST_FOR_EXCEPTION (!tensorProductCell && params->isParameter(tensorCubDegName), std::logic_error, "Error! Parameter 'Cubature Degrees (Horiz Vert)' should be provided only for extruded meshes with Wedge or Hexaedron cells\n""        Use 'Cubature Degree instead'");
+    TEUCHOS_TEST_FOR_EXCEPTION (!tensorProductCell && params->isParameter(tensorCubDegName), std::logic_error,
+                                  "Error! Parameter 'Cubature Degrees (Horiz Vert)' should be provided only for extruded meshes with Wedge or Hexaedron cells\n"
+                                  "        Use 'Cubature Degree instead'");
     int cubDegree = params->get("Cubature Degree", defaultCubDegree);
     cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   }  
@@ -643,7 +645,7 @@ void StokesFOBase::setupEvaluatorRequests ()
       } else {
         // We have a sliding law, which requires a mu (possibly a field),
         // and possibly a bed roughness
-	// debris friction also requires bulk friction coefficient + basal debris factor
+	// debris friction also requires bulk friction coefficient and basal debris factor
         const auto mu_type = util::upper_case(bfc.get<std::string>("Mu Type"));
         if (mu_type!="CONSTANT") {
           auto mu_field_name = bfc.get<std::string>("Mu Field Name");

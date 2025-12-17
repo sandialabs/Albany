@@ -94,14 +94,14 @@ typedef struct TET_ {
 void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int globalTrianglesStride, bool ordering, bool first_time_step,
     const std::vector<int>& indexToVertexID,
-    const std::vector<int>& indexToTriangleID, double /*minBeta*/,
-    const std::vector<double>& /* regulThk */,
+    const std::vector<int>& indexToTriangleID, double, // minBeta
+    const std::vector<double>&, // regulThk,
     const std::vector<double>& levelsNormalizedThickness,
     const std::vector<double>& elevationData,
     const std::vector<double>& thicknessData,
           std::vector<double>& betaData,
     const std::vector<double>& bedTopographyData,
-    const std::vector<double>& smbData,
+    const std::vector<double>&, // smbData,
     const std::vector<double>& stiffeningFactorData,
           std::vector<double>& effectivePressureData,
     const std::vector<double>& muData,
@@ -152,7 +152,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   STKFieldType* surfaceHeightField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_height");
   STKFieldType* thicknessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "ice_thickness");
   STKFieldType* bedTopographyField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_topography");
-  STKFieldType* smbField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_mass_balance");
+  //STKFieldType* smbField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_mass_balance");
   STKFieldType* dirichletField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "dirichlet_field");
   STKFieldType* muField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
   STKFieldType* bedRoughnessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_roughness");
@@ -209,11 +209,12 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       double* effectivePressure = stk::mesh::field_data(*effectivePressureField, node);
       effectivePressure[0] = effectivePressureData[ib];
     }
-
-    if(smbField != NULL) {
-      double* smb = stk::mesh::field_data(*smbField, node);
-      smb[0] = smbData[ib];
-    }
+    
+    // Not needed
+    // if(smbField != NULL) {
+    //  double* smb = stk::mesh::field_data(*smbField, node);
+    //   smb[0] = smbData[ib];
+    // }
     double* sol = stk::mesh::field_data(*solutionField, node);
     sol[0] = velocityOnVertices[j];
     sol[1] = velocityOnVertices[j + numVertices3D];
@@ -341,7 +342,6 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   try {
     auto model = slvrfctry->createModel(albanyApp);
     solver = slvrfctry->createSolver(model, Teuchos::null, true);
-    //solver = slvrfctry->createSolver(mpiComm, model, Teuchos::null, true);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -509,6 +509,40 @@ void velocity_solver_finalize() {
     Kokkos::finalize();
 }
 
+
+//DEPRECATED
+void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
+    int globalTrianglesStride, bool ordering, bool first_time_step,
+    const std::vector<int>& indexToVertexID,
+    const std::vector<int>& indexToTriangleID, double minBeta,
+    const std::vector<double>& regulThk,
+    const std::vector<double>& levelsNormalizedThickness,
+    const std::vector<double>& elevationData,
+    const std::vector<double>& thicknessData,
+          std::vector<double>& betaData,
+    const std::vector<double>& bedTopographyData,
+    const std::vector<double>& smbData,
+    const std::vector<double>& stiffeningFactorData,
+    const std::vector<double>& effectivePressureData,
+    const std::vector<double>& muData,
+    const std::vector<double>& temperatureDataOnPrisms,
+    std::vector<double>& bodyForceMagnitudeOnBasalCell,
+    std::vector<double>& dissipationHeatOnPrisms,
+    std::vector<double>& velocityOnVertices,
+    int& error,
+    const double& deltat) {
+      std::vector<double> effectivePressureDataNonConst(effectivePressureData);
+      const std::vector<double> bedRoughnessData;
+      const std::vector<double> bulkFrictionData;
+      const std::vector<double> basalDebrisData;
+      velocity_solver_solve_fo(nLayers, globalVerticesStride, globalTrianglesStride, ordering, first_time_step,
+                               indexToVertexID,indexToTriangleID, minBeta, regulThk, levelsNormalizedThickness, 
+                               elevationData, thicknessData, betaData, bedTopographyData, smbData, stiffeningFactorData,
+                               effectivePressureDataNonConst, muData, bedRoughnessData, bulkFrictionData, basalDebrisData,
+                               temperatureDataOnPrisms, bodyForceMagnitudeOnBasalCell,dissipationHeatOnPrisms, velocityOnVertices, error, deltat );
+}
+
+
 /*duality:
  *
  *   mpas(F) |  albany
@@ -622,10 +656,20 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalFrictionParams.set("Power Exponent", basalFrictionParams.get("Power Exponent",1.0));
   basalFrictionParams.set("Mu Type",basalFrictionParams.get("Mu Type","Field"));
   basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
-  basalFrictionParams.set("Bed Roughness Type",basalFrictionParams.get("Bed Roughness Type","Field"));
   basalFrictionParams.set("Effective Pressure Type",basalFrictionParams.get("Effective Pressure Type","Field"));
-  basalFrictionParams.set("Bulk Friction Coefficient Type",basalFrictionParams.get("Bulk Friction Coefficient Type","Field"));
-  basalFrictionParams.set("Basal Debris Factor Type", basalFrictionParams.get("Basal Debris Factor Type","Field"));
+
+  bool requireBedRoughness(false), requireBulkFriction(false), requireBasalDebris(false);
+  if((betaType == "REGULARIZED COULOMB") || (betaType == "DEBRIS FRICTION")) {
+    basalFrictionParams.set("Bed Roughness Type",basalFrictionParams.get("Bed Roughness Type","Field"));
+    requireBedRoughness = true;
+    if(betaType == "DEBRIS FRICTION") {
+      basalFrictionParams.set("Bulk Friction Coefficient Type",basalFrictionParams.get("Bulk Friction Coefficient Type","Field"));
+      basalFrictionParams.set("Basal Debris Factor Type", basalFrictionParams.get("Basal Debris Factor Type","Field"));
+      requireBulkFriction = true;
+      requireBasalDebris = true;
+    }
+  }  
+  
   basalFrictionParams.set<bool>("Zero Beta On Floating Ice", zeroBetaOnShelf);
   basalFrictionParams.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", zeroEffectPressOnShelf);
 
@@ -698,81 +742,113 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   discretizationList->set("Workset Size", discretizationList->get("Workset Size", -1));
 
-  discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
+  discretizationList->set("Method", discretizationList->get("Method", "STKExtruded")); //set to STKExtruded is not defined
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
-  discretizationList->sublist("Required Fields Info").set<int>("Number Of Fields",fp+11);
-  Teuchos::ParameterList& field0  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",0+fp));
-  Teuchos::ParameterList& field1  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",1+fp));
-  Teuchos::ParameterList& field2  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",2+fp));
-  Teuchos::ParameterList& field3  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",3+fp));
-  Teuchos::ParameterList& field4  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",4+fp));
-  Teuchos::ParameterList& field5  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",5+fp));
-  Teuchos::ParameterList& field6  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",6+fp));
-  Teuchos::ParameterList& field7  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",7+fp));
-  Teuchos::ParameterList& field8  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",8+fp));
-  Teuchos::ParameterList& field9  = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",9+fp));
-  Teuchos::ParameterList& field10 = discretizationList->sublist("Required Fields Info").sublist(util::strint("Field",10+fp));
 
   //set temperature
-  field0.set<std::string>("Field Name", "temperature");
-  if(depthIntegratedModel)
-    field0.set<std::string>("Field Type", "QuadPoint Scalar");
-  else
-    field0.set<std::string>("Field Type", "Elem Scalar");
-  field0.set<std::string>("Field Origin", "Mesh");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "temperature");
+    if(depthIntegratedModel)
+      field.set<std::string>("Field Type", "QuadPoint Scalar");
+    else
+      field.set<std::string>("Field Type", "Elem Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   //set ice thickness
-  field1.set<std::string>("Field Name", "ice_thickness");
-  field1.set<std::string>("Field Type", "Node Scalar");
-  field1.set<std::string>("Field Origin", "Mesh");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "ice_thickness");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   //set surface_height
-  field2.set<std::string>("Field Name", "surface_height");
-  field2.set<std::string>("Field Type", "Node Scalar");
-  field2.set<std::string>("Field Origin", "Mesh");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "surface_height");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   //set bed topography
-  field3.set<std::string>("Field Name", "bed_topography");
-  field3.set<std::string>("Field Type", "Node Scalar");
-  field3.set<std::string>("Field Origin", "Mesh");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "bed_topography");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   //set mu field
-  field4.set<std::string>("Field Name", "mu");
-  field4.set<std::string>("Field Type", "Node Scalar");
-  field4.set<std::string>("Field Origin", "Mesh");
-
-    //set mu field
-  field5.set<std::string>("Field Name", "bed_roughness");
-  field5.set<std::string>("Field Type", "Node Scalar");
-  field5.set<std::string>("Field Origin", "Mesh");
-
-  //set surface mass balance
-  field6.set<std::string>("Field Name", "surface_mass_balance");
-  field6.set<std::string>("Field Type", "Node Scalar");
-  field6.set<std::string>("Field Origin", "Mesh");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "mu");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   //set dirichlet field
-  field7.set<std::string>("Field Name", "dirichlet_field");
-  field7.set<std::string>("Field Type", "Node Vector");
-  field7.set<std::string>("Field Origin", "Mesh");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "dirichlet_field");
+    field.set<std::string>("Field Type", "Node Vector");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   //set stiffening factor
-  field8.set<std::string>("Field Name", "stiffening_factor_log");
-  field8.set<std::string>("Field Type", "Node Scalar");
-  field8.set<std::string>("Field Origin", "Mesh");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "stiffening_factor_log");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   //set effective pressure
-  field9.set<std::string>("Field Name", "effective_pressure");
-  field9.set<std::string>("Field Type", "Node Scalar");
-  field9.set<std::string>("Field Origin", "Mesh");
-  field9.set<std::string>("Field Usage", "Input-Output");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "effective_pressure");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+    field.set<std::string>("Field Usage", "Input-Output");
+  }
+
+  //set bed roughness
+  if(requireBedRoughness) {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "bed_roughness");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
+
+  //set basal debris factor
+  if(requireBasalDebris){
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "basal_debris");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
+
+  //set bulk friction
+  if(requireBulkFriction) {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "bulk_friction");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
   // Outputs
-  field10.set<std::string>("Field Name", "body_force");
-  field10.set<std::string>("Field Type", "Elem Vector");
-  field10.set<std::string>("Field Usage", "Output");
+  {
+    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
+    field.set<std::string>("Field Name", "body_force");
+    field.set<std::string>("Field Type", "Elem Vector");
+    field.set<std::string>("Field Usage", "Output");
+  }
+
+  // set number of requested fields
+  rfi.set<int>("Number Of Fields",fp);
 
   // Side set outputs
   auto& ss_pl =discretizationList->sublist("Side Set Discretizations");
