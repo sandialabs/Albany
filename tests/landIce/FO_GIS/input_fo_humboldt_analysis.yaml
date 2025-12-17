@@ -177,7 +177,6 @@ ANONYMOUS:
     Method: Extruded
     Surface Height Field Name: surface_height
     Number Of Time Derivatives: 0
-    Exodus Output File Name: output/humboldt.exo
     Columnwise Ordering: false
     NumLayers: 2  #too small, only for testing
     Thickness Field Name: ice_thickness
@@ -185,7 +184,7 @@ ANONYMOUS:
     Interpolate Basal Layered Fields: [temperature, velocity]
     Use Glimmer Spacing: true
     Required Fields Info:
-      Number Of Fields: 9
+      Number Of Fields: 8
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -215,11 +214,6 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 7:
-        Field Name: surface_height
-        Field Type: Node Scalar
-        Field Origin: Mesh
-        Field Usage: Output
-      Field 8:
         Field Name: velocity
         Field Type: Node Vector
         Field Origin: Mesh
@@ -305,7 +299,6 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
-
 
   #Solvers and Analysis
   #What linear/nonlinear solvers and preconditioners to use
