@@ -152,7 +152,9 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
       cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, degree);
     }    
   } else {
-    //TEUCHOS_TEST_FOR_EXCEPTION (!tensorProductCell && params->isParameter(tensorCubDegName), std::logic_error, "Error! Parameter 'Cubature Degrees (Horiz Vert)' should be provided only for extruded meshes with Wedge or Hexaedron cells\n""        Use 'Cubature Degree instead'");
+    TEUCHOS_TEST_FOR_EXCEPTION (!tensorProductCell && params->isParameter(tensorCubDegName), std::logic_error,
+                                  "Error! Parameter 'Cubature Degrees (Horiz Vert)' should be provided only for extruded meshes with Wedge or Hexaedron cells\n"
+                                  "        Use 'Cubature Degree instead'");
     int cubDegree = params->get("Cubature Degree", defaultCubDegree);
     cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   }  

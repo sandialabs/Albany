@@ -217,6 +217,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     } else if (effectivePressureType == "HYDROSTATIC") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC;
       use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
+      save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
       if(save_pressure_field && nodal) {
         outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
         this->addEvaluatedField (outN);
@@ -548,9 +549,9 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
+            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
           }
-	} else {
+        } else {
           MeshScalarT thickness(0), bed_topo(0);
           for (int node=0; node<numNodes; ++node) {
             thickness += thickness_field(cell,node)*BF(cell,node,ipt);
@@ -563,22 +564,22 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
         }
         break;
       case EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES:
-	if(nodal) {
+        if(nodal) {
           auto f_p = use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(-bed_topo_field(cell,ipt)/pressure_smoothing_length_scale))) :  MeshScalarT(0.0);
           NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (overburden_fraction*rho_i*
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = static_cast<EffPressureST>(NVal);
+            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
           }
-	} else {
+        } else {
           NVal = 0;
           for (int node=0; node<numNodes; ++node) {
             auto f_p =use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(-bed_topo_field(cell,node)/pressure_smoothing_length_scale))) :  MeshScalarT(0.0);
             NVal += g* KU::max(rho_i*thickness_field(cell,node) - ( (overburden_fraction*rho_i*
                     thickness_field(cell,node)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,node),0.0) ),0.0)*BF(cell,node,ipt);
-	  }
+          }
         }
         break;
       }
@@ -647,8 +648,8 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
       }
       if (beta_type == BETA_TYPE::DEBRIS_FRICTION) {
         ParamScalarT bedRoughnessValue;
-	ParamScalarT bulkFrictionValue;
-	ParamScalarT basalDebrisValue;
+	      ParamScalarT bulkFrictionValue;
+	      ParamScalarT basalDebrisValue;
         switch (bedRoughness_type) {
         case FIELD_TYPE::FIELD:
           bedRoughnessValue = bedRoughnessField(cell,ipt);
@@ -670,23 +671,23 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
           break;
         }
 
-	switch (bulkFriction_type) {
-	case FIELD_TYPE::FIELD:
-	  bulkFrictionValue = bulkFrictionField(cell,ipt);
-	  break;
-	case FIELD_TYPE::CONSTANT:
-	  bulkFrictionValue = bulkFriction;
-	  break;
-	}
+        switch (bulkFriction_type) {
+        case FIELD_TYPE::FIELD:
+          bulkFrictionValue = bulkFrictionField(cell,ipt);
+          break;
+        case FIELD_TYPE::CONSTANT:
+          bulkFrictionValue = bulkFriction;
+          break;
+        }
 
-	switch (basalDebris_type) {
-	case FIELD_TYPE::FIELD:
-	  basalDebrisValue = basalDebrisField(cell,ipt);
-	  break;
-	case FIELD_TYPE::CONSTANT:
-	  basalDebrisValue = basalDebris;
-	  break;
-	} 
+        switch (basalDebris_type) {
+        case FIELD_TYPE::FIELD:
+          basalDebrisValue = basalDebrisField(cell,ipt);
+          break;
+        case FIELD_TYPE::CONSTANT:
+          basalDebrisValue = basalDebris;
+          break;
+        } 
 
         const double secsInYr = 365*24*3600;
         const double scaling = secsInYr*pow(1000,n+1); //turns flow rate from [Pa^{-n} s^{-1}] to [k^{-1} kPa^{-n} yr^{-1}]
@@ -696,16 +697,16 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
         case FLOW_RATE_TYPE::CONSTANT: { 
           beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
           beta(cell,ipt) += ((bulkFrictionValue * NVal / (1.0 + NVal / N0)) + (basalDebrisValue * u_norm(cell,ipt) / (1.0 + u_norm(cell,ipt) / u0))) / u_norm(cell,ipt);
-	  }
-	  break;
+	      }
+	      break;
         case FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE:
           beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
           beta(cell,ipt) += ((bulkFrictionValue * NVal / (1.0 + NVal / N0)) + (basalDebrisValue * u_norm(cell,ipt) / (1.0 + u_norm(cell,ipt) / u0))) / u_norm(cell,ipt);
           break;
         }
-
       }
-  }  // end of for loop
+    }
+  }
 
   if (is_side_equation && zero_on_floating) {
     for (int ipt=0; ipt<dim; ++ipt) {
@@ -733,7 +734,7 @@ operator() (const BasalFrictionCoefficient_Tag& tag, const int& cell) const {
       beta(cell,ipt) *= h*h;
     }
   }
-}  // end of function
+
 }
 //**********************************************************************
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
@@ -851,6 +852,8 @@ evaluateFields (typename Traits::EvalData workset)
     worksetSize = workset.numCells;
   }
 
+  TEUCHOS_TEST_FOR_EXCEPTION ((save_pressure_field && !std::is_constructible<EffPressureST,MeshScalarT>::value), std::logic_error,
+                                "Error! BasalFrictionCoefficient: Trying to convert a FAD type (NVal) into a double (outN).\n");
   Kokkos::parallel_for(BasalFrictionCoefficient_Policy(0, worksetSize), *this);
 }
 

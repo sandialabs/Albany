@@ -341,7 +341,6 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   try {
     auto model = slvrfctry->createModel(albanyApp);
     solver = slvrfctry->createSolver(model, Teuchos::null, true);
-    //solver = slvrfctry->createSolver(mpiComm, model, Teuchos::null, true);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -508,6 +507,40 @@ void velocity_solver_finalize() {
   if(kokkosInitializedByAlbany)
     Kokkos::finalize();
 }
+
+
+//DEPRECATED
+void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
+    int globalTrianglesStride, bool ordering, bool first_time_step,
+    const std::vector<int>& indexToVertexID,
+    const std::vector<int>& indexToTriangleID, double minBeta,
+    const std::vector<double>& regulThk,
+    const std::vector<double>& levelsNormalizedThickness,
+    const std::vector<double>& elevationData,
+    const std::vector<double>& thicknessData,
+          std::vector<double>& betaData,
+    const std::vector<double>& bedTopographyData,
+    const std::vector<double>& smbData,
+    const std::vector<double>& stiffeningFactorData,
+    const std::vector<double>& effectivePressureData,
+    const std::vector<double>& muData,
+    const std::vector<double>& temperatureDataOnPrisms,
+    std::vector<double>& bodyForceMagnitudeOnBasalCell,
+    std::vector<double>& dissipationHeatOnPrisms,
+    std::vector<double>& velocityOnVertices,
+    int& error,
+    const double& deltat) {
+      std::vector<double> effectivePressureDataNonConst(effectivePressureData);
+      const std::vector<double> bedRoughnessData;
+      const std::vector<double> bulkFrictionData;
+      const std::vector<double> basalDebrisData;
+      velocity_solver_solve_fo(nLayers, globalVerticesStride, globalTrianglesStride, ordering, first_time_step,
+                               indexToVertexID,indexToTriangleID, minBeta, regulThk, levelsNormalizedThickness, 
+                               elevationData, thicknessData, betaData, bedTopographyData, smbData, stiffeningFactorData,
+                               effectivePressureDataNonConst, muData, bedRoughnessData, bulkFrictionData, basalDebrisData,
+                               temperatureDataOnPrisms, bodyForceMagnitudeOnBasalCell,dissipationHeatOnPrisms, velocityOnVertices, error, deltat );
+}
+
 
 /*duality:
  *
@@ -698,7 +731,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   discretizationList->set("Workset Size", discretizationList->get("Workset Size", -1));
 
-  discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
+  discretizationList->set("Method", discretizationList->get("Method", "STKExtruded")); //set to STKExtruded is not defined
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
