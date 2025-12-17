@@ -284,6 +284,17 @@ ANONYMOUS:
             Number Of Layers: 2
             Vector Dim: 2
             File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
+          Field 10:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Vector Dim: 2
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity.ascii
+          Field 11:
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
       upperside:
         Method: NONE
         Required Fields Info:
@@ -292,13 +303,11 @@ ANONYMOUS:
             Field Name: observed_surface_velocity
             Field Type: Node Vector
             Vector Dim: 2
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_velocity.ascii
+            Field Origin: Mesh
           Field 1:
             Field Name: observed_surface_velocity_RMS
             Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
+            Field Origin: Mesh
 
   #Solvers and Analysis
   #What linear/nonlinear solvers and preconditioners to use

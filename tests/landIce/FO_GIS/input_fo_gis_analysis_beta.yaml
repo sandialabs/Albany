@@ -115,7 +115,7 @@ ANONYMOUS:
         Use Serial Mesh: false
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info:
-          Number Of Fields: 4
+          Number Of Fields: 6
           Field 0:
             Field Name: basal_friction
             Field Type: Node Scalar
@@ -137,22 +137,28 @@ ANONYMOUS:
             Number Of Layers: 11
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
+          Field 4:
+            Field Name: observed_surface_velocity
+            Field Type: Node Vector
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
+          Field 5:
+            Field Name: observed_surface_velocity_RMS
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/velocity_Magnitude_RMS.ascii
       upperside:
-        Method: SideSetSTK
-        Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_analysis_surface.exo
+        Method: NONE
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
             Field Name: observed_surface_velocity
             Field Type: Node Vector
-            Field Origin: File
-            File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
+            Field Origin: Mesh
           Field 1:
             Field Name: observed_surface_velocity_RMS
             Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/GisUnstructFiles/velocity_Magnitude_RMS.ascii
+            Field Origin: Mesh
   Piro:
     Sensitivity Method: Adjoint
     Analysis:
