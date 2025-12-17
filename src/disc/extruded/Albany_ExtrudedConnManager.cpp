@@ -135,15 +135,15 @@ getConnectivityMask (const std::string& sub_part_name) const
     }
   } else if (sub_part_name=="lateral" or sub_part_name=="lateralside" or
              sub_part_name.substr(0,9)=="extruded_") {
-    std::vector<std::string> basal_ss_names;
+    std::vector<std::string> basal_parts;
     if (sub_part_name=="lateral" or sub_part_name=="lateralside") {
-      basal_ss_names = m_mesh->basal_mesh()->meshSpecs[0]->ssNames;
+      basal_parts = m_mesh->basal_mesh()->meshSpecs[0]->ssNames;
     } else {
-      basal_ss_names.push_back(m_mesh->get_basal_part_name(sub_part_name));
+      basal_parts.push_back(m_mesh->get_basal_part_name(sub_part_name));
     }
     LayeredMeshNumbering<LO> dofs_layers(m_num_hdofs_per_elem*m_num_fields,m_num_vdofs_per_elem,LayeredMeshOrdering::LAYER);
-    for (const auto& basal_ssn : basal_ss_names) {
-      const auto basal_mask = m_conn_mgr_h->getConnectivityMask(basal_ssn);
+    for (const auto& basal_part : basal_parts) {
+      const auto basal_mask = m_conn_mgr_h->getConnectivityMask(basal_part);
       for (int ie=0; ie<num_basal_elems; ++ie) {
         const int start_h = m_conn_mgr_h->getConnectivityStart(ie);
         const int size_h  = m_conn_mgr_h->getConnectivitySize(ie);
@@ -162,8 +162,21 @@ getConnectivityMask (const std::string& sub_part_name) const
         }
       }
     }
-  } else if (sub_part_name.substr(0,5)=="basal") {
-    std::cout << "basal NS not yet implemented, but not erroring out for now...\n";
+  } else if (sub_part_name.substr(0,6)=="basal_") {
+    const auto basal_part = sub_part_name.substr(6);
+    const auto basal_mask = m_conn_mgr_h->getConnectivityMask(basal_part);
+    const int ilay = 0;
+    for (int ie=0; ie<num_basal_elems; ++ie) {
+      const int start_h = m_conn_mgr_h->getConnectivityStart(ie);
+      const int size_h  = m_conn_mgr_h->getConnectivitySize(ie);
+      for (int idof=0; idof<size_h; ++idof) {
+        if (basal_mask[start_h+idof]==1) {
+          const int ielem3d = layers_data.cell.lid->getId(ie,ilay);
+          const int start3d = getConnectivityStart(ielem3d);
+          mask[start3d+idof] = 1;
+        }
+      }
+    }
   } else {
     throw NotYetImplemented("ExtrudedConnManager::getConnectivityMask for generic sub-part");
   }
