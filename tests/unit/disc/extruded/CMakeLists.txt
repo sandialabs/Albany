@@ -21,3 +21,8 @@ create_unit_test (NAME    ExtrudedConnManager
                   PREFIX  ${testNameRoot}
                   SOURCES ExtrudedConnManager.cpp
                           DummyConnManager.cpp)
+
+create_unit_test (NAME    ExtrudedDisc
+                  PREFIX  ${testNameRoot}
+                  SOURCES ExtrudedDisc.cpp)
+
