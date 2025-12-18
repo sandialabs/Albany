@@ -16,9 +16,12 @@
 
 #include <random>
 
-constexpr int num_layers = 2;
+constexpr int num_layers = 3;
 constexpr int nelem_x = 2;
 constexpr int nelem_y = 2;
+constexpr int ntria = nelem_x*nelem_y*2;
+constexpr int neq = 2;
+constexpr int data_num_layers = 2;
 constexpr double ztop = 1.0;
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -28,11 +31,6 @@ create_extruded_disc (const Teuchos::RCP<const Teuchos_Comm>& comm, bool logical
 
   auto top_level_params = Teuchos::rcp(new Teuchos::ParameterList(""));
   auto disc_params = Teuchos::sublist(top_level_params,"Discretization");
-  if (logically_extruded)
-    disc_params->set<std::string>("Method", "Extruded");
-  else
-    disc_params->set<std::string>("Method", "STKExtruded");
-
   disc_params->set<int>("NumLayers", num_layers);
   disc_params->set<int>("Number Of Time Derivatives", 0);
   disc_params->set<bool>("Columnwise Ordering", true);
@@ -45,7 +43,7 @@ create_extruded_disc (const Teuchos::RCP<const Teuchos_Comm>& comm, bool logical
   basal_params.set<std::string>("Cell Topology", "Triangle");
 
   auto& basal_req = basal_params.sublist("Required Fields Info");
-  basal_req.set<int>("Number Of Fields",2);
+  basal_req.set<int>("Number Of Fields",4);
   auto& H_req = basal_req.sublist("Field 0");
   H_req.set<std::string>("Field Name","thickness");
   H_req.set<std::string>("Field Type","Node Scalar");
@@ -56,19 +54,69 @@ create_extruded_disc (const Teuchos::RCP<const Teuchos_Comm>& comm, bool logical
   zs_req.set<std::string>("Field Type","Node Scalar");
   zs_req.set<std::string>("Field Origin","File");
   zs_req.set<double>("Field Value",ztop);
+  auto& scl_req = basal_req.sublist("Field 2");
+  scl_req.set<std::string>("Field Name","beta");
+  scl_req.set<std::string>("Field Type","Node Scalar");
+  scl_req.set<std::string>("Field Origin","File");
+  scl_req.set<Teuchos::Array<std::string>>("Field Expression",{"x+y"});
+  auto& vec_lay_req = basal_req.sublist("Field 3");
+  vec_lay_req.set<std::string>("Field Name","v");
+  vec_lay_req.set<std::string>("Field Type","Node Layered Vector");
+  vec_lay_req.set<int>("Vector Dim",2);
+  vec_lay_req.set<int>("Number Of Layers",data_num_layers);
+  vec_lay_req.set<std::string>("Field Origin","File");
+  vec_lay_req.set<std::string>("File Name","./v.ascii");
+
+  // Basal state info structs
+  auto bst_H    = Teuchos::rcp(new StateStruct("thickness",StateStruct::NodalDataToElemNode,{ntria,3}));
+  auto bst_zs   = Teuchos::rcp(new StateStruct("surface_height",StateStruct::NodalDataToElemNode,{ntria,3}));
+  auto bst_beta = Teuchos::rcp(new StateStruct("beta",StateStruct::NodalDataToElemNode,{ntria,3}));
+  auto bst_v    = Teuchos::rcp(new StateStruct("v",StateStruct::NodalDataToElemNode,{ntria,3,neq,data_num_layers}));
+  bst_v->layered = true;
 
   std::map<std::string, Teuchos::RCP<StateInfoStruct> > ss_sis;
-  if (not logically_extruded) {
-    // STKExtruded needs H and zs to be declared as side states
-    auto& bsis = ss_sis["basalside"] = Teuchos::rcp(new StateInfoStruct());
-    bsis->push_back(Teuchos::rcp(new StateStruct("thickness",StateStruct::NodalDataToElemNode,{nelem_x*nelem_y,3})));
-    bsis->push_back(Teuchos::rcp(new StateStruct("surface_height",StateStruct::NodalDataToElemNode,{nelem_x*nelem_y,3})));
+  auto& bsis = ss_sis["basalside"] = Teuchos::rcp(new StateInfoStruct());
+  bsis->push_back(bst_H);
+  bsis->push_back(bst_zs);
+  bsis->push_back(bst_beta);
+  bsis->push_back(bst_v);
+
+  if (logically_extruded) {
+    disc_params->set<std::string>("Method", "Extruded");
+    disc_params->set<Teuchos::Array<std::string>>("Extrude Basal Fields",{"beta"});
+    disc_params->set<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{"v"});
+  } else {
+    disc_params->set<std::string>("Method", "STKExtruded");
+    disc_params->set<Teuchos::Array<std::string>>("Extrude Basal Node Fields",{"beta"});
+    disc_params->set<Teuchos::Array<int>>("Basal Node Fields Ranks",{1});
+    disc_params->set<Teuchos::Array<std::string>>("Interpolate Basal Node Layered Fields",{"v"});
+    disc_params->set<Teuchos::Array<int>>("Basal Node Layered Fields Ranks",{2});
+
+    auto& req = disc_params->sublist("Required Fields Info");
+    req.set<int>("Number Of Fields",2);
+    auto& beta_req = req.sublist("Field 0");
+    beta_req.set<std::string>("Field Name","beta");
+    beta_req.set<std::string>("Field Type","Node Scalar");
+    beta_req.set<std::string>("Field Origin","Mesh");
+    auto& v_req = req.sublist("Field 1");
+    v_req.set<std::string>("Field Name","v");
+    v_req.set<std::string>("Field Type","Node Vector");
+    v_req.set<int>("Vector Dim",2);
+    v_req.set<std::string>("Field Origin","Mesh");
   }
+
+  // Volume state info structs
+  auto st_beta = Teuchos::rcp(new StateStruct("beta",StateStruct::NodalDataToElemNode,{num_layers*ntria,6}));
+  auto st_v = Teuchos::rcp(new StateStruct("v",StateStruct::NodalDataToElemNode,{num_layers*ntria,6,neq}));
+
+  auto sis = Teuchos::rcp(new StateInfoStruct());
+  sis->push_back(st_beta);
+  sis->push_back(st_v);
 
   DiscretizationFactory factory(top_level_params,comm,false);
 
   factory.createMeshSpecs();
-  auto disc = factory.createDiscretization(2,{},Teuchos::null,ss_sis);
+  auto disc = factory.createDiscretization(neq,{},sis,ss_sis);
 
   return disc;
 }
@@ -183,6 +231,52 @@ TEUCHOS_UNIT_TEST (ExtrudedDisc,DOFs)
 
     for (int idof=0; idof<ndofs; ++idof) {
       TEST_EQUALITY(lids(ie,idof),lids_stk(ie,idof));
+    }
+  }
+}
+
+TEUCHOS_UNIT_TEST (ExtrudedDisc,LoadFields)
+{
+  using namespace Albany;
+
+  auto comm = getDefaultComm();
+
+  auto disc = create_extruded_disc(comm,true);
+  auto stk_disc = create_extruded_disc(comm,false);
+
+  // +-------------------------------------------------------+
+  // |        Test extruded and interpolated fields          |
+  // +-------------------------------------------------------+
+
+  auto mfa = disc->getMeshStruct()->get_field_accessor();
+  auto mfa_stk = stk_disc->getMeshStruct()->get_field_accessor();
+
+  const int num_ws = disc->getNumWorksets();
+  for (int ws=0; ws<num_ws; ++ws) {
+    auto beta = mfa->getElemStates()[ws].at("beta").host();
+    auto beta_stk = mfa_stk->getElemStates()[ws].at("beta").host();
+    TEST_EQUALITY (beta.extent(0),beta_stk.extent(0));
+    TEST_EQUALITY (beta.extent(1),beta_stk.extent(1));
+    int nelems = beta.extent(0);
+    int nnodes = beta.extent(1);
+    for (int ie=0; ie<nelems; ++ie) {
+      for (int in=0; in<nnodes; ++in) {
+        TEST_EQUALITY(beta(ie,in),beta_stk(ie,in));
+      }
+    }
+
+    auto v = mfa->getElemStates()[ws].at("v").host();
+    auto v_stk = mfa_stk->getElemStates()[ws].at("v").host();
+    TEST_EQUALITY (v.extent(0),v_stk.extent(0));
+    TEST_EQUALITY (v.extent(1),v_stk.extent(1));
+    TEST_EQUALITY (v.extent(2),v_stk.extent(2));
+
+    for (int ie=0; ie<nelems; ++ie) {
+      for (int in=0; in<nnodes; ++in) {
+        for (int eq=0; eq<neq; ++eq) {
+          TEST_EQUALITY(v(ie,in,eq),v_stk(ie,in,eq));
+        }
+      }
     }
   }
 }
