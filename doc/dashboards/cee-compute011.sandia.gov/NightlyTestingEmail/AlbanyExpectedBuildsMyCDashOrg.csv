@@ -1,1 +1,9 @@
 group, site, buildname 
+Nightly, blake.sandia.gov, Trilinos-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Release
+Nightly, blake.sandia.gov, Trilinos-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Debug-No-Warn
+Nightly, blake.sandia.gov, Albany-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Release
+Nightly, blake.sandia.gov, Albany-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Debug-No-Warn
+Nightly, blake.sandia.gov, Albany-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Release-sfad6
+Nightly, blake.sandia.gov, Albany-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Release-sfad12
+Nightly, blake.sandia.gov, Albany-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Release-sfad16
+Nightly, blake.sandia.gov, Albany-Linux-4.18.0-553.76.1.el8_10.x86_64-gcc-12.2.0-Release-sfad24
