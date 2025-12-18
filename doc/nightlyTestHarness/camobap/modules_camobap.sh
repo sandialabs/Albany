@@ -1,3 +1,4 @@
+source /etc/profile.d/sems-modules-init.sh
 module purge
 module load sems-gcc/13.2.0
 module load sems-openmpi/4.1.6
@@ -14,4 +15,4 @@ module load sems-python/3.13.5
 module load sems-cmake/3.31.8
 module load sems-ninja/1.12.1
 module load sems-googletest/1.17.0
-
+module list 
