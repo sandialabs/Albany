@@ -1,4 +1,4 @@
-00 19 * * 1-7 cd /home/projects/albany; rm -rf *out* slurm*; bash -l -c "sbatch run_intel.batch"; bash -l -c "sbatch run_gcc.batch";
+00 19 * * 1-7 cd /home/projects/albany; rm -rf *out* slurm*; bash -l -c "sbatch run_gcc.batch";
 00 02 * * 1-7 cd /home/projects/albany/nightlyCDashAlbanyBlake/aliPerfTests/nightlyCDash; bash -l -c "source blake_gcc_modules.sh >& gcc_modules.out; sbatch batch.openmpi.bash"
 35 07 * * 1-7 chgrp wg-albany -R /home/projects/albany/*
 37 07 * * 1-7 chmod ug+rwX -R /home/projects/albany/*
