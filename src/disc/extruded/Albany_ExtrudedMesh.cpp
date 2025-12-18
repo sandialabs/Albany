@@ -143,7 +143,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   // Make sure we can dereference sis
   if (sis.is_null()) {
     auto nonnull_sis = Teuchos::rcp(new StateInfoStruct());
-    this->setFieldData(comm,nonnull_sis,side_set_sis);
+    return this->setFieldData(comm,nonnull_sis,side_set_sis);
   }
 
   // Make sure we can dereference the basal sis
