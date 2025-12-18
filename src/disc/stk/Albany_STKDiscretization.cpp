@@ -83,8 +83,8 @@ STKDiscretization::STKDiscretization(
       auto ss_disc_params = Teuchos::sublist(ss_discretizations_params,ss_name);
       ss_disc_params->set("Number Of Time Derivatives",discParams->get<int>("Number Of Time Derivatives"));
       ss_disc_params->set("Sensitivity Method",discParams->get<std::string>("Sensitivity Method","None"));
-      ss_disc_params->set("Response Function Index", discParams->get<int>("Response Function Index"));
-      ss_disc_params->set("Sensitivity Parameter Index", discParams->get<int>("Sensitivity Parameter Index"));
+      ss_disc_params->set("Response Function Index", discParams->get<int>("Response Function Index",-1));
+      ss_disc_params->set("Sensitivity Parameter Index", discParams->get<int>("Sensitivity Parameter Index",-1));
 
       auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,true);
       auto side_disc = Teuchos::rcp(new STKDiscretization(ss_disc_params, m_neq, stk_mesh, comm));
