@@ -300,9 +300,6 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
   TEUCHOS_TEST_FOR_EXCEPTION(
       soln_vs.is_null(), std::logic_error,
       "solution vector space must be provided.");
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_overlap_vs.is_null(), std::logic_error,
-      "soln_overlap_map must be provided.");
 
   setCoordinates(coordMV_in);
 
@@ -363,6 +360,9 @@ setCoordinatesAndComputeNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV
   // Add repeated map
   // TODO: Teko - Passing a "Repeated Map" of a block throws a segfault. This doesn't seem to be needed though. Consider removing all together.
   if (froschUsed) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        soln_overlap_vs.is_null(), std::logic_error,
+        "soln_overlap_map must be provided.");
     plist->set("Repeated Map",getTpetraMap(soln_overlap_vs));
   }
 }
