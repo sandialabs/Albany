@@ -40,7 +40,7 @@ jobs:
           podman tag albany:gcc-12-serial ghcr.io/sandialabs/albany:gcc-12-serial
       - name: Login on ghcr
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u "${{ github.actor }}" --password-stdin
+          echo "${{ secrets.GHCR_PAT }}" | podman login ghcr.io -u bartgol --password-stdin
       - name: Push image
         run: |
           podman push ghcr.io/sandialabs/albany:gcc-12-serial
