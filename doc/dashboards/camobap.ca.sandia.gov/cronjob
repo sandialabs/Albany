@@ -1,4 +1,4 @@
-00 18 * * 1-6,7 cd /nightlyAlbanyTests; rm -rf out out_openMP out_Debug; bash build_trilinos_all.sh; cd /nightlyCDash; bash build_albany_all.sh; cd /nightlySpiritCDash; rm -rf *out; bash -l -c "bash nightly_cron_script_spirit_clone.sh; bash nightly_cron_script_spirit.sh"; bash process_results_spirit.sh; bash send_email_spirit.sh;" 
+00 18 * * 1-6,7 cd /nightlyAlbanyTests; rm -rf out out_openMP out_Debug; bash build_trilinos_all.sh; cd /nightlyCDash; bash build_albany_all.sh; 
 12 00 * * 6  rm -rf /home/ikalash/rsync-home.out; cd /mnt/encrypted_sdf1/camobap_backup/home; rsync -azP /home/ikalash . >& /home/ikalash/rsync-home.out
 12 00 * * 5  rm -rf /home/ikalash/rsync-encrypted_sdc1.out; cd /mnt/encrypted_sdf1/camobap_backup/encrypted_sdc1; rsync -azP /mnt/encrypted_sdc1 . >& /home/ikalash/rsync-encrypted_sdc1.out
 
