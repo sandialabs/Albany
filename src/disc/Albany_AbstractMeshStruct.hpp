@@ -53,9 +53,8 @@ struct AbstractMeshStruct {
 
     virtual Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor() const = 0;
 
-    Teuchos::RCP<LayeredMeshNumbering<GO> > global_cell_layers_data;
-    Teuchos::RCP<LayeredMeshNumbering<LO> > local_cell_layers_data;
-    Teuchos::ArrayRCP<double> mesh_layers_ratio;
+    // Contains non-null pointers only for extruded-type meshes
+    LayeredMeshData layers_data;
 
     Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs;
     std::map<std::string, Teuchos::RCP<AbstractMeshStruct>> sideSetMeshStructs;

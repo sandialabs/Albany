@@ -21,3 +21,10 @@ create_unit_test (NAME    ExtrudedConnManager
                   PREFIX  ${testNameRoot}
                   SOURCES ExtrudedConnManager.cpp
                           DummyConnManager.cpp)
+
+create_unit_test (NAME    ExtrudedDisc
+                  PREFIX  ${testNameRoot}
+                  SOURCES ExtrudedDisc.cpp)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/v.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/v.ascii)

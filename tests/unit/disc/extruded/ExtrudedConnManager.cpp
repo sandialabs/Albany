@@ -215,7 +215,7 @@ TEUCHOS_UNIT_TEST(ExtrudedConnMgr, Numbering)
 
       // Helper structures
       const int ndofs_2d = nfields*num_nodes2d;
-      auto cell_layers_lid = extruded_mesh->cell_layers_lid();
+      auto cell_layers_lid = extruded_mesh->layers_data.cell.lid;
       auto dofs_layers_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(ndofs_2d,numDofLayers,ordering));
 
       // Check

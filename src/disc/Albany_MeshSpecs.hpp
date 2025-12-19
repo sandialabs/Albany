@@ -53,7 +53,7 @@ struct MeshSpecsStruct
       std::map<std::string, int> ebNameToIndex_);
 
   // Type of mesh (structured, extruded, unstructured)
-  MeshType mesh_type;
+  MeshType mesh_type = MeshType::Unknown;
 
   // nonconst to allow replacement when the mesh adapts
   CellTopologyData ctd;

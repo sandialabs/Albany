@@ -78,21 +78,21 @@ void UpdateZCoordinateMovingTopBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
-  const int   numLayers = layers_data->numLayers;
-  const int   bot = layers_data->bot_side_pos;
-  const int   top = layers_data->top_side_pos;
+  const auto& dz_ref = layers_data.dz_ref;
+  const int   numLayers = layers_data.cell.lid->numLayers;
+  const int   bot = layers_data.bot_side_pos;
+  const int   top = layers_data.top_side_pos;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i) {
-    sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
   }
 
   // We use this dof mgr to figure out which local node in the cell is on the
@@ -101,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     const int elem_LID = elem_lids(cell);
-    const int ilayer = layers_data->getLayerId(elem_LID);
+    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
 
     const auto f = [&](const int pos) {
       const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
@@ -190,21 +190,21 @@ evaluateFields(typename Traits::EvalData workset)
   using ref_t = typename PHAL::Ref<ScalarOutT>::type;
 
   // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
-  const int   numLayers = layers_data->numLayers;
-  const int   bot = layers_data->bot_side_pos;
-  const int   top = layers_data->top_side_pos;
+  const auto& dz_ref = layers_data.dz_ref;
+  const int   numLayers = layers_data.cell.lid->numLayers;
+  const int   bot = layers_data.bot_side_pos;
+  const int   top = layers_data.top_side_pos;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i)
-    sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
 
   // We use this dof mgr to figure out which local node in the cell is on the
   // top or bottom side.
@@ -212,7 +212,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);
-    const int ilayer = layers_data->getLayerId(elem_LID);
+    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
 
     const auto f = [&](const int pos) {
       const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
@@ -310,21 +310,21 @@ evaluateFields(typename Traits::EvalData workset)
   using ref_t = typename PHAL::Ref<MeshScalarT>::type;
 
   // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.is_null(), std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
       "Error! No layered numbering in the mesh.\n");
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
-  const int   numLayers = layers_data->numLayers;
-  const int   bot = layers_data->bot_side_pos;
-  const int   top = layers_data->top_side_pos;
+  const auto& dz_ref = layers_data.dz_ref;
+  const int   numLayers = layers_data.cell.lid->numLayers;
+  const int   bot = layers_data.bot_side_pos;
+  const int   top = layers_data.top_side_pos;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
   sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
   for(int i=1; i<numLayers; ++i) {
-    sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
   }
 
   // We use this dof mgr to figure out which local node in the cell is on the
@@ -333,7 +333,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const int elem_LID = elem_lids(cell);
-    const int ilayer = layers_data->getLayerId(elem_LID);
+    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
 
     const auto f = [&](const int pos) {
       const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);

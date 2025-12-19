@@ -48,7 +48,7 @@ private:
 
   void interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
                                       const std::vector<stk::mesh::Entity>& cells2d,
-                                      const std::vector<double>& levelsNormalizedThickness,
+                                      const std::vector<double>& layers_z,
                                       GO numGlobalNodes2d);
   void extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
                            const std::vector<stk::mesh::Entity>& cells2d,
