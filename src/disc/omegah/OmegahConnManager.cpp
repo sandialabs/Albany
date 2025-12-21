@@ -31,7 +31,7 @@ namespace {
 
   //Tell Albany about entities that are in the closure of owned elements.  This
   //matches what was done in an element based partition without ghosts.
-  Omega_h::LO getNumEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
+  Omega_h::Read<Omega_h::I8> getEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     //Omegah isn't very const friendly and the Teuchos RCP returns const pointers/refs
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     std::stringstream ss;
@@ -40,22 +40,35 @@ namespace {
     TEUCHOS_TEST_FOR_EXCEPTION ((dim<0 || dim >3), std::logic_error, ss.str());
     const auto elmDim = mesh.dim();
     if( dim == elmDim ) {
-      return getNumOwnedElms(mesh);
+      return mesh.owned(elmDim)
     } else {
       auto entToElm = mesh.ask_up(dim, elmDim);
       auto isElmOwned = mesh.owned(elmDim);
       //create an array that replaces the element indices that are adjacent to
       //each ent with the ownership status of the element (1:owned, 0:o.w.)
       auto entToOwned = Omega_h::unmap(entToElm.ab2b, isElmOwned, 1);
-      // For each vertex, get max ownership among adjacent elements
+      // For each ent of dimension dim, where dim!=meshDim, get max ownership among adjacent elements
       // (will be 1 if any element is owned, 0 otherwise)
       auto entHasOwned = Omega_h::fan_reduce(entToElm.a2ab, Omega_h::read(entToOwned),1,OMEGA_H_MAX);
       TEUCHOS_TEST_FOR_EXCEPTION (entHasOwned.size() != mesh.nents(dim), std::logic_error,
         "Error! Incorrect array size when counting entities in the closure of owned mesh elements.\n");
-      // Sum to get total count of vertices with owned elements
-      return Omega_h::get_sum(entHasOwned);
+      return entHasOwned; //FIXME - type conversion problem from LOs to Read<I8> - HERE
     }
   }
+
+  //Tell Albany about entities that are in the closure of owned elements.  This
+  //matches what was done in an element based partition without ghosts.
+  Omega_h::LO getNumEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
+    //Omegah isn't very const friendly and the Teuchos RCP returns const pointers/refs
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    std::stringstream ss;
+    ss << "Error! Invalid mesh entity dimension passed to " << __func__
+       << " . dim = " << dim << " requested.\n";
+    TEUCHOS_TEST_FOR_EXCEPTION ((dim<0 || dim >3), std::logic_error, ss.str());
+    auto entHasOwnedAdjElm = getEntsInClosureOfOwnedElms(cmesh,dim);
+    return Omega_h::get_sum(entHasOwnedAdjElm);
+  }
+
 }
 
 namespace Albany {
@@ -65,8 +78,11 @@ Omega_h::Read<Omega_h::I8> getIsEntInPart(const OmegahGenericMesh& albanyMesh, c
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    return Omega_h::Read<Omega_h::I8>(getNumEntsInClosureOfOwnedElms(*mesh,part_dim), 1);
+    std::cerr << "cake " << __func__ << " part_name==ebName " << part_name << "\n";
+    return getEntsInClosureOfOwnedElms(*mesh,part_dim);
   } else {
+    //only hit in unit test for 'lateral side' part_name - that test passes, moving on // you fool!
+    std::cerr << "cake " << __func__ << " part_name!=ebName " << part_name << " ebName " << albanyMesh.meshSpecs[0]->ebName  << "\n";
     return mesh->get_array<Omega_h::I8>(part_dim, part_name);
   }
 }
@@ -218,6 +234,7 @@ Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim
   };
   const std::string kernelName = "setGlobalDofId_entityDim" + std::to_string(entityDim);
   Omega_h::parallel_for(numEnts, setNumber, kernelName.c_str());
+  std::cerr << "oscar " << __func__ << " before sync_array\n";
   return mesh.sync_array(entityDim, Omega_h::read(dofNum), dofsPerEnt);
 }
 
