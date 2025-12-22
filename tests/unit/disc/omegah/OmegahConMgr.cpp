@@ -178,7 +178,6 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D_buildConnectivity)
     auto elmGid = conn_mgr->getElementGlobalId(lid);
     const std::array<GO,2> dofs = {ptr[0], ptr[1]};
     const auto expectedDofs = elementGidToDofs.at(elmGid);
-    std::cerr << "dofs: " << dofs[0] << " " << dofs[1] << "\n";
     REQUIRE( expectedDofs == dofs );
   }
 

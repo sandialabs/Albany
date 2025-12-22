@@ -104,11 +104,9 @@ Omega_h::Read<Omega_h::I8> getIsEntInPart(const OmegahGenericMesh& albanyMesh, c
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    std::cerr << "cake " << __func__ << " part_name==ebName " << part_name << "\n";
     return getEntsInClosureOfOwnedElms(*mesh,part_dim);
   } else {
     //only hit in unit test for 'lateral side' part_name - that test passes, moving on // you fool!
-    std::cerr << "cake " << __func__ << " part_name!=ebName " << part_name << " ebName " << albanyMesh.meshSpecs[0]->ebName  << "\n";
     return mesh->get_array<Omega_h::I8>(part_dim, part_name);
   }
 }
@@ -270,7 +268,6 @@ Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim
   };
   const std::string kernelName = "setGlobalDofId_entityDim" + std::to_string(entityDim);
   Omega_h::parallel_for(numEnts, setNumber, kernelName.c_str());
-  std::cerr << "oscar " << __func__ << " before sync_array\n";
   return mesh.sync_array(entityDim, Omega_h::read(dofNum), dofsPerEnt);
 }
 
