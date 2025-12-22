@@ -176,9 +176,6 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
       "Error! The OmegahConnManager currently only supports 2d/3d meshes.\n"
       "  - input mesh dim: " + std::to_string(mesh->dim()) + "\n");
 
-  //build filtered entity arrays to account for ghosting in the omegah mesh HERE
-
-
   auto world = mesh->library()->world();
 
   //TODO this needs to be tested for a tag that has no entries on some processes
