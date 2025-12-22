@@ -169,13 +169,17 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D_buildConnectivity)
   conn_mgr->buildConnectivity(patternC1);
   REQUIRE(2 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
   const auto localElmIds = conn_mgr->getElementBlock();
+  const auto ohMesh = mesh->getOmegahMesh();
+  if( ohMesh->comm()->size() == 4 && ohMesh->nelems() > 0 ) {
+    REQUIRE(localElmIds.size() == 1);
+  }
   for( auto lid : localElmIds ) {
     auto ptr = conn_mgr->getConnectivity(lid);
-    auto elmGid = conn_mgr->getElementGlobalId(lid); //FIXME - returns 0 on both ranks
-    const std::array<GO,2> dofs = {ptr[0], ptr[1]}; //FIXME - valgrind invalid read 
+    auto elmGid = conn_mgr->getElementGlobalId(lid);
+    const std::array<GO,2> dofs = {ptr[0], ptr[1]};
     const auto expectedDofs = elementGidToDofs.at(elmGid);
     std::cerr << "dofs: " << dofs[0] << " " << dofs[1] << "\n";
-    REQUIRE( expectedDofs == dofs ); //FIXME - parallel test fails here 
+    REQUIRE( expectedDofs == dofs );
   }
 
   out << "Testing OmegahConnManager::buildConnectivity()\n";

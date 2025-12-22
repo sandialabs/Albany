@@ -143,14 +143,14 @@ LO getNumEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part
 }
 
 [[nodiscard]]
-std::vector<LO> getLocalElmIds(const OmegahGenericMesh& albanyMesh,  const std::string& part_name) {
-  const auto& mesh = albanyMesh.getOmegahMesh();
-  if(part_name==albanyMesh.meshSpecs[0]->ebName) {
-    std::vector<LO> localElmIds(mesh->nelems());
+std::vector<LO> OmegahConnManager::getLocalElmIds(const std::string& part_name) const {
+  if(part_name==albanyMesh->meshSpecs[0]->ebName) {
+    const auto numElms = getNumOwnedElms(*mesh);
+    std::vector<LO> localElmIds(numElms);
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
     return localElmIds;
   } else {
-    auto entPartId = numberEntsInPart(albanyMesh, part_name);
+    auto entPartId = numberEntsInPart(*albanyMesh, part_name);
     Omega_h::HostRead<Omega_h::LO> entPartId_h(entPartId);
     return std::vector<LO>(entPartId_h.data(), entPartId_h.data()+entPartId_h.size());
   }
@@ -191,26 +191,35 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
 
   assert(mesh->has_tag(in_mesh->part_dim(inPartId), "global"));
 
-  localElmIds = getLocalElmIds(*albanyMesh, inPartId);
+  localElmIds = getLocalElmIds(inPartId);
+}
+
+GO OmegahConnManager::getElementGlobalId(LO localElmtId) const {
+  return m_elmGids[localElmtId];
 }
 
 int OmegahConnManager::getOwnedElementCount() const {
     return getNumOwnedElms(*mesh);
 }
 
-std::vector<GO>
-OmegahConnManager::getElementsInBlock (const std::string&) const
-{
+Omega_h::HostRead<Omega_h::GO> OmegahConnManager::getOwnedElementGids() const {
   const int dim = albanyMesh->part_dim(elem_block_name());
   assert(mesh->has_tag(dim, "global"));
   auto globals_d = mesh->globals(dim);
   auto owned_d = mesh->owned(dim);
   auto keptIndicies_d = Omega_h::collect_marked(owned_d);
   auto ownedGlobals_d = Omega_h::unmap(keptIndicies_d, globals_d, 1);
-  Omega_h::HostRead<Omega_h::GO> ownedGlobalElmIds_h(ownedGlobals_d);
+  return Omega_h::HostRead<Omega_h::GO>(ownedGlobals_d);
+}
+
+std::vector<GO>
+OmegahConnManager::getElementsInBlock (const std::string&) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (m_elmGids.size()==0, std::logic_error,
+      "Error! Cannot call getElementsInBlock before connectivity is built.\n");
   return std::vector<GO>(
-      ownedGlobalElmIds_h.data(),
-      ownedGlobalElmIds_h.data()+ownedGlobalElmIds_h.size());
+      m_elmGids.data(),
+      m_elmGids.data()+m_elmGids.size());
 }
 
 std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
@@ -620,6 +629,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   m_dofsPerEnt = getDofsPerEnt(fp);
   m_dofsPerElm = getPartConnectivitySize();
 
+  m_elmGids = getOwnedElementGids();
   m_globalDofNumbering = createGlobalDofNumbering();
 
   // get element-to-[vertex|edge|face] adjacencies
