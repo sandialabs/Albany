@@ -92,7 +92,7 @@ public:
     */
   GO getElementGlobalId(LO localElmtId) const {
     auto gids = mesh->globals(mesh->dim());
-    return gids.get(localElmtId);
+    return gids.get(localElmtId); //FIXME - returns 0 on both ranks in 1d, two element test
   }
 
   /** Get ID connectivity for a particular element

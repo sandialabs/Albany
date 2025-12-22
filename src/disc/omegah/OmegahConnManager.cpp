@@ -539,7 +539,7 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivity(const Omega_h::Ad
   const int part_dim = this->part_dim();
   for(int i=part_dim+1; i<4; i++)
     assert(!m_dofsPerEnt[i]);//watch out for stragglers
-  Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs);
+  Omega_h::Write<Omega_h::GO> elm2dof(totalNumDofs); //FIXME check size, results in invalid read in parallel unit test
 
   LO dofOffset = 0;
   for(int adjDim=0; adjDim<part_dim; adjDim++) {
