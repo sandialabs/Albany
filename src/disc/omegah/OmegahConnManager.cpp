@@ -192,6 +192,7 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
   assert(mesh->has_tag(in_mesh->part_dim(inPartId), "global"));
 
   localElmIds = getLocalElmIds(inPartId);
+  m_elmGids = getOwnedElementGids();
 }
 
 GO OmegahConnManager::getElementGlobalId(LO localElmtId) const {
@@ -629,7 +630,6 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
   m_dofsPerEnt = getDofsPerEnt(fp);
   m_dofsPerElm = getPartConnectivitySize();
 
-  m_elmGids = getOwnedElementGids();
   m_globalDofNumbering = createGlobalDofNumbering();
 
   // get element-to-[vertex|edge|face] adjacencies
