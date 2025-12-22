@@ -124,7 +124,7 @@ Omega_h::LOs numberEntsInPart(const OmegahGenericMesh& albanyMesh, const std::st
     if(isInPart[i]) {
       partEntIdx[i] = partEntOffset[i];
     } else {
-      partEntIdx[i] = 0;
+      partEntIdx[i] = 0; //FIXME shouldn't be 0 as that is a valid entity number, changing to -1 breaks serial unit test
     }
   });
   return Omega_h::LOs(partEntIdx);
