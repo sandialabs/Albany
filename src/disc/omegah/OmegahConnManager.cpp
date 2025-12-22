@@ -31,6 +31,7 @@ namespace {
 
   //Tell Albany about entities that are in the closure of owned elements.  This
   //matches what was done in an element based partition without ghosts.
+  //returns a mask where each entity of dimension dim
   Omega_h::Read<Omega_h::I8> getEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     //Omegah isn't very const friendly and the Teuchos RCP returns const pointers/refs
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
@@ -40,7 +41,7 @@ namespace {
     TEUCHOS_TEST_FOR_EXCEPTION ((dim<0 || dim >3), std::logic_error, ss.str());
     const auto elmDim = mesh.dim();
     if( dim == elmDim ) {
-      return mesh.owned(elmDim)
+      return mesh.owned(elmDim);
     } else {
       auto entToElm = mesh.ask_up(dim, elmDim);
       auto isElmOwned = mesh.owned(elmDim);
@@ -52,7 +53,7 @@ namespace {
       auto entHasOwned = Omega_h::fan_reduce(entToElm.a2ab, Omega_h::read(entToOwned),1,OMEGA_H_MAX);
       TEUCHOS_TEST_FOR_EXCEPTION (entHasOwned.size() != mesh.nents(dim), std::logic_error,
         "Error! Incorrect array size when counting entities in the closure of owned mesh elements.\n");
-      return entHasOwned; //FIXME - type conversion problem from LOs to Read<I8> - HERE
+      return entHasOwned;
     }
   }
 
