@@ -29,9 +29,34 @@ namespace {
     return Omega_h::get_sum(isElmOwned);
   }
 
-  //Tell Albany about entities that are in the closure of owned elements.  This
-  //matches what was done in an element based partition without ghosts.
-  //returns a mask where each entity of dimension dim
+  /**
+   * \brief Get entities in the closure of owned elements
+   *
+   * This function identifies mesh entities that are in the closure of owned elements,
+   * matching the behavior of element-based partitions without ghosts. An entity is
+   * considered to be in the closure of owned elements if it bounds at least one
+   * owned element.
+   *
+   * \param[in] cmesh The Omega_h mesh (const reference)
+   * \param[in] dim The topological dimension of entities to query (0=vertices, 1=edges,
+   *                2=faces, 3=regions). Must be in range [0, 3].
+   *
+   * \return A mask array (Omega_h::Read<Omega_h::I8>) where each entry corresponds to
+   *         an entity of dimension \p dim. The value is 1 if the entity is in the
+   *         closure of at least one owned element, 0 otherwise. The array has length
+   *         equal to the number of entities of dimension \p dim in the mesh.
+   *
+   * \throws std::logic_error if dim < 0 or dim > 3
+   * \throws std::logic_error if the computed mask size doesn't match the number of entities
+   *
+   * \note For entities with dimension equal to the mesh dimension (elements), this
+   *       simply returns the owned mask from the mesh.
+   *
+   * \note For entities with dimension less than the mesh dimension, the function:
+   *       - Queries upward adjacencies (entity-to-element)
+   *       - Maps element ownership status to entity adjacencies
+   *       - Uses fan_reduce with MAX to determine if any adjacent element is owned
+   */
   Omega_h::Read<Omega_h::I8> getEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     //Omegah isn't very const friendly and the Teuchos RCP returns const pointers/refs
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
