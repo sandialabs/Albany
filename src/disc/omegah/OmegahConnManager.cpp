@@ -422,6 +422,30 @@ LO OmegahConnManager::getPartConnectivitySize() const
   return dofsPerElm;
 }
 
+/**
+ * \brief Create element-to-DOF connectivity with mask values instead of global IDs
+ *
+ * This function creates a flattened connectivity array where each element's DOF entries
+ * are filled with mask values (0 or 1) instead of global DOF IDs. This is used to determine
+ * properties of DOFs (e.g., ownership status, membership in a part) based on the properties
+ * of the mesh entities they belong to.
+ *
+ * \param[in] maskArray Array of 4 mask arrays, one for each entity dimension (0=vertex,
+ *                      1=edge, 2=face, 3=element). Each mask indicates whether the
+ *                      corresponding entity has a particular property (1=yes, 0=no).
+ * \param[in] elmToDim Array of 3 adjacency arrays providing element-to-entity adjacencies
+ *                     for dimensions 0, 1, and 2 (vertices, edges, faces).
+ *
+ * \return Flattened array (Omega_h::GOs) of size (numEntsInPart * m_dofsPerElm) where
+ *         each element's DOF slots are filled with mask values from the corresponding
+ *         mesh entities. The ordering for each element is:
+ *         [vertex DOFs][edge DOFs][face DOFs][element DOFs]
+ *
+ * \note The function uses setElementToEntDofConnectivityMask() and
+ *       setElementDofConnectivityMask() to fill different sections of the connectivity.
+ * \note DOFs are ordered according to Shards ordering (Omega_h-to-Shards permutation applied).
+ * \note This is a const member function and requires buildConnectivity() to have been called.
+ */
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
   Omega_h::Read<Omega_h::I8> maskArray[4], const Omega_h::Adj elmToDim[3]) const
 {
@@ -448,6 +472,28 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
   return elm2dof;
 }
 
+/**
+ * \brief Build ownership information for all DOFs in the element-to-DOF connectivity
+ *
+ * This function determines whether each DOF in the connectivity array is owned by the
+ * current MPI rank or is ghosted from another rank. The ownership of a DOF is determined
+ * by the ownership of the mesh entity (vertex, edge, face, or element) to which the DOF
+ * belongs.
+ *
+ * \return Vector of Ownership enums (size = numEntsInPart * m_dofsPerElm) where each
+ *         entry is either Ownership::Owned or Ownership::Ghosted. The ordering matches
+ *         the element-to-DOF connectivity array produced by createElementToDofConnectivity().
+ *
+ * \throws std::runtime_error if buildConnectivity() has not been called (m_dofsPerElm == 0)
+ *
+ * \note This function internally uses createElementToDofConnectivityMask() with ownership
+ *       masks from the Omega_h mesh to propagate entity ownership to DOF ownership.
+ * \note For each entity dimension, the function retrieves mesh->owned(dim) to get the
+ *       ownership mask for entities of that dimension.
+ * \note A DOF is owned if and only if the mesh entity it belongs to is owned by this rank.
+ * \note This is a const member function called during buildConnectivity() to populate
+ *       the member variable 'owners'.
+ */
 std::vector<Ownership> OmegahConnManager::buildConnectivityOwnership() const {
   std::stringstream ss;
   ss << "Error! The Omega_h dofs per element is zero.  Was buildConnectivity(...) called?\n";
@@ -521,6 +567,40 @@ OmegahConnManager::writeConnectivity()
   out << "\n";
 }
 
+/**
+ * \brief Build element-to-DOF connectivity based on a field pattern
+ *
+ * This is the main workhorse function that constructs the element-to-DOF connectivity
+ * array for the Panzer DOF manager. Given a field pattern that specifies how many DOFs
+ * are associated with each subcell (vertex, edge, face, element), this function:
+ * 1. Determines DOFs per entity for each dimension
+ * 2. Creates global DOF numbering for all entities
+ * 3. Builds element-to-DOF connectivity with global IDs
+ * 4. Computes ownership information for all DOFs
+ *
+ * After this function completes, the connectivity can be queried via getConnectivity().
+ *
+ * \param[in] fp Panzer field pattern that specifies the DOF layout on the reference element.
+ *               The pattern defines how many DOFs are associated with each subcell type
+ *               (vertices, edges, faces, element interior). The pattern's cell topology
+ *               dimension must be compatible with the mesh part dimension.
+ *
+ * \throws std::logic_error if field pattern dimension exceeds the mesh part dimension
+ * \throws std::logic_error if field pattern dimension is less than 1
+ *
+ * \post m_dofsPerEnt is populated with DOFs per entity for each dimension [0-3]
+ * \post m_dofsPerElm is set to the total DOFs per element
+ * \post m_globalDofNumbering is populated with global DOF IDs for all entities
+ * \post m_connectivity is populated with the flattened element-to-DOF connectivity array
+ * \post owners is populated with ownership status (Owned/Ghosted) for each DOF
+ *
+ * \note The connectivity ordering for each element is: [vertex DOFs][edge DOFs][face DOFs][element DOFs]
+ * \note DOFs are reordered from Omega_h to Shards convention to match Albany's expectations
+ * \note This function must be called before getConnectivity() or other connectivity queries
+ * \note Global DOF numbering is synchronized across MPI ranks via mesh.sync_array()
+ *
+ * \see getConnectivity(), buildConnectivityOwnership(), createElementToDofConnectivity()
+ */
 void
 OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 {
