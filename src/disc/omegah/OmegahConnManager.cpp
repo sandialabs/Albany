@@ -243,16 +243,19 @@ std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
 Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt, const GO startingOffset) {
   if(!dofsPerEnt)
     return Omega_h::GOs();
-  const int numEnts = getNumEntsInClosureOfOwnedElms(mesh,entityDim);
+  const auto isEntInPart = getEntsInClosureOfOwnedElms(mesh,entityDim);
+  const int numEnts = mesh.nents(entityDim);
   const int numDofs = numEnts*dofsPerEnt;
   auto worldComm = mesh.library()->world();
   const auto entGlobalIds = mesh.globals(entityDim);
   Omega_h::Write<Omega_h::GO> dofNum(numDofs);
   auto setNumber = OMEGA_H_LAMBDA(int i) {
-    for(int j=0; j<dofsPerEnt; j++) {
-      const auto dofIndex = i*dofsPerEnt+j;
-      const auto dofGlobalId = entGlobalIds[i]*dofsPerEnt+j;
-      dofNum[dofIndex] = startingOffset+dofGlobalId;
+    if(isEntInPart[i]) {
+      for(int j=0; j<dofsPerEnt; j++) {
+        const auto dofIndex = i*dofsPerEnt+j;
+        const auto dofGlobalId = entGlobalIds[i]*dofsPerEnt+j;
+        dofNum[dofIndex] = startingOffset+dofGlobalId;
+      }
     }
   };
   const std::string kernelName = "setGlobalDofId_entityDim" + std::to_string(entityDim);
