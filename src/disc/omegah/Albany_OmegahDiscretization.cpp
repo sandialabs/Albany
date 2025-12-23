@@ -126,8 +126,6 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
 void OmegahDiscretization::
 updateMesh ()
 {
-  printf ("TODO: change name to the method?\n");
-
   // Make sure we don't reuse old dof mgrs (if adapting)
   m_key_to_dof_mgr.clear();
 
