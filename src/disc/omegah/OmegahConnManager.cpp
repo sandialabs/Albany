@@ -117,6 +117,8 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
 }
 
 GO OmegahConnManager::getElementGlobalId(LO localElmtId) const {
+  TEUCHOS_TEST_FOR_EXCEPTION (m_elmGids.size()==0, std::logic_error,
+      "Error! Attempting to access an empty array of element global ids.\n");
   return m_elmGids[localElmtId];
 }
 
@@ -132,8 +134,6 @@ Omega_h::HostRead<Omega_h::GO> OmegahConnManager::getOwnedElementGids() const {
 std::vector<GO>
 OmegahConnManager::getElementsInBlock (const std::string&) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (m_elmGids.size()==0, std::logic_error,
-      "Error! Cannot call getElementsInBlock before connectivity is built.\n");
   return std::vector<GO>(
       m_elmGids.data(),
       m_elmGids.data()+m_elmGids.size());

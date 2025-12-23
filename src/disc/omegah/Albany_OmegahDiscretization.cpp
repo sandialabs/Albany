@@ -142,14 +142,19 @@ updateMesh ()
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
   int nelems = OmegahGhost::getNumOwnedElms(mesh);
+  int num_ws = 0;
   int ws_size = ms->worksetSize;
-  int num_ws = 1 + (nelems-1) / ws_size;
+  if(nelems > 0) {
+    num_ws = 1 + (nelems-1) / ws_size;
 
-  m_workset_sizes.resize(num_ws);
-  int min_ws_size = nelems / num_ws;
-  int remainder = nelems % num_ws;
-  for (int ws=0;ws<num_ws; ++ws) {
-    m_workset_sizes[ws] = min_ws_size + (ws<remainder ? 1 : 0);
+    m_workset_sizes.resize(num_ws);
+    int min_ws_size = nelems / num_ws;
+    int remainder = nelems % num_ws;
+    for (int ws=0;ws<num_ws; ++ws) {
+      m_workset_sizes[ws] = min_ws_size + (ws<remainder ? 1 : 0);
+    }
+  } else { //no elements on this process
+    m_workset_sizes.resize(num_ws);
   }
 
   m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
@@ -228,7 +233,10 @@ computeNodeSets ()
   auto v2e_ab2b = hostRead(v2e.ab2b);
 
   auto e2v = hostRead(mesh.ask_elem_verts());
-  int nodes_per_elem = e2v.size() / mesh.nelems();
+  int nodes_per_elem = 0;
+  if(e2v.size() > 0) {
+    nodes_per_elem = e2v.size() / mesh.nelems();
+  }
 
   auto owned_host = hostRead(mesh.owned(0));
   for (const auto& nsn : nsNames) {
