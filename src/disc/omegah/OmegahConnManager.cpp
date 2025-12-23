@@ -126,7 +126,7 @@ int OmegahConnManager::getOwnedElementCount() const {
 
 Omega_h::HostRead<Omega_h::GO> OmegahConnManager::getOwnedElementGids() const {
   const int dim = albanyMesh->part_dim(elem_block_name());
-  return OmegahGhost::getOwnedElementGids(*mesh,dim);
+  return OmegahGhost::getOwnedEntityGids(*mesh,dim);
 }
 
 std::vector<GO>
