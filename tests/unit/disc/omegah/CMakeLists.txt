@@ -27,3 +27,8 @@ create_unit_test (NAME    box_mesh
                   PREFIX  ${testNameRoot}
                   SOURCES box_mesh.cpp
                   LABELS  Omega_h)
+
+create_unit_test (NAME    OmegahDiscretization
+                  PREFIX  ${testNameRoot}
+                  SOURCES OmegahDiscretization.cpp
+                  LABELS  Omega_h)
