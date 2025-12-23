@@ -149,7 +149,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_1D)
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
 
   // Call updateMesh
-  disc->updateMesh();
+  disc->updateMesh(); //FIXME hangs in parallel, see screenshot from totalview
+  // ~/develop/albanyOmegahAdaptHooks/throwingExceptionInUpdateMesh1d.png
 
   // Verify DOF managers were created
   auto sol_dof_mgr = disc->getDOFManager();

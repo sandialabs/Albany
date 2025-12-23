@@ -10,6 +10,7 @@
 #include "Omega_h_array_ops.hpp"
 #include <Omega_h_file.hpp>   // for Omega_h::binary::write
 #include "Omega_h_recover.hpp" //project_by_fit
+#include "OmegahGhost.hpp" //ghosted mesh helper functions
 
 #ifdef ALBANY_MESHFIELDS
 #include <KokkosController.hpp>
@@ -140,7 +141,7 @@ updateMesh ()
   // Compute workset information
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
-  int nelems = mesh.nelems();
+  int nelems = OmegahGhost::getNumOwnedElms(mesh);
   int ws_size = ms->worksetSize;
   int num_ws = 1 + (nelems-1) / ws_size;
 
@@ -168,11 +169,12 @@ updateMesh ()
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
 
   m_ws_elem_coords.resize(num_ws);
-  auto coords_h  = m_mesh_struct->coords_host();
-  auto node_gids = hostRead(mesh.globals(0));
+  auto coords_h  = m_mesh_struct->coords_host(); //FIXME check this
+  auto node_gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT);
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
-  m_node_lid_to_omegah_pos.resize(mesh.nverts());
-  for (int i=0; i<mesh.nverts(); ++i) {
+  auto nverts = node_gids.size();
+  m_node_lid_to_omegah_pos.resize(nverts);
+  for (int i=0; i<nverts; ++i) {
     auto gid = node_gids[i];
     auto lid = node_indexer->getLocalElement(gid);
     m_node_lid_to_omegah_pos[lid] = i;
