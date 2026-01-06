@@ -239,11 +239,13 @@ computeNodeSets ()
   }
 
   auto owned_host = hostRead(mesh.owned(0));
+  auto verts_in_closure = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, Omega_h::VERT);
+  auto verts_in_closure_host = hostRead(verts_in_closure);
   for (const auto& nsn : nsNames) {
     auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn));
     std::vector<int> owned_on_ns;
     for (int i=0; i<is_on_ns_host.size(); ++i) {
-      if (owned_host[i] and is_on_ns_host[i]) {
+      if (verts_in_closure_host[i] and is_on_ns_host[i]) {
         owned_on_ns.push_back(i);
       }
     }
