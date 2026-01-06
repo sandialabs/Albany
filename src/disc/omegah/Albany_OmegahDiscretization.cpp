@@ -174,7 +174,7 @@ updateMesh ()
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
 
   m_ws_elem_coords.resize(num_ws);
-  auto coords_h  = m_mesh_struct->coords_host(); //FIXME check this
+  auto coords_h  = m_mesh_struct->coords_host();
   auto node_gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT);
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   auto nverts = node_gids.size();
