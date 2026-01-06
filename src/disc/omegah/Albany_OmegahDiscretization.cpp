@@ -511,6 +511,9 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
         "Error! Adaptation type '" << adapt_type << "' not supported.\n"
         " - valid choices for 2D: None, SPR\n");
 
+    TEUCHOS_TEST_FOR_EXCEPTION (mesh->nents(2)==0, std::runtime_error,
+        "Error! At least one process has no mesh elements.\n");
+
     #ifdef ALBANY_MESHFIELDS
     auto effectiveStrain = getEffectiveStrainRate(*mesh);
     auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
