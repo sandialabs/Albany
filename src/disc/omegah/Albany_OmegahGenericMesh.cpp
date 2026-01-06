@@ -219,9 +219,7 @@ loadOmegahMesh ()
   // omegah error estimation and adaptation requires ghosts
   m_mesh.get()->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
 
-  m_coords_d = m_mesh->coords().view();
-  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
-  Kokkos::deep_copy(m_coords_h,m_coords_d);
+  setCoordinates();
 
   // Node/Side sets names
   std::vector<std::string> nsNames, ssNames;
