@@ -238,7 +238,6 @@ computeNodeSets ()
     nodes_per_elem = e2v.size() / mesh.nelems();
   }
 
-  auto owned_host = hostRead(mesh.owned(0));
   auto verts_in_closure = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, Omega_h::VERT);
   auto verts_in_closure_host = hostRead(verts_in_closure);
   for (const auto& nsn : nsNames) {
