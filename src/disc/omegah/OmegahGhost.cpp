@@ -93,4 +93,14 @@ namespace OmegahGhost {
     return Omega_h::HostRead<Omega_h::GO>(ownedGlobals_d);
   }
 
+  Omega_h::Reals getVtxCoordsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh) {
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    auto isInClosure = getEntsInClosureOfOwnedElms(mesh, Omega_h::VERT);
+    auto coords_d = mesh.coords();
+    auto keptIndicies_d = Omega_h::collect_marked(isInClosure);
+    auto ownedCoords_d = Omega_h::unmap(keptIndicies_d, coords_d, mesh.dim());
+    return ownedCoords_d;
+  }
+
+
 } //end OmegahGhost namespace

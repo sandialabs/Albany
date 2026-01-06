@@ -1,6 +1,7 @@
 #include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_Omegah.hpp"
+#include "OmegahGhost.hpp"
 
 #include <Omega_h_for.hpp>        // for Omega_h::parallel_for
 #include <Omega_h_build.hpp>      // for Omega_h::build_box
@@ -461,7 +462,8 @@ OmegahGenericMesh::createSideSets()
 }
 
 void OmegahGenericMesh::setCoordinates() {
-  m_coords_d = m_mesh->coords().view();
+  auto ownedCoords_d = OmegahGhost::getVtxCoordsInClosureOfOwnedElms(*m_mesh);
+  m_coords_d = ownedCoords_d.view();
   m_coords_h = Kokkos::create_mirror_view(m_coords_d);
   Kokkos::deep_copy(m_coords_h,m_coords_d);
 }
