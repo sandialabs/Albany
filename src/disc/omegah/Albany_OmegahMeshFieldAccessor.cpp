@@ -1,6 +1,7 @@
 #include "Albany_OmegahMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_OmegahUtils.hpp"
+#include "OmegahGhost.hpp"
 
 namespace Albany {
 
@@ -337,7 +338,7 @@ saveVector (const Thyra_Vector&  field_vector,
   const int ncomps = field_dof_mgr->getNumFields();
 
   auto mesh_data_h = hostWrite<ST>(m_mesh->nents(dim)*ncomps,field_name);
-  auto owned_h = hostRead(m_mesh->owned(dim));
+  auto owned_h = hostRead(OmegahGhost::getEntsInClosureOfOwnedElms(*m_mesh, dim));
   auto thyra_data_h = getLocalData(field_vector);
   auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
   auto nents_per_elem = elem_ents_h.size() / nelems;

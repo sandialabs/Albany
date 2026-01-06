@@ -33,7 +33,10 @@ namespace {
   }
 
   Omega_h::Reals getEffectiveStrainRate(Omega_h::Mesh &mesh) {
-    return mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
+    auto array = mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
+    TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
+      "Error! solution_grad_norm array should have one component per element.\n");
+    return mesh.sync_array<Omega_h::Real>(2, array, 1);
   }
 
   Omega_h::Reals recoverLinearStrain(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrain) {
