@@ -37,6 +37,10 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
     add_test(${testName}_1d_adapt_omega_h ${SerialAlbany.exe} input_1d_adapt_omegah.yaml)
     set_tests_properties(${testName}_1d_adapt_omega_h PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
 
+    set(Albany2.exe ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${MPIPOST} ${AlbanyPath})
+    add_test(${testName}_1d_adapt_omega_h_2proc ${Albany2.exe} input_1d_adapt_omegah.yaml)
+    set_tests_properties(${testName}_1d_adapt_omega_h_2proc PROPERTIES LABELS "Demo;Forward;Adapt")
+
     # 2d test
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_2d_omegah.yaml COPYONLY)
@@ -53,7 +57,6 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
 
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_adapt_omegah_2proc.yaml
                      ${CMAKE_CURRENT_BINARY_DIR}/input_2d_adapt_omegah_2proc.yaml COPYONLY)
-      set(Albany2.exe ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${MPIPOST} ${AlbanyPath})
       add_test(${testBaseName}_2proc ${Albany2.exe} input_2d_adapt_omegah_2proc.yaml)
       set_tests_properties(${testBaseName}_2proc PROPERTIES LABELS "Demo;Forward;Adapt")
 
