@@ -1,10 +1,12 @@
 #!/bin/bash
 module reset
+module load Core/25.03
 module load PrgEnv-gnu
 module load cpe/24.11
-module load libunwind/1.8.1
+module load gcc-native/12.3
+module load libunwind
 module load cray-python/3.11.7
-module load subversion/1.14.2
+module load subversion
 module load git
 module load cmake
 module load cray-hdf5-parallel/1.14.3.3
