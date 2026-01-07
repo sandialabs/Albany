@@ -37,10 +37,9 @@ public:
                                        std::map<GO,GO>& sideMap,
                                        std::map<GO,std::vector<int>>& sideNodeMap) override;
 
-  int getNumParams() const {return num_params; }
-
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                     const Teuchos::RCP<StateInfoStruct>& sis) override;
+                     const Teuchos::RCP<StateInfoStruct>& sis,
+                     std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis) override;
 
   void printParts(stk::mesh::MetaData *metaData);
 
@@ -67,50 +66,14 @@ public:
   //! Loads from file input required fields not found in the mesh
   void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);
 
-  // Routines to load, fill, or compute a field
-  void loadField (const std::string& field_name,
-                  const Teuchos::ParameterList& params,
-                  Teuchos::RCP<Thyra_MultiVector>& field_mv,
-                  const CombineAndScatterManager& cas_manager,
-                  const Teuchos::RCP<const Teuchos_Comm>& comm,
-                  bool node, bool scalar, bool layered,
-                  const Teuchos::RCP<Teuchos::FancyOStream> out);
-  void fillField (const std::string& field_name,
-                  const Teuchos::ParameterList& params,
-                  Teuchos::RCP<Thyra_MultiVector>& field_mv,
-                  const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
-                  bool node, bool scalar, bool layered,
-                  const Teuchos::RCP<Teuchos::FancyOStream> out);
-  void computeField (const std::string& field_name,
-                     const Teuchos::ParameterList& params,
-                     Teuchos::RCP<Thyra_MultiVector>& field_mv,
-                     const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
-                     const std::vector<stk::mesh::Entity>& entities,
-                     bool node, bool scalar, bool layered,
-                     const Teuchos::RCP<Teuchos::FancyOStream> out);
-
-  // Routines to read a field from file
-  void readScalarFileSerial (const std::string& fname,
-                             Teuchos::RCP<Thyra_MultiVector>& contentVec,
-                             const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                             const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-
-  void readVectorFileSerial (const std::string& fname,
-                             Teuchos::RCP<Thyra_MultiVector>& contentVec,
-                             const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                             const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-
-  void readLayeredScalarFileSerial (const std::string& fname,
-                                    Teuchos::RCP<Thyra_MultiVector>& contentVec,
-                                    const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                                    std::vector<double>& normalizedLayersCoords,
-                                    const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-
-  void readLayeredVectorFileSerial (const std::string& fname,
-                                    Teuchos::RCP<Thyra_MultiVector>& contentVec,
-                                    const Teuchos::RCP<const Thyra_VectorSpace>& vs,
-                                    std::vector<double>& normalizedLayersCoords,
-                                    const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+  // Compute a field from a string expression
+  Teuchos::RCP<Thyra_MultiVector>
+  computeField (const std::string& field_name,
+                const Teuchos::ParameterList& params,
+                const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
+                const std::vector<stk::mesh::Entity>& entities,
+                bool node, bool scalar, bool layered,
+                const Teuchos::RCP<Teuchos::FancyOStream> out);
 
   void checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const;
 
@@ -124,10 +87,6 @@ public:
   bool requiresAutomaticAura;
 
   std::vector<std::string>  m_nodesets_from_sidesets;
-
-  int num_params; 
-
-  Teuchos::RCP<StateInfoStruct> sis_;
 };
 
 } // namespace Albany

@@ -18,7 +18,7 @@
 
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/GetBuckets.hpp>
+
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 #include <stk_io/IossBridge.hpp>
@@ -277,9 +277,10 @@ IossSTKMeshStruct::~IossSTKMeshStruct()
 
 void IossSTKMeshStruct::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis)
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
-  GenericSTKMeshStruct::setFieldData(comm, sis);
+  GenericSTKMeshStruct::setFieldData(comm,sis,side_set_sis);
 
   if(mesh_data->is_bulk_data_null())
     mesh_data->set_bulk_data(*bulkData);
@@ -316,18 +317,17 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
     const auto& region = *mesh_data->get_input_ioss_region();
     const auto& node_blocks = region.get_node_blocks();
 
-    for (const auto& st_ptr : *sis) {
-      auto& st = *st_ptr;
-      if (std::find(restart_fields.begin(),restart_fields.end(),st.name)==restart_fields.end()) {
+    const auto& fa = get_field_accessor();
+    for (const auto& st : fa->getAllSIS()) {
+      if (std::find(restart_fields.begin(),restart_fields.end(),st->name)==restart_fields.end()) {
         continue;
       }
-      st.restartDataAvailable = node_blocks.size()>0;
+      st->restartDataAvailable = node_blocks.size()>0;
       for (const auto& block : node_blocks) {
-        st.restartDataAvailable &= block->field_exists(st.name);
+        st->restartDataAvailable &= block->field_exists(st->name);
       }
     }
   }
-
 }
 
 void IossSTKMeshStruct::

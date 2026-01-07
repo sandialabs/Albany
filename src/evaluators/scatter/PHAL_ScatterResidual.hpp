@@ -207,10 +207,6 @@ protected:
   using Base::m_fields_offsets;
 
   static constexpr bool is_atomic = KU::NeedsAtomic<PHX::Device::execution_space>::value;
-
-  Albany::DualView<int*> m_volume_eqns;
-  Albany::DualView<int*> m_volume_eqns_offsets;
-  Albany::DualView<int*> m_lids;
 };
 
 // **************************************************************

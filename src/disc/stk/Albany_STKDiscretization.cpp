@@ -10,7 +10,6 @@
 #include <Albany_ThyraUtils.hpp>
 #include "Albany_Macros.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "STKConnManager.hpp"
@@ -27,7 +26,7 @@
 
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
-#include <stk_mesh/base/GetBuckets.hpp>
+
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
@@ -68,23 +67,36 @@ STKDiscretization::STKDiscretization(
       metaData(stkMeshStruct_->metaData),
       bulkData(stkMeshStruct_->bulkData),
       comm(comm_),
-      neq(neq_),
       sideSetEquations(sideSetEquations_),
       rigidBodyModes(rigidBodyModes_),
       stkMeshStruct(stkMeshStruct_),
       discParams(discParams_)
 {
+  if (neq_>0) {
+    setNumEq(neq_);
+  }
+
   if (stkMeshStruct->sideSetMeshStructs.size() > 0) {
-    for (auto it : stkMeshStruct->sideSetMeshStructs) {
-      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(it.second,true);
-      auto side_disc = Teuchos::rcp(new STKDiscretization(discParams, neq, stk_mesh, comm));
-      sideSetDiscretizations.insert(std::make_pair(it.first, side_disc));
-      sideSetDiscretizationsSTK.insert(std::make_pair(it.first, side_disc));
+    auto ss_discretizations_params = Teuchos::sublist(discParams,"Side Set Discretizations");
+    for (const auto& [ss_name,ss_mesh] : stkMeshStruct->sideSetMeshStructs) {
+      // Extract ss disc params, and ensure important params are synced with main disc params
+      auto ss_disc_params = Teuchos::sublist(ss_discretizations_params,ss_name);
+      ss_disc_params->set("Number Of Time Derivatives",discParams->get<int>("Number Of Time Derivatives"));
+      ss_disc_params->set("Sensitivity Method",discParams->get<std::string>("Sensitivity Method","None"));
+      ss_disc_params->set("Response Function Index", discParams->get<int>("Response Function Index"));
+      ss_disc_params->set("Sensitivity Parameter Index", discParams->get<int>("Sensitivity Parameter Index"));
+
+      auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,true);
+      auto side_disc = Teuchos::rcp(new STKDiscretization(ss_disc_params, m_neq, stk_mesh, comm));
+      sideSetDiscretizations.insert(std::make_pair(ss_name, side_disc));
+      sideSetDiscretizationsSTK.insert(std::make_pair(ss_name, side_disc));
     }
   }
-  const bool disable_init_exo_output = discParams_->get<bool>("Disable Exodus Output Initial Time", false);
-  if (disable_init_exo_output == true) output_initial_soln_to_exo_file = false;
 
+  exoOutFile = discParams->get<std::string>("Exodus Output File Name", "");
+  exoOutput = exoOutFile!="";
+  exoOutputInterval = discParams->get<int>("Exodus Write Interval", 1);
+  transferSolutionToCoords = discParams->get<bool>("Transfer Solution to Coordinates", false);
 }
 
 STKDiscretization::~STKDiscretization()
@@ -206,7 +218,7 @@ STKDiscretization::transformMesh()
   using std::endl;
   AbstractSTKFieldContainer::STKFieldType* coordinates_field =
       stkMeshStruct->getCoordinatesField();
-  std::string transformType = stkMeshStruct->transformType;
+  auto transformType = discParams->get<std::string>("Transform Type", "None");
 
   std::vector<stk::mesh::Entity> overlapnodes;
   stk::mesh::Selector selector(metaData->locally_owned_part());
@@ -235,9 +247,9 @@ STKDiscretization::transformMesh()
     }
   } else if (transformType == "Shift") {
     //*out << "Shift!\n";
-    double xshift = stkMeshStruct->xShift;
-    double yshift = stkMeshStruct->yShift;
-    double zshift = stkMeshStruct->zShift;
+    double xshift = discParams->get("x-shift", 0.0);
+    double yshift = discParams->get("y-shift", 0.0);
+    double zshift = discParams->get("z-shift", 0.0);
     //*out << "xshift, yshift, zshift = " << xshift << ", " << yshift << ", " <<
     // zshift << '\n';
     const int numDim = stkMeshStruct->numDim;
@@ -265,18 +277,18 @@ STKDiscretization::transformMesh()
     //*out << "IKT Tanh Boundary Layer!\n";
 
     /* The way this transform type works is it takes a uniform STK mesh of [0,L]
-   generated within Albany and applies the following transformation to it:
+       generated within Albany and applies the following transformation to it:
 
-   x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
+       x = L*(1.0 - tanh(beta*(L-x)))/tanh(beta*L))
 
-   for a specified double beta (and similarly for x and y coordinates).  The
-   result is a mesh that is finer near x = 0 and coarser near x = L.  The
-   relative coarseness/fineness is controlled by the parameter beta: large beta
-   => finer boundary layer near x = 0.  If beta = 0, no transformation is
-   applied.*/
+       for a specified double beta (and similarly for x and y coordinates).  The
+       result is a mesh that is finer near x = 0 and coarser near x = L.  The
+       relative coarseness/fineness is controlled by the parameter beta: large beta
+       => finer boundary layer near x = 0.  If beta = 0, no transformation is
+       applied.*/
 
-    Teuchos::Array<double> betas  = stkMeshStruct->betas_BLtransform;
-    const int              numDim = stkMeshStruct->numDim;
+    auto betas = discParams->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
+    const int  numDim = stkMeshStruct->numDim;
     ALBANY_ASSERT(
         betas.length() >= numDim,
         "\n Length of Betas BL Transform array (= "
@@ -337,8 +349,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test A!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -367,8 +379,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test B!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -398,8 +410,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test C and D!" << endl;
 #endif
-    double L     = stkMeshStruct->felixL;
-    double alpha = stkMeshStruct->felixAlpha;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
     *out << "alpha degrees: " << alpha << endl;
@@ -445,7 +457,7 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Confined shelf transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double L = discParams->get("LandIce L", 1.0);
     cout << "L: " << L << endl;
     stkMeshStruct->PBCStruct.scale[0] *= L;
     stkMeshStruct->PBCStruct.scale[1] *= L;
@@ -465,7 +477,8 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Circular shelf transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double alpha = discParams->get("LandIce alpha", 0.0);
+    double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
 #endif
@@ -493,7 +506,7 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "FO XZ MMS transform!" << endl;
 #endif
-    double L = stkMeshStruct->felixL;
+    double L = discParams->get("LandIce L", 1.0);
     // hard-coding values of parameters...  make sure these are same as in the
     // FOStokes body force evaluator!
     double alpha0 = 4e-5;
@@ -531,7 +544,7 @@ STKDiscretization::setupMLCoords()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setupMLCoords");
   if (rigidBodyModes.is_null()) { return; }
-  if (!rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
+  if (!rigidBodyModes->isTekoUsed() && !rigidBodyModes->isMueLuUsed() && !rigidBodyModes->isFROSchUsed()) { return; }
 
   const int                                   numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::STKFieldType* coordinates_field =
@@ -579,34 +592,23 @@ STKDiscretization::writeCoordsToMatrixMarket() const
 #else
   // if user wants to write the coordinates to matrix market file, write them to
   // matrix market file
-  if ((rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
-      stkMeshStruct->writeCoordsToMMFile) {
-    if (comm->getRank() == 0) {
-      std::cout << "Writing mesh coordinates to Matrix Market file."
-                << std::endl;
-    }
-    writeMatrixMarket(coordMV->col(0), "xCoords");
-    if (coordMV->domain()->dim() > 1) {
-      writeMatrixMarket(coordMV->col(1), "yCoords");
-    }
-    if (coordMV->domain()->dim() > 2) {
-      writeMatrixMarket(coordMV->col(2), "zCoords");
-    }
+  auto writeCoordsToMMFile = discParams->get("Write Coordinates to MatrixMarket", false);
+  if ((rigidBodyModes->isTekoUsed() || rigidBodyModes->isMueLuUsed() || rigidBodyModes->isFROSchUsed()) &&
+      writeCoordsToMMFile) {
+    *out << "Writing mesh coordinates to Matrix Market file." << std::endl;
+    writeMatrixMarket(coordMV, "coords");
   }
 #endif
 }
 
 void
-STKDiscretization::writeSolution(
+STKDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const double        time,
-    const bool          overlapped,
-    const bool          force_write_solution)
+    const bool overlapped)
 {
-  writeSolutionToMeshDatabase(soln, soln_dxdp, time, overlapped);
-  // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
-  writeSolutionToFile(soln, time, overlapped, force_write_solution);
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
 
   // If any, process side discs as well
   for (auto it : sideSetDiscretizations) {
@@ -621,22 +623,20 @@ STKDiscretization::writeSolution(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolution(*ss_soln,ss_soln_dxdp,time,overlapped,force_write_solution);
+    disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,overlapped);
   }
 }
 
 void
-STKDiscretization::writeSolution(
+STKDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const Thyra_Vector& soln_dot,
-    const double        time,
-    const bool          overlapped,
-    const bool          force_write_solution)
+    const bool overlapped)
 {
-  writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, time, overlapped);
-  // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and/or soln_dxdp?
-  writeSolutionToFile(soln, time, overlapped, force_write_solution);
+  // Put solution into STK Mesh
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
 
   // If any, process side discs as well
   for (auto it : sideSetDiscretizations) {
@@ -653,23 +653,21 @@ STKDiscretization::writeSolution(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolution(*ss_soln,ss_soln_dxdp,*ss_soln_dot,time,overlapped,force_write_solution);
+    disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,*ss_soln_dot,overlapped);
   }
 }
 
 void
-STKDiscretization::writeSolution(
+STKDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const Thyra_Vector& soln_dot,
     const Thyra_Vector& soln_dotdot,
-    const double        time,
-    const bool          overlapped,
-    const bool          force_write_solution)
+    const bool overlapped)
 {
-  writeSolutionToMeshDatabase(soln, soln_dxdp, soln_dot, soln_dotdot, time, overlapped);
-  // IKT, FIXME? extend writeSolutionToFile to take in soln_dot and soln_dotdot?
-  writeSolutionToFile(soln, time, overlapped, force_write_solution);
+  // Put solution into STK Mesh
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
 
   // If any, process side discs as well
   for (auto it : sideSetDiscretizations) {
@@ -688,21 +686,19 @@ STKDiscretization::writeSolution(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolution(*ss_soln,ss_soln_dxdp,*ss_soln_dot,*ss_soln_dotdot,time,overlapped,force_write_solution);
+    disc->writeSolutionToMeshDatabase(*ss_soln,ss_soln_dxdp,*ss_soln_dot,*ss_soln_dotdot,overlapped);
   }
 }
 
 void
-STKDiscretization::writeSolutionMV(
+STKDiscretization::writeSolutionMVToMeshDatabase(
     const Thyra_MultiVector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const double             time,
-    const bool               overlapped,
-    const bool               force_write_solution)
+    const bool overlapped)
 {
-  writeSolutionMVToMeshDatabase(soln, soln_dxdp, time, overlapped);
-  // IKT, FIXME? extend writeSolutionToFile to take in soln_dxdp?
-  writeSolutionMVToFile(soln, time, overlapped, force_write_solution);
+  // Put solution into STK Mesh
+  const auto& dof_mgr = getDOFManager();
+  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
 
   // If any, process side discs as well
   for (auto it : sideSetDiscretizations) {
@@ -717,75 +713,23 @@ STKDiscretization::writeSolutionMV(
       ss_soln_dxdp = Thyra::createMembers(vs,dim);
       P->apply(Thyra::NOTRANS, *soln_dxdp, ss_soln_dxdp.ptr(), 1.0, 0.0);
     }
-    disc->writeSolutionMV(*ss_soln,ss_soln_dxdp,time,overlapped,force_write_solution);
+    disc->writeSolutionMVToMeshDatabase(*ss_soln,ss_soln_dxdp,overlapped);
   }
 }
 
 void
-STKDiscretization::writeSolutionToMeshDatabase(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const double /* time */,
-    const bool overlapped)
-{
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::writeSolutionToMeshDatabase(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& soln_dot,
-    const double /* time */,
-    const bool overlapped)
-{
-  // Put solution into STK Mesh
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::writeSolutionToMeshDatabase(
-    const Thyra_Vector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const Thyra_Vector& soln_dot,
-    const Thyra_Vector& soln_dotdot,
-    const double /* time */,
-    const bool overlapped)
-{
-  // Put solution into STK Mesh
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnVector(soln, soln_dxdp, soln_dot, soln_dotdot, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::writeSolutionMVToMeshDatabase(
-    const Thyra_MultiVector& soln,
-    const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
-    const double /* time */,
-    const bool overlapped)
-{
-  // Put solution into STK Mesh
-  const auto& dof_mgr = getDOFManager();
-  solutionFieldContainer->saveSolnMultiVector(soln, soln_dxdp, dof_mgr, overlapped);
-}
-
-void
-STKDiscretization::writeSolutionToFile(
-    const Thyra_Vector& soln,
+STKDiscretization::writeMeshDatabaseToFile(
     const double        time,
-    const bool          overlapped,
     const bool          force_write_solution)
 {
 #ifdef ALBANY_DISABLE_OUTPUT_MESH
-  *out << "[STKDiscretization::writeSolutionToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+  *out << "[STKDiscretization::writeMeshDatabaseToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
   (void) time;
   (void) force_write_solution;
 #else
 #ifdef ALBANY_SEACAS
   TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution to file");
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+  if (exoOutput && transferSolutionToCoords) {
     solutionFieldContainer->transferSolutionToCoords();
 
     if (!mesh_data.is_null()) {
@@ -796,12 +740,9 @@ STKDiscretization::writeSolutionToFile(
   }
 
   // Skip this write unless the proper interval has been reached
-  if ((stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
-      (force_write_solution == true) ) {
-    // Skip this write if outputInterval == 0 and output_initial_soln_to_exo_file == false
-    if ((output_initial_soln_to_exo_file == true) || (outputInterval > 0)) {
-      double time_label = monotonicTimeLabel(time);
+  if (exoOutput and
+      (outputInterval % exoOutputInterval == 0 or force_write_solution)) {
+    double time_label = monotonicTimeLabel(time);
 
       mesh_data->begin_output_step(outputFileIdx, time_label);
       int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
@@ -818,96 +759,17 @@ STKDiscretization::writeSolutionToFile(
       }
       mesh_data->end_output_step(outputFileIdx);
 
-      if (comm->getRank() == 0) {
-        *out << "STKDiscretization::writeSolutionToFile: writing time " << time;
-        if (time_label != time) *out << " with label " << time_label;
-        *out << " to index " << out_step << " in file "
-             << stkMeshStruct->exoOutFile << std::endl;
-      }
-    }
-  }
-  outputInterval++;
-#endif
-#endif
-  (void) soln;
-  (void) overlapped;
-}
-
-void
-STKDiscretization::writeSolutionMVToFile(
-    const Thyra_MultiVector& soln,
-    const double             time,
-    const bool               overlapped,
-    const bool               force_write_solution)
-{
-#ifdef ALBANY_DISABLE_OUTPUT_MESH
-  *out << "[STKDiscretization::writeSolutionMVToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
-  (void) time;
-  (void) soln;
-  (void) overlapped;
-  (void) force_write_solution;
-#else
-#ifdef ALBANY_SEACAS
-  TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution MV to file");
-
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-    solutionFieldContainer->transferSolutionToCoords();
-
-    if (!mesh_data.is_null()) {
-      // Mesh coordinates have changed. Rewrite output file by deleting the mesh
-      // data object and recreate it
-      setupExodusOutput();
-    }
-  }
-
-  // Skip this write unless the proper interval has been reached
-  if ((stkMeshStruct->exoOutput &&
-      !(outputInterval % stkMeshStruct->exoOutputInterval)) ||
-      (force_write_solution == true) ) {
-    // Skip this write if outputInterval == 0 and output_initial_soln_to_exo_file == false
-    if ((output_initial_soln_to_exo_file == true) || (outputInterval > 0)) {
-
-      double time_label = monotonicTimeLabel(time);
-
-      mesh_data->begin_output_step(outputFileIdx, time_label);
-      int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
-      // Writing mesh global variables
-      auto fc = stkMeshStruct->getFieldContainer();
-      for (auto& it : fc->getMeshVectorStates()) {
-        mesh_data->write_global(outputFileIdx, it.first, it.second);
-      }
-      for (const auto& it : fc->getMeshScalarIntegerStates()) {
-        mesh_data->write_global(outputFileIdx, it.first, it.second);
-      }
-      for (const auto& it : fc->getMeshScalarInteger64States()) {
-        mesh_data->write_global(outputFileIdx, it.first, static_cast<int64_t>(it.second), stk::util::ParameterType::INT64);
-      }
-      mesh_data->end_output_step(outputFileIdx);
-
-      if (comm->getRank() == 0) {
-        *out << "STKDiscretization::writeSolutionMVToFile: writing time " << time;
-        if (time_label != time) *out << " with label " << time_label;
-        *out << " to index " << out_step << " in file "
-             << stkMeshStruct->exoOutFile << std::endl;
-      }
+    if (comm->getRank() == 0) {
+      *out << "STKDiscretization::writeMeshDatabaseToFile: writing time " << time;
+      if (time_label != time)
+        *out << " with label " << time_label;
+      *out << " to index " << out_step << " in file " << exoOutFile << std::endl;
     }
   }
   outputInterval++;
 
   for (auto it : sideSetDiscretizations) {
-    if (overlapped) {
-      auto ss_soln = Thyra::createMembers(
-          it.second->getOverlapVectorSpace(), soln.domain()->dim());
-      const Thyra_LinearOp& P = *ov_projectors.at(it.first);
-      P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped, force_write_solution);
-    } else {
-      auto ss_soln = Thyra::createMembers(
-          it.second->getVectorSpace(), soln.domain()->dim());
-      const Thyra_LinearOp& P = *projectors.at(it.first);
-      P.apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
-      it.second->writeSolutionMVToFile(*ss_soln, time, overlapped, force_write_solution);
-    }
+    it.second->writeMeshDatabaseToFile(time, force_write_solution);
   }
 #endif
 #endif
@@ -988,6 +850,11 @@ STKDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
+void STKDiscretization::setNumEq (int neq)
+{
+  m_neq = neq;
+}
+
 Teuchos::RCP<Thyra_Vector>
 STKDiscretization::getSolutionField(bool overlapped) const
 {
@@ -1053,9 +920,20 @@ void STKDiscretization::computeVectorSpaces()
   TEUCHOS_TEST_FOR_EXCEPTION (stkMeshStruct->ebNames_.size() < 1,std::logic_error,
       "Error! Albany problems must have at least 1 element block.  Your mesh has 0 element blocks.\n");
 
-  strmap_t<std::pair<std::string,int>> name_to_partAndDim;
-  name_to_partAndDim[solution_dof_name()] = std::make_pair("",neq);
-  name_to_partAndDim[nodes_dof_name()] = std::make_pair("",1);
+  // Make sure we don't reuse old dof mgrs (if adapting)
+  m_key_to_dof_mgr.clear();
+
+  Teuchos::RCP<DOFManager> dof_mgr;
+
+  // Solution dof mgr
+  dof_mgr  = create_dof_mgr("",FE_Type::HGRAD,1,m_neq);
+  m_dof_managers[solution_dof_name()][""] = dof_mgr;
+
+  // Nodes dof mgr
+  dof_mgr = create_dof_mgr("",FE_Type::HGRAD,1,1);
+  m_dof_managers[nodes_dof_name()][""]    = dof_mgr;
+  m_node_dof_managers[""]                 = dof_mgr;
+
   for (const auto& sis : stkMeshStruct->getFieldContainer()->getNodalParameterSIS()) {
     const auto& dims = sis->dim;
     int dof_dim = -1;
@@ -1068,25 +946,13 @@ void STKDiscretization::computeVectorSpaces()
             "Error! Unsupported layout for nodal parameter '" + sis->name + ".\n");
     }
 
-    name_to_partAndDim[sis->name] = std::make_pair(sis->meshPart,dof_dim);
-  }
-
-  for (const auto& it : name_to_partAndDim) {
-    const auto& field_name = it.first;
-    const auto& part_name  = it.second.first;
-    const auto& dof_dim    = it.second.second;
-
     // NOTE: for now we hard code P1. In the future, we must be able to
     //       store this info somewhere and retrieve it here.
-    auto dof_mgr = create_dof_mgr(part_name,field_name,FE_Type::HGRAD,1,dof_dim);
-    m_dof_managers[field_name][part_name] = dof_mgr;
-    m_node_dof_managers[part_name] = Teuchos::null;
-  }
+    dof_mgr = create_dof_mgr(sis->meshPart,FE_Type::HGRAD,1,dof_dim);
+    m_dof_managers[sis->name][sis->meshPart] = dof_mgr;
 
-  // For each part, also make a Node dof manager
-  for (auto& it : m_node_dof_managers) {
-    const auto& part_name = it.first;
-    it.second = create_dof_mgr(part_name, nodes_dof_name(), FE_Type::HGRAD,1,1);
+    dof_mgr = create_dof_mgr(sis->meshPart,FE_Type::HGRAD,1,1);
+    m_node_dof_managers[sis->meshPart] = dof_mgr;
   }
 
   const int meshDim = stkMeshStruct->numDim;
@@ -1105,7 +971,7 @@ STKDiscretization::computeGraphs()
   // as well as what eqn are on each sideset
   std::vector<int> volumeEqns;
   std::map<std::string,std::vector<int>> ss_to_eqns;
-  for (int k=0; k < neq; ++k) {
+  for (int k=0; k < m_neq; ++k) {
     if (sideSetEquations.find(k) == sideSetEquations.end()) {
       volumeEqns.push_back(k);
     }
@@ -1117,7 +983,7 @@ STKDiscretization::computeGraphs()
   const int num_elems = sol_dof_mgr->cell_indexer()->getNumLocalElements();
 
   // Handle the simple case, and return immediately
-  if (numVolumeEqns==neq) {
+  if (numVolumeEqns==m_neq) {
     // This is the easy case: couple everything with everything
     for (int icell=0; icell<num_elems; ++icell) {
       const auto& elem_gids = sol_dof_mgr->getElementGIDs(icell);
@@ -1215,7 +1081,7 @@ STKDiscretization::computeGraphs()
     for (const auto& ss_name : it.second) {
       for (int ws=0; ws<getNumWorksets(); ++ws) {
         const auto& elem_lids = getElementLIDs_host(ws);
-        const auto& ss = sideSets[ws].at(ss_name);
+        const auto& ss = m_sideSets[ws].at(ss_name);
 
         // Loop over all sides in this side set
         for (const auto& side : ss) {
@@ -1236,7 +1102,7 @@ STKDiscretization::computeGraphs()
             // Assume the worst, and couple with all eqns over the whole column
             const int numLayers = cell_layers_data_lid->numLayers;
             const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
-            for (int eq=0; eq<neq; ++eq) {
+            for (int eq=0; eq<m_neq; ++eq) {
               const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
               const int num_col_gids = eq_offsets.size();
               cols.resize(num_col_gids);
@@ -1259,7 +1125,7 @@ STKDiscretization::computeGraphs()
             //       contained in the other, but that starts to get too involved. Given that it's not
             //       a common scenario (need 2+ ss eqn defined on 2 different sidesets), and that we
             //       might have to redo this when we assemble by blocks, we just don't bother.
-            for (int col_eq=0; col_eq<neq; ++col_eq) {
+            for (int col_eq=0; col_eq<m_neq; ++col_eq) {
               const auto& col_eq_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(col_eq,side_pos);
               const int num_col_gids = col_eq_offsets.size();
               cols.resize(num_col_gids);
@@ -1282,7 +1148,6 @@ void
 STKDiscretization::computeWorksetInfo()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeWorksetInfo");
-  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
 
   stk::mesh::Selector select_owned_in_part =
       stk::mesh::Selector(metaData->universal_part()) &
@@ -1350,89 +1215,19 @@ STKDiscretization::computeWorksetInfo()
 
   m_ws_elem_coords.resize(numBuckets);
 
-  nodesOnElemStateVec.resize(numBuckets);
-  m_stateArrays.elemStateArrays.resize(numBuckets);
-  const StateInfoStruct& nodal_states =
-      stkMeshStruct->getFieldContainer()->getNodalSIS();
+  stkMeshStruct->get_field_accessor()->createStateArrays(m_workset_sizes);
+  stkMeshStruct->get_field_accessor()->transferNodeStatesToElemStates();
 
-  // Clear map if remeshing
-  if (!elemGIDws.empty()) { elemGIDws.clear(); }
+  // Clear elem_LID->wsIdx index map if remeshing
+  m_elem_ws_idx.clear();
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+  int num_elems = cell_indexer->getNumLocalElements();
+  m_elem_ws_idx.resize(num_elems);
 
   for (int b = 0; b < numBuckets; b++) {
     stk::mesh::Bucket& buck = *buckets[b];
     m_ws_elem_coords[b].resize(buck.size());
 
-    nodesOnElemStateVec[b].resize(nodal_states.size());
-
-    for (size_t is = 0; is < nodal_states.size(); ++is) {
-      const std::string&            name = nodal_states[is]->name;
-      const StateStruct::FieldDims& dim  = nodal_states[is]->dim;
-      auto& state = m_stateArrays.elemStateArrays[b][name];
-      std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
-      int dim0 = buck.size();  // may be different from dim[0];
-      const auto& field = *metaData->get_field<double>(NODE_RANK, name);
-      switch (dim.size()) {
-        case 2:  // scalar
-        {          
-          stateVec.resize(dim0 * dim[1]);
-          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1]);
-          auto state_h = state.host();
-          for (int i = 0; i < dim0; i++) {
-            stk::mesh::Entity        element = buck[i];
-            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-              stk::mesh::Entity rowNode = rel[j];
-              state_h(i, j) = *stk::mesh::field_data(field, rowNode);
-            }
-          }
-          state.sync_to_dev();
-          break;
-        }
-        case 3:  // vector
-        {
-          stateVec.resize(dim0 * dim[1] * dim[2]);
-          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2]);
-          auto state_h = state.host();
-          for (int i = 0; i < dim0; i++) {
-            stk::mesh::Entity        element = buck[i];
-            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-              stk::mesh::Entity rowNode = rel[j];
-              double*           entry = stk::mesh::field_data(field, rowNode);
-              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                state_h(i, j, k) = entry[k];
-              }
-            }
-          }
-          state.sync_to_dev();
-          break;
-        }
-        case 4:  // tensor
-        {
-          stateVec.resize(dim0 * dim[1] * dim[2] * dim[3]);
-          state.reset_from_host_ptr(stateVec.data(),dim0,dim[1],dim[2],dim[3]);
-          auto state_h = state.host();
-          for (int i = 0; i < dim0; i++) {
-            stk::mesh::Entity        element = buck[i];
-            stk::mesh::Entity const* rel     = bulkData->begin_nodes(element);
-            for (int j = 0; j < static_cast<int>(dim[1]); j++) {
-              stk::mesh::Entity rowNode = rel[j];
-              double*           entry = stk::mesh::field_data(field, rowNode);
-              for (int k = 0; k < static_cast<int>(dim[2]); k++) {
-                for (int l = 0; l < static_cast<int>(dim[3]); l++) {
-                  state_h(i, j, k, l) = entry[k * dim[3] + l];  // check this,
-                                                              // is stride
-                                                              // Correct?
-                }
-              }
-            }
-          }
-          state.sync_to_dev();
-          break;
-        }
-      }
-    }
-    
     stk::mesh::Entity element = buck[0];
 
     // i is the element index within bucket b
@@ -1440,11 +1235,11 @@ STKDiscretization::computeWorksetInfo()
       // Traverse all the elements in this bucket
       element = buck[i];
 
-      // Now, save a map from element GID to workset on this PE
-      elemGIDws[stk_gid(element)].ws = b;
+      int elem_LID = cell_indexer->getLocalElement(stk_gid(element));
 
-      // Now, save a map from element GID to local id on this workset on this PE
-      elemGIDws[stk_gid(element)].LID = i;
+      // Now, save a map from element GID to workset on this PE
+      m_elem_ws_idx[elem_LID].ws = b;
+      m_elem_ws_idx[elem_LID].idx = i;
 
       // Set coords at nodes
       const auto* nodes = bulkData->begin_nodes(element);
@@ -1456,132 +1251,47 @@ STKDiscretization::computeWorksetInfo()
     }
   }
 
+  auto transformType = discParams->get<std::string>("Transform Type", "None");
+  double alpha = discParams->get("LandIce alpha", 0.0);
+  alpha *= M_PI / 180.;  // convert to radians
+  auto& elemStateArrays = stkMeshStruct->get_field_accessor()->getElemStates();
   for (int d = 0; d < stkMeshStruct->numDim; d++) {
     if (stkMeshStruct->PBCStruct.periodic[d]) {
       for (int b = 0; b < numBuckets; b++) {
-        auto has_sheight = m_stateArrays.elemStateArrays[b].count("surface_height")==1;
+        auto has_sheight = elemStateArrays[b].count("surface_height")==1;
         DualDynRankView<double> sHeight;
         if (has_sheight) {
-          sHeight = m_stateArrays.elemStateArrays[b]["surface_height"];
+          sHeight = elemStateArrays[b]["surface_height"];
         }
         for (std::size_t i = 0; i < buckets[b]->size(); i++) {
           int  nodes_per_element = buckets[b]->num_nodes(i);
-          bool anyXeqZero        = false;
-          for (int j = 0; j < nodes_per_element; j++)
-            if (m_ws_elem_coords[b][i][j][d] == 0.0) anyXeqZero = true;
-          if (anyXeqZero) {
-            bool flipZeroToScale = false;
-            for (int j = 0; j < nodes_per_element; j++)
-              if (m_ws_elem_coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d] / 1.9)
-                flipZeroToScale = true;
-            if (flipZeroToScale) {
-              for (int j = 0; j < nodes_per_element; j++) {
-                if (m_ws_elem_coords[b][i][j][d] == 0.0) {
-                  double* xleak = new double[stkMeshStruct->numDim];
-                  for (int k = 0; k < stkMeshStruct->numDim; k++)
-                    if (k == d)
-                      xleak[d] = stkMeshStruct->PBCStruct.scale[d];
-                    else
-                      xleak[k] = m_ws_elem_coords[b][i][j][k];
-                  std::string transformType = stkMeshStruct->transformType;
-                  double      alpha         = stkMeshStruct->felixAlpha;
-                  alpha *= M_PI / 180.;  // convert alpha, read in from
-                                       // ParameterList, to radians
-                  if ((transformType == "ISMIP-HOM Test A" ||
-                       transformType == "ISMIP-HOM Test B" ||
-                       transformType == "ISMIP-HOM Test C" ||
-                       transformType == "ISMIP-HOM Test D") &&
-                      d == 0) {
-                    xleak[2] -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
-                    if (has_sheight) {
-                      sHeight.host()(i, j) -=
-                          stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
-                    }
-                  }
-                  m_ws_elem_coords[b][i][j] = xleak;  // replace ptr to coords
-                  toDelete.push_back(xleak);
-        }}}}}
+          for (int j = 0; j < nodes_per_element; j++) {
+            if (m_ws_elem_coords[b][i][j][d] == 0.0) {
+              double* xleak = new double[stkMeshStruct->numDim];
+              for (int k = 0; k < stkMeshStruct->numDim; k++)
+                if (k == d)
+                  xleak[d] = stkMeshStruct->PBCStruct.scale[d];
+                else
+                  xleak[k] = m_ws_elem_coords[b][i][j][k];
+              if ((transformType == "ISMIP-HOM Test A" ||
+                   transformType == "ISMIP-HOM Test B" ||
+                   transformType == "ISMIP-HOM Test C" ||
+                   transformType == "ISMIP-HOM Test D") &&
+                  d == 0) {
+                xleak[2] -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+                if (has_sheight) {
+                  sHeight.host()(i, j) -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+                }
+              }
+              m_ws_elem_coords[b][i][j] = xleak;  // replace ptr to coords
+              toDelete.push_back(xleak);
+            }
+          }
+        }
         if (has_sheight) {
           sHeight.sync_to_dev();
         }
       }
-    }
-  }
-
-  using ValueState = AbstractSTKFieldContainer::ValueState;
-  using STKState = AbstractSTKFieldContainer::STKState;
-
-  // Pull out pointers to shards::Arrays for every bucket, for every state
-  // Code is data-type dependent
-
-  AbstractSTKFieldContainer& container = *stkMeshStruct->getFieldContainer();
-
-  ValueState& scalarValue_states = container.getScalarValueStates();
-  STKState&   cell_scalar_states = container.getCellScalarStates();
-  STKState&   cell_vector_states = container.getCellVectorStates();
-  STKState&   cell_tensor_states = container.getCellTensorStates();
-  STKState&   qpscalar_states    = container.getQPScalarStates();
-  STKState&   qpvector_states    = container.getQPVectorStates();
-  STKState&   qptensor_states    = container.getQPTensorStates();
-  std::map<std::string, double>& time  = container.getTime();
-
-  // Setup state arrays DualDynRankView's, so that host view stores a pointer
-  // to the stk field data
-  for (std::size_t b = 0; b < buckets.size(); b++) {
-    stk::mesh::Bucket& buck = *buckets[b];
-    for (auto& css : cell_scalar_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*css));
-
-      auto& state = m_stateArrays.elemStateArrays[b][css->name()];
-      state.reset_from_host_ptr(data,buck.size());
-    }
-    for (auto& cvs : cell_vector_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*cvs));
-      auto vec_dim = stk::mesh::field_scalars_per_entity(*cvs,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][cvs->name()];
-      state.reset_from_host_ptr(data,buck.size(),vec_dim);
-    }
-    for (auto& cts : cell_tensor_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*cts));
-      auto dim0 = stk::mesh::field_extent0_per_entity(*cts,buck);
-      auto dim1 = stk::mesh::field_extent1_per_entity(*cts,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][cts->name()];
-      state.reset_from_host_ptr(data,buck.size(),dim0,dim1);
-    }
-    for (auto& qpss : qpscalar_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpss));
-      auto num_qps = stk::mesh::field_scalars_per_entity(*qpss,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][qpss->name()];
-      state.reset_from_host_ptr(data,buck.size(),num_qps);
-    }
-    for (auto& qpvs : qpvector_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpvs));
-      auto num_qps = stk::mesh::field_extent0_per_entity(*qpvs,buck);
-      auto vec_dim = stk::mesh::field_extent1_per_entity(*qpvs,buck);
-
-      auto& state = m_stateArrays.elemStateArrays[b][qpvs->name()];
-      state.reset_from_host_ptr(data,buck.size(),num_qps,vec_dim);
-    }
-    for (auto& qpts : qptensor_states) {
-      auto data = reinterpret_cast<double*>(buck.field_data_location(*qpts));
-      auto num_qps = stk::mesh::field_extent0_per_entity(*qpts,buck);
-      auto dimSq   = stk::mesh::field_extent1_per_entity(*qpts,buck);
-
-      auto dim = static_cast<int>(std::floor(std::sqrt(double(dimSq))));
-      TEUCHOS_TEST_FOR_EXCEPTION (dimSq!=(dim*dim), std::logic_error,
-          "Error! QP Tensor states only supported for square tensors.\n"
-          " - state name: " + qpts->name() + "\n"
-          " - num scalars per qp: " + std::to_string(dimSq) + "\n");
-
-      auto& state = m_stateArrays.elemStateArrays[b][qpts->name()];
-      state.reset_from_host_ptr(data,buck.size(),num_qps,dim,dim);
-    }
-    for (auto& svs : scalarValue_states) {
-      auto& state = m_stateArrays.elemStateArrays[b][*svs];
-      state.reset_from_host_ptr(&time[*svs],1);
     }
   }
 }
@@ -1591,23 +1301,25 @@ STKDiscretization::computeSideSets()
 {
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: computeSideSets");
   // Clean up existing sideset structure if remeshing
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    sideSets[i].clear();  // empty the ith map
+  for (auto& ss : m_sideSets) {
+    ss.clear();  // empty the ith map
   }
 
   int numBuckets = m_wsEBNames.size();
 
-  sideSets.resize(numBuckets);  // Need a sideset list per workset
+  m_sideSets.resize(numBuckets);  // Need a sideset list per workset
 
-  for (const auto& ss : stkMeshStruct->ssPartVec) {
+  Teuchos::Array<GO> side_GIDs;
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+  for (const auto& [ss_name,ss_part] : stkMeshStruct->ssPartVec) {
     // Make sure the sideset exist even if no sides are owned
-    for (int i=0; i<numBuckets; ++i) {
-      sideSets[i][ss.first].resize(0);
+    for (auto& ss : m_sideSets) {
+      ss[ss_name].resize(0);
     }
 
     // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
-        stk::mesh::Selector(*(ss.second)) &
+        stk::mesh::Selector(*ss_part) &
         stk::mesh::Selector(metaData->locally_owned_part());
 
     std::vector<stk::mesh::Entity> sides;
@@ -1616,24 +1328,22 @@ STKDiscretization::computeSideSets()
         bulkData->buckets(metaData->side_rank()),
         sides);
 
-    *out << "STKDisc: sideset " << ss.first << " has size " << sides.size()
+    *out << "STKDisc: sideset " << ss_name << " has size " << sides.size()
          << "  on Proc 0." << std::endl;
 
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at
     // $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
 
-    for (std::size_t localSideID = 0; localSideID < sides.size();
-         localSideID++) {
-      stk::mesh::Entity sidee = sides[localSideID];
-
+    side_GIDs.reserve(side_GIDs.size()+sides.size());
+    for (const auto& side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION(
-          bulkData->num_elements(sidee) != 1,
+          bulkData->num_elements(side) != 1,
           std::logic_error,
           "STKDisc: cannot figure out side set topology for side set "
-              << ss.first << std::endl);
+              << ss_name << std::endl);
 
-      stk::mesh::Entity elem = bulkData->begin_elements(sidee)[0];
+      stk::mesh::Entity elem = bulkData->begin_elements(side)[0];
 
       // containing the side. Note that if the side is internal, it will show up
       // twice in the
@@ -1642,310 +1352,33 @@ STKDiscretization::computeSideSets()
       SideStruct sStruct;
 
       // Save side stk GID.
-      sStruct.side_GID = bulkData->identifier(sidee) - 1;
+      sStruct.side_GID = bulkData->identifier(side) - 1;
+      side_GIDs.push_back(sStruct.side_GID);
 
       // Save elem GID and LID. Here, LID is the local id *within* the workset
       sStruct.elem_GID = bulkData->identifier(elem) - 1;
-      sStruct.ws_elem_idx = elemGIDws[sStruct.elem_GID].LID;
+      int elem_LID = cell_indexer->getLocalElement(sStruct.elem_GID);
+      sStruct.ws_elem_idx = m_elem_ws_idx[elem_LID].idx;
 
       // Get the ws that this element lives in
-      int workset = elemGIDws[sStruct.elem_GID].ws;
+      int workset = m_elem_ws_idx[elem_LID].ws;
 
       // Save the position of the side within element (0-based).
-      sStruct.side_pos = determine_entity_pos(elem, sidee);
+      sStruct.side_pos = determine_entity_pos(elem, side);
 
       // Save the index of the element block that this elem lives in
       sStruct.elem_ebIndex =
           stkMeshStruct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[workset]];
 
       // Get or create the vector of side structs for this side set on this workset
-      auto& ss_vec = sideSets[workset][ss.first];
+      auto& ss_vec = m_sideSets[workset][ss_name];
       ss_vec.push_back(sStruct);
     }
   }
+  auto vs = createVectorSpace(comm,side_GIDs);
+  m_sides_indexer = createGlobalLocalIndexer(vs);
 
-  // =============================================================
-  // (Kokkos Refactor) Convert sideSets to sideSetViews
-
-  // 1) Compute view extents (num_local_worksets, max_sideset_length, max_sides) and local workset counter (current_local_index)
-  std::map<std::string, int> num_local_worksets;
-  std::map<std::string, int> max_sideset_length;
-  std::map<std::string, int> max_sides;
-  std::map<std::string, int> current_local_index;
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
-      // Initialize values if this is the first time seeing a sideset key
-      if (num_local_worksets.find(ss_key) == num_local_worksets.end())
-        num_local_worksets[ss_key] = 0;
-      if (max_sideset_length.find(ss_key) == max_sideset_length.end())
-        max_sideset_length[ss_key] = 0;
-      if (max_sides.find(ss_key) == max_sides.end())
-        max_sides[ss_key] = 0;
-      if (current_local_index.find(ss_key) == current_local_index.end())
-        current_local_index[ss_key] = 0;
-
-      // Update extents for given workset/sideset
-      num_local_worksets[ss_key]++;
-      max_sideset_length[ss_key] = std::max(max_sideset_length[ss_key], (int) ss_val.size());
-      for (size_t j = 0; j < ss_val.size(); ++j)
-        max_sides[ss_key] = std::max(max_sides[ss_key], (int) ss_val[j].side_pos);
-    }
-  }
-
-  // 2) Construct GlobalSideSetList (map of GlobalSideSetInfo)
-  for (const auto& ss_it : num_local_worksets) {
-    std::string             ss_key = ss_it.first;
-
-    max_sides[ss_key]++; // max sides is the largest local ID + 1 and needs to be incremented once for each key here
-
-    globalSideSetViews[ss_key].num_local_worksets = num_local_worksets[ss_key];
-    globalSideSetViews[ss_key].max_sideset_length = max_sideset_length[ss_key];
-    globalSideSetViews[ss_key].side_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("side_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_GID         = Kokkos::DualView<GO**,   Kokkos::LayoutRight, PHX::Device>("elem_GID", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].ws_elem_idx      = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("ws_elem_idx", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].elem_ebIndex     = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("elem_ebIndex", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].side_pos         = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("side_pos", num_local_worksets[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].max_sides        = max_sides[ss_key];
-    globalSideSetViews[ss_key].numCellsOnSide   = Kokkos::DualView<int**,  Kokkos::LayoutRight, PHX::Device>("numCellsOnSide", num_local_worksets[ss_key], max_sides[ss_key]);
-    globalSideSetViews[ss_key].cellsOnSide      = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("cellsOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-    globalSideSetViews[ss_key].sideSetIdxOnSide = Kokkos::DualView<int***, Kokkos::LayoutRight, PHX::Device>("sideSetIdxOnSide", num_local_worksets[ss_key], max_sides[ss_key], max_sideset_length[ss_key]);
-  }
-
-  // 3) Populate global views
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
-      int current_index = current_local_index[ss_key];
-      int numSides = max_sides[ss_key];
-
-      int max_cells_on_side = 0;
-      std::vector<int> numCellsOnSide(numSides);
-      std::vector<std::vector<int>> cellsOnSide(numSides);
-      std::vector<std::vector<int>> sideSetIdxOnSide(numSides);
-      for (size_t j = 0; j < ss_val.size(); ++j) {
-        int cell = ss_val[j].ws_elem_idx;
-        int side = ss_val[j].side_pos;
-
-        cellsOnSide[side].push_back(cell);
-        sideSetIdxOnSide[side].push_back(j);
-      }
-      for (int side = 0; side < numSides; ++side) {
-        numCellsOnSide[side] = cellsOnSide[side].size();
-        max_cells_on_side = std::max(max_cells_on_side, numCellsOnSide[side]);
-      }
-
-      for (int side = 0; side < numSides; ++side) {
-        globalSideSetViews[ss_key].numCellsOnSide.h_view(current_index, side) = numCellsOnSide[side];
-        for (int j = 0; j < numCellsOnSide[side]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = cellsOnSide[side][j];
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = sideSetIdxOnSide[side][j];
-        }
-        for (int j = numCellsOnSide[side]; j < max_sideset_length[ss_key]; ++j) {
-          globalSideSetViews[ss_key].cellsOnSide.h_view(current_index, side, j) = -1;
-          globalSideSetViews[ss_key].sideSetIdxOnSide.h_view(current_index, side, j) = -1;
-        }
-      }
-
-      for (size_t j = 0; j < ss_val.size(); ++j) {
-        globalSideSetViews[ss_key].side_GID.h_view(current_index, j)      = ss_val[j].side_GID;
-        globalSideSetViews[ss_key].elem_GID.h_view(current_index, j)      = ss_val[j].elem_GID;
-        globalSideSetViews[ss_key].ws_elem_idx.h_view(current_index, j)   = ss_val[j].ws_elem_idx;
-        globalSideSetViews[ss_key].elem_ebIndex.h_view(current_index, j)  = ss_val[j].elem_ebIndex;
-        globalSideSetViews[ss_key].side_pos.h_view(current_index, j) = ss_val[j].side_pos;
-      }
-
-      globalSideSetViews[ss_key].side_GID.modify_host();
-      globalSideSetViews[ss_key].elem_GID.modify_host();
-      globalSideSetViews[ss_key].ws_elem_idx.modify_host();
-      globalSideSetViews[ss_key].elem_ebIndex.modify_host();
-      globalSideSetViews[ss_key].side_pos.modify_host();
-      globalSideSetViews[ss_key].numCellsOnSide.modify_host();
-      globalSideSetViews[ss_key].cellsOnSide.modify_host();
-      globalSideSetViews[ss_key].sideSetIdxOnSide.modify_host();
-
-      globalSideSetViews[ss_key].side_GID.sync_device();
-      globalSideSetViews[ss_key].elem_GID.sync_device();
-      globalSideSetViews[ss_key].ws_elem_idx.sync_device();
-      globalSideSetViews[ss_key].elem_ebIndex.sync_device();
-      globalSideSetViews[ss_key].side_pos.sync_device();
-      globalSideSetViews[ss_key].numCellsOnSide.sync_device();
-      globalSideSetViews[ss_key].cellsOnSide.sync_device();
-      globalSideSetViews[ss_key].sideSetIdxOnSide.sync_device();
-
-      current_local_index[ss_key]++;
-    }
-  }
-
-  // 4) Reset current_local_index
-  std::map<std::string, int>::iterator counter_it = current_local_index.begin();
-  while (counter_it != current_local_index.end()) {
-    std::string counter_key = counter_it->first;
-    current_local_index[counter_key] = 0;
-    counter_it++;
-  }
-
-  // 5) Populate map of LocalSideSetInfos
-  for (size_t i = 0; i < sideSets.size(); ++i) {
-    LocalSideSetInfoList& lssList = sideSetViews[i];
-
-    for (const auto& ss_it : sideSets[i]) {
-      std::string             ss_key = ss_it.first;
-      std::vector<SideStruct> ss_val = ss_it.second;
-
-      int current_index = current_local_index[ss_key];
-      std::pair<int,int> range(0, ss_val.size());
-
-      lssList[ss_key].size           = ss_val.size();
-      lssList[ss_key].side_GID       = Kokkos::subview(globalSideSetViews[ss_key].side_GID, current_index, range );
-      lssList[ss_key].elem_GID       = Kokkos::subview(globalSideSetViews[ss_key].elem_GID, current_index, range );
-      lssList[ss_key].ws_elem_idx    = Kokkos::subview(globalSideSetViews[ss_key].ws_elem_idx, current_index, range );
-      lssList[ss_key].elem_ebIndex   = Kokkos::subview(globalSideSetViews[ss_key].elem_ebIndex,  current_index, range );
-      lssList[ss_key].side_pos  = Kokkos::subview(globalSideSetViews[ss_key].side_pos, current_index, range );
-      lssList[ss_key].numSides       = globalSideSetViews[ss_key].max_sides;
-      lssList[ss_key].numCellsOnSide = Kokkos::subview(globalSideSetViews[ss_key].numCellsOnSide, current_index, Kokkos::ALL() );
-      lssList[ss_key].cellsOnSide    = Kokkos::subview(globalSideSetViews[ss_key].cellsOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
-      lssList[ss_key].sideSetIdxOnSide    = Kokkos::subview(globalSideSetViews[ss_key].sideSetIdxOnSide,    current_index, Kokkos::ALL(), Kokkos::ALL() );
-
-      current_local_index[ss_key]++;
-    }
-  }
-
-  // 6) Determine size of global DOFView structure and allocate
-  std::map<std::string, int> total_sideset_idx;
-  std::map<std::string, int> sideset_idx_offset;
-  unsigned int maxSideNodes = 0;
-  const auto& cell_layers_data = stkMeshStruct->local_cell_layers_data;
-  if (!cell_layers_data.is_null()) {
-    const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(stkMeshStruct->meshSpecs[0]->ctd));
-    const int numLayers = cell_layers_data->numLayers;
-    const int numComps = getDOFManager()->getNumFields();
-
-    // Determine maximum number of side nodes
-    for (unsigned int elem_side = 0; elem_side < cell_topo->side_count; ++elem_side) {
-      const CellTopologyData_Subcell& side =  cell_topo->side[elem_side];
-      const unsigned int numSideNodes = side.topology->node_count;
-      maxSideNodes = std::max(maxSideNodes, numSideNodes);
-    }
-
-    // Determine total number of sideset indices per each sideset name
-    for (auto& ssList : sideSets) {
-      for (auto& ss_it : ssList) {
-        std::string             ss_key = ss_it.first;
-        std::vector<SideStruct> ss_val = ss_it.second;
-
-        if (sideset_idx_offset.find(ss_key) == sideset_idx_offset.end())
-          sideset_idx_offset[ss_key] = 0;
-        if (total_sideset_idx.find(ss_key) == total_sideset_idx.end())
-          total_sideset_idx[ss_key] = 0;
-
-        total_sideset_idx[ss_key] += ss_val.size();
-      }
-    }
-
-    // Allocate total localDOFView for each sideset name
-    for (auto& ss_it : num_local_worksets) {
-      std::string ss_key = ss_it.first;
-      allLocalDOFViews[ss_key] = Kokkos::DualView<LO****, PHX::Device>(ss_key + " localDOFView", total_sideset_idx[ss_key], maxSideNodes, numLayers+1, numComps);
-    }
-  }
-
-  // Not all mesh structs that come through here are extruded mesh structs.
-  // If the mesh isn't extruded, we won't need to do any of the following work.
-  if (not cell_layers_data.is_null()) {
-    // Get topo data
-    auto ctd = stkMeshStruct->meshSpecs[0]->ctd;
-
-    // Ensure we have ONE cell per layer.
-    const auto topo_hexa  = shards::getCellTopologyData<shards::Hexahedron<8>>();
-    const auto topo_wedge = shards::getCellTopologyData<shards::Wedge<6>>();
-    TEUCHOS_TEST_FOR_EXCEPTION (
-        ctd.name!=topo_hexa->name &&
-        ctd.name!=topo_wedge->name, std::runtime_error,
-        "Extruded meshes only allowed if there is one element per layer (hexa or wedges).\n"
-        "  - current topology name: " << ctd.name << "\n");
-
-    const auto& sol_dof_mgr = getDOFManager();
-    const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
-
-    // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
-    const auto numLayers = cell_layers_data->numLayers;
-    const int top = cell_layers_data->top_side_pos;
-    const int bot = cell_layers_data->bot_side_pos;
-
-    // 7) Populate localDOFViews for GatherVerticallyContractedSolution
-    for (int ws=0; ws<getNumWorksets(); ++ws) {
-
-      // Need to look at localDOFViews for each i so that there is a view available for each workset even if it is empty
-      std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>& wsldofViews = wsLocalDOFViews[ws];
-
-      const auto& elem_lids = getElementLIDs_host(ws);
-
-      // Loop over the sides that form the boundary condition
-      // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID_i = wsElNodeID[i];
-      for (auto& ss_it : sideSets[ws]) {
-        std::string             ss_key = ss_it.first;
-        std::vector<SideStruct> ss_val = ss_it.second;
-
-        Kokkos::DualView<LO****, PHX::Device>& globalDOFView = allLocalDOFViews[ss_key];
-
-        for (unsigned int sideSet_idx = 0; sideSet_idx < ss_val.size(); ++sideSet_idx) {
-          const auto& side = ss_val[sideSet_idx];
-
-          // Get the data that corresponds to the side
-          const int ws_elem_idx = side.ws_elem_idx;
-          const int side_pos    = side.side_pos;
-
-          // Check if this sideset is the top or bot of the mesh. If not, the data structure
-          // for coupling vertical dofs is not needed.
-          if (side_pos!=top && side_pos!=bot)
-            break;
-
-          const int elem_LID = elem_lids(ws_elem_idx);
-          const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
-
-          for (int eq=0; eq<neq; ++eq) {
-            const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,top,side_pos);
-            const auto& sol_bot_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,bot,side_pos);
-            const int numSideNodes = sol_top_offsets.size();
-
-            for (int j=0; j<numSideNodes; ++j) {
-              for (int il=0; il<numLayers; ++il) {
-                const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-                globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
-                  elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
-              }
-
-              // Add top side in last layer
-              const int il = numLayers-1;
-              const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
-              globalDOFView.h_view(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
-                elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
-            }
-          }
-        }
-
-        globalDOFView.modify_host();
-        globalDOFView.sync_device();
-
-        // Set workset-local sub-view
-        std::pair<int,int> range(sideset_idx_offset[ss_key], sideset_idx_offset[ss_key]+ss_val.size());
-        wsldofViews[ss_key] = Kokkos::subview(globalDOFView, range, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
-
-        sideset_idx_offset[ss_key] += ss_val.size();
-      }
-    }
-  } else {
-    // We still need this view to be present (even if of size 0), so create them
-    std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> dummy;
-    for (int ws=0; ws<getNumWorksets(); ++ws) {
-      wsLocalDOFViews.emplace(std::make_pair(ws,dummy));
-    }
-  }
+  buildSideSetsViews();
 }
 
 int
@@ -2057,6 +1490,48 @@ STKDiscretization::determine_entity_pos(
   return -1;
 }
 
+Teuchos::RCP<ConnManager>
+STKDiscretization::create_conn_mgr (const std::string& part_name)
+{
+  // Figure out which element blocks this part belongs to
+  std::vector<std::string> elem_blocks;
+  const auto& ebn = stkMeshStruct->ebNames_;
+  if (part_name=="") {
+    // Not specifying a mesh part is considered the same as the whole mesh
+    elem_blocks = ebn;
+  } else if (std::find(ebn.begin(),ebn.end(),part_name)!=ebn.end()) {
+    // The part name is just one of the element blocks.
+    elem_blocks = {part_name};
+  } else {
+    // This part is not an element block.
+    // We need to consider any element block that has non-empty interesection
+    // with this part. Note: the interesection is at the level of entities
+    // with rank equal to the specified part (e.g., it may be just nodes).
+    const auto& part = metaData->get_part(part_name);
+
+    for (const auto& eb : ebn) {
+      const auto& ebp = metaData->get_part(eb);
+      stk::mesh::Selector sel (*part);
+      sel |= *ebp;
+      const auto& buckets = bulkData->buckets(part->primary_entity_rank());
+      if (stk::mesh::count_selected_entities(sel,buckets)>0) {
+        elem_blocks.push_back(eb);
+      }
+    }
+  }
+
+  // Ensure that all topologies are the same
+  for (unsigned i=1; i<elem_blocks.size(); ++i) {
+    const auto& topo0 = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
+    const auto& topo  = stkMeshStruct->elementBlockCT_.at(elem_blocks[i]);
+    TEUCHOS_TEST_FOR_EXCEPTION (topo0.getName()!=topo.getName(), std::runtime_error,
+        "Error! DOFManager requires all element blocks to have the same topology.\n");
+  }
+
+  // Create conn manager
+  return Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
+}
+
 void
 STKDiscretization::computeNodeSets()
 {
@@ -2067,7 +1542,7 @@ STKDiscretization::computeNodeSets()
   const auto& cell_indexer = sol_dof_mgr->cell_indexer();
 
   std::vector<std::vector<int>> offsets (sol_dof_mgr->getNumFields());
-  for (int eq=0; eq<neq; ++eq) {
+  for (int eq=0; eq<m_neq; ++eq) {
     offsets[eq] = sol_dof_mgr->getGIDFieldOffsets(eq);
   }
 
@@ -2124,10 +1599,8 @@ void
 STKDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput) {
+  if (exoOutput) {
     outputInterval = 0;
-
-    std::string str = stkMeshStruct->exoOutFile;
 
     Ioss::Init::Initializer io;
 
@@ -2137,7 +1610,7 @@ STKDiscretization::setupExodusOutput()
     //IKT, 8/16/19: The following is needed to get correct output file for Schwarz problems
     //Please see: https://github.com/trilinos/Trilinos/issues/5479
     mesh_data->property_add(Ioss::Property("FLUSH_INTERVAL", 1));
-    outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
+    outputFileIdx = mesh_data->create_output_mesh(exoOutFile, stk::io::WRITE_RESULTS);
 
     // Adding mesh global variables
     /*
@@ -2180,7 +1653,7 @@ STKDiscretization::setupExodusOutput()
   }
 
 #else
-  if (stkMeshStruct->exoOutput) {
+  if (exoOutput) {
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
          << " disabling exodus output \n";
   }
@@ -2238,8 +1711,8 @@ STKDiscretization::buildSideSetProjectors()
 
     // Recall, if node_map(i,j)=k, then on side_gid=i, the j-th side node corresponds
     // to the k-th node in the side set cell numeration.
-    const auto& node_numeration_map = sideNodeNumerationMap.at(it.first);
-    const auto& side_cell_gid_map   = sideToSideSetCellMap.at(it.first);
+    const auto& node_numeration_map = m_side_nodes_to_ss_cell_nodes.at(it.first);
+    const auto& side_cell_gid_map   = m_side_to_ss_cell.at(it.first);
     for (auto side : sides) {
       TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side)!=1, std::logic_error,
           "Error! Found a side with not exactly one element attached.\n"
@@ -2259,7 +1732,7 @@ STKDiscretization::buildSideSetProjectors()
       const auto ss_elem_dof_gids = ss_dofMgr->getElementGIDs(ss_elem_lid);
 
       const auto& permutation = node_numeration_map.at(side_gid);
-      for (int eq=0; eq<neq; ++eq) {
+      for (int eq=0; eq<m_neq; ++eq) {
         const auto& offsets    = dofMgr->getGIDFieldOffsetsSubcell(eq,sideDim,pos);
         const auto& ss_offsets = ss_dofMgr->getGIDFieldOffsets(eq);
         for (int i=0; i<num_side_nodes; ++i) {
@@ -2325,13 +1798,13 @@ STKDiscretization::updateMesh()
 #endif
 
   // Update sideset discretizations (if any)
-  for (auto it : sideSetDiscretizationsSTK) {
-    it.second->updateMesh();
+  for (const auto& [ss_name, ss_disc] : sideSetDiscretizationsSTK) {
+    ss_disc->updateMesh();
 
     stkMeshStruct->buildCellSideNodeNumerationMap(
-        it.first,
-        sideToSideSetCellMap[it.first],
-        sideNodeNumerationMap[it.first]);
+        ss_name,
+        m_side_to_ss_cell[ss_name],
+        m_side_nodes_to_ss_cell_nodes[ss_name]);
   }
 
   if (sideSetDiscretizations.size()>0) {
@@ -2339,101 +1812,54 @@ STKDiscretization::updateMesh()
   }
 }
 
-void STKDiscretization::
-setFieldData(const Teuchos::RCP<StateInfoStruct>& sis)
+void STKDiscretization::setFieldData()
 {
+  using strarr_t = Teuchos::Array<std::string>;
+
   TEUCHOS_FUNC_TIME_MONITOR("STKDiscretization: setFieldData");
-  Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer = stkMeshStruct->getFieldContainer();
 
-  auto mSTKFieldContainer = Teuchos::rcp_dynamic_cast<MultiSTKFieldContainer>(fieldContainer,false);
-  auto oSTKFieldContainer = Teuchos::rcp_dynamic_cast<OrdinarySTKFieldContainer>(fieldContainer,false);
+  auto bulkData = stkMeshStruct->bulkData;
+  auto metaData = stkMeshStruct->metaData;
 
-  int num_time_deriv, numDim, num_params;
-  Teuchos::RCP<Teuchos::ParameterList> params;
+  int  num_time_deriv = discParams->get<int>("Number Of Time Derivatives");
+  bool user_specified_solution_components = false;
+  user_specified_solution_components |= discParams->get<strarr_t>("Solution Vector Components", {}).size()>0;
+  user_specified_solution_components |= num_time_deriv>=1 and discParams->get<strarr_t>("SolutionDot Vector Components", {}).size()>0;
+  user_specified_solution_components |= num_time_deriv>=2 and discParams->get<strarr_t>("SolutionDotDot Vector Components", {}).size()>0;
 
-  auto gSTKFieldContainer = Teuchos::rcp_dynamic_cast<GenericSTKFieldContainer>(fieldContainer,false);
-  params = gSTKFieldContainer->getParams();
-  numDim = gSTKFieldContainer->getNumDim();
-  num_params = gSTKFieldContainer->getNumParams();
-
-  num_time_deriv = params->get<int>("Number Of Time Derivatives");
-
-  Teuchos::Array<std::string> default_solution_vector; // Empty
-  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
-  solution_vector.resize(num_time_deriv + 1);
-  solution_vector[0] =
-    params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
-
-
-  if(num_time_deriv >= 1){
-    solution_vector[1] =
-      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
-  }
-
-  if(num_time_deriv >= 2){
-    solution_vector[2] =
-      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
-  }
-
-  if (Teuchos::nonnull(mSTKFieldContainer)) {
-    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, solution_vector, num_params));
-  } else if (Teuchos::nonnull(oSTKFieldContainer)) {
-    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(
-      params, stkMeshStruct->metaData, stkMeshStruct->bulkData, neq, numDim, sis, num_params));
+  int num_params = stkMeshStruct->num_params;
+  if (user_specified_solution_components) {
+    solutionFieldContainer = Teuchos::rcp(new MultiSTKFieldContainer(discParams, metaData, bulkData, num_params));
   } else {
-    ALBANY_ABORT ("Error! Failed to cast the AbstractSTKFieldContainer to a concrete type.\n");
+    solutionFieldContainer = Teuchos::rcp(new OrdinarySTKFieldContainer(discParams, metaData, bulkData, num_params));
+  }
+  solutionFieldContainer->setSolutionFieldsMetadata(m_neq);
+  m_solution_mfa = solutionFieldContainer;
+
+  // Proceed to set the solution field data in the side meshes as well (if any)
+  for (auto& it : sideSetDiscretizations) {
+    it.second->setFieldData();
   }
 }
 
 Teuchos::RCP<DOFManager>
 STKDiscretization::
 create_dof_mgr (const std::string& part_name,
-                const std::string& field_name,
                 const FE_Type fe_type,
                 const int order,
-                const int dof_dim) const
+                const int dof_dim)
 {
-  // Figure out which element blocks this part belongs to
-  std::vector<std::string> elem_blocks;
-  const auto& ebn = stkMeshStruct->ebNames_;
-  if (part_name=="") {
-    // Not specifying a mesh part is considered the same as the whole mesh
-    elem_blocks = ebn;
-  } else if (std::find(ebn.begin(),ebn.end(),part_name)!=ebn.end()) {
-    // The part name is just one of the element blocks.
-    elem_blocks = {part_name};
-  } else {
-    // This part is not an element block.
-    // We need to consider any element block that has non-empty interesection
-    // with this part. Note: the interesection is at the level of entities
-    // with rank equal to the specified part (e.g., it may be just nodes).
-    const auto& part = metaData->get_part(part_name);
-
-    for (const auto& eb : ebn) {
-      const auto& ebp = metaData->get_part(eb);
-      stk::mesh::Selector sel (*part);
-      sel |= *ebp;
-      const auto& buckets = bulkData->buckets(part->primary_entity_rank());
-      if (stk::mesh::count_selected_entities(sel,buckets)>0) {
-        elem_blocks.push_back(eb);
-      }
-    }
-  }
-
-  // Ensure that all topologies are the same
-  for (unsigned i=1; i<elem_blocks.size(); ++i) {
-    const auto& topo0 = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
-    const auto& topo  = stkMeshStruct->elementBlockCT_.at(elem_blocks[i]);
-    TEUCHOS_TEST_FOR_EXCEPTION (topo0.getName()!=topo.getName(), std::runtime_error,
-        "Error! DOFManager requires all element blocks to have the same topology.\n");
+  auto& dof_mgr = get_dof_mgr(part_name,fe_type,order,dof_dim);
+  if (Teuchos::nonnull(dof_mgr)) {
+    // Not the first time we build a DOFManager for a field with these specs
+    return dof_mgr;
   }
 
   // Create conn and dof managers
-  auto conn_mgr = Teuchos::rcp(new STKConnManager(metaData,bulkData,elem_blocks));
-  auto dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
+  auto conn_mgr = create_conn_mgr(part_name);
+  dof_mgr  = Teuchos::rcp(new DOFManager(conn_mgr,comm,part_name));
 
-  const auto& topo = stkMeshStruct->elementBlockCT_.at(elem_blocks[0]);
+  const auto& topo = stkMeshStruct->elementBlockCT_.at(conn_mgr->elem_block_name());
   Teuchos::RCP<panzer::FieldPattern> fp;
   if (topo.getName()==std::string("Particle")) {
     // ODE equations are defined on a Particle geometry, where Intrepid2 doesn't work.
@@ -2444,9 +1870,9 @@ create_dof_mgr (const std::string& part_name,
     fp = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   }
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
-  //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
+  //       and call the fields cmp_N, N=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
-    dof_mgr->addField(field_name + "_" + std::to_string(i),fp);
+    dof_mgr->addField("cmp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();
@@ -2459,7 +1885,7 @@ STKDiscretization::
 checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
                     const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                     const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
   auto adapt_data = Teuchos::rcp(new AdaptationData());
 
@@ -2518,15 +1944,17 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   // Solution oscillates. We need to half dx
   auto mesh1d = Teuchos::rcp_dynamic_cast<TmplSTKMeshStruct<1>>(stkMeshStruct);
-  int num_params = mesh1d->getNumParams();
+  int num_params = mesh1d->num_params;
   int ne_x = discParams->get<int>("1D Elements");
   auto& adapt_params = discParams->sublist("Mesh Adaptivity");
   discParams->set("Workset Size", stkMeshStruct->meshSpecs()[0]->worksetSize);
   int factor = adapt_params.get("Refining Factor",2);
   discParams->set("1D Elements",factor*ne_x);
+  auto sis = Teuchos::rcp(new StateInfoStruct(getMeshStruct()->get_field_accessor()->getAllSIS()));
   stkMeshStruct = Teuchos::rcp(new TmplSTKMeshStruct<1>(discParams,comm,num_params));
-  stkMeshStruct->setFieldData(comm,mesh1d->sis_);
-  this->setFieldData(mesh1d->sis_);
+  stkMeshStruct->setFieldData(comm,sis,{});
+  stkMeshStruct->getFieldContainer()->addStateStructs(sis);
+  this->setFieldData();
   stkMeshStruct->setBulkData(comm);
 
   updateMesh();
@@ -2554,7 +1982,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     }
   }
 
-  writeSolutionMVToMeshDatabase(*x_mv_new, Teuchos::null, 0, false);
+  writeSolutionMVToMeshDatabase(*x_mv_new, Teuchos::null, false);
 }
 
 }  // namespace Albany

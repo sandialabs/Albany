@@ -114,9 +114,11 @@ set (CTEST_NAME "MALI-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST
 
 set (CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 if (CTEST_DROP_METHOD STREQUAL "https")
-  set (CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
+  #set (CTEST_DROP_SITE "sems-cdash-son.sandia.gov")
   set (CTEST_PROJECT_NAME "Albany")
-  set (CTEST_DROP_LOCATION "/cdash/submit.php?project=Albany")
+  #set (CTEST_DROP_LOCATION "/cdash/submit.php?project=Albany")
+  set (CTEST_DROP_SITE "my.cdash.org")
+  set (CTEST_DROP_LOCATION "/submit.php?project=Albany")
   set (CTEST_TRIGGER_SITE "")
   set (CTEST_DROP_SITE_CDASH TRUE)
 endif ()
@@ -200,8 +202,33 @@ ctest_start(${CTEST_TEST_TYPE})
 
 if (BUILD_MALI)
 
+  # HACK: override cmake command and reuse Albany configure output.
   #
-  # Build MALI, no configuration required
+
+  set (CTEST_CMAKE_COMMAND "true")
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
+    SOURCE "/home/projects/albany/nightlyCDashWeaver/repos/Albany"
+    OPTIONS ""
+    RETURN_VALUE HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit MALI (Albany) configure results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Albany build was not configured!")
+  endif ()
+
+  #
+  # Build MALI
   #
 
   MESSAGE("\nBuilding MALI with script ${CTEST_BUILD_COMMAND} ...\n")

@@ -28,6 +28,11 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Zoltan2_TpetraCrsColorer.hpp"
 
+#ifdef ALBANY_TEKO
+#include "Teko_BlockedTpetraOperator.hpp"
+#include "Teko_InverseLibrary.hpp"
+#endif
+
 #include <stdexcept>
 #include <string>
 
@@ -93,46 +98,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Create parameter libraries
   paramLib     = rcp(new ParamLib);
   distParamLib = rcp(new DistributedParameterLibrary);
-
-#ifdef ALBANY_DEBUG
-  int break_set  = (getenv("ALBANY_BREAK") == NULL) ? 0 : 1;
-  int env_status = 0;
-  int length     = 1;
-  comm->SumAll(&break_set, &env_status, length);
-  if (env_status != 0) {
-    *out << "Host and Process Ids for tasks" << std::endl;
-    comm->Barrier();
-    int nproc = comm->NumProc();
-    for (int i = 0; i < nproc; i++) {
-      if (i == comm->MyPID()) {
-        char buf[80];
-        char hostname[80];
-        gethostname(hostname, sizeof(hostname));
-        sprintf(buf, "Host: %s   PID: %d", hostname, getpid());
-        *out << buf << std::endl;
-        std::cout.flush();
-        sleep(1);
-      }
-      comm->Barrier();
-    }
-    if (comm->MyPID() == 0) {
-      char go = ' ';
-      std::cout << "\n";
-      std::cout << "** Client has paused because the environment variable "
-                   "ALBANY_BREAK has been set.\n";
-      std::cout << "** You may attach a debugger to processes now.\n";
-      std::cout << "**\n";
-      std::cout << "** Enter a character (not whitespace), then <Return> to "
-                   "continue. > ";
-      std::cout.flush();
-      std::cin >> go;
-      std::cout << "\n** Now pausing for 3 seconds.\n";
-      std::cout.flush();
-    }
-    sleep(3);
-  }
-  comm->Barrier();
-#endif
 
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
@@ -362,13 +327,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 
   physicsBasedPreconditioner =
       problemParams->get("Use Physics-Based Preconditioner", false);
-  if (physicsBasedPreconditioner) {
-    precType = problemParams->get("Physics-Based Preconditioner", "Teko");
-#ifdef ALBANY_TEKO
-    if (precType == "Teko")
-      precParams = Teuchos::sublist(problemParams, "Teko", true);
-#endif
-  }
 
   //validate Hessian parameters
   if(problemParams->isSublist("Hessian")) {
@@ -851,6 +809,65 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
   }
 }
 
+void
+Application::setLinearSolverBuilder(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder>& linearSolverBuilder)
+{
+  this->linearSolverBuilder = linearSolverBuilder;
+}
+
+void
+Application::initializePreconditioner()
+{
+  TEUCHOS_ASSERT(physicsBasedPreconditioner);
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: Initialize Preconditioner");
+#ifdef ALBANY_TEKO
+  // Note: this ensures we only use this for FO Thermo
+  const auto& problem_type = problemParams->get<std::string>("Name");
+  TEUCHOS_TEST_FOR_EXCEPTION(problem_type != "LandIce Stokes FO Thermo Coupled 3D", Teuchos::Exceptions::InvalidParameter,
+      "Albany::Application::initializePreconditioner(): physics-based preconditioner not available for " + problem_type);
+
+  // Initialize Teko preconditioner operator
+  const auto precParams = problem->getNullSpace()->getPL();
+  const auto invLibParams = Teuchos::sublist(precParams, "Inverse Factory Library", true);
+  TEUCHOS_ASSERT(Teuchos::nonnull(linearSolverBuilder));
+  const auto invLib = Teko::InverseLibrary::buildFromParameterList(*invLibParams, linearSolverBuilder);
+  const auto invFactory = invLib->getInverseFactory("myBlocks");
+  invFactoryOp = Teuchos::rcp(new Teko::TpetraHelpers::InverseFactoryOperator(invFactory));
+  invFactoryOp->initInverse();
+
+  // Read block decomposition
+  const auto& decomp = problem->getNullSpace()->getTekoBlockDecomp();
+  const int numBlocks = decomp.size();
+  const int numEqns = std::accumulate(decomp.begin(), decomp.end(), 0);
+
+  // Setup blockGIDs_
+  const auto numDofs = Albany::getLocalSubdim(disc->getVectorSpace());
+  TEUCHOS_ASSERT(numDofs % numEqns == 0);
+  const LO numDofsPerEqn = numDofs / numEqns;
+  blockGIDs_.resize(numBlocks);
+  for (int blk = 0; blk < numBlocks; ++blk) {
+    blockGIDs_[blk].resize(decomp[blk] * numDofsPerEqn);
+  }
+
+  // Fill blockGIDs_
+  const auto indexer = Albany::createGlobalLocalIndexer(disc->getVectorSpace());
+  int eqnStride = 0;
+  for (int blk = 0; blk < numBlocks; ++blk) {
+    int numEqnsPerBlock = decomp[blk];
+    for (size_t blkLid = 0; blkLid < blockGIDs_[blk].size(); ++blkLid) {
+      const int eqn = (blkLid % numEqnsPerBlock) + eqnStride;
+      const LO lid = (blkLid / numEqnsPerBlock) * numEqns + eqn;
+      blockGIDs_[blk][blkLid] = indexer->getGlobalElement(lid);
+    }
+    eqnStride += numEqnsPerBlock;
+  }
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      "Albany::Application::initializePreconditioner(): Teko is needed for a physics-based preconditioner");
+  return Teuchos::null;
+#endif
+}
+
 RCP<AbstractDiscretization>
 Application::getDiscretization() const
 {
@@ -879,12 +896,6 @@ RCP<Thyra_LinearOp>
 Application::createJacobianOp() const
 {
   return disc->createJacobianOp();
-}
-
-RCP<Thyra_LinearOp>
-Application::getPreconditioner()
-{
-  return Teuchos::null;
 }
 
 RCP<ParamLib>
@@ -1414,9 +1425,7 @@ Application::computeGlobalResidualImpl(
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char nameResUnscaled[100];  // create string for file name
-  sprintf(nameResUnscaled, "resUnscaled%i_residual", countScale);
-  writeMatrixMarket(f, nameResUnscaled);
+  writeMatrixMarket(f, "resUnscaled", countScale);
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
@@ -1424,9 +1433,7 @@ Application::computeGlobalResidualImpl(
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char nameResScaled[100];  // create string for file name
-  sprintf(nameResScaled, "resScaled%i_residual", countScale);
-  writeMatrixMarket(f, nameResScaled);
+  writeMatrixMarket(f, "resScaled", countScale);
 #endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -1780,6 +1787,31 @@ Application::computeGlobalJacobian(
       countRes++;  // increment residual counter
     }
   }
+}
+
+void
+Application::computeGlobalPreconditioner(
+  const Teuchos::RCP<const Thyra_LinearOp> &jac_lop,
+  Teuchos::RCP<Thyra_Preconditioner> &prec)
+{
+  TEUCHOS_ASSERT(physicsBasedPreconditioner);
+  TEUCHOS_FUNC_TIME_MONITOR("Albany Fill: Preconditioner");
+#ifdef ALBANY_TEKO
+  // Create new BlockedTpetraOperator from Jacobian and rebuild preconditioner
+  TEUCHOS_ASSERT(!blockGIDs_.empty());
+  TEUCHOS_ASSERT(Teuchos::nonnull(invFactoryOp));
+  const auto jac_top = getConstTpetraOperator(jac_lop);
+  const auto jac_blocked_btop = Teuchos::rcp(new Teko::TpetraHelpers::BlockedTpetraOperator(blockGIDs_, jac_top));
+  const auto jac_blocked_top = Teuchos::rcp_dynamic_cast<Tpetra_Operator>(jac_blocked_btop);
+  invFactoryOp->rebuildInverseOperator(jac_blocked_top);
+  const auto invFactoryOpT = Teuchos::rcp_dynamic_cast<Tpetra_Operator>(invFactoryOp);
+  const auto precOp = Thyra::createLinearOp(invFactoryOpT);
+  const auto defaultPrec = Teuchos::rcp_dynamic_cast<Thyra::DefaultPreconditioner<ST>>(prec);
+  defaultPrec->initializeRight(precOp);
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      "Albany::Application::computeGlobalPreconditioner(): Teko is needed for a physics-based preconditioner");
+#endif
 }
 
 void
@@ -3143,14 +3175,17 @@ Application::loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws,
   workset.wsCoords             = coords[ws];
   workset.EBName               = wsEBNames[ws];
   workset.wsIndex              = ws;
-
+  workset.numWs                = disc->getNumWorksets();
 
   workset.savedMDFields = phxSetup->get_saved_fields(evalName);
 
   // Sidesets are integrated within the Cells
   loadWorksetSidesetInfo(workset, ws);
 
-  workset.stateArrayPtr = &disc->getStateArrays(StateStruct::ElemState)[ws];
+  auto mfa = disc->getMeshStruct()->get_field_accessor();
+
+  workset.stateArrayPtr = &mfa->getElemStates()[ws];
+  workset.globalStates  = mfa->getGlobalStates();
 }
 
 void

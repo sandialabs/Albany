@@ -536,15 +536,17 @@ SequentialCoupling::createPoissonSolverAppDiscME(int const file_index, double co
   discs_[subdomain]                                 = disc;
 
   Albany::STKDiscretization& stk_disc = *static_cast<Albany::STKDiscretization*>(disc.get());
-  if (file_index == 0) {
+  //IKT 1/7/2026: we don't have outputExodusSolutionInitialTime anymore in Albany and I think this option will 
+  //not be relevant in the ultimate implementation of this, so commenting out.
+  /*if (file_index == 0) {
     stk_disc.outputExodusSolutionInitialTime(true);
-  }
+  }*/
 
   
   auto  abs_stk_mesh_struct_rcp  = stk_disc.getSTKMeshStruct();
   auto& abs_stk_mesh_struct      = *abs_stk_mesh_struct_rcp;
-  do_outputs_[subdomain]         = abs_stk_mesh_struct.exoOutput;
-  do_outputs_init_[subdomain]    = abs_stk_mesh_struct.exoOutput;
+  do_outputs_[subdomain]         = stk_disc.exoOutput;
+  do_outputs_init_[subdomain]    = stk_disc.exoOutput;
   stk_mesh_structs_[subdomain]   = abs_stk_mesh_struct_rcp;
   model_evaluators_[subdomain]   = solver_factories_[subdomain]->returnModel();
   curr_x_[subdomain]             = Teuchos::null;
@@ -638,14 +640,16 @@ SequentialCoupling::createAdvDiffSolverAppDiscME(int const file_index, double co
 
   
   Albany::STKDiscretization& stk_disc = *static_cast<Albany::STKDiscretization*>(disc.get());
-  if (file_index == 0) {
+  //IKT 1/7/2026: we don't have outputExodusSolutionInitialTime anymore in Albany and I think this option will 
+  //not be relevant in the ultimate implementation of this, so commenting out.
+  /*if (file_index == 0) {
     stk_disc.outputExodusSolutionInitialTime(true);
-  }
+  }*/
 
   auto  abs_stk_mesh_struct_rcp     = stk_disc.getSTKMeshStruct();
   auto& abs_stk_mesh_struct         = *abs_stk_mesh_struct_rcp;
-  do_outputs_[subdomain]            = abs_stk_mesh_struct.exoOutput;
-  do_outputs_init_[subdomain]       = abs_stk_mesh_struct.exoOutput;
+  do_outputs_[subdomain]            = stk_disc.exoOutput;
+  do_outputs_init_[subdomain]       = stk_disc.exoOutput;
   stk_mesh_structs_[subdomain]      = abs_stk_mesh_struct_rcp;
   model_evaluators_[subdomain]      = solver_factories_[subdomain]->returnModel();
   curr_x_[subdomain]                = Teuchos::null;

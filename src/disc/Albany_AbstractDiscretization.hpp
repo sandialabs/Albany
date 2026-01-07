@@ -30,8 +30,8 @@ public:
   using conn_mgr_ptr_t = Teuchos::RCP<Albany::ConnManager>;
   using dof_mgr_ptr_t  = Teuchos::RCP<Albany::DOFManager>;
 
-  static const char* solution_dof_name () { return "ordinary_solution"; }
-  static const char* nodes_dof_name    () { return "mesh_nodes"; }
+  static std::string solution_dof_name () { return "solution"; }
+  static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
   AbstractDiscretization() = default;
@@ -162,16 +162,18 @@ public:
   int getNumWorksets () const { return m_workset_sizes.size(); }
 
   //! Get Side set lists
-  virtual const SideSetList&
-  getSideSets(const int ws) const = 0;
+  const SideSetList& getSideSets(const int ws) const { return m_sideSets[ws]; }
 
   //! Get Side set view lists
-  virtual const LocalSideSetInfoList&
-  getSideSetViews(const int ws) const = 0;
+  const LocalSideSetInfoList&
+  getSideSetViews(const int ws) const { return m_sideSetViews.at(ws); }
 
   //! Get local DOF views for GatherVerticallyContractedSolution
-  virtual const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const = 0;
+  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
+  getLocalDOFViews(const int workset) const
+  {
+    return m_wsLocalDOFViews.at(workset);
+  }
 
   //! Get Dof Manager of field field_name
   Teuchos::RCP<const GlobalLocalIndexer>
@@ -190,6 +192,12 @@ public:
   //! Get GlobalLocalIndexer for solution field
   Teuchos::RCP<const GlobalLocalIndexer>
   getGlobalLocalIndexer () const { return getGlobalLocalIndexer(solution_dof_name()); }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getSidesGlobalLocalIndexer() const { return m_sides_indexer; }
+
+  Teuchos::RCP<const GlobalLocalIndexer>
+  getCellsGlobalLocalIndexer() const { return getDOFManager()->cell_indexer(); }
 
   //! Get GlobalLocalIndexer for overlapped solution field
   Teuchos::RCP<const GlobalLocalIndexer>
@@ -219,30 +227,21 @@ public:
   const strmap_t<Teuchos::RCP<AbstractDiscretization>>& getSideSetDiscretizations() const { return sideSetDiscretizations; }
 
   //! Get the map side_id->side_set_elem_id
-  virtual const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const = 0;
+  const strmap_t<std::map<GO, GO>>& getSideToSideSetCellMap() const {
+    return m_side_to_ss_cell;
+  }
 
   //! Get the map side_node_id->side_set_cell_node_id
-  virtual const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const = 0;
+  const strmap_t<std::map<GO, std::vector<int>>>& getSideNodeNumerationMap() const {
+    return m_side_nodes_to_ss_cell_nodes;
+  }
 
   //! Get MeshStruct
   virtual Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const = 0;
 
-  //! Set stateArrays
-  void setStateArrays(StateArrays& sa) { m_stateArrays = sa; }
-
-  //! Get stateArrays
-  StateArrays& getStateArrays() { return m_stateArrays; }
-
-  //! Get stateArray of given type
-  StateArrayVec& getStateArrays(const StateStruct::StateType type) {
-    if (type==StateStruct::ElemState) {
-      return getStateArrays().elemStateArrays;
-    } else {
-      return getStateArrays().nodeStateArrays;
-    }
+  Teuchos::RCP<AbstractMeshFieldAccessor> get_solution_mesh_field_accessor () const {
+    return m_solution_mfa;
   }
 
   //! Get nodal parameters state info struct
@@ -258,11 +257,9 @@ public:
   const WorksetArray<int>&
   getWsPhysIndex() const { return m_wsPhysIndex; }
 
-  //! Retrieve connectivity map from elementGID to workset
-  virtual WsLIDList&
-  getElemGIDws() = 0;
-  virtual const WsLIDList&
-  getElemGIDws() const = 0;
+  //! Retrieve array storing the ws idx and the idx within the ws of each element (indexed via elem LID)
+  const std::vector<WsIdx>& get_elements_workset_idx () const { return m_elem_ws_idx; }
+        std::vector<WsIdx>& get_elements_workset_idx ()       { return m_elem_ws_idx; }
 
   //! Flag if solution has a restart values -- used in Init Cond
   virtual bool
@@ -276,9 +273,10 @@ public:
   virtual int
   getNumDim() const = 0;
 
+  virtual void setNumEq (int neq) = 0;
+
   //! Get number of total DOFs per node
-  virtual int
-  getNumEq() const = 0;
+  int getNumEq() const { return m_neq; }
 
   //! Get Numbering for layered mesh (mesh structured in one direction)
   virtual Teuchos::RCP<LayeredMeshNumbering<GO>>
@@ -308,8 +306,7 @@ public:
       const std::string&  field_name,
       bool                overlapped) = 0;
 
-  virtual void
-  setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+  virtual void setFieldData() = 0;
 
   // Update mesh internals, such as coordinates, DOF numbers, etc.
   // To be run either after creation or after modification/adaptation.
@@ -317,112 +314,118 @@ public:
 
   // --- Methods to write solution in the output file --- //
 
-  //! Write the solution to the output file. Calls next two together.
-  virtual void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolutionMV(
-      const Thyra_MultiVector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false) = 0; 
+  //! All these overloads call a corresponding overload of writeSolutionToMeshDatabase and writeMeshDatabaseToFile
+  void writeSolution(const Thyra_Vector& solution,
+                     const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                     const double        time,
+                     const bool          overlapped = false,
+                     const bool          force_write_solution = false);
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false);
+  void writeSolution (const Thyra_Vector& solution,
+                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                      const Thyra_Vector& solution_dot,
+                      const Thyra_Vector& solution_dotdot,
+                      const double        time,
+                      const bool          overlapped = false,
+                      const bool          force_write_solution = false);
+  virtual void writeSolutionMV (const Thyra_MultiVector& solution,
+                                const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                const double             time,
+                                const bool               overlapped = false,
+                                const bool               force_write_solution = false);
+
   //! Write the solution to the mesh database.
-  virtual void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double        time,
-      const bool          overlapped = false) = 0;
-  virtual void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const double        time,
-      const bool          overlapped = false) = 0;
-  virtual void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
-      const double        time,
-      const bool          overlapped = false) = 0;
-  virtual void
-  writeSolutionMVToMeshDatabase(
-      const Thyra_MultiVector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double             time,
-      const bool               overlapped = false) = 0;
+  virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                            const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                            const bool          overlapped) = 0;
+  virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                            const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                            const Thyra_Vector& solution_dot,
+                                            const bool          overlapped) = 0;
+  virtual void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                            const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                            const Thyra_Vector& solution_dot,
+                                            const Thyra_Vector& solution_dotdot,
+                                            const bool          overlapped) = 0;
+  virtual void writeSolutionMVToMeshDatabase (const Thyra_MultiVector& solution,
+                                              const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                              const bool               overlapped) = 0;
 
   //! Write the solution to file. Must call writeSolution first.
-  virtual void
-  writeSolutionToFile(
-      const Thyra_Vector& solution,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false) = 0; 
-  virtual void
-  writeSolutionMVToFile(
-      const Thyra_MultiVector& solution,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false) = 0;
-
-  // Routine that disables writing out of initial condition to Exodus file
-  virtual void
-  outputExodusSolutionInitialTime(const bool output_initial_soln_to_exo_file_) = 0;
- 
+  virtual void writeMeshDatabaseToFile (const double time,
+                                        const bool   force_write_solution) = 0;
 
   // Check if mesh adaptation is needed, and if so what kind (topological or just mesh-movement)
   virtual Teuchos::RCP<AdaptationData>
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const = 0;
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) = 0;
 
   // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
 
+  virtual Teuchos::RCP<ConnManager>
+  create_conn_mgr (const std::string& part_name) {
+    throw std::runtime_error("Error! This discretization does not implement 'create_conn_mgr'.");
+  }
+
 protected:
+  dof_mgr_ptr_t&
+  get_dof_mgr (const std::string& part_name,
+               const FE_Type fe_type,
+               const int order,
+               const int dof_dim);
+
+  // From std::vector<SideSet> build corresponding kokkos structures
+  void buildSideSetsViews ();
+
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 
   //! Jacobian matrix operator factory
   Teuchos::RCP<ThyraCrsMatrixFactory> m_jac_factory;
 
-  // One dof mgr per dof per part
   // Notice that the dof mgr on a side is not the restriction
   // of the volume dof mgr to that side, since local ids are different.
+  // Note: the double map works as map[field_name][part_name] = dof_mgr
   strmap_t<strmap_t<dof_mgr_ptr_t>>     m_dof_managers;
 
-  // Dof manager for a scalar node field
+  // Dof manager for a scalar node field (part_name->dof_mgr)
   strmap_t<dof_mgr_ptr_t>               m_node_dof_managers;
 
-  // Struct containing node/elem state arrays
-  StateArrays                           m_stateArrays;
+  // Store a all dof mgrs based on a key that encodes all params used to create it.
+  // This helps to build only one copy of dof mgrs with same specs
+  std::map<std::string,dof_mgr_ptr_t>      m_key_to_dof_mgr;
+
+  // For each ss, map the side_GID into vec, where vec[i]=k if the i-th
+  // node of the side corresponds to the k-th node of the cell in the side mesh
+  strmap_t<std::map<GO, std::vector<int>>> m_side_nodes_to_ss_cell_nodes;
+
+  // For each ss, map the side_GID to the cell_GID in the side mesh
+  strmap_t<std::map<GO, GO>>               m_side_to_ss_cell;
+
+  //! side sets stored as std::map(string ID, SideArray classes) per workset
+  //! (std::vector across worksets)
+  std::vector<SideSetList>            m_sideSets;
+  std::map<int, LocalSideSetInfoList> m_sideSetViews;
+
+  // Provide side gid<->lid indexing. GIDs and LIDs are unique across worksets and sidesets
+  Teuchos::RCP<const GlobalLocalIndexer>    m_sides_indexer;
+
+  // The index to which each element belongs to (indexed by elem LID)
+  std::vector<WsIdx>  m_elem_ws_idx;
+
+  //! Number of equations (and unknowns) per node
+  // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
+  int m_neq = 0;
+
+  //! GatherVerticallyContractedSolution connectivity
+  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> m_wsLocalDOFViews;
 
   // Workset information
   WorksetArray<int>           m_workset_sizes; // size of each ws
@@ -434,6 +437,9 @@ protected:
   // For each workset, the element LID of its elements.
   // Note: with 1 workset, m_workset_elements(0,i)=i.
   DualView<int**>     m_workset_elements;
+
+  // The accessor that allows to read/write solution from/to the mesh
+  Teuchos::RCP<AbstractMeshFieldAccessor> m_solution_mfa;
 };
 
 }  // namespace Albany

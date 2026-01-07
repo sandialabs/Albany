@@ -162,13 +162,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
 
   int  numDim;
 
-  bool        exoOutput;
-  std::string exoOutFile;
-  int         exoOutputInterval;
   mutable GO  max_node_gid = -1;
   mutable GO  max_elem_gid = -1;
-
-  bool transferSolutionToCoords;
 
   int num_time_deriv;
 
@@ -196,36 +191,14 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   virtual double
   restartDataTime() const = 0;
 
-  // Flag for transforming STK mesh; currently only needed for LandIce/Aeras
-  // problems
-  std::string transformType;
-  // alpha and L are parameters read in from ParameterList for LandIce problems
-  double felixAlpha;
-  double felixL;
-  // xShift, yShift and zShift are for "Right-shift" transformMesh routine
-  double xShift, yShift, zShift;
-  // beta values for Tanh Boundary Laner tranformMesh routine
-  Teuchos::Array<double> betas_BLtransform;
   // scale (for mesh generated inside Albany via STK1D, STK2D or STK3D)
   Teuchos::Array<double> scales;
-
-  // Points per edge in creating enriched spectral mesh in
-  // Aeras::SpectralDiscretization (for Aeras only).
-  int points_per_edge;
-
-  bool contigIDs;  // boolean specifying if ascii mesh has contiguous IDs; only
-                   // used for ascii meshes on 1 processor
-
-  // boolean flag for writing coordinates to matrix market file (e.g., for ML
-  // analysis)
-  bool writeCoordsToMMFile;
 
   // Info to map element block to physics set
   bool allElementBlocksHaveSamePhysics;
 
   // Info for periodic BCs -- only for hand-coded STK meshes
   struct PeriodicBCStruct PBCStruct;
-
 
   virtual void
   buildCellSideNodeNumerationMap(
@@ -236,6 +209,8 @@ struct AbstractSTKMeshStruct : public AbstractMeshStruct
   // Useful for loading side meshes from file
   bool side_maps_present = false;
   bool ignore_side_maps  = false;
+
+  int num_params;
 
  protected:
   Teuchos::RCP<AbstractSTKFieldContainer> fieldContainer;

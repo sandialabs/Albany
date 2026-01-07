@@ -11,7 +11,7 @@
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/GetBuckets.hpp>
+
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
@@ -232,23 +232,6 @@ TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   // Set the element types in the EBs
 
-  //get the type of transformation of STK mesh
-  transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh
-  felixAlpha = params->get("LandIce alpha", 0.0); //for LandIce problems
-  felixL = params->get("LandIce L", 1.0); //for LandIce problems
-  xShift = params->get("x-shift", 0.0);
-  yShift = params->get("y-shift", 0.0);
-  zShift = params->get("z-shift", 0.0);
-  betas_BLtransform = params->get<Teuchos::Array<double> >("Betas BL Transform",  Teuchos::tuple<double>(0.0, 0.0, 0.0));
-
-  points_per_edge = params->get("Element Degree", 1) + 1; //get # of nodes per edge for Aeras::SpectralDiscretization (Aeras problems)
-
-  //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
-  contigIDs = params->get("Contiguous IDs", true);
-
-  //Does user want to write coordinates to matrix market file (e.g., for ML analysis)?
-  writeCoordsToMMFile = params->get("Write Coordinates to MatrixMarket", false);
-
   for(unsigned int i = 0; i < numEB; i++){
     if (triangles)
       stk::mesh::set_topology(*partVec[i], optional_element_type);
@@ -299,7 +282,8 @@ template<unsigned Dim, class traits>
 void
 TmplSTKMeshStruct<Dim, traits>::
 setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-              const Teuchos::RCP<StateInfoStruct>& sis)
+              const Teuchos::RCP<StateInfoStruct>& sis,
+              std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
   // Create global mesh: Dim-D structured, rectangular
   std::vector<double> h_dim[traits_type::size];
@@ -319,7 +303,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
       x[idx][i] = x[idx][i - 1] + h_dim[idx][i - 1]; // place the coordinates of the element nodes
   }
 
-  GenericSTKMeshStruct::setFieldData(comm, sis);
+  GenericSTKMeshStruct::setFieldData(comm,sis,side_set_sis);
 }
 
 template<unsigned Dim, class traits>
@@ -469,7 +453,8 @@ EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
       "begins at (0, 0) ends at (100, 100) length (1.0, 1.0) named Block0");
 
     // Parse it
-    sscanf(&blkinfo[0], "begins at (%lld,%lld) ends at (%lld,%lld) length (%lf,%lf) named %s",
+  // Bound the name to avoid buffer overflow (buf is size 256)
+  sscanf(&blkinfo[0], "begins at (%lld,%lld) ends at (%lld,%lld) length (%lf,%lf) named %255s",
       &min[0], &min[1], &max[0], &max[1], &blLength[0], &blLength[1], buf);
 
     name = buf;
@@ -495,7 +480,8 @@ EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& 
       "begins at (0, 0, 0) ends at (100, 100, 100) length (1.0, 1.0, 1.0) named Block0");
 
     // Parse it
-    sscanf(&blkinfo[0], "begins at (%lld,%lld,%lld) ends at (%lld,%lld,%lld) length (%lf,%lf,%lf) named %s",
+  // Bound the name to avoid buffer overflow (buf is size 256)
+  sscanf(&blkinfo[0], "begins at (%lld,%lld,%lld) ends at (%lld,%lld,%lld) length (%lf,%lf,%lf) named %255s",
       &min[0], &min[1], &min[2], &max[0], &max[1], &max[2], &blLength[0], &blLength[1], &blLength[2], buf);
 
     name = buf;

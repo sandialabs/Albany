@@ -70,39 +70,6 @@ public:
     return nodeSetCoords;
   }
 
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const SideSetList&
-  getSideSets(const int workset) const
-  {
-    return sideSets[workset];
-  }
-
-  //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
-  const LocalSideSetInfoList&
-  getSideSetViews(const int workset) const
-  {
-    return sideSetViews.at(workset);
-  }
-
-  //! Get local DOF views for GatherVerticallyContractedSolution
-  const std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const
-  {
-    return wsLocalDOFViews.at(workset);
-  }
-
-  //! Get connectivity map from elementGID to workset
-  WsLIDList&
-  getElemGIDws()
-  {
-    return elemGIDws;
-  }
-  WsLIDList const&
-  getElemGIDws() const
-  {
-    return elemGIDws;
-  }
-
   //! Retrieve coordinate vector (num_used_nodes * 3)
   const Teuchos::ArrayRCP<double>&
   getCoordinates() const;
@@ -121,18 +88,6 @@ public:
   getMeshStruct() const
   {
     return stkMeshStruct;
-  }
-
-  const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const
-  {
-    return sideToSideSetCellMap;
-  }
-
-  const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const
-  {
-    return sideNodeNumerationMap;
   }
 
   //! Flag if solution has a restart values -- used in Init Cond
@@ -165,13 +120,6 @@ public:
     return stkMeshStruct->numDim;
   }
 
-  //! Get number of total DOFs per node
-  int
-  getNumEq() const
-  {
-    return neq;
-  }
-
   const stk::mesh::MetaData&
   getSTKMetaData() const
   {
@@ -182,6 +130,8 @@ public:
   {
     return *bulkData;
   }
+
+  void setNumEq (int neq) override;
 
   // Used very often, so make it a function
   GO stk_gid (const stk::mesh::Entity e) const {
@@ -208,95 +158,42 @@ public:
       const std::string&  field_name,
       const bool          overlapped = false);
 
-  // --- Methods to write solution in the output file --- //
-
-  void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolution(
-      const Thyra_Vector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const Thyra_Vector& solution_dot,
-      const Thyra_Vector& solution_dotdot,
-      const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolutionMV(
-      const Thyra_MultiVector& solution,
-      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false); 
-
   //! Write the solution to the mesh database.
   void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double /* time */,
-      const bool overlapped = false);
+      const bool overlapped);
   void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
-      const double /* time */,
-      const bool overlapped = false);
+      const bool overlapped);
   void
   writeSolutionToMeshDatabase(
       const Thyra_Vector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
       const Thyra_Vector& solution_dot,
       const Thyra_Vector& solution_dotdot,
-      const double /* time */,
-      const bool overlapped = false);
+      const bool overlapped);
   void
   writeSolutionMVToMeshDatabase(
       const Thyra_MultiVector& solution,
       const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
-      const double /* time */,
-      const bool overlapped = false);
+      const bool overlapped);
 
   //! Write the solution to file. Must call writeSolution first.
   void
-  writeSolutionToFile(
-      const Thyra_Vector& solution,
+  writeMeshDatabaseToFile(
       const double        time,
-      const bool          overlapped = false,
-      const bool          force_write_solution = false); 
-  void
-  writeSolutionMVToFile(
-      const Thyra_MultiVector& solution,
-      const double             time,
-      const bool               overlapped = false,
-      const bool               force_write_solution = false);
-
-  void
-  outputExodusSolutionInitialTime(const bool output_initial_soln_to_exo_file_)
-  {
-    output_initial_soln_to_exo_file = output_initial_soln_to_exo_file_;
-  };
- 
+      const bool          force_write_solution) override;
 
   Teuchos::RCP<AdaptationData>
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) const override;
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) override;
 
   void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 
@@ -308,7 +205,7 @@ public:
     */
   void addCellField(const std::string & fieldName,const std::string & blockId);
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis);
+  void setFieldData();
 
   Teuchos::RCP<AbstractSTKFieldContainer> getSolutionFieldContainer() {
     return solutionFieldContainer;
@@ -317,6 +214,10 @@ public:
   //! Find the local position of child entity within parent entity
   int determine_entity_pos (const stk::mesh::Entity parent,
                             const stk::mesh::Entity child) const;
+
+  Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
+  
+  bool exoOutput;
 
  protected:
 
@@ -361,10 +262,9 @@ public:
   // If node_as_elements=true, build the ConnMgr as if nodes are the "cells".
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
-                  const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   // ==================== Members =================== //
 
@@ -377,9 +277,6 @@ public:
   //! Teuchos communicator
   Teuchos::RCP<const Teuchos_Comm> comm;
 
-  //! Number of equations (and unknowns) per node
-  const int neq;
-
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> sideSetEquations;
 
@@ -391,24 +288,8 @@ public:
   NodeSetGIDsList  nodeSetGIDs;
   NodeSetCoordList nodeSetCoords;
 
-  //! side sets stored as std::map(string ID, SideArray classes) per workset
-  //! (std::vector across worksets)
-  std::vector<SideSetList> sideSets;
-  GlobalSideSetList globalSideSetViews;
-  std::map<int, LocalSideSetInfoList> sideSetViews;
-
-  //! GatherVerticallyContractedSolution connectivity
-  std::map<std::string, Kokkos::DualView<LO****, PHX::Device>> allLocalDOFViews;
-  std::map<int, std::map<std::string, Kokkos::DualView<LO****, PHX::Device>>> wsLocalDOFViews;
-
   mutable Teuchos::ArrayRCP<double>                                 coordinates;
   Teuchos::RCP<Thyra_MultiVector>                                   coordMV;
-
-  //! Connectivity map from elementGID to workset and LID in workset
-  WsLIDList elemGIDws;
-
-  // States: vector of length worksets of a map from field name to shards array
-  std::vector<std::vector<std::vector<double>>> nodesOnElemStateVec;
 
   //! Number of elements on this processor
   GO  maxGlobalNodeGID;
@@ -426,22 +307,22 @@ public:
 
   // Sideset discretizations
   std::map<std::string, Teuchos::RCP<STKDiscretization>> sideSetDiscretizationsSTK;
-  std::map<std::string, std::map<GO, GO>>                sideToSideSetCellMap;
-  std::map<std::string, std::map<GO, std::vector<int>>>  sideNodeNumerationMap;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    projectors;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
 
 // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
   Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
-
-  int outputInterval;
-
-  size_t outputFileIdx;
 #endif
 
   // Boolean for disabling output of initial solution to Exodus file
   bool output_initial_soln_to_exo_file{true};
+  // IO related stuff
+  int outputInterval;
+  size_t outputFileIdx;
+  std::string exoOutFile;
+  int exoOutputInterval;
+  bool transferSolutionToCoords;
 
   Teuchos::RCP<AbstractSTKFieldContainer> solutionFieldContainer;
 };

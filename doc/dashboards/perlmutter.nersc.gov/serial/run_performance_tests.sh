@@ -7,8 +7,8 @@
 #SBATCH --constraint=cpu
 #SBATCH --qos=regular
 #SBATCH --time=02:00:00
-#SBATCH --nodes=1
-#SBATCH --ntasks=128
+#SBATCH --nodes=2
+#SBATCH --ntasks=256
 #SBATCH --ntasks-per-node=128
 #SBATCH --ntasks-per-socket=64
 #SBATCH --hint=nomultithread

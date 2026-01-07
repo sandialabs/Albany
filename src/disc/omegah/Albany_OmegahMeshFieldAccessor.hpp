@@ -14,12 +14,19 @@ public:
   OmegahMeshFieldAccessor (const Teuchos::RCP<Omega_h::Mesh>& mesh);
   ~OmegahMeshFieldAccessor () = default;
 
-  void addStateStructs(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void addStateStruct(const Teuchos::RCP<StateStruct>& st) override;
 
-  // TODO: move this in the base class
+  void createStateArrays (const WorksetArray<int>& worksets_sizes) override;
+  void transferNodeStatesToElemStates () override;
+
+  // TODO: move this in the base class?
   void addFieldOnMesh (const std::string& name,
-                       const FE_Type fe_type,
+                       const int entityDim,
                        const int numComps);
+
+  void setFieldOnMesh (const std::string& name,
+                       const int entityDim,
+                       const Teuchos::RCP<const Thyra_MultiVector>& mv);
 
   // Read from mesh methods
   void fillSolnVector (Thyra_Vector&        /* soln */,
@@ -96,8 +103,20 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahMeshFieldAccessor::saveSolnMultiVector");
   }
 
+  void setSolutionFieldsMetadata (const int neq) override;
+
+  // To be called after adaptation, where the stored tags are no longer valid and need to be reset
+  void reset_mesh_tags ();
+
 protected:
   Teuchos::RCP<Omega_h::Mesh>   m_mesh;
+
+  struct TagHandle {
+    Omega_h::Write<ST> array;
+    int                ent_dim;
+    int                ncomps;
+  };
+  std::map<std::string,TagHandle> m_tags;
 };
 
 } // namespace Albany

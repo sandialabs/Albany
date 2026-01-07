@@ -123,7 +123,7 @@ if (DOWNLOAD_MALI)
 
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/E3SM")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Mali_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/E3SM
+      clone ${Mali_REPOSITORY_LOCATION} -b develop --recurse-submodules=externals/scorpio ${CTEST_SOURCE_DIRECTORY}/E3SM
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -159,8 +159,33 @@ ctest_start(${CTEST_TEST_TYPE})
 
 if (BUILD_MALI)
 
+  # HACK: override cmake command and reuse Albany configure output.
   #
-  # Build MALI, no configuration required
+
+  set (CTEST_CMAKE_COMMAND "true")
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuildRocmGccSfad12"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS ""
+    RETURN_VALUE HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit MALI (Albany) configure results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Albany build was not configured!")
+  endif ()
+
+  #
+  # Build MALI
   #
 
   MESSAGE("\nBuilding MALI with script ${CTEST_BUILD_COMMAND} ...\n")

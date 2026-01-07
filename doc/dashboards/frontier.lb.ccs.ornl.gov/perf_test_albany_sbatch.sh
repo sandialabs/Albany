@@ -5,7 +5,7 @@
 #SBATCH --output=logs/AlbanyPerfTesting.%j.out
 #SBATCH --error=logs/AlbanyPerfTesting.%j.err 
 #SBATCH -p batch
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --time=02:00:00 
 #SBATCH --ntasks-per-node=8
 #SBATCH --gpus-per-task=1
@@ -34,4 +34,4 @@ cp test_log_frontier_ali_perf_tests.txt ${DEPLOY_DIR}/logs/test_log_frontier_ali
 cp test_log_frontier_ali_perf_tests_saveresults.txt ${DEPLOY_DIR}/logs/test_log_frontier_ali_perf_tests_saveresults.txt
 
 chmod -R 2770 ${DEPLOY_DIR}
-chown -R :fanssie ${DEPLOY_DIR}
+chown -R :cli193 ${DEPLOY_DIR}

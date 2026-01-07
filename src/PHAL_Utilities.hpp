@@ -109,7 +109,7 @@ private:
 };
 
 template<typename T>
-using MDFieldHostMirror = typename PHX::MDField<T>::array_type::HostMirror;
+using MDFieldHostMirror = typename PHX::MDField<T>::array_type::host_mirror_type;
 
 //! Reduce on an MDField.
 template<typename T>

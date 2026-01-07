@@ -14,6 +14,8 @@ rm -rf ctest_nightly_albany_intel_serial_build.cmake
 
 unset http_proxy
 unset https_proxy
+unset HTTP_PROXY
+unset HTTPS_PROXY 
 
 source attaway_modules_intel.sh >& intel_modules.out  
 source convert-cmake-to-cdash.sh intel serial

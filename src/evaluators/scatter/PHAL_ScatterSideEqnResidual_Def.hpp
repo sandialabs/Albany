@@ -103,7 +103,7 @@ void ScatterSideEqnResidualBase<EvalT, Traits>::
 gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
 {
   // Check for early return
-  if (ss_nodes_gids_gathered) {
+  if (ss_eqns_dofs_lids_gathered) {
     return;
   }
 
@@ -135,7 +135,11 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
   //       sideset (in the owned+shared map), then it also has a side containing
   //       that node on that sideset.
   const int num_ws = disc.getNumWorksets();
-  const auto node_dof_mgr = disc.getNodeDOFManager();
+  const auto dof_mgr = disc.getDOFManager();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  constexpr auto ALL = Kokkos::ALL();
+
+  std::set<LO> all_ss_eqns_lids;
   for (int ws=0; ws<num_ws; ++ws) {
     const auto& ssMap = disc.getSideSets(ws);
     if (ssMap.find(this->sideSetName)==ssMap.end()) {
@@ -148,16 +152,41 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
       const int elem_LID = elem_lids(icell);
       const int side_pos = side.side_pos;
 
-      const auto& offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
-      const auto& gids = node_dof_mgr->getElementGIDs(elem_LID);
-      for (auto o : offsets) {
-        ss_nodes_gids.insert(gids[o]);
+      const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+      for (int eq = 0; eq < this->numFields; eq++) {
+        const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq+this->offset,side_pos);
+        for (auto o : offsets) {
+          all_ss_eqns_lids.insert(dof_lids[o]);
+        }
+      }
+    }
+  }
+
+  // To speed up calculation at runtime, we now group them by ws
+  ss_eqns_dofs_lids.resize(num_ws);
+  if (num_ws==1) {
+    // All ss eqn dofs are in same ws, just copy and be done
+    ss_eqns_dofs_lids[0] = all_ss_eqns_lids;
+  } else {
+    for (int ws=0; ws<num_ws; ++ws) {
+      const auto& elem_lids = disc.getElementLIDs_host(ws);
+      for (size_t ie=0; ie<elem_lids.size(); ++ie) {
+        const int elem_LID = elem_lids(ie);
+        const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+        for (int eq = 0; eq < this->numFields; eq++) {
+          const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+this->offset);
+          for (auto o : offsets) {
+            if (all_ss_eqns_lids.count(dof_lids[o]>0)) {
+              ss_eqns_dofs_lids[ws].insert(dof_lids[0]);
+            }
+          }
+        }
       }
     }
   }
 
   // Avoid doing this again
-  ss_nodes_gids_gathered = true;
+  ss_eqns_dofs_lids_gathered = true;
 }
 
 template<typename EvalT, typename Traits>
@@ -168,7 +197,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (workset.sideSets->find(this->sideSetName)!=workset.sideSets->end()) {
     sideSet = workset.sideSets->at(this->sideSetName);
-    doEvaluateFields(workset,sideSet);
+    if (sideSet.size()>0) {
+      doEvaluateFields(workset,sideSet);
+    }
   }
 
   // We might need to do something for dofs not on this side set
@@ -185,27 +216,24 @@ doPostEvaluate(typename Traits::EvalData workset)
   }
   const auto f_data = Albany::getNonconstLocalData(f);
 
-  // Set f=x outside the sideset
   Teuchos::RCP<Thyra_Vector const> x = workset.x;
   Teuchos::ArrayRCP<const ST> x_data = Albany::getLocalData(x);
 
   constexpr auto ALL = Kokkos::ALL();
-  const auto node_dof_mgr = workset.disc->getNodeDOFManager();
   const auto dof_mgr = workset.disc->getDOFManager();
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
-  const int numCellNodes = node_dof_mgr->getGIDFieldOffsets(0).size();
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto elem_LID = elem_lids(icell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
-    for (int inode=0; inode<numCellNodes; ++inode) {
-      const auto node = node_gids[inode];
-      if (this->ss_nodes_gids.count(node)==0) {
-        for (int eq = 0; eq < this->numFields; eq++) {
-          const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+this->offset);
-          const int lid = dof_lids(offsets[inode]);
+
+    for (int eq = 0; eq < numFields; eq++) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+offset);
+      for (auto o : offsets) {
+        auto lid = dof_lids[o];
+        if (ss_eqns_dofs_lids[workset.wsIndex].count(lid)==0) {
+          // Set f=x outside the sideset, so we converge in 1 newton iteration
           f_data[lid] = x_data[lid];
         }
       }
@@ -292,20 +320,26 @@ doPostEvaluate(typename Traits::EvalData workset)
 
   // Set J=identity outside of the sideset, so it's not singular
   auto Jac = workset.Jac;
-  const int numCellNodes = node_dof_mgr->getGIDFieldOffsets(0).size();
+  const auto& ss_eqn_lids = this->ss_eqns_dofs_lids.at(workset.wsIndex);
+  const RealType j_coeff = workset.j_coeff;
+  Teuchos::Array<ST> vals;
+  Teuchos::Array<LO> cols;
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto elem_LID = elem_lids(icell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
-    const auto& node_gids = node_dof_mgr->getElementGIDs(elem_LID);
+    for (int eq = 0; eq < this->numFields; eq++) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+this->offset);
+      for (auto o : offsets) {
+        auto lrow = dof_lids[o];
+        if (ss_eqn_lids.count(lrow)==0) {
+          // LID not on the sideset. Diagonalize
 
-    for (int inode=0; inode<numCellNodes; ++inode) {
-      const auto node = node_gids[inode];
-      if (this->ss_nodes_gids.count(node)==0) {
-        for (int eq = 0; eq < this->numFields; eq++) {
-          const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+this->offset);
-          const LO lrow = dof_lids(offsets[inode]);
-          Albany::setLocalRowValue(Jac,lrow,lrow, 1.0);
+          // Extract the row, zero it out, then put j_coeff on diagonal
+          Albany::getLocalRowValues(Jac, lrow, cols, vals);
+          for (auto& val : vals) { val = 0.0; }
+          Albany::setLocalRowValues(Jac, lrow, cols(), vals());
+          Albany::setLocalRowValue(Jac,lrow,lrow, j_coeff);
         }
       }
     }
@@ -333,18 +367,21 @@ doEvaluateFields(typename Traits::EvalData workset,
 
   const int numSides = sideSet.size();
   const int neq = dof_mgr->getNumFields();
+
+  Teuchos::Array<LO> cols;
+
   for (int iside=0; iside<numSides; ++iside) {
     const auto& side = sideSet[iside];
-    const auto ws_elem_pos = side.ws_elem_idx;
-    const auto elem_LID = elem_lids(ws_elem_pos);
+    const auto icell = side.ws_elem_idx;
+    const auto elem_LID = elem_lids(icell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     const auto side_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,side.side_pos);
     const int numNodes = side_nodes.size();
 
     // Precompute the column indices (same for all the rows in this side)
-    const int nunk = neq*numNodes;
-    Teuchos::Array<LO> cols(nunk);
     // Note: we couple the eq with ALL other dofs on the side, so loop on [0,neq)
+    const int nunk = neq*numNodes;
+    cols.resize(nunk*numNodes);
     for (int eq=0; eq<neq; ++eq) {
       const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side.side_pos);
       for (int inode=0; inode<numNodes; ++inode){

@@ -112,7 +112,7 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
 
       MeshScalarT trapezoid_weight = 0;
       for (unsigned int qp=0; qp<numSideQPs; ++qp)

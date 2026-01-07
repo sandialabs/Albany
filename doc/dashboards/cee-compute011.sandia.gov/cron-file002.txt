@@ -1,0 +1,4 @@
+MAILTO=""
+# Run the script in the Albany repo in my home directory
+# This runs the clang set of tests on cee-compute002.  
+#15 23 * * * bash -l -c "ulimit -S -n 2048; rm -rf /scratch/albany/*; cd /projects/albany/nightlyAlbanyCDash; cp /projects/albany/gitconfig_for_omegah ~/.gitconfig; /projects/albany/nightlyAlbanyCDash/nightly_cron_script.sh clang-trilinos; /projects/albany/nightlyAlbanyCDash/nightly_cron_script.sh clang-albany; bash process_results_clang.sh"; chgrp wg-albany -R /projects/albany/nightlyAlbanyCDash/*; chmod ug+rwX -R /projects/albany/nightlyAlbanyCDash/*; chgrp wg-albany -R /scratch/albany;  chgrp wg-albany -R /scratch/albany/*; chmod ug+rwX -R /scratch/albany/*;

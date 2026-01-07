@@ -8,7 +8,7 @@ ANONYMOUS:
     Solution Method: Steady
     Name: LandIce Laplacian Sampling 2D
     Compute Sensitivities: true
-    Side Name: lateralside
+    Side Name: LateralSide
     Response Functions:
       Number Of Responses: 1
       Response 0:
@@ -38,8 +38,8 @@ ANONYMOUS:
         Field Origin: File
         File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction_log.ascii
     Side Set Discretizations:
-      Side Sets: [lateralside]
-      lateralside:
+      Side Sets: [LateralSide]
+      LateralSide:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
         Use Serial Mesh: ${USE_SERIAL_MESH}

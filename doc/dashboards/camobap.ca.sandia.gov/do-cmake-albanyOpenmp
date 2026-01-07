@@ -7,8 +7,8 @@ INSTALL_LOCATION=$BUILD_DIR/install
 cmake \
     -GNinja \
     -D ALBANY_TRILINOS_DIR:PATH=${INSTALL_LOCATION} \
-    -D CMAKE_C_COMPILER=/tpls/install/bin/mpicc \
-    -D CMAKE_CXX_COMPILER=/tpls/install/bin/mpicxx \
+    -D CMAKE_C_COMPILER=${OPENMPI_BIN}/mpicc \
+    -D CMAKE_CXX_COMPILER=${OPENMPI_BIN}/mpicxx \
     -D ENABLE_LANDICE:BOOL=ON \
     -D ENABLE_UNIT_TESTS:BOOL=ON \
     -D ENABLE_DEMO_PDES:BOOL=ON \

@@ -1,7 +1,7 @@
 set (tmpStr "Looking for valid Omega_h installation ...")
 message (STATUS ${tmpStr})
 
-find_package(Omega_h 10.8 CONFIG QUIET
+find_package(Omega_h 11.0 CONFIG QUIET
   # Avoid all defaults. Only check env/CMake var Omega_h_ROOT
   NO_CMAKE_PATH
   NO_CMAKE_ENVIRONMENT_PATH
@@ -57,6 +57,9 @@ else ()
   option (Omega_h_USE_Kokkos "Use Kokkos as a backend" ON)
   option (Omega_h_USE_MPI "Use MPI for parallelism" ON)
   set (MPIEXEC_EXECUTABLE ${Albany_CXX_COMPILER})
+  if (Kokkos_ENABLE_CUDA_UVM)
+    option (Omega_h_MEM_SPACE_SHARED "enabled shared memory space" ON)
+  endif()
 
   message (STATUS " *** Begin of Omega_h configuration ***")
   FetchContent_MakeAvailable (Omega_h)

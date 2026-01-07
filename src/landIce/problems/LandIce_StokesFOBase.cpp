@@ -133,7 +133,8 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
   Intrepid2::DefaultCubatureFactory cubFactory;
 
   int defaultCubDegree = 3;
-  bool tensorProductCell = (discParams->get<std::string>("Method") == "STKExtruded") && ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
+  const auto& discMethod = discParams->get<std::string>("Method");
+  bool tensorProductCell = (discMethod == "STKExtruded" or discMethod == "Extruded") && ((cellType->getKey() == shards::Wedge<6>::key) || (cellType->getKey() == shards::Hexahedron<8>::key));
   std::string tensorCubDegName = "Cubature Degrees (Horiz Vert)";
   if(tensorProductCell && params->isParameter(tensorCubDegName)) {
     TEUCHOS_TEST_FOR_EXCEPTION (params->isParameter("Cubature Degree") && params->isParameter(tensorCubDegName), std::logic_error,
@@ -155,6 +156,9 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     int cubDegree = params->get("Cubature Degree", defaultCubDegree);
     cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubDegree);
   }  
+
+  //Add cubature to discretization, to be used for interpolating QuadPoint Fields 
+  discParams->set<Teuchos::RCP<Intrepid2::Cubature<PHX::Device, RealType, RealType>>>("Cell Cubature", cellCubature);
 
   if(depthIntegratedModel) {
 

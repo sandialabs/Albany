@@ -20,4 +20,7 @@ module load rocm/6.2.4
 # otherwise, you need to supply boost header files yourself
 export BOOST_ROOT=/lustre/orion/cli193/proj-shared/automated_testing/boost_1_86_0
 
+# Need this to avoid error when running seacas decomp
+export LD_LIBRARY_PATH=${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
+
 export MPICH_GPU_SUPPORT_ENABLED=1

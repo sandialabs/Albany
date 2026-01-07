@@ -33,31 +33,35 @@ BUILD_DIR=`pwd`
 cmake -G Ninja \
       -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
-      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
+      -D TPL_BLAS_LIBRARIES:FILEPATH=${OPENBLAS_LIB}/libopenblas.so \
+      -D TPL_LAPACK_LIBRARIES:FILEPATH=${OPENBLAS_LIB}/libopenblas.so \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR:PATH=/tpls/install/bin \
-      -D CMAKE_C_COMPILER=/tpls/install/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/tpls/install/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/tpls/install/bin/mpif90 \
+      -D MPI_BASE_DIR:PATH=${OPENMPI_BIN} \
+      -D CMAKE_C_COMPILER=${OPENMPI_BIN}/mpicc \
+      -D CMAKE_CXX_COMPILER=${OPENMPI_BIN}/mpicxx \
+      -D CMAKE_Fortran_COMPILER=${OPENMPI_BIN}/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_C_INC} \
+      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_C_LIB} \
+      -D TPL_Netcdf_PARALLEL:BOOL=ON \
+      -D TPL_ENABLE_Pnetcdf=ON \
+      -D Pnetcdf_INCLUDE_DIRS:PATH=${PARALLEL_NETCDF_INC} \
+      -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_LIB} \
 \
-      -D TPL_ENABLE_HDF5:BOOL=ON \
-      -D HDF5_INCLUDE_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/include \
-      -D HDF5_LIBRARY_DIRS:PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/lib \
+      -D TPL_ENABLE_HDF5:BOOL=OFF \
+      -D HDF5_INCLUDE_DIRS:PATH=${HDF5_INC} \
+      -D HDF5_LIBRARY_DIRS:PATH=${HDF5_LIB} \
 \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
-      -D Boost_INCLUDE_DIRS:FILEPATH=/tpls/install/include \
-      -D Boost_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
-      -D BoostLib_INCLUDE_DIRS:FILEPATH=/tpls/install/include \
-      -D BoostLib_LIBRARY_DIRS:FILEPATH=/tpls/install/lib \
+      -D Boost_INCLUDE_DIRS:FILEPATH=${BOOST_ROOT}/include \
+      -D Boost_LIBRARY_DIRS:FILEPATH=${BOOST_ROOT}/lib \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_ROOT}/include \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_ROOT}/lib \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \
@@ -154,14 +158,14 @@ cmake -G Ninja \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D BUILD_SHARED_LIBS:BOOL=ON \
       -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-      -D MPI_EXEC=/tpls/install/bin/mpirun \
+      -D MPI_EXEC=${OPENMPI_BIN}/mpirun \
 \
       -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=ON \
       -D Kokkos_ENABLE_LIBDL:BOOL=ON \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
-      -D CMAKE_CXX_STANDARD=17 \
+      -D TPL_ENABLE_gtest=OFF \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \

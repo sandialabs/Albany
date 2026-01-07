@@ -32,11 +32,6 @@ AdvDiffProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 }
 
-Albany::AdvDiffProblem::
-~AdvDiffProblem()
-{
-}
-
 void
 Albany::AdvDiffProblem::
 buildProblem(

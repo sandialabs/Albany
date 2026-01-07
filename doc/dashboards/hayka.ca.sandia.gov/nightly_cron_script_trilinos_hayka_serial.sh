@@ -13,6 +13,8 @@ rm -rf ctest_nightly_trilinos_serial.cmake
 
 unset http_proxy
 unset https_proxy
+unset HTTP_PROXY 
+unset HTTPS_PROXY 
 
 source modules_hayka.sh >& hayka_modules.out  
 source convert-cmake-to-cdash.sh 

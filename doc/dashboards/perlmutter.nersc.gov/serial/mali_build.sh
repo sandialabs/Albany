@@ -1,6 +1,10 @@
 BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
 DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial
-SCORPIO_DIR=/global/common/software/fanssie/scorpio-gnu
+
+# Build SCORPIO
+bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
+
+SCORPIO_DIR=${DEPLOY_DIR}/builds/scorpio-gnu
 ALBANY_INSTALL_DIR=${DEPLOY_DIR}/builds/AlbanyInstallSfad12
 TRILINOS_INSTALL_DIR=${DEPLOY_DIR}/builds/TrilinosInstall
 
@@ -18,10 +22,11 @@ make -j 12 gnu-cray \
   CORE=landice \
   PIO=${SCORPIO_DIR} \
   NETCDF=${NETCDF_DIR} \
-  PNETCDF=${PARALLEL_NETCDF_DIR} \
+  PNETCDF=${PNETCDF_DIR} \
   MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL_DIR}/lib64 -Wl,-R${TRILINOS_INSTALL_DIR}/lib64" \
   DEBUG=false \
   EXE_NAME=landice_model;
 
 mkdir /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/mali
-cp landice_model /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/mali/landice_model
+cp landice_model ${DEPLOY_DIR}/builds/mali/landice_model
+cp -r default_inputs ${DEPLOY_DIR}/builds/mali}

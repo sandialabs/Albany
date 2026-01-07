@@ -7,13 +7,13 @@
 #ifndef ALBANY_ADVDIFFPROBLEM_HPP
 #define ALBANY_ADVDIFFPROBLEM_HPP
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
-
 #include "Albany_AbstractProblem.hpp"
 
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
+
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace Albany {
 
@@ -30,7 +30,7 @@ namespace Albany {
 		 const int numDim_);
 
     //! Destructor
-    ~AdvDiffProblem();
+    ~AdvDiffProblem() = default;
 
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
@@ -86,26 +86,27 @@ namespace Albany {
 
 }
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Shards_CellTopology.hpp"
-
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#include "PHAL_DOFVecGradInterpolation.hpp"
-
 #include "PHAL_AdvDiffResid.hpp"
-
+#include "PHAL_DOFVecGradInterpolation.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "PHAL_P0Interpolation.hpp"
+#include "PHAL_FieldFrobeniusNorm.hpp"
 #include "PHAL_Source.hpp"
+
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Shards_CellTopology.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Albany::AdvDiffProblem::constructEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
-  Albany::StateManager& /* stateMgr */,
+  Albany::StateManager& stateMgr,
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
@@ -234,6 +235,47 @@ Albany::AdvDiffProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (neq==1 and fieldManagerChoice == Albany::BUILD_RESID_FM)
+  {
+    using FRT = Albany::FieldRankType;
+    using FL  = Albany::FieldLocation;
+
+    RCP<ParameterList> p;
+
+    // Gather as a scalar solution
+    ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names[0], 0);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Compute scalar solution gradient
+    ev = evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0],0);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Compute grad norm
+    p = rcp(new ParameterList("Grad Norm"));
+    p->set<std::string>("Field Name",dof_names[0]+" Gradient");
+    p->set<std::string>("Field Layout","Cell QuadPoint Gradient");
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Field Norm"));
+    p->set<std::string>("Field Norm Name","solution_grad_norm");
+
+    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Interpolate (cell,qp) norm to (cell) norm
+    ev = evalUtils.constructP0InterpolationEvaluator ("solution_grad_norm", "Cell Average", FL::QuadPoint, FRT::Scalar);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Save state (cell) state
+    auto entity = StateStruct::ElemData;
+    p = stateMgr.registerStateVariable("solution_grad_norm", dl->cell_scalar2, meshSpecs.ebName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Only PHAL::AlbanyTraits::Residual evaluates something,
+    // others will have empty list of evaluated fields
+    if (ev->evaluatedFields().size()>0) {
+      fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+    }
+  }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter AdvDiff", dl->dummy);

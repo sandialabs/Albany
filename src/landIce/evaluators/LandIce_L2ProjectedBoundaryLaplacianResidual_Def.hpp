@@ -88,7 +88,7 @@ L2ProjectedBoundaryLaplacianResidualBase(Teuchos::ParameterList& p, const Teucho
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (int node=0; node<thisSideNodes; ++node) {
-      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.view_host()(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
   sideNodes.modify_host();
@@ -135,8 +135,8 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
-      const int side = sideSet.side_pos.h_view(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
+      const int side = sideSet.side_pos.view_host()(sideSet_idx);
 
       MeshScalarT trapezoid_weights= 0;
       for (unsigned int qp=0; qp<numBasalQPs; ++qp)
@@ -158,28 +158,35 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
         }
 
         //using trapezoidal rule to get diagonal mass matrix
-        t += (solution(cell,sideNodes.h_view(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
+        t += (solution(cell,sideNodes.view_host()(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
 
-        bdLaplacian_L2Projection_res(cell,sideNodes.h_view(side,inode)) = t;
+        bdLaplacian_L2Projection_res(cell,sideNodes.view_host()(side,inode)) = t;
       }
     }
 
+    const auto  ss_disc = workset.disc->getSideSetDiscretizations().at(sideName);
+    const auto  ss_cell_indexer = ss_disc->getCellsGlobalLocalIndexer();
+    const auto& sides_indexer = workset.disc->getSidesGlobalLocalIndexer();
+    const auto& side_to_ss_cell_map = workset.disc->getSideToSideSetCellMap().at(sideName);
+    const auto& side_to_side_node_map = workset.disc->getSideNodeNumerationMap().at(sideName);
     for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
     {
       // Get the local data of side and cell
-      const int cell = sideSet.ws_elem_idx.h_view(sideSet_idx);
-      const int side = sideSet.side_pos.h_view(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
+      const int side = sideSet.side_pos.view_host()(sideSet_idx);
       shards::CellTopology cell2dType(cellType->getCellTopologyData(sideDim,side));
       auto side_disc = workset.disc->getSideSetDiscretizations().at(sideName);
-      auto side_gid = sideSet.side_GID.h_view(sideSet_idx);
+      auto side_gid = sideSet.side_GID.view_host()(sideSet_idx);
 
       // The following line associates to each 3d-side GID the corresponding 2d-cell.
       // It's needed when the 3d mesh is not built online
-      side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
+      // side_gid = workset.disc->getSideToSideSetCellMap().at(sideName).at(side_gid);
+      GO ss_cell_gid = side_to_ss_cell_map.at(side_gid);
+      int ss_cell_lid = ss_cell_indexer->getLocalElement(ss_cell_gid);
 
       //This map associates the nodes of a 2d cell to the nodes of the corresponding side of the 3d mesh
-      const auto& node_map = workset.disc->getSideNodeNumerationMap().at(sideName).at(side_gid);
-      auto side_workset = side_disc->getElemGIDws()[side_gid].ws;
+      const auto& node_map = side_to_side_node_map.at(side_gid);
+      auto side_workset = side_disc->get_elements_workset_idx()[ss_cell_lid].ws;
       auto side_side_set = side_disc->getSideSets(side_workset);
       if(side_side_set.find(bdEdgesName) != side_side_set.end()) {
         auto bdEdges_set = side_side_set[bdEdgesName];
@@ -196,7 +203,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
                 side_nodes[1] = side_node;
             }
 
-            int cell_nodes[2] = {sideNodes.h_view(side,side_nodes[0]),sideNodes.h_view(side,side_nodes[1])};
+            int cell_nodes[2] = {sideNodes.view_host()(side,side_nodes[0]),sideNodes.view_host()(side,side_nodes[1])};
             MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
             MeshScalarT bdEdge_measure = 0.0; 
             if (bdEdge_measure_sqr > 0.0) 
@@ -208,6 +215,5 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
         }
       }
     }
-
   }
 }

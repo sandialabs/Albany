@@ -87,7 +87,7 @@ ANONYMOUS:
       Mass Coefficient: 1.0e-01
       Laplacian Coefficient: 1.0e+01
       Robin Coefficient: 1.0e+00
-      Boundary Edges Set Name: lateralside
+      Boundary Edges Set Name: LateralSide
     Body Force:
       Type: FO INTERP SURF GRAD
     Hessian:

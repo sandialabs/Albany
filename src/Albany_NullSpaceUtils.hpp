@@ -8,6 +8,7 @@
 #define ALBANY_NULL_SPACE_UTILS_HPP
 
 #include "Albany_ThyraTypes.hpp"
+#include "Albany_TpetraTypes.hpp"
 #include "Albany_MeshSpecs.hpp"
 
 namespace Albany {
@@ -27,8 +28,8 @@ public:
   //! Set Piro solver parameter list.
   void setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams);
 
-  //! Update the parameter list.
-  void updatePL(const Teuchos::RCP<Teuchos::ParameterList>& precParams);
+  //! Is Teko used on this problem?
+  bool isTekoUsed() const { return tekoUsed; }
 
   //! Is MueLu used on this problem?
   bool isMueLuUsed() const { return mueLuUsed; }
@@ -50,20 +51,29 @@ public:
   //! Pass only the coordinates.
   void setCoordinates(const Teuchos::RCP<Thyra_MultiVector> &coordMV);
 
+  //! Get the preconditioner parameter list
+  Teuchos::RCP<Teuchos::ParameterList> getPL() const { return plist; }
+
+  //! Get Teko block decomposition
+  const std::vector<int> & getTekoBlockDecomp() const { TEUCHOS_ASSERT(!tekoBlockDecomp.empty()); return tekoBlockDecomp; }
+
 private:
   int numPDEs;
   bool computeConstantModes; //translations
   int physVectorDim;
   bool computeRotationModes;
   int nullSpaceDim;
-  bool mueLuUsed, froschUsed, setNonElastRBM;
+  bool tekoUsed, mueLuUsed, froschUsed, setNonElastRBM;
   bool areProbParametersSet, arePiroParametersSet;
 
   Teuchos::RCP<Teuchos::ParameterList> plist;
 
+  std::vector<int> tekoBlockDecomp;
+  std::vector<Teuchos::RCP<Teuchos::ParameterList>> tekoBlockPlists;
+
   Teuchos::RCP<Thyra_MultiVector> coordMV;
 
-  Teuchos::RCP<TraitsImplBase> nullSpaceTraits;
+  std::vector<Teuchos::RCP<TraitsImplBase>> nullSpaceTraits;
 };
 
 } // namespace Albany

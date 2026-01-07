@@ -52,17 +52,6 @@ class DiscretizationFactory {
                          const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis,
                          const Teuchos::RCP<RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
-    void
-    setMeshStructFieldData(
-      const Teuchos::RCP<StateInfoStruct>& sis);
-
-    void
-    setMeshStructFieldData(
-      const Teuchos::RCP<StateInfoStruct>& sis,
-      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& side_set_sis);
-
-    void setMeshStructBulkData();
-
     /* This function overwrite previous discretization parameter list */
     void
     setDiscretizationParameters(Teuchos::RCP<Teuchos::ParameterList> disc_params);
@@ -71,7 +60,9 @@ class DiscretizationFactory {
 
     // This is used not only to create the main disc from the volume mesh, but also for
     // creating the side discretizations from the side meshes (if any).
-    Teuchos::RCP<AbstractDiscretization> createDiscretizationFromMeshStruct(
+    Teuchos::RCP<AbstractDiscretization>
+    createDiscretizationFromMeshStruct (
+      const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<AbstractMeshStruct>& mesh,
       const int neq,
       const std::map<int,std::vector<std::string> >& sideSetEquations,

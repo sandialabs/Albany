@@ -26,12 +26,18 @@
 #include "Sacado_ScalarParameterLibrary.hpp"
 #include "Sacado_ScalarParameterVector.hpp"
 
+#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_SerialDenseMatrix.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
+
+#ifdef ALBANY_TEKO
+#include "Teko_TpetraInverseFactoryOperator.hpp"
+#endif
 
 #include <set>
 
@@ -74,6 +80,12 @@ public:
   void
   setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>& in_fm) const;
 
+  void
+  setLinearSolverBuilder(const Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder>& linearSolverBuilder);
+
+  void
+  initializePreconditioner();
+
   //! Get underlying abstract discretization
   Teuchos::RCP<Albany::AbstractDiscretization>
   getDiscretization() const;
@@ -93,10 +105,6 @@ public:
   //! Create Jacobian operator
   Teuchos::RCP<Thyra_LinearOp>
   createJacobianOp() const;
-
-  //! Get Preconditioner Operator
-  Teuchos::RCP<Thyra_LinearOp>
-  getPreconditioner();
 
   bool
   observeResponses() const
@@ -270,6 +278,10 @@ public:
   /*!
    * Set xdot to NULL for steady-state problems
    */
+  void computeGlobalPreconditioner(
+    const Teuchos::RCP<const Thyra_LinearOp> &jac,
+    Teuchos::RCP<Thyra_Preconditioner> &prec
+  );
 
   void
   computeGlobalTangent(
@@ -1195,9 +1207,12 @@ void
   Teuchos::Array<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
 
   //! Data for Physics-Based Preconditioners
-  bool                                 physicsBasedPreconditioner;
-  Teuchos::RCP<Teuchos::ParameterList> precParams;
-  std::string                          precType;
+  bool physicsBasedPreconditioner;
+#ifdef ALBANY_TEKO
+  Teuchos::RCP<Stratimikos::DefaultLinearSolverBuilder> linearSolverBuilder;
+  Teuchos::RCP<Teko::TpetraHelpers::InverseFactoryOperator> invFactoryOp;
+  std::vector<std::vector<GO>> blockGIDs_;
+#endif
 
   //! Type of solution method
   SolutionMethodType solMethod;

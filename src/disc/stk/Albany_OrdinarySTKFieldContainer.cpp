@@ -22,109 +22,67 @@
 
 namespace Albany {
 
-static const char* sol_tag_name[3] = {"Exodus Solution Name",
-                                      "Exodus SolutionDot Name",
-                                      "Exodus SolutionDotDot Name"};
-
-static const char* sol_id_name[3] = {"solution",
-                                     "solution_dot",
-                                     "solution_dotdot"};
-
-#ifdef ALBANY_DTK
-static const char* sol_dtk_tag_name[3] = {"Exodus Solution DTK Name",
-                                          "Exodus SolutionDot DTK Name",
-                                          "Exodus SolutionDotDot DTK Name"};
-
-static const char* sol_dtk_id_name[3] = {"solution dtk",
-                                         "solution_dot dtk",
-                                         "solution_dotdot dtk"};
-#endif
-
-OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
-    const Teuchos::RCP<Teuchos::ParameterList>&               params_,
-    const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
-    const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
-    const int                                                 numDim_,
-    const Teuchos::RCP<Albany::StateInfoStruct>&              sis,
-    const int                                                 num_params_)
-    : GenericSTKFieldContainer(
-          params_,
-          metaData_,
-          bulkData_,
-          numDim_,
-          num_params_)
+OrdinarySTKFieldContainer::
+OrdinarySTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                          const Teuchos::RCP<stk::mesh::MetaData>&    metaData_,
+                          const Teuchos::RCP<stk::mesh::BulkData>&    bulkData_,
+                          const int                                   num_params_,
+                          const bool                                  set_geo_fields_meta_data)
+ : GenericSTKFieldContainer(params_,metaData_,bulkData_)
+ , num_params (num_params_)
 {
-#ifdef ALBANY_DTK
-  bool output_dtk_field =
-      params_->get<bool>("Output DTK Field to Exodus", false);
-#endif
-
-  // Start STK stuff
-  this->coordinates_field = metaData_->get_field<double>(stk::topology::NODE_RANK, "coordinates");
-
-  //STK throws when declaring a field that has been already declared
-  if(this->coordinates_field == nullptr) {
-    this->coordinates_field = &metaData_->declare_field<double>(stk::topology::NODE_RANK, "coordinates");
+  if (set_geo_fields_meta_data) {
+    setGeometryFieldsMetadata ();
   }
-  stk::mesh::put_field_on_mesh(
-      *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
-#ifdef ALBANY_SEACAS
-  stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
-#endif
-  if (numDim_ == 3) {
-    this->coordinates_field3d = this->coordinates_field;
-  } else {
-    this->coordinates_field3d = &metaData_->declare_field<double>(
-        stk::topology::NODE_RANK, "coordinates3d");
-    stk::mesh::put_field_on_mesh(
-        *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
-#ifdef ALBANY_SEACAS
-    if (params_->get<bool>("Export 3d coordinates field", false)) {
-      stk::io::set_field_role(
-          *this->coordinates_field3d, Ioss::Field::TRANSIENT);
-    }
-#endif
-  }
-
-  initializeProcRankField();
-
-  this->addStateStructs(sis);
 }
 
-OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
-    const Teuchos::RCP<Teuchos::ParameterList>&               params_,
-    const Teuchos::RCP<stk::mesh::MetaData>&                  metaData_,
-    const Teuchos::RCP<stk::mesh::BulkData>&                  bulkData_,
-    const int                                                 neq_,
-    const int                                                 numDim_,
-    const Teuchos::RCP<StateInfoStruct>&                      /* sis */,
-    const int                                                 num_params_)
-    : GenericSTKFieldContainer(
-          params_,
-          metaData_,
-          bulkData_,
-          neq_,
-          numDim_,
-          num_params_)
+void OrdinarySTKFieldContainer::
+setSolutionFieldsMetadata (int neq)
 {
-  int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
+  this->solutionFieldContainer = true;
+
+  save_solution_field = params->get("Save Solution Field", true);
+  if (not save_solution_field) {
+    return;
+  }
+
+  using strvec_t = std::vector<std::string>;
+
+  strvec_t sol_tag_name = {"Exodus Solution Name",
+                           "Exodus SolutionDot Name",
+                           "Exodus SolutionDotDot Name"};
+
+  strvec_t sol_id_name = {"solution",
+                          "solution_dot",
+                          "solution_dotdot"};
+
+  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
+  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
+
+  int num_time_deriv = params->get<int>("Number Of Time Derivatives");
 #ifdef ALBANY_DTK
-  bool output_dtk_field =
-      params_->get<bool>("Output DTK Field to Exodus", false);
+  bool output_dtk_field = params->get<bool>("Output DTK Field to Exodus", false);
+  strvec_t sol_dtk_tag_name = {"Exodus Solution DTK Name",
+                               "Exodus SolutionDot DTK Name",
+                               "Exodus SolutionDotDot DTK Name"};
+
+  strvec_t sol_dtk_id_name = {"solution dtk",
+                              "solution_dot dtk",
+                              "solution_dotdot dtk"};
 #endif
   //IKT FIXME? - currently won't write dxdp to output file if problem is steady,
   //as this output doesn't work in same way.  May want to change in the future.
-  const auto& sens_method = params_->get<std::string>("Sensitivity Method","None");
+  const auto& sens_method = params->get<std::string>("Sensitivity Method","None");
 
-  output_sens_field = this->num_params > 0 && num_time_deriv > 0 && sens_method != "None";
+  output_sens_field = num_params > 0 && num_time_deriv > 0 && sens_method != "None";
 
   //Create tag and id arrays for sensitivity field (dxdp or dgdp)
-  std::vector<std::string> sol_sens_tag_name_vec;
-  std::vector<std::string> sol_sens_id_name_vec;
+  strvec_t sol_sens_tag_name_vec;
+  strvec_t sol_sens_id_name_vec;
   if (sens_method == "Forward") {
-    sol_sens_tag_name_vec.resize(this->num_params);
-    sol_sens_id_name_vec.resize(this->num_params);
-    for (int np=0; np<this->num_params; np++) {
+    sol_sens_tag_name_vec.resize(num_params);
+    sol_sens_id_name_vec.resize(num_params);
+    for (int np=0; np<num_params; np++) {
       sol_sens_tag_name_vec[np] = "Exodus Solution Sensitivity Name" + std::to_string(np);
       sol_sens_id_name_vec[np] = "sensitivity dxdp" + std::to_string(np);
     }
@@ -136,83 +94,37 @@ OrdinarySTKFieldContainer::OrdinarySTKFieldContainer(
     //WARNING IKT 8/24/2021: I am not sure that the following will do the right thing in the case the parameter
     //p is not defined on the entire mesh.  A different way of observing dgdp may need to be implemented
     //for that case.  Also note that dgdp will not be written correctly to the mesh for the case of a scalar (vs. distributed) parameter.
-    const int resp_fn_index = params_->get<int>("Response Function Index");
-    const int param_sens_index = params_->get<int>("Sensitivity Parameter Index");
+    const int resp_fn_index = params->get<int>("Response Function Index");
+    const int param_sens_index = params->get<int>("Sensitivity Parameter Index");
     sol_sens_id_name_vec[0] = "sensitivity dg" + std::to_string(resp_fn_index) + "dp" + std::to_string(param_sens_index);
   }
 
   if (save_solution_field) {
     solution_field.resize(num_time_deriv + 1);
     solution_field_dtk.resize(num_time_deriv + 1);
-    solution_field_dxdp.resize(this->num_params);
+    solution_field_dxdp.resize(num_params);
 
     for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
-      solution_field[num_vecs] = &metaData_->declare_field<double>(
-          stk::topology::NODE_RANK,
-          params_->get<std::string>(
-              sol_tag_name[num_vecs], sol_id_name[num_vecs]));
-      stk::mesh::put_field_on_mesh(
-          *solution_field[num_vecs], metaData_->universal_part(), neq_, nullptr); // KL: this
+      const auto& name = params->get(sol_tag_name[num_vecs],sol_id_name[num_vecs]);
+      solution_field[num_vecs] = add_field_to_mesh<double>(name,true,true,neq);
 #if defined(ALBANY_DTK)
       if (output_dtk_field == true) {
-        solution_field_dtk[num_vecs] = &metaData_->declare_field<double>(
-            stk::topology::NODE_RANK,
-            params_->get<std::string>(
-                sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
-        stk::mesh::put_field_on_mesh(
-            *solution_field_dtk[num_vecs],
-            metaData_->universal_part(),
-            neq_,
-            nullptr);
+        const auto& dtk_name = params->get(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]);
+        solution_field_dtk[num_vecs] = add_field_to_mesh<double>(dtk_name,true,true,neq);
       }
-#endif
-
-#ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*solution_field[num_vecs], Ioss::Field::TRANSIENT);
-#if defined(ALBANY_DTK)
-      if (output_dtk_field == true)
-        stk::io::set_field_role(
-            *solution_field_dtk[num_vecs], Ioss::Field::TRANSIENT);
-#endif
 #endif
     }
   }
 
   //Transient sensitivities output to Exodus
   if(output_sens_field) {
-    const int num_sens = (sens_method == "Forward") ? this->num_params : 1;
+    const int num_sens = (sens_method == "Forward") ? num_params : 1;
     for (int np = 0; np < num_sens; np++) {
-        solution_field_dxdp[np] = &metaData_->declare_field<double>(
-            stk::topology::NODE_RANK,
-            params_->get<std::string>(
-                sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]));
-        stk::mesh::put_field_on_mesh(
-            *solution_field_dxdp[np],
-            metaData_->universal_part(),
-            neq_,
-            nullptr);
-#ifdef ALBANY_SEACAS
-      stk::io::set_field_role(
-          *solution_field_dxdp[np], Ioss::Field::TRANSIENT);
-#endif
+      const auto sens_name = params->get(sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]);
+      solution_field_dxdp[np] = add_field_to_mesh<double>(sens_name,true,true,neq);
+
     }
   }
-}
-
-void
-OrdinarySTKFieldContainer::initializeProcRankField()
-{
-
-  this->proc_rank_field = &this->metaData->template declare_field<int>(
-      stk::topology::ELEMENT_RANK, "proc_rank");
-
-  // Processor rank field, a scalar
-  stk::mesh::put_field_on_mesh(
-      *this->proc_rank_field, this->metaData->universal_part(), nullptr);
-
-#ifdef ALBANY_SEACAS
-  stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
-#endif
 }
 
 void OrdinarySTKFieldContainer::
@@ -252,10 +164,10 @@ fillSolnSensitivity(Thyra_MultiVector&                    dxdp,
                     const bool                            overlapped)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    dxdp.domain()->dim() != this->num_params, std::runtime_error,
+    dxdp.domain()->dim() != num_params, std::runtime_error,
     "Error in fillSolnSensitivity! Wrong number of vectors in dxdp.\n"
     "  - num vectors: " << dxdp.domain()->dim() << "\n"
-    "  - num_params : " << this->num_params << "\n");
+    "  - num_params : " << num_params << "\n");
 
   for (int iparam = 0; iparam < solution_field_dxdp.size(); ++iparam) {
     auto col = dxdp.col(iparam);
@@ -287,12 +199,12 @@ saveSolnVector (const Thyra_Vector& soln,
 
   if (soln_dxdp != Teuchos::null and output_sens_field) {
     TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_dxdp->domain()->dim() != this->num_params, std::runtime_error,
+      soln_dxdp->domain()->dim() != num_params, std::runtime_error,
       "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
       "  - num vectors: " << soln_dxdp->domain()->dim() << "\n"
-      "  - num_params : " << this->num_params << "\n");
+      "  - num_params : " << num_params << "\n");
 
-    for (int np = 0; np < this->num_params; np++) {
+    for (int np = 0; np < num_params; np++) {
       saveVectorImpl (*soln_dxdp->col(np), solution_field_dxdp[np]->name(), sol_dof_mgr, overlapped);
     }
   }
@@ -337,12 +249,12 @@ saveSolnMultiVector (const Thyra_MultiVector& soln,
 
   if (soln_dxdp != Teuchos::null and output_sens_field) {
     TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_dxdp->domain()->dim() != this->num_params, std::runtime_error,
+      soln_dxdp->domain()->dim() != num_params, std::runtime_error,
       "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
       "  - num vectors: " << soln_dxdp->domain()->dim() << "\n"
-      "  - num_params : " << this->num_params << "\n");
+      "  - num_params : " << num_params << "\n");
 
-    for (int np = 0; np < this->num_params; np++) {
+    for (int np = 0; np < num_params; np++) {
       saveVectorImpl (*soln_dxdp->col(np), solution_field_dxdp[np]->name(), sol_dof_mgr, overlapped);
     }
   }

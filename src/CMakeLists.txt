@@ -41,6 +41,7 @@ set (ALBANY_INCLUDE_DIRS
      ${Albany_SOURCE_DIR}/src/problems
      ${Albany_SOURCE_DIR}/src/responses
      ${Albany_SOURCE_DIR}/src/disc/stk
+     ${Albany_SOURCE_DIR}/src/disc/extruded
      ${Albany_SOURCE_DIR}/src/disc
      ${Albany_SOURCE_DIR}/src/utility
 )
@@ -229,27 +230,29 @@ list (APPEND HEADERS
 
 #discretization
 list (APPEND SOURCES
+  disc/Albany_AbstractDiscretization.cpp
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_MeshSpecs.cpp
   disc/Albany_DOFManager.cpp
   disc/Albany_DiscretizationUtils.cpp
-  disc/Albany_ExtrudedMesh.cpp
-  disc/Albany_ExtrudedConnManager.cpp
-  disc/Albany_ExtrudedDiscretization.cpp
+  disc/extruded/Albany_ExtrudedConnManager.cpp
+  disc/extruded/Albany_ExtrudedDiscretization.cpp
+  disc/extruded/Albany_ExtrudedMesh.cpp
+  disc/extruded/Albany_ExtrudedMeshFieldAccessor.cpp
   )
 list (APPEND HEADERS
   disc/Albany_DiscretizationUtils.hpp
   disc/Albany_AbstractDiscretization.hpp
   disc/Albany_AbstractMeshStruct.hpp
   disc/Albany_AbstractMeshFieldAccessor.hpp
-  disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_MeshSpecs.hpp
   disc/Albany_ConnManager.hpp
   disc/Albany_DOFManager.hpp
-  disc/Albany_ExtrudedMesh.hpp
-  disc/Albany_ExtrudedConnManager.hpp
-  disc/Albany_ExtrudedDiscretization.hpp
+  disc/extruded/Albany_ExtrudedConnManager.hpp
+  disc/extruded/Albany_ExtrudedDiscretization.hpp
+  disc/extruded/Albany_ExtrudedMesh.hpp
+  disc/extruded/Albany_ExtrudedMeshFieldAccessor.hpp
   )
 
 #stk
@@ -267,7 +270,6 @@ list(APPEND SOURCES
   disc/stk/Albany_SideSetSTKMeshStruct.cpp
   disc/stk/Albany_STKDiscretization.cpp
   disc/stk/Albany_STKFieldContainerHelper.cpp
-  disc/stk/Albany_STKNodeFieldContainer.cpp
   disc/stk/Albany_STKNodeSharing.cpp
   disc/stk/Albany_STK3DPointStruct.cpp
   disc/stk/Albany_TmplSTKMeshStruct.cpp
@@ -289,8 +291,6 @@ list (APPEND HEADERS
   disc/stk/Albany_SideSetSTKMeshStruct.hpp
   disc/stk/Albany_STKDiscretization.hpp
   disc/stk/Albany_STKFieldContainerHelper.hpp
-  disc/stk/Albany_STKNodeFieldContainer.hpp
-  disc/stk/Albany_STKNodeFieldContainer_Def.hpp
   disc/stk/Albany_STKNodeSharing.hpp
   disc/stk/Albany_STK3DPointStruct.hpp
   disc/stk/Albany_TmplSTKMeshStruct.hpp
@@ -321,20 +321,15 @@ if (ENABLE_OMEGAH)
   list (APPEND SOURCES
     disc/omegah/Albany_Omegah.cpp
     disc/omegah/Albany_OmegahGenericMesh.cpp
-    disc/omegah/Albany_OmegahBoxMesh.cpp
     disc/omegah/Albany_OmegahDiscretization.cpp
     disc/omegah/Albany_OmegahMeshFieldAccessor.cpp
-    disc/omegah/Albany_OmegahOshMesh.cpp
     disc/omegah/OmegahConnManager.cpp
   )
   list (APPEND HEADERS
     disc/omegah/Albany_Omegah.hpp
     disc/omegah/Albany_OmegahGenericMesh.hpp
-    disc/omegah/Albany_OmegahBoxMesh.hpp
-    disc/omegah/Albany_OmegahBoxMesh_Def.hpp
     disc/omegah/Albany_OmegahDiscretization.hpp
     disc/omegah/Albany_OmegahMeshFieldAccessor.hpp
-    disc/omegah/Albany_OmegahOshMesh.hpp
     disc/omegah/Albany_OmegahUtils.hpp
     disc/omegah/OmegahConnManager.hpp
     disc/omegah/OmegahPermutation.hpp
@@ -529,6 +524,10 @@ endif()
 
 if (ALBANY_OMEGAH)
   target_link_libraries(albanyLib Omega_h::omega_h)
+endif()
+
+if (ALBANY_MESHFIELDS)
+  target_link_libraries(albanyLib meshfields)
 endif()
 
 install(TARGETS albanyLib EXPORT albany-export

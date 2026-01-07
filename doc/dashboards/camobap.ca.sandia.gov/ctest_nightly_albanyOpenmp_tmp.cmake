@@ -28,7 +28,6 @@ set (CTEST_SOURCE_NAME repos)
 #set (CTEST_BUILD_NAME "rhel8.5-gcc11.1.0-${CTEST_BUILD_CONFIGURATION}-Openmp-Albany")
 set (CTEST_BINARY_NAME build)
 
-
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
@@ -49,7 +48,6 @@ set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 #IKT, 3/8/2022: the following is for Ninja build
 set (CTEST_BUILD_FLAGS "${CTEST_BUILD_FLAGS}-k 999999")
 
-set (CTEST_DROP_METHOD "https")
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -100,13 +98,17 @@ getuname(cpu    -m)
 
 set (CTEST_BUILD_NAME "Albany-${osname}-${osrel}-${COMPILER}-${COMPILER_VERSION}-${CTEST_BUILD_CONFIGURATION}-OpenMP")
 
+
+set (CTEST_DROP_METHOD "https")
+
 if (CTEST_DROP_METHOD STREQUAL "https")
-  set (CTEST_DROP_SITE "cdash.sandia.gov")
+  set(CTEST_DROP_METHOD "https")
   set (CTEST_PROJECT_NAME "Albany")
-  set (CTEST_DROP_LOCATION "/CDash-2-3-0/submit.php?project=Albany")
-  set (CTEST_TRIGGER_SITE "")
-  set (CTEST_DROP_SITE_CDASH TRUE)
+  set(CTEST_DROP_SITE "albany-cdash.sandia.gov")
+  set(CTEST_DROP_LOCATION "/submit.php?project=Albany")
+  set(CTEST_DROP_SITE_CDASH TRUE)
 endif ()
+
 
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
@@ -218,6 +220,7 @@ endif ()
 
 
 if (BUILD_ALBFUNCTOR_OPENMP)
+  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build with OpenMP KokkosNode
 
   set (CONFIGURE_OPTIONS
     CDASH-ALBANY-FILE.TXT

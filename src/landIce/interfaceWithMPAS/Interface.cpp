@@ -255,6 +255,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       //Compute mesh layers associated to quad points
       std::vector<int> layerVec(numQPs);
       auto quadPointCoordsHost = Kokkos::create_mirror_view(quadPointCoords);
+      Kokkos::deep_copy(quadPointCoordsHost, quadPointCoords);
       for(int qp=0; qp<numQPs; qp++) {
         int il=0; 
         auto z = (quadPointCoordsHost(qp,2)+1.0)/2; //quad points are defined on [-1,1]
@@ -620,7 +621,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   Teuchos::ParameterList& landiceBcList = probParamList.sublist("LandIce BCs");
   landiceBcList.set<int>("Number",2);
 
-  // Basal Friction BC
+  // Basal Friction BC  
   auto& basalParams = landiceBcList.sublist("BC 0");
   auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
   bool zeroEffectPressOnShelf = basalFrictionParams.get<bool>("Zero Effective Pressure On Floating Ice At Nodes", !physParamList.get<bool>("Use GLP"));
@@ -629,12 +630,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     std::cout<<"\nWARNING: Both BC options \"Zero Effective Pressure On Floating Ice At Nodes\" and \"Zero Beta On Floating Ice\" are set to true. To avoid unexpected beahvior only one should be set to true.\n"<<std::endl;
 
   int basal_cub_degree = physParamList.get<bool>("Use GLP") ? 8 : 4;
-
-  //TODO: remove this after fixing MPAS
-  basal_cub_degree = basalParams.get<int>("Cubature Degree", basal_cub_degree);
-
   probParamList.set<int>("Basal Cubature Degree",probParamList.get<int>("Basal Cubature Degree", basal_cub_degree));
   basalParams.set("Side Set Name", basalParams.get("Side Set Name", "basalside"));
+  probParamList.set("Basal Side Name", basalParams.get<std::string>("Side Set Name"));
   basalParams.set("Type", basalParams.get("Type", "Basal Friction"));
   auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type","Power Law"));
   basalFrictionParams.set("Type",betaType);
@@ -647,7 +645,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalFrictionParams.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", zeroEffectPressOnShelf);
 
   //Lateral floating ice BCs
-  int lateral_cub_degree = 3;
+  int lateral_cub_degree = 4;
   auto& lateralParams = landiceBcList.sublist("BC 1");
   lateralParams.set<int>("Cubature Degree",lateralParams.get<int>("Cubature Degree", lateral_cub_degree));
   //If the following option is not specified (recommended) 
@@ -705,7 +703,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   }
 
   Teuchos::Array<int> defaultCubatureDegrees(2); 
-  defaultCubatureDegrees[0] = 4; defaultCubatureDegrees[1]= depthIntegratedModel ? 6 : 3; 
+  defaultCubatureDegrees[0] = 4; defaultCubatureDegrees[1]= depthIntegratedModel ? 7 : 3; 
 
   if(!probParamList.isParameter("Cubature Degree") || depthIntegratedModel)
     probParamList.set("Cubature Degrees (Horiz Vert)", probParamList.get("Cubature Degrees (Horiz Vert)", defaultCubatureDegrees));  //set Cubature Degrees if not defined

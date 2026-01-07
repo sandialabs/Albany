@@ -65,6 +65,10 @@ cmake \
   -D Kokkos_ENABLE_TESTS:BOOL=OFF \
   -D Kokkos_ARCH_ZEN3:BOOL=ON \
 \
+  -D TPL_ENABLE_ROCBLAS:BOOL=ON \
+  -D TPL_ENABLE_ROCSPARSE:BOOL=ON \
+  -D TPL_ENABLE_ROCSOLVER:BOOL=ON \
+\
   -D Amesos2_ENABLE_KLU2:BOOL=ON \
   -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
   -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
@@ -120,3 +124,7 @@ cmake \
   -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
 \
+  -D Tacho_ENABLE_INT_INT:BOOL=ON \
+  -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
+\
+..

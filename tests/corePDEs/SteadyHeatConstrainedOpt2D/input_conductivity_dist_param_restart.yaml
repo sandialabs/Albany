@@ -5,10 +5,10 @@ ANONYMOUS:
     Name: Heat 2D
     Compute Sensitivities: true
     Dirichlet BCs: 
-      DBC on NS nodeset0 for DOF T: 1.0
-      DBC on NS nodeset1 for DOF T: 0.0
-      DBC on NS nodeset2 for DOF T: -1.0
-      DBC on NS nodeset3 for DOF T: 0.00
+      DBC on NS NodeSet0 for DOF T: 1.0
+      DBC on NS NodeSet1 for DOF T: 0.0
+      DBC on NS NodeSet2 for DOF T: -1.0
+      DBC on NS NodeSet3 for DOF T: 0.00
     Parameters:
       Number Of Parameters: 1
       Parameter 0:

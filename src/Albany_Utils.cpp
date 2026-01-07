@@ -19,10 +19,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Kokkos_Macros.hpp"
 
-// For vtune
-#include <sys/types.h>
-#include <unistd.h>
-
 // For stack trace
 #include <execinfo.h>
 #include <cstdarg>
@@ -483,8 +479,7 @@ CmdLineArgs::CmdLineArgs(
       yaml_filename3(default_yaml_filename3),
       has_first_yaml_file(false),
       has_second_yaml_file(false),
-      has_third_yaml_file(false),
-      vtune(false)
+      has_third_yaml_file(false)
 {
 }
 
@@ -496,11 +491,9 @@ CmdLineArgs::parse_cmdline(int argc, char** argv, std::ostream& os)
   for (int arg = 1; arg < argc; ++arg) {
     if (!std::strcmp(argv[arg], "--help")) {
       os << argv[0]
-         << " [--vtune] [inputfile1.yaml] [inputfile2.yaml] "
+         << " [inputfile1.yaml] [inputfile2.yaml] "
             "[inputfile3.yaml]\n";
       std::exit(1);
-    } else if (!std::strcmp(argv[arg], "--vtune")) {
-      vtune = true;
     } else {
       if (!found_first_yaml_file) {
         yaml_filename         = argv[arg];
@@ -516,20 +509,6 @@ CmdLineArgs::parse_cmdline(int argc, char** argv, std::ostream& os)
       }
     }
   }
-}
-
-void
-connect_vtune(const int p_rank)
-{
-  std::stringstream cmd;
-  pid_t             my_os_pid  = getpid();
-  const std::string vtune_loc  = "amplxe-cl";
-  const std::string output_dir = "./vtune/vtune.";
-  cmd << vtune_loc << " -collect hotspots -result-dir " << output_dir << p_rank
-      << " -target-pid " << my_os_pid << " &";
-  if (p_rank == 0) std::cout << cmd.str() << std::endl;
-  safe_system(cmd.str().c_str());
-  safe_system("sleep 10");
 }
 
 void
@@ -576,14 +555,6 @@ safe_fgets(char* str, int size, FILE* stream)
       ret == str,
       ret << "=safe_fgets(" << static_cast<void*>(str) << ", " << size << ", "
           << stream << ")");
-}
-
-void
-safe_system(char const* str)
-{
-  ALBANY_ASSERT(str, "safe_system called with null command string\n");
-  int ret = system(str);
-  ALBANY_ASSERT(str, ret << "=safe_system(\"" << str << "\")");
 }
 
 void

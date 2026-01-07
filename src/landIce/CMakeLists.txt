@@ -30,6 +30,7 @@ set(SOURCES
   evaluators/LandIce_ColumnCouplingTestResidual.cpp
   evaluators/LandIce_Dissipation.cpp
   evaluators/LandIce_DOFDivInterpolationSide.cpp
+  evaluators/LandIce_EllipticMockModelResidual.cpp
   evaluators/LandIce_EnthalpyResid.cpp
   evaluators/LandIce_EnthalpyBasalResid.cpp
   evaluators/LandIce_FlowRate.cpp
@@ -66,6 +67,7 @@ set(SOURCES
   evaluators/LandIce_w_Resid.cpp
   evaluators/LandIce_Time.cpp
   problems/LandIce_ColumnCouplingTest.cpp
+  problems/LandIce_EllipticMockModel.cpp
   problems/LandIce_Enthalpy.cpp
   problems/LandIce_Hydrology.cpp
   problems/LandIce_LaplacianSampling.cpp
@@ -100,6 +102,8 @@ set(HEADERS
   evaluators/LandIce_Dissipation_Def.hpp
   evaluators/LandIce_DOFDivInterpolationSide.hpp
   evaluators/LandIce_DOFDivInterpolationSide_Def.hpp
+  evaluators/LandIce_EllipticMockModelResidual.hpp
+  evaluators/LandIce_EllipticMockModelResidual_Def.hpp
   evaluators/LandIce_EnthalpyResid.hpp
   evaluators/LandIce_EnthalpyResid_Def.hpp
   evaluators/LandIce_EnthalpyBasalResid.hpp
@@ -195,6 +199,7 @@ set(HEADERS
   utility/Intrepid2_HGRAD_LINE_I4_FEMDef.hpp
   problems/LandIce_ColumnCouplingTest.hpp
   problems/LandIce_Enthalpy.hpp
+  problems/LandIce_EllipticMockModel.hpp
   problems/LandIce_Hydrology.hpp
   problems/LandIce_LaplacianSampling.hpp
   problems/LandIce_ParamEnum.hpp
@@ -220,9 +225,6 @@ endif()
 add_library(landIce ${Albany_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(landIce PROPERTIES PUBLIC_HEADER "${HEADERS}")
 target_link_libraries(landIce PUBLIC albanyLib)
-if (ALBANY_OMEGAH)
-  target_link_libraries(landIce PUBLIC Omega_h::omega_h)
-endif()
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(landIce SYSTEM PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")

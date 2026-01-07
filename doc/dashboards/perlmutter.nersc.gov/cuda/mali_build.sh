@@ -1,6 +1,10 @@
 BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda
 DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda
-SCORPIO_DIR=/global/common/software/fanssie/scorpio-gnu
+
+# Build SCORPIO
+bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
+
+SCORPIO_DIR=${DEPLOY_DIR}/builds/scorpio-gnu
 ALBANY_INSTALL_DIR=${DEPLOY_DIR}/builds/AlbanyInstallSfad12
 TRILINOS_INSTALL_DIR=${DEPLOY_DIR}/builds/TrilinosInstall
 

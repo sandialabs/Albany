@@ -5,15 +5,59 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
   get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
   set (testName ${parentDirName}_${dirName})
 
-  # Create the test with this name and standard executable
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-  add_test(${testName} ${SerialAlbany.exe} input.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "Demo;Forward;Serial")
+  # 1d test
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_1d_stk.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_1d_stk.yaml COPYONLY)
+  add_test(${testName}_1d_stk ${SerialAlbany.exe} input_1d_stk.yaml)
+  set_tests_properties(${testName}_1d_stk PROPERTIES LABELS "Demo;Forward;Serial")
 
-  # Create adaptivity test (serial only)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_adapt.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_adapt.yaml COPYONLY)
-  add_test(${testName}_adapt ${SerialAlbany.exe} input_adapt.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
+  # 1d test with adaptivity
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_1d_adapt_stk.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_1d_adapt_stk.yaml COPYONLY)
+  add_test(${testName}_1d_adapt_stk ${SerialAlbany.exe} input_1d_adapt_stk.yaml)
+  set_tests_properties(${testName}_1d_adapt_stk PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
+
+  # 2d test
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_stk.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_2d_stk.yaml COPYONLY)
+  add_test(${testName}_2d_stk ${SerialAlbany.exe} input_2d_stk.yaml)
+  set_tests_properties(${testName}_2d_stk PROPERTIES LABELS "Demo;Forward;Serial")
+
+  # If omegah is available, repeat all tests but with Omega_h as discretization lib
+  if (ENABLE_OMEGAH)
+    # 1d test
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_1d_omegah.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_1d_omegah.yaml COPYONLY)
+    add_test(${testName}_1d_omegah ${SerialAlbany.exe} input_1d_omegah.yaml)
+    set_tests_properties(${testName}_1d_omegah PROPERTIES LABELS "Demo;Forward;Serial")
+
+    # 1d test with adaptivity
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_1d_adapt_omegah.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_1d_adapt_omegah.yaml COPYONLY)
+    add_test(${testName}_1d_adapt_omega_h ${SerialAlbany.exe} input_1d_adapt_omegah.yaml)
+    set_tests_properties(${testName}_1d_adapt_omega_h PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
+
+    # 2d test
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_omegah.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_2d_omegah.yaml COPYONLY)
+    add_test(${testName}_2d_omegah ${SerialAlbany.exe} input_2d_omegah.yaml)
+    set_tests_properties(${testName}_2d_omegah PROPERTIES LABELS "Demo;Forward;Serial")
+
+    if (ENABLE_MESHFIELDS)
+      # 2d test with adaptivity
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_adapt_omegah.yaml
+                     ${CMAKE_CURRENT_BINARY_DIR}/input_2d_adapt_omegah.yaml COPYONLY)
+      set(testBaseName ${testName}_2d_adapt_omegah)
+      add_test(${testBaseName}_Serial ${SerialAlbany.exe} input_2d_adapt_omegah.yaml)
+      set_tests_properties(${testBaseName}_Serial PROPERTIES LABELS "Demo;Forward;Serial;Adapt")
+
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_adapt_omegah_2proc.yaml
+                     ${CMAKE_CURRENT_BINARY_DIR}/input_2d_adapt_omegah_2proc.yaml COPYONLY)
+      set(Albany2.exe ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${MPIPOST} ${AlbanyPath})
+      add_test(${testBaseName}_2proc ${Albany2.exe} input_2d_adapt_omegah_2proc.yaml)
+      set_tests_properties(${testBaseName}_2proc PROPERTIES LABELS "Demo;Forward;Adapt")
+    ENDIF()
+
+  ENDIF()
+
 ENDIF ()

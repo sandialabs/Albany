@@ -78,7 +78,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
     // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
     int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (int node=0; node<thisSideNodes; ++node) {
-      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.view_host()(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
   sideNodes.modify_host();
@@ -109,8 +109,8 @@ void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::
 operator() (const StokesFOBasalResid_Tag&, const int& sideSet_idx) const {
   
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
-  const int side = sideSet.side_pos.d_view(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
+  const int side = sideSet.side_pos.view_device()(sideSet_idx);
 
   ScalarT local_res[2];
 
@@ -131,7 +131,7 @@ operator() (const StokesFOBasalResid_Tag&, const int& sideSet_idx) const {
       local_res[1] += (beta(sideSet_idx,qp)*(u0*bx*by + u1*(1.0+by*by)))*BF(sideSet_idx,node,qp)*w_measure(sideSet_idx,qp);
     }
     for (unsigned int dim=0; dim<vecDimFO; ++dim)
-      KU::atomic_add<ExecutionSpace>(&residual(cell,sideNodes.d_view(side,node),dim), local_res[dim]);
+      KU::atomic_add<ExecutionSpace>(&residual(cell,sideNodes.view_device()(side,node),dim), local_res[dim]);
   }
 
 }

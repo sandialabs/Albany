@@ -38,11 +38,13 @@ struct AbstractMeshStruct {
     virtual std::string meshLibName() const = 0;
 
     virtual void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
-                               const Teuchos::RCP<StateInfoStruct>& sis) = 0;
+                               const Teuchos::RCP<StateInfoStruct>& sis,
+                               std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis) = 0;
 
     virtual void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) = 0;
 
     bool isBulkDataSet () const { return m_bulk_data_set; }
+    bool isFieldDataSet () const { return m_field_data_set; }
 
     virtual LO get_num_local_elements () const = 0;
     virtual LO get_num_local_nodes () const = 0;
@@ -59,6 +61,7 @@ struct AbstractMeshStruct {
     std::map<std::string, Teuchos::RCP<AbstractMeshStruct>> sideSetMeshStructs;
   protected:
 
+    bool m_field_data_set = false;
     bool m_bulk_data_set = false;
 };
 

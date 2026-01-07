@@ -164,7 +164,7 @@ void ThyraCrsMatrixFactory::fillComplete () {
     DView nnz_per_row("nnz",numOvRows);
     auto ov_nnz_data = nnz.getData(0);
     for (LO i=0; i<numOvRows; ++i) {
-      nnz_per_row.view_host()[i] = static_cast<size_t>(ov_nnz_data[i]);
+      nnz_per_row.view_host()(i) = static_cast<size_t>(ov_nnz_data[i]);
     }
     // Make sure it is synced to device
     nnz_per_row.modify_host();

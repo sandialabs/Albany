@@ -1,0 +1,223 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+          #Write Jacobian to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 0
+    Solution Method: Steady
+    Name: LandIce Elliptic Mock Model 2D
+    Compute Sensitivities: true
+    Side Name: SideSet1
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 1
+        Response 0:
+          Scaling Coefficient: 1.0
+          Name: Quadratic Linear Operator Based
+          Matrix A File Name: ./matrices/A_mis.mm
+          Matrix D File Name: ./matrices/D_mis.mm
+          Matrix D Is Diagonal: false
+          #Field Name: obs_vel
+          Field Name: solution
+          Target Field Name: obs_solution
+          D Solver Settings:
+            Linear Solver Type: Amesos2
+            Linear Solver Types:
+              Amesos2:
+                Solver Type: KLU2
+                VerboseObject:
+                  Verbosity Level: medium
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 500
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                #Prec Type: RILUK
+                Prec Type: Amesos2
+                Ifpack2 Settings:
+                  Amesos2: {}
+                  Amesos2 solver name: KLU2
+        Response 1:
+          Scaling Coefficient: 1.0
+          Name: Quadratic Linear Operator Based
+          Field Name: parameter
+          Matrix A File Name: ./matrices/A_prior.mm
+          Matrix D File Name: ./matrices/M.mm
+          Matrix A Is Symmetric: true
+          Matrix D Is Diagonal: false
+          D Solver Settings:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 100
+                    Convergence Tolerance: 1e-8
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: RILUK
+
+    Dirichlet BCs: 
+      SDBC on NS NodeSet0 for DOF U: 1.0
+    Neumann BCs: {}
+    Parameters:
+      Number Of Parameters: 1 
+      Parameter 0:
+        Lower Bound: -12.0e+00
+        Type: Distributed
+        Name: parameter
+        Upper Bound: 12.0e+00
+    Elliptic Model:
+      Laplacian Coefficient: 1.0
+      Robin Coefficient: 0.0
+      Viscosity Regularization: 0.1
+      Glen's Law Exponent: 3.0
+      Linearize Model: false
+    Cubature Degree: 4
+  Discretization:
+    1D Elements: 40
+    2D Elements: 40
+    1D Scale: 1.0
+    2D Scale: 1.0
+    Method: STK2D
+    Number Of Time Derivatives: 0
+    Exodus Output File Name: slab_mock_model.exo
+    Use Serial Mesh: false
+    Required Fields Info:
+      Number Of Fields: 3
+      Field 0:
+        Field Name: forcing
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Value: 1.0
+      Field 1:
+        Field Name: parameter
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Usage: Input-Output
+        Field Value: 1.0
+      Field 2:
+        Field Name: obs_solution
+        Field Type: Node Scalar
+        Field Origin: File
+        #Field Value: 0.0
+        Field Expression: ['1.0-0.05*x*x']
+    Side Set Discretizations:
+      Side Sets: [SideSet0,SideSet1]
+      SideSet0:
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Use Serial Mesh: false
+      SideSet1:
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Use Serial Mesh: false
+
+  Piro:
+    Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    Analysis:
+      Output Final Parameters: false
+      Output Level: 3
+      #Analysis Package: ROL
+
+    NOX:
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0:
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 1
+          Test 0:
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.0e-08
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 20
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Linear Solver:
+            Write Linear System: false
+            Tolerance: 1e-7
+          Stratimikos Linear Solver:
+            NOX Stratimikos Options: {}
+            Stratimikos:
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Maximum Iterations: 200
+                      Convergence Tolerance: 1e-8
+                      Num Blocks: 100
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                  VerboseObject:
+                    Verbosity Level: medium
+              Preconditioner Type: Ifpack2
+              Preconditioner Types:
+                Ifpack2:
+                  Overlap: 0
+                  Prec Type: Amesos2
+                  Ifpack2 Settings:
+                    Amesos2: {}
+                    Amesos2 solver name: KLU2
+          Rescue Bad Newton Solve: true
+      Line Search:
+        Full Step:
+          Full Step: 1.0
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        Output Information:
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options:
+        Status Test Check Type: Minimal
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    Test Value: 3.215336757440e+00
+    Sensitivity For Parameter 0:
+      Test Value: 3.406703872784e-01
+...

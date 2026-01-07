@@ -66,6 +66,16 @@ getuname(osname -s)
 getuname(osrel  -r)
 getuname(cpu    -m)
 
+
+set (CTEST_DROP_METHOD "https")
+if (CTEST_DROP_METHOD STREQUAL "https")
+  set(CTEST_DROP_METHOD "https")
+  set (CTEST_PROJECT_NAME "Albany")
+  set(CTEST_DROP_SITE "albany-cdash.sandia.gov")
+  set(CTEST_DROP_LOCATION "/submit.php?project=Albany")
+  set(CTEST_DROP_SITE_CDASH TRUE)
+endif ()
+
 #message("IKT osname = " ${osname}) 
 #message("IKT osrel = " ${osrel}) 
 #message("IKT cpu = " ${cpu}) 

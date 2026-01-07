@@ -48,7 +48,7 @@ ANONYMOUS:
     Parameters:
       Number Of Parameters: 0
     LandIce Viscosity:
-      Use P0 Temperature: false
+      Use P0 Temperature: true
       Extract Strain Rate Sq: true
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.3
@@ -101,8 +101,10 @@ ANONYMOUS:
     Thickness Field Name: ice_thickness
     Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction_log, bed_topography, apparent_mass_balance, apparent_mass_balance_RMS]
     Basal Node Fields Ranks: [1, 1, 1, 1, 1, 1]
-    Interpolate Basal Node Layered Fields: [temperature, velocity]
-    Basal Node Layered Fields Ranks: [1, 2]
+    Interpolate Basal Node Layered Fields: [velocity]
+    Basal Node Layered Fields Ranks: [2]
+    Interpolate Basal Elem Layered Fields: [temperature]
+    Basal Elem Layered Fields Ranks: [1]
     Use Glimmer Spacing: true
     Required Fields Info:
       Number Of Fields: 10
@@ -120,7 +122,7 @@ ANONYMOUS:
         Field Origin: Mesh
       Field 3:
         Field Name: temperature
-        Field Type: Node Scalar
+        Field Type: QuadPoint Scalar
         Field Origin: Mesh
       Field 4:
         Field Name: bed_topography
@@ -196,10 +198,10 @@ ANONYMOUS:
             File Name: ../AsciiMeshes/Humboldt/basal_friction_log.ascii
           Field 7:
             Field Name: temperature
-            Field Type: Node Layered Scalar
-            Number Of Layers: 8
+            Field Type: Elem Layered Scalar
+            Number Of Layers: 7
             Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/nodal_temperature.ascii
+            File Name: ../AsciiMeshes/Humboldt/cell_temperature.ascii
           Field 8:
             Field Name: apparent_mass_balance
             Field Type: Node Scalar
@@ -454,6 +456,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 2.659962913974e+01
+    Test Value: 3.065328818695e+01
     Relative Tolerance: 1.0e-06
 ...

@@ -1,0 +1,59 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+  Problem:
+    Solution Method: Steady
+    Name: Populate Mesh
+  Discretization:
+    Method: Ioss
+    Number Of Time Derivatives: 0
+    Use Serial Mesh: false
+    Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
+    Exodus Output File Name: gis_unstruct_2d_populated.exo
+    Required Fields Info:
+      Number Of Fields: 6
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii
+      Field 2:
+        Field Name: temperature
+        Field Type: Node Layered Scalar
+        Number Of Layers: 11
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
+      Field 3:
+        Field Name: basal_friction
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction.ascii
+      Field 4:
+        Field Name: observed_surface_velocity
+        Field Type: Node Vector
+        Vector Dim: 2
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
+      Field 5:
+        Field Name: observed_surface_velocity_RMS
+        Field Type: Node Vector
+        Vector Dim: 2
+        Field Origin: File
+        File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
+  Piro:
+    NOX:
+      Status Tests:
+        Test Type: NormF
+        Tolerance: 1.0
+      Printing:
+        Output Information:
+          Details: false
+...
+

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-export PATH=/usr/bin:$PATH:/tpls/install/ninja/build-cmake
-alias cmake=/usr/bin/cmake
+#export PATH=/usr/bin:$PATH:/tpls/install/ninja/build-cmake
+#alias cmake=/usr/bin/cmake
+module load modules_camobap.sh 
 echo cmake --version
 rm -rf repos
 rm -rf build

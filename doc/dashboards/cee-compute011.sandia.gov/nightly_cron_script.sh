@@ -18,7 +18,10 @@ SCRIPT_DIR=/projects/albany/nightlyAlbanyCDash
 # Install directory holds final installed versions of the build. This is cross-mounted usually.
 INSTALL_DIR=/projects/albany/nightlyAlbanyCDash
 # The build area where the nightly products are built
-SCRATCH_DIR=/scratch/albany
+#SCRATCH_DIR=/scratch/albany
+SCRATCH_DIR=/fgs/ikalash/albany
+unset https_proxy
+unset http_proxy
 unset HTTPS_PROXY
 unset HTTP_PROXY
 

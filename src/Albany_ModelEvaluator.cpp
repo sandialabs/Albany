@@ -548,11 +548,8 @@ ModelEvaluator::create_W_op() const
 Teuchos::RCP<Thyra_Preconditioner>
 ModelEvaluator::create_W_prec() const
 {
-  Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec  = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
-  Teuchos::RCP<Thyra_LinearOp>                   precOp  = app->getPreconditioner();
-
-  W_prec->initializeRight(precOp);
-  return W_prec;
+  app->initializePreconditioner();
+  return Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
 }
 
 Teuchos::RCP<Thyra_LinearOp>
@@ -1196,6 +1193,12 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
   auto f_out    = outArgs.get_f();
   auto W_op_out = outArgs.get_W_op();
 
+  // Get preconditioner operator, if requested
+  Teuchos::RCP<Thyra_Preconditioner> W_prec_out;
+  if (outArgs.supports(OUT_ARG_W_prec)) {
+    W_prec_out = outArgs.get_W_prec();
+  }
+
   //
   // Compute the functions
   //
@@ -1254,6 +1257,17 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     }
 
     f_already_computed = true;
+
+    // Hold on to Jacobian for preconditioner construction
+    if (supplies_prec)
+      Extra_W_op = W_op_out;
+  }
+
+  // W_prec
+  if (Teuchos::nonnull(W_prec_out)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(Extra_W_op), std::logic_error,
+        "Albany::ModelEvaluator::evalModelImpl(): Jacobian not set");
+    app->computeGlobalPreconditioner(Extra_W_op, W_prec_out);
   }
 
   // df/dp

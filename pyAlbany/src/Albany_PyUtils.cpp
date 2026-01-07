@@ -21,10 +21,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Kokkos_Macros.hpp"
 
-// For vtune
-#include <sys/types.h>
-#include <unistd.h>
-
 // For stack trace
 #include <execinfo.h>
 #include <cstdarg>

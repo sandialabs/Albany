@@ -46,24 +46,6 @@ public:
     return m_node_set_coords;
   }
 
-  //! Get Side set lists
-  const SideSetList&
-  getSideSets(const int ws) const override {
-    return m_side_sets[ws];
-  }
-
-  //! Get Side set view lists
-  const LocalSideSetInfoList&
-  getSideSetViews(const int ws) const override {
-    return m_side_set_views.at(ws);
-  }
-
-  //! Get local DOF views for GatherVerticallyContractedSolution
-  const strmap_t<Kokkos::DualView<LO****, PHX::Device>>&
-  getLocalDOFViews(const int workset) const override {
-    return m_ws_local_dof_views.at(workset);
-  }
-
   //! Get coordinates (overlap map).
   const Teuchos::ArrayRCP<double>& getCoordinates() const override { return m_nodes_coordinates; }
 
@@ -73,32 +55,10 @@ public:
     TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::printCoords");
   }
 
-  //! Get the map side_id->side_set_elem_id
-  const std::map<std::string, std::map<GO, GO>>&
-  getSideToSideSetCellMap() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideToSideSetCellMap");
-  }
-
-  //! Get the map side_node_id->side_set_cell_node_id
-  const std::map<std::string, std::map<GO, std::vector<int>>>&
-  getSideNodeNumerationMap() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSideNodeNumerationMap");
-  }
-
   //! Get MeshStruct
   Teuchos::RCP<AbstractMeshStruct>
   getMeshStruct() const override {
     return m_mesh_struct;
-  }
-
-  //! Retrieve connectivity map from elementGID to workset
-  WsLIDList&
-  getElemGIDws() override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
-  }
-  const WsLIDList&
-  getElemGIDws() const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getElemGIDws");
   }
 
   //! Flag if solution has a restart values -- used in Init Cond
@@ -119,11 +79,7 @@ public:
     return m_mesh_struct->meshSpecs[0]->numDim;
   }
 
-  //! Get number of total DOFs per node
-  int
-  getNumEq() const override {
-    return m_neq;
-  }
+  void setNumEq (int neq) override;
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   Teuchos::RCP<Thyra_Vector>
@@ -144,127 +100,49 @@ public:
                 const std::string&  field_name,
                 bool                overlapped) override;
 
-  void setFieldData(const Teuchos::RCP<StateInfoStruct>& sis) override;
+  void setFieldData() override;
 
-  // --- Methods to write solution in the output file --- //
-
-  //! Write the solution to the output file. Calls next two together.
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override {
-    std::cout << "WARNING! This call to OmegahDiscretization::writeSolution does nothing.\n";
-  } 
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
-  } 
-  void
-  writeSolution(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const Thyra_Vector& /* solution_dotdot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolution");
-  } 
-  void
-  writeSolutionMV(
-      const Thyra_MultiVector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double             /* time */,
-      const bool               /* overlapped */ = false,
-      const bool               /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMV");
-  } 
   //! Write the solution to the mesh database.
-  void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
-  }
-  void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
-  }
-  void
-  writeSolutionToMeshDatabase(
-      const Thyra_Vector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const Thyra_Vector& /* solution_dot */,
-      const Thyra_Vector& /* solution_dotdot */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToMeshDatabase");
-  }
-  void
-  writeSolutionMVToMeshDatabase(
-      const Thyra_MultiVector& /* solution */,
-      const Teuchos::RCP<const Thyra_MultiVector>& /* solution_dxdp */,
-      const double             /* time */,
-      const bool               /* overlapped */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToMeshDatabase");
-  }
+  void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                    const bool          overlapped) override;
 
-  //! Write the solution to file. Must call writeSolution first.
-  void
-  writeSolutionToFile(
-      const Thyra_Vector& /* solution */,
-      const double        /* time */,
-      const bool          /* overlapped */ = false,
-      const bool          /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionToFile");
-  } 
-  void
-  writeSolutionMVToFile(
-      const Thyra_MultiVector& /* solution */,
-      const double             /* time */,
-      const bool               /* overlapped */ = false,
-      const bool               /* force_write_solution */ = false) override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::writeSolutionMVToFile");
-  } 
+  void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                    const Thyra_Vector& solution_dot,
+                                    const bool          overlapped) override;
+
+  void writeSolutionToMeshDatabase (const Thyra_Vector& solution,
+                                    const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                    const Thyra_Vector& solution_dot,
+                                    const Thyra_Vector& solution_dotdot,
+                                    const bool          overlapped) override;
+
+  void writeSolutionMVToMeshDatabase (const Thyra_MultiVector& solution,
+                                      const Teuchos::RCP<const Thyra_MultiVector>& solution_dxdp,
+                                      const bool               overlapped) override;
+
+  //! Write the current mesh database to file
+  void writeMeshDatabaseToFile (const double time,
+                                const bool   force_write_solution) override;
 
   Teuchos::RCP<AdaptationData>
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
                       const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) const override
-  {
-    throw NotYetImplemented("OmegaDiscretization::checkForAdaptation");
-  }
+                      const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */) override;
 
-  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override
-  {
-    throw NotYetImplemented("OmegaDiscretization::adapt");
-  }
+  void adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */) override;
+
+  Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
 
 protected:
 
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
-                  const std::string& field_name,
                   const FE_Type fe_type,
                   const int order,
-                  const int dof_dim) const;
+                  const int dof_dim);
 
   void computeNodeSets ();
   void computeGraphs ();
@@ -275,17 +153,11 @@ protected:
 
   Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
 
-  std::vector<std::string> m_sol_names;
-
   // Maps a Tpetra LID to the pos of a node in the omegah arrays
   std::vector<int>  m_node_lid_to_omegah_pos;
 
   // TODO: move stuff below in base class?
   Teuchos::RCP<const Teuchos_Comm> m_comm;
-
-  std::map<int, LocalSideSetInfoList> m_side_set_views;
-  std::vector<SideSetList> m_side_sets;
-  std::map<int, strmap_t<Kokkos::DualView<LO****, PHX::Device>>> m_ws_local_dof_views;
 
   NodeSetList       m_node_sets;
   NodeSetCoordList  m_node_set_coords;
@@ -295,10 +167,6 @@ protected:
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_side_set_equations;
-
-  // Number of equations (and unknowns) per node
-  // TODO: this should soon be removed, in favor of more granular description of each dof/unknown
-  const int m_neq;
 
   // TODO: I don't think this belongs in the disc class. We do store it for STK meshes,
   //       mainly b/c we need to know how many components the soln vector has.

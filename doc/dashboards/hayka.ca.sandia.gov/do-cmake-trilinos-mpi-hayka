@@ -51,7 +51,7 @@ cmake -G Ninja \
       -D Pnetcdf_INCLUDE_DIRS:PATH=${PARALLEL_NETCDF_INC} \
       -D Pnetcdf_LIBRARY_DIRS:PATH=${PARALLEL_NETCDF_LIB} \
 \
-      -D TPL_ENABLE_HDF5:BOOL=ON \
+      -D TPL_ENABLE_HDF5:BOOL=OFF \
       -D HDF5_INCLUDE_DIRS:PATH=${HDF5_INC} \
       -D HDF5_LIBRARY_DIRS:PATH=${HDF5_LIB} \
 \
@@ -164,5 +164,5 @@ cmake -G Ninja \
       -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
       -D Tpetra_ENABLE_DEPRECATED_CODE=ON \
       -D Xpetra_ENABLE_DEPRECATED_CODE=ON \
-      -D CMAKE_CXX_STANDARD=17 \
+      -D TPL_ENABLE_gtest=OFF \
 .. 

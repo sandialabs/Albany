@@ -13,7 +13,7 @@ ANONYMOUS:
       Number: 1
       BC 0:
         Type: Syntetic Test
-        Side Set Name: lateralss
+        Side Set Name: lateralSS
         Cubature Degree: 3
         BC Params:
           Type: Circular Shelf

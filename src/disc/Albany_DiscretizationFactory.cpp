@@ -23,7 +23,7 @@
 #include "Albany_Utils.hpp" // For CalculateNumberParams
 
 #ifdef ALBANY_OMEGAH
-#include "Albany_OmegahBoxMesh.hpp"
+#include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahDiscretization.hpp"
 #endif
 
@@ -87,12 +87,8 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 #endif // ALBANY_SEACAS
     }
 #ifdef ALBANY_OMEGAH
-    else if (method == "Box1D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<1>(disc_params, comm, numParams));
-    } else if (method == "Box2D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<2>(disc_params, comm, numParams));
-    } else if (method == "Box3D") {
-        mesh = Teuchos::rcp(new OmegahBoxMesh<3>(disc_params, comm, numParams));
+    else if (method == "Omegah") {
+        mesh = Teuchos::rcp(new OmegahGenericMesh(disc_params));
     }
 #endif
     else if (method == "Ascii") {
@@ -104,8 +100,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
         //FixME very hacky! needed for printing 2d mesh
         Teuchos::RCP<GenericSTKMeshStruct> meshStruct2D;
         meshStruct2D = Teuchos::rcp(new AsciiSTKMesh2D(disc_params, comm, numParams));
-        Teuchos::RCP<StateInfoStruct> sis = Teuchos::rcp(new StateInfoStruct);
-        meshStruct2D->setFieldData(comm, sis);
+        meshStruct2D->setFieldData(comm,Teuchos::null,{});
         meshStruct2D->setBulkData(comm);
         Ioss::Init::Initializer io;
         Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
@@ -180,7 +175,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
                   "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                   "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss," <<
                   " Exodus, Ascii," <<
-                  " Ascii2D, STKExtruded, Extruded" << std::endl);
+                  " Ascii2D, STKExtruded, Extruded, Omegah" << std::endl);
   }
 
   if (disc_params->isSublist ("Side Set Discretizations")) {
@@ -193,12 +188,10 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     int sideDim = ms->numDim - 1;
-    for (int i(0); i<sideSets.size(); ++i) {
-      const std::string& ss_name = sideSets[i];
-
+    for (const auto& ss_name : sideSets) {
       auto& ss_mesh = mesh->sideSetMeshStructs[ss_name];
 
-      // If this is the basalside of an extruded mesh, we already created the mesh object
+      // Extruded meshes can create some side meshes, so check if mesh is already there
       if (ss_mesh.is_null()) {
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
 
@@ -259,19 +252,23 @@ DiscretizationFactory::createDiscretization(
             std::logic_error,
             "meshStruct accessed, but it has not been constructed" << std::endl);
 
-    auto disc = createDiscretizationFromMeshStruct(meshStruct, neq, sideSetEquations, rigidBodyModes);
+    auto disc = createDiscretizationFromMeshStruct(discParams,meshStruct, neq, sideSetEquations, rigidBodyModes);
 
-    setMeshStructFieldData(sis, side_set_sis);
-    disc->setFieldData(sis);
-    Teuchos::RCP<StateInfoStruct> dummy_sis;
-    for (auto it : disc->getSideSetDiscretizations()) {
-      if (side_set_sis.count(it.first)==1) {
-        it.second->setFieldData(side_set_sis.at(it.first));
-      } else {
-        it.second->setFieldData({});
+    // Set data and solution fields info
+    meshStruct->setFieldData(comm,sis,side_set_sis);
+    disc->setFieldData();
+
+    // Set mesh info
+    meshStruct->setBulkData(comm);
+    for (auto& it : meshStruct->sideSetMeshStructs) {
+      // Some meshes (e.g. extruded) may have already set the bulk data in some
+      // side meshes during the call above, so check first
+      if (not it.second->isBulkDataSet()) {
+        it.second->setBulkData(comm);
       }
     }
-    setMeshStructBulkData();
+
+    // Create internal disc structures
     disc->updateMesh();
 
     return disc;
@@ -283,43 +280,10 @@ DiscretizationFactory::createMeshSpecs(Teuchos::RCP<AbstractMeshStruct> mesh) {
     return meshStruct->meshSpecs;
 }
 
-void
-DiscretizationFactory::setMeshStructFieldData(
-        const Teuchos::RCP<StateInfoStruct>& sis) {
-    setMeshStructFieldData(sis, empty_side_set_sis);
-}
-
-void
-DiscretizationFactory::setMeshStructFieldData(
-        const Teuchos::RCP<StateInfoStruct>& sis,
-        const std::map<std::string, Teuchos::RCP<StateInfoStruct> >& side_set_sis)
-{
-  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructFieldData");
-  meshStruct->setFieldData(comm, sis);
-  for (auto& it : meshStruct->sideSetMeshStructs) {
-    auto this_ss_sis = side_set_sis.count(it.first)>0 ? side_set_sis.at(it.first) : Teuchos::null;
-    it.second->setFieldData(comm,this_ss_sis);
-  }
-}
-
-void DiscretizationFactory::
-setMeshStructBulkData()
-{
-  TEUCHOS_FUNC_TIME_MONITOR("Albany_DiscrFactory: setMeshStructBulkData");
-  meshStruct->setBulkData(comm);
-  for (auto& it : meshStruct->sideSetMeshStructs) {
-    // For extruded meshes, the bulk data of the basal mesh
-    // should be set from inside the extruded mesh call,
-    // during the 'setBulkData' call above
-    if (not it.second->isBulkDataSet()) {
-      it.second->setBulkData(comm);
-    }
-  }
-}
-
 Teuchos::RCP<AbstractDiscretization>
 DiscretizationFactory::
-createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh,
+createDiscretizationFromMeshStruct (const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                    const Teuchos::RCP<AbstractMeshStruct>& mesh,
                                     const int neq,
                                     const std::map<int, std::vector<std::string> >& sideSetEquations,
                                     const Teuchos::RCP<RigidBodyModes>& rigidBodyModes)
@@ -334,15 +298,16 @@ createDiscretizationFromMeshStruct (const Teuchos::RCP<AbstractMeshStruct>& mesh
   {
     auto ext_mesh = Teuchos::rcp_dynamic_cast<ExtrudedMesh>(mesh);
     auto basal_mesh = ext_mesh->basal_mesh();
-    auto basal_disc = createDiscretizationFromMeshStruct(basal_mesh,neq,{},rigidBodyModes);
-    disc = Teuchos::rcp(new ExtrudedDiscretization (discParams,neq,ext_mesh,basal_disc,comm,rigidBodyModes, sideSetEquations));
+    auto basal_params = Teuchos::sublist(Teuchos::sublist(discParams,"Side Set Discretizations"),"basalside");
+    auto basal_disc = createDiscretizationFromMeshStruct(basal_params,basal_mesh,neq,{},rigidBodyModes);
+    disc = Teuchos::rcp(new ExtrudedDiscretization (params,neq,ext_mesh,basal_disc,comm,rigidBodyModes, sideSetEquations));
   } else if (mesh->meshLibName()=="STK") {
     auto ms = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(mesh);
-    disc = Teuchos::rcp(new STKDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new STKDiscretization(params, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #ifdef ALBANY_OMEGAH
   } else if (mesh->meshLibName()=="Omega_h") {
     auto ms = Teuchos::rcp_dynamic_cast<OmegahGenericMesh>(mesh);
-    disc = Teuchos::rcp(new OmegahDiscretization(discParams, neq, ms, comm, rigidBodyModes, sideSetEquations));
+    disc = Teuchos::rcp(new OmegahDiscretization(params, neq, ms, comm, rigidBodyModes, sideSetEquations));
 #endif
   }
   return disc;

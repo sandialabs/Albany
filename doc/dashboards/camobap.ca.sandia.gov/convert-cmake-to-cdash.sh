@@ -38,4 +38,5 @@ sed -i 's, \",,g' /nightlyCDash/cdash-$name-frag.txt
 sed -i 's/-G/\"-G/g' /nightlyCDash/cdash-$name-frag.txt
 sed -i 's/-W/\"-W/g' /nightlyCDash/cdash-$name-frag.txt
 sed -i 's/-D/\"-D/g' /nightlyCDash/cdash-$name-frag.txt
+sed -i 's,{OPEN,ENV{OPEN,g' /nightlyCDash/cdash-$name-frag.txt
 cat /nightlyCDash/cdash-$name-frag.txt

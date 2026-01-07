@@ -1,79 +1,79 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Debug Output: 
+  Debug Output:
     Write Solution to MatrixMarket: 0
-  Problem: 
+  Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: Side Laplacian 3D
     Solve As Side Set Equation: true
-    Side Set Name: SideSet2
+    Side Set Name: SideSet4
     Response Functions:
       Number Of Responses: 1
       Response 0:
         Name: Squared L2 Difference Side Source ST Target PST
-        Side Set Name: SideSet2
+        Side Set Name: SideSet4
         Field Rank: Scalar
         Source Field Name: u
         Target Value: 0.0
-    Dirichlet BCs: 
+    Dirichlet BCs:
       DBC on NS NodeSet0 for DOF U: 0.0
       DBC on NS NodeSet1 for DOF U: 0.0
-      DBC on NS NodeSet4 for DOF U: 0.0
-      DBC on NS NodeSet5 for DOF U: 0.0
+      DBC on NS NodeSet2 for DOF U: 0.0
+      DBC on NS NodeSet3 for DOF U: 0.0
     Cubature Degree: 2
 
-  Discretization: 
+  Discretization:
     Method: STK3D
     1D Elements: 2
     2D Elements: 2
     3D Elements: 2
     Build Node Sets From Side Sets: true
     Cell Topology: Quad
-    Side Set Discretizations: 
-      Side Sets: [SideSet2]
-      SideSet2: 
+    Side Set Discretizations:
+      Side Sets: [SideSet4]
+      SideSet4:
         Method: SideSetSTK
         Exodus Output File Name: side_laplacian_3d.exo
-  Regression For Response 0: 
+  Regression For Response 0:
     Test Value: 9.765625e-04
     Relative Tolerance: 1.0e-04
     Absolute Tolerance: 1.0e-04
-  Piro: 
-    NOX: 
+  Piro:
+    NOX:
       Nonlinear Solver: Line Search Based
-      Solver Options: 
+      Solver Options:
         Status Test Check Type: Minimal
-      Status Tests: 
+      Status Tests:
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 2
-        Test 0: 
+        Test 0:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Unscaled
           Tolerance: 1.0e-05
-        Test 1: 
+        Test 1:
           Test Type: MaxIters
           Maximum Iterations: 50
-      Direction: 
+      Direction:
         Method: Newton
-        Newton: 
+        Newton:
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Linear Solver: 
+          Linear Solver:
             Write Linear System: false
             Tolerance: 1.0e-04
-          Stratimikos Linear Solver: 
+          Stratimikos Linear Solver:
             NOX Stratimikos Options: { }
-            Stratimikos: 
+            Stratimikos:
               Linear Solver Type: Belos
-              Linear Solver Types: 
-                Belos: 
+              Linear Solver Types:
+                Belos:
                   Solver Type: Block GMRES
-                  Solver Types: 
-                    Block GMRES: 
+                  Solver Types:
+                    Block GMRES:
                       Convergence Tolerance: 1.0e-06
                       Output Frequency: 10
                       Output Style: 1
@@ -85,22 +85,22 @@ ANONYMOUS:
                   VerboseObject:
                     Verbosity Level: low
               Preconditioner Type: Ifpack2
-              Preconditioner Types: 
-                Ifpack2: 
+              Preconditioner Types:
+                Ifpack2:
                   Overlap: 1
                   Prec Type: ILUT
-                  Ifpack2 Settings: 
+                  Ifpack2 Settings:
                     'fact: drop tolerance': 0.0
                     'fact: ilut level-of-fill': 1.0
                     'fact: level-of-fill': 1
-      Line Search: 
-        Full Step: 
+      Line Search:
+        Full Step:
           Full Step: 1.0
         Method: Backtrack
-      Printing: 
+      Printing:
         Output Precision: 3
         Output Processor: 0
-        Output Information: 
+        Output Information:
           Error: true
           Warning: true
           Outer Iteration: true
