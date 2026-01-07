@@ -77,6 +77,7 @@ cmake -Wno-dev                                                    \
   -D TPL_ENABLE_ParMETIS:BOOL=ON                                  \
   -D TPL_Netcdf_PARALLEL:BOOL=ON                                  \
   -D TPL_ENABLE_X11:BOOL=OFF                                      \
+  -D TPL_ENABLE_gtest:BOOL=OFF                                    \
   \
   -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}                      \
   -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_ROOT}/include              \
