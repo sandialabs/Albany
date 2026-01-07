@@ -68,6 +68,7 @@ cmake -Wno-dev                                                    \
   -D Tpetra_ENABLE_TESTS:BOOL=OFF                                 \
   -D Zoltan_ENABLE_ULLONG_IDS:BOOL=ON                             \
   \
+  -D TPL_ENABLE_gtest:BOOL=OFF                                    \
   -D TPL_ENABLE_MPI:BOOL=ON                                       \
   -D TPL_ENABLE_Boost:BOOL=ON                                     \
   -D TPL_ENABLE_HDF5:BOOL=ON                                      \
