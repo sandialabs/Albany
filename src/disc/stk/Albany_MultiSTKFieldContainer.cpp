@@ -319,8 +319,7 @@ fillVectorImpl (Thyra_Vector&           field_vector,
 
   auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
 
-  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
-  ALBANY_EXPECT (raw_field != nullptr,
+  ALBANY_EXPECT (metaData->get_field(field_entity_rank, field_name) != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
 
   const auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
@@ -353,8 +352,7 @@ saveVectorImpl (const Thyra_Vector&     field_vector,
 
   auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
 
-  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
-  ALBANY_EXPECT (raw_field != nullptr,
+  ALBANY_EXPECT (metaData->get_field(field_entity_rank, field_name) != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
 
   auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);

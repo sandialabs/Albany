@@ -169,7 +169,6 @@ loadElemState(typename Traits::EvalData workset)
 
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
-  double tan_cell_val, meas;
   for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx) {
     // Get the side GID
     const int side_GID = sideSet.side_GID.view_host()(sideSet_idx);

@@ -364,7 +364,6 @@ transferElemStateToNodeState (const std::string& name)
 void GenericSTKFieldContainer::setGeometryFieldsMetadata ()
 {
   int numDim = metaData->spatial_dimension();
-  auto& universal_part = metaData->universal_part();
 
   this->coordinates_field = add_field_to_mesh<double> ("coordinates", true, false, numDim);
 
