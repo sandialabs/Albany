@@ -56,6 +56,12 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
       set(Albany2.exe ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${MPIPOST} ${AlbanyPath})
       add_test(${testBaseName}_2proc ${Albany2.exe} input_2d_adapt_omegah_2proc.yaml)
       set_tests_properties(${testBaseName}_2proc PROPERTIES LABELS "Demo;Forward;Adapt")
+
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_adapt_omegah_2proc_small.yaml
+                     ${CMAKE_CURRENT_BINARY_DIR}/input_2d_adapt_omegah_2proc_small.yaml COPYONLY)
+      set(Albany2.exe ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${MPIPOST} ${AlbanyPath})
+      add_test(${testBaseName}_2proc_small ${Albany2.exe} input_2d_adapt_omegah_2proc_small.yaml)
+      set_tests_properties(${testBaseName}_2proc_small PROPERTIES LABELS "Demo;Forward;Adapt")
     ENDIF()
 
   ENDIF()

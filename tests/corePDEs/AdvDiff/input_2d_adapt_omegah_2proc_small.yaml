@@ -1,0 +1,150 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+    Write Solution to MatrixMarket: 0
+    Report Timers: false
+  Problem:
+    Name: AdvDiff 2D
+    Solution Method: Transient
+    Number of PDE Equations: 1
+    Dirichlet BCs:
+      DBC on NS NodeSet0 for DOF U0: 0.0
+      DBC on NS NodeSet2 for DOF U0: 0.0
+    Initial Condition:
+      Function: Circle
+    Options:
+      Advection Coefficient: [1.0,1.0]
+      Viscosity mu: 0.01
+    Parameters:
+      Number Of Parameters: 0
+    Response Functions:
+      Number Of Responses: 3
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Max Value
+      Response 1:
+        Type: Scalar Response
+        Name: Solution Min Value
+      Response 2:
+        Type: Scalar Response
+        Name: Solution Average
+  Discretization:
+    Number of Elements: [3,3]
+    Method: Omegah
+    Mesh Creation Method: Box2D
+    Mesh Adaptivity:
+      Type: SPR # superconvergent patch recovery
+      # 'Adapt Ratio' defines the acceptable margin of error,
+      #   expressed as a factor greater than zero.
+      #   Setting this equal to zero would request zero element
+      #   size everywhere, i.e. infinite refinement.
+      #   Increasing it results in larger mesh elements;
+      #   this is a (nonlinear) scaling factor on the resulting
+      #   size field.
+      Adapt Ratio: 1.2
+      # Error Thresold:
+      #  SPR computes the sum of error norms raised to the power
+      #  (2d/(2p+d)) over all elements, where d is the mesh
+      #  dimension and p is the recovered field polynomial order.
+      #  For this example d=2 and p=2.
+      #  The 'Error Threshold' specifies the maxium allowed error
+      #  before mesh adaptation is triggered;
+      #  i.e., `if (error > threshold) runMeshAdaptation(...)` .
+      Error Threshold: 0.3
+      Minimum Edge Length: 0.02 # min desired edge length in physical space
+      Maximum Edge Length: 1.0 # max desired edge length in physical space
+      Write VTK Files: false # write VTK files before and after adaptation
+      Verbose: false # write additional mesh adaptation info to stdout
+  Piro:
+    Tempus:
+      Integrator Name: Tempus Integrator
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control:
+          Initial Time: 0.0
+          Initial Time Index: 0
+          Initial Time Step: 0.05
+          Final Time: 1.0
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper:
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Demo Solver:
+          NOX:
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver:
+                  Tolerance: 1.0e-05
+            Line Search:
+              Full Step:
+                Full Step: 1.0
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: true
+                Details: false
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Minimal
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0:
+                Test Type: NormF
+                Tolerance: 1.0e-08
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 10
+      Stratimikos:
+        Linear Solver Type: Belos
+        Linear Solver Types:
+          Belos:
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES:
+                Convergence Tolerance: 1.0e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 10
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types:
+          Ifpack2:
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings:
+              'fact: ilut level-of-fill': 1.0e+00
+  Regression For Response 0:
+    Test Value: 6.760865494051e-02
+    Absolute Tolerance: 2.0e-05
+  Regression For Response 1:
+    Test Value: -5.467176792554e-05
+    Absolute Tolerance: 3.0e-05
+  Regression For Response 2:
+    Test Value: 5.248640595484e-03
+    Absolute Tolerance: 2.0e-04
+...
