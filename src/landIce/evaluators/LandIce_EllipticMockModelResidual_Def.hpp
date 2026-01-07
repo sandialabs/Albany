@@ -111,7 +111,7 @@ EllipticMockModelResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
   for (unsigned int side=0; side<numSides; ++side) {
     unsigned int thisSideNodes = cellType->getNodeCount(sideDim,side);
     for (unsigned int node=0; node<thisSideNodes; ++node) {
-      sideNodes.h_view(side,node) = cellType->getNodeMap(sideDim,side,node);
+      sideNodes.view_host()(side,node) = cellType->getNodeMap(sideDim,side,node);
     }
   }
   sideNodes.modify_host();
@@ -179,10 +179,10 @@ void LandIce::EllipticMockModelResidual<EvalT, Traits>::
 operator() (const EllipticMockModel_Side_Tag&, const int& sideSet_idx) const {
 
   // Get the local data of side and cell
-  const int cell = sideSet.ws_elem_idx.d_view(sideSet_idx);
-  const int side = sideSet.side_pos.d_view(sideSet_idx);
+  const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
+  const int side = sideSet.side_pos.view_device()(sideSet_idx);
   for (unsigned int inode=0; inode<numSideNodes; ++inode) {
-    auto cell_node = sideNodes.d_view(side,inode);
+    auto cell_node = sideNodes.view_device()(side,inode);
     for (unsigned int qp=0; qp<numSideQPs; ++qp) {
       residual(cell,cell_node) += robin_coeff*side_field(sideSet_idx,qp)*side_BF(sideSet_idx, inode, qp)*w_side_measure(sideSet_idx, qp);
     }
