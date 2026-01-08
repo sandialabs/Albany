@@ -40,11 +40,18 @@ setFieldOnMesh (const std::string& name,
 
   // Create 1d view of input MV
   auto dev_mv = getDeviceData(mv);
+  int ncmps = dev_mv.extent(1);
+  int nents = dev_mv.extent(0);
+  int tag_nents = Omega_h::divide_no_remainder(tag->array().size(), tag->ncomps());
+
+  TEUCHOS_TEST_FOR_EXCEPTION (tag_nents != nents, std::logic_error,
+      "Error! Cannot copy MV on mesh tag, as the number of entities differ.\n"
+      "  - tag name: " + name + "\n"
+      "  - tag num ents: " << tag_nents << "\n"
+      "  - MV num ents: " << nents << "\n");
 
   // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
   // entity id stride faster (it's a 2d view with layout left)
-  int ncmps = dev_mv.extent(1);
-  int nents = dev_mv.extent(0);
   Kokkos::RangePolicy<> policy(0,nents*ncmps);
   auto tag_view = m_tags.at(name).array.view();
   auto lambda = KOKKOS_LAMBDA(int idx) {
