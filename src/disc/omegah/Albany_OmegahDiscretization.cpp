@@ -486,6 +486,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     adapt_data->x_dot = solution_dot;
     adapt_data->x_dotdot = solution_dotdot;
     adapt_data->dxdp = dxdp;
+    int shouldAdapt = 0;
     for (int i=1; i<num_nodes-1; ++i) {
       auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
       auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
@@ -493,9 +494,14 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       auto grad_prev = (data[i]-data[i-1]) / h_prev;
       auto grad_next = (data[i+1]-data[i]) / h_next;
       if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
-        adapt_data->type = AdaptationType::Topology;
+        shouldAdapt = 1;
         break;
       }
+    }
+    //all ranks needs to enter adapt if any need adaptation
+    auto shouldAdapt_global = mesh->comm()->allreduce(shouldAdapt, OMEGA_H_MAX);
+    if(shouldAdapt_global) {
+      adapt_data->type = AdaptationType::Topology;
     }
     return adapt_data;
   } else if (mesh->dim() == 2) {
