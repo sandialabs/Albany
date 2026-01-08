@@ -615,7 +615,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
     while (double(nelems) < desired_nelems) {
       if (!ohMesh->has_tag(0, "metric")) {
-        if(verbose) std::cout << "mesh had no metric, adding implied and adapting to it\n";
+        if(verbose && !ohMesh->comm()->rank()) {
+          std::cout << "mesh had no metric, adding implied and adapting to it\n";
+        }
         Omega_h::add_implied_metric_tag(ohMesh.get());
         Omega_h::adapt(ohMesh.get(), opts);
         nelems = ohMesh->nglobal_ents(ohMesh->dim());
@@ -625,10 +627,14 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       auto const metric_ncomps =
         Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
       ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
-      if(verbose) std::cout << "adapting to scaled metric\n";
+      if(verbose && !ohMesh->comm()->rank()) {
+        std::cout << "adapting to scaled metric\n";
+      }
       Omega_h::adapt(ohMesh.get(), opts);
       nelems = ohMesh->nglobal_ents(ohMesh->dim());
-      if(verbose) std::cout << "mesh now has " << nelems << " total elements\n";
+      if(verbose && !ohMesh->comm()->rank()) {
+        std::cout << "mesh now has " << nelems << " total elements\n";
+      }
     }
   } else if (ohMesh->dim() == 2 && isMeshfieldsEnabled()) {
 
