@@ -36,10 +36,10 @@ ANONYMOUS:
     Method: STK3D
     Exodus Output File Name: felix_stokes_fo_sincosz_out.exo
   Regression For Response 0: 
-    Test Value: 6.026269474671e-01
+    Test Value: 9.86721213035e-02
     Relative Tolerance: 1.0e-04
   Regression For Response 1: 
-    Test Value: 2.034560457726e-01
+    Test Value: 9.86721213035e-02
     Relative Tolerance: 1.0e-04
   Regression For Response 2: 
     Test Value: 0.0
