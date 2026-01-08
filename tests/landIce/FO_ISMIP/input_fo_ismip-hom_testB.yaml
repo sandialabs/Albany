@@ -142,15 +142,15 @@ ANONYMOUS:
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
     Absolute Tolerance: 1.0e-06
-    Test Value: 1.618727420764e+01
+    Test Value: 1.067962127873e+01
   Regression For Response 1:
     Relative Tolerance: 1.0e-06
     Absolute Tolerance: 1.0e-10
-    Test Value: 2.372857585175e+00
+    Test Value: 0.0
   Regression For Response 2:
     Relative Tolerance: 1.0e-06
     Absolute Tolerance: 1.0e-010
-    Test Value: 4.862116055279e+00
+    Test Value: 3.649614402659e+00
     Sensitivity For Parameter 0:
-      Test Value: -1.155031746880e-05
+      Test Value: -6.431392908894e-05
 ...

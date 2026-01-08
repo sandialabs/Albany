@@ -1264,26 +1264,41 @@ STKDiscretization::computeWorksetInfo()
         }
         for (std::size_t i = 0; i < buckets[b]->size(); i++) {
           int  nodes_per_element = buckets[b]->num_nodes(i);
+          //if the structured mesh is periodic along direction d, the first and last nodes along direction d will have coordinates with component d equal to zero.
+          //here we want to select only the last element so that we can modify the mesh coordinates only for the last nodes.
+          bool isFirstOrLastElem = false;
+          bool isNotFirstElem = false;
           for (int j = 0; j < nodes_per_element; j++) {
-            if (m_ws_elem_coords[b][i][j][d] == 0.0) {
-              double* xleak = new double[stkMeshStruct->numDim];
-              for (int k = 0; k < stkMeshStruct->numDim; k++)
-                if (k == d)
-                  xleak[d] = stkMeshStruct->PBCStruct.scale[d];
-                else
-                  xleak[k] = m_ws_elem_coords[b][i][j][k];
-              if ((transformType == "ISMIP-HOM Test A" ||
-                   transformType == "ISMIP-HOM Test B" ||
-                   transformType == "ISMIP-HOM Test C" ||
-                   transformType == "ISMIP-HOM Test D") &&
-                  d == 0) {
-                xleak[2] -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
-                if (has_sheight) {
-                  sHeight.host()(i, j) -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+            //this is hacky. It works only if we have at least three elements along d direction
+            if (m_ws_elem_coords[b][i][j][d] > 0.5 * stkMeshStruct->PBCStruct.scale[d])
+              isNotFirstElem = true;
+            if (m_ws_elem_coords[b][i][j][d] == 0.0) 
+              isFirstOrLastElem = true;
+          }
+          bool isLastElem = isFirstOrLastElem and isNotFirstElem;
+          if (isLastElem) {
+            for (int j = 0; j < nodes_per_element; j++) {
+              if (m_ws_elem_coords[b][i][j][d] == 0.0) {
+                double* xleak = new double[stkMeshStruct->numDim];
+                for (int k = 0; k < stkMeshStruct->numDim; k++)
+                  if (k == d)
+                    xleak[d] = stkMeshStruct->PBCStruct.scale[d]; //set last nodes along dirction d to scale[d]
+                  else
+                    xleak[k] = m_ws_elem_coords[b][i][j][k];
+
+                //this code is ad hoc for the LandIce ISMIP-HOM tests, where the solution is periodic but the domain is not periodic.
+                if ((transformType == "ISMIP-HOM Test A" ||
+                     transformType == "ISMIP-HOM Test B" ||
+                     transformType == "ISMIP-HOM Test C" ||
+                     transformType == "ISMIP-HOM Test D") && d == 0) {
+                  xleak[2] -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+                  if (has_sheight) {
+                    sHeight.host()(i, j) -= stkMeshStruct->PBCStruct.scale[d] * tan(alpha);
+                  }
                 }
+                m_ws_elem_coords[b][i][j] = xleak;  // replace ptr to coords
+                toDelete.push_back(xleak);
               }
-              m_ws_elem_coords[b][i][j] = xleak;  // replace ptr to coords
-              toDelete.push_back(xleak);
             }
           }
         }

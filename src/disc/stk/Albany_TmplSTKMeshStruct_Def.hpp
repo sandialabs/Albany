@@ -544,6 +544,7 @@ TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm)
   AbstractSTKFieldContainer::STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
+      TEUCHOS_TEST_FOR_EXCEPTION(nelem[0] < 3, std::runtime_error, "Error! Implementation of periodic conditions requires at least 3 elements.\n");
       this->PBCStruct.periodic[0] = true;
       this->PBCStruct.scale[0] = scale[0];
   }
@@ -645,10 +646,12 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm 
   AbstractSTKFieldContainer::STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
+      TEUCHOS_TEST_FOR_EXCEPTION(nelem[0] < 3, std::runtime_error, "Error! Implementation of periodic conditions requires at least 3 elements.\n");
       this->PBCStruct.periodic[0] = true;
       this->PBCStruct.scale[0] = scale[0];
   }
   if (periodic_y) {
+      TEUCHOS_TEST_FOR_EXCEPTION(nelem[1] < 3, std::runtime_error, "Error! Implementation of periodic conditions requires at least 3 elements.\n");
       this->PBCStruct.periodic[1] = true;
       this->PBCStruct.scale[1] = scale[1];
   }
@@ -887,14 +890,17 @@ TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& comm)
   AbstractSTKFieldContainer::STKFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (periodic_x) {
+      TEUCHOS_TEST_FOR_EXCEPTION(nelem[0] < 3, std::runtime_error, "Error! Implementation of periodic conditions requires at least 3 elements.\n");
       this->PBCStruct.periodic[0] = true;
       this->PBCStruct.scale[0] = scale[0];
   }
   if (periodic_y) {
+      TEUCHOS_TEST_FOR_EXCEPTION(nelem[1] < 3, std::runtime_error, "Error! Implementation of periodic conditions requires at least 3 elements.\n");
       this->PBCStruct.periodic[1] = true;
       this->PBCStruct.scale[1] = scale[1];
   }
   if (periodic_z) {
+      TEUCHOS_TEST_FOR_EXCEPTION(nelem[2] < 3, std::runtime_error, "Error! Implementation of periodic conditions requires at least 3 elements.\n");
       this->PBCStruct.periodic[2] = true;
       this->PBCStruct.scale[2] = scale[2];
   }
