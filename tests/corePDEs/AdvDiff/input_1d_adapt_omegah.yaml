@@ -31,7 +31,7 @@ ANONYMOUS:
         Type: Scalar Response
         Name: Solution Average
   Discretization:
-    Number of Elements: [10]
+    Number of Elements: [6]
     Method: Omegah
     Mesh Creation Method: Box1D
     Mesh Adaptivity:
