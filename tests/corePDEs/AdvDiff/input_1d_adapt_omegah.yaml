@@ -38,6 +38,8 @@ ANONYMOUS:
       Type: Minimally-Oscillatory
       Max Hessian: 10.0
       Refining Factor: 2
+      Write VTK Files: true # write VTK files before and after adaptation
+      Verbose: true # write additional mesh adaptation info to stdout
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
