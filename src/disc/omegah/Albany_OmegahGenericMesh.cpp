@@ -531,46 +531,64 @@ buildBox (const int dim)
   }
   // omegah error estimation and adaptation requires ghosts
   m_mesh.get()->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
-
 #ifdef DEBUG_OUTPUT
   // This chunk prints ALL mesh entities, along with their geometric classification and centroids
-  int mdim = m_mesh->dim();
+  std::stringstream ss;
+  const int mdim = m_mesh->dim();
+  if(m_mesh()->comm()->rank() == 0) {
+    ss << "## global mesh debug info ##\n";
+  }
+  for (int idim=0; idim<=mdim; ++idim) {
+    auto n = m_mesh()->nglobal_ents(idim);
+    if(m_mesh()->comm()->rank() == 0) {
+      ss << "nglobal_ents(" << idim << ") " << n << "\n";
+    }
+  }
+  ss << "## rank " << m_mesh()->comm()->rank() << " mesh debug info ##\n";
   auto coords = m_mesh->coords();
   Omega_h::Reals centroids;
   Omega_h::TagSet tags;
   Omega_h::get_all_dim_tags(m_mesh.get(),0,&tags);
   for (int idim=0; idim<=mdim; ++idim) {
-    std::cout << "DIM=" << idim << "\n";
+    ss << "DIM=" << idim << "\n";
     for (auto n : tags[idim]) {
       auto tag = m_mesh->get_tagbase(idim,n);
       auto ids = tag->class_ids();
-      std::cout << "tag=" << n << ", ids:";
+      ss << "tag=" << n << ", ids:";
       for (int i=0;i<ids.size(); ++i) {
-        std::cout << " " << ids[i];
-      } std::cout << "\n";
+        ss << " " << ids[i];
+      } ss << "\n";
     }
+    auto owned_h = hostRead(m_mesh->owned(idim));
     auto class_id = m_mesh->get_tag<Omega_h::ClassId>(idim,"class_id");
     auto class_dim = m_mesh->get_tag<Omega_h::Byte>(idim,"class_dim");
     auto gids = m_mesh->globals(idim);
-    std::cout << "  gids size: " << gids.size() << "\n";
-    std::cout << "  class_id size: " << class_id->array().size() << "\n";
-    std::cout << "  class_dim size: " << class_dim->array().size() << "\n";
+    ss << "  gids size: " << gids.size() << "\n";
+    ss << "  class_id size: " << class_id->array().size() << "\n";
+    ss << "  class_dim size: " << class_dim->array().size() << "\n";
+    ss << "  owned size: " << owned_h.size() << "\n";
     for (int i=0; i<gids.size(); ++i) {
-      std::cout << "i=" << i
+      ss << "i=" << i
                 << ", gid=" << gids[i]
                 << ", class_id=" << class_id->array()[i]
-                << ", class_dim=" << static_cast<int>(class_dim->array()[i]);
+                << ", class_dim=" << static_cast<int>(class_dim->array()[i])
+                << ", owned= " << static_cast<int>(owned_h[i]);
       if (idim==0) {
         centroids = coords;
       } else {
         centroids = Omega_h::average_field(m_mesh.get(), idim, Omega_h::LOs(m_mesh->nents(idim), 0, 1),mdim,coords);
       }
-      std::cout << ", centroids=[" << centroids[mdim*i];
+      ss << ", centroids=[" << centroids[mdim*i];
       for (int k=1; k<mdim; ++k) {
-        std::cout << " " << centroids[mdim*i+k];
+        ss << " " << centroids[mdim*i+k];
       }
-      std::cout << "]\n";
+      ss << "]\n";
     }
+  }
+  for(int rank=0; rank<m_mesh->comm()->size(); rank++) {
+    if(rank==m_mesh()->comm()->rank())
+      std::cerr << ss.str();
+    m_mesh->comm()->barrier();
   }
 #endif
   setCoordinates();
