@@ -62,7 +62,8 @@ LO OmegahGenericMesh::get_num_local_nodes () const
   TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
       "Error! Cannot query number of local nodes until bulk data is set.\n");
 
-  return m_mesh->nverts();
+  const auto nverts = OmegahGhost::getNumEntsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT);
+  return nverts;
 }
 
 LO OmegahGenericMesh::get_num_local_elements () const
@@ -70,14 +71,14 @@ LO OmegahGenericMesh::get_num_local_elements () const
   TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
       "Error! Cannot query number of local elements until bulk data is set.\n");
 
-  return m_mesh->nelems();
+  const auto nelems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  return nelems;
 }
 
 GO OmegahGenericMesh::get_max_node_gid () const
 {
   if (m_max_node_gid==-1) {
-    auto globals_d = m_mesh->globals(0);
-    Omega_h::HostRead<Omega_h::GO> global_h(globals_d);
+    auto global_h = OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT);
     for (int i=0; i<global_h.size(); ++i) {
       m_max_node_gid = std::max(m_max_node_gid,GO(global_h[i]));
     }
@@ -91,8 +92,7 @@ GO OmegahGenericMesh::get_max_node_gid () const
 GO OmegahGenericMesh::get_max_elem_gid () const
 {
   if (m_max_elem_gid==-1) {
-    auto globals_d = m_mesh->globals(m_mesh->dim());
-    Omega_h::HostRead<Omega_h::GO> global_h(globals_d);
+    auto global_h = OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, m_mesh->dim());
     for (int i=0; i<global_h.size(); ++i) {
       m_max_elem_gid = std::max(m_max_elem_gid,GO(global_h[i]));
     }
@@ -245,7 +245,8 @@ loadOmegahMesh ()
     const int id  = pl.get<int>("Id");
     const bool markDownward = pl.get<int>("Mark Downward",true); // Is default=true ok?
     auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
-    auto owned = m_mesh->owned(dim);
+    //ghosted entities cannot be owned so we don't need to check the closure of owned elements
+    auto owned = m_mesh->owned(dim); 
     auto is_in_part_and_owned = Omega_h::land_each(is_in_part, owned);
     this->declare_part(pn,topo,is_in_part_and_owned,markDownward);
 
