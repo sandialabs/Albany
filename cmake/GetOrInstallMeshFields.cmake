@@ -93,4 +93,6 @@ else ()
   message (STATUS " *** Begin of MeshFields configuration ***")
   FetchContent_MakeAvailable (MeshFields)
   message (STATUS " ***  End of MeshFields configuration  ***")
+
+  target_compile_options (meshfields PRIVATE $<$<C_COMPILER_ID:GNU>:-w> $<$<C_COMPILER_ID:Intel>: -w>)
 endif()

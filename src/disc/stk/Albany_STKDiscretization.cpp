@@ -477,7 +477,6 @@ STKDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Circular shelf transform!" << endl;
 #endif
-    double alpha = discParams->get("LandIce alpha", 0.0);
     double L     = discParams->get("LandIce L", 1.0);
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;

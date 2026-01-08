@@ -443,8 +443,6 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   if (adapt_type=="None") {
     return adapt_data;
   }
-  const auto verbose = adapt_params.get<bool>("Verbose",false);
-
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
 
@@ -524,6 +522,8 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
 
     const auto [tgtLength, error] = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
     const auto errorThreshold = adapt_params.get<double>("Error Threshold",0.5);
+    const auto verbose = adapt_params.get<bool>("Verbose",false);
+
     if(verbose) {
       //FIXME - should this be a per-rank output?
       //      - does getSprSizeField have a reduction?
