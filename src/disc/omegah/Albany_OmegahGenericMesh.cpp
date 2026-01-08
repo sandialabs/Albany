@@ -407,7 +407,7 @@ OmegahGenericMesh::createNodeSets()
       auto id_tag = Omega_h::mark_by_class(m_mesh.get(),0,ent.dim,ent.id);
       auto owned = m_mesh->owned(0);
 
-      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or (id_tag[i] and owned[i])); }; //FIXME I don't think the 'or' is needed
+      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or (id_tag[i] and owned[i])); };
       Omega_h::parallel_for(tag.size(),f);
     }
 #ifdef DEBUG_OUTPUT
