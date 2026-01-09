@@ -2,6 +2,7 @@
 #include <Omega_h_map.hpp> //unmap, fan_reduce
 #include <Omega_h_mark.hpp> //collect_marked
 #include <Omega_h_array_ops.hpp> //get_sum
+#include <Omega_h_element.hpp> //simplex_degree, hypercube_degree
 
 namespace OmegahGhost {
 
@@ -102,5 +103,16 @@ namespace OmegahGhost {
     return ownedCoords_d;
   }
 
-
+  Omega_h::LOs getDownAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    OMEGA_H_CHECK(dim >= 0 && dim < mesh.dim());
+    const auto isSimplex = (mesh.family() == OMEGA_H_SIMPLEX);
+    const auto entsPerElm = isSimplex ? Omega_h::simplex_degree(mesh.dim(),dim) :
+                                        Omega_h::hypercube_degree(mesh.dim(),dim);
+    auto elmToDown_d = mesh.ask_down(mesh.dim(),dim).ab2b;
+    auto isOwnedElm = mesh.owned(mesh.dim());
+    auto keptIndicies_d = Omega_h::collect_marked(isOwnedElm);
+    auto ownedElmToDown_d = Omega_h::unmap(keptIndicies_d, elmToDown_d, entsPerElm);
+    return ownedElmToDown_d;
+  }
 } //end OmegahGhost namespace
