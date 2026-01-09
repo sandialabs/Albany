@@ -94,6 +94,16 @@ namespace OmegahGhost {
     return Omega_h::HostRead<Omega_h::GO>(ownedGlobals_d);
   }
 
+  Omega_h::Read<Omega_h::I8> getOwnedEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    OMEGA_H_CHECK(dim >= 0 && dim <= mesh.dim());
+    auto isInClosure = getEntsInClosureOfOwnedElms(mesh, dim);
+    auto owned_d = mesh.owned(dim);
+    auto keptIndicies_d = Omega_h::collect_marked(isInClosure);
+    auto ownedInClosure_d = Omega_h::unmap(keptIndicies_d, owned_d, 1);
+    return ownedInClosure_d;
+  }
+
   Omega_h::Reals getVtxCoordsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     auto isInClosure = getEntsInClosureOfOwnedElms(mesh, Omega_h::VERT);
