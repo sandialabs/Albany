@@ -6,7 +6,7 @@ INSTALL_DIR=
 cmake \
   -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-  -D CMAKE_CXX_STANDARD=17 \
+  -D CMAKE_CXX_STANDARD=20 \
 \
   -D CMAKE_C_COMPILER=cc \
   -D CMAKE_CXX_COMPILER=CC \
@@ -126,5 +126,7 @@ cmake \
 \
   -D Tacho_ENABLE_INT_INT:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
+\
+  -D gtest_INCLUDE_DIRS=/global/common/software/fanssie/googletest-1.17.0/include/gtest \
 \
 ../
