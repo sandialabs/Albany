@@ -293,8 +293,10 @@ fillVector (Thyra_Vector&        field_vector,
   auto owned_h = hostRead(m_mesh->owned(dim));
   auto mesh_data_h  = hostRead(m_mesh->get_array<ST>(dim,field_name));
   auto thyra_data_h = getNonconstLocalData(field_vector);
-  auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
-  auto nents_per_elem = elem_ents_h.size() / nelems;
+  auto elem_ents_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh,dim));
+  const auto isSimplex = (m_mesh->family() == OMEGA_H_SIMPLEX);
+  const auto nents_per_elem = isSimplex ? Omega_h::simplex_degree(m_mesh->dim(),dim) :
+                                          Omega_h::hypercube_degree(m_mesh->dim(),dim);
   for (int ielem=0; ielem<nelems; ++ielem) {
     for (int icmp=0; icmp<field_dof_mgr->getNumFields(); ++icmp) {
       const auto& offsets = field_dof_mgr->getGIDFieldOffsets(icmp);
@@ -347,8 +349,10 @@ saveVector (const Thyra_Vector&  field_vector,
   auto mesh_data_h = hostWrite<ST>(m_mesh->nents(dim)*ncomps,field_name);
   auto owned_h = hostRead(OmegahGhost::getEntsInClosureOfOwnedElms(*m_mesh, dim));
   auto thyra_data_h = getLocalData(field_vector);
-  auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
-  auto nents_per_elem = elem_ents_h.size() / nelems;
+  auto elem_ents_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh,dim));
+  const auto isSimplex = (m_mesh->family() == OMEGA_H_SIMPLEX);
+  const auto nents_per_elem = isSimplex ? Omega_h::simplex_degree(m_mesh->dim(),dim) :
+                                          Omega_h::hypercube_degree(m_mesh->dim(),dim);
   for (int ielem=0; ielem<nelems; ++ielem) {
     for (int icmp=0; icmp<field_dof_mgr->getNumFields(); ++icmp) {
       const auto& offsets = field_dof_mgr->getGIDFieldOffsets(icmp);
