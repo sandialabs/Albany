@@ -32,3 +32,8 @@ create_unit_test (NAME    OmegahDiscretization
                   PREFIX  ${testNameRoot}
                   SOURCES OmegahDiscretization.cpp
                   LABELS  Omega_h)
+
+create_unit_test (NAME    OmegahGhost
+                  PREFIX  ${testNameRoot}
+                  SOURCES OmegahGhost.cpp
+                  LABELS  Omega_h)
