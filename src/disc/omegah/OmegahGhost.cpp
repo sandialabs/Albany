@@ -125,4 +125,13 @@ namespace OmegahGhost {
     auto ownedElmToDown_d = Omega_h::unmap(keptIndicies_d, elmToDown_d, entsPerElm);
     return ownedElmToDown_d;
   }
+
+  Omega_h::Graph getUpAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    OMEGA_H_CHECK(dim >= 0 && dim < mesh.dim());
+    auto downAdj = getDownAdjacentEntsInClosureOfOwnedElms(cmesh, dim);
+    auto numVertsInClosure = getNumEntsInClosureOfOwnedElms(cmesh, dim);
+    auto upAdj = Omega_h::invert_map_by_atomics(downAdj, numVertsInClosure);
+    return upAdj;
+  }
 } //end OmegahGhost namespace
