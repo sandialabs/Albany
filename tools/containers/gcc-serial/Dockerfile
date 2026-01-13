@@ -14,13 +14,14 @@ RUN apt-get update &&   \
         vim             \
         wget
 
-# Install compilers
+# Install compilers and python
 RUN apt-get update &&   \
     apt-get install -y  \
         build-essential \
         gcc             \
         g++             \
-        gfortran
+        gfortran        \
+        python3
 
 # Install MPI
 RUN apt-get update &&   \
