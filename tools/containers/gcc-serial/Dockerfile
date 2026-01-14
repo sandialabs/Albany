@@ -54,19 +54,24 @@ RUN cd $SOFTWARE_ROOT && \
 
 RUN mkdir $SOFTWARE_ROOT/trilinos/build
 
-ADD do-cmake-trilinos.sh ${SOFTWARE_ROOT}/trilinos/build/do-cmake.sh
+ADD do-cmake-trilinos.sh ${SOFTWARE_ROOT}/trilinos/build/do-cmake-trilinos.sh
 
 RUN cd $SOFTWARE_ROOT/trilinos/build && \
-    chmod u+x do-cmake.sh && ./do-cmake.sh
+    chmod u+x do-cmake-trilinos.sh && ./do-cmake-trilinos.sh
 
 RUN cd $SOFTWARE_ROOT/trilinos/build && \
     make -j16 install
 
 ENV TRILINOS_ROOT=${SOFTWARE_ROOT}/trilinos/install
 
+RUN cd $SOFTWARE_ROOT/trilinos && \
+    mv build/do-cmake-trilinos.sh ./    && \
+    rm -rf source build
+
 RUN useradd -ms /bin/bash runner
 
-# Update package list, install sudo, set password for 'runner', and configure sudoers
+# Install sudo, set password for 'runner', and configure sudoers. Just in case we want to install
+# some packages while we're running the container
 RUN apt-get update && \
     apt-get install -y sudo && \
     echo "runner:fannsie" | chpasswd && \
@@ -76,7 +81,7 @@ RUN apt-get update && \
 # Switch to user, and set some useful bindings
 USER runner
 
-RUN echo "bind \"\e[A\": history-search-backward" >> ~/.bashrc
-RUN echo "bind \"\e[B\": history-search-forward" >> ~/.bashrc
+RUN echo 'bind "\"\\e[A\": history-search-backward"' >> /home/runner/.bashrc
+RUN echo 'bind "\"\\e[B\": history-search-forward"' >> /home/runner/.bashrc
 
-CMD [ "/bin/bash" ]
+CMD [ "/bin/bash"]
