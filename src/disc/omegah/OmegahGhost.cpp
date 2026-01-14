@@ -86,14 +86,14 @@ namespace OmegahGhost {
     return Omega_h::get_sum(entHasOwnedAdjElm);
   }
 
-  Omega_h::HostRead<Omega_h::GO> getEntGidsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
+  Omega_h::Read<Omega_h::GO> getEntGidsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim <= mesh.dim());
     auto isInClosure = getEntsInClosureOfOwnedElms(mesh, dim);
     auto globals_d = mesh.globals(dim);
     auto keptIndicies_d = Omega_h::collect_marked(isInClosure);
     auto ownedGlobals_d = Omega_h::unmap(keptIndicies_d, globals_d, 1);
-    return Omega_h::HostRead<Omega_h::GO>(ownedGlobals_d);
+    return ownedGlobals_d;
   }
 
   Omega_h::Read<Omega_h::I8> getOwnedEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {

@@ -178,7 +178,7 @@ updateMesh ()
 
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
-  auto node_gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT);
+  auto node_gids = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   auto nverts = node_gids.size();
   m_node_lid_to_omegah_pos.resize(nverts);

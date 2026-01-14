@@ -78,7 +78,7 @@ LO OmegahGenericMesh::get_num_local_elements () const
 GO OmegahGenericMesh::get_max_node_gid () const
 {
   if (m_max_node_gid==-1) {
-    auto global_h = OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT);
+    auto global_h = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT));
     for (int i=0; i<global_h.size(); ++i) {
       m_max_node_gid = std::max(m_max_node_gid,GO(global_h[i]));
     }
@@ -92,7 +92,7 @@ GO OmegahGenericMesh::get_max_node_gid () const
 GO OmegahGenericMesh::get_max_elem_gid () const
 {
   if (m_max_elem_gid==-1) {
-    auto global_h = OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, m_mesh->dim());
+    auto global_h = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, m_mesh->dim()));
     for (int i=0; i<global_h.size(); ++i) {
       m_max_elem_gid = std::max(m_max_elem_gid,GO(global_h[i]));
     }
