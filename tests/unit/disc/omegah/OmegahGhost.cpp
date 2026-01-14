@@ -85,7 +85,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getNumOwnedElms_Parallel)
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntityGids_Serial)
 {
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(3, 3);
 
   // Test vertices (dim = 0)
@@ -133,7 +132,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntityGids_Parallel)
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms_Serial)
 {
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(2, 2);
 
   // In serial with no ghosts, ALL entities are in closure of owned elements
@@ -162,7 +160,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms_Serial)
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms_Parallel)
 {
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(4, 4);
 
   // With ghosts, some entities may NOT be in closure of owned elements
@@ -190,7 +187,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms_Parallel)
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getNumEntsInClosureOfOwnedElms)
 {
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(3, 3);
 
   // Test that count matches mask sum
@@ -208,7 +204,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getNumEntsInClosureOfOwnedElms)
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
 {
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(2, 2);
 
   for (int dim = 0; dim <= mesh.dim(); ++dim) {
@@ -230,7 +225,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getVtxCoordsInClosureOfOwnedElms)
 {
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(2, 2);
 
   auto coords = OmegahGhost::getVtxCoordsInClosureOfOwnedElms(mesh);
@@ -252,8 +246,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getVtxCoordsInClosureOfOwnedElms)
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D_Serial)
 {
-  auto comm = Albany::getDefaultComm();
-
   // Create 1D mesh with 4 edges: 0--1--2--3--4
   const int n_edges = 4;
   auto mesh = create1DMesh(n_edges);
@@ -316,8 +308,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D_Parall
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Serial)
 {
-  auto comm = Albany::getDefaultComm();
-
   // Create 1D mesh with 4 edges: 0--1--2--3--4
   // Vertex adjacencies:
   //   v0: edge 0
@@ -367,8 +357,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Serial)
 
 TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Parallel)
 {
-  auto comm = Albany::getDefaultComm();
-
   // Create 1D mesh with 8 edges
   const int n_edges_total = 8;
   auto mesh = create1DMesh(n_edges_total);
@@ -409,7 +397,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Parallel
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntsInClosureOfOwnedElms)
 {
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(3, 3);
 
   // For elements, "owned in closure" should match owned mask
