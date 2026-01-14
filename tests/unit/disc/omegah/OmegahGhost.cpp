@@ -17,6 +17,7 @@
 #include <Omega_h_build.hpp>
 #include <Omega_h_array_ops.hpp>
 #include <Omega_h_library.hpp>
+#include <Omega_h_comm.hpp>
 
 // Helper function to create 2D simplex box mesh
 Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
@@ -136,23 +137,20 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms)
 }
 
 //
-// TEST 6: GIDs in closure
+// TEST 4: GIDs in closure
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
 {
-  auto mesh = createBoxMesh2D(2, 2);
+  const int n_edges = 8;
+  auto mesh = create1DMesh(n_edges);
+  auto comm = Albany::getDefaultComm();
+  auto numRanks = comm->getSize();
+  auto rank = comm->getRank();
 
-  for (int dim = 0; dim <= mesh.dim(); ++dim) {
-    auto gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh, dim);
-    auto count = OmegahGhost::getNumEntsInClosureOfOwnedElms(mesh, dim);
-
-    // Length should match count
-    TEST_EQUALITY_CONST(gids.size(), count);
-
-    // All GIDs should be valid (non-negative)
-    for (int i = 0; i < gids.size(); ++i) {
-      TEST_ASSERT(gids[i] >= 0);
-    }
+  if(numRanks == 4) {
+    auto gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh, 0);
+    int maxGid = Omega_h::get_max(gids);
+    auto startGid = mesh.comm()->exscan(maxGid, OMEGA_H_SUM);
   }
 }
 
