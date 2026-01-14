@@ -70,48 +70,45 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getNumOwnedElms)
 //
 // TEST 2: Owned entity GIDs
 //
-TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntityGids_Serial)
+TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntityGids)
 {
-  auto mesh = createBoxMesh2D(3, 3);
+  const int ne=4;
+  auto mesh = createBoxMesh2D(ne, ne);
+  auto comm = Albany::getDefaultComm();
 
   // Test vertices (dim = 0)
+  {
   auto vtxGids = OmegahGhost::getOwnedEntityGids(mesh, 0);
-  int expectedVtx = 16; // 4x4 grid of vertices
-  TEST_EQUALITY_CONST(vtxGids.size(), expectedVtx);
-
-  // Test edges (dim = 1)
-  auto edgeGids = OmegahGhost::getOwnedEntityGids(mesh, 1);
-  int expectedEdges = 33; // 3*(3+1) + 4*3 = 33 for 3x3 tri mesh
-  TEST_EQUALITY_CONST(edgeGids.size(), expectedEdges);
-
-  // Test triangles (dim = 2)
-  auto triGids = OmegahGhost::getOwnedEntityGids(mesh, 2);
-  int expectedTris = 18; // 3*3*2 = 18 triangles
-  TEST_EQUALITY_CONST(triGids.size(), expectedTris);
-
-  // Verify GIDs are unique (check for duplicates)
-  std::set<Omega_h::GO> uniqueGids(vtxGids.begin(), vtxGids.end());
-  TEST_EQUALITY_CONST((int)uniqueGids.size(), expectedVtx);
-}
-
-TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntityGids_Parallel)
-{
-  auto comm = Albany::getDefaultComm();
-  auto mesh = createBoxMesh2D(3, 3);
-
-  // Test vertices
-  auto vtxGids = OmegahGhost::getOwnedEntityGids(mesh, 0);
-
-  // Each rank should own some vertices
   TEST_ASSERT(vtxGids.size() > 0);
-
-  // Gather all GIDs to check uniqueness
+  const int expectedVtx = (ne+1)*(ne+1); //square grid of (ne+1)^2 vertices
   int localCount = vtxGids.size();
   int globalCount;
   Teuchos::reduceAll<int>(*comm, Teuchos::REDUCE_SUM, 1, &localCount, &globalCount);
+  TEST_EQUALITY_CONST(globalCount, expectedVtx);
+  }
 
-  // Should equal total vertices
-  TEST_EQUALITY_CONST(globalCount, 16);
+  // Test edges (dim = 1)
+  {
+  auto edgeGids = OmegahGhost::getOwnedEntityGids(mesh, 1);
+  TEST_ASSERT(edgeGids.size() > 0);
+  const int expectedEdges = 2 * ((ne+1) * ne) // horizontal + vertical edges
+                            + (ne * ne); // diagonal edges
+  int localCount = edgeGids.size();
+  int globalCount;
+  Teuchos::reduceAll<int>(*comm, Teuchos::REDUCE_SUM, 1, &localCount, &globalCount);
+  TEST_EQUALITY_CONST(globalCount, expectedEdges);
+  }
+
+  // Test triangles (dim = 2)
+  {
+  auto triGids = OmegahGhost::getOwnedEntityGids(mesh, 2);
+  TEST_ASSERT(triGids.size() > 0);
+  int expectedTris = ne*ne*2; // each quad is divided into two triangles
+  int localCount = triGids.size();
+  int globalCount;
+  Teuchos::reduceAll<int>(*comm, Teuchos::REDUCE_SUM, 1, &localCount, &globalCount);
+  TEST_EQUALITY_CONST(globalCount, expectedTris);
+  }
 }
 
 //
