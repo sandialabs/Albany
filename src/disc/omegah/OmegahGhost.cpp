@@ -3,6 +3,8 @@
 #include <Omega_h_mark.hpp> //collect_marked
 #include <Omega_h_array_ops.hpp> //get_sum
 #include <Omega_h_element.hpp> //simplex_degree, hypercube_degree
+#include <Omega_h_adj.hpp> //invert_adj
+#include <Omega_h_int_scan.hpp> //offset_scan
 
 namespace OmegahGhost {
 
@@ -129,9 +131,15 @@ namespace OmegahGhost {
   Omega_h::Graph getUpAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim < mesh.dim());
-    auto downAdj = getDownAdjacentEntsInClosureOfOwnedElms(cmesh, dim);
-    auto numVertsInClosure = getNumEntsInClosureOfOwnedElms(cmesh, dim);
-    auto upAdj = Omega_h::invert_map_by_atomics(downAdj, numVertsInClosure);
+    auto downEnts = getDownAdjacentEntsInClosureOfOwnedElms(cmesh, dim);
+    const auto isSimplex = (mesh.family() == OMEGA_H_SIMPLEX);
+    const auto entsPerElm = isSimplex ? Omega_h::simplex_degree(mesh.dim(),dim) :
+                                        Omega_h::hypercube_degree(mesh.dim(),dim);
+    const auto numDownEnts = getNumEntsInClosureOfOwnedElms(cmesh, dim);
+    const auto numElms = getNumOwnedElms(cmesh);
+    auto offsets = Omega_h::offset_scan(Omega_h::LOs(numElms,entsPerElm));
+    Omega_h::Graph downGraph({offsets,downEnts});
+    auto upAdj = Omega_h::invert_adj(downGraph, entsPerElm, numDownEnts, mesh.dim(), dim);
     return upAdj;
   }
 } //end OmegahGhost namespace
