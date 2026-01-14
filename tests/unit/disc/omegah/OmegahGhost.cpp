@@ -49,24 +49,8 @@ Omega_h::Mesh create1DMesh(int n_edges) {
 //
 // TEST 1: Basic ownership count
 //
-TEUCHOS_UNIT_TEST(OmegahGhost, getNumOwnedElms_Serial)
+TEUCHOS_UNIT_TEST(OmegahGhost, getNumOwnedElms)
 {
-  auto comm = Albany::getDefaultComm();
-  auto mesh = createBoxMesh2D(4, 4);
-
-  auto numOwnedElms = OmegahGhost::getNumOwnedElms(mesh);
-
-  // 4x4 quad mesh = 32 triangles (2 per quad)
-  int expected = 32;
-  int globalCount;
-  Teuchos::reduceAll<int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedElms, &globalCount);
-
-  TEST_EQUALITY_CONST(globalCount, expected);
-}
-
-TEUCHOS_UNIT_TEST(OmegahGhost, getNumOwnedElms_Parallel)
-{
-  auto comm = Albany::getDefaultComm();
   auto mesh = createBoxMesh2D(4, 4);
 
   auto numOwnedElms = OmegahGhost::getNumOwnedElms(mesh);
@@ -74,10 +58,13 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getNumOwnedElms_Parallel)
   // Each rank should own some elements
   TEST_ASSERT(numOwnedElms > 0);
 
-  // Sum across ranks should equal total
+  // 4x4 quad mesh = 32 triangles (2 per quad)
+  int expected = 32;
   int globalCount;
+  auto comm = Albany::getDefaultComm();
   Teuchos::reduceAll<int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedElms, &globalCount);
-  TEST_EQUALITY_CONST(globalCount, 32);
+
+  TEST_EQUALITY_CONST(globalCount, expected);
 }
 
 //
