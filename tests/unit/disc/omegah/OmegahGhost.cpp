@@ -112,62 +112,31 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntityGids)
 }
 
 //
-// TEST 3: Entities in closure - serial
+// TEST 3: Entities in closure - 2d
 //
-TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms_Serial)
-{
-  auto mesh = createBoxMesh2D(2, 2);
-
-  // In serial with no ghosts, ALL entities are in closure of owned elements
-
-  // Test vertices
-  auto vtxMask = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, 0);
-  TEST_EQUALITY_CONST(vtxMask.size(), mesh.nverts());
-  auto vtxSum = Omega_h::get_sum(vtxMask);
-  TEST_EQUALITY_CONST(vtxSum, mesh.nverts());
-
-  // Test edges
-  auto edgeMask = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, 1);
-  TEST_EQUALITY_CONST(edgeMask.size(), mesh.nedges());
-  auto edgeSum = Omega_h::get_sum(edgeMask);
-  TEST_EQUALITY_CONST(edgeSum, mesh.nedges());
-
-  // Test triangles
-  auto triMask = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, 2);
-  TEST_EQUALITY_CONST(triMask.size(), mesh.nelems());
-  auto triSum = Omega_h::get_sum(triMask);
-  TEST_EQUALITY_CONST(triSum, mesh.nelems());
-}
-
-//
-// TEST 4: Entities in closure - parallel (key ghost test)
-//
-TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms_Parallel)
+TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms)
 {
   auto mesh = createBoxMesh2D(4, 4);
 
-  // With ghosts, some entities may NOT be in closure of owned elements
-
-  // Test elements
+  // elements
   auto elmMask = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, mesh.dim());
   auto numInClosure = Omega_h::get_sum(elmMask);
   auto numOwned = OmegahGhost::getNumOwnedElms(mesh);
-
-  // For elements, "in closure" should equal owned
   TEST_EQUALITY_CONST(numInClosure, numOwned);
 
-  // Test vertices
-  auto vtxMask = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, 0);
-  auto numVtxInClosure = Omega_h::get_sum(vtxMask);
-  auto totalVtx = mesh.nverts();
-
-  // Should have some vertices in closure
-  TEST_ASSERT(numVtxInClosure > 0);
-  TEST_ASSERT(numVtxInClosure <= totalVtx);
+  // vertices and edges
+  for(int dim=0; dim<mesh.dim(); dim++) {
+    auto entMask = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, dim);
+    auto numOwnedEnts = Omega_h::get_sum(mesh.owned(dim));
+    auto numEntsInClosure = Omega_h::get_sum(entMask);
+    TEST_ASSERT(numEntsInClosure > 0);
+    TEST_ASSERT(numEntsInClosure >= numOwnedEnts);
+    TEST_ASSERT(numEntsInClosure <= mesh.nents(dim));
+  }
 }
 
 //
-// TEST 5: Count entities in closure
+// TEST 4: Count entities in closure
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getNumEntsInClosureOfOwnedElms)
 {
