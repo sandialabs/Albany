@@ -23,39 +23,26 @@ Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
   auto lib = Albany::get_omegah_lib();
   const auto scale = 1.0;
   const auto nz = 0;
-  return Omega_h::build_box(lib.world(),OMEGA_H_SIMPLEX,
+  auto mesh = Omega_h::build_box(lib.world(),OMEGA_H_SIMPLEX,
                                           scale,scale,scale,
                                           nx,ny,nz);
+  const auto verbose = true;
+  mesh.set_parting(OMEGA_H_GHOSTED, 1, verbose);
+  return mesh;
 }
 
 // Helper: Create simple 1D mesh with build_from_elems2verts
 // Creates a line of 'n_edges' edges: 0--1--2--...--n_edges
 Omega_h::Mesh create1DMesh(int n_edges) {
   auto lib = Albany::get_omegah_lib();
-  Omega_h::Mesh mesh(&lib);
-
-  // Build elem2verts connectivity
-  // For n edges, we need n*2 vertex indices
-  // Edge 0: vertices {0,1}, Edge 1: vertices {1,2}, etc.
-  Omega_h::Write<Omega_h::LO> elem2verts_w(n_edges * 2);
-  for (int i = 0; i < n_edges; ++i) {
-    elem2verts_w[i * 2 + 0] = i;
-    elem2verts_w[i * 2 + 1] = i + 1;
-  }
-  Omega_h::LOs elem2verts(elem2verts_w);
-
-  int nverts = n_edges + 1;
-
-  // Build 1D simplex mesh (dimension=1, elements are edges)
-  Omega_h::build_from_elems2verts(&mesh, OMEGA_H_SIMPLEX, 1, elem2verts, nverts);
-
-  // Add coordinates (optional but useful)
-  Omega_h::Write<Omega_h::Real> coords_w(nverts * mesh.dim());
-  for (int i = 0; i < nverts; ++i) {
-    coords_w[i] = static_cast<Omega_h::Real>(i) / n_edges; // positions 0.0 to 1.0
-  }
-  mesh.add_coords(Omega_h::Reals(coords_w));
-
+  const auto scale = 1.0;
+  const auto ny = 0;
+  const auto nz = 0;
+  auto mesh = Omega_h::build_box(lib.world(),OMEGA_H_SIMPLEX,
+                                          scale,scale,scale,
+                                          n_edges,ny,nz);
+  const auto verbose = true;
+  mesh.set_parting(OMEGA_H_GHOSTED, 1, verbose);
   return mesh;
 }
 
