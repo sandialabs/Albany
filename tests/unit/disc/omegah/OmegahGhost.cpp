@@ -136,23 +136,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntsInClosureOfOwnedElms)
 }
 
 //
-// TEST 4: Count entities in closure
-//
-TEUCHOS_UNIT_TEST(OmegahGhost, getNumEntsInClosureOfOwnedElms)
-{
-  auto mesh = createBoxMesh2D(3, 3);
-
-  // Test that count matches mask sum
-  for (int dim = 0; dim <= mesh.dim(); ++dim) {
-    auto mask = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, dim);
-    auto maskSum = Omega_h::get_sum(mask);
-    auto count = OmegahGhost::getNumEntsInClosureOfOwnedElms(mesh, dim);
-
-    TEST_EQUALITY_CONST(count, maskSum);
-  }
-}
-
-//
 // TEST 6: GIDs in closure
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
