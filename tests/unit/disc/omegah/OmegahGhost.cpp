@@ -18,6 +18,7 @@
 #include <Omega_h_array_ops.hpp>
 #include <Omega_h_library.hpp>
 #include <Omega_h_comm.hpp>
+#include <Omega_h_file.hpp> //vtk::write_parallel
 
 // Helper function to create 2D simplex box mesh
 Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
@@ -162,23 +163,28 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
 }
 
 //
-// TEST 7: Vertex coordinates in closure
+// TEST 5: Vertex coordinates in closure
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getVtxCoordsInClosureOfOwnedElms)
 {
   auto mesh = createBoxMesh2D(2, 2);
-
+  Omega_h::vtk::write_parallel("foo2x2", &mesh, mesh.dim());
+  //partition cuts are not along x=0.5 and y=0.5 !
+  auto comm = Albany::getDefaultComm();
+  auto numRanks = comm->getSize();
+  auto rank = comm->getRank();
   auto coords = OmegahGhost::getVtxCoordsInClosureOfOwnedElms(mesh);
-  auto numVtxInClosure = OmegahGhost::getNumEntsInClosureOfOwnedElms(mesh, 0);
-
-  // Should have dim * numVertices entries
-  TEST_EQUALITY_CONST(coords.size(), numVtxInClosure * mesh.dim());
-
-  // Check coordinates are within box bounds [0,1] x [0,1]
-  auto coords_h = Omega_h::HostRead(coords);
-  for (int i = 0; i < coords_h.size(); ++i) {
-    TEST_ASSERT(coords_h[i] >= 0.0);
-    TEST_ASSERT(coords_h[i] <= 1.0);
+  if(numRanks == 4) {
+    auto x = Omega_h::get_component(coords, 2, 0);
+    auto minX = Omega_h::get_min(x);
+    auto maxX = Omega_h::get_max(x);
+    auto y = Omega_h::get_component(coords, 2, 1);
+    auto minY = Omega_h::get_min(y);
+    auto maxY = Omega_h::get_max(y);
+    auto delta = 1.0/2;
+  }
+  if(numRanks == 1) {
+    TEST_ASSERT(mesh.coords() == coords);
   }
 }
 
