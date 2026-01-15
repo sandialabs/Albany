@@ -245,7 +245,7 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D)
   } 
   // Check connectivity is correct
   auto edgeToVtx_h = Omega_h::HostRead(edgeToVtx);
-  for (int e = 0; e < n_edges; ++e) {
+  for (int e = 0; e < numOwnedEdges; ++e) {
     int v0 = edgeToVtx_h[e * 2 + 0];
     int v1 = edgeToVtx_h[e * 2 + 1];
 
