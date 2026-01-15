@@ -256,10 +256,16 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D)
 }
 
 //
-// TEST 9: Upward Adjacency (Vertex→Edge) for 1D Mesh
+// TEST 7: Upward Adjacency (Vertex->Edge) for 1D Mesh
 //
 TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Serial)
 {
+  auto comm = Albany::getDefaultComm();
+  auto numRanks = comm->getSize();
+  auto rank = comm->getRank();
+  if( numRanks > 1 ) {
+    return;
+  }
   // Create 1D mesh with 4 edges: 0--1--2--3--4
   // Vertex adjacencies:
   //   v0: edge 0
@@ -315,31 +321,28 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Parallel
 
   // Get vertex-to-edge upward adjacencies
   auto vtxToEdge = OmegahGhost::getUpAdjacentEntsInClosureOfOwnedElms(mesh, 0);
-  auto numVtxInClosure = OmegahGhost::getNumEntsInClosureOfOwnedElms(mesh, 0);
-
-  // Graph should have entries for vertices in closure
-  TEST_EQUALITY_CONST(vtxToEdge.a2ab.size(), numVtxInClosure + 1);
+  auto vertsInClosure = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, 0);
 
   auto a2ab_h = Omega_h::HostRead(vtxToEdge.a2ab);
   auto ab2b_h = Omega_h::HostRead(vtxToEdge.ab2b);
 
-  // Verify graph structure consistency:
-  // - All adjacency counts should be reasonable (1 or 2 for 1D line mesh)
-  // - All edge indices should be valid
-
-  for (int v = 0; v < numVtxInClosure; ++v) {
+  const auto numVerts = a2ab_h.size()-1;
+  const auto numEdges = mesh.nents(mesh.dim());
+  for (int v = 0; v < numVerts; ++v) {
     int numAdj = a2ab_h[v + 1] - a2ab_h[v];
 
     // In a 1D line mesh, vertices should have 1 or 2 adjacent edges
-    TEST_ASSERT(numAdj >= 1);
-    TEST_ASSERT(numAdj <= 2);
+    if(vertsInClosure[v]) {
+      TEST_ASSERT(numAdj >= 1 && numAdj <= 2);
+    } else {
+      TEST_ASSERT(numAdj == 0);
+    }
 
     // Check all edge indices are valid
     for (int j = a2ab_h[v]; j < a2ab_h[v + 1]; ++j) {
       int edge = ab2b_h[j];
       TEST_ASSERT(edge >= 0);
-      // Note: edge index is in the filtered space (owned edges only)
-      TEST_ASSERT(edge < OmegahGhost::getNumOwnedElms(mesh));
+      TEST_ASSERT(edge < numEdges);
     }
   }
 }

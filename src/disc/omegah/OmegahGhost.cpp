@@ -5,6 +5,7 @@
 #include <Omega_h_element.hpp> //simplex_degree, hypercube_degree
 #include <Omega_h_adj.hpp> //invert_adj
 #include <Omega_h_int_scan.hpp> //offset_scan
+#include <Omega_h_for.hpp> //parallel_for
 
 namespace OmegahGhost {
 
@@ -130,18 +131,46 @@ namespace OmegahGhost {
     return ownedElmToDown_d;
   }
 
+  //returns owned upward adjacent elements from *all* entities of dimension dim
+  //on the part. If an entity (dimension=dim) is not in the closure of an owned
+  //element it will have no upward adjacent elements in the returned Graph.
   Omega_h::Graph getUpAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim < mesh.dim());
-    auto downEnts = getDownAdjacentEntsInClosureOfOwnedElms(cmesh, dim);
-    const auto isSimplex = (mesh.family() == OMEGA_H_SIMPLEX);
-    const auto entsPerElm = isSimplex ? Omega_h::simplex_degree(mesh.dim(),dim) :
-                                        Omega_h::hypercube_degree(mesh.dim(),dim);
-    const auto numDownEnts = getNumEntsInClosureOfOwnedElms(cmesh, dim);
-    const auto numElms = getNumOwnedElms(cmesh);
-    auto offsets = Omega_h::offset_scan(Omega_h::LOs(numElms,entsPerElm));
-    Omega_h::Graph downGraph({offsets,downEnts});
-    auto upAdj = Omega_h::invert_adj(downGraph, entsPerElm, numDownEnts, mesh.dim(), dim);
-    return upAdj;
+    auto entToElm = mesh.ask_up(dim, mesh.dim());
+    auto isOwnedElm = mesh.owned(mesh.dim());
+    // create marks for each elm to indicate if it should be kept
+    auto elmsToKeep = Omega_h::Write<Omega_h::I8>(entToElm.ab2b.size(),0);
+    auto ab2b = entToElm.ab2b;
+    Omega_h::parallel_for(ab2b.size(), OMEGA_H_LAMBDA(const Omega_h::LO &i) {
+      const auto candidateElm = ab2b[i];
+      elmsToKeep[i] = isOwnedElm[candidateElm];
+    });
+    // count number of upward adj elms being kept per entity
+    auto oldOffsets = entToElm.a2ab;
+    const auto numEnts = oldOffsets.size()-1;
+    auto filteredEntDegree = Omega_h::Write<Omega_h::LO>(numEnts,0);
+    Omega_h::parallel_for(numEnts, OMEGA_H_LAMBDA(const Omega_h::LO &i) {
+      for(int j=oldOffsets[i]; j<oldOffsets[i+1]; j++) {
+        filteredEntDegree[i] += elmsToKeep[j];
+      }
+    });
+    // create offset array for filtered elements
+    auto offset = Omega_h::offset_scan(Omega_h::Read(filteredEntDegree));
+    // copy elms to new 'values' array that are being kept
+    auto values = Omega_h::Write<Omega_h::LO>(offset.last(), 0);
+    // fill the 'values' array
+    Omega_h::parallel_for(numEnts, OMEGA_H_LAMBDA(const Omega_h::LO &i) {
+      int newUpIdx = offset[i];
+      for(int j=oldOffsets[i]; j<oldOffsets[i+1]; j++) {
+        if( elmsToKeep[j] ) {
+          auto elm = ab2b[j];
+          assert(newUpIdx < offset[i+1]);
+          values[newUpIdx] = elm;
+          newUpIdx++;
+        }
+      }
+    });
+    return Omega_h::Graph({offset,values});
   }
 } //end OmegahGhost namespace
