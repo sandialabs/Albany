@@ -44,8 +44,35 @@ RUN apt-get update &&       \
         libmetis-dev        \
         libparmetis-dev
 
+ENV NETCDF_C_ROOT=/usr/lib/x86_64-linux-gnu/netcdf/mpi
+
+# Create a bash goodies file, for users to load when manually running the container
+# Simply run 'source /opt/share/bash-goodies.sh' to get these
+RUN mkdir -p /opt/share && \
+    echo 'bind "\"\\e[A\": history-search-backward"' > /opt/share/bash-goodies.sh && \
+    echo 'bind "\"\\e[B\": history-search-forward"' >> /opt/share/bash-goodies.sh && \
+    echo 'git config --global url."https://github.com/".insteadOf git@github.com:' >> /opt/share/bash-goodies.sh
+
+# Add a runner user, and assign it to the fanssie group
+RUN groupadd fanssie && \
+    useradd -m -g fanssie -s /bin/bash runner && \
+    echo "umask 002" >> /home/runner/.bashrc
+
+# Install sudo, set password for 'runner', and configure sudoers.
+# This helkps if we realize we need an extra pkg while running a container
+RUN apt-get update && \
+    apt-get install -y sudo && \
+    echo "runner:fannsie" | chpasswd && \
+    echo "runner ALL=(ALL) ALL" >> /etc/sudoers && \
+    apt-get clean
+
 ENV SOFTWARE_ROOT=/software
-RUN mkdir $SOFTWARE_ROOT
+RUN mkdir $SOFTWARE_ROOT && \
+    chown :fanssie $SOFTWARE_ROOT && \
+    chmod 2770 $SOFTWARE_ROOT
+
+# Switch to user from now on
+USER runner
 
 # TRILINOS
 RUN cd $SOFTWARE_ROOT && \
@@ -54,10 +81,10 @@ RUN cd $SOFTWARE_ROOT && \
 
 RUN mkdir $SOFTWARE_ROOT/trilinos/build
 
-ADD do-cmake-trilinos.sh ${SOFTWARE_ROOT}/trilinos/build/do-cmake-trilinos.sh
+ADD --chown=runner:fanssie --chmod=775 do-cmake-trilinos.sh ${SOFTWARE_ROOT}/trilinos/build/do-cmake-trilinos.sh
 
 RUN cd $SOFTWARE_ROOT/trilinos/build && \
-    chmod u+x do-cmake-trilinos.sh && ./do-cmake-trilinos.sh
+    ./do-cmake-trilinos.sh
 
 RUN cd $SOFTWARE_ROOT/trilinos/build && \
     make -j16 install
@@ -67,21 +94,5 @@ ENV TRILINOS_ROOT=${SOFTWARE_ROOT}/trilinos/install
 RUN cd $SOFTWARE_ROOT/trilinos && \
     mv build/do-cmake-trilinos.sh ./    && \
     rm -rf source build
-
-RUN useradd -ms /bin/bash runner
-
-# Install sudo, set password for 'runner', and configure sudoers. Just in case we want to install
-# some packages while we're running the container
-RUN apt-get update && \
-    apt-get install -y sudo && \
-    echo "runner:fannsie" | chpasswd && \
-    echo "runner ALL=(ALL) ALL" >> /etc/sudoers && \
-    apt-get clean
-
-# Switch to user, and set some useful bindings
-USER runner
-
-RUN echo 'bind "\"\\e[A\": history-search-backward"' >> /home/runner/.bashrc
-RUN echo 'bind "\"\\e[B\": history-search-forward"' >> /home/runner/.bashrc
 
 CMD [ "/bin/bash"]
