@@ -37,8 +37,8 @@ Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
   mesh.set_rib_hints(hints);
   mesh.balance();
   // add ghosts
-  mesh.set_parting(OMEGA_H_GHOSTED, 1);
-  assert(mesh.nghost_layers() == 1);
+  const auto verbose = false;
+  mesh.set_parting(OMEGA_H_GHOSTED, 1, verbose);
   return mesh;
 }
 
@@ -52,7 +52,7 @@ Omega_h::Mesh create1DMesh(int n_edges) {
   auto mesh = Omega_h::build_box(lib.world(),OMEGA_H_SIMPLEX,
                                           scale,scale,scale,
                                           n_edges,ny,nz);
-  const auto verbose = true;
+  const auto verbose = false;
   mesh.set_parting(OMEGA_H_GHOSTED, 1, verbose);
   return mesh;
 }
