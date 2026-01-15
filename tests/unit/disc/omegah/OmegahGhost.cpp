@@ -220,23 +220,29 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getVtxCoordsInClosureOfOwnedElms)
 }
 
 //
-// TEST 8: Downward Adjacency (Edge→Vertex) for 1D Mesh
+// TEST 6: Downward Adjacency (Edge→Vertex) for 1D Mesh
 //
-TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D_Serial)
+TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D)
 {
-  // Create 1D mesh with 4 edges: 0--1--2--3--4
-  const int n_edges = 4;
+  const int n_edges = 8;
   auto mesh = create1DMesh(n_edges);
+  auto comm = Albany::getDefaultComm();
+  auto numRanks = comm->getSize();
+  auto rank = comm->getRank();
 
   // Get edge-to-vertex downward adjacencies for owned edges
-  // dim=0 means we're getting vertices (downward from edges)
-  auto edgeToVtx = OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, 0);
+  auto edgeToVtx = OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, OMEGA_H_VERT);
   auto numOwnedEdges = OmegahGhost::getNumOwnedElms(mesh);
 
   // Should have 2 vertices per edge
   TEST_EQUALITY_CONST(edgeToVtx.size(), numOwnedEdges * 2);
-  TEST_EQUALITY_CONST(numOwnedEdges, n_edges);
+ 
+  // Get vertex global ids
+  auto vtxGids = mesh.globals(OMEGA_H_VERT);
 
+  if(numRanks > 1) {
+    TEST_ASSERT(numRanks == 4); //hardcoded for four ranks
+  } 
   // Check connectivity is correct
   auto edgeToVtx_h = Omega_h::HostRead(edgeToVtx);
   for (int e = 0; e < n_edges; ++e) {
@@ -244,41 +250,9 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D_Serial
     int v1 = edgeToVtx_h[e * 2 + 1];
 
     // Edge e should connect vertices e and e+1
-    TEST_EQUALITY_CONST(v0, e);
-    TEST_EQUALITY_CONST(v1, e + 1);
+    TEST_EQUALITY_CONST(vtxGids[v0], (rank*2)+e);
+    TEST_EQUALITY_CONST(vtxGids[v1], (rank*2)+e+1);
   }
-}
-
-TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D_Parallel)
-{
-  auto comm = Albany::getDefaultComm();
-
-  // Create 1D mesh with 8 edges total
-  const int n_edges_total = 8;
-  auto mesh = create1DMesh(n_edges_total);
-
-  // Get edge-to-vertex downward adjacencies for owned edges only
-  auto edgeToVtx = OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, 0);
-  auto numOwnedEdges = OmegahGhost::getNumOwnedElms(mesh);
-
-  // Should have 2 vertices per owned edge
-  TEST_EQUALITY_CONST(edgeToVtx.size(), numOwnedEdges * 2);
-
-  // Each rank should own some edges
-  TEST_ASSERT(numOwnedEdges > 0);
-
-  // Check all vertex indices are valid
-  auto edgeToVtx_h = Omega_h::HostRead(edgeToVtx);
-  int nverts = mesh.nverts();
-  for (int i = 0; i < edgeToVtx_h.size(); ++i) {
-    TEST_ASSERT(edgeToVtx_h[i] >= 0);
-    TEST_ASSERT(edgeToVtx_h[i] < nverts);
-  }
-
-  // Sum across ranks should equal total edges
-  int globalOwnedEdges;
-  Teuchos::reduceAll<int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedEdges, &globalOwnedEdges);
-  TEST_EQUALITY_CONST(globalOwnedEdges, n_edges_total);
 }
 
 //
