@@ -115,6 +115,8 @@ namespace OmegahGhost {
     return ownedCoords_d;
   }
 
+  //returns downward entity indexing in the unfiltered/ghosted mesh that can be used to access
+  // tags/arrays on the ghosted mesh
   Omega_h::LOs getDownAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim < mesh.dim());
