@@ -147,10 +147,17 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
   auto numRanks = comm->getSize();
   auto rank = comm->getRank();
 
-  if(numRanks == 4) {
-    auto gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh, 0);
-    int maxGid = Omega_h::get_max(gids);
-    auto startGid = mesh.comm()->exscan(maxGid, OMEGA_H_SUM);
+  for(int dim=0; dim<=mesh.dim(); dim++) {
+    auto gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh, dim);
+    //this could be more general for n_edges and numRanks...
+    if(numRanks == 4) {
+      for(int i=0; i<gids.size(); i++) {
+        TEST_ASSERT((rank*2)+i == gids[i]);
+      }
+    }
+    if(numRanks == 1) {
+      TEST_ASSERT(mesh.globals(dim) == gids);
+    }
   }
 }
 
