@@ -178,21 +178,43 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getVtxCoordsInClosureOfOwnedElms)
 {
   auto mesh = createBoxMesh2D(2, 2);
 
-
   auto comm = Albany::getDefaultComm();
   auto numRanks = comm->getSize();
   auto rank = comm->getRank();
   auto coords = OmegahGhost::getVtxCoordsInClosureOfOwnedElms(mesh);
-  if(numRanks == 4) {
+  if(numRanks > 1) {
+    TEST_ASSERT(numRanks == 4); //hardcoded for four ranks
     auto x = Omega_h::get_component(coords, 2, 0);
     auto minX = Omega_h::get_min(x);
     auto maxX = Omega_h::get_max(x);
     auto y = Omega_h::get_component(coords, 2, 1);
     auto minY = Omega_h::get_min(y);
     auto maxY = Omega_h::get_max(y);
-    auto delta = 1.0/2;
-  }
-  if(numRanks == 1) {
+    const auto length = 1.0;
+    const auto half = length/2;
+    const auto tol = 1e-10;
+    if(rank == 0) { // lower left
+      TEST_FLOATING_EQUALITY(minX, 0, tol);
+      TEST_FLOATING_EQUALITY(maxX, half, tol);
+      TEST_FLOATING_EQUALITY(minY, 0, tol);
+      TEST_FLOATING_EQUALITY(maxY, half, tol);
+    } else if(rank == 1) { // upper left
+      TEST_FLOATING_EQUALITY(minX, 0, tol);
+      TEST_FLOATING_EQUALITY(maxX, half, tol);
+      TEST_FLOATING_EQUALITY(minY, half, tol);
+      TEST_FLOATING_EQUALITY(maxY, length, tol);
+    } else if(rank == 2) { // lower right
+      TEST_FLOATING_EQUALITY(minX, half, tol);
+      TEST_FLOATING_EQUALITY(maxX, length, tol);
+      TEST_FLOATING_EQUALITY(minY, 0, tol);
+      TEST_FLOATING_EQUALITY(maxY, half, tol);
+    } else if(rank == 3) { // upper right
+      TEST_FLOATING_EQUALITY(minX, half, tol);
+      TEST_FLOATING_EQUALITY(maxX, length, tol);
+      TEST_FLOATING_EQUALITY(minY, half, tol);
+      TEST_FLOATING_EQUALITY(maxY, length, tol);
+    }
+  } else { // one rank
     TEST_ASSERT(mesh.coords() == coords);
   }
 }
