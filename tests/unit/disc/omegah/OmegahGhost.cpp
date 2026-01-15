@@ -18,7 +18,8 @@
 #include <Omega_h_array_ops.hpp>
 #include <Omega_h_library.hpp>
 #include <Omega_h_comm.hpp>
-#include <Omega_h_file.hpp> //vtk::write_parallel
+#include <Omega_h_file.hpp> //Omega_h::vtk::write_parallel
+#include <Omega_h_inertia.hpp> //Omega_h::inertia::Rib
 
 // Helper function to create 2D simplex box mesh
 Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
@@ -28,8 +29,16 @@ Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
   auto mesh = Omega_h::build_box(lib.world(),OMEGA_H_SIMPLEX,
                                           scale,scale,scale,
                                           nx,ny,nz);
-  const auto verbose = true;
-  mesh.set_parting(OMEGA_H_GHOSTED, 1, verbose);
+  // simplify the tests by setting the mesh partition to have cuts along x and y axis 
+  auto hints = std::make_shared<Omega_h::inertia::Rib>();
+  hints->axes.push_back(Omega_h::vector_3(1, 0, 0));  // Cut along x-axis first
+  hints->axes.push_back(Omega_h::vector_3(0, 1, 0));  // Then y-axis
+  // balance using RIB with the specified axes
+  mesh.set_rib_hints(hints);
+  mesh.balance();
+  // add ghosts
+  mesh.set_parting(OMEGA_H_GHOSTED, 1);
+  assert(mesh.nghost_layers() == 1);
   return mesh;
 }
 
@@ -168,8 +177,8 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
 TEUCHOS_UNIT_TEST(OmegahGhost, getVtxCoordsInClosureOfOwnedElms)
 {
   auto mesh = createBoxMesh2D(2, 2);
-  Omega_h::vtk::write_parallel("foo2x2", &mesh, mesh.dim());
-  //partition cuts are not along x=0.5 and y=0.5 !
+
+
   auto comm = Albany::getDefaultComm();
   auto numRanks = comm->getSize();
   auto rank = comm->getRank();
