@@ -326,25 +326,53 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Parallel
   auto a2ab_h = Omega_h::HostRead(vtxToEdge.a2ab);
   auto ab2b_h = Omega_h::HostRead(vtxToEdge.ab2b);
 
+  auto comm = Albany::getDefaultComm();
+  auto numRanks = comm->getSize();
+  auto rank = comm->getRank();
   const auto numVerts = a2ab_h.size()-1;
-  const auto numEdges = mesh.nents(mesh.dim());
-  for (int v = 0; v < numVerts; ++v) {
-    int numAdj = a2ab_h[v + 1] - a2ab_h[v];
-
-    // In a 1D line mesh, vertices should have 1 or 2 adjacent edges
-    if(vertsInClosure[v]) {
-      TEST_ASSERT(numAdj >= 1 && numAdj <= 2);
-    } else {
-      TEST_ASSERT(numAdj == 0);
+  if(numRanks > 1) {
+    TEST_ASSERT(numRanks == 4); //hardcoded for four ranks
+    if(rank==0) {
+      const auto expectedNumAdjElms = std::array<int,4>({1,2,1,0});
+      TEST_EQUALITY_CONST(numVerts, 4); //includes one ghost vtx
+      for (int v = 0; v < numVerts; ++v) {
+        int numAdj = a2ab_h[v + 1] - a2ab_h[v];
+        TEST_EQUALITY_CONST(numAdj, expectedNumAdjElms[v]);
+      }
+      const auto expectedAdjElms = std::array<int,4>({0, 0,1, 1});
+      TEST_EQUALITY_CONST(ab2b_h.size(), expectedAdjElms.size());
+      for (int adjIdx = 0; adjIdx < ab2b_h.size(); ++adjIdx) {
+        TEST_EQUALITY_CONST(ab2b_h[adjIdx], expectedAdjElms[adjIdx]);
+      }
+    } else if(rank == 1 || rank == 2) {
+      TEST_EQUALITY_CONST(numVerts, 5); //includes two ghost verts
+      const auto expectedNumAdjElms = std::array<int,5>({0,1,2,1,0});
+      for (int v = 0; v < numVerts; ++v) {
+        int numAdj = a2ab_h[v + 1] - a2ab_h[v];
+        TEST_EQUALITY_CONST(numAdj, expectedNumAdjElms[v]);
+      }
+      const auto expectedAdjElms = std::array<int,4>({1, 1,2, 2});
+      TEST_EQUALITY_CONST(ab2b_h.size(), expectedAdjElms.size());
+      for (int adjIdx = 0; adjIdx < ab2b_h.size(); ++adjIdx) {
+        TEST_EQUALITY_CONST(ab2b_h[adjIdx], expectedAdjElms[adjIdx]);
+      }
+    } else { //rank == 3
+      TEST_EQUALITY_CONST(numVerts, 4); //includes one ghost vtx
+      const auto expectedNumAdjElms = std::array<int,4>({0,1,2,1});
+      for (int v = 0; v < numVerts; ++v) {
+        int numAdj = a2ab_h[v + 1] - a2ab_h[v];
+        TEST_EQUALITY_CONST(numAdj, expectedNumAdjElms[v]);
+      }
+      const auto expectedAdjElms = std::array<int,4>({1, 1,2, 2});
+      TEST_EQUALITY_CONST(ab2b_h.size(), expectedAdjElms.size());
+      for (int adjIdx = 0; adjIdx < ab2b_h.size(); ++adjIdx) {
+        TEST_EQUALITY_CONST(ab2b_h[adjIdx], expectedAdjElms[adjIdx]);
+      }
     }
-
-    // Check all edge indices are valid
-    for (int j = a2ab_h[v]; j < a2ab_h[v + 1]; ++j) {
-      int edge = ab2b_h[j];
-      TEST_ASSERT(edge >= 0);
-      TEST_ASSERT(edge < numEdges);
-    }
+  } else {
+    return; //skip the test
   }
+
 }
 
 //
