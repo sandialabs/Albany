@@ -97,6 +97,23 @@ namespace OmegahGhost {
     return ownedGlobals_d;
   }
 
+  //return the local id (index) for entities of the specified dimension in the closure of owned elements
+  //if an entity is not in the closure its local id is -1
+  Omega_h::LOs getEntLidsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    OMEGA_H_CHECK(dim >= 0 && dim <= mesh.dim());
+    OMEGA_H_CHECK(mesh.has_tag(dim, "global"));
+    auto isEntInClosure = getEntsInClosureOfOwnedElms(cmesh, dim);
+    auto offset = Omega_h::offset_scan(isEntInClosure);
+    auto lids = Omega_h::Write<Omega_h::LO>(isEntInClosure.size(), -1);
+    Omega_h::parallel_for(isEntInClosure.size(), OMEGA_H_LAMBDA(const Omega_h::LO &i) {
+      if( isEntInClosure[i] ) {
+        lids[i] = offset[i];
+      }
+    });
+    return lids;
+  }
+
   Omega_h::Read<Omega_h::I8> getOwnedEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim <= mesh.dim());
@@ -117,7 +134,9 @@ namespace OmegahGhost {
   }
 
   //returns downward entity indexing in the unfiltered/ghosted mesh that can be used to access
-  // tags/arrays on the ghosted mesh
+  // tags/arrays on the ghosted mesh.
+  //The implicit element indices are in the filtered/unghosted mesh (i.e., ghost
+  //elements are removed).
   Omega_h::LOs getDownAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim < mesh.dim());
@@ -134,6 +153,8 @@ namespace OmegahGhost {
   //returns owned upward adjacent elements from *all* entities of dimension dim
   //on the part. If an entity (dimension=dim) is not in the closure of an owned
   //element it will have no upward adjacent elements in the returned Graph.
+  //The returned graph has indexing into the unfiltered/ghosted mesh (i.e.,
+  //ghost entities are counted).
   Omega_h::Graph getUpAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim) {
     auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim < mesh.dim());
