@@ -12,6 +12,8 @@
 #include "Albany_StringUtils.hpp"
 
 #include <cstdlib>
+#include <map>
+#include <memory>
 #include <stdexcept>
 #include <time.h>
 
@@ -570,6 +572,49 @@ getProcRank()
   int rank{0};
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   return rank;
+}
+
+std::string
+getDebugFileName(const std::string& prefix, const std::string& suffix)
+{
+  int rank = getProcRank();
+  std::stringstream ss;
+  ss << prefix << "_rank" << rank << suffix;
+  return ss.str();
+}
+
+std::ofstream&
+getDebugStream(const std::string& prefix)
+{
+  // Static map to hold one ofstream per unique prefix
+  static std::map<std::string, std::unique_ptr<std::ofstream>> debugStreams;
+
+  // Check if stream already exists for this prefix
+  auto it = debugStreams.find(prefix);
+  if (it == debugStreams.end()) {
+    // Create new stream with rank-specific filename
+    std::string filename = getDebugFileName(prefix, ".txt");
+    auto stream = std::make_unique<std::ofstream>(filename, std::ios::out);
+
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !stream->is_open(),
+      std::runtime_error,
+      "Error! Cannot open debug file '" << filename << "' for writing.\n");
+
+    // Insert into map and get iterator to the inserted element
+    auto result = debugStreams.emplace(prefix, std::move(stream));
+    it = result.first;
+  }
+
+  return *(it->second);
+}
+
+void
+flushDebugStreams()
+{
+  // Note: We cannot access the static map from getDebugStream here,
+  // so this is a no-op. Users should call flush() on individual streams.
+  // This function is provided for API completeness and future expansion.
 }
 
 }  // namespace Albany
