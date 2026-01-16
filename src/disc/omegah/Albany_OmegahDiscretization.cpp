@@ -11,6 +11,7 @@
 #include <Omega_h_file.hpp>   // for Omega_h::binary::write
 #include "Omega_h_recover.hpp" //project_by_fit
 #include "OmegahGhost.hpp" //ghosted mesh helper functions
+#include "Omega_h_element.hpp" //simplex_degree, hypercube_degree
 
 #ifdef ALBANY_MESHFIELDS
 #include <KokkosController.hpp>
@@ -231,23 +232,22 @@ computeNodeSets ()
 
   auto& mesh = *m_mesh_struct->getOmegahMesh();
 
-  auto v2e = mesh.ask_up(0,mesh.dim());
+  auto v2e = OmegahGhost::getUpAdjacentEntsInClosureOfOwnedElms(mesh, Omega_h::VERT);
   auto v2e_a2ab = hostRead(v2e.a2ab);
   auto v2e_ab2b = hostRead(v2e.ab2b);
 
-  auto e2v = hostRead(mesh.ask_elem_verts());
-  int nodes_per_elem = 0;
-  if(e2v.size() > 0) {
-    nodes_per_elem = e2v.size() / mesh.nelems();
-  }
+  auto e2v = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, Omega_h::VERT));
+  assert(mesh.family() == OMEGA_H_SIMPLEX);
+  const auto nodes_per_elem = Omega_h::simplex_degree(mesh.dim(),Omega_h::VERT);
 
-  auto verts_in_closure = OmegahGhost::getEntsInClosureOfOwnedElms(mesh, Omega_h::VERT);
-  auto verts_in_closure_host = hostRead(verts_in_closure);
   for (const auto& nsn : nsNames) {
-    auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn));
+    auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn)); //HERE - check these indices - where are they defined?
     std::vector<int> owned_on_ns;
     for (int i=0; i<is_on_ns_host.size(); ++i) {
-      if (verts_in_closure_host[i] and is_on_ns_host[i]) {
+      //if the vertex has no owned elements upward adjactent to it then it is not
+      //in the closure of an owned elm
+      const auto isVtxInClosure = (v2e_a2ab[i+1] - v2e_a2ab[i] > 0);
+      if (isVtxInClosure and is_on_ns_host[i]) {
         owned_on_ns.push_back(i);
       }
     }
@@ -257,23 +257,20 @@ computeNodeSets ()
     ns_elem_pos.clear();
     ns_elem_pos.reserve(owned_on_ns.size());
     for (auto i : owned_on_ns) {
-      // FIXME! This is only looking at the FIRST elem that node=i is part of.
-      //        we need to LOOP over all elems that have node=i
-      auto node_adj_start = v2e_a2ab[i];
-      auto ielem = v2e_ab2b[node_adj_start];
-
       bool found = false;
-      for (int j=0; j<nodes_per_elem; ++j) {
-        if (e2v[nodes_per_elem*ielem+j]==i) {
-          ns_elem_pos.push_back(std::make_pair(ielem,j));
-          found = true;
+      for(int adjIdx=v2e_a2ab[i]; adjIdx<v2e_a2ab[i+1]; adjIdx++) {
+        auto ielem = v2e_ab2b[adjIdx];
+        for (int j=0; j<nodes_per_elem; ++j) {
+          if (e2v[nodes_per_elem*ielem+j]==i) {
+            ns_elem_pos.push_back(std::make_pair(ielem,j));
+            found = true;
+          }
         }
       }
-      TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
+      TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error, //Hitting runtime error here when i=4
           "Something went wrong while locating a node in an element.\n"
           " - node set: " << nsn << "\n"
-          " - node lid (osh): " << i << "\n"
-          " - ielem: " << ielem << "\n");
+          " - node lid (osh): " << i << "\n");
     }
   }
 }
