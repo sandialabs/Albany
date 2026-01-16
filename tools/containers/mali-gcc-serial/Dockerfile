@@ -75,18 +75,11 @@ RUN cd $SOFTWARE_ROOT && \
 
 ADD --chown=runner:fanssie --chmod=775 do-make-mali.sh $SOFTWARE_ROOT/mali/source/components/mpas-albany-landice
 
-# HACK 2: The mpas makefile does not work correctly for me. In particular, the line
-#  @($(FC) pio1.f90 $(FCINCLUDES) $(FFLAGS) $(LDFLAGS) $(LIBS) -o pio1.out 2> /dev/null && echo "=> PIO 1 detected")
-# (and similarly for pio2) don't work correctly, but work fine if I use 2> instead of &>
-RUN cd $SOFTWARE_ROOT/mali/source/components/mpas-framework && \
-    sed -i 's/&>/2>/g' Makefile
-
-# HACK 3: I also need to remove the Makefile line that removes pio2.f90
-RUN cd $SOFTWARE_ROOT/mali/source/components/mpas-framework && \
-    sed -i 's/@rm -rf pio\[12\]\.f90/@rm -rf/g' Makefile
-
 RUN cd $SOFTWARE_ROOT/mali/source/components/mpas-albany-landice && \
     cat do-make-mali.sh && \
     ./do-make-mali.sh
+
+# Setup env vars
+ENV LD_LIBRARY_PATH=${TRILINOS_ROOT}/lib
 
 CMD [ "/bin/bash" ]

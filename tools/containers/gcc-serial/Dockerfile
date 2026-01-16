@@ -62,7 +62,7 @@ RUN groupadd fanssie && \
 # This helkps if we realize we need an extra pkg while running a container
 RUN apt-get update && \
     apt-get install -y sudo && \
-    echo "runner:fannsie" | chpasswd && \
+    echo "runner:fanssie" | chpasswd && \
     echo "runner ALL=(ALL) ALL" >> /etc/sudoers && \
     apt-get clean
 
