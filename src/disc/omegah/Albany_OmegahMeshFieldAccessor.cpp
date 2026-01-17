@@ -290,7 +290,7 @@ fillVector (Thyra_Vector&        field_vector,
   const int nelems = elems.size();
   const int ncomps = field_dof_mgr->getNumFields();
 
-  auto owned_h = hostRead(OmegahGhost::getOwnedEntsInClosureOfOwnedElms(*m_mesh, dim));
+  auto owned_h = hostRead(m_mesh->owned(dim));
   auto mesh_data_h  = hostRead(m_mesh->get_array<ST>(dim,field_name));
   auto thyra_data_h = getNonconstLocalData(field_vector);
   auto elem_ents_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh,dim));
@@ -347,7 +347,7 @@ saveVector (const Thyra_Vector&  field_vector,
   const int ncomps = field_dof_mgr->getNumFields();
 
   auto mesh_data_h = hostWrite<ST>(m_mesh->nents(dim)*ncomps,field_name);
-  auto owned_h = hostRead(OmegahGhost::getOwnedEntsInClosureOfOwnedElms(*m_mesh, dim));
+  auto owned_h = hostRead(m_mesh->owned(dim));
   auto thyra_data_h = getLocalData(field_vector);
   auto elem_ents_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh,dim));
   const auto isSimplex = (m_mesh->family() == OMEGA_H_SIMPLEX);
