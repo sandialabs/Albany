@@ -405,9 +405,9 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   }
 
   // Check if the input mesh is layered (i.e., if it stores layers info)
-  std::string state_name = "layer_dz_ref";
-  if (mesh_data->has_input_global(state_name)) {
+  if (mesh_data->has_input_global("num_layers")) {
     // layer ratios
+    std::string state_name = "layers_dz_ref";
     mesh_data->get_global (state_name, layers_data.dz_ref, true);
     fieldContainer->getMeshVectorStates()[state_name] = layers_data.dz_ref;
 
