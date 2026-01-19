@@ -1640,16 +1640,25 @@ STKDiscretization::setupExodusOutput()
      */
     auto fc = stkMeshStruct->getFieldContainer();
     for (auto& it : fc->getMeshVectorStates()) {
-      const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
-      mesh_data->add_global(outputFileIdx, it.first, it.second, DV_Type);
+      if (not mesh_data->has_global(outputFileIdx,it.first)) {
+        std::cout << "adding " << it.first << " dbl vec state...\n";
+        const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
+        mesh_data->add_global(outputFileIdx, it.first, it.second, DV_Type);
+      }
     }
     for (const auto& it : fc->getMeshScalarIntegerStates()) {
-     const auto INT_Type = stk::util::ParameterType::INTEGER;
-     mesh_data->add_global(outputFileIdx, it.first, it.second, INT_Type);
+      if (not mesh_data->has_global(outputFileIdx,it.first)) {
+        std::cout << "adding " << it.first << " int state...\n";
+        const auto INT_Type = stk::util::ParameterType::INTEGER;
+        mesh_data->add_global(outputFileIdx, it.first, it.second, INT_Type);
+      }
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
-     const auto INT64_Type = stk::util::ParameterType::INT64;
-     mesh_data->add_global(outputFileIdx, it.first, it.second, INT64_Type);
+      if (not mesh_data->has_global(outputFileIdx,it.first)) {
+        std::cout << "adding " << it.first << " int64 state...\n";
+        const auto INT64_Type = stk::util::ParameterType::INT64;
+        mesh_data->add_global(outputFileIdx, it.first, it.second, INT64_Type);
+      }
     }
 
     // STK and Ioss/Exodus only allow TRANSIENT fields to be exported.
