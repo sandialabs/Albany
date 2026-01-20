@@ -93,8 +93,7 @@ struct cknp2d {
         const int dim_out_0 = kokkos_array_host.extent(0);
         const int dim_out_1 = kokkos_array_host.extent(1);
 
-        result = pybind11::array_t<typename T::value_type>(dim_out_0*dim_out_1);
-        result.resize({dim_out_0,dim_out_1});
+        result = pybind11::array_t<typename T::value_type>({dim_out_0,dim_out_1});
         auto data = result.template mutable_unchecked<T::rank>();
         Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0,dim_out_0), [&](int i) {
             for (int j=0; j<dim_out_1; ++j) {
