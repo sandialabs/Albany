@@ -1,6 +1,5 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
-#include "Albany_StateInfoStruct.hpp"
-#include "Albany_StringUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace Albany {
 
@@ -68,6 +67,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
 void ExtrudedMeshFieldAccessor::
 createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
+  m_ws_sizes = worksets_sizes;
   elemStateArrays.resize(worksets_sizes.size());
 
   // We need to be careful here. Say we have a state X with layout (Node).
@@ -172,7 +172,45 @@ fillVector (Thyra_Vector&        field_vector,
             const dof_mgr_ptr_t& field_dof_mgr,
             const bool           overlapped)
 {
-  throw NotYetImplemented("ExtrudedMeshFieldAccessor::fillVector()");
+  auto data = getNonconstLocalData(field_vector);
+  const auto elem_dof_lids_h = field_dof_mgr->elem_dof_lids().host();
+  const auto conn_mgr = field_dof_mgr->getAlbanyConnManager();
+  auto ws_elem_lids = m_workset_elements.host();
+  int ncomps = field_dof_mgr->getNumFields();
+  std::vector<std::vector<int>> offsets(ncomps);
+  for (int icmp=0; icmp<ncomps; ++icmp) {
+    offsets[icmp] = field_dof_mgr->getGIDFieldOffsets(icmp);
+  }
+  int num_scalar_dofs = offsets[0].size();
+  for (int ws=0; ws<m_ws_sizes.size(); ++ws) {
+    auto state_h = elemStateArrays[ws][field_name].host();
+    TEUCHOS_TEST_FOR_EXCEPTION(state_h.rank()<2 or state_h.rank()>3,std::runtime_error,
+        "Error! Unsupported state rank (" + std::to_string(state_h.rank()) + ").\n");
+
+    for (int ie=0; ie<m_ws_sizes[ws]; ++ie) {
+      int el_lid = ws_elem_lids(ws,ie);
+      auto ownership = conn_mgr->getOwnership(el_lid);
+      for (int idof=0; idof<num_scalar_dofs; ++idof) {
+        // Immediately skip this dof if we don't own it and we need non-overlapped data
+        if (not overlapped and ownership[offsets[0][idof]]!=Owned)
+          continue;
+
+        // Note: lid may STILL be <0 if the DOF mgr was restricted
+        if (state_h.rank()==2) {
+          auto lid = elem_dof_lids_h(el_lid,idof);
+          if (lid>=0)
+            data[lid] = state_h(ie,idof);
+        } else {
+          for (int icmp=0; icmp<ncomps; ++icmp) {
+            auto lid = elem_dof_lids_h(el_lid,offsets[icmp][idof]);
+            if (lid>=0) {
+              data[lid] = state_h(ie,idof,icmp);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 void ExtrudedMeshFieldAccessor::

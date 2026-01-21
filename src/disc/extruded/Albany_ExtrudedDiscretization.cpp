@@ -173,7 +173,10 @@ ExtrudedDiscretization::getField(
     Thyra_Vector& result,
     const std::string& name) const
 {
-  m_basal_disc->getField(result,name);
+  auto mfa = m_extruded_mesh->get_field_accessor();
+  auto st = mfa->getNodalSIS().find(name);
+  auto dof_mgr = getDOFManager(name);
+  mfa->fillVector(result, name, dof_mgr, false);
 }
 
 void
@@ -545,6 +548,7 @@ ExtrudedDiscretization::computeWorksetInfo()
   // TODO: tell field accessor to init states
   m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
   m_extruded_mesh->get_field_accessor()->transferNodeStatesToElemStates();
+  m_extruded_mesh->get_extruded_field_accessor()->setWorksetElements(m_workset_elements);
 
   // Extrude/interpolate basal fields
   const auto& extrude_names = m_disc_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});

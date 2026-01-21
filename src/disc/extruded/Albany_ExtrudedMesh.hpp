@@ -53,6 +53,9 @@ public:
   Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override {
     return m_field_accessor;
   }
+  Teuchos::RCP<ExtrudedMeshFieldAccessor> get_extruded_field_accessor () const {
+    return m_field_accessor;
+  }
 
   void setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
                      const Teuchos::RCP<StateInfoStruct>& sis,
