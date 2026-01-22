@@ -31,7 +31,7 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
     add_test(${testName}_1d_omegah ${SerialAlbany.exe} input_1d_omegah.yaml)
     set_tests_properties(${testName}_1d_omegah PROPERTIES LABELS "Demo;Forward;Serial")
 
-    # 1d test with adaptivity
+    # 1d test with uniform refinment adaptivity - meshfields isn't required
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_1d_adapt_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_1d_adapt_omegah.yaml COPYONLY)
     add_test(${testName}_1d_adapt_omega_h ${SerialAlbany.exe} input_1d_adapt_omegah.yaml)
@@ -46,6 +46,9 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_2d_omegah.yaml COPYONLY)
     add_test(${testName}_2d_omegah ${SerialAlbany.exe} input_2d_omegah.yaml)
     set_tests_properties(${testName}_2d_omegah PROPERTIES LABELS "Demo;Forward;Serial")
+
+    add_test(${testName}_2d_omegah_2proc ${Albany2.exe} input_2d_omegah.yaml)
+    set_tests_properties(${testName}_2d_omegah_2proc PROPERTIES LABELS "Demo;Forward;Parallel")
 
     if (ENABLE_MESHFIELDS)
       # 2d test with adaptivity
@@ -62,7 +65,6 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
 
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_2d_adapt_omegah_2proc_small.yaml
                      ${CMAKE_CURRENT_BINARY_DIR}/input_2d_adapt_omegah_2proc_small.yaml COPYONLY)
-      set(Albany2.exe ${MPIEX} ${MPIPRE} ${MPINPF} 2 ${MPIPOST} ${AlbanyPath})
       add_test(${testBaseName}_2proc_small ${Albany2.exe} input_2d_adapt_omegah_2proc_small.yaml)
       set_tests_properties(${testBaseName}_2proc_small PROPERTIES LABELS "Demo;Forward;Adapt")
     ENDIF()
