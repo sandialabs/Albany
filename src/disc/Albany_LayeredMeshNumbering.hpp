@@ -86,9 +86,12 @@ struct LayeredMeshData
   DataImpl cell = {};
   DataImpl node = {};
 
-  // "Reference" vertical coordinates of the layers: dz[i] = z[i+1]-z[i],
-  // where z[i] is the coordinate of the i-th node layer in [0,1], where 0 is the bottom
-  // and 1 is the top of the layered mesh.
+  // "Reference" vertical grid coordinates of the layers:
+  //   - z[i]: coordinate of the i-th NODE layer
+  //   - dz[i] = z[i+1]-z[i]
+  // The coordinates are normalized, in the sense that z=0 corresponds to the bottom
+  // of the mesh, and z=1 corresponds to the top of the mesh. We always have that
+  // z_ref.front()==0 and z_ref.back()==1, and sum(dz)==1.
   std::vector<double> z_ref = {};
   std::vector<double> dz_ref = {};
 

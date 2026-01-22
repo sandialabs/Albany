@@ -228,15 +228,10 @@ buildConnectivity(const panzer::FieldPattern & fp)
   auto fp_rcp = Teuchos::rcpFromRef(fp);
   auto fp_agg = Teuchos::rcp_dynamic_cast<const panzer::FieldAggPattern>(fp_rcp,true);
 
-  // Unfortunately, FieldAggPattern does not expose how many fields are in it,
-  // so use try/catch block with one of the getters;
   m_num_fields = FieldAggPatternAccessor(*fp_agg).numFields();
 
   using IFP = panzer::Intrepid2FieldPattern;
   const auto line = shards::CellTopology(shards::getCellTopologyData<shards::Line<2>>());
-  //auto basis2fp = [](const Teuchos::RCP<basis_type>& basis) {
-  //  return Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
-  //};
 
   // Check that all fields have the same pattern
   Teuchos::RCP<const IFP> intrepid_fp;
