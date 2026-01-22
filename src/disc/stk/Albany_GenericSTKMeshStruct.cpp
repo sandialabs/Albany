@@ -557,11 +557,24 @@ void GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData)
 void GenericSTKMeshStruct::
 loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
+  loadRequiredInputFields(comm,params->sublist("Required Fields Info"));
+}
+
+void GenericSTKMeshStruct::
+loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                         Teuchos::ParameterList& req_fields_info)
+{
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
   out->setProcRankAndSize(comm->getRank(), comm->getSize());
   out->setOutputToRootOnly(0);
 
   *out << "[GenericSTKMeshStruct] Processing field requirements...\n";
+
+  int num_fields = req_fields_info.get<int>("Number Of Fields", 0);
+
+  // Check for early return
+  if (num_fields==0)
+    return;
 
   // Load required fields
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData->universal_part()) & stk::mesh::Selector(metaData->locally_owned_part());
@@ -585,21 +598,13 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Check whether we need the serial map or not. The only scenario where we DO need it is if we are
   // loading a field from an ASCII file. So let's check the fields info to see if that's the case.
-  Teuchos::ParameterList dummyList;
-  Teuchos::ParameterList* req_fields_info;
-  if (params->isSublist("Required Fields Info")) {
-    req_fields_info = &params->sublist("Required Fields Info");
-  } else {
-    req_fields_info = &dummyList;
-  }
-  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   bool node_field_ascii_loads = false;
   bool elem_field_ascii_loads = false;
   std::string fname, fusage, ftype, forigin;
   for (int ifield=0; ifield<num_fields; ++ifield) {
     std::stringstream ss;
     ss << "Field " << ifield;
-    Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
+    Teuchos::ParameterList& fparams = req_fields_info.sublist(ss.str());
 
     fusage = fparams.get<std::string>("Field Usage", "Input");
     ftype  = fparams.get<std::string>("Field Type","INVALID");
@@ -647,7 +652,7 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
   for (int ifield=0; ifield<num_fields; ++ifield) {
     std::stringstream ss;
     ss << "Field " << ifield;
-    Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
+    Teuchos::ParameterList& fparams = req_fields_info.sublist(ss.str());
 
     // First, get the name and usage of the field, and check if it's used
     if (fparams.isParameter("State Name")) {

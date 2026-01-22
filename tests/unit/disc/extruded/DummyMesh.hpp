@@ -185,6 +185,8 @@ public:
                      std::map<std::string, Teuchos::RCP<StateInfoStruct> > /* side_set_sis */) override {}
 
   void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& /* comm */) override {}
+  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+                                Teuchos::ParameterList& /* req_fields_info */) override {}
 
 protected:
 

@@ -58,6 +58,13 @@ struct AbstractMeshStruct {
 
     Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs;
     std::map<std::string, Teuchos::RCP<AbstractMeshStruct>> sideSetMeshStructs;
+
+    //! Loads from file input required fields not found in the mesh
+    virtual void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
+                                          Teuchos::ParameterList& /* req_fields_info */)
+    {
+      throw std::runtime_error("Error! This mesh struct does not override loadRequiredInputFields.\n");
+    }
   protected:
 
     bool m_field_data_set = false;

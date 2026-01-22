@@ -65,6 +65,8 @@ public:
 
   //! Loads from file input required fields not found in the mesh
   void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);
+  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                                Teuchos::ParameterList& req_fields_info) override;
 
   // Compute a field from a string expression
   Teuchos::RCP<Thyra_MultiVector>
