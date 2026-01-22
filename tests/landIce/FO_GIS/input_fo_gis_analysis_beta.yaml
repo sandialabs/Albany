@@ -138,15 +138,14 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
       upperside:
-        Method: SideSetSTK
-        Number Of Time Derivatives: 0
-        Exodus Output File Name: gis_analysis_surface.exo
+        Method: NONE # ExtrudedDisc doesn't expose an uppserside disc. But we need to read fields
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
             Field Name: observed_surface_velocity
             Field Type: Node Vector
             Field Origin: File
+            Vector Dim: 2
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
           Field 1:
             Field Name: observed_surface_velocity_RMS

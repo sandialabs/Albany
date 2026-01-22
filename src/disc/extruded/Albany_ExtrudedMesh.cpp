@@ -230,6 +230,11 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
     m_basal_mesh->setBulkData(comm);
   }
 
+  // Take all required fields in the upperside disc (if any) and add them to the basalside
+  auto& upper_params = m_params->sublist("Side Set Discretizations").sublist("upperside");
+  auto& upper_reqs   = upper_params.sublist("Required Fields Info");
+  m_basal_mesh->loadRequiredInputFields(comm,upper_reqs);
+
   // Complete initialization of layer data structures
   const auto max_basal_node_gid = m_basal_mesh->get_max_node_gid();
   const auto num_basal_nodes    = m_basal_mesh->get_num_local_nodes();

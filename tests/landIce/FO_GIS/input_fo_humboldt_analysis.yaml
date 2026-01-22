@@ -285,7 +285,7 @@ ANONYMOUS:
             Vector Dim: 2
             File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
       upperside:
-        Method: NONE
+        Method: NONE # ExtrudedDisc doesn't expose an uppserside disc. But we need to read fields
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
