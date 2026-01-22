@@ -501,7 +501,9 @@ if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.yaml)
   add_test(${testName} ${Albany.exe} input_fo_gis_beta_smb.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
+  set_tests_properties(${testName} PROPERTIES
+    LABELS "LandIce;Forward"
+    FIXTURES_SETUP BETA_SMB_FIRST_RUN)
 
   if (NOT ALBANY_DISABLE_OUTPUT_MESH)
     # Restart
@@ -509,8 +511,10 @@ if (ALBANY_IFPACK2)
                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.yaml)
 
     add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
-    set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName})
-    set_tests_properties(${testName} PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Forward")
+    set_tests_properties(${testName}_Restart
+      PROPERTIES RUN_SERIAL TRUE
+      FIXTURES_REQUIRED BETA_SMB_FIRST_RUN
+      LABELS "LandIce;Forward")
   endif()
 endif()
 
