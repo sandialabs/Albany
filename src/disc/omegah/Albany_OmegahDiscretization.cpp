@@ -42,7 +42,10 @@ namespace {
   }
 
   Omega_h::Reals recoverLinearStrain(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrain) {
-    return Omega_h::project_by_fit(&mesh, effectiveStrain);
+    auto recoveredStrain = Omega_h::project_by_fit(&mesh, effectiveStrain);
+    TEUCHOS_TEST_FOR_EXCEPTION (recoveredStrain.size() != mesh.nents(0), std::runtime_error,
+      "Error! the recovered strain array should have one component per mesh vertex.\n");
+    return mesh.sync_array(Omega_h::VERT, recoveredStrain, 1);
   }
 
   #ifdef ALBANY_MESHFIELDS
