@@ -478,6 +478,8 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
                     const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
                     const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
+  static int checkAdaptCount = 0;
+  checkAdaptCount++;
   auto adapt_data = Teuchos::rcp(new AdaptationData());
   auto mesh = m_mesh_struct->getOmegahMesh();
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
@@ -486,6 +488,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     return adapt_data;
   }
   const auto verbose = adapt_params.get<bool>("Verbose",false);
+  const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
 
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
@@ -555,6 +558,16 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
     mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
         false, Omega_h::ArrayType::VectorND);
+
+    if( writeVtk ) {
+      const auto outname = std::string("checkForAdaptation") + std::to_string(checkAdaptCount);
+      const std::string vtkFileName = outname + ".vtk";
+      Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
+      if (mesh->dim() == 2) {
+        const std::string vtkFileName_edges = outname + "_edges.vtk";
+        Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), Omega_h::EDGE);
+      }
+    }
 
     const auto MeshDim = 2;
     const auto ShapeOrder = 1;
