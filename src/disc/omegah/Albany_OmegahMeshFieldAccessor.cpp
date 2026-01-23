@@ -371,6 +371,7 @@ saveVector (const Thyra_Vector&  field_vector,
   }
 
   m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
+  m_mesh->sync_tag(dim,field_name); //update ghosts
 }
 
 void OmegahMeshFieldAccessor::
