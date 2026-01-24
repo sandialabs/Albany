@@ -51,7 +51,7 @@ private:
   PHX::MDField<const ScalarT,Dim> bedRoughnessParam;    // [km],  Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB and DEBRIS_FRICTION only)
   PHX::MDField<const ScalarT,Dim> powerParam;           // [adim], Exponent (for POWER_LAW and REGULARIZED COULOMB and DEBRIS_FRICTION only)
   PHX::MDField<const ScalarT,Dim> bulkFrictionParam;    // [adim], bulk friction coefficient (for DEBRIS_FRICTION only)
-  PHX::MDField<const ScalarT,Dim> basalDebrisParam;	// [Pa m^-1 s] basal debris factor (for DEBRIS_FRICTION only)
+  PHX::MDField<const ScalarT,Dim> basalDebrisParam;	    // [kPa m^-1 s] basal debris factor (for DEBRIS_FRICTION only)
   
   ScalarT printedMu;
   ScalarT printedBedRoughness;
@@ -70,8 +70,8 @@ private:
   PHX::MDField<const VelocityST>        u_norm;             // [m yr^{-1}]
   PHX::MDField<const ParamScalarT>      bedRoughnessField;  // [km], characteristic length
   PHX::MDField<const ParamScalarT>      muField;            // [yr^q m^{-q}] or [adim], Power Law with exponent q, Coulomb Friction
-  PHX::MDField<const ParamScalarT>      bulkFrictionField;  // t
-  PHX::MDField<const ParamScalarT>      basalDebrisField;   // 
+  PHX::MDField<const ParamScalarT>      bulkFrictionField;  // [adim], bulk friction coefficient (for DEBRIS_FRICTION only)
+  PHX::MDField<const ParamScalarT>      basalDebrisField;   // [kPa m^-1 s] basal debris factor (for DEBRIS_FRICTION only)
   PHX::MDField<const EffPressureST>     N;                  // [kPa]
   PHX::MDField<const MeshScalarT>       coordVec;           // [km]
   PHX::MDField<const TemperatureST>     flowRate;           // [Pa^{-n} s^{-1}]
@@ -97,6 +97,8 @@ private:
   bool save_pressure_field;
   double overburden_fraction;  // [adim]
   double pressure_smoothing_length_scale; //[km]
+  double N0; // [kPa] Effective Pressure Regularization;
+  double u0; // [m/yr] Sliding Velocity Regularization;
 
   int numNodes;
   int numQPs;
