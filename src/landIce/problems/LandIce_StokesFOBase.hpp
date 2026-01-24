@@ -1458,7 +1458,9 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     std::string ice_thickness_side_name      = side_fname(ice_thickness_name, ssName);
     std::string ice_overburden_side_name     = side_fname("ice_overburden", ssName);
     std::string effective_pressure_side_name = side_fname(effective_pressure_name, ssName);
-    std::string bed_roughness_side_name      = side_fname("bed_roughness", ssName);
+    std::string bed_roughness_side_name      = side_fname(bed_roughness_name, ssName);
+    std::string bulk_friction_side_name      = side_fname(bulk_friction_name, ssName);
+    std::string basal_debris_side_name       = side_fname(basal_debris_name, ssName);
     std::string bed_topography_side_name     = side_fname(bed_topography_name, ssName);
     std::string flow_factor_side_name        = side_fname(flow_factor_name, ssName);
 
@@ -1680,6 +1682,8 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     p->set<std::string>("Effective Pressure QP Variable Name", effective_pressure_side_name);
     p->set<std::string>("Flow Rate Variable Name",  side_fname(flow_factor_name, ssName),flow_factor_side_name);
     p->set<std::string>("Bed Roughness Variable Name", bed_roughness_side_name);
+    p->set<std::string>("Basal Debris Factor Variable Name", basal_debris_side_name);
+    p->set<std::string>("Bulk Friction Coefficient Variable Name", bulk_friction_side_name);
     p->set<std::string>("Side Set Name", ssName);
     p->set<std::string>("Coordinate Vector Variable Name", side_fname(Albany::coord_vec_name, ssName));
     p->set<Teuchos::ParameterList*>("Parameter List", &pl->sublist("Basal Friction Coefficient"));
@@ -1796,6 +1800,8 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     std::string effective_pressure_side_name           = basal_fname(effective_pressure_name);
     std::string vertically_averaged_velocity_side_name = basal_fname(vertically_averaged_velocity_name);
     std::string bed_roughness_side_name                = basal_fname(bed_roughness_name);
+    std::string bulk_friction_side_name                = basal_fname(bulk_friction_name);
+    std::string basal_debris_side_name                 = basal_fname(basal_debris_name);
 
     // -------------------------------- LandIce evaluators ------------------------- //
 
