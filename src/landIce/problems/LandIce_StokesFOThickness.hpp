@@ -186,7 +186,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     p->set<std::string>("Contracted Solution Name", "Averaged Velocity");
     p->set<std::string>("Mesh Part", "upperside");
     p->set<std::string>("Side Set Name", surfaceSideName);
-    p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+    p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",Teuchos::rcp(new shards::CellTopology(&meshSpecs.ctd)));
     p->set<int>("Solution Offset", dof_offsets[0]);
     p->set<bool>("Is Vector", true);
     p->set<std::string>("Contraction Operator", "Vertical Average");

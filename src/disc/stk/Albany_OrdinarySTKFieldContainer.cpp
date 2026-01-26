@@ -56,9 +56,6 @@ setSolutionFieldsMetadata (int neq)
                           "solution_dot",
                           "solution_dotdot"};
 
-  constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
-  constexpr auto NODE_RANK = stk::topology::NODE_RANK;
-
   int num_time_deriv = params->get<int>("Number Of Time Derivatives");
 #ifdef ALBANY_DTK
   bool output_dtk_field = params->get<bool>("Output DTK Field to Exodus", false);
@@ -299,8 +296,7 @@ fillVectorImpl(Thyra_Vector&                         field_vector,
 
   auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
 
-  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
-  ALBANY_EXPECT (raw_field != nullptr,
+  ALBANY_EXPECT (metaData->get_field(field_entity_rank, field_name) != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
 
   const auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);
@@ -332,8 +328,7 @@ saveVectorImpl (const Thyra_Vector&  field_vector,
 
   auto field_entity_rank = static_cast<stk::topology::rank_t>(entity_dims_with_dofs[0]);
 
-  auto* raw_field = metaData->get_field(field_entity_rank, field_name);
-  ALBANY_EXPECT (raw_field != nullptr,
+  ALBANY_EXPECT (metaData->get_field(field_entity_rank, field_name) != nullptr,
       "Error! Something went wrong while retrieving a field.\n");
 
   auto* field = this->metaData->template get_field<double>(field_entity_rank, field_name);

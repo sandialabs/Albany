@@ -63,11 +63,11 @@ GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(contractedSol);
 
-  auto cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
-  int numSides = cell_topo->side_count;  
+  auto cell_topo = p.get<Teuchos::RCP<const shards::CellTopology> >("Cell Topology");
+  int numSides = cell_topo->getCellTopologyData()->side_count;  
   side_node_count.resize("numSideNodes", numSides);
   for (int side=0; side<numSides; ++side) {
-    side_node_count.host()(side) = cell_topo->side[side].topology->node_count;
+    side_node_count.host()(side) = cell_topo->getCellTopologyData()->side[side].topology->node_count;
   }
   side_node_count.sync_to_dev();
 

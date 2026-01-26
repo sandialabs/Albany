@@ -1,7 +1,7 @@
 set (tmpStr "Looking for valid Omega_h installation ...")
 message (STATUS ${tmpStr})
 
-find_package(Omega_h 10.8 CONFIG QUIET
+find_package(Omega_h 11.0 CONFIG QUIET
   # Avoid all defaults. Only check env/CMake var Omega_h_ROOT
   NO_CMAKE_PATH
   NO_CMAKE_ENVIRONMENT_PATH
@@ -63,5 +63,6 @@ else ()
 
   message (STATUS " *** Begin of Omega_h configuration ***")
   FetchContent_MakeAvailable (Omega_h)
+  target_compile_options (omega_h PRIVATE $<$<C_COMPILER_ID:GNU>:-w> $<$<C_COMPILER_ID:Intel>: -w>)
   message (STATUS " ***  End of Omega_h configuration  ***")
 endif()

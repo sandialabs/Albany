@@ -41,7 +41,6 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   // with the basal mesh.
   if (not st->extruded and not st->interpolated) {
     int num_elem_layers = m_elem_numbering_lid->numLayers;
-    int num_node_layers = num_elem_layers+1;
 
     auto bst = Teuchos::rcp(new StateStruct(st->name,st->entity));
     switch(st->stateType()) {
@@ -261,7 +260,6 @@ void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::st
   const auto& basal_states = m_basal_field_accessor->getElemStates();
   const int num_ws = basal_states.size();
   const int num_elem_layers = m_elem_numbering_lid->numLayers;
-  const int num_node_layers = num_elem_layers+1;
   *out << "[ExtrudedMeshFieldAccessor] Extruding basal fields...\n";
   for (const auto& name : basal_fields) {
     *out << " - Extruding field '" + name + "'...";
@@ -318,7 +316,6 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
   const auto& basal_states = m_basal_field_accessor->getElemStates();
   const int num_ws = basal_states.size();
   const int num_elem_layers = m_elem_numbering_lid->numLayers;
-  const int num_node_layers = num_elem_layers+1;
   const auto& node_layers_coords = mesh_vector_states.at("node_layers_coords");
 
   int il0, il1; // used for convex combination of data

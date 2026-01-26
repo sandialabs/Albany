@@ -4,7 +4,7 @@ rm -rf CMake*
 cmake \
   -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-  -D CMAKE_CXX_STANDARD=17 \
+  -D CMAKE_CXX_STANDARD=20 \
 \
   -D CMAKE_C_COMPILER=cc \
   -D CMAKE_CXX_COMPILER=hipcc \
@@ -126,5 +126,6 @@ cmake \
 \
   -D Tacho_ENABLE_INT_INT:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
+  -D gtest_INCLUDE_DIRS=/lustre/orion/cli193/proj-shared/automated_testing/googletest-1.7.0/include/gtest \
 \
 ..

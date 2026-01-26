@@ -140,7 +140,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
   p->set<std::string>("Contracted Solution Name", dof_name+"_av");
   p->set<std::string>("Mesh Part", sideSetName);
   p->set<std::string>("Side Set Name", sideSetName);
-  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+  p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",Teuchos::rcp(new shards::CellTopology(&meshSpecs.ctd)));
   p->set<int>("Solution Offset", 0);
   p->set<bool>("Is Vector", false);
   p->set<std::string>("Contraction Operator", "Vertical Sum");
@@ -226,7 +226,7 @@ ColumnCouplingTest::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& 
 
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+    paramList->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",Teuchos::rcp(new shards::CellTopology(&meshSpecs.ctd)));
 
     ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList);

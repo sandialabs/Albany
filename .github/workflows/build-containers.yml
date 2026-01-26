@@ -1,0 +1,46 @@
+name: build-containers
+
+on:
+  # Manual run for debugging
+  workflow_dispatch:
+
+  # Also run nightly
+  schedule:
+    - cron: '0 7 * * *'  # Runs at 7 AM UTC, which is midnight MT during Standard Time
+
+permissions:
+  contents: read  # Required to read repository contents
+  packages: write  # Required to read packages from the GitHub Container Registry
+
+concurrency:
+  # Two runs are in the same group if they are testing the same git ref
+  #  - if trigger=pull_request, the ref is refs/pull/<PR_NUMBER>/merge
+  #  - for other triggers, the ref is the branch tested
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gcc-12-serial:
+    runs-on:  [ubuntu-latest]
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+      - name: Check out the repository
+        uses: actions/checkout@v5
+        with:
+          path: albany/source
+      - name: Build image
+        run: |
+          cd albany/source/tools/containers/gcc-serial
+          podman build -f Dockerfile -t albany:gcc-12-serial
+      - name: Tag image
+        run: |
+          podman tag albany:gcc-12-serial ghcr.io/sandialabs/albany:gcc-12-serial
+      - name: Login on ghcr
+        run: |
+          echo "${{ secrets.GHCR_PAT }}" | podman login ghcr.io -u bartgol --password-stdin
+      - name: Push image
+        run: |
+          podman push ghcr.io/sandialabs/albany:gcc-12-serial

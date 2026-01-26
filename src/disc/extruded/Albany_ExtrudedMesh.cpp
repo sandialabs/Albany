@@ -163,10 +163,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   const auto& extrude_names = m_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
   const auto& interpolate_names = m_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
 
-  const int num_elem_layers = m_elem_layers_data_lid->numLayers;
-  const int num_node_layers = m_node_layers_data_lid->numLayers;
-  const bool layer_ord = m_elem_layers_data_lid->layerOrd;
-
   for (const auto& n : extrude_names) {
     TEUCHOS_TEST_FOR_EXCEPTION (basal_sis->find(n,false).is_null(), std::runtime_error,
         "Error! Cannot extrude basal state '" + n + "'. State not found in basal SIS.\n");

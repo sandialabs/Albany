@@ -1,7 +1,8 @@
 #!/bin/bash
 
-export PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/bin:$PATH:/tpls/install/ninja/build-cmake
-which cmake
+#export PATH=/nightlyCDash/albany-tpls-gcc-11.1.1-openmpi-4.1.0/bin:$PATH:/tpls/install/ninja/build-cmake
+#which cmake
+source modules_camobap.sh
 cmake --version
 rm -rf Results
 ./run_trilinos.sh set_irinas_env.in MPI >& out #Trilinos with Serial KokkosNode

@@ -45,28 +45,9 @@ MESSAGE("  -- PYTHON_MAJOR_VERSION = ${PYTHON_MAJOR_VERSION}")
 
 SET(PYBIND11_PYTHON_VERSION ${PYTHON_VERSION})
 
-# Determine the PyAlbany default installation directory prefix.  If
-# CMAKE_INSTALL_PREFIX is set by the user, then use it.  Else the
-# prefix is set to the value of python's sys.prefix.
-EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.prefix)"
-  OUTPUT_VARIABLE PYTHON_PREFIX
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  SET(PyAlbany_DEFAULT_INSTALL_PREFIX ${PYTHON_PREFIX})
-ELSE()
-  SET(PyAlbany_DEFAULT_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-ENDIF()
-
-# Set the PyAlbany install prefix
-SET(PyAlbany_INSTALL_PREFIX ${PyAlbany_DEFAULT_INSTALL_PREFIX}
-  CACHE PATH "The path prefix for where PyAlbany will be installed, e.g. /usr/local")
-
 # Determine the install directory
-SET(PyAlbany_INSTALL_DIR
-  ${PyAlbany_INSTALL_PREFIX}/lib/python${PYTHON_VERSION}/site-packages/PyAlbany
-  )
-MESSAGE("-- PyAlbany installation path: ${PyAlbany_INSTALL_DIR}")
+SET(PyAlbany_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION}/site-packages/PyAlbany)
+MESSAGE("-- PyAlbany installation path: ${CMAKE_INSTALL_PREFIX}/${PyAlbany_INSTALL_DIR}")
 
 IF (NOT (ALBANY_LIBRARIES_ONLY OR DISABLE_ALBANY_TESTS) )
   set (ALBANY_PYTHON_TESTS TRUE)

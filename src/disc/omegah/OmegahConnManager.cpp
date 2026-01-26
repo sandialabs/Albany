@@ -226,7 +226,6 @@ void setElementToEntDofConnectivityMask(const OmegahGenericMesh& albanyMesh, con
   auto partEntIdx = numberEntsInPart(albanyMesh, part_name);
   OmegahPermutation::Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
-  const auto totNumDofs = elm2dof.size();
   auto setMask = OMEGA_H_LAMBDA(int elm) {
     if(isInPart[elm]) {
       const auto firstDown = elm*numDownAdjEntsPerElm;
@@ -237,7 +236,7 @@ void setElementToEntDofConnectivityMask(const OmegahGenericMesh& albanyMesh, con
           const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
           const auto elmPartIdx = partEntIdx[elm];
           const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
-          assert(totNumDofs > connIdx && connIdx >= 0);
+          assert(elm2dof.size() > connIdx and connIdx >= 0);
           elm2dof[connIdx] = maskArray[adjEnt];
         }
       }
@@ -265,7 +264,6 @@ void setElementToEntDofConnectivity(OmegahGenericMesh& albanyMesh, const std::st
   auto partEntIdx = numberEntsInPart(albanyMesh, part_name);
   OmegahPermutation::Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
-  const auto totNumDofs = elm2dof.size();
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
     if(isInPart[elm]) {
       const auto firstDown = elm*numDownAdjEntsPerElm;
@@ -276,7 +274,7 @@ void setElementToEntDofConnectivity(OmegahGenericMesh& albanyMesh, const std::st
           const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
           const auto elmPartIdx = partEntIdx[elm];
           const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
-          assert(totNumDofs > connIdx && connIdx >= 0);
+          assert(elm2dof.size() > connIdx and connIdx >= 0);
           const auto dofIndex = adjEnt*dofsPerEnt+k;
           const auto dofGlobalId = globalDofNumbering[dofIndex];
           elm2dof[connIdx] = dofGlobalId;
@@ -613,8 +611,7 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
   // transfer to host
   auto elm2dofMask_h = Omega_h::HostRead(elm2dofMask);
   std::vector<int> elm2dofMask_vec(elm2dofMask_h.data(), elm2dofMask_h.data()+elm2dofMask_h.size());
-  long unsigned int elm2dofMask_h_size = elm2dofMask_h.size();
-  assert(elm2dofMask_vec.size() == elm2dofMask_h_size);
+  assert(elm2dofMask_vec.size() == elm2dofMask_h.size());
 
   return elm2dofMask_vec;
 }

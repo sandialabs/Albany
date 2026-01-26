@@ -129,14 +129,14 @@ ALBANY:
               'fact: ilut level-of-fill': 1.00000000000000000e+00
   Regression For Response 0:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 1.221269731774
+    Test Value: 0.0
     Sensitivity For Parameter 0:
-      Test Value: 3.487477458518e-01
+      Test Value: 0.0
     Relative Tolerance: 1.00000000000000002e-03
   Regression For Response 1:
     Absolute Tolerance: 1.00000000000000008e-05
-    Test Value: 3.487477458518e+01
+    Test Value: 3.363119799958e+00
     Sensitivity For Parameter 0:
-      Test Value: 1.768365207875
+      Test Value: -3.362633334361e-02
     Relative Tolerance: 1.00000000000000002e-03
 ...

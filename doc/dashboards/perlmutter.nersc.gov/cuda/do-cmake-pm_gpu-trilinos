@@ -6,7 +6,7 @@ INSTALL_DIR=
 cmake \
   -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
   -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-  -D CMAKE_CXX_STANDARD=17 \
+  -D CMAKE_CXX_STANDARD=20 \
 \
   -D CMAKE_C_COMPILER=cc \
   -D CMAKE_CXX_COMPILER=${NVCC_WRAPPER} \
@@ -23,9 +23,9 @@ cmake \
   -D TPL_ENABLE_SuperLU:BOOL=OFF \
   -D ML_ENABLE_SuperLU:BOOL=OFF \
   -D TPL_ENABLE_BLAS:BOOL=ON \
-  -D TPL_BLAS_LIBRARIES:STRING="${CRAY_PE_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+  -D TPL_BLAS_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
   -D TPL_ENABLE_LAPACK:BOOL=ON \
-  -D TPL_LAPACK_LIBRARIES:STRING="${CRAY_PE_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
+  -D TPL_LAPACK_LIBRARIES:STRING="${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so" \
 \
   -D TPL_ENABLE_Boost:BOOL=ON \
   -D Boost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include \
@@ -139,5 +139,7 @@ cmake \
 \
   -D Tacho_ENABLE_INT_INT:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
+\
+  -D gtest_INCLUDE_DIRS=/global/common/software/fanssie/googletest-1.17.0/include/gtest \
 \
 ../

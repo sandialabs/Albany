@@ -8,6 +8,7 @@
 
 #include "LandIce_StokesFO.hpp"
 #include "LandIce_Hydrology.hpp"
+#include "LandIce_EllipticMockModel.hpp"
 #include "LandIce_Enthalpy.hpp"
 #include "LandIce_StokesFOThermoCoupled.hpp"
 #include "LandIce_LaplacianSampling.hpp"
@@ -33,7 +34,8 @@ bool LandIceProblemFactory::provides (const std::string& key) const
          key == "LandIce Stokes FO Thermo Coupled 3D" ||
          key == "LandIce Stokes FO Hydrology" ||
          key == "LandIce Laplacian Sampling 2D" ||
-         key == "LandIce Laplacian Sampling 3D";
+         key == "LandIce Laplacian Sampling 3D" ||
+         key == "LandIce Elliptic Mock Model 2D";
 }
 
 Albany::ProblemFactory::obj_ptr_type
@@ -68,6 +70,8 @@ create (const std::string& key,
     problem = Teuchos::rcp(new LandIce::LaplacianSampling(problemParams, discParams, paramLib, 2));
   } else if (key == "LandIce Laplacian Sampling 3D") {
     problem = Teuchos::rcp(new LandIce::LaplacianSampling(problemParams, discParams, paramLib, 3));
+  } else if (key == "LandIce Elliptic Mock Model 2D"){
+    problem = Teuchos::rcp(new LandIce::EllipticMockModel(problemParams, discParams, paramLib, 2));
   } else if (key == "LandIce Column Coupling Test") {
     problem = Teuchos::rcp(new LandIce::ColumnCouplingTest(problemParams, discParams, paramLib));
   } else {

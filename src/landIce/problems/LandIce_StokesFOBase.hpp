@@ -1764,7 +1764,7 @@ void StokesFOBase::constructSMBEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>
     p->set<bool>("Is Vector", true);
     p->set<std::string>("Contraction Operator", "Vertical Average");
 
-    p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+    p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",Teuchos::rcp(new shards::CellTopology(&meshSpecs.ctd)));
 
     ev = Teuchos::rcp(new GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1859,7 +1859,7 @@ constructStokesFOBaseResponsesEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
     paramList->set<std::string>("Weighted Measure 2D Name",side_fname(Albany::weighted_measure_name, basalSideName + "_planar"));
     paramList->set<std::string>("Inverse Metric Basal Name",basal_fname(Albany::metric_inv_name));
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
-    paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+    paramList->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",Teuchos::rcp(new shards::CellTopology(&meshSpecs.ctd)));
     paramList->set<std::vector<Teuchos::RCP<Teuchos::ParameterList>>*>("Basal Regularization Params",&landice_bcs[LandIceBC::BasalFriction]);
     paramList->set<FST>("Ice Thickness Scalar Type",get_scalar_type(ice_thickness_name));
 
@@ -1968,7 +1968,7 @@ void StokesFOBase::constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<bool>("Is Vector", false);
   p->set<std::string>("Contraction Operator", "Vertical Sum");
-  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+  p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",Teuchos::rcp(new shards::CellTopology(&meshSpecs.ctd)));
 
   ev = Teuchos::rcp(new GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);

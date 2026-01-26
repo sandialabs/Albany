@@ -90,12 +90,14 @@ namespace Albany {
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
+#include "Albany_GeneralPurposeFieldsNames.hpp"
 
 #include "PHAL_AdvDiffResid.hpp"
 #include "PHAL_DOFVecGradInterpolation.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_P0Interpolation.hpp"
 #include "PHAL_FieldFrobeniusNorm.hpp"
+#include "PHAL_ElementBarycenter.hpp"
 #include "PHAL_Source.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
@@ -274,6 +276,43 @@ Albany::AdvDiffProblem::constructEvaluators(
     // others will have empty list of evaluated fields
     if (ev->evaluatedFields().size()>0) {
       fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+    }
+
+    // Compute Element Barycenter
+    p = rcp(new ParameterList("Elem Barycenter"));
+    p->set<std::string>("Coordinate Vector Name",coord_vec_name);
+    p->set<std::string>("Barycenter Name","barycenter");
+    p->set<std::string>("Barycenter X Name","barycenter_x");
+    p->set<std::string>("Barycenter Y Name","barycenter_y");
+    p->set<std::string>("Barycenter Z Name","barycenter_z");
+
+    ev = Teuchos::rcp(new PHAL::ElementBarycenter<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Save state (cell) state
+    p = stateMgr.registerStateVariable("barycenter", dl->cell_gradient, meshSpecs.ebName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Only PHAL::AlbanyTraits::Residual evaluates something,
+    if (ev->evaluatedFields().size()>0) {
+      fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+    }
+
+    // Save components
+    std::vector<std::string> cmp_name = {"x", "y", "z"};
+    cmp_name.resize(numDim);
+
+    for (auto suffix : cmp_name) {
+      // Save state (cell) state
+      p = stateMgr.registerStateVariable("barycenter_"+suffix, dl->cell_scalar2, meshSpecs.ebName, true, &entity);
+      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // Only PHAL::AlbanyTraits::Residual evaluates something,
+      if (ev->evaluatedFields().size()>0) {
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
     }
   }
 
