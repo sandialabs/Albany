@@ -126,6 +126,8 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
  , m_side_set_equations(sideSetEquations)
 {
   m_num_time_deriv = m_disc_params->get("Number Of Time Derivatives",0);
+  vtkOutFile = discParams->get<std::string>("VTK Output File Name", "");
+  vtkOutputInterval = discParams->get<int>("VTK Write Interval", 1);
 
   if (neq>0) {
     setNumEq(neq);
@@ -225,6 +227,9 @@ updateMesh ()
 
   computeNodeSets ();
   computeGraphs ();
+
+  //reset output interval
+  outputInterval = 0;
 }
 
 void OmegahDiscretization::
@@ -787,11 +792,36 @@ writeSolutionMVToMeshDatabase (const Thyra_MultiVector& solution,
 
 //! Write the solution to file. Must call writeSolution first.
 void OmegahDiscretization::
-writeMeshDatabaseToFile (const double /* time */,
+writeMeshDatabaseToFile (const double time,
                          const bool   force_write_solution)
 {
-  std::cout << "WARNING OmegahDiscretization::writeMeshDatabaseToFile not yet implemented\n";
-  // throw NotYetImplemented("OmegahDiscretization::writeMeshDatabaseToFile");
+#ifdef ALBANY_DISABLE_OUTPUT_MESH
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "[OmegahDiscretization::writeMeshDatabaseToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+  (void) time;
+  (void) force_write_solution;
+#else
+  if ( vtkOutFile.empty() ) {
+    return;
+  }
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution to file");
+  if ( (outputInterval % vtkOutputInterval == 0 or force_write_solution)) {
+    auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+    const auto outname = vtkOutFile + "_t" + std::to_string(time);
+    const std::string vtkFileName = outname + ".vtk";
+    if (m_comm->getRank() == 0) {
+      *out << "OmegahDiscretization::writeMeshDatabaseToFile: writing time " << time;
+      *out << " to file " << vtkFileName << std::endl;
+    }
+    const auto mesh = m_mesh_struct->getOmegahMesh();
+    Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
+    if (mesh->dim() == 2) {
+      const std::string vtkFileName_edges = outname + "_edges.vtk";
+      Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), Omega_h::EDGE);
+    }
+  }
+  outputInterval++;
+#endif
 }
 
 }  // namespace Albany
