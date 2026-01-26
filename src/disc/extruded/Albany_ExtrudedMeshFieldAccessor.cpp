@@ -1,6 +1,5 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
-#include "Albany_StateInfoStruct.hpp"
-#include "Albany_StringUtils.hpp"
+#include "Albany_ThyraUtils.hpp"
 
 namespace Albany {
 
@@ -24,7 +23,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
       global_sis.push_back(st);
       break;
     case StateStruct::NodeState:
-      nodal_sis.push_back(st); break;
+      nodal_sis.push_back(st);
       if (st->entity==StateStruct::NodalDistParameter)
         nodal_parameter_sis.push_back(st);
       elem_sis.push_back(st); // We store 3d states as (Cell, Node, ...)
@@ -68,6 +67,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
 void ExtrudedMeshFieldAccessor::
 createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
+  m_ws_sizes = worksets_sizes;
   elemStateArrays.resize(worksets_sizes.size());
 
   // We need to be careful here. Say we have a state X with layout (Node).
@@ -172,7 +172,45 @@ fillVector (Thyra_Vector&        field_vector,
             const dof_mgr_ptr_t& field_dof_mgr,
             const bool           overlapped)
 {
-  throw NotYetImplemented("ExtrudedMeshFieldAccessor::fillVector()");
+  auto data = getNonconstLocalData(field_vector);
+  const auto elem_dof_lids_h = field_dof_mgr->elem_dof_lids().host();
+  const auto conn_mgr = field_dof_mgr->getAlbanyConnManager();
+  auto ws_elem_lids = m_workset_elements.host();
+  int ncomps = field_dof_mgr->getNumFields();
+  std::vector<std::vector<int>> offsets(ncomps);
+  for (int icmp=0; icmp<ncomps; ++icmp) {
+    offsets[icmp] = field_dof_mgr->getGIDFieldOffsets(icmp);
+  }
+  int num_scalar_dofs = offsets[0].size();
+  for (int ws=0; ws<m_ws_sizes.size(); ++ws) {
+    auto state_h = elemStateArrays[ws][field_name].host();
+    TEUCHOS_TEST_FOR_EXCEPTION(state_h.rank()<2 or state_h.rank()>3,std::runtime_error,
+        "Error! Unsupported state rank (" + std::to_string(state_h.rank()) + ").\n");
+
+    for (int ie=0; ie<m_ws_sizes[ws]; ++ie) {
+      int el_lid = ws_elem_lids(ws,ie);
+      auto ownership = conn_mgr->getOwnership(el_lid);
+      for (int idof=0; idof<num_scalar_dofs; ++idof) {
+        // Immediately skip this dof if we don't own it and we need non-overlapped data
+        if (not overlapped and ownership[offsets[0][idof]]!=Owned)
+          continue;
+
+        // Note: lid may STILL be <0 if the DOF mgr was restricted
+        if (state_h.rank()==2) {
+          auto lid = elem_dof_lids_h(el_lid,idof);
+          if (lid>=0)
+            data[lid] = state_h(ie,idof);
+        } else {
+          for (int icmp=0; icmp<ncomps; ++icmp) {
+            auto lid = elem_dof_lids_h(el_lid,offsets[icmp][idof]);
+            if (lid>=0) {
+              data[lid] = state_h(ie,idof,icmp);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 void ExtrudedMeshFieldAccessor::
@@ -262,8 +300,8 @@ void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::st
   const int num_elem_layers = m_elem_numbering_lid->numLayers;
   *out << "[ExtrudedMeshFieldAccessor] Extruding basal fields...\n";
   for (const auto& name : basal_fields) {
-    *out << " - Extruding field '" + name + "'...";
     bool nodal = Teuchos::nonnull(nodal_sis.find(name,false));
+    *out << " - Extruding " << (nodal ? "nodal" : "cell") << " field '" + name + "'...";
     for (int ws=0; ws<num_ws; ++ws) {
       const auto& bstate = basal_states[ws].at(name);
       auto& state = elemStateArrays[ws][name];
@@ -313,26 +351,38 @@ void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::st
 void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields)
 {
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "[ExtrudedMeshFieldAccessor] Interpolating basal fields...\n";
+
   const auto& basal_states = m_basal_field_accessor->getElemStates();
   const int num_ws = basal_states.size();
   const int num_elem_layers = m_elem_numbering_lid->numLayers;
-  const auto& node_layers_coords = mesh_vector_states.at("node_layers_coords");
+  const auto& z_ref = mesh_vector_states.at("layers_z_ref");
+  const auto& dz_ref = mesh_vector_states.at("layers_dz_ref");
 
-  int il0, il1; // used for convex combination of data
+  // Used in case of nodal or quadpoint fields, to do convex interpolation
+  int il0, il1;
   double h0;
 
-  *out << "[ExtrudedMeshFieldAccessor] Interpolating basal fields...\n";
   for (const auto& name : basal_fields) {
-    *out << " - Interpolating field '" + name + "'...";
     bool nodal = Teuchos::nonnull(nodal_sis.find(name,false));
+    *out << " - Interpolating " << (nodal ? "nodal" : "cell") << " field '" + name + "'...";
+
     const auto& field_layers_coords = m_basal_field_accessor->getMeshVectorStates().at(name+"_NLC");
     const int num_field_layers = field_layers_coords.size();
 
-    // Will update il0, il1, h0
-    auto set_combination_params = [&](int il) {
+    std::vector<double> field_levels_coords(field_layers_coords.size()+1,0);
+    for (size_t i=0; i<field_layers_coords.size(); ++i) {
+      // This comes from inverting x_mid = (x(i+1) + x(i)) / 2
+      field_levels_coords[i+1] = 2*field_layers_coords[i] - field_levels_coords[i];
+    }
+    field_levels_coords.back()=1;
+
+    // Returns interp params: indices of data layers before/after mesh layer il,
+    // and the convex combination param h0, so that y(il)=h0*x(il0)+(1-h0)*x(il1)
+    auto get_interp_params = [&](int il) {
       // Find where the mesh layer stands in the field layers
-      double mesh_layer_coord = nodal ? node_layers_coords[il]
-                                      : (node_layers_coords[il] + node_layers_coords[il+1])/2;
+      double mesh_layer_coord = nodal ? z_ref[il]
+                                      : (z_ref[il] + z_ref[il+1])/2;
       auto where = std::upper_bound(field_layers_coords.begin(),field_layers_coords.end(),mesh_layer_coord);
       if (where==field_layers_coords.begin()) {
         // mesh layer is below the first field layer
@@ -347,6 +397,7 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
         il0 = il1-1;
         h0 = (field_layers_coords[il1] - mesh_layer_coord) / (field_layers_coords[il1] - field_layers_coords[il0]);
       }
+      return std::make_tuple(il0,il1,h0);
     };
 
     for (int ws=0; ws<num_ws; ++ws) {
@@ -362,12 +413,28 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
           "[ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields] Error!\n"
           "  Unsupported rank (" << rank << ") for state '" + name + "'\n");
 
+      // Assumes scalar elem fields
+      auto average = [&](int ie, int il) {
+        auto where0 = std::upper_bound(field_levels_coords.begin(),field_levels_coords.end(),z_ref[il]);
+        auto where1 = std::lower_bound(field_levels_coords.begin(),field_levels_coords.end(),z_ref[il+1]);
+        il0 = std::distance(field_levels_coords.begin(),where0)-1;
+        il1 = std::distance(field_levels_coords.begin(),where1);
+
+        double result = 0;
+        for (int ilf=il0; ilf<il1; ++ilf) {
+          auto start = std::max(field_levels_coords[ilf],z_ref[il]);
+          auto end = std::min(field_levels_coords[ilf+1],z_ref[il+1]);
+          result += bview_h(ie,ilf)*(end-start)/dz_ref[il];
+        }
+        return result;
+      };
+
       for (int ie=0; ie<dims[0]; ++ie) {
         for (int il=0; il<num_elem_layers; ++il) {
           int ie3d = m_elem_numbering_lid->getId(ie,il);
           if (nodal) {
             for (int side : {0,1}) { // 0=elem-bottom, 1=elem-top
-              set_combination_params(il+side);
+              std::tie(il0, il1, h0) = get_interp_params(il+side);
               for (int in=0; in<dims[1]; ++in) {
                 if (rank==2) {
                   view_h(ie3d,in+side*dims[1]) = h0*bview_h(ie,in,il0) + (1-h0)*bview_h(ie,in,il1);
@@ -379,10 +446,14 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
               }
             }
           } else {
-            set_combination_params(il);
             if (rank==1) {
-              view_h(ie3d) = h0*bview_h(ie,il0) + (1-h0)*bview_h(ie,il1);
+              // We do a (weighted) average of the values of the (piece-wise constant) data
+              // over all layers that intersect with the current layer (an L2 projeciton)
+              view_h(ie3d) = average(ie,il);
             } else if (rank==2) {
+              std::tie(il0, il1, h0) = get_interp_params(il);
+              // This is usually the case for quad-point fields (and not vector elem fields),
+              // so we simply evaluate the (piece-wise constant) data in the current layer
               for (int j=0; j<dims[1]; ++j) {
                 view_h(ie3d,j) = h0*bview_h(ie,j,il0) + (1-h0)*bview_h(ie,j,il1);
               }

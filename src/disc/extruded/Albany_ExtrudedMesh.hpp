@@ -25,16 +25,6 @@ public:
     return "Albany";
   }
 
-  Teuchos::RCP<const LayeredMeshNumbering<GO>>
-  cell_layers_gid () const { return m_elem_layers_data_gid; }
-  Teuchos::RCP<const LayeredMeshNumbering<LO>>
-  cell_layers_lid () const { return m_elem_layers_data_lid; }
-
-  Teuchos::RCP<const LayeredMeshNumbering<GO>>
-  node_layers_gid () const { return m_node_layers_data_gid; }
-  Teuchos::RCP<const LayeredMeshNumbering<LO>>
-  node_layers_lid () const { return m_node_layers_data_lid; }
-
   const Teuchos::RCP<AbstractMeshStruct>& basal_mesh () const { return m_basal_mesh; }
 
   const Teuchos::RCP<const Teuchos_Comm>& comm() const { return m_comm; }
@@ -42,25 +32,28 @@ public:
   LO get_num_local_nodes () const override {
     TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::logic_error,
         "Error! Bulk data must be set before you can call get_num_local_nodes.\n");
-    return m_basal_mesh->get_num_local_nodes()*m_node_layers_data_gid->numLayers;
+    return m_basal_mesh->get_num_local_nodes()*layers_data.node.gid->numLayers;
   }
   LO get_num_local_elements () const override {
     TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::logic_error,
         "Error! Bulk data must be set before you can call get_num_local_elements.\n");
-    return m_basal_mesh->get_num_local_elements()*m_elem_layers_data_gid->numLayers;
+    return m_basal_mesh->get_num_local_elements()*layers_data.cell.gid->numLayers;
   }
   GO get_max_node_gid () const override {
     TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::logic_error,
         "Error! Bulk data must be set before you can call get_max_node_gid.\n");
-    return m_node_layers_data_gid->numHorizEntities*m_node_layers_data_gid->numLayers;
+    return layers_data.node.gid->numHorizEntities*layers_data.node.gid->numLayers;
   }
   GO get_max_elem_gid () const override {
     TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::logic_error,
         "Error! Bulk data must be set before you can call get_max_elem_gid.\n");
-    return m_elem_layers_data_gid->numHorizEntities*m_elem_layers_data_gid->numLayers;
+    return layers_data.cell.gid->numHorizEntities*layers_data.cell.gid->numLayers;
   }
 
   Teuchos::RCP<AbstractMeshFieldAccessor> get_field_accessor () const override {
+    return m_field_accessor;
+  }
+  Teuchos::RCP<ExtrudedMeshFieldAccessor> get_extruded_field_accessor () const {
     return m_field_accessor;
   }
 
@@ -82,11 +75,6 @@ protected:
   Teuchos::RCP<AbstractMeshStruct>          m_basal_mesh;
 
   Teuchos::RCP<ExtrudedMeshFieldAccessor>   m_field_accessor;
-
-  Teuchos::RCP<LayeredMeshNumbering<GO>>    m_elem_layers_data_gid;
-  Teuchos::RCP<LayeredMeshNumbering<LO>>    m_elem_layers_data_lid;
-  Teuchos::RCP<LayeredMeshNumbering<GO>>    m_node_layers_data_gid;
-  Teuchos::RCP<LayeredMeshNumbering<LO>>    m_node_layers_data_lid;
 
   strmap_t<std::string>                     m_part_to_basal_part;
 };

@@ -76,7 +76,8 @@ protected:
   PartToGeoModelEntities setNodeSetsGeoModelEntities () const;
   PartToGeoModelEntities setSideSetsGeoModelEntities () const;
 
-  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm);
+  void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                                Teuchos::ParameterList& req_fields_info) override;
 
   Teuchos::RCP<Teuchos::ParameterList> m_params;
 

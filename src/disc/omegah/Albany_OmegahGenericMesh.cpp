@@ -36,12 +36,11 @@ OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
 }
 
 void OmegahGenericMesh::
-setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
+setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
               const Teuchos::RCP<StateInfoStruct>& sis,
               std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
   get_field_accessor()->addStateStructs(sis);
-  loadRequiredInputFields(comm);
 
   // We don't yet support side discretizations for omegah meshes
   (void) side_set_sis;
@@ -50,8 +49,9 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 }
 
 void OmegahGenericMesh::
-setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
+setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
+  loadRequiredInputFields(comm,m_params->sublist("Required Fields Info"));
   m_bulk_data_set = true;
 }
 
@@ -601,13 +601,20 @@ buildBox (const int dim)
 }
 
 void OmegahGenericMesh::
-loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
+loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
+                         Teuchos::ParameterList& req_fields_info)
 {
   auto out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
   out->setProcRankAndSize(comm->getRank(), comm->getSize());
   out->setOutputToRootOnly(0);
 
   *out << "[OmegahGenericMesh] Processing field requirements...\n";
+
+  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+
+  // Check for early return
+  if (num_fields==0)
+    return;
 
   // Get nodes/elems global ids
   auto node_gids = m_mesh->globals(0);
@@ -624,8 +631,6 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm)
 
   // Check whether we need the serial map or not. The only scenario where we DO need it is if we are
   // loading a field from an ASCII file. So let's check the fields info to see if that's the case.
-  auto& req_fields_info = m_params->sublist("Required Fields Info");
-  int num_fields = req_fields_info.get<int>("Number Of Fields",0);
   bool node_field_ascii_loads = false;
   bool elem_field_ascii_loads = false;
   std::string fname, fusage, ftype, forigin;

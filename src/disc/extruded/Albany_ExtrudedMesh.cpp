@@ -35,10 +35,10 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
       "[ExtrudedMesh] Error! Number of layers must be strictly positive.\n"
       "  - NumLayers: " << num_layers << "\n");
 
-  m_elem_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
-  m_elem_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,COLUMN));
-  m_node_layers_data_gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
-  m_node_layers_data_lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,COLUMN));
+  layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers,ordering));
+  layers_data.cell.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers,COLUMN));
+  layers_data.node.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(num_layers+1,ordering));
+  layers_data.node.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(num_layers+1,COLUMN));
 
   // Create map part->basal_part
   // upper/basal/bot/top parts map to the full basal mesh
@@ -60,12 +60,14 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
     m_part_to_basal_part["extruded_" + ns] = ns;
     m_part_to_basal_part["basal_" + ns] = ns;
   }
+  std::vector<std::string> extruded_ss_names;
   for (const auto& ss : basal_mesh_specs->ssNames) {
     if (ss=="lateralside") continue; // extruded_lateralside would just be the same as lateralside
     auto pname = "extruded_" + ss;
     ssNames.push_back (pname);
     lateralParts.push_back(pname);
     m_part_to_basal_part["extruded_" + ss] = ss;
+    extruded_ss_names.push_back(pname);
   }
   std::string ebName = "extruded_" + basal_mesh_specs->ebName;
   std::map<std::string,int> ebNameToIndex =
@@ -112,19 +114,22 @@ ExtrudedMesh (const Teuchos::RCP<AbstractMeshStruct>& basal_mesh,
 
   ss_ms["basalside"] = m_basal_mesh->meshSpecs;
 
-  // At this point, we cannot assume there will be a discretization on upper/lateral sides,
-  // so create "empty" mesh specs, just setting the cell topology and mesh dim. IF a side disc
-  // is created, these will be overwritten
-
-  auto& upper_ms = ss_ms["upperside"];
-  upper_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
-  upper_ms[0]->numDim = basal_topo.dimension;
-  upper_ms[0]->ctd = basal_topo;
-
-  auto& lateral_ms = ss_ms["lateralside"];
-  lateral_ms.resize(1, Teuchos::rcp(new MeshSpecsStruct()));
-  lateral_ms[0]->numDim = lat_topo.dimension;
-  lateral_ms[0]->ctd = lat_topo;
+  // Create mesh specs for upper and lateral sides, as well as any extruded side set.
+  // We cannot assume there will be a discretization there, so the mesh specs is "empty"
+  // (meaning only topology and dim). If a side disc is created (which is AFTER the
+  // mesh is created) they will be overwritten.
+  auto create_ss_mesh_specs = [&](const std::string& ss_name, const auto& topo)
+  {
+    auto& ss_ms = meshSpecs[0]->sideSetMeshSpecs[ss_name];
+    ss_ms.resize(1);
+    ss_ms[0] = Teuchos::rcp( new MeshSpecsStruct() );
+    ss_ms[0]->ctd = topo;
+    ss_ms[0]->numDim = meshSpecs[0]->numDim-1;
+  };
+  create_ss_mesh_specs("upperside",basal_topo);
+  create_ss_mesh_specs("lateralside",lat_topo);
+  for (auto ss_name : extruded_ss_names)
+    create_ss_mesh_specs(ss_name,lat_topo);
 
   // For the upperside, we use the same disc as the basalside.
   sideSetMeshStructs["upperside"] = m_basal_mesh;
@@ -138,13 +143,20 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   // Make sure we can dereference sis
   if (sis.is_null()) {
     auto nonnull_sis = Teuchos::rcp(new StateInfoStruct());
-    this->setFieldData(comm,nonnull_sis,side_set_sis);
+    return this->setFieldData(comm,nonnull_sis,side_set_sis);
   }
 
   // Make sure we can dereference the basal sis
   auto basal_sis = side_set_sis["basalside"];
   if (basal_sis.is_null()) {
     basal_sis = Teuchos::rcp(new StateInfoStruct());
+  }
+
+  const auto& upper_sis = side_set_sis["upperside"];
+  if (not upper_sis.is_null()) {
+    for (auto st : *upper_sis) {
+      basal_sis->push_back(st);
+    }
   }
 
   auto NDTEN = StateStruct::MeshFieldEntity::NodalDataToElemNode;
@@ -204,7 +216,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
   // Now the basal field accessor is definitely valid/inited, so we can create the extruded one
   m_field_accessor = Teuchos::rcp(new ExtrudedMeshFieldAccessor(m_basal_mesh->get_field_accessor(),
-                                                                m_elem_layers_data_lid));
+                                                                layers_data.cell.lid));
 
   m_field_accessor->addStateStructs(sis);
 
@@ -218,56 +230,55 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
     m_basal_mesh->setBulkData(comm);
   }
 
+  // Take all required fields in the upperside disc (if any) and add them to the basalside
+  auto& upper_params = m_params->sublist("Side Set Discretizations").sublist("upperside");
+  auto& upper_reqs   = upper_params.sublist("Required Fields Info");
+  m_basal_mesh->loadRequiredInputFields(comm,upper_reqs);
+
   // Complete initialization of layer data structures
   const auto max_basal_node_gid = m_basal_mesh->get_max_node_gid();
   const auto num_basal_nodes    = m_basal_mesh->get_num_local_nodes();
   const auto max_basal_elem_gid = m_basal_mesh->get_max_elem_gid();
   const auto num_basal_elems    = m_basal_mesh->get_num_local_elements();
 
-  m_elem_layers_data_gid->numHorizEntities = max_basal_elem_gid+1;
-  m_elem_layers_data_lid->numHorizEntities = num_basal_elems;
-  m_node_layers_data_gid->numHorizEntities = max_basal_node_gid+1;
-  m_node_layers_data_lid->numHorizEntities = num_basal_nodes;
+  layers_data.cell.gid->numHorizEntities = max_basal_elem_gid+1;
+  layers_data.cell.lid->numHorizEntities = num_basal_elems;
+  layers_data.node.gid->numHorizEntities = max_basal_node_gid+1;
+  layers_data.node.lid->numHorizEntities = num_basal_nodes;
 
-  auto set_pos = [&](auto data) {
-    const auto& ctd = meshSpecs[0]->ctd;
-    data->top_side_pos = ctd.side_count-1;
-    data->bot_side_pos = ctd.side_count-2;
-  };
-  set_pos(m_elem_layers_data_gid);
-  set_pos(m_elem_layers_data_lid);
-  set_pos(m_node_layers_data_gid);
-  set_pos(m_node_layers_data_lid);
+  const auto& ctd = meshSpecs[0]->ctd;
+  layers_data.top_side_pos = ctd.side_count-1;
+  layers_data.bot_side_pos = ctd.side_count-2;
 
   // Set layer data in the field accessor
   bool useGlimmerSpacing = m_params->get("Use Glimmer Spacing", false);
-  int num_elem_layers = m_elem_layers_data_lid->numLayers;
-  int num_node_layers = m_node_layers_data_lid->numLayers;
+  int num_elem_layers = layers_data.cell.lid->numLayers;
+  int num_node_layers = layers_data.node.lid->numLayers;
 
-  std::vector<double> node_layers_coord(num_node_layers);
+  layers_data.z_ref.resize(num_node_layers);
   if(useGlimmerSpacing) {
     for (int i = 0; i < num_node_layers; i++)
-      node_layers_coord[num_elem_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+      layers_data.z_ref[num_elem_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
   } else {
     //uniform layers
     for (int i = 0; i < num_node_layers; i++)
-      node_layers_coord[i] = double(i) / num_elem_layers;
+      layers_data.z_ref[i] = double(i) / num_elem_layers;
   }
 
-  std::vector<double> elem_layer_thickness(num_elem_layers);
+  layers_data.dz_ref.resize(num_elem_layers);
   for (int i = 0; i < num_elem_layers; i++)
-    elem_layer_thickness[i] = node_layers_coord[i+1]-node_layers_coord[i];
+    layers_data.dz_ref[i] = layers_data.z_ref[i+1]-layers_data.z_ref[i];
 
   auto& vec_states = m_field_accessor->getMeshVectorStates();
   auto& int_states = m_field_accessor->getMeshScalarIntegerStates();
   auto& int64_states = m_field_accessor->getMeshScalarInteger64States();
 
-  vec_states["elem_layer_thickness"] = elem_layer_thickness;
-  vec_states["node_layers_coords"] = node_layers_coord;
-  int_states["ordering"] = m_elem_layers_data_lid->layerOrd ? 0 : 1;
+  vec_states["layers_dz_ref"] = layers_data.dz_ref;
+  vec_states["layers_z_ref"] = layers_data.z_ref;
+  int_states["ordering"] = layers_data.cell.lid->layerOrd ? 0 : 1;
   int_states["num_layers"] = num_elem_layers;
-  int64_states["max_2d_elem_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
-  int64_states["max_2d_node_gid"] = m_elem_layers_data_gid->numHorizEntities-1;
+  int64_states["max_2d_elem_gid"] = layers_data.cell.gid->numHorizEntities-1;
+  int64_states["max_2d_node_gid"] = layers_data.cell.gid->numHorizEntities-1;
 
   m_bulk_data_set = true;
 }

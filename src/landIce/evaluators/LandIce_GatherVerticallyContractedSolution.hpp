@@ -62,7 +62,7 @@ protected:
     }
   }
 
-  void computeQuadWeights(const Teuchos::ArrayRCP<double>& layers_ratio);
+  void computeQuadWeights(const std::vector<double>& dz);
   void computeSideDOFOffsets (const Albany::DOFManager& dof_mgr);
 
   // Output:

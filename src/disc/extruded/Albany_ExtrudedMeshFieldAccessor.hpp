@@ -101,12 +101,16 @@ public:
   void extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields);
   void interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields);
 
+  void setWorksetElements (const DualView<int**>& workset_elements) { m_workset_elements = workset_elements; }
 protected:
 
   // This class will rely on the basal mesh to store fields
   Teuchos::RCP<AbstractMeshFieldAccessor> m_basal_field_accessor;
 
   Teuchos::RCP<const LayeredMeshNumbering<LO>>  m_elem_numbering_lid;
+
+  DualView<int**>     m_workset_elements;
+  WorksetArray<int>   m_ws_sizes;
 };
 
 }  // namespace Albany

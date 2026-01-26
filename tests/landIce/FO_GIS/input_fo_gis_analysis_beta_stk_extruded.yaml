@@ -80,14 +80,17 @@ ANONYMOUS:
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:
-    Method: Extruded
+    Method: STKExtruded
     Number Of Time Derivatives: 0
+    Exodus Output File Name: gis_analysis_beta_stk_extruded.exo
     Columnwise Ordering: false
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness
-    Extrude Basal Fields: [ice_thickness, surface_height, basal_friction]
-    Interpolate Basal Layered Fields: [temperature]
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction]
+    Basal Node Fields Ranks: [1, 1, 1]
+    Interpolate Basal Node Layered Fields: [temperature]
+    Basal Node Layered Fields Ranks: [1]
     Required Fields Info:
       Number Of Fields: 4
       Field 0:
@@ -112,7 +115,7 @@ ANONYMOUS:
         Method: Ioss
         Number Of Time Derivatives: 0
         Exodus Output File Name: gis_analysis_basal.exo
-        Use Serial Mesh: false
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Required Fields Info:
           Number Of Fields: 4
@@ -138,14 +141,15 @@ ANONYMOUS:
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
       upperside:
-        Method: NONE # ExtrudedDisc doesn't expose an uppserside disc. But we need to read fields
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: gis_analysis_surface.exo
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
             Field Name: observed_surface_velocity
             Field Type: Node Vector
             Field Origin: File
-            Vector Dim: 2
             File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
           Field 1:
             Field Name: observed_surface_velocity_RMS

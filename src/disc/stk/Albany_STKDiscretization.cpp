@@ -83,8 +83,8 @@ STKDiscretization::STKDiscretization(
       auto ss_disc_params = Teuchos::sublist(ss_discretizations_params,ss_name);
       ss_disc_params->set("Number Of Time Derivatives",discParams->get<int>("Number Of Time Derivatives"));
       ss_disc_params->set("Sensitivity Method",discParams->get<std::string>("Sensitivity Method","None"));
-      ss_disc_params->set("Response Function Index", discParams->get<int>("Response Function Index"));
-      ss_disc_params->set("Sensitivity Parameter Index", discParams->get<int>("Sensitivity Parameter Index"));
+      ss_disc_params->set("Response Function Index", discParams->get<int>("Response Function Index",-1));
+      ss_disc_params->set("Sensitivity Parameter Index", discParams->get<int>("Sensitivity Parameter Index",-1));
 
       auto stk_mesh = Teuchos::rcp_dynamic_cast<AbstractSTKMeshStruct>(ss_mesh,true);
       auto side_disc = Teuchos::rcp(new STKDiscretization(ss_disc_params, m_neq, stk_mesh, comm));
@@ -1035,8 +1035,7 @@ STKDiscretization::computeGraphs()
   }
 
   // Now, process rows/cols corresponding to ss equations
-  const auto& cell_layers_data_lid = stkMeshStruct->local_cell_layers_data;
-  const auto& cell_layers_data_gid = stkMeshStruct->global_cell_layers_data;
+  const auto& layers_data = getMeshStruct()->layers_data;
   const auto SIDE_RANK = metaData->side_rank();
   for (const auto& it : sideSetEquations) {
     const int side_eq = it.first;
@@ -1045,8 +1044,8 @@ STKDiscretization::computeGraphs()
     // A side eqn can be coupled to the whole column if
     //   1) the mesh is layered, AND
     //   2) all sidesets where it's defined are on the top or bottom
-    int allowColumnCoupling = not cell_layers_data_lid.is_null();
-    if (not cell_layers_data_lid.is_null()) {
+    int allowColumnCoupling = not layers_data.cell.lid.is_null();
+    if (not layers_data.cell.lid.is_null()) {
       for (const auto& ss_name : it.second) {
         std::vector<stk::mesh::Entity> sides;
         stk::mesh::Selector sel (*stkMeshStruct->ssPartVec.at(ss_name));
@@ -1060,12 +1059,12 @@ STKDiscretization::computeGraphs()
         const auto& s = sides[0];
         const auto& e = bulkData->begin_elements(s)[0];
         const auto pos = determine_entity_pos(e,s);
-        const auto layer = cell_layers_data_gid->getLayerId(stk_gid(e));
+        const auto layer = layers_data.cell.gid->getLayerId(stk_gid(e));
 
-        if (layer==(cell_layers_data_lid->numLayers-1)) {
-          allowColumnCoupling = pos==cell_layers_data_lid->top_side_pos;
+        if (layer==(layers_data.cell.lid->numLayers-1)) {
+          allowColumnCoupling = pos==layers_data.top_side_pos;
         } else if (layer==0) {
-          allowColumnCoupling = pos==cell_layers_data_lid->bot_side_pos;
+          allowColumnCoupling = pos==layers_data.bot_side_pos;
         } else {
           // The mesh is layered, but this sideset is niether top nor bottom
           allowColumnCoupling = false;
@@ -1099,14 +1098,14 @@ STKDiscretization::computeGraphs()
 
           if (globalAllowColumnCoupling) {
             // Assume the worst, and couple with all eqns over the whole column
-            const int numLayers = cell_layers_data_lid->numLayers;
-            const LO basal_elem_LID = cell_layers_data_lid->getColumnId(elem_LID);
+            const int numLayers = layers_data.cell.lid->numLayers;
+            const LO basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
             for (int eq=0; eq<m_neq; ++eq) {
               const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
               const int num_col_gids = eq_offsets.size();
               cols.resize(num_col_gids);
               for (int il=0; il<numLayers; ++il) {
-                const LO layer_elem_lid = cell_layers_data_lid->getId(basal_elem_LID,il);
+                const LO layer_elem_lid = layers_data.cell.lid->getId(basal_elem_LID,il);
                 const auto& elem_gids = sol_dof_mgr->getElementGIDs(layer_elem_lid);
 
                 for (int jdof=0; jdof<num_col_gids; ++jdof) {
@@ -1641,16 +1640,25 @@ STKDiscretization::setupExodusOutput()
      */
     auto fc = stkMeshStruct->getFieldContainer();
     for (auto& it : fc->getMeshVectorStates()) {
-      const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
-      mesh_data->add_global(outputFileIdx, it.first, it.second, DV_Type);
+      if (not mesh_data->has_global(outputFileIdx,it.first)) {
+        std::cout << "adding " << it.first << " dbl vec state...\n";
+        const auto DV_Type = stk::util::ParameterType::DOUBLEVECTOR;
+        mesh_data->add_global(outputFileIdx, it.first, it.second, DV_Type);
+      }
     }
     for (const auto& it : fc->getMeshScalarIntegerStates()) {
-     const auto INT_Type = stk::util::ParameterType::INTEGER;
-     mesh_data->add_global(outputFileIdx, it.first, it.second, INT_Type);
+      if (not mesh_data->has_global(outputFileIdx,it.first)) {
+        std::cout << "adding " << it.first << " int state...\n";
+        const auto INT_Type = stk::util::ParameterType::INTEGER;
+        mesh_data->add_global(outputFileIdx, it.first, it.second, INT_Type);
+      }
     }
     for (const auto& it : fc->getMeshScalarInteger64States()) {
-     const auto INT64_Type = stk::util::ParameterType::INT64;
-     mesh_data->add_global(outputFileIdx, it.first, it.second, INT64_Type);
+      if (not mesh_data->has_global(outputFileIdx,it.first)) {
+        std::cout << "adding " << it.first << " int64 state...\n";
+        const auto INT64_Type = stk::util::ParameterType::INT64;
+        mesh_data->add_global(outputFileIdx, it.first, it.second, INT64_Type);
+      }
     }
 
     // STK and Ioss/Exodus only allow TRANSIENT fields to be exported.
