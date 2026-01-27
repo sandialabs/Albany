@@ -195,8 +195,8 @@ namespace OmegahGhost {
     return Omega_h::Graph({offset,values});
   }
 
-  //return an array sized for the non-ghosted elements on this process
-  //the ith entry of the array contains the position of the ith non-ghosted
+  //return an array sized for the owned elements on this process
+  //the ith entry of the array contains the position of the ith owned
   //element in the array of ghosted and non-ghosted elements
   Omega_h::LOs getElemPermutationFromNonGhostedToGhosted(Omega_h::Mesh &mesh) {
     auto elmDim = mesh.dim();
