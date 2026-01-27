@@ -762,7 +762,7 @@ evaluateFields (typename Traits::EvalData workset)
         auto hostPower_view = Kokkos::create_mirror_view(powerParam.get_view());
         Kokkos::deep_copy(hostPower_view, powerParam.get_view());
         ScalarT hostPower = hostPower_view(0);
-        power = std::exp(Albany::convertScalar<ParamScalarT>(hostPower));
+        power = Albany::convertScalar<ParamScalarT>(hostPower);
         if (mu_type == FIELD_TYPE::CONSTANT) {
           auto hostMu_view = Kokkos::create_mirror_view(muParam.get_view());
           Kokkos::deep_copy(hostMu_view, muParam.get_view());
