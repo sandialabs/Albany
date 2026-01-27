@@ -194,4 +194,23 @@ namespace OmegahGhost {
     });
     return Omega_h::Graph({offset,values});
   }
+
+  //return an array sized for the non-ghosted elements on this process
+  //the ith entry of the array contains the position of the ith non-ghosted
+  //element in the array of ghosted and non-ghosted elements
+  Omega_h::LOs getElemPermutationFromNonGhostedToGhosted(Omega_h::Mesh &mesh) {
+    auto elmDim = mesh.dim();
+    auto isElmOwned = mesh.owned(elmDim);
+    const auto numOwned = getNumOwnedElms(mesh);
+    auto exscan = Omega_h::offset_scan(isElmOwned);
+    auto perm = Omega_h::Write<Omega_h::LO>(numOwned);
+    Omega_h::parallel_for(mesh.nelems(), OMEGA_H_LAMBDA(const Omega_h::LO &i) {
+      if( isElmOwned[i] ) {
+        const auto idx = exscan[i];
+        assert(idx < numOwned);
+        perm[idx] = i;
+      }
+    });
+    return Omega_h::read(perm);
+  }
 } //end OmegahGhost namespace

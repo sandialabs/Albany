@@ -11,4 +11,5 @@ namespace OmegahGhost {
   Omega_h::LOs getDownAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim);
   Omega_h::Graph getUpAdjacentEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim);
   Omega_h::Read<Omega_h::I8> getOwnedEntsInClosureOfOwnedElms(const Omega_h::Mesh& cmesh, int dim);
+  Omega_h::LOs getElemPermutationFromNonGhostedToGhosted(Omega_h::Mesh &mesh);
 }
