@@ -22,7 +22,7 @@
 #include <Omega_h_inertia.hpp> //Omega_h::inertia::Rib
 
 // Helper function to create 2D simplex box mesh
-Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
+Omega_h::Mesh createBoxMesh2D(int nx, int ny, bool cutAlongAxis=true) {
   auto lib = Albany::get_omegah_lib();
   const auto scale = 1.0;
   const auto nz = 0;
@@ -31,8 +31,10 @@ Omega_h::Mesh createBoxMesh2D(int nx, int ny) {
                                           nx,ny,nz);
   // simplify the tests by setting the mesh partition to have cuts along x and y axis 
   auto hints = std::make_shared<Omega_h::inertia::Rib>();
-  hints->axes.push_back(Omega_h::vector_3(1, 0, 0));  // Cut along x-axis first
-  hints->axes.push_back(Omega_h::vector_3(0, 1, 0));  // Then y-axis
+  if(cutAlongAxis) {
+    hints->axes.push_back(Omega_h::vector_3(1, 0, 0));  // Cut along x-axis first
+    hints->axes.push_back(Omega_h::vector_3(0, 1, 0));  // Then y-axis
+  }
   // balance using RIB with the specified axes
   mesh.set_rib_hints(hints);
   mesh.balance();
@@ -398,4 +400,79 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getOwnedEntsInClosureOfOwnedElms)
 
   auto numOwnedVtxInClosure = Omega_h::get_sum(ownedVtxInClosure);
   TEST_ASSERT(numOwnedVtxInClosure <= numVtxInClosure);
+}
+
+//
+// TEST 11: Element permutation from non-ghosted to ghosted indexing
+//
+TEUCHOS_UNIT_TEST(OmegahGhost, getElemPermutationFromNonGhostedToGhosted)
+{
+  // Create 2x2 2D triangular box mesh
+  // need ghost elements interspersed with owned elements for a meaningful test
+  auto cutAlongAxis = false;
+  auto mesh = createBoxMesh2D(2, 2, cutAlongAxis);
+  Omega_h::vtk::write_parallel("ghostBox2x2.osh", &mesh);
+
+  auto comm = Albany::getDefaultComm();
+  auto numRanks = comm->getSize();
+  auto rank = comm->getRank();
+
+  // Get the permutation array
+  auto perm = OmegahGhost::getElemPermutationFromNonGhostedToGhosted(mesh);
+
+  // Get number of owned elements
+  auto numOwnedElms = OmegahGhost::getNumOwnedElms(mesh);
+
+  // Permutation array should be sized for owned elements only
+  TEST_EQUALITY_CONST(perm.size(), numOwnedElms);
+
+  // Get owned element mask for validation
+  auto isElmOwned = mesh.owned(mesh.dim());
+  auto isElmOwned_h = Omega_h::HostRead(isElmOwned);
+  auto perm_h = Omega_h::HostRead(perm);
+
+  // Validate permutation properties:
+  // 1. All values should be valid element indices
+  for (int i = 0; i < perm_h.size(); ++i) {
+    TEST_ASSERT(perm_h[i] >= 0);
+    TEST_ASSERT(perm_h[i] < mesh.nelems());
+  }
+
+  // 2. All values should correspond to owned elements
+  for (int i = 0; i < perm_h.size(); ++i) {
+    TEST_EQUALITY_CONST(isElmOwned_h[perm_h[i]], 1);
+  }
+
+  // 3. All values should be unique (check by verifying each owned element appears exactly once)
+  std::vector<int> counts(mesh.nelems(), 0);
+  for (int i = 0; i < perm_h.size(); ++i) {
+    counts[perm_h[i]]++;
+  }
+  for (int i = 0; i < perm_h.size(); ++i) {
+    TEST_EQUALITY_CONST(counts[perm_h[i]], 1);
+  }
+
+  // Test specific values for 2 ranks
+  if (numRanks == 4) {
+    // check local element index permutation arrays for each rank
+    if (rank == 0) {
+      const std::vector<int> expected = {1, 4, 5};
+      TEST_ASSERT(perm_h.size() == expected.size());
+      for (int i = 0; i < perm_h.size(); ++i) {
+        TEST_EQUALITY_CONST(perm_h[i], expected[i]);
+      }
+    } else if (rank == 1) {
+      TEST_ASSERT(perm_h.size() == 1);
+      TEST_EQUALITY_CONST(perm_h[0], 2);
+    } else if (rank == 2) {
+      TEST_ASSERT(perm_h.size() == 1);
+      TEST_EQUALITY_CONST(perm_h[0], 0);
+    } else if (rank == 3) {
+      const std::vector<int> expected = {3, 5, 6};
+      TEST_ASSERT(perm_h.size() == expected.size());
+      for (int i = 0; i < perm_h.size(); ++i) {
+        TEST_EQUALITY_CONST(perm_h[i], expected[i]);
+      }
+    }
+  }
 }
