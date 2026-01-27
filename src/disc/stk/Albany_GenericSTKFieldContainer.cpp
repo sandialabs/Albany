@@ -273,7 +273,7 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
   const auto& elem_buckets = bulkData->get_buckets(ELEM_RANK,select_owned_part);
 
   for (const auto& st : nodal_sis) {
-    if (st->entity!=StateStruct::NodalDataToElemNode)
+    if (st->entity==StateStruct::NodalData)
       continue;
     const auto& dim = st->dim;
     const auto rank = st->dim.size();

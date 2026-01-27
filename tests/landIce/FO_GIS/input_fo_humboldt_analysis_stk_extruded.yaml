@@ -7,7 +7,7 @@ ANONYMOUS:
 
   # The problem we want to solve:
   # definition of the equations, boundary conditions, parameters, qoantity of interests we want to compute.
-  Problem:  
+  Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Steady
     Name: LandIce Stokes First Order 3D #problem to be solved
@@ -15,7 +15,7 @@ ANONYMOUS:
       Compute Constant Modes: true
       Compute Rotation Modes: true
     Compute Sensitivities: true
-    Basal Side Name: basalside 
+    Basal Side Name: basalside
     Surface Side Name: upperside
     Flat Bed Approximation: false
     Cubature Degree: 4
@@ -23,7 +23,7 @@ ANONYMOUS:
     Surface Cubature Degree: 4
     LandIce Field Norm:
       # |v| = sqrt(|v|^2 + reg)
-      # used for basal terms, e.g., nonlinear sliding conditions 
+      # used for basal terms, e.g., nonlinear sliding conditions
       sliding_velocity_basalside:
         Regularization Type: Given Value
         Regularization Value: 1.0e-05
@@ -102,7 +102,7 @@ ANONYMOUS:
           Field Rank: Scalar
           Target Value: 0.0
         Response 1:   #regularization term, |\nabla log(beta)|^2
-          Scaling: 5.8824e-06  
+          Scaling: 5.8824e-06
           Name: Squared L2 Difference Side Source PST Target MST
           Source Field Name: basal_friction_log_gradient_basalside
           Side Set Name: basalside
@@ -125,7 +125,7 @@ ANONYMOUS:
         Target Value: 0.0
       Response 2:
         Type: Sum Of Responses
-        Number Of Responses: 2  
+        Number Of Responses: 2
         Response 0:  #regularization term, |log(beta)|^2
           Scaling: 5.8824e-06
           Name: Squared L2 Difference Side Source PST Target MST
@@ -141,7 +141,7 @@ ANONYMOUS:
           Field Rank: Gradient
           Target Value: 0.0
 
-    #Used in optimization probs for dot-product or secant initialization      
+    #Used in optimization probs for dot-product or secant initialization
     Hessian:
       Response 2:
         Parameter 0:
@@ -166,7 +166,7 @@ ANONYMOUS:
               Ifpack2:
                 Overlap: 0
                 Prec Type: RILUK
-                Ifpack2 Settings: 
+                Ifpack2 Settings:
                   Amesos2: {}
                   Amesos2 solver name: klu
 
@@ -174,17 +174,24 @@ ANONYMOUS:
   # The discretization used:
   # What mesh, elements to used, what/how to import fields.
   Discretization:
-    Method: Extruded
+    Workset Size: -1
+    Method: STKExtruded
     Surface Height Field Name: surface_height
     Number Of Time Derivatives: 0
+    Exodus Output File Name: output/humboldt_stk_extruded.exo
+    Use Serial Mesh: false
     Columnwise Ordering: false
     NumLayers: 2  #too small, only for testing
     Thickness Field Name: ice_thickness
-    Extrude Basal Fields: [ice_thickness, surface_height, basal_friction_log, bed_topography, apparent_mass_balance, apparent_mass_balance_RMS]
-    Interpolate Basal Layered Fields: [temperature, velocity]
+    Extrude Basal Node Fields: [ice_thickness, surface_height, basal_friction_log, bed_topography, apparent_mass_balance, apparent_mass_balance_RMS]
+    Basal Node Fields Ranks: [1, 1, 1, 1, 1, 1]
+    Interpolate Basal Elem Layered Fields: [temperature]
+    Basal Elem Layered Fields Ranks: [1]
+    Interpolate Basal Node Layered Fields: [velocity]
+    Basal Node Layered Fields Ranks: [2]
     Use Glimmer Spacing: true
     Required Fields Info:
-      Number Of Fields: 8
+      Number Of Fields: 10
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -214,6 +221,16 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 7:
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+        Field Usage: Output
+      Field 8:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+        Field Usage: Output
+      Field 9:
         Field Name: velocity
         Field Type: Node Vector
         Field Origin: Mesh
@@ -226,7 +243,7 @@ ANONYMOUS:
         Restart Index: 1
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
-        Exodus Output File Name: output/humboldt_basal.exo
+        Exodus Output File Name: output/humboldt_basal_stk_extruded.exo
         Required Fields Info:
           Number Of Fields: 10
           Field 0:
@@ -285,7 +302,9 @@ ANONYMOUS:
             Vector Dim: 2
             File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
       upperside:
-        Method: NONE # ExtrudedDisc doesn't expose an uppserside disc. But we need to read fields
+        Method: SideSetSTK
+        Number Of Time Derivatives: 0
+        Exodus Output File Name: output/humboldt_upper_stk_extruded.exo
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
@@ -299,6 +318,7 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
+
 
   #Solvers and Analysis
   #What linear/nonlinear solvers and preconditioners to use
@@ -317,7 +337,7 @@ ANONYMOUS:
         Number Of Parameters: 1
         Check Derivatives: false
         Derivative Checks:
-          Perform Reduced Derivative Checks: true       
+          Perform Reduced Derivative Checks: true
           Perform Expensive Derivative Checks: false
         Parameter Initial Guess Type: From Model Evaluator
         Uniform Parameter Guess: 2.0
@@ -326,16 +346,16 @@ ANONYMOUS:
 
         Full Space: false
         Use NOX Solver: true
-        
-        Matrix Based Dot Product: 
+
+        Matrix Based Dot Product:
           Matrix Type: Hessian Of Response
           #Matrix Type: Identity
           Matrix Types:
             Hessian Of Response:
               Lump Matrix: true
               Response Index: 1
-        
-        Custom Secant: 
+
+        Custom Secant:
           Type: Limited-Memory BFGS
           Maximum Storage: 50
           Initialization Type: Hessian Of Response
@@ -344,8 +364,8 @@ ANONYMOUS:
               Response Index: 2
 
         ROL Options:
-   
-          Status Test: 
+
+          Status Test:
             Gradient Tolerance: 1.0e-4
             Step Tolerance: 1.0e-10
             Iteration Limit: 1
@@ -397,7 +417,7 @@ ANONYMOUS:
                   Sufficient Decrease Parameter: 1.0e-02
                   Relative Tolerance Exponent: 1.0
 
-            Trust Region: 
+            Trust Region:
               Subproblem Model: Lin-More
               Subproblem Solver: Truncated CG
               Initial Radius: 0.2
@@ -416,7 +436,7 @@ ANONYMOUS:
                   Forcing Sequence Initial Value: 1.0
                   Forcing Sequence Update Frequency: 10
                   Forcing Sequence Reduction Factor: 1.0e-01
-                Gradient: 
+                Gradient:
                   Tolerance Scaling: 1.0e-01
                   Relative Tolerance: 2.0e+00
 
@@ -433,7 +453,7 @@ ANONYMOUS:
               Backtracking Factor:           0.5
               Output Iteration History:      true
               Zero Initial Guess:            false
-              Solver Type:                   0 
+              Solver Type:                   0
 
     NOX:
       Thyra Group Options:
@@ -486,129 +506,129 @@ ANONYMOUS:
                 Ifpack2:
                   Overlap: 0
                   Prec Type: Amesos2
-                MueLu: 
-                  Matrix: 
+                MueLu:
+                  Matrix:
                     PDE equations: 2
-                  Factories: 
-                    myLineDetectionFact: 
+                  Factories:
+                    myLineDetectionFact:
                       factory: LineDetectionFactory
                       'linedetection: orientation': coordinates
-                    mySemiCoarsenPFact1: 
+                    mySemiCoarsenPFact1:
                       factory: SemiCoarsenPFactory
                       'semicoarsen: coarsen rate': 14
-                    UncoupledAggregationFact2: 
+                    UncoupledAggregationFact2:
                       factory: UncoupledAggregationFactory
                       'aggregation: ordering': graph
                       'aggregation: max selected neighbors': 0
                       'aggregation: min agg size': 3
                       'aggregation: phase3 avoid singletons': true
-                    MyCoarseMap2: 
+                    MyCoarseMap2:
                       factory: CoarseMapFactory
                       Aggregates: UncoupledAggregationFact2
-                    myTentativePFact2: 
+                    myTentativePFact2:
                       'tentative: calculate qr': true
                       factory: TentativePFactory
                       Aggregates: UncoupledAggregationFact2
                       CoarseMap: MyCoarseMap2
-                    mySaPFact2: 
+                    mySaPFact2:
                       'sa: eigenvalue estimate num iterations': 10
                       'sa: damping factor': 1.3333333e+00
                       factory: SaPFactory
                       P: myTentativePFact2
-                    myTransferCoordinatesFact: 
+                    myTransferCoordinatesFact:
                       factory: CoordinatesTransferFactory
                       CoarseMap: MyCoarseMap2
                       Aggregates: UncoupledAggregationFact2
-                    myTogglePFact: 
+                    myTogglePFact:
                       factory: TogglePFactory
                       'semicoarsen: number of levels': 2
-                      TransferFactories: 
+                      TransferFactories:
                         P1: mySemiCoarsenPFact1
                         P2: mySaPFact2
                         Ptent1: mySemiCoarsenPFact1
                         Ptent2: myTentativePFact2
                         Nullspace1: mySemiCoarsenPFact1
                         Nullspace2: myTentativePFact2
-                    myRestrictorFact: 
+                    myRestrictorFact:
                       factory: TransPFactory
                       P: myTogglePFact
-                    myToggleTransferCoordinatesFact: 
+                    myToggleTransferCoordinatesFact:
                       factory: ToggleCoordinatesTransferFactory
                       Chosen P: myTogglePFact
-                      TransferFactories: 
+                      TransferFactories:
                         Coordinates1: mySemiCoarsenPFact1
                         Coordinates2: myTransferCoordinatesFact
-                    myRAPFact: 
-                      'rap: fix zero diagonals': true 
+                    myRAPFact:
+                      'rap: fix zero diagonals': true
                       factory: RAPFactory
                       P: myTogglePFact
                       R: myRestrictorFact
-                      TransferFactories: 
+                      TransferFactories:
                         For Coordinates: myToggleTransferCoordinatesFact
-                    myRepartitionHeuristicFact: 
+                    myRepartitionHeuristicFact:
                       factory: RepartitionHeuristicFactory
                       A: myRAPFact
                       'repartition: min rows per proc': 1000
                       'repartition: max imbalance': 1.327e+00
                       'repartition: start level': 4
-                    myZoltanInterface: 
+                    myZoltanInterface:
                       factory: ZoltanInterface
                       A: myRAPFact
                       Coordinates: myToggleTransferCoordinatesFact
                       number of partitions: myRepartitionHeuristicFact
-                    myRepartitionFact: 
+                    myRepartitionFact:
                       factory: RepartitionFactory
                       A: myRAPFact
                       Partition: myZoltanInterface
                       'repartition: remap parts': true
                       number of partitions: myRepartitionHeuristicFact
-                    myRebalanceProlongatorFact: 
+                    myRebalanceProlongatorFact:
                       factory: RebalanceTransferFactory
                       type: Interpolation
                       P: myTogglePFact
                       Coordinates: myToggleTransferCoordinatesFact
                       Nullspace: myTogglePFact
-                    myRebalanceRestrictionFact: 
+                    myRebalanceRestrictionFact:
                       factory: RebalanceTransferFactory
                       type: Restriction
                       R: myRestrictorFact
-                    myRebalanceAFact: 
+                    myRebalanceAFact:
                       factory: RebalanceAcFactory
                       A: myRAPFact
                       TransferFactories: { }
-                    mySmoother1: 
+                    mySmoother1:
                       factory: TrilinosSmoother
                       #type: LINESMOOTHING_BANDEDRELAXATION
                       type: LINESMOOTHING_TRIDIRELAXATION
                       'smoother: pre or post': both
-                      ParameterList: 
+                      ParameterList:
                         'relaxation: type': Gauss-Seidel
                         'relaxation: sweeps': 1
                         'relaxation: damping factor': 1.0e+00
                         'block relaxation: decouple dofs': true
                         'partitioner: PDE equations': 2
-                    mySmoother3: 
+                    mySmoother3:
                       factory: TrilinosSmoother
                       type: RELAXATION
                       'smoother: pre or post': both
-                      ParameterList: 
+                      ParameterList:
                         'relaxation: type': Gauss-Seidel
                         'relaxation: sweeps': 1
                         'relaxation: damping factor': 1.0e+00
-                    mySmoother4: 
+                    mySmoother4:
                       factory: TrilinosSmoother
                       type: RELAXATION
                       'smoother: pre or post': pre
-                      ParameterList: 
+                      ParameterList:
                         'relaxation: type': Gauss-Seidel
                         'relaxation: sweeps': 4
                         'relaxation: damping factor': 1.0e+00
-                  Hierarchy: 
+                  Hierarchy:
                     max levels: 7
                     'coarse: max size': 2000
                     verbosity: Low
                     use kokkos refactor: false
-                    Finest: 
+                    Finest:
                       Smoother: mySmoother1
                       CoarseSolver: mySmoother4
                       P: myRebalanceProlongatorFact
@@ -619,7 +639,7 @@ ANONYMOUS:
                       A: myRebalanceAFact
                       Coordinates: myRebalanceProlongatorFact
                       Importer: myRepartitionFact
-                    All: 
+                    All:
                       startLevel: 1
                       Smoother: mySmoother4
                       CoarseSolver: mySmoother4

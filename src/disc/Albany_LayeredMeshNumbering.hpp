@@ -17,9 +17,6 @@ enum class LayeredMeshOrdering
 
 template <typename T>
 struct LayeredMeshNumbering {
-  // Position of top/bot side in the local element
-  int bot_side_pos = -1;
-  int top_side_pos = -1;
   bool layerOrd;
 
   // T stride;
@@ -76,6 +73,31 @@ struct LayeredMeshNumbering {
   T getLayerId (const T id) const {
     return layerOrd ? id / numHorizEntities : id % numLayers;
   }
+};
+
+struct LayeredMeshData
+{
+  // Helper struct. Because gid/lid are more verbose than first/second in an std::pair...
+  struct DataImpl {
+    Teuchos::RCP<LayeredMeshNumbering<GO>> gid = Teuchos::null;
+    Teuchos::RCP<LayeredMeshNumbering<LO>> lid = Teuchos::null;
+  };
+
+  DataImpl cell = {};
+  DataImpl node = {};
+
+  // "Reference" vertical grid coordinates of the layers:
+  //   - z[i]: coordinate of the i-th NODE layer
+  //   - dz[i] = z[i+1]-z[i]
+  // The coordinates are normalized, in the sense that z=0 corresponds to the bottom
+  // of the mesh, and z=1 corresponds to the top of the mesh. We always have that
+  // z_ref.front()==0 and z_ref.back()==1, and sum(dz)==1.
+  std::vector<double> z_ref = {};
+  std::vector<double> dz_ref = {};
+
+  // Position of top/bot side in the local element
+  int bot_side_pos = -1;
+  int top_side_pos = -1;
 };
 
 } // Namespace Albany

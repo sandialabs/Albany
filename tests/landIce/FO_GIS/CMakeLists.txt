@@ -357,6 +357,11 @@ endif()
 set (testName ${testNameRoot}_AdjointSensitivity_BasalFriction_FluxDivergence)
 
 if (ALBANY_IFPACK2)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta_stk_extruded.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta_stk_extruded.yaml)
+  add_test(${testName}_STKExtruded ${Albany.exe} input_fo_gis_analysis_beta_stk_extruded.yaml)
+  set_tests_properties(${testName}_STKExtruded PROPERTIES LABELS "LandIce;Forward")
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta.yaml)
   add_test(${testName} ${Albany.exe} input_fo_gis_analysis_beta.yaml)
@@ -390,6 +395,11 @@ if (ALBANY_IFPACK2)
     endif()
 
     if(ALBANY_TEKO AND ALBANY_MUELU)
+      set (testName ${testNameRoot}_Humboldt_Analysis_STK_Extruded)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis_stk_extruded.yaml
+                     ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_stk_extruded.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_stk_extruded.yaml)
+
       set (testName ${testNameRoot}_Humboldt_Analysis)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_analysis.yaml
                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis.yaml)
@@ -401,6 +411,8 @@ if (ALBANY_IFPACK2)
       add_test(${testName} ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_mat_free_reg.yaml)
                          
       if (NOT ALBANY_PARALELL_EXODUS)
+        set_tests_properties(${testNameRoot}_Humboldt_Analysis_STK_Extruded
+          PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
         set_tests_properties(${testNameRoot}_Humboldt_Analysis
           PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
         set_tests_properties(${testNameRoot}_Humboldt_Analysis_Mat_Free_Reg
@@ -489,7 +501,9 @@ if (ALBANY_IFPACK2)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.yaml)
   add_test(${testName} ${Albany.exe} input_fo_gis_beta_smb.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
+  set_tests_properties(${testName} PROPERTIES
+    LABELS "LandIce;Forward"
+    FIXTURES_SETUP BETA_SMB_FIRST_RUN)
 
   if (NOT ALBANY_DISABLE_OUTPUT_MESH)
     # Restart
@@ -497,8 +511,10 @@ if (ALBANY_IFPACK2)
                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.yaml)
 
     add_test(${testName}_Restart ${Albany.exe} input_fo_gis_beta_smb_restart.yaml)
-    set_tests_properties(${testName}_Restart  PROPERTIES RUN_SERIAL TRUE DEPENDS ${testName})
-    set_tests_properties(${testName} PROPERTIES RUN_SERIAL TRUE LABELS "LandIce;Forward")
+    set_tests_properties(${testName}_Restart
+      PROPERTIES RUN_SERIAL TRUE
+      FIXTURES_REQUIRED BETA_SMB_FIRST_RUN
+      LABELS "LandIce;Forward")
   endif()
 endif()
 

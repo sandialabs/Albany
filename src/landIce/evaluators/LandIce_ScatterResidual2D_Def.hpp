@@ -68,12 +68,11 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   const auto node_dof_mgr = workset.disc->getNodeDOFManager();
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
-  const auto& mesh = workset.disc->getMeshStruct();
-  const auto& layers_data  = mesh->local_cell_layers_data;
-  const int   numLayers = layers_data->numLayers;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const int   numLayers = layers_data.cell.lid->numLayers;
   const int   numLevels = numLayers + 1;
-  const auto  bot = layers_data->bot_side_pos;
-  const auto  top = layers_data->top_side_pos;
+  const auto  bot = layers_data.bot_side_pos;
+  const auto  top = layers_data.top_side_pos;
   const auto  field_pos = fieldLevel==numLayers ? top : bot;
 
   const auto& topo = dof_mgr->get_topology();
@@ -97,14 +96,14 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     const int cell = side.ws_elem_idx;
     // Get column ID of the cell, since it cell might be at the top!
     const int side_elem_LID = elem_lids(cell);
-    const int basal_elem_LID = layers_data->getColumnId(side_elem_LID);
+    const int basal_elem_LID = layers_data.cell.lid->getColumnId(side_elem_LID);
 
     // Gather Jac col indices, and set Jac=1 outside of the level where the field is defined
     for (int ilev=0; ilev<=numLayers; ++ilev) {
       // Get correct cell layer and correct dofs offsets
       const int ilayer = ilev==numLayers ? ilev-1 : ilev;
       const int pos = ilev==numLayers ? top : bot;
-      const int elem_LID = layers_data->getId(basal_elem_LID,ilayer);
+      const int elem_LID = layers_data.cell.lid->getId(basal_elem_LID,ilayer);
       const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
       // Column-coupled cols
@@ -139,7 +138,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
     const int layer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
     // Note: top nodes must be parsed in the same 2D order as the field_pos side
     const auto& offsets_2d_field = dof_mgr->getGIDFieldOffsetsSide(this->offset,field_pos);
-    const int elem_LID = layers_data->getId(basal_elem_LID,layer);
+    const int elem_LID = layers_data.cell.lid->getId(basal_elem_LID,layer);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
     const auto& cell_node_pos = node_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
 
@@ -171,13 +170,12 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
   constexpr auto ALL = Kokkos::ALL();
 
-  const auto& mesh = workset.disc->getMeshStruct();
-  const auto& layers_data  = mesh->local_cell_layers_data;
-  const auto  bot = layers_data->bot_side_pos;
-  const auto  top = layers_data->top_side_pos;
+  const auto& layers_data  = workset.disc->getMeshStruct()->layers_data;
+  const auto  bot = layers_data.bot_side_pos;
+  const auto  top = layers_data.top_side_pos;
 
   // Pick element layer that contains the field level
-  const auto field_layer = fieldLevel==layers_data->numLayers
+  const auto field_layer = fieldLevel==layers_data.cell.lid->numLayers
                          ? fieldLevel-1 : fieldLevel;
   const int field_pos = field_layer==0 ? bot : top;
 
@@ -246,8 +244,8 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
 
     // Get the local ID of the cell that contains the level where the field is,
     // and the lids of the 2d field in that cell
-    const int basal_elem_LID = layers_data->getColumnId(elem_LID);
-    const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+    const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+    const int field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,field_layer);
     const auto field_elem_dof_lids = Kokkos::subview(elem_dof_lids,field_elem_LID,ALL);
     for (int node=0; node<numSideNodes; ++node) {
       lcols_nodes[bot_nodes[node]] = field_elem_dof_lids(field_offsets[node]);

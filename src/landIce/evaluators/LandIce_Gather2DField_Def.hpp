@@ -96,7 +96,7 @@ void Gather2DField<PHALTraits::Residual, PHALTraits>::
 evaluateFields (typename PHALTraits::EvalData workset)
 {
   // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const auto  x_data  = Albany::getLocalData(workset.x);
@@ -110,8 +110,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& dof_mgr       = workset.disc->getDOFManager();
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
-  const auto top = layers_data->top_side_pos;
-  const auto bot = layers_data->bot_side_pos;
+  const auto top = layers_data.top_side_pos;
+  const auto bot = layers_data.bot_side_pos;
 
   if (extruded) {
 #ifdef ALBANY_DEBUG
@@ -123,8 +123,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
 
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
-      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
-      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+      const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,field_layer);
 
       const auto f = [&] (const std::vector<int>& nodes) {
         const int num_nodes = nodes.size();
@@ -174,15 +174,15 @@ void Gather2DField<PHALTraits::Jacobian, PHALTraits>::
 evaluateFields (typename PHALTraits::EvalData workset)
 {
   // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const int   bot = layers_data->bot_side_pos;
-  const int   top = layers_data->top_side_pos;
+  const int   bot = layers_data.bot_side_pos;
+  const int   top = layers_data.top_side_pos;
 
-  ALBANY_EXPECT (fieldLevel==0 || fieldLevel==layers_data->numLayers,
+  ALBANY_EXPECT (fieldLevel==0 || fieldLevel==layers_data.cell.lid->numLayers,
       "Field level must be 0 or match the number of layers in the mesh.\n"
       "  - field level: " + std::to_string(fieldLevel) + "\n"
-      "  - num layers : " + std::to_string(layers_data->numLayers) + "\n");
+      "  - num layers : " + std::to_string(layers_data.cell.lid->numLayers) + "\n");
 
   const auto  x_data        = Albany::getLocalData(workset.x);
   Teuchos::ArrayRCP<const RealType> xdot_data;  
@@ -205,8 +205,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
     const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
-      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
-      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+      const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,field_layer);
 
       const auto f = [&] (const std::vector<int>& nodes) {
         const int num_nodes = nodes.size();
@@ -272,15 +272,15 @@ void Gather2DField<PHALTraits::Tangent, PHALTraits>::
 evaluateFields (typename PHALTraits::EvalData workset)
 {
     // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const int   bot = layers_data->bot_side_pos;
-  const int   top = layers_data->top_side_pos;
+  const int   bot = layers_data.bot_side_pos;
+  const int   top = layers_data.top_side_pos;
 
-  ALBANY_EXPECT (fieldLevel==0 || fieldLevel==layers_data->numLayers,
+  ALBANY_EXPECT (fieldLevel==0 || fieldLevel==layers_data.cell.lid->numLayers,
       "Field level must be 0 or match the number of layers in the mesh.\n"
       "  - field level: " + std::to_string(fieldLevel) + "\n"
-      "  - num layers : " + std::to_string(layers_data->numLayers) + "\n");
+      "  - num layers : " + std::to_string(layers_data.cell.lid->numLayers) + "\n");
 
   const auto  x_data        = Albany::getLocalData(workset.x);
   Teuchos::ArrayRCP<const RealType> xdot_data;  
@@ -308,8 +308,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
     const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
-      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
-      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+      const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,field_layer);
 
       const auto f = [&] (const std::vector<int>& nodes) {
         const int num_nodes = nodes.size();
@@ -432,9 +432,9 @@ evaluateFields (typename PHALTraits::EvalData workset)
   }
 
   // Mesh data
-  const auto& layers_data = workset.disc->getLayeredMeshNumberingLO();
-  const int   top = layers_data->top_side_pos;
-  const int   bot = layers_data->bot_side_pos;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const int   top = layers_data.top_side_pos;
+  const int   bot = layers_data.bot_side_pos;
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   const auto x_data = Albany::getLocalData(workset.x);
@@ -461,8 +461,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
     const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_pos);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
-      const int basal_elem_LID = layers_data->getColumnId(elem_LID);
-      const int field_elem_LID = layers_data->getId(basal_elem_LID,field_layer);
+      const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,field_layer);
 
       const auto f = [&] (const std::vector<int>& nodes) {
         const int num_nodes = nodes.size();

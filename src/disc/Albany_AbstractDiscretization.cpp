@@ -214,10 +214,10 @@ void AbstractDiscretization::buildSideSetsViews ()
   std::map<std::string, int> total_sideset_idx;
   std::map<std::string, int> sideset_idx_offset;
   unsigned int maxSideNodes = 0;
-  const auto& cell_layers_data = getMeshStruct()->local_cell_layers_data;
-  if (!cell_layers_data.is_null()) {
+  const auto& layers_data = getMeshStruct()->layers_data;
+  if (!layers_data.cell.lid.is_null()) {
     const Teuchos::RCP<const CellTopologyData> cell_topo = Teuchos::rcp(new CellTopologyData(getMeshStruct()->meshSpecs[0]->ctd));
-    const int numLayers = cell_layers_data->numLayers;
+    const int numLayers = layers_data.cell.lid->numLayers;
     const int numComps = getDOFManager()->getNumFields();
 
     // Determine maximum number of side nodes
@@ -251,7 +251,7 @@ void AbstractDiscretization::buildSideSetsViews ()
 
   // Not all mesh structs that come through here are extruded mesh structs.
   // If the mesh isn't extruded, we won't need to do any of the following work.
-  if (not cell_layers_data.is_null()) {
+  if (not layers_data.cell.lid.is_null()) {
     // Get topo data
     auto ctd = getMeshStruct()->meshSpecs[0]->ctd;
 
@@ -268,9 +268,9 @@ void AbstractDiscretization::buildSideSetsViews ()
     const auto& elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
     // Build a LayeredMeshNumbering for cells, so we can get the LIDs of elems over the column
-    const auto numLayers = cell_layers_data->numLayers;
-    const int top = cell_layers_data->top_side_pos;
-    const int bot = cell_layers_data->bot_side_pos;
+    const auto numLayers = layers_data.cell.lid->numLayers;
+    const int top = getMeshStruct()->layers_data.top_side_pos;
+    const int bot = getMeshStruct()->layers_data.bot_side_pos;
 
     // 7) Populate localDOFViews for GatherVerticallyContractedSolution
     for (int ws=0; ws<getNumWorksets(); ++ws) {
@@ -298,7 +298,7 @@ void AbstractDiscretization::buildSideSetsViews ()
             break;
 
           const int elem_LID = elem_lids(ws_elem_idx);
-          const int basal_elem_LID = cell_layers_data->getColumnId(elem_LID);
+          const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
 
           for (int eq=0; eq<getNumEq(); ++eq) {
             const auto& sol_top_offsets = sol_dof_mgr->getGIDFieldOffsetsSide(eq,top,side_pos);
@@ -307,14 +307,14 @@ void AbstractDiscretization::buildSideSetsViews ()
 
             for (int j=0; j<numSideNodes; ++j) {
               for (int il=0; il<numLayers; ++il) {
-                const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
+                const LO layer_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,il);
                 globalDOFView.view_host()(sideSet_idx + sideset_idx_offset[ss_key], j, il, eq) =
                   elem_dof_lids(layer_elem_LID,sol_bot_offsets[j]);
               }
 
               // Add top side in last layer
               const int il = numLayers-1;
-              const LO layer_elem_LID = cell_layers_data->getId(basal_elem_LID,il);
+              const LO layer_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,il);
               globalDOFView.view_host()(sideSet_idx + sideset_idx_offset[ss_key], j, il+1, eq) =
                 elem_dof_lids(layer_elem_LID,sol_top_offsets[j]);
             }

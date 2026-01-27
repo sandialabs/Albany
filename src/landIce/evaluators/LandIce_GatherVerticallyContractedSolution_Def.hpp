@@ -76,7 +76,7 @@ GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
 
 template<typename EvalT, typename Traits>
 void GatherVerticallyContractedSolution<EvalT, Traits>::
-computeQuadWeights(const Teuchos::ArrayRCP<double>& layers_ratio)
+computeQuadWeights(const std::vector<double>& dz)
 {
   if (quad_weights_computed) {
     return;
@@ -84,9 +84,9 @@ computeQuadWeights(const Teuchos::ArrayRCP<double>& layers_ratio)
 
   // Get layered mesh numbering object
   TEUCHOS_TEST_FOR_EXCEPTION (
-      numLayers!=layers_ratio.size(), std::runtime_error,
+      numLayers!=static_cast<int>(dz.size()), std::runtime_error,
       "Error! Inpur discretization number of layers does not match the stored value.\n"
-      "  - disc num layers  : " << layers_ratio.size() << "\n"
+      "  - disc num layers  : " << dz.size() << "\n"
       "  - stored num layers: " << numLayers << "\n");
 
   if(op == VerticalSum){
@@ -94,10 +94,10 @@ computeQuadWeights(const Teuchos::ArrayRCP<double>& layers_ratio)
       quadWeights.host()(i) = 1.0;
   } else  { //Average
 
-    quadWeights.host()(0) = 0.5*layers_ratio[0]; 
-    quadWeights.host()(numLayers) = 0.5*layers_ratio[numLayers-1];
+    quadWeights.host()(0) = 0.5*dz[0]; 
+    quadWeights.host()(numLayers) = 0.5*dz[numLayers-1];
     for(int i=1; i<numLayers; ++i)
-      quadWeights.host()(i) = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
+      quadWeights.host()(i) = 0.5*(dz[i-1] + dz[i]);
   }
   quadWeights.sync_to_dev();
 
@@ -141,10 +141,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(layers_ratio);
+  computeQuadWeights(layers_data.dz_ref);
 
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
@@ -190,10 +190,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   //       you could use cell layers_data and dof mgr instead
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& dz_ref = workset.disc->getMeshStruct()->layers_data.dz_ref;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(layers_ratio);
+  computeQuadWeights(dz_ref);
 
   const int neq = workset.disc->getDOFManager()->getNumFields();
   auto x_data = Albany::getDeviceData(workset.x);
@@ -254,10 +254,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& dz_ref = workset.disc->getMeshStruct()->layers_data.dz_ref;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(layers_ratio);
+  computeQuadWeights(dz_ref);
 
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
@@ -302,10 +302,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   const auto sideSet  = workset.sideSetViews->at(meshPart);
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& dz_ref = workset.disc->getMeshStruct()->layers_data.dz_ref;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(layers_ratio);
+  computeQuadWeights(dz_ref);
 
   auto x_data = Albany::getDeviceData(workset.x);
   auto w = quadWeights.dev();
@@ -383,10 +383,10 @@ evaluateFields(typename PHALTraits::EvalData workset)
   //       you could use cell layers_data and dof mgr instead
   const auto localDOF = workset.localDOFViews->at(meshPart);
 
-  const auto& layers_ratio = workset.disc->getMeshStruct()->mesh_layers_ratio;
+  const auto& dz_ref = workset.disc->getMeshStruct()->layers_data.dz_ref;
 
   // Compute quadWeights (cached)
-  computeQuadWeights(layers_ratio);
+  computeQuadWeights(dz_ref);
 
   const int neq = workset.disc->getDOFManager()->getNumFields();
   auto x_data = Albany::getDeviceData(workset.x);
