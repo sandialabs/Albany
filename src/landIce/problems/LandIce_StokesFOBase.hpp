@@ -1616,7 +1616,8 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-      p->set<double>("Default Nominal Value", pl->sublist("Bulk Friction Coefficient").get<double>(param_name,-1.0));
+      Teuchos::ParameterList beta_list = pl->sublist("Basal Friction Coefficient");
+      p->set<double>("Default Nominal Value", beta_list.get<double>(param_name,-1.0));
 
       Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_bulk_friction;
       ptr_bulk_friction = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
@@ -1632,7 +1633,8 @@ void StokesFOBase::constructBasalBCEvaluators (PHX::FieldManager<PHAL::AlbanyTra
       p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
       p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       p->set<const Teuchos::ParameterList*>("Parameters List", &params->sublist("Parameters"));
-      p->set<double>("Default Nominal Value", pl->sublist("Basal Debris Factor").get<double>(param_name,-1.0));
+      Teuchos::ParameterList beta_list = pl->sublist("Basal Friction Coefficient");
+      p->set<double>("Default Nominal Value", beta_list.get<double>(param_name,-1.0));
 
       Teuchos::RCP<PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>> ptr_basal_debris;
       ptr_basal_debris = Teuchos::rcp(new PHAL::SharedParameter<EvalT,PHAL::AlbanyTraits>(*p,dl));
