@@ -13,6 +13,7 @@
 #include "Omega_h_recover.hpp" //project_by_fit
 #include "OmegahGhost.hpp" //ghosted mesh helper functions
 #include "Omega_h_element.hpp" //simplex_degree, hypercube_degree
+#include "Omega_h_for.hpp" //parallel_for
 
 #ifdef ALBANY_MESHFIELDS
 #include <KokkosController.hpp>
@@ -38,6 +39,13 @@ namespace {
     auto array = mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
     TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
       "Error! solution_grad_norm array should have one component per element.\n");
+    //this array has jumbled values of the effective strain rate - apply a
+    //permutation to map it back to the array with owned and ghosted elements
+    auto perm = OmegahGhost::getElemPermutationFromNonGhostedToGhosted(mesh);
+    auto reordered = Omega_h::Write<Omega_h::Real>(array.size(), 0);
+    Omega_h::parallel_for(perm.size(), OMEGA_H_LAMBDA(const LO &i) {
+      reordered[perm[i]] = array[i];
+    });
     return mesh.sync_array<Omega_h::Real>(2, array, 1);
   }
 
