@@ -82,10 +82,8 @@ RUN cd $SOFTWARE_ROOT/mali/source/components/mpas-albany-landice && \
 # Setup env vars
 ENV LD_LIBRARY_PATH=${TRILINOS_ROOT}/lib
 
-CMD [ "/bin/bash" ]
-
 # set up conda
-# assume WORKDIR is /home/runner or similar and USER is runner
+USER runner
 RUN wget -q "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" -O /home/runner/Miniforge3.sh && \
     bash /home/runner/Miniforge3.sh -b -p /home/runner/miniforge && \
     rm -f /home/runner/Miniforge3.sh
@@ -100,7 +98,6 @@ ENV PATH="/home/runner/miniforge/bin:${PATH}"
 RUN conda create -n compass -c e3sm/label/compass -y -c conda-forge python=3.13 "compass=1.8.0=mpi_mpich*"
 
 # build jigsaw for compass
-USER runner
 WORKDIR /tmp
 RUN /home/runner/miniforge/bin/conda run -n compass bash -lc '\
     export CFLAGS="-O2 -fno-lto" && \
@@ -112,8 +109,12 @@ RUN /home/runner/miniforge/bin/conda run -n compass bash -lc '\
 WORKDIR /home/runner
 RUN /bin/bash -lc 'source /home/runner/miniforge/etc/profile.d/conda.sh && \
     conda activate compass && \
-    create_compass_load_script && \
-    source load_compass_1.8.0_mpich.sh'
+    create_compass_load_script'
 
 # add the compass cfg file specific to the container
 ADD --chown=runner:fanssie --chmod=775 compass-container.cfg /home/runner
+
+# add entrypoint file to customize env for the user
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["bash"]
