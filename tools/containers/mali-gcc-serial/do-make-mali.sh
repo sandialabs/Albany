@@ -9,6 +9,7 @@ make -j gfortran \
   ALBANY=true \
   USE_PIO2=true \
   CORE=landice \
+  SLM=true \
   PIO=${SCORPIO_ROOT} \
   NETCDF=${NETCDF_F_ROOT} \
   MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_ROOT}/lib64 -Wl,-R${TRILINOS_ROOT}/lib64" \

@@ -13,7 +13,7 @@ RUN cd $SOFTWARE_ROOT/albany/build && \
     ./do-cmake-albany.sh
 
 RUN cd $SOFTWARE_ROOT/albany/build && \
-    make -j16 install
+    make -j8 install
 
 ENV ALBANY_ROOT=${SOFTWARE_ROOT}/albany/install
 
@@ -58,7 +58,7 @@ RUN cd $SOFTWARE_ROOT/scorpio/build && \
     ./do-cmake-scorpio.sh
 
 RUN cd $SOFTWARE_ROOT/scorpio/build && \
-    make -j16 install
+    make -j8 install
 
 ENV SCORPIO_ROOT=${SOFTWARE_ROOT}/scorpio/install
 
@@ -71,7 +71,7 @@ RUN cd $SOFTWARE_ROOT && \
     mkdir mali && cd mali && \
     git clone --filter=blob:none https://github.com/mali-dev/e3sm source && \
     git config --global url."https://github.com/".insteadOf git@github.com: && \
-    cd source && git submodule update --init --recursive
+    cd source/components/mpas-albany-landice/src && git submodule update --init SeaLevelModel
 
 ADD --chown=runner:fanssie --chmod=775 do-make-mali.sh $SOFTWARE_ROOT/mali/source/components/mpas-albany-landice
 
@@ -82,4 +82,47 @@ RUN cd $SOFTWARE_ROOT/mali/source/components/mpas-albany-landice && \
 # Setup env vars
 ENV LD_LIBRARY_PATH=${TRILINOS_ROOT}/lib
 
-CMD [ "/bin/bash" ]
+# set up conda
+USER runner
+RUN wget -q "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" -O /home/runner/Miniforge3.sh && \
+    bash /home/runner/Miniforge3.sh -b -p /home/runner/miniforge && \
+    rm -f /home/runner/Miniforge3.sh
+
+ENV PATH="/home/runner/miniforge/bin:${PATH}"
+
+# set up compass
+# Note: the -fno-lto flags were needed to fix an internal compiler.
+# This may be specific to my machine architecture and the compiler version being used here and should not
+# generally be required.  But I don't think they are going to hurt either, as we don't expect to use
+# jigsaw much in this container setup.
+RUN conda create -n compass -c e3sm/label/compass -y -c conda-forge python=3.13 "compass=1.8.0=mpi_mpich*"
+
+# build jigsaw for compass
+WORKDIR /tmp
+RUN /home/runner/miniforge/bin/conda run -n compass bash -lc '\
+    export CFLAGS="-O2 -fno-lto" && \
+    export CXXFLAGS="-O2 -fno-lto" && \
+    export LDFLAGS="-fno-lto" && \
+    build_jigsaw --clone --subdir jigsaw-python'
+
+# create compass load script
+WORKDIR /home/runner
+RUN /bin/bash -lc 'source /home/runner/miniforge/etc/profile.d/conda.sh && \
+    conda activate compass && \
+    create_compass_load_script'
+
+# add the compass cfg file specific to the container
+ADD --chown=runner:fanssie --chmod=775 compass-container.cfg /home/runner
+
+# update environment for user
+RUN cat >> /home/runner/.bashrc <<'EOF'
+export CLICOLOR=1
+export PS1="\[\e[32;1m\]\t \u@\h \[\e[0m\]\[\e[33;1m\]\w\[\e[0m\]\[\e[32;1m\]\$\[\e[0m\] "
+bind "\"\e[A\": history-search-backward"
+bind "\"\e[B\": history-search-forward"
+EOF
+
+# add entrypoint file to load customize env for the user
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["bash"]
