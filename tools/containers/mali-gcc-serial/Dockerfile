@@ -71,7 +71,7 @@ RUN cd $SOFTWARE_ROOT && \
     mkdir mali && cd mali && \
     git clone --filter=blob:none https://github.com/mali-dev/e3sm source && \
     git config --global url."https://github.com/".insteadOf git@github.com: && \
-    cd source && git submodule update --init --recursive
+    cd source/components/mpas-albany-landice/src && git submodule update --init SeaLevelModel
 
 ADD --chown=runner:fanssie --chmod=775 do-make-mali.sh $SOFTWARE_ROOT/mali/source/components/mpas-albany-landice
 
