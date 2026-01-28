@@ -131,7 +131,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   *MPAS_dt =  deltat;
 
-  Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->mesh_layers_ratio;
+  auto& layerThicknessRatio = meshStruct->layers_data.dz_ref;
 
   if(depthIntegratedModel)
     layerThicknessRatio[0] = 1.0;
