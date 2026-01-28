@@ -201,11 +201,10 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
   int lEdgeColumnShift = (Ordering == COLUMN) ? 1 : indexToEdgeID.size();
   int edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
-  this->global_cell_layers_data =
-      Teuchos::rcp(new LayeredMeshNumbering<GO>(globalTrianglesStride,numLayers,Ordering));
-  this->local_cell_layers_data =
-      Teuchos::rcp(new LayeredMeshNumbering<LO>(indexToTriangleID.size(),numLayers,Ordering));
-  this->mesh_layers_ratio.resize(numLayers,1.0/numLayers);
+  layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(globalTrianglesStride,numLayers,Ordering));
+  layers_data.cell.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(indexToTriangleID.size(),numLayers,Ordering));
+
+  layers_data.dz_ref.resize(numLayers,1.0/numLayers);
 
   metaData->commit();
 
