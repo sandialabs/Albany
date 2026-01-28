@@ -114,7 +114,15 @@ RUN /bin/bash -lc 'source /home/runner/miniforge/etc/profile.d/conda.sh && \
 # add the compass cfg file specific to the container
 ADD --chown=runner:fanssie --chmod=775 compass-container.cfg /home/runner
 
-# add entrypoint file to customize env for the user
+# update environment for user
+RUN cat >> /home/runner/.bashrc <<'EOF'
+export CLICOLOR=1
+export PS1="\[\e[32;1m\]\t \u@\h \[\e[0m\]\[\e[33;1m\]\w\[\e[0m\]\[\e[32;1m\]\$\[\e[0m\] "
+bind "\"\e[A\": history-search-backward"
+bind "\"\e[B\": history-search-forward"
+EOF
+
+# add entrypoint file to load customize env for the user
 COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["bash"]
