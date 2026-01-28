@@ -13,7 +13,7 @@ RUN cd $SOFTWARE_ROOT/albany/build && \
     ./do-cmake-albany.sh
 
 RUN cd $SOFTWARE_ROOT/albany/build && \
-    make -j16 install
+    make -j8 install
 
 ENV ALBANY_ROOT=${SOFTWARE_ROOT}/albany/install
 
@@ -58,7 +58,7 @@ RUN cd $SOFTWARE_ROOT/scorpio/build && \
     ./do-cmake-scorpio.sh
 
 RUN cd $SOFTWARE_ROOT/scorpio/build && \
-    make -j16 install
+    make -j8 install
 
 ENV SCORPIO_ROOT=${SOFTWARE_ROOT}/scorpio/install
 
