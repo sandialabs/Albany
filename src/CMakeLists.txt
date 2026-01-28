@@ -384,7 +384,6 @@ list (APPEND SOURCES
   evaluators/utility/PHAL_ComputeBasisFunctionsSide.cpp
   evaluators/utility/PHAL_ConvertFieldType.cpp
   evaluators/utility/PHAL_DummyResidual.cpp
-  evaluators/utility/PHAL_ElementBarycenter.cpp
   evaluators/utility/PHAL_FieldFrobeniusNorm.cpp
   evaluators/utility/PHAL_LinearCombinationParameter.cpp
   evaluators/utility/PHAL_LogGaussianDistributedParameter.cpp
@@ -487,8 +486,6 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_ConvertFieldType_Def.hpp
   evaluators/utility/PHAL_DummyResidual.hpp
   evaluators/utility/PHAL_DummyResidual_Def.hpp
-  evaluators/utility/PHAL_ElementBarycenter.hpp
-  evaluators/utility/PHAL_ElementBarycenter_Def.hpp
   evaluators/utility/PHAL_FieldFrobeniusNorm.hpp
   evaluators/utility/PHAL_FieldFrobeniusNorm_Def.hpp
   evaluators/utility/PHAL_LinearCombinationParameter.hpp
