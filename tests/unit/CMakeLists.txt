@@ -93,6 +93,11 @@ create_unit_test (NAME    HessianVecFad
                   SOURCES HessianVecFad.cpp
                   SERIAL_ONLY)
 
+# DebugStream unit tests
+create_unit_test (NAME    DebugStream
+                  PREFIX  ${dirName}
+                  SOURCES DebugStream.cpp)
+
 #####################################################################
 
 add_subdirectory(disc)
