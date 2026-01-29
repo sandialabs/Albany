@@ -48,9 +48,7 @@ namespace {
     Omega_h::parallel_for(perm.size(), OMEGA_H_LAMBDA(const LO &i) {
       reordered[perm[i]] = array[i];
     });
-    auto synced = mesh.sync_array<Omega_h::Real>(2, reordered, 1);
-    mesh.set_tag(2, "solution_grad_norm", synced);
-    return synced;
+    return mesh.sync_array<Omega_h::Real>(2, reordered, 1);
   }
 
   Omega_h::Reals recoverLinearStrain(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrain) {
