@@ -2,7 +2,6 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "OmegahGhost.hpp"
-#include "Albany_Utils.hpp" // getDebugStream
 
 namespace Albany {
 
@@ -132,9 +131,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
 
 void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& worksets_sizes)
 {
-  auto& stream = Albany::getDebugStream();
   // Elem states
-  stream << "## elm states\n";
   int num_ws = worksets_sizes.size();
   elemStateArrays.resize(worksets_sizes.size());
   for (const auto& st : elem_sis) {
@@ -146,7 +143,6 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
     for (int ws=0; ws<num_ws; ++ws) {
       int num_elems = worksets_sizes[ws];
-      stream << "ws: " << ws << " num_elems " << num_elems << "\n";
       switch (dim.size()) {
         case 1:
           elemStateArrays[ws][st->name].reset_from_dev_ptr(data,num_elems); break;
@@ -211,7 +207,6 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
       throw std::runtime_error("Error! Unsupported rank for global state '" + st->name + "'.\n");
     }
   }
-  stream.flush();
 }
 
 void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
