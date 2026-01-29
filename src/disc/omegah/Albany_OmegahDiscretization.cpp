@@ -39,8 +39,11 @@ namespace {
     auto array = mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
     TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
       "Error! solution_grad_norm array should have one component per element.\n");
-    //this array has jumbled values of the effective strain rate - apply a
-    //permutation to map it back to the array with owned and ghosted elements
+    //Phalanx fills this memory with values for the effective strain rate for
+    //**owned elements only**; inidices corresponding to ghosted/unowned
+    //elements are not included in the array.
+    //Thus, we need to apply a permutation to map the dense array without ghost
+    //elements back to the array with owned and ghosted elements.
     auto perm = OmegahGhost::getElemPermutationFromNonGhostedToGhosted(mesh);
     auto reordered = Omega_h::Write<Omega_h::Real>(array.size(), 0);
     Omega_h::parallel_for(perm.size(), OMEGA_H_LAMBDA(const LO &i) {
