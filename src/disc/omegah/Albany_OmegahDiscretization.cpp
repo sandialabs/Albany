@@ -654,6 +654,11 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
 
   if( writeVtk ) {
+    if (ohMesh->dim() == 1) {
+      // solution_grad_norm tag is not set for 1d problems
+      // avoid 'use of uninitialized values' valgrind error by setting the array to zero
+      ohMesh->set_tag(1, "solution_grad_norm", Omega_h::Read<Omega_h::Real>(ohMesh->nelems(), 0));
+    }
     const auto outname = std::string("before_adapt") + std::to_string(adaptCount);
     const std::string vtkFileName = outname + ".vtk";
     Omega_h::vtk::write_parallel(vtkFileName, &(*ohMesh), ohMesh->dim());
