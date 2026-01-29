@@ -10,7 +10,6 @@
 // Get Albany configuration macros
 #include "Albany_config.h"
 
-#include <fstream>
 #include <ostream>
 #include <sstream>
 
@@ -194,21 +193,6 @@ assert_fail(std::string const& msg) __attribute__((noreturn));
 //
 int
 getProcRank();
-
-//! Generate a filename with the current MPI rank appended
-//! Example: getDebugFileName("debug", ".txt") -> "debug_rank0.txt"
-std::string
-getDebugFileName(const std::string& prefix, const std::string& suffix = ".txt");
-
-//! Get a reference to a per-rank debug output file stream
-//! The file is created on first access and remains open for the process lifetime
-//! Example: getDebugStream("myDebug") -> opens "myDebug_rank0.txt"
-std::ofstream&
-getDebugStream(const std::string& prefix = "albany_debug");
-
-//! Flush all open debug streams (useful before MPI_Finalize)
-void
-flushDebugStreams();
 
 }  // end namespace Albany
 
