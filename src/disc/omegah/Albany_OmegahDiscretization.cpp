@@ -3,7 +3,6 @@
 #include "Albany_StringUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_KokkosTypes.hpp" // PHX::Device::
-#include "Albany_Utils.hpp" // getDebugStream
 
 #include "OmegahConnManager.hpp"
 #include "Omega_h_adapt.hpp"
@@ -251,7 +250,6 @@ computeNodeSets ()
   const auto& nsNames = getMeshStruct()->meshSpecs[0]->nsNames;
   using Omega_h::I32;
   using Omega_h::I8;
-  auto& stream = Albany::getDebugStream();
 
   auto& mesh = *m_mesh_struct->getOmegahMesh();
 
@@ -266,27 +264,13 @@ computeNodeSets ()
   auto numElms = OmegahGhost::getNumOwnedElms(mesh);
   assert(e2v.size() == numElms*nodes_per_elem);
 
-  stream << "## e2v\n";
-  stream << "e2v.size() " << e2v.size() << "\n";
-  for(int i=0; i<numElms; i++) {
-    stream << "elm " << i << ": ";
-    for(int j=0; j<nodes_per_elem; j++) {
-      stream << e2v[i*nodes_per_elem+j] << ", ";
-    }
-    stream << "\n";
-  }
-
   for (const auto& nsn : nsNames) {
-    stream << "## nsn: " << nsn << "\n";
     auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn));
     std::vector<int> owned_on_ns;
-    stream << "is_on_ns_host.size " << is_on_ns_host.size() << "\n";
-    stream << "<i, is_on_ns_host[i], isVtxInClosure, addedToVector>\n";
     for (int i=0; i<is_on_ns_host.size(); ++i) {
       //if the vertex has no owned elements upward adjactent to it then it is not
       //in the closure of an owned elm
       const auto isVtxInClosure = (v2e_a2ab[i+1] - v2e_a2ab[i] > 0);
-      stream << i << ", " << static_cast<bool>(is_on_ns_host[i]) << ", " << isVtxInClosure << ", " << (isVtxInClosure and is_on_ns_host[i]) << "\n";
       if (isVtxInClosure and is_on_ns_host[i]) {
         owned_on_ns.push_back(i);
       }
@@ -296,7 +280,6 @@ computeNodeSets ()
 
     ns_elem_pos.clear();
     ns_elem_pos.reserve(owned_on_ns.size());
-    stream << "<i, adjIdx, ielem, j, nodes_per_elem*ielem+j, e2v[nodes_per_elem*ielem+j], found\n";
     for (auto i : owned_on_ns) {
       bool found = false;
       for(int adjIdx=v2e_a2ab[i]; adjIdx<v2e_a2ab[i+1]; adjIdx++) {
@@ -305,19 +288,12 @@ computeNodeSets ()
         auto ielem = v2e_ab2b[adjIdx];
         auto elmOwnedLid = ownedElmLids[ielem];
         for (int j=0; j<nodes_per_elem; ++j) {
-          stream << i << ", " << adjIdx << ", " << elmOwnedLid << ", " << j << ", "
-                 << nodes_per_elem*elmOwnedLid+j << ", " << e2v[nodes_per_elem*elmOwnedLid+j] << ", "
-                 << (e2v[nodes_per_elem*elmOwnedLid+j]==i) << "\n";
           if (e2v[nodes_per_elem*elmOwnedLid+j]==i) {
             ns_elem_pos.push_back(std::make_pair(elmOwnedLid,j));
             found = true;
           }
         }
       }
-      if( !found ) {
-        stream << "element for vertex " << i << " was not found!\n";
-      }
-      stream.flush();
       TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error, //Hitting runtime error here when i=4
           "Something went wrong while locating a node in an element.\n"
           " - node set: " << nsn << "\n"
