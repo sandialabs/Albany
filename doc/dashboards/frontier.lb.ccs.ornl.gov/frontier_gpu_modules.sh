@@ -20,7 +20,7 @@ module load rocm/6.2.4
 # Frontier's boost module is not compatible with our modules.
 # A pre-built version of boost is available here for members of cli193,
 # otherwise, you need to supply boost header files yourself
-export BOOST_ROOT=/lustre/orion/cli193/proj-shared/automated_testing/boost_1_86_0
+export BOOST_ROOT=/ccs/proj/cli193/tpls/boost_1_86_0
 
 # Need this to avoid error when running seacas decomp
 export LD_LIBRARY_PATH=${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}

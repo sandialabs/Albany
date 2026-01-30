@@ -128,5 +128,6 @@ cmake \
   -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
 \
   -D gtest_INCLUDE_DIRS=/global/common/software/fanssie/googletest-1.17.0/include/gtest \
+  -D gtest_LIBRARY_DIRS=/global/common/software/fanssie/googletest-1.17.0/lib64 \
 \
 ../
