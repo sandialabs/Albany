@@ -51,6 +51,16 @@ namespace {
     return mesh.sync_array<Omega_h::Real>(2, reordered, 1);
   }
 
+  void addEffectiveStrainRateTag(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrainRate) {
+    const auto tagName = std::string("effectiveStrainRate");
+    auto synced = mesh.sync_array<Omega_h::Real>(2, effectiveStrainRate, 1);
+    if( mesh.has_tag(2, tagName) ) {
+      mesh.set_tag<Omega_h::Real>(2, tagName, synced);
+    } else {
+      mesh.add_tag<Omega_h::Real>(2, tagName, 1, synced);
+    }
+  }
+
   Omega_h::Reals recoverLinearStrain(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrain) {
     auto recoveredStrain = Omega_h::project_by_fit(&mesh, effectiveStrain);
     TEUCHOS_TEST_FOR_EXCEPTION (recoveredStrain.size() != mesh.nents(0), std::runtime_error,
@@ -552,6 +562,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
         false, Omega_h::ArrayType::VectorND);
 
     if( writeVtk ) {
+      addEffectiveStrainRateTag(*mesh, effectiveStrain);
       const auto outname = std::string("checkForAdaptation") + std::to_string(checkAdaptCount);
       const std::string vtkFileName = outname + ".vtk";
       Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
