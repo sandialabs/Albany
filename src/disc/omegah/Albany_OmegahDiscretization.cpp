@@ -302,7 +302,7 @@ computeNodeSets ()
           }
         }
       }
-      TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error, //Hitting runtime error here when i=4
+      TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
           "Something went wrong while locating a node in an element.\n"
           " - node set: " << nsn << "\n"
           " - node lid (osh): " << i << "\n");
