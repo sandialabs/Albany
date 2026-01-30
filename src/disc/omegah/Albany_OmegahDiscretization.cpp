@@ -39,7 +39,7 @@ namespace {
     TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
       "Error! solution_grad_norm array should have one component per element.\n");
     //Phalanx fills this memory with values for the effective strain rate for
-    //**owned elements only**; inidices corresponding to ghosted/unowned
+    //**owned elements only**; indices corresponding to ghosted/unowned
     //elements are not included in the array.
     //Thus, we need to apply a permutation to map the dense array without ghost
     //elements back to the array with owned and ghosted elements.
