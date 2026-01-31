@@ -1,11 +1,13 @@
 #include "Albany_OmegahGenericMesh.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_Omegah.hpp"
+#include "OmegahGhost.hpp"
 
 #include <Omega_h_for.hpp>        // for Omega_h::parallel_for
 #include <Omega_h_build.hpp>      // for Omega_h::build_box
 #include <Omega_h_file.hpp>       // for Omega_h::binary::read
 #include <Omega_h_mark.hpp>       // for Omega_h::mark_by_class
+#include <Omega_h_array_ops.hpp>  // for Omega_h::land_each
 
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ThyraUtils.hpp"
@@ -60,7 +62,8 @@ LO OmegahGenericMesh::get_num_local_nodes () const
   TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
       "Error! Cannot query number of local nodes until bulk data is set.\n");
 
-  return m_mesh->nverts();
+  const auto nverts = OmegahGhost::getNumEntsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT);
+  return nverts;
 }
 
 LO OmegahGenericMesh::get_num_local_elements () const
@@ -68,14 +71,14 @@ LO OmegahGenericMesh::get_num_local_elements () const
   TEUCHOS_TEST_FOR_EXCEPTION (not isBulkDataSet(), std::runtime_error,
       "Error! Cannot query number of local elements until bulk data is set.\n");
 
-  return m_mesh->nelems();
+  const auto nelems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  return nelems;
 }
 
 GO OmegahGenericMesh::get_max_node_gid () const
 {
   if (m_max_node_gid==-1) {
-    auto globals_d = m_mesh->globals(0);
-    Omega_h::HostRead<Omega_h::GO> global_h(globals_d);
+    auto global_h = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT));
     for (int i=0; i<global_h.size(); ++i) {
       m_max_node_gid = std::max(m_max_node_gid,GO(global_h[i]));
     }
@@ -89,8 +92,7 @@ GO OmegahGenericMesh::get_max_node_gid () const
 GO OmegahGenericMesh::get_max_elem_gid () const
 {
   if (m_max_elem_gid==-1) {
-    auto globals_d = m_mesh->globals(m_mesh->dim());
-    Omega_h::HostRead<Omega_h::GO> global_h(globals_d);
+    auto global_h = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(*m_mesh, m_mesh->dim()));
     for (int i=0; i<global_h.size(); ++i) {
       m_max_elem_gid = std::max(m_max_elem_gid,GO(global_h[i]));
     }
@@ -167,7 +169,6 @@ mark_part_entities (const std::string& name,
       "[OmegahGenericMesh::mark_part_entities] Error! Cannot mark downward if the part dimension is 0.\n"
       "  - part name: " << name << "\n"
       "  - part dim : " << dim << "\n")
-    Omega_h::Write<Omega_h::I8> downMarked;
 
     // NOTE: In the following, we keep converting Topo_type to its integer dim. That's because
     //       Omega_h::Mesh seems to store a valid nent(dim) count, but uninited nent(topo) count.
@@ -190,7 +191,9 @@ mark_part_entities (const std::string& name,
           for (int j=0; j<deg; ++j) {
             // Note: this has a race condition, but it doesn't matter,
             //       since all threads would write 1
-            downMarked[adj.ab2b[i*deg + j]] = 1;
+            downMarked[adj.ab2b[i*deg + j]] = 1; // I don't think this needs to consider
+                                                 // ownership as it wasn't doing
+                                                 // so with ghosting off
           }
         }
       };
@@ -217,9 +220,7 @@ loadOmegahMesh ()
   // omegah error estimation and adaptation requires ghosts
   m_mesh.get()->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
 
-  m_coords_d = m_mesh->coords().view();
-  m_coords_h = Kokkos::create_mirror_view(m_coords_d);
-  Kokkos::deep_copy(m_coords_h,m_coords_d);
+  setCoordinates();
 
   // Node/Side sets names
   std::vector<std::string> nsNames, ssNames;
@@ -244,7 +245,10 @@ loadOmegahMesh ()
     const int id  = pl.get<int>("Id");
     const bool markDownward = pl.get<int>("Mark Downward",true); // Is default=true ok?
     auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
-    this->declare_part(pn,topo,is_in_part,markDownward);
+    //ghosted entities cannot be owned so we don't need to check the closure of owned elements
+    auto owned = m_mesh->owned(dim); 
+    auto is_in_part_and_owned = Omega_h::land_each(is_in_part, owned);
+    this->declare_part(pn,topo,is_in_part_and_owned,markDownward);
 
     if (dim==0) {
       nsNames.push_back(pn);
@@ -401,8 +405,9 @@ OmegahGenericMesh::createNodeSets()
 
     for (auto ent : gm_ents) {
       auto id_tag = Omega_h::mark_by_class(m_mesh.get(),0,ent.dim,ent.id);
+      auto owned = m_mesh->owned(0);
 
-      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or id_tag[i]); };
+      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or (id_tag[i] and owned[i])); };
       Omega_h::parallel_for(tag.size(),f);
     }
 #ifdef DEBUG_OUTPUT
@@ -443,8 +448,9 @@ OmegahGenericMesh::createSideSets()
 
     for (auto ent : gm_ents) {
       auto id_tag = Omega_h::mark_by_class(m_mesh.get(),sideDim,ent.dim,ent.id);
+      auto owned = m_mesh->owned(sideDim);
 
-      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or id_tag[i]); };
+      auto f = OMEGA_H_LAMBDA(LO i) { tag[i] = (tag[i] or (id_tag[i] and owned[i])); };
       Omega_h::parallel_for(tag.size(),f);
     }
 #ifdef DEBUG_OUTPUT
@@ -457,7 +463,8 @@ OmegahGenericMesh::createSideSets()
 }
 
 void OmegahGenericMesh::setCoordinates() {
-  m_coords_d = m_mesh->coords().view();
+  auto ownedCoords_d = OmegahGhost::getVtxCoordsInClosureOfOwnedElms(*m_mesh);
+  m_coords_d = ownedCoords_d.view();
   m_coords_h = Kokkos::create_mirror_view(m_coords_d);
   Kokkos::deep_copy(m_coords_h,m_coords_d);
 }
@@ -525,46 +532,64 @@ buildBox (const int dim)
   }
   // omegah error estimation and adaptation requires ghosts
   m_mesh.get()->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
-
 #ifdef DEBUG_OUTPUT
   // This chunk prints ALL mesh entities, along with their geometric classification and centroids
-  int mdim = m_mesh->dim();
+  std::stringstream ss;
+  const int mdim = m_mesh->dim();
+  if(m_mesh()->comm()->rank() == 0) {
+    ss << "## global mesh debug info ##\n";
+  }
+  for (int idim=0; idim<=mdim; ++idim) {
+    auto n = m_mesh()->nglobal_ents(idim);
+    if(m_mesh()->comm()->rank() == 0) {
+      ss << "nglobal_ents(" << idim << ") " << n << "\n";
+    }
+  }
+  ss << "## rank " << m_mesh()->comm()->rank() << " mesh debug info ##\n";
   auto coords = m_mesh->coords();
   Omega_h::Reals centroids;
   Omega_h::TagSet tags;
   Omega_h::get_all_dim_tags(m_mesh.get(),0,&tags);
   for (int idim=0; idim<=mdim; ++idim) {
-    std::cout << "DIM=" << idim << "\n";
+    ss << "DIM=" << idim << "\n";
     for (auto n : tags[idim]) {
       auto tag = m_mesh->get_tagbase(idim,n);
       auto ids = tag->class_ids();
-      std::cout << "tag=" << n << ", ids:";
+      ss << "tag=" << n << ", ids:";
       for (int i=0;i<ids.size(); ++i) {
-        std::cout << " " << ids[i];
-      } std::cout << "\n";
+        ss << " " << ids[i];
+      } ss << "\n";
     }
+    auto owned_h = hostRead(m_mesh->owned(idim));
     auto class_id = m_mesh->get_tag<Omega_h::ClassId>(idim,"class_id");
     auto class_dim = m_mesh->get_tag<Omega_h::Byte>(idim,"class_dim");
     auto gids = m_mesh->globals(idim);
-    std::cout << "  gids size: " << gids.size() << "\n";
-    std::cout << "  class_id size: " << class_id->array().size() << "\n";
-    std::cout << "  class_dim size: " << class_dim->array().size() << "\n";
+    ss << "  gids size: " << gids.size() << "\n";
+    ss << "  class_id size: " << class_id->array().size() << "\n";
+    ss << "  class_dim size: " << class_dim->array().size() << "\n";
+    ss << "  owned size: " << owned_h.size() << "\n";
     for (int i=0; i<gids.size(); ++i) {
-      std::cout << "i=" << i
+      ss << "i=" << i
                 << ", gid=" << gids[i]
                 << ", class_id=" << class_id->array()[i]
-                << ", class_dim=" << static_cast<int>(class_dim->array()[i]);
+                << ", class_dim=" << static_cast<int>(class_dim->array()[i])
+                << ", owned= " << static_cast<int>(owned_h[i]);
       if (idim==0) {
         centroids = coords;
       } else {
         centroids = Omega_h::average_field(m_mesh.get(), idim, Omega_h::LOs(m_mesh->nents(idim), 0, 1),mdim,coords);
       }
-      std::cout << ", centroids=[" << centroids[mdim*i];
+      ss << ", centroids=[" << centroids[mdim*i];
       for (int k=1; k<mdim; ++k) {
-        std::cout << " " << centroids[mdim*i+k];
+        ss << " " << centroids[mdim*i+k];
       }
-      std::cout << "]\n";
+      ss << "]\n";
     }
+  }
+  for(int rank=0; rank<m_mesh->comm()->size(); rank++) {
+    if(rank==m_mesh()->comm()->rank())
+      std::cerr << ss.str();
+    m_mesh->comm()->barrier();
   }
 #endif
   setCoordinates();

@@ -106,6 +106,16 @@ Omega_h::Read<Omega_h::I8> markDownward(Omega_h::Mesh& mesh, Omega_h::Read<Omega
   return downMarked;
 }
 
+Omega_h::LO getNumOwnedEnts(Omega_h::Mesh& mesh, int dim) {
+  REQUIRE(dim>=0 && dim <=3);
+  auto owned = mesh.owned(dim);
+  return Omega_h::get_sum(owned);
+}
+
+Omega_h::LO getNumOwnedElms(Omega_h::Mesh& mesh) {
+  auto dim = mesh.dim();
+  return getNumOwnedEnts(mesh,dim);
+}
 
 void checkOwnership(Omega_h::Mesh& mesh, const Albany::OmegahConnManager& connMgr) {
   const auto localElmIds = connMgr.getElementBlock();
@@ -159,6 +169,10 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager1D_buildConnectivity)
   conn_mgr->buildConnectivity(patternC1);
   REQUIRE(2 == conn_mgr->getConnectivitySize(0)); //all elements return the same size
   const auto localElmIds = conn_mgr->getElementBlock();
+  const auto ohMesh = mesh->getOmegahMesh();
+  if( ohMesh->comm()->size() == 4 && ohMesh->nelems() > 0 ) {
+    REQUIRE(localElmIds.size() == 1);
+  }
   for( auto lid : localElmIds ) {
     auto ptr = conn_mgr->getConnectivity(lid);
     auto elmGid = conn_mgr->getElementGlobalId(lid);
@@ -201,6 +215,8 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getElemsInBlock)
   auto elmGids = conn_mgr->getElementsInBlock();
   int elmGidsSize = elmGids.size(); 
   REQUIRE(elmGidsSize == conn_mgr->getOwnedElementCount());
+  auto numOwnedElms = getNumOwnedElms(*mesh->getOmegahMesh());
+  REQUIRE(numOwnedElms == conn_mgr->getOwnedElementCount());
   out << "Testing OmegahConnManager::getElementsInBlock()\n";
   success = true;
 }

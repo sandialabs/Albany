@@ -324,6 +324,7 @@ if (ENABLE_OMEGAH)
     disc/omegah/Albany_OmegahDiscretization.cpp
     disc/omegah/Albany_OmegahMeshFieldAccessor.cpp
     disc/omegah/OmegahConnManager.cpp
+    disc/omegah/OmegahGhost.cpp
   )
   list (APPEND HEADERS
     disc/omegah/Albany_Omegah.hpp
@@ -333,6 +334,7 @@ if (ENABLE_OMEGAH)
     disc/omegah/Albany_OmegahUtils.hpp
     disc/omegah/OmegahConnManager.hpp
     disc/omegah/OmegahPermutation.hpp
+    disc/omegah/OmegahGhost.hpp
   )
 endif()
 

@@ -10,6 +10,9 @@
 #include "Omega_h_array_ops.hpp"
 #include <Omega_h_file.hpp>   // for Omega_h::binary::write
 #include "Omega_h_recover.hpp" //project_by_fit
+#include "OmegahGhost.hpp" //ghosted mesh helper functions
+#include "Omega_h_element.hpp" //simplex_degree, hypercube_degree
+#include "Omega_h_for.hpp" //parallel_for
 
 #ifdef ALBANY_MESHFIELDS
 #include <KokkosController.hpp>
@@ -32,11 +35,37 @@ namespace {
   }
 
   Omega_h::Reals getEffectiveStrainRate(Omega_h::Mesh &mesh) {
-    return mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
+    auto array = mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
+    TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
+      "Error! solution_grad_norm array should have one component per element.\n");
+    //Phalanx fills this memory with values for the effective strain rate for
+    //**owned elements only**; indices corresponding to ghosted/unowned
+    //elements are not included in the array.
+    //Thus, we need to apply a permutation to map the dense array without ghost
+    //elements back to the array with owned and ghosted elements.
+    auto perm = OmegahGhost::getElemPermutationFromNonGhostedToGhosted(mesh);
+    auto reordered = Omega_h::Write<Omega_h::Real>(array.size(), 0);
+    Omega_h::parallel_for(perm.size(), OMEGA_H_LAMBDA(const LO &i) {
+      reordered[perm[i]] = array[i];
+    });
+    return mesh.sync_array<Omega_h::Real>(2, reordered, 1);
+  }
+
+  void addEffectiveStrainRateTag(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrainRate) {
+    const auto tagName = std::string("effectiveStrainRate");
+    auto synced = mesh.sync_array<Omega_h::Real>(2, effectiveStrainRate, 1);
+    if( mesh.has_tag(2, tagName) ) {
+      mesh.set_tag<Omega_h::Real>(2, tagName, synced);
+    } else {
+      mesh.add_tag<Omega_h::Real>(2, tagName, 1, synced);
+    }
   }
 
   Omega_h::Reals recoverLinearStrain(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrain) {
-    return Omega_h::project_by_fit(&mesh, effectiveStrain);
+    auto recoveredStrain = Omega_h::project_by_fit(&mesh, effectiveStrain);
+    TEUCHOS_TEST_FOR_EXCEPTION (recoveredStrain.size() != mesh.nents(0), std::runtime_error,
+      "Error! the recovered strain array should have one component per mesh vertex.\n");
+    return mesh.sync_array(Omega_h::VERT, recoveredStrain, 1);
   }
 
   #ifdef ALBANY_MESHFIELDS
@@ -117,6 +146,8 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
  , m_side_set_equations(sideSetEquations)
 {
   m_num_time_deriv = m_disc_params->get("Number Of Time Derivatives",0);
+  vtkOutFile = discParams->get<std::string>("VTK Output File Name", "");
+  vtkOutputInterval = discParams->get<int>("VTK Write Interval", 1);
 
   if (neq>0) {
     setNumEq(neq);
@@ -126,8 +157,6 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
 void OmegahDiscretization::
 updateMesh ()
 {
-  printf ("TODO: change name to the method?\n");
-
   // Make sure we don't reuse old dof mgrs (if adapting)
   m_key_to_dof_mgr.clear();
 
@@ -142,15 +171,20 @@ updateMesh ()
   // Compute workset information
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
-  int nelems = mesh.nelems();
+  int nelems = OmegahGhost::getNumOwnedElms(mesh);
+  int num_ws = 0;
   int ws_size = ms->worksetSize;
-  int num_ws = 1 + (nelems-1) / ws_size;
+  if(nelems > 0) {
+    num_ws = 1 + (nelems-1) / ws_size;
 
-  m_workset_sizes.resize(num_ws);
-  int min_ws_size = nelems / num_ws;
-  int remainder = nelems % num_ws;
-  for (int ws=0;ws<num_ws; ++ws) {
-    m_workset_sizes[ws] = min_ws_size + (ws<remainder ? 1 : 0);
+    m_workset_sizes.resize(num_ws);
+    int min_ws_size = nelems / num_ws;
+    int remainder = nelems % num_ws;
+    for (int ws=0;ws<num_ws; ++ws) {
+      m_workset_sizes[ws] = min_ws_size + (ws<remainder ? 1 : 0);
+    }
+  } else { //no elements on this process
+    m_workset_sizes.resize(num_ws);
   }
 
   m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
@@ -171,10 +205,11 @@ updateMesh ()
 
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
-  auto node_gids = hostRead(mesh.globals(0));
+  auto node_gids = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
-  m_node_lid_to_omegah_pos.resize(mesh.nverts());
-  for (int i=0; i<mesh.nverts(); ++i) {
+  auto nverts = node_gids.size();
+  m_node_lid_to_omegah_pos.resize(nverts);
+  for (int i=0; i<nverts; ++i) {
     auto gid = node_gids[i];
     auto lid = node_indexer->getLocalElement(gid);
     m_node_lid_to_omegah_pos[lid] = i;
@@ -212,6 +247,9 @@ updateMesh ()
 
   computeNodeSets ();
   computeGraphs ();
+
+  //reset output interval
+  outputInterval = 0;
 }
 
 void OmegahDiscretization::
@@ -223,19 +261,25 @@ computeNodeSets ()
 
   auto& mesh = *m_mesh_struct->getOmegahMesh();
 
-  auto v2e = mesh.ask_up(0,mesh.dim());
+  auto ownedElmLids = hostRead(OmegahGhost::getEntLidsInClosureOfOwnedElms(mesh, mesh.dim()));
+  auto v2e = OmegahGhost::getUpAdjacentEntsInClosureOfOwnedElms(mesh, Omega_h::VERT);
   auto v2e_a2ab = hostRead(v2e.a2ab);
   auto v2e_ab2b = hostRead(v2e.ab2b);
 
-  auto e2v = hostRead(mesh.ask_elem_verts());
-  int nodes_per_elem = e2v.size() / mesh.nelems();
+  auto e2v = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, Omega_h::VERT));
+  assert(mesh.family() == OMEGA_H_SIMPLEX);
+  const auto nodes_per_elem = Omega_h::simplex_degree(mesh.dim(),Omega_h::VERT);
+  auto numElms = OmegahGhost::getNumOwnedElms(mesh);
+  assert(e2v.size() == numElms*nodes_per_elem);
 
-  auto owned_host = hostRead(mesh.owned(0));
   for (const auto& nsn : nsNames) {
     auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn));
     std::vector<int> owned_on_ns;
     for (int i=0; i<is_on_ns_host.size(); ++i) {
-      if (owned_host[i] and is_on_ns_host[i]) {
+      //if the vertex has no owned elements upward adjactent to it then it is not
+      //in the closure of an owned elm
+      const auto isVtxInClosure = (v2e_a2ab[i+1] - v2e_a2ab[i] > 0);
+      if (isVtxInClosure and is_on_ns_host[i]) {
         owned_on_ns.push_back(i);
       }
     }
@@ -245,23 +289,23 @@ computeNodeSets ()
     ns_elem_pos.clear();
     ns_elem_pos.reserve(owned_on_ns.size());
     for (auto i : owned_on_ns) {
-      // FIXME! This is only looking at the FIRST elem that node=i is part of.
-      //        we need to LOOP over all elems that have node=i
-      auto node_adj_start = v2e_a2ab[i];
-      auto ielem = v2e_ab2b[node_adj_start];
-
       bool found = false;
-      for (int j=0; j<nodes_per_elem; ++j) {
-        if (e2v[nodes_per_elem*ielem+j]==i) {
-          ns_elem_pos.push_back(std::make_pair(ielem,j));
-          found = true;
+      for(int adjIdx=v2e_a2ab[i]; adjIdx<v2e_a2ab[i+1]; adjIdx++) {
+        //the ielem element index from v2e is from the ghosted mesh
+        //and the indexing into e2v uses the unghosted element indexing (dense/compressed)
+        auto ielem = v2e_ab2b[adjIdx];
+        auto elmOwnedLid = ownedElmLids[ielem];
+        for (int j=0; j<nodes_per_elem; ++j) {
+          if (e2v[nodes_per_elem*elmOwnedLid+j]==i) {
+            ns_elem_pos.push_back(std::make_pair(elmOwnedLid,j));
+            found = true;
+          }
         }
       }
       TEUCHOS_TEST_FOR_EXCEPTION (not found, std::runtime_error,
           "Something went wrong while locating a node in an element.\n"
           " - node set: " << nsn << "\n"
-          " - node lid (osh): " << i << "\n"
-          " - ielem: " << ielem << "\n");
+          " - node lid (osh): " << i << "\n");
     }
   }
 }
@@ -436,6 +480,8 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
                     const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
                     const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
+  static int checkAdaptCount = 0;
+  checkAdaptCount++;
   auto adapt_data = Teuchos::rcp(new AdaptationData());
   auto mesh = m_mesh_struct->getOmegahMesh();
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
@@ -443,6 +489,9 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   if (adapt_type=="None") {
     return adapt_data;
   }
+  const auto verbose = adapt_params.get<bool>("Verbose",false);
+  const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
+
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
 
@@ -472,6 +521,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     adapt_data->x_dot = solution_dot;
     adapt_data->x_dotdot = solution_dotdot;
     adapt_data->dxdp = dxdp;
+    int shouldAdapt = 0;
     for (int i=1; i<num_nodes-1; ++i) {
       auto h_prev = m_nodes_coordinates[i] - m_nodes_coordinates[i-1];
       auto h_next = m_nodes_coordinates[i+1] - m_nodes_coordinates[i];
@@ -479,9 +529,14 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       auto grad_prev = (data[i]-data[i-1]) / h_prev;
       auto grad_next = (data[i+1]-data[i]) / h_next;
       if (std::fabs(hess)>tol and grad_prev*grad_next<0) {
-        adapt_data->type = AdaptationType::Topology;
+        shouldAdapt = 1;
         break;
       }
+    }
+    //all ranks needs to enter adapt if any need adaptation
+    auto shouldAdapt_global = mesh->comm()->allreduce(shouldAdapt, OMEGA_H_MAX);
+    if(shouldAdapt_global) {
+      adapt_data->type = AdaptationType::Topology;
     }
     return adapt_data;
   } else if (mesh->dim() == 2) {
@@ -497,11 +552,25 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
         "Error! Adaptation type '" << adapt_type << "' not supported.\n"
         " - valid choices for 2D: None, SPR\n");
 
+    TEUCHOS_TEST_FOR_EXCEPTION (mesh->nents(2)==0, std::runtime_error,
+        "Error! At least one process has no mesh elements.\n");
+
     #ifdef ALBANY_MESHFIELDS
     auto effectiveStrain = getEffectiveStrainRate(*mesh);
     auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
     mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
         false, Omega_h::ArrayType::VectorND);
+
+    if( writeVtk ) {
+      addEffectiveStrainRateTag(*mesh, effectiveStrain);
+      const auto outname = std::string("checkForAdaptation") + std::to_string(checkAdaptCount);
+      const std::string vtkFileName = outname + ".vtk";
+      Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
+      if (mesh->dim() == 2) {
+        const std::string vtkFileName_edges = outname + "_edges.vtk";
+        Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), Omega_h::EDGE);
+      }
+    }
 
     const auto MeshDim = 2;
     const auto ShapeOrder = 1;
@@ -573,6 +642,11 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
 
   if( writeVtk ) {
+    if (ohMesh->dim() == 1) {
+      // solution_grad_norm tag is not set for 1d problems
+      // avoid 'use of uninitialized values' valgrind error by setting the array to zero
+      ohMesh->set_tag(1, "solution_grad_norm", Omega_h::Read<Omega_h::Real>(ohMesh->nelems(), 0));
+    }
     const auto outname = std::string("before_adapt") + std::to_string(adaptCount);
     const std::string vtkFileName = outname + ".vtk";
     Omega_h::vtk::write_parallel(vtkFileName, &(*ohMesh), ohMesh->dim());
@@ -594,7 +668,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
     while (double(nelems) < desired_nelems) {
       if (!ohMesh->has_tag(0, "metric")) {
-        if(verbose) std::cout << "mesh had no metric, adding implied and adapting to it\n";
+        if(verbose && !ohMesh->comm()->rank()) {
+          std::cout << "mesh had no metric, adding implied and adapting to it\n";
+        }
         Omega_h::add_implied_metric_tag(ohMesh.get());
         Omega_h::adapt(ohMesh.get(), opts);
         nelems = ohMesh->nglobal_ents(ohMesh->dim());
@@ -604,10 +680,14 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       auto const metric_ncomps =
         Omega_h::divide_no_remainder(metrics.size(), ohMesh->nverts());
       ohMesh->add_tag(0, "metric", metric_ncomps, metrics);
-      if(verbose) std::cout << "adapting to scaled metric\n";
+      if(verbose && !ohMesh->comm()->rank()) {
+        std::cout << "adapting to scaled metric\n";
+      }
       Omega_h::adapt(ohMesh.get(), opts);
       nelems = ohMesh->nglobal_ents(ohMesh->dim());
-      if(verbose) std::cout << "mesh now has " << nelems << " total elements\n";
+      if(verbose && !ohMesh->comm()->rank()) {
+        std::cout << "mesh now has " << nelems << " total elements\n";
+      }
     }
   } else if (ohMesh->dim() == 2 && isMeshfieldsEnabled()) {
 
@@ -715,11 +795,36 @@ writeSolutionMVToMeshDatabase (const Thyra_MultiVector& solution,
 
 //! Write the solution to file. Must call writeSolution first.
 void OmegahDiscretization::
-writeMeshDatabaseToFile (const double /* time */,
+writeMeshDatabaseToFile (const double time,
                          const bool   force_write_solution)
 {
-  std::cout << "WARNING OmegahDiscretization::writeMeshDatabaseToFile not yet implemented\n";
-  // throw NotYetImplemented("OmegahDiscretization::writeMeshDatabaseToFile");
+#ifdef ALBANY_DISABLE_OUTPUT_MESH
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "[OmegahDiscretization::writeMeshDatabaseToFile] ALBANY_DISABLE_OUTPUT_MESH=TRUE. Skip.\n";
+  (void) time;
+  (void) force_write_solution;
+#else
+  if ( vtkOutFile.empty() ) {
+    return;
+  }
+  TEUCHOS_FUNC_TIME_MONITOR("Albany: write solution to file");
+  if ( (outputInterval % vtkOutputInterval == 0 or force_write_solution)) {
+    auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+    const auto outname = vtkOutFile + "_t" + std::to_string(time);
+    const std::string vtkFileName = outname + ".vtk";
+    if (m_comm->getRank() == 0) {
+      *out << "OmegahDiscretization::writeMeshDatabaseToFile: writing time " << time;
+      *out << " to file " << vtkFileName << std::endl;
+    }
+    const auto mesh = m_mesh_struct->getOmegahMesh();
+    Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
+    if (mesh->dim() == 2) {
+      const std::string vtkFileName_edges = outname + "_edges.vtk";
+      Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), Omega_h::EDGE);
+    }
+  }
+  outputInterval++;
+#endif
 }
 
 }  // namespace Albany

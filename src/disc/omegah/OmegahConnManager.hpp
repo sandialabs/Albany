@@ -33,6 +33,7 @@ private:
   std::array<LO,4> m_dofsPerEnt;
   std::array<Omega_h::GOs,4> m_globalDofNumbering;
   Omega_h::HostRead<Omega_h::GO> m_connectivity;
+  Omega_h::HostRead<Omega_h::GO> m_elmGids;
 
   LO getPartConnectivitySize() const;
   std::array<Omega_h::GOs,4> createGlobalDofNumbering() const;
@@ -42,6 +43,8 @@ private:
     Omega_h::Read<Omega_h::I8> maskArray[4],
     const Omega_h::Adj elmToDim[3]) const;
   std::vector<Ownership> buildConnectivityOwnership() const;
+  Omega_h::HostRead<Omega_h::GO> getOwnedElementGids() const;
+  std::vector<LO> getLocalElmIds(const std::string& part_name) const;
 public:
   //Passing the connectivity array from Omegah to Albany in
   // getConnectivity(LO localElmtId) requires matching global
@@ -90,10 +93,7 @@ public:
     *
     * \returns global id of mesh element
     */
-  GO getElementGlobalId(LO localElmtId) const {
-    auto gids = mesh->globals(mesh->dim());
-    return gids.get(localElmtId);
-  }
+  GO getElementGlobalId(LO localElmtId) const;
 
   /** Get ID connectivity for a particular element
     * \details the static assertion at the top of the class
@@ -199,9 +199,7 @@ public:
     return localElmIds;
   }
 
-  int getOwnedElementCount() const {
-    return mesh->nelems();
-  }
+  int getOwnedElementCount() const;
 
   int getConnectivityStart (const LO localElmtId) const override;
   std::vector<int> getConnectivityMask (const std::string& sub_part_name) const override;

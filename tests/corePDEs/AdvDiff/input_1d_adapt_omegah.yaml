@@ -31,13 +31,15 @@ ANONYMOUS:
         Type: Scalar Response
         Name: Solution Average
   Discretization:
-    Number of Elements: [10]
+    Number of Elements: [6]
     Method: Omegah
     Mesh Creation Method: Box1D
     Mesh Adaptivity:
       Type: Minimally-Oscillatory
       Max Hessian: 10.0
       Refining Factor: 2
+      Write VTK Files: true # write VTK files before and after adaptation
+      Verbose: true # write additional mesh adaptation info to stdout
   Piro:
     Tempus:
       Integrator Name: Tempus Integrator
@@ -127,6 +129,6 @@ ANONYMOUS:
     Test Value: 0.0
     Relative Tolerance: 1.0e-04
   Regression For Response 2:
-    Test Value: 7.142857096097e-02
+    Test Value: 6.799999914596e-02
     Relative Tolerance: 1.0e-04
 ...
