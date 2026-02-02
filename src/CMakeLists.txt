@@ -625,11 +625,7 @@ if (ENABLE_MPAS_INTERFACE)
   add_subdirectory (${CMAKE_SOURCE_DIR}/cmake/dummy
                     ${CMAKE_BINARY_DIR}/dummy)
 
-  if (CMAKE_GENERATOR STREQUAL "Ninja")
-    set (WORK_DIR ${CMAKE_BINARY_DIR})
-  elseif(CMAKE_GENERATOR STREQUAL "Unix Makefiles")
-    set (WORK_DIR ${CMAKE_BINARY_DIR}/dummy)
-  endif()
+  set (WORK_DIR ${CMAKE_BINARY_DIR})
 
   add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/export_albany.in
                       COMMAND ${CMAKE_SOURCE_DIR}/cmake/CreateExportAlbany
@@ -645,5 +641,5 @@ if (ENABLE_MPAS_INTERFACE)
 
   # Install the file
   install (FILES ${CMAKE_BINARY_DIR}/export_albany.in
-           DESTINATION ${CMAKE_INSTALL_PREFIX})
+           DESTINATION "./")
 endif()

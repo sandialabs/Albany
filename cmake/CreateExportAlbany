@@ -59,8 +59,10 @@ def run (bin_dir,install_lib_dir, cmake_generator):
 
     if cmake_generator=="Unix Makefiles":
         items = get_link_line_make (bin_dir)
+        os.chdir(bin_dir / "dummy")
     elif cmake_generator=="Ninja":
         items = get_link_line_ninja (bin_dir)
+        os.chdir(bin_dir)
     else:
         print(f"ERROR! Unknown/unsupported cmake generator '{cmake_generator}'")
         raise RuntimeError
