@@ -1,4 +1,4 @@
-30 00 * * 1,3,5 hostname -f | mail -s "cronjob OK" maxcarl@sandia.gov 
-00 01 * * 1,3,5 . /etc/bash.bashrc.local; export LMOD_MODULERCFILE=/sw/frontier/lmod/etc/rc.lua; cd /lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm; source /lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm/install_and_test.sh 
-00 05 * * 1,3,5 . /etc/bash.bashrc.local; export LMOD_MODULERCFILE=/sw/frontier/lmod/etc/rc.lua; cd /lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm; source /lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm/post_install.sh
+30 00 * * * hostname -f | mail -s "cronjob OK" jwatkin@sandia.gov 
+00 01 * * * . /etc/bash.bashrc.local; export LMOD_MODULERCFILE=/sw/frontier/lmod/etc/rc.lua; cd /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier; source /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier/install_and_test.sh 
+00 05 * * * . /etc/bash.bashrc.local; export LMOD_MODULERCFILE=/sw/frontier/lmod/etc/rc.lua; cd /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier; source /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier/post_install.sh
 

@@ -3,7 +3,7 @@
 FAD_CONFIGURATION=${1}
 FAD_SIZE=${2}
 
-BASE_DIR=/lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm
+BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
 
 if [ "$FAD_CONFIGURATION" = "slfad" ] ; then
   FRAG_NAME="${BASE_DIR}/cdash-albany-frag-slfad.txt"

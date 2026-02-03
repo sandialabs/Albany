@@ -3,7 +3,7 @@
 FAD_CONFIGURATION=${1}
 FAD_SIZE=${2}
 
-BASE_DIR=/lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm
+BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
 
 if [ "$FAD_CONFIGURATION" = "slfad" ] ; then
   sed -e "/CDASH-ALBANY-FILE.TXT/r ${BASE_DIR}/cdash-albany-frag-slfad.txt" -e "/CDASH-ALBANY-FILE.TXT/d" "${BASE_DIR}/ctest_nightly_albany_tmp.cmake" >& ${BASE_DIR}/ctest_nightly_albany_slfad.cmake

@@ -1,4 +1,4 @@
-BASE_DIR=/lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm
+BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
 DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
 
 # Build SCORPIO

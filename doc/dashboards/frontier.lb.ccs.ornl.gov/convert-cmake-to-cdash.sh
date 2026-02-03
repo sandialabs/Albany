@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_DIR=/lustre/orion/cli193/scratch/mcarlson/testingCDashFrontier-rocm
+BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
 
 awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-frontier-trilinos >& ${BASE_DIR}/cdash-frag.txt
 sed -i "s/\"/'/g" ${BASE_DIR}/cdash-frag.txt
