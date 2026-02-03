@@ -1,5 +1,5 @@
 BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
-DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
+DEPLOY_DIR=/ccs/proj/cli193/automated_testing/rocm
 
 # Build SCORPIO
 bash ${BASE_DIR}/do-cmake-scorpio-gcc-release

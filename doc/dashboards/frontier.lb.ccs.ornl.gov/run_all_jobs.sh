@@ -1,22 +1,29 @@
 BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
-DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
+DEPLOY_DIR=/ccs/proj/cli193/automated_testing/rocm
+
+# Update Trilinos repo to get most recent changes
+cd ${BASE_DIR}/repos/Trilinos
+git pull
 
 # Update albany repo to get most recent changes
 cd ${BASE_DIR}/repos/Albany
 git pull
-cd ${BASE_DIR}
+
+# Update E3SM repo to get most recent changes
+cd ${BASE_DIR}/repos/E3SM
+git pull
+git submodule sync --recursive && git submodule update --init --recursive
 
 # Update ali-perf-test repo to get most recent changes
 cd ${BASE_DIR}/repos/ali-perf-tests
 git pull
-cd ${BASE_DIR}
 
 # Update ali-perf-data repo to get most recent changes
 cd ${BASE_DIR}/repos/ali-perf-data
 git pull
-cd ${BASE_DIR}
 
 # load modules
+cd ${BASE_DIR}
 source ${BASE_DIR}/frontier_gpu_modules.sh >& ${BASE_DIR}/modules_albany.out
 
 # build trilinos and albany

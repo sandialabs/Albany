@@ -40,8 +40,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "/lustre/orion/cli193/proj-shared/automated_testing/rocm/builds/TrilinosInstall")
-set (ALBANY_INSTALL "/lustre/orion/cli193/proj-shared/automated_testing/rocm/builds/AlbanyInstall")
+set (TRILINOS_INSTALL "/ccs/proj/cli193/automated_testing/rocm/builds/TrilinosInstall")
+set (ALBANY_INSTALL "/ccs/proj/cli193/automated_testing/rocm/builds/AlbanyInstall")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
