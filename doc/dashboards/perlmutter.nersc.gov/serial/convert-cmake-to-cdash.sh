@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 
 awk '/cmake/{p=1;next}{if(p){print}}' do-cmake-pm_cpu-trilinos >& ${BASE_DIR}/cdash-frag.txt
 sed -i "s/\"/'/g" ${BASE_DIR}/cdash-frag.txt

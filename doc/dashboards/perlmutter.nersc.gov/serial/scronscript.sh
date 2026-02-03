@@ -1,4 +1,4 @@
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 cd ${BASE_DIR}
 source ${BASE_DIR}/clean-up.sh
 mkdir ${BASE_DIR}/repos

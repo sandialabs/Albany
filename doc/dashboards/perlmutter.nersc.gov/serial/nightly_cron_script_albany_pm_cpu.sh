@@ -3,7 +3,7 @@
 FAD_CONFIGURATION=${1}
 FAD_SIZE=${2}
 
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial
 cd $BASE_DIR
 

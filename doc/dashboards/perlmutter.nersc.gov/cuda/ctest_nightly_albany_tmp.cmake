@@ -78,7 +78,7 @@ execute_process(COMMAND cat mpicc.txt
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 #message("IKT mpicc = " ${MPICC}) 
 set (MPICC $ENV{MPICH_DIR}/bin/mpicc)
-set (NVCC /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda/nvcc_wrapper_a100)
+set (NVCC /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterCuda/nvcc_wrapper_a100)
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT

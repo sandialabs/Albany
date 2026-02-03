@@ -1,6 +1,6 @@
 #!/bin/bash
-rm -rf /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/repos 
-rm -rf /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/build 
-rm -rf /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/cdash-frag.txt
-rm -rf /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/ctest_nightly_trilinos.cmake 
-rm -rf /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/modules_albany.out 
+rm -rf /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/repos 
+rm -rf /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/build 
+rm -rf /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/cdash-frag.txt
+rm -rf /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/ctest_nightly_trilinos.cmake 
+rm -rf /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/modules_albany.out 

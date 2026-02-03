@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 
 cd ${BASE_DIR}/repos/compass_tests
 

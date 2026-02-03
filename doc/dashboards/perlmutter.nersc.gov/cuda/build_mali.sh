@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterCuda
 DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda
 
 source ${BASE_DIR}/pm_gpu_gnu_modules.sh >& ${BASE_DIR}/modules_albany.out

@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterCuda
 
 unset http_proxy
 unset https_proxy

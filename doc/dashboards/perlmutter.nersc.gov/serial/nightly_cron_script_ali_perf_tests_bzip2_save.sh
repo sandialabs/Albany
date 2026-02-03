@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 cd $BASE_DIR/build/Testing/Temporary
 ln -s $BASE_DIR/repos/ali-perf-tests/jupyter_nb/scripts/ctest2json.py 
 python ctest2json.py >& ctest2json.out  

@@ -6,7 +6,7 @@
 #SCRON --constraint=cpu
 #SCRON --exclusive
 #SCRON --job-name=MALITestingCPU
-0 6 * * * source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/scronscript.sh
+0 6 * * * source /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/scronscript.sh
 #0 6 * * 1,3,5 source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/scronscript.sh
 
 #SCRON -A m4274_g
@@ -19,6 +19,6 @@
 #SCRON --gpus-per-node=4
 #SCRON --gpu-bind=none
 #SCRON --job-name=MALITestingGPU
-0 6 * * * source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda/scronscript.sh
+0 6 * * * source /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterCuda/scronscript.sh
 #0 6 * * 1,3,5 source /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda/scronscript.sh
 

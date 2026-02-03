@@ -1,6 +1,6 @@
 # CMake generated Testfile for
-# Source directory: /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/repos/Albany/tests/landIce/Enthalpy
-# Build directory: /pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-serial/build/AlbBuildSerialGcc/tests/landIce/Enthalpy
+# Source directory: /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/repos/Albany/tests/landIce/Enthalpy
+# Build directory: /pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial/build/AlbBuildSerialGcc/tests/landIce/Enthalpy
 #
 # This file includes the relevant testing commands required for
 # testing this directory and lists subdirectories to be tested as well.

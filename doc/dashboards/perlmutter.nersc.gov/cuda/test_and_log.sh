@@ -1,5 +1,5 @@
 #!/bin/csh
-BASE_DIR=/pscratch/sd/m/mcarlson/biweeklyCDashPerlmutter-cuda
+BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterCuda
 
 source ${BASE_DIR}/repos/compass_tests/load_compass_env.sh
 compass run $1
