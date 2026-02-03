@@ -173,6 +173,11 @@ protected:
   //       But I think we can get rid of it. In principle, we should handle time derivatives
   //       from the app/problem side.
   int m_num_time_deriv;
+
+  // I/O
+  std::string vtkOutFile;
+  int outputInterval;
+  int vtkOutputInterval;
 };
 
 }  // namespace Albany

@@ -1,6 +1,7 @@
 #include "Albany_OmegahMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_OmegahUtils.hpp"
+#include "OmegahGhost.hpp"
 
 namespace Albany {
 
@@ -39,11 +40,18 @@ setFieldOnMesh (const std::string& name,
 
   // Create 1d view of input MV
   auto dev_mv = getDeviceData(mv);
+  int ncmps = dev_mv.extent(1);
+  int nents = dev_mv.extent(0);
+  int tag_nents = Omega_h::divide_no_remainder(tag->array().size(), tag->ncomps());
+
+  TEUCHOS_TEST_FOR_EXCEPTION (tag_nents != nents, std::logic_error,
+      "Error! Cannot copy MV on mesh tag, as the number of entities differ.\n"
+      "  - tag name: " + name + "\n"
+      "  - tag num ents: " << tag_nents << "\n"
+      "  - MV num ents: " << nents << "\n");
 
   // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
   // entity id stride faster (it's a 2d view with layout left)
-  int ncmps = dev_mv.extent(1);
-  int nents = dev_mv.extent(0);
   Kokkos::RangePolicy<> policy(0,nents*ncmps);
   auto tag_view = m_tags.at(name).array.view();
   auto lambda = KOKKOS_LAMBDA(int idx) {
@@ -285,8 +293,10 @@ fillVector (Thyra_Vector&        field_vector,
   auto owned_h = hostRead(m_mesh->owned(dim));
   auto mesh_data_h  = hostRead(m_mesh->get_array<ST>(dim,field_name));
   auto thyra_data_h = getNonconstLocalData(field_vector);
-  auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
-  auto nents_per_elem = elem_ents_h.size() / nelems;
+  auto elem_ents_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh,dim));
+  const auto isSimplex = (m_mesh->family() == OMEGA_H_SIMPLEX);
+  const auto nents_per_elem = isSimplex ? Omega_h::simplex_degree(m_mesh->dim(),dim) :
+                                          Omega_h::hypercube_degree(m_mesh->dim(),dim);
   for (int ielem=0; ielem<nelems; ++ielem) {
     for (int icmp=0; icmp<field_dof_mgr->getNumFields(); ++icmp) {
       const auto& offsets = field_dof_mgr->getGIDFieldOffsets(icmp);
@@ -339,8 +349,10 @@ saveVector (const Thyra_Vector&  field_vector,
   auto mesh_data_h = hostWrite<ST>(m_mesh->nents(dim)*ncomps,field_name);
   auto owned_h = hostRead(m_mesh->owned(dim));
   auto thyra_data_h = getLocalData(field_vector);
-  auto elem_ents_h = hostRead(m_mesh->ask_down(m_mesh->dim(),dim).ab2b);
-  auto nents_per_elem = elem_ents_h.size() / nelems;
+  auto elem_ents_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh,dim));
+  const auto isSimplex = (m_mesh->family() == OMEGA_H_SIMPLEX);
+  const auto nents_per_elem = isSimplex ? Omega_h::simplex_degree(m_mesh->dim(),dim) :
+                                          Omega_h::hypercube_degree(m_mesh->dim(),dim);
   for (int ielem=0; ielem<nelems; ++ielem) {
     for (int icmp=0; icmp<field_dof_mgr->getNumFields(); ++icmp) {
       const auto& offsets = field_dof_mgr->getGIDFieldOffsets(icmp);
@@ -359,6 +371,7 @@ saveVector (const Thyra_Vector&  field_vector,
   }
 
   m_mesh->set_tag(dim,field_name,read(mesh_data_h.write()),false);
+  m_mesh->sync_tag(dim,field_name); //update ghosts
 }
 
 void OmegahMeshFieldAccessor::

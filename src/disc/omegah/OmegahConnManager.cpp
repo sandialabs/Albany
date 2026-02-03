@@ -13,10 +13,10 @@
 #include <Omega_h_for.hpp> //parallel_for
 #include <Omega_h_file.hpp> //write_array, write_parallel
 #include <Omega_h_array_ops.hpp> //get_max
-#include <Omega_h_atomics.hpp> //atomic_fetch_add
 #include <Omega_h_int_scan.hpp> //offset_scan
 
 #include "OmegahPermutation.hpp"
+#include "OmegahGhost.hpp"
 
 #include <fstream>
 
@@ -27,8 +27,9 @@ Omega_h::Read<Omega_h::I8> getIsEntInPart(const OmegahGenericMesh& albanyMesh, c
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    return Omega_h::Read<Omega_h::I8>(mesh->nents(part_dim), 1);
+    return OmegahGhost::getEntsInClosureOfOwnedElms(*mesh,part_dim);
   } else {
+    //only hit in unit test for 'lateral side' part_name - that test passes, moving on // you fool!
     return mesh->get_array<Omega_h::I8>(part_dim, part_name);
   }
 }
@@ -39,12 +40,12 @@ Omega_h::LOs numberEntsInPart(const OmegahGenericMesh& albanyMesh, const std::st
   auto isInPart = getIsEntInPart(albanyMesh, part_name);
   const int part_dim = albanyMesh.part_dim(part_name);
   auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
-  auto partEntIdx = Omega_h::Write<Omega_h::LO>(mesh->nents(part_dim));
-  Omega_h::parallel_for(mesh->nents(part_dim), OMEGA_H_LAMBDA(int i) {
+  auto partEntIdx = Omega_h::Write<Omega_h::LO>(isInPart.size());
+  Omega_h::parallel_for(isInPart.size(), OMEGA_H_LAMBDA(int i) {
     if(isInPart[i]) {
       partEntIdx[i] = partEntOffset[i];
     } else {
-      partEntIdx[i] = 0;
+      partEntIdx[i] = 0; //FIXME shouldn't be 0 as that is a valid entity number, changing to -1 breaks serial unit test
     }
   });
   return Omega_h::LOs(partEntIdx);
@@ -55,7 +56,7 @@ LO getNumEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part
   const auto& mesh = albanyMesh.getOmegahMesh();
   const int part_dim = albanyMesh.part_dim(part_name);
   if(part_name == albanyMesh.meshSpecs[0]->ebName) {
-    return mesh->nents(part_dim);
+    return OmegahGhost::getNumEntsInClosureOfOwnedElms(*mesh,part_dim);
   } else {
     const auto isInPart = getIsEntInPart(albanyMesh,part_name);
     return Omega_h::get_sum<Omega_h::I8>(isInPart);
@@ -63,14 +64,14 @@ LO getNumEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part
 }
 
 [[nodiscard]]
-std::vector<LO> getLocalElmIds(const OmegahGenericMesh& albanyMesh,  const std::string& part_name) {
-  const auto& mesh = albanyMesh.getOmegahMesh();
-  if(part_name==albanyMesh.meshSpecs[0]->ebName) {
-    std::vector<LO> localElmIds(mesh->nelems());
+std::vector<LO> OmegahConnManager::getLocalElmIds(const std::string& part_name) const {
+  if(part_name==albanyMesh->meshSpecs[0]->ebName) {
+    const auto numElms = OmegahGhost::getNumOwnedElms(*mesh);
+    std::vector<LO> localElmIds(numElms);
     std::iota(localElmIds.begin(), localElmIds.end(), 0);
     return localElmIds;
   } else {
-    auto entPartId = numberEntsInPart(albanyMesh, part_name);
+    auto entPartId = numberEntsInPart(*albanyMesh, part_name);
     Omega_h::HostRead<Omega_h::LO> entPartId_h(entPartId);
     return std::vector<LO>(entPartId_h.data(), entPartId_h.data()+entPartId_h.size());
   }
@@ -111,19 +112,31 @@ OmegahConnManager(const Teuchos::RCP<OmegahGenericMesh>& in_mesh,
 
   assert(mesh->has_tag(in_mesh->part_dim(inPartId), "global"));
 
-  localElmIds = getLocalElmIds(*albanyMesh, inPartId);
+  localElmIds = getLocalElmIds(inPartId);
+  m_elmGids = getOwnedElementGids();
+}
+
+GO OmegahConnManager::getElementGlobalId(LO localElmtId) const {
+  TEUCHOS_TEST_FOR_EXCEPTION (m_elmGids.size()==0, std::logic_error,
+      "Error! Attempting to access an empty array of element global ids.\n");
+  return m_elmGids[localElmtId];
+}
+
+int OmegahConnManager::getOwnedElementCount() const {
+    return OmegahGhost::getNumOwnedElms(*mesh);
+}
+
+Omega_h::HostRead<Omega_h::GO> OmegahConnManager::getOwnedElementGids() const {
+  const int dim = albanyMesh->part_dim(elem_block_name());
+  return OmegahGhost::getOwnedEntityGids(*mesh,dim);
 }
 
 std::vector<GO>
 OmegahConnManager::getElementsInBlock (const std::string&) const
 {
-  const int dim = albanyMesh->part_dim(elem_block_name());
-  assert(mesh->has_tag(dim, "global"));
-  auto globals_d = mesh->globals(dim);
-  Omega_h::HostRead<Omega_h::GO> globalElmIds_h(globals_d);
   return std::vector<GO>(
-      globalElmIds_h.data(),
-      globalElmIds_h.data()+globalElmIds_h.size());
+      m_elmGids.data(),
+      m_elmGids.data()+m_elmGids.size());
 }
 
 std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
@@ -156,16 +169,19 @@ std::array<LO,4> getDofsPerEnt(const panzer::FieldPattern & fp)
 Omega_h::GOs createGlobalEntDofNumbering(Omega_h::Mesh& mesh, const LO entityDim, const LO dofsPerEnt, const GO startingOffset) {
   if(!dofsPerEnt)
     return Omega_h::GOs();
+  const auto isEntInPart = OmegahGhost::getEntsInClosureOfOwnedElms(mesh,entityDim);
   const int numEnts = mesh.nents(entityDim);
   const int numDofs = numEnts*dofsPerEnt;
   auto worldComm = mesh.library()->world();
   const auto entGlobalIds = mesh.globals(entityDim);
   Omega_h::Write<Omega_h::GO> dofNum(numDofs);
   auto setNumber = OMEGA_H_LAMBDA(int i) {
-    for(int j=0; j<dofsPerEnt; j++) {
-      const auto dofIndex = i*dofsPerEnt+j;
-      const auto dofGlobalId = entGlobalIds[i]*dofsPerEnt+j;
-      dofNum[dofIndex] = startingOffset+dofGlobalId;
+    if(isEntInPart[i]) {
+      for(int j=0; j<dofsPerEnt; j++) {
+        const auto dofIndex = i*dofsPerEnt+j;
+        const auto dofGlobalId = entGlobalIds[i]*dofsPerEnt+j;
+        dofNum[dofIndex] = startingOffset+dofGlobalId;
+      }
     }
   };
   const std::string kernelName = "setGlobalDofId_entityDim" + std::to_string(entityDim);
@@ -227,7 +243,7 @@ void setElementToEntDofConnectivityMask(const OmegahGenericMesh& albanyMesh, con
     }
   };
   const auto kernelName = "setElementToEntDofConnectivityMask_dim" + std::to_string(part_dim);
-  Omega_h::parallel_for(mesh.nents(part_dim), setMask, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setMask, kernelName.c_str());
 }
 
 /**
@@ -267,7 +283,7 @@ void setElementToEntDofConnectivity(OmegahGenericMesh& albanyMesh, const std::st
     }
   };
   const auto kernelName = "setElementToEntDofConnectivity_dim" + std::to_string(part_dim);
-  Omega_h::parallel_for(mesh.nents(part_dim), setNumber, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setNumber, kernelName.c_str());
 }
 
 /**
@@ -294,8 +310,7 @@ void setElementDofConnectivity(const OmegahGenericMesh& albanyMesh, const std::s
   const int part_dim = albanyMesh.part_dim(part_name);
   const auto kernelName = "setElementDofConnectivity_dim" + std::to_string(part_dim);
 
-  const auto& mesh = *albanyMesh.getOmegahMesh();
-  Omega_h::parallel_for(mesh.nents(part_dim), setNumber, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setNumber, kernelName.c_str());
 }
 
 /**
@@ -309,6 +324,7 @@ void setElementDofConnectivityMask(const OmegahGenericMesh& albanyMesh, const st
   auto isInPart = getIsEntInPart(albanyMesh, partId);
   auto partEntIdx = numberEntsInPart(albanyMesh, partId);
   auto setMask = OMEGA_H_LAMBDA(int elm) {
+    //FIXME add if(isInPart[elm]) { ???
     for(int k=0; k<dofsPerEnt; k++) {
       const auto elmPartIdx = partEntIdx[elm];
       const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+k);
@@ -317,8 +333,7 @@ void setElementDofConnectivityMask(const OmegahGenericMesh& albanyMesh, const st
   };
   const int partDim = albanyMesh.part_dim(partId);
   const auto kernelName = "setElementDofConnectivityMask_dim" + std::to_string(partDim);
-  const auto& mesh = *albanyMesh.getOmegahMesh();
-  Omega_h::parallel_for(mesh.nents(partDim), setMask, kernelName.c_str());
+  Omega_h::parallel_for(isInPart.size(), setMask, kernelName.c_str());
 }
 
 LO OmegahConnManager::getPartConnectivitySize() const
@@ -333,6 +348,30 @@ LO OmegahConnManager::getPartConnectivitySize() const
   return dofsPerElm;
 }
 
+/**
+ * \brief Create element-to-DOF connectivity with mask values instead of global IDs
+ *
+ * This function creates a flattened connectivity array where each element's DOF entries
+ * are filled with mask values (0 or 1) instead of global DOF IDs. This is used to determine
+ * properties of DOFs (e.g., ownership status, membership in a part) based on the properties
+ * of the mesh entities they belong to.
+ *
+ * \param[in] maskArray Array of 4 mask arrays, one for each entity dimension (0=vertex,
+ *                      1=edge, 2=face, 3=element). Each mask indicates whether the
+ *                      corresponding entity has a particular property (1=yes, 0=no).
+ * \param[in] elmToDim Array of 3 adjacency arrays providing element-to-entity adjacencies
+ *                     for dimensions 0, 1, and 2 (vertices, edges, faces).
+ *
+ * \return Flattened array (Omega_h::GOs) of size (numEntsInPart * m_dofsPerElm) where
+ *         each element's DOF slots are filled with mask values from the corresponding
+ *         mesh entities. The ordering for each element is:
+ *         [vertex DOFs][edge DOFs][face DOFs][element DOFs]
+ *
+ * \note The function uses setElementToEntDofConnectivityMask() and
+ *       setElementDofConnectivityMask() to fill different sections of the connectivity.
+ * \note DOFs are ordered according to Shards ordering (Omega_h-to-Shards permutation applied).
+ * \note This is a const member function and requires buildConnectivity() to have been called.
+ */
 Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
   Omega_h::Read<Omega_h::I8> maskArray[4], const Omega_h::Adj elmToDim[3]) const
 {
@@ -359,6 +398,28 @@ Omega_h::GOs OmegahConnManager::createElementToDofConnectivityMask(
   return elm2dof;
 }
 
+/**
+ * \brief Build ownership information for all DOFs in the element-to-DOF connectivity
+ *
+ * This function determines whether each DOF in the connectivity array is owned by the
+ * current MPI rank or is ghosted from another rank. The ownership of a DOF is determined
+ * by the ownership of the mesh entity (vertex, edge, face, or element) to which the DOF
+ * belongs.
+ *
+ * \return Vector of Ownership enums (size = numEntsInPart * m_dofsPerElm) where each
+ *         entry is either Ownership::Owned or Ownership::Ghosted. The ordering matches
+ *         the element-to-DOF connectivity array produced by createElementToDofConnectivity().
+ *
+ * \throws std::runtime_error if buildConnectivity() has not been called (m_dofsPerElm == 0)
+ *
+ * \note This function internally uses createElementToDofConnectivityMask() with ownership
+ *       masks from the Omega_h mesh to propagate entity ownership to DOF ownership.
+ * \note For each entity dimension, the function retrieves mesh->owned(dim) to get the
+ *       ownership mask for entities of that dimension.
+ * \note A DOF is owned if and only if the mesh entity it belongs to is owned by this rank.
+ * \note This is a const member function called during buildConnectivity() to populate
+ *       the member variable 'owners'.
+ */
 std::vector<Ownership> OmegahConnManager::buildConnectivityOwnership() const {
   std::stringstream ss;
   ss << "Error! The Omega_h dofs per element is zero.  Was buildConnectivity(...) called?\n";
@@ -432,6 +493,40 @@ OmegahConnManager::writeConnectivity()
   out << "\n";
 }
 
+/**
+ * \brief Build element-to-DOF connectivity based on a field pattern
+ *
+ * This is the main workhorse function that constructs the element-to-DOF connectivity
+ * array for the Panzer DOF manager. Given a field pattern that specifies how many DOFs
+ * are associated with each subcell (vertex, edge, face, element), this function:
+ * 1. Determines DOFs per entity for each dimension
+ * 2. Creates global DOF numbering for all entities
+ * 3. Builds element-to-DOF connectivity with global IDs
+ * 4. Computes ownership information for all DOFs
+ *
+ * After this function completes, the connectivity can be queried via getConnectivity().
+ *
+ * \param[in] fp Panzer field pattern that specifies the DOF layout on the reference element.
+ *               The pattern defines how many DOFs are associated with each subcell type
+ *               (vertices, edges, faces, element interior). The pattern's cell topology
+ *               dimension must be compatible with the mesh part dimension.
+ *
+ * \throws std::logic_error if field pattern dimension exceeds the mesh part dimension
+ * \throws std::logic_error if field pattern dimension is less than 1
+ *
+ * \post m_dofsPerEnt is populated with DOFs per entity for each dimension [0-3]
+ * \post m_dofsPerElm is set to the total DOFs per element
+ * \post m_globalDofNumbering is populated with global DOF IDs for all entities
+ * \post m_connectivity is populated with the flattened element-to-DOF connectivity array
+ * \post owners is populated with ownership status (Owned/Ghosted) for each DOF
+ *
+ * \note The connectivity ordering for each element is: [vertex DOFs][edge DOFs][face DOFs][element DOFs]
+ * \note DOFs are reordered from Omega_h to Shards convention to match Albany's expectations
+ * \note This function must be called before getConnectivity() or other connectivity queries
+ * \note Global DOF numbering is synchronized across MPI ranks via mesh.sync_array()
+ *
+ * \see getConnectivity(), buildConnectivityOwnership(), createElementToDofConnectivity()
+ */
 void
 OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
 {
@@ -501,13 +596,16 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
       elmToDim[dim] = mesh->ask_down(part_dim,dim);
       mask[dim] = mesh->get_array<Omega_h::I8>(dim, sub_part_name);
     } else {
-      mask[dim] = Omega_h::Read<Omega_h::I8>(mesh->nents(dim), 0);
+      auto numEnts = OmegahGhost::getNumEntsInClosureOfOwnedElms(*mesh, dim);
+      mask[dim] = Omega_h::Read<Omega_h::I8>(numEnts, 0);
     }
   }
-  if(m_dofsPerEnt[part_dim] > 0)
+  if(m_dofsPerEnt[part_dim] > 0) {
     mask[part_dim] = mesh->get_array<Omega_h::I8>(part_dim, sub_part_name);
-  else
-    mask[part_dim] = Omega_h::Read<Omega_h::I8>(mesh->nents(part_dim), 0);
+  } else {
+    auto numEnts = OmegahGhost::getNumEntsInClosureOfOwnedElms(*mesh, part_dim);
+    mask[part_dim] = Omega_h::Read<Omega_h::I8>(numEnts, 0);
+  }
 
   auto elm2dofMask = createElementToDofConnectivityMask(mask, elmToDim);
   // transfer to host

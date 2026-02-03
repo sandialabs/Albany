@@ -31,6 +31,8 @@ if (ALBANY_IFPACK2)
     # Create the tests with this name and standard executable
     add_test(${testName}_Omega_h ${Albany.exe} input_Omega_h.yaml)
     set_tests_properties(${testName}_Omega_h PROPERTIES LABELS "Basic;Forward;Omega_h")
+    add_test(${testName}_Omega_h_Serial ${SerialAlbany.exe} input_Omega_h.yaml)
+    set_tests_properties(${testName}_Omega_h_Serial PROPERTIES LABELS "Basic;Forward;Omega_h")
   endif()
 endif ()
 
