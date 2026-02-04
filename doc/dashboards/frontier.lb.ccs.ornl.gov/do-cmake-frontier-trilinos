@@ -127,6 +127,6 @@ cmake \
   -D Tacho_ENABLE_INT_INT:BOOL=ON \
   -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
   -D gtest_INCLUDE_DIRS=/ccs/proj/cli193/tpls/googletest-1.7.0/include/gtest \
-  -D gtest_INCLUDE_DIRS=/ccs/proj/cli193/tpls/googletest-1.7.0/lib64 \
+  -D gtest_LIBRARY_DIRS=/ccs/proj/cli193/tpls/googletest-1.7.0/lib64 \
 \
 ..
