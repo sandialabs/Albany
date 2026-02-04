@@ -16,6 +16,7 @@
 BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial
 
+cd ${BASE_DIR}
 source ${BASE_DIR}/pm_cpu_gnu_modules.sh >& ${BASE_DIR}/modules_albany.out
 
 bash nightly_cron_script_ali_perf_tests.sh

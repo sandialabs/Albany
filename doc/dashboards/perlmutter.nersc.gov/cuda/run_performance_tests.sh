@@ -17,6 +17,7 @@
 BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterCuda
 DEPLOY_DIR=/global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/cuda
 
+cd ${BASE_DIR}
 source ${BASE_DIR}/pm_gpu_gnu_modules.sh >& ${BASE_DIR}/modules_albany.out
 
 bash nightly_cron_script_ali_perf_tests.sh
