@@ -235,7 +235,7 @@ void setElementToEntDofConnectivityMask(const OmegahGenericMesh& albanyMesh, con
         for(int k=0; k<dofsPerEnt; k++) {
           const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
           const auto elmPartIdx = partEntIdx[elm];
-          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
+          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx*dofsPerEnt+k);
           assert(elm2dof.size() > connIdx and connIdx >= 0);
           elm2dof[connIdx] = maskArray[adjEnt];
         }
@@ -264,19 +264,23 @@ void setElementToEntDofConnectivity(OmegahGenericMesh& albanyMesh, const std::st
   auto partEntIdx = numberEntsInPart(albanyMesh, part_name);
   OmegahPermutation::Omegah2ShardsPerm oh2sh;
   const auto perm = oh2sh.triVtx.perm;
+  std::cout << "setElementToEntDofConnectivity: part=" << part_name << ", dofsPerElm=" << dofsPerElm << ", adjDim=" << adjDim << ", dofOffset=" << dofOffset << "\n";
   auto setNumber = OMEGA_H_LAMBDA(int elm) {
+    std::cout << "ielm=" << elm << "\n";
     if(isInPart[elm]) {
       const auto firstDown = elm*numDownAdjEntsPerElm;
       //loop over element-to-ent adjacencies and fill in the dofs
       for(int j=0; j<numDownAdjEntsPerElm; j++) {
+        std::cout << " j=" << j << "\n";
         const auto adjEnt = adjEnts[firstDown+j];
         for(int k=0; k<dofsPerEnt; k++) {
           const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
           const auto elmPartIdx = partEntIdx[elm];
-          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
+          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx*dofsPerEnt+k);
           assert(elm2dof.size() > connIdx and connIdx >= 0);
           const auto dofIndex = adjEnt*dofsPerEnt+k;
           const auto dofGlobalId = globalDofNumbering[dofIndex];
+          std::cout << "   elmPartIdx=" << elmPartIdx << ", connIdx=" << connIdx << ", dofIndex=" << dofIndex << ", dofGlobalId=" << dofGlobalId << "\n";
           elm2dof[connIdx] = dofGlobalId;
         }
       }
@@ -541,6 +545,7 @@ OmegahConnManager::buildConnectivity(const panzer::FieldPattern &fp)
       "  - Pattern dim   : " + std::to_string(fp.getCellTopology().getDimension()) + "\n");
 
   m_dofsPerEnt = getDofsPerEnt(fp);
+  std::cout << "OCM::bc, dofsPerEnt[0]: " << m_dofsPerEnt[0] << "\n";
   m_dofsPerElm = getPartConnectivitySize();
 
   m_globalDofNumbering = createGlobalDofNumbering();

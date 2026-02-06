@@ -444,6 +444,12 @@ albanyBuildGlobalUnknowns ()
   std::unordered_set<GO> ghostedSet;
   elementGIDs_.resize(numElems);
   elementBlockGIDCount_.resize(1);
+  std::cout << "conn0:\n"
+            << "  size: " << m_conn_mgr->getConnectivitySize(0) << "\n"
+            << "  conn:";
+  for (int i=0; i<m_conn_mgr->getConnectivitySize(0); ++i) {
+    std::cout << " " << m_conn_mgr->getConnectivity(0)[i];
+  } std::cout << "\n";
   for (int ielem=0; ielem<numElems; ++ielem) {
     const int  ndofs = m_conn_mgr->getConnectivitySize(ielem);
     const auto conn  = m_conn_mgr->getConnectivity(ielem);

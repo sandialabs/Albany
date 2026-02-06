@@ -43,6 +43,7 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
  , m_extruded_mesh(extruded_mesh)
  , m_disc_params (discParams)
 {
+  // m_neq = neq;
   setNumEq(neq);
 
   sideSetDiscretizations["basalside"] = basal_disc;
@@ -331,9 +332,11 @@ ExtrudedDiscretization::computeGraphs()
 
   // Handle the simple case, and return immediately
   if (numVolumeEqns==m_neq) {
+    // printf("easy case...\n");
     // This is the easy case: couple everything with everything
     for (int icell=0; icell<num_elems; ++icell) {
       const auto& elem_gids = sol_dof_mgr->getElementGIDs(icell);
+      // std::cout << "icell=" << icell << ", gids: [" << util::join(elem_gids,",") << "]\n";
       m_jac_factory->insertGlobalIndices(elem_gids,elem_gids,true);
     }
     m_jac_factory->fillComplete();
@@ -871,8 +874,6 @@ void ExtrudedDiscretization::setFieldData()
   const auto basal_sol_mfa = m_basal_disc->get_solution_mesh_field_accessor();
   const auto elem_numbering_lid = m_extruded_mesh->layers_data.cell.lid;
   m_solution_mfa = Teuchos::rcp(new ExtrudedMeshFieldAccessor(basal_sol_mfa,elem_numbering_lid));
-
-  m_solution_mfa->setSolutionFieldsMetadata(m_neq);
 }
 
 Teuchos::RCP<ConnManager>

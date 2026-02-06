@@ -14,6 +14,7 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "STKConnManager.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
+#include "Albany_StringUtils.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -983,9 +984,11 @@ STKDiscretization::computeGraphs()
 
   // Handle the simple case, and return immediately
   if (numVolumeEqns==m_neq) {
+    printf("volume eqn only, neq=%d\n",m_neq);
     // This is the easy case: couple everything with everything
     for (int icell=0; icell<num_elems; ++icell) {
       const auto& elem_gids = sol_dof_mgr->getElementGIDs(icell);
+      std::cout << "icell=" << icell << ", gids: [" << util::join(elem_gids,",") << "]\n";
       m_jac_factory->insertGlobalIndices(elem_gids,elem_gids,true);
     }
     m_jac_factory->fillComplete();

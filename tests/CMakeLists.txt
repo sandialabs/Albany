@@ -101,6 +101,23 @@ IF (ALBANY_SEACAS)
   MESSAGE("-- SEACAS_EXODIFF = ${SEACAS_EXODIFF}")
 ENDIF()
 
+# Find Omega_h tools if Omega_h is enabled
+IF(ALBANY_OMEGAH)
+  # Get the bin directory from Omega_h installation
+  get_filename_component(Omega_h_BIN_DIR "${Omega_h_DIR}/../../../bin" ABSOLUTE)
+  find_program(
+       OMEGAH_EXO2OSH
+       NAMES exo2osh
+       PATHS ${Omega_h_BIN_DIR} ENV PATH
+  )
+  find_program(
+       OMEGAH_OSH2EXO
+       NAMES osh2exo
+       PATHS ${Omega_h_BIN_DIR} ENV PATH
+  )
+  MESSAGE("-- OMEGAH_EXO2OSH = ${OMEGAH_EXO2OSH}")
+  MESSAGE("-- OMEGAH_OSH2EXO = ${OMEGAH_OSH2EXO}")
+ENDIF()
 
 # Paths to the actual executables
 set(AlbanyPath                         ${Albany_BINARY_DIR}/src/Albany)
@@ -109,6 +126,8 @@ set(AlbanyAnalysisPath                 ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
 set(SerialAlbany.exe                 ${SERIAL_CALL} ${AlbanyPath})
 set(SerialAlbanyAnalysis.exe         ${SERIAL_CALL} ${AlbanyAnalysisPath})
 set(SerialSeacasDecomp.exe           ${SERIAL_CALL} ${SEACAS_DECOMP})
+set(SerialOmegahExo2Osh.exe          ${SERIAL_CALL} ${OMEGAH_EXO2OSH})
+set(SerialOmegahOsh2Exo.exe          ${SERIAL_CALL} ${OMEGAH_OSH2EXO})
 # Do not test on greater than Trilinos_MPI_EXEC_MAX_NUMPROCS configured in Trilinos build
 # or explicitly given at Albany configure time -D ALBANY_MPI_EXEC_MAX_NUMPROCS
 IF(DEFINED MPIMNP)

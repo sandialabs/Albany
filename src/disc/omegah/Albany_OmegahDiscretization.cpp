@@ -161,12 +161,37 @@ updateMesh ()
   m_key_to_dof_mgr.clear();
 
   // Create DOF managers
+
+  std::cout << "creatint sol dof mgr, with m_neq=" << m_neq << "\n";
   auto sol_dof_mgr  = create_dof_mgr("",FE_Type::HGRAD,1,m_neq);
   auto node_dof_mgr = create_dof_mgr("",FE_Type::HGRAD,1,1);
+  const auto& elem_gids = sol_dof_mgr->getElementGIDs(0);
+  std::cout << "elem0 gids: " << util::join(elem_gids,",") << "\n";
 
   m_dof_managers[solution_dof_name()][""] = sol_dof_mgr;
   m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
   m_node_dof_managers[""]     = node_dof_mgr;
+
+  for (auto st : m_solution_mfa->getNodalParameterSIS()) {
+    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
+    int numComps;
+    switch (st->dim.size()) {
+      case 2: numComps = 1; break;
+      case 3: numComps = st->dim[2]; break;
+      default:
+        throw std::runtime_error(
+            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
+            "  - state name: " + st->name + "\n"
+            "  - input dims: (" + util::join(st->dim,",") + ")\n");
+    }
+    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
+    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+
+    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
+      auto node_dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
+      m_node_dof_managers[st->meshPart] = node_dof_mgr;
+    }
+  }
 
   // Compute workset information
   const auto& ms = m_mesh_struct->meshSpecs[0];
@@ -337,6 +362,7 @@ computeGraphs ()
     // This is the easy case: couple everything with everything
     for (int icell=0; icell<num_elems; ++icell) {
       const auto& elem_gids = sol_dof_mgr->getElementGIDs(icell);
+      // std::cout << "icell=" << icell << ", gids: [" << util::join(elem_gids,",") << "]\n";
       m_jac_factory->insertGlobalIndices(elem_gids,elem_gids,true);
     }
     m_jac_factory->fillComplete();
@@ -349,6 +375,7 @@ computeGraphs ()
 
 void OmegahDiscretization::setFieldData()
 {
+  std::cout << "Setting field metadata in omegah disc, with neq=" << m_neq << "\n";
   auto solution_mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
   solution_mfa->addFieldOnMesh (solution_dof_name(),0,m_neq);
   if (m_num_time_deriv>0) {
@@ -358,26 +385,26 @@ void OmegahDiscretization::setFieldData()
     }
   }
   m_solution_mfa = solution_mfa;
-  for (auto st : m_solution_mfa->getNodalParameterSIS()) {
-    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
-    int numComps;
-    switch (st->dim.size()) {
-      case 2: numComps = 1; break;
-      case 3: numComps = st->dim[2]; break;
-      default:
-        throw std::runtime_error(
-            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
-            "  - state name: " + st->name + "\n"
-            "  - input dims: (" + util::join(st->dim,",") + ")\n");
-    }
-    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
-    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+  // for (auto st : m_solution_mfa->getNodalParameterSIS()) {
+  //   // TODO: get mesh part from st, create dof mgr on that part for st.name dof
+  //   int numComps;
+  //   switch (st->dim.size()) {
+  //     case 2: numComps = 1; break;
+  //     case 3: numComps = st->dim[2]; break;
+  //     default:
+  //       throw std::runtime_error(
+  //           "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
+  //           "  - state name: " + st->name + "\n"
+  //           "  - input dims: (" + util::join(st->dim,",") + ")\n");
+  //   }
+  //   auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
+  //   m_dof_managers[st->name][st->meshPart] = dof_mgr;
 
-    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
-      auto node_dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
-      m_node_dof_managers[st->meshPart] = node_dof_mgr;
-    }
-  }
+  //   if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
+  //     auto node_dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
+  //     m_node_dof_managers[st->meshPart] = node_dof_mgr;
+  //   }
+  // }
 
   // Proceed to set the solution field data in the side meshes as well (if any)
   for (auto& it : sideSetDiscretizations) {
@@ -465,11 +492,13 @@ create_dof_mgr (const std::string& part_name,
   // NOTE: we add $dof_dim copies of the field pattern to the dof mgr,
   //       and call the fields ${field_name}_n, n=0,..,$dof_dim-1
   for (int i=0; i<dof_dim; ++i) {
+    std::cout << "adding sol cmp=" << i << "\n";
     dof_mgr->addField("cmp_" + std::to_string(i),fp);
   }
 
   dof_mgr->build();
 
+  std::cout << "elem0 new dof mgr gids: " << util::join(dof_mgr->getElementGIDs(0),",") << "\n";
   return dof_mgr;
 }
 
