@@ -106,6 +106,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
           std::vector<double>& effectivePressureData,
     const std::vector<double>& muData,
     const std::vector<double>& bedRoughnessData,
+    const std::vector<double>& bulkFrictionData,
+    const std::vector<double>& basalDebrisData,
     const std::vector<double>& temperatureDataOnPrisms,
     std::vector<double>& bodyForceMagnitudeOnBasalCell,
     std::vector<double>& dissipationHeatOnPrisms,
@@ -154,6 +156,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   STKFieldType* dirichletField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "dirichlet_field");
   STKFieldType* muField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
   STKFieldType* bedRoughnessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_roughness");
+  STKFieldType* bulkFrictionField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bulk_friction_coefficient");
+  STKFieldType* basalDebrisField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "basal_debris_factor");
   STKFieldType* stiffeningFactorLogField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "stiffening_factor_log");
   STKFieldType* effectivePressureField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
   STKFieldType* betaField;
@@ -228,6 +232,16 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     if ((il == 0) && !bedRoughnessData.empty() && (bedRoughnessField != nullptr)) {
       double* bedRoughnessVal = stk::mesh::field_data(*bedRoughnessField, node);
       bedRoughnessVal[0] = bedRoughnessData[ib];
+    }
+
+    if ((il == 0) && !bulkFrictionData.empty() && (bulkFrictionField != nullptr)) {
+      double* bulkFrictionVal = stk::mesh::field_data(*bulkFrictionField, node);
+      bulkFrictionVal[0] = bulkFrictionData[ib];
+    }
+
+    if ((il == 0) && !basalDebrisData.empty() && (basalDebrisField != nullptr)) {
+      double* basalDebrisVal = stk::mesh::field_data(*basalDebrisField, node);
+      basalDebrisVal[0] = basalDebrisData[ib];
     }
   }
 
@@ -327,6 +341,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   try {
     auto model = slvrfctry->createModel(albanyApp);
     solver = slvrfctry->createSolver(model, Teuchos::null, true);
+    //solver = slvrfctry->createSolver(mpiComm, model, Teuchos::null, true);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
@@ -494,38 +509,6 @@ void velocity_solver_finalize() {
     Kokkos::finalize();
 }
 
-
-//DEPRECATED
-void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
-    int globalTrianglesStride, bool ordering, bool first_time_step,
-    const std::vector<int>& indexToVertexID,
-    const std::vector<int>& indexToTriangleID, double minBeta,
-    const std::vector<double>& regulThk,
-    const std::vector<double>& levelsNormalizedThickness,
-    const std::vector<double>& elevationData,
-    const std::vector<double>& thicknessData,
-          std::vector<double>& betaData,
-    const std::vector<double>& bedTopographyData,
-    const std::vector<double>& smbData,
-    const std::vector<double>& stiffeningFactorData,
-    const std::vector<double>& effectivePressureData,
-    const std::vector<double>& muData,
-    const std::vector<double>& temperatureDataOnPrisms,
-    std::vector<double>& bodyForceMagnitudeOnBasalCell,
-    std::vector<double>& dissipationHeatOnPrisms,
-    std::vector<double>& velocityOnVertices,
-    int& error,
-    const double& deltat) {
-      std::vector<double> effectivePressureDataNonConst(effectivePressureData);
-      const std::vector<double> bedRoughnessData;
-      velocity_solver_solve_fo(nLayers, globalVerticesStride, globalTrianglesStride, ordering, first_time_step,
-                               indexToVertexID,indexToTriangleID, minBeta, regulThk, levelsNormalizedThickness, 
-                               elevationData, thicknessData, betaData, bedTopographyData, smbData, stiffeningFactorData,
-                               effectivePressureDataNonConst, muData, bedRoughnessData, temperatureDataOnPrisms, 
-                               bodyForceMagnitudeOnBasalCell,dissipationHeatOnPrisms, velocityOnVertices, error, deltat );
-}
-
-
 /*duality:
  *
  *   mpas(F) |  albany
@@ -641,6 +624,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
   basalFrictionParams.set("Bed Roughness Type",basalFrictionParams.get("Bed Roughness Type","Field"));
   basalFrictionParams.set("Effective Pressure Type",basalFrictionParams.get("Effective Pressure Type","Field"));
+  basalFrictionParams.set("Bulk Friction Coefficient Type",basalFrictionParams.get("Bulk Friction Coefficient Type","Field"));
+  basalFrictionParams.set("Basal Debris Factor Type", basalFrictionParams.get("Basal Debris Factor Type","Field"));
   basalFrictionParams.set<bool>("Zero Beta On Floating Ice", zeroBetaOnShelf);
   basalFrictionParams.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", zeroEffectPressOnShelf);
 
@@ -713,7 +698,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   discretizationList->set("Workset Size", discretizationList->get("Workset Size", -1));
 
-  discretizationList->set("Method", discretizationList->get("Method", "STKExtruded")); //set to STKExtruded is not defined
+  discretizationList->set("Method", discretizationList->get("Method", "Extruded")); //set to Extruded is not defined
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
