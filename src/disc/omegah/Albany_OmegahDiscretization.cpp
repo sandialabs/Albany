@@ -239,6 +239,10 @@ updateMesh ()
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
+  // Clear elem_LID->wsIdx index map if remeshing
+  m_elem_ws_idx.clear();
+  m_elem_ws_idx.resize(nelems);
+
   const int mdim = mesh.dim();
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
   int elms_in_prior_worksets = 0;
@@ -246,8 +250,12 @@ updateMesh ()
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
       m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
+      const auto elmIdx = ielem + elms_in_prior_worksets;
+
+      // Save a map from element LID to workset on this PE
+      m_elem_ws_idx[elmIdx].ws = ws;
+      m_elem_ws_idx[elmIdx].idx = ielem;
       for (int inode=0; inode<num_elem_nodes; ++inode) {
-        const auto elmIdx = ielem + elms_in_prior_worksets;
         LO node_lid = node_elem_dof_lids(elmIdx,inode);
         int omh_pos = m_node_lid_to_omegah_pos[node_lid];
         m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
