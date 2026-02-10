@@ -94,11 +94,8 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   switch(st->entity) {
     case StateStruct::NodalDistParameter:
       nodal_parameter_sis.push_back(st);
-      nodal_sis.push_back(st);
-      break;
     case StateStruct::NodalDataToElemNode:
       nodal_sis.push_back(st);
-      elem_sis.push_back(st);
       break;
     case StateStruct::ElemData:   [[fallthrough]];
     case StateStruct::ElemNode:   [[fallthrough]];
@@ -138,8 +135,8 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
     auto data = m_tags.at(st->name).array.data();
     auto dim = st->dim;
     int stride = 1;
+    dim[0] = 1; // We don't use the extent of the elem tag
     for (auto d : dim) stride *= d;
-    stride /= dim[0];
 
     for (int ws=0; ws<num_ws; ++ws) {
       int num_elems = worksets_sizes[ws];
@@ -217,7 +214,7 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
   int num_elem_nodes = elem_nodes.size() / num_elems;
 
   for (const auto& st : nodal_sis) {
-    if (st->entity!=StateStruct::NodalDataToElemNode)
+    if (st->entity==StateStruct::NodalData)
       continue;
     const auto& dim = st->dim;
     const auto rank = st->dim.size();
@@ -237,22 +234,51 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
 
     auto& elem_state_h = elem_state.host();
     auto  node_state_h = hostRead(node_state);
+    
+    TEUCHOS_TEST_FOR_EXCEPTION (dim[1] != static_cast<size_t>(num_elem_nodes), std::runtime_error,
+        "Error! State struct dim[1] does not match actual num_elem_nodes.\n"
+        "  - state name: " + st->name + "\n"
+        "  - dim[1]: " << dim[1] << "\n"
+        "  - num_elem_nodes: " << num_elem_nodes << "\n");
+    
     for (int i=0; i<num_elems; ++i) {
       for (int j=0; j<num_elem_nodes; ++j) {
+        auto node_lid = elem_nodes_h[i*num_elem_nodes+j];
+        TEUCHOS_TEST_FOR_EXCEPTION (node_lid < 0 || node_lid >= m_mesh->nverts(), std::runtime_error,
+            "Error! Invalid node_lid in transferNodeStatesToElemStates.\n"
+            "  - elem: " << i << "\n"
+            "  - local node: " << j << "\n"
+            "  - node_lid: " << node_lid << "\n"
+            "  - nverts: " << m_mesh->nverts() << "\n");
         switch(rank) {
           case 2:
-            elem_state_h(i, j) = node_state_h[elem_nodes_h[i*num_elem_nodes+j]];
+            elem_state_h(i, j) = node_state_h[node_lid];
             break;
           case 3:
             for (size_t k=0; k<dim[2]; ++k) {
-              auto offset = i*num_elem_nodes*dim[2]+j*dim[2]+k;
-              elem_state_h(i, j, k) = node_state_h[elem_nodes_h[offset]];
+              auto idx = node_lid*dim[2]+k;
+              TEUCHOS_TEST_FOR_EXCEPTION (idx >= node_state_h.size(), std::runtime_error,
+                  "Error! Out of bounds access in transferNodeStatesToElemStates rank 3.\n"
+                  "  - state name: " + st->name + "\n"
+                  "  - node_lid: " << node_lid << "\n"
+                  "  - k: " << k << "\n"
+                  "  - idx: " << idx << "\n"
+                  "  - node_state_h.size(): " << node_state_h.size() << "\n");
+              elem_state_h(i, j, k) = node_state_h[idx];
             } break;
           case 4:
             for (size_t k=0; k<dim[2]; ++k) {
               for (size_t l=0; l<dim[3]; ++l) {
-                auto offset = i*num_elem_nodes*dim[2]*dim[3]+j*dim[2]*dim[3]+k*dim[3]+l;
-                elem_state_h(i, j, k, l) = node_state_h[elem_nodes_h[offset]];
+                auto idx = node_lid*dim[2]*dim[3]+k*dim[3]+l;
+                TEUCHOS_TEST_FOR_EXCEPTION (idx >= node_state_h.size(), std::runtime_error,
+                    "Error! Out of bounds access in transferNodeStatesToElemStates rank 4.\n"
+                    "  - state name: " + st->name + "\n"
+                    "  - node_lid: " << node_lid << "\n"
+                    "  - k: " << k << "\n"
+                    "  - l: " << l << "\n"
+                    "  - idx: " << idx << "\n"
+                    "  - node_state_h.size(): " << node_state_h.size() << "\n");
+                elem_state_h(i, j, k, l) = node_state_h[idx];
               }
             } break;
         }
