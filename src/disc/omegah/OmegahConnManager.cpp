@@ -234,7 +234,7 @@ void setElementToEntDofConnectivityMask(const OmegahGenericMesh& albanyMesh, con
         for(int k=0; k<dofsPerEnt; k++) {
           const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
           const auto elmPartIdx = partEntIdx[elm];
-          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
+          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx*dofsPerEnt+k);
           assert(elm2dof.size() > connIdx and connIdx >= 0);
           elm2dof[connIdx] = maskArray[adjEnt];
         }
@@ -272,7 +272,7 @@ void setElementToEntDofConnectivity(OmegahGenericMesh& albanyMesh, const std::st
         for(int k=0; k<dofsPerEnt; k++) {
           const auto shardsAdjEntIdx = perm[j]; //use the omega_h to shards permutation to convert the omegah j index to shards
           const auto elmPartIdx = partEntIdx[elm];
-          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx+k);
+          const auto connIdx = (elmPartIdx*dofsPerElm)+(dofOffset+shardsAdjEntIdx*dofsPerEnt+k);
           assert(elm2dof.size() > connIdx and connIdx >= 0);
           const auto dofIndex = adjEnt*dofsPerEnt+k;
           const auto dofGlobalId = globalDofNumbering[dofIndex];
