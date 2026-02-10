@@ -130,6 +130,22 @@ if (ALBANY_IFPACK2)
                        FIXTURES_REQUIRED PopulateMesh2d
                        FIXTURES_SETUP ${testName}_extruded)
 
+  if (ALBANY_OMEGAH)
+    add_test (NAME ${testName}_CreateGisOsh
+          COMMAND ${OMEGAH_EXO2OSH} gis_unstruct_2d.exo gis_unstruct_2d.osh
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
+    set_tests_properties (${testName}_CreateGisOsh PROPERTIES FIXTURES_SETUP CreateGisOshMesh)
+
+    # Logically extruded mesh with omegah for the basal disc
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_omegah.yaml)
+    add_test(${testName}_Omega_h ${Albany.exe} input_fo_gis_unstruct_omegah.yaml)
+    set_tests_properties(${testName}_Omega_h
+                         PROPERTIES
+                         LABELS "LandIce;Forward;Omega_h"
+                         FIXTURES_REQUIRED CreateGisOshMesh)
+  endif()
+
   # Memoization run
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_mem.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_mem.yaml)
