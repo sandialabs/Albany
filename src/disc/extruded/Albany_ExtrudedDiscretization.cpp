@@ -871,8 +871,6 @@ void ExtrudedDiscretization::setFieldData()
   const auto basal_sol_mfa = m_basal_disc->get_solution_mesh_field_accessor();
   const auto elem_numbering_lid = m_extruded_mesh->layers_data.cell.lid;
   m_solution_mfa = Teuchos::rcp(new ExtrudedMeshFieldAccessor(basal_sol_mfa,elem_numbering_lid));
-
-  m_solution_mfa->setSolutionFieldsMetadata(m_neq);
 }
 
 Teuchos::RCP<ConnManager>
