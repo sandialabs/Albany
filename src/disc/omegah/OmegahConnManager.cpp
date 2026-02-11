@@ -38,7 +38,6 @@ Omega_h::Read<Omega_h::I8> getIsEntInPart(const OmegahGenericMesh& albanyMesh, c
 Omega_h::LOs numberEntsInPart(const OmegahGenericMesh& albanyMesh, const std::string& part_name) {
   const auto& mesh = albanyMesh.getOmegahMesh();
   auto isInPart = getIsEntInPart(albanyMesh, part_name);
-  const int part_dim = albanyMesh.part_dim(part_name);
   auto partEntOffset = Omega_h::offset_scan(isInPart, "partEntIdx");
   auto partEntIdx = Omega_h::Write<Omega_h::LO>(isInPart.size());
   Omega_h::parallel_for(isInPart.size(), OMEGA_H_LAMBDA(int i) {
@@ -611,7 +610,7 @@ std::vector<int> OmegahConnManager::getConnectivityMask (const std::string& sub_
   // transfer to host
   auto elm2dofMask_h = Omega_h::HostRead(elm2dofMask);
   std::vector<int> elm2dofMask_vec(elm2dofMask_h.data(), elm2dofMask_h.data()+elm2dofMask_h.size());
-  assert(elm2dofMask_vec.size() == elm2dofMask_h.size());
+  assert(static_cast<int>(elm2dofMask_vec.size()) == elm2dofMask_h.size());
 
   return elm2dofMask_vec;
 }

@@ -34,6 +34,7 @@ namespace {
 #endif
   }
 
+#ifdef ALBANY_MESHFIELDS
   Omega_h::Reals getEffectiveStrainRate(Omega_h::Mesh &mesh) {
     auto array = mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
     TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
@@ -68,7 +69,6 @@ namespace {
     return mesh.sync_array(Omega_h::VERT, recoveredStrain, 1);
   }
 
-  #ifdef ALBANY_MESHFIELDS
   template <typename ShapeField>
   void setFieldAtVertices(Omega_h::Mesh &mesh, Omega_h::Reals recoveredStrain,
       ShapeField field) {
@@ -78,7 +78,7 @@ namespace {
     MeshField::parallel_for(ExecutionSpace(), {0}, {mesh.nverts()},
         setFieldAtVertices, "setFieldAtVertices");
   }
-  #endif
+#endif
 
   void printTriCount(Omega_h::Mesh &mesh, std::string_view prefix) {
     const auto nTri = mesh.nglobal_ents(2);
@@ -489,8 +489,6 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   if (adapt_type=="None") {
     return adapt_data;
   }
-  const auto verbose = adapt_params.get<bool>("Verbose",false);
-  const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
 
   TEUCHOS_TEST_FOR_EXCEPTION (dxdp != Teuchos::null, std::runtime_error,
       "Error! the dxdp Thyra_MultiVector is expected to be null\n");
@@ -555,12 +553,13 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     TEUCHOS_TEST_FOR_EXCEPTION (mesh->nents(2)==0, std::runtime_error,
         "Error! At least one process has no mesh elements.\n");
 
-    #ifdef ALBANY_MESHFIELDS
+#ifdef ALBANY_MESHFIELDS
     auto effectiveStrain = getEffectiveStrainRate(*mesh);
     auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
     mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
         false, Omega_h::ArrayType::VectorND);
 
+    const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
     if( writeVtk ) {
       addEffectiveStrainRateTag(*mesh, effectiveStrain);
       const auto outname = std::string("checkForAdaptation") + std::to_string(checkAdaptCount);
@@ -609,7 +608,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
       adapt_data->type = AdaptationType::Topology;
     }
     return adapt_data;
-    #endif //ALBANY_MESHFIELDS
+#endif //ALBANY_MESHFIELDS
   } else { //meshdim != 1 && meshdim != 2
     if (!mesh->comm()->rank()) {
       std::cout << "Only 1D and 2D (with Meshfields enabled) Omega_h mesh "

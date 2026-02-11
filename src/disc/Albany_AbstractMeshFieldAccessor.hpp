@@ -68,7 +68,7 @@ public:
 
   // For NodalDataToElemNode states, populate elem state array from corresponding node state array
   virtual void transferNodeStatesToElemStates () = 0;
-  virtual void transferElemStateToNodeState (const std::string& name) {
+  virtual void transferElemStateToNodeState (const std::string& /* name */) {
     throw NotYetImplemented("AbstractMeshFieldAccessor::transferElemStateToNodeState");
   }
 

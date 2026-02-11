@@ -361,7 +361,7 @@ public:
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
 
   virtual Teuchos::RCP<ConnManager>
-  create_conn_mgr (const std::string& part_name) {
+  create_conn_mgr (const std::string& /* part_name */) {
     throw std::runtime_error("Error! This discretization does not implement 'create_conn_mgr'.");
   }
 
