@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  gcc-12-serial:
+  release:
     runs-on:  [ubuntu-latest]
     container:
       image: ghcr.io/sandialabs/albany:gcc-12-serial
@@ -80,7 +80,7 @@ jobs:
             albany/build/Testing/Temporary/Last*
           retention-days: 14
 
-  gcc-12-serial-no-warn:
+  no-warn:
     runs-on:  [ubuntu-latest]
     container:
       image: ghcr.io/sandialabs/albany:gcc-12-serial
