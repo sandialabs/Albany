@@ -269,8 +269,7 @@ computeNodeSets ()
   auto e2v = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, Omega_h::VERT));
   assert(mesh.family() == OMEGA_H_SIMPLEX);
   const auto nodes_per_elem = Omega_h::simplex_degree(mesh.dim(),Omega_h::VERT);
-  auto numElms = OmegahGhost::getNumOwnedElms(mesh);
-  assert(e2v.size() == numElms*nodes_per_elem);
+  assert(e2v.size() == OmegahGhost::getNumOwnedElms(mesh)*nodes_per_elem);
 
   for (const auto& nsn : nsNames) {
     auto is_on_ns_host = hostRead(mesh.get_array<Omega_h::I8>(0,nsn));
