@@ -264,7 +264,6 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Serial)
 {
   auto comm = Albany::getDefaultComm();
   auto numRanks = comm->getSize();
-  auto rank = comm->getRank();
   if( numRanks > 1 ) {
     return;
   }
@@ -457,7 +456,7 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getElemPermutationFromNonGhostedToGhosted)
     // check local element index permutation arrays for each rank
     if (rank == 0) {
       const std::vector<int> expected = {1, 4, 5};
-      TEST_ASSERT(perm_h.size() == expected.size());
+      TEST_ASSERT(perm_h.size() == static_cast<int>(expected.size()));
       for (int i = 0; i < perm_h.size(); ++i) {
         TEST_EQUALITY_CONST(perm_h[i], expected[i]);
       }
@@ -469,7 +468,7 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getElemPermutationFromNonGhostedToGhosted)
       TEST_EQUALITY_CONST(perm_h[0], 0);
     } else if (rank == 3) {
       const std::vector<int> expected = {3, 5, 6};
-      TEST_ASSERT(perm_h.size() == expected.size());
+      TEST_ASSERT(perm_h.size() == static_cast<int>(expected.size()));
       for (int i = 0; i < perm_h.size(); ++i) {
         TEST_EQUALITY_CONST(perm_h[i], expected[i]);
       }
