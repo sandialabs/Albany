@@ -55,12 +55,17 @@ jobs:
             -D ENABLE_OMEGAH:BOOL=ON                                          \
             -D ENABLE_DEMO_PDES:BOOL=ON                                       \
             -D ENABLE_LANDICE:BOOL=ON                                         \
+            -D ENABLE_MPAS_INTERFACE:BOOL=ON                                  \
             \
             -S ${GITHUB_WORKSPACE}/albany/source
       - name: Build Albany
         run: |
           cd ${GITHUB_WORKSPACE}/albany/build
           make -j 4
+      - name: Install Albany
+        run: |
+          cd ${GITHUB_WORKSPACE}/albany/build
+          make install
       - name: Run tests
         run: |
           cd ${GITHUB_WORKSPACE}/albany/build
