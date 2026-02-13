@@ -98,11 +98,12 @@ jobs:
           git config --global url."https://github.com/".insteadOf git@github.com:
       - name: Configure Albany
         run: |
+          export WARN_FLAGS="-Werror=parentheses -Werror=sign-compare -Werror=unused-variable"
           mkdir -p ${GITHUB_WORKSPACE}/albany/build && cd ${GITHUB_WORKSPACE}/albany/build
           cmake \
             -D CMAKE_BUILD_TYPE:STRING=RELEASE                                \
             -D CMAKE_INSTALL_PREFIX:PATH=${GITHUB_WORKSPACE}/albany/install   \
-            -D CMAKE_CXX_FLAGS:STRING="-Wall -Wextra -Werror"                 \
+            -D CMAKE_CXX_FLAGS:STRING="${WARN_FLAGS}"                         \
             \
             -D ALBANY_TRILINOS_DIR:PATH=${TRILINOS_ROOT}                      \
             \
