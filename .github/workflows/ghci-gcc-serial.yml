@@ -117,12 +117,3 @@ jobs:
         run: |
           cd ${GITHUB_WORKSPACE}/albany/build
           make -j 4
-      - name: Upload log files
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: logs
-          path: |
-            albany/build/CMakeCache.txt
-          retention-days: 14
-
