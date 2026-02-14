@@ -1,6 +1,7 @@
 #include "Albany_OmegahMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_OmegahUtils.hpp"
+#include "Albany_StringUtils.hpp"
 #include "OmegahGhost.hpp"
 
 namespace Albany {
@@ -131,6 +132,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
   // Elem states
   int num_ws = worksets_sizes.size();
   elemStateArrays.resize(worksets_sizes.size());
+  std::cout << "oh create SA, worksets_sizes: " << util::join(worksets_sizes,",") << "\n";
   for (const auto& st : elem_sis) {
     auto data = m_tags.at(st->name).array.data();
     auto dim = st->dim;

@@ -1,5 +1,6 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_StringUtils.hpp"
 
 namespace Albany {
 
@@ -16,6 +17,7 @@ ExtrudedMeshFieldAccessor (const Teuchos::RCP<AbstractMeshFieldAccessor>& basal_
 void ExtrudedMeshFieldAccessor::
 addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
+  std::cout << "st=" << st->name << ", dims: " << util::join(st->dim,",") << "\n";
   all_sis.push_back(st);
   // Add to the proper structure
   switch (st->stateType()) {
@@ -95,6 +97,7 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
         throw std::runtime_error("Error! Unexpected/unsupported rank for state '" + st.name + "'.\n");
     }
   };
+  std::cout << "ex create SA, worksets_sizes: " << util::join(worksets_sizes,",") << "\n";
   auto view_bstate = [&] (const StateStruct& st, int ws) {
     auto& bstate = m_basal_field_accessor->getElemStates()[ws][st.name];
     auto data_d = bstate.dev().data();
@@ -309,6 +312,7 @@ void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::st
       auto view_h = state.host();
       std::vector<int> dims;
       bstate.dimensions(dims);
+      std::cout << "ws=" << ws << ", bstate dims: " << util::join(dims,",") << "\n";
       int rank = view_h.rank();
       TEUCHOS_TEST_FOR_EXCEPTION (
           (nodal and (rank<2 or rank>3)) or (not nodal and (rank<1 or rank>2)), std::runtime_error,

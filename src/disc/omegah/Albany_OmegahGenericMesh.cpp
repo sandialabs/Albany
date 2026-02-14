@@ -215,7 +215,9 @@ loadOmegahMesh ()
   const auto& filename = m_params->get<std::string>("Input Filename");
   Omega_h::binary::read(filename, lib.world(), m_mesh.get());
   if (m_params->get("Rebalance",true)) {
+    printf("rebalancing the mesh\n");
     m_mesh->balance(); // re-partition to the number of ranks in world communicator
+    std::cout << "after rebal, oh nelems: " << OmegahGhost::getNumOwnedElms(*m_mesh) << "\n";
   }
   // omegah error estimation and adaptation requires ghosts
   m_mesh.get()->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
@@ -299,11 +301,16 @@ loadOmegahMesh ()
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
+  int numOwnedElems = OmegahGhost::getNumOwnedElms(*m_mesh);
+
   int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  // int ws_size = computeWorksetSize(ws_size_max,numOwnedElems);
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
                           nsNames, ssNames, ws_size, ebName,
                           ebNameToIndex));
+
+  std::cout << "ohm, ws size: " << ws_size << "\n";
 }
 
 OmegahGenericMesh::PartToGeoModelEntities

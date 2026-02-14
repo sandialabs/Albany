@@ -207,6 +207,7 @@ updateMesh ()
   } else { //no elements on this process
     m_workset_sizes.resize(num_ws);
   }
+  std::cout << "oh disc, ws sizes: " << util::join(m_workset_sizes,",") << "\n";
 
   m_workset_elements = DualView<int**>("ws_elems",num_ws,ws_size);
   for (int iws=0,ielem=0; iws<num_ws; ++iws) {

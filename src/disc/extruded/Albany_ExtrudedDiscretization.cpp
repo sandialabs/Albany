@@ -513,6 +513,7 @@ ExtrudedDiscretization::computeWorksetInfo()
     }
   }
   m_workset_elements.sync_to_dev();
+  std::cout << "ed, ws sizes: " << util::join(m_workset_sizes,",") << "\n";
 
   // For now, everything has the same element block name, and same phys index
   m_wsEBNames.resize(num_ws,m_extruded_mesh->meshSpecs[0]->ebName);

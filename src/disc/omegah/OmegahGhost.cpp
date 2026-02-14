@@ -10,14 +10,14 @@
 namespace OmegahGhost {
 
   Omega_h::LO getNumOwnedElms(const Omega_h::Mesh& cmesh) {
-    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    auto& mesh = const_cast<Omega_h::Mesh&>(cmesh);
     auto elmDim = mesh.dim();
     auto isElmOwned = mesh.owned(elmDim);
     return Omega_h::get_sum(isElmOwned);
   }
 
   Omega_h::HostRead<Omega_h::GO> getOwnedEntityGids(const Omega_h::Mesh& cmesh, int dim) {
-    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    auto& mesh = const_cast<Omega_h::Mesh&>(cmesh);
     OMEGA_H_CHECK(dim >= 0 && dim <= mesh.dim());
     OMEGA_H_CHECK(mesh.has_tag(dim, "global"));
     auto globals_d = mesh.globals(dim);

@@ -223,6 +223,7 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   if (not m_basal_mesh->isBulkDataSet()) {
     m_basal_mesh->setBulkData(comm);
   }
+  std::cout << "bmesh nelem: " << m_basal_mesh->get_num_local_elements() << "\n";
 
   // Take all required fields in the upperside disc (if any) and add them to the basalside
   auto& upper_params = m_params->sublist("Side Set Discretizations").sublist("upperside");
