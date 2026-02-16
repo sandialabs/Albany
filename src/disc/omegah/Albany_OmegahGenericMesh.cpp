@@ -299,7 +299,8 @@ loadOmegahMesh ()
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
-  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  int numOwnedElems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  int ws_size = computeWorksetSize(ws_size_max,numOwnedElems);
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
                           nsNames, ssNames, ws_size, ebName,
@@ -618,7 +619,8 @@ buildBox (const int dim)
 
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
-  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  int numOwnedElems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  int ws_size = computeWorksetSize(ws_size_max,numOwnedElems);
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Structured, *ctd, dim,
                           nsNames, ssNames, ws_size, ebName,

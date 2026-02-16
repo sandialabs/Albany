@@ -208,7 +208,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
 void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
 {
-  int num_elems = m_mesh->nelems();
+  int num_elems = OmegahGhost::getNumOwnedElms(*m_mesh);
   auto elem_nodes = m_mesh->ask_elem_verts();
   auto elem_nodes_h = hostRead(elem_nodes);
   int num_elem_nodes = elem_nodes.size() / num_elems;
