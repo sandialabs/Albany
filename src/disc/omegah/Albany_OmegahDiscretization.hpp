@@ -144,6 +144,7 @@ protected:
                   const int order,
                   const int dof_dim);
 
+  void computeSideSets ();
   void computeNodeSets ();
   void computeGraphs ();
 

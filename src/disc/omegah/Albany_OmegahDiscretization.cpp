@@ -274,11 +274,102 @@ updateMesh ()
     m_wsLocalDOFViews[ws] = {};
   }
 
+  computeSideSets ();
   computeNodeSets ();
   computeGraphs ();
 
   //reset output interval
   outputInterval = 0;
+}
+
+void OmegahDiscretization::
+computeSideSets ()
+{
+  const auto& ssNames = getMeshStruct()->meshSpecs[0]->ssNames;
+  using Omega_h::I32;
+  using Omega_h::I8;
+
+  auto& mesh = *m_mesh_struct->getOmegahMesh();
+  int side_dim = mesh.dim()-1;
+
+  assert(mesh.family() == OMEGA_H_SIMPLEX);
+
+  auto ownedElmLids = hostRead(OmegahGhost::getEntLidsInClosureOfOwnedElms(mesh, mesh.dim()));
+  auto ownedElmGids = OmegahGhost::getOwnedEntityGids(mesh, mesh.dim());
+
+  auto s2e = OmegahGhost::getUpAdjacentEntsInClosureOfOwnedElms(mesh, side_dim);
+  auto s2e_a2ab = hostRead(s2e.a2ab);
+  auto s2e_ab2b = hostRead(s2e.ab2b);
+
+  // auto e2s = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, side_dim));
+  // assert(e2s.size() == OmegahGhost::getNumOwnedElms(mesh)*Omega_h::simplex_degree(mesh.dim(),side_dim));
+
+  auto e2s = mesh.ask_down(mesh.dim(),side_dim);
+  auto e2s_ab2b = hostRead(e2s.ab2b);
+
+  int num_loc_sides = Omega_h::element_degree(mesh.family(),mesh.dim(),side_dim);
+  auto determine_side_pos = [&](int elem_lid, int side_lid) {
+    int offset = elem_lid*num_loc_sides;
+    for (int pos=0; pos<num_loc_sides; ++pos) {
+      if (e2s_ab2b[offset+pos]==side_lid)
+        return pos;
+    }
+    return -1;
+  };
+
+  m_sideSets.resize(getNumWorksets());
+
+  auto side_gids = hostRead(mesh.globals(side_dim));
+  Teuchos::Array<GO> side_GIDs;
+  for (const auto& ssn : ssNames) {
+    auto is_on_ss_host = hostRead(mesh.get_array<Omega_h::I8>(side_dim,ssn));
+
+    // Ensure the sideset exists (possibly empty) on all worksets
+    for (auto& ssList : m_sideSets) {
+      ssList[ssn].resize(0);
+    }
+
+    for (int i=0; i<is_on_ss_host.size(); ++i) {
+      if (not is_on_ss_host[i])
+        continue;
+
+      for(int adjIdx=s2e_a2ab[i]; adjIdx<s2e_a2ab[i+1]; adjIdx++) {
+        // the ielem element index from s2e is from the ghosted mesh
+        // and the cell_indexer only counts unghosted (owned) elements
+        auto ielem = s2e_ab2b[adjIdx];
+        auto elemOwnedLid = ownedElmLids[ielem];
+
+        int ws = m_elem_ws_idx[elemOwnedLid].ws;
+
+        auto& ss_vec = m_sideSets[ws][ssn];
+
+        auto& sStruct = ss_vec.emplace_back();;
+
+        sStruct.side_GID = side_gids[i];
+        sStruct.elem_GID = ownedElmGids[ielem];
+        side_GIDs.push_back(sStruct.side_GID);
+
+        // Save elem GID and LID. Here, LID is the local id *within* the workset
+        sStruct.ws_elem_idx = m_elem_ws_idx[elemOwnedLid].idx;
+
+        // Save the position of the side within element (0-based).
+        sStruct.side_pos = determine_side_pos(ielem,i);
+
+        TEUCHOS_TEST_FOR_EXCEPTION (sStruct.side_pos==-1, std::runtime_error,
+            "Something went wrong while locating a side in an element.\n"
+            " - side set: " << ssn << "\n"
+            " - side lid (osh): " << i << "\n"
+            " - owning elem lid (osh): " << ielem << "\n");
+        // Save the index of the element block that this elem lives in
+        sStruct.elem_ebIndex =
+            m_mesh_struct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[ws]];
+      }
+    }
+  }
+  auto vs = createVectorSpace(m_comm,side_GIDs);
+  m_sides_indexer = createGlobalLocalIndexer(vs);
+
+  buildSideSetsViews();
 }
 
 void OmegahDiscretization::
