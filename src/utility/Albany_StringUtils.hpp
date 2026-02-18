@@ -124,6 +124,24 @@ std::string join (const std::initializer_list<T>& c, const std::string& delim) {
   return ss.str();
 }
 
+// Overload that prints a function of each entry
+template<typename Iterable, typename Lambda>
+std::string join (const Iterable& c, const Lambda& f, const std::string& delim) {
+  auto it = std::cbegin(c);
+  auto end = std::cend(c);
+  if (it==end) {
+    return "";
+  }
+
+  std::stringstream ss;
+  ss << f(*it);
+  for (++it; it!=end; ++it) {
+    ss << delim << f(*it);
+  }
+  return ss.str();
+}
+
+
 } // namespace util
 
 #endif  // ALBANY_STRING_UTILS_HPP
