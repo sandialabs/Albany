@@ -81,6 +81,7 @@ ANONYMOUS:
         Method: Omegah
         Mesh Creation Method: OshFile
         Input Filename: ../ExoMeshes/gis_unstruct_2d.osh
+        Mark Parts: ['LateralSide']
         Number Of Time Derivatives: 0
         Required Fields Info:
           Number Of Fields: 4
