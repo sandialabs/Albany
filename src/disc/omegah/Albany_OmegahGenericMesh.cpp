@@ -2,16 +2,17 @@
 #include "Albany_OmegahUtils.hpp"
 #include "Albany_Omegah.hpp"
 #include "OmegahGhost.hpp"
+#include "Albany_StringUtils.hpp"
+
+#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_Gather.hpp"
 
 #include <Omega_h_for.hpp>        // for Omega_h::parallel_for
 #include <Omega_h_build.hpp>      // for Omega_h::build_box
 #include <Omega_h_file.hpp>       // for Omega_h::binary::read
 #include <Omega_h_mark.hpp>       // for Omega_h::mark_by_class
 #include <Omega_h_array_ops.hpp>  // for Omega_h::land_each
-
-#include "Albany_CombineAndScatterManager.hpp"
-#include "Albany_ThyraUtils.hpp"
-#include "Albany_Gather.hpp"
 
 #include <regex>
 
@@ -237,23 +238,41 @@ loadOmegahMesh ()
   // generation/adaptation workflow.
   // A dimension and id uniquely defines a geometric model entity.
   const auto& parts_names = m_params->get<Teuchos::Array<std::string>>("Mark Parts",{});
+  auto get_first = [](const auto& pair_it) {
+    return pair_it.first;
+  };
+  auto get_topo = [&](const int dim) {
+    return str2topo(Omega_h::topological_singular_name(m_mesh->family(),dim));
+  };
   for (const auto& pn : parts_names) {
-          auto& pl = m_params->sublist(pn);
-    const auto topo_str = pl.get<std::string>("Topo");
-    const auto topo = str2topo(pl.get<std::string>("Topo"));
-    const int dim = topo_dim(topo);
-    const int id  = pl.get<int>("Id");
-    const bool markDownward = pl.get<int>("Mark Downward",true); // Is default=true ok?
-    auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
-    //ghosted entities cannot be owned so we don't need to check the closure of owned elements
-    auto owned = m_mesh->owned(dim); 
-    auto is_in_part_and_owned = Omega_h::land_each(is_in_part, owned);
-    this->declare_part(pn,topo,is_in_part_and_owned,markDownward);
+    TEUCHOS_TEST_FOR_EXCEPTION (m_mesh->class_sets.count(pn)==0, std::runtime_error,
+        "[OmegahGenericMesh::loadOmegahMesh] Error! Cannot find part in mesh class_sets.\n"
+        " - part name: " + pn + "\n"
+        " - stored sets: " + util::join(m_mesh->class_sets,get_first,",") + "\n");
 
-    if (dim==0) {
-      nsNames.push_back(pn);
-    } else if (dim==m_mesh->dim()-1) {
-      ssNames.push_back(pn);
+    std::map<int,Omega_h::Bytes> is_in_part_map;
+    for (const auto& class_pair : m_mesh->class_sets.at(pn)) {
+      const int dim = class_pair.dim;
+      const int id  = class_pair.id;
+      auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
+      if (is_in_part_map.count(dim)>0) {
+        is_in_part_map[dim] = Omega_h::lor_each(is_in_part_map[dim],is_in_part);
+      } else {
+        is_in_part_map[dim] = is_in_part;
+      }
+    }
+
+    for (const auto& [dim, is_in_part] : is_in_part_map) {
+      //ghosted entities cannot be owned so we don't need to check the closure of owned elements
+      auto owned = m_mesh->owned(dim); 
+      auto is_in_part_and_owned = Omega_h::land_each(is_in_part, owned);
+      this->declare_part(pn,get_topo(dim),is_in_part_and_owned,/*markDownward = */ true);
+
+      if (dim==0) {
+        nsNames.push_back(pn);
+      } else if (dim==m_mesh->dim()-1) {
+        ssNames.push_back(pn);
+      }
     }
   }
 
