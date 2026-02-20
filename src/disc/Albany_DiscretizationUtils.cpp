@@ -180,10 +180,9 @@ readVectorFileSerial (const std::string& fname,
     std::string line;
     std::getline(ifile, line);
     std::istringstream iss(line);
-    iss >> numNodes >> numComponents;
-    TEUCHOS_TEST_FOR_EXCEPTION (iss.fail(),
-        Teuchos::Exceptions::InvalidParameterValue,
-        "[readVectorFileSerial] Error! First line of the file should cointain two integers.\n");
+    iss >> numNodes;
+    if(!(iss >> numComponents))
+      numComponents = 1;
   }
 
   Teuchos::broadcast(*comm,0,1,&numComponents);

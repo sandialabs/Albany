@@ -26,8 +26,8 @@ LaplacianSampling( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   discParams(discParams_),
   use_sdbcs_(false)
 {
-  neq =1;
-
+  neq = params->get("Number Of Equations", 1);
+  TEUCHOS_TEST_FOR_EXCEPTION ((neq < 1 || neq > 2), std::logic_error, "Error! We support only scalar solution or vector solution with dimension 2\n");
   sideName   = params->isParameter("Side Name")   ? params->get<std::string>("Side Name")   : "INVALID";
 }
 
@@ -58,7 +58,7 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
 
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,1));
+  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,neq));
 
   if(sideName != "INVALID") {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
@@ -76,7 +76,7 @@ void LandIce::LaplacianSampling::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Al
     auto numSideQPs      = sideCubature->getNumPoints();
 
 
-    dl_side = rcp(new Albany::Layouts(numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,1,sideName));
+    dl_side = rcp(new Albany::Layouts(numSideVertices,numSideNodes, numSideQPs,numDim-1,numDim,neq,sideName));
     dl->side_layouts[sideName] = dl_side;
   }
 
@@ -153,20 +153,29 @@ void LandIce::LaplacianSampling::constructNeumannEvaluators (const Teuchos::RCP<
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
 
-   std::vector<std::string> neumannNames(1);
+   std::vector<std::string> neumannNames(neq + 1);
    Teuchos::Array<Teuchos::Array<int> > offsets;
-   offsets.resize(1);
 
-   neumannNames[0] = "U";
-   offsets[0].resize(1);
-   offsets[0][0] = 0;
+   offsets.resize(neq + 1);
+   offsets[neq].resize(neq, 0);
+
+   if(neq == 1) {
+     neumannNames[0] = "U";
+     offsets[0].resize(1, 0);
+   } else { //neq == 2;
+     neumannNames[0] = "U0";
+     offsets[0].resize(1, 0);
+     neumannNames[1] = "U1";
+     offsets[1].resize(1, 1);
+     offsets[neq][1] = 1;
+   }
+   neumannNames[neq] = "all";
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
    std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
    Teuchos::ArrayRCP<std::string> dof_names(1);
    dof_names[0] = "prior_sample";
-
 
    nfm.resize(1); // LandIce problem only has one element block
 
@@ -183,6 +192,7 @@ LandIce::LaplacianSampling::getValidProblemParameters () const
 
   validPL->sublist("LandIce Laplacian Regularization", false, "Parameters needed to compute the Laplacian Regularization");
   validPL->set<std::string> ("Side Name", "", "Name of the lateral side set");
+  validPL->set<int> ("Number Of Equations", 1, "");
   validPL->set<int>("Side Cubature Degree", 3, "Cubature degree used on the mesh side");
 
   return validPL;

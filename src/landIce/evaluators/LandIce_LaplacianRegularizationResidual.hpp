@@ -43,6 +43,7 @@ namespace LandIce {
     
     unsigned int numCells;
     unsigned int numNodes;
+    unsigned int numEqs;
     unsigned int numQPs;
     unsigned int cellDim;
 

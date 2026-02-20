@@ -165,6 +165,10 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     // Get current state specs
     auto fieldName = thisFieldList.get<std::string>("Field Name");
     stateName = thisFieldList.get<std::string>("State Name", fieldName);
+    auto fieldType  = thisFieldList.get<std::string>("Field Type");
+    TEUCHOS_TEST_FOR_EXCEPTION (!(fieldType == "Node Scalar") && !(fieldType == "Node Vector"), std::runtime_error,  "Error! Field Type " << fieldType << " not supported.\n");
+    bool isScalar = (fieldType == "Node Scalar");
+    auto layout = isScalar ? dl->node_scalar : dl->node_vector;
 
     bool is_param = dist_params.find(stateName) != dist_params.end();    
 
@@ -173,72 +177,27 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
 
     if(is_param) {
       entity = Albany::StateStruct::NodalDistParameter;
-      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity);
+      p = stateMgr.registerStateVariable(stateName, layout, meshSpecs.ebName, true, &entity);
       ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
       fm0.template registerEvaluator<EvalT>(ev);
     } else {
       entity = Albany::StateStruct::NodalDataToElemNode;
-      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+      p = stateMgr.registerStateVariable(stateName, layout, elementBlockName, true, &entity);
       p->set<std::string>("Field Name", stateName);
       ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-    }   
-  }
-
-  {
-    stateName = "weighted_normal_sample";
-    /*
-    bool isParameter = false;
-    for (int p_index=0; p_index< num_dist_param_vecs; ++p_index) {
-      std::string parameter_sublist_name = util::strint("Parameter", p_index+num_param_vecs);
-      Teuchos::ParameterList param_list = parameterParams.sublist(parameter_sublist_name);
-      param_name = param_list.get<std::string>("Name");
-      if(param_name == stateName) {
-        isParameter = true;
-        break;
-      }
     }
+    
+    if(isScalar)
+      ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
+    else
+      ev = evalUtils.getPSTUtils().constructDOFVecInterpolationEvaluator(stateName);
+    fm0.template registerEvaluator<EvalT> (ev);
 
-    if(isParameter) {
-      entity = Albany::StateStruct::NodalDistParameter;
-      stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-      ev = evalUtils.constructGatherScalarNodalParameter(stateName,stateName);
-    } else {
-      entity = Albany::StateStruct::NodalDataToElemNode;
-      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-      p->set<std::string>("Field Name", stateName);
-      ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    if(stateName == "weighted_normal_sample") {
+      ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator(stateName);
+      fm0.template registerEvaluator<EvalT> (ev);
     }
-    fm0.template registerEvaluator<EvalT>(ev);
-*/
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator(stateName);
-    fm0.template registerEvaluator<EvalT> (ev);
-  }
-
-  {
-    stateName = "target_field";
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
-    fm0.template registerEvaluator<EvalT> (ev);
-  }
-
-  {
-    stateName = "solution_opt";
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
-    stateName = "target_field";
-    entity = Albany::StateStruct::NodalDataToElemNode;
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-    p->set<std::string>("Field Name", stateName);
-    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator(stateName);
-    fm0.template registerEvaluator<EvalT> (ev);
-
   }
   
   if(numDim == 3) {
@@ -263,7 +222,7 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
         entity = Albany::StateStruct::NodalDataToElemNode;
 
         // Register the state
-        p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_scalar, sideEBName, true, &entity);
+        p = stateMgr.registerSideSetStateVariable(ss_name, stateName, fieldName, ss_dl->node_vector, sideEBName, true, &entity);
         ev = Teuchos::rcp(new PHAL::LoadSideSetStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -280,20 +239,20 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
   // ------------------- Interpolations and utilities ------------------ //
 
   // Gather solution field
-  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset);
+  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate solution field
-  ev = evalUtils.constructDOFInterpolationEvaluator(dof_names[0]);
+  ev = evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate solution gradient
-  ev = evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]);
+  ev = evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Scatter residual
   resid_names[0] = "Laplacian Residual";
-  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Laplacian Sampling");
+  ev = evalUtils.constructScatterResidualEvaluator(true, resid_names, offset, "Scatter Laplacian Sampling");
   fm0.template registerEvaluator<EvalT> (ev);
 
   //----- Gather Coordinate Vector (general parameters)
@@ -314,10 +273,10 @@ LandIce::LaplacianSampling::constructEvaluators (PHX::FieldManager<PHAL::AlbanyT
     ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator(Albany::coord_vec_name,sideName,"Vertex Vector",cellType,Albany::coord_vec_name + "_" + sideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
-    ev = evalUtils.constructDOFCellToSideEvaluator(dof_names[0], sideName, "Node Scalar", cellType, dof_names[0] + "_" + sideName);
+    ev = evalUtils.constructDOFCellToSideEvaluator(dof_names[0], sideName, "Node Vector", cellType, dof_names[0] + "_" + sideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
-    ev = evalUtils.constructDOFInterpolationSideEvaluator (dof_names[0] + "_" + sideName, sideName);
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator (dof_names[0] + "_" + sideName, sideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, sideCubature, sideName);
