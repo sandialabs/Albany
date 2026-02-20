@@ -29,7 +29,7 @@ ANONYMOUS:
           Field Rank: Scalar
           Target Value: 0.0
       Response 1:  #regularization term
-        Scaling Coefficient: 1.0
+        Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
         Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/E_prior.mm
         Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/E_prior.mm
@@ -59,7 +59,7 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
       Response 2:
-        Scaling Coefficient: 1.0
+        Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
         Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
         Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
@@ -67,14 +67,14 @@ ANONYMOUS:
         #Matrix D Is Diagonal: true
         Field Name: weighted_normal_sample
       Response 3:
-        Scaling Coefficient: 1.0
+        Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
         Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state.mm
         Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state.mm
         Matrix A Is Symmetric: true
         Field Name: solution_opt
       Response 4:
-        Scaling Coefficient: 1.0
+        Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
         Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
         Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
@@ -497,5 +497,5 @@ ANONYMOUS:
     Test Value: 0.0
     Relative Tolerance: 1.0e-05
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [2982.53799582]
+    Piro Analysis Test Values: [2982.55445976]
 ...

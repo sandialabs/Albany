@@ -171,8 +171,12 @@ readVectorFileSerial (const std::string& fname,
     TEUCHOS_TEST_FOR_EXCEPTION (!ifile.is_open(), std::runtime_error,
           "[readVectorFileSerial] Error! Unable to open the file.\n"
           "  - file name: " << fname << "\n");
-
-    ifile >> numNodes >> numComponents;
+    std::string line;
+    std::getline(ifile, line);
+    std::istringstream iss(line);
+    iss >> numNodes;
+    if(!(iss >> numComponents))
+      numComponents = 1;
   }
 
   Teuchos::broadcast(*comm,0,1,&numComponents);

@@ -40,18 +40,18 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   if(lumpedMassMatrix) {
     forcing        = decltype(forcing)(forcing_name, dl->node_scalar);
-    field          = decltype(field)(field_name, dl->node_scalar);
+    field          = decltype(field)(field_name, dl->node_vector);
   } else {
     forcing        = decltype(forcing)(forcing_name, dl->qp_scalar);
-    field          = decltype(field)(field_name, dl->qp_scalar);  
-    side_field     = decltype(side_field)(p.get<std::string>("Side Field Variable Name"), dl_side->qp_scalar); 
+    field          = decltype(field)(field_name, dl->qp_vector);  
+    side_field     = decltype(side_field)(p.get<std::string>("Side Field Variable Name"), dl_side->qp_vector); 
     side_BF        = decltype(side_BF)(p.get<std::string>("Side BF Name"), dl_side->node_qp_scalar);     
   }
   BF             = decltype(BF)(p.get<std::string>("BF Name"), dl->node_qp_scalar); 
-  gradField      = decltype(gradField)(gradField_name, dl->qp_gradient);
+  gradField      = decltype(gradField)(gradField_name, dl->qp_vecgradient);
   gradBF         = decltype(gradBF)(gradBFname,dl->node_qp_gradient),
   w_measure      = decltype(w_measure)(w_measure_name, dl->qp_scalar);
-  residual       = decltype(residual)(residual_name, dl->node_scalar);
+  residual       = decltype(residual)(residual_name, dl->node_vector);
   w_side_measure = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
 
   Teuchos::RCP<shards::CellTopology> cellType;
@@ -60,6 +60,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   // Get Dimensions
   numCells  = dl->node_scalar->extent(0);
   numNodes  = dl->node_scalar->extent(1);
+  numEqs = dl->node_vector->extent(2);
 
   numQPs = dl->qp_scalar->extent(1);
   cellDim  = cellType->getDimension();
@@ -126,25 +127,27 @@ operator() (const LaplacianRegularization_Cell_Tag&, const int& cell) const {
       trapezoid_weights += w_measure(cell, qp);
     trapezoid_weights /= numNodes;
   }
-  for (unsigned int inode=0; inode<numNodes; ++inode) {
+  for (unsigned int icomp=0; icomp < numEqs; ++icomp) {
+    for (unsigned int inode=0; inode<numNodes; ++inode) {
       ScalarT t = 0;
       for (unsigned int qp=0; qp<numQPs; ++qp)
         for (unsigned int idim=0; idim<cellDim; ++idim)
-          t += laplacian_coeff*gradField(cell,qp,idim)*gradBF(cell,inode, qp,idim)*w_measure(cell, qp);
+          t += laplacian_coeff*gradField(cell,qp,icomp,idim)*gradBF(cell,inode, qp,idim)*w_measure(cell, qp);
 
       if(lumpedMassMatrix) {
         //using trapezoidal rule to get diagonal mass matrix
-        t += (mass_coeff*field(cell,inode)-forcing(cell,inode))* trapezoid_weights;
+        t += (mass_coeff*field(cell,inode,icomp)-forcing(cell,inode))* trapezoid_weights;
       } else {
         for (unsigned int qp=0; qp<numQPs; ++qp)
-          t += (mass_coeff*field(cell,qp)-forcing(cell,qp))*BF(cell,inode, qp)*w_measure(cell, qp);
+          t += (mass_coeff*field(cell,qp,icomp)-forcing(cell,qp))*BF(cell,inode, qp)*w_measure(cell, qp);
       }
 
       for (unsigned int qp=0; qp<numQPs; ++qp)
         for (unsigned int idim=0; idim<cellDim; ++idim)
-          t += advection_vect[idim]*gradField(cell,qp,idim)*BF(cell,inode, qp)*w_measure(cell, qp);
+          t += advection_vect[idim]*gradField(cell,qp,icomp,idim)*BF(cell,inode, qp)*w_measure(cell, qp);
 
-      residual(cell,inode) = t;
+      residual(cell,inode, icomp) = t;
+    }
   }
 
 }
@@ -165,13 +168,16 @@ operator() (const LaplacianRegularization_Side_Tag&, const int& sideSet_idx) con
 
     for (unsigned int inode=0; inode<numSideNodes; ++inode) {
       auto cell_node = sideNodes.view_device()(side,inode);
-      residual(cell,cell_node) += robin_coeff*field(cell,cell_node)* side_trapezoid_weights;
+      for (unsigned int icomp=0; icomp < numEqs; ++icomp)
+        residual(cell,cell_node,icomp) += robin_coeff*field(cell,cell_node,icomp)* side_trapezoid_weights;
     }
   } else {
     for (unsigned int inode=0; inode<numSideNodes; ++inode) {
       auto cell_node = sideNodes.view_device()(side,inode);
-      for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-        residual(cell,cell_node) += robin_coeff*side_field(sideSet_idx,qp)*side_BF(sideSet_idx, inode, qp)*w_side_measure(sideSet_idx, qp);
+      for (unsigned int icomp=0; icomp < numEqs; ++icomp) {
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          residual(cell,cell_node,icomp) += robin_coeff*side_field(sideSet_idx,qp,icomp)*side_BF(sideSet_idx, inode, qp)*w_side_measure(sideSet_idx, qp);
+        }
       }
     }
   }

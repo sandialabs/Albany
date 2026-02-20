@@ -485,7 +485,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
         }
         break;
       case FIELD_TYPE::EXPONENT_OF_FIELD:
-        muValue = std::exp(muField(cell,ipt));
+        muValue = std::exp(std::min(400.0,std::max(-400.0,muField(cell,ipt))));
         break;
       case FIELD_TYPE::CONSTANT:
         muValue = mu;
