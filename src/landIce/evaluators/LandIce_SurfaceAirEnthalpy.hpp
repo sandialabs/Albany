@@ -40,10 +40,16 @@ public:
   void evaluateFields(typename Traits::EvalData workset);
 
 private:
+  typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input
-  PHX::MDField<const SurfTempST,Cell,Node>   surfaceTemp;  //[K]
+  PHX::MDField<const SurfTempST,Cell,Node>         surfaceTemp;  //[K]
+  PHX::MDField<const MeshScalarT, Cell, Node,Dim>  coords;       //[km]
+  PHX::MDField<const ParamScalarT, Cell, Node>     H;            //[km]
+  PHX::MDField<const ParamScalarT, Cell, Node>     topSurface;   //[km]
+  PHX::MDField<const MeshScalarT,Cell,Node>    	   meltingTemp;  //[K]
+
 
   // Output:
   PHX::MDField<SurfTempST,Cell,Node>   surfaceEnthalpy;  //[MW s m^{-3}]
@@ -54,7 +60,7 @@ private:
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
   double rho_i; //[kg m^{-3}]
   double T0;    //[K]
-  double Tm; //[K], 273.15
+  double Tm;    //[K], 273.15
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
 

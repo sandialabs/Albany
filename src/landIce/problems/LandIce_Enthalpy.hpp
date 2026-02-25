@@ -571,12 +571,16 @@ LandIce::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
     //Input
     p->set<ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
     p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
+    p->set<std::string>("Thickness Name", "ice_thickness");
+    p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
+    p->set<std::string>("Top Surface Name", "surface_height");
 
     //Output
     p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
-
-    ev = Teuchos::rcp(new LandIce::SurfaceAirEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    if constexpr(std::is_same_v<EvalT, PHAL::AlbanyTraits::Residual>) {
+      ev = Teuchos::rcp(new LandIce::SurfaceAirEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   // --- LandIce Temperature: diff enthalpy is h - hs.

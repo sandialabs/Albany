@@ -19,6 +19,10 @@ template<typename EvalT, typename Traits, typename SurfTempST>
 SurfaceAirEnthalpy<EvalT,Traits,SurfTempST>::
 SurfaceAirEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   surfaceTemp    (p.get<std::string> ("Surface Air Temperature Name"), dl->node_scalar),
+  meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
+  coords         (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
+  topSurface     (p.get<std::string> ("Top Surface Name"), dl->node_scalar),
+  H              (p.get<std::string> ("Thickness Name"), dl->node_scalar),
   surfaceEnthalpy(p.get<std::string> ("Surface Air Enthalpy Name"), dl->node_scalar)
 {
   fieldName =  p.get<std::string>("Surface Air Temperature Name");
@@ -29,6 +33,10 @@ SurfaceAirEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
   numNodes = dims[1];
 
   this->addDependentField(surfaceTemp);
+  this->addDependentField(meltingTemp);
+  this->addDependentField(coords);
+  this->addDependentField(topSurface);
+  this->addDependentField(H);
   this->addEvaluatedField(surfaceEnthalpy);
 
   this->setName("Surface air Enthalpy");
@@ -60,8 +68,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                        KOKKOS_CLASS_LAMBDA(const int& cell) {
-    for (std::size_t node = 0; node < numNodes; ++node)
-      surfaceEnthalpy(cell,node) = rho_i * c_i * ( KU::min(surfaceTemp(cell,node),Tm) - T0 ) * powm6;
+    for (std::size_t node = 0; node < numNodes; ++node) {
+      ParamScalarT sigmaz = (topSurface(cell,node)-coords(cell,node,2))/H(cell,node);
+      SurfTempST T = sigmaz*meltingTemp(cell,node) + (1.0 - sigmaz)*KU::min(surfaceTemp(cell,node),meltingTemp(cell,node));
+      //SurfTempST T = KU::min(surfaceTemp(cell,node),Tm);
+      surfaceEnthalpy(cell,node) = rho_i * c_i * (T - T0 ) * powm6;
+    }
   });
 }
 

@@ -19,7 +19,7 @@ ANONYMOUS:
           Scaling: 0.5
           Name: Squared L2 Difference Source ST Target PST
           Source Field Name: prior_sample
-          Field Rank: Scalar
+          Field Rank: Vector
           Target Field Name: target_field
         Response 1: 
           Scaling: 5.0e-4
@@ -262,17 +262,20 @@ ANONYMOUS:
       Field 1:
         Field Name: solution_opt
         Field Origin: File
-        Field Type: Node Scalar
+        Field Type: Node Vector
+        Vector Dim: 1
         File Name: ../AsciiMeshes/HDSA_AdvDiff/x_opt.ascii
       Field 2:
         Field Name: solution_diff_sample_0
         Field Origin: File
-        Field Type: Node Scalar
+        Field Type: Node Vector
+        Vector Dim: 1
         File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_opt.ascii
       Field 3:
         Field Name: solution_diff_sample_1
         Field Origin: File
-        Field Type: Node Scalar
+        Field Type: Node Vector
+        Vector Dim: 1
         File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_1.ascii
       Field 4:
         Field Name: param_opt
@@ -291,7 +294,8 @@ ANONYMOUS:
         File Name: ../AsciiMeshes/HDSA_AdvDiff/p_1.ascii
       Field 7:
         Field Name: target_field
-        Field Type: Node Scalar
+        Field Type: Node Vector
+        Vector Dim: 1
         Field Origin: File
         Field Expression: ['50.0 - 30.0 * (x - 0.5)^2']
         #File Name: ./z_sampl.ascii

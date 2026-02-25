@@ -33,6 +33,7 @@ public PHX::EvaluatorDerived<EvalT, Traits>
 public:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::MeshScalarT ParamScalarT;
   typedef typename EvalT::ScalarT ScalarT;
 
   Temperature (const Teuchos::ParameterList& p,
@@ -46,12 +47,16 @@ public:
 private:
 
   // This is just to allow ETI machinery to work. In a real setting, ScalarT should always be constructible from TemperatureST.
-  typedef typename Albany::StrongestScalarType<TemperatureST,MeshScalarT>::type OutputScalarT;
+  typedef typename Albany::StrongestScalarType<TemperatureST,ParamScalarT>::type OutputScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node> 		meltingTemp; //[K]
-  PHX::MDField<const MeshScalarT,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
-  PHX::MDField<const TemperatureST,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
+  PHX::MDField<const MeshScalarT,Cell,Node>        surfaceTemp;  //[K]
+  PHX::MDField<const MeshScalarT,Cell,Node> 		   meltingTemp; //[K]
+  PHX::MDField<const MeshScalarT,Cell,Node> 		   enthalpyHs;  //[MW s m^{-3}]
+  PHX::MDField<const TemperatureST,Cell,Node> 	   enthalpy;  //[MW s m^{-3}]
+  PHX::MDField<const MeshScalarT, Cell, Node,Dim>  coords;       //[km]
+  PHX::MDField<const ParamScalarT, Cell, Node>     H;            //[km]
+  PHX::MDField<const ParamScalarT, Cell, Node>     topSurface;   //[km]
 
   // Output:
   PHX::MDField<OutputScalarT,Cell,Node> 	temperature; //[K]
@@ -67,6 +72,7 @@ private:
   double temperature_scaling; // [MW^{-1} s^{-1} K m^{3}]
 
   PHAL::MDFieldMemoizer<Traits> memoizer;
+  bool firstTime;
 
 public:
 

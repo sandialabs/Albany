@@ -38,6 +38,7 @@ DirichletField<PHAL::AlbanyTraits::Residual, Traits>::
 DirichletField(Teuchos::ParameterList& p)
  : DirichletField_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
+  first = true;
   // Nothing to do here
 }
 
@@ -70,12 +71,35 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const auto& sol_dof_mgr   = dirichletWorkset.disc->getDOFManager();
   const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
   const auto& sol_offsets = sol_dof_mgr->getGIDFieldOffsets(this->offset);
+  //const auto& elems = sol_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+
+  if((first == true)) {
+    std::cout << "\n\n\nAttenzione, entro qui\n\n"<<std::endl;
+    const auto numNodes = sol_elem_dof_lids.extent_int(1) / sol_dof_mgr->getNumFields();
+    const auto numElems = sol_elem_dof_lids.extent_int(0);
+    //std::cout << "Num Nodes: " << numNodes << " " << numElems << std::endl;
+    Teuchos::RCP<Thyra_Vector> x_ = Teuchos::rcp_const_cast<Thyra_Vector>(dirichletWorkset.x);
+    Teuchos::ArrayRCP<ST> x_View    = Albany::getNonconstLocalData(x_);
+    for (int ielem=0; ielem<numElems; ++ielem) {
+      for (int pos=0; pos<numNodes; ++pos) {
+        const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+        const int p_lid = p_elem_dof_lids(ielem,p_offsets[pos]);
+       //std::cout << x_lid << " " << p_lid << std::endl;
+        if((x_lid < x_View.size()) && (p_lid < p_constView.size()))
+            x_View[x_lid] = p_constView[p_lid];
+      }
+    }  
+    first = false;
+  }
+
   for (const auto& ep : ns_node_elem_pos) {
     const int ielem = ep.first;
-    const int pos   = ep.second;
+    const int pos   = ep.second; 
+    //std::cout << ielem << " " << pos << std::endl;
     const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
     const int p_lid = p_elem_dof_lids(ielem,p_offsets[pos]);
     f_nonconstView[x_lid] = x_constView[x_lid] - p_constView[p_lid];
+//      std::cout << f_nonconstView[x_lid] << "!" << std::endl;
   }
 }
 

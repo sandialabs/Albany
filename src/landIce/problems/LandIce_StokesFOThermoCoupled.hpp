@@ -358,7 +358,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("Surface Height Variable Name", "surface_height");
-  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+  p->set<std::string>("Coordinate Vector Variable Name", Albany::coord_vec_name);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
 
   //Output
@@ -377,12 +377,17 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     //Input
     p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
     p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
+    p->set<std::string>("Thickness Name", ice_thickness_name);
+    p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
+    p->set<std::string>("Top Surface Name", surface_height_name);
+    p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
 
     //Output
     p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
-    ev = createEvaluatorWithOneScalarType<SurfaceAirEnthalpy,EvalT>(p,dl,get_scalar_type("surface_air_temperature"));
-
-    fm0.template registerEvaluator<EvalT>(ev);
+    if constexpr(std::is_same_v<EvalT, PHAL::AlbanyTraits::Residual>) {
+      ev = Teuchos::rcp(new LandIce::SurfaceAirEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   // --- LandIce Temperature: diff enthalpy is h - hs.
@@ -396,6 +401,10 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
   p->set<std::string>("Side Set Name", basalSideName);
+  p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
+  p->set<std::string>("Thickness Name", ice_thickness_name);
+  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
+  p->set<std::string>("Top Surface Name", surface_height_name);
 
   //Output
   p->set<std::string>("Temperature Variable Name", temperature_name);

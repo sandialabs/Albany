@@ -24,12 +24,16 @@ Temperature<EvalT,Traits,TemperatureST>::
 Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
  : meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar)
  , enthalpyHs     (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar)
- , enthalpy     (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar)
- // , thickness     (p.get<std::string> ("Thickness Variable Name"), dl->node_scalar)
+ , enthalpy       (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar)
+ , H              (p.get<std::string> ("Thickness Name"), dl->node_scalar)
+ , topSurface     (p.get<std::string> ("Top Surface Name"), dl->node_scalar)
+ , surfaceTemp    (p.get<std::string> ("Surface Air Temperature Name"), dl->node_scalar)
+ , coords         (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector)
  , temperature    (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar)
  , correctedTemp  (p.get<std::string> ("Corrected Temperature Variable Name"), dl->node_scalar)
  , diffEnth       (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
 {
+  firstTime = true;
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
@@ -43,7 +47,10 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
   this->addDependentField(meltingTemp);
   this->addDependentField(enthalpyHs);
   this->addDependentField(enthalpy);
-  // this->addDependentField(thickness);
+  this->addDependentField(H);
+  this->addDependentField(topSurface);
+  this->addDependentField(surfaceTemp);
+  this->addDependentField(coords);
 
   this->addEvaluatedField(temperature);
   this->addEvaluatedField(correctedTemp);
@@ -65,18 +72,29 @@ KOKKOS_INLINE_FUNCTION
 void Temperature<EvalT,Traits,TemperatureST>::
 operator() (const int &cell) const{
 
-  for (unsigned int node = 0; node < numNodes; ++node) {
-    if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-      temperature(cell,node) = temperature_scaling * enthalpy(cell,node) + T0;
-    else
-      temperature(cell,node) = meltingTemp(cell,node);
+  if(firstTime)
+    for (unsigned int node = 0; node < numNodes; ++node) {
+      ParamScalarT sigmaz = (topSurface(cell,node)-coords(cell,node,2))/H(cell,node);
+      if ( surfaceTemp(cell,node) < meltingTemp(cell,node))
+        temperature(cell,node) = sigmaz*(meltingTemp(cell,node)) + (1.0 - sigmaz)*surfaceTemp(cell,node);
+      else
+        temperature(cell,node) = meltingTemp(cell,node);
 
-    correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
+      correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
 
-    diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
-  }
-  
+      diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+    }
+  else
+    for (unsigned int node = 0; node < numNodes; ++node) {
+      if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
+        temperature(cell,node) = temperature_scaling * enthalpy(cell,node) + T0;
+      else
+        temperature(cell,node) = meltingTemp(cell,node);
 
+      correctedTemp(cell, node) = temperature(cell,node) + Tm - meltingTemp(cell,node);
+
+      diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+    }
 }
 
 template<typename EvalT, typename Traits, typename TemperatureST>
@@ -104,6 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (memoizer.have_saved_data(workset,this->evaluatedFields())) return;
   
   Kokkos::parallel_for(Temperature_Policy(0, workset.numCells), *this);
+  firstTime = false;
 }
 
 }  // end namespace LandIce

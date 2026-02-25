@@ -53,6 +53,7 @@ class DirichletField<PHAL::AlbanyTraits::Residual, Traits>
     DirichletField(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
     void evaluateFields(typename Traits::EvalData d);
+    bool first;
 };
 
 // **************************************************************
