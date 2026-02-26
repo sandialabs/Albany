@@ -156,7 +156,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   STKFieldType* dirichletField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "dirichlet_field");
   STKFieldType* muField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
   STKFieldType* bedRoughnessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_roughness");
-  STKFieldType* bulkFrictionField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bulk_friction_coefficient");
+  STKFieldType* bulkFrictionField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bulk_friction");
   STKFieldType* basalDebrisField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "basal_debris_factor");
   STKFieldType* stiffeningFactorLogField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "stiffening_factor_log");
   STKFieldType* effectivePressureField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
@@ -826,7 +826,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   //set basal debris factor
   if(requireBasalDebris){
     Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
-    field.set<std::string>("Field Name", "basal_debris");
+    field.set<std::string>("Field Name", "basal_debris_factor");
     field.set<std::string>("Field Type", "Node Scalar");
     field.set<std::string>("Field Origin", "Mesh");
   }

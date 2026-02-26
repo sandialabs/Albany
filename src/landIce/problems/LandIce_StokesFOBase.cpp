@@ -101,7 +101,7 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   bed_topography_observed_name= "observed_" + bed_topography_name;
   bed_roughness_name          = params->sublist("Variables Names").get<std::string>("Bed Roughness Name"    ,"bed_roughness");
   bulk_friction_name          = params->sublist("Variables Names").get<std::string>("Bulk Friction Coefficient Name", "bulk_friction");
-  basal_debris_name           = params->sublist("Variables Names").get<std::string>("Basal Debris Factor Name", "basal_debris");
+  basal_debris_name           = params->sublist("Variables Names").get<std::string>("Basal Debris Factor Name", "basal_debris_factor");
   flow_factor_name            = params->sublist("Variables Names").get<std::string>("Flow Factor Name"       ,"flow_factor");
   stiffening_factor_log_name  = params->sublist("Variables Names").get<std::string>("Stiffening Factor Log Name" ,"stiffening_factor_log");
   damage_factor_name          = params->sublist("Variables Names").get<std::string>("Damage Factor Name"     ,"damage_factor");
@@ -658,7 +658,7 @@ void StokesFOBase::setupEvaluatorRequests ()
         if (type=="REGULARIZED COULOMB") {
           // For Coulomb we *may* have another distributed parameter field.
           // We interpolate (and possibly project on ss) only if it is an inputs
-          auto fname = "bed_roughness";
+          auto fname = bed_roughness_name;
           if (is_input_field[fname] || is_ss_input_field[ssName][fname]) {
             ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
             ss_build_interp_ev[ssName][fname][IReq::QP_VAL] = true;
@@ -668,19 +668,19 @@ void StokesFOBase::setupEvaluatorRequests ()
 	if (type=="DEBRIS FRICTION") {
 	  // For debris friction slip law, we have bed roughness as in reg Coulomb
 	  // As well as two new parameters: bulk friction coefficient and basal debris factor
-	  auto fname = "bed_roughness";
+	  auto fname = bed_roughness_name;
 	  if (is_input_field[fname] || is_ss_input_field[ssName][fname]) {
 	    ss_build_interp_ev[ssName][fname][IReq::CELL_TO_SIDE] = true;
 	    ss_build_interp_ev[ssName][fname][IReq::QP_VAL] = true;
 	  }
 	  setSingleFieldProperties(fname, FRT::Scalar, FST::ParamScalar);
-	  auto bname = "bulk_friction";
+	  auto bname = bulk_friction_name;
 	  if (is_input_field[bname] || is_ss_input_field[ssName][bname]) {
 	    ss_build_interp_ev[ssName][bname][IReq::CELL_TO_SIDE] = true;
 	    ss_build_interp_ev[ssName][bname][IReq::QP_VAL] = true;
 	  }
 	  setSingleFieldProperties(bname, FRT::Scalar, FST::ParamScalar);
-	  auto dname = "basal_debris";
+	  auto dname = basal_debris_name;
 	  if (is_input_field[dname] || is_ss_input_field[ssName][dname]) {
 	    ss_build_interp_ev[ssName][dname][IReq::CELL_TO_SIDE] = true;
 	    ss_build_interp_ev[ssName][dname][IReq::QP_VAL] = true;
