@@ -111,25 +111,41 @@ RUN wget -q "https://github.com/conda-forge/miniforge/releases/latest/download/M
 ENV PATH="/home/runner/miniforge/bin:${PATH}"
 
 # set up compass
+# NOTE: Compass is currently skipped on ARM (aarch64).
+# The e3sm/label/compass + conda-forge channels do not currently provide
+# all required dependencies on linux-aarch64 (notably moab and otps), so
+# `conda create` for compass fails on ARM at solve time.
 # Note: the -fno-lto flags were needed to fix an internal compiler.
 # This may be specific to my machine architecture and the compiler version being used here and should not
 # generally be required.  But I don't think they are going to hurt either, as we don't expect to use
 # jigsaw much in this container setup.
-RUN conda create -n compass -c e3sm/label/compass -y -c conda-forge python=3.13 "compass=1.8.0=mpi_mpich*"
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+            conda create -n compass -c e3sm/label/compass -y -c conda-forge python=3.13 "compass=1.8.0=mpi_mpich*"; \
+        else \
+            echo "Skipping Compass conda env on $(uname -m): required deps (moab, otps) are not available for linux-aarch64."; \
+        fi
 
 # build jigsaw for compass
 WORKDIR /tmp
-RUN /home/runner/miniforge/bin/conda run -n compass bash -lc '\
-    export CFLAGS="-O2 -fno-lto" && \
-    export CXXFLAGS="-O2 -fno-lto" && \
-    export LDFLAGS="-fno-lto" && \
-    build_jigsaw --clone --subdir jigsaw-python'
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+            /home/runner/miniforge/bin/conda run -n compass bash -lc '\
+            export CFLAGS="-O2 -fno-lto" && \
+            export CXXFLAGS="-O2 -fno-lto" && \
+            export LDFLAGS="-fno-lto" && \
+            build_jigsaw --clone --subdir jigsaw-python'; \
+        else \
+            echo "Skipping JIGSAW build because Compass env is not available on $(uname -m)."; \
+        fi
 
 # create compass load script
 WORKDIR /home/runner
-RUN /bin/bash -lc 'source /home/runner/miniforge/etc/profile.d/conda.sh && \
-    conda activate compass && \
-    create_compass_load_script'
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+            /bin/bash -lc 'source /home/runner/miniforge/etc/profile.d/conda.sh && \
+            conda activate compass && \
+            create_compass_load_script'; \
+        else \
+            echo "Skipping compass load script on $(uname -m): Compass env not installed."; \
+        fi
 
 # add the compass cfg file specific to the container
 ADD --chown=runner:fanssie --chmod=775 compass-container.cfg /home/runner
