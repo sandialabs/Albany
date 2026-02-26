@@ -2,8 +2,8 @@
 set -e
 
 # Load compass
-source load_compass_1.8.0_mpich.sh
-echo "compass conda env activated"
+#source load_compass_1.8.0_mpich.sh
+#echo "compass conda env activated"
 
 # Execute the command passed to the container
 exec "$@"

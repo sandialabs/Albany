@@ -1,4 +1,5 @@
-FROM ghcr.io/sandialabs/albany:gcc-12-serial
+ARG BASE_IMAGE=ghcr.io/sandialabs/albany:gcc-12-serial
+FROM ${BASE_IMAGE}
 
 # Albany
 RUN cd $SOFTWARE_ROOT && \
