@@ -40,11 +40,10 @@ RUN apt-get update &&       \
     apt-get install -y      \
         libhdf5-openmpi-dev \
         libnetcdf-mpi-dev   \
+        netcdf-bin          \
         libpnetcdf-dev      \
         libmetis-dev        \
         libparmetis-dev
-
-ENV NETCDF_C_ROOT=/usr/lib/x86_64-linux-gnu/netcdf/mpi
 
 # Create a bash goodies file, for users to load when manually running the container
 # Simply run 'source /opt/share/bash-goodies.sh' to get these
