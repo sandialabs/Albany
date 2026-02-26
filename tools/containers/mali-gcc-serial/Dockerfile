@@ -2,9 +2,12 @@ ARG BASE_IMAGE=ghcr.io/sandialabs/albany:gcc-12-serial
 FROM ${BASE_IMAGE}
 
 # Albany
+ARG ALBANY_COMMIT=origin/HEAD
 RUN cd $SOFTWARE_ROOT && \
     mkdir albany && cd albany && \
-    git clone --filter=blob:none https://github.com/sandialabs/albany source
+    git clone --filter=blob:none https://github.com/sandialabs/albany source && \
+    cd source && \
+    git checkout ${ALBANY_COMMIT}
 
 RUN mkdir $SOFTWARE_ROOT/albany/build
 
@@ -68,11 +71,15 @@ RUN cd $SOFTWARE_ROOT/scorpio && \
     rm -rf source build
 
 # MALI
+ARG MALI_ORG=mali-dev
+ARG MALI_COMMIT=origin/develop
 RUN cd $SOFTWARE_ROOT && \
     mkdir mali && cd mali && \
-    git clone --filter=blob:none https://github.com/mali-dev/e3sm source && \
+    git clone --filter=blob:none https://github.com/${MALI_ORG}/e3sm source && \
+    cd source && \
+    git checkout ${MALI_COMMIT} && \
     git config --global url."https://github.com/".insteadOf git@github.com: && \
-    cd source/components/mpas-albany-landice/src && git submodule update --init SeaLevelModel
+    cd components/mpas-albany-landice/src && git submodule update --init SeaLevelModel
 
 ADD --chown=runner:fanssie --chmod=775 do-make-mali.sh $SOFTWARE_ROOT/mali/source/components/mpas-albany-landice
 
