@@ -33,20 +33,32 @@ RUN cd $SOFTWARE_ROOT/albany/install && \
 # Switch back to root to install netcdff
 USER root
 RUN apt-get update && \
-    apt-get install -y libnetcdff-dev
+    apt-get install -y netcdf-bin libnetcdff-dev libpnetcdf-dev
 USER runner
 
 # Set up folders with symlinks for netcdf-f and pnetcdf, as scorpio's clunky cmake logic cannot
 # find them (since include and lib are not in the same root folder)
-RUN mkdir $SOFTWARE_ROOT/netcdf-f && \
+RUN NETCDF_C_INCLUDE_DIR="$(nc-config --includedir 2>/dev/null || echo /usr/include)" && \
+    NETCDF_C_LIB_DIR="$(nc-config --libdir 2>/dev/null || echo /usr/lib/$(gcc -print-multiarch))" && \
+    mkdir $SOFTWARE_ROOT/netcdf-c && \
+    cd $SOFTWARE_ROOT/netcdf-c &&    \
+    ln -s "${NETCDF_C_INCLUDE_DIR}" include && \
+    ln -s "${NETCDF_C_LIB_DIR}" lib
+ENV NETCDF_C_ROOT=${SOFTWARE_ROOT}/netcdf-c
+RUN NETCDF_F_INCLUDE_DIR="$(nf-config --includedir 2>/dev/null || echo /usr/include)" && \
+    NETCDF_F_LIB_DIR="$(nf-config --flibs 2>/dev/null | sed -n 's/.*-L\([^ ]*\).*/\1/p')" && \
+    if [ -z "${NETCDF_F_LIB_DIR}" ]; then NETCDF_F_LIB_DIR="/usr/lib/$(gcc -print-multiarch)"; fi && \
+    mkdir $SOFTWARE_ROOT/netcdf-f && \
     cd $SOFTWARE_ROOT/netcdf-f &&    \
-    ln -s /usr/include &&            \
-    ln -s /usr/lib/x86_64-linux-gnu/ lib
+    ln -s "${NETCDF_F_INCLUDE_DIR}" include && \
+    ln -s "${NETCDF_F_LIB_DIR}" lib
 ENV NETCDF_F_ROOT=${SOFTWARE_ROOT}/netcdf-f
-RUN mkdir $SOFTWARE_ROOT/pnetcdf && \
+RUN PNETCDF_INCLUDE_DIR="$(pnetcdf-config --includedir 2>/dev/null || echo /usr/include)" && \
+    PNETCDF_LIB_DIR="$(pnetcdf-config --libdir 2>/dev/null || echo /usr/lib/$(gcc -print-multiarch))" && \
+    mkdir $SOFTWARE_ROOT/pnetcdf && \
     cd $SOFTWARE_ROOT/pnetcdf && \
-    ln -s /usr/include && \
-    ln -s /usr/lib/x86_64-linux-gnu/ lib
+    ln -s "${PNETCDF_INCLUDE_DIR}" include && \
+    ln -s "${PNETCDF_LIB_DIR}" lib
 ENV PNETCDF_ROOT=${SOFTWARE_ROOT}/pnetcdf
 
 # SCORPIO
