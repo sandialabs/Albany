@@ -75,9 +75,13 @@ RUN mkdir $SOFTWARE_ROOT && \
 USER runner
 
 # TRILINOS
+ARG TRILINOS_COMMIT=origin/develop
+
 RUN cd $SOFTWARE_ROOT && \
     mkdir trilinos && cd trilinos && \
-    git clone --filter=blob:none https://github.com/trilinos/trilinos source
+    git clone https://github.com/trilinos/trilinos source && \
+    cd source && \
+    git checkout $TRILINOS_COMMIT
 
 RUN mkdir $SOFTWARE_ROOT/trilinos/build
 
