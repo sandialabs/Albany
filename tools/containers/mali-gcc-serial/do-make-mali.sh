@@ -8,7 +8,7 @@ export LD_LIBRARY_PATH=${PNETCDF_ROOT}/lib:${LD_LIBRARY_PATH}
 ARCH=$(uname -m)
 
 if [ "${ARCH}" = "x86_64" ]; then
-  make -j gfortran \
+  make -j 4 gfortran \
     ALBANY=true \
     USE_PIO2=true \
     CORE=landice \
@@ -26,7 +26,7 @@ else
     EXTRA_FFLAGS=""
   fi
 
-  make -j all \
+  make -j 4 all \
     FC_PARALLEL=mpif90 \
     CC_PARALLEL=mpicc \
     CXX_PARALLEL=mpicxx \
