@@ -33,7 +33,9 @@ RUN cd $SOFTWARE_ROOT/albany/install && \
 # Switch back to root to install netcdff
 USER root
 RUN apt-get update && \
-    apt-get install -y netcdf-bin libnetcdff-dev libpnetcdf-dev
+    apt-get install -y ca-certificates netcdf-bin libnetcdff-dev libpnetcdf-dev && \
+    update-ca-certificates && \
+    update-ca-certificates --fresh 
 USER runner
 
 # Set up folders with symlinks for netcdf-f and pnetcdf, as scorpio's clunky cmake logic cannot
@@ -104,8 +106,17 @@ ENV LD_LIBRARY_PATH=${TRILINOS_ROOT}/lib
 
 # set up conda
 USER runner
-RUN wget -q "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" -O /home/runner/Miniforge3.sh && \
-    bash /home/runner/Miniforge3.sh -b -p /home/runner/miniforge && \
+ARG TARGETARCH
+RUN if [ "${TARGETARCH}" = "amd64" ]; then MINIFORGE_ARCH="x86_64"; \
+    elif [ "${TARGETARCH}" = "arm64" ]; then MINIFORGE_ARCH="aarch64"; \
+    else MINIFORGE_ARCH="${TARGETARCH}"; fi && \
+    echo "TARGETARCH=${TARGETARCH}" && \
+    echo "uname -m=$(uname -m)" && \
+    echo "MINIFORGE_ARCH=${MINIFORGE_ARCH}" && \
+    echo "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" && \
+    wget -q "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" -O /home/runner/Miniforge3.sh 
+
+RUN bash /home/runner/Miniforge3.sh -b -p /home/runner/miniforge && \
     rm -f /home/runner/Miniforge3.sh
 
 ENV PATH="/home/runner/miniforge/bin:${PATH}"
