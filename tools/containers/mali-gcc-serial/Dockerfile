@@ -143,9 +143,10 @@ RUN if [ "${ALLOW_INSECURE_CERTS}" = "true" ]; then \
 ENV PATH="/home/runner/miniforge/bin:${PATH}"
 
 # set up compass (developer installation, env only)
+ARG COMPASS_ORG=mpas-dev
 ARG COMPASS_COMMIT=origin/main
 WORKDIR /home/runner
-RUN git clone --filter=blob:none https://github.com/MPAS-Dev/compass /home/runner/compass && \
+RUN git clone --filter=blob:none https://github.com/${COMPASS_ORG}/compass /home/runner/compass && \
     cd /home/runner/compass && \
     git checkout ${COMPASS_COMMIT}
 
