@@ -76,6 +76,8 @@ bool depthIntegratedModel(false);
 
 std::vector<int> dirichletNodesIdsDepthInt;
 
+std::set<std::string> noupdate_fields;
+
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 
 bool keptMesh =false;
@@ -133,6 +135,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   *MPAS_dt =  deltat;
 
+  auto& probParamList = paramList->sublist("Problem");
+  
   auto& layerThicknessRatio = meshStruct->layers_data.dz_ref;
 
   if(depthIntegratedModel)
@@ -151,28 +155,15 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
   STKFieldType* surfaceHeightField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_height");
   STKFieldType* thicknessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "ice_thickness");
-  STKFieldType* bedTopographyField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_topography");
-  //STKFieldType* smbField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "surface_mass_balance");
   STKFieldType* dirichletField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "dirichlet_field");
-  STKFieldType* muField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
-  STKFieldType* bedRoughnessField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_roughness");
-  STKFieldType* bulkFrictionField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "bulk_friction");
-  STKFieldType* basalDebrisField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "basal_debris_factor");
   STKFieldType* stiffeningFactorLogField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "stiffening_factor_log");
-  STKFieldType* effectivePressureField = meshStruct->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
-  STKFieldType* betaField;
-  STKFieldType* effectivePressureBasalField;
 
-  auto& probParamList = paramList->sublist("Problem");
-  const auto& landiceBcList = probParamList.sublist("LandIce BCs");
-  const auto& basalParams = landiceBcList.sublist("BC 0");
-  const auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
-  const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
-
-  auto ss_mesh = meshStruct->sideSetMeshStructs.at("basalside");
-  auto ss_mesh_stk = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(ss_mesh,true);
-  betaField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "beta");
-  effectivePressureBasalField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
+  TEUCHOS_TEST_FOR_EXCEPTION(noupdate_fields.find("surface_height") != noupdate_fields.end(), std::runtime_error,
+          "Error! surface_height field needs to be set by MPAS.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(noupdate_fields.find("ice_thickness") != noupdate_fields.end(), std::runtime_error,
+          "Error! ice_thickness field needs to be set by MPAS.\n");
+  bool update_dirichlet = !velocityOnVertices.empty() && (dirichletField != nullptr) && (noupdate_fields.find("dirichlet_field") == noupdate_fields.end());
+  bool update_stiffeningFactorLog = !stiffeningFactorData.empty() && (stiffeningFactorLogField != nullptr) && (noupdate_fields.find("stiffening_factor_log") == noupdate_fields.end());
 
   for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
@@ -195,60 +186,92 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
     coord[2] = elevationData[ib] + (levelsNormalizedThickness[il]-1.0) * thicknessData[ib];
 
-
     double* thickness = stk::mesh::field_data(*thicknessField, node);
     thickness[0] = thicknessData[ib];
     double* sHeight = stk::mesh::field_data(*surfaceHeightField, node);
     sHeight[0] = elevationData[ib];
-    double* bedTopography = stk::mesh::field_data(*bedTopographyField, node);
-    bedTopography[0] = bedTopographyData[ib];
-    double* stiffeningFactorLog = stk::mesh::field_data(*stiffeningFactorLogField, node);
-    stiffeningFactorLog[0] = std::log(stiffeningFactorData[ib]);
 
-    if(!effectivePressureData.empty() && (effectivePressureField != nullptr)) {
-      double* effectivePressure = stk::mesh::field_data(*effectivePressureField, node);
-      effectivePressure[0] = effectivePressureData[ib];
+    if(update_stiffeningFactorLog) {
+      double* stiffeningFactorLog = stk::mesh::field_data(*stiffeningFactorLogField, node);
+      stiffeningFactorLog[0] = std::log(stiffeningFactorData[ib]);
     }
-    
-    // Not needed
-    // if(smbField != NULL) {
-    //  double* smb = stk::mesh::field_data(*smbField, node);
-    //   smb[0] = smbData[ib];
-    // }
+
     double* sol = stk::mesh::field_data(*solutionField, node);
     sol[0] = velocityOnVertices[j];
     sol[1] = velocityOnVertices[j + numVertices3D];
     if(neq==3) {
       sol[2] = thicknessData[ib];
     }
-    double* dirichletVel = stk::mesh::field_data(*dirichletField, node);
-    dirichletVel[0]=velocityOnVertices[j]; //velocityOnVertices stores initial guess and dirichlet velocities.
-    dirichletVel[1]=velocityOnVertices[j + numVertices3D];
+    if(update_dirichlet) {
+      double* dirichletVel = stk::mesh::field_data(*dirichletField, node);
+      dirichletVel[0]=velocityOnVertices[j]; //velocityOnVertices stores initial guess and dirichlet velocities.
+      dirichletVel[1]=velocityOnVertices[j + numVertices3D];
+    }
+  }
 
-    if ((il == 0) && !muData.empty() && (muField != nullptr)) {
+
+  // basal fields
+  const auto& landiceBcList = probParamList.sublist("LandIce BCs");
+  const auto& basalParams = landiceBcList.sublist("BC 0");
+  const auto& basalFrictionParams = basalParams.sublist("Basal Friction Coefficient");
+  const auto betaType = util::upper_case(basalFrictionParams.get<std::string>("Type"));
+  auto ss_mesh = meshStruct->sideSetMeshStructs.at("basalside");
+  auto ss_mesh_stk = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(ss_mesh,true);
+
+  STKFieldType* bedTopographyField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_topography");
+  STKFieldType* muField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "mu");
+  STKFieldType* bedRoughnessField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "bed_roughness");
+  STKFieldType* bulkFrictionField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "bulk_friction");
+  STKFieldType* basalDebrisField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "basal_debris_factor");
+  STKFieldType* betaField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "beta");
+  STKFieldType* effectivePressureField = ss_mesh_stk->metaData->get_field <double> (stk::topology::NODE_RANK, "effective_pressure");
+
+  bool update_bedTopography = !bedTopographyData.empty() && (bedTopographyField != nullptr) && (noupdate_fields.find("bed_topography") == noupdate_fields.end());
+  bool update_mu = !muData.empty() && (muField != nullptr) && (noupdate_fields.find("mu") == noupdate_fields.end());
+  bool update_bedRoughness = !bedRoughnessData.empty() && (bedRoughnessField != nullptr) && (noupdate_fields.find("bed_roughness") == noupdate_fields.end());
+  bool update_bulkFriction = !bulkFrictionData.empty() && (bulkFrictionField != nullptr) && (noupdate_fields.find("bulk_friction") == noupdate_fields.end());
+  bool update_basalDebris = !basalDebrisData.empty() && (basalDebrisField != nullptr) && (noupdate_fields.find("basal_debris_factor") == noupdate_fields.end());
+  bool update_effectivePressure = !effectivePressureData.empty() && (effectivePressureField!=nullptr) && (noupdate_fields.find("effective_pressure") == noupdate_fields.end());
+  for(int i = 0; i < (int) indexToVertexID.size(); ++i) {
+    stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[i]);
+    int ib = vertexLayerShift * i;
+
+    if (update_bedTopography) {
+      double* bedTopography = stk::mesh::field_data(*bedTopographyField, node);
+      bedTopography[0] = bedTopographyData[ib];
+    }
+
+    if (update_mu) {
       double* muVal = stk::mesh::field_data(*muField, node);
       muVal[0] = muData[ib];
     }
 
-    if ((il == 0) && !bedRoughnessData.empty() && (bedRoughnessField != nullptr)) {
+    if (update_bedRoughness) {
       double* bedRoughnessVal = stk::mesh::field_data(*bedRoughnessField, node);
       bedRoughnessVal[0] = bedRoughnessData[ib];
     }
 
-    if ((il == 0) && !bulkFrictionData.empty() && (bulkFrictionField != nullptr)) {
+    if (update_bulkFriction) {
       double* bulkFrictionVal = stk::mesh::field_data(*bulkFrictionField, node);
       bulkFrictionVal[0] = bulkFrictionData[ib];
     }
 
-    if ((il == 0) && !basalDebrisData.empty() && (basalDebrisField != nullptr)) {
+    if (update_basalDebris) {
       double* basalDebrisVal = stk::mesh::field_data(*basalDebrisField, node);
       basalDebrisVal[0] = basalDebrisData[ib];
+    }
+
+    if (update_effectivePressure) {
+      double* effectivePressureVal = stk::mesh::field_data(*effectivePressureField,node);      
+      effectivePressureVal[0] = effectivePressureData[ib];
     }
   }
 
   //In the following we import the temperature field temperatureDataOnPrisms from MPAS, 
   //which is stored as a constant in each Prism (wedge), into a temperature filed in Albany mesh.
-  if(depthIntegratedModel) {
+  STKFieldType* temperatureField = meshStruct->metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
+  bool update_temperature = !temperatureDataOnPrisms.empty() && (temperatureField!=nullptr) && (noupdate_fields.find("temperature") == noupdate_fields.end());
+  if(depthIntegratedModel && update_temperature) {
     //In this case the Albany mesh only has one layer, but the MPAS mesh can still have multiple layers
     bool usePOTemp = probParamList.sublist("LandIce Viscosity").get<bool>("Use P0 Temperature");
     if(!usePOTemp) { 
@@ -279,11 +302,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       }    
       
       // Populate the temperature mesh field, defined at quad points 
-      STKFieldType* temperature_field = meshStruct->metaData->get_field <double> (stk::topology::ELEMENT_RANK, "temperature");
-
       for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
-        double* temperature = stk::mesh::field_data(*temperature_field, elem);
+        double* temperature = stk::mesh::field_data(*temperatureField, elem);
         for(int qp=0; qp<numQPs; qp++) {
           int lId = layerVec[qp] * lElemColumnShift + elemLayerShift * ib;        
           temperature[qp] = temperatureDataOnPrisms[lId];
@@ -291,10 +312,9 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
       }
     } else {  //P0 temperature
       // In this case we compute a column average of the MPAS temperature and save it as a P0 field in the 1-layer Albany mesh.
-      STKFieldType* temperature_field = meshStruct->metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
       for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
-        double* temperature = stk::mesh::field_data(*temperature_field, elem);
+        double* temperature = stk::mesh::field_data(*temperatureField, elem);
         for(int il=0; il<nLayers; il++) {
           int lId = il * lElemColumnShift + elemLayerShift * ib;  
           double tempFraction = temperatureDataOnPrisms[lId]*(levelsNormalizedThickness[il+1]-levelsNormalizedThickness[il]);
@@ -305,14 +325,13 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
         }
       }
     }
-  } else { // Here we copy the temperature on Prisms from MPAS into a P0 field in the Albany mesh.
-    STKFieldType* temperature_field = meshStruct->metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
+  } else if(update_temperature){ // Here we copy the temperature on Prisms from MPAS into a P0 field in the Albany mesh.
     for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
       for(int il=0; il<nLayers; il++) {
         int lId = il * lElemColumnShift + elemLayerShift * ib;
         int gId = il * elemColumnShift + elemLayerShift * (indexToTriangleID[ib]-1) + 1;
         stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, gId);
-        double* temperature = stk::mesh::field_data(*temperature_field, elem);
+        double* temperature = stk::mesh::field_data(*temperatureField, elem);
         temperature[0] = temperatureDataOnPrisms[lId];
       }
     }
@@ -413,10 +432,10 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
-  if (Teuchos::nonnull(ss_mesh_stk) && !effectivePressureData.empty() && (effectivePressureBasalField!=nullptr)) {
+  if (Teuchos::nonnull(ss_mesh_stk) && !effectivePressureData.empty() && (effectivePressureField!=nullptr)) {
     for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
       stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
-      const double* effectivePressureVal = stk::mesh::field_data(*effectivePressureBasalField,node);      
+      const double* effectivePressureVal = stk::mesh::field_data(*effectivePressureField,node);      
       effectivePressureData[vertexLayerShift * ib] = effectivePressureVal[0];
     }
   }
@@ -657,6 +676,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalFrictionParams.set("Mu Type",basalFrictionParams.get("Mu Type","Field"));
   basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
   basalFrictionParams.set("Effective Pressure Type",basalFrictionParams.get("Effective Pressure Type","Field"));
+  std::string effectivePressureType = util::upper_case(basalFrictionParams.get<std::string>("Effective Pressure Type"));
+  bool isEPressureOutput = effectivePressureType.find("HYDROSTATIC")!=std::string::npos;
 
   bool requireBedRoughness(false), requireBulkFriction(false), requireBasalDebris(false);
   if((betaType == "REGULARIZED COULOMB") || (betaType == "DEBRIS FRICTION")) {
@@ -746,8 +767,19 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   auto& rfi = discretizationList->sublist("Required Fields Info");
   int fp = rfi.get<int>("Number Of Fields",0);
+  noupdate_fields.clear();
+  std::set<std::string> existing_fields;
+  //first process fields added in the input yaml file
+  for (int i=0; i<fp; ++i) {
+    auto field_name = rfi.sublist(util::strint("Field",i)).get<std::string>("Field Name");
+    existing_fields.insert(field_name);
+    //these fields are either read from file or outputs, they should not be overwritten with MPAS fields.
+    if(rfi.sublist(util::strint("Field",i)).get("Field Origin", "Mesh") != "Mesh") 
+      noupdate_fields.insert(field_name);
+  }
 
   //set temperature
+  if (existing_fields.find("temperature") == existing_fields.end())
   {
     Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
     field.set<std::string>("Field Name", "temperature");
@@ -759,6 +791,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   }
 
   //set ice thickness
+  if (existing_fields.find("ice_thickness") == existing_fields.end())
   {
     Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
     field.set<std::string>("Field Name", "ice_thickness");
@@ -767,6 +800,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   }
 
   //set surface_height
+  if (existing_fields.find("surface_height") == existing_fields.end())
   {
     Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
     field.set<std::string>("Field Name", "surface_height");
@@ -774,23 +808,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     field.set<std::string>("Field Origin", "Mesh");
   }
 
-  //set bed topography
-  {
-    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
-    field.set<std::string>("Field Name", "bed_topography");
-    field.set<std::string>("Field Type", "Node Scalar");
-    field.set<std::string>("Field Origin", "Mesh");
-  }
-
-  //set mu field
-  {
-    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
-    field.set<std::string>("Field Name", "mu");
-    field.set<std::string>("Field Type", "Node Scalar");
-    field.set<std::string>("Field Origin", "Mesh");
-  }
-
   //set dirichlet field
+  if (existing_fields.find("dirichlet_field") == existing_fields.end())
   {
     Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
     field.set<std::string>("Field Name", "dirichlet_field");
@@ -799,6 +818,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   }
 
   //set stiffening factor
+  if (existing_fields.find("stiffening_factor_log") == existing_fields.end())
   {
     Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
     field.set<std::string>("Field Name", "stiffening_factor_log");
@@ -806,40 +826,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     field.set<std::string>("Field Origin", "Mesh");
   }
 
-  //set effective pressure
-  {
-    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
-    field.set<std::string>("Field Name", "effective_pressure");
-    field.set<std::string>("Field Type", "Node Scalar");
-    field.set<std::string>("Field Origin", "Mesh");
-    field.set<std::string>("Field Usage", "Input-Output");
-  }
-
-  //set bed roughness
-  if(requireBedRoughness) {
-    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
-    field.set<std::string>("Field Name", "bed_roughness");
-    field.set<std::string>("Field Type", "Node Scalar");
-    field.set<std::string>("Field Origin", "Mesh");
-  }
-
-  //set basal debris factor
-  if(requireBasalDebris){
-    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
-    field.set<std::string>("Field Name", "basal_debris_factor");
-    field.set<std::string>("Field Type", "Node Scalar");
-    field.set<std::string>("Field Origin", "Mesh");
-  }
-
-  //set bulk friction
-  if(requireBulkFriction) {
-    Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
-    field.set<std::string>("Field Name", "bulk_friction");
-    field.set<std::string>("Field Type", "Node Scalar");
-    field.set<std::string>("Field Origin", "Mesh");
-  }
-
   // Outputs
+  if (existing_fields.find("body_force") == existing_fields.end())
   {
     Teuchos::ParameterList& field = rfi.sublist(util::strint("Field",fp++));
     field.set<std::string>("Field Name", "body_force");
@@ -859,17 +847,82 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   auto& basal_req = basal_pl.sublist("Required Fields Info");
 
   int bfp = basal_req.get<int>("Number Of Fields",0);
-  basal_req.set<int>("Number Of Fields",bfp+2);
+  existing_fields.clear();
+  for (int i=0; i<bfp; ++i) {
+    auto field_name = basal_req.sublist(util::strint("Field",i)).get<std::string>("Field Name");
+    existing_fields.insert(field_name);
+    //these fields are either read from file or outputs, they should not be overwritten with MPAS fields.
+    if(basal_req.sublist(util::strint("Field",i)).get("Field Origin", "Mesh") != "Mesh") 
+      noupdate_fields.insert(field_name);
+  }
+    
 
-  auto& ss_field0 = basal_req.sublist(util::strint("Field",0+bfp));
-  auto& ss_field1 = basal_req.sublist(util::strint("Field",1+bfp));
-  ss_field0.set<std::string>("Field Name", "beta");
-  ss_field0.set<std::string>("Field Type", "Node Scalar");
-  ss_field0.set<std::string>("Field Usage", "Output");
+  //set bed topography
+  if (existing_fields.find("bed_topography") == existing_fields.end())
+  {
+    Teuchos::ParameterList& field = basal_req.sublist(util::strint("Field",bfp++));
+    field.set<std::string>("Field Name", "bed_topography");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
 
-  ss_field1.set<std::string>("Field Name", "effective_pressure");
-  ss_field1.set<std::string>("Field Type", "Node Scalar");
-  ss_field1.set<std::string>("Field Usage", "Output");
+  //set mu field
+  if (existing_fields.find("mu") == existing_fields.end())
+  {
+    Teuchos::ParameterList& field = basal_req.sublist(util::strint("Field",bfp++));
+    field.set<std::string>("Field Name", "mu");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
+
+  //set bed roughness
+  if(requireBedRoughness && (existing_fields.find("bed_roughness") == existing_fields.end())) {
+    Teuchos::ParameterList& field = basal_req.sublist(util::strint("Field",bfp++));
+    field.set<std::string>("Field Name", "bed_roughness");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
+
+  //set basal debris factor
+  if(requireBasalDebris && (existing_fields.find("basal_debris_factor") == existing_fields.end())){
+    Teuchos::ParameterList& field = basal_req.sublist(util::strint("Field",bfp++));
+    field.set<std::string>("Field Name", "basal_debris_factor");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
+
+  //set bulk friction
+  if(requireBulkFriction && (existing_fields.find("bulk_friction") == existing_fields.end())) {
+    Teuchos::ParameterList& field = basal_req.sublist(util::strint("Field",bfp++));
+    field.set<std::string>("Field Name", "bulk_friction");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Origin", "Mesh");
+  }
+
+  //set effective pressure
+  if (existing_fields.find("effective_pressure") == existing_fields.end())
+  {
+    Teuchos::ParameterList& field = basal_req.sublist(util::strint("Field",bfp++));
+    field.set<std::string>("Field Name", "effective_pressure");
+    field.set<std::string>("Field Type", "Node Scalar");
+    if(isEPressureOutput) {
+      field.set<std::string>("Field Usage", "Output");
+      noupdate_fields.insert("effective_pressure");
+    }
+    else
+      field.set<std::string>("Field Origin", "Mesh");
+  }
+
+  //set beta
+  if (existing_fields.find("beta") == existing_fields.end())
+  {
+    Teuchos::ParameterList& field = basal_req.sublist(util::strint("Field",bfp++));
+    field.set<std::string>("Field Name", "beta");
+    field.set<std::string>("Field Type", "Node Scalar");
+    field.set<std::string>("Field Usage", "Output");
+  }
+
+  basal_req.set<int>("Number Of Fields",bfp);
 
   // Register LandIce problems
   auto& pb_factories = Albany::FactoriesContainer<Albany::ProblemFactory>::instance();
