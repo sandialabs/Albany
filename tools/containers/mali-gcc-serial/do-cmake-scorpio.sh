@@ -12,6 +12,7 @@ cmake -Wno-dev \
  -D NetCDF_C_PATHS:PATH=${NETCDF_C_ROOT}       \
  -D NetCDF_Fortran_PATHS:PATH=${NETCDF_F_ROOT} \
  -D PnetCDF_C_PATHS:PATH=${PNETCDF_ROOT}       \
+ -D PnetCDF_Fortran_PATHS:PATH=${PNETCDF_ROOT} \
  -D WITH_HDF5:BOOL=ON                          \
  -D PIO_ENABLE_TIMING:BOOL=OFF                 \
  -D PIO_ENABLE_TESTS:BOOL=OFF                  \
