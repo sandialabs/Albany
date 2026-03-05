@@ -157,6 +157,7 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
 void OmegahDiscretization::
 updateMesh ()
 {
+  std::cout << "omegah updateMesh...\n";
   // Make sure we don't reuse old dof mgrs (if adapting)
   m_key_to_dof_mgr.clear();
 
@@ -224,6 +225,22 @@ updateMesh ()
 
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
 
+  {
+    auto H = m_mesh_struct->get_field_accessor()->getElemStates()[0]["ice_thickness"].host();
+    for (int pid=0; pid<m_comm->getSize(); ++pid) {
+      if (pid==m_comm->getRank()) {
+        auto elem_gids = getGlobalElements(getCellsGlobalLocalIndexer()->getVectorSpace());
+        std::cout << "pid=" << m_comm->getRank() << "\n";
+        for (int ie=0; ie<10; ++ie) {
+          std::cout << " elem_gid=" << elem_gids[ie] << ", H:";
+          for (int in=0; in<3; ++in) {
+            std::cout << " " << H(ie,in);
+          } std::cout << "\n";
+        }
+      }
+      m_comm->barrier();
+    }
+  }
   m_ws_elem_coords.resize(num_ws);
   auto coords_h  = m_mesh_struct->coords_host();
   auto node_gids = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT));
@@ -280,6 +297,8 @@ updateMesh ()
 
   //reset output interval
   outputInterval = 0;
+
+  std::cout << "omegah updateMesh...done!\n";
 }
 
 void OmegahDiscretization::
@@ -301,13 +320,11 @@ computeSideSets ()
   auto s2e_a2ab = hostRead(s2e.a2ab);
   auto s2e_ab2b = hostRead(s2e.ab2b);
 
-  // auto e2s = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, side_dim));
-  // assert(e2s.size() == OmegahGhost::getNumOwnedElms(mesh)*Omega_h::simplex_degree(mesh.dim(),side_dim));
-
   auto e2s = mesh.ask_down(mesh.dim(),side_dim);
   auto e2s_ab2b = hostRead(e2s.ab2b);
 
   int num_loc_sides = Omega_h::element_degree(mesh.family(),mesh.dim(),side_dim);
+  // Since  elem/side lids are in owned+ghosted space, use full mesh.ask_down connectivity (not from OmegahGhost!)
   auto determine_side_pos = [&](int elem_lid, int side_lid) {
     int offset = elem_lid*num_loc_sides;
     for (int pos=0; pos<num_loc_sides; ++pos) {
@@ -319,6 +336,8 @@ computeSideSets ()
 
   m_sideSets.resize(getNumWorksets());
 
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+  auto elem_gids = hostRead(mesh.globals(mesh.dim()));
   auto side_gids = hostRead(mesh.globals(side_dim));
   Teuchos::Array<GO> side_GIDs;
   for (const auto& ssn : ssNames) {
@@ -334,23 +353,20 @@ computeSideSets ()
         continue;
 
       for(int adjIdx=s2e_a2ab[i]; adjIdx<s2e_a2ab[i+1]; adjIdx++) {
-        // the ielem element index from s2e is from the ghosted mesh
-        // and the cell_indexer only counts unghosted (owned) elements
         auto ielem = s2e_ab2b[adjIdx];
-        auto elemOwnedLid = ownedElmLids[ielem];
+        GO  elem_GID = elem_gids[ielem];
+        int elem_LID = cell_indexer->getLocalElement(elem_GID);
+        int ws = m_elem_ws_idx[elem_LID].ws;
 
-        int ws = m_elem_ws_idx[elemOwnedLid].ws;
-
-        auto& ss_vec = m_sideSets[ws][ssn];
-
-        auto& sStruct = ss_vec.emplace_back();;
+        auto& sStruct = m_sideSets[ws][ssn].emplace_back();;
 
         sStruct.side_GID = side_gids[i];
-        sStruct.elem_GID = ownedElmGids[ielem];
+        sStruct.elem_GID = elem_GID;
+
         side_GIDs.push_back(sStruct.side_GID);
 
         // Save elem GID and LID. Here, LID is the local id *within* the workset
-        sStruct.ws_elem_idx = m_elem_ws_idx[elemOwnedLid].idx;
+        sStruct.ws_elem_idx = m_elem_ws_idx[elem_LID].idx;
 
         // Save the position of the side within element (0-based).
         sStruct.side_pos = determine_side_pos(ielem,i);
@@ -359,7 +375,8 @@ computeSideSets ()
             "Something went wrong while locating a side in an element.\n"
             " - side set: " << ssn << "\n"
             " - side lid (osh): " << i << "\n"
-            " - owning elem lid (osh): " << ielem << "\n");
+            " - owning elem lid (osh): " << ielem << "\n"
+            " - owning elem lid (albany): " << elem_LID << "\n");
         // Save the index of the element block that this elem lives in
         sStruct.elem_ebIndex =
             m_mesh_struct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[ws]];

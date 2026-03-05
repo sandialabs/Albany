@@ -43,7 +43,9 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
               const Teuchos::RCP<StateInfoStruct>& sis,
               std::map<std::string, Teuchos::RCP<StateInfoStruct> > side_set_sis)
 {
+  std::cout << "omegah mesh, set FD...\n";
   get_field_accessor()->addStateStructs(sis);
+  std::cout << "omegah mesh, set FD...done!\n";
 
   // We don't yet support side discretizations for omegah meshes
   (void) side_set_sis;
@@ -659,14 +661,17 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
   int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   // Check for early return
-  if (num_fields==0)
+  if (num_fields==0) {
+    *out << "[OmegahGenericMesh] Processing field requirements...done! (no requirements)\n";
     return;
+  }
 
   // Get nodes/elems global ids
   auto node_gids = m_mesh->globals(0);
   auto elem_gids = m_mesh->globals(m_mesh->dim());
   auto node_gids_h = hostRead(node_gids);
   auto elem_gids_h = hostRead(elem_gids);
+  *out << " check 1...\n";
 
   // NOTE: the reinterpret_cast is safe, since both Albany and Omegah use 64bit int for Global ids
   Teuchos::ArrayView<const GO> node_gids_av(reinterpret_cast<const GO*>(node_gids_h.data()),node_gids_h.size());
@@ -674,6 +679,7 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
   auto nodes_vs = createVectorSpace(comm,node_gids_av);
   auto elems_vs = createVectorSpace(comm,elem_gids_av);
+  *out << " check 2...\n";
 
   // Check whether we need the serial map or not. The only scenario where we DO need it is if we are
   // loading a field from an ASCII file. So let's check the fields info to see if that's the case.
@@ -704,6 +710,7 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
   //       Therefore, we must create a root vs. Moreover, we need the GIDs sorted (so that, regardless
   //       of the GID, we read the serial input files in the correct order), and we can't sort them
   //       once the vs is created.
+  *out << " check 3...\n";
 
   auto serial_nodes_vs = nodes_vs;
   auto serial_elems_vs = elems_vs;
@@ -721,10 +728,12 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     std::sort(all_elem_gids.begin(),all_elem_gids.end());
     serial_elems_vs = createVectorSpace(comm,all_elem_gids);
   }
+  *out << " check 4...\n";
 
   // Creating the combine and scatter manager object (to transfer from serial to parallel vectors)
   auto cas_manager_node = createCombineAndScatterManager(serial_nodes_vs,nodes_vs);
   auto cas_manager_elem = createCombineAndScatterManager(serial_elems_vs,elems_vs);
+  *out << " check 5...\n";
 
   std::string valid_ftype_r = "(Node|Elem) (Layered) (Scalar|Vector)|(Node|Elem) (Scalar|Vector)";
   std::string valid_fusage_r = R"(Input(-Output)?|Output|Unused)";
@@ -823,6 +832,7 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
     m_field_accessor->setFieldOnMesh (fname,nodal ? 0 : m_mesh->dim(), field_mv.getConst());
   }
+  *out << "[OmegahGenericMesh] Processing field requirements...done!\n";
 }
 
 } // namespace Albany

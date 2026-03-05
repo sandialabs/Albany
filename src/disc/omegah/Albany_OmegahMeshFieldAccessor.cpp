@@ -65,6 +65,7 @@ setFieldOnMesh (const std::string& name,
 void OmegahMeshFieldAccessor::
 addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
+  std::cout << "omegah MFA, addStateStruct " << st->name << "...\n";
   auto product = [](const auto& vec, int start) {
     return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());
   };
@@ -124,6 +125,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
     auto nlayers = st->dim.back();
     mesh_vector_states[st->name+"_NLC"].resize(nlayers);
   }
+  std::cout << "omegah MFA, addStateStruct...done!\n";
 }
 
 void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& worksets_sizes)
@@ -131,6 +133,10 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
   // Elem states
   int num_ws = worksets_sizes.size();
   elemStateArrays.resize(worksets_sizes.size());
+  std::cout << "omegah MFA, createStateArrays:\n"
+            << " " << worksets_sizes.size() << " worksets\n"
+            << " " << elem_sis.size() << " elem SIS\n"
+            << " " << elem_sis.size() << " nodal SIS\n";
   for (const auto& st : elem_sis) {
     auto data = m_tags.at(st->name).array.data();
     auto dim = st->dim;
@@ -138,6 +144,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
     dim[0] = 1; // We don't use the extent of the elem tag
     for (auto d : dim) stride *= d;
 
+    std::cout << "state=" << st->name << ", resetting state from dev ptr..\n";
     for (int ws=0; ws<num_ws; ++ws) {
       int num_elems = worksets_sizes[ws];
       switch (dim.size()) {

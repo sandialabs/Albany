@@ -11,6 +11,7 @@
 #include "Albany_Macros.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "STKConnManager.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
@@ -1215,6 +1216,23 @@ STKDiscretization::computeWorksetInfo()
 
   stkMeshStruct->get_field_accessor()->createStateArrays(m_workset_sizes);
   stkMeshStruct->get_field_accessor()->transferNodeStatesToElemStates();
+
+  {
+    auto H = stkMeshStruct->get_field_accessor()->getElemStates()[0]["ice_thickness"].host();
+    for (int pid=0; pid<comm->getSize(); ++pid) {
+      if (pid==comm->getRank()) {
+        auto elem_gids = getGlobalElements(getCellsGlobalLocalIndexer()->getVectorSpace());
+        std::cout << "pid=" << pid << "\n";
+        for (int ie=0; ie<10; ++ie) {
+          std::cout << " elem_gid=" << elem_gids[ie] << ", H:";
+          for (int in=0; in<3; ++in) {
+            std::cout << " " << H(ie,in);
+          } std::cout << "\n";
+        }
+      }
+      comm->barrier();
+    }
+  }
 
   // Clear elem_LID->wsIdx index map if remeshing
   m_elem_ws_idx.clear();
