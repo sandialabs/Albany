@@ -56,8 +56,14 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */,
 void OmegahGenericMesh::
 setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
+  auto out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  out->setProcRankAndSize(comm->getRank(), comm->getSize());
+  out->setOutputToRootOnly(0);
+
+  *out << "[OmegahGenericMesh] Set bulk data...\n";
   loadRequiredInputFields(comm,m_params->sublist("Required Fields Info"));
   m_bulk_data_set = true;
+  *out << "[OmegahGenericMesh] Set bulk data...done!\n";
 }
 
 LO OmegahGenericMesh::get_num_local_nodes () const

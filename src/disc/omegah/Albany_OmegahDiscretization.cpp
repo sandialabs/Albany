@@ -224,6 +224,7 @@ updateMesh ()
   }
 
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
+  //TODO: transfer node states to elem states
 
   {
     auto H = m_mesh_struct->get_field_accessor()->getElemStates()[0]["ice_thickness"].host();
