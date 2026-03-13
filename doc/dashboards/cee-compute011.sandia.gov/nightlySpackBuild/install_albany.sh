@@ -5,6 +5,7 @@ source ../sems-gcc-modules.sh
 export http_proxy=http://proxy.sandia.gov:80
 export https_proxy=http://proxy.sandia.gov:80
 . share/spack/setup-env.sh
+spack config add config:connect_timeout:300
 #spack compiler find
 #cp ../config.yaml etc/spack/defaults/config.yaml
 spack --insecure install --dirty --keep-stage albany@develop%gcc@14.2.0+mpas~py+unit_tests >& spack_albany.out
