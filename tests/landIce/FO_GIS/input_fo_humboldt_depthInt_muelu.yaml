@@ -48,7 +48,7 @@ ANONYMOUS:
     Parameters:
       Number Of Parameters: 0
     LandIce Viscosity:
-      Use P0 Temperature: true
+      Use P0 Temperature: false
       Extract Strain Rate Sq: true
       Type: Glen's Law
       Glen's Law Homotopy Parameter: 0.3
@@ -456,6 +456,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 3.065328818695e+01
+    Test Value: 2.598666084417e+01
     Relative Tolerance: 1.0e-06
 ...
