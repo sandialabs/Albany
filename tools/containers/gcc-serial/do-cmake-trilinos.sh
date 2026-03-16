@@ -1,6 +1,17 @@
 SRC_DIR=${SOFTWARE_ROOT}/trilinos/source
 INSTALL_DIR=${SOFTWARE_ROOT}/trilinos/install
-NETCDF_ROOT=/usr/lib/x86_64-linux-gnu/netcdf/mpi
+if command -v nc-config >/dev/null 2>&1; then
+  NETCDF_LIB_DIR=$(nc-config --libdir)
+  NETCDF_INCLUDE_DIR=$(nc-config --includedir)
+else
+  ARCH_TRIPLET=$(gcc -dumpmachine)
+  NETCDF_LIB_DIR=${NETCDF_C_ROOT:-/usr/lib/${ARCH_TRIPLET}/netcdf/mpi}
+  NETCDF_INCLUDE_DIR=${NETCDF_LIB_DIR}/include
+
+  if [ ! -d "${NETCDF_INCLUDE_DIR}" ]; then
+    NETCDF_INCLUDE_DIR=/usr/include
+  fi
+fi
 
 rm -rf CMakeFiles
 rm -f  CMakeCache.txt
@@ -79,7 +90,7 @@ cmake -Wno-dev                                                    \
   -D TPL_ENABLE_X11:BOOL=OFF                                      \
   -D TPL_ENABLE_gtest:BOOL=OFF                                    \
   \
-  -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_ROOT}                      \
-  -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_ROOT}/include              \
+  -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_LIB_DIR}                   \
+  -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_INCLUDE_DIR}               \
   \
   -S ${SRC_DIR}
