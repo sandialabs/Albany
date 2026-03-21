@@ -13,6 +13,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
+#include "Albany_AbstractDiscretization.hpp"
 #include "Albany_Layouts.hpp"
 #include "PHAL_Utilities.hpp"
 
@@ -134,6 +135,9 @@ public:
   double rho_g_kernel;
 
   const double pi = 3.1415926535897932385;
+
+  Teuchos::RCP<Albany::AbstractDiscretization> disc;
+  int ws_idx;
 };
 
 } // namespace LandIce

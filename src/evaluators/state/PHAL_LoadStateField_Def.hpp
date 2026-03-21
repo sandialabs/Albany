@@ -12,6 +12,8 @@
 
 #include "PHAL_Utilities.hpp"
 #include "PHAL_LoadStateField.hpp"
+#include "Albany_CommUtils.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 
 namespace PHAL {
 
@@ -53,11 +55,33 @@ void LoadStateFieldBase<EvalT, Traits, ScalarType>::evaluateFields(typename Trai
 
   ALBANY_ASSERT (stateData.rank() <= 3, "Current implementation supports only views with rank up to 3. If larger rank is needed modify code below");
 
-  Kokkos::parallel_for(this->getName(),
-                       Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>({0,0,0},{stateData.extent(0),stateData.extent(1),stateData.extent(2)}),
-                       KOKKOS_CLASS_LAMBDA(const int i, const int j, const int k) {
-    field.access(i,j,k) = stateData.access(i,j,k);  //works also when rank is less than 3
-  });
+  auto comm = Albany::getDefaultComm();
+  auto cell_gids = workset.disc->getCellsGlobalLocalIndexer();
+  auto ws_elems = workset.disc->getWsElementLIDs().host();
+  auto node_dof_mgr = workset.disc->getNodeDOFManager();
+  for (int pid=0; pid<comm->getSize(); ++pid) {
+    if (pid==comm->getRank()) {
+      if (stateName=="surface_height")
+        std::cout << "pid=" << pid << ", ws=" << workset.wsIndex << "\n";
+      Kokkos::parallel_for(this->getName(),
+                           Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>({0,0,0},{stateData.extent(0),stateData.extent(1),stateData.extent(2)}),
+                           KOKKOS_CLASS_LAMBDA(const int i, const int j, const int k) {
+        if (stateName=="surface_height") {
+          auto elem_lid = ws_elems(workset.wsIndex,i);
+          auto node_gids = node_dof_mgr->getElementGIDs(elem_lid);
+          std::cout << "  cell=" << i << " (" << cell_gids->getGlobalElement(ws_elems(workset.wsIndex,i)) << ")\n";
+          std::cout << "   node=" << j << " (" << node_gids[j] << "), zs=" << stateData.access(i,j,k) << "\n";
+        }
+        field.access(i,j,k) = stateData.access(i,j,k);  //works also when rank is less than 3
+      });
+    }
+    comm->barrier();
+  }
+  // Kokkos::parallel_for(this->getName(),
+  //                      Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>({0,0,0},{stateData.extent(0),stateData.extent(1),stateData.extent(2)}),
+  //                      KOKKOS_CLASS_LAMBDA(const int i, const int j, const int k) {
+  //   field.access(i,j,k) = stateData.access(i,j,k);  //works also when rank is less than 3
+  // });
 }
 
 template<typename EvalT, typename Traits>
@@ -102,6 +126,7 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   Kokkos::parallel_for(this->getName(),
                        Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>({0,0,0},{stateData.extent(0),stateData.extent(1),stateData.extent(2)}),
                        KOKKOS_CLASS_LAMBDA(const int i, const int j, const int k) {
+
     field.access(i,j,k) = stateData.access(i,j,k); //works also when rank is less than 3
   });
 }

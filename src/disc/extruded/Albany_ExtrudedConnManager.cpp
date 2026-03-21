@@ -137,7 +137,9 @@ getConnectivityMask (const std::string& sub_part_name) const
              sub_part_name.substr(0,9)=="extruded_") {
     std::vector<std::string> basal_parts;
     if (sub_part_name=="lateral" or sub_part_name=="lateralside") {
+      std::cout << "We still don't know how to retrieve the basal barts of 'lateral' mesh part, as we don't know their names (and they must be of the same dim we're quering now). Skipping.\n";
       basal_parts = m_mesh->basal_mesh()->meshSpecs[0]->ssNames;
+      return mask;
     } else {
       basal_parts.push_back(m_mesh->get_basal_part_name(sub_part_name));
     }

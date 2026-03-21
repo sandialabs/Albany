@@ -11,6 +11,7 @@
 #include "Albany_Macros.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_StringUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "STKConnManager.hpp"
 #include "Albany_TmplSTKMeshStruct.hpp"
@@ -1248,6 +1249,27 @@ STKDiscretization::computeWorksetInfo()
       }
     }
   }
+  auto node_dof_mgr = getNodeDOFManager();
+  // for (int pid=0; pid<comm->getSize(); ++pid) {
+  //   if (pid==comm->getRank()) {
+  //     std::cout << "pid=" << pid << "\n";
+  //     for (int ws=0; ws<numBuckets; ++ws) {
+  //       std::cout << " ws=" << ws << "\n";
+  //       for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
+  //         const auto elmIdx = m_workset_elements.host()(ws,ielem);
+  //         auto cell_gid = cell_indexer->getGlobalElement(elmIdx);
+  //         // if (cell_gid>20)
+  //         //   continue;
+  //         std::cout << "  ielem=" << ielem << "(" << cell_gid << ")\n";
+  //         for (int inode=0; inode<m_ws_elem_coords[0][0].size(); ++inode) {
+  //           auto node_gid = node_dof_mgr->getElementGIDs(elmIdx)[inode];
+  //           std::cout << "   node " << inode << "(" << node_gid << "): [" << m_ws_elem_coords[ws][ielem][inode][0] << " " << m_ws_elem_coords[ws][ielem][inode][1] << "]\n";
+  //         }
+  //       }
+  //     }
+  //   }
+  //   comm->barrier();
+  // }
 
   auto transformType = discParams->get<std::string>("Transform Type", "None");
   double alpha = discParams->get("LandIce alpha", 0.0);
@@ -1307,6 +1329,25 @@ STKDiscretization::computeWorksetInfo()
       }
     }
   }
+  // for (int pid=0; pid<comm->getSize(); ++pid) {
+  //   if (pid==comm->getRank()) {
+  //     auto elem_gids = getGlobalElements(getCellsGlobalLocalIndexer()->getVectorSpace());
+  //     std::cout << "pid=" << pid << "\n";
+  //     for (int ws=0; ws<getNumWorksets(); ++ws) {
+  //       std::cout << " ws=" << ws << "\n";
+  //       auto zs = getMeshStruct()->get_field_accessor()->getElemStates()[ws].at("surface_height");
+  //       for (int ie=0; ie<m_workset_sizes[ws]; ++ie) {
+  //         auto elem_lid = m_workset_elements.host()(ws,ie);
+  //         auto node_gids = getNodeDOFManager()->getElementGIDs(elem_lid);
+  //         std::cout << "  cell=" << ie << " (" << elem_gids[elem_lid] << ")\n";
+  //         for (int in=0; in<3; ++in) {
+  //           std::cout << "   node " << in << "(" << node_gids[in] << "), zs=" << zs.host()(ie,in) << "\n";
+  //         }
+  //       }
+  //     }
+  //   }
+  //   comm->barrier();
+  // }
 }
 
 void
@@ -1831,6 +1872,26 @@ STKDiscretization::updateMesh()
 
   if (sideSetDiscretizations.size()>0) {
     buildSideSetProjectors();
+  }
+
+  for (int pid=0; pid<comm->getSize(); ++pid) {
+    if (pid==comm->getRank()) {
+      auto elem_gids = getGlobalElements(getCellsGlobalLocalIndexer()->getVectorSpace());
+      std::cout << "pid=" << pid << "\n";
+      for (int ws=0; ws<getNumWorksets(); ++ws) {
+        std::cout << " ws=" << ws << "\n";
+        auto zs = stkMeshStruct->get_field_accessor()->getElemStates()[ws].at("surface_height");
+        for (int ie=0; ie<m_workset_sizes[ws]; ++ie) {
+          auto elem_lid = m_workset_elements.host()(ws,ie);
+          auto node_gids = getNodeDOFManager()->getElementGIDs(elem_lid);
+          std::cout << "  cell=" << ie << " (" << elem_gids[elem_lid] << ")\n";
+          for (int in=0; in<3; ++in) {
+            std::cout << "   node " << in << "(" << node_gids[in] << "), zs=" << zs.host()(ie,in) << "\n";
+          }
+        }
+      }
+    }
+    comm->barrier();
   }
 }
 

@@ -792,6 +792,7 @@ ExtrudedDiscretization::updateMesh()
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: updateMesh");
 
   // First, make sure the basal disc is updated
+  std::cout << "updating basal disc...";
   m_basal_disc->updateMesh();
 
   createDOFManagers();
@@ -802,9 +803,9 @@ ExtrudedDiscretization::updateMesh()
 
   computeWorksetInfo();
 
-  computeNodeSets();
-
   computeSideSets();
+
+  computeNodeSets();
 
   computeGraphs();
 

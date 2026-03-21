@@ -11,6 +11,8 @@
 
 #include "LandIce_StokesFOResid.hpp"
 
+#include "Albany_CommUtils.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -25,6 +27,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   wGradBF   (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
   force     (p.get<std::string> ("Body Force Variable Name"), dl->qp_vector),
   U         (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+  Unode     (p.get<std::string> ("Velocity QP Variable Name"), dl->node_vector),
   Ugrad     (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   muLandIce (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
   Residual  (p.get<std::string> ("Residual Variable Name"), dl->node_vector),
@@ -70,6 +73,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   }
 
   this->addDependentField(U);
+  this->addDependentField(Unode);
   this->addDependentField(Ugrad);
   this->addDependentField(force);
   this->addDependentField(wBF);
@@ -153,19 +157,23 @@ operator() (const LandIce_3D_Opt_Tag<NumNodes>&, const int& cell) const{
     ScalarT frc0 = force(cell,qp,0);
     ScalarT frc1 = force(cell,qp,1);
     for (size_t node=0; node < num_nodes; ++node) {
-      res0[node]+= strs00*wGradBF(cell,node,qp,0) +
-            strs01*wGradBF(cell,node,qp,1) +
-            strs02*wGradBF(cell,node,qp,2) +
-            frc0*wBF(cell,node,qp);
-      res1[node]+=strs01*wGradBF(cell,node,qp,0) +
-            strs11*wGradBF(cell,node,qp,1) +
-            strs12*wGradBF(cell,node,qp,2) +
-            frc1*wBF(cell,node,qp);
+      // res0[node]+= strs00*wGradBF(cell,node,qp,0) +
+      //       strs01*wGradBF(cell,node,qp,1) +
+      //       strs02*wGradBF(cell,node,qp,2) +
+      //       frc0*wBF(cell,node,qp);
+      // res1[node]+=strs01*wGradBF(cell,node,qp,0) +
+      //       strs11*wGradBF(cell,node,qp,1) +
+      //       strs12*wGradBF(cell,node,qp,2) +
+      //       frc1*wBF(cell,node,qp);
+      res0[node]+=frc0*wBF(cell,node,qp);
+      res1[node]+=frc1*wBF(cell,node,qp);
     }
   }
+  // std::cout << "cell=" << cell << "\n";
   for (size_t node=0; node < num_nodes; ++node) {
-    Residual(cell,node,0)=res0[node];
-    Residual(cell,node,1)=res1[node];
+    // std::cout << " node=" << node << ", frc=[" << res0[node] << ", " << res1[node] << "]\n";
+    Residual(cell,node,0)=Unode(cell,node,0) + res0[node];
+    Residual(cell,node,1)=Unode(cell,node,1) + res1[node];
   }
 }
 
@@ -339,7 +347,14 @@ evaluateFields(typename Traits::EvalData workset)
           Kokkos::parallel_for("StokesFOResid_LandIce_3D_Opt_Hex",LandIce_3D_Opt_Hex_Policy(0,workset.numCells), *this);
         }
         else if (numNodes == 6) {
-          Kokkos::parallel_for("StokesFOResid_LandIce_3D_Opt_Wedge",LandIce_3D_Opt_Wedge_Policy(0,workset.numCells), *this);
+          auto comm = Albany::getDefaultComm();
+          for (int pid=0; pid<comm->getSize(); ++pid) {
+            if (pid==comm->getRank()) {
+              // std::cout << "pid=" << pid << ", resid || for over " << workset.numCells << " cells...\n";
+              Kokkos::parallel_for("StokesFOResid_LandIce_3D_Opt_Wedge",LandIce_3D_Opt_Wedge_Policy(0,workset.numCells), *this);
+            }
+            comm->barrier();
+          }
         }
         else{
           TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,

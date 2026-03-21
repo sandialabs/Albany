@@ -15,6 +15,7 @@
 #include "Albany_Layouts.hpp"
 #include "PHAL_Utilities.hpp"
 #include "Albany_SacadoTypes.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 
 namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
@@ -64,6 +65,8 @@ public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
   struct DOFGradInterpolationBase_Residual_Tag{};
 
+  Teuchos::RCP<Albany::AbstractDiscretization> disc;
+  int ws_idx;
 
 #ifdef KOKKOS_OPTIMIZED
   typedef Kokkos::TeamPolicy<ExecutionSpace>              team_policy ;

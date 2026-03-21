@@ -48,6 +48,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim>       force;
 
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim>       U;
+  PHX::MDField<const ScalarT,Cell,Node,VecDim>       Unode;
   PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
   PHX::MDField<const ScalarT,Cell,QuadPoint>              muLandIce;
 

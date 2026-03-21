@@ -12,6 +12,7 @@
 
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "Albany_CommUtils.hpp"
 
 namespace PHAL {
 
@@ -90,19 +91,28 @@ operator()( const team_member & thread) const{
 }
 
 #else
-  template<typename EvalT, typename Traits, typename ScalarT>
-  KOKKOS_INLINE_FUNCTION
-  void DOFGradInterpolationBase<EvalT, Traits, ScalarT>::
-  operator() (const DOFGradInterpolationBase_Residual_Tag&, const int& cell) const {
-
-   for (size_t qp=0; qp < numQPs; ++qp) {
-          for (size_t dim=0; dim<numDims; dim++) {
-            grad_val_qp(cell,qp,dim) = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
-            for (size_t node= 1 ; node < numNodes; ++node) {
-              grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
-          }
-        }
+template<typename EvalT, typename Traits, typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+void DOFGradInterpolationBase<EvalT, Traits, ScalarT>::
+operator() (const DOFGradInterpolationBase_Residual_Tag&, const int& cell) const {
+  // auto ws_el_lids = disc->getWsElementLIDs().host();
+  // auto cell_gids = disc->getCellsGlobalLocalIndexer();
+  // auto cell_gid = cell_gids->getGlobalElement(ws_el_lids(ws_idx,cell));
+  // bool print = val_node.fieldTag().name()=="surface_height";
+  // if (print) {
+  //   std::cout << "  cell=" << cell << "(" << cell_gid << ")\n";
+  //   for (size_t node= 0 ; node < numNodes; ++node) {
+  //     std::cout << "   node=" << node << ", zs=[" << val_node(cell,node) << "\n";
+  //   }
+  // }
+  for (size_t qp=0; qp < numQPs; ++qp) {
+    for (size_t dim=0; dim<numDims; dim++) {
+      grad_val_qp(cell,qp,dim) = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
+      for (size_t node= 1 ; node < numNodes; ++node) {
+        grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
       }
+    }
+  }
 }
 #endif
 // ***************************************************************************************
@@ -129,7 +139,19 @@ evaluateFields(typename Traits::EvalData workset)
    Kokkos::parallel_for(policy, *this);
 
 #else
- Kokkos::parallel_for(this->getName(),DOFGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
+  Kokkos::parallel_for(this->getName(),DOFGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
+  // disc = workset.disc;
+  // ws_idx = workset.wsIndex;
+  // auto comm = Albany::getDefaultComm();
+  // for (int pid=0; pid<comm->getSize(); ++pid) {
+  //   if (pid==0)
+  //     std::cout << "ws=" << ws_idx << "\n";
+  //   std::cout << " pid=" << pid << "\n";
+  //   if (pid==comm->getRank()) {
+  //     Kokkos::parallel_for(this->getName(),DOFGradInterpolationBase_Residual_Policy(0,workset.numCells),*this);
+  //   }
+  //   comm->barrier();
+  // }
 #endif
 }
 //Specialization for Jacobian evaluation taking advantage of the sparsity of the derivatives

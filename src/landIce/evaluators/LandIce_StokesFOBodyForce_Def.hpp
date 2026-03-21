@@ -12,6 +12,8 @@
 
 #include "LandIce_StokesFOBodyForce.hpp"
 
+#include "Albany_CommUtils.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -194,7 +196,12 @@ operator() (const FO_INTERP_SURF_GRAD_Tag& /* tag */, const int& cell) const{
       force(cell,qp,1) = rho_g_kernel*(h*surfaceGrad(cell,qp,1) + (surface(cell,qp) - z) *(h_y-h_x));
     }
   } else {
+    // auto ws_el_lids = disc->getWsElementLIDs().host();
+    // auto cell_gids = disc->getCellsGlobalLocalIndexer();
+    // auto cell_gid = cell_gids->getGlobalElement(ws_el_lids(ws_idx,cell));
+    // std::cout << "  cell=" << cell << "(" << cell_gid << ")\n";
     for (unsigned int qp=0; qp < numQPs; ++qp) {
+      // std::cout << "   qp=" << qp << ", grad_zs=[" << surfaceGrad(cell,qp,0) << ", " << surfaceGrad(cell,qp,1) << "]\n";
       force(cell,qp,0) = rho_g_kernel*surfaceGrad(cell,qp,0);
       force(cell,qp,1) = rho_g_kernel*surfaceGrad(cell,qp,1);
     }
@@ -438,6 +445,18 @@ evaluateFields(typename Traits::EvalData workset)
     R2 = std::pow(R,2);
 
     Kokkos::parallel_for(FO_INTERP_SURF_GRAD_Policy(0,workset.numCells),*this);
+    // disc = workset.disc;
+    // ws_idx = workset.wsIndex;
+    // auto comm = Albany::getDefaultComm();
+    // for (int pid=0; pid<comm->getSize(); ++pid) {
+      // if (pid==0)
+        // std::cout << "ws=" << ws_idx << "\n";
+      // std::cout << " pid=" << pid << "\n";
+      // if (pid==comm->getRank()) {
+        // Kokkos::parallel_for(FO_INTERP_SURF_GRAD_Policy(0,workset.numCells),*this);
+      // }
+      // comm->barrier();
+    // }
   }
   else if (bf_type == POISSON) {
     Kokkos::parallel_for(POISSON_Policy(0,workset.numCells),*this);

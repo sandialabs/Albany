@@ -157,6 +157,7 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
 void OmegahDiscretization::
 updateMesh ()
 {
+  std::cout << "omegah updateMesh...\n";
   // Make sure we don't reuse old dof mgrs (if adapting)
   m_key_to_dof_mgr.clear();
 
@@ -223,17 +224,47 @@ updateMesh ()
   }
 
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
+  m_mesh_struct->get_field_accessor()->transferNodeStatesToElemStates();
 
-  m_ws_elem_coords.resize(num_ws);
-  auto coords_h  = m_mesh_struct->coords_host();
+  // {
+  //   auto H = m_mesh_struct->get_field_accessor()->getElemStates()[0]["ice_thickness"].host();
+  //   auto z_s = m_mesh_struct->get_field_accessor()->getElemStates()[0]["surface_height"].host();
+  //   for (int pid=0; pid<m_comm->getSize(); ++pid) {
+  //     if (pid==m_comm->getRank()) {
+  //       auto elem_gids = getGlobalElements(getCellsGlobalLocalIndexer()->getVectorSpace());
+  //       std::cout << "pid=" << m_comm->getRank() << "\n";
+  //       for (int ie=0; ie<10; ++ie) {
+  //         std::cout << " elem_gid=" << elem_gids[ie] << ", H:";
+  //         for (int in=0; in<3; ++in) {
+  //           std::cout << " " << H(ie,in);
+  //         } std::cout << "\n";
+  //       }
+  //       for (int ie=0; ie<10; ++ie) {
+  //         std::cout << " elem_gid=" << elem_gids[ie] << ", z_s:";
+  //         for (int in=0; in<3; ++in) {
+  //           std::cout << " " << z_s(ie,in);
+  //         } std::cout << "\n";
+  //       }
+  //     }
+  //     m_comm->barrier();
+  //   }
+  // }
+
   auto node_gids = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   auto nverts = node_gids.size();
-  m_node_lid_to_omegah_pos.resize(nverts);
+
+  // Maps a Tpetra LID to the pos of a node in the omegah arrays
+  // std::map<GO,int> node_gid_to_omegah_lid;
+  std::vector<int>  albany_lid_to_omegah_lid;
+  albany_lid_to_omegah_lid.resize(nverts);
   for (int i=0; i<nverts; ++i) {
     auto gid = node_gids[i];
+    // node_gid_to_omegah_lid[gid] = i;
+    // if (node_indexer->isLocallyOwnedElement(gid)) {
     auto lid = node_indexer->getLocalElement(gid);
-    m_node_lid_to_omegah_pos[lid] = i;
+    albany_lid_to_omegah_lid[lid] = i;
+    // }
   }
 
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
@@ -246,27 +277,84 @@ updateMesh ()
   const int mdim = mesh.dim();
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
   int elms_in_prior_worksets = 0;
-  for (int ws=0; ws<num_ws; ++ws) {
-    m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
-    for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
-      m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
-      const auto elmIdx = ielem + elms_in_prior_worksets;
+  auto coords_h  = m_mesh_struct->coords_host();
+  m_ws_elem_coords.resize(num_ws);
+  // for (int ws=0; ws<num_ws; ++ws) {
+  //   m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
+  //   for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
+  //     m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
+  //     const auto elmIdx = ielem + elms_in_prior_worksets;
 
-      // Save a map from element LID to workset on this PE
-      m_elem_ws_idx[elmIdx].ws = ws;
-      m_elem_ws_idx[elmIdx].idx = ielem;
-      for (int inode=0; inode<num_elem_nodes; ++inode) {
-        LO node_lid = node_elem_dof_lids(elmIdx,inode);
-        int omh_pos = m_node_lid_to_omegah_pos[node_lid];
-        m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
-        auto coords = &m_nodes_coordinates[node_lid*mdim];
-        for (int idim=0; idim<mdim; ++idim) {
-          coords[idim] = m_ws_elem_coords[ws][ielem][inode][idim];
+  //     // Save a map from element LID to workset on this PE
+  //     m_elem_ws_idx[elmIdx].ws = ws;
+  //     m_elem_ws_idx[elmIdx].idx = ielem;
+  //     for (int inode=0; inode<num_elem_nodes; ++inode) {
+  //       LO alb_lid = node_elem_dof_lids(elmIdx,inode);
+  //       int omh_lid = albany_lid_to_omegah_lid[alb_lid];
+  //       m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_lid*mdim];
+  //       auto coords = &m_nodes_coordinates[alb_lid*mdim];
+  //       for (int idim=0; idim<mdim; ++idim) {
+  //         coords[idim] = m_ws_elem_coords[ws][ielem][inode][idim];
+  //       }
+  //     }
+  //   }
+  //   elms_in_prior_worksets += m_workset_sizes[ws];
+  // }
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+  for (int pid=0; pid<m_comm->getSize(); ++pid) {
+    if (pid==m_comm->getRank()) {
+      std::cout << "pid=" << pid << "\n";
+      for (int ws=0; ws<num_ws; ++ws) {
+        std::cout << " ws=" << ws << "\n";
+        m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
+        for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
+          m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
+          // const auto elmIdx = ielem + elms_in_prior_worksets;
+          const auto elmIdx = m_workset_elements.host()(ws,ielem);
+          auto cell_gid = cell_indexer->getGlobalElement(elmIdx);
+
+          std::cout << "  ielem=" << ielem << "(" << cell_gid << ")\n";
+          // std::cout << "  ielem=" << ielem << ", elemIdx=" << elmIdx << ", gid=" << cell_gid << "\n";
+          // Save a map from element LID to workset on this PE
+          m_elem_ws_idx[elmIdx].ws = ws;
+          m_elem_ws_idx[elmIdx].idx = ielem;
+          for (int inode=0; inode<num_elem_nodes; ++inode) {
+            LO alb_lid = node_elem_dof_lids(elmIdx,inode);
+            int omh_lid = albany_lid_to_omegah_lid[alb_lid];
+            m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_lid*mdim];
+            auto coords = &m_nodes_coordinates[alb_lid*mdim];
+            auto node_gid = node_dof_mgr->getElementGIDs(elmIdx)[inode];
+            for (int idim=0; idim<mdim; ++idim) {
+              coords[idim] = m_ws_elem_coords[ws][ielem][inode][idim];
+            }
+            std::cout << "   node " << inode << "(" << node_gid << "): [" << m_ws_elem_coords[ws][ielem][inode][0] << " " << m_ws_elem_coords[ws][ielem][inode][1] << "]\n";
+          }
         }
+        elms_in_prior_worksets += m_workset_sizes[ws];
       }
     }
-    elms_in_prior_worksets += m_workset_sizes[ws];
+    m_comm->barrier();
   }
+  // for (int pid=0; pid<m_comm->getSize(); ++pid) {
+  //   if (pid==m_comm->getRank()) {
+  //     std::cout << "pid=" << pid << "\n";
+  //     for (int ws=0; ws<num_ws; ++ws) {
+  //       std::cout << " ws=" << ws << "\n";
+  //       for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
+  //         const auto elmIdx = m_workset_elements.host()(ws,ielem);
+  //         auto cell_gid = cell_indexer->getGlobalElement(elmIdx);
+  //         // if (cell_gid>20)
+  //         //   continue;
+  //         std::cout << "  ielem=" << ielem << "(" << cell_gid << ")\n";
+  //         for (int inode=0; inode<num_elem_nodes; ++inode) {
+  //           auto node_gid = node_dof_mgr->getElementGIDs(elmIdx)[inode];
+  //           std::cout << "   node " << inode << "(" << node_gid << "): [" << m_ws_elem_coords[ws][ielem][inode][0] << " " << m_ws_elem_coords[ws][ielem][inode][1] << "]\n";
+  //         }
+  //       }
+  //     }
+  //   }
+  //   m_comm->barrier();
+  // }
 
   m_sideSets.resize(num_ws);
   for (int ws=0; ws<num_ws; ++ws) {
@@ -280,6 +368,41 @@ updateMesh ()
 
   //reset output interval
   outputInterval = 0;
+
+  std::cout << "omegah updateMesh...done!\n";
+
+  for (int pid=0; pid<m_comm->getSize(); ++pid) {
+    if (pid==m_comm->getRank()) {
+      auto elem_gids = getGlobalElements(getCellsGlobalLocalIndexer()->getVectorSpace());
+      std::cout << "pid=" << pid << "\n";
+      for (int ws=0; ws<getNumWorksets(); ++ws) {
+        std::cout << " ws=" << ws << "\n";
+        auto zs = getMeshStruct()->get_field_accessor()->getElemStates()[ws].at("surface_height");
+        for (int ie=0; ie<m_workset_sizes[ws]; ++ie) {
+          auto elem_lid = m_workset_elements.host()(ws,ie);
+          auto node_gids = getNodeDOFManager()->getElementGIDs(elem_lid);
+          std::cout << "  cell=" << ie << " (" << elem_gids[elem_lid] << ")\n";
+          for (int in=0; in<3; ++in) {
+            std::cout << "   node " << in << "(" << node_gids[in] << "), zs=" << zs.host()(ie,in) << "\n";
+          }
+        }
+      }
+    }
+    m_comm->barrier();
+  }
+  // std::abort();
+
+  std::cout << "omegah update mesh don\n";
+  std::cout << " mesh tags:\n";
+  auto all_tags = Omega_h::get_all_mesh_tags(m_mesh_struct->getOmegahMesh().get());
+  for (int i = 0; i <= mesh.dim(); ++i) {
+    std::cout << "  dim=" << i << ":";
+    for (int j = 0; j < mesh.ntags(i); ++j) {
+      auto tagbase = mesh.get_tag(i, j);
+      std::cout << " " << tagbase->name();
+    }
+    std::cout << "\n";
+  }
 }
 
 void OmegahDiscretization::
@@ -301,13 +424,11 @@ computeSideSets ()
   auto s2e_a2ab = hostRead(s2e.a2ab);
   auto s2e_ab2b = hostRead(s2e.ab2b);
 
-  // auto e2s = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(mesh, side_dim));
-  // assert(e2s.size() == OmegahGhost::getNumOwnedElms(mesh)*Omega_h::simplex_degree(mesh.dim(),side_dim));
-
   auto e2s = mesh.ask_down(mesh.dim(),side_dim);
   auto e2s_ab2b = hostRead(e2s.ab2b);
 
   int num_loc_sides = Omega_h::element_degree(mesh.family(),mesh.dim(),side_dim);
+  // Since  elem/side lids are in owned+ghosted space, use full mesh.ask_down connectivity (not from OmegahGhost!)
   auto determine_side_pos = [&](int elem_lid, int side_lid) {
     int offset = elem_lid*num_loc_sides;
     for (int pos=0; pos<num_loc_sides; ++pos) {
@@ -319,6 +440,8 @@ computeSideSets ()
 
   m_sideSets.resize(getNumWorksets());
 
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+  auto elem_gids = hostRead(mesh.globals(mesh.dim()));
   auto side_gids = hostRead(mesh.globals(side_dim));
   Teuchos::Array<GO> side_GIDs;
   for (const auto& ssn : ssNames) {
@@ -334,23 +457,20 @@ computeSideSets ()
         continue;
 
       for(int adjIdx=s2e_a2ab[i]; adjIdx<s2e_a2ab[i+1]; adjIdx++) {
-        // the ielem element index from s2e is from the ghosted mesh
-        // and the cell_indexer only counts unghosted (owned) elements
         auto ielem = s2e_ab2b[adjIdx];
-        auto elemOwnedLid = ownedElmLids[ielem];
+        GO  elem_GID = elem_gids[ielem];
+        int elem_LID = cell_indexer->getLocalElement(elem_GID);
+        int ws = m_elem_ws_idx[elem_LID].ws;
 
-        int ws = m_elem_ws_idx[elemOwnedLid].ws;
-
-        auto& ss_vec = m_sideSets[ws][ssn];
-
-        auto& sStruct = ss_vec.emplace_back();;
+        auto& sStruct = m_sideSets[ws][ssn].emplace_back();;
 
         sStruct.side_GID = side_gids[i];
-        sStruct.elem_GID = ownedElmGids[ielem];
+        sStruct.elem_GID = elem_GID;
+
         side_GIDs.push_back(sStruct.side_GID);
 
         // Save elem GID and LID. Here, LID is the local id *within* the workset
-        sStruct.ws_elem_idx = m_elem_ws_idx[elemOwnedLid].idx;
+        sStruct.ws_elem_idx = m_elem_ws_idx[elem_LID].idx;
 
         // Save the position of the side within element (0-based).
         sStruct.side_pos = determine_side_pos(ielem,i);
@@ -359,7 +479,8 @@ computeSideSets ()
             "Something went wrong while locating a side in an element.\n"
             " - side set: " << ssn << "\n"
             " - side lid (osh): " << i << "\n"
-            " - owning elem lid (osh): " << ielem << "\n");
+            " - owning elem lid (osh): " << ielem << "\n"
+            " - owning elem lid (albany): " << elem_LID << "\n");
         // Save the index of the element block that this elem lives in
         sStruct.elem_ebIndex =
             m_mesh_struct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[ws]];

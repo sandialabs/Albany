@@ -133,6 +133,7 @@ DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterList> dis
           basal_params->set("Workset Size", basal_ws_size);
         }
 
+        basal_params->print();
         basalMesh = createMeshStruct(basal_params, comm, numParams);
         mesh = Teuchos::rcp(new ExtrudedMesh(basalMesh, disc_params, comm));
     }

@@ -41,23 +41,33 @@ setFieldOnMesh (const std::string& name,
   // Create 1d view of input MV
   auto dev_mv = getDeviceData(mv);
   int ncmps = dev_mv.extent(1);
-  int nents = dev_mv.extent(0);
+  int mv_nents = dev_mv.extent(0);
   int tag_nents = Omega_h::divide_no_remainder(tag->array().size(), tag->ncomps());
 
-  TEUCHOS_TEST_FOR_EXCEPTION (tag_nents != nents, std::logic_error,
-      "Error! Cannot copy MV on mesh tag, as the number of entities differ.\n"
+  TEUCHOS_TEST_FOR_EXCEPTION (tag_nents != m_mesh->nents(entityDim), std::runtime_error,
+      "Error! Something is amiss with the registered tag size.\n"
       "  - tag name: " + name + "\n"
+      "  - entity dim: " << entityDim << "\n"
       "  - tag num ents: " << tag_nents << "\n"
-      "  - MV num ents: " << nents << "\n");
+      "  - mesh num ents: " << m_mesh->nents(entityDim) << "\n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (mv_nents>tag_nents, std::logic_error,
+      "Error! Unexpected number of entities in input MV.\n"
+      "  - tag name: " + name + "\n"
+      "  - entity dim: " << entityDim << "\n"
+      "  - num owned+ghosted ents: " << tag_nents << "\n"
+      "  - MV num ents: " << mv_nents << "\n");
 
   // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
   // entity id stride faster (it's a 2d view with layout left)
-  Kokkos::RangePolicy<> policy(0,nents*ncmps);
+  Kokkos::RangePolicy<> policy(0,mv_nents*ncmps);
   auto tag_view = m_tags.at(name).array.view();
+  std::cout << "setting " << name << " on mesh...\n";
   auto lambda = KOKKOS_LAMBDA(int idx) {
-    int ient = idx % nents;
-    int icmp = idx / nents;
+    int ient = idx % mv_nents;
+    int icmp = idx / mv_nents;
     tag_view (ient*ncmps + icmp) = dev_mv(ient,icmp);
+    std::cout << " @ ent=" << ient << ", val=" << tag_view (ient*ncmps + icmp) << "\n";
   };
   Kokkos::parallel_for(policy,lambda);
 }
@@ -65,6 +75,7 @@ setFieldOnMesh (const std::string& name,
 void OmegahMeshFieldAccessor::
 addStateStruct(const Teuchos::RCP<StateStruct>& st)
 {
+  std::cout << "omegah MFA, addStateStruct " << st->name << "...\n";
   auto product = [](const auto& vec, int start) {
     return std::accumulate(vec.begin()+start, vec.end(), 1, std::multiplies<int>());
   };
@@ -124,6 +135,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
     auto nlayers = st->dim.back();
     mesh_vector_states[st->name+"_NLC"].resize(nlayers);
   }
+  std::cout << "omegah MFA, addStateStruct...done!\n";
 }
 
 void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& worksets_sizes)
@@ -131,6 +143,10 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
   // Elem states
   int num_ws = worksets_sizes.size();
   elemStateArrays.resize(worksets_sizes.size());
+  std::cout << "omegah MFA, createStateArrays:\n"
+            << " " << worksets_sizes.size() << " worksets\n"
+            << " " << elem_sis.size() << " elem SIS\n"
+            << " " << elem_sis.size() << " nodal SIS\n";
   for (const auto& st : elem_sis) {
     auto data = m_tags.at(st->name).array.data();
     auto dim = st->dim;
@@ -138,6 +154,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
     dim[0] = 1; // We don't use the extent of the elem tag
     for (auto d : dim) stride *= d;
 
+    std::cout << "state=" << st->name << ", resetting state from dev ptr..\n";
     for (int ws=0; ws<num_ws; ++ws) {
       int num_elems = worksets_sizes[ws];
       switch (dim.size()) {
@@ -209,9 +226,20 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
 {
   int num_elems = OmegahGhost::getNumOwnedElms(*m_mesh);
-  auto elem_nodes = m_mesh->ask_elem_verts();
-  auto elem_nodes_h = hostRead(elem_nodes);
-  int num_elem_nodes = elem_nodes.size() / num_elems;
+  auto elem_nodes_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT));
+  int num_elem_nodes = Omega_h::element_degree(m_mesh->family(), m_mesh->dim(), 0);
+  auto owned_nodes_lids_h = hostRead(OmegahGhost::getEntLidsInClosureOfOwnedElms(*m_mesh,0));
+
+  auto node_pos_in_owned_list = [&](LO lid) {
+    auto beg = owned_nodes_lids_h.data();
+    auto end = beg + owned_nodes_lids_h.size();
+    return std::distance(beg,std::find(beg,end,lid));
+  };
+
+  std::cout << "owned node list:";
+  for (auto i=0; i<owned_nodes_lids_h.size(); ++i)
+    std::cout << " " << owned_nodes_lids_h[i];
+  std::cout << "\n";
 
   for (const auto& st : nodal_sis) {
     if (st->entity==StateStruct::NodalData)
@@ -235,6 +263,7 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
     auto& elem_state_h = elem_state.host();
     auto  node_state_h = hostRead(node_state);
     
+    std::cout << "transfering " << st->name << " from node to elem state...\n";
     TEUCHOS_TEST_FOR_EXCEPTION (dim[1] != static_cast<size_t>(num_elem_nodes), std::runtime_error,
         "Error! State struct dim[1] does not match actual num_elem_nodes.\n"
         "  - state name: " + st->name + "\n"
@@ -242,25 +271,29 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
         "  - num_elem_nodes: " << num_elem_nodes << "\n");
     
     for (int i=0; i<num_elems; ++i) {
+      std::cout << " ie=" << i << "\n";
       for (int j=0; j<num_elem_nodes; ++j) {
         auto node_lid = elem_nodes_h[i*num_elem_nodes+j];
+        auto pos = node_pos_in_owned_list(node_lid);
         TEUCHOS_TEST_FOR_EXCEPTION (node_lid < 0 || node_lid >= m_mesh->nverts(), std::runtime_error,
             "Error! Invalid node_lid in transferNodeStatesToElemStates.\n"
             "  - elem: " << i << "\n"
             "  - local node: " << j << "\n"
-            "  - node_lid: " << node_lid << "\n"
-            "  - nverts: " << m_mesh->nverts() << "\n");
+            "  - node pos in owned list: " << pos << "\n"
+            "  - num owned nodes: " << owned_nodes_lids_h.size() << "\n");
+        std::cout << "  node=" << j << ", node_lid=" << elem_nodes_h[i*num_elem_nodes+j] << ", pos=" << pos;
         switch(rank) {
           case 2:
-            elem_state_h(i, j) = node_state_h[node_lid];
+            elem_state_h(i, j) = node_state_h[pos];
+            std::cout << ", val=" << node_state_h[pos] << "\n";
             break;
           case 3:
             for (size_t k=0; k<dim[2]; ++k) {
-              auto idx = node_lid*dim[2]+k;
+              auto idx = pos*dim[2]+k;
               TEUCHOS_TEST_FOR_EXCEPTION (idx >= node_state_h.size(), std::runtime_error,
                   "Error! Out of bounds access in transferNodeStatesToElemStates rank 3.\n"
                   "  - state name: " + st->name + "\n"
-                  "  - node_lid: " << node_lid << "\n"
+                  "  - node pos in owned list: " << pos << "\n"
                   "  - k: " << k << "\n"
                   "  - idx: " << idx << "\n"
                   "  - node_state_h.size(): " << node_state_h.size() << "\n");
@@ -269,11 +302,11 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
           case 4:
             for (size_t k=0; k<dim[2]; ++k) {
               for (size_t l=0; l<dim[3]; ++l) {
-                auto idx = node_lid*dim[2]*dim[3]+k*dim[3]+l;
+                auto idx = pos*dim[2]*dim[3]+k*dim[3]+l;
                 TEUCHOS_TEST_FOR_EXCEPTION (idx >= node_state_h.size(), std::runtime_error,
                     "Error! Out of bounds access in transferNodeStatesToElemStates rank 4.\n"
                     "  - state name: " + st->name + "\n"
-                    "  - node_lid: " << node_lid << "\n"
+                    "  - node pos in owned list: " << pos << "\n"
                     "  - k: " << k << "\n"
                     "  - l: " << l << "\n"
                     "  - idx: " << idx << "\n"
