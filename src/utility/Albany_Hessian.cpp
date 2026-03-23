@@ -18,7 +18,8 @@ createDenseHessianLinearOp(Teuchos::RCP<const Thyra_VectorSpace> p_vs)
   auto H = H_factory.createOp();
   assign(H, 0.0);
 
-  return Teuchos::rcp(new MatrixBased_LOWS(H));
+  bool symmetric = true;
+  return Teuchos::rcp(new MatrixBased_LOWS(H,symmetric));
 }
 
 Teuchos::RCP<Thyra_LinearOp>
@@ -46,7 +47,8 @@ createSparseHessianLinearOp(const Teuchos::RCP<const DistributedParameter>& p)
 
   auto H = H_factory.createOp();
   assign(H, 0.0);
-  return Teuchos::rcp(new MatrixBased_LOWS(H));
+  bool symmetric = true;
+  return Teuchos::rcp(new MatrixBased_LOWS(H,symmetric));
 }
 
 void getHessianBlockIDs(int &i1, int &i2, std::string blockName)

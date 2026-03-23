@@ -95,8 +95,12 @@ ANONYMOUS:
         Parameter 0:
           Reconstruct H_pp using Hessian-vector products: true
           H_pp Solver:
-            Linear Solver Type: Belos
+            Linear Solver Type: Amesos2
             Linear Solver Types:
+              Amesos2:
+                Solver Type: KLU2
+                VerboseObject:
+                  Verbosity Level: medium
               Belos:
                 Solver Type: Block GMRES
                 Solver Types:
@@ -121,7 +125,7 @@ ANONYMOUS:
     Method: STKExtruded
     Number Of Time Derivatives: 0
     Exodus Output File Name: gis_analysis_beta.exo
-    Columnwise Ordering: true
+    Columnwise Ordering: false
     NumLayers: 5
     Use Glimmer Spacing: true
     Thickness Field Name: ice_thickness

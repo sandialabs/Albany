@@ -8,8 +8,9 @@ namespace Albany
 {
 
   MatrixBased_LOWS::
-      MatrixBased_LOWS(
-          const Teuchos::RCP<Thyra_LinearOp> &matrix) : mat_(matrix) {}
+      MatrixBased_LOWS( 
+          const Teuchos::RCP<Thyra_LinearOp> &matrix, const bool isSymmetric) : 
+          mat_(matrix), symmetric_(isSymmetric), initialized_(false) {}
 
   MatrixBased_LOWS::
       ~MatrixBased_LOWS() {}
@@ -28,6 +29,13 @@ namespace Albany
     return mat_->range();
   }
 
+  bool
+  MatrixBased_LOWS::
+      isInitialized() const
+  {
+    return initialized_;
+  }
+
   Teuchos::RCP<Thyra_LinearOp>
   MatrixBased_LOWS::
       getMatrix()
@@ -39,6 +47,11 @@ namespace Albany
   MatrixBased_LOWS::
       initializeSolver(Teuchos::RCP<Teuchos::ParameterList> solverParamList)
   {
+    if(initialized_) //solver already initialized
+      return;
+
+    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(mat_), std::runtime_error, "Error! MatrixBased_LOWS::solveImpl, Operator not allocated.\n");    
+
     std::string solverType = solverParamList->get<std::string>("Linear Solver Type");
     Stratimikos::DefaultLinearSolverBuilder strat;
 #ifdef ALBANY_MUELU
@@ -57,15 +70,18 @@ namespace Albany
           prec,
           solver_.ptr(),
           Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-      Thyra::initializePreconditionedOp<double>(*lows_factory,
-          Thyra::transpose<double>(mat_),
-          Thyra::unspecifiedPrec<double>(::Thyra::transpose<double>(prec->getUnspecifiedPrecOp())),
-          solver_transp_.ptr(),
-          Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+      if(!symmetric_)
+        Thyra::initializePreconditionedOp<double>(*lows_factory,
+            Thyra::transpose<double>(mat_),
+            Thyra::unspecifiedPrec<double>(::Thyra::transpose<double>(prec->getUnspecifiedPrecOp())),
+            solver_transp_.ptr(),
+            Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
     } else {
       Thyra::initializeOp<double>(*lows_factory, mat_, solver_.ptr(), Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-      Thyra::initializeOp<double>(*lows_factory, Thyra::transpose<double>(mat_), solver_transp_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
+      if(!symmetric_)
+        Thyra::initializeOp<double>(*lows_factory, Thyra::transpose<double>(mat_), solver_transp_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
     }
+    initialized_ = true;
   }
 
   bool
@@ -77,13 +93,16 @@ namespace Albany
 
   void
   MatrixBased_LOWS::
-      applyImpl(const Thyra::EOpTransp M_trans,
+      applyImpl(const Thyra::EOpTransp M_transp,
                 const Thyra_MultiVector &X,
                 const Teuchos::Ptr<Thyra_MultiVector> &Y,
                 const ST alpha,
                 const ST beta) const
   {
-    mat_->apply(M_trans, X, Y, alpha, beta);
+    if(symmetric_)
+      mat_->apply(Thyra::EOpTransp::NOTRANS, X, Y, alpha, beta);
+    else
+      mat_->apply(M_transp, X, Y, alpha, beta);
   }
 
   Thyra::SolveStatus<double>
@@ -94,8 +113,8 @@ namespace Albany
           const Teuchos::Ptr<Thyra_MultiVector> &X,
           const Teuchos::Ptr<const Thyra::SolveCriteria<ST>> solveCriteria) const
   {
-    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(solver_), std::runtime_error, "Error! MatrixBased_LOWS::solveImpl, Solver not initialized, call initializeSolver first.\n");
-    if (transp == Thyra::EOpTransp::NOTRANS)
+    TEUCHOS_TEST_FOR_EXCEPTION(!initialized_, std::runtime_error, "Error! MatrixBased_LOWS::solveImpl, Solver not initialized, call initializeSolver first.\n");
+    if (symmetric_ || (transp == Thyra::EOpTransp::NOTRANS))
       return solver_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
     else
       return solver_transp_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
