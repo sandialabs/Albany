@@ -8,7 +8,7 @@ MESSAGE ("\n ***********************")
 MESSAGE (" *** Testing Options ***")
 MESSAGE (" ***********************\n")
 
-OPTION (ALBANY_DISABLE_FAILING_TESTS "If ON, allows to skip tests that are known to fail" OFF)
+OPTION (ALBANY_DISABLE_FAILING_TESTS "If ON, allows skipping tests that are known to fail" OFF)
 
 # Add option to enable Albany unit tests.
 OPTION(ENABLE_UNIT_TESTS "Flag to turn on Unit Tests" ON)

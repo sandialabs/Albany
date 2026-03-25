@@ -217,8 +217,10 @@ if (ALBANY_FROSCH)
                      LABELS            "LandIce;Forward")
                        
   if (NOT ALBANY_PARALELL_EXODUS)
-    set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_FROSch
-      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+    if (NOT ALBANY_DISABLE_FAILING_TESTS)
+      set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_FROSch
+        PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+    endif()
 
     set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
