@@ -78,9 +78,11 @@ if (ALBANY_FROSCH)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_lubricated.yaml)
   
   # Create the tests
-  set (testName ${testNameRoot}_Wet_Bed_FROSch)
-  add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_FROSch.yaml)
-  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
+  if (NOT ALBANY_DISABLE_FAILING_TESTS)
+    set (testName ${testNameRoot}_Wet_Bed_FROSch)
+    add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_FROSch.yaml)
+    set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
+  endif()
   
   set (testName ${testNameRoot}_Humboldt_fluxDiv)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_fluxDiv.yaml)

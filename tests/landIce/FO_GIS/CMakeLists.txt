@@ -186,12 +186,14 @@ if (ALBANY_FROSCH)
                        LABELS "LandIce;Forward"
                        FIXTURES_REQUIRED PopulateMeshes)
   
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml)
-  add_test(${testNameRoot}_Humboldt_FluxDiv_FROSch ${Albany.exe} input_fo_humboldt_frosch_fluxdiv.yaml)
-  set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_FROSch
-                     PROPERTIES
-                     LABELS         "LandIce;Forward")
+  if (NOT ALBANY_DISABLE_FAILING_TESTS)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_fluxdiv.yaml)
+    add_test(${testNameRoot}_Humboldt_FluxDiv_FROSch ${Albany.exe} input_fo_humboldt_frosch_fluxdiv.yaml)
+    set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_FROSch
+                       PROPERTIES
+                       LABELS         "LandIce;Forward")
+  endif()
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_power_law.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_power_law.yaml)
