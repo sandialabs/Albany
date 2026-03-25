@@ -405,10 +405,9 @@ setupFwdOp(const Teuchos::RCP<const Thyra_VectorSpace>& vec_space)
   if(A_.is_null()) {
     vec_space_ = vec_space;
     AtDinvA_LOWS::loadLinearOperators();
-    if(!(diagonalD_ || AequalsD_)) {
-      D_->initializeSolver(fwdSolverParameterList_);
-    }
   }
+  if(!(diagonalD_ || AequalsD_))
+    D_->initializeSolver(fwdSolverParameterList_);
 }
 
 
@@ -511,7 +510,7 @@ applyImpl (const Thyra::EOpTransp /*M_trans*/, //operator is symmetric by constr
     if(diagonalD_)
       Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION (!D_->isInitialized(), std::runtime_error, "Error! AtDinvA_LOWS::applyImpl, D Solver not initialized, call initializeFwdSolver first.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (!D_->isInitialized(), std::runtime_error, "Error! AtDinvA_LOWS::applyImpl, D Solver not initialized.\n");
 
       if (verbose_)
         *out << "\nAtDinvA_LOWS::applyImpl: linear solve for D\n" << std::endl;

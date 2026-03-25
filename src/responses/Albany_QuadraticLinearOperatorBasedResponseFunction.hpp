@@ -205,9 +205,6 @@ namespace Albany {
 
       //! Initilializes the solver from a parameter list with Stratimikos parameters  
       void initializeSolver(Teuchos::RCP<Teuchos::ParameterList> solverParamList);
-      
-      //! Initilializes the solver for matrix D from a parameter list with Stratimikos parameters  
-      void initializeFwdSolver();
 
 
     protected:
@@ -248,7 +245,7 @@ namespace Albany {
       //! internal auxiliary vectors for computations
       Teuchos::RCP<Thyra_Vector> vecD_,vec1_,vec2_;
 
-      //! Builder for linear solvers using Stratimikos parameter lists
+      //! Stratimikos parameter list for inverting D (when D is not diagonal)
       Teuchos::RCP<Teuchos::ParameterList> fwdSolverParameterList_;
 
       //! booleans denoting whether matrix A is symmetric, D is diagonal or A equals D

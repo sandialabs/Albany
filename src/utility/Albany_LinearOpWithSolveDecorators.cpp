@@ -50,7 +50,8 @@ namespace Albany
     if(initialized_) //solver already initialized
       return;
 
-    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(mat_), std::runtime_error, "Error! MatrixBased_LOWS::solveImpl, Operator not allocated.\n");    
+    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(mat_), std::runtime_error, "Error! MatrixBased_LOWS::initializeSolver, Operator not allocated.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(solverParamList), std::runtime_error, "Error! MatrixBased_LOWS::initializeSolver, solver parameter list is null.\n");    
 
     std::string solverType = solverParamList->get<std::string>("Linear Solver Type");
     Stratimikos::DefaultLinearSolverBuilder strat;
@@ -88,7 +89,7 @@ namespace Albany
   MatrixBased_LOWS::
       opSupportedImpl(Thyra::EOpTransp M_trans) const
   {
-    return mat_->opSupported(M_trans);
+    return symmetric_ ? mat_->opSupported(Thyra::EOpTransp::NOTRANS) : mat_->opSupported(M_trans);
   }
 
   void
