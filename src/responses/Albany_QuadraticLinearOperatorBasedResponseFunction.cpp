@@ -374,10 +374,7 @@ AtDinvA_LOWS(
     if(!(diagonalD || AequalsD_)) {
       TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(solverParameterList), std::runtime_error, 
        "Error! AtDinvA_LOWS::AtDinvA_LOWS, Solver settings for inverting D must be available when D is not diagonal.\n");
-      fwdLinearSolverBuilder_.setParameterList(solverParameterList);
-    #ifdef ALBANY_MUELU
-      Stratimikos::enableMueLu<double, LO, Tpetra_GO, KokkosNode>(fwdLinearSolverBuilder_);
-    #endif
+      fwdSolverParameterList_=solverParameterList;
     }
   };
 
@@ -410,7 +407,7 @@ setupFwdOp(const Teuchos::RCP<const Thyra_VectorSpace>& vec_space)
     AtDinvA_LOWS::loadLinearOperators();
   }
   if(!(diagonalD_ || AequalsD_))
-    initializeFwdSolver();
+    D_->initializeSolver(fwdSolverParameterList_);
 }
 
 
@@ -431,11 +428,11 @@ quadraticForm(const Thyra_MultiVector& X) {
     if(diagonalD_)
       Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::quadraticForm, D solver not initialized.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (!D_->isInitialized(), std::runtime_error, "Error! AtDinvA_LOWS::quadraticForm, D solver not initialized.\n");
       if (verbose_)
         *out << "\nAtDinvA_LOWS::quadraticForm: linear solve for D\n" << std::endl;
 
-      D_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
+      D_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
     }
 
     //  coeff X' A' inv(D) A X
@@ -444,72 +441,8 @@ quadraticForm(const Thyra_MultiVector& X) {
 
 void
 Albany::AtDinvA_LOWS::
-initializeFwdSolver() {
-  if(Teuchos::nonnull(D_solver_)) //solver already initialized
-   return;
-
-  std::string solverType = fwdLinearSolverBuilder_.getParameterList()->get<std::string>("Linear Solver Type");
-
-  auto lows_factory = fwdLinearSolverBuilder_.createLinearSolveStrategy(solverType);
-  D_solver_ = lows_factory->createOp();
-
-  auto prec_factory =  lows_factory->getPreconditionerFactory();  
-  if(Teuchos::nonnull(prec_factory)) {
-    auto precD = prec_factory->createPrec();
-    prec_factory->initializePrec(Teuchos::rcp(new ::Thyra::DefaultLinearOpSource<double>(D_)), precD.get());
-    Thyra::initializePreconditionedOp<double>(*lows_factory,
-        D_,
-        precD,
-        D_solver_.ptr(),
-        Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-  } else {
-    Thyra::initializeOp<double>(*lows_factory, D_, D_solver_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-  }
-}
-
-void
-Albany::AtDinvA_LOWS::
 initializeSolver(Teuchos::RCP<Teuchos::ParameterList> solverParamList) {
-  if(Teuchos::nonnull(A_solver_)) //solver already initialized
-    return;
-
-  if(A_.is_null())
-    AtDinvA_LOWS::loadLinearOperators();
-
-  std::string solverType = solverParamList->get<std::string>("Linear Solver Type");
-
-  Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-
-  #ifdef ALBANY_MUELU
-    Stratimikos::enableMueLu<double, LO, Tpetra_GO, KokkosNode>(linearSolverBuilder);
-  #endif
-
-  linearSolverBuilder.setParameterList(solverParamList);
-  auto lows_factory = linearSolverBuilder.createLinearSolveStrategy(solverType);
-  A_solver_ = lows_factory->createOp();
-  A_transSolver_ = lows_factory->createOp();
-
-  auto prec_factory =  lows_factory->getPreconditionerFactory();  
-  if(Teuchos::nonnull(prec_factory)) {
-    auto precA = prec_factory->createPrec();
-    prec_factory->initializePrec(Teuchos::rcp(new ::Thyra::DefaultLinearOpSource<double>(A_)), precA.get());
-    Thyra::initializePreconditionedOp<double>(*lows_factory,
-          A_,
-          precA,
-          A_solver_.ptr(),
-          Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-    if(!symmetricA_) {
-      Thyra::initializePreconditionedOp<double>(*lows_factory,
-            Thyra::transpose<double>(A_),
-            Thyra::unspecifiedPrec<double>(::Thyra::transpose<double>(precA->getUnspecifiedPrecOp())),
-            A_transSolver_.ptr(),
-            Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-    }
-  } else {
-    Thyra::initializeOp<double>(*lows_factory, A_, A_solver_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-    if(!symmetricA_)
-      Thyra::initializeOp<double>(*lows_factory, Thyra::transpose<double>(A_), A_transSolver_.ptr(),Thyra::SUPPORT_SOLVE_FORWARD_ONLY);
-  }
+  A_->initializeSolver(solverParamList);
 }
 
 
@@ -540,10 +473,10 @@ loadLinearOperators() {
     tpetra_D_mat->getLocalDiagCopy (*tpetra_diag_vec);
     vecD_ = Albany::createThyraVector(tpetra_diag_vec);
   } else {
-    D_ = Albany::createThyraLinearOp(tpetra_D_mat);
+    D_ = Teuchos::rcp(new MatrixBased_LOWS(Albany::createThyraLinearOp(tpetra_D_mat), true));
   }
 
-  A_ = Albany::createThyraLinearOp(tpetra_A_mat);  
+  A_ = Teuchos::rcp(new MatrixBased_LOWS(Albany::createThyraLinearOp(tpetra_A_mat), symmetricA_));  
   vec1_ = Thyra::createMember(A_->range());
   vec2_ = Thyra::createMember(A_->range());
 }
@@ -577,17 +510,16 @@ applyImpl (const Thyra::EOpTransp /*M_trans*/, //operator is symmetric by constr
     if(diagonalD_)
       Thyra::ele_wise_divide( 1.0, *vec1_, *vecD_, vec2_.ptr() );
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(D_solver_), std::runtime_error, "Error! AtDinvA_LOWS::applyImpl, D Solver not initialized, call initializeFwdSolver first.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (!D_->isInitialized(), std::runtime_error, "Error! AtDinvA_LOWS::applyImpl, D Solver not initialized.\n");
 
       if (verbose_)
         *out << "\nAtDinvA_LOWS::applyImpl: linear solve for D\n" << std::endl;
       
-      D_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
+      D_->solve(Thyra::EOpTransp::NOTRANS, *vec1_, vec2_.ptr());
     }
 
     // Y = alpha coeff A' inv(D) A X + beta Y
-    auto trans = symmetricA_ ? Thyra::EOpTransp::NOTRANS : Thyra::EOpTransp::TRANS;
-    A_->apply(trans, *vec2_, Y, alpha, beta);
+    A_->apply(Thyra::EOpTransp::TRANS, *vec2_, Y, alpha, beta);
   }
 }
 
@@ -603,7 +535,7 @@ solveImpl(
   Thyra::SolveStatus<double> solveStatus;
 
 
-  TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::is_null(A_solver_) || Teuchos::is_null(A_transSolver_), std::runtime_error, "Error! AtDinvA_LOWS::solveImpl, Solvers not initialized, call initializeSolver first.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (!A_->isInitialized(), std::runtime_error, "Error! AtDinvA_LOWS::solveImpl, Solvers not initialized, call initializeSolver first.\n");
 
   Thyra::SolveStatus<double> solveStatus1, solveStatus2;
 
@@ -611,7 +543,7 @@ solveImpl(
     if (verbose_)
       *out << "\nAtDinvA_LOWS::solveImpl: linear solve for A\n" << std::endl;
 
-    solveStatus1 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
+    solveStatus1 = A_->solve(Thyra::EOpTransp::NOTRANS, B, X, solveCriteria);
     X->scale(1.0/coeff_);
     return solveStatus1;
   }  
@@ -620,10 +552,7 @@ solveImpl(
 
   vec1_->assign(0.0);
   // v1 = A^{-T} B
-  if(symmetricA_)
-    solveStatus1 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, B, vec1_.ptr(), solveCriteria);
-  else
-    solveStatus1 = A_transSolver_->solve(Thyra::EOpTransp::NOTRANS, B, vec1_.ptr(), solveCriteria);
+  solveStatus1 = A_->solve(Thyra::EOpTransp::TRANS, B, vec1_.ptr(), solveCriteria);
   
   // v2 = coeff^{-1} D A^{-T} B
   vec2_->assign(0.0);
@@ -636,7 +565,7 @@ solveImpl(
     *out << "\n\nAtDinvA_LOWS::solveImpl: second linear solve for A\n" << std::endl;
 
   // X = coeff^{-1} A^{-1} D A^{-T} B
-  solveStatus2 = A_solver_->solve(Thyra::EOpTransp::NOTRANS, *vec2_, X, solveCriteria);
+  solveStatus2 = A_->solve(Thyra::EOpTransp::NOTRANS, *vec2_, X, solveCriteria);
 
   if((solveStatus1.solveStatus == Thyra::SOLVE_STATUS_CONVERGED) && (solveStatus2.solveStatus == Thyra::SOLVE_STATUS_CONVERGED))
     solveStatus.solveStatus =  Thyra::SOLVE_STATUS_CONVERGED;
