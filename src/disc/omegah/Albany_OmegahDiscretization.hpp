@@ -145,6 +145,7 @@ protected:
                   const int dof_dim);
 
   void computeNodeSets ();
+  void computeSideSets ();
   void computeGraphs ();
 
   // ======================= Members ======================= //

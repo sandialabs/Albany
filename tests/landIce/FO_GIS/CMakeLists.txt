@@ -162,7 +162,39 @@ if (ALBANY_IFPACK2)
   endif()
 endif()
 
-if (NOT ALBANY_PARALELL_EXODUS)
+#########################################################################
+###     Unstructured GIS with Omega_h for basal mesh (test)          ###
+#########################################################################
+
+if (ALBANY_OMEGAH AND ALBANY_IFPACK2)
+  # Find the exo2osh tool from the Omega_h installation
+  find_program(OMEGAH_EXO2OSH NAMES exo2osh
+    PATHS ${Omega_h_DIR}/bin ${Omega_h_DIR}/../bin NO_DEFAULT_PATH)
+
+  if (OMEGAH_EXO2OSH)
+    set (testName ${testNameRoot}_Unstructured_Omega_h)
+
+    # Fixture: convert the 2d exodus mesh to .osh format (run once)
+    add_test (NAME ${testName}_CreateGisOsh
+        COMMAND ${OMEGAH_EXO2OSH} gis_unstruct_2d.exo gis_unstruct_2d.osh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
+    set_tests_properties (${testName}_CreateGisOsh
+        PROPERTIES FIXTURES_SETUP CreateGisOshMesh)
+
+    # Actual Albany test using Omega_h for the basal mesh
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_omegah.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_gis_unstruct_omegah.yaml
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
+    set_tests_properties(${testName}
+                         PROPERTIES
+                         LABELS "LandIce;Forward;Omega_h"
+                         FIXTURES_REQUIRED "CreateGisOshMesh;PopulateMesh2d")
+  else()
+    message(STATUS "exo2osh tool not found; skipping ${testNameRoot}_Unstructured_Omega_h test.")
+  endif()
+endif()
+
 	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_2d_decompMesh)
   add_test (NAME ${testNameHumboldtDecompMesh}
         COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
