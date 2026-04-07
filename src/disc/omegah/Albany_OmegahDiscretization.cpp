@@ -168,6 +168,30 @@ updateMesh ()
   m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
   m_node_dof_managers[""]     = node_dof_mgr;
 
+  // Create DOF managers for nodal parameter states (setFieldData should have been called already)
+  TEUCHOS_TEST_FOR_EXCEPTION (m_solution_mfa.is_null(), std::runtime_error,
+      "[OmegahDiscretization] Error! Solution MFA is null, but setFieldData should have created it...\n");
+
+  for (auto st : m_solution_mfa->getNodalParameterSIS()) {
+    int numComps;
+    switch (st->dim.size()) {
+      case 2: numComps = 1; break;
+      case 3: numComps = st->dim[2]; break;
+      default:
+        throw std::runtime_error(
+            "[OmegahDiscretization::updateMesh] Error! Unsupported nodal state rank.\n"
+            "  - state name: " + st->name + "\n"
+            "  - input dims: (" + util::join(st->dim,",") + ")\n");
+    }
+    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
+    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+
+    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
+      auto node_dof_mgr_part = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
+      m_node_dof_managers[st->meshPart] = node_dof_mgr_part;
+    }
+  }
+
   // Compute workset information
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
@@ -202,6 +226,7 @@ updateMesh ()
   }
 
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
+  m_mesh_struct->get_field_accessor()->transferNodeStatesToElemStates();
 
   auto node_gids = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
@@ -456,26 +481,6 @@ void OmegahDiscretization::setFieldData()
     }
   }
   m_solution_mfa = solution_mfa;
-  for (auto st : m_solution_mfa->getNodalParameterSIS()) {
-    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
-    int numComps;
-    switch (st->dim.size()) {
-      case 2: numComps = 1; break;
-      case 3: numComps = st->dim[2]; break;
-      default:
-        throw std::runtime_error(
-            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
-            "  - state name: " + st->name + "\n"
-            "  - input dims: (" + util::join(st->dim,",") + ")\n");
-    }
-    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
-    m_dof_managers[st->name][st->meshPart] = dof_mgr;
-
-    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
-      auto node_dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
-      m_node_dof_managers[st->meshPart] = node_dof_mgr;
-    }
-  }
 
   // Proceed to set the solution field data in the side meshes as well (if any)
   for (auto& it : sideSetDiscretizations) {
