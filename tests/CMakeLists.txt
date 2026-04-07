@@ -103,6 +103,42 @@ IF (ALBANY_SEACAS)
   MESSAGE("-- SEACAS_EXODIFF = ${SEACAS_EXODIFF}")
 ENDIF()
 
+# Find Omega_h tools if Omega_h is enabled
+if(ALBANY_OMEGAH)
+  if (Omega_h_FOUND)
+    # Get the bin directory from Omega_h installation
+    get_filename_component(Omega_h_BIN_DIR "${Omega_h_DIR}/../../../bin" ABSOLUTE)
+    find_program(
+         OMEGAH_EXO2OSH
+         NAMES exo2osh
+         PATHS ${Omega_h_BIN_DIR} ENV PATH
+    )
+    # Not sure if we need this, but might as well
+    find_program(
+         OMEGAH_OSH2EXO
+         NAMES osh2exo
+         PATHS ${Omega_h_BIN_DIR} ENV PATH
+    )
+    if(NOT OMEGAH_EXO2OSH OR NOT OMEGAH_OSH2EXO)
+      string(CONCAT msg
+        "Omega_h conversion tools (exo2osh or osh2exo) not found in Omega_h bin dir."
+        "Please, reinstall Omega_h with Omega_h_USE_SEACASExodus=ON\n"
+        "  Omega_h_BIN_DIR: ${Omega_h_BIN_DIR}")
+      message(FATAL_ERROR "${msg}")
+    endif()
+  else()
+    set(OMEGAH_EXO2OSH exo2osh)
+    set(OMEGAH_OSH2EXO osh2exo)
+    if (NOT TARGET ${OMEGAH_EXO2OSH} OR NOT TARGET ${OMEGAH_OSH2EXO})
+      string(CONCAT msg
+        "Omega_h conversion tools (exo2osh or osh2exo) not built by Omega_h project"
+        "Please, contact developers\n")
+      message(FATAL_ERROR "${msg}")
+    endif()
+  endif()
+  message("-- OMEGAH_EXO2OSH = ${OMEGAH_EXO2OSH}")
+  message("-- OMEGAH_OSH2EXO = ${OMEGAH_OSH2EXO}")
+endif()
 
 # Paths to the actual executables
 set(AlbanyPath                         ${Albany_BINARY_DIR}/src/Albany)
