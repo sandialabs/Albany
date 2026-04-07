@@ -299,7 +299,8 @@ loadOmegahMesh ()
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
-  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  int numOwnedElems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  int ws_size = computeWorksetSize(ws_size_max,numOwnedElems);
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
                           nsNames, ssNames, ws_size, ebName,
@@ -618,7 +619,8 @@ buildBox (const int dim)
 
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
-  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  int numOwnedElems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  int ws_size = computeWorksetSize(ws_size_max,numOwnedElems);
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Structured, *ctd, dim,
                           nsNames, ssNames, ws_size, ebName,
@@ -641,11 +643,11 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
   if (num_fields==0)
     return;
 
-  // Get nodes/elems global ids
-  auto node_gids = m_mesh->globals(0);
-  auto elem_gids = m_mesh->globals(m_mesh->dim());
-  auto node_gids_h = hostRead(node_gids);
-  auto elem_gids_h = hostRead(elem_gids);
+  // Get owned-only nodes/elems global ids.
+  // Using ALL nodes (including ghost copies on multiple ranks) would create a Tpetra Map
+  // with duplicate GIDs across ranks, which has undefined behavior. We must use owned-only.
+  auto node_gids_h = OmegahGhost::getOwnedEntityGids(*m_mesh, 0);
+  auto elem_gids_h = OmegahGhost::getOwnedEntityGids(*m_mesh, m_mesh->dim());
 
   // NOTE: the reinterpret_cast is safe, since both Albany and Omegah use 64bit int for Global ids
   Teuchos::ArrayView<const GO> node_gids_av(reinterpret_cast<const GO*>(node_gids_h.data()),node_gids_h.size());
@@ -803,6 +805,12 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     }
 
     m_field_accessor->setFieldOnMesh (fname,nodal ? 0 : m_mesh->dim(), field_mv.getConst());
+
+    // Sync owned entity data to ghost copies so that subsequent operations
+    // (e.g., transferNodeStatesToElemStates) can safely read ghost node values.
+    // This is necessary because setFieldOnMesh only writes owned entity data
+    // (positions 0..N_owned-1 in Omega_h's owned-first ordering).
+    m_mesh->sync_tag(nodal ? 0 : m_mesh->dim(), fname);
   }
 }
 
