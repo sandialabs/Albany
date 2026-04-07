@@ -203,32 +203,43 @@ updateMesh ()
 
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
 
-  m_ws_elem_coords.resize(num_ws);
-  auto coords_h  = m_mesh_struct->coords_host();
   auto node_gids = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   auto nverts = node_gids.size();
-  m_node_lid_to_omegah_pos.resize(nverts);
+
+  // Maps an Albany node LID to a position in the coords_host() array.
+  std::vector<int> albany_lid_to_omegah_pos(nverts);
   for (int i=0; i<nverts; ++i) {
     auto gid = node_gids[i];
     auto lid = node_indexer->getLocalElement(gid);
-    m_node_lid_to_omegah_pos[lid] = i;
+    albany_lid_to_omegah_pos[lid] = i;
   }
 
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
+  // Build elem_LID -> workset index map (needed by computeSideSets and others)
+  m_elem_ws_idx.clear();
+  m_elem_ws_idx.resize(nelems);
+
   const int mdim = mesh.dim();
+  auto coords_h  = m_mesh_struct->coords_host();
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
+  m_ws_elem_coords.resize(num_ws);
   int elms_in_prior_worksets = 0;
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
       m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
+      const auto elmIdx = ielem + elms_in_prior_worksets;
+
+      // Save a map from element Albany-LID to workset on this PE
+      m_elem_ws_idx[elmIdx].ws  = ws;
+      m_elem_ws_idx[elmIdx].idx = ielem;
+
       for (int inode=0; inode<num_elem_nodes; ++inode) {
-        const auto elmIdx = ielem + elms_in_prior_worksets;
         LO node_lid = node_elem_dof_lids(elmIdx,inode);
-        int omh_pos = m_node_lid_to_omegah_pos[node_lid];
+        int omh_pos = albany_lid_to_omegah_pos[node_lid];
         m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
         auto coords = &m_nodes_coordinates[node_lid*mdim];
         for (int idim=0; idim<mdim; ++idim) {
