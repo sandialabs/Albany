@@ -20,6 +20,11 @@
 #include "Intrepid2_HGRAD_WEDGE_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_WEDGE_C2_FEM.hpp"
 
+// Expression reading
+#ifdef ALBANY_PANZER_EXPR_EVAL
+#include <Panzer_ExprEval_impl.hpp>
+#endif
+
 namespace Albany {
 
 int computeWorksetSize(const int worksetSizeMax,
@@ -346,7 +351,7 @@ loadField (const std::string& field_name,
 
   *out << "  - Reading " << field_type << " field '" << field_name << "' from file '" << fname << "' ... ";
   out->getOStream()->flush();
-  // Read the input file and stuff it in the Tpetra multivector
+  // Read the input file and stuff it in the Thyra multivector
 
   if (scalar) {
     if (layered) {
@@ -411,7 +416,6 @@ fillField (const std::string& field_name,
            const Teuchos::RCP<Teuchos::FancyOStream> out,
            std::vector<double>& norm_layers_coords)
 {
-  std::string temp_str;
   std::string field_type = (nodal ? "Node" : "Elem");
   field_type += (layered ? " Layered" : "");
   field_type += (scalar ? " Scalar" : " Vector");
@@ -504,6 +508,96 @@ fillField (const std::string& field_name,
       field_mv->col(iv)->assign(values[iv]);
     }
   }
+
+  return field_mv;
+}
+
+Teuchos::RCP<Thyra_MultiVector>
+computeField (const std::string& field_name,
+              const Teuchos::ParameterList& field_params,
+              const Kokkos::View<double**,typename DeviceView1d<double>::memory_space>& x,
+              const Kokkos::View<double**,typename DeviceView1d<double>::memory_space>& y,
+              const Kokkos::View<double**,typename DeviceView1d<double>::memory_space>& z,
+              const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
+              bool nodal, bool scalar, bool layered,
+              const Teuchos::RCP<Teuchos::FancyOStream>& out)
+{
+#ifdef ALBANY_PANZER_EXPR_EVAL
+  // Only nodal fields allowed, no layered fields
+  TEUCHOS_TEST_FOR_EXCEPTION(!nodal, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
+
+  int field_dim = 1;
+  if (!scalar) {
+    TEUCHOS_TEST_FOR_EXCEPTION(!field_params.isParameter("Vector Dim"), std::logic_error,
+                               "Error! In order to compute the vector field '" << field_name << "' "
+                               "from a mathematical expression, you must provide the parameter 'Vector Dim'.\n");
+    field_dim = field_params.get<int>("Vector Dim");
+  }
+
+  // Get the expressions out of the parameter list.
+  Teuchos::Array<std::string> expressions = field_params.get<Teuchos::Array<std::string>>("Field Expression");
+
+  // NOTE: we need expressions to be of length AT LEAST equal to the field dimension.
+  //       If the length L is larger than the field dimension M, then the first L-M
+  //       strings are assumed to be coefficients needed for the field formula.
+  //       E.g.: if we have a field of dimension 2, one could write
+  //         <Parameter name="Field Expression" type="Array(string)" value="{a=1.5;b=-1;c=2;a*x^2+b*x+c;a*x+b*x+c}"/>
+
+  int num_expr = expressions.size();
+  std::string field_type = (nodal ? "Node" : "Elem");
+  field_type += (layered ? " Layered" : "");
+  field_type += (scalar ? " Scalar" : " Vector");
+  TEUCHOS_TEST_FOR_EXCEPTION(num_expr<field_dim, Teuchos::Exceptions::InvalidParameter,
+                             "Error! Input array for 'Field Expression' is too short. "
+                             "Expected length >=" << field_dim << ". Got " << num_expr << " instead.\n");
+
+  *out << "  - Computing " << field_type << " field '" << field_name << "' from mathematical expression(s):";
+  int num_expr_params = num_expr - field_dim;
+  for (int idim=num_expr_params; idim<num_expr; ++idim) {
+    *out << " " << expressions[idim] << (idim==num_expr-1 ? "" : ";");
+  }
+  if (num_expr_params>0) {
+    *out << " (with";
+    for (int idim=0; idim<num_expr_params; ++idim) {
+      *out << " " << expressions[idim] << (idim==num_expr_params-1 ? "" : ";");
+    }
+    *out << ")";
+  }
+  *out << ".\n";
+
+  // Extract coordinates of all nodes
+  auto field_mv = Thyra::createMembers(entities_vs,field_dim);
+
+  using exec_space = PHX::Device::execution_space;
+  using layout = typename Kokkos::View<double**,DeviceView1d<double>::memory_space>::traits::array_layout;
+
+  // Set up the expression parser
+  panzer::Expr::Eval<double**,layout,exec_space> eval;
+  using const_view_type = decltype(eval)::const_view_type;
+  set_cmath_functions(eval);
+  eval.set("x",x);
+  if (y.data()!=nullptr)
+    eval.set("y",y);
+  if (z.data()!=nullptr)
+    eval.set("z",z);
+
+  // Start by reading the parameters used in the field expression(s)
+  Teuchos::any result;
+  for (int iparam=0; iparam<num_expr_params; ++iparam) {
+    eval.read_string(result,expressions[iparam]+";","params");
+  }
+
+  // Parse and evaluate all the expressions
+  for (int idim=0; idim<field_dim; ++idim) {
+    eval.read_string(result,expressions[num_expr_params+idim],"field expression");
+    auto result_view = Teuchos::any_cast<const_view_type>(result);
+    auto result_view_1d = DeviceView1d<const double>(result_view.data(),result_view.extent_int(0));
+    Kokkos::deep_copy(getNonconstDeviceData(field_mv->col(idim)),result_view_1d);
+  }
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Cannot read the field from a mathematical expression, since PanzerExprEval package was not found in Trilinos.\n");
+#endif
 
   return field_mv;
 }

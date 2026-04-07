@@ -26,11 +26,6 @@
 #include <stk_mesh/base/CreateAdjacentEntities.hpp>
 #include <stk_mesh/base/MeshBuilder.hpp>
 
-// Expression reading
-#ifdef ALBANY_PANZER_EXPR_EVAL
-#include <Panzer_ExprEval_impl.hpp>
-#endif
-
 // Rebalance
 #ifdef ALBANY_ZOLTAN
 #include <percept/stk_rebalance/Rebalance.hpp>
@@ -701,54 +696,34 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
 
     // Depending on the input field type, we need to use different pointers/importers/vectors
     bool nodal, scalar, layered;
-    Teuchos::RCP<CombineAndScatterManager> cas_manager;
-    std::vector<stk::mesh::Entity>* entities;
     if (ftype == "Node Scalar") {
       nodal = true; scalar = true; layered = false;
-      cas_manager = cas_manager_node;
-      entities = &nodes;
     } else if (ftype == "Elem Scalar") {
       nodal = false; scalar = true; layered = false;
-      cas_manager = cas_manager_elem;
-      entities = &elems;
     } else if (ftype == "QuadPoint Scalar") {
       nodal = false; scalar = false; layered = false; //saved as vector, numQuadPoints == Vector Dim
-      cas_manager = cas_manager_elem;
-      entities = &elems;
     } else if (ftype == "Node Vector") {
       nodal = true; scalar = false; layered = false;
-      cas_manager = cas_manager_node;
-      entities = &nodes;
     } else if (ftype == "Elem Vector") {
       nodal = false; scalar = false; layered = false;
-      cas_manager = cas_manager_elem;
-      entities = &elems;
     } else if (ftype == "Node Layered Scalar") {
       nodal = true; scalar = true; layered = true;
-      cas_manager = cas_manager_node;
-      entities = &nodes;
     } else if (ftype == "Elem Layered Scalar") {
       nodal = false; scalar = true; layered = true;
-      cas_manager = cas_manager_elem;
-      entities = &elems;
     } else if (ftype == "QuadPoint Layered Scalar") {
       nodal = false; scalar = false; layered = true; //saved as vector, numQuadPoints == Vector Dim
-      cas_manager = cas_manager_elem;
-      entities = &elems;
     } else if (ftype == "Node Layered Vector") {
       nodal = true; scalar = false; layered = true;
-      cas_manager = cas_manager_node;
-      entities = &nodes;
     } else if (ftype == "Elem Layered Vector") {
       nodal = false; scalar = false; layered = true;
-      cas_manager = cas_manager_elem;
-      entities = &elems;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
                                   "Error! Field '" << fname << "' has type '" << ftype << "'.\n" <<
                                   "Unfortunately, the only supported field types so fare are 'Node/Elem Scalar/Vector' and 'Node/Elem Layered Scalar/Vector'.\n");
     }
 
+    auto& entities = nodal ? nodes : elems;
+    auto cas_manager = nodal ? cas_manager_node : cas_manager_elem;
     auto serial_vs = cas_manager->getOwnedVectorSpace();
     auto vs = cas_manager->getOverlappedVectorSpace();  // It is not overlapped, it is just distributed.
     Teuchos::RCP<Thyra_MultiVector> field_mv;
@@ -760,7 +735,26 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     } else if (load_value) {
       field_mv = fillField (fname, fparams, vs, nodal, scalar, layered, out, norm_layers_coords);
     } else if (load_math_expr) {
-      field_mv = computeField (fname, fparams, vs, *entities, nodal, scalar, layered, out);
+      using view_type = Kokkos::View<double**,DeviceView1d<double>::memory_space>;
+
+      view_type x("x",entities.size(),1), y("y",entities.size(),1), z("z",entities.size(),1);
+      view_type::host_mirror_type x_h = Kokkos::create_mirror_view(x);
+      view_type::host_mirror_type y_h = Kokkos::create_mirror_view(y);
+      view_type::host_mirror_type z_h = Kokkos::create_mirror_view(z);
+      const auto& coordinates = *this->getCoordinatesField3d();
+      double* xyz;
+      for (unsigned int i=0; i<entities.size(); ++i) {
+        xyz = stk::mesh::field_data(coordinates, entities[i]);
+
+        x_h(i,0) = xyz[0];
+        y_h(i,0) = xyz[1];
+        z_h(i,0) = xyz[2];
+      }
+      Kokkos::deep_copy(x,x_h);
+      Kokkos::deep_copy(y,y_h);
+      Kokkos::deep_copy(z,z_h);
+
+      field_mv = computeField (fname, fparams, x, y, z, vs, nodal, scalar, layered, out);
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! No means were specified for loading field '" + fname + "'.\n");
     }
@@ -777,121 +771,16 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     stk::mesh::EntityId gid;
     LO lid;
     auto indexer = createGlobalLocalIndexer(vs);
-    for (unsigned int i(0); i<entities->size(); ++i) {
-      double* values = stk::mesh::field_data(*stk_field, (*entities)[i]);
+    for (unsigned int i(0); i<entities.size(); ++i) {
+      double* values = stk::mesh::field_data(*stk_field, entities[i]);
 
-      gid = bulkData->identifier((*entities)[i]) - 1;
+      gid = bulkData->identifier(entities[i]) - 1;
       lid = indexer->getLocalElement(GO(gid));
       for (int iDim(0); iDim<field_mv_view.size(); ++iDim) {
         values[iDim] = field_mv_view[iDim][lid];
       }
     }
   }
-}
-
-Teuchos::RCP<Thyra_MultiVector>
-GenericSTKMeshStruct::
-computeField (const std::string& field_name,
-              const Teuchos::ParameterList& field_params,
-              const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
-              const std::vector<stk::mesh::Entity>& entities,
-              bool nodal, bool scalar, bool layered,
-              const Teuchos::RCP<Teuchos::FancyOStream> out)
-{
-#ifdef ALBANY_PANZER_EXPR_EVAL
-  // Only nodal fields allowed, no layered fields
-  TEUCHOS_TEST_FOR_EXCEPTION(!nodal, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
-  TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
-
-  int field_dim = 1;
-  if (!scalar) {
-    TEUCHOS_TEST_FOR_EXCEPTION(!field_params.isParameter("Vector Dim"), std::logic_error,
-                               "Error! In order to compute the vector field '" << field_name << "' "
-                               "from a mathematical expression, you must provide the parameter 'Vector Dim'.\n");
-    field_dim = field_params.get<int>("Vector Dim");
-  }
-
-  // Get the expressions out of the parameter list.
-  Teuchos::Array<std::string> expressions = field_params.get<Teuchos::Array<std::string>>("Field Expression");
-
-  // NOTE: we need expressions to be of length AT LEAST equal to the field dimension.
-  //       If the length L is larger than the field dimension M, then the first L-M
-  //       strings are assumed to be coefficients needed for the field formula.
-  //       E.g.: if we have a field of dimension 2, one could write
-  //         <Parameter name="Field Expression" type="Array(string)" value="{a=1.5;b=-1;c=2;a*x^2+b*x+c;a*x+b*x+c}"/>
-
-  int num_expr = expressions.size();
-  std::string temp_str;
-  std::string field_type = (nodal ? "Node" : "Elem");
-  field_type += (layered ? " Layered" : "");
-  field_type += (scalar ? " Scalar" : " Vector");
-  TEUCHOS_TEST_FOR_EXCEPTION(num_expr<field_dim, Teuchos::Exceptions::InvalidParameter,
-                             "Error! Input array for 'Field Expression' is too short. "
-                             "Expected length >=" << field_dim << ". Got " << num_expr << " instead.\n");
-
-  *out << "  - Computing " << field_type << " field '" << field_name << "' from mathematical expression(s):";
-  int num_expr_params = num_expr - field_dim;
-  for (int idim=num_expr_params; idim<num_expr; ++idim) {
-    *out << " " << expressions[idim] << (idim==num_expr-1 ? "" : ";");
-  }
-  if (num_expr_params>0) {
-    *out << " (with";
-    for (int idim=0; idim<num_expr_params; ++idim) {
-      *out << " " << expressions[idim] << (idim==num_expr_params-1 ? "" : ";");
-    }
-    *out << ")";
-  }
-  *out << ".\n";
-
-  // Extract coordinates of all nodes
-  auto field_mv = Thyra::createMembers(entities_vs,field_dim);
-  using exec_space = Tpetra_MultiVector::execution_space;
-  using view_type = Kokkos::View<double**,DeviceView1d<double>::memory_space>;
-  using layout = view_type::traits::array_layout;
-
-  view_type x("x",entities.size(),1), y("y",entities.size(),1), z("z",entities.size(),1);
-  view_type::host_mirror_type x_h = Kokkos::create_mirror_view(x);
-  view_type::host_mirror_type y_h = Kokkos::create_mirror_view(y);
-  view_type::host_mirror_type z_h = Kokkos::create_mirror_view(z);
-  const auto& coordinates = *this->getCoordinatesField3d();
-  double* xyz;
-  for (unsigned int i=0; i<entities.size(); ++i) {
-    xyz = stk::mesh::field_data(coordinates, entities[i]);
-
-    x_h(i,0) = xyz[0];
-    y_h(i,0) = xyz[1];
-    z_h(i,0) = xyz[2];
-  }
-  Kokkos::deep_copy(x,x_h);
-  Kokkos::deep_copy(y,y_h);
-  Kokkos::deep_copy(z,z_h);
-
-  // Set up the expression parser
-  panzer::Expr::Eval<double**,layout,exec_space> eval;
-  using const_view_type = decltype(eval)::const_view_type;
-  set_cmath_functions(eval);
-  eval.set("x",x);
-  eval.set("y",y);
-  eval.set("z",z);
-
-  // Start by reading the parameters used in the field expression(s)
-  Teuchos::any result;
-  for (int iparam=0; iparam<num_expr_params; ++iparam) {
-    eval.read_string(result,expressions[iparam]+";","params");
-  }
-
-  // Parse and evaluate all the expressions
-  for (int idim=0; idim<field_dim; ++idim) {
-    eval.read_string(result,expressions[num_expr_params+idim],"field expression");
-    auto result_view = Teuchos::any_cast<const_view_type>(result);
-    auto result_view_1d = DeviceView1d<const double>(result_view.data(),result_view.extent_int(0));
-    Kokkos::deep_copy(getNonconstDeviceData(field_mv->col(idim)),result_view_1d);
-  }
-#else
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Cannot read the field from a mathematical expression, since PanzerExprEval package was not found in Trilinos.\n");
-#endif
-
-  return field_mv;
 }
 
 void GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const
@@ -916,7 +805,7 @@ void GenericSTKMeshStruct::checkFieldIsInMesh (const std::string& fname, const s
 Teuchos::RCP<Teuchos::ParameterList>
 GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));;
+  Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));
   validPL->set<std::string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
   validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
   validPL->set<std::string>("Exodus Output File Name", "",

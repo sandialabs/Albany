@@ -68,15 +68,6 @@ public:
   void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
                                 Teuchos::ParameterList& req_fields_info) override;
 
-  // Compute a field from a string expression
-  Teuchos::RCP<Thyra_MultiVector>
-  computeField (const std::string& field_name,
-                const Teuchos::ParameterList& params,
-                const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
-                const std::vector<stk::mesh::Entity>& entities,
-                bool node, bool scalar, bool layered,
-                const Teuchos::RCP<Teuchos::FancyOStream> out);
-
   void checkFieldIsInMesh (const std::string& fname, const std::string& ftype) const;
 
   void setDefaultCoordinates3d ();

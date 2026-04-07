@@ -215,6 +215,16 @@ fillField (const std::string& field_name,
            const Teuchos::RCP<Teuchos::FancyOStream> out,
            std::vector<double>& norm_layers_coords);
 
+Teuchos::RCP<Thyra_MultiVector>
+computeField (const std::string& field_name,
+              const Teuchos::ParameterList& field_params,
+              const Kokkos::View<double**,typename DeviceView1d<double>::memory_space>& x,
+              const Kokkos::View<double**,typename DeviceView1d<double>::memory_space>& y,
+              const Kokkos::View<double**,typename DeviceView1d<double>::memory_space>& z,
+              const Teuchos::RCP<const Thyra_VectorSpace>& entities_vs,
+              bool nodal, bool scalar, bool layered,
+              const Teuchos::RCP<Teuchos::FancyOStream>& out);
+
 }  // namespace Albany
 
 #endif  // ALBANY_DISCRETIZATION_UTILS_HPP
