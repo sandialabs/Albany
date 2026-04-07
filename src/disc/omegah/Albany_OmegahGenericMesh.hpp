@@ -39,8 +39,8 @@ public:
 
   bool hasRestartSolution () const { return m_has_restart_solution; }
 
-  DeviceView1d<const double>                   coords_dev  () const { return m_coords_d; }
-  DeviceView1d<      double>::host_mirror_type coords_host () const { return m_coords_h; }
+  auto coords_dev  () const { return m_coords_d; }
+  auto coords_host () const { return m_coords_h; }
 
   int part_dim (const std::string& part_name) const;
 
@@ -86,10 +86,10 @@ protected:
   // Given a part name, returns its topology (in the form of an Omega_h enum
   std::map<std::string,Topo_type>  m_part_topo;
 
-  Teuchos::RCP<OmegahMeshFieldAccessor>    m_field_accessor;
+  Teuchos::RCP<OmegahMeshFieldAccessor>     m_field_accessor;
 
-  DeviceView1d<const double>                m_coords_d;
-  DeviceView1d<      double>::host_mirror_type    m_coords_h;
+  Kokkos::View<const double*,PHX::Device>                      m_coords_d;
+  Kokkos::View<const double*,PHX::Device>::host_mirror_type    m_coords_h;
 
   mutable GO m_max_node_gid = -1; //set when get_max_node_gid() called
   mutable GO m_max_elem_gid = -1; //set when get_max_elem_gid() called

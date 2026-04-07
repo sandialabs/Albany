@@ -3,15 +3,15 @@
 #include "Albany_Omegah.hpp"
 #include "OmegahGhost.hpp"
 
+#include "Albany_CombineAndScatterManager.hpp"
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_Gather.hpp"
+
 #include <Omega_h_for.hpp>        // for Omega_h::parallel_for
 #include <Omega_h_build.hpp>      // for Omega_h::build_box
 #include <Omega_h_file.hpp>       // for Omega_h::binary::read
 #include <Omega_h_mark.hpp>       // for Omega_h::mark_by_class
 #include <Omega_h_array_ops.hpp>  // for Omega_h::land_each
-
-#include "Albany_CombineAndScatterManager.hpp"
-#include "Albany_ThyraUtils.hpp"
-#include "Albany_Gather.hpp"
 
 #include <regex>
 
@@ -32,6 +32,10 @@ OmegahGenericMesh (const Teuchos::RCP<Teuchos::ParameterList>& params)
     // Digits have CONSECUTIVE char values. So '1' = '0'+1, etc.
     int dim = method[3] - '0';
     buildBox(dim);
+  } else {
+    throw std::runtime_error("Invalid choice for 'Mesh Creation Method'.\n"
+                             " - provided choice: " + method + "\n"
+                             " - valid choices: OshFile, Box1D, Box2D, Box3D\n");
   }
 
   m_field_accessor = Teuchos::rcp(new OmegahMeshFieldAccessor(m_mesh));
@@ -299,7 +303,8 @@ loadOmegahMesh ()
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
-  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  int numOwnedElems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  int ws_size = computeWorksetSize(ws_size_max,numOwnedElems);
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
                           nsNames, ssNames, ws_size, ebName,
@@ -462,7 +467,8 @@ OmegahGenericMesh::createSideSets()
   return ssNames;
 }
 
-void OmegahGenericMesh::setCoordinates() {
+void OmegahGenericMesh::setCoordinates()
+{
   auto ownedCoords_d = OmegahGhost::getVtxCoordsInClosureOfOwnedElms(*m_mesh);
   m_coords_d = ownedCoords_d.view();
   m_coords_h = Kokkos::create_mirror_view(m_coords_d);
@@ -618,7 +624,8 @@ buildBox (const int dim)
 
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
-  int ws_size = computeWorksetSize(ws_size_max,m_mesh->nelems());
+  int numOwnedElems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  int ws_size = computeWorksetSize(ws_size_max,numOwnedElems);
   this->meshSpecs[0] = Teuchos::rcp(
       new MeshSpecsStruct(MeshType::Structured, *ctd, dim,
                           nsNames, ssNames, ws_size, ebName,
