@@ -17,9 +17,30 @@ addFieldOnMesh (const std::string& name,
                 const int entityDim,
                 const int numComps)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (m_mesh->has_tag(entityDim,name), std::logic_error,
-      "Error! Tag '" + name + "' is already defined on the mesh.\n");
   Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
+  if (m_mesh->has_tag(entityDim,name)) {
+    auto tag = m_mesh->get_tag<ST>(entityDim,name);
+    TEUCHOS_TEST_FOR_EXCEPTION (tag->ncomps()!=numComps, std::logic_error,
+        "Error! Attempt to re-define tag with different number of components.\n"
+        " - tag name: " + name + "\n"
+        " - tag ncomps: " + std::to_string(tag->ncomps()) + "\n"
+        " - new ncomps: " + std::to_string(numComps) + "\n");
+
+    auto const old_size = tag->array().size();
+    auto const new_size = f.size();
+    TEUCHOS_TEST_FOR_EXCEPTION (old_size != new_size, std::logic_error,
+        "Error! Attempt to re-define tag with incompatible storage size.\n"
+        "The mesh entity count appears to have changed since the tag was created.\n"
+        " - tag name: " + name + "\n"
+        " - entity dimension: " + std::to_string(entityDim) + "\n"
+        " - tag array size: " + std::to_string(old_size) + "\n"
+        " - expected array size: " + std::to_string(new_size) + "\n"
+        " - tag ncomps: " + std::to_string(tag->ncomps()) + "\n"
+        " - current numComps: " + std::to_string(numComps) + "\n");
+    // Copy existing data, then remove so we can re-add with OUR (writable) array
+    Omega_h::copy_into(tag->array(),f);
+    m_mesh->remove_tag(entityDim,name);
+  }
   m_mesh->add_tag<ST>(entityDim,name,numComps,f,false);
   m_tags[name].array = f;
   m_tags[name].ncomps = numComps;
@@ -41,22 +62,33 @@ setFieldOnMesh (const std::string& name,
   // Create 1d view of input MV
   auto dev_mv = getDeviceData(mv);
   int ncmps = dev_mv.extent(1);
-  int nents = dev_mv.extent(0);
+  int mv_nents = dev_mv.extent(0);
   int tag_nents = Omega_h::divide_no_remainder(tag->array().size(), tag->ncomps());
 
-  TEUCHOS_TEST_FOR_EXCEPTION (tag_nents != nents, std::logic_error,
-      "Error! Cannot copy MV on mesh tag, as the number of entities differ.\n"
+  TEUCHOS_TEST_FOR_EXCEPTION (tag_nents != m_mesh->nents(entityDim), std::runtime_error,
+      "Error! Something is amiss with the registered tag size.\n"
       "  - tag name: " + name + "\n"
+      "  - entity dim: " << entityDim << "\n"
       "  - tag num ents: " << tag_nents << "\n"
-      "  - MV num ents: " << nents << "\n");
+      "  - mesh num ents: " << m_mesh->nents(entityDim) << "\n");
+
+  // The MV may contain only owned entities (fewer than total owned+ghosted).
+  // Omega_h places owned entities first, so we write to positions [0, mv_nents).
+  // The caller is responsible for syncing ghost data afterwards if needed.
+  TEUCHOS_TEST_FOR_EXCEPTION (mv_nents > tag_nents, std::logic_error,
+      "Error! Unexpected number of entities in input MV.\n"
+      "  - tag name: " + name + "\n"
+      "  - entity dim: " << entityDim << "\n"
+      "  - num owned+ghosted ents: " << tag_nents << "\n"
+      "  - MV num ents: " << mv_nents << "\n");
 
   // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
   // entity id stride faster (it's a 2d view with layout left)
-  Kokkos::RangePolicy<> policy(0,nents*ncmps);
+  Kokkos::RangePolicy<> policy(0,mv_nents*ncmps);
   auto tag_view = m_tags.at(name).array.view();
   auto lambda = KOKKOS_LAMBDA(int idx) {
-    int ient = idx % nents;
-    int icmp = idx / nents;
+    int ient = idx % mv_nents;
+    int icmp = idx / mv_nents;
     tag_view (ient*ncmps + icmp) = dev_mv(ient,icmp);
   };
   Kokkos::parallel_for(policy,lambda);
@@ -94,11 +126,9 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   switch(st->entity) {
     case StateStruct::NodalDistParameter:
       nodal_parameter_sis.push_back(st);
-      nodal_sis.push_back(st);
-      break;
+      [[fallthrough]];
     case StateStruct::NodalDataToElemNode:
       nodal_sis.push_back(st);
-      elem_sis.push_back(st);
       break;
     case StateStruct::ElemData:   [[fallthrough]];
     case StateStruct::ElemNode:   [[fallthrough]];
@@ -138,8 +168,8 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
     auto data = m_tags.at(st->name).array.data();
     auto dim = st->dim;
     int stride = 1;
+    dim[0] = 1; // We don't use the extent of the elem tag to compute stride
     for (auto d : dim) stride *= d;
-    stride /= dim[0];
 
     for (int ws=0; ws<num_ws; ++ws) {
       int num_elems = worksets_sizes[ws];
@@ -211,13 +241,12 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
 void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
 {
-  int num_elems = m_mesh->nelems();
-  auto elem_nodes = m_mesh->ask_elem_verts();
-  auto elem_nodes_h = hostRead(elem_nodes);
-  int num_elem_nodes = elem_nodes.size() / num_elems;
+  int num_elems = OmegahGhost::getNumOwnedElms(*m_mesh);
+  auto elem_nodes_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT));
+  int num_elem_nodes = Omega_h::element_degree(m_mesh->family(), m_mesh->dim(), 0);
 
   for (const auto& st : nodal_sis) {
-    if (st->entity!=StateStruct::NodalDataToElemNode)
+    if (st->entity==StateStruct::NodalData)
       continue;
     const auto& dim = st->dim;
     const auto rank = st->dim.size();
@@ -237,22 +266,30 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
 
     auto& elem_state_h = elem_state.host();
     auto  node_state_h = hostRead(node_state);
+    
+    TEUCHOS_TEST_FOR_EXCEPTION (dim[1] != static_cast<size_t>(num_elem_nodes), std::runtime_error,
+        "Error! State struct dim[1] does not match actual num_elem_nodes.\n"
+        "  - state name: " + st->name + "\n"
+        "  - dim[1]: " << dim[1] << "\n"
+        "  - num_elem_nodes: " << num_elem_nodes << "\n");
+    
     for (int i=0; i<num_elems; ++i) {
       for (int j=0; j<num_elem_nodes; ++j) {
+        // elem_nodes_h uses omega_h LIDs; node_state_h is indexed by omega_h LID.
+        // Ghost node data is valid because sync_tag was called after loading fields.
+        auto node_lid = elem_nodes_h[i*num_elem_nodes+j];
         switch(rank) {
           case 2:
-            elem_state_h(i, j) = node_state_h[elem_nodes_h[i*num_elem_nodes+j]];
+            elem_state_h(i, j) = node_state_h[node_lid];
             break;
           case 3:
             for (size_t k=0; k<dim[2]; ++k) {
-              auto offset = i*num_elem_nodes*dim[2]+j*dim[2]+k;
-              elem_state_h(i, j, k) = node_state_h[elem_nodes_h[offset]];
+              elem_state_h(i, j, k) = node_state_h[node_lid*dim[2]+k];
             } break;
           case 4:
             for (size_t k=0; k<dim[2]; ++k) {
               for (size_t l=0; l<dim[3]; ++l) {
-                auto offset = i*num_elem_nodes*dim[2]*dim[3]+j*dim[2]*dim[3]+k*dim[3]+l;
-                elem_state_h(i, j, k, l) = node_state_h[elem_nodes_h[offset]];
+                elem_state_h(i, j, k, l) = node_state_h[node_lid*dim[2]*dim[3]+k*dim[3]+l];
               }
             } break;
         }
