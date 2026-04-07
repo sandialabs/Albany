@@ -250,12 +250,7 @@ updateMesh ()
     elms_in_prior_worksets += m_workset_sizes[ws];
   }
 
-  m_sideSets.resize(num_ws);
-  for (int ws=0; ws<num_ws; ++ws) {
-    m_sideSetViews[ws] = {};
-    m_wsLocalDOFViews[ws] = {};
-  }
-
+  computeSideSets ();
   computeNodeSets ();
   computeGraphs ();
 
@@ -267,7 +262,6 @@ void OmegahDiscretization::
 computeNodeSets ()
 {
   const auto& nsNames = getMeshStruct()->meshSpecs[0]->nsNames;
-  using Omega_h::I32;
   using Omega_h::I8;
 
   auto& mesh = *m_mesh_struct->getOmegahMesh();
@@ -318,6 +312,100 @@ computeNodeSets ()
           " - node lid (osh): " << i << "\n");
     }
   }
+}
+
+void OmegahDiscretization::
+computeSideSets ()
+{
+  // Reset sideset-related arrays
+  int num_ws = getNumWorksets();
+  m_sideSets.resize(num_ws);
+  m_sideSetViews.resize(num_ws);
+  m_wsLocalDOFViews.resize(num_ws);
+  for (int ws=0; ws<num_ws; ++ws) {
+    m_sideSets[ws] = {};
+    m_sideSetViews[ws] = {};
+    m_wsLocalDOFViews[ws] = {};
+  }
+
+  const auto& ssNames = getMeshStruct()->meshSpecs[0]->ssNames;
+  if (ssNames.empty()) return;
+
+  auto& mesh = *m_mesh_struct->getOmegahMesh();
+  const int side_dim = mesh.dim()-1;
+  const int num_loc_sides = Omega_h::element_degree(mesh.family(), mesh.dim(), side_dim);
+
+  // Build s2e: for each side (owned+ghost), the list of OWNED adjacent elements.
+  // This ensures each side is processed exactly once (by the process owning its element).
+  auto s2e = OmegahGhost::getUpAdjacentEntsInClosureOfOwnedElms(mesh, side_dim);
+  auto s2e_a2ab = hostRead(s2e.a2ab);
+  auto s2e_ab2b = hostRead(s2e.ab2b);
+
+  // Down-adjacency: element -> sides (all elements, owned+ghost)
+  auto e2s = mesh.ask_down(mesh.dim(), side_dim);
+  auto e2s_ab2b = hostRead(e2s.ab2b);
+
+  // Owned element GIDs and side GIDs (for lookup by omega_h LID)
+  auto elem_gids = hostRead(mesh.globals(mesh.dim()));
+  auto side_gids = hostRead(mesh.globals(side_dim));
+
+  // cell_indexer maps element GIDs to Albany LIDs (0..N_owned-1)
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+
+  // Determine local position of a side within an element
+  auto determine_side_pos = [&](int elem_lid, int side_lid) {
+    int offset = elem_lid*num_loc_sides;
+    for (int pos=0; pos<num_loc_sides; ++pos) {
+      if (e2s_ab2b[offset+pos]==side_lid)
+        return pos;
+    }
+    return -1;
+  };
+
+  Teuchos::Array<GO> side_GIDs;
+  for (const auto& ssn : ssNames) {
+    auto is_on_ss_host = hostRead(mesh.get_array<Omega_h::I8>(side_dim,ssn));
+
+    for (int i=0; i<is_on_ss_host.size(); ++i) {
+      if (not is_on_ss_host[i]) continue;
+
+      // For each owned element adjacent to side i, add a side set entry
+      for (int adjIdx=s2e_a2ab[i]; adjIdx<s2e_a2ab[i+1]; adjIdx++) {
+        auto ielem = s2e_ab2b[adjIdx];  // omega_h LID of owned element
+        GO  elem_GID = elem_gids[ielem];
+        int elem_LID = cell_indexer->getLocalElement(elem_GID);
+
+        TEUCHOS_TEST_FOR_EXCEPTION (elem_LID < 0 or elem_LID >= static_cast<int>(m_elem_ws_idx.size()),
+            std::runtime_error,
+            "Error! Element LID out of range in computeSideSets.\n"
+            "  - side id: " << i << "\n"
+            "  - elem omega_h LID: " << ielem << "\n"
+            "  - elem GID: " << elem_GID << "\n"
+            "  - elem Albany LID: " << elem_LID << "\n");
+
+        int ws  = m_elem_ws_idx[elem_LID].ws;
+        int idx = m_elem_ws_idx[elem_LID].idx;
+
+        int side_pos = determine_side_pos(ielem, i);
+        TEUCHOS_TEST_FOR_EXCEPTION (side_pos < 0, std::runtime_error,
+            "Error! Could not locate side " << i << " within element " << ielem << ".\n");
+
+        auto& sStruct = m_sideSets[ws][ssn].emplace_back();
+        sStruct.elem_GID      = elem_GID;
+        sStruct.elem_ebIndex = m_mesh_struct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[ws]];
+        sStruct.side_pos      = side_pos;
+        sStruct.ws_elem_idx   = idx;
+        sStruct.side_GID      = side_gids[i];
+
+        side_GIDs.push_back(side_gids[i]);
+      }
+    }
+  }
+
+  auto vs = createVectorSpace(m_comm,side_GIDs);
+  m_sides_indexer = createGlobalLocalIndexer(vs);
+
+  buildSideSetsViews();
 }
 
 void OmegahDiscretization::
