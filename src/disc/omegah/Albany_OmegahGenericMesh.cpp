@@ -638,14 +638,16 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
   int num_fields = req_fields_info.get<int>("Number Of Fields",0);
 
   // Check for early return
-  if (num_fields==0)
+  if (num_fields==0) {
+    *out << "[OmegahGenericMesh] Processing field requirements...done! (no requirements)\n";
     return;
+  }
 
-  // Get nodes/elems global ids
-  auto node_gids = m_mesh->globals(0);
-  auto elem_gids = m_mesh->globals(m_mesh->dim());
-  auto node_gids_h = hostRead(node_gids);
-  auto elem_gids_h = hostRead(elem_gids);
+  // Get owned-only nodes/elems global ids.
+  // Using ALL nodes (including ghost copies on multiple ranks) would create a Tpetra Map
+  // with duplicate GIDs across ranks, which has undefined behavior. We must use owned-only.
+  auto node_gids_h = OmegahGhost::getOwnedEntityGids(*m_mesh, 0);
+  auto elem_gids_h = OmegahGhost::getOwnedEntityGids(*m_mesh, m_mesh->dim());
 
   // NOTE: the reinterpret_cast is safe, since both Albany and Omegah use 64bit int for Global ids
   Teuchos::ArrayView<const GO> node_gids_av(reinterpret_cast<const GO*>(node_gids_h.data()),node_gids_h.size());
@@ -776,8 +778,10 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     bool load_value = fparams.isParameter("Field Value") || fparams.isParameter("Random Value");
     TEUCHOS_TEST_FOR_EXCEPTION ( load_ascii && load_value, std::logic_error,
         "Error! You cannot specify both 'File Name' and 'Field Value' (or 'Random Value') for loading a field.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION ( load_math_expr, std::logic_error,
-        "Error! 'Field Expression' not supported by Omegah meshes (yet).\n");
+    TEUCHOS_TEST_FOR_EXCEPTION ( load_ascii && load_math_expr, std::logic_error,
+        "Error! You cannot specify both 'File Name' and 'Field Expression' for loading a field.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION ( load_math_expr && load_value, std::logic_error,
+        "Error! You cannot specify both 'Field Expression' and 'Field Value' (or 'Random Value') for loading a field.\n");
 
     // Depending on the input field type, we need to use different pointers/importers/vectors
     bool nodal = std::regex_search(ftype,nodal_r);
@@ -797,13 +801,49 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
       field_mv = loadField (fname, fparams, *cas_manager, comm, nodal, scalar, layered, out, norm_layers_coords);
     } else if (load_value) {
       field_mv = fillField (fname, fparams, vs, nodal, scalar, layered, out, norm_layers_coords);
+    } else if (load_math_expr) {
+      TEUCHOS_TEST_FOR_EXCEPTION(!nodal, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
+
+      using exec_space = PHX::Device::execution_space;
+      using view_type = Kokkos::View<double**,DeviceView1d<double>::memory_space>;
+
+      int num_ents = getLocalSubdim(vs);
+      view_type x("x",num_ents,1);
+      view_type y,z;
+      int mdim = m_mesh->dim();
+      if (mdim>1) {
+        y = view_type ("y",num_ents,1);
+        if (mdim>2) {
+          z = view_type ("z",num_ents,1);
+        }
+      }
+      auto copy_coords = KOKKOS_LAMBDA(int i) {
+        x(i,0) = m_coords_d(mdim*i);
+        if (mdim>1) {
+          y(i,0) = m_coords_d(mdim*i+1);
+          if (mdim>2) {
+            z(i,0) = m_coords_d(mdim*i+2);
+          }
+        }
+      };
+      Kokkos::parallel_for(Kokkos::RangePolicy<exec_space>(0,num_ents),copy_coords);
+
+      field_mv = computeField (fname, fparams, x, y, z, vs, nodal, scalar, layered, out);
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
           "Error! No means were specified for loading field '" + fname + "'.\n");
     }
 
     m_field_accessor->setFieldOnMesh (fname,nodal ? 0 : m_mesh->dim(), field_mv.getConst());
+
+    // Sync owned entity data to ghost copies so that subsequent operations
+    // (e.g., transferNodeStatesToElemStates) can safely read ghost node values.
+    // This is necessary because setFieldOnMesh only writes owned entity data
+    // (positions 0..N_owned-1 in Omega_h's owned-first ordering).
+    m_mesh->sync_tag(nodal ? 0 : m_mesh->dim(), fname);
   }
+  *out << "[OmegahGenericMesh] Processing field requirements...done!\n";
 }
 
 } // namespace Albany
