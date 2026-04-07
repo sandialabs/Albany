@@ -242,21 +242,48 @@ loadOmegahMesh ()
   // A dimension and id uniquely defines a geometric model entity.
   const auto& parts_names = m_params->get<Teuchos::Array<std::string>>("Mark Parts",{});
   for (const auto& pn : parts_names) {
-          auto& pl = m_params->sublist(pn);
-    const auto topo_str = pl.get<std::string>("Topo");
-    const auto topo = str2topo(pl.get<std::string>("Topo"));
-    const int dim = topo_dim(topo);
-    const int id  = pl.get<int>("Id");
-    const bool markDownward = pl.get<int>("Mark Downward",true); // Is default=true ok?
-    auto is_in_part = Omega_h::mark_by_class(m_mesh.get(), dim, dim, id);
-    //ghosted entities cannot be owned so we don't need to check the closure of owned elements
-    auto owned = m_mesh->owned(dim); 
-    auto is_in_part_and_owned = Omega_h::land_each(is_in_part, owned);
-    this->declare_part(pn,topo,is_in_part_and_owned,markDownward);
+    TEUCHOS_TEST_FOR_EXCEPTION(m_mesh->class_sets.count(pn)==0, std::runtime_error,
+        "Error! Part '" + pn + "' was not found in the mesh class_sets. "
+        "Marked parts must exist in mesh->class_sets.\n");
 
-    if (dim==0) {
+    const auto& class_pairs = m_mesh->class_sets.at(pn);
+    TEUCHOS_TEST_FOR_EXCEPTION(class_pairs.empty(), std::runtime_error,
+        "Error! Class set '" + pn + "' is empty in the mesh file.\n");
+
+    // Determine the mesh entity dimension from the first class pair's model dimension.
+    // For sidesets created by exo2osh, class pairs have model_dim = mesh.dim()-1.
+    const int ent_dim = class_pairs[0].dim;
+
+    // Build a union mark for all geometric entities in this class set
+    auto is_in_part = Omega_h::Read<Omega_h::I8>(m_mesh->nents(ent_dim), 0);
+    for (const auto& cp : class_pairs) {
+      TEUCHOS_TEST_FOR_EXCEPTION(cp.dim != ent_dim, std::runtime_error,
+          "Error! Class set '" + pn + "' has pairs with mixed entity dimensions.\n");
+      auto mark = Omega_h::mark_by_class(m_mesh.get(), ent_dim, cp.dim, cp.id);
+      is_in_part = Omega_h::lor_each(is_in_part, mark);
+    }
+
+    // Infer the Topo_type from (mesh_family, ent_dim)
+    Topo_type topo;
+    const bool isSimplex = (m_mesh->family()==OMEGA_H_SIMPLEX);
+    bool mark_downward = true;
+    if (ent_dim==0) {
+      topo = Topo_type::vertex;
+      mark_downward = false;
+    } else if (ent_dim==1) {
+      topo = Topo_type::edge;
+    } else if (ent_dim==2) {
+      topo = isSimplex ? Topo_type::triangle : Topo_type::quadrilateral;
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+          "Error! Class set part with entity dimension " + std::to_string(ent_dim) + " not supported.\n");
+    }
+
+    this->declare_part(pn, topo, is_in_part, mark_downward);
+
+    if (ent_dim==0) {
       nsNames.push_back(pn);
-    } else if (dim==m_mesh->dim()-1) {
+    } else if (ent_dim==m_mesh->dim()-1) {
       ssNames.push_back(pn);
     }
   }
@@ -799,10 +826,8 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     auto serial_vs = cas_manager->getOwnedVectorSpace();
     auto vs = cas_manager->getOverlappedVectorSpace();  // It is not overlapped, it is just distributed.
 
-    std::vector<double> norm_layers_coords;
-    if (layered) {
-      norm_layers_coords = m_field_accessor->getMeshVectorStates()[fname + "_NLC"];
-    }
+    std::vector<double> dummy;
+    auto& norm_layers_coords = layered ? m_field_accessor->getMeshVectorStates()[fname + "_NLC"] : dummy;
     Teuchos::RCP<Thyra_MultiVector> field_mv;
     if (load_ascii) {
       field_mv = loadField (fname, fparams, *cas_manager, comm, nodal, scalar, layered, out, norm_layers_coords);
