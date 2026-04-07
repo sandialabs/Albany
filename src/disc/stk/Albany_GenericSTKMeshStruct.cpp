@@ -735,6 +735,9 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     } else if (load_value) {
       field_mv = fillField (fname, fparams, vs, nodal, scalar, layered, out, norm_layers_coords);
     } else if (load_math_expr) {
+      TEUCHOS_TEST_FOR_EXCEPTION(!nodal, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
+
       using view_type = Kokkos::View<double**,DeviceView1d<double>::memory_space>;
 
       view_type x("x",entities.size(),1), y("y",entities.size(),1), z("z",entities.size(),1);
