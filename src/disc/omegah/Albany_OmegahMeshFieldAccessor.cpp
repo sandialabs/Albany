@@ -241,9 +241,9 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
 void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
 {
-  int num_elems = OmegahGhost::getNumOwnedElms(*m_mesh);
   auto elem_nodes_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT));
   int num_elem_nodes = Omega_h::element_degree(m_mesh->family(), m_mesh->dim(), 0);
+  int num_ws = elemStateArrays.size();
 
   for (const auto& st : nodal_sis) {
     if (st->entity==StateStruct::NodalData)
@@ -251,51 +251,47 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
     const auto& dim = st->dim;
     const auto rank = st->dim.size();
 
-    const auto& node_state = m_mesh->get_tag<ST>(0,st->name)->array();
-          auto& elem_state = elemStateArrays[0][st->name];
-    switch (rank) {
-      case 2:
-        elem_state.resize(st->name,num_elems,dim[1]); break;
-      case 3:
-        elem_state.resize(st->name,num_elems,dim[1],dim[2]); break;
-      case 4:
-        elem_state.resize(st->name,num_elems,dim[1],dim[2],dim[3]); break;
-      default:
-        throw std::runtime_error("Error! Unsupported rank for node state '" + st->name + "'.\n");
-    }
-
-    auto& elem_state_h = elem_state.host();
-    auto  node_state_h = hostRead(node_state);
-    
     TEUCHOS_TEST_FOR_EXCEPTION (dim[1] != static_cast<size_t>(num_elem_nodes), std::runtime_error,
         "Error! State struct dim[1] does not match actual num_elem_nodes.\n"
         "  - state name: " + st->name + "\n"
         "  - dim[1]: " << dim[1] << "\n"
         "  - num_elem_nodes: " << num_elem_nodes << "\n");
-    
-    for (int i=0; i<num_elems; ++i) {
-      for (int j=0; j<num_elem_nodes; ++j) {
-        // elem_nodes_h uses omega_h LIDs; node_state_h is indexed by omega_h LID.
-        // Ghost node data is valid because sync_tag was called after loading fields.
-        auto node_lid = elem_nodes_h[i*num_elem_nodes+j];
-        switch(rank) {
-          case 2:
-            elem_state_h(i, j) = node_state_h[node_lid];
-            break;
-          case 3:
-            for (size_t k=0; k<dim[2]; ++k) {
-              elem_state_h(i, j, k) = node_state_h[node_lid*dim[2]+k];
-            } break;
-          case 4:
-            for (size_t k=0; k<dim[2]; ++k) {
-              for (size_t l=0; l<dim[3]; ++l) {
-                elem_state_h(i, j, k, l) = node_state_h[node_lid*dim[2]*dim[3]+k*dim[3]+l];
-              }
-            } break;
+
+    const auto& node_state = m_mesh->get_tag<ST>(0,st->name)->array();
+    auto  node_state_h = hostRead(node_state);
+
+    int elem_offset = 0;
+    for (int ws=0; ws<num_ws; ++ws) {
+      auto& elem_state = elemStateArrays[ws][st->name];
+      auto& elem_state_h = elem_state.host();
+      int ws_num_elems = elem_state_h.extent(0);
+
+      for (int i=0; i<ws_num_elems; ++i) {
+        int global_elem_idx = elem_offset + i;
+        for (int j=0; j<num_elem_nodes; ++j) {
+          // elem_nodes_h uses omega_h LIDs; node_state_h is indexed by omega_h LID.
+          // Ghost node data is valid because sync_tag was called after loading fields.
+          auto node_lid = elem_nodes_h[global_elem_idx*num_elem_nodes+j];
+          switch(rank) {
+            case 2:
+              elem_state_h(i, j) = node_state_h[node_lid];
+              break;
+            case 3:
+              for (size_t k=0; k<dim[2]; ++k) {
+                elem_state_h(i, j, k) = node_state_h[node_lid*dim[2]+k];
+              } break;
+            case 4:
+              for (size_t k=0; k<dim[2]; ++k) {
+                for (size_t l=0; l<dim[3]; ++l) {
+                  elem_state_h(i, j, k, l) = node_state_h[node_lid*dim[2]*dim[3]+k*dim[3]+l];
+                }
+              } break;
+          }
         }
       }
+      elem_state.sync_to_dev();
+      elem_offset += ws_num_elems;
     }
-    elem_state.sync_to_dev();
   }
 }
 
