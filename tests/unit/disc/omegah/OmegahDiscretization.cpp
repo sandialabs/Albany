@@ -63,6 +63,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_DOFManagers)
   auto mesh = createOmegahBoxMesh(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
 
+  // Create solution MFA
+  disc->setFieldData();
+
   // Call updateMesh
   disc->updateMesh();
 
@@ -87,6 +90,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_Worksets)
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
+
+  // Create solution MFA
+  disc->setFieldData();
 
   // Call updateMesh
   disc->updateMesh();
@@ -122,6 +128,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_Coordinates)
   auto mesh = createOmegahBoxMesh(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
 
+  // Create solution MFA
+  disc->setFieldData();
+
   // Call updateMesh
   disc->updateMesh();
 
@@ -148,9 +157,11 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_1D)
   auto mesh = createOmegahBoxMesh<1>(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
 
+  // Create solution MFA
+  disc->setFieldData();
+
   // Call updateMesh
-  disc->updateMesh(); //FIXME hangs in parallel, see screenshot from totalview
-  // ~/develop/albanyOmegahAdaptHooks/throwingExceptionInUpdateMesh1d.png
+  disc->updateMesh();
 
   // Verify DOF managers were created
   auto sol_dof_mgr = disc->getDOFManager();
