@@ -356,6 +356,14 @@ computeSideSets ()
   const auto& ssNames = getMeshStruct()->meshSpecs[0]->ssNames;
   if (ssNames.empty()) return;
 
+  // Ensure every workset has an entry for every sideset name, even when this
+  // rank/workset owns no sides for that sideset. Downstream code may rely on
+  // getSideSets(ws).at(ssName) being valid and yielding an empty vector.
+  for (int ws=0; ws<num_ws; ++ws) {
+    for (const auto& ssn : ssNames) {
+      m_sideSets[ws][ssn] = {};
+    }
+  }
   auto& mesh = *m_mesh_struct->getOmegahMesh();
   const int side_dim = mesh.dim()-1;
   const int num_loc_sides = Omega_h::element_degree(mesh.family(), mesh.dim(), side_dim);
