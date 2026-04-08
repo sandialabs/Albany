@@ -345,8 +345,8 @@ computeSideSets ()
   // Reset sideset-related arrays
   int num_ws = getNumWorksets();
   m_sideSets.resize(num_ws);
-  m_sideSetViews.resize(num_ws);
-  m_wsLocalDOFViews.resize(num_ws);
+  m_sideSetViews.clear();
+  m_wsLocalDOFViews.clear();
   for (int ws=0; ws<num_ws; ++ws) {
     m_sideSets[ws] = {};
     m_sideSetViews[ws] = {};
