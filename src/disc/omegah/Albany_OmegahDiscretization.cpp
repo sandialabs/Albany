@@ -168,6 +168,30 @@ updateMesh ()
   m_dof_managers[nodes_dof_name()][""]     = node_dof_mgr;
   m_node_dof_managers[""]     = node_dof_mgr;
 
+  // Create DOF managers for nodal parameter states (setFieldData should have been called already)
+  TEUCHOS_TEST_FOR_EXCEPTION (m_solution_mfa.is_null(), std::runtime_error,
+      "[OmegahDiscretization] Error! Solution MFA is null, but setFieldData should have created it...\n");
+
+  for (auto st : m_solution_mfa->getNodalParameterSIS()) {
+    int numComps;
+    switch (st->dim.size()) {
+      case 2: numComps = 1; break;
+      case 3: numComps = st->dim[2]; break;
+      default:
+        throw std::runtime_error(
+            "[OmegahDiscretization::updateMesh] Error! Unsupported nodal state rank.\n"
+            "  - state name: " + st->name + "\n"
+            "  - input dims: (" + util::join(st->dim,",") + ")\n");
+    }
+    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
+    m_dof_managers[st->name][st->meshPart] = dof_mgr;
+
+    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
+      auto node_dof_mgr_part = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
+      m_node_dof_managers[st->meshPart] = node_dof_mgr_part;
+    }
+  }
+
   // Compute workset information
   const auto& ms = m_mesh_struct->meshSpecs[0];
   const auto& mesh = *m_mesh_struct->getOmegahMesh();
@@ -202,33 +226,45 @@ updateMesh ()
   }
 
   m_mesh_struct->get_field_accessor()->createStateArrays(m_workset_sizes);
+  m_mesh_struct->get_field_accessor()->transferNodeStatesToElemStates();
 
-  m_ws_elem_coords.resize(num_ws);
-  auto coords_h  = m_mesh_struct->coords_host();
   auto node_gids = hostRead(OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh,Omega_h::VERT));
   auto node_indexer = getOverlapNodeGlobalLocalIndexer();
   auto nverts = node_gids.size();
-  m_node_lid_to_omegah_pos.resize(nverts);
+
+  // Maps an Albany node LID to a position in the coords_host() array.
+  std::vector<int> albany_lid_to_omegah_pos(nverts);
   for (int i=0; i<nverts; ++i) {
     auto gid = node_gids[i];
     auto lid = node_indexer->getLocalElement(gid);
-    m_node_lid_to_omegah_pos[lid] = i;
+    albany_lid_to_omegah_pos[lid] = i;
   }
 
   int num_elem_nodes = node_dof_mgr->get_topology().getNodeCount();
   const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
 
+  // Build elem_LID -> workset index map (needed by computeSideSets and others)
+  m_elem_ws_idx.clear();
+  m_elem_ws_idx.resize(nelems);
+
   const int mdim = mesh.dim();
+  auto coords_h  = m_mesh_struct->coords_host();
   m_nodes_coordinates.resize(mdim * getLocalSubdim(getOverlapNodeVectorSpace()));
+  m_ws_elem_coords.resize(num_ws);
   int elms_in_prior_worksets = 0;
   for (int ws=0; ws<num_ws; ++ws) {
     m_ws_elem_coords[ws].resize(m_workset_sizes[ws]);
     for (int ielem=0; ielem<m_workset_sizes[ws]; ++ielem) {
       m_ws_elem_coords[ws][ielem].resize(num_elem_nodes);
+      const auto elmIdx = ielem + elms_in_prior_worksets;
+
+      // Save a map from element Albany-LID to workset on this PE
+      m_elem_ws_idx[elmIdx].ws  = ws;
+      m_elem_ws_idx[elmIdx].idx = ielem;
+
       for (int inode=0; inode<num_elem_nodes; ++inode) {
-        const auto elmIdx = ielem + elms_in_prior_worksets;
         LO node_lid = node_elem_dof_lids(elmIdx,inode);
-        int omh_pos = m_node_lid_to_omegah_pos[node_lid];
+        int omh_pos = albany_lid_to_omegah_pos[node_lid];
         m_ws_elem_coords[ws][ielem][inode] = &coords_h[omh_pos*mdim];
         auto coords = &m_nodes_coordinates[node_lid*mdim];
         for (int idim=0; idim<mdim; ++idim) {
@@ -239,12 +275,7 @@ updateMesh ()
     elms_in_prior_worksets += m_workset_sizes[ws];
   }
 
-  m_sideSets.resize(num_ws);
-  for (int ws=0; ws<num_ws; ++ws) {
-    m_sideSetViews[ws] = {};
-    m_wsLocalDOFViews[ws] = {};
-  }
-
+  computeSideSets ();
   computeNodeSets ();
   computeGraphs ();
 
@@ -256,7 +287,6 @@ void OmegahDiscretization::
 computeNodeSets ()
 {
   const auto& nsNames = getMeshStruct()->meshSpecs[0]->nsNames;
-  using Omega_h::I32;
   using Omega_h::I8;
 
   auto& mesh = *m_mesh_struct->getOmegahMesh();
@@ -310,6 +340,108 @@ computeNodeSets ()
 }
 
 void OmegahDiscretization::
+computeSideSets ()
+{
+  // Reset sideset-related arrays
+  int num_ws = getNumWorksets();
+  m_sideSets.resize(num_ws);
+  m_sideSetViews.clear();
+  m_wsLocalDOFViews.clear();
+  for (int ws=0; ws<num_ws; ++ws) {
+    m_sideSets[ws] = {};
+    m_sideSetViews[ws] = {};
+    m_wsLocalDOFViews[ws] = {};
+  }
+
+  const auto& ssNames = getMeshStruct()->meshSpecs[0]->ssNames;
+  if (ssNames.empty()) return;
+
+  // Ensure every workset has an entry for every sideset name, even when this
+  // rank/workset owns no sides for that sideset. Downstream code may rely on
+  // getSideSets(ws).at(ssName) being valid and yielding an empty vector.
+  for (int ws=0; ws<num_ws; ++ws) {
+    for (const auto& ssn : ssNames) {
+      m_sideSets[ws][ssn] = {};
+    }
+  }
+  auto& mesh = *m_mesh_struct->getOmegahMesh();
+  const int side_dim = mesh.dim()-1;
+  const int num_loc_sides = Omega_h::element_degree(mesh.family(), mesh.dim(), side_dim);
+
+  // Build s2e: for each side (owned+ghost), the list of OWNED adjacent elements.
+  // This ensures each side is processed exactly once (by the process owning its element).
+  auto s2e = OmegahGhost::getUpAdjacentEntsInClosureOfOwnedElms(mesh, side_dim);
+  auto s2e_a2ab = hostRead(s2e.a2ab);
+  auto s2e_ab2b = hostRead(s2e.ab2b);
+
+  // Down-adjacency: element -> sides (all elements, owned+ghost)
+  auto e2s = mesh.ask_down(mesh.dim(), side_dim);
+  auto e2s_ab2b = hostRead(e2s.ab2b);
+
+  // Owned element GIDs and side GIDs (for lookup by omega_h LID)
+  auto elem_gids = hostRead(mesh.globals(mesh.dim()));
+  auto side_gids = hostRead(mesh.globals(side_dim));
+
+  // cell_indexer maps element GIDs to Albany LIDs (0..N_owned-1)
+  auto cell_indexer = getCellsGlobalLocalIndexer();
+
+  // Determine local position of a side within an element
+  auto determine_side_pos = [&](int elem_lid, int side_lid) {
+    int offset = elem_lid*num_loc_sides;
+    for (int pos=0; pos<num_loc_sides; ++pos) {
+      if (e2s_ab2b[offset+pos]==side_lid)
+        return pos;
+    }
+    return -1;
+  };
+
+  Teuchos::Array<GO> side_GIDs;
+  for (const auto& ssn : ssNames) {
+    auto is_on_ss_host = hostRead(mesh.get_array<Omega_h::I8>(side_dim,ssn));
+
+    for (int i=0; i<is_on_ss_host.size(); ++i) {
+      if (not is_on_ss_host[i]) continue;
+
+      // For each owned element adjacent to side i, add a side set entry
+      for (int adjIdx=s2e_a2ab[i]; adjIdx<s2e_a2ab[i+1]; adjIdx++) {
+        auto ielem = s2e_ab2b[adjIdx];  // omega_h LID of owned element
+        GO  elem_GID = elem_gids[ielem];
+        int elem_LID = cell_indexer->getLocalElement(elem_GID);
+
+        TEUCHOS_TEST_FOR_EXCEPTION (elem_LID < 0 or elem_LID >= static_cast<int>(m_elem_ws_idx.size()),
+            std::runtime_error,
+            "Error! Element LID out of range in computeSideSets.\n"
+            "  - side id: " << i << "\n"
+            "  - elem omega_h LID: " << ielem << "\n"
+            "  - elem GID: " << elem_GID << "\n"
+            "  - elem Albany LID: " << elem_LID << "\n");
+
+        int ws  = m_elem_ws_idx[elem_LID].ws;
+        int idx = m_elem_ws_idx[elem_LID].idx;
+
+        int side_pos = determine_side_pos(ielem, i);
+        TEUCHOS_TEST_FOR_EXCEPTION (side_pos < 0, std::runtime_error,
+            "Error! Could not locate side " << i << " within element " << ielem << ".\n");
+
+        auto& sStruct = m_sideSets[ws][ssn].emplace_back();
+        sStruct.elem_GID      = elem_GID;
+        sStruct.elem_ebIndex = m_mesh_struct->meshSpecs[0]->ebNameToIndex[m_wsEBNames[ws]];
+        sStruct.side_pos      = side_pos;
+        sStruct.ws_elem_idx   = idx;
+        sStruct.side_GID      = side_gids[i];
+
+        side_GIDs.push_back(side_gids[i]);
+      }
+    }
+  }
+
+  auto vs = createVectorSpace(m_comm,side_GIDs);
+  m_sides_indexer = createGlobalLocalIndexer(vs);
+
+  buildSideSetsViews();
+}
+
+void OmegahDiscretization::
 computeGraphs ()
 {
   const auto vs = getVectorSpace();
@@ -357,26 +489,6 @@ void OmegahDiscretization::setFieldData()
     }
   }
   m_solution_mfa = solution_mfa;
-  for (auto st : m_solution_mfa->getNodalParameterSIS()) {
-    // TODO: get mesh part from st, create dof mgr on that part for st.name dof
-    int numComps;
-    switch (st->dim.size()) {
-      case 2: numComps = 1; break;
-      case 3: numComps = st->dim[2]; break;
-      default:
-        throw std::runtime_error(
-            "[OmegahDiscretization::setFieldData] Error! Unsupported nodal state rank.\n"
-            "  - state name: " + st->name + "\n"
-            "  - input dims: (" + util::join(st->dim,",") + ")\n");
-    }
-    auto dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,numComps);
-    m_dof_managers[st->name][st->meshPart] = dof_mgr;
-
-    if (m_node_dof_managers.find(st->meshPart)==m_node_dof_managers.end()) {
-      auto node_dof_mgr = create_dof_mgr (st->meshPart,FE_Type::HGRAD,1,1);
-      m_node_dof_managers[st->meshPart] = node_dof_mgr;
-    }
-  }
 
   // Proceed to set the solution field data in the side meshes as well (if any)
   for (auto& it : sideSetDiscretizations) {

@@ -144,6 +144,7 @@ protected:
                   const int order,
                   const int dof_dim);
 
+  void computeSideSets ();
   void computeNodeSets ();
   void computeGraphs ();
 
@@ -152,9 +153,6 @@ protected:
   Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
   Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
-
-  // Maps a Tpetra LID to the pos of a node in the omegah arrays
-  std::vector<int>  m_node_lid_to_omegah_pos;
 
   // TODO: move stuff below in base class?
   Teuchos::RCP<const Teuchos_Comm> m_comm;

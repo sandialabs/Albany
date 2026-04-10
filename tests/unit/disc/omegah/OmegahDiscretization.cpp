@@ -20,16 +20,21 @@
 #include <Omega_h_for.hpp>
 #include <Omega_h_array_ops.hpp>
 
+#include <algorithm>
+
 #define REQUIRE(cond) \
   TEUCHOS_TEST_FOR_EXCEPTION (!(cond),std::runtime_error, \
       "Condition failed: " << #cond << "\n");
 
 template <size_t Dim = 2>
 Teuchos::RCP<Albany::OmegahGenericMesh>
-createOmegahBoxMesh(const Teuchos::RCP<const Teuchos_Comm>& comm) {
+createOmegahBoxMesh(const Teuchos::RCP<const Teuchos_Comm>& comm,
+                    const int worksetSize = -1) {
   auto pl = Teuchos::rcp(new Teuchos::ParameterList());
   pl->set("Mesh Creation Method","Box" + std::to_string(Dim) + "D");
   pl->set("Number of Elements",Teuchos::Array<int>(Dim,2));
+  if (worksetSize > 0)
+    pl->set("Workset Size", worksetSize);
   auto p = Teuchos::rcp(new Albany::OmegahGenericMesh(pl));
   return p;
 }
@@ -63,6 +68,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_DOFManagers)
   auto mesh = createOmegahBoxMesh(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
 
+  // Create solution MFA
+  disc->setFieldData();
+
   // Call updateMesh
   disc->updateMesh();
 
@@ -87,6 +95,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_Worksets)
 
   auto mesh = createOmegahBoxMesh(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
+
+  // Create solution MFA
+  disc->setFieldData();
 
   // Call updateMesh
   disc->updateMesh();
@@ -122,6 +133,9 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_Coordinates)
   auto mesh = createOmegahBoxMesh(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
 
+  // Create solution MFA
+  disc->setFieldData();
+
   // Call updateMesh
   disc->updateMesh();
 
@@ -148,9 +162,11 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_1D)
   auto mesh = createOmegahBoxMesh<1>(teuchosComm);
   auto disc = createOmegahDiscretization(mesh, teuchosComm);
 
+  // Create solution MFA
+  disc->setFieldData();
+
   // Call updateMesh
-  disc->updateMesh(); //FIXME hangs in parallel, see screenshot from totalview
-  // ~/develop/albanyOmegahAdaptHooks/throwingExceptionInUpdateMesh1d.png
+  disc->updateMesh();
 
   // Verify DOF managers were created
   auto sol_dof_mgr = disc->getDOFManager();
@@ -163,5 +179,137 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_updateMesh_1D)
   REQUIRE(1 == disc->getNumDim());
 
   out << "Testing OmegahDiscretization::updateMesh() for 1D mesh\n";
+  success = true;
+}
+
+// Helper: sum the number of side structs over all worksets for a given sideset name
+static int countSideSetEntries(const Albany::OmegahDiscretization& disc,
+                               const std::string& sideSetName)
+{
+  int total = 0;
+  int num_ws = disc.getNumWorksets();
+  for (int ws = 0; ws < num_ws; ++ws) {
+    const auto& ssl = disc.getSideSets(ws);
+    auto it = ssl.find(sideSetName);
+    if (it != ssl.end())
+      total += static_cast<int>(it->second.size());
+  }
+  return total;
+}
+
+// For the 2D box mesh, there are 4 boundary sidesets (one per side of the unit square).
+// Each sideset name matches one of SideSet0..SideSet3.
+static const std::vector<std::string> kExpected2DBoxSSNames = {
+  "SideSet0", "SideSet1", "SideSet2", "SideSet3"
+};
+// A 2x2 box mesh has 2 boundary edges per side of the unit square.
+static constexpr int kEdgesPerBoundarySide = 2;
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_computeSideSets_basic)
+{
+  auto teuchosComm = Albany::getDefaultComm();
+
+  // A 2D 2x2 box mesh has SideSet0..SideSet3 (one per boundary edge group).
+  auto mesh = createOmegahBoxMesh<2>(teuchosComm);
+  auto disc = createOmegahDiscretization(mesh, teuchosComm);
+
+  disc->setFieldData();
+  disc->updateMesh();  // internally calls computeSideSets()
+
+  const auto& ssNames = mesh->meshSpecs[0]->ssNames;
+  REQUIRE(ssNames.size() == kExpected2DBoxSSNames.size());
+
+  // Verify the expected sideset names are all present.
+  for (const auto& expected : kExpected2DBoxSSNames) {
+    auto it = std::find(ssNames.begin(), ssNames.end(), expected);
+    REQUIRE(it != ssNames.end());
+  }
+
+  int num_ws = disc->getNumWorksets();
+  REQUIRE(num_ws >= 1);
+
+  // Every workset must have an entry for every sideset name (possibly empty).
+  for (int ws = 0; ws < num_ws; ++ws) {
+    const auto& ssl = disc->getSideSets(ws);
+    for (const auto& ssn : ssNames) {
+      REQUIRE(ssl.count(ssn) == 1);
+    }
+  }
+
+  // For a 2D 2x2 simplex box (8 triangles), each of the 4 boundary edges
+  // belongs to exactly one SideSet. Count them per-sideset (globally summed).
+  // The boundary has 2 edges per side, so each sideset should have 2 entries.
+  // When running on multiple MPI ranks the owned-edge sets are disjoint but sum to 2.
+  int totalSides = 0;
+  for (const auto& ssn : ssNames) {
+    int localCount  = countSideSetEntries(*disc, ssn);
+    int globalCount = 0;
+    Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &localCount, &globalCount);
+
+    // Each side of the 2x2 box has exactly 2 boundary edges.
+    REQUIRE(globalCount == kEdgesPerBoundarySide);
+    totalSides += globalCount;
+  }
+  // 4 sides x 2 edges each = 8 total boundary edges
+  REQUIRE(totalSides == static_cast<int>(kExpected2DBoxSSNames.size()) * kEdgesPerBoundarySide);
+
+  // Verify SideStruct fields are in valid ranges for every entry.
+  // A triangle has 3 sides, so side_pos must be in [0,2].
+  const int num_loc_sides = 3;  // triangle
+  for (int ws = 0; ws < num_ws; ++ws) {
+    const auto& ssl = disc->getSideSets(ws);
+    for (const auto& ssn : ssNames) {
+      for (const auto& s : ssl.at(ssn)) {
+        REQUIRE(s.elem_GID >= 0);
+        REQUIRE(s.side_GID >= 0);
+        REQUIRE(s.ws_elem_idx >= 0);
+        REQUIRE(s.side_pos  >= 0);
+        REQUIRE(s.side_pos   < num_loc_sides);
+        REQUIRE(s.elem_ebIndex == 0);
+      }
+    }
+  }
+
+  out << "Testing OmegahDiscretization::computeSideSets() basic correctness\n";
+  success = true;
+}
+
+TEUCHOS_UNIT_TEST(OmegahDiscTests, Discretization_computeSideSets_multiWorkset)
+{
+  auto teuchosComm = Albany::getDefaultComm();
+
+  // Force multiple worksets by setting workset size to 1.
+  // A 2x2 simplex box mesh has 8 triangles total (globally).
+  auto mesh = createOmegahBoxMesh<2>(teuchosComm, 1);
+  auto disc = createOmegahDiscretization(mesh, teuchosComm);
+
+  disc->setFieldData();
+  disc->updateMesh();
+
+  const auto& ssNames = mesh->meshSpecs[0]->ssNames;
+  REQUIRE(ssNames.size() == kExpected2DBoxSSNames.size());
+
+  int num_ws = disc->getNumWorksets();
+
+  // Every workset must contain an entry for every sideset name.
+  for (int ws = 0; ws < num_ws; ++ws) {
+    const auto& ssl = disc->getSideSets(ws);
+    for (const auto& ssn : ssNames) {
+      REQUIRE(ssl.count(ssn) == 1);
+    }
+  }
+
+  // The global side counts should be the same as in the single-workset case.
+  int totalSides = 0;
+  for (const auto& ssn : ssNames) {
+    int localCount  = countSideSetEntries(*disc, ssn);
+    int globalCount = 0;
+    Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &localCount, &globalCount);
+    REQUIRE(globalCount == kEdgesPerBoundarySide);
+    totalSides += globalCount;
+  }
+  REQUIRE(totalSides == static_cast<int>(kExpected2DBoxSSNames.size()) * kEdgesPerBoundarySide);
+
+  out << "Testing OmegahDiscretization::computeSideSets() with multiple worksets\n";
   success = true;
 }
