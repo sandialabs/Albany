@@ -2,6 +2,7 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_OmegahUtils.hpp"
 #include "OmegahGhost.hpp"
+#include <Omega_h_map.hpp>
 
 namespace Albany {
 
@@ -20,6 +21,9 @@ addFieldOnMesh (const std::string& name,
   Omega_h::Write<ST> f(m_mesh->nents(entityDim)*numComps,name);
   if (m_mesh->has_tag(entityDim,name)) {
     auto tag = m_mesh->get_tag<ST>(entityDim,name);
+    TEUCHOS_TEST_FOR_EXCEPTION (tag==nullptr, std::logic_error,
+        "Error! Tag '" + name + "' already exists on entity dim " + std::to_string(entityDim) +
+        " but has a non-real (non-double) type. Cannot use it as an Albany field.\n");
     TEUCHOS_TEST_FOR_EXCEPTION (tag->ncomps()!=numComps, std::logic_error,
         "Error! Attempt to re-define tag with different number of components.\n"
         " - tag name: " + name + "\n"
@@ -72,9 +76,10 @@ setFieldOnMesh (const std::string& name,
       "  - tag num ents: " << tag_nents << "\n"
       "  - mesh num ents: " << m_mesh->nents(entityDim) << "\n");
 
-  // The MV may contain only owned entities (fewer than total owned+ghosted).
-  // Omega_h places owned entities first, so we write to positions [0, mv_nents).
-  // The caller is responsible for syncing ghost data afterwards if needed.
+  // The MV contains only owned entities. In Omega_h's GHOSTED parting, owned entities
+  // are NOT guaranteed to be at positions 0..nowned-1 in the entity arrays, so we must
+  // use collect_marked to find the actual Omega_h positions for owned entities.
+  // The caller is responsible for syncing ghost data afterwards via sync_tag.
   TEUCHOS_TEST_FOR_EXCEPTION (mv_nents > tag_nents, std::logic_error,
       "Error! Unexpected number of entities in input MV.\n"
       "  - tag name: " + name + "\n"
@@ -83,15 +88,26 @@ setFieldOnMesh (const std::string& name,
       "  - MV num ents: " << mv_nents << "\n");
 
   // Copy into tag. WARNING: tags have entity id striding slower, while the input mv makes
-  // entity id stride faster (it's a 2d view with layout left)
+  // entity id stride faster (it's a 2d view with layout left).
+  // IMPORTANT: In Omega_h's GHOSTED parting, owned entities are NOT guaranteed to be at
+  // positions 0..nowned-1. We must map Albany LID k -> Omega_h position via collect_marked.
+  auto owned_positions = Omega_h::collect_marked(m_mesh->owned(entityDim));
+  TEUCHOS_TEST_FOR_EXCEPTION (owned_positions.size() != mv_nents, std::logic_error,
+      "Error! Mismatch between Albany MV size and Omega_h owned entity count.\n"
+      "  - field name: " + name + "\n"
+      "  - mv_nents: " << mv_nents << "\n"
+      "  - nowned: " << owned_positions.size() << "\n");
+
   Kokkos::RangePolicy<> policy(0,mv_nents*ncmps);
   auto tag_view = m_tags.at(name).array.view();
   auto lambda = KOKKOS_LAMBDA(int idx) {
-    int ient = idx % mv_nents;
+    int ient = idx % mv_nents;  // Albany LID
     int icmp = idx / mv_nents;
-    tag_view (ient*ncmps + icmp) = dev_mv(ient,icmp);
+    int omegah_pos = owned_positions[ient];  // actual Omega_h entity position
+    tag_view (omegah_pos*ncmps + icmp) = dev_mv(ient,icmp);
   };
   Kokkos::parallel_for(policy,lambda);
+  Kokkos::fence();
 }
 
 void OmegahMeshFieldAccessor::
