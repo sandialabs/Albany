@@ -38,26 +38,15 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   // If not extruded and not interpolated, then it must be an output,
   // so we must add it to the basal mesh, with a layout that is compatible
   // with the basal mesh.
-  if (not st->extruded and not st->interpolated) {
+  if (not st->extruded and not st->interpolated and st->stateType()==StateStruct::ElemState) {
     int num_elem_layers = m_elem_numbering_lid->numLayers;
 
     auto bst = Teuchos::rcp(new StateStruct(st->name,st->entity));
-    switch(st->stateType()) {
-      case StateStruct::GlobalState:
-        global_sis.push_back(st);
-        break;
-      case StateStruct::NodeState:
-        break;
-      case StateStruct::ElemState:
-        bst->entity = StateStruct::ElemData;
-        bst->dim.push_back(st->dim[0] / num_elem_layers);
-        bst->dim.push_back(num_elem_layers);
-        for (size_t i=1; i<st->dim.size(); ++i) {
-          bst->dim.push_back(st->dim[i]);
-        }
-        break;
-      default:
-        throw std::logic_error("Error! Unrecognized/unsupported type for state " + st->name + "\n");
+    bst->entity = StateStruct::ElemData;
+    bst->dim.push_back(st->dim[0] / num_elem_layers);
+    bst->dim.push_back(num_elem_layers);
+    for (size_t i=1; i<st->dim.size(); ++i) {
+      bst->dim.push_back(st->dim[i]);
     }
 
     m_basal_field_accessor->addStateStruct(bst);
@@ -117,6 +106,8 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
   };
   int num_ws = worksets_sizes.size();
   for (auto st : elem_sis) {
+    // Skip NodeState entries: they are handled by the nodal_sis loop below
+    if (st->stateType() == StateStruct::NodeState) continue;
     for (int ws=0; ws<num_ws; ++ws) {
       if (st->extruded or st->interpolated) {
         // This state is not stored in the basal mesh, so we need to allocate the state array here

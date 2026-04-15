@@ -147,7 +147,7 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 
   // Make sure we can dereference the basal sis
-  auto basal_sis = side_set_sis["basalside"];
+  auto& basal_sis = side_set_sis["basalside"];
   if (basal_sis.is_null()) {
     basal_sis = Teuchos::rcp(new StateInfoStruct());
   }
@@ -206,12 +206,6 @@ setFieldData (const Teuchos::RCP<const Teuchos_Comm>& comm,
   }
 
   // Ensure field data is set on basal mesh
-  // Since we store upper and basal stuff on same mesh, pass both basal and upper SIS
-  if (not side_set_sis["upperside"].is_null()) {
-    for (auto st : *side_set_sis["upperside"]) {
-      basal_sis->push_back(st);
-    }
-  }
   m_basal_mesh->setFieldData(comm,basal_sis,{});
 
   // Now the basal field accessor is definitely valid/inited, so we can create the extruded one
