@@ -87,32 +87,38 @@ ANONYMOUS:
           Number Of Fields: 4
           Field 0:
             Field Name: ice_thickness
-            Field Origin: Mesh
+            Field Origin: File
             Field Type: Node Scalar
+            File Name: ../AsciiMeshes/GisUnstructFiles/thickness.ascii
           Field 1:
             Field Name: surface_height
-            Field Origin: Mesh
+            Field Origin: File
             Field Type: Node Scalar
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_height.ascii
           Field 2:
             Field Name: temperature
-            Field Origin: Mesh
+            Field Origin: File
             Field Type: Node Layered Scalar
             Number Of Layers: 11
+            File Name: ../AsciiMeshes/GisUnstructFiles/temperature.ascii
           Field 3:
             Field Name: basal_friction
-            Field Origin: Mesh
+            Field Origin: File
             Field Type: Node Scalar
+            File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction.ascii
       upperside:
         Required Fields Info:
           Number Of Fields: 2
           Field 0:
             Field Name: observed_surface_velocity
             Field Type: Node Vector
-            Field Origin: Mesh
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii
           Field 1:
             Field Name: observed_surface_velocity_RMS
             Field Type: Node Vector
-            Field Origin: Mesh
+            Field Origin: File
+            File Name: ../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii
   Regression For Response 0:
     Test Value: 1.109508809230e+08
     Sensitivity For Parameter 0:
