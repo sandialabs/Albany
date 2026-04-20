@@ -132,9 +132,12 @@ if (ALBANY_IFPACK2)
 
   if (ALBANY_OMEGAH)
     add_test (NAME ${testName}_CreateGisOsh
-          COMMAND ${OMEGAH_EXO2OSH} gis_unstruct_2d.exo gis_unstruct_2d.osh
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
-    set_tests_properties (${testName}_CreateGisOsh PROPERTIES FIXTURES_SETUP CreateGisOshMesh)
+          COMMAND ${OMEGAH_EXO2OSH} gis_unstruct_2d_populated.exo gis_unstruct_2d_populated.osh
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_tests_properties (${testName}_CreateGisOsh
+                          PROPERTIES
+                          FIXTURES_REQUIRED PopulateMesh2d
+                          FIXTURES_SETUP CreateGisOshMesh)
 
     # Logically extruded mesh with omegah for the basal disc
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
