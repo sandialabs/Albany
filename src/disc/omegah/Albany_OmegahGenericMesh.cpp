@@ -793,10 +793,26 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
           "Error! 'Field Usage' for field '" << fname << "' must be one of 'Input', 'Output', 'Input-Output' or 'Unused'.\n");
     }
 
+    // Depending on the input field type, we need to use different pointers/importers/vectors
+    bool nodal = std::regex_search(ftype,nodal_r);
+    bool scalar = std::regex_search(ftype,scalar_r);
+    bool layered = std::regex_search(ftype,layered_r);
+
     // Ok, it's an input (or input-output) field. Find out where the field comes from
     forigin = fparams.get<std::string>("Field Origin","INVALID");
     if (forigin=="Mesh") {
       *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
+      if (layered) {
+        // First, we must load the normalized layers coords
+        auto nlc = fparams.get<Teuchos::Array<double>>("Normalized Layers Coords");
+        auto& norm_layers_coords = m_field_accessor->getMeshVectorStates()[fname + "_NLC"];
+        TEUCHOS_TEST_FOR_EXCEPTION (nlc.size()!=norm_layers_coords.size(),
+            Teuchos::Exceptions::InvalidParameter,
+            "Error! 'Normalized Layers Coords' for field '" << fname << "' have the wrong length.\n"
+            "  Expected: " << norm_layers_coords.size() << "\n"
+            "  Provided: " << nlc.size() << "\n");
+        std::copy(nlc.begin(),nlc.end(),norm_layers_coords.begin());
+      }
       continue;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION (forigin!="File",
@@ -816,11 +832,6 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
         "Error! You cannot specify both 'File Name' and 'Field Expression' for loading a field.\n");
     TEUCHOS_TEST_FOR_EXCEPTION ( load_math_expr && load_value, std::logic_error,
         "Error! You cannot specify both 'Field Expression' and 'Field Value' (or 'Random Value') for loading a field.\n");
-
-    // Depending on the input field type, we need to use different pointers/importers/vectors
-    bool nodal = std::regex_search(ftype,nodal_r);
-    bool scalar = std::regex_search(ftype,scalar_r);
-    bool layered = std::regex_search(ftype,layered_r);
 
     auto cas_manager = nodal ? cas_manager_node : cas_manager_elem;
     auto serial_vs = cas_manager->getOwnedVectorSpace();
