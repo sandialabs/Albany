@@ -3,6 +3,9 @@
 #include "Albany_OmegahUtils.hpp"
 #include "OmegahGhost.hpp"
 
+#include <iomanip>
+#include <sstream>
+
 namespace Albany {
 
 OmegahMeshFieldAccessor::
@@ -431,6 +434,55 @@ void OmegahMeshFieldAccessor::reset_mesh_tags ()
       m_mesh->add_tag(dim,name,ncmp,read(array));
     }
   }
+}
+
+bool OmegahMeshFieldAccessor::
+assembleTagFromComponents (const std::string& name, const int ent_dim)
+{
+  auto it = m_tags.find(name);
+  if (it == m_tags.end()) return false;
+
+  const int ncomp = it->second.ncomps;
+  if (ncomp <= 1) return false;  // scalar tag — nothing to assemble
+
+  // Determine zero-padding width from the total component count.
+  // Components are 1-indexed (1..ncomp), so the largest index equals ncomp,
+  // and its digit count is the required zero-pad width.
+  // E.g. ncomp=2  → width=1 → "name_1","name_2"
+  //      ncomp=11 → width=2 → "name_01","name_02",...,"name_11"
+  const int width = static_cast<int>(std::to_string(ncomp).size());
+
+  auto make_comp_name = [&](int icmp) {
+    std::ostringstream oss;
+    oss << name << "_" << std::setfill('0') << std::setw(width) << (icmp + 1);
+    return oss.str();
+  };
+
+  // If the first component tag is absent there is nothing to do.
+  if (!m_mesh->has_tag(ent_dim, make_comp_name(0))) return false;
+
+  // All component tags should be present; copy each into the appropriate
+  // stride of the multi-component tag's writable buffer.
+  const int nents = m_mesh->nents(ent_dim);
+  auto tag_data_h = hostWrite(it->second.array);  // host-writable mirror
+
+  for (int icmp = 0; icmp < ncomp; ++icmp) {
+    const std::string comp_name = make_comp_name(icmp);
+    TEUCHOS_TEST_FOR_EXCEPTION(!m_mesh->has_tag(ent_dim, comp_name), std::runtime_error,
+        "Error! Expected component tag '" + comp_name + "' not found "
+        "while assembling field '" + name + "'.\n");
+    auto comp_data_h = hostRead(m_mesh->get_array<ST>(ent_dim, comp_name));
+    for (int ient = 0; ient < nents; ++ient) {
+      tag_data_h[ient * ncomp + icmp] = comp_data_h[ient];
+    }
+  }
+
+  // Sync the host mirror back to the device array (no-op on CPU-only builds).
+  // The mesh tag shares the same Kokkos allocation as it->second.array, so
+  // this also updates the tag visible to the rest of the mesh database.
+  tag_data_h.write();
+
+  return true;
 }
 
 } // namespace Albany

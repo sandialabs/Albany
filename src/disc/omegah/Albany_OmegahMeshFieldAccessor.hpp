@@ -108,6 +108,13 @@ public:
   // To be called after adaptation, where the stored tags are no longer valid and need to be reset
   void reset_mesh_tags ();
 
+  // For a registered multi-component (vector or layered) tag 'name', check whether
+  // individual scalar component tags 'name_1', 'name_2', ... (or 'name_01', 'name_02', ...)
+  // are present on the mesh.  If so, assemble their values into the registered tag and
+  // return true.  This is needed when loading from a .osh file produced by exo2osh,
+  // which writes vector/layered fields as separate scalar tags rather than one multi-comp tag.
+  bool assembleTagFromComponents (const std::string& name, const int ent_dim);
+
 protected:
   Teuchos::RCP<Omega_h::Mesh>   m_mesh;
 

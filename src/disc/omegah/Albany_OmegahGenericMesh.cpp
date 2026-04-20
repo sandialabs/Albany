@@ -801,7 +801,7 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     // Ok, it's an input (or input-output) field. Find out where the field comes from
     forigin = fparams.get<std::string>("Field Origin","INVALID");
     if (forigin=="Mesh") {
-      *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
+      *out << "  - Field '" << fname << "' is listed as present in the mesh.\n";
       if (layered) {
         // First, we must load the normalized layers coords
         auto nlc = fparams.get<Teuchos::Array<double>>("Normalized Layers Coords");
@@ -812,6 +812,19 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
             "  Expected: " << norm_layers_coords.size() << "\n"
             "  Provided: " << nlc.size() << "\n");
         std::copy(nlc.begin(),nlc.end(),norm_layers_coords.begin());
+      }
+      // For vector and layered fields, the .osh mesh (e.g. produced by exo2osh) may only carry
+      // individual scalar component tags "foo_1","foo_2",... rather than the multi-component tag
+      // "foo".  The multi-component tag was registered as empty by addStateStruct.  If those
+      // scalar component tags are present, assemble their values into the multi-component tag.
+      if (!scalar) {
+        const int ent_dim = nodal ? 0 : m_mesh->dim();
+        const bool assembled = m_field_accessor->assembleTagFromComponents(fname, ent_dim);
+        if (assembled) {
+          *out << "  - Assembled '" << fname << "' from scalar component tags.\n";
+          // Sync owned-entity data to ghost copies.
+          m_mesh->sync_tag(ent_dim, fname);
+        }
       }
       continue;
     } else {
