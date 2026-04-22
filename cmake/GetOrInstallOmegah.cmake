@@ -54,6 +54,7 @@ else ()
   string(REPLACE "include/kokkos" "" Kokkos_INSTALL_DIR ${Kokkos_INCLUDE_DIR})
   set(Kokkos_PREFIX ${Kokkos_INSTALL_DIR} PATH "Path to Kokkos install")
 
+  option (Omega_h_USE_SEACASExodus "Whether to use SEACASExodus" ON)
   option (Omega_h_USE_Kokkos "Use Kokkos as a backend" ON)
   option (Omega_h_USE_MPI "Use MPI for parallelism" ON)
   set (MPIEXEC_EXECUTABLE ${Albany_CXX_COMPILER})

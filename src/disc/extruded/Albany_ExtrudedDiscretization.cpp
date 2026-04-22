@@ -239,6 +239,8 @@ void ExtrudedDiscretization::computeCoordinates ()
   const int mesh_dim = getNumDim();
   auto ni_vs = node_indexer->getVectorSpace();
   auto my_gids = getGlobalElements(ni_vs);
+
+  int invalid_node_lid_count = 0;
   for (int ielem=0; ielem<num_basal_elems; ++ielem) {
     const auto& basal_node_gids = basal_node_dof_mgr->getElementGIDs(ielem);
     for (int node=0; node<npe_basal; ++node) {
@@ -252,6 +254,7 @@ void ExtrudedDiscretization::computeCoordinates ()
         // const auto& node_gids = node_dof_mgr->getElementGIDs(ielem);
         const GO node_gid = layers_data.node.gid->getId(basal_node_gid, ilev);
         const int node_lid = node_indexer->getLocalElement(node_gid);
+        if (node_lid < 0) { ++invalid_node_lid_count; continue; }
         double* coords = &m_nodes_coordinates[mesh_dim*node_lid];
 
         for (int idim=0; idim<basal_dim; ++idim) {
@@ -260,6 +263,14 @@ void ExtrudedDiscretization::computeCoordinates ()
         coords[basal_dim] = s_h[basal_node_lid] - H[basal_node_lid] * (1. - layers_data.z_ref[ilev]);
       }
     }
+  }
+
+  // Guard against invalid node LIDs (can happen at partition boundaries in parallel)
+  if (invalid_node_lid_count > 0) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+        "[ExtrudedDiscretization::computeCoordinates] " << invalid_node_lid_count
+        << " node GIDs could not be mapped to local LIDs.\n"
+        "This likely indicates a mismatch between the extruded and basal mesh partitioning.\n");
   }
 
 #ifdef OUTPUT_TO_SCREEN
@@ -540,6 +551,11 @@ ExtrudedDiscretization::computeWorksetInfo()
       m_ws_elem_coords[ws][ie].resize(num_nodes);
       for (int in=0; in<num_nodes; ++in) {
         const int node_lid = elem_node_lids(elem_lid,in);
+        TEUCHOS_TEST_FOR_EXCEPTION(node_lid < 0 || node_lid >= (int)(m_nodes_coordinates.size()/num_dim),
+            std::runtime_error,
+            "[ExtrudedDiscretization::computeWorksetInfo] Invalid node_lid=" << node_lid
+            << " for elem_lid=" << elem_lid << ", node=" << in
+            << " (valid range [0," << m_nodes_coordinates.size()/num_dim-1 << "])\n");
         m_ws_elem_coords[ws][ie][in] = &m_nodes_coordinates[num_dim*node_lid];
       }
     }
@@ -802,9 +818,9 @@ ExtrudedDiscretization::updateMesh()
 
   computeWorksetInfo();
 
-  computeNodeSets();
-
   computeSideSets();
+
+  computeNodeSets();
 
   computeGraphs();
 
@@ -871,8 +887,6 @@ void ExtrudedDiscretization::setFieldData()
   const auto basal_sol_mfa = m_basal_disc->get_solution_mesh_field_accessor();
   const auto elem_numbering_lid = m_extruded_mesh->layers_data.cell.lid;
   m_solution_mfa = Teuchos::rcp(new ExtrudedMeshFieldAccessor(basal_sol_mfa,elem_numbering_lid));
-
-  m_solution_mfa->setSolutionFieldsMetadata(m_neq);
 }
 
 Teuchos::RCP<ConnManager>
