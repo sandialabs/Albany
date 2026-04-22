@@ -677,6 +677,22 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     return;
   }
 
+  for (int d=0; d<=m_mesh->dim(); ++d) {
+    for (int i=0; i<m_mesh->ntags(d); ++i) {
+      auto t = m_mesh->get_tag(d,i);
+      *out << "  - dim=" << d << " name='" << t->name()
+           << "' ncomps=" << t->ncomps() << "\n";
+      if (t->name()=="temperature") {
+        auto tr = m_mesh->get_tag<double>(d,t->name());
+        auto arr = tr->array();
+        std::cout << "  vals: ";
+        for (int k=0; k<arr.size(); ++k)
+          std::cout << " " << arr[k];
+        std::cout << "\n";
+      }
+    }
+  }
+
   // Get owned-only nodes/elems global ids.
   // Using ALL nodes (including ghost copies on multiple ranks) would create a Tpetra Map
   // with duplicate GIDs across ranks, which has undefined behavior. We must use owned-only.
@@ -801,6 +817,10 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     // Ok, it's an input (or input-output) field. Find out where the field comes from
     forigin = fparams.get<std::string>("Field Origin","INVALID");
     if (forigin=="Mesh") {
+      int tag_dim = nodal ? 0 : m_mesh->dim();
+      TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(tag_dim,fname), std::runtime_error,
+          "Error! Field '" << fname << "' was declared with Field Origin=Mesh but is not present as a tag on the omegah mesh");
+
       *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
       if (layered) {
         // First, we must load the normalized layers coords

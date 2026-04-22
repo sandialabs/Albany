@@ -172,6 +172,7 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
     // Need to also add the global vector state for the normalized layers coords
     auto nlayers = st->dim.back();
     mesh_vector_states[st->name+"_NLC"].resize(nlayers);
+    std::cout << st->name+"_NLC resized...\n";
   }
 }
 

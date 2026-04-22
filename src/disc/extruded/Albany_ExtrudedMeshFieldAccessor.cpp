@@ -1,5 +1,6 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_StringUtils.hpp"
 
 namespace Albany {
 
@@ -359,6 +360,7 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
     *out << " - Interpolating " << (nodal ? "nodal" : "cell") << " field '" + name + "'...";
 
     const auto& field_layers_coords = m_basal_field_accessor->getMeshVectorStates().at(name+"_NLC");
+    std::cout << " NLC: [" << util::join(field_layers_coords,",") << "]\n";
     const int num_field_layers = field_layers_coords.size();
 
     std::vector<double> field_levels_coords(field_layers_coords.size()+1,0);

@@ -49,6 +49,7 @@ ANONYMOUS:
       Glen's Law A: 3.1709792e-24            # [Pa^-n s^-1]
       Glen's Law n: 3.0
       Flow Rate Type: Temperature Based
+      # Flow Rate Type: Uniform
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:
