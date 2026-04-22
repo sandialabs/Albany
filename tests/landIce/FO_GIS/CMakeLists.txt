@@ -361,10 +361,16 @@ IF(NOT Kokkos_ENABLE_CUDA)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
   
   else()
-    set (testName ${testNameRoot}_Humboldt_Transient)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient.yaml)
-    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient.yaml)
+    set (testName ${testNameRoot}_Humboldt_Transient_STK3D)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk3d.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk3d.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk3d.yaml)
+    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+
+    set (testName ${testNameRoot}_Humboldt_Transient_STK)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
   endif()
 
