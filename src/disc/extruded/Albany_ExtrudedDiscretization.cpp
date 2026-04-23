@@ -150,6 +150,12 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
                     const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
                     const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */)
 {
+  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto adapt_type = adapt_params.get<std::string>("Type","None");
+  auto adapt_data = Teuchos::rcp(new AdaptationData());
+  if (adapt_type=="None") {
+    return adapt_data;
+  }
   // We can't just do
   //  return m_basal_disc->checkForAdaptation(solution,solution_dot,solution_dotdot);
   // We need to decide WHAT to bass to basal disc: the whole solution or the projection?
