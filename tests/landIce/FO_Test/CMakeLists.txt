@@ -88,5 +88,17 @@ if (ALBANY_IFPACK2)
   add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_advDiff.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
 
+  set (testName ${testNameRoot}_HDSA_AdvDiff_vec)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_advDiff_vec.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_advDiff_vec.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_advDiff_vec.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
+  set (testName ${testNameRoot}_HDSA_AdvDiff3D_vec)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hdsa_advDiff3D_vec.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_hdsa_advDiff3D_vec.yaml)
+  add_test(${testName} ${AlbanyAnalysis.exe} input_hdsa_advDiff3D_vec.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce")
+
 endif()
 

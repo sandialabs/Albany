@@ -8,6 +8,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
     Name: LandIce Laplacian Sampling 2D
+    Number Of Equations: 2
     Compute Sensitivities: true
     Side Name: SideSetX
     Response Functions:
@@ -16,7 +17,7 @@ ANONYMOUS:
         Type: Sum Of Responses
         Number Of Responses: 2
         Response 0:  #velocity misfit term
-          Scaling: 0.5
+          Scaling: 0.25
           Name: Squared L2 Difference Source ST Target PST
           Source Field Name: prior_sample
           Field Rank: Vector
@@ -86,7 +87,7 @@ ANONYMOUS:
     2D Elements: 1
     2D Scale: 0.01
     Method: STK2D
-    Exodus Output File Name: hdsa_adv_2d.exo
+    Exodus Output File Name: hdsa_adv_2d_vec.exo
     Number Of Time Derivatives: 0
     Required Fields Info:
       Number Of Fields: 2
@@ -99,10 +100,10 @@ ANONYMOUS:
       Field 1:
         Field Name: target_field
         Field Type: Node Vector
-        Vector Dim: 1
+        Vector Dim: 2
         Field Origin: File
         #File Name: param_opt.ascii
-        Field Expression: ['50.0 - 30.0 * (x - 0.5)^2']
+        Field Expression: ['50.0 - 30.0 * (x - 0.5)^2','50.0 - 30.0 * (x - 0.5)^2']
     
     Side Set Discretizations:
       Side Sets: [SideSetX]
