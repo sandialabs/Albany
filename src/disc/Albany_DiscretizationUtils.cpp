@@ -177,7 +177,13 @@ readVectorFileSerial (const std::string& fname,
           "[readVectorFileSerial] Error! Unable to open the file.\n"
           "  - file name: " << fname << "\n");
 
-    ifile >> numNodes >> numComponents;
+    std::string line;
+    std::getline(ifile, line);
+    std::istringstream iss(line);
+    iss >> numNodes >> numComponents;
+    TEUCHOS_TEST_FOR_EXCEPTION (iss.fail(),
+        Teuchos::Exceptions::InvalidParameterValue,
+        "[readVectorFileSerial] Error! First line of the file should cointain two integers.\n");
   }
 
   Teuchos::broadcast(*comm,0,1,&numComponents);
@@ -226,7 +232,13 @@ readLayeredScalarFileSerial (const std::string &fname,
         "[readLayeredScalarFileSerial] Error! Unable to open the file.\n"
         "  - file name: " << fname << "\n");
 
-    ifile >> numNodes >> numLayers;
+    std::string line;
+    std::getline(ifile, line);
+    std::istringstream iss(line);
+    iss >> numNodes >> numLayers;
+    TEUCHOS_TEST_FOR_EXCEPTION (iss.fail(),
+        Teuchos::Exceptions::InvalidParameterValue,
+        "[readLayeredScalarFileSerial] Error! First line of the file should cointain two integers.\n");
   }
 
   Teuchos::broadcast(*comm,0,1,&numLayers);
@@ -280,7 +292,14 @@ readLayeredVectorFileSerial (const std::string &fname,
         "[readLayeredVectorFileSerial] Error! Unable to open the file.\n"
         "  - file name: " << fname << "\n");
 
-    ifile >> numNodes >> numComponents >> numLayers;
+    std::string line;
+    std::getline(ifile, line);
+    std::istringstream iss(line);
+    iss >> numNodes >> numComponents >> numLayers;
+    TEUCHOS_TEST_FOR_EXCEPTION (iss.fail(),
+      Teuchos::Exceptions::InvalidParameterValue,
+        "[readLayeredVectorFileSerial] Error! First line of the file should cointain three integers.\n");
+
     numVectors = numLayers*numComponents;
   }
 
