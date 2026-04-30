@@ -19,7 +19,7 @@ ANONYMOUS:
           Scaling: 0.5
           Name: Squared L2 Difference Source ST Target PST
           Source Field Name: prior_sample
-          Field Rank: Scalar
+          Field Rank: Vector
           Target Field Name: target_field
     Dirichlet BCs: {}
     Neumann BCs: {}
@@ -58,7 +58,8 @@ ANONYMOUS:
         #Field Value: 1.0
       Field 1:
         Field Name: target_field
-        Field Type: Node Scalar
+        Field Type: Node Vector
+        Vector Dim: 1
         Field Origin: File
         Field Expression: ['(1.0 + x)^3']
     

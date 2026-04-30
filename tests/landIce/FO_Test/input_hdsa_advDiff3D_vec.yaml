@@ -1,48 +1,39 @@
 %YAML 1.1
-
-
-# Problem:
-# (mimiking piro H test, but with p = p_{piro}^3)
-#
-# find p that minimizes
-# g0 = 0.5 (x - T)'(x-T),  T = (1+X)^3
-#
-# subject to:
-# f = x - p
-# p_opt = (1+X)^3
-# x_opt = (1+X)^3
-#
-# f_true  = x - p - 0.2 p^(2/3)
-#
-# p_sample_0 = p_opt
-# p_sample_1 = (X + X^2)^3
-#
-# x_diff_sample_0 = 0.2*(1+X)^2
-# y_diff_sample_0 = 0.2*(X+X^2)^2
 ---
 ANONYMOUS:
   Debug Output:
-    #Write Solution to MatrixMarket: -1
-    #Write Jacobian to MatrixMarket: -1
+          #Write Solution to MatrixMarket: -1
+          #Write Jacobian to MatrixMarket: -1
   Problem:
     Phalanx Graph Visualization Detail: 1
     Solution Method: Steady
-    Name: LandIce Laplacian Sampling 2D
+    Name: LandIce Laplacian Sampling 3D
+    Number Of Equations: 2
     Compute Sensitivities: true
-    Side Name: SideSet0
+    Side Name: SideSetX
     Response Functions:
       Number Of Responses: 5
-      Response 0: # misfit
-        Scaling: 0.5
-        Name: Squared L2 Difference Source ST Target PST
-        Source Field Name: prior_sample
-        Field Rank: Vector
-        Target Field Name: target_field
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 0: 
+          Scaling: 0.25
+          Name: Squared L2 Difference Source ST Target PST
+          Source Field Name: prior_sample
+          Field Rank: Vector
+          Target Field Name: target_field
+        Response 1: 
+          Scaling: 5.0e-4
+          Name: Squared L2 Difference Source PST Target PST
+          Source Field Name: weighted_normal_sample
+          #Side Set Name: basalside
+          Field Rank: Scalar
+          Target Value: 0.0
       Response 1:  #regularization term
         Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/E_prior.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/E_prior.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/E_prior_3d.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/E_prior_3d.mm
         Matrix A Is Symmetric: true
         Field Name: weighted_normal_sample
         D Solver Settings:
@@ -71,23 +62,23 @@ ANONYMOUS:
       Response 2:
         Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/M.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/M.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/M_prior_3d.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/M_prior_3d.mm
         Matrix A Is Symmetric: true
         #Matrix D Is Diagonal: true
         Field Name: weighted_normal_sample
       Response 3:
         Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/E_state.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/E_state.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state_3d.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state_3d.mm
         Matrix A Is Symmetric: true
         Field Name: solution_opt
       Response 4:
         Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
-        Matrix A File Name: ../AsciiMeshes/HDSA/M.mm
-        Matrix D File Name: ../AsciiMeshes/HDSA/M.mm
+        Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/M_state_3d.mm
+        Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/M_state_3d.mm
         Matrix A Is Symmetric: true
         #Matrix D Is Diagonal: true
         Field Name: solution_opt
@@ -117,11 +108,11 @@ ANONYMOUS:
         Type: Distributed
         Name: solution_diff_sample_1
     LandIce Laplacian Regularization:
-      Mass Coefficient: 1.0
-      Laplacian Coefficient: 0.0
-      Robin Coefficient: 0.0
-      #Advection Vector: [2.5, 0.0]
-      Lump Mass Matrix: true
+      Mass Coefficient: 0.0
+      Laplacian Coefficient: 1.0
+      Robin Coefficient: 2.0
+      Advection Vector: [0.0, 0.0]
+      Lump Mass Matrix: false
     Cubature Degree: 4
     Hessian:
       Response 0:
@@ -255,10 +246,13 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
   Discretization:
-    1D Elements: 50
+    1D Elements: 199
     2D Elements: 1
-    Method: STK2D
-    Exodus Output File Name: hdsa_analysis_piro.exo
+    3D Elements: 1
+    2D Scale: 0.25
+    3D Scale: 0.25
+    Method: STK3D
+    Exodus Output File Name: hdsa_analysis_advDiff3D.exo
     Number Of Time Derivatives: 0
     Required Fields Info:
       Number Of Fields: 8
@@ -266,50 +260,51 @@ ANONYMOUS:
         Field Name: weighted_normal_sample
         Field Type: Node Scalar
         Field Origin: File
-        Field Expression: ['(1.0 + x)^3']
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt_3d.ascii
         Field Usage: Input-Output
       Field 1:
         Field Name: solution_opt
         Field Origin: File
         Field Type: Node Vector
-        Vector Dim: 1
-        Field Expression: ['(1.0 + x)^3']
+        Vector Dim: 2
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/x_opt_3d.ascii
       Field 2:
         Field Name: solution_diff_sample_0
         Field Origin: File
         Field Type: Node Vector
-        Vector Dim: 1
-        Field Expression: ['0.2*(1.0 + x)^2']
+        Vector Dim: 2
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_opt_3d.ascii
       Field 3:
         Field Name: solution_diff_sample_1
         Field Origin: File
         Field Type: Node Vector
-        Vector Dim: 1
-        Field Expression: ['0.2*(x + x^2)^2']
+        Vector Dim: 2
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_1_3d.ascii
       Field 4:
         Field Name: param_opt
         Field Type: Node Scalar
         Field Origin: File
-        Field Expression: ['(1.0 + x)^3']
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt_3d.ascii
       Field 5:
         Field Name: param_sample_0
         Field Type: Node Scalar
         Field Origin: File
-        Field Expression: ['(1.0 + x)^3']
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt_3d.ascii
       Field 6:
         Field Name: param_sample_1
         Field Type: Node Scalar
         Field Origin: File
-        Field Expression: ['(x + x^2)^3']
+        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_1_3d.ascii
       Field 7:
         Field Name: target_field
         Field Type: Node Vector
-        Vector Dim: 1
+        Vector Dim: 2
         Field Origin: File
-        Field Expression: ['(1.0 + x)^3']
+        Field Expression: ['50.0 - 30.0 * (x - 0.5)^2', '50.0 - 30.0 * (x - 0.5)^2']
+        #File Name: ./z_sampl.ascii
       Side Set Discretizations:
-        Side Sets: [SideSet0]
-        SideSet0:
+        Side Sets: [SideSetX]
+        SideSetX:
           Method: SideSetSTK
           Number Of Time Derivatives: 0
           Use Serial Mesh: false
@@ -351,7 +346,7 @@ ANONYMOUS:
 
         MD Prior:
           alpha_u: 0.25
-          alpha_z: 0.25
+          alpha_z: 44.0
           alpha_d: 1.e-5
           Number Of Singular Values: 50
           Oversampling Factor: 1
@@ -507,7 +502,7 @@ ANONYMOUS:
   Regression For Response 0:
     Absolute Tolerance: 1.0e-05
     Test Value: 0.0
-    Relative Tolerance: 1.0e-05
+    Relative Tolerance: 1.0e-04
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [39.0607243439]
+    Piro Analysis Test Values: [4217.968967508952]
 ...

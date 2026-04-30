@@ -1,4 +1,5 @@
 %%MatrixMarket matrix coordinate real general
+%%E = M+0.001 S
 400 400 2392
 1 1 8.36420993858179719e-04
 1 2 -5.76789503070910202e-04
