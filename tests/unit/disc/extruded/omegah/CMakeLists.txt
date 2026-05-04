@@ -11,7 +11,9 @@ get_filename_component(parentDirName ${parentPath} NAME)
 get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${grandParentDirName}_${parentDirName}_${dirName})
 
-# Copy the populated basal mesh file (shared with the Omega_h unit tests)
+# Copy the Omega_h mesh file into the build directory.
+# This mesh is stored under the non-extruded Omega_h disc tests and is also
+# shared with the STK extruded unit tests (which additionally use the .exo variant).
 set(meshName "gis_unstruct_basal_populated.osh")
 set(meshSrcDir "${CMAKE_CURRENT_SOURCE_DIR}/../../omegah/OmegahMeshes")
 file(COPY        ${meshSrcDir}/${meshName}

@@ -29,12 +29,14 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "../ExtrudedDiscTestUtils.hpp"
 
 #include <Teuchos_CommHelpers.hpp>
 #include <Teuchos_UnitTestHelpers.hpp>
 #include <Teuchos_LocalTestingHelpers.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 // The GIS basal mesh has 2D triangular elements; the extruded 3D mesh has wedge elements.
@@ -177,45 +179,6 @@ create_disc(const Teuchos::RCP<const Teuchos_Comm>& comm)
   return factory.createDiscretization(neq, {}, sis, ss_sis);
 }
 
-// Compute the global min and max of a rank-2 DynRankView (host) across all MPI ranks.
-template<typename DT>
-std::pair<double,double> global_minmax2(
-    const Kokkos::DynRankView<DT,Kokkos::LayoutRight,Albany::HostMemSpace>& v,
-    const Teuchos::RCP<const Teuchos_Comm>& comm)
-{
-  double lmin =  std::numeric_limits<double>::max();
-  double lmax = -std::numeric_limits<double>::max();
-  for (size_t i=0; i<v.extent(0); ++i)
-    for (size_t j=0; j<v.extent(1); ++j) {
-      lmin = std::min(lmin, (double)v(i,j));
-      lmax = std::max(lmax, (double)v(i,j));
-    }
-  double gmin, gmax;
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lmin, &gmin);
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lmax, &gmax);
-  return {gmin, gmax};
-}
-
-// Compute the global min and max of a rank-3 DynRankView (host) across all MPI ranks.
-template<typename DT>
-std::pair<double,double> global_minmax3(
-    const Kokkos::DynRankView<DT,Kokkos::LayoutRight,Albany::HostMemSpace>& v,
-    const Teuchos::RCP<const Teuchos_Comm>& comm)
-{
-  double lmin =  std::numeric_limits<double>::max();
-  double lmax = -std::numeric_limits<double>::max();
-  for (size_t i=0; i<v.extent(0); ++i)
-    for (size_t j=0; j<v.extent(1); ++j)
-      for (size_t k=0; k<v.extent(2); ++k) {
-        lmin = std::min(lmin, (double)v(i,j,k));
-        lmax = std::max(lmax, (double)v(i,j,k));
-      }
-  double gmin, gmax;
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lmin, &gmin);
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lmax, &gmax);
-  return {gmin, gmax};
-}
-
 } // anonymous namespace
 
 // ---------------------------------------------------------------------------
@@ -304,25 +267,31 @@ TEUCHOS_UNIT_TEST(ExtrudedDisc_STKBasal, ExtrudedFieldsCorrect)
   const int  num_ws = disc->getNumWorksets();
 
   for (const std::string& fname : {"ice_thickness", "surface_height", "basal_friction"}) {
-    // Collect min/max of the 2D basal elem state
-    double bmin =  std::numeric_limits<double>::max();
-    double bmax = -std::numeric_limits<double>::max();
+    // Accumulate local min/max across all basal worksets, then do a single global reduction.
+    double lbmin =  std::numeric_limits<double>::max();
+    double lbmax = -std::numeric_limits<double>::max();
     for (int ws=0; ws<bnum_ws; ++ws) {
       auto v = bmfa->getElemStates()[ws].at(fname).host();
-      auto [mn,mx] = global_minmax2(v, comm);
-      bmin = std::min(bmin, mn);
-      bmax = std::max(bmax, mx);
+      auto [mn,mx] = ExtrudedDiscTestUtils::local_minmax2(v);
+      lbmin = std::min(lbmin, mn);
+      lbmax = std::max(lbmax, mx);
     }
+    double bmin, bmax;
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lbmin, &bmin);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lbmax, &bmax);
 
-    // Collect min/max of the 3D extruded elem state
-    double vmin =  std::numeric_limits<double>::max();
-    double vmax = -std::numeric_limits<double>::max();
+    // Accumulate local min/max across all 3D worksets, then do a single global reduction.
+    double lvmin =  std::numeric_limits<double>::max();
+    double lvmax = -std::numeric_limits<double>::max();
     for (int ws=0; ws<num_ws; ++ws) {
       auto v = mfa->getElemStates()[ws].at(fname).host();
-      auto [mn,mx] = global_minmax2(v, comm);
-      vmin = std::min(vmin, mn);
-      vmax = std::max(vmax, mx);
+      auto [mn,mx] = ExtrudedDiscTestUtils::local_minmax2(v);
+      lvmin = std::min(lvmin, mn);
+      lvmax = std::max(lvmax, mx);
     }
+    double vmin, vmax;
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lvmin, &vmin);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lvmax, &vmax);
 
     // The extruded 3D field is a replication of the basal field over all layers,
     // so global min/max must match exactly.
@@ -347,21 +316,32 @@ TEUCHOS_UNIT_TEST(ExtrudedDisc_STKBasal, InterpolatedFieldCorrect)
   const int bnum_ws = bdisc->getNumWorksets();
   const int  num_ws = disc->getNumWorksets();
 
-  // Collect min/max of the basal layered temperature
-  double bmin =  std::numeric_limits<double>::max();
-  double bmax = -std::numeric_limits<double>::max();
+  // Collect min/max of the basal layered temperature using a single global reduction.
+  double lbmin =  std::numeric_limits<double>::max();
+  double lbmax = -std::numeric_limits<double>::max();
   for (int ws=0; ws<bnum_ws; ++ws) {
     auto v = bmfa->getElemStates()[ws].at("temperature").host();
-    auto [mn,mx] = global_minmax3(v, comm);
-    bmin = std::min(bmin, mn);
-    bmax = std::max(bmax, mx);
+    auto [mn,mx] = ExtrudedDiscTestUtils::local_minmax3(v);
+    lbmin = std::min(lbmin, mn);
+    lbmax = std::max(lbmax, mx);
   }
+  double bmin, bmax;
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lbmin, &bmin);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lbmax, &bmax);
 
-  // All 3D temperature values must lie within [bmin, bmax]
+  // Collect min/max of the interpolated 3D temperature using a single global reduction,
+  // then check that all values lie within [bmin, bmax].
+  double lvmin =  std::numeric_limits<double>::max();
+  double lvmax = -std::numeric_limits<double>::max();
   for (int ws=0; ws<num_ws; ++ws) {
     auto v = mfa->getElemStates()[ws].at("temperature").host();
-    auto [mn,mx] = global_minmax2(v, comm);
-    TEST_ASSERT(mn >= bmin - 1e-10);
-    TEST_ASSERT(mx <= bmax + 1e-10);
+    auto [mn,mx] = ExtrudedDiscTestUtils::local_minmax2(v);
+    lvmin = std::min(lvmin, mn);
+    lvmax = std::max(lvmax, mx);
   }
+  double vmin, vmax;
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lvmin, &vmin);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lvmax, &vmax);
+  TEST_ASSERT(vmin >= bmin - 1e-10);
+  TEST_ASSERT(vmax <= bmax + 1e-10);
 }

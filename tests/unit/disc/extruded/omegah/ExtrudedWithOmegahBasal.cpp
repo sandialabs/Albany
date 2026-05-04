@@ -21,6 +21,7 @@
 #include "Albany_CommUtils.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "../ExtrudedDiscTestUtils.hpp"
 
 #include <Teuchos_CommHelpers.hpp>
 #include <Teuchos_UnitTestHelpers.hpp>
@@ -145,25 +146,6 @@ create_disc(const Teuchos::RCP<const Teuchos_Comm>& comm)
   return factory.createDiscretization(neq, {}, sis, ss_sis);
 }
 
-// Compute the global min and max of a rank-2 DynRankView (host) across all MPI ranks.
-template<typename DT>
-std::pair<double,double> global_minmax2(
-    const Kokkos::DynRankView<DT,Kokkos::LayoutRight,Albany::HostMemSpace>& v,
-    const Teuchos::RCP<const Teuchos_Comm>& comm)
-{
-  double lmin =  std::numeric_limits<double>::max();
-  double lmax = -std::numeric_limits<double>::max();
-  for (size_t i=0; i<v.extent(0); ++i)
-    for (size_t j=0; j<v.extent(1); ++j) {
-      lmin = std::min(lmin, (double)v(i,j));
-      lmax = std::max(lmax, (double)v(i,j));
-    }
-  double gmin, gmax;
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lmin, &gmin);
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lmax, &gmax);
-  return {gmin, gmax};
-}
-
 } // anonymous namespace
 
 // ---------------------------------------------------------------------------
@@ -241,20 +223,34 @@ TEUCHOS_UNIT_TEST(ExtrudedDisc_OmegahBasal, ExtrudedFieldsCorrect)
   };
 
   for (const auto& [fname, expected] : checks) {
-    // Basal min/max should equal the constant
+    // Basal: accumulate local min/max across all worksets, then do a single global reduction.
+    double lbmin =  std::numeric_limits<double>::max();
+    double lbmax = -std::numeric_limits<double>::max();
     for (int ws=0; ws<bnum_ws; ++ws) {
       auto v = bmfa->getElemStates()[ws].at(fname).host();
-      auto [mn, mx] = global_minmax2(v, comm);
-      TEST_FLOATING_EQUALITY(mn, expected, 1e-12);
-      TEST_FLOATING_EQUALITY(mx, expected, 1e-12);
+      auto [mn, mx] = ExtrudedDiscTestUtils::local_minmax2(v);
+      lbmin = std::min(lbmin, mn);
+      lbmax = std::max(lbmax, mx);
     }
+    double bmin, bmax;
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lbmin, &bmin);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lbmax, &bmax);
+    TEST_FLOATING_EQUALITY(bmin, expected, 1e-12);
+    TEST_FLOATING_EQUALITY(bmax, expected, 1e-12);
 
-    // 3D extruded min/max should also equal the constant
+    // 3D: accumulate local min/max across all worksets, then do a single global reduction.
+    double lvmin =  std::numeric_limits<double>::max();
+    double lvmax = -std::numeric_limits<double>::max();
     for (int ws=0; ws<num_ws; ++ws) {
       auto v = mfa->getElemStates()[ws].at(fname).host();
-      auto [mn, mx] = global_minmax2(v, comm);
-      TEST_FLOATING_EQUALITY(mn, expected, 1e-12);
-      TEST_FLOATING_EQUALITY(mx, expected, 1e-12);
+      auto [mn, mx] = ExtrudedDiscTestUtils::local_minmax2(v);
+      lvmin = std::min(lvmin, mn);
+      lvmax = std::max(lvmax, mx);
     }
+    double vmin, vmax;
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, 1, &lvmin, &vmin);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 1, &lvmax, &vmax);
+    TEST_FLOATING_EQUALITY(vmin, expected, 1e-12);
+    TEST_FLOATING_EQUALITY(vmax, expected, 1e-12);
   }
 }
