@@ -67,7 +67,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param.yaml
 add_test(${testName} ${Albany.exe} input_conductivity_dist_param.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS "Basic;Forward")
 
-if (ALBANY_PARALELL_EXODUS AND NOT ALBANY_DISABLE_OUTPUT_MESH)
+if (ALBANY_PARALLEL_EXODUS AND NOT ALBANY_DISABLE_OUTPUT_MESH)
   # Copy Input file from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param_restart.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param_restart.yaml COPYONLY)

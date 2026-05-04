@@ -6,7 +6,7 @@ get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${parentDirName}_${dirName})
 
 # This variable will be set in the input files during the 'configure_file' call
-if (ALBANY_PARALELL_EXODUS)
+if (ALBANY_PARALLEL_EXODUS)
   set (USE_SERIAL_MESH "true")
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
@@ -36,7 +36,7 @@ set (testName ${testNameRoot}_Import2DAsciiMesh)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_create_exo_from_msh.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_create_exo_from_msh.yaml)
  
-IF (ALBANY_PARALELL_EXODUS)
+IF (ALBANY_PARALLEL_EXODUS)
   add_test(${testName} ${Albany.exe} input_create_exo_from_msh.yaml)  
   set_tests_properties(${testName}
                        PROPERTIES
@@ -61,7 +61,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_populate_meshes.yaml
 
 add_test(${testName} ${Albany.exe} input_fo_gis_populate_meshes.yaml)
 # If Iopx is not present, we must decompose the input mesh first
-IF (NOT ALBANY_PARALELL_EXODUS)
+IF (NOT ALBANY_PARALLEL_EXODUS)
   set (testNameDecompMesh ${testNameRoot}_decompMesh)
   add_test (NAME ${testNameDecompMesh}
             COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} gis_unstruct_2d.exo
@@ -90,7 +90,7 @@ set (testName ${testNameRoot}_PopulateMesh2d)
 add_test(${testName} ${Albany.exe} input_fo_gis_populate_mesh_2d.yaml)
 
 # If Iopx is not present, we must decompose the input mesh first
-IF (NOT ALBANY_PARALELL_EXODUS)
+IF (NOT ALBANY_PARALLEL_EXODUS)
   set_tests_properties(${testName}
                        PROPERTIES
                        LABELS            "LandIce;Forward"
@@ -178,7 +178,7 @@ if (ALBANY_IFPACK2)
   endif()
 endif()
 
-if (NOT ALBANY_PARALELL_EXODUS)
+if (NOT ALBANY_PARALLEL_EXODUS)
 	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_2d_decompMesh)
   add_test (NAME ${testNameHumboldtDecompMesh}
         COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
@@ -234,7 +234,7 @@ if (ALBANY_FROSCH)
                      PROPERTIES
                      LABELS            "LandIce;Forward")
                        
-  if (NOT ALBANY_PARALELL_EXODUS)
+  if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_FluxDiv_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 
@@ -274,7 +274,7 @@ if (ALBANY_MUELU)
   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_depthInt_debrisFriction.yaml)
   add_test(${testNameRoot}_Humboldt_DepthIntegrated_DebrisFriction ${Albany.exe} input_fo_humboldt_depthInt_debrisFriction.yaml)
 
-  if (NOT ALBANY_PARALELL_EXODUS)
+  if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_MueLu
                        PROPERTIES
                        LABELS            "LandIce;Forward"
@@ -445,7 +445,7 @@ if (ALBANY_IFPACK2)
                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_mat_free_reg.yaml)
       add_test(${testName} ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_mat_free_reg.yaml)
                          
-      if (NOT ALBANY_PARALELL_EXODUS)
+      if (NOT ALBANY_PARALLEL_EXODUS)
         set_tests_properties(${testNameRoot}_Humboldt_Analysis_STK_Extruded
           PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
         set_tests_properties(${testNameRoot}_Humboldt_Analysis
@@ -519,7 +519,7 @@ if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_analysis_three_params.yaml)
     add_test(${testName} ${AlbanyAnalysis.exe} input_fo_humboldt_analysis_three_params.yaml)
     set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Large;Analysis")
-    if (NOT ALBANY_PARALELL_EXODUS)
+    if (NOT ALBANY_PARALLEL_EXODUS)
       set_tests_properties(${testNameRoot}_Humboldt_Analysis_ThreeParameters
         PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
     endif()
@@ -589,7 +589,7 @@ if (ALBANY_IFPACK2)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 
-  if (NOT ALBANY_PARALELL_EXODUS)
+  if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_LaplacianPriorSampling
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 

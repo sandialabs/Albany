@@ -5,7 +5,7 @@ get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${parentDirName}_${dirName}_16km)
 
 # This variable will be set in the input files during the 'configure_file' call
-if (ALBANY_PARALELL_EXODUS)
+if (ALBANY_PARALLEL_EXODUS)
   set (USE_SERIAL_MESH "true")
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
@@ -31,7 +31,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_friction_reg.ascii
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_velocity.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_velocity.ascii COPYONLY)
                  
-if (NOT ALBANY_PARALELL_EXODUS)
+if (NOT ALBANY_PARALLEL_EXODUS)
   add_test (NAME ${testNameRoot}_decompMesh
         COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} antarctica_2d.exo
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -43,7 +43,7 @@ if(ALBANY_MUELU)
                 ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuKokkos.yaml)
   add_test(${testNameRoot}_MueLuKokkos ${Albany8.exe} inputMueLuKokkos.yaml)
     
-  if (NOT ALBANY_PARALELL_EXODUS)
+  if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_MueLuKokkos
                     PROPERTIES
                     LABELS            "LandIce;Forward"
@@ -58,7 +58,7 @@ if(ALBANY_MUELU)
                  ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.yaml)
   add_test(${testNameRoot}_MueLu ${Albany8.exe} inputMueLu.yaml)
     
-  if (NOT ALBANY_PARALELL_EXODUS)
+  if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_MueLu
                      PROPERTIES
                      LABELS            "LandIce;Forward"
@@ -73,7 +73,7 @@ endif()
 #   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FROSch.yaml
 #                  ${CMAKE_CURRENT_BINARY_DIR}/input_FROSch.yaml)
 #   add_test(${testNameRoot}_FROSch ${Albany8.exe} input_FROSch.yaml)
-#   if (NOT ALBANY_PARALELL_EXODUS)
+#   if (NOT ALBANY_PARALLEL_EXODUS)
 #     set_tests_properties(${testNameRoot}_FROSch
 #                      PROPERTIES
 #                      LABELS            "LandIce;Forward"

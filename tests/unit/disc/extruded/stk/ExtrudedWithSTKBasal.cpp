@@ -13,7 +13,7 @@
 //  - expected mesh parts (node sets and side sets) are present
 //
 // The serial test reads the Exodus file directly.  The parallel test requires
-// the file to be pre-decomposed (via the SEACAS decomp tool) when ALBANY_PARALELL_EXODUS
+// the file to be pre-decomposed (via the SEACAS decomp tool) when ALBANY_PARALLEL_EXODUS
 // (Iopx) is not available; this is handled automatically in CMakeLists.txt via a
 // FIXTURES_REQUIRED dependency on a decomp step.
 //

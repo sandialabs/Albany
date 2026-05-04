@@ -27,7 +27,7 @@ create_unit_test (NAME    ExtrudedWithSTKBasal
 
 # When parallel Exodus (Iopx) is not available, we need to decompose the serial
 # Exodus file before running the parallel unit test.
-IF (NOT ALBANY_PARALELL_EXODUS)
+IF (NOT ALBANY_PARALLEL_EXODUS)
   set (testNameDecompMesh ${testNameRoot}_ExtrudedWithSTKBasal_decompMesh)
   add_test (NAME ${testNameDecompMesh}
             COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} ${meshName}

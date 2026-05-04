@@ -3,7 +3,7 @@ get_filename_component(parentDirName ${parentPath} NAME)
 get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testName ${parentDirName}_${dirName})
 
-if (ALBANY_PARALELL_EXODUS)
+if (ALBANY_PARALLEL_EXODUS)
   set (USE_SERIAL_MESH "true")
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
@@ -21,7 +21,7 @@ endif()
 # Create the test
 add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
 # If Iopx is not present, we must decompose the input mesh first
-if (NOT ALBANY_PARALELL_EXODUS)
+if (NOT ALBANY_PARALLEL_EXODUS)
 	add_test (NAME ${testName}_Humboldt_decompMesh
             COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
