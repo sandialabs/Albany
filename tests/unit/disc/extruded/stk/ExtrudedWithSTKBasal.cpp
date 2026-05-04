@@ -11,6 +11,18 @@
 //  - scalar fields loaded from the mesh are correctly extruded to the 3D mesh
 //  - layered scalar fields (temperature) are correctly interpolated to the 3D mesh
 //  - expected mesh parts (node sets and side sets) are present
+//
+// The serial test reads the Exodus file directly.  The parallel test requires
+// the file to be pre-decomposed (via the SEACAS decomp tool) when ALBANY_PARALELL_EXODUS
+// (Iopx) is not available; this is handled automatically in CMakeLists.txt via a
+// FIXTURES_REQUIRED dependency on a decomp step.
+//
+// NOTE: the basal disc parameter "Save Solution Field: false" is needed because the
+// Exodus file may have a "solution" field stored with a different DOF count than
+// neq (it was produced by a previous Albany STKExtruded run that gathered the 3D
+// solution onto the 2D basal mesh).  Suppressing the Albany solution-field declaration
+// on the basal disc avoids the resulting STK field-restriction conflict while still
+// allowing ice_thickness, surface_height, basal_friction, and temperature to be read.
 
 #include "Albany_UnitTestSession.hpp"
 #include "Albany_Utils.hpp"
@@ -42,10 +54,17 @@ namespace {
 // temperature is a 11-layer nodal field also loaded from the Exodus restart.
 // The extruded disc extrudes the three scalar fields and interpolates temperature.
 //
+// "Save Solution Field: false" prevents Albany from declaring the "solution" field on the
+// basal STK mesh.  This avoids a field-restriction conflict that arises because the Exodus
+// file may store "solution" with a different number of components than our neq (the file
+// was produced by an STKExtruded run that gathered the full 3D solution onto the 2D mesh).
+//
 // NOTE: because the layer NLC (normalized layer coordinates) for temperature is not stored
 // in the Exodus file, interpolateBasalLayeredFields will use zero NLC and will copy the
 // last data layer to all mesh layers.  The test therefore only checks that temperature
 // values are finite and lie within the data bounds, not that interpolation is exact.
+//
+// When run in parallel, the file must have been pre-decomposed; see CMakeLists.txt.
 Teuchos::RCP<Albany::AbstractDiscretization>
 create_disc(const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
@@ -78,6 +97,10 @@ create_disc(const Teuchos::RCP<const Teuchos_Comm>& comm)
   basal_params.set<int>("Number Of Time Derivatives", 0);
   basal_params.set<int>("Restart Index", 1);
   basal_params.set<std::string>("Exodus Input File Name", exo_file);
+  // The Exodus file may contain a "solution" field stored from a previous extruded run with
+  // a different DOF count.  Prevent the conflict by telling Albany not to declare its own
+  // "solution" field on the basal disc; we only need the state fields (ice_thickness etc.).
+  basal_params.set<bool>("Save Solution Field", false);
 
   // Declare which fields are expected on the basal mesh (all already present from Restart)
   auto& basal_req = basal_params.sublist("Required Fields Info");

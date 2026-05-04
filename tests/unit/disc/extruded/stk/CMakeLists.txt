@@ -24,3 +24,20 @@ file(COPY        ${meshSrcDir}/${meshName}
 create_unit_test (NAME    ExtrudedWithSTKBasal
                   PREFIX  ${testNameRoot}
                   SOURCES ExtrudedWithSTKBasal.cpp)
+
+# When parallel Exodus (Iopx) is not available, we need to decompose the serial
+# Exodus file before running the parallel unit test.
+IF (NOT ALBANY_PARALELL_EXODUS)
+  set (testNameDecompMesh ${testNameRoot}_ExtrudedWithSTKBasal_decompMesh)
+  add_test (NAME ${testNameDecompMesh}
+            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} ${meshName}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set_tests_properties (${testNameDecompMesh}
+                        PROPERTIES
+                          FIXTURES_SETUP ${testNameRoot}_ExtrudedWithSTKBasal_meshDecomp
+                          RUN_SERIAL     TRUE
+                          LABELS         "unit")
+  set_tests_properties (${testNameRoot}_ExtrudedWithSTKBasal_UnitTest_Parallel
+                        PROPERTIES
+                          FIXTURES_REQUIRED ${testNameRoot}_ExtrudedWithSTKBasal_meshDecomp)
+ENDIF ()
