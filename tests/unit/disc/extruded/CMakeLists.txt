@@ -28,3 +28,10 @@ create_unit_test (NAME    ExtrudedDisc
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/v.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/v.ascii)
+
+if (ALBANY_SEACAS)
+  add_subdirectory(stk)
+endif()
+if (ENABLE_OMEGAH)
+  add_subdirectory(omegah)
+endif()
