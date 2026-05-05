@@ -4,7 +4,7 @@ get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${parentDirName}_${dirName})
 
 # This variable will be set in the input files during the 'configure_file' call
-if (ALBANY_PARALELL_EXODUS)
+if (ALBANY_PARALLEL_EXODUS)
   set (USE_SERIAL_MESH "true")
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
@@ -42,7 +42,7 @@ add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 
 # If Iopx is not present, we must decompose the input mesh first
-if (NOT ALBANY_PARALELL_EXODUS)
+if (NOT ALBANY_PARALLEL_EXODUS)
   add_test (NAME ${testNameRoot}_Humboldt_decompMesh
           COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
@@ -94,7 +94,7 @@ if (ALBANY_FROSCH)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_lubricated.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
 
-  if (NOT ALBANY_PARALELL_EXODUS)
+  if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_fluxDiv
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
 
@@ -141,7 +141,7 @@ if (ALBANY_FROSCH AND ALBNAY_TEKO)
   # Prevent the two tests to be run at the same time as they rely on written files:
   set_tests_properties(${testName_Non_Contiguous}_Parallel PROPERTIES DEPENDS  ${testName_Contiguous}_Parallel)
 
-  if (NOT ALBANY_PARALELL_EXODUS)
+  if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_Contiguous_Mesh_Hessian_Parallel
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
 

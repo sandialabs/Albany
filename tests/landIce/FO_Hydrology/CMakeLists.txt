@@ -5,7 +5,7 @@ get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${parentDirName}_${dirName})
 
 # This variable will be set in the input files during the 'configure_file' call
-if (ALBANY_PARALELL_EXODUS)
+if (ALBANY_PARALLEL_EXODUS)
   set (USE_SERIAL_MESH "true")
 #IKT 5/22/19 - commenting out for now as this is leading to compilation error
 else ()
