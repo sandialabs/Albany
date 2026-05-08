@@ -43,7 +43,7 @@ RUN apt-get update &&       \
         netcdf-bin          \
         libpnetcdf-dev      \
         libmetis-dev        \
-        libparmetis-dev
+        libscotchparmetis-dev
 
 # Create a bash goodies file, for users to load when manually running the container
 # Simply run 'source /opt/share/bash-goodies.sh' to get these
