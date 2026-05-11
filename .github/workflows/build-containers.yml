@@ -34,7 +34,7 @@ jobs:
       - name: Build image
         run: |
           cd albany/source/tools/containers/gcc-serial
-          podman build -f Dockerfile -t albany:gcc-12-serial
+          podman build --format docker -f Dockerfile -t albany:gcc-12-serial
       - name: Tag image
         run: |
           podman tag albany:gcc-12-serial ghcr.io/sandialabs/albany:gcc-12-serial
