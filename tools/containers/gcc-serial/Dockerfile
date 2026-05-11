@@ -4,6 +4,9 @@ LABEL maintainer="lbertag@sandia.gov"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Ensure all subsequent RUN commands use a login bash shell
+SHELL ["/bin/bash", "-l", "-c"]
+
 # Install basic utils
 RUN apt-get update &&   \
     apt-get install -y  \
@@ -43,7 +46,7 @@ RUN apt-get update &&       \
         netcdf-bin          \
         libpnetcdf-dev      \
         libmetis-dev        \
-        libscotchparmetis-dev
+        libparmetis-dev
 
 # Create a bash goodies file, for users to load when manually running the container
 # Simply run 'source /opt/share/bash-goodies.sh' to get these
