@@ -1,4 +1,4 @@
-FROM docker.io/ubuntu:latest
+FROM docker.io/ubuntu:24.04
 
 LABEL maintainer="lbertag@sandia.gov"
 
@@ -43,7 +43,7 @@ RUN apt-get update &&       \
         netcdf-bin          \
         libpnetcdf-dev      \
         libmetis-dev        \
-        libscotchparmetis-dev
+        libparmetis-dev
 
 # Create a bash goodies file, for users to load when manually running the container
 # Simply run 'source /opt/share/bash-goodies.sh' to get these
