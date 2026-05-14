@@ -704,6 +704,11 @@ ExtrudedDiscretization::computeSideSets()
             " - elem nodes gids: " + util::join(elem_nodes,",") + "\n");
         return pos;
       };
+      // Track added side GIDs to avoid duplicates. This matters for "lateralside",
+      // which is built from all basal side sets. If those side sets overlap (e.g.,
+      // boundary_side_set contains boundary_side_set_1 and boundary_side_set_2),
+      // iterating all of them would add the same 3D face multiple times.
+      std::set<GO> added_side_GIDs;
       for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
         for (const auto& basal_ssn : basal_ss_names) {
           auto basal_ss = m_basal_disc->getSideSets(ws).at(basal_ssn);
@@ -714,6 +719,9 @@ ExtrudedDiscretization::computeSideSets()
               SideStruct sStruct;
               sStruct.elem_GID = layers_data.cell.gid->getId(basal_elem_gid,ilev);
               sStruct.side_GID = 2*num_glb_basal_elems + side_layers_gid.getId(basal_side.side_GID,ilev);
+
+              // Skip if this side was already added (can happen when basal side sets overlap)
+              if (!added_side_GIDs.insert(sStruct.side_GID).second) continue;
 
               auto elem_LID = cell_indexer->getLocalElement(sStruct.elem_GID);
               sStruct.ws_elem_idx = m_elem_ws_idx[elem_LID].idx;
