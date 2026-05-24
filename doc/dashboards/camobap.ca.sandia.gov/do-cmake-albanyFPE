@@ -23,7 +23,7 @@ cmake \
     -D SEACAS_DECOMP=${TRILINOSSRCDIR}/build/install/bin/decomp \
     -D SEACAS_EXODIFF=${TRILINOSSRCDIR}/build/install/bin/exodiff \
     -D SEACAS_ALGEBRA=${TRILINOSSRCDIR}/build/install/bin/algebra \
-    -D ENABLE_ALBANY_PYTHON:BOOL=ON \
+    -D ENABLE_ALBANY_PYTHON:BOOL=OFF \
     -D TRILINOS_SOURCE_DIR=${TRILINOSSRCDIR} \
     -D TRILINOS_BUILD_DIR=${TRILINOSBLDDIR} \
     -D PYTHON_EXECUTABLE='/usr/bin/python3.6m' \
