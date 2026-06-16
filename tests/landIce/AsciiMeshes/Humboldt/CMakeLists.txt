@@ -50,3 +50,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/A_notLumped_humboldt.mm
                ${CMAKE_CURRENT_BINARY_DIR}/A_notLumped_humboldt.mm COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/D_notLumped_humboldt.mm
                ${CMAKE_CURRENT_BINARY_DIR}/D_notLumped_humboldt.mm COPYONLY)
+
+add_subdirectory(humboldt_contiguous_2d.osh)
