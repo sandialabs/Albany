@@ -177,6 +177,7 @@ updateMesh ()
     switch (st->dim.size()) {
       case 2: numComps = 1; break;
       case 3: numComps = st->dim[2]; break;
+      case 4: numComps = st->dim[2]*st->dim[3]; break;
       default:
         throw std::runtime_error(
             "[OmegahDiscretization::updateMesh] Error! Unsupported nodal state rank.\n"
