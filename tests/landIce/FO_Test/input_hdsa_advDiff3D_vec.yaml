@@ -85,7 +85,7 @@ ANONYMOUS:
     Dirichlet BCs: {}
     Neumann BCs: {}
     Parameters:
-      Number Of Parameters: 7
+      Number Of Parameters: 6
       Parameter 0:
         Name: weighted_normal_sample
         Type: Distributed
@@ -94,24 +94,21 @@ ANONYMOUS:
         Name: solution_opt
       Parameter 2:
         Type: Distributed
-        Name: param_opt
+        Name: param_sample_0
       Parameter 3:
         Type: Distributed
-        Name: param_sample_0
+        Name: solution_diff_sample_0
       Parameter 4:
         Type: Distributed
-        Name: solution_diff_sample_0
-      Parameter 5:
-        Type: Distributed
         Name: param_sample_1
-      Parameter 6:
+      Parameter 5:
         Type: Distributed
         Name: solution_diff_sample_1
     LandIce Laplacian Regularization:
       Mass Coefficient: 0.0
       Laplacian Coefficient: 1.0
       Robin Coefficient: 2.0
-      Advection Vector: [0.0, 0.0]
+      Advection Vector: [0.0, 0.0, 0.0]
       Lump Mass Matrix: false
     Cubature Degree: 4
     Hessian:
@@ -255,7 +252,7 @@ ANONYMOUS:
     Exodus Output File Name: hdsa_analysis_advDiff3D.exo
     Number Of Time Derivatives: 0
     Required Fields Info:
-      Number Of Fields: 8
+      Number Of Fields: 7
       Field 0:
         Field Name: weighted_normal_sample
         Field Type: Node Scalar
@@ -281,21 +278,16 @@ ANONYMOUS:
         Vector Dim: 2
         File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_1_3d.ascii
       Field 4:
-        Field Name: param_opt
-        Field Type: Node Scalar
-        Field Origin: File
-        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt_3d.ascii
-      Field 5:
         Field Name: param_sample_0
         Field Type: Node Scalar
         Field Origin: File
         File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt_3d.ascii
-      Field 6:
+      Field 5:
         Field Name: param_sample_1
         Field Type: Node Scalar
         Field Origin: File
         File Name: ../AsciiMeshes/HDSA_AdvDiff/p_1_3d.ascii
-      Field 7:
+      Field 6:
         Field Name: target_field
         Field Type: Node Vector
         Vector Dim: 2
@@ -316,6 +308,7 @@ ANONYMOUS:
       Analysis Package: HDSA
       HDSA:
         Number Of Parameters: 1
+        Low Fidelity Optimal Parameter Name: "weighted_normal_sample"
         Check Derivatives: false
         Derivative Checks:
           Perform Reduced Derivative Checks: false       

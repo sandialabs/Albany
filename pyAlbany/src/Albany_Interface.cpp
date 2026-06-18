@@ -14,6 +14,7 @@
 #include "Albany_RegressionTests.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_CommUtils.hpp"
+#include "Albany_StringUtils.hpp"
 #include "Albany_ThyraUtils.hpp"
 
 #include "Albany_FactoriesHelpers.hpp"
@@ -473,7 +474,30 @@ bool PyProblem::performAnalysis()
     Teuchos::ParameterList &piroParams =
         slvrfctry->getParameters()->sublist("Piro");
 
-    int status = Piro::PerformAnalysis(*solver, piroParams, p, observer);
+    std::string analysisPackage = slvrfctry->getAnalysisParameters().get("Analysis Package","Solve");
+
+    bool error(false);
+    if(analysisPackage == "HDSA") {  
+      std::cout << "I'm in the HDSA case" <<std::endl;
+      int num_samples=slvrfctry->getAnalysisParameters().sublist("HDSA").get("Number Of Data Samples",2);
+      const std::string p_opt_name = slvrfctry->getAnalysisParameters().sublist("HDSA").get("Low Fidelity Optimal Parameter Name", "param_opt");
+      const std::string x_opt_name = slvrfctry->getAnalysisParameters().sublist("HDSA").get("Low Fidelity Optimal Solution Name", "solution_opt");
+      const std::string p_sample_root_name = slvrfctry->getAnalysisParameters().sublist("HDSA").get("Parameter Sample Root Name", "param_sample");
+      const std::string x_diff_root_name = slvrfctry->getAnalysisParameters().sublist("HDSA").get("Solution Difference Root Name", "solution_diff_sample");
+      const auto distParamLib = albanyApp->getDistributedParameterLibrary();
+      auto p_opt = distParamLib->get(p_opt_name)->vector();
+      Teuchos::RCP< Thyra::VectorBase<double> > u_opt = distParamLib->get(x_opt_name)->vector()->clone_v();
+
+      std::vector<Teuchos::RCP< Thyra::VectorBase<double> > > p_samples, u_diff_at_samples;
+      for(int i=0; i<num_samples; ++i) {
+        p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector());
+        u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector());
+      }
+      Piro::PerformAnalysis(*solver, piroParams, p, observer, u_opt, p_opt, u_diff_at_samples, p_samples);
+    } else {
+      int status = Piro::PerformAnalysis(*solver, piroParams, p, observer);
+      error = (status != ROL::EXITSTATUS_CONVERGED && status != ROL::EXITSTATUS_STEPTOL);
+    }
 
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
@@ -488,7 +512,6 @@ bool PyProblem::performAnalysis()
 
     stackedTimer->stop("PyAlbany: performAnalysis");
     stackedTimer->stopBaseTimer();
-    bool error = (status != ROL::EXITSTATUS_CONVERGED && status != ROL::EXITSTATUS_STEPTOL);
     return error;
 }
 

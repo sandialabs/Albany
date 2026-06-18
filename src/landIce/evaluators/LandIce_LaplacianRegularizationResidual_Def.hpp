@@ -105,6 +105,9 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   }
   sideNodes.modify_host();
   sideNodes.sync_device();
+
+  TEUCHOS_TEST_FOR_EXCEPTION (advection_vect.size() != cellDim, std::runtime_error,
+                              "Error! Advection Vector Side not compatible with problem dimension.\n");
 }
 
 // **********************************************************************

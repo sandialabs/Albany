@@ -47,7 +47,7 @@ ANONYMOUS:
       Mass Coefficient: 0.0
       Laplacian Coefficient: 1.0
       Robin Coefficient: 2.0
-      Advection Vector: [0.0, 0.0, 0.0]
+      Advection Vector: [0.5, 0.0, 0.0]
       Lump Mass Matrix: false
     Cubature Degree: 4
     Hessian:
