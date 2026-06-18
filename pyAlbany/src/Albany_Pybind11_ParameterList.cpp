@@ -35,7 +35,7 @@ namespace py = pybind11;
 template<typename T>
 pybind11::array_t<T> copyTeuchosArrayToNumPy(Teuchos::Array< T > & tArray) {
 
-    pybind11::array_t<T> array(tArray.size());
+    pybind11::array_t<T> array(pybind11::array::ShapeContainer{tArray.size()});
     auto data = array.template mutable_unchecked<1>();
     for (int i=0; i < tArray.size(); ++i)
       data(i) = tArray[i];

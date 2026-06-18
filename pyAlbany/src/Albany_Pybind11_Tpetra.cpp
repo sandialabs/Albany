@@ -65,7 +65,7 @@ struct cknp1d {
     cknp1d (T kokkos_array_host) {
 
         const int dim_out_0 = kokkos_array_host.extent(0);
-        result = pybind11::array_t<typename T::value_type>(dim_out_0);
+        result = pybind11::array_t<typename T::value_type>(pybind11::array::ShapeContainer{dim_out_0});
         auto data = result.template mutable_unchecked<1>();
         Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0,dim_out_0), [&](int i) {
             data(i) = kokkos_array_host(i);
@@ -93,7 +93,7 @@ struct cknp2d {
         const int dim_out_0 = kokkos_array_host.extent(0);
         const int dim_out_1 = kokkos_array_host.extent(1);
 
-        result = pybind11::array_t<typename T::value_type>({dim_out_0,dim_out_1});
+        result = pybind11::array_t<typename T::value_type>(pybind11::array::ShapeContainer{dim_out_0,dim_out_1});
         auto data = result.template mutable_unchecked<T::rank>();
         Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0,dim_out_0), [&](int i) {
             for (int j=0; j<dim_out_1; ++j) {
@@ -215,8 +215,8 @@ pybind11::tuple getRemoteIndexList(RCP_ConstPyMap map, pybind11::array_t<Tpetra_
     Tpetra::LookupStatus result;
     Teuchos::ArrayView< const Tpetra_GO > globalList(globalIndexes_av);
 
-    pybind11::array_t<int> nodeList_np(globalList.size());
-    pybind11::array_t<Tpetra_LO> localList_np(globalList.size());
+    pybind11::array_t<int> nodeList_np(pybind11::array::ShapeContainer{globalList.size()});
+    pybind11::array_t<Tpetra_LO> localList_np(pybind11::array::ShapeContainer{globalList.size()});
 
     Teuchos::ArrayView< int >             nodeList(nodeList_np.mutable_data(0), globalList.size());
     Teuchos::ArrayView< Tpetra_LO >       localList(localList_np.mutable_data(0), globalList.size());
@@ -285,6 +285,9 @@ void pyalbany_vector(pybind11::module &m){
         })
         .def("dot",[](Teuchos::RCP<Tpetra_Vector> &m, Teuchos::RCP<Tpetra_Vector> &m2){
             return m->dot(*m2);
+        })
+        .def("meanValue",[](Teuchos::RCP<Tpetra_Vector> &m){
+            return m->meanValue();
         });
 }
 
