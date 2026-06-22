@@ -10,7 +10,6 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=128
 #SBATCH --ntasks-per-node=128
-#SBATCH --ntasks-per-socket=64
 #SBATCH --hint=nomultithread
 
 BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
