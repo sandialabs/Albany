@@ -2,11 +2,11 @@
 ---
 ANONYMOUS:
   Debug Output:
-          #Write Solution to MatrixMarket: -1
-          #Write Jacobian to MatrixMarket: -1
-          #Write Residual to MatrixMarket: -1
+    #Write Solution to MatrixMarket: -3
+    #Write Jacobian to MatrixMarket: -1
+    #Write Residual to MatrixMarket: -1
   Problem:
-    Phalanx Graph Visualization Detail: 1
+    Phalanx Graph Visualization Detail: 0
     Solution Method: Transient
     Name: LandIce Coupled FO H 3D
     Compute Sensitivities: false
@@ -58,18 +58,16 @@ ANONYMOUS:
     Body Force:
       Type: FO INTERP SURF GRAD
   Discretization:
-    Method: STKExtruded
+    Method: Extruded
     Number Of Time Derivatives: 1
-    Exodus Output File Name: output/humboldt_transient.exo
+    # Exodus Output File Name: output/humboldt_transient.exo
     Columnwise Ordering: false
     NumLayers: 5
     Thickness Field Name: ice_thickness
     #Surface Height Field Name: surface_height
     Use Glimmer Spacing: true
-    Extrude Basal Node Fields: [ice_thickness, surface_height, bed_topography]
-    Basal Node Fields Ranks: [1, 1]
-    Interpolate Basal Node Layered Fields: [temperature,velocity]
-    Basal Node Layered Fields Ranks: [1,2]
+    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography]
+    Interpolate Basal Layered Fields: [temperature,velocity]
     Required Fields Info:
       Number Of Fields: 5
       Field 0:
@@ -137,9 +135,6 @@ ANONYMOUS:
             Vector Dim: 2
             File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
       upperside:
-        Method: SideSetSTK
-        Number Of Time Derivatives: 1
-        Exodus Output File Name: humboldt_transient_surface.exo
         Required Fields Info:
           Number Of Fields: 2
           Field 0:

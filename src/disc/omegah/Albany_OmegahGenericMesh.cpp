@@ -281,10 +281,12 @@ loadOmegahMesh ()
 
     this->declare_part(pn, topo, is_in_part, mark_downward);
 
-    if (ent_dim==0) {
-      nsNames.push_back(pn);
-    } else if (ent_dim==m_mesh->dim()-1) {
+    if (ent_dim>=m_mesh->dim()-1) {
       ssNames.push_back(pn);
+      if (mark_downward)
+        nsNames.push_back(pn);
+    } else if (ent_dim==0) {
+      nsNames.push_back(pn);
     }
   }
 
