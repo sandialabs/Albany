@@ -247,7 +247,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     if(zero_on_floating || zero_N_on_floating_at_nodes || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC) ) {
       bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), nodal_layout);
       this->addDependentField (bed_topo_field);
-      thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
+      thickness_field = PHX::MDField<const EffPressureST>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
       this->addDependentField (thickness_field);
       if(!nodal) {
         BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
@@ -558,7 +558,8 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
             outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
           }
         } else {
-          MeshScalarT thickness(0), bed_topo(0);
+          EffPressureST thickness(0);
+          MeshScalarT bed_topo(0);
           for (int node=0; node<numNodes; ++node) {
             thickness += thickness_field(cell,node)*BF(cell,node,ipt);
             bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
@@ -716,7 +717,8 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
       if(nodal)
         isGrounded = rho_i*thickness_field(cell,ipt) > -rho_w*bed_topo_field(cell,ipt);
       else {
-        MeshScalarT thickness(0), bed_topo(0);
+        EffPressureST thickness(0);
+        MeshScalarT bed_topo(0);
         for (int node=0; node<numNodes; ++node) {
           thickness += thickness_field(cell,node)*BF(cell,node,ipt);
           bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);

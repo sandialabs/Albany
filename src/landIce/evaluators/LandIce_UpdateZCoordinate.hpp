@@ -48,8 +48,9 @@ private:
   // Output:
   PHX::MDField<ScalarT, Cell, Node>           topSurface;
   PHX::MDField<MeshScalarT, Cell, Node, Dim>  coordVecOut;
+  PHX::MDField<ScalarT, Cell, Node>           HOut;
 
-  bool haveThickness;
+  bool haveThickness, haveThicknessDiff;
   double minH, rho_i, rho_w;
   int numDims, numNodes;
 };

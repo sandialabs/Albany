@@ -66,6 +66,13 @@ StokesFOThickness::StokesFOThickness(
     surface_height_name += "_computed";
     ice_thickness_name += "_computed";
   }
+/*
+  is_dist[surface_height_name]=true;
+  dist_params_name_to_mesh_part[surface_height_name]="";
+
+  is_dist[ice_thickness_name]=true;
+  dist_params_name_to_mesh_part[ice_thickness_name]="";
+  */
 
   effectivePressure_from_basalFrictionEval = true;
 }
@@ -210,6 +217,7 @@ void StokesFOThickness::setFieldsProperties () {
 
   if(unsteady) {
     setSingleFieldProperties(ice_thickness_name, FRT::Scalar, FST::Scalar);
+    setSingleFieldProperties(effective_pressure_name, FRT::Scalar, FST::Scalar);
     setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::Scalar);
   } else {
     setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::ParamScalar);

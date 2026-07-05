@@ -118,7 +118,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
     check_topology(dof_mgr->get_topology());
 #endif
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const int field_side_pos = field_layer==0 ? bot : top;
+    const int field_side_pos = fieldLevel==0 ? bot : top;
     const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
 
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
@@ -201,7 +201,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
     check_topology(dof_mgr->get_topology());
 #endif
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const int field_side_pos = field_layer==0 ? bot : top;
+    const int field_side_pos = fieldLevel==0 ? bot : top;
     const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
@@ -304,7 +304,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
     check_topology(dof_mgr->get_topology());
 #endif
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const int field_side_pos = field_layer==0 ? bot : top;
+    const int field_side_pos = fieldLevel==0 ? bot : top;
     const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_side_pos);
     for (std::size_t cell=0; cell<workset.numCells; ++cell ) {
       const int elem_LID = elem_lids(cell);
@@ -455,7 +455,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
 #endif
 
     const int field_layer = fieldLevel==0 ? 0 : fieldLevel-1;
-    const int field_pos = field_layer==0 ? bot : top;
+    const int field_pos = fieldLevel==0 ? bot : top;
     // Note: grab sol dofs in same order as the side where the field is defined,
     //       to ensure that corresponding dofs are vertically aligned
     const auto& field_nodes = dof_mgr->getGIDFieldOffsetsSide(offset,field_pos);
