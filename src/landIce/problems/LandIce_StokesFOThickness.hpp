@@ -30,6 +30,7 @@
 #include "LandIce_ThicknessResid.hpp"
 #include "LandIce_StokesFOImplicitThicknessUpdateResid.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"  
+#include "PHAL_ScatterScalarNodalParameter.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -158,7 +159,36 @@ StokesFOThickness::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& f
 
   ev = Teuchos::rcp(new PHAL::ScatterResidualWithExtrudedField<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+/*
+  {
+  std::string stateName = "ice_thickness_computed";
+  auto entity = Albany::StateStruct::NodalDistParameter;
+  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+  p->set<std::string>("Parameter Name", stateName);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
 
+  ev = Teuchos::rcp(new PHAL::ScatterScalarNodalParameter<EvalT,PHAL::AlbanyTraits>(*p, dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+  if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+    fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+  }
+*/
+/*
+  {
+  std::string stateName = "surface_height_computed";
+  auto entity = Albany::StateStruct::NodalDistParameter;
+  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+  p->set<std::string>("Parameter Name", stateName);
+  p->set<Teuchos::RCP<Albany::ScalarParameterAccessors<EvalT>>>("Accessors", this->getAccessors()->template at<EvalT>());
+
+  ev = Teuchos::rcp(new PHAL::ScatterScalarNodalParameter<EvalT,PHAL::AlbanyTraits>(*p, dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+  if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+    fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+  }
+*/
   // --- Thickness equation evaluators --- //
   constructThicknessEvaluators<EvalT> (fm0, meshSpecs, fieldManagerChoice);
 
@@ -240,7 +270,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<std::string>("Initial Thickness Name", initial_ice_thickness_name);
   p->set<std::string>("Side Set Name", surfaceSideName);
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
-  p->set<int>("Cubature Degree",3);
+  p->set<int>("Cubature Degree",4);
   p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
   if(this->params->isParameter("Time Step Ptr")) {
@@ -288,6 +318,8 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     p->set<std::string>("Old Coords Name",  "Coord Vec Old");
     p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
     p->set<std::string>("Thickness Name",   ice_thickness_name);
+    p->set<std::string>("Thickness Increment Name",    "Extruded " + dof_names[1]);
+    p->set<std::string>("Past Thickness Name" ,initial_ice_thickness_name);
     p->set<std::string>("Top Surface Name", surface_height_name);
     p->set<std::string>("Bed Topography Name", bed_topography_name);
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
@@ -296,7 +328,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTopBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
-
+/*
     const std::string layout = e2str(FL::Node) + " Scalar";
     ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(surface_height_name, "lateralside", layout, cellType, surface_height_name + "_lateralside");
           fm0.template registerEvaluator<EvalT> (ev);
@@ -314,7 +346,48 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
 
     ev = Teuchos::rcp(new LandIce::BinarySumOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT, typename EvalT::ParamScalarT>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
+    */
   }
+  
+ /* {
+    // Saving the dissipation heat in the output mesh
+    std::string stateName = ice_thickness_name;
+    p = Teuchos::rcp(new Teuchos::ParameterList("Write computed thickness"));
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+      // An output: save it.
+      p->set("State Name", stateName);
+      p->set("Field Name", stateName);
+      p->set<Teuchos::RCP<PHX::DataLayout>> ("State Field Layout",dl->node_scalar);
+      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // Only PHAL::AlbanyTraits::Residual evaluates something,
+      // others will have empty list of evaluated fields
+      if (ev->evaluatedFields().size()>0) {
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }
+
+  {
+    // Saving the dissipation heat in the output mesh
+    std::string stateName = surface_height_name;
+    p = Teuchos::rcp(new Teuchos::ParameterList("Write computed surface height"));
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+      // An output: save it.
+      p->set("State Name", stateName);
+      p->set("Field Name", stateName);
+      p->set<Teuchos::RCP<PHX::DataLayout>> ("State Field Layout",dl->node_scalar);
+      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // Only PHAL::AlbanyTraits::Residual evaluates something,
+      // others will have empty list of evaluated fields
+      if (ev->evaluatedFields().size()>0) {
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }*/
 
   //--- LandIce Stokes FO Residual Thickness ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Scatter ResidualH"));

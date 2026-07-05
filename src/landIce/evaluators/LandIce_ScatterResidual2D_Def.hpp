@@ -177,7 +177,7 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
   // Pick element layer that contains the field level
   const auto field_layer = fieldLevel==layers_data.cell.lid->numLayers
                          ? fieldLevel-1 : fieldLevel;
-  const int field_pos = field_layer==0 ? bot : top;
+  const int field_pos = fieldLevel==layers_data.cell.lid->numLayers ? top : bot;
 
   const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto& dof_mgr       = workset.disc->getDOFManager();

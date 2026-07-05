@@ -72,7 +72,7 @@ ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
 {
   // Create field tag
   nodal_field_tag =
-    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className + "_" + this->param_name, dl->dummy));
 
   this->addEvaluatedField(*nodal_field_tag);
 }
@@ -82,9 +82,12 @@ template<typename Traits>
 void ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  std::cout << "ScatterScalarNodalParameter: " << this->param_name <<std::endl;
   // Check for early return
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
+  std::cout << "Still here ScatterScalarNodalParameter: " << this->param_name <<std::endl;
 
   const int ws = workset.wsIndex;
 
@@ -117,7 +120,7 @@ ScatterScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p,
   fieldLevel = p.get<int>("Field Level");
 
   // Create field tag
-  nodal_field_tag = Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+  nodal_field_tag = Teuchos::rcp(new PHX::Tag<ParamScalarT>(className + "_" + this->param_name, dl->dummy));
 
   this->addEvaluatedField(*nodal_field_tag);
 }

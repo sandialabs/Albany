@@ -76,7 +76,7 @@ private:
   PHX::MDField<const MeshScalarT>       coordVec;           // [km]
   PHX::MDField<const TemperatureST>     flowRate;           // [Pa^{-n} s^{-1}]
   PHX::MDField<const MeshScalarT>       bed_topo_field;     // [km]
-  PHX::MDField<const MeshScalarT>       thickness_field;    // [km]
+  PHX::MDField<const EffPressureST>     thickness_field;    // [km]
 
   // Output:
   PHX::MDField<ScalarT>       beta;     // [kPa yr m^{-1}]
