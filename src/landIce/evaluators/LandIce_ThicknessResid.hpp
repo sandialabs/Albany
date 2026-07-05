@@ -47,21 +47,21 @@ private:
 
   // Input:
 
-  PHX::MDField<const ScalarT,Cell,Node>       Hdiff;
-  PHX::MDField<const ScalarT,Cell,Node>       dHdt;
-  PHX::MDField<const ParamScalarT,Cell,Node>  H0;
-  PHX::MDField<const ScalarT> V;
-  PHX::MDField<const ParamScalarT,Cell,Node>  SMB;
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,Node>       Hdiff;  //[km]
+  PHX::MDField<const ScalarT,Cell,Node>       dHdt;   //[m/yr]
+  PHX::MDField<const ParamScalarT,Cell,Node>  H0;     //[km]
+  PHX::MDField<const ScalarT>                 V;      //[m/yr]                
+  PHX::MDField<const ParamScalarT,Cell,Node>  SMB;    //[m/yr]
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;  //[km]
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
 
 
-  unsigned int  cellDims, numNodes, cubatureDegree;
+  unsigned int  cellDim, numNodes, cubatureDegree;
   Teuchos::RCP<double> dt;
   bool have_SMB;
-  std::string sideSetName;
+  std::string sideSetName, lateralSideSetName;
 
   std::size_t numVecFODims;
 

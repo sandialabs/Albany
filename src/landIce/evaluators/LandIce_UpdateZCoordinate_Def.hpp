@@ -37,17 +37,26 @@ UpdateZCoordinateMovingTopBase (const Teuchos::ParameterList& p,
 
   this->addDependentField(coordVecIn);
   this->addDependentField(bedTopo);
-  if(p.isParameter("Thickness Name")) {
+  if(!p.isParameter("Thickness Increment Name")) {
     H = decltype(H)(p.get<std::string> ("Thickness Name"), dl->node_scalar);
     this->addDependentField(H);
+    haveThicknessDiff = false;
     haveThickness = true;
   }
   else {
     H0 = decltype(H0)(p.get<std::string> ("Past Thickness Name"), dl->node_scalar);
     dH = decltype(dH)(p.get<std::string> ("Thickness Increment Name"), dl->node_scalar);
+    haveThicknessDiff = true;
+    if(p.isParameter("Thickness Name")) {
+      HOut = decltype(HOut)(p.get<std::string> ("Thickness Name"), dl->node_scalar);
+      this->addEvaluatedField(HOut);
+      haveThickness = true;
+    }
+    else
+      haveThickness = false;
     this->addDependentField(H0);
     this->addDependentField(dH);
-    haveThickness = false;
+    
   }
 
   this->addEvaluatedField(coordVecOut);
@@ -108,10 +117,12 @@ evaluateFields(typename Traits::EvalData workset)
       const int ilevel = pos==bot ? ilayer : ilayer+1;
       for (auto node : nodes) {
         ScalarT h;
-        if(haveThickness) {
+        if(!haveThicknessDiff) {
           h = std::max(H(cell,node), ScalarT(minH));
         } else {
           h = std::max(H0(cell,node) + dH(cell,node), ScalarT(minH));
+          if (haveThickness)
+            HOut(cell,node) = h;
         }
         ScalarT bed = Albany::convertScalar<const ScalarT>(bedTopo(cell,node));
         bool floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
@@ -121,11 +132,13 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT>::type vals = topSurface(cell,node);
         vals = lowSurf+h; 
         
-	ScalarT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
-	for(int icomp=0; icomp< numDims; icomp++) {
+	      ScalarT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
+	      for(int icomp=0; icomp< numDims; icomp++) {
           typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
           val = (icomp==2) ? Albany::convertScalar<MeshScalarT>(zcoord)
                            : coordVecIn(cell,node,icomp);
+          //if(cell == 0 && icomp==2)
+           // std::cout << "node: " << node << ", z: " << coordVecOut(cell,node,0) << " " << coordVecOut(cell,node,1) << " "<< coordVecOut(cell,node,2) <<std::endl;
         }
       }
     };
