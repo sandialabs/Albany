@@ -375,7 +375,7 @@ IF(NOT Kokkos_ENABLE_CUDA)
 
     if (ALBANY_OMEGAH)
       # TODO: when exo2osh treats nodesets correctly, we can uncomment this (and remove code in AsciiMeshes/Humboldt)
-      # set (testName ${testNameRoot}_Humboldt_Transient_Omega_h)
+      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h)
       # add_test (NAME ${testName}_CreateHumboldtOsh
       #       COMMAND ${OMEGAH_EXO2OSH} humboldt_contiguous_2d.exo humboldt_contiguous_2d.osh
       #       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
