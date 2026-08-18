@@ -688,10 +688,12 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
     MeshField::OmegahMeshField<ExecutionSpace,
                                MeshDim,
                                MeshField::KokkosController> omf(*mesh);
-    auto recoveredStrainField = omf.CreateLagrangeField<Omega_h::Real, ShapeOrder, MeshDim>();
+    auto fieldAndController = omf.CreateLagrangeField<Omega_h::Real, ShapeOrder, MeshDim>();
+    auto recoveredStrainField = fieldAndController.field;
     setFieldAtVertices(*mesh, recoveredStrain, recoveredStrainField);
 
-    auto coordField = omf.getCoordField();
+    auto coordFieldAndController = omf.getCoordField();
+    auto coordField = coordFieldAndController.field;
     const auto [shp, map] =
       MeshField::Omegah::getTriangleElement<ShapeOrder>(*mesh);
     MeshField::FieldElement coordFe(mesh->nelems(), coordField, shp, map);
