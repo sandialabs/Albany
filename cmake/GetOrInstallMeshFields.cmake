@@ -37,7 +37,7 @@ function(print_target_properties target)
     endforeach()
 endfunction()
 
-find_package(MeshFields CONFIG QUIET
+find_package(MeshFields 1.0.0 CONFIG QUIET
   # Avoid all defaults. Only check env/CMake var MeshFields_ROOT
   NO_CMAKE_PATH
   NO_CMAKE_ENVIRONMENT_PATH
