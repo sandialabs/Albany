@@ -661,6 +661,23 @@ buildBox (const int dim)
                           ebNameToIndex));
 }
 
+
+template<typename CoordView1d, typename CoordView2d>
+void copyCoordsToViews(CoordView1d coords_d, const int mdim, const int num_ents,
+    CoordView2d x, CoordView2d y, CoordView2d z) {
+  using exec_space = PHX::Device::execution_space;
+  auto copy_coords = KOKKOS_LAMBDA(int i) {
+    x(i,0) = coords_d(mdim*i);
+    if (mdim>1) {
+      y(i,0) = coords_d(mdim*i+1);
+      if (mdim>2) {
+        z(i,0) = coords_d(mdim*i+2);
+      }
+    }
+  };
+  Kokkos::parallel_for(Kokkos::RangePolicy<exec_space>(0,num_ents),copy_coords);
+}
+
 void OmegahGenericMesh::
 loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
                          Teuchos::ParameterList& req_fields_info)
@@ -852,16 +869,8 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
           z = view_type ("z",num_ents,1);
         }
       }
-      auto copy_coords = KOKKOS_LAMBDA(int i) {
-        x(i,0) = m_coords_d(mdim*i);
-        if (mdim>1) {
-          y(i,0) = m_coords_d(mdim*i+1);
-          if (mdim>2) {
-            z(i,0) = m_coords_d(mdim*i+2);
-          }
-        }
-      };
-      Kokkos::parallel_for(Kokkos::RangePolicy<exec_space>(0,num_ents),copy_coords);
+
+      copyCoordsToViews(m_coords_d, mdim, num_ents, x, y, z);
 
       field_mv = computeField (fname, fparams, x, y, z, vs, nodal, scalar, layered, out);
     } else {
