@@ -334,37 +334,37 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getUpAdjacentEntsInClosureOfOwnedElms_1D_Parallel
   if(numRanks > 1) {
     TEST_ASSERT(numRanks == 4); //hardcoded for four ranks
     if(rank==0) {
-      const auto expectedNumAdjElms = std::array<int,4>({1,2,1,0});
+      const auto expectedNumAdjElms = std::array<int,4>{1,2,1,0};
       TEST_EQUALITY_CONST(numVerts, 4); //includes one ghost vtx
       for (int v = 0; v < numVerts; ++v) {
         int numAdj = a2ab_h[v + 1] - a2ab_h[v];
         TEST_EQUALITY_CONST(numAdj, expectedNumAdjElms[v]);
       }
-      const auto expectedAdjElms = std::array<int,4>({0, 0,1, 1});
+      const auto expectedAdjElms = std::array<int,4>{0, 0,1, 1};
       TEST_EQUALITY_CONST(ab2b_h.size(), expectedAdjElms.size());
       for (int adjIdx = 0; adjIdx < ab2b_h.size(); ++adjIdx) {
         TEST_EQUALITY_CONST(ab2b_h[adjIdx], expectedAdjElms[adjIdx]);
       }
     } else if(rank == 1 || rank == 2) {
       TEST_EQUALITY_CONST(numVerts, 5); //includes two ghost verts
-      const auto expectedNumAdjElms = std::array<int,5>({0,1,2,1,0});
+      const auto expectedNumAdjElms = std::array<int,5>{0,1,2,1,0};
       for (int v = 0; v < numVerts; ++v) {
         int numAdj = a2ab_h[v + 1] - a2ab_h[v];
         TEST_EQUALITY_CONST(numAdj, expectedNumAdjElms[v]);
       }
-      const auto expectedAdjElms = std::array<int,4>({1, 1,2, 2});
+      const auto expectedAdjElms = std::array<int,4>{1, 1,2, 2};
       TEST_EQUALITY_CONST(ab2b_h.size(), expectedAdjElms.size());
       for (int adjIdx = 0; adjIdx < ab2b_h.size(); ++adjIdx) {
         TEST_EQUALITY_CONST(ab2b_h[adjIdx], expectedAdjElms[adjIdx]);
       }
     } else { //rank == 3
       TEST_EQUALITY_CONST(numVerts, 4); //includes one ghost vtx
-      const auto expectedNumAdjElms = std::array<int,4>({0,1,2,1});
+      const auto expectedNumAdjElms = std::array<int,4>{0,1,2,1};
       for (int v = 0; v < numVerts; ++v) {
         int numAdj = a2ab_h[v + 1] - a2ab_h[v];
         TEST_EQUALITY_CONST(numAdj, expectedNumAdjElms[v]);
       }
-      const auto expectedAdjElms = std::array<int,4>({1, 1,2, 2});
+      const auto expectedAdjElms = std::array<int,4>{1, 1,2, 2};
       TEST_EQUALITY_CONST(ab2b_h.size(), expectedAdjElms.size());
       for (int adjIdx = 0; adjIdx < ab2b_h.size(); ++adjIdx) {
         TEST_EQUALITY_CONST(ab2b_h[adjIdx], expectedAdjElms[adjIdx]);
