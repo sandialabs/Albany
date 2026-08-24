@@ -72,7 +72,8 @@ ANONYMOUS:
         Matrix A File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state.mm
         Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/E_state.mm
         Matrix A Is Symmetric: true
-        Field Name: solution_opt
+        #quadratic form, it doesn't matter where we evaluate it, as long as the dimensions match
+        Field Name: solution_diff_sample_0 
       Response 4:
         Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
@@ -80,30 +81,25 @@ ANONYMOUS:
         Matrix D File Name: ../AsciiMeshes/HDSA_AdvDiff/M.mm
         Matrix A Is Symmetric: true
         #Matrix D Is Diagonal: true
-        Field Name: solution_opt
+        #quadratic form, it doesn't matter where we evaluate it, as long as the dimensions match
+        Field Name: solution_diff_sample_0
     Dirichlet BCs: {}
     Neumann BCs: {}
     Parameters:
-      Number Of Parameters: 7
+      Number Of Parameters: 5
       Parameter 0:
         Name: weighted_normal_sample
         Type: Distributed
       Parameter 1:
         Type: Distributed
-        Name: solution_opt
+        Name: param_sample_0
       Parameter 2:
         Type: Distributed
-        Name: param_opt
+        Name: solution_diff_sample_0
       Parameter 3:
         Type: Distributed
-        Name: param_sample_0
-      Parameter 4:
-        Type: Distributed
-        Name: solution_diff_sample_0
-      Parameter 5:
-        Type: Distributed
         Name: param_sample_1
-      Parameter 6:
+      Parameter 4:
         Type: Distributed
         Name: solution_diff_sample_1
     LandIce Laplacian Regularization:
@@ -193,7 +189,7 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
       Response 3:
-        Parameter 1:
+        Parameter 2:
           Reconstruct H_pp using Hessian-vector products: false
           H_pp Solver:
             Linear Solver Type: Belos
@@ -219,7 +215,7 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
       Response 4:
-        Parameter 1:
+        Parameter 2:
           Reconstruct H_pp using Hessian-vector products: false
           H_pp Solver:
             Linear Solver Type: Belos
@@ -252,7 +248,7 @@ ANONYMOUS:
     Exodus Output File Name: hdsa_analysis_advDiff.exo
     Number Of Time Derivatives: 0
     Required Fields Info:
-      Number Of Fields: 8
+      Number Of Fields: 6
       Field 0:
         Field Name: weighted_normal_sample
         Field Type: Node Scalar
@@ -260,39 +256,28 @@ ANONYMOUS:
         File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt.ascii
         Field Usage: Input-Output
       Field 1:
-        Field Name: solution_opt
-        Field Origin: File
-        Field Type: Node Vector
-        Vector Dim: 1
-        File Name: ../AsciiMeshes/HDSA_AdvDiff/x_opt.ascii
-      Field 2:
         Field Name: solution_diff_sample_0
         Field Origin: File
         Field Type: Node Vector
         Vector Dim: 1
         File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_opt.ascii
-      Field 3:
+      Field 2:
         Field Name: solution_diff_sample_1
         Field Origin: File
         Field Type: Node Vector
         Vector Dim: 1
         File Name: ../AsciiMeshes/HDSA_AdvDiff/x_diff_p_1.ascii
-      Field 4:
-        Field Name: param_opt
-        Field Type: Node Scalar
-        Field Origin: File
-        File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt.ascii
-      Field 5:
+      Field 3:
         Field Name: param_sample_0
         Field Type: Node Scalar
         Field Origin: File
         File Name: ../AsciiMeshes/HDSA_AdvDiff/p_opt.ascii
-      Field 6:
+      Field 4:
         Field Name: param_sample_1
         Field Type: Node Scalar
         Field Origin: File
         File Name: ../AsciiMeshes/HDSA_AdvDiff/p_1.ascii
-      Field 7:
+      Field 5:
         Field Name: target_field
         Field Type: Node Vector
         Vector Dim: 1
@@ -313,6 +298,7 @@ ANONYMOUS:
       Analysis Package: HDSA
       HDSA:
         Number Of Parameters: 1
+        Normal Random Generator Seed: 42
         Check Derivatives: false
         Derivative Checks:
           Perform Reduced Derivative Checks: false       
@@ -336,10 +322,12 @@ ANONYMOUS:
         State Elliptic Operator: 
           Operator Type: Hessian Of Response
           Response Index: 3
+          Parameter Index: 2
         
         State Mass Operator: 
           Operator Type: Hessian Of Response
           Response Index: 4
+          Parameter Index: 2
 
         MD Prior:
           alpha_u: 0.25
