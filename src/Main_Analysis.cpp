@@ -86,22 +86,25 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
-    if(analysisPackage == "HDSA") {
-      int num_samples=slvrfctry.getAnalysisParameters().sublist("HDSA").get("Number Of Data Samples",2);
-      const std::string p_opt_name = slvrfctry.getAnalysisParameters().sublist("HDSA").get("Low Fidelity Optimal Parameter Name", "param_opt");
-      const std::string x_opt_name = slvrfctry.getAnalysisParameters().sublist("HDSA").get("Low Fidelity Optimal Solution Name", "solution_opt");
-      const std::string p_sample_root_name = slvrfctry.getAnalysisParameters().sublist("HDSA").get("Parameter Sample Root Name", "param_sample");
-      const std::string x_diff_root_name = slvrfctry.getAnalysisParameters().sublist("HDSA").get("Solution Difference Root Name", "solution_diff_sample");
-      const auto distParamLib = albanyApp->getDistributedParameterLibrary();
-      auto p_opt = distParamLib->get(p_opt_name)->vector();
-      Teuchos::RCP< Thyra::VectorBase<double> > u_opt = distParamLib->get(x_opt_name)->vector()->clone_v();
-
-      std::vector<Teuchos::RCP< Thyra::VectorBase<double> > > p_samples, u_diff_at_samples;
-      for(int i=0; i<num_samples; ++i) {
-        p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector());
-        u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector());
+    if(analysisPackage == "HDSA") {      
+      auto& hdsaPList = slvrfctry.getAnalysisParameters().sublist("HDSA");
+      if(hdsaPList.isParameter("Normal Random Generator Seed")) {
+        int seed = hdsaPList.get<int>("Normal Random Generator Seed");
+        hdsaPList.set("Normal Random Generator Seed", seed + comm->getRank());
       }
-      Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer, u_opt, p_opt, u_diff_at_samples, p_samples);
+      const std::string p_sample_root_name = hdsaPList.get("Parameter Sample Root Name", "param_sample");
+      const std::string x_diff_root_name = hdsaPList.get("Solution Difference Root Name", "solution_diff_sample");
+      const auto distParamLib = albanyApp->getDistributedParameterLibrary();      
+      std::vector<Teuchos::RCP< Thyra::VectorBase<double> > > p_samples, u_diff_at_samples;
+      
+      //we clone these vectors because we don't want them to be modify somewhere else in the code as parameters. 
+      //for the HDSA analysis these are data
+      int num_samples=hdsaPList.get("Number Of Data Samples",2);
+      for(int i=0; i<num_samples; ++i) {
+        p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector()->clone_v());
+        u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector()->clone_v());
+      }
+      Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer, u_diff_at_samples, p_samples);
     } else
     Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
 
