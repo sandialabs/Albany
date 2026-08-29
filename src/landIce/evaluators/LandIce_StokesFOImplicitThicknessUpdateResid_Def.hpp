@@ -69,7 +69,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(gradBF,fm);
   this->utils.setFieldData(Residual,fm);
 
-  Res = createDynRankView(Residual.get_view(), "Residual", numCells, numNodes,2);
+  Res = Sacado::createDynRankView(Residual.get_view(), "Residual", numCells, numNodes,2);
 }
 //**********************************************************************
 //Kokkos functors

@@ -57,7 +57,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(PhiResidual,fm);
 
   // Allocate workspace
-  if (haveSource) neg_source = Kokkos::createDynRankView(Source.get_view(), "neg_source", worksetSize, numQPs);
+  if (haveSource) neg_source = Sacado::createDynRankView(Source.get_view(), "neg_source", worksetSize, numQPs);
 }
 
 //**********************************************************************

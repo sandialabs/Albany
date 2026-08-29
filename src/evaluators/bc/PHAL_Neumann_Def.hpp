@@ -200,31 +200,31 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (inputConditions == "robin" || inputConditions == "radiate")
   {
     this->utils.setFieldData(dof,fm);
-    dofSide_buffer = Kokkos::createDynRankView(dof.get_view(), "dofSide", numCells*maxNumQpSide*numDOFsSet);
+    dofSide_buffer = Sacado::createDynRankView(dof.get_view(), "dofSide", numCells*maxNumQpSide*numDOFsSet);
   }
   // Note, we do not need to add dependent field to fm here for output - that is done
   // by Neumann Aggregator
 
   // Allocate Temporary Views
-  physPointsCell_buffer = Kokkos::createDynRankView(coordVec.get_view(), "physPointsCell", numCells*numNodes*cellDims);
-  temporary_buffer = Kokkos::createDynRankView(coordVec.get_view(),"temporary_buffer", numCells*maxNumQpSide*cellDims*cellDims);
+  physPointsCell_buffer = Sacado::createDynRankView(coordVec.get_view(), "physPointsCell", numCells*numNodes*cellDims);
+  temporary_buffer = Sacado::createDynRankView(coordVec.get_view(),"temporary_buffer", numCells*maxNumQpSide*cellDims*cellDims);
 
   cubPointsSide_buffer = Kokkos::DynRankView<RealType, PHX::Device>("cubPointsSide", maxNumQpSide*maxSideDim);
   refPointsSide_buffer = Kokkos::DynRankView<RealType, PHX::Device>("refPointsSide", maxNumQpSide*cellDims);
   cubWeightsSide_buffer = Kokkos::DynRankView<RealType, PHX::Device>("cubWeightsSide", maxNumQpSide);
   basis_refPointsSide_buffer = Kokkos::DynRankView<RealType, PHX::Device>("basis_refPointsSide", numNodes*maxNumQpSide);
 
-  physPointsSide_buffer = Kokkos::createDynRankView(coordVec.get_view(),"physPointsSide", numCells*maxNumQpSide*cellDims);
-  jacobianSide_buffer = Kokkos::createDynRankView(coordVec.get_view(),"jacobianSide", numCells*maxNumQpSide*cellDims*cellDims);
-  jacobianSide_det_buffer = Kokkos::createDynRankView(coordVec.get_view(),"jacobianSide", numCells*maxNumQpSide);
-  weighted_measure_buffer = Kokkos::createDynRankView(coordVec.get_view(),"weighted_measure", numCells*maxNumQpSide);
-  trans_basis_refPointsSide_buffer = Kokkos::createDynRankView(coordVec.get_view(),"trans_basis_refPointsSide", numCells*numNodes*maxNumQpSide);
-  weighted_trans_basis_refPointsSide_buffer = Kokkos::createDynRankView(coordVec.get_view(),"weighted_trans_basis_refPointsSide", numCells*numNodes*maxNumQpSide);
-  side_normals_buffer = Kokkos::createDynRankView(coordVec.get_view(),"side_normals", numCells*maxNumQpSide*cellDims);
-  normal_lengths_buffer =Kokkos::createDynRankView(coordVec.get_view(),"normal_lengths", numCells*maxNumQpSide);
+  physPointsSide_buffer = Sacado::createDynRankView(coordVec.get_view(),"physPointsSide", numCells*maxNumQpSide*cellDims);
+  jacobianSide_buffer = Sacado::createDynRankView(coordVec.get_view(),"jacobianSide", numCells*maxNumQpSide*cellDims*cellDims);
+  jacobianSide_det_buffer = Sacado::createDynRankView(coordVec.get_view(),"jacobianSide", numCells*maxNumQpSide);
+  weighted_measure_buffer = Sacado::createDynRankView(coordVec.get_view(),"weighted_measure", numCells*maxNumQpSide);
+  trans_basis_refPointsSide_buffer = Sacado::createDynRankView(coordVec.get_view(),"trans_basis_refPointsSide", numCells*numNodes*maxNumQpSide);
+  weighted_trans_basis_refPointsSide_buffer = Sacado::createDynRankView(coordVec.get_view(),"weighted_trans_basis_refPointsSide", numCells*numNodes*maxNumQpSide);
+  side_normals_buffer = Sacado::createDynRankView(coordVec.get_view(),"side_normals", numCells*maxNumQpSide*cellDims);
+  normal_lengths_buffer =Sacado::createDynRankView(coordVec.get_view(),"normal_lengths", numCells*maxNumQpSide);
 
   if (inputConditions == "robin" || inputConditions == "radiate") {
-    dofCell_buffer = Kokkos::createDynRankView(dof.get_view(), "dofCell", numCells, numNodes, numDOFsSet);
+    dofCell_buffer = Sacado::createDynRankView(dof.get_view(), "dofCell", numCells, numNodes, numDOFsSet);
   }
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
@@ -278,41 +278,41 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   // std::cout << "NN0 " << std::endl;
   switch(bc_type){
     case INTJUMP:
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case ROBIN:
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (dof.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case STEFAN_BOLTZMANN:
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (dof.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case NORMAL:
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case PRESS:
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case TRACTION:
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     case CLOSED_FORM:
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (dof.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     default:
     //std::cout << "NN1 " << std::endl;
-       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+       neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
   }
 
-  data_buffer = Kokkos::createDynRankView(neumann, "data", numCells*maxNumQpSide*numDOFsSet);
+  data_buffer = Sacado::createDynRankView(neumann, "data", numCells*maxNumQpSide*numDOFsSet);
 
   // Needed?
   Kokkos::deep_copy(neumann, 0.0);
@@ -408,13 +408,13 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     cubWeightsSide = DynRankViewRealT(cubWeightsSide_buffer.data(), numQPsSide);
     basis_refPointsSide = DynRankViewRealT(basis_refPointsSide_buffer.data(), numNodes, numQPsSide);
 
-    physPointsSide = Kokkos::createViewWithType<DynRankViewMeshScalarT>(physPointsSide_buffer, physPointsSide_buffer.data(), numCells_, numQPsSide, cellDims);
-    jacobianSide = Kokkos::createViewWithType<DynRankViewMeshScalarT>(jacobianSide_buffer, jacobianSide_buffer.data(), numCells_, numQPsSide, cellDims, cellDims);
-    jacobianSide_det = Kokkos::createViewWithType<DynRankViewMeshScalarT>(jacobianSide_det_buffer, jacobianSide_det_buffer.data(), numCells_, numQPsSide);
-    weighted_measure = Kokkos::createViewWithType<DynRankViewMeshScalarT>(weighted_measure_buffer, weighted_measure_buffer.data(), numCells_, numQPsSide);
-    trans_basis_refPointsSide = Kokkos::createViewWithType<DynRankViewMeshScalarT>(trans_basis_refPointsSide_buffer, trans_basis_refPointsSide_buffer.data(), numCells_, numNodes, numQPsSide);
-    weighted_trans_basis_refPointsSide = Kokkos::createViewWithType<DynRankViewMeshScalarT>(weighted_trans_basis_refPointsSide_buffer, weighted_trans_basis_refPointsSide_buffer.data(), numCells_, numNodes, numQPsSide);
-    physPointsCell =Kokkos::createViewWithType<DynRankViewMeshScalarT>(physPointsCell_buffer, physPointsCell_buffer.data(), numCells_, numNodes, cellDims);
+    physPointsSide = Sacado::createViewWithType<DynRankViewMeshScalarT>(physPointsSide_buffer, physPointsSide_buffer.data(), numCells_, numQPsSide, cellDims);
+    jacobianSide = Sacado::createViewWithType<DynRankViewMeshScalarT>(jacobianSide_buffer, jacobianSide_buffer.data(), numCells_, numQPsSide, cellDims, cellDims);
+    jacobianSide_det = Sacado::createViewWithType<DynRankViewMeshScalarT>(jacobianSide_det_buffer, jacobianSide_det_buffer.data(), numCells_, numQPsSide);
+    weighted_measure = Sacado::createViewWithType<DynRankViewMeshScalarT>(weighted_measure_buffer, weighted_measure_buffer.data(), numCells_, numQPsSide);
+    trans_basis_refPointsSide = Sacado::createViewWithType<DynRankViewMeshScalarT>(trans_basis_refPointsSide_buffer, trans_basis_refPointsSide_buffer.data(), numCells_, numNodes, numQPsSide);
+    weighted_trans_basis_refPointsSide = Sacado::createViewWithType<DynRankViewMeshScalarT>(weighted_trans_basis_refPointsSide_buffer, weighted_trans_basis_refPointsSide_buffer.data(), numCells_, numNodes, numQPsSide);
+    physPointsCell =Sacado::createViewWithType<DynRankViewMeshScalarT>(physPointsCell_buffer, physPointsCell_buffer.data(), numCells_, numNodes, cellDims);
 
 
     cubatureSide[side]->getCubature(cubPointsSide, cubWeightsSide);
@@ -455,8 +455,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     if(bc_type == ROBIN || bc_type == STEFAN_BOLTZMANN ) {
-      dofCell = Kokkos::createViewWithType<DynRankViewScalarT>(dofCell_buffer, dofCell_buffer.data(), numCells_, numNodes, numDOFsSet);
-      dofSide = Kokkos::createViewWithType<DynRankViewScalarT>(dofSide_buffer, dofSide_buffer.data(), numCells_, numQPsSide, numDOFsSet);
+      dofCell = Sacado::createViewWithType<DynRankViewScalarT>(dofCell_buffer, dofCell_buffer.data(), numCells_, numNodes, numDOFsSet);
+      dofSide = Sacado::createViewWithType<DynRankViewScalarT>(dofSide_buffer, dofSide_buffer.data(), numCells_, numQPsSide, numDOFsSet);
 
       Kokkos::deep_copy(dofCell, 0.0);
       for (int iCell=0; iCell < numCells_; ++iCell) {
@@ -480,7 +480,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     }
 
     // Transform the given BC data to the physical space QPs in each side (elem_side)
-    data = Kokkos::createViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >(data_buffer,data_buffer.data(), numCells_, numQPsSide, numDOFsSet);
+    data = Sacado::createViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >(data_buffer,data_buffer.data(), numCells_, numQPsSide, numDOFsSet);
 
     // Note: if you add a BC here, you need to add it above as well
     // to allocate neumann correctly.
@@ -591,10 +591,10 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
   int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
   int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
 
-  Kokkos::DynRankView<ScalarT, PHX::Device> grad_T =  Kokkos::createDynRankView(qp_data_returned, "grad_T", numCells_, numPoints, cellDims);
+  Kokkos::DynRankView<ScalarT, PHX::Device> grad_T =  Sacado::createDynRankView(qp_data_returned, "grad_T", numCells_, numPoints, cellDims);
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
-  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
-  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
+  DynRankViewMeshScalarT side_normals = Sacado::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
+  DynRankViewMeshScalarT normal_lengths = Sacado::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
 
 /*
   double kdTdx[3];
@@ -691,8 +691,8 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
-  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
-  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
+  DynRankViewMeshScalarT side_normals = Sacado::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
+  DynRankViewMeshScalarT normal_lengths = Sacado::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell, local_side_id, celltopo);
@@ -723,9 +723,9 @@ calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_r
 
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
   DynRankViewMeshScalarT side_normals =
-          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
+          Sacado::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells_, numPoints, cellDims);
   DynRankViewMeshScalarT normal_lengths =
-          Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
+          Sacado::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells_, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell, local_side_id, celltopo);

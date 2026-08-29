@@ -48,7 +48,7 @@
 #ifndef __INTREPID2_HGRAD_LINE_I4_FEM_DEF_HPP__
 #define __INTREPID2_HGRAD_LINE_I4_FEM_DEF_HPP__
 
-#include "KokkosExp_View_Fad.hpp"
+#include "Sacado_Fad_Kokkos.hpp"
 
 namespace Intrepid2 {
 

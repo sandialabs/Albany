@@ -75,7 +75,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
 
   this->utils.setFieldData(CResidual,fm);
 
-  divergence = Kokkos::createDynRankView(VGrad.get_view(), "XXX", numCells, numQPs);
+  divergence = Sacado::createDynRankView(VGrad.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************

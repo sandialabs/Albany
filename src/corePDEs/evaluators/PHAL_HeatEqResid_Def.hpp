@@ -107,10 +107,10 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(TResidual,fm);
 
   // Allocate workspace
-  flux = Kokkos::createDynRankView(Temperature.get_view(), "flux", worksetSize, numQPs, numDims);
-  if (haveSource) neg_source = Kokkos::createDynRankView(Temperature.get_view(), "neg_source", worksetSize, numQPs);
-  if (haveAbsorption) aterm = Kokkos::createDynRankView(Temperature.get_view(), "aterm", worksetSize, numQPs);
-  if (haveConvection) convection = Kokkos::createDynRankView(Temperature.get_view(), "convection", worksetSize, numQPs);
+  flux = Sacado::createDynRankView(Temperature.get_view(), "flux", worksetSize, numQPs, numDims);
+  if (haveSource) neg_source = Sacado::createDynRankView(Temperature.get_view(), "neg_source", worksetSize, numQPs);
+  if (haveAbsorption) aterm = Sacado::createDynRankView(Temperature.get_view(), "aterm", worksetSize, numQPs);
+  if (haveConvection) convection = Sacado::createDynRankView(Temperature.get_view(), "convection", worksetSize, numQPs);
 }
 
 //**********************************************************************

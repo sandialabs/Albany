@@ -89,8 +89,8 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(VResidual,fm);
 
   // Allocate workspace
-  U_ksqr = Kokkos::createDynRankView(U.get_view(), "U_ksqr", worksetSize, numQPs);
-  V_ksqr = Kokkos::createDynRankView(U.get_view(), "V_ksqr", worksetSize, numQPs);
+  U_ksqr = Sacado::createDynRankView(U.get_view(), "U_ksqr", worksetSize, numQPs);
+  V_ksqr = Sacado::createDynRankView(U.get_view(), "V_ksqr", worksetSize, numQPs);
 }
 
 //**********************************************************************

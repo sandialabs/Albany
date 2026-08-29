@@ -7,7 +7,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
 #include "Shards_CellTopology.hpp"
-#include "Kokkos_ViewFactory.hpp"
+#include "Sacado_Fad_Kokkos_ViewFactory.hpp"
 
 #include "Albany_DiscretizationUtils.hpp"
 #include "Albany_GeneralPurposeFieldsNames.hpp"
@@ -156,7 +156,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size() < 3, Teuchos::Exceptions::InvalidParameter, 
     "Error! Field layout has fewer dimensions than expected. (StokesFOSynteticTestBC)\n");
 
-  qp_temp_buffer = Kokkos::createDynRankView(u.get_view(),"temporary_buffer", dims[0]*dims[1]*dims[2]);
+  qp_temp_buffer = Sacado::createDynRankView(u.get_view(),"temporary_buffer", dims[0]*dims[1]*dims[2]);
 }
 
 //**********************************************************************
@@ -168,7 +168,7 @@ void StokesFOSynteticTestBC<EvalT, Traits, betaScalarT>::evaluateFields (typenam
   }
 
   using DynRankViewScalarT = Kokkos::DynRankView<ScalarT, PHX::Device>;
-  auto qp_temp = Kokkos::createViewWithType<DynRankViewScalarT>(qp_temp_buffer, qp_temp_buffer.data(), numSideQPs, vecDimFO);
+  auto qp_temp = Sacado::createViewWithType<DynRankViewScalarT>(qp_temp_buffer, qp_temp_buffer.data(), numSideQPs, vecDimFO);
 
   sideSet = workset.sideSetViews->at(ssName);
 

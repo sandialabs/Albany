@@ -11,7 +11,7 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
-#include "KokkosExp_View_Fad.hpp"
+#include "Sacado_Fad_Kokkos.hpp"
 
 namespace PHAL {
 
@@ -164,7 +164,7 @@ template<typename Traits>
 void FastSolutionVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const int num_dof = Kokkos::dimension_scalar(this->val_node.get_view());
+  const int num_dof = Sacado::dimension_scalar(this->val_node.get_view());
   Kokkos::parallel_for(this->getName(), workset.numCells,
       VecInterpolationJacob<
         ScalarT,

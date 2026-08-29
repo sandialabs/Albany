@@ -17,7 +17,7 @@
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_CommTypes.hpp"
 
-#include "Kokkos_ViewFactory.hpp"
+#include "Sacado_Fad_Kokkos_ViewFactory.hpp"
 #include "Teuchos_RCP.hpp"
 
 #include <string>
