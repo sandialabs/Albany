@@ -258,7 +258,7 @@ evaluateFields(typename Traits::EvalData workset)
         H_Cell(node) = Hdiff(elem_LID, node) + H0(elem_LID, node);//unsteady ? ScalarT(Hdiff(elem_LID, node) + H0(elem_LID, node)) : ScalarT(H0(elem_LID, node));
         SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
-          V_Cell(node, dim) = V(iSide, i, dim)/1000.0;  //[km/yr]
+          V_Cell(node, dim) = 0*physPointsCell(0, node, dim)/640.0*(1-dim);//V(iSide, i, dim)/1000.0;  //[km/yr]
         }
       }
 
@@ -317,7 +317,7 @@ evaluateFields(typename Traits::EvalData workset)
             V_dot_gradPhi += trans_gradBasis_refPointsSide(0, node, qp, dim)*V_Side(qp, dim);
             V_dot_HGrad += gradH_Side(qp, dim)*V_Side(qp, dim);
           }
-          V_norm = sqrt(V_norm+1e-6);
+          
 
           ScalarT tmp = dHdt_Side(qp) + divHV - 3e-4;// - SMB_Side(qp);
 
@@ -326,14 +326,18 @@ evaluateFields(typename Traits::EvalData workset)
             HV_gradPhi += H_Side(qp) * V_Side(qp) * trans_gradBasis_refPointsSide(0, node, qp, dim);
           
           res += ((dHdt_Side(qp) - 3e-4)*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
-          res += tmp * h/V_norm*V_dot_gradPhi * weighted_measure(qp); //SUPG
+          ScalarT invTau = sqrt(4.0/ *dt/ *dt + 4*V_norm*V_norm/h/h + divV_Side(qp)*divV_Side(qp));
+          res += tmp * V_dot_gradPhi * weighted_measure(qp) / sqrt(invTau); //SUPG
+         // V_norm = sqrt(V_norm+1e-6);
+          //res += tmp * h/V_norm*V_dot_gradPhi * weighted_measure(qp); //SUPG
 
           //res += tmp * (trans_basis_refPointsSide(0, node, qp)+h/V_norm*V_dot_gradPhi) * weighted_measure(qp);
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp)+h/V_norm*V_dot_HGrad*V_dot_gradPhi*weighted_measure(qp);
           
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp);
-          //for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
-           // res += 3*h*V_norm/2.0*gradH_Side(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
+          ScalarT delta = h*std::min(0.2*V_norm, std::abs(tmp)/std::sqrt(gradH_Side(qp,0)*gradH_Side(qp,0)+gradH_Side(qp,1)*gradH_Side(qp,1)+1e-8));
+          for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
+            res += delta  *gradH_Side(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
         }
         Residual(elem_LID,node) = res;
       }
@@ -358,15 +362,15 @@ evaluateFields(typename Traits::EvalData workset)
       auto cubWeightsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsEdge);
       auto basis_refPointsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsEdge);
 
-      auto jacobianEdge = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim, cellDim);
-      auto edge_weighted_measure = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge);
-      auto trans_basis_refPointsEdge = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsEdge);
-      auto sideNormals = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim);
-      auto scratch = Kokkos::createDynRankView(jacobianEdge,"XXS", numQPsEdge*cellDim*cellDim);
+      auto jacobianEdge = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim, cellDim);
+      auto edge_weighted_measure = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge);
+      auto trans_basis_refPointsEdge = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsEdge);
+      auto sideNormals = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim);
+      auto scratch = Sacado::createDynRankView(jacobianEdge,"XXS", numQPsEdge*cellDim*cellDim);
 
-      auto H_Edge = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
-      //auto V_X_Edge = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
-      auto V_Normal_Edge = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
+      auto H_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
+      //auto V_X_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
+      auto V_Normal_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
 
       // Pre-Calculate reference element quantities
       cubatureEdge->getCubature(cubPointsEdge, cubWeightsEdge);
@@ -411,17 +415,17 @@ evaluateFields(typename Traits::EvalData workset)
       for (unsigned int i = 0; i < numEdgeNodes; ++i){
         std::size_t node = edge.node[i];
         for (std::size_t qp = 0; qp < numQPsEdge; ++qp) {
-          const MeshScalarT& tmp = trans_basis_refPointsEdge(0, node, qp);
-          H_Edge(qp) += H_Cell(node) * tmp;
+          const MeshScalarT& edge_basis = trans_basis_refPointsEdge(0, node, qp);
+          H_Edge(qp) += H_Cell(node) * edge_basis;
           //V_X_Edge(qp) += V_Cell(node,0) * tmp;
           auto normal_norm = 0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-            V_Normal_Edge(qp) += V_Cell(node, dim) * tmp * sideNormals(0, qp, dim);
+            V_Normal_Edge(qp) += V_Cell(node, dim) * edge_basis * sideNormals(0, qp, dim);
         }
       }
 
-      //for (unsigned int qp = 0; qp < numQPsEdge; qp++)
-      //  std::cout << "qp: " << qp << ", Normal V: " << V_Normal_Edge(qp) << " | " <<V_X_Edge(qp)<< ", N:" << sideNormals(0, qp, 0) << ", " <<  sideNormals(0, qp, 1) <<  ", H: " << H_Edge(qp) << ", measure:  " <<  edge_weighted_measure(qp) << std::endl;
+     // for (unsigned int qp = 0; qp < numQPsEdge; qp++)
+      //  std::cout << "qp: " << qp << ", Normal V: " << V_Normal_Edge(qp) << ", N:" << sideNormals(0, qp, 0) << ", " <<  sideNormals(0, qp, 1) <<  ", H: " << H_Edge(qp) << ", measure:  " <<  edge_weighted_measure(qp) << std::endl;
 
       for (unsigned int i = 0; i < numEdgeNodes; ++i){
         std::size_t node = edge.node[i];
