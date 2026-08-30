@@ -62,9 +62,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
 
-  jacobian_det = Kokkos::createDynRankView(coordVec.get_view(), "jacobian_det", numCells, numQPs);
-  jacobian = Kokkos::createDynRankView(coordVec.get_view(), "jacobian", numCells, numQPs, numDims, numDims);
-  jacobian_inv = Kokkos::createDynRankView(coordVec.get_view(), "jacobian_inv", numCells, numQPs, numDims, numDims);
+  jacobian_det = Sacado::createDynRankView(coordVec.get_view(), "jacobian_det", numCells, numQPs);
+  jacobian = Sacado::createDynRankView(coordVec.get_view(), "jacobian", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Sacado::createDynRankView(coordVec.get_view(), "jacobian_inv", numCells, numQPs, numDims, numDims);
 
   // Allocate Temporary Kokkos Views
   val_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("val_at_cub_points", numNodes, numQPs);

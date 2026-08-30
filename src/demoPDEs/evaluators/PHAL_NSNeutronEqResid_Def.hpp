@@ -84,8 +84,8 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(NResidual,fm);
 
   // Allocate workspace
-  flux = Kokkos::createDynRankView(Neutron.get_view(), "XXX", numCells, numQPs, numDims);
-  abscoeff = Kokkos::createDynRankView(Neutron.get_view(), "XXX", numCells, numQPs);
+  flux = Sacado::createDynRankView(Neutron.get_view(), "XXX", numCells, numQPs, numDims);
+  abscoeff = Sacado::createDynRankView(Neutron.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************

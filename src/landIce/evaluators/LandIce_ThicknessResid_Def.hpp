@@ -10,7 +10,7 @@
 #include "Phalanx_Print.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Kokkos_ViewFactory.hpp"
+#include "Sacado_Fad_Kokkos_ViewFactory.hpp"
 
 #include "Albany_MeshSpecs.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -97,7 +97,7 @@ void ThicknessResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& /* fm */)
 {
-  physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, cellDims);
+  physPointsCell = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, cellDims);
 }
 
 //**********************************************************************
@@ -167,21 +167,21 @@ evaluateFields(typename Traits::EvalData workset)
       basis_refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsSide);
       basisGrad_refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsSide, cellDims);
 
-      jacobianSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDims, cellDims);
-      invJacobianSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDims, cellDims);
-      jacobianSide_det = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
-      weighted_measure = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
-      trans_basis_refPointsSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
-      trans_gradBasis_refPointsSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide, cellDims);
-      weighted_trans_basis_refPointsSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
-      scratch = Kokkos::createDynRankView(jacobianSide,"XXS", numQPsSide*cellDims*cellDims);
+      jacobianSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDims, cellDims);
+      invJacobianSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDims, cellDims);
+      jacobianSide_det = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
+      weighted_measure = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
+      trans_basis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
+      trans_gradBasis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide, cellDims);
+      weighted_trans_basis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
+      scratch = Sacado::createDynRankView(jacobianSide,"XXS", numQPsSide*cellDims*cellDims);
 
-      dofSide = Kokkos::createDynRankView(Residual.get_view(), "XXX", 1, numQPsSide);
-      dofSideVec = Kokkos::createDynRankView(Residual.get_view(), "XXX", 1, numQPsSide, numVecFODims);
-      dHdt_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
-      SMB_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
-      H_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
-      V_Side = Kokkos::createDynRankView(Residual.get_view(), "XXX", numQPsSide, numVecFODims);
+      dofSide = Sacado::createDynRankView(Residual.get_view(), "XXX", 1, numQPsSide);
+      dofSideVec = Sacado::createDynRankView(Residual.get_view(), "XXX", 1, numQPsSide, numVecFODims);
+      dHdt_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      SMB_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      H_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      V_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide, numVecFODims);
 
       // Pre-Calculate reference element quantities
       cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
@@ -225,12 +225,12 @@ evaluateFields(typename Traits::EvalData workset)
       FST::multiplyMeasure(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      dHdt_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
-      SMB_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
-      H_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);
-      V_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes, numVecFODims);
-      gradH_Side = createDynRankView(Residual.get_view(), "xxx", numQPsSide, numVecFODims);
-      divV_Side = createDynRankView(Residual.get_view(), "xxx", numQPsSide);
+      dHdt_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
+      SMB_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
+      H_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
+      V_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes, numVecFODims);
+      gradH_Side = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide, numVecFODims);
+      divV_Side = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide);
 
       std::map<LO, std::size_t>::const_iterator it;
       for (unsigned int i = 0; i < numSideNodes; ++i){

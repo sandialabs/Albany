@@ -50,8 +50,8 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
   cubature->getCubature(refPoints, refWeights);
 
-  jacobian = Kokkos::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs, numDims, numDims);
-  jacobian_inv = Kokkos::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs, numDims, numDims);
+  jacobian = Sacado::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Sacado::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs, numDims, numDims);
 }
 
 //**********************************************************************

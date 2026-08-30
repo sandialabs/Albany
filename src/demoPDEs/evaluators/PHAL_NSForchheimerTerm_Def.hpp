@@ -68,7 +68,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(ForchTerm,fm); 
 
   // Allocate workspace
-  normV = Kokkos::createDynRankView(V.get_view(), "XXX", numCells, numQPs);
+  normV = Sacado::createDynRankView(V.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************

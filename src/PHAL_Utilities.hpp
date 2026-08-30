@@ -41,8 +41,7 @@ int getDerivativeDimensions (const Albany::Application* app,
 
 template<class ViewType>
 int getDerivativeDimensionsFromView (const ViewType &a) {
-  int ds = Kokkos::dimension_scalar(a);
-  return ds == 0 ? ds : ds-1;
+  return Sacado::dimension_scalar(a)-1;
 }
 
 

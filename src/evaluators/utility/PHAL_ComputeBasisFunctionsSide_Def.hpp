@@ -253,13 +253,13 @@ evaluateFields(typename Traits::EvalData workset)
       unsigned int numCells_ = sideSet.numCellsOnSide.view_host()(side);
       if( numCells_ == 0) continue;
 
-      Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths = Kokkos::createDynRankView(sideCoordVec.get_view(),"normal_lengths", numCells_, numSideQPs);
-      Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_side = Kokkos::createDynRankView(sideCoordVec.get_view(),"jacobian_side", numCells_, numSideQPs, numCellDims, numCellDims);
-      Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide = Kokkos::createDynRankView(sideCoordVec.get_view(),"physPointsSide", numCells_, numSideQPs, numCellDims);
+      Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths = Sacado::createDynRankView(sideCoordVec.get_view(),"normal_lengths", numCells_, numSideQPs);
+      Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_side = Sacado::createDynRankView(sideCoordVec.get_view(),"jacobian_side", numCells_, numSideQPs, numCellDims, numCellDims);
+      Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide = Sacado::createDynRankView(sideCoordVec.get_view(),"physPointsSide", numCells_, numSideQPs, numCellDims);
       Kokkos::DynRankView<RealType, PHX::Device> refPointsSide("refPointsSide", numSideQPs, numCellDims);
 
-      normals_view = Kokkos::createDynRankView(sideCoordVec.get_view(),"normals", numCells_, numSideQPs, numCellDims);
-      physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", numCells_, numNodes, numCellDims);
+      normals_view = Sacado::createDynRankView(sideCoordVec.get_view(),"normals", numCells_, numSideQPs, numCellDims);
+      physPointsCell = Sacado::createDynRankView(coordVec.get_view(), "XXX", numCells_, numNodes, numCellDims);
 
       Kokkos::parallel_for(ScatterCoordVec_Policy(0, numCells_), *this);
 

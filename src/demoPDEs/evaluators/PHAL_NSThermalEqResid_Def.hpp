@@ -112,8 +112,8 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
   this->utils.setFieldData(TResidual,fm);
 
   // Allocate workspace
-  flux = Kokkos::createDynRankView(Temperature.get_view(), "XXX", numCells, numQPs, numDims);
-  convection = Kokkos::createDynRankView(Temperature.get_view(), "XXX", numCells, numQPs);
+  flux = Sacado::createDynRankView(Temperature.get_view(), "XXX", numCells, numQPs, numDims);
+  convection = Sacado::createDynRankView(Temperature.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************
