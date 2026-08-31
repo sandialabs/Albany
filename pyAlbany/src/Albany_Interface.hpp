@@ -264,6 +264,17 @@ namespace PyAlbany
         void setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p);
 
         /**
+         * \brief setDistributedField member function
+         * 
+         * This function is used to communicate distributed fields from Python to Albany.
+         * 
+         * \param p_index [in] Index of the distributed field for which the value has to be set.
+         * 
+         * \param p [in] A distributed vector which stores the values of the parameters.
+         */
+        void setDistributedField(const std::string& name,  Teuchos::RCP<const Tpetra_Vector> p);
+
+        /**
          * \brief getParameter member function
          * 
          * This function is used to communicate the parameter values from Albany to Python.

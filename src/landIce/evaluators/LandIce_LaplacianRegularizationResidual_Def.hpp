@@ -140,9 +140,11 @@ operator() (const LaplacianRegularization_Cell_Tag&, const int& cell) const {
       if(lumpedMassMatrix) {
         //using trapezoidal rule to get diagonal mass matrix
         t += (mass_coeff*field(cell,inode,icomp)-forcing(cell,inode))* trapezoid_weights;
+        //t += (mass_coeff*field(cell,inode,icomp)-std::pow(forcing(cell,inode),3))* trapezoid_weights;
       } else {
         for (unsigned int qp=0; qp<numQPs; ++qp)
           t += (mass_coeff*field(cell,qp,icomp)-forcing(cell,qp))*BF(cell,inode, qp)*w_measure(cell, qp);
+          //t += (mass_coeff*field(cell,qp,icomp)-std::pow(forcing(cell,qp),3))*BF(cell,inode, qp)*w_measure(cell, qp);
       }
 
       for (unsigned int qp=0; qp<numQPs; ++qp)

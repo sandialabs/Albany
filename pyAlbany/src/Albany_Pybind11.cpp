@@ -49,6 +49,7 @@ PYBIND11_MODULE(AlbanyInterface, m) {
         .def("getParameterMap", &PyAlbany::PyProblem::getParameterMap)
         .def("setDirections", &PyAlbany::PyProblem::setDirections)
         .def("setParameter", &PyAlbany::PyProblem::setParameter)
+        .def("setDistributedField", &PyAlbany::PyProblem::setDistributedField)
         .def("getParameter", &PyAlbany::PyProblem::getParameter)
         .def("getResponse", &PyAlbany::PyProblem::getResponse)
         .def("getState", &PyAlbany::PyProblem::getState)

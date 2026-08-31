@@ -82,7 +82,8 @@ ANONYMOUS:
         Matrix A File Name: ../AsciiMeshes/HDSA/E_state.mm
         Matrix D File Name: ../AsciiMeshes/HDSA/E_state.mm
         Matrix A Is Symmetric: true
-        Field Name: solution_opt
+        #hessein of quadratic form doesn't not depend on where it is evaluated, as long as the dimensions match
+        Field Name: solution_diff_sample_0 
       Response 4:
         Scaling Coefficient: 0.5
         Name: Quadratic Linear Operator Based
@@ -90,30 +91,25 @@ ANONYMOUS:
         Matrix D File Name: ../AsciiMeshes/HDSA/M.mm
         Matrix A Is Symmetric: true
         #Matrix D Is Diagonal: true
-        Field Name: solution_opt
+        #hessein of quadratic form doesn't not depend on where it is evaluated, as long as the dimensions match
+        Field Name: solution_diff_sample_0 
     Dirichlet BCs: {}
     Neumann BCs: {}
     Parameters:
-      Number Of Parameters: 7
+      Number Of Parameters: 5
       Parameter 0:
         Name: weighted_normal_sample
         Type: Distributed
       Parameter 1:
         Type: Distributed
-        Name: solution_opt
+        Name: param_sample_0
       Parameter 2:
         Type: Distributed
-        Name: param_opt
+        Name: solution_diff_sample_0
       Parameter 3:
         Type: Distributed
-        Name: param_sample_0
-      Parameter 4:
-        Type: Distributed
-        Name: solution_diff_sample_0
-      Parameter 5:
-        Type: Distributed
         Name: param_sample_1
-      Parameter 6:
+      Parameter 4:
         Type: Distributed
         Name: solution_diff_sample_1
     LandIce Laplacian Regularization:
@@ -203,7 +199,7 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
       Response 3:
-        Parameter 1:
+        Parameter 2:
           Reconstruct H_pp using Hessian-vector products: false
           H_pp Solver:
             Linear Solver Type: Belos
@@ -229,7 +225,7 @@ ANONYMOUS:
                   Amesos2: {}
                   Amesos2 solver name: klu
       Response 4:
-        Parameter 1:
+        Parameter 2:
           Reconstruct H_pp using Hessian-vector products: false
           H_pp Solver:
             Linear Solver Type: Belos
@@ -261,7 +257,7 @@ ANONYMOUS:
     Exodus Output File Name: hdsa_analysis_piro.exo
     Number Of Time Derivatives: 0
     Required Fields Info:
-      Number Of Fields: 8
+      Number Of Fields: 6
       Field 0:
         Field Name: weighted_normal_sample
         Field Type: Node Scalar
@@ -269,44 +265,34 @@ ANONYMOUS:
         Field Expression: ['(1.0 + x)^3']
         Field Usage: Input-Output
       Field 1:
-        Field Name: solution_opt
-        Field Origin: File
-        Field Type: Node Vector
-        Vector Dim: 1
-        Field Expression: ['(1.0 + x)^3']
-      Field 2:
-        Field Name: solution_diff_sample_0
-        Field Origin: File
-        Field Type: Node Vector
-        Vector Dim: 1
-        Field Expression: ['0.2*(1.0 + x)^2']
-      Field 3:
-        Field Name: solution_diff_sample_1
-        Field Origin: File
-        Field Type: Node Vector
-        Vector Dim: 1
-        Field Expression: ['0.2*(x + x^2)^2']
-      Field 4:
-        Field Name: param_opt
-        Field Type: Node Scalar
-        Field Origin: File
-        Field Expression: ['(1.0 + x)^3']
-      Field 5:
-        Field Name: param_sample_0
-        Field Type: Node Scalar
-        Field Origin: File
-        Field Expression: ['(1.0 + x)^3']
-      Field 6:
-        Field Name: param_sample_1
-        Field Type: Node Scalar
-        Field Origin: File
-        Field Expression: ['(x + x^2)^3']
-      Field 7:
         Field Name: target_field
         Field Type: Node Vector
         Vector Dim: 1
         Field Origin: File
         Field Expression: ['(1.0 + x)^3']
+      Field 2:
+        Field Name: param_sample_0
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Expression: ['(1.0 + x)^3']
+      Field 3:
+        Field Name: solution_diff_sample_0
+        Field Origin: File
+        Field Type: Node Vector
+        Vector Dim: 1
+        Field Expression: ['0.2*(1.0 + x)^2']
+      Field 4:
+        Field Name: param_sample_1
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: "param_1.ascii"
+        #Field Expression: ['(x + x^2)^3']
+      Field 5:
+        Field Name: solution_diff_sample_1
+        Field Origin: File
+        Field Type: Node Vector
+        Vector Dim: 1
+        Field Expression: ['0.2*(x + x^2)^2']
       Side Set Discretizations:
         Side Sets: [SideSet0]
         SideSet0:
@@ -321,6 +307,9 @@ ANONYMOUS:
       Analysis Package: HDSA
       HDSA:
         Number Of Parameters: 1
+        Number Of Data Samples: 2
+        Normal Random Generator Seed: 42
+        Perform HDSA Analysis With OED: false
         Check Derivatives: false
         Derivative Checks:
           Perform Reduced Derivative Checks: false       
@@ -344,23 +333,31 @@ ANONYMOUS:
         State Elliptic Operator: 
           Operator Type: Hessian Of Response
           Response Index: 3
+          Parameter Index: 2
         
         State Mass Operator: 
           Operator Type: Hessian Of Response
           Response Index: 4
+          Parameter Index: 2
 
         MD Prior:
           alpha_u: 0.25
           alpha_z: 0.25
-          alpha_d: 1.e-5
           Number Of Singular Values: 50
-          Oversampling Factor: 1
+          Oversampling Factor: 10
           Number Of Subspace Iterations: 2
-          Number Of Prior Samples: 100
+          Number Of Prior Samples: 0
+
+        MD Posterior:
+          alpha_d: 1.e-5
+          Number Of Posterior Samples: 0
 
         MD Hessian Analysis:
           Rank: 20
           Oversampling Factor: 10
+        
+        MD Continuation Update:
+          Number Of Continuation Steps: 0
 
       ROL:
         Number Of Parameters: 1

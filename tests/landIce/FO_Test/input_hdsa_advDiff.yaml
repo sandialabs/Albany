@@ -298,6 +298,8 @@ ANONYMOUS:
       Analysis Package: HDSA
       HDSA:
         Number Of Parameters: 1
+        Number Of Data Samples: 2
+        Perform HDSA Analysis With OED: false
         Normal Random Generator Seed: 42
         Check Derivatives: false
         Derivative Checks:
@@ -332,11 +334,17 @@ ANONYMOUS:
         MD Prior:
           alpha_u: 0.25
           alpha_z: 44.0
-          alpha_d: 1.e-5
           Number Of Singular Values: 50
           Oversampling Factor: 1
           Number Of Subspace Iterations: 2
           Number Of Prior Samples: 100
+
+        MD Posterior:
+          alpha_d: 1.e-5
+          Number Of Posterior Samples: 100
+
+        MD Continuation Update:
+          Number Of Continuation Steps: 0
 
         MD Hessian Analysis:
           Rank: 20

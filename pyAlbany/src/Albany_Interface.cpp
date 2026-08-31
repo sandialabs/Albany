@@ -302,6 +302,22 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p)
     stackedTimer->stopBaseTimer();
 }
 
+void
+PyProblem::setDistributedField(const std::string& name, Teuchos::RCP<const Tpetra_Vector> p)
+{
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->startBaseTimer();
+    stackedTimer->start("PyAlbany: setDistributedField");
+    auto distParamLib = albanyApp->getDistributedParameterLibrary();
+
+    auto target = distParamLib->get(name)->vector();
+    auto source = Albany::createConstThyraVector(p);
+
+    Thyra::copy(*source, target.ptr());
+    stackedTimer->stop("PyAlbany: setDistributedField");
+    stackedTimer->stopBaseTimer();
+}
+
 Teuchos::RCP<Tpetra_Vector> PyProblem::getParameter(const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
