@@ -86,6 +86,7 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
+    std::cout << "ecco le norme qui " <<std::endl;
     if(analysisPackage == "HDSA") {      
       auto& hdsaPList = slvrfctry.getAnalysisParameters().sublist("HDSA");
       if(hdsaPList.isParameter("Normal Random Generator Seed")) {
@@ -100,9 +101,11 @@ int main(int argc, char *argv[]) {
       //we clone these vectors because we don't want them to be modify somewhere else in the code as parameters. 
       //for the HDSA analysis these are data
       int num_samples=hdsaPList.get("Number Of Data Samples",2);
+      std::cout << "ecco le norme adesso " << num_samples << std::endl;
       for(int i=0; i<num_samples; ++i) {
         p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector()->clone_v());
         u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector()->clone_v());
+        std::cout << "ecco le norme: " << p_samples.back()->norm_2() << " " <<  u_diff_at_samples.back()->norm_2() << std::endl;
       }
       Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer, u_diff_at_samples, p_samples);
     } else

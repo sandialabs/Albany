@@ -302,6 +302,22 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p)
     stackedTimer->stopBaseTimer();
 }
 
+void
+PyProblem::setDistributedField(const std::string& name, Teuchos::RCP<const Tpetra_Vector> p)
+{
+    Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
+    stackedTimer->startBaseTimer();
+    stackedTimer->start("PyAlbany: setDistributedField");
+    auto distParamLib = albanyApp->getDistributedParameterLibrary();
+
+    auto target = distParamLib->get(name)->vector();
+    auto source = Albany::createConstThyraVector(p);
+
+    Thyra::copy(*source, target.ptr());
+    stackedTimer->stop("PyAlbany: setDistributedField");
+    stackedTimer->stopBaseTimer();
+}
+
 Teuchos::RCP<Tpetra_Vector> PyProblem::getParameter(const int p_index)
 {
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
@@ -492,10 +508,22 @@ bool PyProblem::performAnalysis()
       //we clone these vectors because we don't want them to be modify somewhere else in the code as parameters. 
       //for the HDSA analysis these are data
       int num_samples=hdsaPList.get("Number Of Data Samples",2);
+      std::cout << "ecco le norme adesso " << num_samples << std::endl;
       for(int i=0; i<num_samples; ++i) {
         p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector()->clone_v());
         u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector()->clone_v());
+        std::cout << "ecco le norme: " << p_samples.back()->norm_2() << " " <<  u_diff_at_samples.back()->norm_2() << std::endl;
       }
+
+
+      std::cout << "nominal p1 norm = "
+          << Thyra::norm_2(*albanyModel->getNominalValues().get_p(1))
+          << std::endl;
+
+std::cout << "dist param_sample_0 norm = "
+          << Thyra::norm_2(
+               *distParamLib->get("param_sample_0")->vector())
+          << std::endl;
       Piro::PerformAnalysis(*solver, piroParams, p, observer, u_diff_at_samples, p_samples);
     } else {
       int status = Piro::PerformAnalysis(*solver, piroParams, p, observer);
