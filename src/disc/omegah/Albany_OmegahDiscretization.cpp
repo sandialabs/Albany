@@ -35,8 +35,8 @@ namespace {
   }
 
 #ifdef ALBANY_MESHFIELDS
-  Omega_h::Reals getEffectiveStrainRate(Omega_h::Mesh &mesh) {
-    auto array = mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
+  Omega_h::Reals getEffectiveStrainRate(Omega_h::Mesh &mesh, const std::string& eff_strain_name) {
+    auto array = mesh.get_array<Omega_h::Real>(2, eff_strain_name);
     TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
       "Error! solution_grad_norm array should have one component per element.\n");
     //Phalanx fills this memory with values for the effective strain rate for
@@ -52,8 +52,9 @@ namespace {
     return mesh.sync_array<Omega_h::Real>(2, reordered, 1);
   }
 
-  void addEffectiveStrainRateTag(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrainRate) {
-    const auto tagName = std::string("effectiveStrainRate");
+  void addEffectiveStrainRateTag(Omega_h::Mesh &mesh,
+                                 Omega_h::Reals effectiveStrainRate,
+                                 const std::string& tagName) {
     auto synced = mesh.sync_array<Omega_h::Real>(2, effectiveStrainRate, 1);
     if( mesh.has_tag(2, tagName) ) {
       mesh.set_tag<Omega_h::Real>(2, tagName, synced);
@@ -598,6 +599,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
   auto mesh = m_mesh_struct->getOmegahMesh();
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
   auto adapt_type = adapt_params.get<std::string>("Type","None");
+  printf("omegah disc, check for adapt, type=%s\n",adapt_type.c_str());
   if (adapt_type=="None") {
     return adapt_data;
   }
@@ -666,14 +668,15 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
         "Error! At least one process has no mesh elements.\n");
 
 #ifdef ALBANY_MESHFIELDS
-    auto effectiveStrain = getEffectiveStrainRate(*mesh);
+    auto eff_strain_name = adapt_params.get<std::string>("Effective Strain Name","solution_grad_norm");
+    auto effectiveStrain = getEffectiveStrainRate(*mesh,eff_strain_name);
     auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
     mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
         false, Omega_h::ArrayType::VectorND);
 
     const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
     if( writeVtk ) {
-      addEffectiveStrainRateTag(*mesh, effectiveStrain);
+      addEffectiveStrainRateTag(*mesh, effectiveStrain, eff_strain_name);
       const auto outname = std::string("checkForAdaptation") + std::to_string(checkAdaptCount);
       const std::string vtkFileName = outname + ".vtk";
       Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
