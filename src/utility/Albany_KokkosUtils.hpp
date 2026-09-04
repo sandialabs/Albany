@@ -43,8 +43,6 @@ using std::min;
 #endif
 using Sacado::Fad::max;
 using Sacado::Fad::min;
-using Sacado::Fad::Exp::max;
-using Sacado::Fad::Exp::min;
 
 // Choose atomic based on execution space
 template <typename ExeSpace>
