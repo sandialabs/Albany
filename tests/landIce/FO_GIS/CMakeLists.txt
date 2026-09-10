@@ -258,6 +258,10 @@ if (ALBANY_MUELU)
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_muelu.yaml)
   add_test(${testNameRoot}_Humboldt_MueLu ${Albany.exe} input_fo_humboldt_muelu.yaml)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_muelu_n4.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_muelu_n4.yaml)
+  add_test(${testNameRoot}_Humboldt_n4_MueLu ${Albany.exe} input_fo_humboldt_muelu_n4.yaml)
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_depthInt_muelu.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_depthInt_muelu.yaml)
   add_test(${testNameRoot}_Humboldt_DepthIntegrated_MueLu ${Albany.exe} input_fo_humboldt_depthInt_muelu.yaml)

@@ -47,8 +47,15 @@ private:
   KOKKOS_INLINE_FUNCTION
   TemprT flowRate(const TemprT& T) const;
 
-  const double pi, actenh, actenl, gascon, switchingT;
-  const double arrmlh, arrmll, scyr;
+  Teuchos::ParameterList* visc_list;
+
+  const double actenl;     // [J mol^{-1}]
+  const double actenh;     // [J mol^{-1}]
+  const double gasconst;   // [J mol^{-1} K^{-1}]
+  const double switchingT; // [K]
+  const double arrmll;     // [Pa^{-n} s^{-1}]
+  const double arrmlh;     // [Pa^{-n} s^{-1}]
+  const double scyr;       // [s yr^{-1}]
 
   bool extractStrainRateSq;
   bool useStereographicMap;
