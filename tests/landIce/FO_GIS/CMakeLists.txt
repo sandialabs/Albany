@@ -390,6 +390,13 @@ IF(NOT Kokkos_ENABLE_CUDA)
         LABELS "LandIce;Forward;Omega_h")
       # set_tests_properties(${testName}  PROPERTIES
       #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
+
+      # Adaptive test
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt.yaml
+                     ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt.yaml)
+      add_test(${testName}_adapt ${Albany.exe} input_fo_humboldt_transient_omegah_adapt.yaml)
+      set_tests_properties(${testName}_adapt PROPERTIES
+        LABELS "LandIce;Forward;Omega_h;Adapt")
     endif()
   endif()
 endif()
