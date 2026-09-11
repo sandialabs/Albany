@@ -121,7 +121,7 @@ ANONYMOUS:
           Maximum Edge Length: 1.0 # max desired edge length in physical space
           Write VTK Files: false # write VTK files before and after adaptation
           Verbose: false # write additional mesh adaptation info to stdout
-          Effective Strain Name: sliding_velocity_basalside
+          Effective Strain Name: sliding_velocity
         Required Fields Info:
           Number Of Fields: 7
           Field 0:
