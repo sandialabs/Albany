@@ -13,6 +13,8 @@
 #include "LandIce_ViscosityFO.hpp"
 #include "LandIce_ViscosityFO.hpp"
 
+#include <numbers>
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -23,22 +25,19 @@ template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 ViscosityFO<EvalT, Traits, VelT, TemprT>::
 ViscosityFO(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
-  pi (3.1415926535897932385),
-  actenh (1.39e5),        // [J mol-1]
-  actenl (6.0e4),         // [J mol-1]
-  gascon (8.314),         // [J mol-1 K-1]
-  switchingT (263.15),    // [K]
-  arrmlh (1.733e3),       // [Pa-3 s-1]
-  arrmll (3.613e-13),     // [Pa-3 s-1]
+  visc_list(p.get<Teuchos::ParameterList*>("Parameter List")),
+  actenh (visc_list->sublist("Arrhenius Relationship").get("Q+",1.39e5)),     // [J mol^{-1}]
+  actenl (visc_list->sublist("Arrhenius Relationship").get("Q-",6.0e4)),      // [J mol^{-1}]
+  gasconst (8.314),                                                           // [J mol^{-1} K^{-1}]
+  switchingT (visc_list->sublist("Arrhenius Relationship").get("T*",263.15)), // [K]
+  arrmlh (visc_list->sublist("Arrhenius Relationship").get("A+",1.733e3)),    // [Pa^{-n} s^{-1}]
+  arrmll (visc_list->sublist("Arrhenius Relationship").get("A-", 3.613e-13)), // [Pa^{-n} s^{-1}]
   scyr   (3.1536e7),      // [s yr-1]
   Ugrad (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   homotopyParam(p.get<std::string>("Continuation Parameter Name"), dl->shared_param),
   mu    (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
   flowRate_type(UNIFORM)
 {
-  Teuchos::ParameterList* visc_list =
-   p.get<Teuchos::ParameterList*>("Parameter List");
-
   std::string viscType = visc_list->get("Type", "Constant");
 
   extractStrainRateSq = visc_list->get("Extract Strain Rate Sq", false);
@@ -176,8 +175,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT,typename Traits,typename VelT, typename TemprT>
 KOKKOS_INLINE_FUNCTION
 TemprT ViscosityFO<EvalT,Traits,VelT,TemprT>::flowRate (const TemprT& T) const {
-  return (T < switchingT) ? arrmll / exp (actenl / gascon / ((T > TemprT(150)) ? T : TemprT(150))) :
-    arrmlh / exp (actenh / gascon / T);
+  return (T < switchingT) ? arrmll / exp (actenl / gasconst / ((T > TemprT(150)) ? T : TemprT(150))) :
+    arrmlh / exp (actenh / gasconst / T);
 }
 
 //**********************************************************************
@@ -196,6 +195,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_EX
   double a = 1.0;
   for (unsigned int qp=0; qp < numQPs; ++qp)
   {
+    const auto pi = std::numbers::pi;
     MeshScalarT x = coordVec(cell,qp,0);
     MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
     MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
