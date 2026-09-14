@@ -34,9 +34,11 @@ GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
     op = VerticalSum;
   else if (opType == "Vertical Average")
     op = VerticalAverage;
+  else if (opType == "Vertical MOLHO Average")
+    op = VerticalMOLHOAverage;
   else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-                                  "Error! \"" << opType << "\" is not a valid Contraction Operator. Valid Operators are: \"Vertical Sum\" and \"Vertical Average\"");
+                                  "Error! \"" << opType << "\" is not a valid Contraction Operator. Valid Operators are: \"Vertical Sum\", \"Vertical Average\" and \"Vertical MOLHO Average\"");
   }
 
   isVector =  p.get<bool>("Is Vector");
@@ -92,12 +94,15 @@ computeQuadWeights(const std::vector<double>& dz)
   if(op == VerticalSum){
     for (int i=0; i<=numLayers; ++i)
       quadWeights.host()(i) = 1.0;
-  } else  { //Average
+  } else if (op == VerticalAverage) { 
 
     quadWeights.host()(0) = 0.5*dz[0]; 
     quadWeights.host()(numLayers) = 0.5*dz[numLayers-1];
     for(int i=1; i<numLayers; ++i)
       quadWeights.host()(i) = 0.5*(dz[i-1] + dz[i]);
+  } else  { //VerticalMOLHOAverage
+    quadWeights.host()(0) = 0.2*dz[0]; 
+    quadWeights.host()(numLayers) = 0.8*dz[numLayers-1]; //numLayers =1 for MOLHO
   }
   quadWeights.sync_to_dev();
 

@@ -298,14 +298,14 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
 
-      MeshScalarT h = 0.0;
+      MeshScalarT area = 0.0;
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) 
-        h += weighted_measure(qp);  
-      h = sqrt(h);
+        area += weighted_measure(qp);  
+      MeshScalarT h = sqrt(area);
 
       for (unsigned int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
-        ScalarT res = 0;
+        ScalarT res = (dHdt_Cell(node) - 3e-4)*area/3.0;  //ScalarT res = (dHdt_Cell(node) - SMB_Cell(node))*area/3.0;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           ScalarT divHV = divV_Side(qp)* H_Side(qp);
           ScalarT V_norm2 = 0.0;
@@ -329,16 +329,23 @@ evaluateFields(typename Traits::EvalData workset)
             advective_rate += std::abs(V_dot_gradN);
           }
 
+          ScalarT speed = sqrt(V_norm2 + 1e-12);
+
           ScalarT tmp = dHdt_Side(qp) + divHV - 3e-4;// - SMB_Side(qp);
 
           ScalarT HV_gradPhi = 0.0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             HV_gradPhi += H_Side(qp) * V_Side(qp, dim) * trans_gradBasis_refPointsSide(0, node, qp, dim);
           
-          res += ((dHdt_Side(qp) - 3e-4)*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
+          //res += ((dHdt_Side(qp) - 3e-4)*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
+          res -=  HV_gradPhi * weighted_measure(qp);
           //std::cout << "Time Step: " << *dt << std::endl;
           ScalarT invTau = sqrt(4.0/ *dt/ *dt + advective_rate*advective_rate + divV_Side(qp)*divV_Side(qp));
-          res += tmp * V_dot_gradPhi * weighted_measure(qp) / invTau; //SUPG
+          //res += tmp * V_dot_gradPhi * weighted_measure(qp) / invTau; //SUPG
+
+
+
+
          // V_norm = sqrt(V_norm+1e-6);
           //res += tmp * h/V_norm*V_dot_gradPhi * weighted_measure(qp); //SUPG
 
@@ -346,10 +353,46 @@ evaluateFields(typename Traits::EvalData workset)
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp)+h/V_norm*V_dot_HGrad*V_dot_gradPhi*weighted_measure(qp);
           
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp);
-          ScalarT delta = h*std::min(0.2*sqrt(V_norm2+1e-12), std::abs(tmp)/std::sqrt(gradH_Side(qp,0)*gradH_Side(qp,0)+gradH_Side(qp,1)*gradH_Side(qp,1)+1e-12));
-          for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
-            res += delta  *gradH_Side(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
+          //ScalarT delta = V_norm2/(advective_rate+1e-12);
+          //ScalarT delta = h*std::min(0.2*sqrt(V_norm2+1e-12), std::abs(tmp)/std::sqrt(gradH_Side(qp,0)*gradH_Side(qp,0)+gradH_Side(qp,1)*gradH_Side(qp,1)+1e-12));
+          //for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
+            //res += delta  *gradH_Side(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
         }
+
+        ScalarT A[3][3] = {{0.0}};
+        ScalarT D[3][3] = {{0.0}};
+
+        // Element advection matrix
+        for (int k = 0; k < 3; ++k) {
+          std::size_t nodeii = side.node[k];
+          for (int l = 0; l < 3; ++l) {
+            std::size_t nodejj = side.node[l];
+            for (int qp = 0; qp < numQPsSide; ++qp) {
+
+              ScalarT V_dot_gradNi = 0.0;
+              for (int dim = 0; dim < 2; ++dim)
+                V_dot_gradNi += V_Side(qp,dim) * trans_gradBasis_refPointsSide(0,nodeii,qp,dim);
+
+              A[k][l] -= trans_basis_refPointsSide(0,nodejj,qp) * V_dot_gradNi * weighted_measure(qp);
+            }
+          }
+        }
+        for (int k = 0; k < 3; ++k) {
+          for (int l = k+1; l < 3; ++l) {
+
+            ScalarT nu_lk = std::max(ScalarT(0.0), std::max(A[k][l], A[l][k]));
+
+            D[k][l] = -nu_lk;
+            D[l][k] = -nu_lk;
+
+            D[k][k] += nu_lk;
+            D[l][l] += nu_lk;
+          }
+        }
+        for (int j = 0; j < 3; ++j)
+          res += D[i][j] * H_Cell(side.node[j]);
+
+
         Residual(elem_LID,node) = res;
       }
 
