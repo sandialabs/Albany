@@ -42,7 +42,7 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  enum ContractionOperator {VerticalAverage, VerticalSum};
+  enum ContractionOperator {VerticalAverage, VerticalMOLHOAverage, VerticalSum};
 
   Teuchos::ArrayRCP<const ST> x_constView;
 
@@ -105,6 +105,6 @@ public:
 };
 
 
-} // namespace LandIce
+} // namespace LandIceGatherVerticallyContractedSolution
 
 #endif // LANDICE_GATHER_VERTICALLY_CONTRACTED_SOLUTION_HPP

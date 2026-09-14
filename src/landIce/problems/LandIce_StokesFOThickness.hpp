@@ -219,7 +219,10 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     p->set<Teuchos::RCP<const shards::CellTopology> >("Cell Topology",Teuchos::rcp(new shards::CellTopology(&meshSpecs.ctd)));
     p->set<int>("Solution Offset", dof_offsets[0]);
     p->set<bool>("Is Vector", true);
-    p->set<std::string>("Contraction Operator", "Vertical Average");
+    if(this->depthIntegratedModel)
+      p->set<std::string>("Contraction Operator", "Vertical MOLHO Average");
+    else
+      p->set<std::string>("Contraction Operator", "Vertical Average");
 
     ev = Teuchos::rcp(new LandIce::GatherVerticallyContractedSolution<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
