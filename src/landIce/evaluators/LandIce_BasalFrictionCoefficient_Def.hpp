@@ -771,9 +771,9 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
 //**********************************************************************
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
-typename BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::MeshScalarT
+EffPressureST
 BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
-computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScalarT& bed_topo) const
+computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshScalarT& bed_topo) const
 {
   // Effective pressure with a near-ocean region followed by a bounded
   // transition to a prescribed inland fraction of overburden pressure.
@@ -782,36 +782,36 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
   // "pressure_smoothing_length_scale" == "length_scale" and
   // "transition_h_ocean" == "h_ocean" (all already in Albany's internal
   // km-scaled length units).
-  MeshScalarT ice_term = rho_i * thickness;
-  MeshScalarT ocean_term = KU::max(-1.0 * rho_w * bed_topo, 0.0);
-  MeshScalarT height_above_flotation =
+  EffPressureST ice_term = rho_i * thickness;
+  EffPressureST ocean_term = KU::max(-1.0 * rho_w * bed_topo, 0.0);
+  EffPressureST height_above_flotation =
       KU::max(bed_topo + (rho_i / rho_w) * thickness, 0.0);
 
   // Ocean-connected effective-pressure fraction (guard against division
   // by zero at ice-free cells: N will end up 0 there regardless, since N
   // is proportional to ice_term below).
-  MeshScalarT q_ocean = (ice_term > 0.0) ?
-      MeshScalarT(KU::max(1.0 - ocean_term / ice_term, 0.0)) : MeshScalarT(0.0);
+  EffPressureST q_ocean = (ice_term > 0.0) ?
+      EffPressureST(KU::max(1.0 - ocean_term / ice_term, 0.0)) : EffPressureST(0.0);
 
   // Prescribed inland effective-pressure fraction: N/Pice_inland =
   // 1 - min_flotation_fraction (same convention as Albany's HYDROSTATIC(_AT_NODES)
   // types, where "Minimum Flotation Fraction" is subtracted from
   // a retained-overburden fraction of 1, not applied directly).
-  MeshScalarT q_inland = 1.0 - min_flotation_fraction;
+  EffPressureST q_inland = 1.0 - min_flotation_fraction;
 
   // Ocean-connected value at the end of the fixed near-ocean region.
-  MeshScalarT q_start = (ice_term > 0.0) ?
-      MeshScalarT(rho_w * transition_h_ocean / ice_term) : MeshScalarT(0.0);
+  EffPressureST q_start = (ice_term > 0.0) ?
+      EffPressureST(rho_w * transition_h_ocean / ice_term) : EffPressureST(0.0);
   // Guarantee the transition begins at or below the prescribed inland
   // value, and keep the near-grounding-line branch bounded as well.
   q_start = KU::min(q_start, q_inland);
-  MeshScalarT q_near_ocean = KU::min(q_ocean, q_inland);
+  EffPressureST q_near_ocean = KU::min(q_ocean, q_inland);
 
-  MeshScalarT distance_into_transition =
+  EffPressureST distance_into_transition =
       KU::max(height_above_flotation - transition_h_ocean, 0.0);
-  MeshScalarT transition_q = q_inland - (q_inland - q_start) *
+  EffPressureST transition_q = q_inland - (q_inland - q_start) *
       std::exp(-distance_into_transition / pressure_smoothing_length_scale);
-  MeshScalarT q = (height_above_flotation <= transition_h_ocean) ? q_near_ocean : transition_q;
+  EffPressureST q = (height_above_flotation <= transition_h_ocean) ? q_near_ocean : transition_q;
 
   // Roundoff safeguard.
   q = KU::min(KU::max(q, 0.0), q_inland);

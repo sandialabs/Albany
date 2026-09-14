@@ -46,10 +46,10 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-
+    
   PHX::MDField<const ScalarT,Cell,Node>       Hdiff;  //[km]
   PHX::MDField<const ScalarT,Cell,Node>       dHdt;   //[m/yr]
-  PHX::MDField<const ParamScalarT,Cell,Node>  H0;     //[km]
+  PHX::MDField<const MeshScalarT,Cell,Node>   H0;     //[km]
   PHX::MDField<const ScalarT>                 V;      //[m/yr]                
   PHX::MDField<const ParamScalarT,Cell,Node>  SMB;    //[m/yr]
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;  //[km]

@@ -128,7 +128,7 @@ private:
   // (EFFECTIVE_PRESSURE_TYPE::TRANSITION). Reproduces (offline)
   // friction_law_conversion.py::effective_pressure4().
   KOKKOS_INLINE_FUNCTION
-  MeshScalarT computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScalarT& bed_topo) const;
+  EffPressureST computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshScalarT& bed_topo) const;
 
 public:
 

@@ -82,12 +82,9 @@ template<typename Traits>
 void ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
-  std::cout << "ScatterScalarNodalParameter: " << this->param_name <<std::endl;
   // Check for early return
   if (this->memoizer.have_saved_data(workset,this->evaluatedFields()))
     return;
-  std::cout << "Still here ScatterScalarNodalParameter: " << this->param_name <<std::endl;
 
   const int ws = workset.wsIndex;
 
