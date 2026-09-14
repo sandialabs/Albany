@@ -15,7 +15,7 @@
 #include "Albany_MeshSpecs.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_DiscretizationUtils.hpp"
-#include "LandIce_ThicknessResid.hpp"
+#include "LandIce_ThicknessResidCell.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -24,8 +24,8 @@ namespace LandIce {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-ThicknessResid<EvalT, Traits>::
-ThicknessResid(const Teuchos::ParameterList& p,
+ThicknessResidCell<EvalT, Traits>::
+ThicknessResidCell(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   Hdiff    (p.get<std::string> ("Thickness Change Variable Name"), dl->node_scalar),
   H0       (p.get<std::string> ("Initial Thickness Name"), dl->node_scalar),
@@ -44,13 +44,11 @@ ThicknessResid(const Teuchos::ParameterList& p,
     this->addDependentField(dHdt);
   } 
 
-  if(p.isParameter("SMB Name")) {
-   SMB = decltype(SMB)(p.get<std::string> ("SMB Name"), dl->node_scalar);
-   have_SMB = true;
-   this->addDependentField(SMB);
-  } else {
-    have_SMB = false;
-  }
+  forcing = decltype(forcing)(p.get<std::string> ("Forcing Name"), dl->node_scalar);
+  this->addDependentField(forcing);
+
+  V = decltype(V)(p.get<std::string>("Velocity Name"),  dl->node_vector);
+  this->addDependentField(V);
 
   this->addEvaluatedField(Residual);
 
@@ -58,24 +56,14 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
 
-  sideSetName  = p.get<std::string> ("Side Set Name");
-  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
-                              "Error! Layout for side set " << sideSetName << " not found.\n");
-  Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
+  //for (const auto &ele : dl->side_layouts) 
+  //  std::cout <<"Layout: " <<ele.first << std::endl;
 
-  auto av_v_layout = dl_side->node_vector;
-  V = decltype(V)(p.get<std::string>("Averaged Velocity Variable Name"), av_v_layout);
-  this->addDependentField(V);
-
-  std::cout << "\nSideSetName: " << sideSetName << std::endl;
-  for (const auto &ele : dl->side_layouts) 
-    std::cout <<"Layout: " <<ele.first << std::endl;
-
-  lateralSideSetName = p.isParameter("Lateral Side Set Name") ? p.get<std::string>("Lateral Side Set Name") : std::string("lateralside");
+  lateralSideSetName = p.isParameter("Lateral Side Set Name") ? p.get<std::string>("Lateral Side Set Name") : std::string("boundary_side_set_3");
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(lateralSideSetName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Lateral side data layout not found.\n");
 
-  this->setName("ThicknessResid"+PHX::print<EvalT>());
+  this->setName("ThicknessResidCell"+PHX::print<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
@@ -86,8 +74,8 @@ ThicknessResid(const Teuchos::ParameterList& p,
   cellDim = dims[2];
 
   const CellTopologyData * const elem_top = &meshSpecs->ctd;
-  TEUCHOS_TEST_FOR_EXCEPTION (elem_top->dimension != 3, std::runtime_error,
-                              "Error! This evaluator expects a 3D cell.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (elem_top->dimension != 2, std::runtime_error,
+                              "Error! This evaluator expects a 2D cell.\n");
 
   intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
 
@@ -105,7 +93,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void ThicknessResid<EvalT, Traits>::
+void ThicknessResidCell<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData /* d */,
                       PHX::FieldManager<Traits>& /* fm */)
 {
@@ -114,7 +102,7 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void ThicknessResid<EvalT, Traits>::
+void ThicknessResidCell<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
@@ -136,10 +124,10 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
+  //Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
 
-  if (it_ss != ssList.end()) {
-    const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
+  if (cellDim==2) {
+    //const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
 
     Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide;
     Kokkos::DynRankView<RealType, PHX::Device> refPointsSide;
@@ -148,48 +136,45 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::DynRankView<RealType, PHX::Device> basisGrad_refPointsSide;
 
     Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide;
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSideDet;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> invJacobianSide;
-    //Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_det;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_measure;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_basis_refPointsSide;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_gradBasis_refPointsSide;
-    //Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_trans_basis_refPointsSide;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> scratch;
 
-    Kokkos::DynRankView<ScalarT, PHX::Device> dHdt_Side;
-    Kokkos::DynRankView<ScalarT, PHX::Device> SMB_Side;
-    Kokkos::DynRankView<ScalarT, PHX::Device> H_Side;
-    Kokkos::DynRankView<ScalarT, PHX::Device> V_Side;
+    Kokkos::DynRankView<ScalarT, PHX::Device> dHdt_Points;
+    Kokkos::DynRankView<ScalarT, PHX::Device> forcing_Points;
+    Kokkos::DynRankView<ScalarT, PHX::Device> H_Points;
+    Kokkos::DynRankView<ScalarT, PHX::Device> V_Points;
 
-    Kokkos::DynRankView<ScalarT, PHX::Device> dHdt_Cell;
-    Kokkos::DynRankView<ScalarT, PHX::Device> SMB_Cell;
-    Kokkos::DynRankView<ScalarT, PHX::Device> H_Cell;
-    Kokkos::DynRankView<ScalarT, PHX::Device> V_Cell;
-    Kokkos::DynRankView<ScalarT, PHX::Device> gradH_Side;
-    Kokkos::DynRankView<ScalarT, PHX::Device> divV_Side;
+    Kokkos::DynRankView<ScalarT, PHX::Device> dHdt_Nodes;
+    Kokkos::DynRankView<ScalarT, PHX::Device> forcing_Nodes;
+    Kokkos::DynRankView<ScalarT, PHX::Device> H_Nodes;
+    Kokkos::DynRankView<ScalarT, PHX::Device> V_Nodes;
+    Kokkos::DynRankView<ScalarT, PHX::Device> gradH_Points;
+    Kokkos::DynRankView<ScalarT, PHX::Device> divV_Points;
 
     // Loop over the sides that form the boundary condition
-    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
+    for (std::size_t elem_LID = 0; elem_LID < workset.numCells; ++elem_LID) { // loop over the sides on this ws and name
 
       // Get the data that corresponds to the side
-      const int elem_LID = sideSet[iSide].ws_elem_idx;
-      const int elem_side = sideSet[iSide].side_pos;
-      const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
-      sideType = Teuchos::rcp(new shards::CellTopology(side.topology));
-      unsigned int numSideNodes = sideType->getNodeCount();
+      //const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
+      unsigned int numSideNodes = cellType->getNodeCount();
       Intrepid2::DefaultCubatureFactory cubFactory;
-      cubatureSide = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, cubatureDegree);
-      unsigned int sideDims = sideType->getDimension();
+      cubatureSide = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubatureDegree);
+      unsigned int sideDims = cellType->getDimension();
       unsigned int numQPsSide = cubatureSide->getNumPoints();
 
       // Allocate Temporary Views (should be pre-allocated)
-      cubPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, sideDims);
+     // cubPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, sideDims);
       refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, cellDim);
       cubWeightsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide);
       basis_refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsSide);
       basisGrad_refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsSide, cellDim);
 
       jacobianSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDim, cellDim);
+      jacobianSideDet = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
       invJacobianSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDim, cellDim);
       weighted_measure = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
       trans_basis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
@@ -197,136 +182,136 @@ evaluateFields(typename Traits::EvalData workset)
       //weighted_trans_basis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
       scratch = Sacado::createDynRankView(jacobianSide,"XXS", numQPsSide*cellDim*cellDim);
 
-      dHdt_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
-      SMB_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
-      H_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
-      V_Side = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide, numVecFODims);
+      dHdt_Points = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      forcing_Points = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      H_Points = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
+      V_Points = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide, numVecFODims);
 
       // Pre-Calculate reference element quantities
-      cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
+      cubatureSide->getCubature(refPointsSide, cubWeightsSide);
 
       // Copy the coordinate data over to a temp container
      for (std::size_t node = 0; node < numNodes; ++node) {
-       for (std::size_t dim = 0; dim < cellDim-1; ++dim)
+       for (std::size_t dim = 0; dim < cellDim; ++dim)
          physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
-       physPointsCell(0, node, cellDim-1) = -1.0; //set z=-1 on internal cell nodes and z=0 side (see next lines).
+         //physPointsCell(0, node, cellDim-1) = -1.0; //set z=-1 on internal cell nodes and z=0 side (see next lines).
      }
-     for (unsigned int i = 0; i < numSideNodes; ++i)
-       physPointsCell(0, side.node[i], cellDim-1) = 1.0;  //set z=1 on side
+     //for (unsigned int i = 0; i < numSideNodes; ++i)
+     //  physPointsCell(0, i, cellDim-1) = 1.0;  //set z=0 on side
 
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-      Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
+      //Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
+      //refPointsSide = cubPointsSide;
 
       //for (std::size_t node = 0; node < numNodes; ++node) {
-      //  std::cout << "node" << node << " points: " << physPointsCell(0, node,0) << " " << physPointsCell(0, node, 1) << " " << physPointsCell(0, node, 2)<<  std::endl;
+      //  std::cout << "node" << node << " points: " << physPointsCell(0, node,0) << " " << physPointsCell(0, node, 1) <<  std::endl;
       //}
       //for(int i=0; i< numQPsSide; ++i)
       //  std::cout << "qp: " << i << " points: " << refPointsSide(i,0) << " " << refPointsSide(i,1) << " " << refPointsSide(i,2)<< ", name: " << cellType->getName() << std::endl;
 
       // Calculate side geometry
       Intrepid2::CellTools<PHX::Device>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
+      Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobianSideDet, jacobianSide);
 
+     // std::cout << "Resid: " << __LINE__ << std::endl;
       Intrepid2::CellTools<PHX::Device>::setJacobianInv(invJacobianSide, jacobianSide);
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       //FST::computeEdgeMeasure(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType, scratch);
-      FST::computeFaceMeasure(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType, scratch);
-
+      FST::computeCellMeasure(weighted_measure, jacobianSideDet, cubWeightsSide);
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // Values of the basis functions at side cubature points, in the reference parent cell domain
       intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       intrepidBasis->getValues(basisGrad_refPointsSide, refPointsSide, Intrepid2::OPERATOR_GRAD);
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // Transform values of the basis functions
       FST::HGRADtransformVALUE(trans_basis_refPointsSide, basis_refPointsSide);
 
       FST::HGRADtransformGRAD(trans_gradBasis_refPointsSide, invJacobianSide, basisGrad_refPointsSide);
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // Multiply with weighted measure
       //FST::multiplyMeasure(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      dHdt_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
-      SMB_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
-      H_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
-      V_Cell = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes, numVecFODims);
-      gradH_Side = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide, numVecFODims);
-      divV_Side = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide);
+      dHdt_Nodes = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
+      forcing_Nodes = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
+      H_Nodes = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
+      V_Nodes = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes, numVecFODims);
+      gradH_Points = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide, numVecFODims);
+      divV_Points = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide);
 
-      for (unsigned int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i];
-        dHdt_Cell(node) = unsteady ? dHdt(elem_LID, node) : ScalarT(Hdiff(elem_LID, node)/ *dt);
-        H_Cell(node) = Hdiff(elem_LID, node) + H0(elem_LID, node);//unsteady ? ScalarT(Hdiff(elem_LID, node) + H0(elem_LID, node)) : ScalarT(H0(elem_LID, node));
-        SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
+      for (unsigned int node = 0; node < numSideNodes; ++node){
+        dHdt_Nodes(node) = unsteady ? dHdt(elem_LID, node) : ScalarT(Hdiff(elem_LID, node)/ *dt);
+        H_Nodes(node) = Hdiff(elem_LID, node) + H0(elem_LID, node);//unsteady ? ScalarT(Hdiff(elem_LID, node) + H0(elem_LID, node)) : ScalarT(H0(elem_LID, node));
+        forcing_Nodes(node) = forcing(elem_LID, node);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
-          V_Cell(node, dim) = 0*physPointsCell(0, node, dim)/640.0*(1-dim);//V(iSide, i, dim)/1000.0;  //[km/yr]
+          V_Nodes(node, dim) = V(elem_LID, node, dim)/1000.0;  //[km/yr]    physPointsCell(0, node, dim)/640.0*(1-dim);//
         }
       }
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // This is needed, since evaluate currently sums into
       for (unsigned int qp = 0; qp < numQPsSide; qp++) {
-        dHdt_Side(qp) = 0.0;
-        H_Side(qp) = 0.0;
-        SMB_Side(qp) = 0.0;
-        divV_Side(qp) = 0.0;
+        dHdt_Points(qp) = 0.0;
+        H_Points(qp) = 0.0;
+        forcing_Points(qp) = 0.0;
+        divV_Points(qp) = 0.0;
         for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
-          V_Side(qp, dim) = 0.0;
-          gradH_Side(qp, dim) = 0.0;
+          V_Points(qp, dim) = 0.0;
+          gradH_Points(qp, dim) = 0.0;
         }
       }
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      for (unsigned int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i];
+      for (unsigned int node = 0; node < numSideNodes; ++node){
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           const MeshScalarT& tmp = trans_basis_refPointsSide(0, node, qp);
-          dHdt_Side(qp) += dHdt_Cell(node) * tmp;
-          SMB_Side(qp) += SMB_Cell(node) * tmp;
-          H_Side(qp) += H_Cell(node) * tmp;
+          dHdt_Points(qp) += dHdt_Nodes(node) * tmp;
+          forcing_Points(qp) += forcing_Nodes(node) * tmp;
+          H_Points(qp) += H_Nodes(node) * tmp;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-            V_Side(qp, dim) += V_Cell(node, dim) * tmp;
+            V_Points(qp, dim) += V_Nodes(node, dim) * tmp;
         }
       }
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-        for (unsigned int i = 0; i < numSideNodes; ++i){
-          std::size_t node = side.node[i];
+        for (unsigned int node = 0; node < numSideNodes; ++node){
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
             const MeshScalarT& tmp = trans_gradBasis_refPointsSide(0, node, qp, dim);
-            gradH_Side(qp, dim) += H_Cell(node) * tmp;
-            divV_Side(qp) += V_Cell(node, dim) * tmp;
+            gradH_Points(qp, dim) += H_Nodes(node) * tmp;
+            divV_Points(qp) += V_Nodes(node, dim) * tmp;
           }
         }
       }
-
+//std::cout << "Resid: " << __LINE__ << " " <<numQPsSide << " " <<  numNodes << " " << numVecFODims << " " <<cellDim << " " << weighted_measure(0)  << " " << weighted_measure(1) << " "<< weighted_measure(2)  << " " << weighted_measure(3) << " "<< weighted_measure(4)  << " " << weighted_measure(5) <<  std::endl;
       MeshScalarT h = 0.0;
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) 
         h += weighted_measure(qp);  
+    //    std::cout << "Resid: " << __LINE__ << " " << h << std::endl;
       h = sqrt(h);
-
-      for (unsigned int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i];
+//std::cout << "Resid: " << __LINE__ << std::endl;
+      for (unsigned int node = 0; node < numSideNodes; ++node){
         ScalarT res = 0;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-          ScalarT divHV = divV_Side(qp)* H_Side(qp);
+          ScalarT divHV = divV_Points(qp)* H_Points(qp);
           ScalarT V_norm = 0.0;
           ScalarT V_dot_gradPhi = 0.0;
           ScalarT V_dot_HGrad = 0.0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
-            divHV += gradH_Side(qp, dim)*V_Side(qp,dim);
-            V_norm += V_Side(qp, dim)*V_Side(qp, dim);
-            V_dot_gradPhi += trans_gradBasis_refPointsSide(0, node, qp, dim)*V_Side(qp, dim);
-            V_dot_HGrad += gradH_Side(qp, dim)*V_Side(qp, dim);
+            divHV += gradH_Points(qp, dim)*V_Points(qp,dim);
+            V_norm += V_Points(qp, dim)*V_Points(qp, dim);
+            V_dot_gradPhi += trans_gradBasis_refPointsSide(0, node, qp, dim)*V_Points(qp, dim);
+            V_dot_HGrad += gradH_Points(qp, dim)*V_Points(qp, dim);
           }
-          
+          //std::cout << "Resid: " << __LINE__ << std::endl;
 
-          ScalarT tmp = dHdt_Side(qp) + divHV - 3e-4;// - SMB_Side(qp);
+          ScalarT tmp = dHdt_Points(qp) + divHV - forcing_Points(qp);
 
           ScalarT HV_gradPhi = 0.0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-            HV_gradPhi += H_Side(qp) * V_Side(qp) * trans_gradBasis_refPointsSide(0, node, qp, dim);
+            HV_gradPhi += H_Points(qp) * V_Points(qp) * trans_gradBasis_refPointsSide(0, node, qp, dim);
           
-          res += ((dHdt_Side(qp) - 3e-4)*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
-          ScalarT invTau = sqrt(4.0/ *dt/ *dt + 4*V_norm*V_norm/h/h + divV_Side(qp)*divV_Side(qp));
+          res += ((dHdt_Points(qp) - forcing_Points(qp))*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
+          ScalarT invTau = sqrt(4.0/ *dt/ *dt + 4*V_norm*V_norm/h/h + divV_Points(qp)*divV_Points(qp));
           res += tmp * V_dot_gradPhi * weighted_measure(qp) / sqrt(invTau); //SUPG
          // V_norm = sqrt(V_norm+1e-6);
           //res += tmp * h/V_norm*V_dot_gradPhi * weighted_measure(qp); //SUPG
@@ -335,10 +320,11 @@ evaluateFields(typename Traits::EvalData workset)
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp)+h/V_norm*V_dot_HGrad*V_dot_gradPhi*weighted_measure(qp);
           
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp);
-          ScalarT delta = h*std::min(0.2*V_norm, std::abs(tmp)/std::sqrt(gradH_Side(qp,0)*gradH_Side(qp,0)+gradH_Side(qp,1)*gradH_Side(qp,1)+1e-8));
+          ScalarT delta = h*std::min(0.2*V_norm, std::abs(tmp)/std::sqrt(gradH_Points(qp,0)*gradH_Points(qp,0)+gradH_Points(qp,1)*gradH_Points(qp,1)+1e-8));
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
-            res += delta  *gradH_Side(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
+            res += delta  *gradH_Points(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
         }
+        //std::cout << "Resid: " << __LINE__ << std::endl;
         Residual(elem_LID,node) = res;
       }
 
@@ -347,7 +333,7 @@ evaluateFields(typename Traits::EvalData workset)
       if(it == elem_side_map.end())
         continue;   //not on the lateral side
 
-      const int elem_edge = it->second+3; //hack. Selecting the top edge of the Wedge associated to the edge lateral side
+      const int elem_edge = it->second; //Selecting the top edge of the Wedge associated to the edge lateral side
         
       const CellTopologyData_Subcell& edge =  cellType->getCellTopologyData()->edge[elem_edge];
       auto edgeType = Teuchos::rcp(new shards::CellTopology(edge.topology));
@@ -374,11 +360,10 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Pre-Calculate reference element quantities
       cubatureEdge->getCubature(cubPointsEdge, cubWeightsEdge);
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
       Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell(refPointsEdge, cubPointsEdge, edgeDim, elem_edge, *cellType);
-
-      
+    // std::cout << "Resid: " << __LINE__ << std::endl;
 
       //for (std::size_t node = 0; node < numNodes; ++node) {
       //  std::cout << "node" << node << " points: " << physPointsCell(0, node,0) << " " << physPointsCell(0, node, 1) << " " << physPointsCell(0, node, 2)<<  std::endl;
@@ -389,12 +374,12 @@ evaluateFields(typename Traits::EvalData workset)
       // Calculate side geometry
       Intrepid2::CellTools<PHX::Device>::setJacobian(jacobianEdge, refPointsEdge, physPointsCell, *cellType);
       Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(sideNormals, jacobianEdge, it->second, *cellType );
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       FST::computeEdgeMeasure(edge_weighted_measure, jacobianEdge, cubWeightsEdge, elem_edge, *cellType, scratch);
-      
+      //std::cout << "Resid: " << __LINE__ << std::endl;
       // Values of the basis functions at side cubature points, in the reference parent cell domain
       intrepidBasis->getValues(basis_refPointsEdge, refPointsEdge, Intrepid2::OPERATOR_VALUE);
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // Transform values of the basis functions
       FST::HGRADtransformVALUE(trans_basis_refPointsEdge, basis_refPointsEdge);
       
@@ -410,20 +395,20 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t dim = 0; dim < numVecFODims; ++dim)
           sideNormals(0, qp, dim) /= norm;          
       }
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
       for (unsigned int i = 0; i < numEdgeNodes; ++i){
         std::size_t node = edge.node[i];
         for (std::size_t qp = 0; qp < numQPsEdge; ++qp) {
           const MeshScalarT& edge_basis = trans_basis_refPointsEdge(0, node, qp);
-          H_Edge(qp) += H_Cell(node) * edge_basis;
-          //V_X_Edge(qp) += V_Cell(node,0) * tmp;
+          H_Edge(qp) += H_Nodes(node) * edge_basis;
+          //V_X_Edge(qp) += V_Nodes(node,0) * tmp;
           auto normal_norm = 0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-            V_Normal_Edge(qp) += V_Cell(node, dim) * edge_basis * sideNormals(0, qp, dim);
+            V_Normal_Edge(qp) += V_Nodes(node, dim) * edge_basis * sideNormals(0, qp, dim);
         }
       }
-
+//std::cout << "Resid: " << __LINE__ << std::endl;
      // for (unsigned int qp = 0; qp < numQPsEdge; qp++)
       //  std::cout << "qp: " << qp << ", Normal V: " << V_Normal_Edge(qp) << ", N:" << sideNormals(0, qp, 0) << ", " <<  sideNormals(0, qp, 1) <<  ", H: " << H_Edge(qp) << ", measure:  " <<  edge_weighted_measure(qp) << std::endl;
 
