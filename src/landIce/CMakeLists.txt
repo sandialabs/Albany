@@ -61,6 +61,7 @@ set(SOURCES
   evaluators/LandIce_SurfaceAirEnthalpy.cpp
   evaluators/LandIce_Temperature.cpp
   evaluators/LandIce_ThicknessResid.cpp
+  evaluators/LandIce_ThicknessResidCell.cpp
   evaluators/LandIce_UpdateZCoordinate.cpp
   evaluators/LandIce_VerticalVelocity.cpp
   evaluators/LandIce_ViscosityFO.cpp
@@ -76,6 +77,8 @@ set(SOURCES
   problems/LandIce_StokesFO.cpp
   problems/LandIce_StokesFOBase.cpp
   problems/LandIce_StokesFOThermoCoupled.cpp
+  problems/LandIce_ThicknessEvolution.cpp
+  problems/LandIce_ThicknessEvolution.cpp
   problems/LandIce_StokesFOThickness.cpp
   problems/LandIce_StokesFOHydrology.cpp
   evaluators/hydrology/LandIce_HydrologyBasalGravitationalWaterPotential.cpp
@@ -164,6 +167,8 @@ set(HEADERS
   evaluators/LandIce_Temperature_Def.hpp
   evaluators/LandIce_ThicknessResid_Def.hpp
   evaluators/LandIce_ThicknessResid.hpp
+  evaluators/LandIce_ThicknessResidCell_Def.hpp
+  evaluators/LandIce_ThicknessResidCell.hpp
   evaluators/LandIce_UpdateZCoordinate.hpp
   evaluators/LandIce_UpdateZCoordinate_Def.hpp
   evaluators/LandIce_VerticalVelocity.hpp
