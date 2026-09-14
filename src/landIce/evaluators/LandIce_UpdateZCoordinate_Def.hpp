@@ -132,8 +132,8 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT>::type vals = topSurface(cell,node);
         vals = lowSurf+h; 
         
-	      ScalarT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
-	      for(int icomp=0; icomp< numDims; icomp++) {
+        ScalarT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
+        for(int icomp=0; icomp< numDims; icomp++) {
           typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
           val = (icomp==2) ? Albany::convertScalar<MeshScalarT>(zcoord)
                            : coordVecIn(cell,node,icomp);

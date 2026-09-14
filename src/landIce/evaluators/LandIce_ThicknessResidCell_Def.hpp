@@ -293,26 +293,37 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT res = 0;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           ScalarT divHV = divV_Points(qp)* H_Points(qp);
-          ScalarT V_norm = 0.0;
+          ScalarT V_norm2 = 0.0;
           ScalarT V_dot_gradPhi = 0.0;
           ScalarT V_dot_HGrad = 0.0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
             divHV += gradH_Points(qp, dim)*V_Points(qp,dim);
-            V_norm += V_Points(qp, dim)*V_Points(qp, dim);
+            V_norm2 += V_Points(qp, dim)*V_Points(qp, dim);
             V_dot_gradPhi += trans_gradBasis_refPointsSide(0, node, qp, dim)*V_Points(qp, dim);
             V_dot_HGrad += gradH_Points(qp, dim)*V_Points(qp, dim);
           }
+
+          ScalarT advective_rate = 0.0;  // 2|V|/ h_V,  h_V = 2|V|/sum(|V \nabla Phi|)
+          for (unsigned int inode = 0; inode < numNodes; ++inode) {
+            ScalarT V_dot_gradN = 0.0;
+
+            for (std::size_t dim = 0; dim < numVecFODims; ++dim)
+              V_dot_gradN += V_Points(qp,dim) * trans_gradBasis_refPointsSide(0,inode,qp,dim);
+
+            advective_rate += std::abs(V_dot_gradN);
+          }
+
           //std::cout << "Resid: " << __LINE__ << std::endl;
 
           ScalarT tmp = dHdt_Points(qp) + divHV - forcing_Points(qp);
 
           ScalarT HV_gradPhi = 0.0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-            HV_gradPhi += H_Points(qp) * V_Points(qp) * trans_gradBasis_refPointsSide(0, node, qp, dim);
+            HV_gradPhi += H_Points(qp) * V_Points(qp, dim) * trans_gradBasis_refPointsSide(0, node, qp, dim);
           
           res += ((dHdt_Points(qp) - forcing_Points(qp))*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
-          ScalarT invTau = sqrt(4.0/ *dt/ *dt + 4*V_norm*V_norm/h/h + divV_Points(qp)*divV_Points(qp));
-          res += tmp * V_dot_gradPhi * weighted_measure(qp) / sqrt(invTau); //SUPG
+          ScalarT invTau = sqrt(4.0/ *dt/ *dt + advective_rate*advective_rate + divV_Points(qp)*divV_Points(qp));
+          res += tmp * V_dot_gradPhi * weighted_measure(qp) / invTau; //SUPG
          // V_norm = sqrt(V_norm+1e-6);
           //res += tmp * h/V_norm*V_dot_gradPhi * weighted_measure(qp); //SUPG
 
@@ -320,7 +331,7 @@ evaluateFields(typename Traits::EvalData workset)
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp)+h/V_norm*V_dot_HGrad*V_dot_gradPhi*weighted_measure(qp);
           
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp);
-          ScalarT delta = h*std::min(0.2*V_norm, std::abs(tmp)/std::sqrt(gradH_Points(qp,0)*gradH_Points(qp,0)+gradH_Points(qp,1)*gradH_Points(qp,1)+1e-8));
+          ScalarT delta = h*std::min(0.2*sqrt(V_norm2), std::abs(tmp)/std::sqrt(gradH_Points(qp,0)*gradH_Points(qp,0)+gradH_Points(qp,1)*gradH_Points(qp,1)+1e-8));
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
             res += delta  *gradH_Points(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
         }
