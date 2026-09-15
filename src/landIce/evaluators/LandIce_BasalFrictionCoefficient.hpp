@@ -97,6 +97,7 @@ private:
   bool save_pressure_field;
   double overburden_fraction;  // [adim]
   double pressure_smoothing_length_scale; //[km]
+  double transition_h_ocean; // [km] (for TRANSITION effective pressure type only)
   double N0; // [kPa] Effective Pressure Regularization;
   double u0; // [m/yr] Sliding Velocity Regularization;
 
@@ -111,7 +112,7 @@ private:
   bool is_power_parameter;
   enum class BETA_TYPE {CONSTANT, FIELD, POWER_LAW, REGULARIZED_COULOMB, DEBRIS_FRICTION};
   enum class FIELD_TYPE {CONSTANT, FIELD, EXPONENT_OF_FIELD, EXPONENT_OF_FIELD_AT_NODES};
-  enum class EFFECTIVE_PRESSURE_TYPE {CONSTANT, FIELD, HYDROSTATIC, HYDROSTATIC_AT_NODES};
+  enum class EFFECTIVE_PRESSURE_TYPE {CONSTANT, FIELD, HYDROSTATIC, HYDROSTATIC_AT_NODES, TRANSITION};
   enum class FLOW_RATE_TYPE {CONSTANT, VISCOSITY_FLOW_RATE};
   BETA_TYPE beta_type;
   EFFECTIVE_PRESSURE_TYPE effectivePressure_type;
@@ -121,6 +122,13 @@ private:
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
   Albany::LocalSideSetInfo sideSet;
+
+  // Effective pressure with a near-ocean region followed by a bounded
+  // transition to a prescribed inland fraction of overburden pressure
+  // (EFFECTIVE_PRESSURE_TYPE::TRANSITION). Reproduces (offline)
+  // friction_law_conversion.py::effective_pressure4().
+  KOKKOS_INLINE_FUNCTION
+  MeshScalarT computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScalarT& bed_topo) const;
 
 public:
 
