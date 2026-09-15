@@ -283,15 +283,18 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
 //std::cout << "Resid: " << __LINE__ << " " <<numQPsSide << " " <<  numNodes << " " << numVecFODims << " " <<cellDim << " " << weighted_measure(0)  << " " << weighted_measure(1) << " "<< weighted_measure(2)  << " " << weighted_measure(3) << " "<< weighted_measure(4)  << " " << weighted_measure(5) <<  std::endl;
-      MeshScalarT h = 0.0;
+      MeshScalarT area = 0.0;
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) 
-        h += weighted_measure(qp);  
+        area += weighted_measure(qp);  
     //    std::cout << "Resid: " << __LINE__ << " " << h << std::endl;
-      h = sqrt(h);
+      MeshScalarT h = sqrt(area);
 //std::cout << "Resid: " << __LINE__ << std::endl;
+      
       for (unsigned int node = 0; node < numSideNodes; ++node){
-        ScalarT res = 0;
+        ScalarT min_divV = 0.0; 
+        ScalarT res = (dHdt_Nodes(node) - forcing_Nodes(node))*area/3.0;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
+          min_divV = std::min(min_divV, divV_Points(qp));
           ScalarT divHV = divV_Points(qp)* H_Points(qp);
           ScalarT V_norm2 = 0.0;
           ScalarT V_dot_gradPhi = 0.0;
@@ -321,9 +324,10 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             HV_gradPhi += H_Points(qp) * V_Points(qp, dim) * trans_gradBasis_refPointsSide(0, node, qp, dim);
           
-          res += ((dHdt_Points(qp) - forcing_Points(qp))*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
-          ScalarT invTau = sqrt(4.0/ *dt/ *dt + advective_rate*advective_rate + divV_Points(qp)*divV_Points(qp));
-          res += tmp * V_dot_gradPhi * weighted_measure(qp) / invTau; //SUPG
+          //res += ((dHdt_Points(qp) - forcing_Points(qp))*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
+          res -=  HV_gradPhi * weighted_measure(qp);
+          ScalarT invTau = sqrt(4.0/ *dt/ *dt + advective_rate*advective_rate  + divV_Points(qp)*divV_Points(qp));
+          //res += tmp * V_dot_gradPhi * weighted_measure(qp) / invTau; //SUPG
          // V_norm = sqrt(V_norm+1e-6);
           //res += tmp * h/V_norm*V_dot_gradPhi * weighted_measure(qp); //SUPG
 
@@ -331,11 +335,47 @@ evaluateFields(typename Traits::EvalData workset)
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp)+h/V_norm*V_dot_HGrad*V_dot_gradPhi*weighted_measure(qp);
           
           //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp);
-          ScalarT delta = h*std::min(0.2*sqrt(V_norm2), std::abs(tmp)/std::sqrt(gradH_Points(qp,0)*gradH_Points(qp,0)+gradH_Points(qp,1)*gradH_Points(qp,1)+1e-8));
-          for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
-            res += delta  *gradH_Points(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
+          //ScalarT delta = V_norm2/(advective_rate+1e-12);
+          //ScalarT delta = h*std::min(0.2*sqrt(V_norm2+1e-12), std::abs(tmp)/std::sqrt(gradH_Points(qp,0)*gradH_Points(qp,0)+gradH_Points(qp,1)*gradH_Points(qp,1)+1e-8));
+         // for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
+         //   res += delta  *gradH_Points(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
         }
-        //std::cout << "Resid: " << __LINE__ << std::endl;
+        if (1.0 + *dt * min_divV < 0) {
+         std::cout << "Loss of positivity: " << min_divV << " " << 1.0 + *dt * min_divV <<std::endl;
+        }
+
+        ScalarT A[3][3] = {{0.0}};
+        ScalarT D[3][3] = {{0.0}};
+
+        // Element advection matrix
+        for (int k = 0; k < 3; ++k) {
+          for (int l = 0; l < 3; ++l) {
+            for (int qp = 0; qp < numQPsSide; ++qp) {
+
+              ScalarT V_dot_gradNk = 0.0;
+              for (int dim = 0; dim < 2; ++dim)
+                V_dot_gradNk += V_Points(qp,dim) * trans_gradBasis_refPointsSide(0,k,qp,dim);
+
+              A[k][l] -= trans_basis_refPointsSide(0,l,qp) * V_dot_gradNk * weighted_measure(qp);
+            }
+          }
+        }
+        for (int k = 0; k < 3; ++k) {
+          for (int l = k+1; l < 3; ++l) {
+
+            ScalarT nu_lk = std::max(ScalarT(0.0), std::max(A[k][l], A[l][k]));
+
+            D[k][l] = -nu_lk;
+            D[l][k] = -nu_lk;
+
+            D[k][k] += nu_lk;
+            D[l][l] += nu_lk;
+          }
+        }
+        for (int j = 0; j < 3; ++j)
+          res += D[node][j] * H_Nodes(j);
+
+
         Residual(elem_LID,node) = res;
       }
 
