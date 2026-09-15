@@ -486,7 +486,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT res = 0;
         for (std::size_t qp = 0; qp < numQPsEdge; ++qp) { 
           if(V_Normal_Edge(qp) > 0)   
-            res += H_Edge(qp) * V_Normal_Edge(qp) * trans_basis_refPointsEdge(0, node, qp) * edge_weighted_measure(qp);
+            res += H_Cell(node) * V_Normal_Edge(qp) * trans_basis_refPointsEdge(0, node, qp) * edge_weighted_measure(qp);
         }
         Residual(elem_LID,node) += res;
       }
