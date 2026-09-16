@@ -175,6 +175,16 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 # add the compass cfg file specific to the container
 ADD --chown=runner:fanssie --chmod=775 compass-container.cfg /home/runner
 
+ARG RUN_FULL_INTEGRATION_TESTS=false
+
+SHELL ["/bin/bash", "-c"]
+RUN if [ "${RUN_FULL_INTEGRATION_TESTS}" = "true" ]; then \
+    source compass/load_dev_compass_*.sh && \
+    compass suite -c landice -t full_integration -w /home/runner/COMPASS-WORK/BASELINE -s -f ~/compass-container.cfg && \
+    cd /home/runner/COMPASS-WORK/BASELINE && \
+    compass run; \
+    fi
+
 # update environment for user
 RUN cat >> /home/runner/.bashrc <<'EOF'
 export CLICOLOR=1
