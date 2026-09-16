@@ -143,9 +143,10 @@ RUN if [ "${ALLOW_INSECURE_CERTS}" = "true" ]; then \
 ENV PATH="/home/runner/miniforge/bin:${PATH}"
 
 # set up compass (developer installation, env only)
+ARG COMPASS_ORG=mpas-dev
 ARG COMPASS_COMMIT=origin/main
 WORKDIR /home/runner
-RUN git clone --filter=blob:none https://github.com/MPAS-Dev/compass /home/runner/compass && \
+RUN git clone --filter=blob:none https://github.com/${COMPASS_ORG}/compass /home/runner/compass && \
     cd /home/runner/compass && \
     git checkout ${COMPASS_COMMIT}
 
@@ -173,6 +174,16 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 
 # add the compass cfg file specific to the container
 ADD --chown=runner:fanssie --chmod=775 compass-container.cfg /home/runner
+
+ARG RUN_FULL_INTEGRATION_TESTS=false
+
+SHELL ["/bin/bash", "-c"]
+RUN if [ "${RUN_FULL_INTEGRATION_TESTS}" = "true" ]; then \
+    source compass/load_dev_compass_*.sh && \
+    compass suite -c landice -t full_integration -w /home/runner/COMPASS-WORK/BASELINE -s -f ~/compass-container.cfg && \
+    cd /home/runner/COMPASS-WORK/BASELINE && \
+    compass run; \
+    fi
 
 # update environment for user
 RUN cat >> /home/runner/.bashrc <<'EOF'
