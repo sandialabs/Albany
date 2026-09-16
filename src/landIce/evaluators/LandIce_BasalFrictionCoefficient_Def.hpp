@@ -47,6 +47,9 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   save_pressure_field = false;
   overburden_fraction = 0.0;
   pressure_smoothing_length_scale = 1.0;
+  use_rc_thickness_cutoff = false;
+  rc_thickness_lower = 0.075;  // [km]
+  rc_thickness_upper = 0.150;  // [km]
   Teuchos::ParameterList beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
   //Validate Parameters
@@ -75,7 +78,10 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<std::string>("Bulk Friction Coefficient Type", "Constant", "Bulk Friction Coefficient Type: Field");
   validPL.set<double>("Bulk Friction Coefficient", 0.0, "Constant value for Bulk Friction Coefficient (for debris friction slip)");
   validPL.set<std::string>("Basal Debris Factor Type", "Constant", "Basal Debris Factor Type: Field");
-  validPL.set<double>("Basal Debris Factor", 0.0, "Constant value for Basal Debris Factor (for debris friction slip)"); 
+  validPL.set<double>("Basal Debris Factor", 0.0, "Constant value for Basal Debris Factor (for debris friction slip)");
+  validPL.set<bool>("Use Regularized Coulomb Thickness Cutoff", false, "Enable thickness-dependent modification to Regularized Coulomb: SH=0 (power-law asymptote) for thin ice, SH=1 (standard RC) for thick ice");
+  validPL.set<double>("Regularized Coulomb Thickness Lower Bound", 0.075, "Lower thickness bound [km]: below this thickness, use RC power-law asymptote (SH=0)");
+  validPL.set<double>("Regularized Coulomb Thickness Upper Bound", 0.150, "Upper thickness bound [km]: above this thickness, use standard RC law (SH=1)");
   beta_list.validateParameters(validPL,0);
 
   zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
@@ -172,6 +178,23 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << flowRateType << "\" is not a valid parameter for Is not a valid parameter for Flow Rate Type\n");
     }
 
+    // Parse optional thickness cutoff for Regularized Coulomb
+    use_rc_thickness_cutoff = beta_list.get<bool>("Use Regularized Coulomb Thickness Cutoff", false);
+    if (use_rc_thickness_cutoff) {
+      rc_thickness_lower = beta_list.get<double>("Regularized Coulomb Thickness Lower Bound", 0.075);
+      rc_thickness_upper = beta_list.get<double>("Regularized Coulomb Thickness Upper Bound", 0.150);
+
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          rc_thickness_lower < 0.0,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error in LandIce::BasalFrictionCoefficient: \"Regularized Coulomb Thickness Lower Bound\" must be nonnegative.\n");
+
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          rc_thickness_upper <= rc_thickness_lower,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error in LandIce::BasalFrictionCoefficient: \"Regularized Coulomb Thickness Upper Bound\" must be greater than \"Regularized Coulomb Thickness Lower Bound\".\n");
+    }
+
   } else if (betaType == "DEBRIS FRICTION") {
     beta_type = BETA_TYPE::DEBRIS_FRICTION;
 #ifdef OUTPUT_TO_SCREEN
@@ -244,15 +267,26 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"Length Scale Factor\" should be positive\n");
     }
 
-    if(zero_on_floating || zero_N_on_floating_at_nodes || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC) ) {
-      bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), nodal_layout);
-      this->addDependentField (bed_topo_field);
+    // Determine if we need thickness and related fields
+    bool need_thickness_for_flotation = zero_on_floating || zero_N_on_floating_at_nodes ||
+                                        (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) ||
+                                        (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC);
+    bool need_thickness_for_rc_cutoff = (beta_type == BETA_TYPE::REGULARIZED_COULOMB) && use_rc_thickness_cutoff;
+    bool need_thickness = need_thickness_for_flotation || need_thickness_for_rc_cutoff;
+
+    if(need_thickness) {
       thickness_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
       this->addDependentField (thickness_field);
       if(!nodal) {
         BF = PHX::MDField<const RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
         this->addDependentField (BF);
       }
+    }
+
+    // Bed topography and physical parameters only needed for flotation-related logic
+    if(need_thickness_for_flotation) {
+      bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), nodal_layout);
+      this->addDependentField (bed_topo_field);
       Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
       rho_i = phys_param_list.get<double> ("Ice Density");
       rho_w = phys_param_list.get<double> ("Water Density");
@@ -639,15 +673,38 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
           break;
         }
 
+        // Optional thickness transition: SH=0 gives the RC power-law
+        // asymptote for thin ice; SH=1 recovers the standard RC law.
+        MeshScalarT SH = 1.0;
+        if (use_rc_thickness_cutoff) {
+          MeshScalarT thickness = 0.0;
+          if (nodal) {
+            thickness = thickness_field(cell,ipt);
+          } else {
+            for (int node=0; node<numNodes; ++node) {
+              thickness += thickness_field(cell,node)*BF(cell,node,ipt);
+            }
+          }
+
+          if (thickness <= rc_thickness_lower) {
+            SH = 0.0;
+          } else if (thickness >= rc_thickness_upper) {
+            SH = 1.0;
+          } else {
+            const MeshScalarT x = (thickness - rc_thickness_lower) / (rc_thickness_upper - rc_thickness_lower);
+            SH = x*x*x*(10.0 + x*(-15.0 + 6.0*x));
+          }
+        }
+
         const double secsInYr = 365*24*3600;
         const double scaling = secsInYr*pow(1000,n+1); //turns flow rate from [Pa^{-n} s^{-1}] to [k^{-1} kPa^{-n} yr^{-1}]
         switch (flowRate_type) {
         case FLOW_RATE_TYPE::CONSTANT: {
-          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
+          beta(cell,ipt) /=  std::pow ( SH * u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate_val*std::pow(NVal,n),  power); //bedRoughness in km
           }
           break;
         case FLOW_RATE_TYPE::VISCOSITY_FLOW_RATE:
-          beta(cell,ipt) /=  std::pow ( u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate(cell)*std::pow(NVal,n),  power); //bedRoughness in km
+          beta(cell,ipt) /=  std::pow ( SH * u_norm(cell,ipt) + bedRoughnessValue*scaling*flowRate(cell)*std::pow(NVal,n),  power); //bedRoughness in km
           break;
         }
       }
