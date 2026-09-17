@@ -47,7 +47,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   save_pressure_field = false;
   overburden_fraction = 0.0;
   pressure_smoothing_length_scale = 1.0;
-  transition_h_ocean = 0.025;
+  transition_h_ocean = 0.0;
   Teuchos::ParameterList beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
   //Validate Parameters
@@ -67,7 +67,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<double>("Sliding Velocity Regularization", 500.0, "Sliding Velocity Regularization [m yr^{-1}]");
   validPL.set<double>("Minimum Fraction Overburden Pressure", 1.0, "Minimum Fraction Overburden Pressure");
   validPL.set<double>("Length Scale Factor", 1.0, "Length Scale Factor [km]");
-  validPL.set<double>("Transition Height Above Flotation", 0.025, "Height above flotation [km] below which the effective pressure is assumed to be set purely by the ocean-connected (hydrostatic) fraction, with no inland transition applied (for Effective Pressure Type == Transition only)");
+  validPL.set<double>("Transition Height Above Flotation", "Height above flotation [km] below which the effective pressure is assumed to be set purely by the ocean-connected (hydrostatic) fraction, with no inland transition applied (for Effective Pressure Type == Transition only)");
   validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
   validPL.set<double>("Beta", 1.0, "Constant value for beta");
   validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");
@@ -249,15 +249,12 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     if(use_pressurized_bed || effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION) {
       overburden_fraction = beta_list.get<double>("Minimum Fraction Overburden Pressure");
       pressure_smoothing_length_scale = beta_list.get<double>("Length Scale Factor");
-      bool length_scale_must_be_strictly_positive = (effectivePressure_type != EFFECTIVE_PRESSURE_TYPE::TRANSITION);
-      TEUCHOS_TEST_FOR_EXCEPTION(length_scale_must_be_strictly_positive && pressure_smoothing_length_scale <= 0.0, Teuchos::Exceptions::InvalidParameter,
+      TEUCHOS_TEST_FOR_EXCEPTION(pressure_smoothing_length_scale <= 0.0, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"Length Scale Factor\" should be positive\n");
-      TEUCHOS_TEST_FOR_EXCEPTION(!length_scale_must_be_strictly_positive && pressure_smoothing_length_scale < 0.0, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"Length Scale Factor\" should be non-negative (0 disables the smooth transition, using a step function instead) when Effective Pressure Type is Transition\n");
     }
 
     if(effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION) {
-      transition_h_ocean = beta_list.get<double>("Transition Height Above Flotation", 0.025);
+      transition_h_ocean = beta_list.get<double>("Transition Height Above Flotation");
       TEUCHOS_TEST_FOR_EXCEPTION(transition_h_ocean < 0.0, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"Transition Height Above Flotation\" should be non-negative\n");
     }
@@ -808,17 +805,11 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
   q_start = KU::min(q_start, q_inland);
   MeshScalarT q_near_ocean = KU::min(q_ocean, q_inland);
 
-  MeshScalarT q;
-  if (pressure_smoothing_length_scale == 0.0) {
-    // Length scale of 0 disables the smooth transition (step function).
-    q = (height_above_flotation <= transition_h_ocean) ? q_near_ocean : q_inland;
-  } else {
-    MeshScalarT distance_into_transition =
-        KU::max(height_above_flotation - transition_h_ocean, 0.0);
-    MeshScalarT transition_q = q_inland - (q_inland - q_start) *
-        std::exp(-std::log(2.0) * distance_into_transition / pressure_smoothing_length_scale);
-    q = (height_above_flotation <= transition_h_ocean) ? q_near_ocean : transition_q;
-  }
+  MeshScalarT distance_into_transition =
+      KU::max(height_above_flotation - transition_h_ocean, 0.0);
+  MeshScalarT transition_q = q_inland - (q_inland - q_start) *
+      std::exp(-distance_into_transition / pressure_smoothing_length_scale);
+  MeshScalarT q = (height_above_flotation <= transition_h_ocean) ? q_near_ocean : transition_q;
 
   // Roundoff safeguard.
   q = KU::min(KU::max(q, 0.0), q_inland);
