@@ -122,8 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto numLayers = layers_data.cell.lid->numLayers;
 
   // Pick element layer that contains the field level
-  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
-                        ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Distributed parameter vector
@@ -326,8 +325,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto numLayers = layers_data.cell.lid->numLayers;
 
   // Pick element layer that contains the field level
-  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
-                        ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Distributed parameter vector
@@ -614,8 +612,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (is_p_direction_active) vvec_data = Albany::getDeviceData(vvec->col(0).getConst());
 
   // Pick element layer that contains the field level
-  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
-                        ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Distributed parameter vector
