@@ -376,7 +376,7 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
 
   const int fieldLevel = level_it->second;
-  const int fieldLayer = fieldLevel==layers_data.cell.lid->numLayers ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   // Note: grab offsets on top/bot ordered in the same way as on side $field_pos
@@ -691,7 +691,6 @@ evaluateFields(typename Traits::EvalData workset)
   const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
   const int top = layers_data.top_side_pos;
   const int bot = layers_data.bot_side_pos;
-  const int numLayers = layers_data.cell.lid->numLayers;
   const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
 
   // Solution dof mgr data
@@ -700,7 +699,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Parameter data
   const int fieldLevel = level_it->second;
-  const int fieldLayer = fieldLevel==numLayers ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
   const auto& p_dof_mgr = workset.disc->getDOFManager(workset.dist_param_deriv_name);
   const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
@@ -708,7 +707,7 @@ evaluateFields(typename Traits::EvalData workset)
   //       to guarantee corresponding nodes are vertically aligned.
   const auto& top_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
   const auto& bot_offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
-  const auto& field_offsets = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
+  const auto& field_offsets = fieldLayer==fieldLevel ? bot_offsets : top_offsets;
 
   const int numSideNodes = field_offsets.size();
 
