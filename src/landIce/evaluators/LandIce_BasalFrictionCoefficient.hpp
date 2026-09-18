@@ -100,6 +100,10 @@ private:
   double N0; // [kPa] Effective Pressure Regularization;
   double u0; // [m/yr] Sliding Velocity Regularization;
 
+  bool use_rc_thickness_cutoff;           // Enable thickness-dependent RC modification
+  double rc_thickness_lower;              // [km] Lower thickness bound (SH=0 below this)
+  double rc_thickness_upper;              // [km] Upper thickness bound (SH=1 above this)
+
   int numNodes;
   int numQPs;
   int dim;
