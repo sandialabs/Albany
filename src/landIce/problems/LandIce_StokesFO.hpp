@@ -239,6 +239,12 @@ StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // --- States/parameters --- //
   constructStokesFOBaseEvaluators<EvalT> (fm0, meshSpecs, stateMgr, fieldManagerChoice);
 
+  if(depthIntegratedModel) { //check the temperature has a compatible field type
+    const Albany::StateStruct::MeshFieldEntity meshFieldEntity = stateMgr.getStateInfoStruct()->find(temperature_name)->entity;
+    TEUCHOS_TEST_FOR_EXCEPTION(meshFieldEntity == Albany::StateStruct::MeshFieldEntity::ElemData, std::runtime_error, 
+        "Error! When using MOLHO, the imported 3d temperature field should not be of Elem type.\n Maybe the temperature field needs to be defined with \"Field Type: QuadPoint Scalar\" \n ");
+  }
+
   // Finally, construct responses, and return the tags
   return constructStokesFOBaseResponsesEvaluators<EvalT> (fm0, meshSpecs, fieldManagerChoice, responseList);
 }
