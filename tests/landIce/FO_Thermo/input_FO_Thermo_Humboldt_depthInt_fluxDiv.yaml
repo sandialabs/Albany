@@ -405,14 +405,14 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value:  1.004796295090e+01
+    Test Value:  9.641748816124e+00
     Sensitivity For Parameter 0:
-      Test Value: 2.546960013857e+00
+      Test Value: 2.440106502494e+00
   Regression For Response 1:
     Relative Tolerance: 1.0e-06
-    Test Value: 6.496058223876e-04
+    Test Value: 6.405018328683e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.488138274327e-04
+      Test Value: 1.426531983367e-04
   Regression For Response 2:
     Relative Tolerance: 1.0e-06
     Test Value:  5.967986097162e+00

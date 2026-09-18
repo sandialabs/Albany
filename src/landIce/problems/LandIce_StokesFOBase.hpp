@@ -2025,6 +2025,7 @@ void StokesFOBase::constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
   p->set<bool>("Use Upwind Stabilization",  flux_div_params.get("Use Upwind Stabilization", true));
   p->set<std::string>("Layered Flux Divergence Residual Name", resid_names[eqId]);
+  p->set<bool>("Is Depth Integrated", depthIntegratedModel);
 
   ev = createEvaluatorWithOneScalarType<LayeredFluxDivergenceResidual,EvalT>(p,dl,get_scalar_type(ice_thickness_name));
   fm0.template registerEvaluator<EvalT>(ev);
