@@ -345,6 +345,7 @@ transferElemStateToNodeState (const std::string& name)
             for (int j=0; j<dim2; ++j) {
               values[j] = e_state_h(ie,in,j);
             }
+            break;
           case 4:
             dim2 = e_state_h.extent_int(2);
             dim3 = e_state_h.extent_int(3);
@@ -353,6 +354,7 @@ transferElemStateToNodeState (const std::string& name)
                 values[j*dim3+k] = e_state_h(ie,in,j,k);
               }
             }
+            break;
           default:
             throw std::runtime_error("Unsupported rank for state '" + name + "'\n");
         }
