@@ -1,0 +1,14 @@
+#!/bin/bash
+# Download, build, install boost
+PWD_PATH=`pwd`
+BOOST_PATH=/global/common/software/fanssie/boost/1.83.0/gcc/14.3
+mkdir -p ${BOOST_PATH}
+
+wget -c  https://sourceforge.net/projects/boost/files/boost/1.83.0/boost_1_83_0.tar.bz2
+tar -xjvf boost_1_83_0.tar.bz2
+cd boost_1_83_0
+
+./bootstrap.sh --prefix=${BOOST_PATH} --with-toolset=gcc
+./b2 -j 16 --without-python --without-stacktrace link=static install
+cd ${PWD_PATH}
+

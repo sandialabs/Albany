@@ -1,0 +1,48 @@
+#!/bin/bash
+module load cmake
+
+# NERSC recommends dynamic linking
+export CRAYPE_LINK_TYPE=dynamic
+
+# ----------------------------------------------------------------------
+# Paths
+# ----------------------------------------------------------------------
+SUPERLU_SRC=../superlu-7.0.1
+SUPERLU_BUILD="./"
+SUPERLU_INSTALL=/global/common/software/fanssie/superlu/7.0.1/gcc/14.3
+
+rm -rf ${SUPERLU_BUILD}
+mkdir -p ${SUPERLU_BUILD}
+
+LIBSCI=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.so
+
+echo "Using LibSci: ${LIBSCI}"
+
+# ----------------------------------------------------------------------
+# Configure
+# ----------------------------------------------------------------------
+cmake \
+    -S ${SUPERLU_SRC} \
+    -B ${SUPERLU_BUILD} \
+    \
+    -DCMAKE_C_COMPILER=$(which cc) \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=${SUPERLU_INSTALL} \
+    \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    \
+    -Denable_internal_blaslib=OFF \
+    -DTPL_BLAS_LIBRARIES:FILEPATH=${LIBSCI} \
+    \
+    -Denable_tests=ON \
+    -Denable_fortran=OFF
+
+# ----------------------------------------------------------------------
+# Build / test / install
+# ----------------------------------------------------------------------
+cmake --build ${SUPERLU_BUILD} --parallel 16
+
+#ctest --test-dir ${SUPERLU_BUILD} --output-on-failure
+
+cmake --install ${SUPERLU_BUILD}
