@@ -51,6 +51,8 @@ namespace LandIce {
     unsigned int numCells;
     unsigned int numNodes;
     bool upwindStabilization;
+    bool depthIntegrated;
+
 
     PHX::MDField<const MeshScalarT, Cell, Node, Dim> coords;
     PHX::MDField<const ThicknessScalarT> H;

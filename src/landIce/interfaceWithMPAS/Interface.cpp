@@ -272,57 +272,40 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   STKFieldType* temperatureField = meshStruct->metaData->get_field<double>(stk::topology::ELEMENT_RANK, "temperature");
   bool update_temperature = !temperatureDataOnPrisms.empty() && (temperatureField!=nullptr) && (noupdate_fields.find("temperature") == noupdate_fields.end());
   if(depthIntegratedModel && update_temperature) {
-    //In this case the Albany mesh only has one layer, but the MPAS mesh can still have multiple layers
-    bool usePOTemp = probParamList.sublist("LandIce Viscosity").get<bool>("Use P0 Temperature");
-    if(!usePOTemp) { 
-      // In this case we compute the temperature at Albany quadrature points. 
-      // For each quadrature point we identify what MPAS wedge/layer it belongs to, 
-      // and assign the temperature at that wedge to Albany temperature QuadPoint field at that quad point.
-      const auto problem = Teuchos::rcp_dynamic_cast<LandIce::StokesFO>(albanyApp->getProblem());
-      TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(problem), std::runtime_error,
-          "Error! Stokes FO Problem not defined. At the moment the depth integrated model only works for Stokes FO.\n");
-      const auto cellCubature = problem->getCellCubature();
+    // In this case the Albany mesh only has one layer, but the MPAS mesh can still have multiple layers
+    // We compute the temperature at Albany quadrature points. 
+    // For each quadrature point we identify what MPAS wedge/layer it belongs to, 
+    // and assign the temperature at that wedge to Albany temperature QuadPoint field at that quad point.
+    const auto problem = Teuchos::rcp_dynamic_cast<LandIce::StokesFO>(albanyApp->getProblem());
+    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(problem), std::runtime_error,
+        "Error! Stokes FO Problem not defined. At the moment the depth integrated model only works for Stokes FO.\n");
+    const auto cellCubature = problem->getCellCubature();
 
-      int numQPs = cellCubature->getNumPoints();
-      Kokkos::DynRankView<double, PHX::Device> quadPointCoords("refPoints", numQPs, 3);
-      Kokkos::DynRankView<double, PHX::Device> quadPointWeights("refWeights", numQPs);
+    int numQPs = cellCubature->getNumPoints();
+    Kokkos::DynRankView<double, PHX::Device> quadPointCoords("refPoints", numQPs, 3);
+    Kokkos::DynRankView<double, PHX::Device> quadPointWeights("refWeights", numQPs);
 
-      // Pre-Calculate reference element quantities
-      cellCubature->getCubature(quadPointCoords, quadPointWeights);
+    // Pre-Calculate reference element quantities
+    cellCubature->getCubature(quadPointCoords, quadPointWeights);
 
-      //Compute mesh layers associated to quad points
-      std::vector<int> layerVec(numQPs);
-      auto quadPointCoordsHost = Kokkos::create_mirror_view(quadPointCoords);
-      Kokkos::deep_copy(quadPointCoordsHost, quadPointCoords);
+    //Compute mesh layers associated to quad points
+    std::vector<int> layerVec(numQPs);
+    auto quadPointCoordsHost = Kokkos::create_mirror_view(quadPointCoords);
+    Kokkos::deep_copy(quadPointCoordsHost, quadPointCoords);
+    for(int qp=0; qp<numQPs; qp++) {
+      int il=0; 
+      auto z = (quadPointCoordsHost(qp,2)+1.0)/2; //quad points are defined on [-1,1]
+      while ((z > levelsNormalizedThickness[il+1]) && (il<nLayers)) il++;
+      layerVec[qp] = il;
+    }    
+    
+    // Populate the temperature mesh field, defined at quad points 
+    for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
+      double* temperature = stk::mesh::field_data(*temperatureField, elem);
       for(int qp=0; qp<numQPs; qp++) {
-        int il=0; 
-        auto z = (quadPointCoordsHost(qp,2)+1.0)/2; //quad points are defined on [-1,1]
-        while ((z > levelsNormalizedThickness[il+1]) && (il<nLayers)) il++;
-        layerVec[qp] = il;
-      }    
-      
-      // Populate the temperature mesh field, defined at quad points 
-      for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
-        stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
-        double* temperature = stk::mesh::field_data(*temperatureField, elem);
-        for(int qp=0; qp<numQPs; qp++) {
-          int lId = layerVec[qp] * lElemColumnShift + elemLayerShift * ib;        
-          temperature[qp] = temperatureDataOnPrisms[lId];
-        }
-      }
-    } else {  //P0 temperature
-      // In this case we compute a column average of the MPAS temperature and save it as a P0 field in the 1-layer Albany mesh.
-      for(int ib=0; ib < (int) indexToTriangleID.size(); ++ib ) {
-        stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, indexToTriangleID[ib]);
-        double* temperature = stk::mesh::field_data(*temperatureField, elem);
-        for(int il=0; il<nLayers; il++) {
-          int lId = il * lElemColumnShift + elemLayerShift * ib;  
-          double tempFraction = temperatureDataOnPrisms[lId]*(levelsNormalizedThickness[il+1]-levelsNormalizedThickness[il]);
-          if(il ==0)
-            temperature[0] = tempFraction;
-          else
-            temperature[0] += tempFraction;
-        }
+        int lId = layerVec[qp] * lElemColumnShift + elemLayerShift * ib;        
+        temperature[qp] = temperatureDataOnPrisms[lId];
       }
     }
   } else if(update_temperature){ // Here we copy the temperature on Prisms from MPAS into a P0 field in the Albany mesh.
@@ -741,6 +724,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   viscosityList.set("Use Stiffening Factor", viscosityList.get("Use Stiffening Factor", true));
   viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
   viscosityList.set("Use P0 Temperature", viscosityList.get("Use P0 Temperature", !depthIntegratedModel)); 
+  TEUCHOS_TEST_FOR_EXCEPTION(viscosityList.get<bool>("Use P0 Temperature") == depthIntegratedModel, std::runtime_error, 
+      "Error! The provided value Use P0 Temperature is not consistent with the model (FO or MOLHO) used.\n");
 
 
   probParamList.sublist("Body Force").set("Type", "FO INTERP SURF GRAD");

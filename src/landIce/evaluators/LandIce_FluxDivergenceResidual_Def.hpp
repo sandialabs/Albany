@@ -30,6 +30,8 @@ LayeredFluxDivergenceResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   const std::string& vel_name       = p.get<std::string>("Velocity Name");
   const std::string& coords_name    = p.get<std::string>("Coords Name");
   const std::string& residual_name  = p.get<std::string>("Layered Flux Divergence Residual Name");
+  
+  depthIntegrated = p.get<bool>("Is Depth Integrated");
 
   flux_div       = decltype(flux_div)(flux_div_name,  dl->node_scalar);
   H              = decltype(H)(thickness_name,  dl->node_scalar);
@@ -163,10 +165,15 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     //computing thickness of the layer at the triangle nodes
     ThicknessScalarT H0 = H(cell,node0)*dz, H1 = H(cell,node1)*dz, H2 = H(cell,node2)*dz;
 
+    double c0(0.5), c1(0.5);
+    if(depthIntegrated) {
+      c0 = 0.2; c1 = 0.8; //for n=3
+    }
+
     //computing the vertically averaged velocity at the triangles nodes
-    ScalarT vel0[2] = {(vel(cell, node0, 0)+vel(cell, node0p1, 0))/2., (vel(cell, node0, 1)+vel(cell, node0p1, 1))/2.},
-        vel1[2] = {(vel(cell, node1, 0)+vel(cell, node1p1, 0))/2., (vel(cell, node1, 1)+vel(cell, node1p1, 1))/2.},
-        vel2[2] = {(vel(cell, node2, 0)+vel(cell, node2p1, 0))/2., (vel(cell, node2, 1)+vel(cell, node2p1, 1))/2.};
+    ScalarT vel0[2] = {c0*vel(cell, node0, 0)+c1*vel(cell, node0p1, 0), c0*vel(cell, node0, 1)+c1*vel(cell, node0p1, 1)},
+        vel1[2] = {c0*vel(cell, node1, 0)+c1*vel(cell, node1p1, 0), c0*vel(cell, node1, 1)+c1*vel(cell, node1p1, 1)},
+        vel2[2] = {c0*vel(cell, node2, 0)+c1*vel(cell, node2p1, 0), c0*vel(cell, node2, 1)+c1*vel(cell, node2p1, 1)};
 //*/
 
     //interpolating the thickness and the velocities at the circumcenter
